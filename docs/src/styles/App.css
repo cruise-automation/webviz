@@ -1,0 +1,47 @@
+/*
+  Copyright (c) 2018-present, GM Cruise LLC
+
+  This source code is licensed under the Apache License, Version 2.0,
+  found in the LICENSE file in the root directory of this source tree.
+  You may not use this file except in compliance with the License.
+*/
+html {
+  font-size: 16px;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  font-family: sans-serif;
+  font-size: 1rem;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+.react-live-error {
+  white-space: pre;
+  font-size: 12px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+}
+
+.prism-code,
+.markdown-body pre,
+.markdown-body code {
+  font-size: 90%;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+}
+
+.prism-code,
+.markdown-body pre {
+  background-color: #302424 !important;
+}
+
+.prism-code {
+  margin: 0 !important;
+}

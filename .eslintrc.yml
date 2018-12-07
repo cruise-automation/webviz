@@ -1,0 +1,23 @@
+env:
+  browser: true
+parser: babel-eslint
+extends:
+  - eslint:recommended
+  - react-app
+parserOptions:
+  ecmaFeatures:
+    jsx: true
+  ecmaVersion: 2018
+  sourceType: module
+plugins:
+  - prettier
+  - react
+  - flowtype
+  - jest
+  - import
+  - jsx-a11y
+rules:
+  quotes:
+    - error
+    - single
+  no-console: [error, { allow: [warn, error] }]

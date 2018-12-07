@@ -1,0 +1,8 @@
+{
+  "packages": ["packages/*"],
+  "devDependencies": {
+    "lerna": "^3.4.3"
+  },
+  "version": "0.0.4",
+  "npmClient": "npm"
+}

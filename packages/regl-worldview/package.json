@@ -1,0 +1,32 @@
+{
+  "name": "regl-worldview",
+  "version": "0.0.0",
+  "description": "A reusable component for rendering 2D and 3D views using regl",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "browser": "dist/index.esm.js",
+  "scripts": {
+    "build": "rollup -c",
+    "build:watch": "rollup -c --watch",
+    "build:es6": "npm run clean && mkdir dist && npm run build:flow && npm run compile",
+    "compile": "babel src -d dist --ignore '**/*.test.js,**/*.stories.js'",
+    "clean": "rimraf dist",
+    "build:dev": "npm run build:flow && npm run compile",
+    "build:flow": "flow-copy-source -v src dist --ignore '*.test.*' --ignore '*.stories.*' --ignore '**/stories/**'",
+    "test": "jest --coverage --verbose --color",
+    "watch": "NODE_ENV=development npm run build:watch"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "earcut": "^2.1.3",
+    "gl-matrix": ">=2.6.1",
+    "lodash": "^4.17.11",
+    "normalize-wheel": "1.0.1",
+    "react-container-dimensions": "1.3.3",
+    "regl": "^1.3.1",
+    "reselect": "^3.0.1",
+    "styled-components": "^3.3.0"
+  }
+}

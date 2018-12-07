@@ -1,0 +1,185 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+// @flow
+import { Ray } from '../utils/Raycast';
+import type { CameraState } from '../camera/CameraStore';
+import type { BaseProps, Props } from '../Worldview';
+
+export type { CameraState, BaseProps, Props };
+
+export type Dimensions = {|
+  width: number,
+  height: number,
+  left: number,
+  top: number,
+|};
+
+export type ReglCommand = {
+  vert: string,
+  frag: string,
+  uniforms?: any,
+};
+
+export type CompiledReglCommand<T> = (props: T, context: any) => void;
+
+export type ReglFn = <T>(ReglCommand) => CompiledReglCommand<T>;
+
+type Command<T> = (T | T[], ...args: any[]) => void;
+
+export type RawCommand<T> = (regl: any) => {} | Command<T>;
+
+export type Regl = {
+  // https://github.com/gajus/eslint-plugin-flowtype/issues/346
+  // eslint-disable-next-line no-undef
+  [[call]]: ReglFn,
+  limits: {
+    pointSizeDims: [number, number],
+  },
+  prop: (string) => any,
+};
+
+export type CommandProps = {
+  [string]: any,
+};
+
+export type CommandDict = {
+  [string]: Command<any>,
+};
+
+// [left, top, width, height]
+export type Viewport = [number, number, number, number];
+export type Vec2 = [number, number];
+export type Vec3 = [number, number, number];
+export type Vec4 = [number, number, number, number];
+export type Mat4 = [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+];
+
+export interface CameraCommand {
+  getProjection(): Mat4;
+  getView(): Mat4;
+  toScreenCoord(viewport: Viewport, point: Vec3): ?Vec3;
+  draw(props: {}, (ctx: any) => void): void;
+}
+
+export type ReglContext = {
+  regl: ReglFn,
+  camera: CameraCommand,
+  commands: CommandDict,
+};
+
+export type ArrowSize = {
+  shaftLength: number,
+  shaftWidth: number,
+  headLength: number,
+  headWidth: number,
+};
+
+export type ReglClickInfo = {
+  ray: Ray,
+  clickedObjectId?: number,
+};
+
+export type MouseHandler = (MouseEvent, ?ReglClickInfo) => void;
+
+export type ReglComponentProps = {
+  commandId: string,
+  commandProps: Array<{}> | {},
+};
+
+export interface ReglComponent {
+  paint: (ReglContext) => void;
+  paintHitmap: (ReglContext) => void;
+}
+
+export type Coordinate = [number, number];
+
+export type Point = {
+  x: number,
+  y: number,
+  z: number,
+};
+
+export type Position = Point;
+
+export type Orientation = {
+  x: number,
+  y: number,
+  z: number,
+  w: number,
+};
+
+export type Scale = {
+  x: number,
+  y: number,
+  z: number,
+};
+
+export type Color = {
+  r: number,
+  g: number,
+  b: number,
+  a: number,
+};
+
+export type Colors = Color[];
+
+export type Pose = {
+  position: Position,
+  orientation: Orientation,
+};
+
+export type BaseShape = {
+  hitmapId?: number,
+  pose: Pose,
+  scale: Scale,
+  color: Color,
+};
+
+export type Arrow = BaseShape & {
+  points?: Point[],
+};
+
+export type Cube = BaseShape;
+
+export type Cylinder = BaseShape;
+
+export type Line = BaseShape & {
+  points: Point[],
+};
+
+export type PointType = BaseShape & {
+  points: Point[],
+};
+
+export type SphereList = BaseShape & {
+  points?: Point[],
+};
+
+export type TriangleList = BaseShape & {
+  points: Point[],
+};
+
+export type PolygonType = BaseShape & {
+  points: Vec3[],
+  id: number,
+};

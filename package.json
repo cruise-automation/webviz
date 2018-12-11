@@ -67,7 +67,7 @@
     "bootstrap": "npm install && lerna exec npm install",
     "build": "lerna run build",
     "clean": "lerna run clean",
-    "lint": "eslint packages",
+    "lint": "eslint packages --max-warnings=0",
     "lint:fix": "eslint packages --fix",
     "test": "lerna run test",
     "link": "lerna link --force-local",

@@ -10,15 +10,15 @@ import styled from 'styled-components';
 
 const StyledSwitchWrapper = styled.div`
   display: inline-flex;
-  flex-direction: row;
   align-items: center;
 `;
 const StyledSwitch = styled.label`
   position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 26px;
+  display: block;
+  width: 30px;
+  height: 18px;
   user-select: none;
+  margin: 0;
 `;
 
 const StyledSlider = styled.span`
@@ -31,14 +31,14 @@ const StyledSlider = styled.span`
   background-color: #ccc;
   -webkit-transition: 0.4s;
   transition: 0.4s;
-  border-radius: 26px;
+  border-radius: 9px;
   &:before {
     position: absolute;
     content: '';
-    height: 18px;
-    width: 18px;
-    left: 4px;
-    bottom: 4px;
+    height: 12px;
+    width: 12px;
+    left: 3px;
+    bottom: 3px;
     background-color: white;
     -webkit-transition: 0.4s;
     transition: 0.4s;
@@ -53,13 +53,10 @@ const StyledInput = styled.input`
   &:checked + ${StyledSlider} {
     background-color: #23d160;
   }
-  &:focus + ${StyledSlider} {
-    box-shadow: 0 0 1px #20b253;
-  }
   &:checked + ${StyledSlider}:before {
-    -webkit-transform: translateX(18px);
-    -ms-transform: translateX(18px);
-    transform: translateX(18px);
+    -webkit-transform: translateX(12px);
+    -ms-transform: translateX(12px);
+    transform: translateX(12px);
   }
   &:disabled + ${StyledSlider} {
     background-color: #efefef;

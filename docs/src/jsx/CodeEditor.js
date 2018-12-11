@@ -10,7 +10,6 @@ import { LiveProvider, LiveEditor, LiveError, LivePreview } from 'react-live';
 
 const StyledProvider = styled(LiveProvider)`
   border-radius: 2px;
-  box-shadow: 1px 1px 20px rgba(20, 20, 20, 0.27);
   overflow: hidden;
   margin-bottom: 16px;
 `;
@@ -55,7 +54,7 @@ const StyledPreview = styled(LivePreview)`
 const StyledError = styled(LiveError)`
   display: block;
   padding: 1rem;
-  background: red;
+  background: #f24366;
   color: white;
 `;
 

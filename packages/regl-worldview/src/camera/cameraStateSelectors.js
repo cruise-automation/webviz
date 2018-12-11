@@ -18,7 +18,11 @@ const TEMP_VEC3 = [0, 0, 0];
 const TEMP_MAT = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const TEMP_QUAT = [0, 0, 0, 0];
 
-const stateSelector = (state: CameraState) => state;
+type StateSelector = (CameraState) => CameraState;
+type Selector<S, P, R> = (state: S, props: P, ...args: any[]) => R;
+
+const stateSelector: StateSelector = (state: CameraState) => state;
+
 const perspectiveSelector = createSelector(
   stateSelector,
   ({ perspective }) => perspective

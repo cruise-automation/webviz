@@ -15,8 +15,8 @@ const scratch = [0, 0, 0, 0, 0, 0, 0, 0, 0];
 export default function eulerFromQuaternion(out: number[], q: Vec4): Vec3 {
   const m = mat3.fromQuat(scratch, q);
   const m11 = m[0], m12 = m[3], m13 = m[6]; // prettier-ignore
-  const m21 = m[1], m22 = m[4], m23 = m[7]; // prettier-ignore
-  const m31 = m[2], m32 = m[5], m33 = m[8]; // prettier-ignore
+  const             m22 = m[4], m23 = m[7]; // prettier-ignore
+  const             m32 = m[5], m33 = m[8]; // prettier-ignore
 
   out[1] = Math.asin(m13 < -1 ? -1 : m13 > 1 ? 1 : m13);
   if (Math.abs(m13) < 0.99999) {

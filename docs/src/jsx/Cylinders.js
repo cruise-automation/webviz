@@ -33,7 +33,6 @@ function CylindersDemo() {
             position: 'absolute',
             right: 0,
             top: 0,
-            backgroundColor: 'white',
           }}
           min={0.5}
           max={20}

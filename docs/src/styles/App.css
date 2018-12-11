@@ -5,9 +5,6 @@
   found in the LICENSE file in the root directory of this source tree.
   You may not use this file except in compliance with the License.
 */
-html {
-  font-size: 16px;
-}
 
 html,
 body {
@@ -17,11 +14,8 @@ body {
   max-width: 100%;
   font-family: sans-serif;
   font-size: 1rem;
-}
-
-#root {
-  width: 100%;
-  height: 100%;
+  color: #f7f7f3;
+  background: #1f1e27;
 }
 
 .react-live-error {
@@ -33,15 +27,34 @@ body {
 .prism-code,
 .markdown-body pre,
 .markdown-body code {
-  font-size: 90%;
+  font-size: 80%;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
 }
 
 .prism-code,
 .markdown-body pre {
-  background-color: #302424 !important;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #f7f7f3;
+}
+
+.markdown-body pre code {
+  background-color: transparent;
+  color: #f7f7f3;
+}
+
+.markdown-body code {
+  background-color: #6e51ee80;
+  color: #f7f7f3;
+}
+
+.markdown-body a {
+  color: #22b5ff;
 }
 
 .prism-code {
   margin: 0 !important;
+}
+
+.Select {
+  color: #1f1e27;
 }

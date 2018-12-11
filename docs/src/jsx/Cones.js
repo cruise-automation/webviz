@@ -33,7 +33,6 @@ function ConesDemo() {
             position: 'absolute',
             top: 0,
             right: 0,
-            background: 'white',
           }}
           min={0.5}
           max={20}

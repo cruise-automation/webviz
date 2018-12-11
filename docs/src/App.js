@@ -4,55 +4,103 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
+import React, { useState } from 'react';
 import { MDXProvider } from '@mdx-js/tag';
 import { BrowserRouter as Router, Route, Link, Redirect } from 'react-router-dom';
 import routes, { componentList } from './routes';
 import styled from 'styled-components';
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: row;
-`;
-
-const Header = styled.header`
-  flex-direction: column;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  text-align: center;
-`;
+import Logo from './Logo';
 
 const SideBar = styled.aside`
   width: 240px;
   position: fixed;
-  top: 0;
   left: 0;
-  bottom: 0;
-  overflow-y: scroll;
-  padding: 1rem;
-  background-color: #f1f1f1;
-  ul {
-    padding: 0;
-    margin: 0;
-    list-style: none;
-    li {
-      a {
-        display: inline-block;
-        font-size: 0.875rem;
-        padding-left: 8px;
-        line-height: 1.2;
-      }
-    }
+  top: 0;
+  overflow: hidden;
+  @media only screen and (max-width: 680px) {
+    right: 0;
+    width: 100%;
+    background: #1f1e27;
+    z-index: 999;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
   }
 `;
 
-const Main = styled.main`
+const LogoLink = styled(Link)`
+  padding: 2rem;
+  display: block;
+  color: #f7f7f3;
+  &:hover {
+    color: #f7f7f3;
+    opacity: 0.5;
+  }
+`;
+
+const Navigation = styled.ul`
+  max-height: calc(100vh - 88px);
+  overflow-y: auto;
+  padding: 0 2rem 2rem;
+  margin: 0;
+  list-style-type: none;
+  width: 100%;
+  @media only screen and (max-width: 680px) {
+    display: ${(props) => (props.isMobileNavOpen ? 'block' : 'none')};
+  }
+`;
+
+const Section = styled.li`
+  margin-bottom: 1rem;
+  display: block;
+
+  ul,
+  li {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+  }
+
+  li {
+    margin-bottom: 0.25rem;
+    a {
+      color: #f7f7f3;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      font-size: 14px;
+    }
+  }
+
+  div {
+    font-size: 14px;
+    opacity: 0.5;
+    margin-bottom: 0.5rem;
+  }
+`;
+
+const MainContainer = styled.main`
   margin-left: 240px;
-  flex: 1;
-  overflow-x: hidden;
-  padding: 1rem;
+  padding: 0 2rem 2rem;
+  @media only screen and (max-width: 680px) {
+    margin-left: 0;
+    margin-top: 4rem;
+  }
+`;
+
+const Main = styled.div`
+  max-width: 1040px;
+  margin: 0 auto;
+`;
+
+const MobileNavigationToggle = styled.a`
+  display: none;
+  padding: 2rem;
+  cursor: pointer;
+  &:hover {
+    opacity: 0.5;
+  }
+  @media only screen and (max-width: 680px) {
+    display: block;
+  }
 `;
 
 function DefaultMain({ name, ...rest }) {
@@ -64,53 +112,59 @@ function DefaultMain({ name, ...rest }) {
 }
 
 export default function App() {
+  const [isMobileNavOpen, toggleMobileNav] = useState(0);
   return (
     <MDXProvider components={{}}>
       <Router>
-        <Container>
+        <React.Fragment>
           <SideBar>
-            <Header>
-              <Link to="/">
-                <h1 className="font-md">Regl Worldview</h1>
-              </Link>
-            </Header>
-            <ul>
+            <LogoLink to="/">
+              <Logo width={160} />
+            </LogoLink>
+            <MobileNavigationToggle onClick={() => toggleMobileNav(!isMobileNavOpen)}>
+              {isMobileNavOpen ? '↑' : '↓'}
+            </MobileNavigationToggle>
+            <Navigation isMobileNavOpen={isMobileNavOpen}>
               {routes.map((route) => (
-                <li key={route.path}>
-                  <div> {route.name}</div>
+                <Section key={route.path}>
+                  <div>{route.name}</div>
                   <ul>
                     {route.subRoutes.map((subRoute) => (
                       <li key={subRoute.path}>
-                        <Link to={`${route.path}${subRoute.path}`}>{subRoute.name || subRoute.main}</Link>
+                        <Link to={`${route.path}${subRoute.path}`} onClick={() => toggleMobileNav(false)}>
+                          {subRoute.name || subRoute.main}
+                        </Link>
                       </li>
                     ))}
                   </ul>
-                </li>
+                </Section>
               ))}
-            </ul>
+            </Navigation>
           </SideBar>
-          <Main>
-            <Route exact path="/" render={() => <Redirect to="/guides" />} />
-            {routes.map((route) => (
-              <React.Fragment key={route.path}>
-                <Route
-                  exact
-                  path={route.path}
-                  render={() => <Redirect to={`${route.path}${route.subRoutes[0].path}`} />}
-                />
-                {route.subRoutes.map((subRoute) => (
-                  <div className="markdown-body" key={subRoute.path}>
-                    <Route
-                      exact={subRoute.exact}
-                      path={`${route.path}${subRoute.path}`}
-                      component={componentList[subRoute.main] || DefaultMain}
-                    />
-                  </div>
-                ))}
-              </React.Fragment>
-            ))}
-          </Main>
-        </Container>
+          <MainContainer>
+            <Main>
+              <Route exact path="/" render={() => <Redirect to="/guides" />} />
+              {routes.map((route) => (
+                <React.Fragment key={route.path}>
+                  <Route
+                    exact
+                    path={route.path}
+                    render={() => <Redirect to={`${route.path}${route.subRoutes[0].path}`} />}
+                  />
+                  {route.subRoutes.map((subRoute) => (
+                    <div className="markdown-body" key={subRoute.path}>
+                      <Route
+                        exact={subRoute.exact}
+                        path={`${route.path}${subRoute.path}`}
+                        component={componentList[subRoute.main] || DefaultMain}
+                      />
+                    </div>
+                  ))}
+                </React.Fragment>
+              ))}
+            </Main>
+          </MainContainer>
+        </React.Fragment>
       </Router>
     </MDXProvider>
   );

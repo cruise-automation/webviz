@@ -8,9 +8,11 @@ webviz is a collection of packages for visualizing 2D and 3D views on the web.
 
 - `npm install` in the root directory
 - `npm run bootstrap` in the root directory to install dependencies in packages
-- `npm link` in the regl-worldview directory to symlink the package.
+- `npm link` in the `regl-worldview` directory to symlink the package.
 - `lerna run build` to run a single build or `lerna run watch --parallel` to watch and build
 - `npm run storybook` in the root directory to run storybook
+- `npm link regl-worldview` in the `docs` directory
+- `npm start` in the `docs` directory to run the docs app
 
 ## Flow
 

@@ -53,7 +53,7 @@ const ROUTE_CONFIG = [
     name: 'Examples',
     subRouteNames: ['Basic Example', 'Composition', 'Dynamic Commands', 'Interactivity'],
   },
-  { name: 'Guides', subRouteNames: ['Quick Start', 'Writing a custom command component'] },
+  { name: 'Guides', subRouteNames: ['Quick Start'] },
   {
     name: 'API',
     subRouteNames: [

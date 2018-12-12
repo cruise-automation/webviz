@@ -6,9 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import Lines from './Lines';
-import type { Pose, Color, Scale, Point, Vec3 } from '../types';
+import React from "react";
+
+import type { Pose, Color, Scale, Point, Vec3 } from "../types";
+import Lines from "./Lines";
 
 const pointToVec3 = (p: Vec3): Point => ({
   x: p[0],

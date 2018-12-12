@@ -9,8 +9,9 @@
 // Copied from Jam3/camera-project
 // in order to replace gl-vec4 dependency with gl-matrix
 
-import { vec4 } from 'gl-matrix';
-import type { Vec3, Vec4, Mat4 } from '../types';
+import { vec4 } from "gl-matrix";
+
+import type { Vec3, Vec4, Mat4 } from "../types";
 
 const NEAR_RANGE = 0;
 const FAR_RANGE = 1;

@@ -4,10 +4,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import Worldview, { Lines, DEFAULT_CAMERA_STATE } from 'regl-worldview';
-import WorldviewCodeEditor from './WorldviewCodeEditor';
-import { p } from './utils';
+import React from "react";
+import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
+
+import { p } from "./utils";
+import WorldviewCodeEditor from "./WorldviewCodeEditor";
 
 function LinesInstabilityDemo() {
   const points = [
@@ -37,7 +38,7 @@ function LinesInstabilityDemo() {
 
   const markers = [
     {
-      primitive: 'line strip',
+      primitive: "line strip",
       scale: { x: 1, y: 1, z: 1 },
       color: { r: 1, g: 0, b: 1, a: 1 },
       pose,
@@ -118,4 +119,5 @@ function LinesInstabilityDemo() {
 
 export { LinesInstabilityDemo, code };
 
+// eslint-disable-next-line react/display-name
 export default () => <WorldviewCodeEditor code={code} />;

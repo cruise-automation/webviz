@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { withPose, pointToVec3, blend, shouldConvert, colorBuffer } from './commandUtils';
-import type { ReglCommand, Vec3 } from '../types';
+import type { ReglCommand, Vec3 } from "../types";
+import { withPose, pointToVec3, blend, shouldConvert, colorBuffer } from "./commandUtils";
 
 // Creates a regl command factory which will render any geometry described by point positions
 // and elements (indexes into the array of positions), and apply the object's pose, scale, and color to it.
@@ -15,13 +15,13 @@ export default (positions: Vec3[], elements: Vec3[]) => (regl: any): ReglCommand
   const vertexArray = Float32Array.from([].concat(...positions));
 
   if (elements.some((face) => face.some((i) => i < 0 || i >= 1 << 16))) {
-    throw new Error('Element index out of bounds for Uint16');
+    throw new Error("Element index out of bounds for Uint16");
   }
   const elementsArray = Uint16Array.from([].concat(...elements));
 
   const buff = regl.buffer({
     // tell the gpu this buffer's contents will change frequently
-    usage: 'dynamic',
+    usage: "dynamic",
     data: [],
   });
   const colorBuff = colorBuffer(regl);
@@ -61,7 +61,7 @@ export default (positions: Vec3[], elements: Vec3[]) => (regl: any): ReglCommand
         const points = shouldConvert(props.points) ? props.points.map(pointToVec3) : props.points || [0, 0, 0];
         return {
           buffer: buff({
-            usage: 'dynamic',
+            usage: "dynamic",
             data: points,
           }),
           divisor: 1,

@@ -6,9 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { makeCommand } from './Command';
-import fromGeometry from '../utils/fromGeometry';
-import type { SphereList } from '../types';
+import type { SphereList } from "../types";
+import fromGeometry from "../utils/fromGeometry";
+import { makeCommand } from "./Command";
 
 const NUM_PARALLELS = 15;
 const NUM_MERIDIANS = 15;
@@ -51,6 +51,6 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
   faces.push([pt, prevPt, 1]);
 }
 
-const Spheres = makeCommand<SphereList>('Spheres', fromGeometry(points, faces));
+const Spheres = makeCommand<SphereList>("Spheres", fromGeometry(points, faces));
 
 export default Spheres;

@@ -6,10 +6,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from 'react';
-import WorldviewReactContext from '../WorldviewReactContext';
-import { type WorldviewContextType } from '../WorldviewContext';
-import type { Point, Vec3, Dimensions, Pose } from '../types';
+import * as React from "react";
+
+import type { Point, Vec3, Dimensions, Pose } from "../types";
+import { type WorldviewContextType } from "../WorldviewContext";
+import WorldviewReactContext from "../WorldviewReactContext";
 
 type PoseObj = { pose: Pose };
 type RenderItemInput<T: PoseObj> = {
@@ -50,7 +51,9 @@ export default class Overlay<T: PoseObj> extends React.Component<Props<T>, State
     const context = this._context;
     const dimension = context && context.dimension;
     const { renderItem, children } = this.props;
-    if (!context || !dimension) return;
+    if (!context || !dimension) {
+      return;
+    }
     const items = children.map((item, index) => {
       const coordinates = this.project(item.pose.position, context);
       return renderItem({ item, index, coordinates, dimension });
@@ -59,7 +62,9 @@ export default class Overlay<T: PoseObj> extends React.Component<Props<T>, State
   };
 
   project = (point: Point, context: ?WorldviewContextType): ?Vec3 => {
-    if (!context || !context.initializedData) return;
+    if (!context || !context.initializedData) {
+      return;
+    }
     const { dimension } = context;
     const { camera } = context.initializedData;
 

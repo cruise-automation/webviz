@@ -15,8 +15,8 @@
   -webkit-text-size-adjust: 100%;
   line-height: 1.5;
   color: #f7f7f3;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol';
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 16px;
   line-height: 1.5;
   word-wrap: break-word;
@@ -79,7 +79,7 @@
 }
 
 .markdown-body .pl-c2::before {
-  content: '^M';
+  content: "^M";
 }
 
 .markdown-body .pl-sr .pl-cce {
@@ -190,7 +190,7 @@
   overflow: visible;
 }
 
-.markdown-body [type='checkbox'] {
+.markdown-body [type="checkbox"] {
   box-sizing: border-box;
   padding: 0;
 }
@@ -229,13 +229,13 @@
 
 .markdown-body hr::before {
   display: table;
-  content: '';
+  content: "";
 }
 
 .markdown-body hr::after {
   display: table;
   clear: both;
-  content: '';
+  content: "";
 }
 
 .markdown-body table {
@@ -256,7 +256,7 @@
 .markdown-body h6 {
   margin-top: 0;
   margin-bottom: 0;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
 .markdown-body h1 {
@@ -316,14 +316,14 @@
 }
 
 .markdown-body code {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
   font-size: 12px;
 }
 
 .markdown-body pre {
   margin-top: 0;
   margin-bottom: 0;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
   font-size: 12px;
 }
 
@@ -357,13 +357,13 @@
 
 .markdown-body::before {
   display: table;
-  content: '';
+  content: "";
 }
 
 .markdown-body::after {
   display: table;
   clear: both;
-  content: '';
+  content: "";
 }
 
 .markdown-body > *:first-child {
@@ -555,11 +555,11 @@
   box-sizing: content-box;
 }
 
-.markdown-body img[align='right'] {
+.markdown-body img[align="right"] {
   padding-left: 20px;
 }
 
-.markdown-body img[align='left'] {
+.markdown-body img[align="left"] {
   padding-right: 20px;
 }
 
@@ -624,7 +624,7 @@
 .markdown-body kbd {
   display: inline-block;
   padding: 3px 5px;
-  font: 11px 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font: 11px "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
   line-height: 10px;
   color: #444d56;
   vertical-align: middle;

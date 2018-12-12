@@ -6,13 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from 'react';
-import { quat, vec3 } from 'gl-matrix';
-import { storiesOf } from '@storybook/react';
-import { withKnobs, boolean, number } from '@storybook/addon-knobs';
+import { withKnobs, boolean, number } from "@storybook/addon-knobs";
+import { storiesOf } from "@storybook/react";
+import { quat, vec3 } from "gl-matrix";
+import * as React from "react";
 
-import Container from './Container';
-import { Arrows, Spheres, Axes, Grid, cameraStateSelectors, type CameraState } from '..';
+import Container from "./Container";
+
+import { Arrows, Spheres, Axes, Grid, cameraStateSelectors, type CameraState } from "..";
 
 function vec3ToObject([x, y, z]) {
   return { x, y, z };
@@ -110,12 +111,12 @@ class CameraStateStory extends React.Component<Props, State> {
     return (
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'row',
-          width: '100%',
-          height: '100%',
+          display: "flex",
+          flexDirection: "row",
+          width: "100%",
+          height: "100%",
         }}>
-        <div style={{ flex: '1 1 0', overflow: 'hidden' }}>
+        <div style={{ flex: "1 1 0", overflow: "hidden" }}>
           <Container hideDebug axes grid cameraState={cameraState} onCameraStateChange={this._onCameraStateChange}>
             <Arrows>{[poseArrowMarker]}</Arrows>
             <Spheres>{[sphereMarker]}</Spheres>
@@ -123,7 +124,7 @@ class CameraStateStory extends React.Component<Props, State> {
             <Axes />
           </Container>
         </div>
-        <div style={{ flex: '1 1 0', overflow: 'hidden' }}>
+        <div style={{ flex: "1 1 0", overflow: "hidden" }}>
           <Container
             hideState
             hideDebug
@@ -147,80 +148,80 @@ class CameraStateStory extends React.Component<Props, State> {
   }
 }
 
-const stories = storiesOf('Worldview', module);
-stories.addDecorator(withKnobs).add('cameraState', () => {
-  const controlled = boolean('controlled (disable mouse controls)', true);
-  const perspective = boolean('is perspective', true);
+const stories = storiesOf("Worldview", module);
+stories.addDecorator(withKnobs).add("cameraState", () => {
+  const controlled = boolean("controlled (disable mouse controls)", true);
+  const perspective = boolean("is perspective", true);
 
-  const distance = number('distance', 50, {
+  const distance = number("distance", 50, {
     range: true,
     min: 0,
     max: 400,
     step: 1,
   });
-  const thetaOffset = number('thetaOffset', 0.3, {
+  const thetaOffset = number("thetaOffset", 0.3, {
     range: true,
     min: 0,
     max: Math.PI * 2,
     step: 0.01,
   });
-  const phi = number('phi', 0.85, {
+  const phi = number("phi", 0.85, {
     range: true,
     min: 0,
     max: Math.PI,
     step: 0.01,
   });
-  const orientationX = number('orientation - x', 0, {
+  const orientationX = number("orientation - x", 0, {
     range: true,
     min: 0,
     max: 1,
     step: 0.01,
   });
-  const orientationY = number('orientation - y', 0, {
+  const orientationY = number("orientation - y", 0, {
     range: true,
     min: 0,
     max: 1,
     step: 0.01,
   });
-  const orientationZ = number('orientation - z', 0, {
+  const orientationZ = number("orientation - z", 0, {
     range: true,
     min: 0,
     max: 1,
     step: 0.01,
   });
 
-  const posX = number('target - x', 0, {
+  const posX = number("target - x", 0, {
     range: true,
     min: 0,
     max: 20,
     step: 0.1,
   });
-  const posY = number('target - y', 0, {
+  const posY = number("target - y", 0, {
     range: true,
     min: 0,
     max: 20,
     step: 0.1,
   });
-  const posZ = number('target - z', 0, {
+  const posZ = number("target - z", 0, {
     range: true,
     min: 0,
     max: 20,
     step: 0.1,
   });
 
-  const offsetX = number('targetOffset - x', 0, {
+  const offsetX = number("targetOffset - x", 0, {
     range: true,
     min: 0,
     max: 20,
     step: 0.1,
   });
-  const offsetY = number('targetOffset - y', 0, {
+  const offsetY = number("targetOffset - y", 0, {
     range: true,
     min: 0,
     max: 20,
     step: 0.1,
   });
-  const offsetZ = number('targetOffset - z', 0, {
+  const offsetZ = number("targetOffset - z", 0, {
     range: true,
     min: 0,
     max: 20,

@@ -6,10 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
-import FloatingBox from './FloatingBox';
+import { getCSSColor } from "../utils/commandUtils";
+import FloatingBox from "./FloatingBox";
+
 import Worldview, {
   Cubes,
   Axes,
@@ -20,9 +22,7 @@ import Worldview, {
   type ReglClickInfo,
   type Cube,
   type SphereList,
-} from '../';
-
-import { getCSSColor } from '../utils/commandUtils';
+} from "..";
 
 export const StyledContainer = styled.div`
   position: absolute;
@@ -85,7 +85,7 @@ function generateCubes(clickedIds, count = DEFAULT_MARKER_COUNT, hitmapIdStartId
       scale,
       color: numberToColor(idx, count, alpha),
       info: {
-        description: 'additional cube info',
+        description: "additional cube info",
         objectId: hitmapId + 10000,
       },
     };
@@ -112,7 +112,7 @@ function generateSpheres(clickedIds, count = DEFAULT_MARKER_COUNT, hitmapIdStart
       scale,
       color: numberToColor(count - idx - 1, count, alpha),
       info: {
-        description: 'additional sphere info',
+        description: "additional sphere info",
         objectId: hitmapId + 1000,
       },
     };
@@ -150,7 +150,9 @@ export default function() {
     }
 
     _move = () => {
-      if (!this.state) return;
+      if (!this.state) {
+        return;
+      }
       const {
         cameraState: { thetaOffset: prevThetaOffset },
         cameraState,
@@ -172,7 +174,9 @@ export default function() {
 
     _onClick = (e: MouseEvent, arg: ?ReglClickInfo) => {
       const clickedId = arg && arg.clickedObjectId;
-      if (!clickedId) return;
+      if (!clickedId) {
+        return;
+      }
       const clickedIds = this.state.clickedIds;
       if (clickedIds.has(clickedId)) {
         clickedIds.delete(clickedId);
@@ -182,7 +186,7 @@ export default function() {
       this.setState({ clickedIds });
     };
 
-    _updateObjectMap = (objects: $ReadOnlyArray<Cube | SphereList>, type: 'cube' | 'sphere') => {
+    _updateObjectMap = (objects: $ReadOnlyArray<Cube | SphereList>, type: "cube" | "sphere") => {
       objects.forEach((object) => {
         if (object.hitmapId) {
           this._objectMap[object.hitmapId] = { object, type };
@@ -217,8 +221,8 @@ export default function() {
 
       const cubes = generateCubes(clickedIds);
       const spheres = generateSpheres(clickedIds, 10, cubes.length + 1);
-      this._updateObjectMap(cubes, 'cube');
-      this._updateObjectMap(spheres, 'sphere');
+      this._updateObjectMap(cubes, "cube");
+      this._updateObjectMap(spheres, "sphere");
 
       const textMarkers = [];
       for (const clickedId of clickedIds) {
@@ -243,7 +247,7 @@ export default function() {
             text,
             color: { r: 1, g: 1, b: 1, a: 1 },
             pose: {
-              orientation: orientation,
+              orientation,
               position: { x: position.x + 2, y: position.y, z: position.z },
             },
             scale: { x: 1, y: 1, z: 1 },
@@ -258,9 +262,9 @@ export default function() {
       return (
         <Worldview cameraState={cameraState} onCameraStateChange={this._onCameraStateChange} onClick={this._onClick}>
           <FloatingBox>
-            <div>{clickedIds.size === 0 && 'click an object'}</div>
+            <div>{clickedIds.size === 0 && "click an object"}</div>
             <button style={{ marginBottom: 4 }} onClick={this._onToggleEnableRotate}>
-              {`${enableAutoRotate ? 'Disable Auto Rotate' : 'Enable Auto Rotate'}`}
+              {`${enableAutoRotate ? "Disable Auto Rotate" : "Enable Auto Rotate"}`}
             </button>
             {clickedIds.size > 0 && <button onClick={this._onClearText}>Clear Text</button>}
           </FloatingBox>
@@ -286,10 +290,10 @@ export default function() {
                   style={{
                     transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
                   }}>
-                  <h2 style={{ color: getCSSColor(color), fontSize: '2rem' }}>{title}</h2>
+                  <h2 style={{ color: getCSSColor(color), fontSize: "2rem" }}>{title}</h2>
                   <div>{text}</div>
                   <a
-                    style={{ pointerEvents: 'visible' }}
+                    style={{ pointerEvents: "visible" }}
                     href="https://google.com/"
                     target="_blank"
                     rel="noopener noreferrer">

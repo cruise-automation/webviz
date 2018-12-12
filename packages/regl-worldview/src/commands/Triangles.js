@@ -6,13 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { makeCommand } from './Command';
-import { blend, pointToVec3Array, withPose, getVertexColors, shouldConvert, toRGBA } from '../utils/commandUtils';
-import type { TriangleList, Regl } from '../types';
+import type { TriangleList, Regl } from "../types";
+import { blend, pointToVec3Array, withPose, getVertexColors, shouldConvert, toRGBA } from "../utils/commandUtils";
+import { makeCommand } from "./Command";
 
 const singleColor = (regl) =>
   withPose({
-    primitive: 'triangles',
+    primitive: "triangles",
     vert: `
   precision mediump float;
 
@@ -67,7 +67,7 @@ const singleColor = (regl) =>
 
 const vertexColors = (regl) =>
   withPose({
-    primitive: 'triangles',
+    primitive: "triangles",
     vert: `
   precision mediump float;
 
@@ -111,7 +111,7 @@ const vertexColors = (regl) =>
     blend,
     depth: {
       enable: true,
-      func: '<=',
+      func: "<=",
     },
 
     count: (context, props) => props.points.length,

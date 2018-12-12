@@ -4,6 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-const enzyme = require('enzyme');
-const Adapter = require('enzyme-adapter-react-16');
+const enzyme = require("enzyme");
+const Adapter = require("enzyme-adapter-react-16");
+
 enzyme.configure({ adapter: new Adapter() });

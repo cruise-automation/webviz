@@ -4,10 +4,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import Worldview, { FilledPolygons, DEFAULT_CAMERA_STATE } from 'regl-worldview';
-import useRange from './useRange';
-import polygonGenerator from 'polygon-generator';
+import polygonGenerator from "polygon-generator";
+import React from "react";
+import Worldview, { FilledPolygons, DEFAULT_CAMERA_STATE } from "regl-worldview";
+
+import useRange from "./useRange";
 
 // #BEGIN EXAMPLE
 function FilledPolygonsDemo() {

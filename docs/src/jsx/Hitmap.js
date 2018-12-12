@@ -4,10 +4,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useEffect, useState } from 'react';
-import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from 'regl-worldview';
-import { generateCubes, generateSpheres, lerp } from './utils';
-import { FloatingBox, StyledContainer } from './WorldviewCodeEditor';
+import React, { useEffect, useState } from "react";
+import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
+
+import { generateCubes, generateSpheres, lerp } from "./utils";
+import { FloatingBox, StyledContainer } from "./WorldviewCodeEditor";
 
 // #BEGIN EXAMPLE
 function HitmapDemo() {
@@ -22,12 +23,12 @@ function HitmapDemo() {
     thetaOffset: 0,
   });
 
-  let _intervalId;
-  let _objectMap = {};
+  let intervalId;
+  const objectMap = {};
 
   useEffect(() => {
     if (enableAutoRotate) {
-      _intervalId = setInterval(() => {
+      intervalId = setInterval(() => {
         const { thetaOffset: prevThetaOffset } = cameraState;
         let thetaOffset = prevThetaOffset;
         if (thetaOffset >= 6.1) {
@@ -37,7 +38,7 @@ function HitmapDemo() {
         setCameraState({ ...cameraState, thetaOffset });
       }, 16.6);
       return function cleanup() {
-        clearInterval(_intervalId);
+        clearInterval(intervalId);
       };
     }
   });
@@ -47,19 +48,19 @@ function HitmapDemo() {
   const spheres = generateSpheres(clickedIds, 10, cubes.length + 1);
   cubes.forEach((object) => {
     if (object.hitmapId) {
-      _objectMap[object.hitmapId] = { object, type: 'cube' };
+      objectMap[object.hitmapId] = { object, type: "cube" };
     }
   });
 
   spheres.forEach((object) => {
     if (object.hitmapId) {
-      _objectMap[object.hitmapId] = { object, type: 'sphere' };
+      objectMap[object.hitmapId] = { object, type: "sphere" };
     }
   });
 
   const textMarkers = [];
   clickedIds.forEach((clickedId) => {
-    const clickedObj = _objectMap[clickedId];
+    const clickedObj = objectMap[clickedId];
     if (clickedObj) {
       const {
         object: {
@@ -70,9 +71,9 @@ function HitmapDemo() {
         },
         type,
       } = clickedObj;
-      let text = 'hitmapId: ' + hitmapId + ' x: ' + position.x + ' y: ' + position.y + ' z: ' + position.z;
+      let text = `hitmapId: ${hitmapId} x: ${position.x} y: ${position.y} z: ${position.z}`;
       if (info) {
-        text += ' description: ' + info.description + ' objectId:' + info.objectId;
+        text += ` description: ${info.description} objectId:${info.objectId}`;
       }
 
       const id = textMarkers.length;
@@ -81,7 +82,7 @@ function HitmapDemo() {
         text,
         color: { r: 1, g: 1, b: 1, a: 1 },
         pose: {
-          orientation: orientation,
+          orientation,
           position: { x: position.x + 2, y: position.y, z: position.z },
         },
         scale: { x: 1, y: 1, z: 1 },
@@ -104,7 +105,9 @@ function HitmapDemo() {
         }}
         onClick={(e, arg) => {
           const clickedId = arg && arg.clickedObjectId;
-          if (!clickedId) return;
+          if (!clickedId) {
+            return;
+          }
           if (clickedIds.has(clickedId)) {
             clickedIds.delete(clickedId);
           } else {
@@ -114,9 +117,9 @@ function HitmapDemo() {
           setClickedIds(clickedIds);
         }}>
         <FloatingBox>
-          <div>{clickedIds.size === 0 && 'click an object'}</div>
+          <div>{clickedIds.size === 0 && "click an object"}</div>
           <button style={{ marginBottom: 4 }} onClick={() => setEnableAutoRotate(!enableAutoRotate)}>
-            {enableAutoRotate ? 'Disable Auto Rotate' : 'Enable Auto Rotate'}
+            {enableAutoRotate ? "Disable Auto Rotate" : "Enable Auto Rotate"}
           </button>
           {clickedIds.size > 0 && <button onClick={() => setClickedIds(new Set())}>Clear Text</button>}
         </FloatingBox>
@@ -140,12 +143,12 @@ function HitmapDemo() {
               <StyledContainer
                 key={item.id}
                 style={{
-                  transform: 'translate(' + left.toFixed() + 'px,' + top.toFixed() + 'px)',
+                  transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
                 }}>
-                <h2 style={{ color: getCSSColor(color), fontSize: '2rem' }}>{title}</h2>
+                <h2 style={{ color: getCSSColor(color), fontSize: "2rem" }}>{title}</h2>
                 <div>{text}</div>
                 <a
-                  style={{ pointerEvents: 'visible' }}
+                  style={{ pointerEvents: "visible" }}
                   href="https://google.com/"
                   target="_blank"
                   rel="noopener noreferrer">

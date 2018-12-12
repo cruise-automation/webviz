@@ -6,10 +6,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { createSelector } from 'reselect';
-import { vec3, quat, mat4 } from 'gl-matrix';
-import { fromSpherical } from '../utils/commandUtils';
-import type { CameraState, Vec4, Vec3, Mat4 } from '../types';
+import { vec3, quat, mat4 } from "gl-matrix";
+import { createSelector } from "reselect";
+
+import type { CameraState, Vec4, Vec3, Mat4 } from "../types";
+import { fromSpherical } from "../utils/commandUtils";
 
 const UNIT_X_VECTOR = Object.freeze([1, 0, 0]);
 

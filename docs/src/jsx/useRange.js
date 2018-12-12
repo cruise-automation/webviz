@@ -4,7 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export default function useRange(initialRange = 0.1) {
   const [range, setRange] = useState(initialRange);

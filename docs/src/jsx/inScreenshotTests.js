@@ -5,5 +5,5 @@
 //  You may not use this file except in compliance with the License.
 
 export default function inScreenshotTests() {
-  return navigator.userAgent.includes('HeadlessChrome');
+  return navigator.userAgent.includes("HeadlessChrome");
 }

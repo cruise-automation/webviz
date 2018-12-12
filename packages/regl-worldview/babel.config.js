@@ -17,7 +17,7 @@ module.exports = {
   ],
   plugins: [
     // jest requires the es5 transform to work
-    process.env.NODE_ENV === 'test' ? 'transform-es2015-modules-commonjs' : undefined,
+    process.env.NODE_ENV === 'test' ? 'babel-plugin-transform-es2015-modules-commonjs' : undefined,
     '@babel/plugin-proposal-class-properties',
     '@babel/plugin-proposal-export-default-from',
   ].filter(Boolean),

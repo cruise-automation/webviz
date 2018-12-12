@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { SimpleCommand, makeCommand } from './Command';
+import { makeCommand } from './Command';
 import fromGeometry from '../utils/fromGeometry';
 import type { BaseShape } from '../types';
 import { createCylinderGeometry } from './Cylinders';
@@ -14,6 +14,6 @@ import { createCylinderGeometry } from './Cylinders';
 const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, true);
 
 // prettier-ignore
-const Cylinders: Class<SimpleCommand<BaseShape>> = (makeCommand('Cylinders', fromGeometry(points, sideFaces.concat(endCapFaces))): Class<SimpleCommand<any>>);
+const Cylinders = makeCommand<BaseShape>('Cylinders', fromGeometry(points, sideFaces.concat(endCapFaces)));
 
 export default Cylinders;

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { SimpleCommand, makeCommand } from './Command';
+import { makeCommand } from './Command';
 import { blend, withPose, toRGBA, shouldConvert, pointToVec3 } from '../utils/commandUtils';
 import type { Line } from '../types';
 
@@ -417,6 +417,7 @@ export const lines = (regl: any) => {
   };
 };
 
-const Lines: Class<SimpleCommand<Line>> = (makeCommand('Lines', lines): Class<SimpleCommand<any>>);
+// prettier-ignore
+const Lines = makeCommand<Line>('Lines', lines);
 
 export default Lines;

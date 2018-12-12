@@ -6,12 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { SimpleCommand, makeCommand } from './Command';
+import { makeCommand } from './Command';
 import type { Cube } from '../types';
 import fromGeometry from '../utils/fromGeometry';
 
-const Cubes: Class<SimpleCommand<Cube>> = (makeCommand(
-  'Cubes',
+// prettier-ignore
+const Cubes = makeCommand<Cube>('Cubes',
   fromGeometry(
     [
       // bottom face corners
@@ -45,7 +45,6 @@ const Cubes: Class<SimpleCommand<Cube>> = (makeCommand(
       [0, 1, 4],
       [1, 4, 5],
     ]
-  )
-): Class<SimpleCommand<any>>);
+  ));
 
 export default Cubes;

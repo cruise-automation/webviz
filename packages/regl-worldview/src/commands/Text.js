@@ -154,7 +154,7 @@ export default class Text extends React.Component<Props> {
   render() {
     return (
       <React.Fragment>
-        <StyledContainer innerRef={this._textContainerRef} />
+        <StyledContainer ref={this._textContainerRef} />
         <WorldviewReactContext.Consumer>
           {(ctx: ?WorldviewContextType) => {
             if (ctx) {

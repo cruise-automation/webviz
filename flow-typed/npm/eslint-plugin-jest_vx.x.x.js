@@ -1,4 +1,4 @@
-// flow-typed signature: 586dbe42e4d98a9595bcaae61ddbac87
+// flow-typed signature: ae4d4d8c08dbfbd05390c73037670703
 // flow-typed version: <<STUB>>/eslint-plugin-jest_v^22.0.1/flow_v0.86.0
 
 /**
@@ -83,10 +83,6 @@ declare module 'eslint-plugin-jest/rules/__tests__/no-test-prefixes.test' {
 }
 
 declare module 'eslint-plugin-jest/rules/__tests__/no-test-return-statement.test' {
-  declare module.exports: any;
-}
-
-declare module 'eslint-plugin-jest/rules/__tests__/no-truthy-falsy.test' {
   declare module.exports: any;
 }
 
@@ -191,10 +187,6 @@ declare module 'eslint-plugin-jest/rules/no-test-prefixes' {
 }
 
 declare module 'eslint-plugin-jest/rules/no-test-return-statement' {
-  declare module.exports: any;
-}
-
-declare module 'eslint-plugin-jest/rules/no-truthy-falsy' {
   declare module.exports: any;
 }
 
@@ -305,9 +297,6 @@ declare module 'eslint-plugin-jest/rules/__tests__/no-test-prefixes.test.js' {
 declare module 'eslint-plugin-jest/rules/__tests__/no-test-return-statement.test.js' {
   declare module.exports: $Exports<'eslint-plugin-jest/rules/__tests__/no-test-return-statement.test'>;
 }
-declare module 'eslint-plugin-jest/rules/__tests__/no-truthy-falsy.test.js' {
-  declare module.exports: $Exports<'eslint-plugin-jest/rules/__tests__/no-truthy-falsy.test'>;
-}
 declare module 'eslint-plugin-jest/rules/__tests__/prefer-expect-assertions.test.js' {
   declare module.exports: $Exports<'eslint-plugin-jest/rules/__tests__/prefer-expect-assertions.test'>;
 }
@@ -385,9 +374,6 @@ declare module 'eslint-plugin-jest/rules/no-test-prefixes.js' {
 }
 declare module 'eslint-plugin-jest/rules/no-test-return-statement.js' {
   declare module.exports: $Exports<'eslint-plugin-jest/rules/no-test-return-statement'>;
-}
-declare module 'eslint-plugin-jest/rules/no-truthy-falsy.js' {
-  declare module.exports: $Exports<'eslint-plugin-jest/rules/no-truthy-falsy'>;
 }
 declare module 'eslint-plugin-jest/rules/prefer-expect-assertions.js' {
   declare module.exports: $Exports<'eslint-plugin-jest/rules/prefer-expect-assertions'>;

@@ -8,7 +8,6 @@
 
 module.exports = {
   rootDir: "..",
-  collectCoverageFrom: ["client/**/*.{js,jsx}"],
   testMatch: ["**/*.test.js"],
   testURL: "http://localhost",
   transform: {

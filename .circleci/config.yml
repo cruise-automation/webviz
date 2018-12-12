@@ -15,7 +15,7 @@ jobs:
 
       - restore_cache:
           keys:
-          - regl-worldview-deps-{{ checksum "package-lock.json" }}
+          - regl-worldview-deps-{{ checksum "packages/regl-worldview/package-lock.json" }}
           - regl-worldview-deps-
 
       - run: npm run bootstrap

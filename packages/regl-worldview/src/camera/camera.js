@@ -6,13 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { mat4 } from 'gl-matrix';
-import project from './cameraProject';
+import { mat4 } from "gl-matrix";
 
-import getOrthographicBounds from '../utils/getOrthographicBounds';
-import { selectors, DEFAULT_CAMERA_STATE, type CameraState } from './CameraStore';
-
-import type { Vec3, Mat4, CameraCommand, Viewport } from '../types';
+import type { Vec3, Mat4, CameraCommand, Viewport } from "../types";
+import getOrthographicBounds from "../utils/getOrthographicBounds";
+import project from "./cameraProject";
+import { selectors, DEFAULT_CAMERA_STATE, type CameraState } from "./CameraStore";
 
 const NEAR_PLANE_DISTANCE = 0.01;
 const FAR_PLANE_DISTANCE = 5000;
@@ -78,7 +77,7 @@ export default (regl: any) => {
       context: {
         // use functions, not lambdas here to make sure we can access
         // the regl supplied this scope: http://regl.party/api#this
-        projection: function(context, props) {
+        projection(context, props) {
           const { viewportWidth, viewportHeight } = context;
           // save these variables on the camera instance
           // because we need them for raycasting
@@ -88,7 +87,7 @@ export default (regl: any) => {
           return this.getProjection();
         },
 
-        view: function(context, props) {
+        view(context, props) {
           return this.getView();
         },
       },
@@ -96,8 +95,8 @@ export default (regl: any) => {
       // adds view and projection as uniforms to every command
       // and makes them available in the shaders
       uniforms: {
-        view: regl.context('view'),
-        projection: regl.context('projection'),
+        view: regl.context("view"),
+        projection: regl.context("projection"),
       },
     });
   };

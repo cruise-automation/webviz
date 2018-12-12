@@ -6,10 +6,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import earcut from 'earcut';
-import type { Vec3, Point, PolygonType, TriangleList } from '../types';
-import Triangles from './Triangles';
+import earcut from "earcut";
+import React from "react";
+
+import type { Vec3, Point, PolygonType, TriangleList } from "../types";
+import Triangles from "./Triangles";
 
 const NO_POSE = {
   position: { x: 0, y: 0, z: 0 },
@@ -56,7 +57,7 @@ export default function FilledPolygons({ children: polygons = [], getHitmapId }:
     const color = poly.color;
     triangles.push({
       points: polyPoints,
-      pose: pose,
+      pose,
       color: { r: color[0], g: color[1], b: color[2], a: color[3] },
       scale: DEFAULT_SCALE,
     });

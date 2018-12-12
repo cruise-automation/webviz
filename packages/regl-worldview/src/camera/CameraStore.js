@@ -6,10 +6,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { vec3, quat } from 'gl-matrix';
-import isEqual from 'lodash/isEqual';
-import selectors from './cameraStateSelectors';
-import type { Vec2, Vec3, Vec4 } from '../types';
+import { vec3, quat } from "gl-matrix";
+import isEqual from "lodash/isEqual";
+
+import type { Vec2, Vec3, Vec4 } from "../types";
+import selectors from "./cameraStateSelectors";
 
 export type CameraState = {|
   distance: number,

@@ -4,9 +4,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from 'react';
-import styled, { css } from 'styled-components';
-import { LiveProvider, LiveEditor, LiveError, LivePreview } from 'react-live';
+import * as React from "react";
+import { LiveProvider, LiveEditor, LiveError, LivePreview } from "react-live";
+import styled, { css } from "styled-components";
 
 const StyledProvider = styled(LiveProvider)`
   border-radius: 2px;

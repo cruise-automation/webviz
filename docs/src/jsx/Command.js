@@ -4,8 +4,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import Worldview, { Command, DEFAULT_CAMERA_STATE } from 'regl-worldview';
+import React from "react";
+import Worldview, { Command, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // extend Command
 class Triangle extends Command {
@@ -19,7 +19,7 @@ class Triangle extends Command {
   }
 }
 
-Triangle.displayName = 'triangle';
+Triangle.displayName = "triangle";
 
 Triangle.defaultProps = {
   color: [1, 0, 0, 1],

@@ -4,8 +4,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
+
 const Wrapper = styled.span`
   padding: 4px 8px;
   display: inline-flex;
@@ -21,18 +22,18 @@ const Label = styled.label`
   text-transform: uppercase;
 `;
 
-export default function InputNumber({ value, onChange, min = 0.5, max = 20, step = 0.1, label = '', horizontal }) {
+export default function InputNumber({ value, onChange, min = 0.5, max = 20, step = 0.1, label = "", horizontal }) {
   return (
     <Wrapper
       style={
         horizontal
           ? {
-              alignItems: 'baseline',
-              flexDirection: 'row',
+              alignItems: "baseline",
+              flexDirection: "row",
             }
           : {}
       }>
-      <Label style={{ display: 'inline-block', marginRight: 4 }}>{label}</Label>
+      <Label style={{ display: "inline-block", marginRight: 4 }}>{label}</Label>
       <input
         type="number"
         name="scaleX"

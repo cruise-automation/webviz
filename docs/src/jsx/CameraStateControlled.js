@@ -4,9 +4,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from 'regl-worldview';
-import CameraStateInfo from './CameraStateInfo';
+import React from "react";
+import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
+
+import CameraStateInfo from "./CameraStateInfo";
 
 // #BEGIN EXAMPLE
 class CameraStateControlled extends React.Component {

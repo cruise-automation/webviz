@@ -6,14 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { makeCommand } from './Command';
-import { withPose, pointToVec3, getVertexColors } from '../utils/commandUtils';
-import type { PointType, Regl } from '../types';
+import type { PointType, Regl } from "../types";
+import { withPose, pointToVec3, getVertexColors } from "../utils/commandUtils";
+import { makeCommand } from "./Command";
 
 export const points = (regl: Regl) => {
   const [min, max] = regl.limits.pointSizeDims;
   return withPose({
-    primitive: 'points',
+    primitive: "points",
     vert: `
     precision mediump float;
 
@@ -56,7 +56,7 @@ export const points = (regl: Regl) => {
       },
     },
 
-    count: regl.prop('points.length'),
+    count: regl.prop("points.length"),
   });
 };
 

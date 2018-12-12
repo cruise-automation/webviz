@@ -4,11 +4,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState } from 'react';
-import Worldview, { Cones, Axes, DEFAULT_CAMERA_STATE } from 'regl-worldview';
-import { p } from './utils';
-import useRange from './useRange';
-import ConeControls from './ConeControls';
+import React, { useState } from "react";
+import Worldview, { Cones, Axes, DEFAULT_CAMERA_STATE } from "regl-worldview";
+
+import ConeControls from "./ConeControls";
+import useRange from "./useRange";
+import { p } from "./utils";
 
 // #BEGIN EXAMPLE
 function ConesDemo() {
@@ -30,7 +31,7 @@ function ConesDemo() {
       <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
         <ConeControls
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             right: 0,
           }}

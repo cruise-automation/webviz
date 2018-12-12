@@ -6,12 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { vec3, quat } from 'gl-matrix';
-import CameraStore, { selectors } from './CameraStore';
+import { vec3, quat } from "gl-matrix";
+
+import CameraStore, { selectors } from "./CameraStore";
 
 class NearlyEqual {
   value: number;
-  $$typeof = Symbol.for('jest.asymmetricMatcher');
+  $$typeof = Symbol.for("jest.asymmetricMatcher");
 
   constructor(value: number) {
     this.value = value;
@@ -22,7 +23,7 @@ class NearlyEqual {
   }
 
   getExpectedType() {
-    return 'number';
+    return "number";
   }
 
   toAsymmetricMatcher() {
@@ -32,8 +33,8 @@ class NearlyEqual {
 
 const nearlyZero = new NearlyEqual(0);
 
-describe('camera store', () => {
-  it('camera zoom in by percentage', () => {
+describe("camera store", () => {
+  it("camera zoom in by percentage", () => {
     const store = new CameraStore();
     const initialState = store.state;
     const distance = vec3.distance(selectors.position(store.state), initialState.target);
@@ -42,7 +43,7 @@ describe('camera store', () => {
     expect(vec3.distance(selectors.position(store.state), store.state.target)).toBeCloseTo(75 * 0.9);
   });
 
-  it('camera zooms out by percentage', () => {
+  it("camera zooms out by percentage", () => {
     const store = new CameraStore();
     const initialState = store.state;
     const distance = vec3.distance(selectors.position(store.state), initialState.target);
@@ -51,7 +52,7 @@ describe('camera store', () => {
     expect(vec3.distance(selectors.position(store.state), store.state.target)).toBeCloseTo(75 * 1.3);
   });
 
-  it('does not zoom in more than 100%', () => {
+  it("does not zoom in more than 100%", () => {
     const store = new CameraStore();
     const initialState = store.state;
     const distance = vec3.distance(selectors.position(store.state), initialState.target);
@@ -65,7 +66,7 @@ describe('camera store', () => {
     expect(vec3.distance(selectors.position(store.state), store.state.target)).toBeGreaterThan(0);
   });
 
-  it('does not zoom infinitely small', () => {
+  it("does not zoom infinitely small", () => {
     const store = new CameraStore();
     for (let i = 0; i < 1000; i++) {
       store.cameraZoom(100);
@@ -75,14 +76,14 @@ describe('camera store', () => {
     expect(dist).toBeLessThanOrEqual(0.001);
   });
 
-  describe('targetOffset', () => {
-    it('is initially zero', () => {
+  describe("targetOffset", () => {
+    it("is initially zero", () => {
       const store = new CameraStore();
       expect(vec3.distance(store.state.target, [0, 0, 0])).toBeCloseTo(0);
       expect(vec3.distance(store.state.targetOffset, [0, 0, 0])).toBeCloseTo(0);
     });
 
-    it('is adjusted when moving the target', () => {
+    it("is adjusted when moving the target", () => {
       const store = new CameraStore();
       store.cameraMove([2, 1]);
       expect(vec3.distance(store.state.target, [0, 0, 0])).toBeCloseTo(0);
@@ -93,7 +94,7 @@ describe('camera store', () => {
       expect(vec3.distance(store.state.targetOffset, [3, 2, 0])).toBeCloseTo(0);
     });
 
-    it('is changed in setTarget and defaults to existing value', () => {
+    it("is changed in setTarget and defaults to existing value", () => {
       const store = new CameraStore();
       store.cameraMove([2, 1]);
       expect(vec3.distance(store.state.target, [0, 0, 0])).toBeCloseTo(0);
@@ -117,7 +118,7 @@ describe('camera store', () => {
     });
   });
 
-  describe('cameraState', () => {
+  describe("cameraState", () => {
     const cameraState = {
       thetaOffset: 0.32,
       phi: 0.8,
@@ -129,15 +130,15 @@ describe('camera store', () => {
     };
     let store;
 
-    describe('initial store state', () => {
-      it('initialize cameraState by cameraState input', () => {
+    describe("initial store state", () => {
+      it("initialize cameraState by cameraState input", () => {
         store = new CameraStore(undefined, cameraState);
         expect(store.state).toEqual(cameraState);
       });
     });
   });
 
-  describe('selectors', () => {
+  describe("selectors", () => {
     const camState = {
       thetaOffset: Math.PI / 2,
       phi: 0,
@@ -148,15 +149,15 @@ describe('camera store', () => {
       perspective: false,
     };
 
-    it('orientation selector returns camera orientation', () => {
+    it("orientation selector returns camera orientation", () => {
       expect(selectors.orientation(camState)).toEqual([0, 0, -0.7071067811865475, 0.7071067811865476]);
     });
 
-    it('position selector returns camera position', () => {
+    it("position selector returns camera position", () => {
       expect(selectors.position(camState)).toEqual([nearlyZero, nearlyZero, 56]);
     });
 
-    it('targetHeading selector returns the correct theta based on targetOrientation', () => {
+    it("targetHeading selector returns the correct theta based on targetOrientation", () => {
       let output = selectors.targetHeading(camState);
       expect(output).toBeCloseTo(0, 2);
       output = selectors.targetHeading({
@@ -166,11 +167,11 @@ describe('camera store', () => {
       expect(output).toBeCloseTo(-0.87, 2);
     });
 
-    it('view selector ', () => {
+    it("view selector ", () => {
       expect(selectors.view(camState)).toEqual([nearlyZero, 1, 0, 0, -1, nearlyZero, 0, 0, 0, 0, 1, 0, 0, 0, -2500, 1]);
     });
 
-    it('target offset is relative to target orientation', () => {
+    it("target offset is relative to target orientation", () => {
       //  |
       //  +---T------*
       //             C
@@ -208,7 +209,7 @@ describe('camera store', () => {
       expect(vec3.transformMat4([0, 0, 0], [2, 25, 0], view2)).toEqual([0, nearlyZero, -3]);
     });
 
-    it('follows target orientation in yaw only', () => {
+    it("follows target orientation in yaw only", () => {
       const view1 = selectors.view({
         thetaOffset: 0,
         phi: 0,

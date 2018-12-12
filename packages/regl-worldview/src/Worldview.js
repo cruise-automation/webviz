@@ -6,15 +6,16 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from 'react';
-import mapValues from 'lodash/mapValues';
-import pickBy from 'lodash/pickBy';
-import ContainerDimensions from 'react-container-dimensions';
-import { CameraListener } from './camera/index';
-import { WorldviewContext } from './WorldviewContext';
-import WorldviewReactContext from './WorldviewReactContext';
-import { Ray } from './utils/Raycast';
-import type { MouseHandler, Dimensions, Vec4, CameraState } from './types';
+import mapValues from "lodash/mapValues";
+import pickBy from "lodash/pickBy";
+import * as React from "react";
+import ContainerDimensions from "react-container-dimensions";
+
+import { CameraListener } from "./camera/index";
+import type { MouseHandler, Dimensions, Vec4, CameraState } from "./types";
+import { Ray } from "./utils/Raycast";
+import { WorldviewContext } from "./WorldviewContext";
+import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 
@@ -60,7 +61,7 @@ function handleMouseInteraction(objectId: number, ray: Ray, e: MouseEvent, handl
       clickedObjectId: objectId !== 0 ? objectId : undefined,
     });
   } catch (err) {
-    console.error('Error during mouse handler', err);
+    console.error("Error during mouse handler", err);
   }
 }
 
@@ -81,7 +82,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     const { width, height, top, left, backgroundColor } = props;
     if (props.cameraState && !props.onCameraStateChange) {
       console.error(
-        'onCameraStateChange and cameraState must be used together! Alternatively, use defaultCameraState to turn Worldview into an uncontrolled component.'
+        "onCameraStateChange and cameraState must be used together! Alternatively, use defaultCameraState to turn Worldview into an uncontrolled component."
       );
     }
 
@@ -102,7 +103,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   componentDidMount() {
     if (!this._canvas.current) {
-      return console.warn('missing canvas element');
+      return console.warn("missing canvas element");
     }
     const { worldviewContext } = this.state;
     worldviewContext.initialize(this._canvas.current);
@@ -137,27 +138,37 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   _onClick = (e: MouseEvent) => {
-    if (!this.props.onClick) return;
+    if (!this.props.onClick) {
+      return;
+    }
     this._onMouseInteraction(e, this.props.onClick);
   };
 
   _onDoubleClick = (e: MouseEvent) => {
-    if (!this.props.onDoubleClick) return;
+    if (!this.props.onDoubleClick) {
+      return;
+    }
     this._onMouseInteraction(e, this.props.onDoubleClick);
   };
 
   _onMouseDown = (e: MouseEvent) => {
-    if (!this.props.onMouseDown) return;
+    if (!this.props.onMouseDown) {
+      return;
+    }
     this._onMouseInteraction(e, this.props.onMouseDown);
   };
 
   _onMouseMove = (e: MouseEvent) => {
-    if (!this.props.onMouseMove) return;
+    if (!this.props.onMouseMove) {
+      return;
+    }
     this._onMouseInteraction(e, this.props.onMouseMove, this.props.hitmapOnMouseMove);
   };
 
   _onMouseUp = (e: MouseEvent) => {
-    if (!this.props.onMouseUp) return;
+    if (!this.props.onMouseUp) {
+      return;
+    }
     this._onMouseInteraction(e, this.props.onMouseUp);
   };
 
@@ -194,7 +205,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     const { worldviewContext } = this.state;
     const initializedData = worldviewContext.initializedData;
 
-    if (process.env.NODE_ENV === 'production' || !initializedData) {
+    if (process.env.NODE_ENV === "production" || !initializedData) {
       return null;
     }
     const { regl } = initializedData;
@@ -203,29 +214,29 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       bottom: 5,
       right: 10,
       width: 200,
-      position: 'absolute',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      color: 'white',
-      fontFamily: 'monospace',
+      position: "absolute",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      color: "white",
+      fontFamily: "monospace",
       fontSize: 10,
     };
     const { counters, reglCommandObjects } = worldviewContext;
     const data = mapValues(counters, (val) => `${val} ms`);
-    data['draw calls'] = reglCommandObjects.reduce((total, cmd) => total + cmd.stats.count, 0);
+    data["draw calls"] = reglCommandObjects.reduce((total, cmd) => total + cmd.stats.count, 0);
     if (mem) {
-      data['heap used'] = `${((mem.usedJSHeapSize / mem.jsHeapSizeLimit) * 100).toFixed(3)}%`;
+      data["heap used"] = `${((mem.usedJSHeapSize / mem.jsHeapSizeLimit) * 100).toFixed(3)}%`;
     }
 
-    Object.assign(data, pickBy(regl.stats, (val) => typeof val === 'number' && val !== 0));
+    Object.assign(data, pickBy(regl.stats, (val) => typeof val === "number" && val !== 0));
     if (regl.stats.bufferCount > 1000) {
-      throw new Error('Memory leak: Buffer count > 1000.');
+      throw new Error("Memory leak: Buffer count > 1000.");
     }
 
     const rows = Object.keys(data).map((key) => {
       return (
-        <tr key={key} style={{ backgroundColor: 'transparent', border: 'none' }}>
-          <td style={{ paddingRight: 10, border: 'none' }}>{key}</td>
-          <td style={{ width: '100%', border: 'none' }}>{data[key]}</td>
+        <tr key={key} style={{ backgroundColor: "transparent", border: "none" }}>
+          <td style={{ paddingRight: 10, border: "none" }}>{key}</td>
+          <td style={{ width: "100%", border: "none" }}>{data[key]}</td>
         </tr>
       );
     });
@@ -273,6 +284,6 @@ const Worldview = (props: Props) => (
   </ContainerDimensions>
 );
 
-Worldview.displayName = 'Worldview';
+Worldview.displayName = "Worldview";
 
 export default Worldview;

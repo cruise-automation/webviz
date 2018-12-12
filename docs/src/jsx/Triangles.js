@@ -4,12 +4,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import Worldview, { Triangles, DEFAULT_CAMERA_STATE } from 'regl-worldview';
-import { p, q } from './utils';
-import { seed } from './constants';
-import seedrandom from 'seedrandom';
-import range from 'lodash/range';
+import range from "lodash/range";
+import React from "react";
+import Worldview, { Triangles, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import seedrandom from "seedrandom";
+
+import { seed } from "./constants";
+import { p, q } from "./utils";
 
 // #BEGIN EXAMPLE
 function TrianglesDemo() {

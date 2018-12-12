@@ -6,13 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from 'react';
-import { vec3, quat } from 'gl-matrix';
+import { vec3, quat } from "gl-matrix";
+import * as React from "react";
 
-import type { Arrow } from '../types';
-import Cylinders from './Cylinders';
-import Cones from './Cones';
-import { pointToVec3, vec3ToPoint, orientationToVec4, vec4ToOrientation } from '../utils/commandUtils';
+import type { Arrow } from "../types";
+import { pointToVec3, vec3ToPoint, orientationToVec4, vec4ToOrientation } from "../utils/commandUtils";
+import Cones from "./Cones";
+import Cylinders from "./Cylinders";
 
 const UNIT_X_VECTOR = Object.freeze([0, 0, 1]);
 

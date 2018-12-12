@@ -4,13 +4,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState } from 'react';
-import Worldview, { Lines, Points, DEFAULT_CAMERA_STATE } from 'regl-worldview';
+import React, { useState } from "react";
+import Worldview, { Lines, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import seedrandom from "seedrandom";
 
-import seedrandom from 'seedrandom';
-import { p } from './utils';
-import { seed } from './constants';
-import LineControls from './LineControls';
+import { seed } from "./constants";
+import LineControls from "./LineControls";
+import { p } from "./utils";
 
 // #BEGIN EXAMPLE
 function LinesStripDemo() {
@@ -55,7 +55,7 @@ function LinesStripDemo() {
   };
 
   const sharedProps = {
-    primitive: joined ? 'line strip' : 'lines',
+    primitive: joined ? "line strip" : "lines",
     scale,
     closed,
     scaleInvariant,
@@ -100,7 +100,7 @@ function LinesStripDemo() {
         }}>
         <LineControls
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             right: 0,
           }}

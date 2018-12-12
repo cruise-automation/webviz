@@ -4,25 +4,27 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState } from 'react';
-import BasicExample from './BasicExample';
-import DynamicCommands from './DynamicCommands';
-import Cubes from './Cubes';
-import SpheresSingle from './SpheresSingle';
-import SpheresInstanced from './SpheresInstanced';
-import SpheresInstanceColor from './SpheresInstancedColor';
-import Points from './Points';
-import LinesStrip from './LinesStrip';
-import Arrows from './Arrows';
-import Cones from './Cones';
-import Cylinders from './Cylinders';
-import Triangles from './Triangles';
-import FilledPolygons from './FilledPolygons';
-import Overlay from './Overlay';
-import Hitmap from './Hitmap';
-import Select from 'react-virtualized-select';
-import 'react-select/dist/react-select.css';
-import 'react-virtualized-select/styles.css';
+import React, { useState } from "react";
+import Select from "react-virtualized-select";
+
+import Arrows from "./Arrows";
+import BasicExample from "./BasicExample";
+import Cones from "./Cones";
+import Cubes from "./Cubes";
+import Cylinders from "./Cylinders";
+import DynamicCommands from "./DynamicCommands";
+import FilledPolygons from "./FilledPolygons";
+import Hitmap from "./Hitmap";
+import LinesStrip from "./LinesStrip";
+import Overlay from "./Overlay";
+import Points from "./Points";
+import SpheresInstanced from "./SpheresInstanced";
+import SpheresInstanceColor from "./SpheresInstancedColor";
+import SpheresSingle from "./SpheresSingle";
+import Triangles from "./Triangles";
+
+import "react-select/dist/react-select.css";
+import "react-virtualized-select/styles.css";
 
 const allExamples = {
   BasicExample,
@@ -50,7 +52,7 @@ export default function AllExamples() {
 
   return (
     <div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
         <Select
           style={{ width: 300, marginBottom: 8 }}
           clearable={false}

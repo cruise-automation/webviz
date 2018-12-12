@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from 'react';
-import styled from 'styled-components';
+import * as React from "react";
+import styled from "styled-components";
 
 const StyledSwitchWrapper = styled.div`
   display: inline-flex;
@@ -24,7 +24,7 @@ const StyledSwitch = styled.label`
 
 const StyledSlider = styled.span`
   position: absolute;
-  cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   top: 0;
   left: 0;
   right: 0;
@@ -35,7 +35,7 @@ const StyledSlider = styled.span`
   border-radius: 9px;
   &:before {
     position: absolute;
-    content: '';
+    content: "";
     height: 12px;
     width: 12px;
     left: 3px;
@@ -82,7 +82,7 @@ export default function Switch({ on, onChange, label, disabled, renderText }: Pr
         <StyledInput disabled={disabled} type="checkbox" checked={on} onChange={disabled ? undefined : onChange} />
         <StyledSlider disabled={disabled} />
       </StyledSwitch>
-      {label && <span style={{ margin: '0 0.5rem' }}>{label} </span>}
+      {label && <span style={{ margin: "0 0.5rem" }}>{label} </span>}
       {renderText && renderText(on)}
     </StyledSwitchWrapper>
   );

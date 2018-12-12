@@ -6,12 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from 'react';
-import normalizeWheel from 'normalize-wheel';
+import normalizeWheel from "normalize-wheel";
+import * as React from "react";
 
-import getOrthographicBounds from '../utils/getOrthographicBounds';
-import CameraStore from './CameraStore';
-import type { Vec2 } from '../types';
+import type { Vec2 } from "../types";
+import getOrthographicBounds from "../utils/getOrthographicBounds";
+import CameraStore from "./CameraStore";
 
 const PAN_SPEED = 4;
 const MOUSE_ZOOM_SPEED = 0.3;
@@ -43,15 +43,17 @@ export default class CameraListener extends React.Component<Props> {
 
   componentDidMount() {
     const { _el } = this;
-    if (!_el) return;
+    if (!_el) {
+      return;
+    }
 
     this._rect = _el.getBoundingClientRect();
     const listen = (target: any, name: string, fn) => {
       target.addEventListener(name, fn);
       this._listeners.push({ target, name, fn });
     };
-    listen(document, 'blur', this._onBlur);
-    listen(window, 'mouseup', this._onWindowMouseUp);
+    listen(document, "blur", this._onBlur);
+    listen(window, "mouseup", this._onWindowMouseUp);
   }
 
   componentWillUnmount() {
@@ -71,7 +73,9 @@ export default class CameraListener extends React.Component<Props> {
 
   _onMouseDown = (e: MouseEvent) => {
     const { _el } = this;
-    if (!_el) return;
+    if (!_el) {
+      return;
+    }
 
     e.preventDefault();
     this._buttons.add(e.button);
@@ -109,13 +113,12 @@ export default class CameraListener extends React.Component<Props> {
       const magnitude = this._getMagnitude(distance);
 
       return { x: magnitude, y: magnitude };
-    } else {
-      // in orthographic mode we know the exact viewable area
-      // which is a square so we can move exactly percentage within it
-      const { width, height } = this._rect;
-      const bounds = getOrthographicBounds(distance, width, height);
-      return { x: this._getMagnitude(bounds.width), y: this._getMagnitude(bounds.height) };
     }
+    // in orthographic mode we know the exact viewable area
+    // which is a square so we can move exactly percentage within it
+    const { width, height } = this._rect;
+    const bounds = getOrthographicBounds(distance, width, height);
+    return { x: this._getMagnitude(bounds.width), y: this._getMagnitude(bounds.height) };
   }
 
   _onWindowMouseMove = (e: MouseEvent) => {
@@ -168,7 +171,9 @@ export default class CameraListener extends React.Component<Props> {
 
   _onWindowMouseUp = (e: MouseEvent) => {
     const { _el } = this;
-    if (!_el) return;
+    if (!_el) {
+      return;
+    }
 
     // do nothing if this container had a mouseup, because we catch it in the onMouseUp handler
     if (_el.contains((e.target: any)) || e.target === _el) {
@@ -182,15 +187,15 @@ export default class CameraListener extends React.Component<Props> {
   };
 
   startDragging(e: MouseEvent) {
-    if (e.button !== 0 && this._el && typeof this._el.requestPointerLock === 'function') {
+    if (e.button !== 0 && this._el && typeof this._el.requestPointerLock === "function") {
       this._el.requestPointerLock();
     }
-    window.addEventListener('mousemove', this._onWindowMouseMove);
+    window.addEventListener("mousemove", this._onWindowMouseMove);
   }
 
   _endDragging() {
-    window.removeEventListener('mousemove', this._onWindowMouseMove);
-    if (typeof (document: any).exitPointerLock === 'function') {
+    window.removeEventListener("mousemove", this._onWindowMouseMove);
+    if (typeof (document: any).exitPointerLock === "function") {
       (document: any).exitPointerLock();
     }
   }

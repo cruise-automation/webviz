@@ -6,12 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import styled from 'styled-components';
-import WorldviewReactContext from '../WorldviewReactContext';
-import { type WorldviewContextType } from '../WorldviewContext';
-import { getCSSColor } from '../utils/commandUtils';
-import type { Point, CameraCommand, Dimensions, Color, Pose, Scale } from '../types';
+import React from "react";
+import styled from "styled-components";
+
+import type { Point, CameraCommand, Dimensions, Color, Pose, Scale } from "../types";
+import { getCSSColor } from "../utils/commandUtils";
+import { type WorldviewContextType } from "../WorldviewContext";
+import WorldviewReactContext from "../WorldviewReactContext";
 
 type TextMarker = {
   name?: string,
@@ -40,10 +41,10 @@ const StyledContainer = styled.div`
 `;
 
 class TextElement {
-  wrapper = document.createElement('span');
-  _inner = document.createElement('span');
-  _text = document.createTextNode('');
-  _color = '';
+  wrapper = document.createElement("span");
+  _inner = document.createElement("span");
+  _text = document.createTextNode("");
+  _color = "";
 
   constructor() {
     this.wrapper.appendChild(this._inner);
@@ -59,7 +60,7 @@ class TextElement {
       this.wrapper.style.color = newColor;
     }
     if (this._text.textContent !== marker.text) {
-      this._text.textContent = marker.text || '';
+      this._text.textContent = marker.text || "";
     }
   }
 }

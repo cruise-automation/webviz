@@ -4,12 +4,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import inScreenshotTests from './inScreenshotTests';
+import React from "react";
+
+import inScreenshotTests from "./inScreenshotTests";
 
 export default (fn) => {
   class WithRange extends React.Component {
-    static displayName = 'withRange';
+    static displayName = "withRange";
 
     state = { range: 0 };
 
@@ -39,6 +40,6 @@ export default (fn) => {
     }
   }
   const inner = () => <WithRange />;
-  inner.displayName = 'WithRangeInner';
+  inner.displayName = "WithRangeInner";
   return inner;
 };

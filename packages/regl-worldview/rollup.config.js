@@ -15,7 +15,7 @@ import pkg from './package.json';
 const getBabelOptions = ({ useESModules }) => ({
   exclude: '**/node_modules/**',
   runtimeHelpers: true,
-  plugins: [['@babel/plugin-transform-runtime', { useESModules }]],
+  plugins: [['@babel/transform-runtime', { useESModules }]],
 });
 
 const input = 'src/index.js';
@@ -35,7 +35,6 @@ export default [
       format: 'iife', // Browser only
       name: libraryName,
       globals,
-      sourcemap: 'inline',
     },
     external: Object.keys(globals),
     plugins: [

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { SimpleCommand, makeCommand } from './Command';
+import { makeCommand } from './Command';
 import { blend, pointToVec3Array, withPose, getVertexColors, shouldConvert, toRGBA } from '../utils/commandUtils';
 import type { TriangleList, Regl } from '../types';
 
@@ -139,6 +139,6 @@ export const triangleList = (regl: Regl) => {
 };
 
 // prettier-ignore
-const Triangles: Class<SimpleCommand<TriangleList>> = (makeCommand('Triangles', triangleList): Class<SimpleCommand<any>>);
+const Triangles = makeCommand<TriangleList>('Triangles', triangleList);
 
 export default Triangles;

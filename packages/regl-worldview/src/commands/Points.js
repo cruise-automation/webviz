@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { SimpleCommand, makeCommand } from './Command';
+import { makeCommand } from './Command';
 import { withPose, pointToVec3, getVertexColors } from '../utils/commandUtils';
 import type { PointType, Regl } from '../types';
 
@@ -61,5 +61,6 @@ export const points = (regl: Regl) => {
 };
 
 // prettier-ignore
-const Points: Class<SimpleCommand<PointType>> = (makeCommand('Points', points): Class<SimpleCommand<any>>);
+const Points = makeCommand<PointType>('Points', points);
+
 export default Points;

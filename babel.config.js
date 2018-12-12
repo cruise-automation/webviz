@@ -16,8 +16,7 @@ module.exports = {
     '@babel/preset-flow',
   ],
   plugins: [
-    '@babel/plugin-transform-modules-commonjs',
-    // 'transform-es2015-modules-commonjs',
+    process.env.NODE_ENV === 'test' ? '@babel/plugin-transform-modules-commonjs' : undefined,
     '@babel/plugin-proposal-class-properties',
     '@babel/plugin-syntax-dynamic-import',
     '@babel/plugin-proposal-export-default-from',

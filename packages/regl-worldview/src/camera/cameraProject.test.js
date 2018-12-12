@@ -1,10 +1,11 @@
+// @flow
+
 //  Copyright (c) 2018-present, GM Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// @flow
 // Copied from Jam3/camera-project
 // in order to replace gl-vec4 dependency with gl-matrix
 import { vec3, mat4 } from 'gl-matrix';

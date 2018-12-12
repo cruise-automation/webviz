@@ -118,7 +118,7 @@ const vertexColors = (regl) =>
   });
 
 // command to render triangle lists optionally supporting vertex colors for each triangle
-export const triangleList = (regl: Regl) => {
+export const triangles = (regl: Regl) => {
   const single = regl(singleColor(regl));
   const vertex = regl(vertexColors(regl));
   return (props: any) => {
@@ -139,6 +139,6 @@ export const triangleList = (regl: Regl) => {
 };
 
 // prettier-ignore
-const Triangles = makeCommand<TriangleList>('Triangles', triangleList);
+const Triangles = makeCommand<TriangleList>('Triangles', triangles);
 
 export default Triangles;

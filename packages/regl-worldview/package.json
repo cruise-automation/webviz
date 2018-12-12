@@ -5,6 +5,13 @@
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "browser": "dist/index.esm.js",
+  "files": [
+    "src",
+    "dist",
+    "LICENSE",
+    "README.md",
+    "package.json"
+  ],
   "scripts": {
     "build": "rollup -c",
     "build:watch": "rollup -c --watch",

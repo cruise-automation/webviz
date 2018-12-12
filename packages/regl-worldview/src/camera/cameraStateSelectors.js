@@ -9,7 +9,7 @@
 import { createSelector } from 'reselect';
 import { vec3, quat, mat4 } from 'gl-matrix';
 import { fromSpherical } from '../utils/commandUtils';
-import type { CameraState } from './CameraStore';
+import type { CameraState, Vec4, Vec3, Mat4 } from '../types';
 
 const UNIT_X_VECTOR = Object.freeze([1, 0, 0]);
 
@@ -18,10 +18,7 @@ const TEMP_VEC3 = [0, 0, 0];
 const TEMP_MAT = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const TEMP_QUAT = [0, 0, 0, 0];
 
-type StateSelector = (CameraState) => CameraState;
-type Selector<S, P, R> = (state: S, props: P, ...args: any[]) => R;
-
-const stateSelector: StateSelector = (state: CameraState) => state;
+const stateSelector = (state: CameraState) => state;
 
 const perspectiveSelector = createSelector(
   stateSelector,
@@ -45,7 +42,7 @@ const targetOrientationSelector = createSelector(
 );
 
 // the heading direction of the target
-const targetHeadingSelector = createSelector(
+const targetHeadingSelector: (CameraState) => number = createSelector(
   targetOrientationSelector,
   (targetOrientation) => {
     const out = vec3.transformQuat(TEMP_VEC3, UNIT_X_VECTOR, targetOrientation);
@@ -55,7 +52,7 @@ const targetHeadingSelector = createSelector(
 );
 
 // orientation of the camera
-const orientationSelector = createSelector(
+const orientationSelector: (CameraState) => Vec4 = createSelector(
   perspectiveSelector,
   phiSelector,
   thetaOffsetSelector,
@@ -72,7 +69,7 @@ const orientationSelector = createSelector(
 );
 
 // position of the camera
-const positionSelector = createSelector(
+const positionSelector: (CameraState) => Vec3 = createSelector(
   thetaOffsetSelector,
   phiSelector,
   distanceSelector,
@@ -154,7 +151,7 @@ Step 5: rotate the camera to point forward
      |
 
 */
-const viewSelector = createSelector(
+const viewSelector: (CameraState) => Mat4 = createSelector(
   stateSelector,
   orientationSelector,
   positionSelector,

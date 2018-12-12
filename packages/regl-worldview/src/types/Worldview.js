@@ -8,9 +8,10 @@
 
 import { Ray } from '../utils/Raycast';
 import type { CameraState } from '../camera/CameraStore';
+import type { KeyMapping } from '../camera/CameraListener';
 import type { BaseProps, Props } from '../Worldview';
 
-export type { CameraState, BaseProps, Props };
+export type { CameraState, KeyMapping, BaseProps, Props };
 
 export type Dimensions = {|
   width: number,

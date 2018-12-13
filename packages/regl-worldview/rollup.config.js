@@ -12,7 +12,7 @@ import replace from "rollup-plugin-replace";
 
 import pkg from "./package.json";
 
-// Additional optitons applied on top of babel.config.js
+// Additional options applied on top of babel.config.js
 const getBabelOptions = ({ useESModules }) => ({
   exclude: "**/node_modules/**",
   runtimeHelpers: true,

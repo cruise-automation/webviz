@@ -5,10 +5,10 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import Worldview, { Overlay, Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 import useRange from "./useRange";
 import { StyledContainer } from "./WorldviewCodeEditor";
+import Worldview, { Overlay, Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function OverlayDemo() {

@@ -5,10 +5,10 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 import { p } from "./utils";
 import WorldviewCodeEditor from "./WorldviewCodeEditor";
+import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 function LinesInstabilityDemo() {
   const points = [

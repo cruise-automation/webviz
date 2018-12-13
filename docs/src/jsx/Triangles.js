@@ -6,11 +6,11 @@
 
 import range from "lodash/range";
 import React from "react";
-import Worldview, { Triangles, DEFAULT_CAMERA_STATE } from "regl-worldview";
 import seedrandom from "seedrandom";
 
 import { seed } from "./constants";
 import { p, q } from "./utils";
+import Worldview, { Triangles, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function TrianglesDemo() {

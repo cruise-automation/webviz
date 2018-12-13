@@ -7,6 +7,16 @@
 import range from "lodash/range";
 import polygonGenerator from "polygon-generator";
 import React, { useState, useEffect } from "react";
+import seedrandom from "seedrandom";
+import styled from "styled-components";
+
+import CameraStateInfo from "./CameraStateInfo";
+import CodeEditor from "./CodeEditor";
+import ConeControls from "./ConeControls";
+import { seed } from "./constants";
+import LineControls from "./LineControls";
+import useRange from "./useRange";
+import { buildMatrix, buildSphereList, p, q, generateCubes, generateSpheres, lerp } from "./utils";
 import Worldview, {
   Command,
   SimpleCommand,
@@ -27,16 +37,6 @@ import Worldview, {
   withPose,
   getCSSColor,
 } from "regl-worldview";
-import seedrandom from "seedrandom";
-import styled from "styled-components";
-
-import CameraStateInfo from "./CameraStateInfo";
-import CodeEditor from "./CodeEditor";
-import ConeControls from "./ConeControls";
-import { seed } from "./constants";
-import LineControls from "./LineControls";
-import useRange from "./useRange";
-import { buildMatrix, buildSphereList, p, q, generateCubes, generateSpheres, lerp } from "./utils";
 
 export const StyledContainer = styled.div`
   position: absolute;

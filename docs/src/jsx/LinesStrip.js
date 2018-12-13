@@ -5,12 +5,12 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { useState } from "react";
-import Worldview, { Lines, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
 import seedrandom from "seedrandom";
 
 import { seed } from "./constants";
 import LineControls from "./LineControls";
 import { p } from "./utils";
+import Worldview, { Lines, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function LinesStripDemo() {

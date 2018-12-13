@@ -18,7 +18,7 @@ jobs:
             - regl-worldview-deps-{{ checksum "packages/regl-worldview/package-lock.json" }}
             - regl-worldview-deps-
 
-      - run: npm run bootstrap
+      - run: npm run install-ci
 
       - save_cache:
           paths: ["node_modules"]

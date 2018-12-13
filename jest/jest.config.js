@@ -15,7 +15,6 @@ module.exports = {
     "^.+\\.css$": "<rootDir>/jest/cssTransform.js",
     "^(?!.*\\.(js|jsx|css|json)$)": "<rootDir>/jest/fileTransform.js",
   },
-  setupFiles: ["<rootDir>/jest/setupTests"],
   moduleDirectories: ["<rootDir>/packages", "node_modules"],
   moduleFileExtensions: ["web.js", "js", "json", "web.jsx", "jsx", "node"],
   resetMocks: true,

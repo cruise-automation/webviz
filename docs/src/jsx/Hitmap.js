@@ -5,10 +5,10 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { useEffect, useState } from "react";
-import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
 
 import { generateCubes, generateSpheres, lerp } from "./utils";
 import { FloatingBox, StyledContainer } from "./WorldviewCodeEditor";
+import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function HitmapDemo() {

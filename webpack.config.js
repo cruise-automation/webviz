@@ -103,6 +103,7 @@ module.exports = {
   devServer: {
     contentBase: path.resolve(`${__dirname}/docs/public`),
     hot: true,
+    open: true,
   },
 };
 

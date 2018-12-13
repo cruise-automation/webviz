@@ -43,3 +43,11 @@ jobs:
       - run:
           name: "npm run build"
           command: npm run build
+
+      - add_ssh_keys:
+          fingerprints:
+            - "d5:b8:7b:18:02:16:f1:90:6c:6d:34:b7:71:55:ae:b4"
+
+      - run:
+          name: "deploy docs if on master"
+          command: if [ $CIRCLE_BRANCH = "master" ]; then git config --global user.email "$GH_EMAIL" && git config --global user.name "$GH_NAME" && npm run docs-deploy; fi

@@ -39,3 +39,7 @@ jobs:
       - run:
           name: "npm test"
           command: npm test
+
+      - run:
+          name: "npm run build"
+          command: npm run build

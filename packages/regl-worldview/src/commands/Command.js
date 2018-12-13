@@ -4,11 +4,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from 'react';
-import WorldviewReactContext from '../WorldviewReactContext';
-import { type WorldviewContextType } from '../WorldviewContext';
-import { intToRGB } from '../utils/commandUtils';
-import type { RawCommand, Color } from '../types';
+// TODO(JP): Should remove this and properly fix Flow.
+/* eslint-disable flowtype/no-types-missing-file-annotation */
+
+import * as React from "react";
+
+import type { RawCommand, Color } from "../types";
+import { intToRGB } from "../utils/commandUtils";
+import { type WorldviewContextType } from "../WorldviewContext";
+import WorldviewReactContext from "../WorldviewReactContext";
 
 export type Props<T> = {
   children?: T[],
@@ -24,7 +28,7 @@ type CommandProps = {
 // Subclasses should override getDrawProps and (and optionally getHitmapProps).
 export default class Command<T: CommandProps> extends React.Component<T> {
   context: WorldviewContextType;
-  static displayName = 'Command';
+  static displayName = "Command";
   static command: RawCommand<any>;
 
   // do not override this in sub-commands
@@ -45,7 +49,9 @@ export default class Command<T: CommandProps> extends React.Component<T> {
 
   _updateContext() {
     const drawProps = this.getDrawProps();
-    if (drawProps == null) return;
+    if (drawProps == null) {
+      return;
+    }
     this.context.registerDrawCall({
       command: this,
       drawProps,
@@ -63,7 +69,7 @@ export default class Command<T: CommandProps> extends React.Component<T> {
   }
 
   getDrawProps(): any {
-    throw new Error('Overriding getDrawProps in subclass is required');
+    throw new Error("Overriding getDrawProps in subclass is required");
   }
 
   getHitmapProps(): any {

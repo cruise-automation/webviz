@@ -4,17 +4,19 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import range from 'lodash/range';
-import times from 'lodash/times';
-import polygonGenerator from 'polygon-generator';
-import seedrandom from 'seedrandom';
-import { storiesOf } from '@storybook/react';
-import { withKnobs, boolean, number, button } from '@storybook/addon-knobs';
-import withRange from './withRange';
-import hitmapStory, { StyledContainer } from './hitmap';
-import FloatingBox from './FloatingBox';
-import Container from './Container';
+import { withKnobs, boolean, number, button } from "@storybook/addon-knobs";
+import { storiesOf } from "@storybook/react";
+import range from "lodash/range";
+import times from "lodash/times";
+import polygonGenerator from "polygon-generator";
+import React from "react";
+import seedrandom from "seedrandom";
+
+import Container from "./Container";
+import FloatingBox from "./FloatingBox";
+import hitmapStory, { StyledContainer } from "./hitmap";
+import withRange from "./withRange";
+
 import {
   Arrows,
   Axes,
@@ -28,7 +30,7 @@ import {
   Spheres,
   Triangles,
   DEFAULT_CAMERA_STATE,
-} from '../';
+} from "..";
 
 const p = (x, y = x, z = x) => ({ x, y, z });
 const q = (x, y = x, z = x, w = x) => ({ x, y, z, w });
@@ -49,10 +51,10 @@ const pointArrowMarker = {
 };
 
 const linesStory = (markerProps) => {
-  const debug = boolean('debug', false);
-  const perspective = boolean('is perspective', true);
-  const monochrome = boolean('monochrome', false);
-  button('reset colors', () => {
+  const debug = boolean("debug", false);
+  const perspective = boolean("is perspective", true);
+  const monochrome = boolean("monochrome", false);
+  button("reset colors", () => {
     seed = Math.random();
   });
 
@@ -148,7 +150,7 @@ class Wrapper extends React.Component {
     const { cubes } = this.props;
     return (
       <React.Fragment>
-        <div style={{ position: 'absolute', top: 30, left: 30, background: 'red' }}>
+        <div style={{ position: "absolute", top: 30, left: 30, background: "red" }}>
           <div>some randomly nested div </div>
           <Cubes>
             {cubes.map((c) => {
@@ -208,10 +210,10 @@ const buildSphereList = (range) => {
   return marker;
 };
 
-storiesOf('Worldview', module)
+storiesOf("Worldview", module)
   .addDecorator(withKnobs)
   .add(
-    '<Cubes>',
+    "<Cubes>",
     withRange((range) => {
       const marker = cube(range);
       return (
@@ -222,7 +224,7 @@ storiesOf('Worldview', module)
     })
   )
   .add(
-    '<Spheres> - single',
+    "<Spheres> - single",
     withRange((range) => {
       const marker = {
         pose: {
@@ -249,7 +251,7 @@ storiesOf('Worldview', module)
     })
   )
   .add(
-    '<Spheres> - instanced',
+    "<Spheres> - instanced",
     withRange((range) => {
       return (
         <Container cameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
@@ -259,7 +261,7 @@ storiesOf('Worldview', module)
     })
   )
   .add(
-    '<Spheres> - per-instance colors',
+    "<Spheres> - per-instance colors",
     withRange((range) => {
       const coords = buildMatrix(20, 20, 20, 10);
       const rng = seedrandom(seed);
@@ -291,7 +293,7 @@ storiesOf('Worldview', module)
     })
   )
   .add(
-    '<Points>',
+    "<Points>",
     withRange((range) => {
       const cloud = buildMatrix(3 + range * 2, 3 + range * 2, 3 + range * 2);
       const marker = {
@@ -317,16 +319,16 @@ storiesOf('Worldview', module)
       );
     })
   )
-  .add('<Lines> - line strip', () => {
-    const thickness = number('thickness', 0.75, {
+  .add("<Lines> - line strip", () => {
+    const thickness = number("thickness", 0.75, {
       range: true,
       min: 0,
       max: 5,
       step: 0.01,
     });
-    const primitive = boolean('joined', true) ? 'line strip' : 'lines';
-    const scaleInvariant = boolean('scaleInvariant', false);
-    const closed = boolean('closed', false);
+    const primitive = boolean("joined", true) ? "line strip" : "lines";
+    const scaleInvariant = boolean("scaleInvariant", false);
+    const closed = boolean("closed", false);
 
     const scale = { x: thickness };
     return linesStory({
@@ -336,7 +338,7 @@ storiesOf('Worldview', module)
       scaleInvariant,
     });
   })
-  .add('<Lines> - instability', () => {
+  .add("<Lines> - instability", () => {
     const points = [
       { x: -812.2277333190451, y: 2961.4633761946707, z: 0 },
       { x: -812.2718382693613, y: 2960.8755785794347, z: 0 },
@@ -363,7 +365,7 @@ storiesOf('Worldview', module)
     };
     const markers = [
       {
-        primitive: 'line strip',
+        primitive: "line strip",
         scale: { x: 1, y: 1, z: 1 },
         color: { r: 1, g: 0, b: 1, a: 1 },
         pose,
@@ -383,7 +385,7 @@ storiesOf('Worldview', module)
       </Container>
     );
   })
-  .add('<Arrows>', () => {
+  .add("<Arrows>", () => {
     const markers = [poseArrowMarker, pointArrowMarker];
     return (
       <Container axes grid cameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
@@ -392,21 +394,21 @@ storiesOf('Worldview', module)
     );
   })
   .add(
-    '<Cones>',
+    "<Cones>",
     withRange((range) => {
-      const scaleX = number('scale - x', 3, {
+      const scaleX = number("scale - x", 3, {
         range: true,
         min: 0.5,
         max: 20,
         step: 0.1,
       });
-      const scaleY = number('scale - y', 3, {
+      const scaleY = number("scale - y", 3, {
         range: true,
         min: 0.5,
         max: 20,
         step: 0.1,
       });
-      const scaleZ = number('scale - z', 10, {
+      const scaleZ = number("scale - z", 10, {
         range: true,
         min: 0.5,
         max: 20,
@@ -430,21 +432,21 @@ storiesOf('Worldview', module)
     })
   )
   .add(
-    '<Cylinders>',
+    "<Cylinders>",
     withRange((range) => {
-      const scaleX = number('scale - x', 3, {
+      const scaleX = number("scale - x", 3, {
         range: true,
         min: 0.5,
         max: 20,
         step: 0.1,
       });
-      const scaleY = number('scale - y', 3, {
+      const scaleY = number("scale - y", 3, {
         range: true,
         min: 0.5,
         max: 20,
         step: 0.1,
       });
-      const scaleZ = number('scale - z', 10, {
+      const scaleZ = number("scale - z", 10, {
         range: true,
         min: 0.5,
         max: 20,
@@ -467,7 +469,7 @@ storiesOf('Worldview', module)
       );
     })
   )
-  .add('<Triangles>', () => {
+  .add("<Triangles>", () => {
     const rng = seedrandom(seed);
     const vertexColors = range(30).map((_, i) => ({
       r: rng(),
@@ -498,7 +500,7 @@ storiesOf('Worldview', module)
     );
   })
   .add(
-    '<FilledPolygons>',
+    "<FilledPolygons>",
     withRange((range) => {
       const sideLength = 5 * range + 5;
       const startingAngle = 15 * range;
@@ -518,7 +520,7 @@ storiesOf('Worldview', module)
     })
   )
   .add(
-    '<Overlay>',
+    "<Overlay>",
     withRange((range) => {
       const marker = {
         pose: {
@@ -539,7 +541,7 @@ storiesOf('Worldview', module)
 
       const textMarkers = sphereMarkers.map((sphere, index) => ({
         pose: sphere.pose,
-        text: 'Overlay on top of Sphere',
+        text: "Overlay on top of Sphere",
         info: {
           title: `Index: ${index}`,
         },
@@ -568,10 +570,10 @@ storiesOf('Worldview', module)
                   style={{
                     transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
                   }}>
-                  <h2 style={{ fontSize: '2rem' }}>{title}</h2>
+                  <h2 style={{ fontSize: "2rem" }}>{title}</h2>
                   <div>{text}</div>
                   <a
-                    style={{ pointerEvents: 'visible', color: '#f1f1f1' }}
+                    style={{ pointerEvents: "visible", color: "#f1f1f1" }}
                     href="http://www.google.com"
                     target="_blank"
                     rel="noopener noreferrer">
@@ -586,8 +588,8 @@ storiesOf('Worldview', module)
       );
     })
   )
-  .add('hitmap', hitmapStory)
-  .add('dynamic commands', () => {
+  .add("hitmap", hitmapStory)
+  .add("dynamic commands", () => {
     class Demo extends React.Component {
       state = {
         cubes: 5,
@@ -619,7 +621,7 @@ storiesOf('Worldview', module)
     return <Demo />;
   })
   .add(
-    'backgroundColor',
+    "backgroundColor",
     withRange((range) => {
       const sideLength = 5 * range + 5;
       const startingAngle = 15 * range;

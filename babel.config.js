@@ -5,6 +5,10 @@
 //  You may not use this file except in compliance with the License.
 
 module.exports = {
-  setupFiles: ['../../test/setupTests'],
-  testMatch: ['**/src/**/*.test.js'],
+  presets: ["@babel/preset-react", "@babel/preset-flow"],
+  plugins: [
+    "@babel/plugin-transform-modules-commonjs",
+    "@babel/plugin-proposal-class-properties",
+    "@babel/plugin-syntax-dynamic-import",
+  ],
 };

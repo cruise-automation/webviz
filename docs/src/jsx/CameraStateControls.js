@@ -4,9 +4,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import Switch from './Switch';
-import InputNumber from './InputNumber';
+import React from "react";
+
+import InputNumber from "./InputNumber";
+import Switch from "./Switch";
 
 export default function CameraStateControls({
   perspective,

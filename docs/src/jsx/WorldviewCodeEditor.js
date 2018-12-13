@@ -4,21 +4,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState, useEffect } from 'react';
-
-import styled from 'styled-components';
-import seedrandom from 'seedrandom';
-import range from 'lodash/range';
-import polygonGenerator from 'polygon-generator';
-
-import CodeEditor from './CodeEditor';
-import CameraStateInfo from './CameraStateInfo';
-import LineControls from './LineControls';
-import ConeControls from './ConeControls';
-import useRange from './useRange';
-import { buildMatrix, buildSphereList, p, q, generateCubes, generateSpheres, lerp } from './utils';
-import { seed } from './constants';
-
+import range from "lodash/range";
+import polygonGenerator from "polygon-generator";
+import React, { useState, useEffect } from "react";
 import Worldview, {
   Command,
   SimpleCommand,
@@ -38,7 +26,17 @@ import Worldview, {
   DEFAULT_CAMERA_STATE,
   withPose,
   getCSSColor,
-} from 'regl-worldview';
+} from "regl-worldview";
+import seedrandom from "seedrandom";
+import styled from "styled-components";
+
+import CameraStateInfo from "./CameraStateInfo";
+import CodeEditor from "./CodeEditor";
+import ConeControls from "./ConeControls";
+import { seed } from "./constants";
+import LineControls from "./LineControls";
+import useRange from "./useRange";
+import { buildMatrix, buildSphereList, p, q, generateCubes, generateSpheres, lerp } from "./utils";
 
 export const StyledContainer = styled.div`
   position: absolute;

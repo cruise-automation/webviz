@@ -4,12 +4,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState } from 'react';
-import { MDXProvider } from '@mdx-js/tag';
-import { BrowserRouter as Router, Route, Link, Redirect } from 'react-router-dom';
-import routes, { componentList } from './routes';
-import styled from 'styled-components';
-import Logo from './Logo';
+import { MDXProvider } from "@mdx-js/tag";
+import React, { useState } from "react";
+import { BrowserRouter as Router, Route, Link, Redirect } from "react-router-dom";
+import styled from "styled-components";
+
+import Logo from "./Logo";
+import routes, { componentList } from "./routes";
 
 const SideBar = styled.aside`
   width: 240px;
@@ -46,7 +47,7 @@ const Navigation = styled.ul`
   list-style-type: none;
   width: 100%;
   @media only screen and (max-width: 680px) {
-    display: ${(props) => (props.isMobileNavOpen ? 'block' : 'none')};
+    display: ${(props) => (props.isMobileNavOpen ? "block" : "none")};
   }
 `;
 
@@ -65,7 +66,7 @@ const Section = styled.li`
     margin-bottom: 0.25rem;
     a {
       color: #f7f7f3;
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
       font-size: 14px;
     }
   }
@@ -122,7 +123,7 @@ export default function App() {
               <Logo width={160} />
             </LogoLink>
             <MobileNavigationToggle onClick={() => toggleMobileNav(!isMobileNavOpen)}>
-              {isMobileNavOpen ? '↑' : '↓'}
+              {isMobileNavOpen ? "↑" : "↓"}
             </MobileNavigationToggle>
             <Navigation isMobileNavOpen={isMobileNavOpen}>
               {routes.map((route) => (

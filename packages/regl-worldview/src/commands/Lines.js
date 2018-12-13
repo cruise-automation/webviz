@@ -6,9 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { makeCommand } from './Command';
-import { blend, withPose, toRGBA, shouldConvert, pointToVec3 } from '../utils/commandUtils';
-import type { Line } from '../types';
+import type { Line } from "../types";
+import { blend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import { makeCommand } from "./Command";
 
 /*
 Triangle-based line drawing.
@@ -97,7 +97,7 @@ varying vec4 vColor;
 
 ${Object.keys(POINT_TYPES)
   .map((k) => `const float POINT_${k} = ${POINT_TYPES[k]}.0;`)
-  .join('\n')}
+  .join("\n")}
 
 #WITH_POSE
 
@@ -223,13 +223,13 @@ function pointsEqual(a, b) {
 export const lines = (regl: any) => {
   // The point type attribute, reused for each instance
   const pointTypeBuffer = regl.buffer({
-    type: 'uint16',
-    usage: 'static',
+    type: "uint16",
+    usage: "static",
     data: [POINT_TYPES.TL, POINT_TYPES.BL, POINT_TYPES.TR, POINT_TYPES.BR],
   });
   const debugColorBuffer = regl.buffer({
-    type: 'float',
-    usage: 'static',
+    type: "float",
+    usage: "static",
     data: [
       [0, 1, 1, 1], // cyan
       [1, 0, 0, 1], // red
@@ -239,8 +239,8 @@ export const lines = (regl: any) => {
   });
 
   // The buffers used for input position & color data
-  const colorBuffer = regl.buffer({ type: 'float' });
-  const positionBuffer = regl.buffer({ type: 'float' });
+  const colorBuffer = regl.buffer({ type: "float" });
+  const positionBuffer = regl.buffer({ type: "float" });
 
   const command = regl(
     withPose({
@@ -248,12 +248,12 @@ export const lines = (regl: any) => {
       frag,
       blend,
       uniforms: {
-        thickness: regl.prop('scale.x'),
-        viewportWidth: regl.context('viewportWidth'),
-        viewportHeight: regl.context('viewportHeight'),
-        alpha: regl.prop('alpha'),
-        joined: regl.prop('joined'),
-        scaleInvariant: regl.prop('scaleInvariant'),
+        thickness: regl.prop("scale.x"),
+        viewportWidth: regl.context("viewportWidth"),
+        viewportHeight: regl.context("viewportHeight"),
+        alpha: regl.prop("alpha"),
+        joined: regl.prop("joined"),
+        scaleInvariant: regl.prop("scaleInvariant"),
       },
       attributes: {
         pointType: pointTypeBuffer,
@@ -295,8 +295,8 @@ export const lines = (regl: any) => {
         }),
       },
       count: VERTICES_PER_INSTANCE,
-      instances: regl.prop('instances'),
-      primitive: regl.prop('primitive'),
+      instances: regl.prop("instances"),
+      primitive: regl.prop("primitive"),
     })
   );
 
@@ -350,7 +350,7 @@ export const lines = (regl: any) => {
 
   // Render one line list/strip
   const renderLine = (props) => {
-    const { debug, primitive = 'lines', scaleInvariant = false } = props;
+    const { debug, primitive = "lines", scaleInvariant = false } = props;
     const numInputPoints = props.points.length;
 
     const alreadyClosed = numInputPoints > 2 && pointsEqual(props.points[0], props.points[numInputPoints - 1]);
@@ -358,7 +358,7 @@ export const lines = (regl: any) => {
     const shouldClose = !alreadyClosed && props.closed;
 
     fillPointArray(props.points, alreadyClosed, shouldClose);
-    positionBuffer({ data: pointArray, usage: 'dynamic' });
+    positionBuffer({ data: pointArray, usage: "dynamic" });
 
     const monochrome = !(props.colors && props.colors.length);
     let colors;
@@ -378,9 +378,9 @@ export const lines = (regl: any) => {
         colors.push(colors[0]);
       }
     }
-    colorBuffer({ data: colors, usage: 'dynamic' });
+    colorBuffer({ data: colors, usage: "dynamic" });
 
-    const joined = primitive === 'line strip';
+    const joined = primitive === "line strip";
     const effectiveNumPoints = numInputPoints + (shouldClose ? 1 : 0);
     const instances = joined ? effectiveNumPoints - 1 : Math.floor(effectiveNumPoints / 2);
 
@@ -388,7 +388,7 @@ export const lines = (regl: any) => {
       command({
         ...props,
         joined,
-        primitive: 'triangle strip',
+        primitive: "triangle strip",
         alpha: debug ? 0.2 : 1,
         monochrome,
         instances,
@@ -398,7 +398,7 @@ export const lines = (regl: any) => {
         command({
           ...props,
           joined,
-          primitive: 'line strip',
+          primitive: "line strip",
           alpha: 1,
           monochrome,
           instances,

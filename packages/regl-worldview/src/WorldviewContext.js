@@ -6,14 +6,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import createREGL from 'regl';
-import debounce from 'lodash/debounce';
-import Command from './commands/Command';
-import { camera, CameraStore } from './camera/index';
-import { getRayFromClick } from './utils/Raycast';
-import { getIdFromColor } from './utils/commandUtils';
-import type { CameraState } from './camera/CameraStore';
-import type { Dimensions, RawCommand, CompiledReglCommand, CameraCommand, Vec4 } from './types';
+import debounce from "lodash/debounce";
+import createREGL from "regl";
+
+import type { CameraState } from "./camera/CameraStore";
+import { camera, CameraStore } from "./camera/index";
+import Command from "./commands/Command";
+import type { Dimensions, RawCommand, CompiledReglCommand, CameraCommand, Vec4 } from "./types";
+import { getIdFromColor } from "./utils/commandUtils";
+import { getRayFromClick } from "./utils/Raycast";
 
 type Props = any;
 
@@ -56,7 +57,7 @@ export type WorldviewContextType = {
 // of the function; otherwise, compile the instructions directly
 function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
   const src = cmd(regl);
-  return typeof src === 'function' ? src : regl(src);
+  return typeof src === "function" ? src : regl(src);
 }
 
 // This is made available to every Command component as `this.context`.
@@ -95,14 +96,14 @@ export class WorldviewContext {
 
   initialize(canvas: HTMLCanvasElement) {
     if (this.initializedData) {
-      throw new Error('can not initialize regl twice');
+      throw new Error("can not initialize regl twice");
     }
 
     const regl = this._instrumentCommands(
       createREGL({
         canvas,
-        extensions: ['angle_instanced_arrays', 'oes_texture_float'],
-        profile: process.env.NODE_ENV !== 'production',
+        extensions: ["angle_instanced_arrays", "oes_texture_float"],
+        profile: process.env.NODE_ENV !== "production",
       })
     );
     // compile any components which mounted before regl is initialized
@@ -189,7 +190,9 @@ export class WorldviewContext {
   paint() {
     const start = Date.now();
     this.reglCommandObjects.forEach((cmd) => (cmd.stats.count = 0));
-    if (!this.initializedData) return;
+    if (!this.initializedData) {
+      return;
+    }
     const { regl, camera } = this.initializedData;
     this._clearCanvas(regl);
     camera.draw(this.cameraStore.state, () => {
@@ -207,7 +210,9 @@ export class WorldviewContext {
   _debouncedPaint = debounce(this.paint, 10);
 
   readHitmap(canvasX: number, canvasY: number): Promise<number> {
-    if (!this.initializedData) return new Promise((_, reject) => reject(new Error('regl data not initialized yet')));
+    if (!this.initializedData) {
+      return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
+    }
 
     const { regl, camera, _fbo } = this.initializedData;
     const { width, height } = this.dimension;
@@ -264,11 +269,11 @@ export class WorldviewContext {
     sortedDrawCalls.forEach((drawInput: DrawInput) => {
       const { command, drawProps } = drawInput;
       if (!drawProps) {
-        return console.warn(`${isHitmap ? 'hitmap' : ''} draw skipped, props was falsy`);
+        return console.warn(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`);
       }
       const cmd = this._compiled.get(command.constructor);
       if (!cmd) {
-        return console.warn('could not find draw command for', command.constructor.displayName);
+        return console.warn("could not find draw command for", command.constructor.displayName);
       }
       // mapTiles requires additional context data
       if (drawProps.context && drawProps.props) {
@@ -290,13 +295,13 @@ export class WorldviewContext {
   };
 
   _instrumentCommands(regl: any) {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       return regl;
     }
     return new Proxy(regl, {
       apply: (target, thisArg, args) => {
         const command = target(...args);
-        if (typeof command.stats === 'object') {
+        if (typeof command.stats === "object") {
           this.reglCommandObjects.push(command);
         }
         return command;

@@ -4,10 +4,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import Worldview, { Overlay, Spheres, DEFAULT_CAMERA_STATE } from 'regl-worldview';
-import { StyledContainer } from './WorldviewCodeEditor';
-import useRange from './useRange';
+import React from "react";
+import Worldview, { Overlay, Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
+
+import useRange from "./useRange";
+import { StyledContainer } from "./WorldviewCodeEditor";
 
 // #BEGIN EXAMPLE
 function OverlayDemo() {
@@ -31,9 +32,9 @@ function OverlayDemo() {
 
   const textMarkers = sphereMarkers.map((sphere, index) => ({
     pose: sphere.pose,
-    text: 'Overlay on top of Sphere',
+    text: "Overlay on top of Sphere",
     info: {
-      title: 'Index:' + index,
+      title: `Index:${index}`,
     },
   }));
 
@@ -60,10 +61,10 @@ function OverlayDemo() {
                 style={{
                   transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
                 }}>
-                <h2 style={{ fontSize: '2rem' }}>{title}</h2>
+                <h2 style={{ fontSize: "2rem" }}>{title}</h2>
                 <div>{text}</div>
                 <a
-                  style={{ pointerEvents: 'visible', color: '#f1f1f1' }}
+                  style={{ pointerEvents: "visible", color: "#f1f1f1" }}
                   href="http://www.google.com"
                   target="_blank"
                   rel="noopener noreferrer">

@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import Command from './Command';
-import { withPose } from '../utils/commandUtils';
+import { withPose } from "../utils/commandUtils";
+import Command from "./Command";
 
 export function grid() {
   return withPose({
@@ -28,7 +28,7 @@ export function grid() {
         gl_FragColor = vec4(1., 1., 1., 1.);
       }
     `,
-    primitive: 'lines',
+    primitive: "lines",
     attributes: {
       point: (context, props) => {
         const points = [];
@@ -57,7 +57,7 @@ type Props = {
 
 // useful for rendering a grid for debugging in stories
 export default class Grid extends Command<Props> {
-  static displayName = 'Grid';
+  static displayName = "Grid";
   static command = grid;
   static defaultProps = {
     count: 6,

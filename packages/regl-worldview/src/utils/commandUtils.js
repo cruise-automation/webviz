@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { Color, CommandProps, Point, Orientation, ReglCommand, Vec4, Vec3 } from '../types';
+import type { Color, CommandProps, Point, Orientation, ReglCommand, Vec4, Vec3 } from "../types";
 
 const rotateGLSL = `
   uniform vec3 _position;
@@ -87,14 +87,14 @@ export const blend = {
   enable: true,
   // this is the same gl.BlendFunc used by three.js by default
   func: {
-    src: 'src alpha',
-    dst: 'one minus src alpha',
+    src: "src alpha",
+    dst: "one minus src alpha",
     srcAlpha: 1,
-    dstAlpha: 'one minus src alpha',
+    dstAlpha: "one minus src alpha",
   },
   equation: {
-    rgb: 'add',
-    alpha: 'add',
+    rgb: "add",
+    alpha: "add",
   },
 };
 
@@ -103,7 +103,7 @@ export const blend = {
 // inserts some glsl helpers to apply the pose to points in a fragment shader
 export function withPose(command: ReglCommand): ReglCommand {
   const { vert, uniforms } = command;
-  const newVert = vert.replace('#WITH_POSE', rotateGLSL);
+  const newVert = vert.replace("#WITH_POSE", rotateGLSL);
   const newUniforms = {
     ...uniforms,
     _position: (context, props) => {
@@ -139,7 +139,7 @@ function hasNestedArrays(arr: any[]) {
 // In the case of a single color, the same color will be used for all instances.
 export function colorBuffer(regl: any) {
   const buffer = regl.buffer({
-    usage: 'dynamic',
+    usage: "dynamic",
     data: [],
   });
 
@@ -154,7 +154,7 @@ export function colorBuffer(regl: any) {
     }
     return {
       buffer: buffer({
-        usage: 'dynamic',
+        usage: "dynamic",
         data,
       }),
       divisor,
@@ -202,7 +202,7 @@ export function getIdFromColor(rgb: Uint8Array) {
 export function changePropsColors(commandProps: CommandProps) {
   const { color, colors } = commandProps;
   if (!color && !colors) {
-    throw new Error('No color/colors attribute found, could not produce a hitmap color');
+    throw new Error("No color/colors attribute found, could not produce a hitmap color");
   }
   const newColor = getHitmapColorId(commandProps);
   if (commandProps.color) {

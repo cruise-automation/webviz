@@ -6,10 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Ray } from '../utils/Raycast';
-import type { CameraState } from '../camera/CameraStore';
+import { Ray } from "../utils/Raycast";
+import type { CameraState } from "../camera/CameraStore";
 import type { KeyMapping } from '../camera/CameraListener';
-import type { BaseProps, Props } from '../Worldview';
+import type { BaseProps, Props } from "../Worldview";
 
 export type { CameraState, KeyMapping, BaseProps, Props };
 

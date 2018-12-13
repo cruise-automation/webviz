@@ -4,12 +4,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState } from 'react';
-import { quat, vec3 } from 'gl-matrix';
-import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors } from 'regl-worldview';
-import CameraStateControls from './CameraStateControls';
-import CameraStateInfo from './CameraStateInfo';
-import { p, q } from './utils';
+import { quat, vec3 } from "gl-matrix";
+import React, { useState } from "react";
+import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors } from "regl-worldview";
+
+import CameraStateControls from "./CameraStateControls";
+import CameraStateInfo from "./CameraStateInfo";
+import { p, q } from "./utils";
 
 function CameraState() {
   const [perspective, setPerspective] = useState(true);
@@ -105,9 +106,9 @@ function CameraState() {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
       }}>
       <CameraStateControls
         perspective={perspective}
@@ -137,8 +138,8 @@ function CameraState() {
         setOrientationY={setOrientationY}
         setOrientationZ={setOrientationZ}
       />
-      <div style={{ display: 'flex', flexDirection: 'row' }}>
-        <div style={{ flex: '1 1 0', overflow: 'hidden', height: 500 }}>
+      <div style={{ display: "flex", flexDirection: "row" }}>
+        <div style={{ flex: "1 1 0", overflow: "hidden", height: 500 }}>
           <Worldview
             cameraState={cameraState}
             onCameraStateChange={({
@@ -172,7 +173,7 @@ function CameraState() {
           </Worldview>
         </div>
 
-        <div style={{ flex: '1 1 0', overflow: 'hidden', height: 500 }}>
+        <div style={{ flex: "1 1 0", overflow: "hidden", height: 500 }}>
           <Worldview
             defaultCameraState={{
               perspective: true,

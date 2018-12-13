@@ -4,11 +4,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// flow
-import React from 'react';
-import styled from 'styled-components';
-import Worldview, { type Props } from '../index';
-import inScreenshotTests from './inScreenshotTests';
+// TODO(JP): Should remove this and properly fix Flow.
+/* eslint-disable flowtype/no-types-missing-file-annotation */
+
+import React from "react";
+import styled from "styled-components";
+
+import Worldview, { type Props } from "../index";
+import inScreenshotTests from "./inScreenshotTests";
 
 const WorldviewWrapper = styled.div`
   position: relative;
@@ -43,17 +46,17 @@ export default class Container extends React.Component<Props> {
 
   render() {
     const { worldviewCamState } = this.state;
-    const { cameraState, defaultCameraState, onCameraStateChange, ...rest } = this.props;
     const worldviewCamStateInfo = Object.keys(worldviewCamState)
       .map((key) => `${key}: ${worldviewCamState[key]}`)
-      .join('\n');
+      .join("\n");
 
     return (
       <WorldviewWrapper>
         {!this.props.hideState && <TextWrapper>{worldviewCamStateInfo}</TextWrapper>}
         <Worldview
+          {...this.props}
           hideDebug={inScreenshotTests()}
-          {...rest}
+          defaultCameraState={undefined}
           cameraState={worldviewCamState}
           onCameraStateChange={this.onCameraStateChange}>
           {this.props.children}

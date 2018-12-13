@@ -4,6 +4,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// TODO(JP): Should remove this and properly fix Flow.
+/* eslint-disable flowtype/no-types-missing-file-annotation */
+
 export const p = (x, y = x, z = x) => ({ x, y, z });
 export const q = (x, y = x, z = x, w = x) => ({ x, y, z, w });
 
@@ -67,7 +70,7 @@ export function generateCubes(clickedIds, count = DEFAULT_MARKER_COUNT, hitmapId
       scale,
       color: numberToColor(idx, count, alpha),
       info: {
-        description: 'additional cube info',
+        description: "additional cube info",
         objectId: hitmapId + 10000,
       },
     };
@@ -94,7 +97,7 @@ export function generateSpheres(clickedIds, count = DEFAULT_MARKER_COUNT, hitmap
       scale,
       color: numberToColor(count - idx - 1, count, alpha),
       info: {
-        description: 'additional sphere info',
+        description: "additional sphere info",
         objectId: hitmapId + 1000,
       },
     };

@@ -4,10 +4,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState } from 'react';
-import Worldview, { Cubes, Spheres, DEFAULT_CAMERA_STATE } from 'regl-worldview';
-import { p, q, buildMatrix } from './utils';
-import useRange from './useRange';
+import React, { useState } from "react";
+import Worldview, { Cubes, Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
+
+import useRange from "./useRange";
+import { p, q, buildMatrix } from "./utils";
 
 // #BEGIN EXAMPLE
 function DynamicCommandsDemo() {
@@ -20,7 +21,7 @@ function DynamicCommandsDemo() {
       <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
         <div
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: 10,
             left: 10,
             padding: 10,

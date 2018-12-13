@@ -4,11 +4,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-const { getBabelLoader } = require('react-app-rewired');
+const { getBabelLoader } = require("react-app-rewired");
+
 module.exports = (config, _env) => {
   const babelLoader = getBabelLoader(config.module.rules);
   config.module.rules.map((rule) => {
-    if (typeof rule.test !== 'undefined' || typeof rule.oneOf === 'undefined') {
+    if (typeof rule.test !== "undefined" || typeof rule.oneOf === "undefined") {
       return rule;
     }
 
@@ -19,7 +20,7 @@ module.exports = (config, _env) => {
           loader: babelLoader.loader,
           options: babelLoader.options,
         },
-        '@mdx-js/loader',
+        "@mdx-js/loader",
       ],
     });
 

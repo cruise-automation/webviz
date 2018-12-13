@@ -6,7 +6,7 @@
 
 import { MDXProvider } from "@mdx-js/tag";
 import React, { useState } from "react";
-import { BrowserRouter as Router, Route, Link, Redirect } from "react-router-dom";
+import { HashRouter as Router, Route, Link, Redirect } from "react-router-dom";
 import styled from "styled-components";
 
 import Logo from "./Logo";

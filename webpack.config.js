@@ -15,7 +15,7 @@ module.exports = {
     docs: "./docs/src/index.js",
   },
   output: {
-    path: path.resolve(`${__dirname}/dist`),
+    path: path.resolve(`${__dirname}/docs/public/dist`),
     publicPath: "/dist/",
     pathinfo: true,
     filename: "[name].js",
@@ -102,7 +102,6 @@ module.exports = {
   performance: { hints: false },
   devServer: {
     contentBase: path.resolve(`${__dirname}/docs/public`),
-    historyApiFallback: true,
     hot: true,
   },
 };

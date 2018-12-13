@@ -4,15 +4,21 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import styled from "styled-components";
+import React from "react";
 
-export default styled.div`
-  position: absolute;
-  border: 1px solid white;
-  background-color: grey;
-  top: 10px;
-  left: 10px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-`;
+export default function FloatingBox() {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        border: "1px solid white",
+        backgroundColor: "grey",
+        top: 10,
+        left: 10,
+        padding: 10,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    />
+  );
+}

@@ -8,29 +8,9 @@
 /* eslint-disable flowtype/no-types-missing-file-annotation */
 
 import React from "react";
-import styled from "styled-components";
 
 import Worldview, { type Props } from "../index";
 import inScreenshotTests from "./inScreenshotTests";
-
-const WorldviewWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  height: 100%;
-`;
-
-const TextWrapper = styled.div`
-  position: absolute;
-  pointer-events: none;
-  width: 100%;
-  bottom: 8px;
-  left: 8px
-  z-index: 1;
-  overflow: hidden;
-  font-size: 0.8rem;
-  color: gray;
-  white-space: pre-line;
-`;
 
 export default class Container extends React.Component<Props> {
   state = {
@@ -51,8 +31,24 @@ export default class Container extends React.Component<Props> {
       .join("\n");
 
     return (
-      <WorldviewWrapper>
-        {!this.props.hideState && <TextWrapper>{worldviewCamStateInfo}</TextWrapper>}
+      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        {!this.props.hideState && (
+          <div
+            style={{
+              position: "absolute",
+              pointerEvents: "none",
+              width: "100%",
+              bottom: "8px",
+              left: "8p",
+              zIndex: "1",
+              overflow: "hidden",
+              fontSize: "0.8rem",
+              color: "gray",
+              whiteSpace: "pre-line",
+            }}>
+            {worldviewCamStateInfo}
+          </div>
+        )}
         <Worldview
           {...this.props}
           hideDebug={inScreenshotTests()}
@@ -61,7 +57,7 @@ export default class Container extends React.Component<Props> {
           onCameraStateChange={this.onCameraStateChange}>
           {this.props.children}
         </Worldview>
-      </WorldviewWrapper>
+      </div>
     );
   }
 }

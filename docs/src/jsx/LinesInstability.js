@@ -9,6 +9,7 @@ import React from "react";
 import { p } from "./utils";
 import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
+
 // #BEGIN EXAMPLE
 function LinesInstabilityDemo() {
   const points = [

@@ -6,11 +6,11 @@
 
 import { quat, vec3 } from "gl-matrix";
 import React, { useState } from "react";
-import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors } from "regl-worldview";
 
 import CameraStateControls from "./CameraStateControls";
 import CameraStateInfo from "./CameraStateInfo";
 import { p, q } from "./utils";
+import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors } from "regl-worldview";
 
 function CameraState() {
   const [perspective, setPerspective] = useState(true);

@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import styled from "styled-components";
 
 import type { Point, CameraCommand, Dimensions, Color, Pose, Scale } from "../types";
 import { getCSSColor } from "../utils/commandUtils";
@@ -22,23 +21,34 @@ type TextMarker = {
   text: string,
 };
 
-const StyledContainer = styled.div`
-  > span {
-    position: absolute;
-    white-space: nowrap;
-    z-index: 100;
-    pointer-events: none;
-    top: 0;
-    left: 0;
-    will-change: transform;
-    > span {
+let cssHasBeenInserted = false;
+function insertGlobalCss() {
+  if (cssHasBeenInserted) {
+    return;
+  }
+  const style = document.createElement("style");
+  style.innerHTML = `
+    .regl-worldview-text-wrapper {
+      position: absolute;
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+      top: 0;
+      left: 0;
+      will-change: transform;
+    }
+    .regl-worldview-text-inner {
       position: relative;
       left: -50%;
       top: -0.5em;
       white-space: pre-line;
     }
+  `;
+  if (document.body) {
+    document.body.appendChild(style);
   }
-`;
+  cssHasBeenInserted = true;
+}
 
 class TextElement {
   wrapper = document.createElement("span");
@@ -47,6 +57,9 @@ class TextElement {
   _color = "";
 
   constructor() {
+    insertGlobalCss();
+    this.wrapper.className = "regl-worldview-text-wrapper";
+    this._inner.className = "regl-worldview-text-inner";
     this.wrapper.appendChild(this._inner);
     this._inner.appendChild(this._text);
   }
@@ -155,7 +168,7 @@ export default class Text extends React.Component<Props> {
   render() {
     return (
       <React.Fragment>
-        <StyledContainer ref={this._textContainerRef} />
+        <div ref={this._textContainerRef} />
         <WorldviewReactContext.Consumer>
           {(ctx: ?WorldviewContextType) => {
             if (ctx) {

@@ -22,10 +22,7 @@ const getBabelOptions = ({ useESModules }) => ({
 const input = "src/index.js";
 const libraryName = "ReglWorldview";
 
-// HACK: add 'stream' field for styled-components SSR build.
-// Another issue about loading multiple instances:
-// https://www.styled-components.com/docs/faqs#why-am-i-getting-a-warning-about-several-instances-of-module-on-the-page
-const globals = { react: "React", "react-dom": "ReactDOM", stream: "undefined" };
+const globals = { react: "React", "react-dom": "ReactDOM" };
 const isExternal = (id) => !id.startsWith(".") && !id.startsWith("/");
 
 export default [
@@ -45,13 +42,7 @@ export default [
         browser: true,
       }),
       babel(getBabelOptions({ useESModules: true })),
-      commonjs({
-        include: "node_modules/**",
-        // Make styled components work: https://github.com/styled-components/styled-components/issues/1654
-        namedExports: {
-          "node_modules/react-is/index.js": ["isElement", "isValidElementType", "ForwardRef"],
-        },
-      }),
+      commonjs({ include: "node_modules/**" }),
       replace({ "process.env.NODE_ENV": JSON.stringify("development") }),
     ],
   },

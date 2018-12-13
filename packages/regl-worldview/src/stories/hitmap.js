@@ -6,8 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from "react";
-import styled from "styled-components";
+import * as React from "react";
 
 import { getCSSColor } from "../utils/commandUtils";
 import FloatingBox from "./FloatingBox";
@@ -24,24 +23,26 @@ import Worldview, {
   type SphereList,
 } from "..";
 
-export const StyledContainer = styled.div`
-  position: absolute;
-  white-space: nowrap;
-  z-index: 100;
-  pointer-events: none;
-  top: 0;
-  left: 0;
-  will-change: transform;
-  padding: 0.8rem;
-  background: #24bbcaa3;
-  max-width: 240px;
-  color: #fff;
-  white-space: pre-line;
-  > div {
-    position: relative;
-    white-space: pre-line;
-  }
-`;
+export function StyledContainer(props: {| children: React.Node, style: Object |}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        zIndex: 100,
+        pointerEvents: "none",
+        top: 0,
+        left: 0,
+        willChange: "transform",
+        padding: "0.8rem",
+        background: "#24bbcaa3",
+        maxWidth: "240px",
+        color: "#fff",
+        whiteSpace: "pre-line",
+        ...props.style,
+      }}
+    />
+  );
+}
 
 const p = (x, y = x, z = x) => ({ x, y, z });
 type RGBA = {
@@ -291,7 +292,7 @@ export default function() {
                     transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
                   }}>
                   <h2 style={{ color: getCSSColor(color), fontSize: "2rem" }}>{title}</h2>
-                  <div>{text}</div>
+                  <div style={{ position: "relative", whiteSpace: "pre-line" }}>{text}</div>
                   <a
                     style={{ pointerEvents: "visible" }}
                     href="https://google.com/"

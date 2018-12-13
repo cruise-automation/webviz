@@ -7,41 +7,50 @@
 import React, { useState } from "react";
 import Select from "react-virtualized-select";
 
-import Arrows from "./Arrows";
-import BasicExample from "./BasicExample";
-import Cones from "./Cones";
-import Cubes from "./Cubes";
-import Cylinders from "./Cylinders";
-import DynamicCommands from "./DynamicCommands";
-import FilledPolygons from "./FilledPolygons";
-import Hitmap from "./Hitmap";
-import LinesStrip from "./LinesStrip";
-import Overlay from "./Overlay";
-import Points from "./Points";
-import SpheresInstanced from "./SpheresInstanced";
-import SpheresInstanceColor from "./SpheresInstancedColor";
-import SpheresSingle from "./SpheresSingle";
-import Triangles from "./Triangles";
-
 import "react-select/dist/react-select.css";
 import "react-virtualized-select/styles.css";
+import {
+  BasicExample,
+  CameraStateControlled,
+  CameraStateUncontrolled,
+  Composition,
+  Arrows,
+  Cones,
+  Cubes,
+  Cylinders,
+  DynamicCommands,
+  FilledPolygon,
+  Hitmap,
+  Lines,
+  Overlays,
+  Points,
+  SpheresInstanced,
+  SpheresInstancedColor,
+  SpheresSingle,
+  Text,
+  Triangles,
+} from "./allLiveEditors";
 
 const allExamples = {
   BasicExample,
-  DynamicCommands,
-  Cubes,
-  SpheresSingle,
-  SpheresInstanced,
-  SpheresInstanceColor,
-  Points,
-  LinesStrip,
+  CameraStateControlled,
+  CameraStateUncontrolled,
+  Composition,
   Arrows,
   Cones,
+  Cubes,
   Cylinders,
-  Triangles,
-  FilledPolygons,
-  Overlay,
+  DynamicCommands,
+  FilledPolygon,
   Hitmap,
+  Lines,
+  Overlays,
+  Points,
+  SpheresInstanced,
+  SpheresInstancedColor,
+  SpheresSingle,
+  Text,
+  Triangles,
 };
 
 export default function AllExamples() {

@@ -11,19 +11,26 @@ import pickBy from "lodash/pickBy";
 import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
-import { CameraListener } from "./camera/index";
-import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap } from "./types";
+import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
 
+import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap } from "./types";
+
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 
-type SharedProps = {|
+export type BaseProps = {|
+  keyMap?: CameraKeyMap,
   backgroundColor?: Vec4,
+  // rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
-  hideDebug?: boolean,
+  showDebug?: boolean,
   children?: React.Node,
+
+  cameraState?: CameraState,
+  onCameraStateChange?: (CameraState) => void,
+  defaultCameraState?: CameraState,
 
   // interactions
   onDoubleClick?: MouseHandler,
@@ -31,30 +38,12 @@ type SharedProps = {|
   onMouseUp?: MouseHandler,
   onMouseMove?: MouseHandler,
   onClick?: MouseHandler,
-|};
-
-type ControlledType = {|
-  ...SharedProps,
   ...Dimensions,
-  cameraState: CameraState,
-  keyMap?: CameraKeyMap,
-  onCameraStateChange: (CameraState) => void,
 |};
-
-type UncontrolledType = {|
-  ...SharedProps,
-  ...Dimensions,
-  defaultCameraState: CameraState,
-  keyMap?: CameraKeyMap,
-|};
-
-export type BaseProps = ControlledType | UncontrolledType;
 
 type State = {|
   worldviewContext: WorldviewContext,
 |};
-
-export type Props = $Diff<BaseProps, Dimensions>;
 
 function handleMouseInteraction(objectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
   try {
@@ -74,26 +63,35 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   _tick: AnimationFrameID | void;
 
   static defaultProps = {
-    // rendering the hitmap on mouse move is expensive, so disable it by default
-    hitmapOnMouseMove: false,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
   };
 
   constructor(props: BaseProps) {
     super(props);
-    const { width, height, top, left, backgroundColor } = props;
-    if (props.cameraState && !props.onCameraStateChange) {
-      console.error(
-        "onCameraStateChange and cameraState must be used together! Alternatively, use defaultCameraState to turn Worldview into an uncontrolled component."
-      );
+    const { width, height, top, left, backgroundColor, onCameraStateChange, cameraState, defaultCameraState } = props;
+    if (onCameraStateChange) {
+      if (!cameraState) {
+        console.warn(
+          "You provided `onCameraStateChange` without `cameraState`. Use Worldview as a controlled component with `cameraState` and `onCameraStateChange`, or uncontrolled with `defaultCameraState`."
+        );
+      }
+      if (cameraState && defaultCameraState) {
+        console.warn("You provided both `cameraState` and `defaultCameraState`. `defaultCameraState` will be ignored.");
+      }
+    } else {
+      if (cameraState) {
+        console.warn(
+          "You provided `cameraState` without an `onCameraStateChange` handler. This will prevent moving the camera. If the camera should be movable, use `defaultCameraState`, otherwise set `onCameraStateChange`."
+        );
+      }
     }
 
     this.state = {
       worldviewContext: new WorldviewContext({
         dimension: { width, height, top, left },
         canvasBackgroundColor: backgroundColor || DEFAULT_BACKGROUND_COLOR,
-        cameraState: props.cameraState || props.defaultCameraState,
-        keyMap: props.keyMap,
+        // DEFAULT_CAMERA_STATE is applied if both `cameraState` and `defaultCameraState` are not present
+        cameraState: props.cameraState || props.defaultCameraState || DEFAULT_CAMERA_STATE,
         onCameraStateChange: props.onCameraStateChange || undefined,
       }),
     };
@@ -126,7 +124,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   componentDidUpdate() {
     const { worldviewContext } = this.state;
-    // no need to update cameraStore's state if the component is uncontrolled
+    // update internal cameraState
     if (this.props.cameraState) {
       worldviewContext.cameraStore.setCameraState(this.props.cameraState);
     }
@@ -251,7 +249,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, hideDebug, keyMap } = this.props;
+    const { width, height, showDebug, keyMap } = this.props;
     const { worldviewContext } = this.state;
     const style = { width, height };
 
@@ -269,7 +267,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
             onMouseMove={this._onMouseMove}
             onClick={this._onClick}
           />
-          {hideDebug ? null : this._renderDebug()}
+          {showDebug ? this._renderDebug() : null}
         </CameraListener>
         {worldviewContext.initializedData && (
           <WorldviewReactContext.Provider value={worldviewContext}>
@@ -280,6 +278,8 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     );
   }
 }
+
+export type Props = $Diff<React.ElementConfig<typeof WorldviewBase>, Dimensions>;
 
 const Worldview = (props: Props) => (
   <ContainerDimensions>

@@ -9,7 +9,7 @@
 import normalizeWheel from "normalize-wheel";
 import * as React from "react";
 
-import type { Vec2, CameraKeyMap } from "../types";
+import type { Vec2, CameraKeyMap, CameraAction, CameraActionType } from "../types";
 import getOrthographicBounds from "../utils/getOrthographicBounds";
 import CameraStore from "./CameraStore";
 
@@ -18,19 +18,6 @@ const MOUSE_ZOOM_SPEED = 0.3;
 const KEYBOARD_MOVE_SPEED = 0.3;
 const KEYBOARD_ZOOM_SPEED = 150;
 const KEYBOARD_SPIN_SPEED = 1.5;
-
-export const ACTIONS = Object.freeze({
-  moveDown: 'moveDown',
-  moveLeft: 'moveLeft',
-  moveRight: 'moveRight',
-  moveUp: 'moveUp',
-  rotateLeft: 'rotateLeft',
-  rotateRight: 'rotateRight',
-  tiltDown: 'tiltDown',
-  tiltUp: 'tiltUp',
-  zoomIn: 'zoomIn',
-  zoomOut: 'zoomOut',
-});
 
 const DEFAULT_KEYMAP: CameraKeyMap = {
   a: 'moveLeft',
@@ -49,6 +36,7 @@ type KeyMotion = { x?: number, y?: number, zoom?: number, yaw?: number, tilt?: n
 
 type Props = {|
   cameraStore: CameraStore,
+  keyMap?: KeyMapping,
   children?: React.ChildrenArray<React.Element<any> | null>,
   keyMap?: CameraKeyMap,
   onKeyDown?: (KeyboardEvent) => void,
@@ -232,7 +220,7 @@ export default class CameraListener extends React.Component<Props> {
     const zoomSpeed = this._getMagnitude(KEYBOARD_ZOOM_SPEED);
     const spinSpeed = this._getMagnitude(KEYBOARD_SPIN_SPEED);
     const { keyMap } = this.props;
-    const action = (keyMap && keyMap[key]) || DEFAULT_KEYMAP[key] || false;
+    const action: CameraActionType = (keyMap && keyMap[key]) || DEFAULT_KEYMAP[key] || false;
 
     switch (action) {
       case 'moveRight':

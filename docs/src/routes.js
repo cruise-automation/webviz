@@ -4,25 +4,25 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import BasicExample from "./1.1BasicExample.md";
-import Composition from "./1.2Composition.md";
-import DynamicCommands from "./1.3DynamicCommands.md";
-import Interactivity from "./1.4Interactivity.md";
-import QuickStart from "./2.1QuickStart.md";
-import Lines from "./3.10Lines.md";
-import Overlay from "./3.11Overlay.md";
-import Points from "./3.12Points.md";
-import Spheres from "./3.13Spheres.md";
-import Text from "./3.14Text.md";
-import Triangles from "./3.15Triangles.md";
-import Worldview from "./3.1Worldview.md";
-import Camera from "./3.2Camera.md";
-import Command from "./3.3Command.md";
-import Arrows from "./3.4Arrows.md";
-import Cones from "./3.5Cones.md";
-import Cubes from "./3.6Cubes.md";
-import Cylinders from "./3.7Cylinders.md";
-import FilledPolygons from "./3.8FilledPolygons.md";
+import BasicExample from "./1.1.BasicExample.mdx";
+import Composition from "./1.2.Composition.mdx";
+import DynamicCommands from "./1.3.DynamicCommands.mdx";
+import Interactivity from "./1.4.Interactivity.mdx";
+import QuickStart from "./2.1.QuickStart.mdx";
+import Worldview from "./3.1.Worldview.mdx";
+import Lines from "./3.10.Lines.mdx";
+import Overlay from "./3.11.Overlay.mdx";
+import Points from "./3.12.Points.mdx";
+import Spheres from "./3.13.Spheres.mdx";
+import Text from "./3.14.Text.mdx";
+import Triangles from "./3.15.Triangles.mdx";
+import Camera from "./3.2.Camera.mdx";
+import Command from "./3.3.Command.mdx";
+import Arrows from "./3.4.Arrows.mdx";
+import Cones from "./3.5.Cones.mdx";
+import Cubes from "./3.6.Cubes.mdx";
+import Cylinders from "./3.7.Cylinders.mdx";
+import FilledPolygons from "./3.8.FilledPolygons.mdx";
 
 export const componentList = {
   BasicExample,

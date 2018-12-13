@@ -12,7 +12,7 @@ import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener } from "./camera/index";
-import type { MouseHandler, Dimensions, Vec4, CameraState } from "./types";
+import type { MouseHandler, Dimensions, Vec4, CameraState, KeyMapping } from "./types";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
@@ -37,6 +37,7 @@ type ControlledType = {|
   ...SharedProps,
   ...Dimensions,
   cameraState: CameraState,
+  keyMap?: KeyMapping,
   onCameraStateChange: (CameraState) => void,
 |};
 
@@ -44,6 +45,7 @@ type UncontrolledType = {|
   ...SharedProps,
   ...Dimensions,
   defaultCameraState: CameraState,
+  keyMap?: KeyMapping,
 |};
 
 export type BaseProps = ControlledType | UncontrolledType;
@@ -91,6 +93,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         dimension: { width, height, top, left },
         canvasBackgroundColor: backgroundColor || DEFAULT_BACKGROUND_COLOR,
         cameraState: props.cameraState || props.defaultCameraState,
+        keyMap: props.keyMap,
         onCameraStateChange: props.onCameraStateChange || undefined,
       }),
     };
@@ -248,13 +251,13 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, hideDebug } = this.props;
+    const { width, height, hideDebug, keyMap } = this.props;
     const { worldviewContext } = this.state;
     const style = { width, height };
 
     return (
       <React.Fragment>
-        <CameraListener cameraStore={worldviewContext.cameraStore}>
+        <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap}>
           <canvas
             style={style}
             width={width}

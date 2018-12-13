@@ -7,10 +7,11 @@
 //  You may not use this file except in compliance with the License.
 
 import type { CameraState } from "../camera/CameraStore";
+import type { KeyMapping } from "../camera/CameraListener";
 import { Ray } from "../utils/Raycast";
 import type { BaseProps, Props } from "../Worldview";
 
-export type { CameraState, BaseProps, Props };
+export type { CameraState, KeyMapping, BaseProps, Props };
 
 export type Dimensions = {|
   width: number,

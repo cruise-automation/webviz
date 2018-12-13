@@ -19,10 +19,39 @@ const KEYBOARD_MOVE_SPEED = 0.3;
 const KEYBOARD_ZOOM_SPEED = 150;
 const KEYBOARD_SPIN_SPEED = 1.5;
 
+const ACTIONS = {
+  MOVE_DOWN: 'moveDown',
+  MOVE_LEFT: 'moveLeft',
+  MOVE_RIGHT: 'moveRight',
+  MOVE_UP: 'moveUp',
+  ROTATE_LEFT: 'rotateLeft',
+  ROTATE_RIGHT: 'rotateRight',
+  TILT_DOWN: 'tiltDown',
+  TILT_UP: 'tiltUp',
+  ZOOM_IN: 'zoomIn',
+  ZOOM_OUT: 'zoomOut',
+};
+export type ActionType = $Values<typeof ACTIONS> | boolean | null;
+export type KeyMapping = { [string]: ActionType };
+
+const DEFAULT_KEYMAP: KeyMapping = {
+  a: ACTIONS['MOVE_LEFT'],
+  d: ACTIONS['MOVE_RIGHT'],
+  e: ACTIONS['ROTATE_RIGHT'],
+  f: ACTIONS['TILT_DOWN'],
+  q: ACTIONS['ROTATE_LEFT'],
+  r: ACTIONS['TILT_UP'],
+  s: ACTIONS['MOVE_DOWN'],
+  w: ACTIONS['MOVE_UP'],
+  x: ACTIONS['ZOOM_OUT'],
+  z: ACTIONS['ZOOM_IN'],
+};
+
 type KeyMotion = { x?: number, y?: number, zoom?: number, yaw?: number, tilt?: number };
 
 type Props = {|
   cameraStore: CameraStore,
+  keyMap?: KeyMapping,
   children?: React.ChildrenArray<React.Element<any> | null>,
   onKeyDown?: (KeyboardEvent) => void,
 |};
@@ -30,7 +59,7 @@ type Props = {|
 // attaches mouse and keyboard listeners to allow for moving the camera on user input
 export default class CameraListener extends React.Component<Props> {
   _keyTimer: ?AnimationFrameID;
-  _keys: Set<number> = new Set();
+  _keys: Set<string> = new Set();
   _buttons: Set<number> = new Set();
   _listeners = [];
   _shiftKey = false;
@@ -200,30 +229,33 @@ export default class CameraListener extends React.Component<Props> {
     }
   }
 
-  getKeyMotion = (keyCode: number): ?KeyMotion => {
+  getKeyMotion = (key: string): ?KeyMotion => {
     const moveSpeed = this._getMagnitude(KEYBOARD_MOVE_SPEED);
     const zoomSpeed = this._getMagnitude(KEYBOARD_ZOOM_SPEED);
     const spinSpeed = this._getMagnitude(KEYBOARD_SPIN_SPEED);
-    switch (keyCode) {
-      case 68: // d - right
+    const { keyMap } = this.props;
+    const action = (keyMap && keyMap[key]) || DEFAULT_KEYMAP[key] || false;
+
+    switch (action) {
+      case ACTIONS['MOVE_RIGHT']: // d - right
         return { x: moveSpeed };
-      case 65: // a - left
+      case ACTIONS['MOVE_LEFT']: // a - left
         return { x: -moveSpeed };
-      case 87: // w - up
+      case ACTIONS['MOVE_UP']: // w - up
         return { y: moveSpeed };
-      case 83: // s - down
+      case ACTIONS['MOVE_DOWN']: // s - down
         return { y: -moveSpeed };
-      case 90: // z - zoom in
+      case ACTIONS['ZOOM_IN']: // z - zoom in
         return { zoom: zoomSpeed };
-      case 88: // x - zoom out
+      case ACTIONS['ZOOM_OUT']: // x - zoom out
         return { zoom: -zoomSpeed };
-      case 81: // q - rotate left
+      case ACTIONS['ROTATE_LEFT']: // q - rotate left
         return { yaw: -spinSpeed };
-      case 69: // e - rotate right
+      case ACTIONS['ROTATE_RIGHT']: // e - rotate right
         return { yaw: spinSpeed };
-      case 82: // r - tilt down
+      case ACTIONS['TILT_UP']: // r - tilt up
         return { tilt: -spinSpeed };
-      case 70: // f - tilt up
+      case ACTIONS['TILT_DOWN']: // f - tilt down
         return { tilt: spinSpeed };
       default:
         return null;
@@ -289,7 +321,7 @@ export default class CameraListener extends React.Component<Props> {
   }
 
   _onKeyDown = (e: KeyboardEvent) => {
-    const { onKeyDown } = this.props;
+    const { onKeyDown, keyMap } = this.props;
     this._shiftKey = e.shiftKey;
     this._metaKey = e.metaKey;
     this._ctrlKey = e.ctrlKey;
@@ -302,12 +334,17 @@ export default class CameraListener extends React.Component<Props> {
       return;
     }
 
+    // allow null, false, or empty keymappings which explicitly cancel Worldview from processing that key
+    if (keyMap && e.key in keyMap && !keyMap[e.key]) {
+      return false;
+    }
+
     // ignore repeated keydown events
-    if (this._keys.has(e.keyCode)) {
+    if (this._keys.has(e.key)) {
       e.stopPropagation();
       e.preventDefault();
-    } else if (this.getKeyMotion(e.keyCode)) {
-      this._keys.add(e.keyCode);
+    } else if (this.getKeyMotion(e.key)) {
+      this._keys.add(e.key);
       this._startKeyTimer();
       e.stopPropagation();
       e.preventDefault();
@@ -321,7 +358,7 @@ export default class CameraListener extends React.Component<Props> {
     this._metaKey = e.metaKey;
     this._ctrlKey = e.ctrlKey;
 
-    this._keys.delete(e.keyCode);
+    this._keys.delete(e.key);
   };
 
   _onWheel = (e: WheelEvent) => {

@@ -83,14 +83,15 @@
     "test": "NODE_ENV=test jest --config jest/jest.config.js",
     "link": "lerna link --force-local",
     "update-version": "lerna publish --skip-git --skip-npm --force-publish '*'",
-    "check-packages": "yarn clean && yarn compile && yarn test && yarn lint",
+    "check-packages": "npm run clean && lerna run compile && npm run test && npm run lint",
     "publish-packages": "./scripts/publish",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
     "flow": "flow",
     "flow-typed-rebuild": "rm -rf flow-typed/ && flow-typed install && flow-typed install --rootDir packages/regl-worldview",
     "docs": "webpack-dev-server",
-    "docs-deploy": "gh-pages -d docs/public"
+    "docs-deploy": "gh-pages -d docs/public",
+    "publish": "lerna run clean && lerna run build && lerna publish"
   },
   "workspaces": [
     "packages/*"

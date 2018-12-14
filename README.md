@@ -22,7 +22,7 @@ webviz is a collection of packages for visualizing 2D and 3D views on the web.
 
 ## Publishing
 
-- `lerna run publish` in the root directory
+- `npm run publish` in the root directory
 
 ## Contributing
 

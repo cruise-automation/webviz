@@ -68,7 +68,7 @@ export class WorldviewContext {
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<Command<any>, any> = new Map();
   _hitmapCalls: Map<Command<any>, any> = new Map();
-  _paintCalls: Map<React.Component<any>, any> = new Map();
+  _paintCalls: Map<PaintFn, PaintFn> = new Map();
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
   counters: { paint?: number, render?: number } = {};

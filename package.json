@@ -35,7 +35,6 @@
     "eslint-plugin-react": "^7.11.1",
     "flow-bin": "^0.88.0",
     "flow-copy-source": "^2.0.2",
-    "flow-mono-cli": "^1.4.3",
     "flow-typed": "^2.5.1",
     "gh-pages": "^2.0.1",
     "gl-matrix": "^2.8.1",
@@ -89,20 +88,11 @@
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
     "flow": "flow",
-    "flow-mono": "flow-mono create-symlinks ./dist/.flowconfig",
-    "flow-mono-install": "flow-mono install-types",
+    "flow-typed-rebuild": "rm -rf flow-typed/ && flow-typed install && flow-typed install --rootDir packages/regl-worldview",
     "docs": "webpack-dev-server",
     "docs-deploy": "gh-pages -d docs/public"
   },
   "workspaces": [
     "packages/*"
-  ],
-  "flow-mono": {
-    "create-symlinks": {
-      "ignore": [
-        "eslint",
-        "jest"
-      ]
-    }
-  }
+  ]
 }

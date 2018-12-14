@@ -38,7 +38,7 @@ export default function CameraStateControls({
   setOrientationZ,
 }) {
   return (
-    <div>
+    <div style={{ color: "#88878a" }}>
       <div>
         <Switch on={perspective} onChange={() => setPerspective(!perspective)} label="perspective" />
       </div>

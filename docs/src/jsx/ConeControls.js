@@ -23,7 +23,7 @@ export default function ConeControls({
   const sharedProps = { min, max, step };
 
   return (
-    <div style={style}>
+    <div style={{ color: "#88878a", ...style }}>
       <InputNumber label="scaleX" {...sharedProps} value={scaleX} onChange={setScaleX} />
       <InputNumber label="scaleY" {...sharedProps} value={scaleY} onChange={setScaleY} />
       <InputNumber label="scaleZ" {...sharedProps} value={scaleZ} onChange={setScaleZ} />

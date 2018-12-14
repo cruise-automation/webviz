@@ -25,14 +25,13 @@ export default function LineControls({
   style = {},
 }) {
   return (
-    <div style={style}>
-      <InputNumber horizontal label="thickness" value={thickness} min={0} max={5} step={0.01} onChange={setThickness} />
-
+    <div style={{ color: "#88878a", ...style }}>
       <Switch on={debug} onChange={() => setDebug(!debug)} label="debug" />
       <Switch on={joined} onChange={() => setJoined(!joined)} label={"line-strip"} />
       <Switch on={scaleInvariant} onChange={() => setScaleInvariant(!scaleInvariant)} label="scaleInvariant" />
       <Switch on={closed} onChange={() => setClosed(!closed)} label="closed" />
       <Switch on={monochrome} onChange={() => setMonochrome(!monochrome)} label="monochrome" />
+      <InputNumber horizontal label="thickness" value={thickness} min={0} max={5} step={0.01} onChange={setThickness} />
     </div>
   );
 }

@@ -66,15 +66,4 @@ export default [
     external: isExternal,
     plugins: [babel(getBabelOptions({ useESModules: false }))],
   },
-  // build types.js for easy grouping of type imports
-  {
-    input: "src/types/index.js",
-    output: {
-      file: "dist/types.js",
-      format: "es",
-      name: libraryName,
-    },
-    external: isExternal,
-    plugins: [babel(getBabelOptions({ useESModules: false }))],
-  },
 ];

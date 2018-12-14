@@ -1,5 +1,6 @@
 [ignore]
 .*\.ignore\.js
+dist
 
 [include]
 

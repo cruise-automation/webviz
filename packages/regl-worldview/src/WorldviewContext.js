@@ -9,10 +9,9 @@
 import debounce from "lodash/debounce";
 import createREGL from "regl";
 
-import type { CameraState } from "./camera/CameraStore";
 import { camera, CameraStore } from "./camera/index";
 import Command from "./commands/Command";
-import type { Dimensions, RawCommand, CompiledReglCommand, CameraCommand, Vec4 } from "./types";
+import type { Dimensions, RawCommand, CompiledReglCommand, CameraCommand, Vec4, CameraState } from "./types";
 import { getIdFromColor } from "./utils/commandUtils";
 import { getRayFromClick } from "./utils/Raycast";
 

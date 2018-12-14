@@ -22,7 +22,7 @@ module.exports = {
     devtoolModuleFilenameTemplate: (info) => path.resolve(info.absoluteResourcePath),
   },
   resolve: {
-    modules: [path.resolve(`${__dirname}/packages`), "node_modules"],
+    modules: [path.resolve("."), path.resolve(`${__dirname}/packages`), "node_modules"],
     extensions: [".js"],
     // Doesn't work properly with linked packages, see
     // https://webpack.js.org/configuration/resolve/#resolve-symlinks

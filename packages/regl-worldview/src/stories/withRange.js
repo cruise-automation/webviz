@@ -6,7 +6,7 @@
 
 import React, { Component } from "react";
 
-import inScreenshotTests from "./inScreenshotTests";
+import inScreenshotTests from "stories/inScreenshotTests";
 
 // storybook helper to render a story over and over w/ an oscillating value
 export default (fn) => {

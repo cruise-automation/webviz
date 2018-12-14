@@ -3,3 +3,4 @@ node_modules
 coverage
 build
 /flow-typed
+!.eslintrc.js

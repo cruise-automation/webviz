@@ -1,7 +1,5 @@
 {
-  "packages": [
-    "packages/*"
-  ],
+  "packages": ["packages/*"],
   "devDependencies": {
     "lerna": "^3.4.3"
   },

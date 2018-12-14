@@ -55,12 +55,7 @@ export default [
       name: libraryName,
     },
     external: isExternal,
-    plugins: [
-      babel(getBabelOptions({ useESModules: false })),
-      copy({
-        "flow/index.js.flow": "dist/index.cjs.js.flow",
-      }),
-    ],
+    plugins: [babel(getBabelOptions({ useESModules: false }))],
   },
   {
     input,
@@ -73,7 +68,7 @@ export default [
     plugins: [
       babel(getBabelOptions({ useESModules: false })),
       copy({
-        "flow/index.js.flow": "dist/index.esm.js.flow",
+        "flow/index.js.flow": "dist/index.js.flow",
       }),
     ],
   },

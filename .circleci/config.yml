@@ -1,3 +1,9 @@
+# Copyright (c) 2018-present, GM Cruise LLC
+#
+# This source code is licensed under the Apache License, Version 2.0,
+# found in the LICENSE file in the root directory of this source tree.
+# You may not use this file except in compliance with the License.
+
 # See https://circleci.com/docs/2.0/language-javascript/
 version: 2
 jobs:
@@ -43,6 +49,10 @@ jobs:
       - run:
           name: "npm run build"
           command: npm run build
+
+      - run:
+          name: "npm run screenshot-ci"
+          command: npm run screenshot-ci
 
       - add_ssh_keys:
           fingerprints:

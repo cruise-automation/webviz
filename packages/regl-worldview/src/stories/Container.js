@@ -10,7 +10,7 @@
 import React from "react";
 
 import Worldview, { type Props } from "../index";
-import inScreenshotTests from "./inScreenshotTests";
+import inScreenshotTests from "stories/inScreenshotTests";
 
 export default class Container extends React.Component<Props> {
   state = {

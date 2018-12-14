@@ -6,7 +6,7 @@
 
 import React from "react";
 
-import inScreenshotTests from "./inScreenshotTests";
+import inScreenshotTests from "stories/inScreenshotTests";
 
 export default (fn) => {
   class WithRange extends React.Component {

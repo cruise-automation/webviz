@@ -10,8 +10,7 @@
     "dist",
     "LICENSE",
     "README.md",
-    "package.json",
-    "types.js.flow"
+    "package.json"
   ],
   "scripts": {
     "build": "rollup -c",

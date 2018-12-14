@@ -13,7 +13,7 @@ import { createCylinderGeometry } from "./Cylinders";
 
 const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, true);
 
-export const cones = fromGeometry(points, sideFaces.concat(endCapFaces));
+const cones = fromGeometry(points, sideFaces.concat(endCapFaces));
 // prettier-ignore
 const Cylinders = makeCommand<BaseShape>('Cylinders', cones );
 

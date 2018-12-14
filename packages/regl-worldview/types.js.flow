@@ -1,4 +1,0 @@
-// @flow
-// Export all public-facing types so the consumer can import the flow types using
-// import type { Cube } from 'regl-worldview/types';
-export * from "./src/types/index.js";

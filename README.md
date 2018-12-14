@@ -13,8 +13,8 @@ webviz is a collection of packages for visualizing 2D and 3D views on the web.
 
 ## Flow
 
-- `npm flow-mono` to set up symlink for flow (reload the editor or recompile the component package if flow can not locate the module)
-- `npm flow-mono-install` to update local flow-typed cache and parallel install in all packages
+- `npm run flow` to run Flow.
+- `npm run flow-typed-rebuild` to update the flow-typed definitions (any time when changing packages).
 
 ## Testing
 

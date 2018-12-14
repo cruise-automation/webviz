@@ -4,6 +4,8 @@ webviz is a collection of packages for visualizing 2D and 3D views on the web.
 
 ## Documentation
 
+Visit [docs page](https://cruise-automation.github.io/webviz/) to see more guides, examples and APIs.
+
 ## Developing
 
 - `npm run bootstrap` in the root directory to install dependencies
@@ -22,7 +24,7 @@ webviz is a collection of packages for visualizing 2D and 3D views on the web.
 
 ## Publishing
 
-- `lerna run publish` in the root directory
+- `npm run publish` in the root directory
 
 ## Contributing
 

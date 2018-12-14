@@ -6,6 +6,7 @@
 
 import babel from "rollup-plugin-babel";
 import commonjs from "rollup-plugin-commonjs";
+import copy from "rollup-plugin-copy";
 import resolve from "rollup-plugin-node-resolve";
 import peerDepsExternal from "rollup-plugin-peer-deps-external";
 import replace from "rollup-plugin-replace";
@@ -54,7 +55,12 @@ export default [
       name: libraryName,
     },
     external: isExternal,
-    plugins: [babel(getBabelOptions({ useESModules: false }))],
+    plugins: [
+      babel(getBabelOptions({ useESModules: false })),
+      copy({
+        "flow/index.js.flow": "dist/index.cjs.js.flow",
+      }),
+    ],
   },
   {
     input,
@@ -64,17 +70,11 @@ export default [
       name: libraryName,
     },
     external: isExternal,
-    plugins: [babel(getBabelOptions({ useESModules: false }))],
-  },
-  // build types.js for easy grouping of type imports
-  {
-    input: "src/types/index.js",
-    output: {
-      file: "dist/types.js",
-      format: "es",
-      name: libraryName,
-    },
-    external: isExternal,
-    plugins: [babel(getBabelOptions({ useESModules: false }))],
+    plugins: [
+      babel(getBabelOptions({ useESModules: false })),
+      copy({
+        "flow/index.js.flow": "dist/index.esm.js.flow",
+      }),
+    ],
   },
 ];

@@ -15,11 +15,7 @@
   "scripts": {
     "build": "rollup -c",
     "build:watch": "rollup -c --watch",
-    "build:es6": "npm run clean && mkdir dist && npm run build:flow && npm run compile",
-    "compile": "babel src -d dist --ignore '**/*.test.js,**/*.stories.js'",
     "clean": "rimraf dist",
-    "build:dev": "npm run build:flow && npm run compile",
-    "build:flow": "flow-copy-source -v src dist --ignore '*.test.*' --ignore '*.stories.*' --ignore '**/stories/**'",
     "watch": "NODE_ENV=development npm run build:watch"
   },
   "publishConfig": {

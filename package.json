@@ -8,6 +8,7 @@
     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
     "@babel/plugin-transform-modules-commonjs": "^7.2.0",
     "@babel/plugin-transform-runtime": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
     "@babel/preset-flow": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
     "@mdx-js/loader": "^0.16.6",
@@ -34,7 +35,6 @@
     "eslint-plugin-prettier": "^3.0.0",
     "eslint-plugin-react": "^7.11.1",
     "flow-bin": "^0.88.0",
-    "flow-copy-source": "^2.0.2",
     "flow-typed": "^2.5.1",
     "gh-pages": "^2.0.1",
     "gl-matrix": "^2.8.1",
@@ -59,6 +59,7 @@
     "rollup": "^0.67.3",
     "rollup-plugin-babel": "^4.0.3",
     "rollup-plugin-commonjs": "^9.2.0",
+    "rollup-plugin-copy": "^0.2.3",
     "rollup-plugin-node-resolve": "^3.4.0",
     "rollup-plugin-peer-deps-external": "^2.2.0",
     "rollup-plugin-replace": "^2.1.0",
@@ -83,14 +84,15 @@
     "test": "NODE_ENV=test jest --config jest/jest.config.js",
     "link": "lerna link --force-local",
     "update-version": "lerna publish --skip-git --skip-npm --force-publish '*'",
-    "check-packages": "yarn clean && yarn compile && yarn test && yarn lint",
+    "check-packages": "npm run clean && lerna run compile && npm run test && npm run lint",
     "publish-packages": "./scripts/publish",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
     "flow": "flow",
     "flow-typed-rebuild": "rm -rf flow-typed/ && flow-typed install && flow-typed install --rootDir packages/regl-worldview",
     "docs": "webpack-dev-server",
-    "docs-deploy": "gh-pages -d docs/public"
+    "docs-deploy": "gh-pages -d docs/public",
+    "publish": "lerna run clean && lerna run build && lerna publish"
   },
   "workspaces": [
     "packages/*"

@@ -21,3 +21,20 @@ If you're not using a module bundler or package manager we also have a global ("
 Change the code and see the updated view at the right side.
 
 <AllExamples />
+
+## Flow types
+
+Flow types are supported. To use the type:
+
+```js
+import type { Position, Orientation, Scale, Color, Cube, Props, BaseProps } from 'regl-worldview'
+
+const position: Position = { x: 1, y: 1, z: 1 };
+const orientation: Orientation = {  x: 1, y: 1, z: 1, w: 1};
+const scale: Scale = { x: 1, y: 1, z: 1 };
+const color: Color = { r: 1, g: 1, b: 1, a: 0.5 };
+const pose: Pose = { position, orientation }[]
+
+const cube: Cube = { pose, scale, color }
+
+```

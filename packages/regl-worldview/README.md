@@ -11,7 +11,7 @@ npm install --save regl-worldview
 ```
 
 ```js
-import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from 'regl-worldview';
+import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 function Demo() {
   const markers = [
@@ -29,7 +29,7 @@ function Demo() {
     <div
       style={{
         height: 500,
-        width: '100%',
+        width: "100%",
       }}>
       <Worldview defaultCameraState={DEFAULT_CAMERA_STATE}>
         <Spheres>{markers}</Spheres>
@@ -41,4 +41,4 @@ function Demo() {
 
 ## Documentation
 
-Visit [docs page](https://pages.github.com/cruise-automation/regl-worldview/) to see more guides, examples and APIs.
+Visit [docs page](https://cruise-automation.github.io/webviz/) to see more guides, examples and APIs.

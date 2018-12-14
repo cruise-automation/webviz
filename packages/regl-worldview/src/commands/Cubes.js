@@ -10,7 +10,7 @@ import type { Cube } from "../types";
 import fromGeometry from "../utils/fromGeometry";
 import { makeCommand } from "./Command";
 
-export const cubes = fromGeometry(
+const cubes = fromGeometry(
   [
     // bottom face corners
     [-0.5, -0.5, -0.5],

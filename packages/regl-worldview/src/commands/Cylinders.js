@@ -44,7 +44,7 @@ export function createCylinderGeometry(numSegments: number, cone: boolean) {
 
 const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, false);
 
-export const cylinders = fromGeometry(points, sideFaces.concat(endCapFaces));
+const cylinders = fromGeometry(points, sideFaces.concat(endCapFaces));
 // prettier-ignore
 const Cylinders = makeCommand<Cylinder>('Cylinders', cylinders);
 

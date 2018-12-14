@@ -13,7 +13,7 @@ import { p } from "./utils";
 import Worldview, { Lines, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
-function LinesStripDemo() {
+function LinesDemo() {
   const [debug, setDebug] = useState(false);
   const [thickness, setThickness] = useState(0.75);
   const [joined, setJoined] = useState(true);
@@ -142,4 +142,4 @@ function LinesStripDemo() {
 }
 // #END EXAMPLE
 
-export default LinesStripDemo;
+export default LinesDemo;

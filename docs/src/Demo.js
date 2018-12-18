@@ -47,7 +47,7 @@ const Container = styled.div`
           outline: 0;
         }
         &::-webkit-slider-thumb {
-          -webkit-appearance: none;
+          appearance: none;
           height: 12px;
           width: 28px;
           border-radius: 6px;

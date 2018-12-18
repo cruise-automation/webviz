@@ -6,9 +6,10 @@
 
 import React, { useState } from "react";
 import { Route, Link, NavLink, Redirect } from "react-router-dom";
-import routes, { componentList } from "./routes";
 import styled from "styled-components";
+
 import Logo from "./Logo";
+import routes, { componentList } from "./routes";
 
 const SideBar = styled.aside`
   width: 240px;
@@ -118,8 +119,7 @@ function DefaultMain({ name, ...rest }) {
 }
 
 const Docs = (props) => {
-  console.log(props);
-  const [isMobileNavOpen, toggleMobileNav] = useState(0);
+  const [isMobileNavOpen, toggleMobileNav] = useState(false);
 
   return (
     <React.Fragment>

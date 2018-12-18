@@ -4,20 +4,21 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from "react";
 import { MDXProvider } from "@mdx-js/tag";
-import { BrowserRouter as Router, Route } from "react-router-dom";
-import Landing from "./Landing";
+import React from "react";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+
 import Docs from "./Docs";
+import Landing from "./Landing";
 
 export default function App() {
   return (
     <MDXProvider components={{}}>
       <Router>
-        <React.Fragment>
+        <Switch>
+          <Route path="/docs" component={Docs} />
           <Route exact path="/" component={Landing} />
-          <Route path="/docs" children={({ match }) => (match ? <Docs /> : null)} />
-        </React.Fragment>
+        </Switch>
       </Router>
     </MDXProvider>
   );

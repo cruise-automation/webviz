@@ -4,13 +4,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from 'react';
-import Logo from './Logo';
-import styled from 'styled-components';
-import GithubLogo from './GithubLogo';
-import CruiseLogo from './CruiseLogo';
-import { Link } from 'react-router-dom';
-import Demo from './Demo';
+import React from "react";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+
+import CruiseLogo from "./CruiseLogo";
+import Demo from "./Demo";
+import GithubLogo from "./GithubLogo";
+import Logo from "./Logo";
 
 const OuterContainer = styled.div`
   padding: 50px;
@@ -129,7 +130,7 @@ const Landing = () => (
         <DocsFooterLink to="/docs" className="monospace">
           Get started →
         </DocsFooterLink>
-        <a href="https://getcruise.com" target="_blank" style={{ color: 'currentColor' }}>
+        <a href="https://getcruise.com" target="_blank" rel="noopener noreferrer" style={{ color: "currentColor" }}>
           <CruiseLogo height={20} />
         </a>
       </Footer>

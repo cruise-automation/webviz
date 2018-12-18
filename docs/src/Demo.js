@@ -5,8 +5,9 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { useState } from "react";
-import WorldviewCodeEditor from "./jsx/WorldviewCodeEditor";
 import styled from "styled-components";
+
+import WorldviewCodeEditor from "./jsx/WorldviewCodeEditor";
 
 const Container = styled.div`
   display: flex;
@@ -40,7 +41,7 @@ const Container = styled.div`
       input[type="range"] {
         width: 120px;
         margin-right: 20px;
-        -webkit-appearance: none;
+        appearance: none;
         background: transparent;
         &:focus {
           outline: 0;
@@ -77,7 +78,7 @@ const Container = styled.div`
   }
 `;
 
-const HelloWorldview = () => {
+const HelloWorldView = () => {
   const [numSpheres, setNumSpheres] = useState(1000);
   const [distance, setDistance] = useState(150);
 
@@ -123,7 +124,7 @@ const HelloWorldview = () => {
       </Container>
       <WorldviewCodeEditor
         height={700}
-        code={`function HelloWorldview() {
+        code={`function HelloWorldView() {
   const getRandom = (min, max) => Math.floor(Math.random() * max) + min;
 
   return (
@@ -160,4 +161,4 @@ const HelloWorldview = () => {
   );
 };
 
-export default HelloWorldview;
+export default HelloWorldView;

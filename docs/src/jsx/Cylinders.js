@@ -6,7 +6,6 @@
 
 import React, { useState } from "react";
 
-import ConeControls from "./ConeControls";
 import useRange from "./useRange";
 import { p } from "./utils";
 import Worldview, { Cylinders, Axes, DEFAULT_CAMERA_STATE } from "regl-worldview";
@@ -14,9 +13,9 @@ import Worldview, { Cylinders, Axes, DEFAULT_CAMERA_STATE } from "regl-worldview
 // #BEGIN EXAMPLE
 function CylindersDemo() {
   const range = useRange();
-  const [scaleX, setScaleX] = useState(3);
-  const [scaleY, setScaleY] = useState(3);
-  const [scaleZ, setScaleZ] = useState(10);
+  const [scaleX] = useState(3);
+  const [scaleY] = useState(3);
+  const [scaleZ] = useState(10);
   const marker = {
     pose: {
       orientation: { x: 0, y: 0, z: 0, w: 1 },

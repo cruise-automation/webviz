@@ -6,7 +6,7 @@
 
 import { MDXProvider } from "@mdx-js/tag";
 import React from "react";
-import { BrowserRouter as Router, Route, Redirect, Switch } from "react-router-dom";
+import { HashRouter as Router, Route, Redirect, Switch } from "react-router-dom";
 
 import Docs from "./Docs";
 import Landing from "./Landing";

@@ -137,8 +137,8 @@ function CameraState() {
         setOrientationY={setOrientationY}
         setOrientationZ={setOrientationZ}
       />
-      <div style={{ display: "flex", flexDirection: "row" }}>
-        <div style={{ flex: "1 1 0", overflow: "hidden", height: 500 }}>
+      <div style={{ display: "flex", height: 500, overflow: "hidden" }}>
+        <div style={{ flex: "1 1 0" }}>
           <Worldview
             hideDebug={true}
             cameraState={cameraState}
@@ -172,7 +172,7 @@ function CameraState() {
           </Worldview>
         </div>
 
-        <div style={{ flex: "1 1 0", overflow: "hidden", height: 500 }}>
+        <div style={{ flex: "1 1 0" }}>
           <Worldview
             hideDebug={true}
             defaultCameraState={{

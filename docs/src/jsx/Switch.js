@@ -12,6 +12,7 @@ import styled from "styled-components";
 const StyledSwitchWrapper = styled.div`
   display: inline-flex;
   align-items: center;
+  margin: 4px 0;
 `;
 const StyledSwitch = styled.label`
   position: relative;
@@ -29,7 +30,7 @@ const StyledSlider = styled.span`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
+  background-color: #555;
   -webkit-transition: 0.4s;
   transition: 0.4s;
   border-radius: 9px;
@@ -82,7 +83,11 @@ export default function Switch({ on, onChange, label, disabled, renderText }: Pr
         <StyledInput disabled={disabled} type="checkbox" checked={on} onChange={disabled ? undefined : onChange} />
         <StyledSlider disabled={disabled} />
       </StyledSwitch>
-      {label && <span style={{ margin: "0 0.5rem" }}>{label} </span>}
+      {label && (
+        <span style={{ margin: "0 0.5rem", fontSize: "0.75rem" }} className="monospace">
+          {label}{" "}
+        </span>
+      )}
       {renderText && renderText(on)}
     </StyledSwitchWrapper>
   );

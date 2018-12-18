@@ -103,6 +103,9 @@ function LinesDemo() {
           position: "absolute",
           top: 0,
           right: 0,
+          width: 200,
+          display: "flex",
+          flexDirection: "column",
         }}
         thickness={thickness}
         setThickness={setThickness}

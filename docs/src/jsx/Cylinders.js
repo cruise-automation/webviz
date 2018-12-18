@@ -28,22 +28,6 @@ function CylindersDemo() {
 
   return (
     <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
-      <ConeControls
-        style={{
-          position: "absolute",
-          right: 0,
-          top: 0,
-        }}
-        min={0.5}
-        max={20}
-        step={1}
-        scaleX={scaleX}
-        setScaleX={setScaleX}
-        scaleY={scaleY}
-        setScaleY={setScaleY}
-        scaleZ={scaleZ}
-        setScaleZ={setScaleZ}
-      />
       <Cylinders>{[marker]}</Cylinders>
       <Axes />
     </Worldview>

@@ -25,17 +25,16 @@ function PointsDemo() {
   };
 
   return (
-    <div style={{ height: 500 }}>
-      <Worldview
-        defaultCameraState={{
-          ...DEFAULT_CAMERA_STATE,
-          perspective: true,
-          distance: 20,
-          targetOffset: [6, 10, 0],
-        }}>
-        <Points>{[marker]}</Points>
-      </Worldview>
-    </div>
+    <Worldview
+      defaultCameraState={{
+        ...DEFAULT_CAMERA_STATE,
+        perspective: true,
+        distance: 20,
+        targetOffset: [6, 10, 0],
+      }}
+      hideDebug={true}>
+      <Points>{[marker]}</Points>
+    </Worldview>
   );
 }
 // #END EXAMPLE

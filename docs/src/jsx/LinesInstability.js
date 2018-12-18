@@ -48,17 +48,16 @@ function LinesInstabilityDemo() {
   ];
 
   return (
-    <div style={{ height: 500 }}>
-      <Worldview
-        defaultCameraState={{
-          ...DEFAULT_CAMERA_STATE,
-          perspective: false,
-          target: [-812, 2959.64, 0],
-          distance: 5,
-        }}>
-        <Lines>{markers}</Lines>
-      </Worldview>
-    </div>
+    <Worldview
+      hideDebug={true}
+      defaultCameraState={{
+        ...DEFAULT_CAMERA_STATE,
+        perspective: false,
+        target: [-812, 2959.64, 0],
+        distance: 5,
+      }}>
+      <Lines>{markers}</Lines>
+    </Worldview>
   );
 }
 // #END EXAMPLE

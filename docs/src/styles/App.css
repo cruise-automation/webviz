@@ -12,10 +12,12 @@ body {
   height: 100%;
   max-height: 100%;
   max-width: 100%;
-  font-family: sans-serif;
-  font-size: 1rem;
   color: #f7f7f3;
   background: #1f1e27;
+}
+
+.monospace {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
 .react-live-error {
@@ -43,7 +45,7 @@ body {
 }
 
 .markdown-body code {
-  background-color: #6e51ee80;
+  background-color: rgba(0, 0, 0, 0.5);
   color: #f7f7f3;
 }
 
@@ -53,6 +55,10 @@ body {
 
 .prism-code {
   margin: 0 !important;
+}
+
+.react-live pre.prism-code {
+  padding: 16px;
 }
 
 .Select {

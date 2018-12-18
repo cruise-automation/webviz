@@ -31,16 +31,15 @@ function SpheresInstanceColorDemo() {
     },
   };
   return (
-    <div style={{ height: 500 }}>
-      <Worldview
-        defaultCameraState={{
-          ...DEFAULT_CAMERA_STATE,
-          perspective: true,
-          target: [20, 20, 100],
-        }}>
-        <Spheres>{[marker]}</Spheres>
-      </Worldview>
-    </div>
+    <Worldview
+      defaultCameraState={{
+        ...DEFAULT_CAMERA_STATE,
+        perspective: true,
+        target: [20, 20, 100],
+      }}
+      hideDebug={true}>
+      <Spheres>{[marker]}</Spheres>
+    </Worldview>
   );
 }
 // #END EXAMPLE

@@ -32,11 +32,9 @@ function SpheresSingleDemo() {
   ];
 
   return (
-    <div style={{ height: 500 }}>
-      <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
-        <Spheres>{markers}</Spheres>
-      </Worldview>
-    </div>
+    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+      <Spheres>{markers}</Spheres>
+    </Worldview>
   );
 }
 // #END EXAMPLE

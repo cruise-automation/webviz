@@ -25,7 +25,7 @@ export function grid() {
     frag: `
       precision mediump float;
       void main () {
-        gl_FragColor = vec4(1., 1., 1., 1.);
+        gl_FragColor = vec4(.3, .3, .3, 1.);
       }
     `,
     primitive: "lines",

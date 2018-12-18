@@ -4,9 +4,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState } from 'react';
-import WorldviewCodeEditor from './jsx/WorldviewCodeEditor';
-import styled from 'styled-components';
+import React, { useState } from "react";
+import WorldviewCodeEditor from "./jsx/WorldviewCodeEditor";
+import styled from "styled-components";
 
 const Container = styled.div`
   display: flex;
@@ -37,7 +37,7 @@ const Container = styled.div`
       font-size: 16px;
       color: #edcc28;
 
-      input[type='range'] {
+      input[type="range"] {
         width: 120px;
         margin-right: 20px;
         -webkit-appearance: none;
@@ -127,34 +127,32 @@ const HelloWorldview = () => {
   const getRandom = (min, max) => Math.floor(Math.random() * max) + min;
 
   return (
-    <div style={{ height: 700 }}>
-      <Worldview
-        defaultCameraState={{
-          distance: ${distance},
-          phi: Math.PI / 4,
-          target: [0, 0, 0],
-          targetOffset: [0, 0, 0],
-          targetOrientation: [0, 0, 0, 1],
-          thetaOffset: 0,
-          perspective: true 
-        }}
-        hideDebug={true}>
-        <Spheres>
-          {new Array(${numSpheres}).fill().map((_, i) => ({
-            pose: {
-              orientation: { x: 0, y: 0, z: 0, w: 0 },
-              position: { 
-                x: getRandom(-50, 100), 
-                y: getRandom(-50, 100), 
-                z: getRandom(-50, 100) 
-              },
+    <Worldview
+      defaultCameraState={{
+        distance: ${distance},
+        phi: Math.PI / 4,
+        target: [0, 0, 0],
+        targetOffset: [0, 0, 0],
+        targetOrientation: [0, 0, 0, 1],
+        thetaOffset: 0,
+        perspective: true 
+      }}
+      hideDebug={true}>
+      <Spheres>
+        {new Array(${numSpheres}).fill().map((_, i) => ({
+          pose: {
+            orientation: { x: 0, y: 0, z: 0, w: 0 },
+            position: { 
+              x: getRandom(-50, 100), 
+              y: getRandom(-50, 100), 
+              z: getRandom(-50, 100) 
             },
-            scale: { x: 1, y: 1, z: 1 },
-            color: { r: 1, g: 1, b: 1, a: 0.85 },
-          }))}
-        </Spheres>
-      </Worldview>
-    </div>
+          },
+          scale: { x: 1, y: 1, z: 1 },
+          color: { r: 1, g: 1, b: 1, a: 0.85 },
+        }))}
+      </Spheres>
+    </Worldview>
   );
 }`}
       />

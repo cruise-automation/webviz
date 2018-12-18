@@ -5,21 +5,16 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-
-import CameraStateInfo from "./CameraStateInfo";
 import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function CameraStateUncontrolled() {
   const cameraState = { ...DEFAULT_CAMERA_STATE, perspective: true };
   return (
-    <div style={{ height: 500 }}>
-      <CameraStateInfo cameraState={cameraState} />
-      <Worldview defaultCameraState={cameraState}>
-        <Grid />
-        <Axes />
-      </Worldview>
-    </div>
+    <Worldview defaultCameraState={cameraState} hideDebug={true}>
+      <Grid />
+      <Axes />
+    </Worldview>
   );
 }
 // #END EXAMPLE

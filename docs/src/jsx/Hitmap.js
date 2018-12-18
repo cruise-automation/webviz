@@ -95,73 +95,71 @@ function HitmapDemo() {
   });
 
   return (
-    <div style={{ height: 500 }}>
-      <Worldview
-        cameraState={cameraState}
-        onCameraStateChange={(cameraState) => {
-          if (!enableAutoRotate) {
-            setCameraState(cameraState);
+    <Worldview
+      cameraState={cameraState}
+      onCameraStateChange={(cameraState) => {
+        if (!enableAutoRotate) {
+          setCameraState(cameraState);
+        }
+      }}
+      onClick={(e, arg) => {
+        const clickedId = arg && arg.clickedObjectId;
+        if (!clickedId) {
+          return;
+        }
+        if (clickedIds.has(clickedId)) {
+          clickedIds.delete(clickedId);
+        } else {
+          clickedIds.add(clickedId);
+        }
+
+        setClickedIds(clickedIds);
+      }}>
+      <FloatingBox>
+        <div>{clickedIds.size === 0 && "click an object"}</div>
+        <button style={{ marginBottom: 4 }} onClick={() => setEnableAutoRotate(!enableAutoRotate)}>
+          {enableAutoRotate ? "Disable Auto Rotate" : "Enable Auto Rotate"}
+        </button>
+        {clickedIds.size > 0 && <button onClick={() => setClickedIds(new Set())}>Clear Text</button>}
+      </FloatingBox>
+      <Cubes getHitmapId={getHitmapId}>{cubes}</Cubes>
+      <Spheres getHitmapId={getHitmapId}>{spheres}</Spheres>
+      <Overlay
+        renderItem={({ item, coordinates, dimension: { width, height } }) => {
+          if (!coordinates) {
+            return null;
           }
-        }}
-        onClick={(e, arg) => {
-          const clickedId = arg && arg.clickedObjectId;
-          if (!clickedId) {
-            return;
-          }
-          if (clickedIds.has(clickedId)) {
-            clickedIds.delete(clickedId);
-          } else {
-            clickedIds.add(clickedId);
+          const [left, top] = coordinates;
+          if (left < -10 || top < -10 || left > width + 10 || top > height + 10) {
+            return null; // Don't render anything that's too far outside of the canvas
           }
 
-          setClickedIds(clickedIds);
+          const {
+            text,
+            info: { color, title },
+          } = item;
+          return (
+            <StyledContainer
+              key={item.id}
+              style={{
+                transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
+              }}>
+              <h2 style={{ color: getCSSColor(color), fontSize: "2rem" }}>{title}</h2>
+              <div>{text}</div>
+              <a
+                style={{ pointerEvents: "visible" }}
+                href="https://google.com/"
+                target="_blank"
+                rel="noopener noreferrer">
+                A custom link
+              </a>
+            </StyledContainer>
+          );
         }}>
-        <FloatingBox>
-          <div>{clickedIds.size === 0 && "click an object"}</div>
-          <button style={{ marginBottom: 4 }} onClick={() => setEnableAutoRotate(!enableAutoRotate)}>
-            {enableAutoRotate ? "Disable Auto Rotate" : "Enable Auto Rotate"}
-          </button>
-          {clickedIds.size > 0 && <button onClick={() => setClickedIds(new Set())}>Clear Text</button>}
-        </FloatingBox>
-        <Cubes getHitmapId={getHitmapId}>{cubes}</Cubes>
-        <Spheres getHitmapId={getHitmapId}>{spheres}</Spheres>
-        <Overlay
-          renderItem={({ item, coordinates, dimension: { width, height } }) => {
-            if (!coordinates) {
-              return null;
-            }
-            const [left, top] = coordinates;
-            if (left < -10 || top < -10 || left > width + 10 || top > height + 10) {
-              return null; // Don't render anything that's too far outside of the canvas
-            }
-
-            const {
-              text,
-              info: { color, title },
-            } = item;
-            return (
-              <StyledContainer
-                key={item.id}
-                style={{
-                  transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
-                }}>
-                <h2 style={{ color: getCSSColor(color), fontSize: "2rem" }}>{title}</h2>
-                <div>{text}</div>
-                <a
-                  style={{ pointerEvents: "visible" }}
-                  href="https://google.com/"
-                  target="_blank"
-                  rel="noopener noreferrer">
-                  A custom link
-                </a>
-              </StyledContainer>
-            );
-          }}>
-          {textMarkers}
-        </Overlay>
-        <Axes />
-      </Worldview>
-    </div>
+        {textMarkers}
+      </Overlay>
+      <Axes />
+    </Worldview>
   );
 }
 // #END EXAMPLE

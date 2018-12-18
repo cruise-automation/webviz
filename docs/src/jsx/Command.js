@@ -54,7 +54,7 @@ Triangle.command = () => {
 function CommandDemo() {
   return (
     <div style={{ height: 500 }}>
-      <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
+      <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
         <Triangle color={[0, 0, 1, 1]} />
       </Worldview>
     </div>

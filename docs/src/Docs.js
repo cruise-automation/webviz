@@ -4,11 +4,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState } from 'react';
-import { Route, Link, Redirect } from 'react-router-dom';
-import routes, { componentList } from './routes';
-import styled from 'styled-components';
-import Logo from './Logo';
+import React, { useState } from "react";
+import { Route, Link, NavLink, Redirect } from "react-router-dom";
+import routes, { componentList } from "./routes";
+import styled from "styled-components";
+import Logo from "./Logo";
 
 const SideBar = styled.aside`
   width: 240px;
@@ -45,7 +45,7 @@ const Navigation = styled.ul`
   list-style-type: none;
   width: 100%;
   @media only screen and (max-width: 680px) {
-    display: ${(props) => (props.isMobileNavOpen ? 'block' : 'none')};
+    display: ${(props) => (props.isMobileNavOpen ? "block" : "none")};
   }
 `;
 
@@ -64,8 +64,11 @@ const Section = styled.li`
     margin-bottom: 0.25rem;
     a {
       color: #f7f7f3;
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
       font-size: 14px;
+      &.active {
+        color: #a395e2;
+      }
     }
   }
 
@@ -125,18 +128,21 @@ const Docs = (props) => {
           <Logo width={160} />
         </LogoLink>
         <MobileNavigationToggle onClick={() => toggleMobileNav(!isMobileNavOpen)}>
-          {isMobileNavOpen ? '↑' : '↓'}
+          {isMobileNavOpen ? "↑" : "↓"}
         </MobileNavigationToggle>
         <Navigation isMobileNavOpen={isMobileNavOpen}>
           {routes.map((route) => (
             <Section key={route.path}>
-              <div>{route.name}</div>
+              {route.name && <div>{route.name}</div>}
               <ul>
                 {route.subRoutes.map((subRoute) => (
                   <li key={subRoute.path}>
-                    <Link to={`${route.path}${subRoute.path}`} onClick={() => toggleMobileNav(false)}>
+                    <NavLink
+                      to={`${route.path}${subRoute.path}`}
+                      onClick={() => toggleMobileNav(false)}
+                      activeClassName="active">
                       {subRoute.name || subRoute.main}
-                    </Link>
+                    </NavLink>
                   </li>
                 ))}
               </ul>

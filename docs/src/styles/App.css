@@ -17,7 +17,7 @@ body {
 }
 
 .monospace {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
 .react-live-error {
@@ -45,7 +45,7 @@ body {
 }
 
 .markdown-body code {
-  background-color: #6e51ee80;
+  background-color: rgba(0, 0, 0, 0.5);
   color: #f7f7f3;
 }
 

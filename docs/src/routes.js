@@ -47,11 +47,11 @@ export const componentList = {
 };
 
 const ROUTE_CONFIG = [
+  { name: "Guides", subRouteNames: ["Quick Start"] },
   {
     name: "Examples",
     subRouteNames: ["Basic Example", "Composition", "Dynamic Commands", "Interactivity"],
   },
-  { name: "Guides", subRouteNames: ["Quick Start"] },
   {
     name: "API",
     subRouteNames: [

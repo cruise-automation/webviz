@@ -27,28 +27,26 @@ function ConesDemo() {
   };
 
   return (
-    <div style={{ height: 500 }}>
-      <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
-        <ConeControls
-          style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-          }}
-          min={0.5}
-          max={20}
-          step={1}
-          scaleX={scaleX}
-          setScaleX={setScaleX}
-          scaleY={scaleY}
-          setScaleY={setScaleY}
-          scaleZ={scaleZ}
-          setScaleZ={setScaleZ}
-        />
-        <Cones>{[marker]}</Cones>
-        <Axes />
-      </Worldview>
-    </div>
+    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+      <ConeControls
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+        }}
+        min={0.5}
+        max={20}
+        step={1}
+        scaleX={scaleX}
+        setScaleX={setScaleX}
+        scaleY={scaleY}
+        setScaleY={setScaleY}
+        scaleZ={scaleZ}
+        setScaleZ={setScaleZ}
+      />
+      <Cones>{[marker]}</Cones>
+      <Axes />
+    </Worldview>
   );
 }
 // #END EXAMPLE

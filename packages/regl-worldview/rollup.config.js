@@ -10,7 +10,7 @@ import copy from "rollup-plugin-copy";
 import resolve from "rollup-plugin-node-resolve";
 import peerDepsExternal from "rollup-plugin-peer-deps-external";
 import replace from "rollup-plugin-replace";
-import { uglify } from "rollup-plugin-uglify";
+import { terser } from "rollup-plugin-terser";
 
 import pkg from "./package.json";
 
@@ -47,7 +47,7 @@ export default [
       babel(getBabelOptions({ useESModules: true })),
       commonjs({ include: "node_modules/**" }),
       replace({ "process.env.NODE_ENV": JSON.stringify("development") }),
-      uglify(),
+      terser(),
     ],
   },
   {

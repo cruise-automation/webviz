@@ -5,6 +5,6 @@
   "devDependencies": {
     "lerna": "^3.4.3"
   },
-  "version": "0.0.4-alpha",
+  "version": "0.0.5",
   "npmClient": "npm"
 }

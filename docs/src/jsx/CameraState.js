@@ -8,7 +8,6 @@ import { quat, vec3 } from "gl-matrix";
 import React, { useState } from "react";
 
 import CameraStateControls from "./CameraStateControls";
-import CameraStateInfo from "./CameraStateInfo";
 import { p, q } from "./utils";
 import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors } from "regl-worldview";
 
@@ -138,9 +137,10 @@ function CameraState() {
         setOrientationY={setOrientationY}
         setOrientationZ={setOrientationZ}
       />
-      <div style={{ display: "flex", flexDirection: "row" }}>
-        <div style={{ flex: "1 1 0", overflow: "hidden", height: 500 }}>
+      <div style={{ display: "flex", height: 500, overflow: "hidden" }}>
+        <div style={{ flex: "1 1 0" }}>
           <Worldview
+            hideDebug={true}
             cameraState={cameraState}
             onCameraStateChange={({
               perspective,
@@ -169,12 +169,12 @@ function CameraState() {
             <Spheres>{[sphereMarker]}</Spheres>
             <Grid count={10} />
             <Axes />
-            <CameraStateInfo cameraState={cameraState} />
           </Worldview>
         </div>
 
-        <div style={{ flex: "1 1 0", overflow: "hidden", height: 500 }}>
+        <div style={{ flex: "1 1 0" }}>
           <Worldview
+            hideDebug={true}
             defaultCameraState={{
               perspective: true,
               distance: 150,

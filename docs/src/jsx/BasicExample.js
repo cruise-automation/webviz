@@ -27,7 +27,7 @@ function BasicExample() {
         height: 500,
         width: "100%",
       }}>
-      <Worldview defaultCameraState={DEFAULT_CAMERA_STATE}>
+      <Worldview defaultCameraState={DEFAULT_CAMERA_STATE} hideDebug={true}>
         <Spheres>{markers}</Spheres>
       </Worldview>
     </div>

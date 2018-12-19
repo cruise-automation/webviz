@@ -29,20 +29,20 @@ const pose = {
 const xAxis = {
   pose,
   points: xAxisPoints,
-  scale: { x: 1, y: 1, z: 1 },
-  color: { r: 1, g: 0, b: 0, a: 1 },
+  scale: { x: 0.5, y: 0.5, z: 0.5 },
+  color: { r: 0.95, g: 0.26, b: 0.4, a: 1 },
 };
 const yAxis = {
   pose,
   points: yAxisPoints,
-  scale: { x: 1, y: 1, z: 1 },
-  color: { r: 0, g: 1, b: 0, a: 1 },
+  scale: { x: 0.5, y: 0.5, z: 0.5 },
+  color: { r: 0.02, g: 0.82, b: 0.49, a: 1 },
 };
 const zAxis = {
   pose,
   points: zAxisPoints,
-  scale: { x: 1, y: 1, z: 1 },
-  color: { r: 0, g: 0, b: 1, a: 1 },
+  scale: { x: 0.5, y: 0.5, z: 0.5 },
+  color: { r: 0.11, g: 0.51, b: 0.92, a: 1 },
 };
 
 type Axis = {

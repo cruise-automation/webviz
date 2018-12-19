@@ -14,11 +14,9 @@ import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 function SpheresInstancedDemo() {
   const range = useRange();
   return (
-    <div style={{ height: 500 }}>
-      <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
-        <Spheres>{[buildSphereList(range)]}</Spheres>
-      </Worldview>
-    </div>
+    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+      <Spheres>{[buildSphereList(range)]}</Spheres>
+    </Worldview>
   );
 }
 // #END EXAMPLE

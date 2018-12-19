@@ -113,6 +113,6 @@ export const scope = {
   withPose,
 };
 
-export default function WorldviewCodeEditor({ code, noInline, scope: customScope = {} }) {
-  return <CodeEditor code={code} scope={{ ...customScope, ...scope }} noInline={noInline} />;
+export default function WorldviewCodeEditor({ code, noInline, height, scope: customScope = {} }) {
+  return <CodeEditor {...{ code, noInline, height }} scope={{ ...customScope, ...scope }} />;
 }

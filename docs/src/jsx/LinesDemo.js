@@ -92,52 +92,54 @@ function LinesDemo() {
   });
 
   return (
-    <div style={{ height: 500 }}>
-      <Worldview
-        defaultCameraState={{
-          ...DEFAULT_CAMERA_STATE,
-          perspective: true,
-        }}>
-        <LineControls
-          style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-          }}
-          thickness={thickness}
-          setThickness={setThickness}
-          debug={debug}
-          setDebug={setDebug}
-          joined={joined}
-          setJoined={setJoined}
-          scaleInvariant={scaleInvariant}
-          setScaleInvariant={setScaleInvariant}
-          closed={closed}
-          setClosed={setClosed}
-          monochrome={monochrome}
-          setMonochrome={setMonochrome}
-        />
-        <Lines>{markers}</Lines>
-        {debug && (
-          <Points>
-            {[
-              {
-                points: [p(0)],
-                scale: p(3),
-                pose,
-                color: { r: 0, g: 1, b: 0, a: 1 },
-              },
-              {
-                points: pts,
-                scale: p(3),
-                color: { r: 1, g: 1, b: 1, a: 1 },
-                pose,
-              },
-            ]}
-          </Points>
-        )}
-      </Worldview>
-    </div>
+    <Worldview
+      defaultCameraState={{
+        ...DEFAULT_CAMERA_STATE,
+        perspective: true,
+      }}
+      hideDebug={true}>
+      <LineControls
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          width: 200,
+          display: "flex",
+          flexDirection: "column",
+        }}
+        thickness={thickness}
+        setThickness={setThickness}
+        debug={debug}
+        setDebug={setDebug}
+        joined={joined}
+        setJoined={setJoined}
+        scaleInvariant={scaleInvariant}
+        setScaleInvariant={setScaleInvariant}
+        closed={closed}
+        setClosed={setClosed}
+        monochrome={monochrome}
+        setMonochrome={setMonochrome}
+      />
+      <Lines>{markers}</Lines>
+      {debug && (
+        <Points>
+          {[
+            {
+              points: [p(0)],
+              scale: p(3),
+              pose,
+              color: { r: 0, g: 1, b: 0, a: 1 },
+            },
+            {
+              points: pts,
+              scale: p(3),
+              color: { r: 1, g: 1, b: 1, a: 1 },
+              pose,
+            },
+          ]}
+        </Points>
+      )}
+    </Worldview>
   );
 }
 // #END EXAMPLE

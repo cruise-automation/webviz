@@ -47,11 +47,11 @@ export const componentList = {
 };
 
 const ROUTE_CONFIG = [
+  { name: "Guides", subRouteNames: ["Quick Start"] },
   {
     name: "Examples",
     subRouteNames: ["Basic Example", "Composition", "Dynamic Commands", "Interactivity"],
   },
-  { name: "Guides", subRouteNames: ["Quick Start"] },
   {
     name: "API",
     subRouteNames: [
@@ -87,14 +87,14 @@ function getComponentName(str) {
 export default ROUTE_CONFIG.map(({ name, subRouteNames }) => {
   const componentName = getComponentName(name);
   return {
-    path: `/${componentName}`,
+    path: `/docs/${componentName.toLowerCase()}`,
     name: componentName,
     exact: true,
     subRoutes: subRouteNames.map((subRouteName, idx) => {
       const subComponentName = getComponentName(subRouteName);
       return {
         exact: idx !== 0,
-        path: `/${subComponentName}`,
+        path: `/${subComponentName.toLowerCase()}`,
         name: subRouteName,
         main: subComponentName,
       };

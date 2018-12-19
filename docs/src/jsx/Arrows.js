@@ -26,11 +26,9 @@ function ArrowsDemo() {
   };
 
   return (
-    <div style={{ height: 500 }}>
-      <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
-        <Arrows>{[poseArrow, pointArrow]}</Arrows>
-      </Worldview>
-    </div>
+    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+      <Arrows>{[poseArrow, pointArrow]}</Arrows>
+    </Worldview>
   );
 }
 // #END EXAMPLE

@@ -7,24 +7,34 @@
 import React from "react";
 import styled from "styled-components";
 
-const Wrapper = styled.span`
-  padding: 4px 8px;
+const StyledInput = styled.label`
   display: inline-flex;
   flex-direction: column;
-  min-width: 120px;
-`;
+  width: 100%;
+  margin: 0 8px 6px 0;
 
-const Label = styled.label`
-  display: inline-block;
-  margin-bottom: 0;
-  font-size: 0.75rem;
-  font-weight: bold;
-  text-transform: uppercase;
+  div {
+    display: inline-block;
+    margin-bottom: 4px;
+    font-size: 0.75rem;
+  }
+
+  input {
+    appearance: none;
+    background: black;
+    border-radius: 3px;
+    border: 0;
+    outline: 0;
+    color: white;
+    font-size: 0.9rem !important;
+    padding: 2px 5px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace !important;
+  }
 `;
 
 export default function InputNumber({ value, onChange, min = 0.5, max = 20, step = 0.1, label = "", horizontal }) {
   return (
-    <Wrapper
+    <StyledInput
       style={
         horizontal
           ? {
@@ -33,10 +43,11 @@ export default function InputNumber({ value, onChange, min = 0.5, max = 20, step
             }
           : {}
       }>
-      <Label style={{ display: "inline-block", marginRight: 4 }}>{label}</Label>
+      <div className="monospace">{label}</div>
       <input
         type="number"
         name="scaleX"
+        className="monospace"
         min={min}
         max={max}
         step={step}
@@ -47,6 +58,6 @@ export default function InputNumber({ value, onChange, min = 0.5, max = 20, step
           onChange(newVal);
         }}
       />
-    </Wrapper>
+    </StyledInput>
   );
 }

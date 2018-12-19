@@ -40,11 +40,9 @@ function TrianglesDemo() {
   };
 
   return (
-    <div style={{ height: 500 }}>
-      <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
-        <Triangles>{[marker]}</Triangles>
-      </Worldview>
-    </div>
+    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+      <Triangles>{[marker]}</Triangles>
+    </Worldview>
   );
 }
 // #END EXAMPLE

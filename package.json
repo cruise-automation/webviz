@@ -63,6 +63,7 @@
     "rollup-plugin-node-resolve": "^3.4.0",
     "rollup-plugin-peer-deps-external": "^2.2.0",
     "rollup-plugin-replace": "^2.1.0",
+    "rollup-plugin-terser": "^3.0.0",
     "sass-loader": "^7.1.0",
     "seedrandom": "^2.4.4",
     "storybook-chrome-screenshot": "^1.4.0",

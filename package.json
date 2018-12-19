@@ -95,9 +95,10 @@
     "docs": "webpack-dev-server",
     "docs-deploy": "gh-pages -d docs/public",
     "publish": "lerna run clean && lerna run build && lerna publish",
-    "screenshot": "NODE_ENV=development storybook-chrome-screenshot -c stories --parallel 8",
-    "screenshot-ci": "npm run screenshot --puppeteer-launch-config '{\"executablePath\": \"/usr/bin/google-chrome\", \"headless\": false, \"args\":[\"--use-gl=swiftshader\", \"--no-sandbox\",\"--disable-setuid-sandbox\", \"--disable-dev-shm-usage\", \"--headless\", \"--mute-audio\"]}'",
-    "screenshot-debug": "npm run screenshot --puppeteer-launch-config '{\"headless\": false}' --parallel 1 --debug"
+    "screenshot": "NODE_ENV=development storybook-chrome-screenshot -c stories --parallel 8 --inject-files stories/injected.js",
+    "screenshot-ci": "npm run screenshot -- --puppeteer-launch-config '{\"executablePath\": \"/usr/bin/google-chrome\", \"headless\": false, \"args\":[\"--use-gl=swiftshader\", \"--no-sandbox\",\"--disable-setuid-sandbox\", \"--disable-dev-shm-usage\", \"--headless\", \"--mute-audio\"]}'",
+    "screenshot-debug": "npm run screenshot -- --parallel 1 --debug --puppeteer-launch-config '{\"headless\": false}'",
+    "ci": "npm run install-ci && npm run lint && npm run flow && npm test && npm run build && npm run screenshot-ci"
   },
   "workspaces": [
     "packages/*"

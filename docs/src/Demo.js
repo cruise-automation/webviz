@@ -143,7 +143,7 @@ const HelloWorldview = () => {
       <Spheres>
         {new Array(${numSpheres}).fill().map((_, i) => ({
           pose: {
-            orientation: { x: 0, y: 0, z: 0, w: 0 },
+            orientation: { x: 0, y: 0, z: 0, w: 1 },
             position: {
               x: getRandom(-50, 100),
               y: getRandom(-50, 100),

@@ -16,6 +16,7 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 import Container from "./Container";
 import FloatingBox from "./FloatingBox";
 import hitmapStory, { StyledContainer } from "./hitmap";
+import { p, q, buildMatrix, rng, cube } from "./util";
 import withRange from "./withRange";
 
 import {
@@ -32,10 +33,6 @@ import {
   Triangles,
   DEFAULT_CAMERA_STATE,
 } from "..";
-
-const p = (x, y = x, z = x) => ({ x, y, z });
-const q = (x, y = x, z = x, w = x) => ({ x, y, z, w });
-let seed = 123; // fixed seed for screenshot tests.
 
 const poseArrowMarker = {
   pose: {
@@ -55,13 +52,14 @@ const linesStory = (markerProps) => {
   const debug = boolean("debug", false);
   const perspective = boolean("is perspective", true);
   const monochrome = boolean("monochrome", false);
+
+  let random = rng;
   button("reset colors", () => {
-    seed = Math.random();
+    random = seedrandom(Math.random());
   });
 
-  const rng = seedrandom(seed);
   const randomColor = () => {
-    return { r: rng(), g: rng(), b: rng(), a: 1 };
+    return { r: random(), g: random(), b: random(), a: 1 };
   };
 
   const points = [
@@ -146,57 +144,6 @@ const linesStory = (markerProps) => {
   );
 };
 
-class Wrapper extends React.Component {
-  render() {
-    const { cubes } = this.props;
-    return (
-      <React.Fragment>
-        <div style={{ position: "absolute", top: 30, left: 30, background: "red" }}>
-          <div>some randomly nested div </div>
-          <Cubes>
-            {cubes.map((c) => {
-              return {
-                ...c,
-                pose: {
-                  ...c.pose,
-                  position: { x: 5, y: 5, z: 5 },
-                },
-                color: { r: 1, g: 0, b: 0, a: 1 },
-              };
-            })}
-          </Cubes>
-        </div>
-        <Cubes>{cubes}</Cubes>
-      </React.Fragment>
-    );
-  }
-}
-
-const cube = (range, id) => {
-  const marker = {
-    id,
-    pose: {
-      orientation: { x: 0.038269, y: -0.01677, z: -0.8394, w: 0.541905 },
-      position: { x: range, y: range, z: range },
-    },
-    scale: p(5, 5),
-    color: { r: 1, g: 0, b: 1, a: 1 },
-  };
-  return marker;
-};
-
-const buildMatrix = (x, y, z, step = 1) => {
-  const result = [];
-  for (let i = 0; i < x; i++) {
-    for (let j = 0; j < y; j++) {
-      for (let k = 0; k < z; k++) {
-        result.push(p(i * step, j * step, k * step));
-      }
-    }
-  }
-  return result;
-};
-
 const buildSphereList = (range) => {
   const coords = buildMatrix(20, 20, 20, 10);
   const marker = {
@@ -214,17 +161,6 @@ const buildSphereList = (range) => {
 storiesOf("Worldview", module)
   .addDecorator(withKnobs)
   .addDecorator(withScreenshot())
-  .add(
-    "<Cubes>",
-    withRange((range) => {
-      const marker = cube(range);
-      return (
-        <Container cameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
-          <Wrapper cubes={[marker]} />
-        </Container>
-      );
-    })
-  )
   .add(
     "<Spheres> - single",
     withRange((range) => {
@@ -266,10 +202,9 @@ storiesOf("Worldview", module)
     "<Spheres> - per-instance colors",
     withRange((range) => {
       const coords = buildMatrix(20, 20, 20, 10);
-      const rng = seedrandom(seed);
       window.colors =
         window.colors ||
-        coords.map((coord, i) => {
+        coords.map(() => {
           return { r: rng(), g: rng(), b: rng(), a: 1 };
         });
 
@@ -472,7 +407,6 @@ storiesOf("Worldview", module)
     })
   )
   .add("<Triangles>", () => {
-    const rng = seedrandom(seed);
     const vertexColors = range(30).map((_, i) => ({
       r: rng(),
       g: rng(),

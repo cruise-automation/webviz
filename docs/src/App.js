@@ -5,16 +5,20 @@
 //  You may not use this file except in compliance with the License.
 
 import { MDXProvider } from "@mdx-js/tag";
+import createHashHistory from "history/createHashHistory";
 import React from "react";
-import { HashRouter as Router, Route, Redirect, Switch } from "react-router-dom";
+import { Router, Route, Redirect, Switch } from "react-router-dom";
 
 import Docs from "./Docs";
 import Landing from "./Landing";
 
+const history = createHashHistory();
+history.listen(() => window.scrollTo(0, 0));
+
 export default function App() {
   return (
     <MDXProvider components={{}}>
-      <Router>
+      <Router history={history}>
         <Switch>
           <Route path="/docs" component={Docs} />
           <Route exact path="/" component={Landing} />

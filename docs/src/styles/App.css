@@ -16,6 +16,13 @@ body {
   background: #1f1e27;
 }
 
+a,
+a:hover,
+a:visited,
+.markdown-body a {
+  color: #22b5ff;
+}
+
 .monospace {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
@@ -47,10 +54,6 @@ body {
 .markdown-body code {
   background-color: rgba(0, 0, 0, 0.5);
   color: #f7f7f3;
-}
-
-.markdown-body a {
-  color: #22b5ff;
 }
 
 .prism-code {

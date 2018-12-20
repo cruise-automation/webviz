@@ -10,7 +10,7 @@ import styled from "styled-components";
 
 import CruiseLogo from "./CruiseLogo";
 import Demo from "./Demo";
-import GithubLogo from "./GithubLogo";
+import GitHubLogo from "./GitHubLogo";
 import Logo from "./Logo";
 
 const OuterContainer = styled.div`
@@ -55,7 +55,7 @@ const Header = styled.div`
   }
 `;
 
-const Flex = styled.div`
+const HeaderLinks = styled.div`
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -78,13 +78,14 @@ const Flex = styled.div`
   }
 `;
 
-const GithubLink = styled.a`
+const GitHubLink = styled.a`
   display: inline-flex;
   align-items: center;
   margin-right: 26px;
 
   svg {
     margin-right: 8px;
+    margin-bottom: 2px;
   }
 `;
 
@@ -108,22 +109,29 @@ const Landing = () => (
         <Logo width={170} />
         <h1 className="monospace">Declarative rendering for interactive scenes</h1>
         <h2>
-          Worldview is a lightweight, extensible 2d and 3d scene renderer built on React and regl. Performance, ease of
-          use, and extensibility are top priorities.
+          Worldview is a lightweight, extensible 2D and 3D scene renderer built on{" "}
+          <a href="https://reactjs.org/" target="_blank" rel="noopener noreferrer">
+            React
+          </a>{" "}
+          and{" "}
+          <a href="http://regl.party/" target="_blank" rel="noopener noreferrer">
+            regl
+          </a>
+          . Performance, ease of use, and extensibility are top priorities.
         </h2>
-        <Flex>
-          <GithubLink
+        <HeaderLinks>
+          <GitHubLink
             href="https://github.com/cruise-automation/webviz"
             className="monospace"
             target="_blank"
             rel="noopener noreferrer">
-            <GithubLogo height={20} />
-            Github
-          </GithubLink>
+            <GitHubLogo width={20} />
+            GitHub
+          </GitHubLink>
           <Link to="/docs" className="monospace">
             Documentation →
           </Link>
-        </Flex>
+        </HeaderLinks>
       </Header>
       <Demo />
       <Footer>

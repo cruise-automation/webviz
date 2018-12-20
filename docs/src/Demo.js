@@ -5,6 +5,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 import WorldviewCodeEditor from "./jsx/WorldviewCodeEditor";
@@ -78,7 +79,7 @@ const Container = styled.div`
   }
 `;
 
-const HelloWorldView = () => {
+const HelloWorldview = () => {
   const [numSpheres, setNumSpheres] = useState(1000);
   const [distance, setDistance] = useState(150);
 
@@ -88,8 +89,8 @@ const HelloWorldView = () => {
         <div>
           <h3 className="monospace">Rendering objects</h3>
           <p>
-            Place objects in the scene by passing them as children of the Worldview component. Objects are automatically
-            batched by type for high performance drawing.
+            Place objects in the scene by passing them as children of the Worldview component. Worldview provides
+            built-in <Link to="/docs">commands</Link> for rendering points, spheres, lines, and more.
           </p>
           <label className="monospace">
             <input
@@ -124,7 +125,7 @@ const HelloWorldView = () => {
       </Container>
       <WorldviewCodeEditor
         height={700}
-        code={`function HelloWorldView() {
+        code={`function HelloWorldview() {
   const getRandom = (min, max) => Math.floor(Math.random() * max) + min;
 
   return (
@@ -136,17 +137,17 @@ const HelloWorldView = () => {
         targetOffset: [0, 0, 0],
         targetOrientation: [0, 0, 0, 1],
         thetaOffset: 0,
-        perspective: true 
+        perspective: true,
       }}
       hideDebug={true}>
       <Spheres>
         {new Array(${numSpheres}).fill().map((_, i) => ({
           pose: {
-            orientation: { x: 0, y: 0, z: 0, w: 0 },
-            position: { 
-              x: getRandom(-50, 100), 
-              y: getRandom(-50, 100), 
-              z: getRandom(-50, 100) 
+            orientation: { x: 0, y: 0, z: 0, w: 1 },
+            position: {
+              x: getRandom(-50, 100),
+              y: getRandom(-50, 100),
+              z: getRandom(-50, 100),
             },
           },
           scale: { x: 1, y: 1, z: 1 },
@@ -161,4 +162,4 @@ const HelloWorldView = () => {
   );
 };
 
-export default HelloWorldView;
+export default HelloWorldview;

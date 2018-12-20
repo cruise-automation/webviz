@@ -31,9 +31,8 @@ const SideBar = styled.aside`
 const LogoLink = styled(Link)`
   padding: 2rem;
   display: block;
-  color: #f7f7f3;
+  color: #f7f7f3 !important;
   &:hover {
-    color: #f7f7f3;
     opacity: 0.5;
   }
 `;
@@ -151,7 +150,7 @@ const Docs = (props) => {
           <Section>
             <li>
               <GithubLink href="https://github.com/cruise-automation/webviz" rel="noopener noreferrer" target="_blank">
-                Github
+                GitHub
               </GithubLink>
             </li>
           </Section>

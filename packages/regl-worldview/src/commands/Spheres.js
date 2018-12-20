@@ -51,7 +51,7 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
   faces.push([pt, prevPt, 1]);
 }
 
-export const spheres = fromGeometry(points, faces);
+const spheres = fromGeometry(points, faces);
 const Spheres = makeCommand<SphereList>("Spheres", spheres);
 
 export default Spheres;

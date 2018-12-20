@@ -10,14 +10,14 @@ export { default as Command, SimpleCommand, makeCommand } from "./Command";
 
 // Primitives
 export { default as Arrows } from "./Arrows";
-export { default as Cones, cones } from "./Cones";
-export { default as Cubes, cubes } from "./Cubes";
-export { default as Cylinders, cylinders } from "./Cylinders";
+export { default as Cones } from "./Cones";
+export { default as Cubes } from "./Cubes";
+export { default as Cylinders } from "./Cylinders";
 export { default as Grid } from "./Grid";
-export { default as Lines, lines } from "./Lines";
-export { default as Points, points } from "./Points";
-export { default as Spheres, spheres } from "./Spheres";
-export { default as Triangles, triangles } from "./Triangles";
+export { default as Lines } from "./Lines";
+export { default as Points } from "./Points";
+export { default as Spheres } from "./Spheres";
+export { default as Triangles } from "./Triangles";
 
 // Composed shapes
 export { default as Axes } from "./Axes";

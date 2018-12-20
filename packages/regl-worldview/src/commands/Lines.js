@@ -220,7 +220,7 @@ function pointsEqual(a, b) {
   return ax === bx && ay === by && az === bz;
 }
 
-export const lines = (regl: any) => {
+const lines = (regl: any) => {
   // The point type attribute, reused for each instance
   const pointTypeBuffer = regl.buffer({
     type: "uint16",
@@ -240,7 +240,13 @@ export const lines = (regl: any) => {
 
   // The buffers used for input position & color data
   const colorBuffer = regl.buffer({ type: "float" });
-  const positionBuffer = regl.buffer({ type: "float" });
+
+  // All invocations of the vertex shader share data from the positions buffer, but with different
+  // offsets. However, when offset and stride are combined, 3 or 4 attributes reading from the same
+  // buffer produces incorrect results on certain Lenovo hardware running Ubuntu. As a workaround,
+  // we upload the same data into two buffers and have only two attributes reading from each buffer.
+  const positionBuffer1 = regl.buffer({ type: "float" });
+  const positionBuffer2 = regl.buffer({ type: "float" });
 
   const command = regl(
     withPose({
@@ -270,25 +276,25 @@ export const lines = (regl: any) => {
           divisor: monochrome || debug ? 0 : 1,
         }),
         positionA: (context, { joined }) => ({
-          buffer: positionBuffer,
+          buffer: positionBuffer1,
           offset: 0,
           stride: (joined ? 1 : 2) * POINT_BYTES,
           divisor: 1,
         }),
         positionB: (context, { joined }) => ({
-          buffer: positionBuffer,
+          buffer: positionBuffer1,
           offset: POINT_BYTES,
           stride: (joined ? 1 : 2) * POINT_BYTES,
           divisor: 1,
         }),
-        positionC: (context, { joined }) => ({
-          buffer: positionBuffer,
+        positionC: (context, { joined, instances }) => ({
+          buffer: positionBuffer2,
           offset: 2 * POINT_BYTES,
           stride: (joined ? 1 : 2) * POINT_BYTES,
           divisor: 1,
         }),
         positionD: (context, { joined }) => ({
-          buffer: positionBuffer,
+          buffer: positionBuffer2,
           offset: 3 * POINT_BYTES,
           stride: (joined ? 1 : 2) * POINT_BYTES,
           divisor: 1,
@@ -358,7 +364,8 @@ export const lines = (regl: any) => {
     const shouldClose = !alreadyClosed && props.closed;
 
     fillPointArray(props.points, alreadyClosed, shouldClose);
-    positionBuffer({ data: pointArray, usage: "dynamic" });
+    positionBuffer1({ data: pointArray, usage: "dynamic" });
+    positionBuffer2({ data: pointArray, usage: "dynamic" });
 
     const monochrome = !(props.colors && props.colors.length);
     let colors;

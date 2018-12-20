@@ -5,6 +5,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
+
 import Worldview, { Triangles, Text, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
@@ -90,21 +91,19 @@ function CompositionDemo() {
   };
 
   return (
-    <div style={{ height: 500 }}>
-      <Worldview
-        defaultCameraState={{
-          ...DEFAULT_CAMERA_STATE,
-          distance: 15,
-          phi: 0,
-          target: [-661, -242, -25],
-          targetOffset: [-0.8, -3.8, 0],
-          targetOrientation: [0, 0, 0, 1],
-          thetaOffset: 9.62,
-        }}>
-        <Triangles>{[stopSignWhiteBaseMarker, stopSignMarker]}</Triangles>
-        <Text>{[labelMarker]}</Text>
-      </Worldview>
-    </div>
+    <Worldview
+      defaultCameraState={{
+        ...DEFAULT_CAMERA_STATE,
+        distance: 15,
+        phi: 0,
+        target: [-661, -242, -25],
+        targetOffset: [-0.8, -3.8, 0],
+        targetOrientation: [0, 0, 0, 1],
+        thetaOffset: 9.62,
+      }}>
+      <Triangles>{[stopSignWhiteBaseMarker, stopSignMarker]}</Triangles>
+      <Text>{[labelMarker]}</Text>
+    </Worldview>
   );
 }
 // #END EXAMPLE

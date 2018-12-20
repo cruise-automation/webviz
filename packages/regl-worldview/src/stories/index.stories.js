@@ -11,6 +11,7 @@ import times from "lodash/times";
 import polygonGenerator from "polygon-generator";
 import React from "react";
 import seedrandom from "seedrandom";
+import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Container from "./Container";
 import FloatingBox from "./FloatingBox";
@@ -159,6 +160,7 @@ const buildSphereList = (range) => {
 
 storiesOf("Worldview", module)
   .addDecorator(withKnobs)
+  .addDecorator(withScreenshot())
   .add(
     "<Spheres> - single",
     withRange((range) => {

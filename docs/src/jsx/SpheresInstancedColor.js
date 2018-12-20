@@ -5,11 +5,11 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 import seedrandom from "seedrandom";
 
 import { seed } from "./constants";
 import { buildMatrix, p, q } from "./utils";
+import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function SpheresInstanceColorDemo() {
@@ -31,16 +31,15 @@ function SpheresInstanceColorDemo() {
     },
   };
   return (
-    <div style={{ height: 500 }}>
-      <Worldview
-        defaultCameraState={{
-          ...DEFAULT_CAMERA_STATE,
-          perspective: true,
-          target: [20, 20, 100],
-        }}>
-        <Spheres>{[marker]}</Spheres>
-      </Worldview>
-    </div>
+    <Worldview
+      defaultCameraState={{
+        ...DEFAULT_CAMERA_STATE,
+        perspective: true,
+        target: [20, 20, 100],
+      }}
+      hideDebug={true}>
+      <Spheres>{[marker]}</Spheres>
+    </Worldview>
   );
 }
 // #END EXAMPLE

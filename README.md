@@ -4,18 +4,19 @@ webviz is a collection of packages for visualizing 2D and 3D views on the web.
 
 ## Documentation
 
+Visit [docs page](https://cruise-automation.github.io/webviz/) to see more guides, examples and APIs.
+
 ## Developing
+
 - `npm run bootstrap` in the root directory to install dependencies
-- `npm link` in the `regl-worldview` directory to symlink the package.
 - `npm run build` to run a single build or `npm run watch` to watch and build
 - `npm run storybook` in the root directory to run storybook
-- `npm link regl-worldview` in the `docs` directory
-- `npm start` in the `docs` directory to run the docs app
+- `npm run docs` to run the docs app
 
 ## Flow
 
-- `npm flow-mono` to set up symlink for flow (reload the editor or recompile the component package if flow can not locate the module)
-- `npm flow-mono-install` to update local flow-typed cache and parallel install in all packages
+- `npm run flow` to run Flow.
+- `npm run flow-typed-rebuild` to update the flow-typed definitions (any time when changing packages).
 
 ## Testing
 
@@ -23,7 +24,7 @@ webviz is a collection of packages for visualizing 2D and 3D views on the web.
 
 ## Publishing
 
-- `lerna run publish` in the root directory
+- `npm run publish` in the root directory
 
 ## Contributing
 

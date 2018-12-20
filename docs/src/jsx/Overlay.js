@@ -5,10 +5,10 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import Worldview, { Overlay, Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 import useRange from "./useRange";
 import { StyledContainer } from "./WorldviewCodeEditor";
+import Worldview, { Overlay, Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function OverlayDemo() {
@@ -39,45 +39,43 @@ function OverlayDemo() {
   }));
 
   return (
-    <div style={{ height: 500 }}>
-      <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
-        <Spheres>{sphereMarkers}</Spheres>
-        <Overlay
-          renderItem={({ item, coordinates, index, dimension: { width, height } }) => {
-            if (!coordinates) {
-              return null;
-            }
-            const [left, top] = coordinates;
-            if (left < -10 || top < -10 || left > width + 10 || top > height + 10) {
-              return null; // Don't render anything that's too far outside of the canvas
-            }
-            const {
-              text,
-              info: { title },
-            } = item;
-            return (
-              <StyledContainer
-                key={index}
-                style={{
-                  transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
-                }}>
-                <h2 style={{ fontSize: "2rem" }}>{title}</h2>
-                <div>{text}</div>
-                <a
-                  style={{ pointerEvents: "visible", color: "#f1f1f1" }}
-                  href="http://www.google.com"
-                  target="_blank"
-                  rel="noopener noreferrer">
-                  A custom link
-                </a>
-                <div>range: {range.toFixed(2)}</div>
-              </StyledContainer>
-            );
-          }}>
-          {textMarkers}
-        </Overlay>
-      </Worldview>
-    </div>
+    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+      <Spheres>{sphereMarkers}</Spheres>
+      <Overlay
+        renderItem={({ item, coordinates, index, dimension: { width, height } }) => {
+          if (!coordinates) {
+            return null;
+          }
+          const [left, top] = coordinates;
+          if (left < -10 || top < -10 || left > width + 10 || top > height + 10) {
+            return null; // Don't render anything that's too far outside of the canvas
+          }
+          const {
+            text,
+            info: { title },
+          } = item;
+          return (
+            <StyledContainer
+              key={index}
+              style={{
+                transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
+              }}>
+              <h2 style={{ fontSize: "2rem" }}>{title}</h2>
+              <div>{text}</div>
+              <a
+                style={{ pointerEvents: "visible", color: "#f1f1f1" }}
+                href="http://www.google.com"
+                target="_blank"
+                rel="noopener noreferrer">
+                A custom link
+              </a>
+              <div>range: {range.toFixed(2)}</div>
+            </StyledContainer>
+          );
+        }}>
+        {textMarkers}
+      </Overlay>
+    </Worldview>
   );
 }
 // #END EXAMPLE

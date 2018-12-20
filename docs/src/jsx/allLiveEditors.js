@@ -41,7 +41,9 @@ export const FilledPolygon = makeCodeComponent(require("!!raw-loader!./FilledPol
 
 export const Hitmap = makeCodeComponent(require("!!raw-loader!./Hitmap"));
 
-export const Lines = makeCodeComponent(require("!!raw-loader!./LinesStrip"));
+export const LinesDemo = makeCodeComponent(require("!!raw-loader!./LinesDemo"));
+
+export const LinesWireframe = makeCodeComponent(require("!!raw-loader!./LinesWireframe"));
 
 export const Overlays = makeCodeComponent(require("!!raw-loader!./Overlay"));
 

@@ -1,37 +1,43 @@
-# See https://circleci.com/docs/2.0/language-javascript/
+# Copyright (c) 2018-present, GM Cruise LLC
+#
+# This source code is licensed under the Apache License, Version 2.0,
+# found in the LICENSE file in the root directory of this source tree.
+# You may not use this file except in compliance with the License.
+
 version: 2
 jobs:
   build:
-    docker:
-      - image: circleci/node:11-browsers
+    machine: true
 
     steps:
       - checkout
 
       - restore_cache:
           keys:
-          - global-deps-{{ checksum "package-lock.json" }}
-          - global-deps-
-
+            - global-deps-{{ checksum "package-lock.json" }}
+            - global-deps-
       - restore_cache:
           keys:
-          - regl-worldview-deps-{{ checksum "packages/regl-worldview/package-lock.json" }}
-          - regl-worldview-deps-
+            - regl-worldview-deps-{{ checksum "packages/regl-worldview/package-lock.json" }}
+            - regl-worldview-deps-
 
-      - run: npm run bootstrap
+      - run: docker run -v `pwd`:`pwd` -w `pwd` -it --rm cruise/webviz-ci:0.0.2 npm run ci
 
       - save_cache:
           paths: ["node_modules"]
           key: global-deps-{{ checksum "package-lock.json" }}
-
       - save_cache:
           paths: ["packages/regl-worldview/node_modules"]
           key: regl-worldview-deps-{{ checksum "packages/regl-worldview/package-lock.json" }}
 
-      - run:
-          name: "npm run lint"
-          command: npm run lint
+      # Store artifacts
+      - store_artifacts:
+          path: __screenshots__
 
-      - run:
-          name: "npm test"
-          command: npm test
+      # Deploy when on master branch
+      - add_ssh_keys:
+          fingerprints:
+            - "d5:b8:7b:18:02:16:f1:90:6c:6d:34:b7:71:55:ae:b4"
+      - deploy:
+          name: "deploy docs if on master"
+          command: if [ $CIRCLE_BRANCH = "master" ]; then git config --global user.email "$GH_EMAIL" && git config --global user.name "$GH_NAME" && sudo chown -R circleci:circleci . && npm run docs-deploy; fi

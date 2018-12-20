@@ -5,20 +5,18 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 import useRange from "./useRange";
 import { buildSphereList } from "./utils";
+import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function SpheresInstancedDemo() {
   const range = useRange();
   return (
-    <div style={{ height: 500 }}>
-      <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
-        <Spheres>{[buildSphereList(range)]}</Spheres>
-      </Worldview>
-    </div>
+    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+      <Spheres>{[buildSphereList(range)]}</Spheres>
+    </Worldview>
   );
 }
 // #END EXAMPLE

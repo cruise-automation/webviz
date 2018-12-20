@@ -8,6 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
+import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Container from "./Container";
 
@@ -94,20 +95,22 @@ const labelMarker = {
   scale: { x: 1, y: 1, z: 1 },
 };
 
-storiesOf("Worldview", module).add("<Text>", () => {
-  return (
-    <Container
-      cameraState={{
-        ...DEFAULT_CAMERA_STATE,
-        distance: 15,
-        phi: 0,
-        target: [-661, -242, -25],
-        targetOffset: [-0.8, -3.8, 0],
-        targetOrientation: [0, 0, 0, 1],
-        thetaOffset: 9.62,
-      }}>
-      <Triangles>{[stopSignWhiteBaseMarker, stopSignMarker]}</Triangles>
-      <Text>{[labelMarker]}</Text>
-    </Container>
-  );
-});
+storiesOf("Worldview", module)
+  .addDecorator(withScreenshot())
+  .add("<Text>", () => {
+    return (
+      <Container
+        cameraState={{
+          ...DEFAULT_CAMERA_STATE,
+          distance: 15,
+          phi: 0,
+          target: [-661, -242, -25],
+          targetOffset: [-0.8, -3.8, 0],
+          targetOrientation: [0, 0, 0, 1],
+          thetaOffset: 9.62,
+        }}>
+        <Triangles>{[stopSignWhiteBaseMarker, stopSignMarker]}</Triangles>
+        <Text>{[labelMarker]}</Text>
+      </Container>
+    );
+  });

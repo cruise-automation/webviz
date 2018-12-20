@@ -5,9 +5,8 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
-import CameraStateInfo from "./CameraStateInfo";
+import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 class CameraStateControlled extends React.Component {
@@ -31,13 +30,10 @@ class CameraStateControlled extends React.Component {
   render() {
     const { cameraState } = this.state;
     return (
-      <div style={{ height: 500 }}>
-        <CameraStateInfo cameraState={cameraState} />
-        <Worldview cameraState={cameraState} onCameraStateChange={this.onCameraStateChange}>
-          <Grid />
-          <Axes />
-        </Worldview>
-      </div>
+      <Worldview cameraState={cameraState} onCameraStateChange={this.onCameraStateChange} hideDebug={true}>
+        <Grid />
+        <Axes />
+      </Worldview>
     );
   }
 }

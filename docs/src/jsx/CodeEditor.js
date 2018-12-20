@@ -9,9 +9,8 @@ import { LiveProvider, LiveEditor, LiveError, LivePreview } from "react-live";
 import styled, { css } from "styled-components";
 
 const StyledProvider = styled(LiveProvider)`
-  border-radius: 2px;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 60px;
 `;
 
 const LiveWrapper = styled.div`
@@ -25,13 +24,12 @@ const LiveWrapper = styled.div`
 `;
 
 const column = css`
-  flex-basis: 50%;
+  flex: 1 1 auto;
   width: 50%;
-  max-width: 50%;
+  min-height: 400px;
+  max-height: 700px;
   @media (max-width: 600px) {
-    flex-basis: auto;
     width: 100%;
-    max-width: 100%;
   }
 `;
 
@@ -44,11 +42,16 @@ const StyledEditor = styled(LiveEditor)`
 
 const StyledPreview = styled(LivePreview)`
   position: relative;
-  background: white;
+  background: transparent;
   color: black;
-  height: auto;
   overflow: hidden;
+  display: flex;
   ${column}
+
+  div, canvas {
+    display: flex;
+    flex: 1 1 auto;
+  }
 `;
 
 const StyledError = styled(LiveError)`
@@ -58,11 +61,11 @@ const StyledError = styled(LiveError)`
   color: white;
 `;
 
-const CodeEditor = ({ noInline, code, scope, vertical, height = 500 }) => {
+const CodeEditor = ({ noInline, code, scope }) => {
   return (
     <StyledProvider code={code} scope={scope} noInline={noInline} mountStylesheet={false}>
       <LiveWrapper>
-        <StyledEditor style={{ height }} />
+        <StyledEditor />
         <StyledPreview />
       </LiveWrapper>
       <StyledError />

@@ -6,13 +6,15 @@
 
 import babel from "rollup-plugin-babel";
 import commonjs from "rollup-plugin-commonjs";
+import copy from "rollup-plugin-copy";
 import resolve from "rollup-plugin-node-resolve";
 import peerDepsExternal from "rollup-plugin-peer-deps-external";
 import replace from "rollup-plugin-replace";
+import { terser } from "rollup-plugin-terser";
 
 import pkg from "./package.json";
 
-// Additional optitons applied on top of babel.config.js
+// Additional options applied on top of babel.config.js
 const getBabelOptions = ({ useESModules }) => ({
   exclude: "**/node_modules/**",
   runtimeHelpers: true,
@@ -22,10 +24,7 @@ const getBabelOptions = ({ useESModules }) => ({
 const input = "src/index.js";
 const libraryName = "ReglWorldview";
 
-// HACK: add 'stream' field for styled-components SSR build.
-// Another issue about loading multiple instances:
-// https://www.styled-components.com/docs/faqs#why-am-i-getting-a-warning-about-several-instances-of-module-on-the-page
-const globals = { react: "React", "react-dom": "ReactDOM", stream: "undefined" };
+const globals = { react: "React", "react-dom": "ReactDOM" };
 const isExternal = (id) => !id.startsWith(".") && !id.startsWith("/");
 
 export default [
@@ -36,6 +35,7 @@ export default [
       format: "iife", // Browser only
       name: libraryName,
       globals,
+      sourcemap: true,
     },
     external: Object.keys(globals),
     plugins: [
@@ -45,14 +45,9 @@ export default [
         browser: true,
       }),
       babel(getBabelOptions({ useESModules: true })),
-      commonjs({
-        include: "node_modules/**",
-        // Make styled components work: https://github.com/styled-components/styled-components/issues/1654
-        namedExports: {
-          "node_modules/react-is/index.js": ["isElement", "isValidElementType", "ForwardRef"],
-        },
-      }),
+      commonjs({ include: "node_modules/**" }),
       replace({ "process.env.NODE_ENV": JSON.stringify("development") }),
+      terser(),
     ],
   },
   {
@@ -61,6 +56,7 @@ export default [
       file: pkg.main,
       format: "cjs",
       name: libraryName,
+      sourcemap: true,
     },
     external: isExternal,
     plugins: [babel(getBabelOptions({ useESModules: false }))],
@@ -71,19 +67,14 @@ export default [
       file: pkg.module,
       format: "es",
       name: libraryName,
+      sourcemap: true,
     },
     external: isExternal,
-    plugins: [babel(getBabelOptions({ useESModules: false }))],
-  },
-  // build types.js for easy grouping of type imports
-  {
-    input: "src/types/index.js",
-    output: {
-      file: "dist/types.js",
-      format: "es",
-      name: libraryName,
-    },
-    external: isExternal,
-    plugins: [babel(getBabelOptions({ useESModules: false }))],
+    plugins: [
+      babel(getBabelOptions({ useESModules: false })),
+      copy({
+        "flow/index.js.flow": "dist/index.js.flow",
+      }),
+    ],
   },
 ];

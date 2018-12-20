@@ -5,6 +5,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
+
 import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
@@ -26,7 +27,7 @@ function BasicExample() {
         height: 500,
         width: "100%",
       }}>
-      <Worldview defaultCameraState={DEFAULT_CAMERA_STATE}>
+      <Worldview defaultCameraState={DEFAULT_CAMERA_STATE} hideDebug={true}>
         <Spheres>{markers}</Spheres>
       </Worldview>
     </div>

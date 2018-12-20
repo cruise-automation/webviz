@@ -110,8 +110,14 @@ const Landing = () => (
         <h1 className="monospace">Declarative rendering for interactive scenes</h1>
         <h2>
           Worldview is a lightweight, extensible 2D and 3D scene renderer built on{" "}
-          <a href="https://reactjs.org/">React</a> and <a href="https://regl.party/">regl</a>. Performance, ease of use,
-          and extensibility are top priorities.
+          <a href="https://reactjs.org/" target="_blank" rel="noopener noreferrer">
+            React
+          </a>{" "}
+          and{" "}
+          <a href="http://regl.party/" target="_blank" rel="noopener noreferrer">
+            regl
+          </a>
+          . Performance, ease of use, and extensibility are top priorities.
         </h2>
         <HeaderLinks>
           <GitHubLink

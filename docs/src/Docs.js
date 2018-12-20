@@ -32,8 +32,7 @@ const LogoLink = styled(Link)`
   padding: 2rem;
   display: block;
   color: #f7f7f3 !important;
-  &:hover,
-  &:visited {
+  &:hover {
     opacity: 0.5;
   }
 `;

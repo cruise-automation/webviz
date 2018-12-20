@@ -6,5 +6,7 @@
 
 // DON"T REMOVE THIS FILE
 // This is for the docs, stories, and linter to work
+import Worldview from "./src";
+
 export * from "./src";
-export default from "./src";
+export default Worldview;

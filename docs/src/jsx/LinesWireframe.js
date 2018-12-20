@@ -55,13 +55,7 @@ function LinesWireframe() {
     },
   ];
   return (
-    <Worldview
-      hideDebug={true}
-      defaultCameraState={{
-        ...DEFAULT_CAMERA_STATE,
-        perspective: true,
-        distance: 10,
-      }}>
+    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, distance: 10 }}>
       <Lines>{lines}</Lines>
     </Worldview>
   );

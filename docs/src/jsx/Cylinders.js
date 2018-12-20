@@ -8,7 +8,7 @@ import React, { useState } from "react";
 
 import useRange from "./useRange";
 import { p } from "./utils";
-import Worldview, { Cylinders, Axes, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Cylinders, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function CylindersDemo() {
@@ -26,7 +26,7 @@ function CylindersDemo() {
   };
 
   return (
-    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+    <Worldview>
       <Cylinders>{[marker]}</Cylinders>
       <Axes />
     </Worldview>

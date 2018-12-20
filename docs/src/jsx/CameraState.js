@@ -140,7 +140,6 @@ function CameraState() {
       <div style={{ display: "flex", height: 500, overflow: "hidden" }}>
         <div style={{ flex: "1 1 0" }}>
           <Worldview
-            hideDebug={true}
             cameraState={cameraState}
             onCameraStateChange={({
               perspective,
@@ -174,7 +173,6 @@ function CameraState() {
 
         <div style={{ flex: "1 1 0" }}>
           <Worldview
-            hideDebug={true}
             defaultCameraState={{
               perspective: true,
               distance: 150,

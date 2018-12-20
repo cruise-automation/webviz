@@ -34,10 +34,8 @@ function SpheresInstanceColorDemo() {
     <Worldview
       defaultCameraState={{
         ...DEFAULT_CAMERA_STATE,
-        perspective: true,
         target: [20, 20, 100],
-      }}
-      hideDebug={true}>
+      }}>
       <Spheres>{[marker]}</Spheres>
     </Worldview>
   );

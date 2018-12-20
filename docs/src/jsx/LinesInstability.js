@@ -49,7 +49,6 @@ function LinesInstabilityDemo() {
 
   return (
     <Worldview
-      hideDebug={true}
       defaultCameraState={{
         ...DEFAULT_CAMERA_STATE,
         perspective: false,

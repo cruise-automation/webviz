@@ -29,7 +29,7 @@ const TEMP_QUAT = [0, 0, 0, 0];
 
 export const DEFAULT_CAMERA_STATE: CameraState = {
   distance: 75,
-  perspective: false,
+  perspective: true,
   phi: Math.PI / 4,
   target: [0, 0, 0],
   targetOffset: [0, 0, 0],

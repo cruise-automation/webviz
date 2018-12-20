@@ -8,7 +8,7 @@ import polygonGenerator from "polygon-generator";
 import React from "react";
 
 import useRange from "./useRange";
-import Worldview, { FilledPolygons, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { FilledPolygons } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function FilledPolygonsDemo() {
@@ -24,7 +24,7 @@ function FilledPolygonsDemo() {
     id: 1,
   };
   return (
-    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+    <Worldview>
       <FilledPolygons>{[polygon]}</FilledPolygons>
     </Worldview>
   );

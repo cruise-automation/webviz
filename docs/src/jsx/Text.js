@@ -32,8 +32,7 @@ class TextDemo extends React.Component {
           targetOffset: [-0.8, -3.8, 0],
           targetOrientation: [0, 0, 0, 1],
           thetaOffset: 9.62,
-        }}
-        hideDebug={true}>
+        }}>
         <Text>{[labelMarker]}</Text>
       </Worldview>
     );

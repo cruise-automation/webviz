@@ -7,7 +7,7 @@
 import React from "react";
 
 import useRange from "./useRange";
-import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Spheres } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function SpheresSingleDemo() {
@@ -32,7 +32,7 @@ function SpheresSingleDemo() {
   ];
 
   return (
-    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+    <Worldview>
       <Spheres>{markers}</Spheres>
     </Worldview>
   );

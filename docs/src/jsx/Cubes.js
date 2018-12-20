@@ -6,7 +6,7 @@
 
 import React from "react";
 
-import Worldview, { Cubes, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Cubes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 class CubesDemo extends React.Component {
@@ -23,7 +23,7 @@ class CubesDemo extends React.Component {
     ];
 
     return (
-      <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+      <Worldview>
         <Cubes>{markers}</Cubes>
       </Worldview>
     );

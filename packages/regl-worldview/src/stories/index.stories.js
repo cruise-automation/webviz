@@ -221,7 +221,6 @@ storiesOf("Worldview", module)
         <Container
           cameraState={{
             ...DEFAULT_CAMERA_STATE,
-            perspective: true,
             target: [20, 20, 100],
           }}>
           <Spheres>{[marker]}</Spheres>
@@ -247,7 +246,6 @@ storiesOf("Worldview", module)
         <Container
           cameraState={{
             ...DEFAULT_CAMERA_STATE,
-            perspective: true,
             distance: 20,
             targetOffset: [6, 10, 0],
           }}>

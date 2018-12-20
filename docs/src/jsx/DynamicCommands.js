@@ -8,7 +8,7 @@ import React, { useState } from "react";
 
 import useRange from "./useRange";
 import { p, q, buildMatrix } from "./utils";
-import Worldview, { Cubes, Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Cubes, Spheres } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function DynamicCommandsDemo() {
@@ -17,7 +17,7 @@ function DynamicCommandsDemo() {
   const arr = new Array(cubeCount).fill(0).map((n, idx) => idx);
 
   return (
-    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+    <Worldview>
       <div
         style={{
           position: "absolute",

@@ -28,11 +28,9 @@ function PointsDemo() {
     <Worldview
       defaultCameraState={{
         ...DEFAULT_CAMERA_STATE,
-        perspective: true,
         distance: 20,
         targetOffset: [6, 10, 0],
-      }}
-      hideDebug={true}>
+      }}>
       <Points>{[marker]}</Points>
     </Worldview>
   );

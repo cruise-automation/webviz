@@ -14,6 +14,7 @@ import CameraStateInfo from "./CameraStateInfo";
 import CodeEditor from "./CodeEditor";
 import ConeControls from "./ConeControls";
 import { seed } from "./constants";
+import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
 import useRange from "./useRange";
 import { buildMatrix, buildSphereList, p, q, generateCubes, generateSpheres, lerp } from "./utils";
@@ -94,6 +95,7 @@ export const scope = {
   CameraStateInfo,
   LineControls,
   ConeControls,
+  InputNumber,
 
   Command,
   SimpleCommand,

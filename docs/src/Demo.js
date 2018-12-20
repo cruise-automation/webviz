@@ -146,7 +146,7 @@ const HelloWorldview = () => {
             position: {
               x: getRandom(-50, 100),
               y: getRandom(-50, 100),
-              z: getRandom(-50, 100)
+              z: getRandom(-50, 100),
             },
           },
           scale: { x: 1, y: 1, z: 1 },

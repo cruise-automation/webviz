@@ -10,7 +10,7 @@ import seedrandom from "seedrandom";
 
 import { seed } from "./constants";
 import { p, q } from "./utils";
-import Worldview, { Triangles, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Triangles } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function TrianglesDemo() {
@@ -40,7 +40,7 @@ function TrianglesDemo() {
   };
 
   return (
-    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+    <Worldview>
       <Triangles>{[marker]}</Triangles>
     </Worldview>
   );

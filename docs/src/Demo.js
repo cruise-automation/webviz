@@ -137,9 +137,8 @@ const HelloWorldview = () => {
         targetOffset: [0, 0, 0],
         targetOrientation: [0, 0, 0, 1],
         thetaOffset: 0,
-        perspective: true,
       }}
-      hideDebug={true}>
+     >
       <Spheres>
         {new Array(${numSpheres}).fill().map((_, i) => ({
           pose: {

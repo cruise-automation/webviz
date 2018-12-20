@@ -18,7 +18,7 @@ CameraStore holds the camera state and offers methods to handle camera rotation,
 
 | Name              | Type      | Default      | Description                                                                                     |
 | ----------------- | --------- | ------------ | ----------------------------------------------------------------------------------------------- |
-| perspective       | `boolean` | false        | type of the camera, default to orthographic (2D), pass in `true` to enable perspective (3D)     |
+| perspective       | `boolean` | true         | type of the camera, default to orthographic (2D), pass in `true` to enable perspective (3D)     |
 | target            | `vec3`    | [0, 0, 0]    | position of the target                                                                          |
 | targetOrientation | `quat`    | [0, 0, 0, 1] | orientation of the target (only yaw angle is used to determine camera placement)                |
 | targetOffset      | `vec3`    | [0, 0, 0]    | additional offset for the camera, specified in the `target`/`targetOrientation` reference frame |
@@ -38,9 +38,11 @@ You must choose one of the two options for camera state:
 
 <CameraStateControlled />
 
-**Uncontrolled** using `defaultCameraState` as props. _Notice that the cameraState doesn't change as you move or rotate the camera._ ([Understanding uncontrolled components](https://reactjs.org/docs/uncontrolled-components.html))
+**Uncontrolled** using `defaultCameraState` as props. _Notice that the cameraState doesn't change when you change the distance in the input._ ([Understanding uncontrolled components](https://reactjs.org/docs/uncontrolled-components.html))
 
 <CameraStateUncontrolled />
+
+If none of the three props are passed in, Worldview is `Uncontrolled` using `DEFAULT_CAMERA_STATE`.
 
 ## cameraStateSelectors
 

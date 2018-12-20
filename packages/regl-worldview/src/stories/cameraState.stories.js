@@ -118,7 +118,7 @@ class CameraStateStory extends React.Component<Props, State> {
           height: "100%",
         }}>
         <div style={{ flex: "1 1 0", overflow: "hidden" }}>
-          <Container hideDebug axes grid cameraState={cameraState} onCameraStateChange={this._onCameraStateChange}>
+          <Container axes grid cameraState={cameraState} onCameraStateChange={this._onCameraStateChange}>
             <Arrows>{[poseArrowMarker]}</Arrows>
             <Spheres>{[sphereMarker]}</Spheres>
             <Grid count={10} />
@@ -128,7 +128,6 @@ class CameraStateStory extends React.Component<Props, State> {
         <div style={{ flex: "1 1 0", overflow: "hidden" }}>
           <Container
             hideState
-            hideDebug
             defaultCameraState={{
               perspective: true,
               distance: 150,

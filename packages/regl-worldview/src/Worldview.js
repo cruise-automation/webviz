@@ -11,7 +11,7 @@ import pickBy from "lodash/pickBy";
 import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
-import { CameraListener } from "./camera/index";
+import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
 import type { MouseHandler, Dimensions, Vec4, CameraState } from "./types";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
@@ -19,11 +19,16 @@ import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 
-type SharedProps = {|
+export type BaseProps = {|
   backgroundColor?: Vec4,
   hitmapOnMouseMove?: boolean,
-  hideDebug?: boolean,
+  showDebug?: boolean,
   children?: React.Node,
+
+  defaultCameraState: CameraState,
+  // Worldview is controlled if cameraState and onCameraStateChange are both present
+  cameraState?: CameraState,
+  onCameraStateChange?: (CameraState) => void,
 
   // interactions
   onDoubleClick?: MouseHandler,
@@ -31,28 +36,14 @@ type SharedProps = {|
   onMouseUp?: MouseHandler,
   onMouseMove?: MouseHandler,
   onClick?: MouseHandler,
-|};
-
-type ControlledType = {|
-  ...SharedProps,
   ...Dimensions,
-  cameraState: CameraState,
-  onCameraStateChange: (CameraState) => void,
 |};
 
-type UncontrolledType = {|
-  ...SharedProps,
-  ...Dimensions,
-  defaultCameraState: CameraState,
-|};
-
-export type BaseProps = ControlledType | UncontrolledType;
+export type Props = $Diff<BaseProps, Dimensions>;
 
 type State = {|
   worldviewContext: WorldviewContext,
 |};
-
-export type Props = $Diff<BaseProps, Dimensions>;
 
 function handleMouseInteraction(objectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
   try {
@@ -80,12 +71,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   constructor(props: BaseProps) {
     super(props);
     const { width, height, top, left, backgroundColor } = props;
-    if (props.cameraState && !props.onCameraStateChange) {
-      console.error(
-        "onCameraStateChange and cameraState must be used together! Alternatively, use defaultCameraState to turn Worldview into an uncontrolled component."
-      );
-    }
-
     this.state = {
       worldviewContext: new WorldviewContext({
         dimension: { width, height, top, left },
@@ -124,7 +109,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   componentDidUpdate() {
     const { worldviewContext } = this.state;
     // no need to update cameraStore's state if the component is uncontrolled
-    if (this.props.cameraState) {
+    if (this.props.cameraState && this.props.onCameraStateChange) {
       worldviewContext.cameraStore.setCameraState(this.props.cameraState);
     }
 
@@ -248,7 +233,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, hideDebug } = this.props;
+    const { width, height, showDebug } = this.props;
     const { worldviewContext } = this.state;
     const style = { width, height };
 
@@ -266,7 +251,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
             onMouseMove={this._onMouseMove}
             onClick={this._onClick}
           />
-          {hideDebug ? null : this._renderDebug()}
+          {showDebug ? this._renderDebug() : null}
         </CameraListener>
         {worldviewContext.initializedData && (
           <WorldviewReactContext.Provider value={worldviewContext}>
@@ -283,6 +268,10 @@ const Worldview = (props: Props) => (
     {({ width, height, left, top }) => <WorldviewBase width={width} height={height} left={left} top={top} {...props} />}
   </ContainerDimensions>
 );
+
+Worldview.defaultProps = {
+  defaultCameraState: DEFAULT_CAMERA_STATE,
+};
 
 Worldview.displayName = "Worldview";
 

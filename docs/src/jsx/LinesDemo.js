@@ -10,7 +10,7 @@ import seedrandom from "seedrandom";
 import { seed } from "./constants";
 import LineControls from "./LineControls";
 import { p } from "./utils";
-import Worldview, { Lines, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Lines, Points } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function LinesDemo() {
@@ -92,12 +92,7 @@ function LinesDemo() {
   });
 
   return (
-    <Worldview
-      defaultCameraState={{
-        ...DEFAULT_CAMERA_STATE,
-        perspective: true,
-      }}
-      hideDebug={true}>
+    <Worldview>
       <LineControls
         style={{
           position: "absolute",

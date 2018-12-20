@@ -2,5 +2,8 @@
   "editor.formatOnSave": true,
   "eslint.autoFixOnSave": true,
   "flow.useNPMPackagedFlow": true,
-  "javascript.validate.enable": false
+  "javascript.validate.enable": false,
+  "files.associations": {
+    "*.mdx": "markdown"
+  }
 }

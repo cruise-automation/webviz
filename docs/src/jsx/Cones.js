@@ -9,7 +9,7 @@ import React, { useState } from "react";
 import ConeControls from "./ConeControls";
 import useRange from "./useRange";
 import { p } from "./utils";
-import Worldview, { Cones, Axes, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Cones, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function ConesDemo() {
@@ -27,7 +27,7 @@ function ConesDemo() {
   };
 
   return (
-    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+    <Worldview>
       <ConeControls
         style={{
           position: "absolute",

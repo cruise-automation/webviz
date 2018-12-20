@@ -10,7 +10,6 @@
 import React from "react";
 
 import Worldview, { type Props } from "../index";
-import inScreenshotTests from "stories/inScreenshotTests";
 
 export default class Container extends React.Component<Props> {
   state = {
@@ -51,7 +50,6 @@ export default class Container extends React.Component<Props> {
         )}
         <Worldview
           {...this.props}
-          hideDebug={inScreenshotTests()}
           defaultCameraState={undefined}
           cameraState={worldviewCamState}
           onCameraStateChange={this.onCameraStateChange}>

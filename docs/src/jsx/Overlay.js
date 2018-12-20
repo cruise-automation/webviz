@@ -8,7 +8,7 @@ import React from "react";
 
 import useRange from "./useRange";
 import { StyledContainer } from "./WorldviewCodeEditor";
-import Worldview, { Overlay, Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Overlay, Spheres } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function OverlayDemo() {
@@ -39,7 +39,7 @@ function OverlayDemo() {
   }));
 
   return (
-    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+    <Worldview>
       <Spheres>{sphereMarkers}</Spheres>
       <Overlay
         renderItem={({ item, coordinates, index, dimension: { width, height } }) => {
@@ -79,4 +79,5 @@ function OverlayDemo() {
   );
 }
 // #END EXAMPLE
+
 export default OverlayDemo;

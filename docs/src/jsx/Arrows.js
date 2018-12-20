@@ -7,7 +7,7 @@
 import React from "react";
 
 import { p } from "./utils";
-import Worldview, { Arrows, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Arrows } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function ArrowsDemo() {
@@ -26,7 +26,7 @@ function ArrowsDemo() {
   };
 
   return (
-    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} hideDebug={true}>
+    <Worldview>
       <Arrows>{[poseArrow, pointArrow]}</Arrows>
     </Worldview>
   );

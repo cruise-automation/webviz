@@ -19,7 +19,6 @@ function HitmapDemo() {
     ...DEFAULT_CAMERA_STATE,
     distance: 145,
     phi: 1.22,
-    perspective: true,
     thetaOffset: 0,
   });
 

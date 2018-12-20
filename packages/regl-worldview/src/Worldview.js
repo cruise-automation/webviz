@@ -25,9 +25,9 @@ export type BaseProps = {|
   showDebug?: boolean,
   children?: React.Node,
 
-  cameraState: CameraState,
   defaultCameraState: CameraState,
-  // if onCameraStateChange is present, Worldview is controlled, otherwise it's uncontrolled
+  // Worldview is controlled if cameraState and onCameraStateChange are both present
+  cameraState?: CameraState,
   onCameraStateChange?: (CameraState) => void,
 
   // interactions
@@ -109,7 +109,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   componentDidUpdate() {
     const { worldviewContext } = this.state;
     // no need to update cameraStore's state if the component is uncontrolled
-    if (this.props.onCameraStateChange) {
+    if (this.props.cameraState && this.props.onCameraStateChange) {
       worldviewContext.cameraStore.setCameraState(this.props.cameraState);
     }
 
@@ -270,7 +270,6 @@ const Worldview = (props: Props) => (
 );
 
 Worldview.defaultProps = {
-  cameraState: DEFAULT_CAMERA_STATE,
   defaultCameraState: DEFAULT_CAMERA_STATE,
 };
 

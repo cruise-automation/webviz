@@ -4,6 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+const rehypePrism = require("@mapbox/rehype-prism");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
@@ -44,7 +45,18 @@ module.exports = {
         exclude: /node_modules/,
         use: { loader: "babel-loader?cacheDirectory" },
       },
-      { test: /\.mdx$/, use: ["babel-loader?cacheDirectory", "@mdx-js/loader"] },
+      {
+        test: /\.mdx$/,
+        use: [
+          "babel-loader?cacheDirectory",
+          {
+            loader: "@mdx-js/loader",
+            options: {
+              hastPlugins: [rehypePrism],
+            },
+          },
+        ],
+      },
       { test: /\.md$/, loader: "raw-loader" },
       { test: /\.svg$/, loader: "react-svg-loader" },
       { test: /\.ne$/, loader: "nearley-loader" },

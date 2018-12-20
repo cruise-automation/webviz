@@ -11,6 +11,7 @@
     "@babel/preset-env": "^7.2.0",
     "@babel/preset-flow": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
+    "@mapbox/rehype-prism": "^0.3.0",
     "@mdx-js/loader": "^0.16.6",
     "@storybook/addon-actions": "^4.0.12",
     "@storybook/addon-knobs": "^4.0.12",

@@ -77,7 +77,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       }
       if (cameraState && defaultCameraState) {
         console.warn(
-          "You provided `cameraState`, `onCameraStateChange` and `defaultCameraState` props. `defaultCameraState` will be ignored for Worldview is controlled when both `cameraState` and `onCameraStateChange` are present."
+          "You provided both `cameraState` and `defaultCameraState`. `defaultCameraState` will be ignored."
         );
       }
     } else {

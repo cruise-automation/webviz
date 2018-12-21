@@ -19,14 +19,13 @@ import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 
-export type BaseProps = {|
+type SharedProps = {|
   backgroundColor?: Vec4,
   hitmapOnMouseMove?: boolean,
   showDebug?: boolean,
   children?: React.Node,
 
-  defaultCameraState: CameraState,
-  // Worldview is controlled if cameraState and onCameraStateChange are both present
+  // Worldview is only controlled if both cameraState and onCameraStateChange are present
   cameraState?: CameraState,
   onCameraStateChange?: (CameraState) => void,
 
@@ -36,10 +35,15 @@ export type BaseProps = {|
   onMouseUp?: MouseHandler,
   onMouseMove?: MouseHandler,
   onClick?: MouseHandler,
-  ...Dimensions,
 |};
 
-export type Props = $Diff<BaseProps, Dimensions>;
+export type BaseProps = {|
+  ...Dimensions,
+  ...SharedProps,
+  defaultCameraState: CameraState,
+|};
+
+export type Props = {| ...SharedProps, defaultCameraState?: CameraState |};
 
 type State = {|
   worldviewContext: WorldviewContext,
@@ -63,6 +67,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   _tick: AnimationFrameID | void;
 
   static defaultProps = {
+    defaultCameraState: DEFAULT_CAMERA_STATE,
     // rendering the hitmap on mouse move is expensive, so disable it by default
     hitmapOnMouseMove: false,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
@@ -268,10 +273,6 @@ const Worldview = (props: Props) => (
     {({ width, height, left, top }) => <WorldviewBase width={width} height={height} left={left} top={top} {...props} />}
   </ContainerDimensions>
 );
-
-Worldview.defaultProps = {
-  defaultCameraState: DEFAULT_CAMERA_STATE,
-};
 
 Worldview.displayName = "Worldview";
 

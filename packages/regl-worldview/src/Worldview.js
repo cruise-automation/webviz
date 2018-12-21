@@ -25,7 +25,6 @@ export type BaseProps = {|
   showDebug?: boolean,
   children?: React.Node,
 
-  // Worldview is only controlled if both cameraState and onCameraStateChange are present
   cameraState?: CameraState,
   onCameraStateChange?: (CameraState) => void,
   defaultCameraState?: CameraState,
@@ -72,18 +71,16 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     if (onCameraStateChange) {
       if (!cameraState) {
         console.warn(
-          "Worldview camera state is read-only as you provided `onCameraStateChange` prop without `cameraState` prop. Turn worldview to controlled with `cameraState` and `onCameraStateChange` props, or uncontrolled with `defaultCameraState` prop."
+          "You provided `onCameraStateChange` without `cameraState`. Use Worldview as a controlled component with `cameraState` and `onCameraStateChange`, or uncontrolled with `defaultCameraState`."
         );
       }
       if (cameraState && defaultCameraState) {
-        console.warn(
-          "You provided `cameraState`, `onCameraStateChange` and `defaultCameraState` props. `defaultCameraState` will be ignored for Worldview is controlled when both `cameraState` and `onCameraStateChange` are present."
-        );
+        console.warn("You provided both `cameraState` and `defaultCameraState`. `defaultCameraState` will be ignored.");
       }
     } else {
       if (cameraState) {
         console.warn(
-          "Failed prop type: you provided `cameraState` prop without an `onCameraStateChange` handler. This will render a read-only field. If the field should be mutable use `defaultCameraState`. Otherwise set `onCameraStateChange`."
+          "You provided `cameraState` without an `onCameraStateChange` handler. This will prevent moving the camera. If the camera should be movable, use `defaultCameraState`, otherwise set `onCameraStateChange`."
         );
       }
     }

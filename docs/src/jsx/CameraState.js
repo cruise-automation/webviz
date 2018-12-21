@@ -1,3 +1,5 @@
+// @flow
+
 //  Copyright (c) 2018-present, GM Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
@@ -9,43 +11,18 @@ import React, { useState } from "react";
 
 import CameraStateControls from "./CameraStateControls";
 import { p, q } from "./utils";
-import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors } from "regl-worldview";
+import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors, type CameraState } from "regl-worldview";
 
-function CameraState() {
-  const [perspective, setPerspective] = useState(true);
-  const [distance, setDistance] = useState(50);
-  const [thetaOffset, setThetaOffset] = useState(0.3);
-  const [phi, setPhi] = useState(0.85);
-  const [orientationX, setOrientationX] = useState(0);
-  const [orientationY, setOrientationY] = useState(0);
-  const [orientationZ, setOrientationZ] = useState(0);
-
-  const [posX, setPosX] = useState(0);
-  const [posY, setPosY] = useState(0);
-  const [posZ, setPosZ] = useState(0);
-  const [offsetX, setOffsetX] = useState(0);
-  const [offsetY, setOffsetY] = useState(0);
-  const [offsetZ, setOffsetZ] = useState(0);
-
-  let length = Math.hypot(orientationX, orientationY, orientationZ);
-  if (length > 1) {
-    length /= 2;
-  }
-  const orientationW = Math.sqrt(1 - length * length);
-
-  const target = [posX, posY, posZ];
-  const targetOffset = [offsetX, offsetY, offsetZ];
-  const targetOrientation = [orientationX, orientationY, orientationZ, orientationW];
-
-  const cameraState = {
-    perspective,
-    distance,
-    thetaOffset,
-    phi,
-    target,
-    targetOffset,
-    targetOrientation,
-  };
+export default function CameraStateExample() {
+  const [cameraState, setCameraState] = useState<CameraState>({
+    perspective: true,
+    distance: 50,
+    thetaOffset: 0.3,
+    phi: 0.85,
+    target: [0, 0, 0],
+    targetOrientation: [0, 0, 0, 1],
+    targetOffset: [0, 0, 0],
+  });
 
   const targetHeading = cameraStateSelectors.targetHeading(cameraState);
 
@@ -109,61 +86,10 @@ function CameraState() {
         flexDirection: "column",
         width: "100%",
       }}>
-      <CameraStateControls
-        perspective={perspective}
-        distance={distance}
-        thetaOffset={thetaOffset}
-        phi={phi}
-        posX={posX}
-        posY={posY}
-        posZ={posZ}
-        offsetX={offsetX}
-        offsetY={offsetY}
-        offsetZ={offsetZ}
-        orientationX={orientationX}
-        orientationY={orientationY}
-        orientationZ={orientationZ}
-        setPerspective={setPerspective}
-        setDistance={setDistance}
-        setThetaOffset={setThetaOffset}
-        setPhi={setPhi}
-        setPosX={setPosX}
-        setPosY={setPosY}
-        setPosZ={setPosZ}
-        setOffsetX={setOffsetX}
-        setOffsetY={setOffsetY}
-        setOffsetZ={setOffsetZ}
-        setOrientationX={setOrientationX}
-        setOrientationY={setOrientationY}
-        setOrientationZ={setOrientationZ}
-      />
+      <CameraStateControls cameraState={cameraState} setCameraState={setCameraState} />
       <div style={{ display: "flex", height: 500, overflow: "hidden" }}>
         <div style={{ flex: "1 1 0" }}>
-          <Worldview
-            cameraState={cameraState}
-            onCameraStateChange={({
-              perspective,
-              distance,
-              thetaOffset,
-              phi,
-              target,
-              targetOffset,
-              targetOrientation,
-            }) => {
-              setPerspective(perspective);
-              setDistance(distance);
-              setThetaOffset(thetaOffset);
-              setPhi(phi);
-              setPosX(target[0]);
-              setPosY(target[1]);
-              setPosZ(target[2]);
-              setOffsetX(targetOffset[0]);
-              setOffsetY(targetOffset[1]);
-              setOffsetZ(targetOffset[2]);
-              setOrientationX(targetOrientation[0]);
-              setOrientationY(targetOrientation[1]);
-              setOrientationZ(targetOrientation[2]);
-            }}>
+          <Worldview cameraState={cameraState} onCameraStateChange={(cameraState) => setCameraState(cameraState)}>
             <Arrows>{[poseArrowMarker]}</Arrows>
             <Spheres>{[sphereMarker]}</Spheres>
             <Grid count={10} />
@@ -192,5 +118,3 @@ function CameraState() {
     </div>
   );
 }
-
-export default CameraState;

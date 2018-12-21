@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 import WorldviewCodeEditor from "./jsx/WorldviewCodeEditor";
+import Slider from "./utils/Slider";
 
 const Container = styled.div`
   display: flex;
@@ -38,36 +39,6 @@ const Container = styled.div`
       align-items: center;
       font-size: 16px;
       color: #edcc28;
-
-      input[type="range"] {
-        width: 120px;
-        margin-right: 20px;
-        appearance: none;
-        background: transparent;
-        &:focus {
-          outline: 0;
-        }
-        &::-webkit-slider-thumb {
-          appearance: none;
-          height: 12px;
-          width: 28px;
-          border-radius: 6px;
-          background: #edcc28;
-          cursor: pointer;
-          &:hover {
-            opacity: 0.5;
-          }
-        }
-        &::-webkit-slider-runnable-track {
-          width: 100%;
-          height: 16px;
-          cursor: pointer;
-          background: transparent;
-          border: 1px solid #edcc28;
-          border-radius: 8px;
-          padding: 1px;
-        }
-      }
     }
   }
 
@@ -93,14 +64,7 @@ const HelloWorldview = () => {
             built-in <Link to="/docs">commands</Link> for rendering points, spheres, lines, and more.
           </p>
           <label className="monospace">
-            <input
-              type="range"
-              min={100}
-              max={2000}
-              value={numSpheres}
-              step={100}
-              onChange={(e) => setNumSpheres(parseInt(e.target.value))}
-            />
+            <Slider min={100} max={2000} value={numSpheres} step={100} onChange={(value) => setNumSpheres(value)} />
             {numSpheres} spheres
           </label>
         </div>
@@ -111,14 +75,7 @@ const HelloWorldview = () => {
             the camera’s distance and offset from the target in spherical coordinates.
           </p>
           <label className="monospace">
-            <input
-              type="range"
-              min={0}
-              max={400}
-              value={distance}
-              step={10}
-              onChange={(e) => setDistance(parseInt(e.target.value))}
-            />
+            <Slider min={0} max={400} value={distance} step={10} onChange={(value) => setDistance(value)} />
             {distance} distance from target
           </label>
         </div>

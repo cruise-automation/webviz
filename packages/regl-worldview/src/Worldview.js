@@ -19,7 +19,7 @@ import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 
-type SharedProps = {|
+export type BaseProps = {|
   backgroundColor?: Vec4,
   hitmapOnMouseMove?: boolean,
   showDebug?: boolean,
@@ -28,6 +28,7 @@ type SharedProps = {|
   // Worldview is only controlled if both cameraState and onCameraStateChange are present
   cameraState?: CameraState,
   onCameraStateChange?: (CameraState) => void,
+  defaultCameraState?: CameraState,
 
   // interactions
   onDoubleClick?: MouseHandler,
@@ -35,15 +36,8 @@ type SharedProps = {|
   onMouseUp?: MouseHandler,
   onMouseMove?: MouseHandler,
   onClick?: MouseHandler,
-|};
-
-export type BaseProps = {|
   ...Dimensions,
-  ...SharedProps,
-  defaultCameraState: CameraState,
 |};
-
-export type Props = {| ...SharedProps, defaultCameraState?: CameraState |};
 
 type State = {|
   worldviewContext: WorldviewContext,
@@ -67,7 +61,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   _tick: AnimationFrameID | void;
 
   static defaultProps = {
-    defaultCameraState: DEFAULT_CAMERA_STATE,
     // rendering the hitmap on mouse move is expensive, so disable it by default
     hitmapOnMouseMove: false,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
@@ -75,12 +68,32 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   constructor(props: BaseProps) {
     super(props);
-    const { width, height, top, left, backgroundColor } = props;
+    const { width, height, top, left, backgroundColor, onCameraStateChange, cameraState, defaultCameraState } = props;
+    if (onCameraStateChange) {
+      if (!cameraState) {
+        console.warn(
+          "Worldview camera state is read-only as you provided `onCameraStateChange` prop without `cameraState` prop. Turn worldview to controlled with `cameraState` and `onCameraStateChange` props, or uncontrolled with `defaultCameraState` prop."
+        );
+      }
+      if (cameraState && defaultCameraState) {
+        console.warn(
+          "You provided `cameraState`, `onCameraStateChange` and `defaultCameraState` props. `defaultCameraState` will be ignored for Worldview is controlled when both `cameraState` and `onCameraStateChange` are present."
+        );
+      }
+    } else {
+      if (cameraState) {
+        console.warn(
+          "Failed prop type: you provided `cameraState` prop without an `onCameraStateChange` handler. This will render a read-only field. If the field should be mutable use `defaultCameraState`. Otherwise set `onCameraStateChange`."
+        );
+      }
+    }
+
     this.state = {
       worldviewContext: new WorldviewContext({
         dimension: { width, height, top, left },
         canvasBackgroundColor: backgroundColor || DEFAULT_BACKGROUND_COLOR,
-        cameraState: props.cameraState || props.defaultCameraState,
+        // DEFAULT_CAMERA_STATE is applied if both `cameraState` and `defaultCameraState` are not present
+        cameraState: props.cameraState || props.defaultCameraState || DEFAULT_CAMERA_STATE,
         onCameraStateChange: props.onCameraStateChange || undefined,
       }),
     };
@@ -267,6 +280,8 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     );
   }
 }
+
+export type Props = $Diff<React.ElementConfig<typeof WorldviewBase>, Dimensions>;
 
 const Worldview = (props: Props) => (
   <ContainerDimensions>

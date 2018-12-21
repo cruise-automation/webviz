@@ -9,25 +9,23 @@ import React from "react";
 import Worldview, { Cubes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
-class CubesDemo extends React.Component {
-  render() {
-    const markers = [
-      {
-        pose: {
-          orientation: { x: 0, y: 0, z: 0.5, w: 1 },
-          position: { x: 0.5, y: 0.5, z: 0.5 },
-        },
-        scale: { x: 5, y: 5, z: 5 },
-        color: { r: 1, g: 0, b: 1, a: 0.5 },
+function CubesDemo() {
+  const markers = [
+    {
+      pose: {
+        orientation: { x: 0, y: 0, z: 0.5, w: 1 },
+        position: { x: 0.5, y: 0.5, z: 0.5 },
       },
-    ];
+      scale: { x: 5, y: 5, z: 5 },
+      color: { r: 1, g: 0, b: 1, a: 0.5 },
+    },
+  ];
 
-    return (
-      <Worldview>
-        <Cubes>{markers}</Cubes>
-      </Worldview>
-    );
-  }
+  return (
+    <Worldview>
+      <Cubes>{markers}</Cubes>
+    </Worldview>
+  );
 }
 // #END EXAMPLE
 

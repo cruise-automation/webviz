@@ -7,8 +7,23 @@
 const rehypePrism = require("@mapbox/rehype-prism");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const path = require("path");
+const retext = require("retext");
+const retextSmartypants = require("retext-smartypants");
 const TerserPlugin = require("terser-webpack-plugin");
+const visit = require("unist-util-visit");
 const webpack = require("webpack");
+
+// Enable smart quotes:
+// https://github.com/mdx-js/mdx/blob/ad58be384c07672dc415b3d9d9f45dcebbfd2eb8/docs/advanced/retext-plugins.md
+const smartypantsProcessor = retext().use(retextSmartypants);
+function remarkSmartypants() {
+  function transformer(tree) {
+    visit(tree, "text", (node) => {
+      node.value = String(smartypantsProcessor.processSync(node.value));
+    });
+  }
+  return transformer;
+}
 
 module.exports = {
   devtool: "cheap-module-eval-source-map",
@@ -53,6 +68,7 @@ module.exports = {
             loader: "@mdx-js/loader",
             options: {
               hastPlugins: [rehypePrism],
+              mdPlugins: [remarkSmartypants],
             },
           },
         ],

@@ -51,8 +51,8 @@ const Container = styled.div`
 `;
 
 const HelloWorldview = () => {
-  const [numSpheres, setNumSpheres] = useState(1000);
-  const [distance, setDistance] = useState(150);
+  const [spheresPerAxis, setSpheresPerAxis] = useState(6);
+  const [distance, setDistance] = useState(30);
 
   return (
     <React.Fragment>
@@ -64,8 +64,8 @@ const HelloWorldview = () => {
             built-in <Link to="/docs">commands</Link> for rendering points, spheres, lines, and more.
           </p>
           <label className="monospace">
-            <Slider min={100} max={2000} value={numSpheres} step={100} onChange={(value) => setNumSpheres(value)} />
-            {numSpheres} spheres
+            <Slider min={3} max={10} value={spheresPerAxis} onChange={setSpheresPerAxis} />
+            {spheresPerAxis * spheresPerAxis * spheresPerAxis} spheres
           </label>
         </div>
         <div>
@@ -75,7 +75,7 @@ const HelloWorldview = () => {
             the camera’s distance and offset from the target in spherical coordinates.
           </p>
           <label className="monospace">
-            <Slider min={0} max={400} value={distance} step={10} onChange={(value) => setDistance(value)} />
+            <Slider min={10} max={70} value={distance} step={10} onChange={setDistance} />
             {distance} distance from target
           </label>
         </div>
@@ -83,7 +83,16 @@ const HelloWorldview = () => {
       <WorldviewCodeEditor
         height={700}
         code={`function HelloWorldview() {
-  const getRandom = (min, max) => Math.floor(Math.random() * max) + min;
+  const n = ${spheresPerAxis};
+  const points = [], colors = [];
+  for (let x = 0; x < n; x++) {
+    for (let y = 0; y < n; y++) {
+      for (let z = 0; z < n; z++) {
+        points.push({ x: x/n*10-5, y: y/n*10-5, z: z/n*10-5 });
+        colors.push({ r: z/n, g: y/n, b: x/n, a: 0.8});
+      }
+    }
+  }
 
   return (
     <Worldview
@@ -93,22 +102,19 @@ const HelloWorldview = () => {
         target: [0, 0, 0],
         targetOffset: [0, 0, 0],
         targetOrientation: [0, 0, 0, 1],
-        thetaOffset: 0,
-      }}
-     >
+        thetaOffset: Math.PI / 4,
+        perspective: true,
+      }}>
       <Spheres>
-        {new Array(${numSpheres}).fill().map((_, i) => ({
+        {{
+          points,
+          colors,
           pose: {
+            position: { x: 0, y: 0, z: 0 },
             orientation: { x: 0, y: 0, z: 0, w: 1 },
-            position: {
-              x: getRandom(-50, 100),
-              y: getRandom(-50, 100),
-              z: getRandom(-50, 100),
-            },
           },
           scale: { x: 1, y: 1, z: 1 },
-          color: { r: 1, g: 1, b: 1, a: 0.85 },
-        }))}
+        }}
       </Spheres>
     </Worldview>
   );

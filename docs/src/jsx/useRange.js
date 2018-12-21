@@ -6,9 +6,15 @@
 
 import { useState, useEffect } from "react";
 
+import inScreenshotTests from "stories/inScreenshotTests";
+
 export default function useRange(initialRange = 0.1) {
   const [range, setRange] = useState(initialRange);
   const [count, setCount] = useState(0);
+
+  if (inScreenshotTests()) {
+    return range;
+  }
 
   useEffect(() => {
     const stop = requestAnimationFrame((tick) => {

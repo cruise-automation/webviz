@@ -19,7 +19,7 @@ import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 
-export type BaseProps = {|
+type SharedProps = {|
   backgroundColor?: Vec4,
   hitmapOnMouseMove?: boolean,
   showDebug?: boolean,
@@ -36,7 +36,12 @@ export type BaseProps = {|
   onMouseUp?: MouseHandler,
   onMouseMove?: MouseHandler,
   onClick?: MouseHandler,
+|};
+
+export type BaseProps = {|
   ...Dimensions,
+  ...SharedProps,
+  defaultCameraState: CameraState,
 |};
 
 type State = {|
@@ -61,6 +66,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   _tick: AnimationFrameID | void;
 
   static defaultProps = {
+    defaultCameraState: DEFAULT_CAMERA_STATE,
     // rendering the hitmap on mouse move is expensive, so disable it by default
     hitmapOnMouseMove: false,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
@@ -76,9 +82,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         );
       }
       if (cameraState && defaultCameraState) {
-        console.warn(
-          "You provided both `cameraState` and `defaultCameraState`. `defaultCameraState` will be ignored."
-        );
+        console.warn("You provided both `cameraState` and `defaultCameraState`. `defaultCameraState` will be ignored.");
       }
     } else {
       if (cameraState) {

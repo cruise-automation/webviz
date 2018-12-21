@@ -37,7 +37,7 @@ export const Cylinders = makeCodeComponent(require("!!raw-loader!./Cylinders"));
 
 export const DynamicCommands = makeCodeComponent(require("!!raw-loader!./DynamicCommands"));
 
-export const FilledPolygon = makeCodeComponent(require("!!raw-loader!./FilledPolygons"));
+export const FilledPolygons = makeCodeComponent(require("!!raw-loader!./FilledPolygons"));
 
 export const Hitmap = makeCodeComponent(require("!!raw-loader!./Hitmap"));
 
@@ -45,7 +45,7 @@ export const LinesDemo = makeCodeComponent(require("!!raw-loader!./LinesDemo"));
 
 export const LinesWireframe = makeCodeComponent(require("!!raw-loader!./LinesWireframe"));
 
-export const Overlays = makeCodeComponent(require("!!raw-loader!./Overlay"));
+export const Overlay = makeCodeComponent(require("!!raw-loader!./Overlay"));
 
 export const Points = makeCodeComponent(require("!!raw-loader!./Points"));
 

@@ -371,6 +371,7 @@ export default class CameraListener extends React.Component<Props> {
     return (
       <div
         tabIndex={0}
+        style={{ outline: "none" }}
         draggable
         ref={(el) => (this._el = el)}
         onMouseDown={this._onMouseDown}

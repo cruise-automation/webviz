@@ -71,7 +71,7 @@ const StyledInput = styled.input`
 type Props = {
   on: boolean,
   disabled?: boolean,
-  onChange: SyntheticInputEvent<HTMLInputElement>,
+  onChange: (boolean) => void,
   renderText?: (on: boolean) => React.Node,
   label?: string,
 };
@@ -80,7 +80,12 @@ export default function Switch({ on, onChange, label, disabled, renderText }: Pr
   return (
     <StyledSwitchWrapper>
       <StyledSwitch>
-        <StyledInput disabled={disabled} type="checkbox" checked={on} onChange={disabled ? undefined : onChange} />
+        <StyledInput
+          disabled={disabled}
+          type="checkbox"
+          checked={on}
+          onChange={disabled ? undefined : (e) => onChange(e.target.checked)}
+        />
         <StyledSlider disabled={disabled} />
       </StyledSwitch>
       {label && (

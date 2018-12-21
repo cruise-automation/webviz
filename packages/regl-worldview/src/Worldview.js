@@ -72,7 +72,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     if (onCameraStateChange) {
       if (!cameraState) {
         console.warn(
-          "Worldview camera state is read-only as you provided `onCameraStateChange` prop without `cameraState` prop. Turn worldview to controlled with `cameraState` and `onCameraStateChange` props, or uncontrolled with `defaultCameraState` prop."
+          "You provided `onCameraStateChange` without `cameraState`. Use Worldview as a controlled component with `cameraState` and `onCameraStateChange`, or uncontrolled with `defaultCameraState`."
         );
       }
       if (cameraState && defaultCameraState) {

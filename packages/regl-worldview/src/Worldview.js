@@ -123,8 +123,8 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   componentDidUpdate() {
     const { worldviewContext } = this.state;
-    // no need to update cameraStore's state if the component is uncontrolled
-    if (this.props.cameraState && this.props.onCameraStateChange) {
+    // update internal cameraState
+    if (this.props.cameraState) {
       worldviewContext.cameraStore.setCameraState(this.props.cameraState);
     }
 

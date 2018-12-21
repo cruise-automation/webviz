@@ -19,13 +19,12 @@ import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 
-type SharedProps = {|
+export type BaseProps = {|
   backgroundColor?: Vec4,
   hitmapOnMouseMove?: boolean,
   showDebug?: boolean,
   children?: React.Node,
 
-  // Worldview is only controlled if both cameraState and onCameraStateChange are present
   cameraState?: CameraState,
   onCameraStateChange?: (CameraState) => void,
   defaultCameraState?: CameraState,
@@ -36,12 +35,7 @@ type SharedProps = {|
   onMouseUp?: MouseHandler,
   onMouseMove?: MouseHandler,
   onClick?: MouseHandler,
-|};
-
-export type BaseProps = {|
   ...Dimensions,
-  ...SharedProps,
-  defaultCameraState: CameraState,
 |};
 
 type State = {|
@@ -66,7 +60,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   _tick: AnimationFrameID | void;
 
   static defaultProps = {
-    defaultCameraState: DEFAULT_CAMERA_STATE,
     // rendering the hitmap on mouse move is expensive, so disable it by default
     hitmapOnMouseMove: false,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
@@ -130,8 +123,8 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   componentDidUpdate() {
     const { worldviewContext } = this.state;
-    // no need to update cameraStore's state if the component is uncontrolled
-    if (this.props.cameraState && this.props.onCameraStateChange) {
+    // update internal cameraState
+    if (this.props.cameraState) {
       worldviewContext.cameraStore.setCameraState(this.props.cameraState);
     }
 

@@ -83,7 +83,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     } else {
       if (cameraState) {
         console.warn(
-          "Failed prop type: you provided `cameraState` prop without an `onCameraStateChange` handler. This will render a read-only field. If the field should be mutable use `defaultCameraState`. Otherwise set `onCameraStateChange`."
+          "You provided `cameraState` without an `onCameraStateChange` handler. This will prevent moving the camera. If the camera should be movable, use `defaultCameraState`, otherwise set `onCameraStateChange`."
         );
       }
     }

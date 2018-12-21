@@ -11,6 +11,7 @@ import styled, { css } from "styled-components";
 const StyledProvider = styled(LiveProvider)`
   overflow: hidden;
   margin-bottom: 60px;
+  position: relative;
 `;
 
 const LiveWrapper = styled.div`
@@ -59,6 +60,9 @@ const StyledError = styled(LiveError)`
   padding: 1rem;
   background: #f24366;
   color: white;
+  position: absolute;
+  top: 0;
+  right: 0;
 `;
 
 const CodeEditor = ({ noInline, code, scope }) => {

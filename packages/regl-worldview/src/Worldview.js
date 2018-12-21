@@ -25,10 +25,9 @@ export type BaseProps = {|
   showDebug?: boolean,
   children?: React.Node,
 
-  defaultCameraState: CameraState,
-  // Worldview is controlled if cameraState and onCameraStateChange are both present
   cameraState?: CameraState,
   onCameraStateChange?: (CameraState) => void,
+  defaultCameraState?: CameraState,
 
   // interactions
   onDoubleClick?: MouseHandler,
@@ -38,8 +37,6 @@ export type BaseProps = {|
   onClick?: MouseHandler,
   ...Dimensions,
 |};
-
-export type Props = $Diff<BaseProps, Dimensions>;
 
 type State = {|
   worldviewContext: WorldviewContext,
@@ -70,12 +67,30 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   constructor(props: BaseProps) {
     super(props);
-    const { width, height, top, left, backgroundColor } = props;
+    const { width, height, top, left, backgroundColor, onCameraStateChange, cameraState, defaultCameraState } = props;
+    if (onCameraStateChange) {
+      if (!cameraState) {
+        console.warn(
+          "You provided `onCameraStateChange` without `cameraState`. Use Worldview as a controlled component with `cameraState` and `onCameraStateChange`, or uncontrolled with `defaultCameraState`."
+        );
+      }
+      if (cameraState && defaultCameraState) {
+        console.warn("You provided both `cameraState` and `defaultCameraState`. `defaultCameraState` will be ignored.");
+      }
+    } else {
+      if (cameraState) {
+        console.warn(
+          "You provided `cameraState` without an `onCameraStateChange` handler. This will prevent moving the camera. If the camera should be movable, use `defaultCameraState`, otherwise set `onCameraStateChange`."
+        );
+      }
+    }
+
     this.state = {
       worldviewContext: new WorldviewContext({
         dimension: { width, height, top, left },
         canvasBackgroundColor: backgroundColor || DEFAULT_BACKGROUND_COLOR,
-        cameraState: props.cameraState || props.defaultCameraState,
+        // DEFAULT_CAMERA_STATE is applied if both `cameraState` and `defaultCameraState` are not present
+        cameraState: props.cameraState || props.defaultCameraState || DEFAULT_CAMERA_STATE,
         onCameraStateChange: props.onCameraStateChange || undefined,
       }),
     };
@@ -108,8 +123,8 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   componentDidUpdate() {
     const { worldviewContext } = this.state;
-    // no need to update cameraStore's state if the component is uncontrolled
-    if (this.props.cameraState && this.props.onCameraStateChange) {
+    // update internal cameraState
+    if (this.props.cameraState) {
       worldviewContext.cameraStore.setCameraState(this.props.cameraState);
     }
 
@@ -263,15 +278,13 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 }
 
+export type Props = $Diff<React.ElementConfig<typeof WorldviewBase>, Dimensions>;
+
 const Worldview = (props: Props) => (
   <ContainerDimensions>
     {({ width, height, left, top }) => <WorldviewBase width={width} height={height} left={left} top={top} {...props} />}
   </ContainerDimensions>
 );
-
-Worldview.defaultProps = {
-  defaultCameraState: DEFAULT_CAMERA_STATE,
-};
 
 Worldview.displayName = "Worldview";
 

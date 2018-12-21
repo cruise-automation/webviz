@@ -13,13 +13,13 @@ import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
 // #BEGIN EXAMPLE
 function CameraStateControlled() {
   const [distance, setDistance] = useState(100);
-  const [cameraState, setCamerState] = useState({ ...DEFAULT_CAMERA_STATE, distance });
+  const [cameraState, setCameraState] = useState({ ...DEFAULT_CAMERA_STATE, distance });
 
   return (
     <Worldview
       cameraState={cameraState}
       onCameraStateChange={(newCamState) => {
-        setCamerState(newCamState);
+        setCameraState(newCamState);
         setDistance(newCamState.distance);
       }}>
       <FloatingBox>
@@ -31,7 +31,7 @@ function CameraStateControlled() {
           step={1}
           onChange={(newDistance) => {
             setDistance(newDistance);
-            setCamerState({ ...cameraState, distance: newDistance });
+            setCameraState({ ...cameraState, distance: newDistance });
           }}
         />
       </FloatingBox>

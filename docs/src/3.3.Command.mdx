@@ -12,7 +12,7 @@ Checkout [Writing A Custom Command Component](/guides/writing-a-custom-command-c
 
 Sample usage:
 ```js
-import Worldview, { withPose, Command, DEFAULT_CAMERA_STATE } from 'regl-worldview';
+import Worldview, { withPose, Command } from 'regl-worldview';
 
 // extend Command
 class Triangle extends Command {
@@ -62,7 +62,7 @@ class Triangle extends Command {
 // usage
 function CommandDemo() {
   return (
-    <Worldview >
+    <Worldview>
       <Triangle color={[0, 0, 1, 1]} />
     </Worldview>
   );

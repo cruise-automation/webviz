@@ -8,10 +8,12 @@ import { quat, vec3 } from "gl-matrix";
 import React, { useState } from "react";
 
 import CameraStateControls from "./CameraStateControls";
+import useRange from "./useRange";
 import { p, q } from "./utils";
 import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors } from "regl-worldview";
 
 function CameraState() {
+  const range = useRange();
   const [perspective, setPerspective] = useState(true);
   const [distance, setDistance] = useState(50);
   const [thetaOffset, setThetaOffset] = useState(0.3);
@@ -20,7 +22,7 @@ function CameraState() {
   const [orientationY, setOrientationY] = useState(0);
   const [orientationZ, setOrientationZ] = useState(0);
 
-  const [posX, setPosX] = useState(0);
+  const posX = range * 5;
   const [posY, setPosY] = useState(0);
   const [posZ, setPosZ] = useState(0);
   const [offsetX, setOffsetX] = useState(0);
@@ -111,23 +113,22 @@ function CameraState() {
       }}>
       <CameraStateControls
         perspective={perspective}
-        distance={distance}
-        thetaOffset={thetaOffset}
-        phi={phi}
-        posX={posX}
-        posY={posY}
-        posZ={posZ}
-        offsetX={offsetX}
-        offsetY={offsetY}
-        offsetZ={offsetZ}
-        orientationX={orientationX}
-        orientationY={orientationY}
-        orientationZ={orientationZ}
+        distance={distance.toFixed(3)}
+        thetaOffset={thetaOffset.toFixed(3)}
+        phi={phi.toFixed(3)}
+        posX={posX.toFixed(3)}
+        posY={posY.toFixed(3)}
+        posZ={posZ.toFixed(3)}
+        offsetX={offsetX.toFixed(3)}
+        offsetY={offsetY.toFixed(3)}
+        offsetZ={offsetZ.toFixed(3)}
+        orientationX={orientationX.toFixed(3)}
+        orientationY={orientationY.toFixed(3)}
+        orientationZ={orientationZ.toFixed(3)}
         setPerspective={setPerspective}
         setDistance={setDistance}
         setThetaOffset={setThetaOffset}
         setPhi={setPhi}
-        setPosX={setPosX}
         setPosY={setPosY}
         setPosZ={setPosZ}
         setOffsetX={setOffsetX}
@@ -154,7 +155,6 @@ function CameraState() {
               setDistance(distance);
               setThetaOffset(thetaOffset);
               setPhi(phi);
-              setPosX(target[0]);
               setPosY(target[1]);
               setPosZ(target[2]);
               setOffsetX(targetOffset[0]);

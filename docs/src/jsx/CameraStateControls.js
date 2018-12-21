@@ -4,7 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from "react";
+import React, { memo } from "react";
 import styled from "styled-components";
 
 import InputNumber from "./InputNumber";
@@ -28,7 +28,7 @@ const InputGroupWrapper = styled.div`
   }
 `;
 
-export default function CameraStateControls({
+function CameraStateControls({
   perspective,
   distance,
   thetaOffset,
@@ -46,7 +46,6 @@ export default function CameraStateControls({
   setDistance,
   setThetaOffset,
   setPhi,
-  setPosX,
   setPosY,
   setPosZ,
   setOffsetX,
@@ -75,7 +74,7 @@ export default function CameraStateControls({
           <InputNumber label="phi" value={phi} min={0} max={Math.PI} step={0.01} onChange={setPhi} />
         </div>
         <div>
-          <InputNumber label="posX" value={posX} min={0} max={20} step={0.1} onChange={setPosX} />
+          <InputNumber label="posX" value={posX} min={0} max={20} step={0.1} />
           <InputNumber label="posY" value={posY} min={0} max={20} step={0.1} onChange={setPosY} />
           <InputNumber label="posZ" value={posZ} min={0} max={20} step={0.1} onChange={setPosZ} />
         </div>
@@ -114,3 +113,5 @@ export default function CameraStateControls({
     </div>
   );
 }
+
+export default memo(CameraStateControls);

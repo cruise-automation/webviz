@@ -6,17 +6,17 @@
 
 import React from "react";
 
-import Worldview, { Cubes } from "regl-worldview";
+import Worldview, { Axes, Cubes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function CubesDemo() {
   const markers = [
     {
       pose: {
-        orientation: { x: 0, y: 0, z: 0.5, w: 1 },
-        position: { x: 0.5, y: 0.5, z: 0.5 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+        position: { x: 0, y: 0, z: 0 },
       },
-      scale: { x: 5, y: 5, z: 5 },
+      scale: { x: 10, y: 10, z: 10 },
       color: { r: 1, g: 0, b: 1, a: 0.5 },
     },
   ];
@@ -24,6 +24,7 @@ function CubesDemo() {
   return (
     <Worldview>
       <Cubes>{markers}</Cubes>
+      <Axes />
     </Worldview>
   );
 }

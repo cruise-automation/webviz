@@ -4,47 +4,26 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useState } from "react";
+import React from "react";
 
-import ConeControls from "./ConeControls";
-import useRange from "./useRange";
-import { p } from "./utils";
 import Worldview, { Cones, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function ConesDemo() {
-  const range = useRange();
-  const [scaleX, setScaleX] = useState(3);
-  const [scaleY, setScaleY] = useState(3);
-  const [scaleZ, setScaleZ] = useState(10);
-  const marker = {
-    pose: {
-      orientation: { x: 0, y: 0, z: 0, w: 1 },
-      position: { x: 0, y: 0, z: 0 },
+  const markers = [
+    {
+      pose: {
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+        position: { x: 0, y: 0, z: 0 },
+      },
+      scale: { x: 10, y: 10, z: 10 },
+      color: { r: 1, g: 0, b: 1, a: 0.5 },
     },
-    scale: p(scaleX, scaleY, scaleZ),
-    color: { r: 1 - range * 0.5, g: range, b: 1, a: 1 - range * 0.3 },
-  };
+  ];
 
   return (
     <Worldview>
-      <ConeControls
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-        }}
-        min={0.5}
-        max={20}
-        step={1}
-        scaleX={scaleX}
-        setScaleX={setScaleX}
-        scaleY={scaleY}
-        setScaleY={setScaleY}
-        scaleZ={scaleZ}
-        setScaleZ={setScaleZ}
-      />
-      <Cones>{[marker]}</Cones>
+      <Cones>{markers}</Cones>
       <Axes />
     </Worldview>
   );

@@ -12,7 +12,6 @@ import styled from "styled-components";
 
 import CameraStateInfo from "./CameraStateInfo";
 import CodeEditor from "./CodeEditor";
-import ConeControls from "./ConeControls";
 import { seed } from "./constants";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
@@ -94,7 +93,6 @@ export const scope = {
   DEFAULT_CAMERA_STATE,
   CameraStateInfo,
   LineControls,
-  ConeControls,
   InputNumber,
 
   Command,

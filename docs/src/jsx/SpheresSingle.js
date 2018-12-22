@@ -6,37 +6,28 @@
 
 import React from "react";
 
-import useRange from "./useRange";
-import Worldview, { Spheres } from "regl-worldview";
+import Worldview, { Axes, Spheres } from "regl-worldview";
 
 // #BEGIN EXAMPLE
-function SpheresSingleDemo() {
-  const range = useRange();
+function SpheresDemo() {
   const markers = [
     {
       pose: {
-        orientation: { x: 0.038269, y: -0.01677, z: -0.8394, w: 0.541905 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
         position: { x: 0, y: 0, z: 0 },
       },
-      scale: { x: 5, y: 5, z: 5 },
-      color: { r: 1, g: 0, b: 1, a: 1 - range },
-    },
-    {
-      pose: {
-        orientation: { x: 0.038269, y: -0.01677, z: -0.8394, w: 0.541905 },
-        position: { x: 10, y: 10, z: 10 },
-      },
-      scale: { x: 5, y: 5, z: 5 },
-      color: { r: 1, g: 0, b: 1, a: range },
+      scale: { x: 10, y: 10, z: 10 },
+      color: { r: 1, g: 0, b: 1, a: 0.5 },
     },
   ];
 
   return (
     <Worldview>
       <Spheres>{markers}</Spheres>
+      <Axes />
     </Worldview>
   );
 }
 // #END EXAMPLE
 
-export default SpheresSingleDemo;
+export default SpheresDemo;

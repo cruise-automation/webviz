@@ -6,28 +6,28 @@
 
 import React from "react";
 
-import { p } from "./utils";
-import Worldview, { Arrows } from "regl-worldview";
+import Worldview, { Arrows, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function ArrowsDemo() {
   const poseArrow = {
     pose: {
-      orientation: { x: 0.038269, y: -0.01677, z: -0.8394, w: 0.541905 },
+      orientation: { x: 0, y: 0, z: -1, w: 0.5 },
       position: { x: 0, y: 0, z: 0 },
     },
-    scale: p(20, 3, 3),
+    scale: { x: 20, y: 3, z: 3 },
     color: { r: 1, g: 0, b: 1, a: 1 },
   };
   const pointArrow = {
     color: { r: 1, g: 1, b: 1, a: 1 },
-    points: [p(0, 0, 0), p(10, 10, 10)],
-    scale: p(2, 2, 3),
+    points: [{ x: 0, y: 0, z: 0 }, { x: 10, y: 10, z: 10 }],
+    scale: { x: 2, y: 2, z: 3 },
   };
 
   return (
     <Worldview>
       <Arrows>{[poseArrow, pointArrow]}</Arrows>
+      <Axes />
     </Worldview>
   );
 }

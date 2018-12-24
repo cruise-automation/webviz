@@ -8,7 +8,7 @@ import polygonGenerator from "polygon-generator";
 import React from "react";
 
 import useRange from "./useRange";
-import Worldview, { FilledPolygons } from "regl-worldview";
+import Worldview, { FilledPolygons, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function FilledPolygonsDemo() {
@@ -26,6 +26,7 @@ function FilledPolygonsDemo() {
   return (
     <Worldview>
       <FilledPolygons>{[polygon]}</FilledPolygons>
+      <Axes />
     </Worldview>
   );
 }

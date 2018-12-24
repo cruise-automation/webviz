@@ -6,7 +6,7 @@
 
 import React from "react";
 
-import Worldview, { Triangles, Text, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Axes, Triangles, Text, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function CompositionDemo() {
@@ -103,6 +103,7 @@ function CompositionDemo() {
       }}>
       <Triangles>{[stopSignWhiteBaseMarker, stopSignMarker]}</Triangles>
       <Text>{[labelMarker]}</Text>
+      <Axes />
     </Worldview>
   );
 }

@@ -6,7 +6,7 @@
 
 import React from "react";
 
-import Worldview, { Cubes } from "regl-worldview";
+import Worldview, { Cubes, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function BasicExample() {
@@ -24,6 +24,7 @@ function BasicExample() {
   return (
     <Worldview>
       <Cubes>{markers}</Cubes>
+      <Axes />
     </Worldview>
   );
 }

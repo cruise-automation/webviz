@@ -8,7 +8,7 @@ import React from "react";
 
 import useRange from "./useRange";
 import { buildMatrix, p, q } from "./utils";
-import Worldview, { Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Axes, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function PointsDemo() {
@@ -19,7 +19,7 @@ function PointsDemo() {
     scale: p(1 * (3 * range)),
     color: { r: 1, g: range, b: 1, a: 1 },
     pose: {
-      position: p(3 + range),
+      position: p(range),
       orientation: q(0),
     },
   };
@@ -28,10 +28,12 @@ function PointsDemo() {
     <Worldview
       defaultCameraState={{
         ...DEFAULT_CAMERA_STATE,
-        distance: 20,
-        targetOffset: [6, 10, 0],
+        distance: 16,
+        phi: 1,
+        targetOffset: [3, 6, 0],
       }}>
       <Points>{[marker]}</Points>
+      <Axes />
     </Worldview>
   );
 }

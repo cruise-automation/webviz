@@ -8,10 +8,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import CruiseLogo from "./CruiseLogo";
 import Demo from "./Demo";
-import GitHubLogo from "./GitHubLogo";
-import Logo from "./Logo";
+import CruiseLogo from "./utils/CruiseLogo";
+import GitHubLogo from "./utils/GitHubLogo";
+import Logo from "./utils/Logo";
 
 const OuterContainer = styled.div`
   padding: 50px;

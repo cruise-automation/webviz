@@ -1,0 +1,38 @@
+import GithubLink from './utils/GithubLink'
+
+# Flow types
+
+Flow types are supported. To use the types, import directly from `regl-worldview`. <GithubLink shouldPrefixLogo href="https://github.com/cruise-automation/webviz/blob/master/packages/regl-worldview/src/types/index.js"> more type definitions </GithubLink>
+
+```js
+// @flow
+import React from "react";
+
+import { Worldview, Cubes } from "regl-worldview";
+import type { Position, Orientation, Scale, Color, Cube, Pose, Props } from "regl-worldview";
+
+export default function WorldviewExampe() {
+  const position: Position = { x: 0, y: 0, z: 0 };
+  const orientation: Orientation = { x: 0, y: 0, z: 0, w: 1 };
+  const scale: Scale = { x: 10, y: 10, z: 10 };
+  const color: Color = { r: 1, g: 0, b: 1, a: 0.5 };
+  const pose: Pose = { position, orientation };
+
+  const cube: Cube = { pose, scale, color };
+
+  const worldviewProps: Props = {
+    backgroundColor: [0, 1, 1, 1],
+    hitmapOnMouseMove: false,
+    showDebug: false,
+  };
+
+  return (
+    <div style={{ height: 500}}>
+      <Worldview {...worldviewProps}>
+        <Cubes>{[cube]}</Cubes>
+      </Worldview>
+    </div>
+  );
+}
+
+```

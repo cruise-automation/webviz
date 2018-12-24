@@ -8,7 +8,7 @@ import React from "react";
 
 import useRange from "./useRange";
 import { StyledContainer } from "./WorldviewCodeEditor";
-import Worldview, { Overlay, Spheres } from "regl-worldview";
+import Worldview, { Overlay, Spheres, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function OverlayDemo() {
@@ -75,6 +75,7 @@ function OverlayDemo() {
         }}>
         {textMarkers}
       </Overlay>
+      <Axes />
     </Worldview>
   );
 }

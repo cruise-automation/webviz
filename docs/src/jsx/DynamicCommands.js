@@ -8,7 +8,7 @@ import React, { useState } from "react";
 
 import useRange from "./useRange";
 import { p, q, buildMatrix } from "./utils";
-import Worldview, { Cubes, Spheres } from "regl-worldview";
+import Worldview, { Cubes, Spheres, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function DynamicCommandsDemo() {
@@ -63,6 +63,7 @@ function DynamicCommandsDemo() {
           ]}
         </Spheres>
       )}
+      <Axes />
     </Worldview>
   );
 }

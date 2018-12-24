@@ -6,31 +6,26 @@
 
 import React from "react";
 
-import Worldview, { Spheres } from "regl-worldview";
+import Worldview, { Cubes, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function BasicExample() {
   const markers = [
     {
       pose: {
-        orientation: { x: 0.038269, y: -0.01677, z: -0.8394, w: 0.541905 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
         position: { x: 0, y: 0, z: 0 },
       },
-      scale: { x: 5, y: 5, z: 5 },
+      scale: { x: 15, y: 15, z: 15 },
       color: { r: 1, g: 0, b: 1, a: 0.9 },
     },
   ];
 
   return (
-    <div
-      style={{
-        height: 500,
-        width: "100%",
-      }}>
-      <Worldview>
-        <Spheres>{markers}</Spheres>
-      </Worldview>
-    </div>
+    <Worldview>
+      <Cubes>{markers}</Cubes>
+      <Axes />
+    </Worldview>
   );
 }
 // #END EXAMPLE

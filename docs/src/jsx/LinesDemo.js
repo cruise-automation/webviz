@@ -10,7 +10,7 @@ import seedrandom from "seedrandom";
 import { seed } from "./constants";
 import LineControls from "./LineControls";
 import { p } from "./utils";
-import Worldview, { Lines, Points } from "regl-worldview";
+import Worldview, { Lines, Points, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function LinesDemo() {
@@ -134,6 +134,7 @@ function LinesDemo() {
           ]}
         </Points>
       )}
+      <Axes />
     </Worldview>
   );
 }

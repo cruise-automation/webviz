@@ -8,8 +8,8 @@ import React, { useState } from "react";
 import { Route, Link, NavLink, Redirect } from "react-router-dom";
 import styled from "styled-components";
 
-import Logo from "./Logo";
 import routes, { componentList } from "./routes";
+import Logo from "./utils/Logo";
 
 const SideBar = styled.aside`
   width: 240px;

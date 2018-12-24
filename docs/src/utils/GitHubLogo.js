@@ -6,7 +6,7 @@
 
 import React from "react";
 
-export default function GitHubLogo({ width }) {
+export default function GitHubLogo({ width = 24 }) {
   return (
     <svg width={width} viewBox="0 0 33 32">
       <path

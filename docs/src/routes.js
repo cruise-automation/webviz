@@ -16,6 +16,7 @@ import Points from "./3.12.Points.mdx";
 import Spheres from "./3.13.Spheres.mdx";
 import Text from "./3.14.Text.mdx";
 import Triangles from "./3.15.Triangles.mdx";
+import Flow from "./3.16FlowTypes.mdx";
 import Camera from "./3.2.Camera.mdx";
 import Command from "./3.3.Command.mdx";
 import Arrows from "./3.4.Arrows.mdx";
@@ -44,6 +45,7 @@ export const componentList = {
   Spheres,
   Text,
   Triangles,
+  Flow,
 };
 
 const ROUTE_CONFIG = [
@@ -69,6 +71,7 @@ const ROUTE_CONFIG = [
       "Spheres",
       "Text",
       "Triangles",
+      "Flow",
     ],
   },
 ];

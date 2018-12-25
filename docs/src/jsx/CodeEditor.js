@@ -111,7 +111,7 @@ function CodeEditor({ noInline, code, nonEditableCode, scope }) {
         <StyledEditor onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
           {hovered && (
             <StyledActions>
-              <CopyToClipboard text={[nonEditableCode, '\n',  code].join('\n')} onCopy={() => setCopied(true)}>
+              <CopyToClipboard text={[nonEditableCode, "\n", code].join("\n")} onCopy={() => setCopied(true)}>
                 <StyledActionBtn onMouseLeave={() => setCopied(false)}>
                   {copied ? <DoneIcon color={SUCCESS_COLOR} /> : <CopyIcon />}
                 </StyledActionBtn>

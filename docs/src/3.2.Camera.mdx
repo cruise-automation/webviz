@@ -13,15 +13,15 @@ CameraStore holds the camera state and offers methods to handle camera rotation,
 
 ## cameraState
 
-| Name              | Type      | Default      | Description                                                                                     |
-| ----------------- | --------- | ------------ | ----------------------------------------------------------------------------------------------- |
-| perspective       | `boolean` | true         | type of the camera, default to orthographic (2D), pass in `true` to enable perspective (3D)     |
-| target            | `vec3`    | [0, 0, 0]    | position of the target                                                                          |
-| targetOrientation | `quat`    | [0, 0, 0, 1] | orientation of the target (only yaw angle is used to determine camera placement)                |
-| targetOffset      | `vec3`    | [0, 0, 0]    | additional offset for the camera, specified in the `target`/`targetOrientation` reference frame |
-| distance          | `number`  | 75           | distance between the camera and target                                                          |
-| phi               | `number`  | Math.PI/4    | angle in radians from +z pole to -z pole, range: [0, π]. Ignored when `perspective` is false    |
-| thetaOffset       | `number`  | 0            | offset azimuth angle in radians, +θ corresponds to +x→+y, range: [0, 2π]                        |
+| Name                | Type      | Default        | Description                                                                                     |
+| ------------------- | --------- | -------------- | ----------------------------------------------------------------------------------------------- |
+| `perspective`       | `boolean` | `true`         | type of the camera, default to orthographic (2D), pass in `true` to enable perspective (3D)     |
+| `target`            | `vec3`    | `[0, 0, 0]`    | position of the target                                                                          |
+| `targetOrientation` | `quat`    | `[0, 0, 0, 1]` | orientation of the target (only yaw angle is used to determine camera placement)                |
+| `targetOffset`      | `vec3`    | `[0, 0, 0]`    | additional offset for the camera, specified in the `target`/`targetOrientation` reference frame |
+| `distance`          | `number`  | `75`           | distance between the camera and target                                                          |
+| `phi`               | `number`  | `Math.PI/4`    | angle in radians from +z pole to -z pole, range: [0, π]. Ignored when `perspective` is false    |
+| `thetaOffset`       | `number`  | `0`            | offset azimuth angle in radians, +θ corresponds to +x→+y, range: [0, 2π]                        |
 
 <CameraState />
 
@@ -52,10 +52,10 @@ const targetHeading = cameraStateSelectors.targetHeading(cameraState);
 const theta = cameraStateSelectors.theta(cameraState);
 ```
 
-| Name          | Type     | Description                                                          |
-| ------------- | -------- | -------------------------------------------------------------------- |
-| orientation   | `quat`   | orientation of the camera                                            |
-| position      | `vec3`   | position of the camera                                               |
-| targetHeading | `quat`   | heading direction of the target                                      |
-| theta         | `number` | azimuth angle in radians, +θ corresponds to +x→+y, range: [0, 2π]    |
-| view          | `mat4`   | field of view, control the behavior of the projection transformation |
+| Name            | Type     | Description                                                          |
+| --------------- | -------- | -------------------------------------------------------------------- |
+| `orientation`   | `quat`   | orientation of the camera                                            |
+| `position`      | `vec3`   | position of the camera                                               |
+| `targetHeading` | `quat`   | heading direction of the target                                      |
+| `theta`         | `number` | azimuth angle in radians, +θ corresponds to +x→+y, range: [0, 2π]    |
+| `view`          | `mat4`   | field of view, control the behavior of the projection transformation |

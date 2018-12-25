@@ -2,20 +2,20 @@
 
 ## Props
 
-| Name                | Optional | Type                     | Default              | Description                                                                                             |
-| ------------------- | -------- | ------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------- |
-| cameraState         | yes      | `$Shape<CameraState>`    |                      | control the [cameraState](/api/camera), must use with `onCameraStateChange`                             |
-| onCameraStateChange | yes      | `?(CameraState) => void` |                      | callback whenever the camera state changes                                                              |
-| defaultCameraState  |          | `$Shape<CameraState>`    | DEFAULT_CAMERA_STATE | pass in this prop to turn Worldview to an uncontrolled component. `onCameraStateChange` will be ignored |
-| backgroundColor     |          | `Vec4`                   | [0,0,0,1]            | change the scene background color                                                                       |
-| hitmapOnMouseMove   |          | `boolean`                | false                | if enabled, the clicked objectId will be returned from the mouse event handler                          |
-| children            | yes      | `React.Node`             |                      | regl components to render inside the Worldview                                                          |
-| showDebug           | yes      | `?boolean`               |                      | show debug information                                                                                  |
-| onDoubleClick       | yes      | `MouseHandler`           |                      |                                                                                                         |
-| onMouseDown         | yes      | `MouseHandler`           |                      |                                                                                                         |
-| onMouseUp           | yes      | `MouseHandler`           |                      |                                                                                                         |
-| onMouseMove         | yes      | `MouseHandler`           |                      |                                                                                                         |
-| onClick             | yes      | `MouseHandler`           |                      |                                                                                                         |
+| Name                  | Optional | Type                     | Default                | Description                                                                                             |
+| --------------------- | -------- | ------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| `cameraState`         | yes      | `$Shape<CameraState>`    |                        | control the [cameraState](/api/camera), must use with `onCameraStateChange`                             |
+| `onCameraStateChange` | yes      | `?(CameraState) => void` |                        | callback whenever the camera state changes                                                              |
+| `defaultCameraState`  |          | `$Shape<CameraState>`    | `DEFAULT_CAMERA_STATE` | pass in this prop to turn Worldview to an uncontrolled component. `onCameraStateChange` will be ignored |
+| `backgroundColor`     |          | `Vec4`                   | `[0,0,0,1]`            | change the scene background color                                                                       |
+| `hitmapOnMouseMove`   |          | `boolean`                | `false`                | if enabled, the clicked objectId will be returned from the mouse event handler                          |
+| `children`            | yes      | `React.Node`             |                        | regl components to render inside the Worldview                                                          |
+| `showDebug`           | yes      | `?boolean`               |                        | show debug information                                                                                  |
+| `onDoubleClick`       | yes      | `MouseHandler`           |                        |                                                                                                         |
+| `onMouseDown`         | yes      | `MouseHandler`           |                        |                                                                                                         |
+| `onMouseUp`           | yes      | `MouseHandler`           |                        |                                                                                                         |
+| `onMouseMove`         | yes      | `MouseHandler`           |                        |                                                                                                         |
+| `onClick`             | yes      | `MouseHandler`           |                        |                                                                                                         |
 
 ## Event Handlers
 

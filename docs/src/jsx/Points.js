@@ -7,28 +7,38 @@
 import React from "react";
 
 import useRange from "./useRange";
-import { buildMatrix, p, q } from "./utils";
 import Worldview, { Axes, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function PointsDemo() {
   const range = useRange();
-  const cloud = buildMatrix(3 + range * 2, 3 + range * 2, 3 + range * 2);
+  // create coordinates
+  const x = 3 + range * 2;
+  const y = x;
+  const z = x;
+  const step = 10;
+  const points = [];
+  for (let i = 0; i < x; i++) {
+    for (let j = 0; j < y; j++) {
+      for (let k = 0; k < z; k++) {
+        points.push({ x: i * step, y: j * step, z: k * step });
+      }
+    }
+  }
+
+  const scaleX = 3 * range;
   const marker = {
-    points: cloud,
-    scale: p(1 * (3 * range)),
+    points,
+    scale: { x: scaleX, y: scaleX, z: scaleX },
     color: { r: 1, g: range, b: 1, a: 1 },
-    pose: {
-      position: p(range),
-      orientation: q(0),
-    },
+    pose: { position: { x: range, y: range, z: range }, orientation: { x: 0, y: 0, z: 0, w: 1 } },
   };
 
   return (
     <Worldview
       defaultCameraState={{
         ...DEFAULT_CAMERA_STATE,
-        distance: 16,
+        distance: 124,
         phi: 1,
         targetOffset: [3, 6, 0],
       }}>

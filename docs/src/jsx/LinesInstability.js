@@ -6,7 +6,6 @@
 
 import React from "react";
 
-import { p } from "./utils";
 import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
@@ -32,7 +31,7 @@ function LinesInstabilityDemo() {
     { x: -812.4113489277303, y: 2958.368466516476, z: 0 },
   ];
   const pose = {
-    position: p(0),
+    position: { x: 0, y: 0, z: 0 },
     orientation: { x: 0, y: 0, z: 0, w: 1 },
   };
 

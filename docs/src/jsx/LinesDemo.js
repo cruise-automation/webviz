@@ -7,9 +7,7 @@
 import React, { useState } from "react";
 import seedrandom from "seedrandom";
 
-import { seed } from "./constants";
 import LineControls from "./LineControls";
-import { p } from "./utils";
 import Worldview, { Lines, Points, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
@@ -21,37 +19,38 @@ function LinesDemo() {
   const [closed, setClosed] = useState(false);
   const [monochrome, setMonochrome] = useState(false);
   const scale = { x: thickness };
+  const SEED = 123;
+  const rng = seedrandom(SEED);
 
-  const rng = seedrandom(seed);
   const randomColor = () => {
     return { r: rng(), g: rng(), b: rng(), a: 1 };
   };
 
   const points = [
-    p(0, 0, 0),
-    p(0, 3, 0),
-    p(3, 3, 0),
-    p(3, 0, 0),
-    p(0, 0, 0),
-    p(0, 0, 3),
-    p(0, 3, 3),
-    p(3, 3, 3),
-    p(3, 0, 3),
-    p(0, 0, 3),
+    [0, 0, 0],
+    [0, 3, 0],
+    [3, 3, 0],
+    [3, 0, 0],
+    [0, 0, 0],
+    [0, 0, 3],
+    [0, 3, 3],
+    [3, 3, 3],
+    [3, 0, 3],
+    [0, 0, 3],
   ];
   for (let i = 0; i < 10; i++) {
-    points.push(p(5 + 1.5 * Math.sin((Math.PI * 2 * i) / 10), i, 6));
+    points.push([5 + 1.5 * Math.sin((Math.PI * 2 * i) / 10), i, 6]);
   }
   for (let i = 20; i >= 0; i--) {
-    points.push(p(5 + 1.5 * Math.sin((Math.PI * 2 * i) / 20), i * 0.5, 2));
+    points.push([5 + 1.5 * Math.sin((Math.PI * 2 * i) / 20), i * 0.5, 2]);
   }
   for (let i = 0; i < 20; i++) {
-    points.push(p(5, i * 0.7, 4));
+    points.push([5, i * 0.7, 4]);
   }
-  points.push(p(0, 0, -6), p(0, 5, -6));
+  points.push([0, 0, -6], [0, 5, -6]);
   const pose = {
-    position: p(0),
-    orientation: { w: 0, x: 0, y: 0, z: 0 },
+    position: { x: 0, y: 0, z: 0 },
+    orientation: { x: 0, y: 0, z: 0, w: 1 },
   };
 
   const sharedProps = {
@@ -69,18 +68,17 @@ function LinesDemo() {
     {
       ...sharedProps,
       pose,
-      points: [p(-4, 0, 0), p(-4, -4, 0), p(-8, -3, 2), p(-4, 0, 0)],
+      points: [[-4, 0, 0], [-4, -4, 0], [-8, -3, 2], [-4, 0, 0]],
     },
     {
       ...sharedProps,
       pose,
-      points: [p(-4, 0, 0), p(-4, 0, -4), p(-6, 0, -6)],
+      points: [[-4, 0, 0], [-4, 0, -4], [-6, 0, -6]],
     },
   ];
 
   // collect points in order to draw debug markers
   const pts = [];
-
   markers.forEach((marker) => {
     marker.debug = debug;
     if (monochrome) {
@@ -120,14 +118,14 @@ function LinesDemo() {
         <Points>
           {[
             {
-              points: [p(0)],
-              scale: p(3),
-              pose,
+              points: [{ x: 0, y: 0, z: 0 }],
+              scale: { x: 3, y: 3, z: 3 },
               color: { r: 0, g: 1, b: 0, a: 1 },
+              pose,
             },
             {
               points: pts,
-              scale: p(3),
+              scale: { x: 3, y: 3, z: 3 },
               color: { r: 1, g: 1, b: 1, a: 1 },
               pose,
             },

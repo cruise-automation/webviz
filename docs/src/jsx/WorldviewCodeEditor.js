@@ -4,7 +4,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import range from "lodash/range";
 import polygonGenerator from "polygon-generator";
 import React, { useState, useEffect } from "react";
 import seedrandom from "seedrandom";
@@ -12,11 +11,9 @@ import styled from "styled-components";
 
 import CameraStateInfo from "./CameraStateInfo";
 import CodeEditor from "./CodeEditor";
-import { seed } from "./constants";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
 import useRange from "./useRange";
-import { buildMatrix, buildSphereList, p, q, generateCubes, generateSpheres, lerp } from "./utils";
 import Worldview, {
   Command,
   SimpleCommand,
@@ -72,23 +69,14 @@ export const scope = {
   StyledContainer,
   FloatingBox,
 
-  p,
-  q,
   getCSSColor,
-  buildMatrix,
-  buildSphereList,
-  lerp,
-  generateCubes,
-  generateSpheres,
   useRange,
   useState,
   useEffect,
   Worldview,
-  seed,
   seedrandom,
 
   polygonGenerator,
-  range,
   styled,
   DEFAULT_CAMERA_STATE,
   CameraStateInfo,

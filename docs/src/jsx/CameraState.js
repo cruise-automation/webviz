@@ -10,10 +10,17 @@ import { quat, vec3 } from "gl-matrix";
 import React, { useState } from "react";
 
 import CameraStateControls from "./CameraStateControls";
-import { p, q } from "./utils";
 import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors, type CameraState } from "regl-worldview";
 
 export default function CameraStateExample() {
+  const getPoseFromVecs = (position, orientation) => {
+    const [x, y, z, w] = orientation;
+    const [x1, y1, z1] = position;
+    return {
+      orientation: { x, y, z, w },
+      position: { x: x1, y: y1, z: z1 },
+    };
+  };
   const [cameraState, setCameraState] = useState<CameraState>({
     perspective: true,
     distance: 50,
@@ -27,10 +34,7 @@ export default function CameraStateExample() {
   const targetHeading = cameraStateSelectors.targetHeading(cameraState);
 
   const poseArrowMarker = {
-    pose: {
-      orientation: q(...cameraState.targetOrientation),
-      position: p(...cameraState.target),
-    },
+    pose: getPoseFromVecs(cameraState.target, cameraState.targetOrientation),
     scale: { x: 20, y: 3, z: 3 },
     color: { r: 1, g: 0, b: 1, a: 1 },
   };
@@ -55,10 +59,7 @@ export default function CameraStateExample() {
   quat.rotateY(cameraOrientation, cameraOrientation, Math.PI / 2);
 
   const cameraArrowMarker = {
-    pose: {
-      position: p(...cameraPosition),
-      orientation: q(...cameraOrientation),
-    },
+    pose: getPoseFromVecs(cameraPosition, cameraOrientation),
     scale: { x: arrowLength, y: 2, z: 2 },
     color: { r: 0, g: 1, b: 1, a: 0.5 },
   };

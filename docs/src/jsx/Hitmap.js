@@ -6,13 +6,23 @@
 
 import React, { useEffect, useState } from "react";
 
-import { generateCubes, generateSpheres, lerp } from "./utils";
 import { FloatingBox, StyledContainer } from "./WorldviewCodeEditor";
 import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function HitmapDemo() {
   const getHitmapId = (shape) => shape.hitmapId || 0;
+  const lerp = (start, end, amt) => {
+    return (1 - amt) * start + amt * end;
+  };
+  const numberToColor = (number, max, a = 1) => {
+    const i = (number * 255) / max;
+    const r = Math.round(Math.sin(0.024 * i + 0) * 127 + 128) / 255;
+    const g = Math.round(Math.sin(0.024 * i + 2) * 127 + 128) / 255;
+    const b = Math.round(Math.sin(0.024 * i + 4) * 127 + 128) / 255;
+    return { r, g, b, a };
+  };
+
   const [enableAutoRotate, setEnableAutoRotate] = useState(false);
   const [clickedIds, setClickedIds] = useState(new Set([7, 27]));
   const [cameraState, setCameraState] = useState({
@@ -43,8 +53,61 @@ function HitmapDemo() {
   });
 
   // Generate shapes and update the map
-  const cubes = generateCubes(clickedIds);
-  const spheres = generateSpheres(clickedIds, 10, cubes.length + 1);
+  const count = 20;
+  const cubeGap = 5;
+
+  // generate cubes
+  let hitmapIdCounter = 1;
+  const cubes = new Array(count).fill(0).map((_, idx) => {
+    const totalLen = count * cubeGap;
+    const posX = -totalLen / 2 + idx * cubeGap;
+    const posY = Math.sin(posX) * 30;
+    const posZ = Math.cos(posX) * 20;
+    const hitmapId = hitmapIdCounter++;
+    const isClicked = clickedIds.has(hitmapId);
+    const scale = isClicked ? { x: 10, y: 10, z: 10 } : { x: 5, y: 5, z: 5 };
+    const alpha = isClicked ? 1 : 0.2 + idx / count;
+    return {
+      hitmapId,
+      pose: {
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+        position: { x: posX, y: posY, z: posZ },
+      },
+      scale,
+      color: numberToColor(idx, count, alpha),
+      info: {
+        description: "additional cube info",
+        objectId: hitmapId + 10000,
+      },
+    };
+  });
+
+  // generate spheres
+  const spheres = new Array(count).fill(0).map((_, idx) => {
+    const totalLen = count * cubeGap * 1.1;
+    const posX = -totalLen / 2 + idx * cubeGap * 1.1;
+    const posY = -Math.sin(posX) * 30;
+    const posZ = -Math.cos(posX) * 20;
+
+    const hitmapId = hitmapIdCounter++;
+    const isClicked = clickedIds.has(hitmapId);
+    const scale = isClicked ? { x: 10, y: 10, z: 10 } : { x: 5, y: 5, z: 5 };
+    const alpha = isClicked ? 1 : 0.2 + idx / count;
+    return {
+      hitmapId,
+      pose: {
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+        position: { x: posY, y: posX, z: posZ },
+      },
+      scale,
+      color: numberToColor(count - idx - 1, count, alpha),
+      info: {
+        description: "additional sphere info",
+        objectId: hitmapId + 1000,
+      },
+    };
+  });
+
   cubes.forEach((object) => {
     if (object.hitmapId) {
       objectMap[object.hitmapId] = { object, type: "cube" };
@@ -142,6 +205,7 @@ function HitmapDemo() {
               key={item.id}
               style={{
                 transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
+                flexDirection: "column",
               }}>
               <h2 style={{ color: getCSSColor(color), fontSize: "2rem" }}>{title}</h2>
               <div>{text}</div>

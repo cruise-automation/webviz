@@ -7,14 +7,26 @@
 import React from "react";
 import seedrandom from "seedrandom";
 
-import { seed } from "./constants";
-import { buildMatrix, p, q } from "./utils";
 import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function SpheresInstanceColorDemo() {
-  const coords = buildMatrix(20, 20, 20, 10);
-  const rng = seedrandom(seed);
+  const SEED = 123;
+  // create coordinates
+  const x = 20;
+  const y = 20;
+  const z = 20;
+  const step = 10;
+  const coords = [];
+  for (let i = 0; i < x; i++) {
+    for (let j = 0; j < y; j++) {
+      for (let k = 0; k < z; k++) {
+        coords.push({ x: i * step, y: j * step, z: k * step });
+      }
+    }
+  }
+
+  const rng = seedrandom(SEED);
   window.colors =
     window.colors ||
     coords.map((coord, i) => {
@@ -23,13 +35,14 @@ function SpheresInstanceColorDemo() {
 
   const marker = {
     points: coords,
-    scale: p(0.25),
+    scale: { x: 0.25, y: 0.25, z: 0.25 },
     colors: window.colors,
     pose: {
-      position: p(3),
-      orientation: q(0),
+      position: { x: 3, y: 3, z: 3 },
+      orientation: { x: 0, y: 0, z: 0, w: 1 },
     },
   };
+
   return (
     <Worldview
       defaultCameraState={{

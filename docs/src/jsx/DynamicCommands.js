@@ -7,7 +7,6 @@
 import React, { useState } from "react";
 
 import useRange from "./useRange";
-import { p, q, buildMatrix } from "./utils";
 import Worldview, { Cubes, Spheres, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
@@ -15,6 +14,23 @@ function DynamicCommandsDemo() {
   const range = useRange();
   const [cubeCount, setCubeCount] = useState(3);
   const arr = new Array(cubeCount).fill(0).map((n, idx) => idx);
+
+  // create coordinates
+  const x = 20;
+  const y = 20;
+  const z = 20;
+  const step = 10;
+  const sphereCoords = [];
+  for (let i = 0; i < x; i++) {
+    for (let j = 0; j < y; j++) {
+      for (let k = 0; k < z; k++) {
+        sphereCoords.push({ x: i * step, y: j * step, z: k * step });
+      }
+    }
+  }
+
+  const sphereScaleX = 0.25 * (1 + range);
+  const spherePosX = 3 + range;
 
   return (
     <Worldview>
@@ -34,15 +50,10 @@ function DynamicCommandsDemo() {
             {
               id,
               pose: {
-                orientation: {
-                  x: 0.038269,
-                  y: -0.01677,
-                  z: -0.8394,
-                  w: 0.541905,
-                },
+                orientation: { x: 0, y: 0, z: 0, w: 1 },
                 position: { x: 5 * id, y: 5 * id, z: 5 * id },
               },
-              scale: p(5, 5),
+              scale: { x: 5, y: 5, z: 5 },
               color: { r: 1, g: 0, b: 0, a: 1 },
             },
           ]}
@@ -52,12 +63,12 @@ function DynamicCommandsDemo() {
         <Spheres>
           {[
             {
-              points: buildMatrix(20, 20, 20, 10),
-              scale: p(0.25 * (1 + range)),
+              points: sphereCoords,
+              scale: { x: sphereScaleX, y: sphereScaleX, z: sphereScaleX },
               color: { r: 1, g: range, b: 1, a: 1 },
               pose: {
-                position: p(3 + range),
-                orientation: q(0),
+                position: { x: spherePosX, y: spherePosX, z: spherePosX },
+                orientation: { x: 0, y: 0, z: 0, w: 1 },
               },
             },
           ]}

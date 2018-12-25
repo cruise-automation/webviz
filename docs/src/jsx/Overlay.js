@@ -15,7 +15,7 @@ function OverlayDemo() {
   const range = useRange();
   const marker = {
     pose: {
-      orientation: { x: 0.038269, y: -0.01677, z: -0.8394, w: 0.541905 },
+      orientation: { x: 0, y: 0, z: 0, w: 1 },
       position: { x: 0, y: 0, z: 0 },
     },
     scale: { x: 5, y: 5, z: 5 },
@@ -58,6 +58,7 @@ function OverlayDemo() {
             <StyledContainer
               key={index}
               style={{
+                flexDirection: "column",
                 transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
               }}>
               <h2 style={{ fontSize: "2rem" }}>{title}</h2>

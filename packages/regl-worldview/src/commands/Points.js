@@ -41,7 +41,7 @@ const points = (regl: Regl) => {
     `,
     attributes: {
       point: (context, props) => {
-        return props.points.map(pointToVec3);
+        return props.points.map((point) => (Array.isArray(point) ? point : pointToVec3(point)));
       },
       color: (context, props) => {
         const colors = getVertexColors(props);

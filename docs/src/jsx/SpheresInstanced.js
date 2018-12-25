@@ -7,15 +7,39 @@
 import React from "react";
 
 import useRange from "./useRange";
-import { buildSphereList } from "./utils";
 import Worldview, { Spheres } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function SpheresInstancedDemo() {
   const range = useRange();
+  // create coordinates
+  const x = 20;
+  const y = 20;
+  const z = 20;
+  const step = 10;
+  const coords = [];
+  for (let i = 0; i < x; i++) {
+    for (let j = 0; j < y; j++) {
+      for (let k = 0; k < z; k++) {
+        coords.push({ x: i * step, y: j * step, z: k * step });
+      }
+    }
+  }
+  // create sphere list
+  const scaleX = 0.25 * (1 + range);
+  const sphereList = {
+    points: coords,
+    scale: { x: scaleX, y: scaleX, z: scaleX },
+    color: { r: 1, g: range, b: 1, a: 1 },
+    pose: {
+      position: { x: range, y: range, z: range },
+      orientation: { x: 0, y: 0, z: 0, w: 1 },
+    },
+  };
+
   return (
     <Worldview>
-      <Spheres>{[buildSphereList(range)]}</Spheres>
+      <Spheres>{[sphereList]}</Spheres>
     </Worldview>
   );
 }

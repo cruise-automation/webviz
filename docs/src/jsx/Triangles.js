@@ -4,18 +4,16 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import range from "lodash/range";
 import React from "react";
 import seedrandom from "seedrandom";
 
-import { seed } from "./constants";
-import { p, q } from "./utils";
-import Worldview, { Triangles } from "regl-worldview";
+import Worldview, { Triangles, Axes } from "regl-worldview";
 
 // #BEGIN EXAMPLE
 function TrianglesDemo() {
-  const rng = seedrandom(seed);
-  const vertexColors = range(30).map((_, i) => ({
+  const SEED = 123;
+  const rng = seedrandom(SEED);
+  const vertexColors = new Array(30).fill(0).map((_, i) => ({
     r: rng(),
     g: rng(),
     b: rng(),
@@ -25,15 +23,15 @@ function TrianglesDemo() {
   const colors = [];
   const points = [];
   for (let i = 0; i < 10; i++) {
-    points.push([5 * i, 0, 0]);
-    points.push([5 * i, 5, 0]);
-    points.push([5 * i + 5, 5, 0]);
+    points.push([5 * i - 20, 0, 0]);
+    points.push([5 * i - 20, 5, 0]);
+    points.push([5 * i - 20 + 5, 5, 0]);
     colors.push(vertexColors[3 * i], vertexColors[3 * i + 1], vertexColors[3 * i + 2]);
   }
   const marker = {
     pose: {
-      position: p(0),
-      orientation: q(0),
+      position: { x: 0, y: 0, z: 0 },
+      orientation: { x: 0, y: 0, z: 0, w: 1 },
     },
     points,
     colors,
@@ -42,6 +40,7 @@ function TrianglesDemo() {
   return (
     <Worldview>
       <Triangles>{[marker]}</Triangles>
+      <Axes />
     </Worldview>
   );
 }

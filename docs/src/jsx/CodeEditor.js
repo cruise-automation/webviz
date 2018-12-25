@@ -13,6 +13,7 @@ import CopyIcon from "../utils/icons/Copy";
 import DoneIcon from "../utils/icons/Done";
 
 const SUCCESS_COLOR = "#2bb622";
+
 const StyledProvider = styled(LiveProvider)`
   overflow: hidden;
   margin-bottom: 60px;

@@ -14,9 +14,14 @@ function makeCodeComponent(raw) {
   const code = raw
     .split("// #BEGIN EXAMPLE")[1]
     .split("// #END EXAMPLE")[0]
-    .trim();
+    .split("// #BEGIN EDITABLE");
+
+  if (code.length !== 2) {
+    throw new Error("Check demo code!");
+  }
+
   // eslint-disable-next-line react/display-name
-  return () => <WorldviewCodeEditor code={code} />;
+  return () => <WorldviewCodeEditor code={code[1].trim()} nonEditableCode={code[0].trim()} />;
 }
 
 export const Arrows = makeCodeComponent(require("!!raw-loader!./Arrows"));

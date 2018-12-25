@@ -4,11 +4,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// #BEGIN EXAMPLE
 import React from "react";
 
 import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
-// #BEGIN EXAMPLE
+// #BEGIN EDITABLE
 function LinesInstabilityDemo() {
   const points = [
     { x: -812.2277333190451, y: 2961.4633761946707, z: 0 },

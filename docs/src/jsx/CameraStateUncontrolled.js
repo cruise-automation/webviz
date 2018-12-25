@@ -4,13 +4,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// #BEGIN EXAMPLE
 import React, { useState } from "react";
 
 import InputNumber from "./InputNumber";
-import { FloatingBox } from "./WorldviewCodeEditor";
 import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
-// #BEGIN EXAMPLE
+// #BEGIN EDITABLE
 function CameraStateUncontrolled() {
   const [distance, setDistance] = useState(100);
 
@@ -20,9 +20,20 @@ function CameraStateUncontrolled() {
         ...DEFAULT_CAMERA_STATE,
         distance,
       }}>
-      <FloatingBox>
+      <div
+        style={{
+          position: "absolute",
+          border: "1px solid white",
+          backgroundColor: "grey",
+          top: 10,
+          left: 10,
+          padding: 10,
+          display: "flex",
+          flexDirection: "column",
+        }}>
         <InputNumber label="distance" value={distance} min={0} max={400} step={1} onChange={setDistance} />
-      </FloatingBox>
+      </div>
+
       <Grid />
       <Axes />
     </Worldview>

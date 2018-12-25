@@ -4,12 +4,32 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// #BEGIN EXAMPLE
 import React, { useEffect, useState } from "react";
+import styled from "styled-components";
 
-import { FloatingBox, StyledContainer } from "./WorldviewCodeEditor";
 import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
 
-// #BEGIN EXAMPLE
+const StyledContainer = styled.div`
+  position: absolute;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  will-change: transform;
+  padding: 0.8rem;
+  background: #24bbcaa3;
+  max-width: 240px;
+  color: #fff;
+  white-space: pre-line;
+  > div {
+    position: relative;
+    white-space: pre-line;
+  }
+`;
+
+// #BEGIN EDITABLE
 function HitmapDemo() {
   const getHitmapId = (shape) => shape.hitmapId || 0;
   const lerp = (start, end, amt) => {
@@ -177,13 +197,23 @@ function HitmapDemo() {
 
         setClickedIds(clickedIds);
       }}>
-      <FloatingBox>
+      <div
+        style={{
+          position: "absolute",
+          border: "1px solid white",
+          backgroundColor: "grey",
+          top: 10,
+          left: 10,
+          padding: 10,
+          display: "flex",
+          flexDirection: "column",
+        }}>
         <div>{clickedIds.size === 0 && "click an object"}</div>
         <button style={{ marginBottom: 4 }} onClick={() => setEnableAutoRotate(!enableAutoRotate)}>
           {enableAutoRotate ? "Disable Auto Rotate" : "Enable Auto Rotate"}
         </button>
         {clickedIds.size > 0 && <button onClick={() => setClickedIds(new Set())}>Clear Text</button>}
-      </FloatingBox>
+      </div>
       <Cubes getHitmapId={getHitmapId}>{cubes}</Cubes>
       <Spheres getHitmapId={getHitmapId}>{spheres}</Spheres>
       <Overlay

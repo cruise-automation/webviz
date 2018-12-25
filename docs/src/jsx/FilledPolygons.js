@@ -4,13 +4,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// #BEGIN EXAMPLE
 import polygonGenerator from "polygon-generator";
 import React from "react";
 
 import useRange from "./useRange";
 import Worldview, { FilledPolygons, Axes } from "regl-worldview";
 
-// #BEGIN EXAMPLE
+// #BEGIN EDITABLE
 function FilledPolygonsDemo() {
   const range = useRange();
   const sideLength = 5 * range + 5;

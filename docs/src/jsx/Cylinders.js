@@ -4,11 +4,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// #BEGIN EXAMPLE
 import React from "react";
 
 import Worldview, { Cylinders, Axes } from "regl-worldview";
 
-// #BEGIN EXAMPLE
+// #BEGIN EDITABLE
 function CylindersDemo() {
   const markers = [
     {

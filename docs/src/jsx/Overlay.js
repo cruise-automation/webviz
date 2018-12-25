@@ -4,13 +4,33 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// #BEGIN EXAMPLE
 import React from "react";
+import styled from "styled-components";
 
 import useRange from "./useRange";
-import { StyledContainer } from "./WorldviewCodeEditor";
 import Worldview, { Overlay, Spheres, Axes } from "regl-worldview";
 
-// #BEGIN EXAMPLE
+export const StyledContainer = styled.div`
+  position: absolute;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  will-change: transform;
+  padding: 0.8rem;
+  background: #24bbcaa3;
+  max-width: 240px;
+  color: #fff;
+  white-space: pre-line;
+  > div {
+    position: relative;
+    white-space: pre-line;
+  }
+`;
+
+// #BEGIN EDITABLE
 function OverlayDemo() {
   const range = useRange();
   const marker = {

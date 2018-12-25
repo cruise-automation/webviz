@@ -13,6 +13,7 @@ import CameraStateInfo from "./CameraStateInfo";
 import CodeEditor from "./CodeEditor";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
+import { StyledContainer } from "./Overlay";
 import useRange from "./useRange";
 import Worldview, {
   Command,
@@ -35,39 +36,8 @@ import Worldview, {
   getCSSColor,
 } from "regl-worldview";
 
-export const StyledContainer = styled.div`
-  position: absolute;
-  white-space: nowrap;
-  z-index: 100;
-  pointer-events: none;
-  top: 0;
-  left: 0;
-  will-change: transform;
-  padding: 0.8rem;
-  background: #24bbcaa3;
-  max-width: 240px;
-  color: #fff;
-  white-space: pre-line;
-  > div {
-    position: relative;
-    white-space: pre-line;
-  }
-`;
-
-export const FloatingBox = styled.div`
-  position: absolute;
-  border: 1px solid white;
-  background-color: grey;
-  top: 10px;
-  left: 10px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-`;
-
 export const scope = {
   StyledContainer,
-  FloatingBox,
 
   getCSSColor,
   useRange,
@@ -101,6 +71,6 @@ export const scope = {
   withPose,
 };
 
-export default function WorldviewCodeEditor({ code, noInline, height, scope: customScope = {} }) {
-  return <CodeEditor {...{ code, noInline, height }} scope={{ ...customScope, ...scope }} />;
+export default function WorldviewCodeEditor({ scope: customScope = {}, ...rest }) {
+  return <CodeEditor scope={{ ...customScope, ...scope }} {...rest} />;
 }

@@ -4,10 +4,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from "react";
+import React, { useState } from "react";
+import { CopyToClipboard } from "react-copy-to-clipboard";
 import { LiveProvider, LiveEditor, LiveError, LivePreview } from "react-live";
 import styled, { css } from "styled-components";
 
+import CopyIcon from "../utils/icons/Copy";
+import DoneIcon from "../utils/icons/Done";
+
+const SUCCESS_COLOR = "#2bb622";
 const StyledProvider = styled(LiveProvider)`
   overflow: hidden;
   margin-bottom: 60px;
@@ -34,11 +39,21 @@ const column = css`
   }
 `;
 
-const StyledEditor = styled(LiveEditor)`
-  background: blue;
-  color: #eee;
+const StyledEditor = styled.div`
   overflow: scroll;
+  position: relative;
+  pre {
+    &:focus {
+      outline: none;
+    }
+  }
   ${column}
+`;
+
+const StyledNonEditableArea = styled.pre`
+  margin-bottom: 0 !important;
+  max-height: 104px;
+  overflow-y: scroll;
 `;
 
 const StyledPreview = styled(LivePreview)`
@@ -65,16 +80,52 @@ const StyledError = styled(LiveError)`
   right: 0;
 `;
 
-const CodeEditor = ({ noInline, code, scope }) => {
+const StyledActions = styled.div`
+  position: absolute;
+  top: 0;
+  right: 4px;
+  text-align: right;
+`;
+const StyledActionBtn = styled.button`
+  background: transparent;
+  border: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  &:hover,
+  &:focus {
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+  }
+`;
+
+function CodeEditor({ noInline, code, nonEditableCode, scope }) {
+  const [hovered, setHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   return (
     <StyledProvider code={code} scope={scope} noInline={noInline} mountStylesheet={false}>
       <LiveWrapper>
-        <StyledEditor />
+        <StyledEditor onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+          {hovered && (
+            <StyledActions>
+              <CopyToClipboard text={code} onCopy={() => setCopied(true)}>
+                <StyledActionBtn onMouseLeave={() => setCopied(false)}>
+                  {copied ? <DoneIcon color={SUCCESS_COLOR} /> : <CopyIcon />}
+                </StyledActionBtn>
+              </CopyToClipboard>
+            </StyledActions>
+          )}
+          <StyledNonEditableArea>{nonEditableCode}</StyledNonEditableArea>
+          <LiveEditor />
+        </StyledEditor>
         <StyledPreview />
       </LiveWrapper>
       <StyledError />
     </StyledProvider>
   );
-};
+}
 
 export default CodeEditor;

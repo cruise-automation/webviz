@@ -46,7 +46,7 @@ const opacities = [
   { value: 30, hex: "4D" },
   { value: 20, hex: "33" },
   { value: 10, hex: "1A" },
-  { value: "05", hex: "0D" },
+  { value: 5, hex: "0D" },
 ];
 
 const palette = {};

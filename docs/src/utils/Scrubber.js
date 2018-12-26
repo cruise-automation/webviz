@@ -9,10 +9,11 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
+import { color } from "../theme";
 import { useEventListener } from "./useEventListener";
 
 const StyledNumber = styled.span`
-  color: #edcc28;
+  color: ${color.primary};
   border-bottom: 1px dotted currentColor;
   cursor: ${(props) => (props.vertical ? "ns-resize" : "ew-resize")};
   padding-left: 4px;

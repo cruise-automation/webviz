@@ -9,6 +9,8 @@
 import * as React from "react";
 import styled from "styled-components";
 
+import { color, palette } from "../theme";
+
 const StyledSwitchWrapper = styled.div`
   display: inline-flex;
   align-items: center;
@@ -53,7 +55,7 @@ const StyledInput = styled.input`
   width: 0;
   height: 0;
   &:checked + ${StyledSlider} {
-    background-color: #23d160;
+    background-color: ${color.success};
   }
   &:checked + ${StyledSlider}:before {
     -webkit-transform: translateX(12px);
@@ -61,10 +63,10 @@ const StyledInput = styled.input`
     transform: translateX(12px);
   }
   &:disabled + ${StyledSlider} {
-    background-color: #efefef;
+    background-color: ${color.disabled};
   }
   &:checked:disabled + ${StyledSlider} {
-    background-color: #23d16099;
+    background-color: ${palette.green40};
   }
 `;
 

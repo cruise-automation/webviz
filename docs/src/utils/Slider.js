@@ -9,6 +9,8 @@
 import * as React from "react";
 import styled from "styled-components";
 
+import { color } from "../theme";
+
 const SliderInput = styled.input.attrs({ type: "range" })`
   width: 120px;
   margin-right: 20px;
@@ -22,7 +24,7 @@ const SliderInput = styled.input.attrs({ type: "range" })`
     height: 12px;
     width: 28px;
     border-radius: 6px;
-    background: #edcc28;
+    background: ${color.primary};
     cursor: pointer;
     &:hover {
       opacity: 0.5;
@@ -33,7 +35,7 @@ const SliderInput = styled.input.attrs({ type: "range" })`
     height: 16px;
     cursor: pointer;
     background: transparent;
-    border: 1px solid #edcc28;
+    border: 1px solid ${color.primary};
     border-radius: 8px;
     padding: 1px;
   }

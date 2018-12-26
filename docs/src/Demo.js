@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 import WorldviewCodeEditor from "./jsx/WorldviewCodeEditor";
+import { color } from "./theme";
 import Slider from "./utils/Slider";
 
 const Container = styled.div`
@@ -38,7 +39,7 @@ const Container = styled.div`
       display: flex;
       align-items: center;
       font-size: 16px;
-      color: #edcc28;
+      color: ${color.label};
     }
   }
 

@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 import Demo from "./Demo";
+import { color, fontSize } from "./theme";
 import CruiseLogo from "./utils/CruiseLogo";
 import GitHubLogo from "./utils/GitHubLogo";
 import Logo from "./utils/Logo";
@@ -42,15 +43,15 @@ const Header = styled.div`
   }
 
   h1 {
-    font-size: 38px;
+    font-size: ${fontSize.h1};
   }
   h2 {
-    font-size: 20px;
+    font-size: ${fontSize.h2};
   }
 
   @media only screen and (max-width: 940px) {
     h1 {
-      font-size: 32px;
+      font-size: ${fontSize.h1Sm};
     }
   }
 `;
@@ -61,12 +62,12 @@ const HeaderLinks = styled.div`
   flex-wrap: wrap;
 
   a {
-    color: #edcc28;
-    border: 1px solid #edcc28;
+    color: ${color.linkPrimary};
+    border: 1px solid ${color.linkPrimary};
     padding: 4px 10px;
     &:hover,
     &:visited {
-      color: #edcc28;
+      color: ${color.linkPrimaryVisited};
     }
   }
 
@@ -98,7 +99,7 @@ const Footer = styled.div`
 
 const DocsFooterLink = styled(Link)`
   display: block;
-  color: #edcc28 !important;
+  color: ${color.linkPrimary} !important;
   font-size: 18px;
 `;
 

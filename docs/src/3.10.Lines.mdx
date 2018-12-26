@@ -6,9 +6,9 @@ import { LinesDemo, LinesWireframe } from "./jsx/allLiveEditors";
 
 ## Props
 
-| Name     | Type     | Default | Description                     |
-| -------- | -------- | ------- | ------------------------------- |
-| children | `Line[]` | []      | array of Line markers to render |
+| Name       | Type     | Default | Description                     |
+| ---------- | -------- | ------- | ------------------------------- |
+| `children` | `Line[]` | `[]`    | array of Line markers to render |
 
 ### Line
 
@@ -29,7 +29,7 @@ type Line = {
     b: number, // between 0 and 1
     a: number, // between 0 and 1
   },
-  points: [{ x: number, y: number, z: number }]
+  points: [{ x: number, y: number, z: number } | [ number, number, number ]]
 }
 ```
 

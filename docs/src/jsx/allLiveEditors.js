@@ -17,7 +17,7 @@ function makeCodeComponent(raw) {
     .split("// #BEGIN EDITABLE");
 
   if (code.length !== 2) {
-    throw new Error("Check demo code!");
+    throw new Error("Demo code must contain `// #BEGIN EXAMPLE`,  `// #BEGIN EDITABLE`, and `// #END EXAMPLE`");
   }
 
   // eslint-disable-next-line react/display-name

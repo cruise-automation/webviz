@@ -13,6 +13,7 @@ import CopyIcon from "../utils/icons/Copy";
 import DoneIcon from "../utils/icons/Done";
 
 const SUCCESS_COLOR = "#2bb622";
+
 const StyledProvider = styled(LiveProvider)`
   overflow: hidden;
   margin-bottom: 60px;
@@ -111,7 +112,7 @@ function CodeEditor({ noInline, code, nonEditableCode, scope }) {
         <StyledEditor onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
           {hovered && (
             <StyledActions>
-              <CopyToClipboard text={code} onCopy={() => setCopied(true)}>
+              <CopyToClipboard text={[nonEditableCode, "\n", code].join("\n")} onCopy={() => setCopied(true)}>
                 <StyledActionBtn onMouseLeave={() => setCopied(false)}>
                   {copied ? <DoneIcon color={SUCCESS_COLOR} /> : <CopyIcon />}
                 </StyledActionBtn>

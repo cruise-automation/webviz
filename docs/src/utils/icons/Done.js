@@ -4,7 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// Icon from https://material.io/tools/icons/?icon=file_copy&style=outline
+// Icon from https://material.io/tools/icons/?icon=done&style=baseline
 import React from "react";
 
 export default function Done({ size = 24, color = "#fff" }) {

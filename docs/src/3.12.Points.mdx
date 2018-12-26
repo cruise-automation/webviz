@@ -6,9 +6,9 @@ import { Points } from './jsx/allLiveEditors'
 
 ## Props
 
-| Name     | Type      | Default | Description                      |
-| -------- | --------- | ------- | -------------------------------- |
-| children | `Point[]` | []      | array of Point markers to render |
+| Name       | Type      | Default | Description                      |
+| ---------- | --------- | ------- | -------------------------------- |
+| `children` | `Point[]` | `[]`    | array of Point markers to render |
 
 ### Point
 
@@ -29,7 +29,7 @@ type Point = {
     b: number, // between 0 and 1
     a: number, // between 0 and 1
   },
-  points: [{ x: number, y: number, z: number }],
+  points: [{ x: number, y: number, z: number } | [ number, number, number ]] ,
 }
 ```
 

@@ -9,6 +9,7 @@ import { Route, Link, NavLink, Redirect } from "react-router-dom";
 import styled from "styled-components";
 
 import routes, { componentList } from "./routes";
+import { color, fontFamily } from "./theme";
 import Logo from "./utils/Logo";
 
 const SideBar = styled.aside`
@@ -20,7 +21,7 @@ const SideBar = styled.aside`
   @media only screen and (max-width: 680px) {
     right: 0;
     width: 100%;
-    background: #1f1e27;
+    background: ${color.bgDark};
     z-index: 999;
     display: flex;
     justify-content: space-between;
@@ -31,7 +32,7 @@ const SideBar = styled.aside`
 const LogoLink = styled(Link)`
   padding: 2rem;
   display: block;
-  color: #f7f7f3 !important;
+  color: ${color.textLight} !important;
   &:hover {
     opacity: 0.5;
   }
@@ -63,11 +64,11 @@ const Section = styled.li`
   li {
     margin-bottom: 0.25rem;
     a {
-      color: #f7f7f3;
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      color: ${color.textLight};
+      font-family: ${fontFamily.primary},
       font-size: 14px;
       &.active {
-        color: #a395e2;
+        color: ${color.linkSecondaryActive};
       }
     }
   }
@@ -106,7 +107,7 @@ const MobileNavigationToggle = styled.a`
 `;
 
 const GithubLink = styled.a`
-  color: #edcc28 !important;
+  color: ${color.linkPrimary} !important;
 `;
 
 function DefaultMain({ name, ...rest }) {

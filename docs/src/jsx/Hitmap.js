@@ -19,9 +19,9 @@ const StyledContainer = styled.div`
   left: 0;
   will-change: transform;
   padding: 0.8rem;
-  background: #24bbcaa3;
+  background: #99ddff;
   max-width: 240px;
-  color: #fff;
+  color: #f7f7f3;
   white-space: pre-line;
   > div {
     position: relative;

@@ -9,6 +9,7 @@ import { CopyToClipboard } from "react-copy-to-clipboard";
 import { LiveProvider, LiveEditor, LiveError, LivePreview } from "react-live";
 import styled, { css } from "styled-components";
 
+import { color, palette } from "../theme";
 import CopyIcon from "../utils/icons/Copy";
 import DoneIcon from "../utils/icons/Done";
 
@@ -74,7 +75,7 @@ const StyledPreview = styled(LivePreview)`
 const StyledError = styled(LiveError)`
   display: block;
   padding: 1rem;
-  background: #f24366;
+  background: ${color.danger};
   color: white;
   position: absolute;
   top: 0;
@@ -97,7 +98,7 @@ const StyledActionBtn = styled.button`
   align-items: center;
   &:hover,
   &:focus {
-    background: rgba(255, 255, 255, 0.2);
+    background: ${palette.white20};
     outline: none;
   }
 `;

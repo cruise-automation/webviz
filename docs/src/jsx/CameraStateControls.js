@@ -9,13 +9,14 @@
 import React from "react";
 import styled from "styled-components";
 
+import { color } from "../theme";
 import Scrubber from "../utils/Scrubber";
 import Slider from "../utils/Slider";
 import Switch from "../utils/Switch";
 import type { CameraState, Quat } from "regl-worldview";
 
 const ControlsTable = styled.table`
-  color: #88878a;
+  color: ${color.textMuted};
   &,
   td,
   th,

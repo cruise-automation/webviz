@@ -7,6 +7,8 @@
 import React from "react";
 import styled from "styled-components";
 
+import { fontFamily } from "../theme";
+
 const StyledInput = styled.label`
   display: inline-flex;
   flex-direction: column;
@@ -28,7 +30,7 @@ const StyledInput = styled.label`
     color: white;
     font-size: 0.9rem !important;
     padding: 2px 5px;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace !important;
+    font-family: ${fontFamily.primary};
   }
 `;
 

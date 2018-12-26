@@ -21,6 +21,7 @@ const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 
 export type BaseProps = {|
   backgroundColor?: Vec4,
+  // rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
   showDebug?: boolean,
   children?: React.Node,
@@ -60,8 +61,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   _tick: AnimationFrameID | void;
 
   static defaultProps = {
-    // rendering the hitmap on mouse move is expensive, so disable it by default
-    hitmapOnMouseMove: false,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
   };
 

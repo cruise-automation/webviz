@@ -16,12 +16,12 @@ import WorldviewReactContext from "../WorldviewReactContext";
 
 export type Props<T> = {
   children?: T[],
-  getHitmapId?: ?(T) => ?number,
-  layerIndex?: ?number,
+  getHitmapId?: (T) => ?number,
+  layerIndex?: number,
 };
 
 type CommandProps = {
-  layerIndex?: ?number,
+  layerIndex?: number,
 };
 
 // The base class for all regl-based drawing commands.

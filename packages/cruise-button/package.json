@@ -1,0 +1,22 @@
+{
+  "name": "cruise-button",
+  "version": "0.0.1",
+  "main": "lib/index.js",
+  "description": "Cruise button",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build-dev": "BABEL_ENV=$NODE_ENV babel src/index.js --out-dir lib --copy-files --config-file ../../babel.config.js",
+    "build": "NODE_ENV=production npm run build-dev && flow-copy-source -v src lib --ignore '*.test.*'",
+    "watch": "NODE_ENV=development npm run build-dev --watch"
+  },
+  "dependencies": {
+    "classnames": "^2.2.5",
+    "styled-components": "^3.3.0"
+  },
+  "peerDependencies": {
+    "react": "16.x"
+  },
+  "devDependencies": {
+    "flow-bin": "^0.89.0"
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "name": "@cruise/tooltip",
+  "name": "@cruise-automation/tooltip",
   "version": "0.0.6",
   "main": "lib/index.js",
   "description": "Cruise tooltip",
@@ -17,5 +17,9 @@
   },
   "devDependencies": {
     "flow-bin": "^0.89.0"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "b4fbe46dc6b4cbcc62dcce8d07e190cce3b6be00"
 }

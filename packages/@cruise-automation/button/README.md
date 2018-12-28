@@ -1,10 +1,10 @@
-# @cruise/button
+# @cruise-automation/button
 
 Low level button component that supports Bulma styles. For usage across Cruise projects.
 
 ## Usage
 
-Install: `npm install --save @cruise/button`.
+Install: `npm install --save @cruise-automation/button`.
 
 If the button is passed an `onClick` callback the event will have its propagation stopped before the callback is called. This is because 95% of the time you don't want the event to propagate and can be the source of subtle bugs. If you want the click to propagate, do not supply an `onClick` handler and wrap the component in a container element with an `onClick` handler such as a span or div.
 

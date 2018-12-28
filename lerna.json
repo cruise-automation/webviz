@@ -1,7 +1,7 @@
 {
   "packages": [
     "packages/*",
-    "packages/@cruise/*"
+    "packages/@cruise-automation/*"
   ],
   "devDependencies": {
     "lerna": "^3.4.3"

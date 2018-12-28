@@ -1,6 +1,6 @@
 # @cruise-automation/button
 
-Low level button component that supports Bulma styles. For usage across Cruise projects.
+Button component that supports animated progress for destructive actions, "pulse" animation, and Bulma classes.
 
 ## Usage
 

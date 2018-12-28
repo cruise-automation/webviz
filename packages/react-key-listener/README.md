@@ -4,7 +4,7 @@ React component for handling keyboard events. Use this instead of calling `addEv
 
 ## Usage
 
-Install: `npm install --save keylistener`.
+Install: `npm install --save react-key-listener`.
 
 Example:
 

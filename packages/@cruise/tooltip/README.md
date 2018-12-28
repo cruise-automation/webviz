@@ -1,10 +1,10 @@
-# cruise-tooltip
+# @cruise/tooltip
 
 Floating tooltip React component, for usage across Cruise projects.
 
 ## Usage
 
-Install: `npm install --save cruise-tooltip`.
+Install: `npm install --save @cruise/tooltip`.
 
 It can render any `React.Node` within itself. It comes with a wrapper component you can use to add tooltips to existing html elements, and an imperative API to absolutely position the tooltip for interacting with non-element based things (image hitmaps, charts, webgl).
 

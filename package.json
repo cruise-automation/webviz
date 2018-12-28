@@ -100,7 +100,7 @@
     "storybook": "start-storybook -p 6006 -c stories",
     "build-storybook": "build-storybook -c stories",
     "flow": "flow",
-    "flow-typed-rebuild": "rm -rf flow-typed/ && flow-typed install && flow-typed install --rootDir packages/cruise-button && flow-typed install --rootDir packages/cruise-tooltip && flow-typed install --rootDir packages/keylistener && flow-typed install --rootDir packages/regl-worldview",
+    "flow-typed-rebuild": "rm -rf flow-typed/ && flow-typed install && flow-typed install --rootDir packages/@cruise/button && flow-typed install --rootDir packages/@cruise/tooltip && flow-typed install --rootDir packages/react-key-listener && flow-typed install --rootDir packages/regl-worldview",
     "docs": "webpack-dev-server",
     "docs-deploy": "gh-pages -d docs/public",
     "publish": "lerna run clean && lerna run build && lerna publish",

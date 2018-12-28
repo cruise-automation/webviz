@@ -1,6 +1,7 @@
 {
   "packages": [
-    "packages/*"
+    "packages/*",
+    "packages/@cruise/*"
   ],
   "devDependencies": {
     "lerna": "^3.4.3"

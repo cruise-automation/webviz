@@ -1,6 +1,6 @@
 {
   "name": "react-key-listener",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "main": "lib/index.js",
   "description": "React component for handling keyboard events",
   "license": "Apache-2.0",

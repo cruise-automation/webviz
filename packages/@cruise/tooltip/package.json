@@ -1,6 +1,6 @@
 {
   "name": "@cruise/tooltip",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "main": "lib/index.js",
   "description": "Cruise tooltip",
   "license": "Apache-2.0",

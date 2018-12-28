@@ -1,6 +1,9 @@
 webviz is a collection of packages for visualizing 2D and 3D views on the web.
 
-- regl-worldview: a react library for rendering 2D and 3D views using [regl](https://github.com/regl-project/regl).
+- regl-worldview: React library for rendering 2D and 3D scenes using [regl](https://github.com/regl-project/regl).
+- react-key-listener: React component for handling keyboard events, without interfering with editable fields and buttons.
+- @cruise-automation/button: Button component that supports animated progress for destructive actions, "pulse" animation, and Bulma classes.
+- @cruise-automation/tooltip: React component using [popper.js](https://popper.js.org/) to add rich, customizable tooltips to DOM elements.
 
 ## Documentation
 

@@ -1,10 +1,11 @@
 {
   "packages": [
-    "packages/*"
+    "packages/*",
+    "packages/@cruise-automation/*"
   ],
   "devDependencies": {
     "lerna": "^3.4.3"
   },
-  "version": "0.0.5",
+  "version": "0.0.7",
   "npmClient": "npm"
 }

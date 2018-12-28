@@ -1,7 +1,8 @@
 {
   "name": "regl-worldview",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "description": "A reusable component for rendering 2D and 3D views using regl",
+  "license": "Apache-2.0",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "browser": "dist/index.esm.js",
@@ -33,5 +34,6 @@
   },
   "devDependencies": {
     "flow-bin": "^0.89.0"
-  }
+  },
+  "gitHead": "a799782ff908186f8c42c37f39806d251922ca6e"
 }

@@ -18,4 +18,5 @@ module.exports = {
   moduleDirectories: ["<rootDir>/packages", "node_modules"],
   moduleFileExtensions: ["web.js", "js", "json", "web.jsx", "jsx", "node"],
   resetMocks: true,
+  setupFiles: ["<rootDir>/jest/configureEnzyme.js"],
 };

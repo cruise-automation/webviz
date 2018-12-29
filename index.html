@@ -14,6 +14,7 @@
     <meta name="theme-color" content="#000000">
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,400i,700,700i" rel="stylesheet">
     <title>webviz</title>
+    <link rel='shortcut icon' type='image/x-icon' href='favicon.ico' />
   </head>
   <body>
     <noscript>
@@ -41,7 +42,7 @@
     };
     window.addEventListener("error", window.webviz_handleTopLevelError);
     </script>
-    <script src='dist/webvizCoreBundle.js'></script> <!-- for when running in open source repo -->
+    <script src='dist/webvizCoreBundle.js'></script>
     <script type="text/javascript">
     window.removeEventListener("error", window.webviz_handleTopLevelError);
     if (!window.webviz_caughtTopLevelError) {

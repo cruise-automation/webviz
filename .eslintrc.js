@@ -14,6 +14,12 @@ module.exports = {
   plugins: ["jest", "import-order-alphabetical"],
   parser: "babel-eslint",
   settings: { "import/resolver": { webpack: { config: `${__dirname}/webpack.config.js` } } },
+  globals: {
+    RAVEN_URL: false, // injected via webpack
+    GIT_INFO: false, // injected via webpack
+    CURRENT_VERSION: false, // injected via webpack
+    MINIMUM_CHROME_VERSION: false, // injected via webpack
+  },
   rules: {
     curly: "error",
     "prettier/prettier": "error",

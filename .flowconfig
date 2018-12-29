@@ -1,17 +1,28 @@
 [ignore]
 .*\.ignore\.js
 dist
+.*/node_modules/react-draggable/.*
+.*/node_modules/redux-persist/.*
+.*/node_modules/jsonlint-lines-primitives/.*
+.*/node_modules/immutable/.*
+.*/node_modules/radium/.*
+# Temporarily disable reading rosbag.js Flow files until we fix them
+.*/node_modules/rosbag/.*\.js\.flow
 
 [include]
 
 [libs]
-
-[lints]
+./flow-typed
+./packages/webviz-core/src/globals.js.flow
 
 [options]
+emoji=true
+esproposal.class_static_fields=enable
+esproposal.class_instance_fields=enable
 # Cheap workaround to make flow typechecking work across packages in the monorepo
 module.system.node.resolve_dirname=node_modules
-module.system.node.resolve_dirname=packages
-
-[strict]
-
+module.system.node.resolve_dirname=./packages
+module.name_mapper.extension='scss' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/CSSModule.js.flow'
+module.name_mapper.extension='md' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/Markdown.js.flow'
+module.name_mapper.extension='ne' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/Nearley.js.flow'
+module.name_mapper.extension='worker.js' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/WorkerLoader.js.flow'

@@ -16,7 +16,7 @@
     "react": "16.x"
   },
   "devDependencies": {
-    "flow-bin": "^0.89.0"
+    "flow-bin": "0.80.0"
   },
   "publishConfig": {
     "access": "public"

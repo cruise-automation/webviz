@@ -1,0 +1,72 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/colors.module.scss";
+
+$spacing: 4px;
+
+.iconContainer {
+  padding-top: $spacing;
+  display: flex;
+  flex: 0 0 auto;
+  margin-left: $spacing;
+  padding-left: $spacing;
+  flex-direction: row;
+  border-left: 1px solid $panel-background;
+  min-height: 22px;
+
+  .floating & {
+    border-left-width: 0px;
+  }
+}
+
+.panelToolbarContainer {
+  transition: opacity 0.1s ease-in-out;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+  background-color: $toolbar;
+
+  &.floating {
+    position: absolute;
+    right: 0;
+    // leave some room for possible scrollbar
+    padding-right: 5px;
+    top: 0;
+    z-index: 5000;
+    background-color: transparent;
+    opacity: 0;
+
+    &.hasChildren {
+      left: 0;
+      background-color: $toolbar;
+    }
+
+    &.containsOpen {
+      opacity: 1;
+    }
+  }
+
+  :global(.mosaic-window):hover & {
+    opacity: 1;
+  }
+}
+
+.icon,
+.dragIcon {
+  font-size: 14px;
+  margin-right: 0.3em;
+}
+
+.dragIcon {
+  cursor: move;
+}
+
+.helpModalFootnote {
+  opacity: 0.8;
+  margin: 1em 0 0;
+  font-size: 1.1rem;
+}

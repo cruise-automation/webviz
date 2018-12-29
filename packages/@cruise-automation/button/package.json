@@ -10,14 +10,13 @@
     "watch": "NODE_ENV=development npm run build-dev --watch"
   },
   "dependencies": {
-    "classnames": "^2.2.5",
-    "styled-components": "^3.3.0"
+    "classnames": "^2.2.5"
   },
   "peerDependencies": {
     "react": "16.x"
   },
   "devDependencies": {
-    "flow-bin": "^0.89.0"
+    "flow-bin": "0.80.0"
   },
   "publishConfig": {
     "access": "public"

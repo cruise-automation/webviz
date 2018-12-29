@@ -8,7 +8,6 @@
 
 import cx from "classnames";
 import * as React from "react";
-import styled, { keyframes } from "styled-components";
 
 export const PROGRESS_DIRECTION = Object.freeze({
   HORIZONTAL: "horizontal",
@@ -17,25 +16,33 @@ export const PROGRESS_DIRECTION = Object.freeze({
 });
 export type ProgressDirection = $Values<typeof PROGRESS_DIRECTION>;
 
-const PulseAnimation = keyframes`
-  0%,
-  100%  {
-    opacity: 0.9;
+let keyframesInjected = false;
+function injectKeyframes() {
+  if (keyframesInjected) {
+    return;
   }
-  50% {
-    opacity: 0.2;
+  const style = document.createElement("style");
+  style.innerHTML = `
+    @keyframes cruise-automation-button-pulse {
+      0%,
+      100%  {
+        opacity: 0.9;
+      }
+      50% {
+        opacity: 0.2;
+      }
+    }
+  `;
+  if (!document.body) {
+    throw new Error("no document.body");
   }
-`;
-
-const StyledButton = styled.button`
-  position: relative;
-  z-index: 0;
-  overflow: hidden;
-`;
+  document.body.appendChild(style);
+  keyframesInjected = true;
+}
 
 type ProgressProps = {
   customStyle?: { [string]: any },
-  direction: ProgressDirection,
+  direction?: ProgressDirection,
   percentage: number,
 };
 
@@ -54,22 +61,6 @@ function getProgressStyle(props: ProgressProps) {
     height: direction !== PROGRESS_DIRECTION.HORIZONTAL ? `${percentage}%` : "100%",
   };
 }
-
-const Progress = styled.span.attrs({
-  style: getProgressStyle,
-})`
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  z-index: 1;
-  background-color: rgba(0, 0, 0, 0.5);
-  ${(props) =>
-    props.direction === PROGRESS_DIRECTION.PULSE &&
-    `
-    animation: ${PulseAnimation} 1s linear infinite;
-  `};
-`;
 
 type Props = {
   id?: string,
@@ -199,13 +190,29 @@ export default class Button extends React.Component<Props, State> {
       return null;
     }
 
+    if (progressDirection === PROGRESS_DIRECTION.PULSE) {
+      injectKeyframes();
+    }
+
     // allow user supplied classname to supercede built in class
     return (
-      <Progress
+      <span
+        style={{
+          content: "",
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          zIndex: 1,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          animation:
+            progressDirection === PROGRESS_DIRECTION.PULSE && "cruise-automation-button-pulse 1s linear infinite",
+          ...getProgressStyle({
+            direction: progressDirection,
+            percentage: progressPercentage,
+            customStyle: progressStyle,
+          }),
+        }}
         className={progressClassName}
-        direction={progressDirection}
-        percentage={progressPercentage}
-        customStyle={progressStyle}
       />
     );
   }
@@ -223,7 +230,7 @@ export default class Button extends React.Component<Props, State> {
     });
 
     return (
-      <StyledButton
+      <button
         type="button"
         className={classes}
         id={id}
@@ -231,12 +238,12 @@ export default class Button extends React.Component<Props, State> {
         onMouseDown={this.onMouseDown}
         onMouseLeave={this.onMouseLeave}
         onMouseUp={this.onMouseUp}
-        style={style}
+        style={{ position: "relative", zIndex: 0, overflow: "hidden", ...style }}
         title={tooltip}
         disabled={disabled}>
         {children}
         {this.renderProgressBar()}
-      </StyledButton>
+      </button>
     );
   }
 }

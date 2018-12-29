@@ -1,0 +1,15 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+.canvas {
+  flex: 1 1 100%;
+
+  // size to fit while preserving aspect ratio
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
+  object-position: top left;
+}

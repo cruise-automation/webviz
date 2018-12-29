@@ -1,0 +1,59 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/colors.module.scss";
+
+.name {
+  font-weight: bold;
+}
+
+tr.section th {
+  color: $highlight;
+  text-align: center;
+  font-size: 1.5em;
+  padding: 4px;
+  cursor: pointer;
+}
+
+tr.status-ok {
+  &.section th,
+  td {
+    color: $green;
+  }
+}
+tr.status-warn {
+  &.section th,
+  td {
+    color: $orange;
+  }
+}
+tr.status-error {
+  &.section th,
+  td {
+    color: $red;
+  }
+}
+tr.status-stale {
+  &.section th,
+  td {
+    color: $text-muted;
+  }
+}
+tr.status-unknown {
+  &.section th,
+  td {
+    color: $red;
+  }
+}
+
+.keyCell {
+  padding-right: 5px;
+}
+
+td.collapsedSection {
+  text-align: center;
+  color: $red;
+}

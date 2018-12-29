@@ -1,0 +1,49 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/colors.module.scss";
+@import "~webviz-core/src/styles/mixins.module.scss";
+
+.container {
+  @extend %floating-box;
+  min-width: 50px;
+  flex: 0 0 auto;
+  overflow-y: auto;
+  max-height: 100%;
+
+  hr {
+    margin: 1px 0;
+    padding: 0;
+    background-color: $divider;
+  }
+
+  a {
+    text-decoration: none;
+  }
+}
+
+.item {
+  @extend %menu-item;
+
+  &.active {
+    @extend %menu-item-active;
+  }
+
+  &.disabled {
+    color: $text-disabled;
+    cursor: not-allowed;
+    &:hover {
+      background-color: transparent;
+      color: $text-disabled;
+    }
+  }
+}
+
+.icon {
+  margin-right: 8px;
+  font-size: 14px;
+  vertical-align: middle;
+}

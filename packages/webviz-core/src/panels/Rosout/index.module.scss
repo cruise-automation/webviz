@@ -1,0 +1,107 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/mixins.module.scss";
+@import "~webviz-core/src/styles/colors.module.scss";
+
+$option-height: 24;
+$option-font-size: $text-size;
+
+:export {
+  optionHeight: $option-height;
+}
+
+.message {
+  line-height: 1.2;
+  padding-top: 32px;
+  @include monospace;
+}
+
+.filtersBar {
+  align-items: right;
+  background-color: $toolbar;
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  left: 0;
+  width: 100%;
+}
+
+.severityFilter {
+  flex: 0 1 auto;
+  min-width: 200px;
+  margin-left: 10px;
+}
+
+.nodeFilter {
+  flex: 2 1 auto;
+  min-width: 200px;
+}
+
+:global {
+  div.Select-menu-outer {
+    @extend %floating-box;
+  }
+  div.Select-menu {
+    padding-bottom: 5em !important; // TODO(jacob): not working when there are enough items to scroll?
+  }
+  .Select-control {
+    font-size: $option-font-size;
+    .Select-clear {
+      line-height: $option-font-size * 2;
+      font-size: $option-font-size * 1.5;
+    }
+  }
+  $select-item-font-size: $option-font-size;
+  $select-input-bg: $toolbar;
+  $select-input-border-color: transparent;
+  $select-input-border-focus: transparent;
+  $select-input-height: $option-height * 1px;
+  $select-input-internal-height: 26px;
+  $select-text-color: $text-control;
+  $select-input-placeholder: transparentize($text-control, 0.5);
+  $select-option-bg: red;
+  $select-clear-color: $text-control;
+  $select-loading-color: $text-control;
+  $select-arrow-color: $text-control;
+
+  @import "~react-select/scss/default";
+  @import "~react-virtualized/styles";
+  // @import '~react-virtualized-select/styles';
+
+  .VirtualizedSelectOption {
+    @extend %menu-item;
+  }
+  .VirtualizedSelectSelectedOption {
+    @extend %menu-item-active;
+  }
+  .VirtualizedSelectFocusedOption {
+    @extend %menu-item-hover;
+    // TODO(jacob): doesn't override react-virtualized-select styles for some reason
+    background-color: $menu-item-hover !important;
+  }
+  .Select-input > input {
+    color: $select-text-color;
+  }
+  .Select-multi-value-wrapper {
+    display: table-cell;
+    position: relative;
+  }
+  .Select--multi .Select-multi-value-wrapper {
+    width: 100%;
+  }
+  .Select--multi .Select-value {
+    color: $text-bright;
+    background-color: $background-control-selected;
+    border: 1px solid $light-purple;
+    margin: 2px;
+  }
+
+  .Select--multi .Select-value-icon:hover {
+    background-color: $light-purple;
+    color: $background-control-selected;
+  }
+}

@@ -1,0 +1,115 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/mixins.module.scss";
+
+$legend-highlight-color: rgba($toolbar, 0.7);
+$legend-highlight-color-bright: lighten(rgba($legend-highlight-color, 1), 8%);
+$legend-highlight-color-brighter: lighten(rgba($legend-highlight-color, 1), 17%);
+$legend-item-height: 20px;
+
+.root {
+  $legend-root-left: 65px;
+  position: absolute;
+  left: $legend-root-left;
+  top: 10px;
+  background: $legend-highlight-color;
+  color: #eee;
+  max-width: calc(100% - #{$legend-root-left});
+
+  &:hover {
+    background: $legend-highlight-color;
+  }
+}
+
+.addLine {
+  display: none;
+  content: "+ add line";
+  position: absolute;
+  background: $legend-highlight-color;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateY(100%);
+  padding: 6px;
+  cursor: pointer;
+  text-align: center;
+
+  &:hover {
+    background: $legend-highlight-color-bright;
+  }
+
+  .root:hover & {
+    display: block;
+  }
+}
+
+.item {
+  display: flex;
+  padding: 0 5px;
+  height: $legend-item-height;
+  line-height: $legend-item-height;
+  position: relative;
+
+  &:hover {
+    background: $legend-highlight-color-bright;
+  }
+}
+
+.itemIconContainer {
+  display: inline-block;
+  width: 22px;
+  height: $legend-item-height;
+  line-height: 0;
+  cursor: pointer;
+  text-align: center;
+  flex-shrink: 0;
+
+  &:hover {
+    background: $legend-highlight-color-brighter;
+  }
+}
+
+.itemIcon {
+  display: inline-block;
+  width: 15px;
+  border-bottom: 2px solid currentColor;
+  height: 0px;
+  vertical-align: middle;
+  position: relative;
+  top: calc(50% - 1px);
+}
+
+.itemRemove {
+  visibility: hidden;
+  padding: 0 6px;
+  cursor: pointer;
+  position: absolute;
+  top: 0px;
+  left: -21px;
+  height: $legend-item-height;
+  line-height: $legend-item-height;
+  user-select: none;
+  background: $legend-highlight-color-bright;
+
+  &:hover {
+    background: $legend-highlight-color-brighter;
+  }
+
+  .item:hover & {
+    visibility: initial;
+  }
+}
+
+.itemInput {
+  overflow: hidden;
+}
+
+// <input> is several levels deeper, and there's not too much chance
+// of leaking stuff here, so not using `>`.
+.itemInputDisabled input {
+  text-decoration: line-through;
+}

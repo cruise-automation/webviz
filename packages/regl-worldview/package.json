@@ -33,7 +33,7 @@
     "reselect": "^3.0.1"
   },
   "devDependencies": {
-    "flow-bin": "^0.89.0"
+    "flow-bin": "0.80.0"
   },
   "gitHead": "a799782ff908186f8c42c37f39806d251922ca6e"
 }

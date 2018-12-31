@@ -8,7 +8,6 @@
 
 import { addDecorator, configure } from "@storybook/react";
 import { initScreenshot, setScreenshotOptions } from "storybook-chrome-screenshot";
-import "babel-polyfill";
 
 import "webviz-core/src/styles/global.scss";
 import prepareForScreenshots from "./prepareForScreenshots";

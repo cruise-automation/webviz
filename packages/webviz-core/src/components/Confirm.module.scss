@@ -1,0 +1,25 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/mixins.module.scss";
+
+.container {
+  min-width: 200px;
+  padding: 16px;
+  @extend %clearfix;
+}
+
+.prompt {
+  padding: 8px 0;
+  white-space: pre-line;
+  line-height: 1.4;
+}
+
+.controls {
+  padding-top: 8px;
+  float: right;
+  margin-right: -0.2em;
+}

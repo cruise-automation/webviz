@@ -1,0 +1,20 @@
+<!--
+Copyright (c) 2018-present, GM Cruise LLC
+
+This source code is licensed under the Apache License, Version 2.0,
+found in the LICENSE file in the root directory of this source tree.
+You may not use this file except in compliance with the License.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+  <title>
+    webviz
+  </title>
+  <desc>
+    webviz logo
+  </desc>
+  <g fill="none" fill-rule="evenodd" stroke-width="2">
+    <path stroke="#E987FF" d="M11 2.8v14.116l11.29 4.168V5.996L11 2z" opacity=".983"/>
+    <path fill="#20C0FF" fill-opacity=".3" fill-rule="nonzero" stroke="#20C0FF" d="M8 4.8v14.116l11.29 4.168V7.996L8 4z"/>
+    <path stroke="#BD10E0" d="M5 6.8v14.116l11.29 4.168V9.996L5 6z"/>
+  </g>
+</svg>

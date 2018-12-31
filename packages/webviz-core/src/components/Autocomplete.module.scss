@@ -1,0 +1,58 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/mixins.module.scss";
+
+$row-height: 24px;
+
+.root {
+  border-radius: 3px;
+  border-top-left-radius: 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  overflow: auto;
+  max-height: min-content;
+  background: $toolbar;
+  z-index: 1;
+  bottom: 40px;
+  margin-left: -6px;
+}
+
+.input {
+  flex-grow: 1;
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  color: inherit;
+  border-radius: 0;
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &.inputError {
+    color: $red;
+  }
+}
+
+.autocompleteItem {
+  padding: 0 6px;
+  cursor: pointer;
+  line-height: $row-height;
+  height: $row-height;
+  white-space: pre;
+}
+
+.selected {
+  background-color: $background-control-selected;
+}
+.highlighted {
+  background-color: $menu-item-hover;
+}
+
+:export {
+  rowHeight: $row-height / 1px;
+}

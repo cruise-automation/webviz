@@ -9,8 +9,13 @@
 import { addDecorator, configure } from "@storybook/react";
 import { initScreenshot, setScreenshotOptions } from "storybook-chrome-screenshot";
 
+import "webviz-core/src/styles/global.scss";
 import prepareForScreenshots from "./prepareForScreenshots";
-import "./reset.css";
+import waitForFonts from "webviz-core/src/styles/waitForFonts";
+import installChartjs from "webviz-core/src/util/installChartjs";
+
+global.GIT_INFO = {};
+installChartjs();
 
 addDecorator(initScreenshot());
 setScreenshotOptions({
@@ -33,4 +38,6 @@ function loadStories() {
   reqDocs.keys().forEach((filename) => reqDocs(filename));
 }
 
-configure(loadStories, module);
+waitForFonts(() => {
+  configure(loadStories, module);
+});

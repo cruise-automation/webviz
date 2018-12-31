@@ -1,0 +1,99 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/colors.module.scss";
+@import "~webviz-core/src/styles/mixins.module.scss";
+
+$padding: 6px;
+
+// this is the padding of nested levels of the tree
+// applied in javascript so it can be multiplied by the depth
+:export {
+  indentWidth: 20;
+  paddingLeft: $padding / 1px;
+}
+
+.children {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.checkbox {
+  @extend %list-item-icon;
+}
+
+// this icon looks a bit large compared to the others
+// make it smaller so its less drastic
+.blockHelperIcon {
+  font-size: 14px;
+  top: 0;
+  // since its smaller, center it a bit
+  padding-left: 2px;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  padding-right: $padding;
+
+  $height: 30px;
+
+  // vertically center text and icons
+  vertical-align: center;
+  line-height: $height;
+  height: $height;
+
+  cursor: pointer;
+
+  // the text should grow and shrink to the free space in the container
+  // if it shrinks past the text length, truncate text & show ellipsis
+  .text {
+    flex: 1 1 auto;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    margin-right: 4px;
+  }
+
+  .type-icon,
+  .type-icon-edit {
+    font-size: 14px;
+  }
+
+  // turn the type icon into an edit icon on hover
+  .type-icon-edit {
+    display: none;
+    color: white;
+  }
+  &.canEdit:hover {
+    .type-icon {
+      display: none;
+    }
+    .type-icon-edit {
+      display: unset;
+    }
+  }
+
+  .expand-icon {
+    font-size: 16px;
+  }
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+.hasChildren {
+  font-weight: bold;
+  color: $text-bright;
+}
+
+.filterMatch .text {
+  color: $highlight;
+}
+
+.disabled {
+  color: $text-disabled;
+}

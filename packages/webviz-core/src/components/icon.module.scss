@@ -1,0 +1,48 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+.icon > svg {
+  fill: currentColor;
+  width: 1em;
+  height: 1em;
+  vertical-align: text-top;
+}
+
+.large,
+.large img {
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+  vertical-align: middle;
+}
+
+.medium,
+.medium img {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  vertical-align: middle;
+}
+
+.clickable {
+  cursor: pointer;
+}
+:global(.disabled) .clickable {
+  cursor: unset;
+}
+
+.fade {
+  opacity: 0.5;
+  transition: opacity 0.2s ease-in-out;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &.active {
+    opacity: 0.9;
+  }
+}

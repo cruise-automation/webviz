@@ -1,0 +1,57 @@
+// @flow
+//
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+declare type GitInfo = {
+  hash: string,
+  dirty: ?boolean,
+};
+
+declare var GIT_INFO: ?GitInfo;
+
+declare var CURRENT_VERSION: string;
+
+declare var MINIMUM_CHROME_VERSION: number;
+
+// flow lacks definitions for abort controller
+declare type AbortSignal = any;
+
+declare class AbortController {
+  abort(): void;
+  signal: AbortSignal;
+}
+
+declare type WebvizExpectType = {
+  toContainOnly(arr: Array<any>): void,
+  // FIXME(jacob): this doesn't actually make Flow happy with expect(x).not.toContainOnly in tests :(
+  not: {
+    toContainOnly(arr: Array<any>): void,
+  },
+};
+
+/** The expect function is used every time you want to test a value */
+// redeclare this from the jest flowtype definition and include our custom matchers
+// which are defined in ./jest/setupTestFramework.js
+declare var expect: {
+  /** The object that you want to make assertions against */
+  (value: any): JestExpectType & JestPromiseType & EnzymeMatchersType & WebvizExpectType,
+  /** Add additional Jasmine matchers to Jest's roster */
+  extend(matchers: { [name: string]: JestMatcher }): void,
+  /** Add a module that formats application-specific data structures. */
+  addSnapshotSerializer(serializer: (input: Object) => string): void,
+  assertions(expectedAssertions: number): void,
+  hasAssertions(): void,
+  any(value: mixed): JestAsymmetricEqualityType,
+  anything(): void,
+  arrayContaining(value: Array<mixed>): void,
+  objectContaining(value: Object): void,
+  /** Matches any received string that contains the exact expected string. */
+  stringContaining(value: string): void,
+  stringMatching(value: string | RegExp): void,
+};
+
+declare type StyleObj = { [key: string]: string | number };

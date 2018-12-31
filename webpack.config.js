@@ -6,6 +6,7 @@
 
 const rehypePrism = require("@mapbox/rehype-prism");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
+const { spawnSync } = require("child_process");
 const path = require("path");
 const retext = require("retext");
 const retextSmartypants = require("retext-smartypants");
@@ -25,14 +26,37 @@ function remarkSmartypants() {
   return transformer;
 }
 
+const config = {
+  ravenUrl: undefined,
+  currentVersion: "0.0.1",
+  minimumChromeVersion: parseInt(process.env.MINIMUM_CHROME_VERSION) || 68,
+};
+
+const gitInfo = (() => {
+  const revParse = spawnSync("git", ["rev-parse", "--short", "HEAD"], { timeout: 5000 });
+  const diffIndex = spawnSync("git", ["diff-index", "--quiet", "HEAD", "--"], { timeout: 5000 });
+  if (revParse.error) {
+    console.log("Error getting git commit hash:", revParse.error); // eslint-disable-line no-console
+    return undefined;
+  }
+  if (diffIndex.error) {
+    console.log("Error getting git status:", diffIndex.error); // eslint-disable-line no-console
+  }
+  return {
+    hash: revParse.status === 0 && revParse.stdout.toString().trim(),
+    dirty: diffIndex.status && diffIndex.status !== 0,
+  };
+})();
+
 module.exports = {
   devtool: "cheap-module-eval-source-map",
   entry: {
     docs: "./docs/src/index.js",
+    webvizCoreBundle: "./packages/webviz-core/src/index.js",
   },
   output: {
     path: path.resolve(`${__dirname}/docs/public/dist`),
-    publicPath: "/dist/",
+    publicPath: process.env.DEV_SERVER ? "/dist/" : "/webviz/dist/",
     pathinfo: true,
     filename: "[name].js",
     devtoolModuleFilenameTemplate: (info) => path.resolve(info.absoluteResourcePath),
@@ -119,6 +143,12 @@ module.exports = {
     ],
   },
   plugins: [
+    new webpack.DefinePlugin({
+      RAVEN_URL: JSON.stringify(config.ravenUrl),
+      GIT_INFO: JSON.stringify(gitInfo),
+      CURRENT_VERSION: JSON.stringify(config.currentVersion),
+      MINIMUM_CHROME_VERSION: JSON.stringify(config.minimumChromeVersion),
+    }),
     new CaseSensitivePathsPlugin(),
     // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),

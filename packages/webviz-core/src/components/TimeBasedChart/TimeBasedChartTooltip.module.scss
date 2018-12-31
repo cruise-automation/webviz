@@ -1,0 +1,33 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/colors.module.scss";
+@import "~webviz-core/src/styles/mixins.module.scss";
+
+.root {
+  @include monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  max-width: 350px;
+  overflow-wrap: break-word;
+
+  th,
+  td {
+    border: none;
+  }
+
+  th {
+    color: $text-muted;
+
+    &:first-child {
+      text-align: left;
+    }
+  }
+}
+
+.title {
+  color: $text-muted;
+}

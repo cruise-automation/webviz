@@ -1,0 +1,38 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/colors.module.scss";
+
+.layout {
+  height: 0;
+  flex: 1 1 auto;
+}
+
+$spacing: 14px;
+
+.block {
+  color: white;
+  flex: 0 0 auto;
+  margin-right: $spacing;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.logoWrapper {
+  display: inline-block;
+  margin-right: 0.5rem;
+  width: 100%;
+
+  svg {
+    vertical-align: middle;
+    margin-right: 0.5rem;
+  }
+}
+
+.playback-controls {
+  background-color: $toolbar-background;
+}

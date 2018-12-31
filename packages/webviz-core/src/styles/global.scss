@@ -1,0 +1,219 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "./reset.scss";
+@import "./colors.module.scss";
+@import "./mixins.module.scss";
+
+@font-face {
+  font-family: "Inter UI";
+  src: url("~inter-ui/Inter UI (web)/Inter-UI.var.woff2") format("woff2-variations");
+  font-weight: 400 900;
+  font-style: oblique 0deg 10deg;
+}
+
+/* globally apply flex to containers outside our component hierarchy */
+/* this ensures the app container elements stretch edge to edge and do not scroll */
+html,
+body,
+#root,
+.app-container {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 100%;
+  background: $background;
+  overflow: hidden;
+
+  font-size: $text-size;
+  color: $text-normal;
+  @include sans-serif;
+}
+
+// Make sure everything uses box-sizing: border-box.
+// Per https://www.paulirish.com/2012/box-sizing-border-box-ftw/
+// When changing this, be aware that Mosaic also adds this by default.
+html {
+  box-sizing: border-box;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+#root > span,
+#root > span > span {
+  // Wrappers added by storybook-chrome-screenshot.
+  display: block;
+  height: 100%;
+}
+
+#root {
+  // ensure portals are able to stack on top of the main app
+  z-index: 0;
+}
+
+::selection {
+  background-color: transparentize($text-normal, 0.4);
+}
+
+code,
+pre,
+tt {
+  @include monospace;
+  overflow-wrap: break-word;
+}
+
+code {
+  background-color: lighten($background, 20%);
+  border-radius: 0.2em;
+  padding: 0 0.25em;
+}
+
+button,
+input,
+select,
+textarea {
+  @include sans-serif;
+  color: $text-control;
+  font-size: 1rem;
+  text-align: left;
+  background-color: $background-control;
+  border-radius: 4px;
+  border: none;
+  padding: $control-padding;
+  margin: $control-margin;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+input,
+textarea {
+  color: $text-input;
+  background-color: transparentize($text-normal, 0.1);
+
+  &:focus {
+    background-color: $text-normal;
+  }
+
+  &.disabled {
+    color: $text-input-disabled;
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+textarea {
+  @include monospace;
+  border: 2px solid $text-normal;
+  color: $text-normal;
+  background-color: $panel-background;
+  &:focus {
+    background-color: black;
+  }
+}
+
+div::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+div::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+div::-webkit-scrollbar-thumb {
+  background: #666;
+}
+
+a {
+  color: $text-control;
+  &:hover {
+    color: $text-control-hover;
+  }
+}
+
+i,
+em {
+  font-style: italic;
+}
+
+b,
+strong {
+  @extend %bold;
+}
+
+p {
+  margin: 1em 0;
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+hr {
+  border: none;
+  display: block;
+  height: 2px;
+  margin: 0;
+  padding: 0;
+  background-color: $divider;
+}
+
+button {
+  cursor: pointer;
+  text-align: center;
+
+  &.is-danger {
+    background-color: $red;
+  }
+  &.is-warning {
+    background-color: $orange;
+  }
+
+  &:hover {
+    color: $text-control-hover;
+  }
+
+  &.is-primary {
+    background-color: $green;
+  }
+  &.selected {
+    background-color: $background-control-selected;
+    color: $text-normal;
+  }
+  &.disabled {
+    color: $text-disabled;
+    cursor: not-allowed;
+  }
+}
+
+th {
+  color: $text-normal;
+
+  tr:first-child & {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+}
+
+th,
+td {
+  border: 1px solid $divider;
+  padding: 0 0.3em;
+  line-height: 1.3em;
+}
+
+tr:hover {
+  th,
+  td {
+    background-color: $text-disabled;
+  }
+}

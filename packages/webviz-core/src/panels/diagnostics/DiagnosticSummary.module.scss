@@ -1,0 +1,45 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/colors.module.scss";
+@import "~webviz-core/src/styles/mixins.module.scss";
+
+.panel {
+  background-color: $toolbar;
+}
+.ok .message {
+  color: $green;
+}
+.warn .message {
+  color: $orange;
+}
+.error .message {
+  color: $red;
+}
+.stale .message {
+  color: $text-muted;
+}
+
+.pinIcon {
+  @extend %list-item-icon;
+  margin-left: 4px;
+  vertical-align: middle;
+  visibility: hidden;
+  &.pinned,
+  .nodeRow:hover & {
+    visibility: visible;
+  }
+}
+
+.nodeRow {
+  @extend %menu-item;
+  padding: 0;
+  line-height: 24px;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

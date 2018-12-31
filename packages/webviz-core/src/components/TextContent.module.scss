@@ -1,0 +1,65 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "webviz-core/src/styles/colors.module.scss";
+
+.root {
+  background-color: $panel-background;
+  font-size: 1.1rem;
+  line-height: 1.65;
+
+  h1 {
+    font-size: 2em;
+    line-height: 1.2;
+    margin-bottom: 0.5em;
+  }
+
+  h2 {
+    font-size: 1.3em;
+    margin-bottom: 0.25em;
+    font-weight: bold;
+  }
+
+  h3 {
+    font-size: 1.1em;
+    margin-bottom: 0.25em;
+    color: $text-muted;
+    font-weight: bold;
+  }
+
+  h4,
+  h5,
+  h6 {
+    margin-bottom: 0.25em;
+    color: $text-muted;
+    font-style: italic;
+  }
+
+  ul {
+    list-style-position: outside;
+    list-style-type: disc;
+    margin-left: 1.5em;
+    margin-bottom: 1em;
+  }
+
+  p {
+    margin: 0 0 1em;
+  }
+
+  p,
+  ul {
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  td,
+  th {
+    line-height: 1.65;
+    padding: 0.5em;
+    vertical-align: middle;
+  }
+}

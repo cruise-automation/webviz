@@ -1,0 +1,60 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+@import "~webviz-core/src/styles/colors.module.scss";
+
+.tooltip {
+  background-color: $tooltip-background;
+  border-radius: 4px;
+  padding: 6px;
+  white-space: pre-line;
+  position: relative;
+}
+
+.arrow {
+  position: absolute;
+  border: 5px solid transparent;
+}
+
+[data-placement^="top"] {
+  .tooltip {
+    bottom: 7px;
+  }
+  .arrow {
+    bottom: -3px;
+    border-top-color: $tooltip-background;
+  }
+}
+
+[data-placement^="right"] {
+  .tooltip {
+    left: 7px;
+  }
+  .arrow {
+    left: -3px;
+    border-right-color: $tooltip-background;
+  }
+}
+
+[data-placement^="bottom"] {
+  .tooltip {
+    top: 7px;
+  }
+  .arrow {
+    top: -3px;
+    border-bottom-color: $tooltip-background;
+  }
+}
+
+[data-placement^="left"] {
+  .tooltip {
+    right: 7px;
+  }
+  .arrow {
+    right: -3px;
+    border-left-color: $tooltip-background;
+  }
+}

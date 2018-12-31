@@ -1,0 +1,85 @@
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+// this is based on https://github.com/palantir/react-mosaic/blob/master/styles/blueprint-theme.less
+@import "~webviz-core/src/styles/colors.module.scss";
+$grey: #777;
+
+.mosaic {
+  .mosaic-root {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+  }
+
+  .mosaic-tile {
+    margin: 0;
+  }
+
+  .mosaic-window {
+    box-shadow: none;
+  }
+
+  .mosaic-window > .mosaic-window-body {
+    flex: 1 1 auto;
+    display: flex;
+    background: $panel-background;
+  }
+
+  // we use custom toolbars
+  .mosaic-window-toolbar {
+    display: none;
+  }
+
+  .mosaic-window-title {
+    font-size: 12px;
+    line-height: 30px;
+    padding-left: 5px;
+    color: $grey;
+  }
+
+  .mosaic-split {
+    background: none;
+    z-index: 99;
+    .mosaic-split-line {
+      box-shadow: 0 0 0 1px $toolbar;
+    }
+    &:hover .mosaic-split-line {
+      box-shadow: 0 0 0 1px $grey;
+    }
+  }
+
+  .mosaic-window-controls {
+    .separator {
+      border-left: 1px solid $divider;
+    }
+    .pt-button {
+      &,
+      &:active,
+      &:focus {
+        outline: none;
+      }
+
+      &,
+      &:before {
+        cursor: pointer;
+        background-color: transparent;
+        border-color: transparent;
+        color: $text-control;
+      }
+
+      &:hover:before {
+        color: $text-control-hover;
+      }
+    }
+  }
+
+  .drop-target-container .drop-target {
+    background-color: $text-disabled;
+    border: 2px solid $text-muted;
+  }
+}

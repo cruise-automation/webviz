@@ -154,4 +154,18 @@ describe("rpc", () => {
     rpc.receive("foo", () => {});
     expect(() => rpc.receive("foo", () => {})).toThrow();
   });
+
+  // Regression test for memory leak.
+  it("clears out _pendingCallbacks when done", async () => {
+    const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
+    const local = new Rpc(mainChannel);
+    const worker = new Rpc(workerChannel);
+    worker.receive("foo", (msg) => {
+      return { bar: msg.foo };
+    });
+    expect(Object.keys(local._pendingCallbacks).length).toEqual(0); // eslint-disable-line no-underscore-dangle
+    const result = await local.send("foo", { foo: "baz" });
+    expect(Object.keys(local._pendingCallbacks).length).toEqual(0); // eslint-disable-line no-underscore-dangle
+    expect(result).toEqual({ bar: "baz" });
+  });
 });

@@ -14,10 +14,13 @@
 
 import { Time } from "rosbag";
 
-import RandomAccessDataSource from "./RandomAccessDataSource";
+import RandomAccessDataSource, { SEEK_BACK_SECONDS } from "./RandomAccessDataSource";
 import { ExtensionPoint, type InitializationResult, type MessageLike } from "./types";
-import { type DataSourceMetricsCollectorInterface } from "webviz-core/src/types/dataSources";
-import type { TopicMsg, DataSourceMessage } from "webviz-core/src/types/dataSources";
+import {
+  type DataSourceMessage,
+  type DataSourceMetricsCollectorInterface,
+  type TopicMsg,
+} from "webviz-core/src/types/dataSources";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { fromMillis } from "webviz-core/src/util/time";
 
@@ -145,10 +148,11 @@ describe("RandomAccessDataSource", () => {
   it("calls listener with player initial player state and data types", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessDataSource(provider);
-    const store = new MessageStore(2);
+    const store = new MessageStore(3);
     await source.setListener(store.add);
     const messages = await store.done;
     expect(messages).toContainOnly([
+      { op: "capabilities", capabilities: ["seekBackfill"] },
       { op: "datatypes", datatypes },
       { op: "player_state", start_time: start, end_time: end, playing: false, speed: 0.2 },
     ]);
@@ -157,11 +161,12 @@ describe("RandomAccessDataSource", () => {
   it("returns topics on topic request", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessDataSource(provider);
-    const store = new MessageStore(3);
+    const store = new MessageStore(4);
     await source.setListener(store.add);
     source.requestTopics();
     const messages = await store.done;
     expect(messages).toContainOnly([
+      { op: "capabilities", capabilities: ["seekBackfill"] },
       { op: "datatypes", datatypes },
       { op: "player_state", start_time: start, end_time: end, playing: false, speed: 0.2 },
       { op: "topics", topics: [{ topic: "/foo/bar", datatype: "fooBar" }, { topic: "/baz", datatype: "baz" }] },
@@ -171,7 +176,7 @@ describe("RandomAccessDataSource", () => {
   it("calls listener with player state changes on play/pause", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessDataSource(provider);
-    const store = new MessageStore(4);
+    const store = new MessageStore(5);
     await source.setListener(store.add);
     // make getMessages do nothing since we're going to start reading
     provider.getMessages = () => new Promise((resolve) => {});
@@ -182,6 +187,7 @@ describe("RandomAccessDataSource", () => {
     source.pausePlayback();
     const messages = await store.done;
     expect(messages).toContainOnly([
+      { op: "capabilities", capabilities: ["seekBackfill"] },
       { op: "datatypes", datatypes },
       { op: "player_state", start_time: start, end_time: end, playing: false, speed: 0.2 },
       { op: "player_state", start_time: start, end_time: end, playing: true, speed: 0.2 },
@@ -192,13 +198,14 @@ describe("RandomAccessDataSource", () => {
   it("calls listener with speed changes", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessDataSource(provider);
-    const store = new MessageStore(5);
+    const store = new MessageStore(6);
     await source.setListener(store.add);
     source.setPlaybackSpeed(0.5);
     source.setPlaybackSpeed(1);
     source.setPlaybackSpeed(0.2);
     const messages = await store.done;
     expect(messages).toContainOnly([
+      { op: "capabilities", capabilities: ["seekBackfill"] },
       { op: "datatypes", datatypes },
       { op: "player_state", start_time: start, end_time: end, playing: false, speed: 0.2 },
       { op: "player_state", start_time: start, end_time: end, playing: false, speed: 0.5 },
@@ -210,7 +217,7 @@ describe("RandomAccessDataSource", () => {
   it("reads messages when playing back", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessDataSource(provider);
-    const store = new MessageStore(4);
+    const store = new MessageStore(5);
     await source.setListener(store.add);
     source.subscribe({ topic: "/foo/bar" });
     let callCount = 0;
@@ -240,6 +247,7 @@ describe("RandomAccessDataSource", () => {
     source.startPlayback();
     const messages = await store.done;
     expect(messages).toContainOnly([
+      { op: "capabilities", capabilities: ["seekBackfill"] },
       { op: "datatypes", datatypes },
       { op: "player_state", start_time: start, end_time: end, playing: false, speed: 0.2 },
       { op: "player_state", start_time: start, end_time: end, playing: true, speed: 0.2 },
@@ -256,7 +264,7 @@ describe("RandomAccessDataSource", () => {
   it("pauses and does not emit messages after pause", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessDataSource(provider);
-    const store = new MessageStore(5);
+    const store = new MessageStore(6);
     await source.setListener(store.add);
     source.subscribe({ topic: "/foo/bar" });
     let callCount = 0;
@@ -288,6 +296,7 @@ describe("RandomAccessDataSource", () => {
     source.startPlayback();
     const messages = await store.done;
     expect(messages).toContainOnly([
+      { op: "capabilities", capabilities: ["seekBackfill"] },
       { op: "datatypes", datatypes },
       { op: "player_state", start_time: start, end_time: end, playing: false, speed: 0.2 },
       { op: "player_state", start_time: start, end_time: end, playing: true, speed: 0.2 },
@@ -305,7 +314,7 @@ describe("RandomAccessDataSource", () => {
   it("seek during reading discards messages before seek", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessDataSource(provider);
-    const store = new MessageStore(6);
+    const store = new MessageStore(7);
     await source.setListener(store.add);
     source.subscribe({ topic: "/foo/bar" });
     let callCount = 0;
@@ -340,12 +349,51 @@ describe("RandomAccessDataSource", () => {
     source.startPlayback();
     const messages = await store.done;
     expect(messages).toContainOnly([
+      { op: "capabilities", capabilities: ["seekBackfill"] },
       { op: "datatypes", datatypes },
       { op: "player_state", start_time: start, end_time: end, playing: false, speed: 0.2 },
       { op: "player_state", start_time: start, end_time: end, playing: true, speed: 0.2 },
       { op: "seek" },
       { op: "update_time", time: new Time(0, 0) },
       { op: "player_state", start_time: start, end_time: end, playing: false, speed: 0.2 },
+    ]);
+  });
+
+  it("backfills previous messages on seek", async () => {
+    const provider = new TestProvider();
+    const source = new RandomAccessDataSource(provider);
+    const store = new MessageStore(6);
+    await source.setListener(store.add);
+    source.subscribe({ topic: "/foo/bar" });
+    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+      expect(start).toEqual(new Time(100 - SEEK_BACK_SECONDS, 0));
+      expect(end).toEqual(new Time(100, -1));
+      expect(topics).toContainOnly(["/foo/bar"]);
+      const result: MessageLike[] = [
+        {
+          topic: "/foo/bar",
+          receiveTime: new Time(100, -1),
+          message: { payload: "foo bar" },
+        },
+      ];
+      return Promise.resolve(result);
+    };
+    provider.getMessages = getMessages;
+    source.seekPlayback(new Time(100, 0));
+    const messages = await store.done;
+    expect(messages).toContainOnly([
+      { op: "capabilities", capabilities: ["seekBackfill"] },
+      { op: "datatypes", datatypes },
+      { op: "player_state", start_time: start, end_time: end, playing: false, speed: 0.2 },
+      { op: "seek" },
+      { op: "update_time", time: new Time(100, 0) },
+      {
+        op: "message",
+        datatype: "fooBar",
+        topic: "/foo/bar",
+        receiveTime: new Time(100, -1),
+        message: { payload: "foo bar" },
+      },
     ]);
   });
 

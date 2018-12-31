@@ -68,6 +68,7 @@ export default class Rpc {
     const { id, topic, data } = (ev.data: any);
     if (topic === RESPONSE) {
       this._pendingCallbacks[id](ev.data);
+      delete this._pendingCallbacks[id];
       return;
     }
     // invoke the receive handler in a promise so if it throws synchronously we can reject

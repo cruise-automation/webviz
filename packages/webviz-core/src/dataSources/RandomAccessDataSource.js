@@ -15,6 +15,7 @@ import type {
   DataSource,
   DataSourceMessage,
   DataSourceMetricsCollectorInterface,
+  Message,
   PublishPayload,
   SubscribePayload,
   Timestamp,
@@ -23,6 +24,10 @@ import type {
 import { fromMillis } from "webviz-core/src/util/time";
 
 const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
+
+// the number of seconds to seek backwards to build context during a seek operation
+// larger values mean more oportunity to capture context before the seek event, but are slower operations
+export const SEEK_BACK_SECONDS = 0.15;
 
 export default class RandomAccessDataSource implements DataSource {
   _provider: RandomAccessDataSourceProvider;
@@ -62,11 +67,34 @@ export default class RandomAccessDataSource implements DataSource {
     this._end = result.end;
     const { datatypes, topics } = result;
     this._providerTopics = topics;
+    this._listener({ op: "capabilities", capabilities: ["seekBackfill"] });
     this._listener({ op: "datatypes", datatypes });
     this._emitState();
     if (this._autoplay) {
       this.startPlayback();
     }
+  }
+
+  async _getMessages(start: Time, end: Time): Promise<Message[]> {
+    const messages = await this._provider.getMessages(start, end, Array.from(this._subscribedTopics));
+    return messages.map((message) => {
+      const topic: ?TopicMsg = this._providerTopics.find((t) => t.topic === message.topic);
+      if (!topic) {
+        throw new Error(`Could not find topic for message ${message.topic}`);
+      }
+
+      if (!topic.datatype) {
+        throw new Error(`Missing datatype for topic: ${message.topic}`);
+      }
+
+      return {
+        op: "message",
+        topic: message.topic,
+        datatype: topic.datatype,
+        receiveTime: message.receiveTime,
+        message: message.message,
+      };
+    });
   }
 
   async _tick(): Promise<void> {
@@ -91,11 +119,9 @@ export default class RandomAccessDataSource implements DataSource {
       return;
     }
 
-    const start: Time = this._currentTime;
-    const end: Time = Time.add(start, fromMillis(rangeMillis));
-
     const seekTime = this._lastSeekTime;
-    const messages = await this._provider.getMessages(start, end, Array.from(this._subscribedTopics));
+    const end: Time = Time.add(this._currentTime, fromMillis(rangeMillis));
+    const messages = await this._getMessages(this._currentTime, end);
 
     // if we seeked while reading the do not emit messages
     // just start reading again from the new seek position
@@ -109,31 +135,8 @@ export default class RandomAccessDataSource implements DataSource {
       return;
     }
 
-    const promises = new Set();
-    for (const message of messages) {
-      const topic: ?TopicMsg = this._providerTopics.find((t) => t.topic === message.topic);
-      if (!topic) {
-        throw new Error(`Could not find topic for message ${message.topic}`);
-      }
-
-      if (!topic.datatype) {
-        throw new Error(`Missing datatype for topic: ${message.topic}`);
-      }
-
-      const msg = {
-        op: "message",
-        topic: message.topic,
-        datatype: topic.datatype,
-        receiveTime: message.receiveTime,
-        message: message.message,
-      };
-      // collect promises to listen after all dispatches are complete
-      promises.add(this._listener(msg));
-    }
-
+    const promises = messages.map((message) => this._listener(message));
     this._currentTime = Time.add(end, new Time(0, 1));
-
-    // wait until all our calls to dispatch messages have completed
     await Promise.all(promises);
   }
 
@@ -195,9 +198,19 @@ export default class RandomAccessDataSource implements DataSource {
   seekPlayback(time: Timestamp): void {
     this._currentTime = time;
     this._metricsCollector.seek();
-    this._lastSeekTime = Date.now();
+    const seekTime = Date.now();
+    this._lastSeekTime = seekTime;
     this._listener({ op: "seek" });
     this._listener({ op: "update_time", time });
+    if (!this._isPlaying) {
+      this._getMessages(Time.add(time, new Time(-SEEK_BACK_SECONDS, 0)), Time.add(time, new Time(0, -1))).then(
+        (messages) => {
+          if (seekTime === this._lastSeekTime) {
+            messages.forEach((message) => this._listener(message));
+          }
+        }
+      );
+    }
   }
 
   requestTopics(): void {

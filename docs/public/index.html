@@ -30,7 +30,7 @@
       }
       .item {
         display: inline-flex;
-        width: 300px;
+        width: 290px;
         height: 150px;
         background: rgba(255, 255, 255, 0.1);
         padding: 20px 30px;
@@ -48,18 +48,24 @@
       .item-logo {
         margin-bottom: 0.5em;
       }
+      a {
+        color: #71b3fb;
+      }
+      a:hover {
+        color: #288fff;
+      }
     </style>
   </head>
   <body>
     <div style="margin-bottom: 2em">
-      <strong>Webviz</strong> is a collection of web-based visualization tools, created to support building autonomous vehicles.
+      <strong>Webviz</strong> is a web-based application for playback and visualization of <a href="http://www.ros.org/">ROS</a> <a href="http://wiki.ros.org/Bags">bag files</a>. This repository also contains some libraries that can be used independently to build web-based visualization tools.
     </div>
 
     <div>
       <a class="item" href="webviz-core.html">
         <div class="item-logo">
           <img src="webviz-logo.svg" width="70">
-          <span class="monospace" style="font-size: 1.5em; vertical-align: middle">webviz-core</span>
+          <span class="monospace" style="font-size: 1.5em; vertical-align: middle">webviz</span>
         </div>
         A tool to inspect ROS bags
       </a>

@@ -5,36 +5,13 @@
 //  You may not use this file except in compliance with the License.
 
 // #BEGIN EXAMPLE
-import React, { useEffect, useState } from "react";
-import styled from "styled-components";
+import React, { useState } from "react";
 
 import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
-
-const StyledContainer = styled.div`
-  position: absolute;
-  white-space: nowrap;
-  z-index: 100;
-  pointer-events: none;
-  top: 0;
-  left: 0;
-  will-change: transform;
-  padding: 0.8rem;
-  background: #99ddff;
-  max-width: 240px;
-  color: #f7f7f3;
-  white-space: pre-line;
-  > div {
-    position: relative;
-    white-space: pre-line;
-  }
-`;
 
 // #BEGIN EDITABLE
 function HitmapDemo() {
   const getHitmapId = (shape) => shape.hitmapId || 0;
-  const lerp = (start, end, amt) => {
-    return (1 - amt) * start + amt * end;
-  };
   const numberToColor = (number, max, a = 1) => {
     const i = (number * 255) / max;
     const r = Math.round(Math.sin(0.024 * i + 0) * 127 + 128) / 255;
@@ -43,8 +20,7 @@ function HitmapDemo() {
     return { r, g, b, a };
   };
 
-  const [enableAutoRotate, setEnableAutoRotate] = useState(false);
-  const [clickedIds, setClickedIds] = useState(new Set([7, 27]));
+  const [clickedId, setClickedId] = useState(7);
   const [cameraState, setCameraState] = useState({
     ...DEFAULT_CAMERA_STATE,
     distance: 145,
@@ -52,25 +28,7 @@ function HitmapDemo() {
     thetaOffset: 0,
   });
 
-  let intervalId;
   const objectMap = {};
-
-  useEffect(() => {
-    if (enableAutoRotate) {
-      intervalId = setInterval(() => {
-        const { thetaOffset: prevThetaOffset } = cameraState;
-        let thetaOffset = prevThetaOffset;
-        if (thetaOffset >= 6.1) {
-          thetaOffset = 0;
-        }
-        thetaOffset = lerp(thetaOffset, 2 * Math.PI, 0.01);
-        setCameraState({ ...cameraState, thetaOffset });
-      }, 16.6);
-      return function cleanup() {
-        clearInterval(intervalId);
-      };
-    }
-  });
 
   // Generate shapes and update the map
   const count = 20;
@@ -84,7 +42,7 @@ function HitmapDemo() {
     const posY = Math.sin(posX) * 30;
     const posZ = Math.cos(posX) * 20;
     const hitmapId = hitmapIdCounter++;
-    const isClicked = clickedIds.has(hitmapId);
+    const isClicked = clickedId === hitmapId;
     const scale = isClicked ? { x: 10, y: 10, z: 10 } : { x: 5, y: 5, z: 5 };
     const alpha = isClicked ? 1 : 0.2 + idx / count;
     return {
@@ -110,7 +68,7 @@ function HitmapDemo() {
     const posZ = -Math.cos(posX) * 20;
 
     const hitmapId = hitmapIdCounter++;
-    const isClicked = clickedIds.has(hitmapId);
+    const isClicked = clickedId === hitmapId;
     const scale = isClicked ? { x: 10, y: 10, z: 10 } : { x: 5, y: 5, z: 5 };
     const alpha = isClicked ? 1 : 0.2 + idx / count;
     return {
@@ -141,7 +99,7 @@ function HitmapDemo() {
   });
 
   const textMarkers = [];
-  clickedIds.forEach((clickedId) => {
+  if (clickedId !== undefined) {
     const clickedObj = objectMap[clickedId];
     if (clickedObj) {
       const {
@@ -153,9 +111,9 @@ function HitmapDemo() {
         },
         type,
       } = clickedObj;
-      let text = `hitmapId: ${hitmapId} x: ${position.x} y: ${position.y} z: ${position.z}`;
+      let text = `hitmapId: ${hitmapId}\nx: ${position.x}\ny: ${position.y}\nz: ${position.z}`;
       if (info) {
-        text += ` description: ${info.description} objectId:${info.objectId}`;
+        text += `\ndescription: ${info.description}\nobjectId: ${info.objectId}`;
       }
 
       const id = textMarkers.length;
@@ -174,46 +132,21 @@ function HitmapDemo() {
         },
       });
     }
-  });
+  }
 
   return (
     <Worldview
       cameraState={cameraState}
       onCameraStateChange={(cameraState) => {
-        if (!enableAutoRotate) {
-          setCameraState(cameraState);
-        }
+        setCameraState(cameraState);
       }}
       onClick={(e, arg) => {
-        const clickedId = arg && arg.clickedObjectId;
-        if (!clickedId) {
-          return;
-        }
-        if (clickedIds.has(clickedId)) {
-          clickedIds.delete(clickedId);
+        if (clickedId === arg.clickedObjectId) {
+          setClickedId(undefined);
         } else {
-          clickedIds.add(clickedId);
+          setClickedId(arg.clickedObjectId);
         }
-
-        setClickedIds(clickedIds);
       }}>
-      <div
-        style={{
-          position: "absolute",
-          border: "1px solid white",
-          backgroundColor: "grey",
-          top: 10,
-          left: 10,
-          padding: 10,
-          display: "flex",
-          flexDirection: "column",
-        }}>
-        <div>{clickedIds.size === 0 && "click an object"}</div>
-        <button style={{ marginBottom: 4 }} onClick={() => setEnableAutoRotate(!enableAutoRotate)}>
-          {enableAutoRotate ? "Disable Auto Rotate" : "Enable Auto Rotate"}
-        </button>
-        {clickedIds.size > 0 && <button onClick={() => setClickedIds(new Set())}>Clear Text</button>}
-      </div>
       <Cubes getHitmapId={getHitmapId}>{cubes}</Cubes>
       <Spheres getHitmapId={getHitmapId}>{spheres}</Spheres>
       <Overlay
@@ -231,22 +164,24 @@ function HitmapDemo() {
             info: { color, title },
           } = item;
           return (
-            <StyledContainer
+            <div
               key={item.id}
               style={{
                 transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
                 flexDirection: "column",
+                position: "absolute",
+                background: "rgba(0, 0, 0, 0.8)",
+                color: "white",
+                maxWidth: 250,
+                pointerEvents: "none",
+                willChange: "transform",
+                fontSize: 12,
+                padding: 8,
+                whiteSpace: "pre-line",
               }}>
-              <h2 style={{ color: getCSSColor(color), fontSize: "2rem" }}>{title}</h2>
+              <div style={{ color: getCSSColor(color) }}>{title}</div>
               <div>{text}</div>
-              <a
-                style={{ pointerEvents: "visible" }}
-                href="https://google.com/"
-                target="_blank"
-                rel="noopener noreferrer">
-                A custom link
-              </a>
-            </StyledContainer>
+            </div>
           );
         }}>
         {textMarkers}

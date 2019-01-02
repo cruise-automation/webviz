@@ -1,10 +1,12 @@
-# KeyListener
+# react-key-listener
 
-React component for handling keyboard events. Use this instead of calling `addEventListener` or adding `onKeyDown` to elements manually.
+React component for handling keyboard events, without interfering with editable fields and buttons. Use this instead of calling `addEventListener` or adding `onKeyDown` to elements manually.
 
 ## Usage
 
-Install: `npm install --save react-key-listener`.
+```bash
+npm install --save react-key-listener
+```
 
 Example:
 

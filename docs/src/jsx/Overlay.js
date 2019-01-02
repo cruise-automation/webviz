@@ -6,29 +6,9 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
-import styled from "styled-components";
 
 import useRange from "./useRange";
 import Worldview, { Overlay, Spheres, Axes } from "regl-worldview";
-
-export const StyledContainer = styled.div`
-  position: absolute;
-  white-space: nowrap;
-  z-index: 100;
-  pointer-events: none;
-  top: 0;
-  left: 0;
-  will-change: transform;
-  padding: 0.8rem;
-  background: #99ddff;
-  max-width: 240px;
-  color: #f7f7f3;
-  white-space: pre-line;
-  > div {
-    position: relative;
-    white-space: pre-line;
-  }
-`;
 
 // #BEGIN EDITABLE
 function OverlayDemo() {
@@ -52,9 +32,9 @@ function OverlayDemo() {
 
   const textMarkers = sphereMarkers.map((sphere, index) => ({
     pose: sphere.pose,
-    text: "Overlay on top of Sphere",
+    text: "overlay on top of Sphere",
     info: {
-      title: `Index:${index}`,
+      title: `index: ${index}`,
     },
   }));
 
@@ -75,23 +55,32 @@ function OverlayDemo() {
             info: { title },
           } = item;
           return (
-            <StyledContainer
+            <div
               key={index}
               style={{
-                flexDirection: "column",
                 transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
+                flexDirection: "column",
+                position: "absolute",
+                background: "rgba(0, 0, 0, 0.8)",
+                color: "white",
+                maxWidth: 250,
+                pointerEvents: "none",
+                willChange: "transform",
+                fontSize: 12,
+                padding: 8,
+                whiteSpace: "pre-line",
               }}>
-              <h2 style={{ fontSize: "2rem" }}>{title}</h2>
+              <div>{title}</div>
               <div>{text}</div>
               <a
-                style={{ pointerEvents: "visible", color: "#f1f1f1" }}
-                href="http://www.google.com"
+                style={{ pointerEvents: "visible" }}
+                href="http://www.getcruise.com"
                 target="_blank"
                 rel="noopener noreferrer">
-                A custom link
+                custom link
               </a>
               <div>range: {range.toFixed(2)}</div>
-            </StyledContainer>
+            </div>
           );
         }}>
         {textMarkers}

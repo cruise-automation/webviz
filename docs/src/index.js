@@ -8,7 +8,6 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import App from "./App";
-import "./styles/bootstrap-reboot.css";
 import "./styles/markdown.css";
 import "./styles/prism.css";
 import "./styles/App.css";

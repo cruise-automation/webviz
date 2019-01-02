@@ -4,7 +4,7 @@
 
 | Name                  | Type                    | Default                | Description                                                                                             |
 | --------------------- | ----------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| `cameraState`         | `$Shape<CameraState>`   |                        | control the [cameraState](/api/camera), must use with `onCameraStateChange`                             |
+| `cameraState`         | `$Shape<CameraState>`   |                        | control the [cameraState](#/docs/api/camera), must use with `onCameraStateChange`                             |
 | `onCameraStateChange` | `(CameraState) => void` |                        | callback whenever the camera state changes                                                              |
 | `defaultCameraState`  | `$Shape<CameraState>`   | `DEFAULT_CAMERA_STATE` | pass in this prop to turn Worldview to an uncontrolled component. `onCameraStateChange` will be ignored |
 | `backgroundColor`     | `Vec4`                  | `[0,0,0,1]`            | change the scene background color                                                                       |
@@ -21,9 +21,9 @@
 
 ## Event Handlers
 
-Currently Worldview supports the following mouse event handlers: `onDoubleClick`, `onMouseDown`, `onMouseUp`, `onMouseMove`, and `onClick`. When a supported html DOM event is fired, the event handler will be triggered with the original event object and additional click information which can help build interactive views:
+Currently Worldview supports the following mouse event handlers: `onDoubleClick`, `onMouseDown`, `onMouseUp`, `onMouseMove`, and `onClick`. When a supported DOM event is fired, the event handler will be triggered with the original event object and additional click information which can help build interactive views:
 
-- `ray`: the raw raycasting information including `dir`(direction), `origin`, and `point`, all in `Vec3` format.
+- `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
 - `clickedObjectId`: the `hitmapId` that you specified in the regl commands (`undefined` if it's not specified).
 
-Learn more at [hitmap](/api/hitmap).
+For an example, see [Interactivity](#/docs/examples/interactivity).

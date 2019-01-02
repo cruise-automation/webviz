@@ -5,49 +5,83 @@
   found in the LICENSE file in the root directory of this source tree.
   You may not use this file except in compliance with the License.
 -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- THIS COMMENT IS A HOOK FOR ANALYTICS - please do not change -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="theme-color" content="#000000">
-    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,400i,700,700i" rel="stylesheet">
-    <title>webviz</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="theme-color" content="#000000" />
+    <title>Webviz</title>
     <link rel='shortcut icon' type='image/x-icon' href='favicon.ico' />
+    <link rel="stylesheet" type="text/css" href="bootstrap-reboot.css">
+    <style>
+      html, body {
+        color: #f7f7f3;
+        background: #1f1e27;
+      }
+      body {
+        max-width: 500px;
+        padding: 20px;
+        margin: 1em auto;
+        text-align: center;
+      }
+      .monospace {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      }
+      .item {
+        display: inline-flex;
+        width: 290px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px 30px;
+        border-radius: 4px;
+        margin-bottom: 1em;
+        flex-direction: column;
+        justify-content: space-evenly;
+        color: inherit;
+      }
+      .item:hover, item:focus {
+        background: rgba(255, 255, 255, 0.15);
+        color: inherit;
+        text-decoration: none;
+      }
+      .item-logo {
+        margin-bottom: 0.5em;
+      }
+      a {
+        color: #71b3fb;
+      }
+      a:hover {
+        color: #288fff;
+      }
+    </style>
   </head>
   <body>
-    <noscript>
-      You need to enable JavaScript to run this app.
-    </noscript>
-    <div id="root"></div>
-    <div id="topLevelError" style="display: none; margin: 20px; font-size: 16px; position: absolute;">
-      An error occurred:<br/>
-      <div id="topLevelErrorMessage"></div>
-      <br/>
-      Troubleshooting steps:
-      <ul style="list-style: disc inside;">
-        <li>Make sure you&rsquo;re using the latest version of <a href="https://www.google.com/chrome" style="display: inline">Google Chrome</a>.</li>
-        <li>Look in the Chrome <a href="https://developers.google.com/web/tools/chrome-devtools/console/">developer console</a> for more error details.</li>
-        <!-- THIS COMMENT IS A HOOK FOR TROUBLESHOOTING STEPS - please do not change -->
-      </ul>
+    <div style="margin-bottom: 2em">
+      <strong>Webviz</strong> is a web-based application for playback and visualization of <a href="http://www.ros.org/">ROS</a> <a href="http://wiki.ros.org/Bags">bag files</a>. This repository also contains some libraries that can be used independently to build web-based visualization tools.
     </div>
-    <script type="text/javascript">
-    /* THIS COMMENT IS A HOOK FOR INITIAL STATE - please do not change */
-    // catch and display script errors from bundle.js
-    window.webviz_handleTopLevelError = (event) => {
-      window.webviz_caughtTopLevelError = true;
-      document.getElementById("topLevelErrorMessage").innerText = event.message;
-      document.getElementById("topLevelError").style.display = "block";
-    };
-    window.addEventListener("error", window.webviz_handleTopLevelError);
-    </script>
-    <script src='dist/webvizCoreBundle.js'></script>
-    <script type="text/javascript">
-    window.removeEventListener("error", window.webviz_handleTopLevelError);
-    if (!window.webviz_caughtTopLevelError) {
-      document.getElementById("topLevelError").remove();
-    }
-    </script>
+
+    <div>
+      <a class="item" href="webviz-core.html">
+        <div class="item-logo">
+          <img src="webviz-logo.svg" width="70">
+          <span class="monospace" style="font-size: 1.5em; vertical-align: middle">webviz</span>
+        </div>
+        A tool to inspect ROS bags
+      </a>
+    </div>
+
+    <div>
+      <a class="item" href="worldview">
+        <div class="item-logo"><img src="worldview-logo.svg" width="230"></div>
+        Declarative rendering for interactive scenes
+      </a>
+    </div>
+
+    <div style="margin-bottom: 2em">
+      And more on <a href="https://github.com/cruise-automation/webviz">Github</a>.
+    </div>
+
+    <a href="https://getcruise.com"><img src="cruise-logo.svg" width="100"></a>
   </body>
 </html>

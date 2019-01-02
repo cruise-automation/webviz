@@ -1,16 +1,18 @@
 # @cruise-automation/tooltip
 
-Floating tooltip React component, for usage across Cruise projects.
+React component that uses [popper.js](https://popper.js.org/) to add rich, customizable tooltips to DOM elements.
 
 ## Usage
 
-Install: `npm install --save @cruise-automation/tooltip`.
+```bash
+npm install --save @cruise-automation/tooltip
+```
 
 It can render any `React.Node` within itself. It comes with a wrapper component you can use to add tooltips to existing html elements, and an imperative API to absolutely position the tooltip for interacting with non-element based things (image hitmaps, charts, webgl).
 
 The tooltip container element has basic css applied for absolute positioning.  It also has an unused global className of `tooltip` so you can apply custom styles globally in your application. e.g. `.tooltip { border-radius: 5px, padding: 10px, border: 1px solid pink }` in your css.
 
-The react "wrapper" component API looks like so:
+The React "wrapper" component API looks like this:
 
 ```js
 <Tooltip contents="This is the tooltip contents" fixed delay>
@@ -18,12 +20,12 @@ The react "wrapper" component API looks like so:
 </Tooltip>
 ```
 
-The imperative API looks like so:
+The imperative API looks like this:
 
 ```js
 const MyComponent = (props) => {
   const showTip = (e) => {
-    Tip.show(
+    Tooltip.show(
       e.clientX,
       e.clientY,
       <div>
@@ -49,7 +51,7 @@ Shows the tooltip at `x, y` with the `contents` rendered into the body of the to
 
 ### Tooltip.hide()
 
-Hides the tooltip
+Hides the tooltip.
 
 ## Props
 

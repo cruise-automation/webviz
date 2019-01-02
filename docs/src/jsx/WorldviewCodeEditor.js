@@ -13,7 +13,6 @@ import CameraStateInfo from "./CameraStateInfo";
 import CodeEditor from "./CodeEditor";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
-import { StyledContainer } from "./Overlay";
 import useRange from "./useRange";
 import Worldview, {
   Command,
@@ -37,8 +36,6 @@ import Worldview, {
 } from "regl-worldview";
 
 export const scope = {
-  StyledContainer,
-
   getCSSColor,
   useRange,
   useState,

@@ -13,7 +13,7 @@ import Worldview, { Text, Axes } from "regl-worldview";
 function TextDemo() {
   const labelMarker = {
     name: "randomName",
-    text: "STOP",
+    text: "HELLO",
     color: { r: 1, g: 1, b: 1, a: 1 },
     pose: {
       orientation: { x: 0, y: 0, z: 0, w: 1 },

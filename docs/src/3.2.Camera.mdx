@@ -3,13 +3,15 @@ import CameraState from './jsx/CameraState.js';
 
 # Camera
 
-Worldview's virtual camera is positioned with respect to a "**`target`**" object. The camera faces in the same direction as the target (yaw only, specified by `targetOrientation`),
+Worldview's virtual camera is positioned with respect to a "target" object. The camera faces in the same direction as the target (yaw only, specified by `targetOrientation`),
 and is positioned so that it "looks at" the `target`, or at the `targetOffset` (in the reference frame of the target) if specified.
 
 Relative to the point it "looks at", the camera's position is controlled by `distance`, `phi`, and `thetaOffset`, in [spherical coordinates](https://en.wikipedia.org/wiki/Spherical_coordinate_system).
 With `phi = 0` the camera points straight down from above the target, and with `phi = Math.PI` it points straight up from below. `thetaOffset` controls extra yaw (in addition to following the `targetOrientation`), and `distance` specifies the zoom level.
 
 CameraStore holds the camera state and offers methods to handle camera rotation, zoom and move. It also provides `setCameraState` methods to allow you to reset the full/partial camera state. These methods are currently encapsulated inside Worldview.
+
+You can move the camera around using the mouse/trackpad, or by using the keyboard: *a/s/d/f* (for `targetOffset`), *q/e* (for `thetaOffset`), *r/f* (for `phi`), and *z/x* (for `distance`).
 
 ## cameraState
 
@@ -33,20 +35,19 @@ You must choose one of the two options for camera state:
 
 <CameraStateControlled />
 
-**Uncontrolled** using `defaultCameraState` as props. _Notice that the cameraState doesn't change when you change the distance in the input._ ([Understanding uncontrolled components](https://reactjs.org/docs/uncontrolled-components.html))
+**Uncontrolled** using `defaultCameraState` as props. _Notice how the cameraState doesn't change when you change the distance in the input._ ([Understanding uncontrolled components](https://reactjs.org/docs/uncontrolled-components.html))
 
 <CameraStateUncontrolled />
 
-If none of the three props are passed in, Worldview is `Uncontrolled` using `DEFAULT_CAMERA_STATE`.
+If none of the three props are passed in, Worldview is **Uncontrolled** using `DEFAULT_CAMERA_STATE`.
 
 ## cameraStateSelectors
 
-CameraStore exports a set of selectors which allow you to get additional information based on the cameraState:
+We export a set of selectors to allow you to get additional information based on the cameraState:
 
 ```js
 import { cameraStateSelectors } from "regl-worldview";
 
-...
 // Full cameraState is required
 const targetHeading = cameraStateSelectors.targetHeading(cameraState);
 const theta = cameraStateSelectors.theta(cameraState);

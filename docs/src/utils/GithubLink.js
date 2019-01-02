@@ -14,7 +14,6 @@ import GithubLogo from "./GitHubLogo";
 const StyledLink = styled.a`
   display: inline-flex;
   align-items: center;
-  font-style: italic;
 `;
 const StyledChildrenWrapper = styled.span`
   margin: 4px;

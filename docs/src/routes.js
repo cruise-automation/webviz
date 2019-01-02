@@ -10,20 +10,20 @@ import DynamicCommands from "./1.3.DynamicCommands.mdx";
 import Interactivity from "./1.4.Interactivity.mdx";
 import QuickStart from "./2.1.QuickStart.mdx";
 import Worldview from "./3.1.Worldview.mdx";
-import Lines from "./3.10.Lines.mdx";
-import Overlay from "./3.11.Overlay.mdx";
-import Points from "./3.12.Points.mdx";
-import Spheres from "./3.13.Spheres.mdx";
-import Text from "./3.14.Text.mdx";
-import Triangles from "./3.15.Triangles.mdx";
-import Flow from "./3.16FlowTypes.mdx";
 import Camera from "./3.2.Camera.mdx";
 import Command from "./3.3.Command.mdx";
-import Arrows from "./3.4.Arrows.mdx";
-import Cones from "./3.5.Cones.mdx";
-import Cubes from "./3.6.Cubes.mdx";
-import Cylinders from "./3.7.Cylinders.mdx";
-import FilledPolygons from "./3.8.FilledPolygons.mdx";
+import Flow from "./3.4.FlowTypes.mdx";
+import Arrows from "./4.1.Arrows.mdx";
+import Text from "./4.10.Text.mdx";
+import Triangles from "./4.11.Triangles.mdx";
+import Cones from "./4.2.Cones.mdx";
+import Cubes from "./4.3.Cubes.mdx";
+import Cylinders from "./4.4.Cylinders.mdx";
+import FilledPolygons from "./4.5.FilledPolygons.mdx";
+import Lines from "./4.6.Lines.mdx";
+import Overlay from "./4.7.Overlay.mdx";
+import Points from "./4.8.Points.mdx";
+import Spheres from "./4.9.Spheres.mdx";
 
 export const componentList = {
   BasicExample,
@@ -56,10 +56,11 @@ const ROUTE_CONFIG = [
   },
   {
     name: "API",
+    subRouteNames: ["Worldview", "Camera", "Command", "Flow"],
+  },
+  {
+    name: "Commands",
     subRouteNames: [
-      "Worldview",
-      "Camera",
-      "Command",
       "Arrows",
       "Cones",
       "Cubes",
@@ -71,7 +72,6 @@ const ROUTE_CONFIG = [
       "Spheres",
       "Text",
       "Triangles",
-      "Flow",
     ],
   },
 ];

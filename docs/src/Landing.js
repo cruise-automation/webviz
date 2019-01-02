@@ -22,7 +22,7 @@ const OuterContainer = styled.div`
   background-repeat: no-repeat;
   min-height: 100vh;
   @media only screen and (max-width: 940px) {
-    background-position: left top;
+    background-position: 30% top;
   }
 `;
 

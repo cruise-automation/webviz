@@ -9,9 +9,9 @@
 import normalizeWheel from "normalize-wheel";
 import * as React from "react";
 
+import type { CameraKeyMap, CameraAction, Vec2 } from "../types";
 import getOrthographicBounds from "../utils/getOrthographicBounds";
 import CameraStore from "./CameraStore";
-import type { Vec4, CameraActionType, CameraState, CameraKeyMap } from "./types";
 
 const PAN_SPEED = 4;
 const MOUSE_ZOOM_SPEED = 0.3;
@@ -20,16 +20,16 @@ const KEYBOARD_ZOOM_SPEED = 150;
 const KEYBOARD_SPIN_SPEED = 1.5;
 
 const DEFAULT_KEYMAP: CameraKeyMap = {
-  a: 'moveLeft',
-  d: 'moveRight',
-  e: 'rotateRight',
-  f: 'tiltUp',
-  q: 'rotateLeft',
-  r: 'tiltDown',
-  s: 'moveDown',
-  w: 'moveUp',
-  x: 'zoomOut',
-  z: 'zoomIn',
+  a: "moveLeft",
+  d: "moveRight",
+  e: "rotateRight",
+  f: "tiltUp",
+  q: "rotateLeft",
+  r: "tiltDown",
+  s: "moveDown",
+  w: "moveUp",
+  x: "zoomOut",
+  z: "zoomIn",
 };
 
 type KeyMotion = { x?: number, y?: number, zoom?: number, yaw?: number, tilt?: number };
@@ -219,30 +219,33 @@ export default class CameraListener extends React.Component<Props> {
     const zoomSpeed = this._getMagnitude(KEYBOARD_ZOOM_SPEED);
     const spinSpeed = this._getMagnitude(KEYBOARD_SPIN_SPEED);
     const { keyMap } = this.props;
-    const action: CameraActionType = (keyMap && keyMap[key]) || DEFAULT_KEYMAP[key] || false;
+    const action: CameraAction | false = (keyMap && keyMap[key]) || DEFAULT_KEYMAP[key] || false;
 
     switch (action) {
-      case 'moveRight':
+      case "moveRight":
         return { x: moveSpeed };
-      case 'moveLeft':
+      case "moveLeft":
         return { x: -moveSpeed };
-      case 'moveUp':
+      case "moveUp":
         return { y: moveSpeed };
-      case 'moveDown':
+      case "moveDown":
         return { y: -moveSpeed };
-      case 'zoomIn':
+      case "zoomIn":
         return { zoom: zoomSpeed };
-      case 'zoomOut':
+      case "zoomOut":
         return { zoom: -zoomSpeed };
-      case 'rotateLeft':
+      case "rotateLeft":
         return { yaw: -spinSpeed };
-      case 'rotateRight':
+      case "rotateRight":
         return { yaw: spinSpeed };
-      case 'tiltUp':
+      case "tiltUp":
         return { tilt: -spinSpeed };
-      case 'tiltDown':
+      case "tiltDown":
         return { tilt: spinSpeed };
+      case false:
+        return null;
       default:
+        (action: empty);
         return null;
     }
   };

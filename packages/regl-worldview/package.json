@@ -33,11 +33,7 @@
     "reselect": "^3.0.1"
   },
   "devDependencies": {
-    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
-    "flow-bin": "0.80.0",
-    "rollup": "^1.0.0",
-    "rollup-plugin-copy": "^0.2.3",
-    "rollup-plugin-terser": "^4.0.1"
+    "flow-bin": "0.80.0"
   },
   "gitHead": "a799782ff908186f8c42c37f39806d251922ca6e"
 }

@@ -18,9 +18,9 @@
 | `onMouseMove`         | `MouseHandler`          |                        |                                                                                                         |
 | `onClick`             | `MouseHandler`          |                        |                                                                                                         |
 
-*All props are optional.*
+_All props are optional._
 
-## Event Handlers
+## Mouse Event Handlers
 
 Currently Worldview supports the following mouse event handlers: `onDoubleClick`, `onMouseDown`, `onMouseUp`, `onMouseMove`, and `onClick`. When a supported DOM event is fired, the event handler will be triggered with the original event object and additional click information which can help build interactive views:
 
@@ -29,12 +29,9 @@ Currently Worldview supports the following mouse event handlers: `onDoubleClick`
 
 For an example, see [Interactivity](#/docs/examples/interactivity).
 
-## Key Map
+## Keyboard Controls
 
-`keyMap` should contain key-value pairs of the value of KeyboardEvent.key as the "key" portion of the pair and the
-  action to perform instead as the value portion of the key-value pair. If you'd like to cancel a key mapping, simply
-  provide a "falsy" value as the value portion of the key-value pair. For example, the following would reverse all
-  actions and disable tilting and zooming:
+`keyMap` allows you to customize the keyboard controls for Worldview's camera. The `keyMap` is an optional object whose keys are [KeyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) values, and whose values specify the action to perform when the corresponding key is pressed. To disable a key from the keyboard controls, simply provide a `null`/`false` value for that key. For example, the following would reverse all actions and disable tilting and zooming:
 
     <Worldview keyMap={{
       w: 'moveDown',
@@ -46,8 +43,6 @@ For an example, see [Interactivity](#/docs/examples/interactivity).
 
       r: false,
       f: null,
-      x: '',
-      z: 0,
+      x: false,
+      z: null,
     }} />
-
-   Notice that `0`, `''`, `null`, and `false` all work to disable a key mapping.

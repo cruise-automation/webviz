@@ -246,6 +246,7 @@ export default class CameraListener extends React.Component<Props> {
         return null;
       default:
         (action: empty);
+        console.warn("Unrecognized key action:", action);
         return null;
     }
   };

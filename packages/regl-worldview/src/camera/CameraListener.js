@@ -311,7 +311,7 @@ export default class CameraListener extends React.Component<Props> {
     this._metaKey = e.metaKey;
     this._ctrlKey = e.ctrlKey;
 
-    if (e.ctrlKey || e.metaKey) {
+    if (e.altKey || e.ctrlKey || e.metaKey) {
       if (onKeyDown) {
         onKeyDown(e);
       }

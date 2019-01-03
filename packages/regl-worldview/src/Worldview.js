@@ -12,7 +12,7 @@ import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener } from "./camera/index";
-import type { MouseHandler, Dimensions, Vec4, CameraState, KeyMapping } from "./types";
+import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap } from "./types";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
@@ -37,7 +37,7 @@ type ControlledType = {|
   ...SharedProps,
   ...Dimensions,
   cameraState: CameraState,
-  keyMap?: KeyMapping,
+  keyMap?: CameraKeyMap,
   onCameraStateChange: (CameraState) => void,
 |};
 
@@ -45,7 +45,7 @@ type UncontrolledType = {|
   ...SharedProps,
   ...Dimensions,
   defaultCameraState: CameraState,
-  keyMap?: KeyMapping,
+  keyMap?: CameraKeyMap,
 |};
 
 export type BaseProps = ControlledType | UncontrolledType;

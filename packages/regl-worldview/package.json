@@ -20,10 +20,15 @@
     "clean": "rimraf dist",
     "build:dev": "npm run build:flow && npm run compile",
     "build:flow": "flow-copy-source -v src dist --ignore '*.test.*' --ignore '*.stories.*' --ignore '**/stories/**'",
+    "watch:flow": "flow-copy-source -v src dist --ignore '*.test.*' --ignore '*.stories.*' --ignore '**/stories/**' --watch",
     "watch": "NODE_ENV=development npm run build:watch"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "flow-copy-source": "^2.0.2",
+    "rollup": "^1.0.0"
   },
   "dependencies": {
     "earcut": "^2.1.3",

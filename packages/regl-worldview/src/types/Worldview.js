@@ -6,12 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { CameraState } from "../camera/CameraStore";
-import type { KeyMapping } from "../camera/CameraListener";
+import ACTIONS from "../camera/CameraListener";
 import { Ray } from "../utils/Raycast";
+
+import type { CameraState } from "../camera/CameraStore";
 import type { BaseProps, Props } from "../Worldview";
 
-export type { CameraState, KeyMapping, BaseProps, Props };
+export type { CameraState, BaseProps, Props };
 
 export type Dimensions = {|
   width: number,
@@ -185,3 +186,9 @@ export type PolygonType = BaseShape & {
   points: Vec3[],
   id: number,
 };
+
+// Camera
+export type CameraAction = 'moveDown' | 'moveLeft' | 'moveRight' | 'moveUp' | 'rotateLeft' | 'rotateRight' | 'tiltDown'
+  | 'tiltUp' | 'zoomIn' | 'zoomOut';
+export type CameraActionType = CameraAction | false | null;
+export type CameraKeyMap = { [string]: CameraActionType };

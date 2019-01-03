@@ -9,7 +9,7 @@
 import normalizeWheel from "normalize-wheel";
 import * as React from "react";
 
-import type { Vec2 } from "../types";
+import type { Vec2, CameraKeyMap } from "../types";
 import getOrthographicBounds from "../utils/getOrthographicBounds";
 import CameraStore from "./CameraStore";
 
@@ -19,40 +19,38 @@ const KEYBOARD_MOVE_SPEED = 0.3;
 const KEYBOARD_ZOOM_SPEED = 150;
 const KEYBOARD_SPIN_SPEED = 1.5;
 
-const ACTIONS = {
-  MOVE_DOWN: 'moveDown',
-  MOVE_LEFT: 'moveLeft',
-  MOVE_RIGHT: 'moveRight',
-  MOVE_UP: 'moveUp',
-  ROTATE_LEFT: 'rotateLeft',
-  ROTATE_RIGHT: 'rotateRight',
-  TILT_DOWN: 'tiltDown',
-  TILT_UP: 'tiltUp',
-  ZOOM_IN: 'zoomIn',
-  ZOOM_OUT: 'zoomOut',
-};
-export type ActionType = $Values<typeof ACTIONS> | boolean | null;
-export type KeyMapping = { [string]: ActionType };
+export const ACTIONS = Object.freeze({
+  moveDown: 'moveDown',
+  moveLeft: 'moveLeft',
+  moveRight: 'moveRight',
+  moveUp: 'moveUp',
+  rotateLeft: 'rotateLeft',
+  rotateRight: 'rotateRight',
+  tiltDown: 'tiltDown',
+  tiltUp: 'tiltUp',
+  zoomIn: 'zoomIn',
+  zoomOut: 'zoomOut',
+});
 
-const DEFAULT_KEYMAP: KeyMapping = {
-  a: ACTIONS['MOVE_LEFT'],
-  d: ACTIONS['MOVE_RIGHT'],
-  e: ACTIONS['ROTATE_RIGHT'],
-  f: ACTIONS['TILT_DOWN'],
-  q: ACTIONS['ROTATE_LEFT'],
-  r: ACTIONS['TILT_UP'],
-  s: ACTIONS['MOVE_DOWN'],
-  w: ACTIONS['MOVE_UP'],
-  x: ACTIONS['ZOOM_OUT'],
-  z: ACTIONS['ZOOM_IN'],
+const DEFAULT_KEYMAP: CameraKeyMap = {
+  a: 'moveLeft',
+  d: 'moveRight',
+  e: 'rotateRight',
+  f: 'tiltUp',
+  q: 'rotateLeft',
+  r: 'tiltDown',
+  s: 'moveDown',
+  w: 'moveUp',
+  x: 'zoomOut',
+  z: 'zoomIn',
 };
 
 type KeyMotion = { x?: number, y?: number, zoom?: number, yaw?: number, tilt?: number };
 
 type Props = {|
   cameraStore: CameraStore,
-  keyMap?: KeyMapping,
   children?: React.ChildrenArray<React.Element<any> | null>,
+  keyMap?: CameraKeyMap,
   onKeyDown?: (KeyboardEvent) => void,
 |};
 
@@ -237,25 +235,25 @@ export default class CameraListener extends React.Component<Props> {
     const action = (keyMap && keyMap[key]) || DEFAULT_KEYMAP[key] || false;
 
     switch (action) {
-      case ACTIONS['MOVE_RIGHT']: // d - right
+      case 'moveRight':
         return { x: moveSpeed };
-      case ACTIONS['MOVE_LEFT']: // a - left
+      case 'moveLeft':
         return { x: -moveSpeed };
-      case ACTIONS['MOVE_UP']: // w - up
+      case 'moveUp':
         return { y: moveSpeed };
-      case ACTIONS['MOVE_DOWN']: // s - down
+      case 'moveDown':
         return { y: -moveSpeed };
-      case ACTIONS['ZOOM_IN']: // z - zoom in
+      case 'zoomIn':
         return { zoom: zoomSpeed };
-      case ACTIONS['ZOOM_OUT']: // x - zoom out
+      case 'zoomOut':
         return { zoom: -zoomSpeed };
-      case ACTIONS['ROTATE_LEFT']: // q - rotate left
+      case 'rotateLeft':
         return { yaw: -spinSpeed };
-      case ACTIONS['ROTATE_RIGHT']: // e - rotate right
+      case 'rotateRight':
         return { yaw: spinSpeed };
-      case ACTIONS['TILT_UP']: // r - tilt up
+      case 'tiltUp':
         return { tilt: -spinSpeed };
-      case ACTIONS['TILT_DOWN']: // f - tilt down
+      case 'tiltDown':
         return { tilt: spinSpeed };
       default:
         return null;

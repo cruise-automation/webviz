@@ -9,9 +9,9 @@
 import normalizeWheel from "normalize-wheel";
 import * as React from "react";
 
-import type { Vec2, CameraKeyMap, CameraAction, CameraActionType } from "../types";
 import getOrthographicBounds from "../utils/getOrthographicBounds";
 import CameraStore from "./CameraStore";
+import type { Vec2, CameraKeyMap, CameraAction, CameraActionType } from "../types";
 
 const PAN_SPEED = 4;
 const MOUSE_ZOOM_SPEED = 0.3;
@@ -36,7 +36,6 @@ type KeyMotion = { x?: number, y?: number, zoom?: number, yaw?: number, tilt?: n
 
 type Props = {|
   cameraStore: CameraStore,
-  keyMap?: KeyMapping,
   children?: React.ChildrenArray<React.Element<any> | null>,
   keyMap?: CameraKeyMap,
   onKeyDown?: (KeyboardEvent) => void,

@@ -184,3 +184,9 @@ export type PolygonType = BaseShape & {
   points: Vec3[],
   id: number,
 };
+
+// Camera
+export type CameraAction = 'moveDown' | 'moveLeft' | 'moveRight' | 'moveUp' | 'rotateLeft' | 'rotateRight' | 'tiltDown'
+  | 'tiltUp' | 'zoomIn' | 'zoomOut';
+export type CameraActionType = CameraAction | false | null;
+export type CameraKeyMap = { [string]: CameraActionType };

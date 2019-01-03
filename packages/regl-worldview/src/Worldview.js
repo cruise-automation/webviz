@@ -12,7 +12,7 @@ import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
-import type { MouseHandler, Dimensions, Vec4, CameraState } from "./types";
+import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap } from "./types";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
@@ -20,6 +20,7 @@ import WorldviewReactContext from "./WorldviewReactContext";
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 
 export type BaseProps = {|
+  keyMap?: CameraKeyMap,
   backgroundColor?: Vec4,
   // rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
@@ -247,13 +248,13 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, showDebug } = this.props;
+    const { width, height, showDebug, keyMap } = this.props;
     const { worldviewContext } = this.state;
     const style = { width, height };
 
     return (
       <React.Fragment>
-        <CameraListener cameraStore={worldviewContext.cameraStore}>
+        <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap}>
           <canvas
             style={style}
             width={width}

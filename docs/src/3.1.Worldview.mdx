@@ -4,9 +4,10 @@
 
 | Name                  | Type                    | Default                | Description                                                                                             |
 | --------------------- | ----------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| `cameraState`         | `$Shape<CameraState>`   |                        | control the [cameraState](#/docs/api/camera), must use with `onCameraStateChange`                             |
+| `cameraState`         | `$Shape<CameraState>`   |                        | control the [cameraState](#/docs/api/camera), must use with `onCameraStateChange`                       |
 | `onCameraStateChange` | `(CameraState) => void` |                        | callback whenever the camera state changes                                                              |
 | `defaultCameraState`  | `$Shape<CameraState>`   | `DEFAULT_CAMERA_STATE` | pass in this prop to turn Worldview to an uncontrolled component. `onCameraStateChange` will be ignored |
+| `keyMap`              | `CameraKeyMap`          | {}                     | override default Worldview hotkeys                                                                      |
 | `backgroundColor`     | `Vec4`                  | `[0,0,0,1]`            | change the scene background color                                                                       |
 | `hitmapOnMouseMove`   | `boolean`               |                        | if enabled, the clicked objectId will be returned from the mouse event handler                          |
 | `children`            | `React.Node`            |                        | regl components to render inside the Worldview                                                          |
@@ -17,9 +18,9 @@
 | `onMouseMove`         | `MouseHandler`          |                        |                                                                                                         |
 | `onClick`             | `MouseHandler`          |                        |                                                                                                         |
 
-*All props are optional.*
+_All props are optional._
 
-## Event Handlers
+## Mouse Event Handlers
 
 Currently Worldview supports the following mouse event handlers: `onDoubleClick`, `onMouseDown`, `onMouseUp`, `onMouseMove`, and `onClick`. When a supported DOM event is fired, the event handler will be triggered with the original event object and additional click information which can help build interactive views:
 
@@ -27,3 +28,21 @@ Currently Worldview supports the following mouse event handlers: `onDoubleClick`
 - `clickedObjectId`: the `hitmapId` that you specified in the regl commands (`undefined` if it's not specified).
 
 For an example, see [Interactivity](#/docs/examples/interactivity).
+
+## Keyboard Controls
+
+`keyMap` allows you to customize the keyboard controls for Worldview's camera. The `keyMap` is an optional object whose keys are [KeyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) values, and whose values specify the action to perform when the corresponding key is pressed. To disable a key from the keyboard controls, simply provide a `null`/`false` value for that key. For example, the following would reverse all actions and disable tilting and zooming:
+
+    <Worldview keyMap={{
+      w: 'moveDown',
+      a: 'moveRight',
+      s: 'moveUp',
+      d: 'moveLeft',
+      e: 'rotateLeft',
+      q: 'rotateRight',
+
+      r: false,
+      f: null,
+      x: false,
+      z: null,
+    }} />

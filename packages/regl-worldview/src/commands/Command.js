@@ -22,8 +22,8 @@ export type Props<T> = {
 };
 
 // Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.
-export default class Command extends React.Component<Props<T>> {
-  context: WorldviewContextType;
+export default class Command<T> extends React.Component<Props<T>> {
+  context: ?WorldviewContextType;
   static displayName = "Command";
 
   constructor(props) {
@@ -42,13 +42,22 @@ export default class Command extends React.Component<Props<T>> {
 
   componentDidMount() {
     this.context.onMount(this, this.props.reglCommand);
+    this._updateContext();
+  }
+
+  componentDidUpdate() {
+    this._updateContext();
   }
 
   componentWillUnmount() {
     this.context.onUnmount(this);
   }
 
-  _updateContext(context: WorldviewContextType) {
+  _updateContext() {
+    const context = this.context;
+    if (!context) {
+      return;
+    }
     const drawProps = this.props.drawProps;
     if (drawProps == null) {
       return;
@@ -77,7 +86,6 @@ export default class Command extends React.Component<Props<T>> {
         {(ctx: ?WorldviewContextType) => {
           if (ctx) {
             this.context = ctx;
-            this._updateContext(ctx);
           }
           return null;
         }}
@@ -108,7 +116,7 @@ function getHitmapProps(getHitmapId, children) {
 // Sample usage: const Cubes = makeCommand('Cubes', rawCommand)
 // When you have children as the drawProps input, it's useful to simply call makeCommand
 // which creates a new regl component. It also handles basic hitmap interactions.
-export function makeCommand<T>(name: string, command: RawCommand<T>) {
+export function makeCommand<T>(name: string, command: RawCommand<T>): React.StatelessFunctionalComponent<T> {
   const cmd = (props: Props<T>) => {
     return (
       <Command

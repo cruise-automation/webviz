@@ -6,6 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import React from "react";
+
 import { withPose } from "../utils/commandUtils";
 import Command from "./Command";
 
@@ -56,14 +58,13 @@ type Props = {
 };
 
 // useful for rendering a grid for debugging in stories
-export default class Grid extends Command<Props> {
+export default class Grid extends React.Component<Props> {
   static displayName = "Grid";
-  static command = grid;
   static defaultProps = {
     count: 6,
   };
 
-  getDrawProps() {
-    return this.props;
+  render() {
+    return <Command reglCommand={grid} drawProps={this.props} />;
   }
 }

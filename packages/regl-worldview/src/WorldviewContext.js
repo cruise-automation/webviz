@@ -32,6 +32,7 @@ type InitializedData = {
 };
 
 export type DrawInput = {
+  instance: React.Component<any>,
   command: Command<any>,
   drawProps: Props,
   layerIndex: ?number,
@@ -40,7 +41,7 @@ export type DrawInput = {
 export type PaintFn = () => void;
 
 export type WorldviewContextType = {
-  onMount(instance: Command<any>): void,
+  onMount(instance: Command<any>, command: RawCommand<any>): void,
   registerDrawCall(drawInput: DrawInput): void,
   registerHitmapCall(drawInput: DrawInput): void,
   registerPaintCallback(PaintFn): void,
@@ -63,10 +64,10 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
 // It contains all the regl interaction code and is responsible for collecting and executing
 // draw calls, hitmap calls, and raycasting.
 export class WorldviewContext {
-  _commands: Map<Function, RawCommand<any>> = new Map();
+  _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
-  _drawCalls: Map<Command<any>, any> = new Map();
-  _hitmapCalls: Map<Command<any>, any> = new Map();
+  _drawCalls: Map<React.Component<any>, any> = new Map();
+  _hitmapCalls: Map<React.Component<any>, any> = new Map();
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
@@ -106,9 +107,9 @@ export class WorldviewContext {
       })
     );
     // compile any components which mounted before regl is initialized
-    this._commands.forEach((value, key) => {
-      const compiledCommand = compile(regl, value);
-      this._compiled.set(key, compiledCommand);
+    this._commands.forEach((uncompiledCommand) => {
+      const compiledCommand = compile(regl, uncompiledCommand);
+      this._compiled.set(uncompiledCommand, compiledCommand);
     });
 
     const Camera = compile(regl, camera);
@@ -133,21 +134,20 @@ export class WorldviewContext {
   }
 
   // compile a command when it is first mounted, and try to register in _commands and _compiled maps
-  onMount(instance: Command<any>) {
-    const ctor: Function = instance.constructor;
+  onMount(instance: React.Component<any>, command: RawCommand<any>) {
     const { initializedData } = this;
     // do nothing if regl hasn't been initialized yet
-    if (!initializedData || this._commands.get(ctor)) {
+    if (!initializedData || this._commands.has(command)) {
       return;
     }
-    this._commands.set(ctor, ctor.command);
+    this._commands.add(command);
 
     // for components that mount after regl is initialized
-    this._compiled.set(ctor, compile(initializedData.regl, ctor.command));
+    this._compiled.set(command, compile(initializedData.regl, command));
   }
 
   // unregister children hitmap and draw calls
-  onUnmount(instance: Command<any>) {
+  onUnmount(instance: React.Component<any>) {
     this._hitmapCalls.delete(instance);
     this._drawCalls.delete(instance);
   }
@@ -157,7 +157,7 @@ export class WorldviewContext {
   }
 
   registerDrawCall(drawInput: DrawInput) {
-    this._drawCalls.set(drawInput.command, drawInput);
+    this._drawCalls.set(drawInput.instance, drawInput);
   }
 
   registerPaintCallback(paintFn: PaintFn) {
@@ -165,7 +165,7 @@ export class WorldviewContext {
   }
 
   registerHitmapCall(drawInput: DrawInput) {
-    this._hitmapCalls.set(drawInput.command, drawInput);
+    this._hitmapCalls.set(drawInput.instance, drawInput);
   }
 
   setDimension(dimension: Dimensions) {
@@ -266,13 +266,13 @@ export class WorldviewContext {
     const sortedDrawCalls = Array.from(drawCallsMap.values()).sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
 
     sortedDrawCalls.forEach((drawInput: DrawInput) => {
-      const { command, drawProps } = drawInput;
+      const { command, drawProps, instance } = drawInput;
       if (!drawProps) {
         return console.warn(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`);
       }
-      const cmd = this._compiled.get(command.constructor);
+      const cmd = this._compiled.get(command);
       if (!cmd) {
-        return console.warn("could not find draw command for", command.constructor.displayName);
+        return console.warn("could not find draw command for", instance.constructor.displayName);
       }
       // mapTiles requires additional context data
       if (drawProps.context && drawProps.props) {

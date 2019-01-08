@@ -8,47 +8,41 @@ import React from "react";
 
 import Worldview, { Command } from "regl-worldview";
 
-// extend Command
-class Triangle extends Command {
-  // override getDrawProps - the return value of this function
-  // will be passed to the static regl command within the Trangle component
-  getDrawProps() {
-    return {
-      color: this.props.color,
-      points: [[-1, 0], [0, -1], [1, 1]],
-    };
-  }
+const reglTriangle = (regl) => ({
+  vert: `
+    precision mediump float;
+    attribute vec2 position;
+    void main () {
+      gl_Position = vec4(position, 0, 1);
+    }
+  `,
+  frag: `
+    precision mediump float;
+    uniform vec4 color;
+    void main () {
+      gl_FragColor = color;
+  }`,
+  attributes: {
+    position: regl.prop("points"),
+  },
+  uniforms: {
+    color: regl.prop("color"),
+  },
+  count: regl.prop("points.length"),
+});
+
+function Triangle({ color }) {
+  const drawProps = {
+    color,
+    points: [[-1, 0], [0, -1], [1, 1]],
+  };
+  return <Command reglCommand={reglTriangle} drawProps={drawProps} />;
 }
 
 Triangle.displayName = "triangle";
 
 Triangle.defaultProps = {
   color: [1, 0, 0, 1],
-};
-
-Triangle.command = () => {
-  return {
-    vert: `
-        precision mediump float;
-        attribute vec2 position;
-        void main () {
-          gl_Position = vec4(position, 0, 1);
-        }
-        `,
-    frag: `
-        precision mediump float;
-        uniform vec4 color;
-        void main () {
-          gl_FragColor = color;
-        }`,
-    attributes: {
-      position: (context, props) => props.points,
-    },
-    uniforms: {
-      color: (context, props) => props.color,
-    },
-    count: (context, props) => props.points.length,
-  };
 };
 
 function CommandDemo() {

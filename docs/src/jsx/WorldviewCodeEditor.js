@@ -16,7 +16,6 @@ import LineControls from "./LineControls";
 import useRange from "./useRange";
 import Worldview, {
   Command,
-  SimpleCommand,
   Arrows,
   Cones,
   Cubes,
@@ -51,7 +50,6 @@ export const scope = {
   InputNumber,
 
   Command,
-  SimpleCommand,
   Arrows,
   Cones,
   Cubes,

@@ -13,57 +13,47 @@ Sample usage:
 ```js
 import Worldview, { withPose, Command } from 'regl-worldview';
 
-// extend Command
-class Triangle extends Command {
-  static displayName = 'triangle'
-  static command = () => {
-    return {
-      vert: `
-      precision mediump float;
-      attribute vec2 position;
-      void main () {
-        gl_Position = vec4(position, 0, 1);
-      }
-      `
-      frag: `
-      precision mediump float;
-      uniform vec4 color;
-      void main () {
-        gl_FragColor = color;
-      }`,
-      attributes: {
-        position: (context, props) => props.points,
-      },
-      uniforms: {
-        color: (context, props) => props.color,
-      }
-      count: (context, props) => props.points.length,
+// define our regl command
+const reglTriangle = (regl) => ({
+  vert: `
+    precision mediump float;
+    attribute vec2 position;
+    void main () {
+      gl_Position = vec4(position, 0, 1);
     }
+  `,
+  frag: `
+    precision mediump float;
+    uniform vec4 color;
+    void main () {
+      gl_FragColor = color;
+  }`,
+  attributes: {
+    position: regl.prop("points"),
   },
-  static defaultProps = {
-    color: [1, 0, 0, 1],
-  }
+  uniforms: {
+    color: regl.prop("color"),
+  },
+  count: regl.prop("points.length"),
+});
 
-  // override getDrawProps - the return value of this function
-  // will be passed to the static regl command within the Trangle component
-  getDrawProps() {
-    return {
-      color: props.color,
-      points: [
-        [-1, 0],
-        [0, -1],
-        [1, 1]
-      ]
-    }
-  }
+// define a Triangle React component to render with our regl command
+function Triangle({ color }) {
+  const drawProps = {
+    color,
+    points: [[-1, 0], [0, -1], [1, 1]],
+  };
+  return <Command reglCommand={reglTriangle} drawProps={drawProps} />;
 }
 
-// usage
+// pass our Triangle component to worldview
 function CommandDemo() {
   return (
-    <Worldview>
-      <Triangle color={[0, 0, 1, 1]} />
-    </Worldview>
+    <div style={{ height: 500 }}>
+      <Worldview>
+        <Triangle color={[0, 0, 1, 1]} />
+      </Worldview>
+    </div>
   );
 }
 ```
@@ -74,7 +64,7 @@ function CommandDemo() {
 
 When you have children as the drawProps input, it's useful to simply call makeCommand
 which creates a regl component automatically based on the regl command supplied. It also handles basic hitmap
-interactions. You'll want to subclass Command if the React children is not the drawProps input or if
+interactions. You'll want to return a `<Command />` component directly from render if the React children is not the drawProps input or if
 additional data processing is needed to generate the drawProps/hitmapProps.
 
 Sample usage:

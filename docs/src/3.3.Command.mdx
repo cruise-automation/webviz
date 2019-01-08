@@ -14,14 +14,14 @@ Sample usage:
 import Worldview, { withPose, Command } from 'regl-worldview';
 
 // define our regl command
-const reglTriangle = () => ({
+const reglTriangle = (regl) => ({
   vert: `
     precision mediump float;
     attribute vec2 position;
     void main () {
       gl_Position = vec4(position, 0, 1);
     }
-  `
+  `,
   frag: `
     precision mediump float;
     uniform vec4 color;
@@ -29,39 +29,31 @@ const reglTriangle = () => ({
       gl_FragColor = color;
   }`,
   attributes: {
-    position: (context, props) => props.points,
+    position: regl.prop("points"),
   },
   uniforms: {
-    color: (context, props) => props.color,
-  }
-  count: (context, props) => props.points.length,
+    color: regl.prop("color"),
+  },
+  count: regl.prop("points.length"),
 });
 
-class Triangle extends React.Component {
-  static defaultProps = {
-    color: [1, 0, 0, 1],
-  }
-
-  render() {
-    const drawProps = {
-      color: this.props.color,
-      points: [
-        [-1, 0],
-        [0, -1],
-        [1, 1]
-      ]
-    };
-    console.log('hit')
-    return <Command reglCommand={reglTriangle} drawProps={drawProps} />
-  }
+// define a Triangle React component to render with our regl command
+function Triangle({ color }) {
+  const drawProps = {
+    color,
+    points: [[-1, 0], [0, -1], [1, 1]],
+  };
+  return <Command reglCommand={reglTriangle} drawProps={drawProps} />;
 }
 
-// usage
+// pass our Triangle component to worldview
 function CommandDemo() {
   return (
-    <Worldview>
-      <Triangle color={[0, 0, 1, 1]} />
-    </Worldview>
+    <div style={{ height: 500 }}>
+      <Worldview>
+        <Triangle color={[0, 0, 1, 1]} />
+      </Worldview>
+    </div>
   );
 }
 ```

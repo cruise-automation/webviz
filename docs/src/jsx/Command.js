@@ -8,37 +8,35 @@ import React from "react";
 
 import Worldview, { Command } from "regl-worldview";
 
-const triangleReglCommand = () => ({
+const reglTriangle = (regl) => ({
   vert: `
-      precision mediump float;
-      attribute vec2 position;
-      void main () {
-        gl_Position = vec4(position, 0, 1);
-      }
-      `,
+    precision mediump float;
+    attribute vec2 position;
+    void main () {
+      gl_Position = vec4(position, 0, 1);
+    }
+  `,
   frag: `
-      precision mediump float;
-      uniform vec4 color;
-      void main () {
-        gl_FragColor = color;
-      }`,
+    precision mediump float;
+    uniform vec4 color;
+    void main () {
+      gl_FragColor = color;
+  }`,
   attributes: {
-    position: (context, props) => props.points,
+    position: regl.prop("points"),
   },
   uniforms: {
-    color: (context, props) => props.color,
+    color: regl.prop("color"),
   },
-  count: (context, props) => props.points.length,
+  count: regl.prop("points.length"),
 });
 
-class Triangle extends React.Component {
-  render() {
-    const drawProps = {
-      color: this.props.color,
-      points: [[-1, 0], [0, -1], [1, 1]],
-    };
-    return <Command reglCommand={triangleReglCommand} drawProps={drawProps} />;
-  }
+function Triangle({ color }) {
+  const drawProps = {
+    color,
+    points: [[-1, 0], [0, -1], [1, 1]],
+  };
+  return <Command reglCommand={reglTriangle} drawProps={drawProps} />;
 }
 
 Triangle.displayName = "triangle";

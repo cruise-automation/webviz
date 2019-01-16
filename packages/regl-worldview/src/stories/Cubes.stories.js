@@ -78,7 +78,7 @@ class DynamicCubes extends React.Component<any, any> {
     }
 
     return (
-      <Container cameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }} onClick={this.onContainerClick}>
+      <Container cameraState={DEFAULT_CAMERA_STATE} onClick={this.onContainerClick}>
         <div style={{ position: "absolute", top: 30, left: 30 }}>
           <div>Only the yellow cubes should be clickable</div>
           <div>you clicked on cube: {this.state.cubeId} </div>

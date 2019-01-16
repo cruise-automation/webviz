@@ -56,6 +56,7 @@ export default class CameraStore {
   };
 
   cameraRotate = ([x, y]: Vec2) => {
+    // This can happen in 2D mode, when both e.movementX and e.movementY are evaluated as negative and mouseX move is 0
     if (x === 0 && y === 0) {
       return;
     }
@@ -70,6 +71,7 @@ export default class CameraStore {
 
   // move the camera along x, y axis; do not move up/down
   cameraMove = ([x, y]: Vec2) => {
+    // moveX and moveY both be 0 sometimes
     if (x === 0 && y === 0) {
       return;
     }

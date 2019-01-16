@@ -20,7 +20,7 @@ const getBabelOptions = ({ useESModules }) => ({
   runtimeHelpers: true,
   plugins: [
     ["@babel/transform-runtime", { useESModules }],
-    ["@babel/plugin-proposal-object-rest-spread", { useBuiltIns: true }]
+    ["@babel/plugin-proposal-object-rest-spread", { useBuiltIns: true }],
   ],
 });
 

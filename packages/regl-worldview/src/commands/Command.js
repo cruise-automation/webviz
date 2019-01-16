@@ -17,7 +17,7 @@ import WorldviewReactContext from "../WorldviewReactContext";
 export type Props<T> = {
   children?: T[],
   reglCommand: RawCommand<T>,
-  getHitmapId?: (T) => ?number,
+  getHitmapId?: (T) =>?number,
   layerIndex?: number,
 };
 
@@ -124,5 +124,6 @@ export function makeCommand<T>(name: string, command: RawCommand<T>): React.Stat
     return <Command reglCommand={command} drawProps={props.children} hitmapProps={hitmapProps} />;
   };
   cmd.displayName = name;
+  cmd.reglCommand = command;
   return cmd;
 }

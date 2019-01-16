@@ -17,7 +17,7 @@ import WorldviewReactContext from "../WorldviewReactContext";
 export type Props<T> = {
   children?: T[],
   reglCommand: RawCommand<T>,
-  getHitmapId?: (T) =>?number,
+  getHitmapId?: (T) => ?number,
   layerIndex?: number,
 };
 

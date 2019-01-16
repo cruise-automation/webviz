@@ -3,6 +3,7 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 
+import { intToRGB } from "../utils/commandUtils";
 import Container from "./Container";
 import { cube, p, UNIT_QUATERNION, buildMatrix, rng } from "./util";
 import withRange from "./withRange";
@@ -43,6 +44,52 @@ const instancedCameraState = {
   perspective: true,
 };
 
+class DynamicCubes extends React.Component<any, any> {
+  state = { cubeCount: 1, cubeId: -1 };
+  onContainerClick = (e, args) => {
+    this.setState({ cubeId: args.clickedObjectId || -1 });
+  };
+
+  render() {
+    const { range } = this.props;
+    const { cubeCount } = this.state;
+    const cubes = new Array(cubeCount).fill(0).map((_, i) => {
+      const marker = cube(range, i + 1);
+      const { position } = marker.pose;
+      const { x, y, z } = position;
+      return {
+        ...marker,
+        color: marker.id % 2 ? [1, 1, 0, 1] : [1, 0, 0, 1],
+        pose: {
+          orientation: { x: 0, y: 0, z: 0, w: 1 },
+          position: { x: x + i * 4, y: y + i * 4, z: z + i * 4 },
+        },
+      };
+    });
+
+    function getHitmapProps() {
+      const result = cubes
+        .filter((cube) => cube.id % 2)
+        .map((cube) => ({
+          ...cube,
+          color: intToRGB(cube.id),
+        }));
+      return result;
+    }
+
+    return (
+      <Container cameraState={DEFAULT_CAMERA_STATE} onClick={this.onContainerClick}>
+        <div style={{ position: "absolute", top: 30, left: 30 }}>
+          <div>Only the yellow cubes should be clickable</div>
+          <div>you clicked on cube: {this.state.cubeId} </div>
+          <button onClick={() => this.setState({ cubeCount: cubeCount + 1 })}>Add Cube</button>
+        </div>
+        <Cubes getHitmapProps={getHitmapProps}>{cubes}</Cubes>
+      </Container>
+    );
+  }
+}
+
 storiesOf("Worldview", module)
   .add(
     "<Cubes> - single",
@@ -53,6 +100,12 @@ storiesOf("Worldview", module)
           <Wrapper cubes={[marker]} />
         </Container>
       );
+    })
+  )
+  .add(
+    "<Cubes> - dynamic hitmap",
+    withRange((range) => {
+      return <DynamicCubes range={range} />;
     })
   )
   .add(

@@ -16,6 +16,7 @@ export { default as fromGeometry } from "./utils/fromGeometry";
 export * from "./utils/Raycast";
 export * from "./commands/index";
 export * from "./types/index";
+export { default as WorldviewReactContext } from "./WorldviewReactContext";
 
 export { Worldview };
 export default Worldview;

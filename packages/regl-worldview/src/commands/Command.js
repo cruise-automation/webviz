@@ -118,14 +118,12 @@ function getHitmapProps(getHitmapId, children) {
 // which creates a new regl component. It also handles basic hitmap interactions.
 export function makeCommand<T>(name: string, command: RawCommand<T>): React.StatelessFunctionalComponent<T> {
   const cmd = (props: Props<T>) => {
-    return (
-      <Command
-        reglCommand={command}
-        drawProps={props.children}
-        hitmapProps={getHitmapProps(props.getHitmapId, props.children)}
-      />
-    );
+    const hitmapProps = props.getHitmapProps
+      ? props.getHitmapProps()
+      : getHitmapProps(props.getHitmapId, props.children);
+    return <Command reglCommand={command} drawProps={props.children} hitmapProps={hitmapProps} />;
   };
   cmd.displayName = name;
+  cmd.reglCommand = command;
   return cmd;
 }

@@ -4,6 +4,7 @@
   "main": "lib/index.js",
   "description": "React component for handling keyboard events",
   "license": "Apache-2.0",
+  "repository": "cruise-automation/webviz",
   "scripts": {
     "build-dev": "BABEL_ENV=$NODE_ENV babel src/index.js --out-dir lib --copy-files --config-file ../../babel.config.js",
     "build": "NODE_ENV=production npm run build-dev && flow-copy-source -v src lib --ignore '*.test.*'",

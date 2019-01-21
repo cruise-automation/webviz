@@ -29,6 +29,7 @@ import Worldview, {
   FilledPolygons,
   Overlay,
   Text,
+  GLTFScene,
   DEFAULT_CAMERA_STATE,
   withPose,
   getCSSColor,
@@ -63,6 +64,7 @@ export const scope = {
   FilledPolygons,
   Overlay,
   Text,
+  GLTFScene,
   withPose,
 };
 

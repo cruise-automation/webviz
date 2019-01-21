@@ -16,6 +16,7 @@ import Flow from "./3.4.FlowTypes.mdx";
 import Arrows from "./4.1.Arrows.mdx";
 import Text from "./4.10.Text.mdx";
 import Triangles from "./4.11.Triangles.mdx";
+import GLTFScene from "./4.12.GLTFScene.mdx";
 import Cones from "./4.2.Cones.mdx";
 import Cubes from "./4.3.Cubes.mdx";
 import Cylinders from "./4.4.Cylinders.mdx";
@@ -46,6 +47,7 @@ export const componentList = {
   Text,
   Triangles,
   Flow,
+  GLTFScene,
 };
 
 const ROUTE_CONFIG = [
@@ -72,6 +74,7 @@ const ROUTE_CONFIG = [
       "Spheres",
       "Text",
       "Triangles",
+      "GLTFScene",
     ],
   },
 ];

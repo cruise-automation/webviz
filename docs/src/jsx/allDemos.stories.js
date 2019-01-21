@@ -8,6 +8,7 @@ import { storiesOf } from "@storybook/react";
 import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
+import duckModel from "../Duck.glb";
 import Arrows from "./Arrows";
 import BasicExample from "./BasicExample";
 import CameraStateControlled from "./CameraStateControlled";
@@ -16,6 +17,7 @@ import Composition from "./Composition";
 import Cones from "./Cones";
 import Cubes from "./Cubes";
 import Cylinders from "./Cylinders";
+import DuckScene from "./DuckScene";
 import DynamicCommands from "./DynamicCommands";
 import FilledPolygons from "./FilledPolygons";
 import Hitmap from "./Hitmap";
@@ -50,6 +52,7 @@ const allDemos = {
   SpheresSingle,
   Text,
   Triangles,
+  DuckScene: () => <DuckScene modelURL={duckModel} />,  // eslint-disable-line
 };
 
 const stories = storiesOf("Worldview docs", module);

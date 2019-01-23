@@ -7,7 +7,7 @@
 // #BEGIN EXAMPLE
 import React from "react";
 
-import duckModel from "../Duck.glb";
+import duckModel from "../Duck.glb"; // URL pointing to a .glb file
 import Worldview, { Axes, Grid, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE

@@ -8,10 +8,9 @@
 
 import React from "react";
 
-import duckModel from "../Duck.glb";
 import WorldviewCodeEditor from "./WorldviewCodeEditor";
 
-function makeCodeComponent(raw, scope = {}) {
+function makeCodeComponent(raw) {
   const code = raw
     .split("// #BEGIN EXAMPLE")[1]
     .split("// #END EXAMPLE")[0]
@@ -22,7 +21,7 @@ function makeCodeComponent(raw, scope = {}) {
   }
 
   // eslint-disable-next-line react/display-name
-  return () => <WorldviewCodeEditor code={code[1].trim()} nonEditableCode={code[0].trim()} scope={scope} />;
+  return () => <WorldviewCodeEditor code={code[1].trim()} nonEditableCode={code[0].trim()} />;
 }
 
 export const Arrows = makeCodeComponent(require("!!raw-loader!./Arrows"));
@@ -41,7 +40,7 @@ export const Cubes = makeCodeComponent(require("!!raw-loader!./Cubes"));
 
 export const Cylinders = makeCodeComponent(require("!!raw-loader!./Cylinders"));
 
-export const DuckScene = makeCodeComponent(require("!!raw-loader!./DuckScene"), { duckModel });
+export const DuckScene = makeCodeComponent(require("!!raw-loader!./DuckScene"));
 
 export const DynamicCommands = makeCodeComponent(require("!!raw-loader!./DynamicCommands"));
 

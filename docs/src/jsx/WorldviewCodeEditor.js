@@ -9,6 +9,7 @@ import React, { useState, useEffect } from "react";
 import seedrandom from "seedrandom";
 import styled from "styled-components";
 
+import duckModel from "../Duck.glb";
 import CameraStateInfo from "./CameraStateInfo";
 import CodeEditor from "./CodeEditor";
 import InputNumber from "./InputNumber";
@@ -66,6 +67,8 @@ export const scope = {
   Text,
   GLTFScene,
   withPose,
+
+  duckModel,
 };
 
 export default function WorldviewCodeEditor({ scope: customScope = {}, ...rest }) {

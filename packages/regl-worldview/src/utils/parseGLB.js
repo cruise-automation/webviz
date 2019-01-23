@@ -6,20 +6,16 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// Load a GLB file: https://github.com/KhronosGroup/glTF/tree/master/specification/2.0
+// Parse a GLB file: https://github.com/KhronosGroup/glTF/tree/master/specification/2.0
 //
 // Returns an object containing the raw json data as well as parsed images (Image) and
 // accessors (TypedArray).
-export default async function loadGLB(url: string): Promise<{}> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`failed to fetch GLB: ${response.status}`);
-  }
-  const responseData = new DataView(await response.arrayBuffer());
+export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<{}> {
+  const data = new DataView(arrayBuffer);
   let offset = 0;
 
   function readUint32() {
-    const value = responseData.getUint32(offset, true);
+    const value = data.getUint32(offset, true);
     offset += 4;
     return value;
   }
@@ -38,8 +34,8 @@ export default async function loadGLB(url: string): Promise<{}> {
 
   // total file length
   const totalLength = readUint32();
-  if (totalLength !== responseData.byteLength) {
-    throw new Error(`length ${totalLength} doesn't match response length ${responseData.byteLength}`);
+  if (totalLength !== data.byteLength) {
+    throw new Error(`length ${totalLength} doesn't match response length ${data.byteLength}`);
   }
 
   function findNextChunkOfType(type) {
@@ -47,7 +43,7 @@ export default async function loadGLB(url: string): Promise<{}> {
       const chunkLength = readUint32();
       const chunkType = readUint32();
       if (chunkType === type) {
-        const chunkData = new DataView(responseData.buffer, offset, chunkLength);
+        const chunkData = new DataView(data.buffer, offset, chunkLength);
         offset += chunkLength;
         return chunkData;
       }
@@ -101,25 +97,11 @@ export default async function loadGLB(url: string): Promise<{}> {
 
   // load embedded images
   const images = await Promise.all(
-    json.images.map(
-      (imgInfo) =>
-        new Promise((resolve, reject) => {
-          const bufferView = json.bufferViews[imgInfo.bufferView];
-          const data = new DataView(binary.buffer, binary.byteOffset + bufferView.byteOffset, bufferView.byteLength);
-          const url = URL.createObjectURL(new Blob([data], { type: imgInfo.mimeType }));
-
-          const image = new Image();
-          image.onload = () => {
-            URL.revokeObjectURL(url);
-            resolve(image);
-          };
-          image.onerror = () => {
-            URL.revokeObjectURL(url);
-            reject();
-          };
-          image.src = url;
-        })
-    )
+    json.images.map((imgInfo) => {
+      const bufferView = json.bufferViews[imgInfo.bufferView];
+      const data = new DataView(binary.buffer, binary.byteOffset + bufferView.byteOffset, bufferView.byteLength);
+      return self.createImageBitmap(new Blob([data], { type: imgInfo.mimeType }));
+    })
   );
 
   return { json, accessors, images };

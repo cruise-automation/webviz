@@ -9,9 +9,9 @@
 import { mat4 } from "gl-matrix";
 import React from "react";
 
-import loadGLB from "../utils/loadGLB";
+import parseGLB from "../utils/parseGLB";
 
-import { Command, pointToVec3, orientationToVec4, type Pose, type Point, WorldviewReactContext } from "..";
+import { Command, pointToVec3, orientationToVec4, type Pose, type Scale, WorldviewReactContext } from "..";
 
 function glConstantToRegl(value: ?number): ?string {
   if (value === undefined) {
@@ -20,16 +20,16 @@ function glConstantToRegl(value: ?number): ?string {
   // prettier-ignore
   switch (value) {
     // min/mag filters
-    case WebGLRenderingContext.NEAREST: return 'nearest';
-    case WebGLRenderingContext.LINEAR: return 'linear';
-    case WebGLRenderingContext.NEAREST_MIPMAP_NEAREST: return 'nearest mipmap nearest';
-    case WebGLRenderingContext.NEAREST_MIPMAP_LINEAR: return 'nearest mipmap linear';
-    case WebGLRenderingContext.LINEAR_MIPMAP_NEAREST: return 'linear mipmap nearest';
-    case WebGLRenderingContext.LINEAR_MIPMAP_LINEAR: return 'linear mipmap linear';
+    case WebGLRenderingContext.NEAREST: return "nearest";
+    case WebGLRenderingContext.LINEAR: return "linear";
+    case WebGLRenderingContext.NEAREST_MIPMAP_NEAREST: return "nearest mipmap nearest";
+    case WebGLRenderingContext.NEAREST_MIPMAP_LINEAR: return "nearest mipmap linear";
+    case WebGLRenderingContext.LINEAR_MIPMAP_NEAREST: return "linear mipmap nearest";
+    case WebGLRenderingContext.LINEAR_MIPMAP_LINEAR: return "linear mipmap linear";
     // texture wrapping modes
-    case WebGLRenderingContext.REPEAT: return 'repeat';
-    case WebGLRenderingContext.CLAMP_TO_EDGE: return 'clamp';
-    case WebGLRenderingContext.MIRRORED_REPEAT: return 'mirror';
+    case WebGLRenderingContext.REPEAT: return "repeat";
+    case WebGLRenderingContext.CLAMP_TO_EDGE: return "clamp";
+    case WebGLRenderingContext.MIRRORED_REPEAT: return "mirror";
   }
   throw new Error(`unhandled constant value ${JSON.stringify(value)}`);
 }
@@ -91,24 +91,31 @@ const drawModel = (regl) => {
   `,
   });
 
+  // Build the draw calls needed to draw the model. This only needs to happen once, since they
+  // are the same each time, with only poseMatrix changing.
   let drawCalls;
   function prepareDrawCallsIfNeeded(model) {
     if (drawCalls) {
       return;
     }
 
-    const textures = model.json.textures.map((texture) => {
-      const sampler = model.json.samplers[texture.sampler];
-      return regl.texture({
-        data: model.images[texture.source],
-        min: "linear", //glConstantToRegl(sampler.minFilter),
+    // upload textures to the GPU
+    const textures = model.json.textures.map((textureInfo) => {
+      const sampler = model.json.samplers[textureInfo.sampler];
+      const bitmap: ImageBitmap = model.images[textureInfo.source];
+      const texture = regl.texture({
+        data: bitmap,
+        min: glConstantToRegl(sampler.minFilter),
         mag: glConstantToRegl(sampler.magFilter),
         wrapS: glConstantToRegl(sampler.wrapS),
         wrapT: glConstantToRegl(sampler.wrapT),
       });
+      bitmap.close();
+      return texture;
     });
     drawCalls = [];
 
+    // helper to draw the primitives comprising a mesh
     function drawMesh(mesh, nodeMatrix) {
       for (const primitive of mesh.primitives) {
         const material = model.json.materials[primitive.material];
@@ -123,6 +130,8 @@ const drawModel = (regl) => {
         });
       }
     }
+
+    // helper to draw all the meshes contained in a node and its child nodes
     function drawNode(node, parentMatrix) {
       const nodeMatrix = node.matrix
         ? mat4.clone(node.matrix)
@@ -142,6 +151,8 @@ const drawModel = (regl) => {
         }
       }
     }
+
+    // finally, draw each of the main scene's nodes
     for (const nodeIdx of model.json.scenes[model.json.scene].nodes) {
       const rootTransform = mat4.create();
       mat4.rotateX(rootTransform, rootTransform, Math.PI / 2);
@@ -150,6 +161,7 @@ const drawModel = (regl) => {
     }
   }
 
+  // create a regl command to set the context for each draw call
   const withPoseMatrix = regl({
     context: {
       poseMatrix: (context, props) =>
@@ -171,38 +183,57 @@ const drawModel = (regl) => {
 };
 
 type Props = {|
-  modelURL: string,
+  model: string | (() => Promise<Object>),
   children: {|
     pose: Pose,
-    scale: Point,
+    scale: Scale,
   |},
 |};
 
-export default class GLTFScene extends React.Component<Props, *> {
+export default class GLTFScene extends React.Component<Props, {| loadedModel: ?Object |}> {
   state = {
-    model: undefined,
+    loadedModel: undefined,
   };
   _context = undefined;
 
-  componentDidMount() {
-    loadGLB(this.props.modelURL).then((model) => {
-      this.setState({ model });
-      if (this._context) {
-        this._context.onDirty();
+  async _loadModel(): Promise<Object> {
+    const { model } = this.props;
+    if (typeof model === "function") {
+      return model();
+    } else if (typeof model === "string") {
+      const response = await fetch(model);
+      if (!response.ok) {
+        throw new Error(`failed to fetch GLB: ${response.status}`);
       }
-    });
+      return parseGLB(await response.arrayBuffer());
+    }
+    /*:: (model: empty) */
+    throw new Error(`unsupported model prop: ${typeof model}`);
+  }
+
+  componentDidMount() {
+    this._loadModel()
+      .then((loadedModel) => {
+        this.setState({ loadedModel });
+        if (this._context) {
+          this._context.onDirty();
+        }
+      })
+      .catch((err) => {
+        console.error("error loading GLB model:", err);
+      });
   }
 
   render() {
-    const { model } = this.state;
-    if (!model) {
+    const { loadedModel } = this.state;
+    if (!loadedModel) {
       return null;
     }
     return (
       <WorldviewReactContext.Consumer>
         {(context) => {
           this._context = context;
-          return <Command reglCommand={drawModel} drawProps={{ model, ...this.props.children }} />;
+          return <Command reglCommand={drawModel} drawProps={{ model: loadedModel, ...this.props.children }} />;
         }}
       </WorldviewReactContext.Consumer>
     );

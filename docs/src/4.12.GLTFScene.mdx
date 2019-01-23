@@ -6,11 +6,11 @@ import {DuckScene} from './jsx/allLiveEditors';
 
 ## Props
 
-| Name       | Type       | Default | Description                       |
-| ---------- | ---------- | ------- | --------------------------------- |
-| `modelURL` | `string` |   | URL of a `.glb` file to load. The file must define a single `scene`. |
-| `pose` | `Pose` | zero position, identity orientation | position and orientation at which to render the scene |
-| `scale` | `Scale` | `{ x: 1, y: 1, z: 1 }` | scale factor |
+| Name    | Type                               | Default                             | Description                                                                                                                                                                                                     |
+| ------- | ---------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model` | `string | (() => Promise<Object>)` |                                     | URL of a `.glb` file to load, or an async function resolving to a loaded model. (A `parseGLB` function is also exported if you want custom logic for loading the model.) The file must define a single `scene`. |
+| `pose`  | `Pose`                             | zero position, identity orientation | position and orientation at which to render the scene                                                                                                                                                           |
+| `scale` | `Scale`                            | `{ x: 1, y: 1, z: 1 }`              | scale factor                                                                                                                                                                                                    |
 
 ## Duck.glb
 

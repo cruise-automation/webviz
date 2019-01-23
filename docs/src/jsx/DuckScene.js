@@ -4,15 +4,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-/* global duckModel */
-
 // #BEGIN EXAMPLE
 import React from "react";
 
+import duckModel from "../Duck.glb";
 import Worldview, { Axes, Grid, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function DuckScene({ modelURL }) {
+function DuckScene() {
   return (
     <Worldview
       defaultCameraState={{
@@ -22,7 +21,7 @@ function DuckScene({ modelURL }) {
       }}>
       <Axes />
       <Grid />
-      <GLTFScene modelURL={typeof duckModel !== "undefined" ? duckModel : modelURL}>
+      <GLTFScene model={duckModel}>
         {{
           pose: {
             position: { x: 0, y: 0, z: 0 },

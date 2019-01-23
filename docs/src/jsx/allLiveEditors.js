@@ -40,6 +40,8 @@ export const Cubes = makeCodeComponent(require("!!raw-loader!./Cubes"));
 
 export const Cylinders = makeCodeComponent(require("!!raw-loader!./Cylinders"));
 
+export const DuckScene = makeCodeComponent(require("!!raw-loader!./DuckScene"));
+
 export const DynamicCommands = makeCodeComponent(require("!!raw-loader!./DynamicCommands"));
 
 export const FilledPolygons = makeCodeComponent(require("!!raw-loader!./FilledPolygons"));

@@ -16,6 +16,7 @@ import Composition from "./Composition";
 import Cones from "./Cones";
 import Cubes from "./Cubes";
 import Cylinders from "./Cylinders";
+import DuckScene from "./DuckScene";
 import DynamicCommands from "./DynamicCommands";
 import FilledPolygons from "./FilledPolygons";
 import Hitmap from "./Hitmap";
@@ -50,6 +51,7 @@ const allDemos = {
   SpheresSingle,
   Text,
   Triangles,
+  DuckScene,
 };
 
 const stories = storiesOf("Worldview docs", module);

@@ -9,7 +9,7 @@
 import { mat4 } from "gl-matrix";
 import React from "react";
 
-import { blend, toRGBA, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
+import { blend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
 import parseGLB from "../utils/parseGLB";
 
 import { Command, type Pose, type Scale, WorldviewReactContext } from "..";

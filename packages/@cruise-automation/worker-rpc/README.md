@@ -72,5 +72,3 @@ If the `handler` throws or rejects the error message will be sent through the `M
 ### `Rpc.transferable`
 
 This is a static property on the `Rpc` class that contains the magic string you must use as a key when responding to a message in a receiver and attaching transferables to the response.
-
-## License

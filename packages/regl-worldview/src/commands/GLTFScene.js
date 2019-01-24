@@ -9,9 +9,10 @@
 import { mat4 } from "gl-matrix";
 import React from "react";
 
+import { blend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
 import parseGLB from "../utils/parseGLB";
 
-import { Command, pointToVec3, orientationToVec4, type Pose, type Scale, WorldviewReactContext } from "..";
+import { Command, type Pose, type Scale, WorldviewReactContext } from "..";
 
 function glConstantToRegl(value: ?number): ?string {
   if (value === undefined) {
@@ -37,10 +38,14 @@ function glConstantToRegl(value: ?number): ?string {
 const drawModel = (regl) => {
   const command = regl({
     primitive: "triangles",
+    blend,
     uniforms: {
-      baseColorTexture: regl.prop("baseColorTexture"),
-      nodeMatrix: regl.prop("nodeMatrix"),
+      globalAlpha: regl.context("globalAlpha"),
       poseMatrix: regl.context("poseMatrix"),
+
+      baseColorTexture: regl.prop("baseColorTexture"),
+      baseColorFactor: regl.prop("baseColorFactor"),
+      nodeMatrix: regl.prop("nodeMatrix"),
       "light.direction": [0, 0, -1],
       "light.ambientIntensity": 0.5,
       "light.diffuseIntensity": 0.5,
@@ -70,7 +75,9 @@ const drawModel = (regl) => {
   `,
     frag: `
   precision mediump float;
+  uniform float globalAlpha;
   uniform sampler2D baseColorTexture;
+  uniform vec4 baseColorFactor;
   varying mediump vec2 vTexCoord;
   varying mediump vec3 vNormal;
 
@@ -84,11 +91,19 @@ const drawModel = (regl) => {
   uniform DirectionalLight light;
 
   void main() {
-    vec3 baseColor = texture2D(baseColorTexture, vTexCoord).rgb;
+    vec4 baseColor = texture2D(baseColorTexture, vTexCoord) * baseColorFactor;
     float diffuse = light.diffuseIntensity * max(0.0, dot(vNormal, -light.direction));
-    gl_FragColor = vec4((light.ambientIntensity + diffuse) * baseColor, 1);
+    gl_FragColor = vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
   }
   `,
+  });
+
+  // default values for when baseColorTexture is not specified
+  const singleTexCoord = regl.buffer([0, 0]);
+  const whiteTexture = regl.texture({
+    data: [255, 255, 255, 255],
+    width: 1,
+    height: 1,
   });
 
   // Build the draw calls needed to draw the model. This only needs to happen once, since they
@@ -100,19 +115,23 @@ const drawModel = (regl) => {
     }
 
     // upload textures to the GPU
-    const textures = model.json.textures.map((textureInfo) => {
-      const sampler = model.json.samplers[textureInfo.sampler];
-      const bitmap: ImageBitmap = model.images[textureInfo.source];
-      const texture = regl.texture({
-        data: bitmap,
-        min: glConstantToRegl(sampler.minFilter),
-        mag: glConstantToRegl(sampler.magFilter),
-        wrapS: glConstantToRegl(sampler.wrapS),
-        wrapT: glConstantToRegl(sampler.wrapT),
+    const textures =
+      model.json.textures &&
+      model.json.textures.map((textureInfo) => {
+        const sampler = model.json.samplers[textureInfo.sampler];
+        const bitmap: ImageBitmap = model.images[textureInfo.source];
+        const texture = regl.texture({
+          data: bitmap,
+          min: glConstantToRegl(sampler.minFilter),
+          mag: glConstantToRegl(sampler.magFilter),
+          wrapS: glConstantToRegl(sampler.wrapS),
+          wrapT: glConstantToRegl(sampler.wrapT),
+        });
+        return texture;
       });
-      bitmap.close();
-      return texture;
-    });
+    if (model.images) {
+      model.images.forEach((bitmap: ImageBitmap) => bitmap.close());
+    }
     drawCalls = [];
 
     // helper to draw the primitives comprising a mesh
@@ -124,8 +143,11 @@ const drawModel = (regl) => {
           indices: model.accessors[primitive.indices],
           positions: model.accessors[primitive.attributes.POSITION],
           normals: model.accessors[primitive.attributes.NORMAL],
-          texCoords: model.accessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]],
-          baseColorTexture: textures[texInfo.index],
+          texCoords: texInfo
+            ? model.accessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]]
+            : { divisor: 1, buffer: singleTexCoord },
+          baseColorTexture: texInfo ? textures[texInfo.index] : whiteTexture,
+          baseColorFactor: material.pbrMetallicRoughness.baseColorFactor || [1, 1, 1, 1],
           nodeMatrix,
         });
       }
@@ -162,7 +184,7 @@ const drawModel = (regl) => {
   }
 
   // create a regl command to set the context for each draw call
-  const withPoseMatrix = regl({
+  const withContext = regl({
     context: {
       poseMatrix: (context, props) =>
         mat4.fromRotationTranslationScale(
@@ -171,12 +193,13 @@ const drawModel = (regl) => {
           pointToVec3(props.pose.position),
           props.scale ? pointToVec3(props.scale) : [1, 1, 1]
         ),
+      globalAlpha: (context, props) => (props.alpha == null ? 1 : props.alpha),
     },
   });
 
   return (props) => {
     prepareDrawCallsIfNeeded(props.model);
-    withPoseMatrix(props, () => {
+    withContext(props, () => {
       command(drawCalls);
     });
   };
@@ -187,6 +210,7 @@ type Props = {|
   children: {|
     pose: Pose,
     scale: Scale,
+    alpha: ?number,
   |},
 |};
 

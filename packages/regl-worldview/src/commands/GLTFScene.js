@@ -40,10 +40,12 @@ const drawModel = (regl) => {
     primitive: "triangles",
     blend,
     uniforms: {
+      globalAlpha: regl.context("globalAlpha"),
+      poseMatrix: regl.context("poseMatrix"),
+
       baseColorTexture: regl.prop("baseColorTexture"),
       baseColorFactor: regl.prop("baseColorFactor"),
       nodeMatrix: regl.prop("nodeMatrix"),
-      poseMatrix: regl.context("poseMatrix"),
       "light.direction": [0, 0, -1],
       "light.ambientIntensity": 0.5,
       "light.diffuseIntensity": 0.5,
@@ -73,6 +75,7 @@ const drawModel = (regl) => {
   `,
     frag: `
   precision mediump float;
+  uniform float globalAlpha;
   uniform sampler2D baseColorTexture;
   uniform vec4 baseColorFactor;
   varying mediump vec2 vTexCoord;
@@ -90,7 +93,7 @@ const drawModel = (regl) => {
   void main() {
     vec4 baseColor = texture2D(baseColorTexture, vTexCoord) * baseColorFactor;
     float diffuse = light.diffuseIntensity * max(0.0, dot(vNormal, -light.direction));
-    gl_FragColor = vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a);
+    gl_FragColor = vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
   }
   `,
   });
@@ -181,7 +184,7 @@ const drawModel = (regl) => {
   }
 
   // create a regl command to set the context for each draw call
-  const withPoseMatrix = regl({
+  const withContext = regl({
     context: {
       poseMatrix: (context, props) =>
         mat4.fromRotationTranslationScale(
@@ -190,12 +193,13 @@ const drawModel = (regl) => {
           pointToVec3(props.pose.position),
           props.scale ? pointToVec3(props.scale) : [1, 1, 1]
         ),
+      globalAlpha: (context, props) => (props.alpha == null ? 1 : props.alpha),
     },
   });
 
   return (props) => {
     prepareDrawCallsIfNeeded(props.model);
-    withPoseMatrix(props, () => {
+    withContext(props, () => {
       command(drawCalls);
     });
   };
@@ -206,6 +210,7 @@ type Props = {|
   children: {|
     pose: Pose,
     scale: Scale,
+    alpha: ?number,
   |},
 |};
 

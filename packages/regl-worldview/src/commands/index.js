@@ -26,3 +26,4 @@ export { default as FilledPolygons } from "./FilledPolygons";
 // Other
 export { default as Overlay } from "./Overlay";
 export { default as Text } from "./Text";
+export { default as GLTFScene } from "./GLTFScene";

@@ -9,6 +9,7 @@ import React, { useState, useEffect } from "react";
 import seedrandom from "seedrandom";
 import styled from "styled-components";
 
+import duckModel from "../Duck.glb";
 import CameraStateInfo from "./CameraStateInfo";
 import CodeEditor from "./CodeEditor";
 import InputNumber from "./InputNumber";
@@ -29,6 +30,7 @@ import Worldview, {
   FilledPolygons,
   Overlay,
   Text,
+  GLTFScene,
   DEFAULT_CAMERA_STATE,
   withPose,
   getCSSColor,
@@ -63,7 +65,10 @@ export const scope = {
   FilledPolygons,
   Overlay,
   Text,
+  GLTFScene,
   withPose,
+
+  duckModel,
 };
 
 export default function WorldviewCodeEditor({ scope: customScope = {}, ...rest }) {

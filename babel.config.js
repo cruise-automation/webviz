@@ -10,5 +10,6 @@ module.exports = {
     "@babel/plugin-transform-modules-commonjs",
     "@babel/plugin-proposal-class-properties",
     "@babel/plugin-syntax-dynamic-import",
+    ["@babel/plugin-proposal-object-rest-spread", { useBuiltIns: true }],
   ],
 };

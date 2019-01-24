@@ -13,9 +13,11 @@ import Worldview from "./3.1.Worldview.mdx";
 import Camera from "./3.2.Camera.mdx";
 import Command from "./3.3.Command.mdx";
 import Flow from "./3.4.FlowTypes.mdx";
+import BrowserSupport from "./3.5.BrowserSupport.mdx";
 import Arrows from "./4.1.Arrows.mdx";
 import Text from "./4.10.Text.mdx";
 import Triangles from "./4.11.Triangles.mdx";
+import GLTFScene from "./4.12.GLTFScene.mdx";
 import Cones from "./4.2.Cones.mdx";
 import Cubes from "./4.3.Cubes.mdx";
 import Cylinders from "./4.4.Cylinders.mdx";
@@ -46,6 +48,8 @@ export const componentList = {
   Text,
   Triangles,
   Flow,
+  GLTFScene,
+  BrowserSupport,
 };
 
 const ROUTE_CONFIG = [
@@ -56,7 +60,7 @@ const ROUTE_CONFIG = [
   },
   {
     name: "API",
-    subRouteNames: ["Worldview", "Camera", "Command", "Flow"],
+    subRouteNames: ["Worldview", "Camera", "Command", "Flow", "Browser Support"],
   },
   {
     name: "Commands",
@@ -72,6 +76,7 @@ const ROUTE_CONFIG = [
       "Spheres",
       "Text",
       "Triangles",
+      "GLTFScene",
     ],
   },
 ];

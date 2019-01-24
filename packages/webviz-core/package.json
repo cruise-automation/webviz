@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "rosbag analysis tool",
   "license": "Apache-2.0",
+  "repository": "cruise-automation/webviz",
   "dependencies": {
     "@mdi/svg": "3.2.89",
     "chart.js": "2.7.3",

@@ -13,6 +13,7 @@ export { selectors as cameraStateSelectors, CameraStore, DEFAULT_CAMERA_STATE } 
 export * from "./utils/commandUtils";
 export { default as eulerFromQuaternion } from "./utils/eulerFromQuaternion";
 export { default as fromGeometry } from "./utils/fromGeometry";
+export { default as parseGLB } from "./utils/parseGLB";
 export * from "./utils/Raycast";
 export * from "./commands/index";
 export * from "./types/index";

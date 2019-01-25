@@ -1,4 +1,4 @@
-# @cruise-automation/worker-rpc
+# @cruise-automation/rpc
 
 An RPC layer to make it easier to communicate between a WebWorker and the main thread.  Has support for sending and responding with [transferable](https://developer.mozilla.org/en-US/docs/Web/API/Transferable) objects to avoid structured cloning of large array buffers.  It also propagates errors thrown in receivers back to the calling thread.
 
@@ -6,7 +6,7 @@ An RPC layer to make it easier to communicate between a WebWorker and the main t
 
 ```js
 // worker.js
-import Rpc from '@cruise-automation/worker-rpc'
+import Rpc from '@cruise-automation/rpc'
 
 const rpc = new Rpc(global);
 

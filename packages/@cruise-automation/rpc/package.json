@@ -1,5 +1,5 @@
 {
-  "name": "@cruise-automation/worker-rpc",
+  "name": "@cruise-automation/rpc",
   "version": "0.0.0",
   "description": "Add RPC to WebWorkers with transferrable object support",
   "main": "lib/index.js",

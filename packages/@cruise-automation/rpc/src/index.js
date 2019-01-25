@@ -51,7 +51,7 @@ export function createLinkedChannels(): { local: Channel, remote: Channel } {
 //   const rpc = new Rpc(global);
 // Check out the tests for more examples.
 export default class Rpc {
-  static transferables = "$$TRANSFERABLES";
+  static transferables = Symbol("$$TRANSFERABLES");
   _channel: Channel;
   _messageId: number = 0;
   _pendingCallbacks: { [number]: (any) => void } = {};

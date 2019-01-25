@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "license": "Apache-2.0",
   "scripts": {
+    "prepublish": "npm run build",
     "build-dev": "BABEL_ENV=$NODE_ENV babel src/index.js --out-dir lib --copy-files --config-file ../../../babel.config.js",
     "build": "NODE_ENV=production npm run build-dev && flow-copy-source -v src lib --ignore '*.test.*'",
     "watch": "NODE_ENV=development npm run build-dev --watch"

@@ -81,6 +81,19 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<{}> {
       default:
         throw new Error(`unrecognized componentType ${accessorInfo.componentType}`);
     }
+    let numComponents;
+    // prettier-ignore
+    switch (accessorInfo.type) {
+      case "SCALAR": numComponents = 1; break;
+      case "VEC2": numComponents = 2; break;
+      case "VEC3": numComponents = 3; break;
+      case "VEC4": numComponents = 4; break;
+      case "MAT2": numComponents = 4; break;
+      case "MAT3": numComponents = 9; break;
+      case "MAT4": numComponents = 16; break;
+      default:
+        throw new Error(`unrecognized type ${accessorInfo.type}`);
+    }
     const bufferView = json.bufferViews[accessorInfo.bufferView];
     if (bufferView.buffer !== 0) {
       throw new Error("only GLB-stored buffers are supported");
@@ -91,18 +104,20 @@ export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<{}> {
     return new arrayType(
       binary.buffer,
       binary.byteOffset + (bufferView.byteOffset || 0) + (accessorInfo.byteOffset || 0),
-      bufferView.byteLength / arrayType.BYTES_PER_ELEMENT
+      accessorInfo.count * numComponents
     );
   });
 
   // load embedded images
-  const images = await Promise.all(
-    json.images.map((imgInfo) => {
-      const bufferView = json.bufferViews[imgInfo.bufferView];
-      const data = new DataView(binary.buffer, binary.byteOffset + bufferView.byteOffset, bufferView.byteLength);
-      return self.createImageBitmap(new Blob([data], { type: imgInfo.mimeType }));
-    })
-  );
+  const images =
+    json.images &&
+    (await Promise.all(
+      json.images.map((imgInfo) => {
+        const bufferView = json.bufferViews[imgInfo.bufferView];
+        const data = new DataView(binary.buffer, binary.byteOffset + bufferView.byteOffset, bufferView.byteLength);
+        return self.createImageBitmap(new Blob([data], { type: imgInfo.mimeType }));
+      })
+    ));
 
   return { json, accessors, images };
 }

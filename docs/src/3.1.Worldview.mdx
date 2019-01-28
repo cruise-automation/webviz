@@ -31,18 +31,18 @@ For an example, see [Interactivity](#/docs/examples/interactivity).
 
 ## Keyboard Controls
 
-`keyMap` allows you to customize the keyboard controls for Worldview's camera. The `keyMap` is an optional object whose keys are [KeyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) values, and whose values specify the action to perform when the corresponding key is pressed. To disable a key from the keyboard controls, simply provide a `null`/`false` value for that key. For example, the following would reverse all actions and disable tilting and zooming:
+`keyMap` allows you to customize the keyboard controls for Worldview's camera. The `keyMap` is an optional object whose keys are [KeyboardEvent.code](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code) values, and whose values specify the action to perform when the corresponding key is pressed. To disable a key from the keyboard controls, simply provide a `null`/`false` value for that key. For example, the following would reverse all actions and disable tilting and zooming:
 
     <Worldview keyMap={{
-      w: 'moveDown',
-      a: 'moveRight',
-      s: 'moveUp',
-      d: 'moveLeft',
-      e: 'rotateLeft',
-      q: 'rotateRight',
+      KeyW: 'moveDown',
+      KeyA: 'moveRight',
+      KeyS: 'moveUp',
+      KeyD: 'moveLeft',
+      KeyE: 'rotateLeft',
+      KeyQ: 'rotateRight',
 
-      r: false,
-      f: null,
-      x: false,
-      z: null,
+      KeyR: false,
+      KeyF: null,
+      KeyX: false,
+      KeyZ: null,
     }} />

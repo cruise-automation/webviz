@@ -67,6 +67,7 @@ const Section = styled.li`
       color: ${color.textLight};
       font-family: ${fontFamily.primary},
       font-size: 14px;
+      text-decoration: none;
       &.active {
         color: ${color.linkSecondaryActive};
       }

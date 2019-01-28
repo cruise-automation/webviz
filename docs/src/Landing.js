@@ -44,6 +44,7 @@ const Header = styled.div`
 
   h1 {
     font-size: ${fontSize.h1};
+    line-height: 1.4;
   }
   h2 {
     font-size: ${fontSize.h2};
@@ -65,6 +66,7 @@ const HeaderLinks = styled.div`
     color: ${color.linkPrimary};
     border: 1px solid ${color.linkPrimary};
     padding: 4px 10px;
+    text-decoration: none;
     &:hover,
     &:visited {
       color: ${color.linkPrimaryVisited};
@@ -100,6 +102,7 @@ const Footer = styled.div`
 const DocsFooterLink = styled(Link)`
   display: block;
   color: ${color.linkPrimary} !important;
+  text-decoration: none;
   font-size: 18px;
 `;
 

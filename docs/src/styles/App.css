@@ -20,7 +20,12 @@ a,
 a:hover,
 a:visited,
 .markdown-body a {
-  color: #22b5ff;
+  color: #f7f7f3;
+  text-decoration: underline;
+}
+
+a:hover {
+  opacity: 0.75;
 }
 
 .monospace {

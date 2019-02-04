@@ -1,4 +1,4 @@
-import GithubLink from './utils/GithubLink'
+import GithubLink from './jsx/utils/GithubLink'
 
 # Flow types
 
@@ -27,12 +27,11 @@ export default function WorldviewExampe() {
   };
 
   return (
-    <div style={{ height: 500}}>
+    <div style={{ height: 500 }}>
       <Worldview {...worldviewProps}>
         <Cubes>{[cube]}</Cubes>
       </Worldview>
     </div>
   );
 }
-
 ```

@@ -11,13 +11,6 @@ import styled from "styled-components";
 import CodeSandboxIcon from "./icons/CodeSandbox";
 import { palette } from "./theme";
 
-function compress(string) {
-  return LZString.compressToBase64(string)
-    .replace(/\+/g, `-`) // Convert '+' to '-'
-    .replace(/\//g, `_`) // Convert '/' to '_'
-    .replace(/=+$/, ``); // Remove ending '='
-}
-
 const StyledActionButton = styled.button`
   background: transparent;
   border: none;
@@ -55,7 +48,7 @@ function CodeSandboxButton({ codeSandboxCode, codeSandboxConfig = {} }) {
     },
   };
 
-  parameters = compress(JSON.stringify(parameters));
+  parameters = LZString.compressToBase64(JSON.stringify(parameters));
 
   return (
     <form action="https://codesandbox.io/api/v1/sandboxes/define" method="POST" target="_blank">

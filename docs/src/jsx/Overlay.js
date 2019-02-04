@@ -7,11 +7,11 @@
 // #BEGIN EXAMPLE
 import React from "react";
 
-import useRange from "./useRange";
+import useRange from "./utils/useRange";
 import Worldview, { Overlay, Spheres, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function OverlayDemo() {
+function Example() {
   const range = useRange();
   const marker = {
     pose: {
@@ -91,4 +91,4 @@ function OverlayDemo() {
 }
 // #END EXAMPLE
 
-export default OverlayDemo;
+export default Example;

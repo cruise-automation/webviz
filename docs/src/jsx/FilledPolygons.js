@@ -8,11 +8,11 @@
 import polygonGenerator from "polygon-generator";
 import React from "react";
 
-import useRange from "./useRange";
+import useRange from "./utils/useRange";
 import Worldview, { FilledPolygons, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function FilledPolygonsDemo() {
+function Example() {
   const range = useRange();
   const sideLength = 5 * range + 5;
   const startingAngle = 15 * range;
@@ -33,4 +33,4 @@ function FilledPolygonsDemo() {
 }
 // #END EXAMPLE
 
-export default FilledPolygonsDemo;
+export default Example;

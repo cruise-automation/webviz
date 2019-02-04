@@ -9,10 +9,10 @@
 import React from "react";
 import styled from "styled-components";
 
-import { color } from "../theme";
-import Scrubber from "../utils/Scrubber";
-import Slider from "../utils/Slider";
-import Switch from "../utils/Switch";
+import Scrubber from "./Scrubber";
+import Slider from "./Slider";
+import Switch from "./Switch";
+import { color } from "./theme";
 import type { CameraState, Quat } from "regl-worldview";
 
 const ControlsTable = styled.table`

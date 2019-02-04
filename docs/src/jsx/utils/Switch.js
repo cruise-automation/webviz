@@ -9,7 +9,7 @@
 import * as React from "react";
 import styled from "styled-components";
 
-import { color, palette } from "../theme";
+import { color, palette } from "./theme";
 
 const StyledSwitchWrapper = styled.div`
   display: inline-flex;

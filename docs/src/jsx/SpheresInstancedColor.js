@@ -11,7 +11,7 @@ import seedrandom from "seedrandom";
 import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function SpheresInstanceColorDemo() {
+function Example() {
   const SEED = 123;
   // create coordinates
   const x = 20;
@@ -56,4 +56,4 @@ function SpheresInstanceColorDemo() {
 }
 // #END EXAMPLE
 
-export default SpheresInstanceColorDemo;
+export default Example;

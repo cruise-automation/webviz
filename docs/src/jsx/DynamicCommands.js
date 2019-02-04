@@ -7,11 +7,11 @@
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
 
-import useRange from "./useRange";
+import useRange from "./utils/useRange";
 import Worldview, { Cubes, Spheres, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function DynamicCommandsDemo() {
+function Example() {
   const range = useRange();
   const [cubeCount, setCubeCount] = useState(3);
   const arr = new Array(cubeCount).fill(0).map((n, idx) => idx);
@@ -81,4 +81,4 @@ function DynamicCommandsDemo() {
 }
 // #END EXAMPLE
 
-export default DynamicCommandsDemo;
+export default Example;

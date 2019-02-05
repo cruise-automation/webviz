@@ -4,7 +4,7 @@ import sample from "lodash/sample";
 import React from "react";
 
 import Container from "./Container";
-import { cube, p, rng } from "./util";
+import { cube, rng } from "./util";
 
 import { Cubes, DEFAULT_CAMERA_STATE } from "..";
 

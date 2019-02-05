@@ -10,7 +10,7 @@ import React from "react";
 import Worldview, { Cylinders, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function CylindersDemo() {
+function Example() {
   const markers = [
     {
       pose: {
@@ -31,4 +31,4 @@ function CylindersDemo() {
 }
 // #END EXAMPLE
 
-export default CylindersDemo;
+export default Example;

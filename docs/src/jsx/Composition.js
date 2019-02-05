@@ -10,7 +10,7 @@ import React from "react";
 import Worldview, { Axes, Triangles, Text, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function CompositionDemo() {
+function Example() {
   const labelMarker = {
     name: "randomName",
     text: "STOP",
@@ -108,4 +108,4 @@ function CompositionDemo() {
 }
 // #END EXAMPLE
 
-export default CompositionDemo;
+export default Example;

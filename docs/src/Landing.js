@@ -9,10 +9,10 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 import Demo from "./Demo";
-import { color, fontSize } from "./theme";
-import CruiseLogo from "./utils/CruiseLogo";
-import GitHubLogo from "./utils/GitHubLogo";
-import Logo from "./utils/Logo";
+import CruiseLogo from "./jsx/utils/CruiseLogo";
+import GitHubLogo from "./jsx/utils/GitHubLogo";
+import Logo from "./jsx/utils/Logo";
+import { color, fontSize } from "./jsx/utils/theme";
 
 const OuterContainer = styled.div`
   padding: 50px;

@@ -10,7 +10,7 @@ import React from "react";
 import Worldview, { Cubes, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function BasicExample() {
+function Example() {
   const markers = [
     {
       pose: {
@@ -30,4 +30,4 @@ function BasicExample() {
   );
 }
 // #END EXAMPLE
-export default BasicExample;
+export default Example;

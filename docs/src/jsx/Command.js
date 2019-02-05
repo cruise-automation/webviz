@@ -45,7 +45,7 @@ Triangle.defaultProps = {
   color: [1, 0, 0, 1],
 };
 
-function CommandDemo() {
+function Example() {
   return (
     <div style={{ height: 500 }}>
       <Worldview>
@@ -55,4 +55,4 @@ function CommandDemo() {
   );
 }
 
-export default CommandDemo;
+export default Example;

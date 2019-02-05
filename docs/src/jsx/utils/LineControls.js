@@ -6,8 +6,8 @@
 
 import React from "react";
 
-import Switch from "../utils/Switch";
 import InputNumber from "./InputNumber";
+import Switch from "./Switch";
 
 export default function LineControls({
   thickness,

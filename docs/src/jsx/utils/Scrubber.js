@@ -10,7 +10,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
-import { color } from "../theme";
+import { color } from "./theme";
 import { useEventListener } from "./useEventListener";
 
 const StyledNumber = styled.span`

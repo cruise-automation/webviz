@@ -50,6 +50,7 @@
     "jest-canvas-mock": "^1.1.0",
     "lerna": "^3.4.3",
     "lodash": "^4.17.11",
+    "lz-string": "^1.4.4",
     "nearley-loader": "^2.0.0",
     "node-sass": "^4.10.0",
     "polygon-generator": "^1.1.2",

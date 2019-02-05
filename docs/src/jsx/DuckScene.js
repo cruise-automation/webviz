@@ -7,11 +7,11 @@
 // #BEGIN EXAMPLE
 import React from "react";
 
-import duckModel from "../Duck.glb"; // URL pointing to a .glb file
+import duckModel from "./utils/Duck.glb"; // URL pointing to a .glb file
 import Worldview, { Axes, Grid, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function DuckScene() {
+function Example() {
   return (
     <Worldview
       defaultCameraState={{
@@ -35,4 +35,4 @@ function DuckScene() {
 }
 // #END EXAMPLE
 
-export default DuckScene;
+export default Example;

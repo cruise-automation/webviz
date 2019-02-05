@@ -8,9 +8,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import WorldviewCodeEditor from "./jsx/WorldviewCodeEditor";
-import { color } from "./theme";
-import Slider from "./utils/Slider";
+import Slider from "./jsx/utils/Slider";
+import { color } from "./jsx/utils/theme";
+import WorldviewCodeEditor from "./jsx/utils/WorldviewCodeEditor";
 
 const Container = styled.div`
   display: flex;

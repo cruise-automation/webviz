@@ -7,11 +7,11 @@
 // #BEGIN EXAMPLE
 import React from "react";
 
-import useRange from "./useRange";
+import useRange from "./utils/useRange";
 import Worldview, { Axes, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function PointsDemo() {
+function Example() {
   const range = useRange();
   // create coordinates
   const x = 3 + range * 2;
@@ -50,4 +50,4 @@ function PointsDemo() {
 }
 // #END EXAMPLE
 
-export default PointsDemo;
+export default Example;

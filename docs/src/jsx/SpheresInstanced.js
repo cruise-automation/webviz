@@ -7,11 +7,11 @@
 // #BEGIN EXAMPLE
 import React from "react";
 
-import useRange from "./useRange";
+import useRange from "./utils/useRange";
 import Worldview, { Spheres } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function SpheresInstancedDemo() {
+function Example() {
   const range = useRange();
   // create coordinates
   const x = 20;
@@ -46,4 +46,4 @@ function SpheresInstancedDemo() {
 }
 // #END EXAMPLE
 
-export default SpheresInstancedDemo;
+export default Example;

@@ -10,7 +10,7 @@ import React from "react";
 import Worldview, { Cones, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function ConesDemo() {
+function Example() {
   const markers = [
     {
       pose: {
@@ -31,4 +31,4 @@ function ConesDemo() {
 }
 // #END EXAMPLE
 
-export default ConesDemo;
+export default Example;

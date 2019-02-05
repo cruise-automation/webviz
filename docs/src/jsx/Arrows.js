@@ -10,7 +10,7 @@ import React from "react";
 import Worldview, { Arrows, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function ArrowsDemo() {
+function Example() {
   const poseArrow = {
     pose: {
       orientation: { x: 0, y: 0, z: -1, w: 0.5 },
@@ -34,4 +34,4 @@ function ArrowsDemo() {
 }
 // #END EXAMPLE
 
-export default ArrowsDemo;
+export default Example;

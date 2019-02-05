@@ -81,15 +81,31 @@ const ROUTE_CONFIG = [
   },
 ];
 
+let nameToUrlMap;
+// get the hash part of the url by subRouteName, e.g.  'arrow' => `/docs/commands/arrows`
+// used to autogen doc links by component name in CodeSandbox
+export function getHashUrlByComponentName(name) {
+  // only generate the map once
+  if (!nameToUrlMap) {
+    nameToUrlMap = {};
+    ROUTE_CONFIG.forEach(({ name, subRouteNames }) => {
+      subRouteNames.forEach((subRouteName) => {
+        const componentName = getComponentName(subRouteName);
+        const subRoutePath = getSubRoutePath(subRouteName);
+        nameToUrlMap[componentName] = `/docs/${name.toLowerCase()}/${subRoutePath}`;
+      });
+    });
+  }
+  return nameToUrlMap[name];
+}
+
 // convert route names to component names, e.g. 'Quick Start' => 'QuickStart'
-function getComponentName(str) {
-  return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, (match, index) => {
-    // or if (/\s+/.test(match)) for white spaces
-    if (+match === 0) {
-      return "";
-    }
-    return match.toUpperCase();
-  });
+function getComponentName(routeName) {
+  return routeName.replace(/\s/g, "");
+}
+
+function getSubRoutePath(subRouteName) {
+  return `${subRouteName.toLowerCase().replace(/\s/g, "-")}`;
 }
 
 export default ROUTE_CONFIG.map(({ name, subRouteNames }) => {
@@ -102,7 +118,7 @@ export default ROUTE_CONFIG.map(({ name, subRouteNames }) => {
       const subComponentName = getComponentName(subRouteName);
       return {
         exact: idx !== 0,
-        path: `/${subComponentName.toLowerCase()}`,
+        path: `/${getSubRoutePath(subRouteName)}`,
         name: subRouteName,
         main: subComponentName,
       };

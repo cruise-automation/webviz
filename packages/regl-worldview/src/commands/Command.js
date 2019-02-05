@@ -121,7 +121,7 @@ export function makeCommand<T>(name: string, command: RawCommand<T>): React.Stat
     const hitmapProps = props.getHitmapProps
       ? props.getHitmapProps()
       : getHitmapProps(props.getHitmapId, props.children);
-    return <Command reglCommand={command} drawProps={props.children} hitmapProps={hitmapProps} />;
+    return <Command {...props} reglCommand={command} drawProps={props.children} hitmapProps={hitmapProps} />;
   };
   cmd.displayName = name;
   cmd.reglCommand = command;

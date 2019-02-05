@@ -8,6 +8,7 @@
 
 import mapValues from "lodash/mapValues";
 import pickBy from "lodash/pickBy";
+import size from "lodash/size";
 import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
@@ -18,6 +19,8 @@ import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
+
+export const MOUSE_HANDLERS = ["onClick", "onMouseUp", "onMouseMove", "onMouseDown", "onDoubleClick"];
 
 export type BaseProps = {|
   keyMap?: CameraKeyMap,
@@ -44,7 +47,7 @@ type State = {|
   worldviewContext: WorldviewContext,
 |};
 
-function handleMouseInteraction(objectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
+function handleWorldviewMouseInteraction(objectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
   try {
     handler(e, {
       ray,
@@ -138,47 +141,48 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   _onClick = (e: MouseEvent) => {
-    if (!this.props.onClick) {
-      return;
-    }
-    this._onMouseInteraction(e, this.props.onClick);
+    const handlerName = "onClick";
+    this._onMouseInteraction(e, handlerName);
   };
 
   _onDoubleClick = (e: MouseEvent) => {
-    if (!this.props.onDoubleClick) {
-      return;
-    }
-    this._onMouseInteraction(e, this.props.onDoubleClick);
+    const handlerName = "onDoubleClick";
+    this._onMouseInteraction(e, handlerName);
   };
 
   _onMouseDown = (e: MouseEvent) => {
-    if (!this.props.onMouseDown) {
-      return;
-    }
-    this._onMouseInteraction(e, this.props.onMouseDown);
+    const handlerName = "onMouseDown";
+    this._onMouseInteraction(e, handlerName);
   };
 
   _onMouseMove = (e: MouseEvent) => {
-    if (!this.props.onMouseMove) {
-      return;
-    }
-    this._onMouseInteraction(e, this.props.onMouseMove, this.props.hitmapOnMouseMove);
+    const handlerName = "onMouseMove";
+    this._onMouseInteraction(e, handlerName, this.props.hitmapOnMouseMove);
   };
 
   _onMouseUp = (e: MouseEvent) => {
-    if (!this.props.onMouseUp) {
-      return;
-    }
-    this._onMouseInteraction(e, this.props.onMouseUp);
+    const handlerName = "onMouseUp";
+    this._onMouseInteraction(e, handlerName);
   };
 
-  _onMouseInteraction = (e: MouseEvent, handler: MouseHandler, readHitmap: boolean = true) => {
+  _anyComponentHandlerExists = (handlerName: string) =>
+    size(this.state.worldviewContext.mouseHandlers[handlerName]) > 0;
+
+  _onMouseInteraction = (e: MouseEvent, handlerName: string, readHitmap: boolean = true) => {
+    const worldviewHandler = this.props[handlerName];
+    const anyComponentHandlerExists = this._anyComponentHandlerExists(handlerName);
+
+    if (!worldviewHandler && !anyComponentHandlerExists) {
+      return;
+    }
+
     if (!(e.target instanceof window.HTMLElement) || e.button !== 0) {
       return;
     }
+
+    const { top: clientTop, left: clientLeft } = e.target.getBoundingClientRect();
     const { worldviewContext } = this.state;
     const { clientX, clientY } = e;
-    const { top: clientTop, left: clientLeft } = e.target.getBoundingClientRect();
 
     const canvasX = clientX - clientLeft;
     const canvasY = clientY - clientTop;
@@ -187,15 +191,24 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       return;
     }
 
-    if (!readHitmap) {
-      return handleMouseInteraction(0, ray, e, handler);
+    if (!readHitmap && worldviewHandler) {
+      return handleWorldviewMouseInteraction(0, ray, e, worldviewHandler);
     }
 
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();
     worldviewContext
       .readHitmap(canvasX, canvasY)
-      .then((objectId) => handleMouseInteraction(objectId, ray, e, handler))
+      .then((objectId) => {
+        if (worldviewHandler) {
+          handleWorldviewMouseInteraction(objectId, ray, e, worldviewHandler);
+        }
+        const componentLevelHandler = worldviewContext.mouseHandlers[handlerName][objectId];
+        if (componentLevelHandler) {
+          const [component, drawProp] = componentLevelHandler;
+          component.props[handlerName](objectId, ray, e, drawProp);
+        }
+      })
       .catch((e) => {
         console.error(e);
       });

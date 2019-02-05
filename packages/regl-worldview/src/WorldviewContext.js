@@ -14,6 +14,7 @@ import Command from "./commands/Command";
 import type { Dimensions, RawCommand, CompiledReglCommand, CameraCommand, Vec4, CameraState } from "./types";
 import { getIdFromColor } from "./utils/commandUtils";
 import { getRayFromClick } from "./utils/Raycast";
+import { MOUSE_HANDLERS } from "./Worldview";
 
 type Props = any;
 
@@ -69,6 +70,11 @@ export class WorldviewContext {
   _drawCalls: Map<React.Component<any>, any> = new Map();
   _hitmapCalls: Map<React.Component<any>, any> = new Map();
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
+  mouseHandlers: {
+    [string]: {
+      [number]: [React.Component<any>, any],
+    },
+  };
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
   counters: { paint?: number, render?: number } = {};
@@ -92,6 +98,11 @@ export class WorldviewContext {
         this.paint();
       }
     }, cameraState);
+
+    this.mouseHandlers = MOUSE_HANDLERS.reduce((acc, handler) => {
+      acc[handler] = {};
+      return acc;
+    }, {});
   }
 
   initialize(canvas: HTMLCanvasElement) {
@@ -165,6 +176,7 @@ export class WorldviewContext {
   }
 
   registerHitmapCall(drawInput: DrawInput) {
+    this._registerMouseHandlers(drawInput.instance, drawInput.drawProps);
     this._hitmapCalls.set(drawInput.instance, drawInput);
   }
 
@@ -307,4 +319,19 @@ export class WorldviewContext {
       },
     });
   }
+
+  _registerMouseHandlers = (component: React.Component<any>, drawProps: any[]) => {
+    const availableComponentHandlers = MOUSE_HANDLERS.filter((handler) => component.props[handler]);
+    drawProps.forEach((drawProp) => {
+      // TODO: handle components with 'colors' prop
+      if (drawProp.color) {
+        const id = getIdFromColor(drawProp.color.map((color) => color * 255));
+        if (id === 0) {
+          return;
+        }
+        const handlerResult = [component, drawProp];
+        availableComponentHandlers.forEach((handler) => (this.mouseHandlers[handler][id] = handlerResult));
+      }
+    }, {});
+  };
 }

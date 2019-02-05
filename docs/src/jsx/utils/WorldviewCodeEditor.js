@@ -44,10 +44,9 @@ const CODE_SANDBOX_CONFIG = {
     react: "16.7.0-alpha.2",
     "react-dom": "16.7.0-alpha.2",
     "regl-worldview": "latest",
-    "@babel/runtime": "latest",
     seedrandom: "latest",
     "polygon-generator": "latest",
-    "styled-components": "3.4.10",
+    "styled-components": "latest",
   },
   files: {
     "utils/CameraStateInfo.js": {

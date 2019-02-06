@@ -13,6 +13,7 @@ import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
 import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap } from "./types";
+import { getNodeEnv } from "./utils/common";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
@@ -205,7 +206,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     const { worldviewContext } = this.state;
     const initializedData = worldviewContext.initializedData;
 
-    if (process.env.NODE_ENV === "production" || !initializedData) {
+    if (getNodeEnv() === "production" || !initializedData) {
       return null;
     }
     const { regl } = initializedData;

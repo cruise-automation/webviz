@@ -205,7 +205,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     const { worldviewContext } = this.state;
     const initializedData = worldviewContext.initializedData;
 
-    if (process.env.NODE_ENV === "production" || !initializedData) {
+    if ((process && process.env && process.env.NODE_ENV === "production") || !initializedData) {
       return null;
     }
     const { regl } = initializedData;

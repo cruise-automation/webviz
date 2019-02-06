@@ -103,7 +103,7 @@ export class WorldviewContext {
       createREGL({
         canvas,
         extensions: ["angle_instanced_arrays", "oes_texture_float", "oes_element_index_uint"],
-        profile: process.env.NODE_ENV !== "production",
+        profile: process && process.env && process.env.NODE_ENV !== "production",
       })
     );
     // compile any components which mounted before regl is initialized
@@ -294,7 +294,7 @@ export class WorldviewContext {
   };
 
   _instrumentCommands(regl: any) {
-    if (process.env.NODE_ENV === "production") {
+    if (process && process.env && process.env.NODE_ENV === "production") {
       return regl;
     }
     return new Proxy(regl, {

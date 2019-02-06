@@ -8,19 +8,16 @@
 
 import mapValues from "lodash/mapValues";
 import pickBy from "lodash/pickBy";
-import size from "lodash/size";
 import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
-import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap } from "./types";
+import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap, MouseEventEnum } from "./types";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
-
-export const MOUSE_HANDLERS = ["onClick", "onMouseUp", "onMouseMove", "onMouseDown", "onDoubleClick"];
 
 export type BaseProps = {|
   keyMap?: CameraKeyMap,
@@ -160,15 +157,11 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     this._onMouseInteraction(e, "onMouseUp");
   };
 
-  _anyComponentHandlerExists = (handlerName: string) =>
-    size(this.state.worldviewContext.mouseHandlers[handlerName]) > 0;
-
-  _onMouseInteraction = (e: MouseEvent, handlerName: string, readHitmap: boolean = true) => {
+  _onMouseInteraction = (e: MouseEvent, mouseEventName: MouseEventEnum, readHitmap: boolean = true) => {
     const { worldviewContext } = this.state;
-    const worldviewHandler = this.props[handlerName];
-    const componentHandlers = this.state.worldviewContext.mouseHandlers[handlerName];
+    const worldviewHandler = this.props[mouseEventName];
 
-    if (!worldviewHandler && size(componentHandlers) === 0) {
+    if (!worldviewHandler) {
       return;
     }
 
@@ -198,11 +191,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         if (worldviewHandler) {
           handleWorldviewMouseInteraction(objectId, ray, e, worldviewHandler);
         }
-        const componentLevelHandler = worldviewContext.mouseHandlers[handlerName][objectId];
-        if (componentLevelHandler) {
-          const [component, drawProp] = componentLevelHandler;
-          component.props[handlerName](objectId, ray, e, drawProp);
-        }
+        worldviewContext.callComponentHandlers(objectId, ray, e, mouseEventName);
       })
       .catch((e) => {
         console.error(e);

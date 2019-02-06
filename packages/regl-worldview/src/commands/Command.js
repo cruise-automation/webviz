@@ -9,8 +9,8 @@
 
 import * as React from "react";
 
-import type { RawCommand } from "../types";
-import { intToRGB } from "../utils/commandUtils";
+import type { ComponentMouseHandler, MouseEventEnum, RawCommand } from "../types";
+import { getIdFromColor, intToRGB } from "../utils/commandUtils";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
 
@@ -19,6 +19,7 @@ export type Props<T> = {
   reglCommand: RawCommand<T>,
   getHitmapId?: (T) => ?number,
   layerIndex?: number,
+  [MouseEventEnum]: ComponentMouseHandler,
 };
 
 // Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.
@@ -78,6 +79,37 @@ export default class Command<T> extends React.Component<Props<T>> {
         layerIndex: this.props.layerIndex,
       });
     }
+  }
+
+  getDrawPropFromHitmapId(id: number) {
+    const { hitmapProps } = this.props;
+    for (const drawProp of hitmapProps) {
+      if (drawProp.color) {
+        const drawPropId = getIdFromColor(drawProp.color.map((color) => color * 255));
+        if (drawPropId === id) {
+          return drawProp;
+        }
+      }
+    }
+    return null;
+  }
+
+  fireRelevantMouseHandler(id: number, e: any, ray: any, mouseEventName: MouseEventEnum) {
+    const mouseHandler = this.props[mouseEventName];
+    if (!mouseHandler) {
+      return;
+    }
+
+    const drawProp = this.getDrawPropFromHitmapId(id);
+    if (!drawProp) {
+      return;
+    }
+
+    mouseHandler(e, {
+      ray,
+      interactedObject: drawProp,
+      component: this,
+    });
   }
 
   render() {

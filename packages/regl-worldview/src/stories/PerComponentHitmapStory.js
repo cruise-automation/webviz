@@ -47,15 +47,15 @@ class PerCubeInteractions extends React.Component<any, any> {
     }
   };
 
-  onCubeClick = (id, ray, event, clickedObject) => this.setState({ cubeDetails: clickedObject });
+  onCubeClick = (e, { interactedObject }) => this.setState({ cubeDetails: interactedObject });
 
-  onCubeDoubleClick = (id, ray, event, clickedObject) => {
+  onCubeDoubleClick = (id, { interactedObject }) => {
     const newCubes = [...this.state.cubes];
-    remove(newCubes, (cube) => cube.id === clickedObject.id);
+    remove(newCubes, (cube) => cube.id === interactedObject.id);
     this.setState({ cubes: newCubes });
   };
 
-  onCubeHover = (id, ray, event, hoveredObject) => this.setState({ cursor: hoveredObject.mouseCursor });
+  onCubeHover = (e, { interactedObject }) => this.setState({ cursor: interactedObject.mouseCursor });
 
   createCube = (i) => {
     const marker = cube(0, i + 1);

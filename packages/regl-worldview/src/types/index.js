@@ -5,8 +5,10 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import * as React from "react";
 
 import type { CameraState } from "../camera/CameraStore";
+import CommandComponent from "../commands/Command";
 import { Ray } from "../utils/Raycast";
 import type { BaseProps, Props } from "../Worldview";
 
@@ -100,7 +102,15 @@ export type ReglClickInfo = {
   clickedObjectId?: number,
 };
 
+export type ComponentReglClickInfo = {
+  ray: Ray,
+  interactedObject: Object,
+  component: CommandComponent,
+};
+
 export type MouseHandler = (MouseEvent, ?ReglClickInfo) => void;
+
+export type ComponentMouseHandler = (MouseEvent, ComponentReglClickInfo) => void;
 
 export type ReglComponentProps = {
   commandId: string,
@@ -184,6 +194,8 @@ export type PolygonType = BaseShape & {
   points: Vec3[],
   id: number,
 };
+
+export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
 
 // Camera
 export type CameraAction =

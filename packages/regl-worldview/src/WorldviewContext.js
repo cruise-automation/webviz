@@ -273,7 +273,9 @@ export class WorldviewContext {
 
   callComponentHandlers = (objectId: number, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
     this._hitmapCalls.forEach((_, component) => {
-      component.fireRelevantMouseHandler(objectId, e, ray, mouseEventName);
+      if (component.fireRelevantMouseHandler) {
+        component.fireRelevantMouseHandler(objectId, e, ray, mouseEventName);
+      }
     });
   };
 

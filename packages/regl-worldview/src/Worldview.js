@@ -141,38 +141,34 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   _onClick = (e: MouseEvent) => {
-    const handlerName = "onClick";
-    this._onMouseInteraction(e, handlerName);
+    this._onMouseInteraction(e, "onClick");
   };
 
   _onDoubleClick = (e: MouseEvent) => {
-    const handlerName = "onDoubleClick";
-    this._onMouseInteraction(e, handlerName);
+    this._onMouseInteraction(e, "onDoubleClick");
   };
 
   _onMouseDown = (e: MouseEvent) => {
-    const handlerName = "onMouseDown";
-    this._onMouseInteraction(e, handlerName);
+    this._onMouseInteraction(e, "onMouseDown");
   };
 
   _onMouseMove = (e: MouseEvent) => {
-    const handlerName = "onMouseMove";
-    this._onMouseInteraction(e, handlerName, this.props.hitmapOnMouseMove);
+    this._onMouseInteraction(e, "onMouseMove", this.props.hitmapOnMouseMove);
   };
 
   _onMouseUp = (e: MouseEvent) => {
-    const handlerName = "onMouseUp";
-    this._onMouseInteraction(e, handlerName);
+    this._onMouseInteraction(e, "onMouseUp");
   };
 
   _anyComponentHandlerExists = (handlerName: string) =>
     size(this.state.worldviewContext.mouseHandlers[handlerName]) > 0;
 
   _onMouseInteraction = (e: MouseEvent, handlerName: string, readHitmap: boolean = true) => {
+    const { worldviewContext } = this.state;
     const worldviewHandler = this.props[handlerName];
-    const anyComponentHandlerExists = this._anyComponentHandlerExists(handlerName);
+    const componentHandlers = this.state.worldviewContext.mouseHandlers[handlerName];
 
-    if (!worldviewHandler && !anyComponentHandlerExists) {
+    if (!worldviewHandler && size(componentHandlers) === 0) {
       return;
     }
 
@@ -181,7 +177,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
 
     const { top: clientTop, left: clientLeft } = e.target.getBoundingClientRect();
-    const { worldviewContext } = this.state;
     const { clientX, clientY } = e;
 
     const canvasX = clientX - clientLeft;

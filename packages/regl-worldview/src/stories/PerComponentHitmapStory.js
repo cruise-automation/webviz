@@ -44,28 +44,32 @@ function PerCubeInteractions() {
   const [cubeDetails, setCubeDetails] = useState({});
   const [cursor, setCursor] = useState("auto");
 
-  const onContainerClick = (e, args) => {
+  function onContainerClick(e, args) {
     if (!args.clickedObjectId) {
       setCubeDetails({});
     }
-  };
+  }
 
-  const onContainerMouseMove = (e, args) => {
+  function onContainerMouseMove(e, args) {
     if (!args.clickedObjectId) {
       setCursor("auto");
     }
-  };
+  }
 
-  const onCubeClick = (e, { interactedObject }) => setCubeDetails(interactedObject);
+  function onCubeClick(e, { interactedObject }) {
+    setCubeDetails(interactedObject);
+  }
 
-  const onCubeDoubleClick = (id, { interactedObject }) => {
+  function onCubeDoubleClick(id, { interactedObject }) {
     const newCubes = [...cubes];
     remove(newCubes, (cube) => cube.id === interactedObject.id);
 
     setCubes(newCubes);
-  };
+  }
 
-  const onCubeHover = (e, { interactedObject }) => setCursor(interactedObject.mouseCursor);
+  function onCubeHover(e, { interactedObject }) {
+    setCursor(interactedObject.mouseCursor);
+  }
 
   return (
     <div style={{ cursor, width: "100%", height: "100%" }}>
@@ -89,7 +93,9 @@ function PerCubeInteractions() {
           <div style={{ margin: "5px 0" }}>
             you clicked on cube: <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(cubeDetails, null, 2)}</pre>{" "}
           </div>
-          <button onClick={() => setCubes([...cubes, createCube(last(cubes).index + 1)])}>Add Cube</button>
+          <button onClick={() => setCubes([...cubes, createCube(last(cubes) ? last(cubes).index + 1 : 0)])}>
+            Add Cube
+          </button>
         </div>
         <Cubes
           onMouseMove={onCubeHover}

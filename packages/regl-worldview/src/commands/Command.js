@@ -82,17 +82,17 @@ export default class Command<T> extends React.Component<Props<T>> {
     }
   }
 
-  getDrawPropFromHitmapId(id: number) {
-    const { hitmapProps } = this.props;
-    for (const drawProp of hitmapProps) {
-      if (drawProp.color) {
-        const drawPropId = getIdFromColor(drawProp.color.map((color) => color * 255));
-        if (drawPropId === id) {
-          return drawProp;
+  getHitmapPropFromHitmapId(id: number) {
+    const { hitmapProps = [] } = this.props;
+    return hitmapProps.find((hitmapProp) => {
+      // TODO handle objects with 'colors' prop
+      if (hitmapProp.color) {
+        const hitmapPropId = getIdFromColor(hitmapProp.color.map((color) => color * 255));
+        if (hitmapPropId === id) {
+          return true;
         }
       }
-    }
-    return null;
+    });
   }
 
   fireRelevantMouseHandler(id: number, e: any, ray: any, mouseEventName: MouseEventEnum) {
@@ -101,15 +101,14 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
 
-    const drawProp = this.getDrawPropFromHitmapId(id);
-    if (!drawProp) {
+    const hitmapProp = this.getHitmapPropFromHitmapId(id);
+    if (!hitmapProp) {
       return;
     }
 
     mouseHandler(e, {
       ray,
-      interactedObject: drawProp,
-      component: this,
+      interactedObject: hitmapProp,
     });
   }
 

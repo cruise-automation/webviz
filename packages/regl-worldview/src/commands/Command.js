@@ -82,26 +82,27 @@ export default class Command<T> extends React.Component<Props<T>> {
     }
   }
 
-  getHitmapPropFromHitmapId(id: number) {
+  _getHitmapPropFromHitmapId(objectId: number) {
     const { hitmapProps = [] } = this.props;
     return hitmapProps.find((hitmapProp) => {
-      // TODO handle objects with 'colors' prop
+      // TODO handle objects with 'colors' property
       if (hitmapProp.color) {
         const hitmapPropId = getIdFromColor(hitmapProp.color.map((color) => color * 255));
-        if (hitmapPropId === id) {
+        if (hitmapPropId === objectId) {
           return true;
         }
       }
+      return false;
     });
   }
 
-  fireRelevantMouseHandler(id: number, e: any, ray: any, mouseEventName: MouseEventEnum) {
+  handleMouseEvent(objectId: number, e: any, ray: any, mouseEventName: MouseEventEnum) {
     const mouseHandler = this.props[mouseEventName];
     if (!mouseHandler) {
       return;
     }
 
-    const hitmapProp = this.getHitmapPropFromHitmapId(id);
+    const hitmapProp = this._getHitmapPropFromHitmapId(objectId);
     if (!hitmapProp) {
       return;
     }

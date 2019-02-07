@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import type { CameraState } from "../camera/CameraStore";
-import CommandComponent from "../commands/Command";
 import { Ray } from "../utils/Raycast";
 import type { BaseProps, Props } from "../Worldview";
 
@@ -103,7 +102,6 @@ export type ReglClickInfo = {
 export type ComponentReglClickInfo = {
   ray: Ray,
   interactedObject: Object,
-  component: CommandComponent,
 };
 
 export type MouseHandler = (MouseEvent, ?ReglClickInfo) => void;

@@ -5,6 +5,7 @@ import React from "react";
 
 import { intToRGB } from "../utils/commandUtils";
 import Container from "./Container";
+import PerComponentHitmapStory from "./PerComponentHitmapStory";
 import { cube, p, UNIT_QUATERNION, buildMatrix, rng } from "./util";
 import withRange from "./withRange";
 
@@ -108,6 +109,7 @@ storiesOf("Worldview", module)
       return <DynamicCubes range={range} />;
     })
   )
+  .add("<Cubes> - per-component interaction", () => <PerComponentHitmapStory />)
   .add(
     "<Cubes> - instanced",
     withRange((range) => {

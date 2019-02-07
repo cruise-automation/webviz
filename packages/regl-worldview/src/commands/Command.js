@@ -9,8 +9,8 @@
 
 import * as React from "react";
 
-import type { RawCommand } from "../types";
-import { intToRGB } from "../utils/commandUtils";
+import type { ComponentMouseHandler, MouseEventEnum, RawCommand } from "../types";
+import { getIdFromColor, intToRGB } from "../utils/commandUtils";
 import { getNodeEnv } from "../utils/common";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
@@ -20,6 +20,7 @@ export type Props<T> = {
   reglCommand: RawCommand<T>,
   getHitmapId?: (T) => ?number,
   layerIndex?: number,
+  [MouseEventEnum]: ComponentMouseHandler,
 };
 
 // Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.
@@ -81,6 +82,37 @@ export default class Command<T> extends React.Component<Props<T>> {
     }
   }
 
+  _getHitmapPropFromHitmapId(objectId: number) {
+    const { hitmapProps = [] } = this.props;
+    return hitmapProps.find((hitmapProp) => {
+      // TODO handle objects with 'colors' property
+      if (hitmapProp.color) {
+        const hitmapPropId = getIdFromColor(hitmapProp.color.map((color) => color * 255));
+        if (hitmapPropId === objectId) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+
+  handleMouseEvent(objectId: number, e: any, ray: any, mouseEventName: MouseEventEnum) {
+    const mouseHandler = this.props[mouseEventName];
+    if (!mouseHandler) {
+      return;
+    }
+
+    const hitmapProp = this._getHitmapPropFromHitmapId(objectId);
+    if (!hitmapProp) {
+      return;
+    }
+
+    mouseHandler(e, {
+      ray,
+      interactedObject: hitmapProp,
+    });
+  }
+
   render() {
     return (
       <WorldviewReactContext.Consumer>
@@ -122,7 +154,7 @@ export function makeCommand<T>(name: string, command: RawCommand<T>): React.Stat
     const hitmapProps = props.getHitmapProps
       ? props.getHitmapProps()
       : getHitmapProps(props.getHitmapId, props.children);
-    return <Command reglCommand={command} drawProps={props.children} hitmapProps={hitmapProps} />;
+    return <Command {...props} reglCommand={command} drawProps={props.children} hitmapProps={hitmapProps} />;
   };
   cmd.displayName = name;
   cmd.reglCommand = command;

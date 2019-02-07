@@ -162,10 +162,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     const { worldviewContext } = this.state;
     const worldviewHandler = this.props[mouseEventName];
 
-    if (!worldviewHandler) {
-      return;
-    }
-
     if (!(e.target instanceof window.HTMLElement) || e.button !== 0) {
       return;
     }

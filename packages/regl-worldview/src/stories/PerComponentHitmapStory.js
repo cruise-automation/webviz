@@ -1,7 +1,7 @@
 import last from "lodash/last";
 import remove from "lodash/remove";
 import sample from "lodash/sample";
-import React from "react";
+import React, { useState } from "react";
 
 import Container from "./Container";
 import { cube, rng } from "./util";
@@ -20,97 +20,87 @@ const randomCubeFacts = [
 
 const randomMouseCursors = ["progress", "wait", "crosshair", "text", "move", "grab", "ew-resize", "ns-resize"];
 
-const getCube = (marker, position, color) => ({
-  ...marker,
-  color,
-  pose: {
-    orientation: { x: 0, y: 0, z: 0, w: 1 },
-    position,
-  },
-});
+const createCube = (i) => {
+  const marker = cube(0, i + 1);
+  const { position: posePosition } = marker.pose;
+  const color = [rng(), rng(), rng(), 1];
+  const { x, y, z } = posePosition;
+  const position = { x: x + i * 5, y: y + i * 5, z: z + i * 5 };
+  return {
+    ...marker,
+    color,
+    pose: {
+      position,
+      orientation: { x: 0, y: 0, z: 0, w: 1 },
+    },
+    index: i,
+    cubeFact: sample(randomCubeFacts),
+    mouseCursor: sample(randomMouseCursors),
+  };
+};
 
-class PerCubeInteractions extends React.Component<any, any> {
-  constructor() {
-    super();
-    this.state = { cubes: [this.createCube(0)], cubeDetails: {}, cursor: "auto" };
-  }
+function PerCubeInteractions() {
+  const [cubes, setCubes] = useState([createCube(0)]);
+  const [cubeDetails, setCubeDetails] = useState({});
+  const [cursor, setCursor] = useState("auto");
 
-  onContainerClick = (e, args) => {
+  const onContainerClick = (e, args) => {
     if (!args.clickedObjectId) {
-      this.setState({ cubeDetails: {} });
+      setCubeDetails({});
     }
   };
 
-  onContainerMouseMove = (e, args) => {
+  const onContainerMouseMove = (e, args) => {
     if (!args.clickedObjectId) {
-      this.setState({ cursor: "auto" });
+      setCursor("auto");
     }
   };
 
-  onCubeClick = (e, { interactedObject }) => this.setState({ cubeDetails: interactedObject });
+  const onCubeClick = (e, { interactedObject }) => setCubeDetails(interactedObject);
 
-  onCubeDoubleClick = (id, { interactedObject }) => {
-    const newCubes = [...this.state.cubes];
+  const onCubeDoubleClick = (id, { interactedObject }) => {
+    const newCubes = [...cubes];
     remove(newCubes, (cube) => cube.id === interactedObject.id);
-    this.setState({ cubes: newCubes });
+
+    setCubes(newCubes);
   };
 
-  onCubeHover = (e, { interactedObject }) => this.setState({ cursor: interactedObject.mouseCursor });
+  const onCubeHover = (e, { interactedObject }) => setCursor(interactedObject.mouseCursor);
 
-  createCube = (i) => {
-    const marker = cube(0, i + 1);
-    const { position: posePosition } = marker.pose;
-    const color = [rng(), rng(), rng(), 1];
-    const { x, y, z } = posePosition;
-    const position = { x: x + i * 5, y: y + i * 5, z: z + i * 5 };
-    return {
-      ...getCube(marker, position, color),
-      cubeFact: sample(randomCubeFacts),
-      mouseCursor: sample(randomMouseCursors),
-      index: i,
-    };
-  };
-
-  render() {
-    const { cubes, cubeDetails, cursor } = this.state;
-
-    return (
-      <div style={{ cursor, width: "100%", height: "100%" }}>
-        <Container
-          hitmapOnMouseMove
-          cameraState={DEFAULT_CAMERA_STATE}
-          onClick={this.onContainerClick}
-          onMouseMove={this.onContainerMouseMove}>
-          <div
-            style={{
-              position: "absolute",
-              padding: "5px",
-              top: 30,
-              left: 30,
-              width: "400px",
-              backgroundColor: "rgba(165, 94, 255, 0.1)",
-            }}>
-            <div>click on a cube to see its details</div>
-            <div>double click on a cube to remove it</div>
-            <br />
-            <div style={{ margin: "5px 0" }}>
-              you clicked on cube: <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(cubeDetails, null, 2)}</pre>{" "}
-            </div>
-            <button onClick={() => this.setState({ cubes: [...cubes, this.createCube(last(cubes).index + 1)] })}>
-              Add Cube
-            </button>
+  return (
+    <div style={{ cursor, width: "100%", height: "100%" }}>
+      <Container
+        hitmapOnMouseMove
+        cameraState={DEFAULT_CAMERA_STATE}
+        onClick={onContainerClick}
+        onMouseMove={onContainerMouseMove}>
+        <div
+          style={{
+            position: "absolute",
+            padding: "5px",
+            top: 30,
+            left: 30,
+            width: "400px",
+            backgroundColor: "rgba(165, 94, 255, 0.1)",
+          }}>
+          <div>click on a cube to see its details</div>
+          <div>double click on a cube to remove it</div>
+          <br />
+          <div style={{ margin: "5px 0" }}>
+            you clicked on cube: <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(cubeDetails, null, 2)}</pre>{" "}
           </div>
-          <Cubes
-            onMouseMove={this.onCubeHover}
-            onClick={this.onCubeClick}
-            onDoubleClick={this.onCubeDoubleClick}
-            getHitmapId={(marker) => marker.id}>
-            {cubes}
-          </Cubes>
-        </Container>
-      </div>
-    );
-  }
+          <button onClick={() => setCubes([...cubes, createCube(last(cubes).index + 1)])}>Add Cube</button>
+        </div>
+        <Cubes
+          onMouseMove={onCubeHover}
+          onClick={onCubeClick}
+          onDoubleClick={onCubeDoubleClick}
+          getHitmapId={(marker) => marker.id}>
+          {cubes}
+        </Cubes>
+      </Container>
+    </div>
+  );
 }
 
 export default PerCubeInteractions;

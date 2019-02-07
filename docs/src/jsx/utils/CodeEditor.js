@@ -22,12 +22,19 @@ const StyledProvider = styled(LiveProvider)`
 
 const LiveWrapper = styled.div`
   display: flex;
-  flex-direction: row;
-  justify-content: stretch;
-  align-items: stretch;
-  @media (max-width: 600px) {
-    flex-direction: column;
-  }
+  ${({ isRowView }) =>
+    isRowView
+      ? css`
+          flex-direction: column;
+        `
+      : css`
+          flex-direction: row;
+          justify-content: stretch;
+          align-items: stretch;
+          @media (max-width: 600px) {
+            flex-direction: column;
+          }
+        `}
 `;
 
 const column = css`
@@ -48,7 +55,7 @@ const StyledEditor = styled.div`
       outline: none;
     }
   }
-  ${column}
+  ${({ isRowView }) => !isRowView && column}
 `;
 
 const StyledNonEditableArea = styled.pre`
@@ -63,7 +70,7 @@ const StyledPreview = styled(LivePreview)`
   color: black;
   overflow: hidden;
   display: flex;
-  ${column}
+  ${({ isRowView }) => !isRowView && column}
 
   div, canvas {
     display: flex;
@@ -112,6 +119,7 @@ function CodeEditor({
   componentName,
   copyCode,
   docUrl,
+  isRowView,
   noInline,
   nonEditableCode,
   scope,
@@ -121,8 +129,11 @@ function CodeEditor({
 
   return (
     <StyledProvider code={code} scope={scope} noInline={noInline} mountStylesheet={false}>
-      <LiveWrapper>
-        <StyledEditor onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      <LiveWrapper isRowView={isRowView}>
+        <StyledEditor
+          isRowView={isRowView}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}>
           {hovered && (
             <StyledActions>
               <CopyToClipboard text={copyCode} onCopy={() => setCopied(true)}>
@@ -138,7 +149,7 @@ function CodeEditor({
           <StyledNonEditableArea>{nonEditableCode}</StyledNonEditableArea>
           <LiveEditor />
         </StyledEditor>
-        <StyledPreview />
+        <StyledPreview isRowView={isRowView} />
       </LiveWrapper>
       <StyledError />
     </StyledProvider>

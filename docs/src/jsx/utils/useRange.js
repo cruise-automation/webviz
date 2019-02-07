@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 
-import inScreenshotTests from "stories/inScreenshotTests";
+import { inScreenshotTests } from "./codeSandboxUtils";
 
 export default function useRange(initialRange = 0.1) {
   const [range, setRange] = useState(initialRange);

@@ -10,7 +10,7 @@ import React from "react";
 import Worldview, { Text, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function TextDemo() {
+function Example() {
   const labelMarker = {
     name: "randomName",
     text: "HELLO",
@@ -31,4 +31,4 @@ function TextDemo() {
 }
 // #END EXAMPLE
 
-export default TextDemo;
+export default Example;

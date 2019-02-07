@@ -10,7 +10,7 @@ import React from "react";
 import Worldview, { Axes, Spheres } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function SpheresDemo() {
+function Example() {
   const markers = [
     {
       pose: {
@@ -31,4 +31,4 @@ function SpheresDemo() {
 }
 // #END EXAMPLE
 
-export default SpheresDemo;
+export default Example;

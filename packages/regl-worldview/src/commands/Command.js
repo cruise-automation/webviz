@@ -11,6 +11,7 @@ import * as React from "react";
 
 import type { RawCommand } from "../types";
 import { intToRGB } from "../utils/commandUtils";
+import { getNodeEnv } from "../utils/common";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
 
@@ -30,7 +31,7 @@ export default class Command<T> extends React.Component<Props<T>> {
     super(props);
     // In development put a check in to make sure the reglCommand prop is not mutated.
     // Similar to how react checks for unsupported or deprecated calls in a development build.
-    if (process && process.env && process.env.NODE_ENV !== "production") {
+    if (getNodeEnv() !== "production") {
       this.shouldComponentUpdate = (nextProps: Props) => {
         if (nextProps.reglCommand !== this.props.reglCommand) {
           console.error("Changing the regl command prop on a <Command /> is not supported.");

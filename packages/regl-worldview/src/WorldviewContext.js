@@ -13,6 +13,7 @@ import { camera, CameraStore } from "./camera/index";
 import Command from "./commands/Command";
 import type { Dimensions, RawCommand, CompiledReglCommand, CameraCommand, Vec4, CameraState } from "./types";
 import { getIdFromColor } from "./utils/commandUtils";
+import { getNodeEnv } from "./utils/common";
 import { getRayFromClick } from "./utils/Raycast";
 
 type Props = any;
@@ -103,7 +104,7 @@ export class WorldviewContext {
       createREGL({
         canvas,
         extensions: ["angle_instanced_arrays", "oes_texture_float", "oes_element_index_uint"],
-        profile: process.env.NODE_ENV !== "production",
+        profile: getNodeEnv() !== "production",
       })
     );
     // compile any components which mounted before regl is initialized
@@ -294,7 +295,7 @@ export class WorldviewContext {
   };
 
   _instrumentCommands(regl: any) {
-    if (process.env.NODE_ENV === "production") {
+    if (getNodeEnv() === "production") {
       return regl;
     }
     return new Proxy(regl, {

@@ -9,10 +9,10 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 import Demo from "./Demo";
-import { color, fontSize } from "./theme";
-import CruiseLogo from "./utils/CruiseLogo";
-import GitHubLogo from "./utils/GitHubLogo";
-import Logo from "./utils/Logo";
+import CruiseLogo from "./jsx/utils/CruiseLogo";
+import GitHubLogo from "./jsx/utils/GitHubLogo";
+import Logo from "./jsx/utils/Logo";
+import { color, fontSize } from "./jsx/utils/theme";
 
 const OuterContainer = styled.div`
   padding: 50px;
@@ -44,6 +44,7 @@ const Header = styled.div`
 
   h1 {
     font-size: ${fontSize.h1};
+    line-height: 1.4;
   }
   h2 {
     font-size: ${fontSize.h2};
@@ -65,6 +66,7 @@ const HeaderLinks = styled.div`
     color: ${color.linkPrimary};
     border: 1px solid ${color.linkPrimary};
     padding: 4px 10px;
+    text-decoration: none;
     &:hover,
     &:visited {
       color: ${color.linkPrimaryVisited};
@@ -100,6 +102,7 @@ const Footer = styled.div`
 const DocsFooterLink = styled(Link)`
   display: block;
   color: ${color.linkPrimary} !important;
+  text-decoration: none;
   font-size: 18px;
 `;
 

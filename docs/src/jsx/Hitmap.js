@@ -10,7 +10,7 @@ import React, { useState } from "react";
 import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function HitmapDemo() {
+function Example() {
   const getHitmapId = (shape) => shape.hitmapId || 0;
   const numberToColor = (number, max, a = 1) => {
     const i = (number * 255) / max;
@@ -191,4 +191,4 @@ function HitmapDemo() {
   );
 }
 // #END EXAMPLE
-export default HitmapDemo;
+export default Example;

@@ -9,11 +9,10 @@ import { CopyToClipboard } from "react-copy-to-clipboard";
 import { LiveProvider, LiveEditor, LiveError, LivePreview } from "react-live";
 import styled, { css } from "styled-components";
 
-import { color, palette } from "../theme";
-import CopyIcon from "../utils/icons/Copy";
-import DoneIcon from "../utils/icons/Done";
-
-const SUCCESS_COLOR = "#2bb622";
+import CodeSanboxLink from "./CodeSandboxLink";
+import CopyIcon from "./icons/Copy";
+import DoneIcon from "./icons/Done";
+import { color, palette } from "./theme";
 
 const StyledProvider = styled(LiveProvider)`
   overflow: hidden;
@@ -87,7 +86,9 @@ const StyledActions = styled.div`
   top: 0;
   right: 4px;
   text-align: right;
+  display: flex;
 `;
+
 const StyledActionBtn = styled.button`
   background: transparent;
   border: none;
@@ -100,10 +101,21 @@ const StyledActionBtn = styled.button`
   &:focus {
     background: ${palette.white20};
     outline: none;
+    cursor: pointer;
   }
 `;
 
-function CodeEditor({ noInline, code, nonEditableCode, scope }) {
+function CodeEditor({
+  code,
+  codeSandboxCode,
+  codeSandboxConfig = {},
+  componentName,
+  copyCode,
+  docUrl,
+  noInline,
+  nonEditableCode,
+  scope,
+}) {
   const [hovered, setHovered] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -113,11 +125,14 @@ function CodeEditor({ noInline, code, nonEditableCode, scope }) {
         <StyledEditor onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
           {hovered && (
             <StyledActions>
-              <CopyToClipboard text={[nonEditableCode, "\n", code].join("\n")} onCopy={() => setCopied(true)}>
-                <StyledActionBtn onMouseLeave={() => setCopied(false)}>
-                  {copied ? <DoneIcon color={SUCCESS_COLOR} /> : <CopyIcon />}
+              <CopyToClipboard text={copyCode} onCopy={() => setCopied(true)}>
+                <StyledActionBtn onMouseLeave={() => setCopied(false)} title="Copy code">
+                  {copied ? <DoneIcon color={color.success} /> : <CopyIcon />}
                 </StyledActionBtn>
               </CopyToClipboard>
+              {codeSandboxCode && (
+                <CodeSanboxLink codeSandboxCode={codeSandboxCode} codeSandboxConfig={codeSandboxConfig} />
+              )}
             </StyledActions>
           )}
           <StyledNonEditableArea>{nonEditableCode}</StyledNonEditableArea>

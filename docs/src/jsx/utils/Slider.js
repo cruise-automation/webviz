@@ -9,7 +9,7 @@
 import * as React from "react";
 import styled from "styled-components";
 
-import { color } from "../theme";
+import { color } from "./theme";
 
 const SliderInput = styled.input.attrs({ type: "range" })`
   width: 120px;

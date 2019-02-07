@@ -8,11 +8,11 @@
 import React, { useState } from "react";
 import seedrandom from "seedrandom";
 
-import LineControls from "./LineControls";
+import LineControls from "./utils/LineControls";
 import Worldview, { Lines, Points, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function LinesDemo() {
+function Example() {
   const [debug, setDebug] = useState(false);
   const [thickness, setThickness] = useState(0.75);
   const [joined, setJoined] = useState(true);
@@ -139,4 +139,4 @@ function LinesDemo() {
 }
 // #END EXAMPLE
 
-export default LinesDemo;
+export default Example;

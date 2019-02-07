@@ -7,7 +7,7 @@
 import React from "react";
 import styled from "styled-components";
 
-import { fontFamily } from "../theme";
+import { fontFamily } from "./theme";
 
 const StyledInput = styled.label`
   display: inline-flex;

@@ -7,11 +7,11 @@
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
 
-import InputNumber from "./InputNumber";
+import InputNumber from "./utils/InputNumber";
 import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function CameraStateUncontrolled() {
+function Example() {
   const [distance, setDistance] = useState(100);
 
   return (
@@ -41,4 +41,4 @@ function CameraStateUncontrolled() {
 }
 // #END EXAMPLE
 
-export default CameraStateUncontrolled;
+export default Example;

@@ -130,7 +130,7 @@ module.exports = {
       },
       { test: /\.scss$/, loader: "sass-loader", options: { sourceMap: true } },
       { test: /\.woff2?$/, loader: "url-loader" },
-      { test: /\.glb$/, loader: "file-loader" },
+      { test: /\.(glb|bag)$/, loader: "file-loader" },
     ],
   },
   optimization: {

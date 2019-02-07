@@ -10,7 +10,7 @@ import React from "react";
 import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function LinesInstabilityDemo() {
+function Example() {
   const points = [
     { x: -812.2277333190451, y: 2961.4633761946707, z: 0 },
     { x: -812.2718382693613, y: 2960.8755785794347, z: 0 },
@@ -61,4 +61,4 @@ function LinesInstabilityDemo() {
 }
 // #END EXAMPLE
 
-export default LinesInstabilityDemo;
+export default Example;

@@ -36,7 +36,7 @@ function Example() {
     const marker = {
       id,
       pose: {
-        orientation: { x: 0.038269, y: -0.01677, z: -0.8394, w: 0.541905 },
+        orientation: { x: 0, y: 0, z: 0, w: 0 },
         position: { x: range, y: range, z: range },
       },
       scale: { x: 5, y: 5, z: 5 },

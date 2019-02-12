@@ -49,7 +49,7 @@ function handleWorldviewMouseInteraction(objectId: number, ray: Ray, e: MouseEve
   try {
     handler(e, {
       ray,
-      clickedObjectId: objectId !== 0 ? objectId : undefined,
+      interactedObjectId: objectId !== 0 ? objectId : undefined,
     });
   } catch (err) {
     console.error("Error during mouse handler", err);

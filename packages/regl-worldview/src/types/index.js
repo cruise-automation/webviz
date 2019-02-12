@@ -101,7 +101,7 @@ export type ReglClickInfo = {
 
 export type ComponentReglClickInfo = {
   ray: Ray,
-  interactedObject: Object,
+  clickedObject: Object,
 };
 
 export type MouseHandler = (MouseEvent, ?ReglClickInfo) => void;

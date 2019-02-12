@@ -1,8 +1,12 @@
 import { MouseEvents } from './jsx/allLiveEditors.js';
 
+
 # MouseEvents
 
-There are two ways of handling mouse events in Worldview. Optional handlers can be specified at the Worldview level or at the command component level.
+Currently Worldview supports the following mouse event handlers: `onDoubleClick`, `onMouseDown`, `onMouseUp`, `onMouseMove`, and `onClick`. When a supported DOM event is fired, the event handler will be triggered with the original event object and additional click information which can help build interactive views:
+
+- `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
+- `clickedObjectId`: the `hitmapId` that you specified in the regl commands (`undefined` if it's not specified).
 
 | Name            | type           | Default | Description                                                                                  |
 | --------------- | -------------- | ------- | -------------------------------------------------------------------------------------------- |
@@ -12,15 +16,7 @@ There are two ways of handling mouse events in Worldview. Optional handlers can 
 | `onMouseMove`   | `MouseHandler` |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the `Worldview` component |
 | `onClick`       | `MouseHandler` |         |                                                                                              |
 
-## Mouse Event Handlers
-
-Currently Worldview supports the following mouse event handlers: `onDoubleClick`, `onMouseDown`, `onMouseUp`, `onMouseMove`, and `onClick`. When a supported DOM event is fired, the event handler will be triggered with the original event object and additional click information which can help build interactive views:
-
-#### Worldview Level Handlers
-
-- `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `clickedObjectId`: the `hitmapId` that you specified in the regl commands (`undefined` if it's not specified).
-
+## Worldview Level Handler
 Sample usage:
 
 ```js
@@ -29,19 +25,17 @@ Sample usage:
 </Worldview>
 ```
 
-#### Command Component Level Handlers
 
-- `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `interactedObject`: the object that was interacted with.
 
+## Command Component Level Handlers
 Sample usage:
 
 ```js
 <Worldview>
-  <Cubes onClick={(evt, { interactedObject }) => console.log("You clicked on", interactedObject)}>{cubes}</Cubes>
+  <Cubes onClick={(evt, { clickedObject }) => console.log("You clicked on", clickedObject)}>{cubes}</Cubes>
 </Worldview>
 ```
 
-### Full Example
+## Full Example
 
 <MouseEvents />

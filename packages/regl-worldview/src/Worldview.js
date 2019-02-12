@@ -45,8 +45,8 @@ type State = {|
   worldviewContext: WorldviewContext,
 |};
 
-function handleWorldviewMouseInteraction(objectIdAlt: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
-  const objectId = objectIdAlt !== 0 ? objectIdAlt : undefined;
+function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
+  const objectId = rawObjectId !== 0 ? rawObjectId : undefined;
   const args = {
     ray,
     objectId,

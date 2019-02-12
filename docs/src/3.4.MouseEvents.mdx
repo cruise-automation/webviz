@@ -15,13 +15,14 @@ Currently Worldview supports the following mouse event handlers: `onDoubleClick`
 
 ## Worldview Level Handler
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `objectId`: the `id` that you specified in the regl commands (`undefined` if it's not specified).
+- `objectId`: the `hitmapId` that you specified in the regl commands through `getHitmapId` mapping. Usually you'd use `getHitmapId={(marker) => marker.id}` to generate the hitmapId.
 
 Sample usage:
 
 ```js
 <Worldview onClick={(evt, { objectId }) => console.log("You clicked on", objectId)}>
-  {/* Command children */}
+  <Cubes getHitmapId={(marker) => marker.id}>{cubes}</Cubes>
+  {/* Other command children */}
 </Worldview>
 ```
 
@@ -35,7 +36,12 @@ Sample usage:
 
 ```js
 <Worldview>
-  <Cubes onClick={(evt, { object }) => console.log("You clicked on", object)}>{cubes}</Cubes>
+  <Cubes
+    getHitmapId={(marker) => marker.id}
+    onClick={(evt, { object }) => console.log("You clicked on", object)}
+  >
+    {cubes}
+  </Cubes>
 </Worldview>
 ```
 

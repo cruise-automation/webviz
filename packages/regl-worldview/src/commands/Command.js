@@ -109,7 +109,7 @@ export default class Command<T> extends React.Component<Props<T>> {
 
     mouseHandler(e, {
       ray,
-      interactedObject: hitmapProp,
+      object: hitmapProp,
     });
   }
 

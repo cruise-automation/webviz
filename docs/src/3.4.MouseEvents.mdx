@@ -1,8 +1,9 @@
 import { MouseEvents } from './jsx/allLiveEditors.js';
 
+
 # MouseEvents
 
-There are two ways of handling mouse events in Worldview. Optional handlers can be specified at the Worldview level or at the command component level.
+Currently Worldview supports the following mouse event handlers: `onDoubleClick`, `onMouseDown`, `onMouseUp`, `onMouseMove`, and `onClick`. When a supported DOM event is fired, the event handler will be triggered with the original event object and additional event information which can help build interactive views.
 
 | Name            | type           | Default | Description                                                                                  |
 | --------------- | -------------- | ------- | -------------------------------------------------------------------------------------------- |
@@ -12,36 +13,38 @@ There are two ways of handling mouse events in Worldview. Optional handlers can 
 | `onMouseMove`   | `MouseHandler` |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the `Worldview` component |
 | `onClick`       | `MouseHandler` |         |                                                                                              |
 
-## Mouse Event Handlers
-
-Currently Worldview supports the following mouse event handlers: `onDoubleClick`, `onMouseDown`, `onMouseUp`, `onMouseMove`, and `onClick`. When a supported DOM event is fired, the event handler will be triggered with the original event object and additional click information which can help build interactive views:
-
-#### Worldview Level Handlers
-
+## Worldview Level Handler
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `clickedObjectId`: the `hitmapId` that you specified in the regl commands (`undefined` if it's not specified).
+- `objectId`: the `hitmapId` that you specified in the regl commands through `getHitmapId` mapping. Usually you'd use `getHitmapId={(marker) => marker.id}` to generate the hitmapId.
 
 Sample usage:
 
 ```js
-<Worldview onClick={(evt, { clickedObjectId }) => console.log("You clicked on", clickedObjectId)}>
-  {/* Command children */}
+<Worldview onClick={(evt, { objectId }) => console.log("You clicked on", objectId)}>
+  <Cubes getHitmapId={(marker) => marker.id}>{cubes}</Cubes>
+  {/* Other command children */}
 </Worldview>
 ```
 
-#### Command Component Level Handlers
 
+
+## Command Component Level Handlers
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `interactedObject`: the object that was interacted with.
+- `object`: the object that you interacted with.
 
 Sample usage:
 
 ```js
 <Worldview>
-  <Cubes onClick={(evt, { interactedObject }) => console.log("You clicked on", interactedObject)}>{cubes}</Cubes>
+  <Cubes
+    getHitmapId={(marker) => marker.id}
+    onClick={(evt, { object }) => console.log("You clicked on", object)}
+  >
+    {cubes}
+  </Cubes>
 </Worldview>
 ```
 
-### Full Example
+## Full Example
 
 <MouseEvents />

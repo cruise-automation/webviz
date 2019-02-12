@@ -11,7 +11,7 @@ import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSC
 
 // #BEGIN EDITABLE
 function Example() {
-  const getHitmapId = (shape) => shape.hitmapId || 0;
+  const getHitmapId = (shape) => shape.id || 0;
   const numberToColor = (number, max, a = 1) => {
     const i = (number * 255) / max;
     const r = Math.round(Math.sin(0.024 * i + 0) * 127 + 128) / 255;
@@ -35,18 +35,18 @@ function Example() {
   const cubeGap = 5;
 
   // generate cubes
-  let hitmapIdCounter = 1;
+  let idCounter = 1;
   const cubes = new Array(count).fill(0).map((_, idx) => {
     const totalLen = count * cubeGap;
     const posX = -totalLen / 2 + idx * cubeGap;
     const posY = Math.sin(posX) * 30;
     const posZ = Math.cos(posX) * 20;
-    const hitmapId = hitmapIdCounter++;
-    const isClicked = clickedId === hitmapId;
+    const id = idCounter++;
+    const isClicked = clickedId === id;
     const scale = isClicked ? { x: 10, y: 10, z: 10 } : { x: 5, y: 5, z: 5 };
     const alpha = isClicked ? 1 : 0.2 + idx / count;
     return {
-      hitmapId,
+      id,
       pose: {
         orientation: { x: 0, y: 0, z: 0, w: 1 },
         position: { x: posX, y: posY, z: posZ },
@@ -55,7 +55,7 @@ function Example() {
       color: numberToColor(idx, count, alpha),
       info: {
         description: "additional cube info",
-        objectId: hitmapId + 10000,
+        objectId: id + 10000,
       },
     };
   });
@@ -67,12 +67,12 @@ function Example() {
     const posY = -Math.sin(posX) * 30;
     const posZ = -Math.cos(posX) * 20;
 
-    const hitmapId = hitmapIdCounter++;
-    const isClicked = clickedId === hitmapId;
+    const id = idCounter++;
+    const isClicked = clickedId === id;
     const scale = isClicked ? { x: 10, y: 10, z: 10 } : { x: 5, y: 5, z: 5 };
     const alpha = isClicked ? 1 : 0.2 + idx / count;
     return {
-      hitmapId,
+      id,
       pose: {
         orientation: { x: 0, y: 0, z: 0, w: 1 },
         position: { x: posY, y: posX, z: posZ },
@@ -81,20 +81,20 @@ function Example() {
       color: numberToColor(count - idx - 1, count, alpha),
       info: {
         description: "additional sphere info",
-        objectId: hitmapId + 1000,
+        objectId: id + 1000,
       },
     };
   });
 
   cubes.forEach((object) => {
-    if (object.hitmapId) {
-      objectMap[object.hitmapId] = { object, type: "cube" };
+    if (object.id) {
+      objectMap[object.id] = { object, type: "cube" };
     }
   });
 
   spheres.forEach((object) => {
-    if (object.hitmapId) {
-      objectMap[object.hitmapId] = { object, type: "sphere" };
+    if (object.id) {
+      objectMap[object.id] = { object, type: "sphere" };
     }
   });
 
@@ -104,21 +104,21 @@ function Example() {
     if (clickedObj) {
       const {
         object: {
-          hitmapId,
+          id,
           pose: { orientation, position },
           info,
           color,
         },
         type,
       } = clickedObj;
-      let text = `hitmapId: ${hitmapId}\nx: ${position.x}\ny: ${position.y}\nz: ${position.z}`;
+      let text = `id: ${id}\nx: ${position.x}\ny: ${position.y}\nz: ${position.z}`;
       if (info) {
         text += `\ndescription: ${info.description}\nobjectId: ${info.objectId}`;
       }
 
-      const id = textMarkers.length;
+      const idTextMarker = textMarkers.length;
       textMarkers.push({
-        id,
+        id: idTextMarker,
         text,
         color: { r: 1, g: 1, b: 1, a: 1 },
         pose: {
@@ -141,10 +141,10 @@ function Example() {
         setCameraState(cameraState);
       }}
       onClick={(e, arg) => {
-        if (clickedId === arg.clickedObjectId) {
+        if (clickedId === arg.objectId) {
           setClickedId(undefined);
         } else {
-          setClickedId(arg.clickedObjectId);
+          setClickedId(arg.objectId);
         }
       }}>
       <Cubes getHitmapId={getHitmapId}>{cubes}</Cubes>

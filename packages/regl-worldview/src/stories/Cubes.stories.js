@@ -5,7 +5,6 @@ import React from "react";
 
 import { intToRGB } from "../utils/commandUtils";
 import Container from "./Container";
-import PerComponentHitmapStory from "./PerComponentHitmapStory";
 import { cube, p, UNIT_QUATERNION, buildMatrix, rng } from "./util";
 import withRange from "./withRange";
 
@@ -48,7 +47,7 @@ const instancedCameraState = {
 class DynamicCubes extends React.Component<any, any> {
   state = { cubeCount: 1, cubeId: -1 };
   onContainerClick = (e, args) => {
-    this.setState({ cubeId: args.clickedObjectId || -1 });
+    this.setState({ cubeId: args.objectId || -1 });
   };
 
   render() {
@@ -109,7 +108,6 @@ storiesOf("Worldview", module)
       return <DynamicCubes range={range} />;
     })
   )
-  .add("<Cubes> - per-component interaction", () => <PerComponentHitmapStory />)
   .add(
     "<Cubes> - instanced",
     withRange((range) => {

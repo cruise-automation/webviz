@@ -65,30 +65,30 @@ function Example() {
   }
 
   function onContainerClick(e, args) {
-    if (!args.clickedObjectId) {
+    if (!args.objectId) {
       setCubeDetails({});
     }
   }
 
   function onContainerMouseMove(e, args) {
-    if (!args.clickedObjectId) {
+    if (!args.objectId) {
       setCursor("auto");
     }
   }
 
-  function onCubeClick(e, { interactedObject }) {
-    setCubeDetails(interactedObject);
+  function onCubeClick(e, { object }) {
+    setCubeDetails(object);
   }
 
-  function onCubeDoubleClick(id, { interactedObject }) {
+  function onCubeDoubleClick(id, { object }) {
     const newCubes = [...cubes];
-    remove(newCubes, (cube) => cube.id === interactedObject.id);
+    remove(newCubes, (cube) => cube.id === object.id);
 
     setCubes(newCubes);
   }
 
-  function onCubeHover(e, { interactedObject }) {
-    setCursor(interactedObject.mouseCursor);
+  function onCubeHover(e, { object }) {
+    setCursor(object.mouseCursor);
   }
 
   return (

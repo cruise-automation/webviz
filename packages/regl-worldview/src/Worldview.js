@@ -45,12 +45,19 @@ type State = {|
   worldviewContext: WorldviewContext,
 |};
 
-function handleWorldviewMouseInteraction(objectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
+function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
+  const objectId = rawObjectId !== 0 ? rawObjectId : undefined;
+  const args = {
+    ray,
+    objectId,
+    get clickedObjectId() {
+      console.warn('"clickedObjectId" is deprecated. Please use "objectId" instead.');
+      return objectId;
+    },
+  };
+
   try {
-    handler(e, {
-      ray,
-      clickedObjectId: objectId !== 0 ? objectId : undefined,
-    });
+    handler(e, args);
   } catch (err) {
     console.error("Error during mouse handler", err);
   }

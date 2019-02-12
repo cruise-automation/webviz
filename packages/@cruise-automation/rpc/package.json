@@ -1,6 +1,6 @@
 {
   "name": "@cruise-automation/rpc",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "description": "Add RPC to WebWorkers with transferrable object support",
   "main": "lib/index.js",
   "license": "Apache-2.0",
@@ -12,5 +12,8 @@
   "keywords": [
     "WebWorker",
     "rpc"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -4,6 +4,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import last from "lodash/last";
+import remove from "lodash/remove";
+import sample from "lodash/sample";
 import polygonGenerator from "polygon-generator";
 import React, { useState, useEffect } from "react";
 import seedrandom from "seedrandom";
@@ -80,6 +83,9 @@ export const scope = {
   useEffect,
   Worldview,
   seedrandom,
+  last,
+  remove,
+  sample,
 
   polygonGenerator,
   styled,

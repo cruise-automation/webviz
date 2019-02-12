@@ -10,7 +10,7 @@ import React from "react";
 
 import WorldviewCodeEditor from "./utils/WorldviewCodeEditor";
 
-function makeCodeComponent(raw, componentName) {
+function makeCodeComponent(raw, componentName, isRowView) {
   const code = raw
     .split("// #BEGIN EXAMPLE")[1]
     .split("// #END EXAMPLE")[0]
@@ -22,7 +22,12 @@ function makeCodeComponent(raw, componentName) {
 
   // eslint-disable-next-line react/display-name
   return () => (
-    <WorldviewCodeEditor code={code[1].trim()} nonEditableCode={code[0].trim()} componentName={componentName} />
+    <WorldviewCodeEditor
+      code={code[1].trim()}
+      nonEditableCode={code[0].trim()}
+      componentName={componentName}
+      isRowView={isRowView}
+    />
   );
 }
 
@@ -59,6 +64,8 @@ export const Hitmap = makeCodeComponent(require("!!raw-loader!./Hitmap"), "Hitma
 export const LinesDemo = makeCodeComponent(require("!!raw-loader!./LinesDemo"), "LinesDemo");
 
 export const LinesWireframe = makeCodeComponent(require("!!raw-loader!./LinesWireframe"), "LinesWireframe");
+
+export const MouseEvents = makeCodeComponent(require("!!raw-loader!./MouseEvents"), "MouseEvents", true);
 
 export const Overlay = makeCodeComponent(require("!!raw-loader!./Overlay"), "Overlay");
 

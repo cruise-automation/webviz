@@ -12,8 +12,9 @@ import QuickStart from "./2.1.QuickStart.mdx";
 import Worldview from "./3.1.Worldview.mdx";
 import Camera from "./3.2.Camera.mdx";
 import Command from "./3.3.Command.mdx";
-import Flow from "./3.4.FlowTypes.mdx";
-import BrowserSupport from "./3.5.BrowserSupport.mdx";
+import MouseEvents from "./3.4.MouseEvents.mdx";
+import Flow from "./3.5.FlowTypes.mdx";
+import BrowserSupport from "./3.6.BrowserSupport.mdx";
 import Arrows from "./4.1.Arrows.mdx";
 import Text from "./4.10.Text.mdx";
 import Triangles from "./4.11.Triangles.mdx";
@@ -36,6 +37,7 @@ export const componentList = {
   Worldview,
   Camera,
   Command,
+  MouseEvents,
   Arrows,
   Cones,
   Cubes,
@@ -60,7 +62,7 @@ const ROUTE_CONFIG = [
   },
   {
     name: "API",
-    subRouteNames: ["Worldview", "Camera", "Command", "Flow", "Browser Support"],
+    subRouteNames: ["Worldview", "Camera", "Command", "Mouse Events", "Flow", "Browser Support"],
   },
   {
     name: "Commands",

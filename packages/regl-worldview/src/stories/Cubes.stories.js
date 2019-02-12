@@ -47,7 +47,7 @@ const instancedCameraState = {
 class DynamicCubes extends React.Component<any, any> {
   state = { cubeCount: 1, cubeId: -1 };
   onContainerClick = (e, args) => {
-    this.setState({ cubeId: args.interactedObjectId || -1 });
+    this.setState({ cubeId: args.objectId || -1 });
   };
 
   render() {

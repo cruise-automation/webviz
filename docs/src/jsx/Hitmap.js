@@ -141,10 +141,10 @@ function Example() {
         setCameraState(cameraState);
       }}
       onClick={(e, arg) => {
-        if (clickedId === arg.interactedObjectId) {
+        if (clickedId === arg.objectId) {
           setClickedId(undefined);
         } else {
-          setClickedId(arg.interactedObjectId);
+          setClickedId(arg.objectId);
         }
       }}>
       <Cubes getHitmapId={getHitmapId}>{cubes}</Cubes>

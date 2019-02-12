@@ -40,8 +40,6 @@ const LiveWrapper = styled.div`
 const column = css`
   flex: 1 1 auto;
   width: 50%;
-  min-height: 400px;
-  max-height: 700px;
   @media (max-width: 600px) {
     width: 100%;
   }
@@ -50,12 +48,19 @@ const column = css`
 const StyledEditor = styled.div`
   overflow: scroll;
   position: relative;
+  min-height: 400px;
+  max-height: 700px;
   pre {
     &:focus {
       outline: none;
     }
   }
   ${({ isRowView }) => !isRowView && column}
+  ${({ isRowView }) =>
+    isRowView &&
+    css`
+      margin-bottom: 8px;
+    `}
 `;
 
 const StyledNonEditableArea = styled.pre`
@@ -64,7 +69,7 @@ const StyledNonEditableArea = styled.pre`
   overflow-y: scroll;
 `;
 
-const StyledPreview = styled(LivePreview)`
+const StyledPreview = styled.div`
   position: relative;
   background: transparent;
   color: black;
@@ -149,7 +154,9 @@ function CodeEditor({
           <StyledNonEditableArea>{nonEditableCode}</StyledNonEditableArea>
           <LiveEditor />
         </StyledEditor>
-        <StyledPreview isRowView={isRowView} />
+        <StyledPreview isRowView={isRowView}>
+          <LivePreview />
+        </StyledPreview>
       </LiveWrapper>
       <StyledError />
     </StyledProvider>

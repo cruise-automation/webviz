@@ -11,9 +11,18 @@ import createREGL from "regl";
 
 import { camera, CameraStore } from "./camera/index";
 import Command from "./commands/Command";
-import type { Dimensions, RawCommand, CompiledReglCommand, CameraCommand, Vec4, CameraState } from "./types";
+import type {
+  Dimensions,
+  RawCommand,
+  CompiledReglCommand,
+  CameraCommand,
+  Vec4,
+  CameraState,
+  MouseEventEnum,
+} from "./types";
 import { getIdFromColor } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
+import type { Ray } from "./utils/Raycast";
 import { getRayFromClick } from "./utils/Raycast";
 
 type Props = any;
@@ -261,6 +270,14 @@ export class WorldviewContext {
       });
     });
   }
+
+  callComponentHandlers = (objectId: number, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
+    this._hitmapCalls.forEach((_, component) => {
+      if (component.handleMouseEvent) {
+        component.handleMouseEvent(objectId, e, ray, mouseEventName);
+      }
+    });
+  };
 
   _drawInput = (isHitmap?: boolean) => {
     const drawCallsMap = isHitmap ? this._hitmapCalls : this._drawCalls;

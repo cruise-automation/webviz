@@ -96,7 +96,6 @@ class TextElement {
     }
 
     if (autoBackgroundColor && !isColorEqual(textColor, this._prevBgColor)) {
-      // set the bgColor if it's not already set or if it's different from the current textColor
       this._prevBgColor = textColor;
       const isTextColorDark = isColorDark(textColor);
       const hexBgColor = isTextColorDark ? BG_COLOR_DARK : BG_COLOR_LIGHT;

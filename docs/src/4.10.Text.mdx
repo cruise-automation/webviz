@@ -6,13 +6,22 @@ import {Text} from './jsx/allLiveEditors'
 
 ## Props
 
-| Name       | Type     | Default | Description                     |
-| ---------- | -------- | ------- | ------------------------------- |
-| `children` | `Text[]` | `[]`    | array of Text markers to render |
+| Name            | optional | Type      | Default | Description                            |
+| --------------- | -------- | --------- | ------- |
+| `children`      |          | `Text[]`  | `[]`    | array of Text markers to render        |
+| `enableBgColor` | yes      | `boolean` |         | show solid background color if enabled |
+
 
 ### Text
 
 ```js
+type Color = {
+  r: number, // between 0 and 1
+  g: number, // between 0 and 1
+  b: number, // between 0 and 1
+  a: number, // between 0 and 1
+}
+
 type Text = {
   pose: {
     position: { x: number, y: number, z: number },
@@ -23,15 +32,18 @@ type Text = {
     y: number,
     z: number
   },
-  color: {
-    r: number, // between 0 and 1
-    g: number, // between 0 and 1
-    b: number, // between 0 and 1
-    a: number, // between 0 and 1
-  },
+  color: Color,
+  colors?: [
+  // text color, only applied when colors.length >= 2
+  Color,
+  // background color, only applied when colors.length >= 2
+  Color
+ ],
   name?: string,
   text: string,
 }
 ```
 
 <Text />
+
+

@@ -20,11 +20,25 @@ function Example() {
       position: { x: 10, y: 10, z: 1 },
     },
     scale: { x: 1, y: 1, z: 1 },
+    colors: [
+      {
+        r: 1,
+        g: 1,
+        b: 1,
+        a: 1,
+      },
+      {
+        r: 1,
+        g: 0,
+        b: 0,
+        a: 0.8,
+      },
+    ],
   };
 
   return (
     <Worldview>
-      <Text>{[labelMarker]}</Text>
+      <Text enableBgColor>{[labelMarker]}</Text>
       <Axes />
     </Worldview>
   );

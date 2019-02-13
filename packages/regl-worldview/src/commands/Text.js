@@ -15,7 +15,7 @@ import WorldviewReactContext from "../WorldviewReactContext";
 
 const BG_COLOR_LIGHT = "#ffffff";
 const BG_COLOR_DARK = "#1f1e27";
-const BRIGHTNESS_THRESHOLD = 123;
+const BRIGHTNESS_THRESHOLD = 128;
 const DEFAULT_TEXT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
 const DEFAULT_BG_COLOR = { r: 0, g: 0, b: 0, a: 0 };
 
@@ -57,11 +57,15 @@ function insertGlobalCss() {
   cssHasBeenInserted = true;
 }
 
-function getIsColorDark({ r, g, b }: Color): boolean {
+function isColorDark({ r, g, b }: Color): boolean {
   // ITU-R BT.709 https://en.wikipedia.org/wiki/Rec._709
   // 0.2126 * 255 * r + 0.7152 * 255 * g + 0.0722 * 255 * b
   const luma = 54.213 * r + 182.376 * g + 18.411 * b;
-  return luma > BRIGHTNESS_THRESHOLD;
+  return luma < BRIGHTNESS_THRESHOLD;
+}
+
+function isColorEqual(a: Color, b: Color): boolean {
+  return a.r === b.r && a.g === b.g && a.b === b.b && a.a === b.a;
 }
 
 class TextElement {
@@ -80,28 +84,26 @@ class TextElement {
     this._inner.appendChild(this._text);
   }
 
-  update(marker: TextMarker, left: number, top: number, enableBgColor?: boolean) {
+  update(marker: TextMarker, left: number, top: number, autoBackgroundColor?: boolean) {
     this.wrapper.style.transform = `translate(${left.toFixed()}px,${top.toFixed()}px)`;
     const { color, colors = [] } = marker;
     const hasBgColor = colors.length >= 2;
     const textColor = hasBgColor ? colors[0] : color;
 
-    if (this._prevTextColor !== textColor) {
+    if (!isColorEqual(this._prevTextColor, textColor)) {
       this._prevTextColor = textColor;
       this.wrapper.style.color = getCSSColor(textColor);
     }
 
-    if (enableBgColor) {
+    if (autoBackgroundColor && !isColorEqual(textColor, this._prevBgColor)) {
       // set the bgColor if it's not already set or if it's different from the current textColor
-      if (!hasBgColor && this._prevBgColor !== textColor) {
-        this._prevBgColor = textColor;
-        const isTextColorDark = getIsColorDark(textColor);
-        const hexBgColor = isTextColorDark ? BG_COLOR_DARK : BG_COLOR_LIGHT;
-        this._inner.style.background = hexBgColor;
-      } else if (hasBgColor && this._prevBgColor !== colors[1]) {
-        this._prevBgColor = colors[1];
-        this._inner.style.background = getCSSColor(colors[1]);
-      }
+      this._prevBgColor = textColor;
+      const isTextColorDark = isColorDark(textColor);
+      const hexBgColor = isTextColorDark ? BG_COLOR_DARK : BG_COLOR_LIGHT;
+      this._inner.style.background = hexBgColor;
+    } else if (hasBgColor && !isColorEqual(colors[1], this._prevBgColor)) {
+      this._prevBgColor = colors[1];
+      this._inner.style.background = getCSSColor(colors[1]);
     }
 
     if (this._text.textContent !== marker.text) {
@@ -112,7 +114,7 @@ class TextElement {
 
 type Props = {
   children: TextMarker[],
-  enableBgColor?: boolean,
+  autoBackgroundColor?: boolean,
 };
 
 // Render text on a scene using DOM nodes, similar to the Overlay command.
@@ -141,7 +143,7 @@ export default class Text extends React.Component<Props> {
   paint = () => {
     const context = this._context;
     const textComponents = this._textComponents;
-    const { children: markers, enableBgColor } = this.props;
+    const { children: markers, autoBackgroundColor } = this.props;
     const { current: textContainer } = this._textContainerRef;
     const initializedData = context && context.initializedData;
 
@@ -178,7 +180,7 @@ export default class Text extends React.Component<Props> {
         textContainer.appendChild(el.wrapper);
       }
 
-      el.update(marker, left, top, enableBgColor);
+      el.update(marker, left, top, autoBackgroundColor);
     }
 
     for (const key of componentsToRemove) {

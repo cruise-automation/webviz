@@ -20,25 +20,13 @@ function Example() {
       position: { x: 10, y: 10, z: 1 },
     },
     scale: { x: 1, y: 1, z: 1 },
-    colors: [
-      {
-        r: 1,
-        g: 1,
-        b: 1,
-        a: 1,
-      },
-      {
-        r: 1,
-        g: 0,
-        b: 0,
-        a: 0.8,
-      },
-    ],
+    // uncomment colors and remove autoBackgroundColor prop to set text and background colors
+    // colors: [{ r: 1, g: 1, b: 1, a: 1 }, { r: 1, g: 0, b: 0, a: 0.8 }],
   };
 
   return (
     <Worldview>
-      <Text enableBgColor>{[labelMarker]}</Text>
+      <Text autoBackgroundColor>{[labelMarker]}</Text>
       <Axes />
     </Worldview>
   );

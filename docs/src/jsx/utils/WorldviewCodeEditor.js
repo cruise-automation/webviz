@@ -139,7 +139,7 @@ ${copyCode}
 
 function App() {
   return (
-    <div className="App" style={{ width: "100vw", height: "100vh" }}>
+    <div className="App" style={{ width: "100vw", height: "100vh", display: "flex" }}>
       <Example />
     </div>
   );

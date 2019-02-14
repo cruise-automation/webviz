@@ -37,6 +37,7 @@ type KeyMotion = { x?: number, y?: number, zoom?: number, yaw?: number, tilt?: n
 type Props = {|
   cameraStore: CameraStore,
   keyMap?: CameraKeyMap,
+  shiftKeys: boolean,
   children?: React.ChildrenArray<React.Element<any> | null>,
 |};
 
@@ -218,6 +219,10 @@ export default class CameraListener extends React.Component<Props> {
     const spinSpeed = this._getMagnitude(KEYBOARD_SPIN_SPEED);
     const { keyMap } = this.props;
     const action: CameraAction | false = (keyMap && keyMap[code]) || DEFAULT_KEYMAP[code] || false;
+
+    if (this._shiftKey && !this.props.shiftKeys) {
+      return null;
+    }
 
     switch (action) {
       case "moveRight":

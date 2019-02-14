@@ -8,6 +8,7 @@
 | `onCameraStateChange` | `(CameraState) => void` |                        | callback whenever the camera state changes                                                              |
 | `defaultCameraState`  | `$Shape<CameraState>`   | `DEFAULT_CAMERA_STATE` | pass in this prop to turn Worldview to an uncontrolled component. `onCameraStateChange` will be ignored |
 | `keyMap`              | `CameraKeyMap`          | {}                     | override default Worldview hotkeys                                                                      |
+| `shiftKeys`           | `boolean`               | true                   | enable/disable shift modifier for keyboard controls                                                     |
 | `backgroundColor`     | `Vec4`                  | `[0,0,0,1]`            | change the scene background color                                                                       |
 | `hitmapOnMouseMove`   | `boolean`               |                        | if enabled, the clicked objectId will be returned from the mouse event handler                          |
 | `children`            | `React.Node`            |                        | regl components to render inside the Worldview                                                          |
@@ -46,3 +47,5 @@ For an example, see [Interactivity](#/docs/examples/interactivity).
       KeyX: false,
       KeyZ: null,
     }} />
+
+When the Shift key is pressed along with keys in the `keyMap`, the motion will be slowed. To disable this behavior, pass `shiftKeys={false}`.

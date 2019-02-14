@@ -21,6 +21,7 @@ const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 
 export type BaseProps = {|
   keyMap?: CameraKeyMap,
+  shiftKeys: boolean,
   backgroundColor?: Vec4,
   // rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
@@ -63,6 +64,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   static defaultProps = {
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
+    shiftKeys: true,
   };
 
   constructor(props: BaseProps) {
@@ -248,13 +250,13 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, showDebug, keyMap } = this.props;
+    const { width, height, showDebug, keyMap, shiftKeys } = this.props;
     const { worldviewContext } = this.state;
     const style = { width, height };
 
     return (
       <React.Fragment>
-        <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap}>
+        <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap} shiftKeys={shiftKeys}>
           <canvas
             style={style}
             width={width}

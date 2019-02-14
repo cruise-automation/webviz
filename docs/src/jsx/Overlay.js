@@ -69,6 +69,8 @@ function Example() {
                 fontSize: 12,
                 padding: 8,
                 whiteSpace: "pre-line",
+                top: 0,
+                left: 0,
               }}>
               <div>{title}</div>
               <div>{text}</div>

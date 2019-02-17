@@ -96,12 +96,13 @@ export type ArrowSize = {
 
 export type ReglClickInfo = {
   ray: Ray,
-  objectId?: number,
+  objectId: ?number,
 };
 
 export type ComponentReglClickInfo = {
   ray: Ray,
   object: Object,
+  objectId: ?number,
 };
 
 export type MouseHandler = (MouseEvent, ?ReglClickInfo) => void;
@@ -166,7 +167,9 @@ export type Arrow = BaseShape & {
   points?: Point[],
 };
 
-export type Cube = BaseShape;
+export type Cube = BaseShape & {
+  colors?: Color[],
+};
 
 export type Cylinder = BaseShape;
 
@@ -184,6 +187,7 @@ export type SphereList = BaseShape & {
 
 export type TriangleList = BaseShape & {
   points: Point[],
+  colors?: Color[],
 };
 
 export type PolygonType = BaseShape & {

@@ -13,6 +13,13 @@ import {Triangles} from './jsx/allLiveEditors'
 ### Triangle
 
 ```js
+type Color =  {
+  r: number, // between 0 and 1
+  g: number, // between 0 and 1
+  b: number, // between 0 and 1
+  a: number, // between 0 and 1
+}
+
 type Triangle = {
   pose: {
     position: { x: number, y: number, z: number },
@@ -23,12 +30,8 @@ type Triangle = {
     y: number,
     z: number,
   },
-  color: {
-    r: number, // between 0 and 1
-    g: number, // between 0 and 1
-    b: number, // between 0 and 1
-    a: number, // between 0 and 1
-  },
+  color: Color,
+  colors?: Color[],
   points: [{ x: number, y: number, z: number }]
 }
 ```

@@ -1,4 +1,4 @@
-import { MouseEvents } from './jsx/allLiveEditors.js';
+import { MouseEvents, MouseEventsInstanced } from './jsx/allLiveEditors.js';
 
 
 # MouseEvents
@@ -48,3 +48,8 @@ Sample usage:
 ## Full Example
 
 <MouseEvents />
+
+## HitmapId Mapping for Instanced Objects
+Usually using instanced objects can help improve rendering performance, e.g. an instanced sphere can contain thousands of spheres. When the user clicks a single sphere, the mapped `objectId` which was generated through `getHitmapId` function will be returned from the event. A common way to generate the hitmapId is:  `getHitmapId={(marker, colorIndex) => marker.id + colorIndex}`.
+
+<MouseEventsInstanced />

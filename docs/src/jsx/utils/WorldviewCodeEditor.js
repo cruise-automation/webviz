@@ -38,6 +38,8 @@ import Worldview, {
   DEFAULT_CAMERA_STATE,
   withPose,
   getCSSColor,
+  intToRGB,
+  cameraStateSelectors,
 } from "regl-worldview";
 
 // Add required packages and files for all examples to run
@@ -76,6 +78,8 @@ const CODE_SANDBOX_CONFIG = {
 };
 
 export const scope = {
+  intToRGB,
+  cameraStateSelectors,
   getCSSColor,
   useRange,
   useState,

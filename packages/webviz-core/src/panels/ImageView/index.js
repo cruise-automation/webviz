@@ -94,8 +94,10 @@ class ImageView extends Component<Props> {
       } // satisfy flow
       topics.sort(naturalSort("name"));
 
-      const rectifiedTopics = [`${group}/image_rect_color`, `${group}/image_rect_color_compressed`];
-      const hasRectifiedTopic = topics.some((topic) => RECTIFIED_TOPIC_REGEX.test(topic.name));
+      const rectifiedTopics = topics
+        .filter(topic => RECTIFIED_TOPIC_REGEX.test(topic.name))
+        .map(topic => topic.name);
+      const hasRectifiedTopic = rectifiedTopics.length > 0;
       const isSelected = topics.some((topic) => topic.name === cameraTopic);
 
       // place rectified topic above other topics
@@ -107,7 +109,6 @@ class ImageView extends Component<Props> {
                 key={rectifiedTopic}
                 value={rectifiedTopic}
                 icon={<CameraMeteringMatrixIcon />}
-                disabled={topics.map((topic) => topic.name).indexOf(rectifiedTopic) < 0}
                 onClick={() => this.onChangeTopic(rectifiedTopic)}>
                 <Tooltip contents={hasRectifiedTopic ? null : `rectified image is not available in the current bag`}>
                   <span>{rectifiedTopic}</span>

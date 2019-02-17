@@ -95,8 +95,8 @@ class ImageView extends Component<Props> {
       topics.sort(naturalSort("name"));
 
       const rectifiedTopics = topics
-        .filter(topic => RECTIFIED_TOPIC_REGEX.test(topic.name))
-        .map(topic => topic.name);
+        .filter((topic) => RECTIFIED_TOPIC_REGEX.test(topic.name))
+        .map((topic) => topic.name);
       const hasRectifiedTopic = rectifiedTopics.length > 0;
       const isSelected = topics.some((topic) => topic.name === cameraTopic);
 

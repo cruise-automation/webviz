@@ -47,20 +47,24 @@ type Props = {
 };
 
 // command to draw a filled polygon
-export default function FilledPolygons({ children: polygons = [], getHitmapId }: Props) {
+export default function FilledPolygons({ children: polygons = [], getHitmapId, ...props }: Props) {
   const triangles = [];
   for (const poly of polygons) {
-    const { points, id, color } = poly;
+    const { points, color, ...restOfProps } = poly;
     const pose = poly.pose ? poly.pose : NO_POSE;
     const earcutPoints: Vec3[] = getEarcutPoints(points);
     const polyPoints: Point[] = earcutPoints.map(([x, y, z]) => ({ x, y, z }));
     triangles.push({
-      id,
+      ...restOfProps,
       points: polyPoints,
       pose,
       color: { r: color[0], g: color[1], b: color[2], a: color[3] },
       scale: DEFAULT_SCALE,
     });
   }
-  return <Triangles getHitmapId={getHitmapId}>{triangles}</Triangles>;
+  return (
+    <Triangles {...props} getHitmapId={getHitmapId}>
+      {triangles}
+    </Triangles>
+  );
 }

@@ -50,6 +50,6 @@ Sample usage:
 <MouseEvents />
 
 ## HitmapId Mapping for Instanced Objects
-Usually using instanced objects can help improve rendering performance, e.g. an instanced sphere can contain thousands of spheres. When the user clicks a single sphere, the mapped `objectId` which was generated through `getHitmapId` function will be returned from the event. A common way to generate the hitmapId is:  `getHitmapId={(marker, colorIndex) => marker.id + colorIndex}`.
+Usually using instanced objects can help improve rendering performance, e.g. an instanced sphere can contain thousands of spheres. When the user clicks a single sphere, the mapped instanceId (returned as `objectId`) which was generated through `getHitmapId` function will be returned from the event. A common way to generate the instanceId is:  `getHitmapId={(marker, pointIndex) => marker.id + pointIndex}`.
 
 <MouseEventsInstanced />

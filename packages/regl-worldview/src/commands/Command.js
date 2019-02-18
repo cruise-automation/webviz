@@ -18,7 +18,7 @@ import WorldviewReactContext from "../WorldviewReactContext";
 export type Props<T> = {
   children?: T[],
   reglCommand: RawCommand<T>,
-  getHitmapId?: (T, colorIndex?: number) => ?number,
+  getHitmapId?: (T, pointIndex?: number) => ?number,
   layerIndex?: number,
   [MouseEventEnum]: ComponentMouseHandler,
 };
@@ -86,14 +86,14 @@ export default class Command<T> extends React.Component<Props<T>> {
     const { hitmapProps = [] } = this.props;
 
     return hitmapProps.find((hitmapProp) => {
-      if (hitmapProp.color) {
+      if (hitmapProp.points) {
+        // just return the original hitmapProp for instanced rendering
+        return true;
+      } else if (hitmapProp.color) {
         const hitmapPropId = getIdFromColor(hitmapProp.color.map((color) => color * 255));
         if (hitmapPropId === objectId) {
           return true;
         }
-      } else if (hitmapProp.colors) {
-        // Just returning the original objectId because we don't want to do potentially expensive search here.
-        return objectId;
       }
       return false;
     });
@@ -137,10 +137,10 @@ function getHitmapProps(getHitmapId, children) {
   }
 
   return children.reduce((memo, marker) => {
-    if (marker.colors) {
+    if (marker.points) {
       memo.push({
         ...marker,
-        colors: marker.colors.map((_, colorIndex) => intToRGB(getHitmapId(marker, colorIndex) || 0)),
+        colors: marker.points.map((_, pointIndex) => intToRGB(getHitmapId(marker, pointIndex) || 0)),
       });
     } else if (marker.color) {
       const hitmapId = getHitmapId(marker);

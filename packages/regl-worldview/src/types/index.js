@@ -157,7 +157,7 @@ export type Pose = {
 };
 
 export type BaseShape = {
-  hitmapId?: number,
+  id?: number,
   pose: Pose,
   scale: Scale,
   color: Color,

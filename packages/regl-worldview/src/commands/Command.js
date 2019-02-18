@@ -87,8 +87,10 @@ export default class Command<T> extends React.Component<Props<T>> {
 
     return hitmapProps.find((hitmapProp) => {
       if (hitmapProp.points) {
-        // just return the original hitmapProp for instanced rendering
-        return true;
+        // for instanced rendering, find the hitmapProp that produces the same id range and return it
+        if (objectId >= hitmapProp.id && objectId < hitmapProp.id + hitmapProp.points.length) {
+          return true;
+        }
       } else if (hitmapProp.color) {
         const hitmapPropId = getIdFromColor(hitmapProp.color.map((color) => color * 255));
         if (hitmapPropId === objectId) {

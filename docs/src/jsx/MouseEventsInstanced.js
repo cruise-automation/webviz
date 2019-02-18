@@ -51,7 +51,7 @@ function Example() {
     if (object && object.points && objectId) {
       const idx = objectId - object.id;
       if (idx >= 0 && idx <= points.length) {
-        msg = `Clicked objectId is ${objectId} and position is ${JSON.stringify(markerMatrix.points[idx])}`;
+        msg = `Clicked objectId is ${objectId} and its position is ${JSON.stringify(markerMatrix.points[idx])}`;
       }
     }
     setCommandMsg(msg);
@@ -72,9 +72,10 @@ function Example() {
           top: 0,
           width: 320,
           maxWidth: "100%",
-          background: "rgba(255, 255, 255, 0.66)",
+          color: "white",
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
         }}>
-        {commandMsg ? <span style={{ color: "green" }}>{commandMsg}</span> : <span>Click any object</span>}
+        {commandMsg ? <span>{commandMsg}</span> : <span>Click any object</span>}
       </div>
       <Points getHitmapId={(marker, idx) => marker.id + idx} onClick={onObjectClick}>
         {[markerMatrix]}

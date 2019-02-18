@@ -59,7 +59,7 @@ export function getCSSColor(color: Color = DEFAULT_TEXT_COLOR) {
   return `rgba(${(r * 255).toFixed()}, ${(g * 255).toFixed()}, ${(b * 255).toFixed()}, ${a.toFixed(3)})`;
 }
 
-const toRGBAArray = (colors: Color[]): Float32Array => {
+const toRGBAArray = (colors: $ReadOnlyArray<Color>): Float32Array => {
   const result = new Float32Array(colors.length * 4);
   let i = 0;
   for (const { r, g, b, a } of colors) {
@@ -127,10 +127,10 @@ export function getVertexColors({
   color,
   points,
 }: {
-  colors?: (Color | Vec4)[],
+  colors?: $ReadOnlyArray<Color> | $ReadOnlyArray<Vec4>,
   color: Color,
-  points: Point[],
-}): Float32Array | Vec4[] {
+  points: $ReadOnlyArray<Point>,
+}): Float32Array | $ReadOnlyArray<Vec4> {
   if ((!colors || !colors.length) && color) {
     return constantRGBAArray(points.length, color);
   }

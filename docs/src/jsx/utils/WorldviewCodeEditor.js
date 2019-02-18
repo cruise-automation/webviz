@@ -43,9 +43,8 @@ import Worldview, {
 // Add required packages and files for all examples to run
 const CODE_SANDBOX_CONFIG = {
   dependencies: {
-    // TODO(Audrey): update to use "latest" once hooks api is finalized
-    react: "16.7.0-alpha.2",
-    "react-dom": "16.7.0-alpha.2",
+    react: "latest",
+    "react-dom": "latest",
     "regl-worldview": "latest",
     seedrandom: "latest",
     "polygon-generator": "latest",

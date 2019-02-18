@@ -7,7 +7,7 @@
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
 
-import Worldview, { Axes, Spheres } from "regl-worldview";
+import Worldview, { Axes, Points } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
@@ -40,12 +40,12 @@ function Example() {
       orientation: { x: 0, y: 0, z: 0, w: 1 },
       position: { x: 0, y: 0, z: 0 },
     },
-    scale: { x: 1, y: 1, z: 1 },
+    scale: { x: 10, y: 10, z: 10 },
     colors: points.map((_, idx) => numberToColor(idx, points.length)),
     points,
   };
 
-  function onSphereClick(ev, { objectId, object }) {
+  function onObjectClick(ev, { objectId, object }) {
     let msg = "";
     // use the objectId to find the particular object that's been clicked
     if (object && object.points && objectId) {
@@ -74,11 +74,11 @@ function Example() {
           maxWidth: "100%",
           background: "rgba(255, 255, 255, 0.66)",
         }}>
-        {commandMsg ? <span style={{ color: "green" }}>{commandMsg}</span> : <span>Click any sphere</span>}
+        {commandMsg ? <span style={{ color: "green" }}>{commandMsg}</span> : <span>Click any object</span>}
       </div>
-      <Spheres getHitmapId={(marker, idx) => marker.id + idx} onClick={onSphereClick}>
+      <Points getHitmapId={(marker, idx) => marker.id + idx} onClick={onObjectClick}>
         {[markerMatrix]}
-      </Spheres>
+      </Points>
       <Axes />
     </Worldview>
   );

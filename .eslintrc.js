@@ -23,7 +23,7 @@ module.exports = {
   rules: {
     curly: "error",
     "prettier/prettier": "error",
-    "no-console": ["error", { allow: ["warn", "error"] }],
+    "no-console": ["error", { allow: ["warn", "error", "debug"] }],
     "no-unused-vars": ["error", { args: "none", varsIgnorePattern: "^_" }],
     "flowtype/no-unused-expressions": "error",
     "no-underscore-dangle": ["error", { allowAfterThis: true }],

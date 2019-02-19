@@ -286,7 +286,7 @@ export class WorldviewContext {
     sortedDrawCalls.forEach((drawInput: DrawInput) => {
       const { command, drawProps, instance } = drawInput;
       if (!drawProps) {
-        return console.warn(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`);
+        return console.debug(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`, drawInput);
       }
       const cmd = this._compiled.get(command);
       if (!cmd) {

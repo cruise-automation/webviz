@@ -182,7 +182,7 @@ export class WorldviewContext {
     this.dimension = dimension;
   }
 
-  raycast(canvasX: number, canvasY: number) {
+  raycast = (canvasX: number, canvasY: number) => {
     if (!this.initializedData) {
       return undefined;
     }
@@ -194,7 +194,7 @@ export class WorldviewContext {
       width,
       height,
     });
-  }
+  };
 
   paint() {
     const start = Date.now();

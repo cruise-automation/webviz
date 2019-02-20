@@ -11,7 +11,6 @@ import React, { useState } from "react";
 import useRange from "./utils/useRange";
 import Worldview, { FilledPolygons, Axes } from "regl-worldview";
 
-
 // #BEGIN EDITABLE
 function Example() {
   const [selectedObj, setSelectedObj] = useState();

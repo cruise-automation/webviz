@@ -52,7 +52,7 @@ export default function FilledPolygons({ children: polygons = [], getHitmapId, .
   for (const poly of polygons) {
     const { points, color, ...restOfMarker } = poly;
     const pose = poly.pose ? poly.pose : NO_POSE;
-    const earcutPoints: Vec3[] = getEarcutPoints(points);
+    const earcutPoints: Vec3[] = getEarcutPoints(points.map(({ x, y, z }) => [x, y, z]));
     const polyPoints: Point[] = earcutPoints.map(([x, y, z]) => ({ x, y, z }));
     triangles.push({
       ...restOfMarker,

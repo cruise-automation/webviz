@@ -15,10 +15,15 @@ import { getNodeEnv } from "../utils/common";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
 
+type GetHitmapId<T> = (T, pointIndex?: number) => ?number;
+
+type HitmapProp<T> = T & ({ colors: Color[] } | { color: Color });
+
 export type Props<T> = {
   children?: T[],
   reglCommand: RawCommand<T>,
-  getHitmapId?: (T, pointIndex?: number) => ?number,
+  getHitmapId?: GetHitmapId,
+  testObjectIdInRange?: (objectId: number, hitmapProps: HitmapProp<T>) => boolean,
   layerIndex?: number,
   [MouseEventEnum]: ComponentMouseHandler,
 };
@@ -83,12 +88,12 @@ export default class Command<T> extends React.Component<Props<T>> {
   }
 
   _getHitmapPropFromHitmapId(objectId: number) {
-    const { hitmapProps = [] } = this.props;
+    const { hitmapProps = [], testObjectIdInRange } = this.props;
 
     return hitmapProps.find((hitmapProp) => {
       if (hitmapProp.points) {
         // for instanced rendering, find the hitmapProp that produces the same id range and return it
-        if (objectId >= hitmapProp.id && objectId < hitmapProp.id + hitmapProp.points.length) {
+        if (testObjectIdInRange(objectId, hitmapProp)) {
           return true;
         }
       } else if (hitmapProp.color) {
@@ -133,7 +138,7 @@ export default class Command<T> extends React.Component<Props<T>> {
   }
 }
 
-function getHitmapProps(getHitmapId, children) {
+function defaultGetHitmapProps<T>(getHitmapId: GetHitmapId<T>, children: T[]): ?(HitmapProp[]) {
   if (!getHitmapId || !children || children.length === 0) {
     return undefined;
   }
@@ -158,17 +163,46 @@ function getHitmapProps(getHitmapId, children) {
   }, []);
 }
 
+// default function to get hitmapId, support regular and instanced object rendering
+function defaultGetHitmapId<T>(marker: T, pointIndex: ?number = 0) {
+  return marker.id + pointIndex;
+}
+// for instanced rendering, test if the objectId is contained in the object
+// e.g. for marker {id: 2, points: [100 points]}, if the objectId is 92, the function will return true
+// because the objectId is in the marker instance range 2 ~ 101
+function defaultTestObjectIdInRange<T>(objectId: number, hitmapProp: T) {
+  if (!hitmapProp.points) {
+    return false;
+  }
+  return objectId >= hitmapProp.id && objectId < hitmapProp.id + hitmapProp.points.length;
+}
 // Factory function for creating simple regl components.
 // Sample usage: const Cubes = makeCommand('Cubes', rawCommand)
 // When you have children as the drawProps input, it's useful to simply call makeCommand
 // which creates a new regl component. It also handles basic hitmap interactions.
 export function makeCommand<T>(name: string, command: RawCommand<T>): React.StatelessFunctionalComponent<T> {
-  const cmd = (props: Props<T>) => {
-    const hitmapProps = props.getHitmapProps
-      ? props.getHitmapProps()
-      : getHitmapProps(props.getHitmapId, props.children);
-    return <Command {...props} reglCommand={command} drawProps={props.children} hitmapProps={hitmapProps} />;
+  const cmd = ({ getHitmapProps, children, enableInstanceHitmap, ...rest }: Props<T>) => {
+    let getHitmapId;
+    let testObjectIdProp = {};
+
+    // apply defaults if getHitmapId and testObjectIdInRange are not provided
+    if (enableInstanceHitmap) {
+      if ((rest.getHitmapId && !rest.testObjectIdInRange) || (!rest.getHitmapId && rest.testObjectIdInRange)) {
+        console.warn(
+          "Possible wrong hitmap id mapping in instanced rendering. Keep or remove both `getHitmapId` and `testObjectIdInRange` props."
+        );
+      }
+      getHitmapId = rest.getHitmapId || defaultGetHitmapId;
+      testObjectIdProp = {
+        testObjectIdInRange: rest.testObjectIdInRange || defaultTestObjectIdInRange,
+      };
+    }
+    const hitmapProps = getHitmapProps ? getHitmapProps() : defaultGetHitmapProps(getHitmapId, children);
+    return (
+      <Command {...rest} {...testObjectIdProp} reglCommand={command} drawProps={children} hitmapProps={hitmapProps} />
+    );
   };
+
   cmd.displayName = name;
   cmd.reglCommand = command;
   return cmd;

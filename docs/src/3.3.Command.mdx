@@ -4,9 +4,11 @@ import CommandDemo from './jsx/Command.js';
 
 Command is the base class for all regl-based drawing commands. Subclasses should override getDrawProps and (and optionally getHitmapProps). Note: getHitmapProps is not implemented in this base class.
 
-| Name         | optional | type     | Default | Description                                                                       |
-| ------------ | -------- | -------- | ------- |
-| `layerIndex` | yes      | `number` |         | defines the draw order of each command, e.g. -1 will put the shape in lower layer |
+| Name                  | optional | type                                                        | Default | Description                                                                                                      |
+| --------------------- | -------- | ----------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `layerIndex`          | yes      | `number`                                                    |         | defines the draw order of each command, e.g. -1 will put the shape in lower layer                                |
+| `getHitmapId`         | yes      | `(T, pointIndex?: number) => ?number`                       |         | map the marker object to a hitmapId                                                                              |
+| `testObjectIdInRange` | yes      | `(objectId: number, hitmapProps: HitmapProp<T>) => boolean` |         | test if the `objectId` returned by the hitmap event is in the marker's id range when rendering instanced objects |
 
 
 Sample usage:

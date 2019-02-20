@@ -7,7 +7,7 @@
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
 
-import Worldview, { Axes, Points } from "regl-worldview";
+import Worldview, { Axes, Points, Spheres } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
@@ -22,16 +22,18 @@ function Example() {
   }
 
   const points = [];
+  const spheresPoints = [];
   const step = 5;
   for (let i = 0; i < 10; i++) {
     for (let j = 0; j < 10; j++) {
       for (let k = 0; k < 10; k++) {
         points.push({ x: i * step, y: j * step, z: k * step });
+        spheresPoints.push({ x: i * step - 50, y: j * step, z: k * step });
       }
     }
   }
 
-  const markerMatrix = {
+  const pointsMarker = {
     // Unique identifier for the object that contains multiple instances.
     // If an object starts with 1000 and has 500 colors, the returned objectId
     // will be in the range of 1000 ~ 1499
@@ -43,15 +45,30 @@ function Example() {
     scale: { x: 10, y: 10, z: 10 },
     colors: points.map((_, idx) => numberToColor(idx, points.length)),
     points,
+    isSphere: false,
+  };
+
+  const spheresMarker = {
+    id: 6000,
+    pose: {
+      orientation: { x: 0, y: 0, z: 0, w: 1 },
+      position: { x: 0, y: 0, z: 0 },
+    },
+    scale: { x: 2, y: 2, z: 2 },
+    colors: points.map((_, idx) => numberToColor(idx, points.length)),
+    points: spheresPoints,
+    isSphere: true,
   };
 
   function onObjectClick(ev, { objectId, object }) {
     let msg = "";
     // use the objectId to find the particular object that's been clicked
     if (object && object.points && objectId) {
-      const idx = objectId - object.id;
+      // spheres has reverse id, from 6000 to 5001
+      const idx = object.isSphere ? object.id - objectId : objectId - object.id;
+
       if (idx >= 0 && idx <= points.length) {
-        msg = `Clicked objectId is ${objectId} and its position is ${JSON.stringify(markerMatrix.points[idx])}`;
+        msg = `Clicked objectId is ${objectId} and its position is ${JSON.stringify(pointsMarker.points[idx])}`;
       }
     }
     setCommandMsg(msg);
@@ -77,9 +94,18 @@ function Example() {
         }}>
         {commandMsg ? <span>{commandMsg}</span> : <span>Click any object</span>}
       </div>
-      <Points getHitmapId={(marker, idx) => marker.id + idx} onClick={onObjectClick}>
-        {[markerMatrix]}
+      <Points enableInstanceHitmap onClick={onObjectClick}>
+        {[pointsMarker]}
       </Points>
+      <Spheres
+        enableInstanceHitmap
+        getHitmapId={(marker, pointIdx) => marker.id - pointIdx}
+        testObjectIdInRange={(objectId, hitmapProp) =>
+          objectId <= hitmapProp.id && objectId > hitmapProp.id - points.length
+        }
+        onClick={onObjectClick}>
+        {[spheresMarker]}
+      </Spheres>
       <Axes />
     </Worldview>
   );

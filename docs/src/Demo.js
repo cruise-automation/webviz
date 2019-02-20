@@ -82,7 +82,7 @@ const HelloWorldview = () => {
         </div>
       </Container>
       <WorldviewCodeEditor
-        height={700}
+        height={750}
         code={`function HelloWorldview() {
   const n = ${spheresPerAxis};
   const points = [], colors = [];

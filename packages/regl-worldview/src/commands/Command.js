@@ -182,17 +182,17 @@ function defaultTestObjectIdInRange<T>(objectId: number, hitmapProp: T) {
 // which creates a new regl component. It also handles basic hitmap interactions.
 export function makeCommand<T>(name: string, command: RawCommand<T>): React.StatelessFunctionalComponent<T> {
   const cmd = ({ getHitmapProps, children, enableInstanceHitmap, ...rest }: Props<T>) => {
-    let getHitmapId;
+    let getHitmapId = rest.getHitmapId;
     let testObjectIdProp = {};
 
     // apply defaults if getHitmapId and testObjectIdInRange are not provided
     if (enableInstanceHitmap) {
       if ((rest.getHitmapId && !rest.testObjectIdInRange) || (!rest.getHitmapId && rest.testObjectIdInRange)) {
         console.warn(
-          "Possible wrong hitmap id mapping in instanced rendering. Keep or remove both `getHitmapId` and `testObjectIdInRange` props."
+          "Possible wrong hitmap id mapping in the instanced rendering. Keep or remove both `getHitmapId` and `testObjectIdInRange` props."
         );
       }
-      getHitmapId = rest.getHitmapId || defaultGetHitmapId;
+      getHitmapId = getHitmapId || defaultGetHitmapId;
       testObjectIdProp = {
         testObjectIdInRange: rest.testObjectIdInRange || defaultTestObjectIdInRange,
       };

@@ -66,9 +66,11 @@ function Example() {
     if (object && object.points && objectId) {
       // spheres has reverse id, from 6000 to 5001
       const idx = object.isSphere ? object.id - objectId : objectId - object.id;
-
+      const objectName = object.isSphere ? "Sphere" : "Point";
       if (idx >= 0 && idx <= points.length) {
-        msg = `Clicked objectId is ${objectId} and its position is ${JSON.stringify(pointsMarker.points[idx])}`;
+        msg = `${objectName} clicked. The objectId is ${objectId} and its position is ${JSON.stringify(
+          pointsMarker.points[idx]
+        )}`;
       }
     }
     setCommandMsg(msg);

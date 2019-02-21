@@ -83,7 +83,9 @@ const HelloWorldview = () => {
       </Container>
       <WorldviewCodeEditor
         height={750}
-        code={`function HelloWorldview() {
+        componentName="HelloWorld"
+        code={`
+function Example() {
   const n = ${spheresPerAxis};
   const points = [], colors = [];
   for (let x = 0; x < n; x++) {
@@ -120,6 +122,9 @@ const HelloWorldview = () => {
     </Worldview>
   );
 }`}
+        nonEditableCode={`
+import React from 'react';
+import { Worldview, Spheres } from 'regl-worldview'`}
       />
     </React.Fragment>
   );

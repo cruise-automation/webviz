@@ -7,7 +7,7 @@
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
 
-import Worldview, { Axes, Points, Spheres } from "regl-worldview";
+import Worldview, { Axes, Points, Spheres, Cubes, Triangles, intToRGB } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
@@ -45,10 +45,10 @@ function Example() {
     scale: { x: 10, y: 10, z: 10 },
     colors: points.map((_, idx) => numberToColor(idx, points.length)),
     points,
-    isSphere: false,
+    info: "an instanced point",
   };
 
-  const spheresMarker = {
+  const instancedSphereMarker = {
     id: 6000,
     pose: {
       orientation: { x: 0, y: 0, z: 0, w: 1 },
@@ -57,19 +57,25 @@ function Example() {
     scale: { x: 2, y: 2, z: 2 },
     colors: points.map((_, idx) => numberToColor(idx, points.length)),
     points: spheresPoints,
-    isSphere: true,
+    info: "an instanced sphere",
+    hasCustomHitmapProps: true, // with customGetHitmapProps and customGetObjectFromHitmapId
   };
 
   function onObjectClick(ev, { objectId, object }) {
     let msg = "";
     // use the objectId to find the particular object that's been clicked
-    if (object && object.points && objectId) {
-      // spheres has reverse id, from 6000 to 5001
-      const idx = object.isSphere ? object.id - objectId : objectId - object.id;
-      const objectName = object.isSphere ? "Sphere" : "Point";
-      if (idx >= 0 && idx <= points.length) {
-        msg = `${objectName} clicked. The objectId is ${objectId} and its position is ${JSON.stringify(
-          pointsMarker.points[idx]
+    if (object && objectId) {
+      if (object.points) {
+        // instanced spheres has reverse id, from 6000 to 5001
+        const idx = object.hasCustomHitmapProps ? object.id - objectId : objectId - object.id;
+        if (idx >= 0 && idx <= points.length) {
+          msg = `Clicked ${object.info}. The objectId is ${objectId} and its position is ${JSON.stringify(
+            object.points[idx]
+          )}`;
+        }
+      } else {
+        msg = `Clicked ${object.info}. The objectId is ${objectId} and its position is ${JSON.stringify(
+          object.pose.position
         )}`;
       }
     }
@@ -80,6 +86,24 @@ function Example() {
     if (!objectId) {
       setCommandMsg("");
     }
+  }
+
+  function customGetHitmapProps(children, enableInstanceHitmap) {
+    return children.map((marker) => ({
+      ...marker,
+      colors: marker.points.map((_, pointIndex) => intToRGB(marker.id - pointIndex)),
+    }));
+  }
+
+  function customGetObjectFromHitmapId(objectId, hitmapProps, enableInstanceHitmap) {
+    return hitmapProps.find((hitmapProp) => {
+      if (hitmapProp.points && enableInstanceHitmap) {
+        if (objectId <= hitmapProp.id && objectId > hitmapProp.id - hitmapProp.points.length) {
+          return true;
+        }
+      }
+      return false;
+    });
   }
 
   return (
@@ -101,13 +125,65 @@ function Example() {
       </Points>
       <Spheres
         enableInstanceHitmap
-        getHitmapId={(marker, pointIdx) => marker.id - pointIdx}
-        testObjectIdInRange={(objectId, hitmapProp) =>
-          objectId <= hitmapProp.id && objectId > hitmapProp.id - points.length
-        }
+        getHitmapProps={customGetHitmapProps}
+        getObjectFromHitmapId={customGetObjectFromHitmapId}
         onClick={onObjectClick}>
-        {[spheresMarker]}
+        {[instancedSphereMarker]}
       </Spheres>
+      <Points enableHitmap onClick={onObjectClick}>
+        {[
+          {
+            id: 10001,
+            pose: {
+              orientation: { x: 0, y: 0, z: 0, w: 1 },
+              position: { x: 0, y: 0, z: 0 },
+            },
+            points: [{ x: 10, y: -10, z: 0 }],
+            color: { r: 1, g: 0, b: 0, a: 1 },
+            scale: { x: 20, y: 20, z: 20 },
+            info: "a point",
+          },
+        ]}
+      </Points>
+      <Cubes enableHitmap onClick={onObjectClick}>
+        {[
+          {
+            id: 20001,
+            pose: {
+              orientation: { x: 0, y: 0, z: 0, w: 1 },
+              position: { x: 0, y: -10, z: 0 },
+            },
+            color: { r: 1, g: 0, b: 0, a: 1 },
+            scale: { x: 4, y: 4, z: 4 },
+            info: "a cube",
+          },
+        ]}
+      </Cubes>
+      <Spheres getHitmapId={(marker) => marker.myId} onClick={onObjectClick}>
+        {[
+          {
+            myId: 30001,
+            pose: {
+              orientation: { x: 0, y: 0, z: 0, w: 1 },
+              position: { x: -10, y: -10, z: 0 },
+            },
+            color: { r: 1, g: 0, b: 0, a: 1 },
+            scale: { x: 4, y: 4, z: 4 },
+            info: `a sphere with deprecated api "getHitmapId"`,
+          },
+        ]}
+      </Spheres>
+      <Triangles enableHitmap onClick={onObjectClick}>
+        {[
+          {
+            id: 40001,
+            pose: pointsMarker.pose,
+            points: [[-20, -10, 0], [-20, -5, 0], [-15, -10, 0], [-15, -5, 0], [-15, -10, 0], [-10, -5, 0]],
+            colors: pointsMarker.colors.slice(6),
+            info: "one point in a triangle",
+          },
+        ]}
+      </Triangles>
       <Axes />
     </Worldview>
   );

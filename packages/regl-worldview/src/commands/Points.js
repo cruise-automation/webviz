@@ -8,6 +8,7 @@
 
 import type { PointType, Regl } from "../types";
 import { withPose, pointToVec3, getVertexColors } from "../utils/commandUtils";
+import { getObjectFromHitmapIdForPoints, getHitmapPropsForPoints } from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
 
 const points = (regl: Regl) => {
@@ -61,6 +62,9 @@ const points = (regl: Regl) => {
 };
 
 // prettier-ignore
-const Points = makeCommand<PointType>('Points', points);
+const Points = makeCommand<PointType>('Points', points,  {
+  getHitmapProps: getHitmapPropsForPoints,
+  getObjectFromHitmapId: getObjectFromHitmapIdForPoints,
+});
 
 export default Points;

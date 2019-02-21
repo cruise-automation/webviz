@@ -8,6 +8,7 @@
 
 import type { Cube } from "../types";
 import fromGeometry from "../utils/fromGeometry";
+import { getObjectFromHitmapId, getHitmapProps } from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
 
 const cubes = fromGeometry(
@@ -45,6 +46,9 @@ const cubes = fromGeometry(
   ]
 );
 // prettier-ignore
-const Cubes = makeCommand<Cube>('Cubes', cubes);
+const Cubes = makeCommand<Cube>('Cubes', cubes, {
+  getHitmapProps,
+  getObjectFromHitmapId,
+});
 
 export default Cubes;

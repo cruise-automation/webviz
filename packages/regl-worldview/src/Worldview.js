@@ -48,6 +48,7 @@ type State = {|
 
 function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
   const objectId = rawObjectId !== 0 ? rawObjectId : undefined;
+  // TODO: deprecating, remove before 1.x release
   const args = {
     ray,
     objectId,

@@ -8,8 +8,13 @@
 
 import * as React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
+import { Router } from "react-router-dom";
 
-export default function renderToBody(element: React.Element<*>) {
+import history from "webviz-core/src/util/history";
+
+type RenderedToBodyHandle = {| update: (React.Element<*>) => void, remove: () => void |};
+
+export default function renderToBody(element: React.Element<*>): RenderedToBodyHandle {
   const container = document.createElement("div");
   container.dataset.modalcontainer = "true";
   if (!document.body) {
@@ -17,9 +22,18 @@ export default function renderToBody(element: React.Element<*>) {
   }
   document.body.appendChild(container);
 
-  render(element, container);
+  function ComponentToRender({ children }) {
+    // $FlowFixMe - somehow complains about `history`
+    return <Router history={history}>{children}</Router>;
+  }
+
+  render(<ComponentToRender>{element}</ComponentToRender>, container);
 
   return {
+    update(child: React.Element<*>) {
+      render(<ComponentToRender>{child}</ComponentToRender>, container);
+    },
+
     remove() {
       unmountComponentAtNode(container);
       if (!document.body) {
@@ -28,4 +42,28 @@ export default function renderToBody(element: React.Element<*>) {
       document.body.removeChild(container);
     },
   };
+}
+
+export class RenderToBodyComponent extends React.Component<{| children: React.Element<*> |}> {
+  _renderedToBodyHandle: ?RenderedToBodyHandle;
+
+  componentDidMount() {
+    this._renderedToBodyHandle = renderToBody(this.props.children);
+  }
+
+  componentDidUpdate() {
+    if (this._renderedToBodyHandle) {
+      this._renderedToBodyHandle.update(this.props.children);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this._renderedToBodyHandle) {
+      this._renderedToBodyHandle.remove();
+    }
+  }
+
+  render() {
+    return null;
+  }
 }

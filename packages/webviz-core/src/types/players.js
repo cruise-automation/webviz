@@ -6,12 +6,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import type { Time } from "rosbag";
+
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 export type Topic = {|
   datatype: string,
   name: string,
   displayName?: string,
+  originalTopic?: string,
 |};
 
 export type Namespace = {|
@@ -19,21 +22,16 @@ export type Namespace = {|
   name: string,
 |};
 
-export type Timestamp = {
-  sec: number,
-  nsec: number,
-};
-
 export type TypedMessage<T> = {|
   topic: string,
   datatype: string,
-  op: "msg" | "message",
-  receiveTime: Timestamp,
+  op: "message",
+  receiveTime: Time,
   message: T,
 |};
 export type Message = TypedMessage<any>;
 
-export type TopicMsg = {| topic: string, datatype: ?string |};
+export type TopicMsg = {| topic: string, datatype: ?string, originalTopic?: string |};
 
 export type TopicsMessage = {|
   op: "topics",
@@ -45,31 +43,31 @@ type DatatypesMessage = {|
   datatypes: RosDatatypes,
 |};
 
-export type PlayerState = {|
-  startTime: Timestamp,
-  endTime: Timestamp,
+export type PlayerStatePayload = {|
+  startTime: Time,
+  endTime: Time,
   isPlaying: boolean,
   speed: number,
 |};
 
 export type PlayerStateMessage = {|
   op: "player_state",
-  start_time: Timestamp,
-  end_time: Timestamp,
+  start_time: Time,
+  end_time: Time,
   playing: boolean,
   speed: number,
 |};
 
-// Most data sources should update time by passing receiveTime along with `op: "message"`,
+// Most players should update time by passing receiveTime along with `op: "message"`,
 // but when that's not possible, the current time can be updated using this op instead.
 export type UpdateTimeMessage = {|
   op: "update_time",
-  time: Timestamp,
+  time: Time,
 |};
 
 export type PlayerStateWithTimeMessage = {|
   ...PlayerStateMessage,
-  current_time: Timestamp,
+  current_time: Time,
 |};
 
 type CapabilitiesMessage = {|
@@ -81,10 +79,6 @@ type SubscribeMessage = {| op: "subscribe", id: number |};
 type UnsubscribeMessage = {| op: "unsubscribe" |};
 
 type SeekMessage = {| op: "seek" |};
-type AuxiliaryDataMessage = {|
-  op: "auxiliaryData",
-  data: Object,
-|};
 
 export type Progress = { [string]: ?number };
 
@@ -93,20 +87,23 @@ type ProgressMessage = {|
   progress: Progress,
 |};
 
-export type DataSourceMessage =
+// eslint-disable-next-line no-use-before-define
+type ConnectingMessage = {| op: "connecting", player: Player |};
+type ConnectedMessage = {| op: "connected" |};
+
+export type PlayerMessage =
   | Message
   | UpdateTimeMessage
   | TopicsMessage
   | DatatypesMessage
   | PlayerStateMessage
   | CapabilitiesMessage
-  | SubscribeMessage
-  | UnsubscribeMessage
   | ProgressMessage
   | SeekMessage
-  | AuxiliaryDataMessage;
+  | ConnectingMessage
+  | ConnectedMessage;
 
-export type WebSocketDataSourceMessage =
+export type WebSocketPlayerMessage =
   | Message
   | TopicsMessage
   | DatatypesMessage
@@ -117,10 +114,10 @@ export type WebSocketDataSourceMessage =
   | SeekMessage;
 
 export type BagWorkerMessage =
-  | DataSourceMessage
+  | PlayerMessage
   | {| op: "abort", error: {| stack?: string, code?: number |} |}
   | {| op: "connected" |}
-  | {| op: "unparsedMessage", topic: string, buffer: ArrayBuffer, receiveTime: Timestamp |};
+  | {| op: "unparsedMessage", topic: string, buffer: ArrayBuffer, receiveTime: Time |};
 
 export type Frame = {
   [topic: string]: Message[],
@@ -130,13 +127,17 @@ export type BufferedFrame = {
   [topic: string]: Message,
 };
 
+// TODO(JP): Pull this into two types, one for the Player (which does not care about the
+// `requester`) and one for the Internals panel (which does).
 export type SubscribePayload = {
   topic: string,
-  encoding?: string,
+  encoding?: string, // TODO(JP): Remove and derive from `scale` (= "image/compressed").
   scale?: number,
   requester?: {| type: "panel" | "node" | "other", name: string |},
 };
 
+// TODO(JP): Pull this into two types, one for the Player (which does not care about the
+// `advertiser`) and one for the Internals panel (which does).
 export type AdvertisePayload = {|
   topic: string,
   datatype: string,
@@ -148,47 +149,34 @@ export type PublishPayload = {|
   msg: Object,
 |};
 
-// interface for the DataSource - both websocket and webworker based
-// data sources need to implement this to plug into redux
-export interface DataSource {
-  // sets listener & resolves when the datasource is ready or connected
-  // the listener will be called whenever the datasource has a new message available
+// interface for the Player - both websocket and webworker based
+// players need to implement this to plug into redux
+export interface Player {
+  // sets listener & resolves when the player is ready or connected
+  // the listener will be called whenever the player has a new message available
   // for consumption.  The message callback returns a promise in case it defers
   // processing of the messages until a later time.
-  setListener(callback: (DataSourceMessage) => Promise<void>): Promise<void>;
+  setListener(callback: (PlayerMessage) => Promise<void>): Promise<void>;
 
-  // used to subscribe to topics
-  subscribe(request: SubscribePayload): void;
-
-  // unsubscribe from topics
-  unsubscribe(request: SubscribePayload): void;
-
-  // advertise a topic for publishing
-  advertise(request: AdvertisePayload): void;
-  unadvertise(request: AdvertisePayload): void;
+  // Set a new set of subscriptions/advertisers.
+  setSubscriptions(subscriptions: SubscribePayload[]): void;
+  setPublishers(publishers: AdvertisePayload[]): void;
 
   // publish a message on an advertised topic
   publish(request: PublishPayload): void;
 
-  // request topics from the data source. The data source is expected
-  // to eventually push a topic response message to the message listener callback
-  requestTopics(): void;
-
-  // Send a request for messages. The datasource is expected to push a response message to the listener after this.
-  // It is useful for datasources that are polling based (i.e we fetch from them when we're ready to handle data).
+  // Send a request for messages. The player is expected to push a response message to the listener after this.
+  // It is useful for players that are polling based (i.e we fetch from them when we're ready to handle data).
   requestMessages(): void;
 
-  // close the datasource
+  // close the player
   close(): Promise<void>;
-
-  // set a callback to be called if the data source is closed/disconnected other than via close()
-  onAbort(callback: (?Error) => void): void;
 
   // playback control
   startPlayback(): void;
   pausePlayback(): void;
   setPlaybackSpeed(speed: number): void;
-  seekPlayback(time: Timestamp): void;
+  seekPlayback(time: Time): void;
 }
 
 // redux action types follow:
@@ -207,16 +195,16 @@ export type SET_WEBSOCKET_INPUT = {
   payload: string,
 };
 
-export type DATA_SOURCE_CONNECTING = {
-  type: "DATA_SOURCE_CONNECTING",
+export type PLAYER_CONNECTING = {
+  type: "PLAYER_CONNECTING",
 };
 
-export type DATA_SOURCE_CONNECTED = {
-  type: "DATA_SOURCE_CONNECTED",
+export type PLAYER_CONNECTED = {
+  type: "PLAYER_CONNECTED",
 };
 
-export type DATA_SOURCE_DISCONNECTED = {
-  type: "DATA_SOURCE_DISCONNECTED",
+export type PLAYER_DISCONNECTED = {
+  type: "PLAYER_DISCONNECTED",
 };
 
 export type TOPICS_RECEIVED = {
@@ -232,17 +220,17 @@ export type DATATYPES_RECEIVED = {
 export type FRAME_RECEIVED = {
   type: "FRAME_RECEIVED",
   frame: Frame,
-  currentTime: ?Timestamp,
+  currentTime: ?Time,
 };
 
 export type TIME_UPDATED = {
   type: "TIME_UPDATED",
-  time: Timestamp,
+  time: Time,
 };
 
 export type PLAYER_STATE_CHANGED = {
   type: "PLAYER_STATE_CHANGED",
-  payload: PlayerState,
+  payload: PlayerStatePayload,
 };
 
 export type SET_RECONNECT_DELAY = {
@@ -252,17 +240,17 @@ export type SET_RECONNECT_DELAY = {
 
 export type SEEK_PLAYBACK = {
   type: "SEEK_PLAYBACK",
-  payload: Timestamp,
+  payload: Time,
 };
 
-export type DATA_SOURCE_PROGRESS = {
-  type: "DATA_SOURCE_PROGRESS",
+export type PLAYER_PROGRESS = {
+  type: "PLAYER_PROGRESS",
   payload: Progress,
 };
 
 export type PLAYBACK_RESET = {
   type: "PLAYBACK_RESET",
-  payload?: Timestamp,
+  payload?: Time,
 };
 
 export type CAPABILITIES_RECEIVED = {
@@ -270,7 +258,7 @@ export type CAPABILITIES_RECEIVED = {
   capabilities: string[],
 };
 
-export interface DataSourceMetricsCollectorInterface {
+export interface PlayerMetricsCollectorInterface {
   initialized(): void;
   play(): void;
   seek(): void;

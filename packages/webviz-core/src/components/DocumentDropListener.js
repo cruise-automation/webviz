@@ -9,21 +9,30 @@
 import * as React from "react";
 
 type Props = {
-  filesSelected: (FileList) => any,
+  children: React.Node, // Shown when dragging in a file.
+  filesSelected: ({ files: FileList, shiftPressed: boolean }) => any,
 };
 
-export default class DocumentDropListener extends React.PureComponent<Props> {
+type State = {
+  hovering: boolean,
+};
+
+export default class DocumentDropListener extends React.PureComponent<Props, State> {
+  state = { hovering: false };
+
   componentDidMount() {
-    document.addEventListener("dragover", this.onDragOver);
-    document.addEventListener("drop", this.onDrop);
+    document.addEventListener("dragover", this._onDragOver);
+    document.addEventListener("drop", this._onDrop);
+    document.addEventListener("dragleave", this._onDragLeave);
   }
 
   componentWillUnmount() {
-    document.removeEventListener("dragover", this.onDragOver);
-    document.removeEventListener("drop", this.onDrop);
+    document.removeEventListener("dragover", this._onDragOver);
+    document.removeEventListener("drop", this._onDrop);
+    document.removeEventListener("dragleave", this._onDragLeave);
   }
 
-  onDrop = async (ev: DragEvent) => {
+  _onDrop = async (ev: DragEvent) => {
     const { filesSelected } = this.props;
     if (!ev.dataTransfer) {
       return;
@@ -35,28 +44,40 @@ export default class DocumentDropListener extends React.PureComponent<Props> {
     }
     ev.preventDefault();
     ev.stopPropagation();
-    filesSelected(files);
+    filesSelected({ files, shiftPressed: ev.shiftKey });
+    this.setState({ hovering: false });
   };
 
-  onDragOver = (ev: DragEvent) => {
+  _onDragOver = (ev: DragEvent) => {
     ev.stopPropagation();
     ev.preventDefault();
     // dataTransfer isn't guaranteed to exist by spec, so must be checked
     if (ev.dataTransfer) {
       ev.dataTransfer.dropEffect = "copy";
+
+      if (ev.dataTransfer.types.length === 1 && ev.dataTransfer.types[0] === "Files") {
+        this.setState({ hovering: true });
+      }
     }
   };
 
+  _onDragLeave = () => {
+    this.setState({ hovering: false });
+  };
+
   render() {
-    // Expose a hidden input for Puppeteer to use to drop a file in.
     return (
-      <input
-        type="file"
-        style={{ display: "none" }}
-        onChange={(event) => this.props.filesSelected(event.target.files)}
-        data-puppeteer-file-upload
-        multiple
-      />
+      <React.Fragment>
+        <input
+          // Expose a hidden input for Puppeteer to use to drop a file in.
+          type="file"
+          style={{ display: "none" }}
+          onChange={(event) => this.props.filesSelected({ files: event.target.files, shiftPressed: false })}
+          data-puppeteer-file-upload
+          multiple
+        />
+        {this.state.hovering && this.props.children}
+      </React.Fragment>
     );
   }
 }

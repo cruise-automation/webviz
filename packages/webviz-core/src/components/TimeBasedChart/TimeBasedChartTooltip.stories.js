@@ -30,7 +30,7 @@ storiesOf("<TimeBasedChartTooltip>", module)
               message: {
                 topic: "/some/topic",
                 datatype: "some_datatype",
-                op: "msg",
+                op: "message",
                 receiveTime: { sec: 123, nsec: 456 },
                 message: {
                   header: {

@@ -18,6 +18,7 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { State } from "webviz-core/src/reducers";
 import type { PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
 import { getPanelIdForType } from "webviz-core/src/util";
+import naturalSort from "webviz-core/src/util/naturalSort";
 
 type PanelListItem = {|
   title: string,
@@ -155,7 +156,7 @@ class PanelList extends React.Component<PanelListProps> {
     const { mosaicId, onPanelSelect } = this.props;
     return (
       <React.Fragment>
-        {panelList.map(
+        {panelList.sort(naturalSort("title")).map(
           // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
           ({ presets, title, component: { panelType } }) =>
             presets ? (

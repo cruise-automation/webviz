@@ -6,22 +6,39 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEqual } from "lodash";
+import WavesIcon from "@mdi/svg/svg/waves.svg";
+import cx from "classnames";
+import { isEqual, omit } from "lodash";
 import React from "react";
 
+import CameraModel from "./CameraModel";
 import { decodeYUV, decodeBGR, decodeFloat1c, decodeRGGB } from "./decodings";
 import styles from "./ImageCanvas.module.scss";
+import { type ImageViewPanelHooks } from "./index";
+import type { SaveConfig } from "./index";
+import ChildToggle from "webviz-core/src/components/ChildToggle";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
+import Icon from "webviz-core/src/components/Icon";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { Message } from "webviz-core/src/types/dataSources";
+import colors from "webviz-core/src/styles/colors.module.scss";
 import type { ImageMarker, CameraInfo, Color } from "webviz-core/src/types/Messages";
+import type { Message } from "webviz-core/src/types/players";
 
 type Props = {
   topic: string,
   image: ?Message,
   cameraInfo: ?CameraInfo,
   markers: Message[],
+  panelHooks?: ImageViewPanelHooks,
+  transformMarkers: boolean,
+  saveConfig: SaveConfig,
+};
+
+type State = {
+  cameraModel: ?CameraModel,
+  prevCameraInfo: ?CameraInfo,
+  prevTransformMarkers: boolean,
 };
 
 function toRGBA(color: Color) {
@@ -29,13 +46,40 @@ function toRGBA(color: Color) {
   return `rgba(${r}, ${g}, ${b}, ${a || 1})`;
 }
 
-export default class ImageCanvas extends React.Component<Props> {
-  canvas: ?HTMLCanvasElement;
-  ready: boolean = true;
+export default class ImageCanvas extends React.Component<Props, State> {
+  _canvasRef: { current: null | HTMLCanvasElement } = React.createRef();
+  _ready: boolean = true;
 
   static defaultProps = {
     markers: [],
   };
+
+  state = { cameraModel: null, prevCameraInfo: null, prevTransformMarkers: false };
+
+  static getDerivedStateFromProps({ cameraInfo, topic, transformMarkers }: Props, prevState: State) {
+    if (!cameraInfo && prevState.prevCameraInfo) {
+      return {
+        prevCameraInfo: cameraInfo,
+        cameraModel: null,
+        transformMarkers: false,
+      };
+    }
+    // only reset the cameraModel when cameraInfo or transformMarkers change
+    if (
+      cameraInfo &&
+      (transformMarkers !== prevState.prevTransformMarkers ||
+        cameraInfo !== prevState.prevCameraInfo ||
+        (!prevState.prevCameraInfo || !isEqual(omit(cameraInfo, "header"), omit(prevState.prevCameraInfo, "header"))))
+    ) {
+      return {
+        prevTransformMarkers: transformMarkers,
+        prevCameraInfo: cameraInfo,
+        cameraModel: new CameraModel(cameraInfo, transformMarkers),
+      };
+    }
+
+    return null;
+  }
 
   decodeMessageToBitmap = async (msg: any): Promise<?ImageBitmap> => {
     let image: ImageData | Image | Blob | void;
@@ -72,7 +116,7 @@ export default class ImageCanvas extends React.Component<Props> {
   };
 
   clearCanvas = () => {
-    const { canvas } = this;
+    const canvas = this._canvasRef.current;
     if (!canvas) {
       return;
     }
@@ -80,20 +124,24 @@ export default class ImageCanvas extends React.Component<Props> {
   };
 
   resizeCanvas = (width: number, height: number) => {
-    const { canvas } = this;
+    const canvas = this._canvasRef.current;
     if (canvas && (canvas.width !== width || canvas.height !== height)) {
       canvas.width = width;
       canvas.height = height;
     }
   };
 
-  paintBitmap = (bitmap: ?ImageBitmap, info: ?CameraInfo) => {
-    if (!bitmap) {
-      this.clearCanvas();
+  paintBitmap = (bitmap: ?ImageBitmap) => {
+    const { cameraInfo: info } = this.props;
+    const { cameraModel } = this.state;
+    const canvas = this._canvasRef.current;
+    const cameraModelWithInitializedData = cameraModel && cameraModel.initializedData ? cameraModel : null;
+
+    if (!canvas) {
       return;
     }
-    const { canvas } = this;
-    if (!canvas) {
+    if (!bitmap) {
+      this.clearCanvas();
       return;
     }
     const ctx = canvas.getContext("2d");
@@ -104,11 +152,8 @@ export default class ImageCanvas extends React.Component<Props> {
       ctx.drawImage(bitmap, 0, 0);
       ctx.restore();
       ctx.save();
-      try {
-        this.paintMarkers(ctx);
-      } catch (err) {
-        console.warn("error painting markers:", err);
-      } finally {
+      if (cameraModelWithInitializedData) {
+        this.paintMarkers(ctx, cameraModelWithInitializedData);
         ctx.restore();
       }
     } else {
@@ -118,17 +163,18 @@ export default class ImageCanvas extends React.Component<Props> {
     bitmap.close();
   };
 
-  paintMarkers(ctx: CanvasRenderingContext2D) {
+  paintMarkers(ctx: CanvasRenderingContext2D, cameraModel: CameraModel) {
     const { markers } = this.props;
-    const imageViewHooks = getGlobalHooks().perPanelHooks().ImageView;
+    const imageViewHooks = this.props.panelHooks || getGlobalHooks().perPanelHooks().ImageView;
+
     for (const msg of markers) {
       ctx.save();
       if (imageViewHooks.imageMarkerArrayDatatypes.includes(msg.datatype)) {
         for (const marker of msg.message.markers) {
-          this.paintMarker(ctx, marker);
+          this.paintMarker(ctx, marker, cameraModel);
         }
       } else if (imageViewHooks.imageMarkerDatatypes.includes(msg.datatype)) {
-        this.paintMarker(ctx, msg.message);
+        this.paintMarker(ctx, msg.message, cameraModel);
       } else {
         console.warn("unrecognized image marker datatype", msg);
       }
@@ -136,11 +182,13 @@ export default class ImageCanvas extends React.Component<Props> {
     }
   }
 
-  paintMarker(ctx: CanvasRenderingContext2D, marker: ImageMarker) {
+  paintMarker(ctx: CanvasRenderingContext2D, marker: ImageMarker, cameraModel: CameraModel) {
     switch (marker.type) {
-      case 0: // CIRCLE
+      case 0: {
+        // CIRCLE
         ctx.beginPath();
-        ctx.arc(marker.position.x, marker.position.y, marker.scale, 0, 2 * Math.PI);
+        const { x, y } = cameraModel.maybeUnrectifyPoint(marker.position);
+        ctx.arc(x, y, marker.scale, 0, 2 * Math.PI);
         if (marker.thickness <= 0) {
           ctx.fillStyle = toRGBA(marker.outline_color);
           ctx.fill();
@@ -150,6 +198,7 @@ export default class ImageCanvas extends React.Component<Props> {
           ctx.stroke();
         }
         break;
+      }
 
       // LINE_LIST
       case 2:
@@ -159,8 +208,8 @@ export default class ImageCanvas extends React.Component<Props> {
         ctx.strokeStyle = toRGBA(marker.outline_color);
         ctx.lineWidth = marker.thickness;
         for (let i = 0; i < marker.points.length; i += 2) {
-          const { x: x1, y: y1 } = marker.points[i];
-          const { x: x2, y: y2 } = marker.points[i + 1];
+          const { x: x1, y: y1 } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
+          const { x: x2, y: y2 } = cameraModel.maybeUnrectifyPoint(marker.points[i + 1]);
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
@@ -170,14 +219,15 @@ export default class ImageCanvas extends React.Component<Props> {
 
       // LINE_STRIP, POLYGON
       case 1:
-      case 3:
+      case 3: {
         if (marker.points.length === 0) {
           break;
         }
         ctx.beginPath();
-        ctx.moveTo(marker.points[0].x, marker.points[0].y);
+        const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[0]);
+        ctx.moveTo(x, y);
         for (let i = 1; i < marker.points.length; i++) {
-          const { x, y } = marker.points[i];
+          const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
           ctx.lineTo(x, y);
         }
         if (marker.type === 3) {
@@ -192,6 +242,7 @@ export default class ImageCanvas extends React.Component<Props> {
           ctx.stroke();
         }
         break;
+      }
 
       case 4: {
         // POINTS
@@ -202,7 +253,7 @@ export default class ImageCanvas extends React.Component<Props> {
         const size = marker.scale || 4;
         if (marker.outline_colors && marker.outline_colors.length === marker.points.length) {
           for (let i = 0; i < marker.points.length; i++) {
-            const { x, y } = marker.points[i];
+            const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
             ctx.fillStyle = toRGBA(marker.outline_colors[i]);
             ctx.beginPath();
             ctx.arc(x, y, size, 0, 2 * Math.PI);
@@ -211,7 +262,7 @@ export default class ImageCanvas extends React.Component<Props> {
         } else {
           ctx.beginPath();
           for (let i = 0; i < marker.points.length; i++) {
-            const { x, y } = marker.points[i];
+            const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
             ctx.arc(x, y, size, 0, 2 * Math.PI);
             ctx.closePath();
           }
@@ -223,9 +274,8 @@ export default class ImageCanvas extends React.Component<Props> {
 
       case 5: {
         // TEXT (our own extension on visualization_msgs/Marker)
-        const {
-          position: { x, y },
-        } = marker;
+        const { x, y } = cameraModel.maybeUnrectifyPoint(marker.position);
+
         const fontSize = marker.scale * 12;
         const padding = 4 * marker.scale;
         ctx.font = `${fontSize}px sans-serif`;
@@ -271,6 +321,7 @@ export default class ImageCanvas extends React.Component<Props> {
 
   shouldComponentUpdate(nextProps: Props) {
     return (
+      nextProps.transformMarkers !== this.props.transformMarkers ||
       // shallow equality to avoid comparing image data
       nextProps.image !== this.props.image ||
       // deep equality since camera info is re-published but never actually changes
@@ -287,7 +338,7 @@ export default class ImageCanvas extends React.Component<Props> {
 
   downloadImage = () => {
     const { topic, image } = this.props;
-    const { canvas } = this;
+    const canvas = this._canvasRef.current;
     const { body } = document;
 
     // satisfy flow
@@ -328,33 +379,61 @@ export default class ImageCanvas extends React.Component<Props> {
   };
 
   renderCurrentImage() {
-    if (!this.ready) {
+    if (!this._ready) {
       console.warn("Dropped frame on image canvas");
       return;
     }
 
-    const { image, cameraInfo } = this.props;
+    const { image } = this.props;
     if (!image) {
       this.clearCanvas();
       return;
     }
 
-    this.ready = false;
+    this._ready = false;
+
     this.decodeMessageToBitmap(image)
       .then((bitmap) => {
-        this.paintBitmap(bitmap, cameraInfo);
-        this.ready = true;
+        this.paintBitmap(bitmap);
+        this._ready = true;
       })
       .catch((err) => {
         console.warn(`failed to decode image on ${image.topic}:`, err);
         this.clearCanvas();
-        this.ready = true;
+        this._ready = true;
       });
   }
 
   render() {
+    const { saveConfig, transformMarkers } = this.props;
+    const { cameraModel } = this.state;
+
     return (
-      <canvas onContextMenu={this.onCanvasRightClick} ref={(el) => (this.canvas = el)} className={styles.canvas} />
+      <React.Fragment>
+        <canvas onContextMenu={this.onCanvasRightClick} ref={this._canvasRef} className={styles.canvas} />
+        {cameraModel && cameraModel.initializedData && (
+          <ChildToggle.ContainsOpen>
+            {(containsOpen) => (
+              <div
+                className={cx(styles["bottom-bar"], {
+                  [styles.containsOpen]: containsOpen,
+                })}>
+                <Icon
+                  onClick={() => saveConfig({ transformMarkers: !transformMarkers })}
+                  tooltip={
+                    transformMarkers
+                      ? "Markers are being transformed by webviz based on the camera model. Click to turn it off."
+                      : `Markers can be transformed by webviz based on the camera model. Click to turn it on.`
+                  }
+                  fade
+                  medium>
+                  <WavesIcon style={{ color: transformMarkers ? colors.orange : colors.textBright }} />
+                </Icon>
+              </div>
+            )}
+          </ChildToggle.ContainsOpen>
+        )}
+      </React.Fragment>
     );
   }
 }

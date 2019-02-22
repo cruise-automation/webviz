@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import createHistory from "history/createBrowserHistory";
 import React from "react";
 import ReactDOM from "react-dom";
 import { routerMiddleware } from "react-router-redux";
@@ -43,9 +42,10 @@ let hooks = {
   perPanelHooks: () => ({
     DiagnosticSummary: { defaultConfig: { pinnedIds: [] } },
     ImageView: {
-      defaultConfig: { cameraTopic: "", enabledMarkerNames: [], scale: 0.2 },
+      defaultConfig: { cameraTopic: "", enabledMarkerNames: [], scale: 0.2, transformMarkers: false },
       imageMarkerDatatypes: ["visualization_msgs/ImageMarker"],
       imageMarkerArrayDatatypes: [],
+      isUnrectifiedTopicName: (topic) => !topic.includes("rect"),
     },
     StateTransitions: { defaultConfig: { paths: [] }, customStateTransitionColors: {} },
     TopicEcho: { docLinkFunction: () => undefined },
@@ -61,11 +61,17 @@ let hooks = {
     "sensor_msgs/LaserScan",
     "nav_msgs/OccupancyGrid",
   ],
+  rootTransformFrame: "map",
+  defaultFollowTransformFrame: null,
   load: () => {},
 };
 
 export function getGlobalHooks() {
   return hooks;
+}
+
+export function addGlobalHooksForStorybook(webvizHooks) {
+  hooks = { ...hooks, ...webvizHooks };
 }
 
 export function loadWebviz(webvizHooks) {
@@ -86,8 +92,8 @@ export function loadWebviz(webvizHooks) {
   const Confirm = require("webviz-core/src/components/Confirm").default;
   const rootReducer = require("webviz-core/src/reducers").default;
   const configureStore = require("webviz-core/src/store").default;
+  const history = require("webviz-core/src/util/history").default;
 
-  const history = createHistory();
   const store = configureStore(rootReducer, [routerMiddleware(history)]);
 
   function render() {

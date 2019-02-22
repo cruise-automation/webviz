@@ -12,7 +12,6 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Plot from "webviz-core/src/panels/Plot";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
-import { CLOCK_TOPIC } from "webviz-core/src/util/globalConstants";
 
 const locationMessages = [
   {
@@ -200,17 +199,6 @@ const fixture = {
       receiveTime: message.header.stamp,
       message,
     })),
-    [CLOCK_TOPIC]: [
-      {
-        op: "message",
-        datatype: "ros/Clock",
-        topic: CLOCK_TOPIC,
-        receiveTime: { sec: 1540, nsec: 0 },
-        message: {
-          clock: { sec: 1540, nsec: 0 },
-        },
-      },
-    ],
     "/boolean_topic": [
       {
         op: "message",

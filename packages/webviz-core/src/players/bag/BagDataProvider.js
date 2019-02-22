@@ -8,7 +8,7 @@
 
 import { open, Time } from "rosbag";
 
-import { type InitializationResult, type MessageLike } from "../types";
+import { type InitializationResult, type MessageLike, type RandomAccessDataProvider } from "../types";
 // $FlowFixMe - flow doesn't understand webpack imports this as a WebWorker constructor
 import BagDataProviderWorker from "./BagDataProvider.worker"; // eslint-disable-line
 import type { InitializeMessage } from "./types";
@@ -25,7 +25,7 @@ type Connection = {
   type: string,
 };
 
-export class BagDataProvider {
+export class BagDataProvider implements RandomAccessDataProvider {
   _rpc: Rpc;
   _bagPath: File | string;
   _connections: { [topic: string]: Connection } = {};

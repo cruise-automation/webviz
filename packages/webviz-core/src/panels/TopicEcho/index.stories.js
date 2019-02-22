@@ -10,9 +10,9 @@ import { storiesOf } from "@storybook/react";
 import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
+import { fixture } from "./fixture";
 import TopicEcho from "webviz-core/src/panels/TopicEcho";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
-import { fixture } from "webviz-core/src/util/fixture";
 
 storiesOf("<TopicEcho>", module)
   .addDecorator(withScreenshot())

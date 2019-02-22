@@ -17,10 +17,11 @@ import PlayIcon from "@mdi/svg/svg/play.svg";
 import classnames from "classnames";
 import * as React from "react";
 import { connect } from "react-redux";
+import type { Time } from "rosbag";
 import styled from "styled-components";
 
 import styles from "./index.module.scss";
-import { pausePlayback, seekPlayback, setPlaybackSpeed, startPlayback } from "webviz-core/src/actions/dataSource";
+import { pausePlayback, seekPlayback, setPlaybackSpeed, startPlayback } from "webviz-core/src/actions/player";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
@@ -28,9 +29,8 @@ import Icon from "webviz-core/src/components/Icon";
 import Slider from "webviz-core/src/components/Slider";
 import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
 import type { State as ReduxState } from "webviz-core/src/reducers";
-import { DataSourceCapabilities, type DataSourceState } from "webviz-core/src/reducers/dataSource";
+import { PlayerCapabilities, type PlayerState } from "webviz-core/src/reducers/player";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import type { Timestamp } from "webviz-core/src/types/dataSources";
 import { times } from "webviz-core/src/util/entities";
 import { formatTime, formatTimeRaw, subtractTimes, toSec, fromSec } from "webviz-core/src/util/time";
 
@@ -55,11 +55,11 @@ const StyledMarker = styled.div.attrs({
 `;
 
 type Props = {|
-  dataSource: DataSourceState,
+  player: PlayerState,
   pause: () => void,
   play: () => void,
   setSpeed: (number) => void,
-  seek: (Timestamp) => void,
+  seek: (Time) => void,
 |};
 
 const TooltipItem = ({ title, value }) => (
@@ -81,8 +81,8 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
 
   keyDownHandlers = {
     " ": () => {
-      const { pause, play, dataSource } = this.props;
-      const { isPlaying } = dataSource;
+      const { pause, play, player } = this.props;
+      const { isPlaying } = player;
 
       if (isPlaying) {
         pause();
@@ -93,7 +93,7 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
   };
 
   onMouseMove = (e: SyntheticMouseEvent<HTMLDivElement>) => {
-    const { startTime, endTime } = this.props.dataSource;
+    const { startTime, endTime } = this.props.player;
     const { el, slider } = this;
     if (!startTime || !endTime || !el || !slider) {
       return;
@@ -126,13 +126,13 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
   };
 
   render() {
-    const { pause, play, setSpeed, dataSource } = this.props;
-    const { isPlaying, startTime, endTime, currentTime, speed, capabilities, isConnecting } = dataSource;
+    const { pause, play, setSpeed, player } = this.props;
+    const { isPlaying, startTime, endTime, currentTime, speed, capabilities, isConnecting } = player;
 
     if (!startTime || !endTime) {
       const message =
-        isConnecting && capabilities.includes(DataSourceCapabilities.initialization) ? (
-          "Data source is initializing..."
+        isConnecting && capabilities.includes(PlayerCapabilities.initialization) ? (
+          "Player is initializing..."
         ) : (
           <span>
             Drop a <a href="http://wiki.ros.org/ROS/Tutorials/Recording%20and%20playing%20back%20data">ROS bag file</a>{" "}
@@ -198,7 +198,7 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
 
 const mapStateToProps = (state: ReduxState): $Shape<Props> => {
   return {
-    dataSource: state.dataSource,
+    player: state.player,
   };
 };
 

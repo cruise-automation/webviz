@@ -8,7 +8,5 @@
 
 export const TRANSFORM_TOPIC = "/tf";
 export const DIAGNOSTIC_TOPIC = "/diagnostics";
-// Create a node that publishes to /webviz/clock if you want a global clock topic.
-// TODO(JP): Deprecate /webviz/clock entirely and use `receiveTime` everywhere instead.
-export const CLOCK_TOPIC = "/webviz/clock";
 export const SOCKET_KEY = "dataSource.websocket";
+export const SECOND_BAG_PREFIX = "/webviz_bag_2";

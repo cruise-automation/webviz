@@ -11,14 +11,15 @@ import * as React from "react";
 import ChartComponent from "react-chartjs-2";
 import DocumentEvents from "react-document-events";
 import ReactDOM from "react-dom";
+import type { Time } from "rosbag";
 import styled from "styled-components";
 
 import TimeBasedChartTooltip from "./TimeBasedChartTooltip";
 import Button from "webviz-core/src/components/Button";
 import createSyncingComponent from "webviz-core/src/components/createSyncingComponent";
 import type { MessageHistoryItem } from "webviz-core/src/components/MessageHistory";
+import { PLOT_DASHED_STYLE, PLOT_DOT_DASHED_STYLE } from "webviz-core/src/components/TimeBasedChart/constants";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
-import type { Timestamp } from "webviz-core/src/types/dataSources";
 
 const SyncTimeAxis = createSyncingComponent("SyncTimeAxis", (dataItems: {| minX: ?number, maxX: ?number |}[]) => ({
   minX: min(dataItems.map(({ minX }) => (minX === undefined || minX === null ? undefined : floor(minX, 1)))),
@@ -30,7 +31,7 @@ export type TimeBasedChartTooltipData = {|
   path: string,
   value: number | boolean | string,
   constantName: ?string,
-  startTime: Timestamp,
+  startTime: Time,
 |};
 
 const SRoot = styled.div`
@@ -56,15 +57,32 @@ const SBar = styled.div`
   // "display" and "left" are set by JS, but outside of React.
 `;
 
+const SLegend = styled.div`
+  display: flex;
+  width: 10%;
+  min-width: 90px;
+  overflow-y: auto;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: start;
+  padding: 30px 0px 10px 0px;
+`;
+
 type Props = {|
   type: "scatter" | "multicolorLine",
   width: number,
   height: number,
+  zoom: boolean,
   data: any,
+  xAxes?: any,
   yAxes: any,
   plugins?: any,
+  annotations?: any[],
+  drawLegend?: boolean,
+  isSynced?: boolean,
+  onClick?: (e: (Object) => Object) => void,
 |};
-type State = {| showResetZoom: boolean |};
+type State = {| showResetZoom: boolean, shouldRedraw: boolean, annotations: any[] |};
 
 // Create a chart with any y-axis but with an x-axis that shows time since the
 // start of the bag, and which is kept in sync with other instances of this
@@ -76,10 +94,22 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
   _bar: ?HTMLDivElement;
   _tooltipModel: ?{ dataPoints?: any[] };
   _mousePosition: ?{| x: number, y: number |};
-  state = { showResetZoom: false };
+  state = { showResetZoom: false, shouldRedraw: false, annotations: [] };
 
   componentDidMount() {
     document.addEventListener("visibilitychange", this._onVisibilityChange);
+  }
+
+  static getDerivedStateFromProps(nextProps: Props, prevState: State): State {
+    const { annotations } = prevState;
+    const nextAnnotations = nextProps.annotations || [];
+    const currentFutureTime = annotations && annotations.length && annotations[0].value;
+    const nextFutureTime = nextAnnotations && nextAnnotations.length && nextAnnotations[0].value;
+    return {
+      ...prevState,
+      shouldRedraw: currentFutureTime !== nextFutureTime,
+      annotations: nextAnnotations,
+    };
   }
 
   _onVisibilityChange = () => {
@@ -113,8 +143,10 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
   // `_onResetZoom`.
   _onPlotChartUpdate = (axis: any) => {
     const showResetZoom =
-      axis.options.ticks.min !== axis.options.ticks.timeBasedChartMin ||
-      axis.options.ticks.max !== axis.options.ticks.timeBasedChartMax;
+      typeof axis.options.ticks.timeBasedChartMin === "number" &&
+      typeof axis.options.ticks.timeBasedChartMax === "number" &&
+      (axis.options.ticks.min !== axis.options.ticks.timeBasedChartMin ||
+        axis.options.ticks.max !== axis.options.ticks.timeBasedChartMax);
     if (showResetZoom && !this.state.showResetZoom) {
       this.setState({ showResetZoom: true });
     }
@@ -223,7 +255,28 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
   };
 
   _chartjsOptions = (minX: number, maxX: number) => {
-    const { plugins } = this.props;
+    const { plugins, xAxes, yAxes } = this.props;
+    const { annotations } = this.state;
+    const defaultXTicksSettings = {
+      fontFamily: mixins.monospaceFont,
+      fontSize: 10,
+      fontColor: "#eee",
+      maxRotation: 0,
+      callback: this._onGetTick,
+      timeBasedChartMin: minX,
+      timeBasedChartMax: maxX,
+    };
+    const defaultYTicksSettings = {
+      fontFamily: mixins.monospaceFont,
+      fontSize: 10,
+      fontColor: "#eee",
+      padding: 0,
+    };
+    const defaultXAxis = {
+      ticks: defaultXTicksSettings,
+      gridLines: { color: "rgba(255, 255, 255, 0.2)", zeroLineColor: "rgba(255, 255, 255, 0.2)" },
+      afterUpdate: this._onPlotChartUpdate,
+    };
 
     // We create a new `options` object every time, but caching this wouldn't help anyway, since
     // react-chartjs-2 creates a new object on every render anyway. :'(
@@ -249,35 +302,34 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
         enabled: false, // Disable native tooltips since we use custom ones.
       },
       scales: {
-        xAxes: [
-          {
-            ticks: {
-              fontFamily: mixins.monospaceFont,
-              fontSize: 10,
-              fontColor: "#eee",
-              maxRotation: 0,
-              callback: this._onGetTick,
-              timeBasedChartMin: minX,
-              timeBasedChartMax: maxX,
-            },
-            gridLines: { color: "rgba(255, 255, 255, 0.2)", zeroLineColor: "rgba(255, 255, 255, 0.2)" },
-            afterUpdate: this._onPlotChartUpdate,
-          },
-        ],
-        yAxes: this.props.yAxes.map((yAxis) => ({
+        xAxes: xAxes
+          ? xAxes.map((xAxis) => ({
+              ...defaultXAxis,
+              ...xAxis,
+              ticks: {
+                ...defaultXTicksSettings,
+                ...xAxis.ticks,
+                callback: (...args) =>
+                  xAxis.ticks.callback ? xAxis.ticks.callback(...args) : this._onGetTick(...args),
+              },
+            }))
+          : [defaultXAxis],
+        yAxes: yAxes.map((yAxis) => ({
           ...yAxis,
           afterUpdate: this._onPlotChartUpdate,
           ticks: {
+            ...defaultYTicksSettings,
             ...yAxis.ticks,
-            // Pad on the left so charts don't jump around.
-            callback: (...args) =>
-              (yAxis.ticks.callback ? yAxis.ticks.callback(...args) : this._onGetTick(...args)).padStart(7),
+            callback: (...args) => (yAxis.ticks.callback ? yAxis.ticks.callback(...args) : this._onGetTick(...args)),
           },
         })),
       },
+      events: ["click"],
+      onClick: this.props.onClick,
       pan: { enabled: true },
-      zoom: { enabled: true },
+      zoom: { enabled: this.props.zoom },
       plugins: plugins || {},
+      annotation: { annotations },
     };
     if (!this.state.showResetZoom) {
       // $FlowFixMe
@@ -288,48 +340,98 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
     return options;
   };
 
+  _renderLegend = () => {
+    const { data } = this.props;
+    return data.datasets.map((dataset, i) => {
+      const { label, color, pointStyle, borderDash } = dataset;
+      let pointSvg;
+      if (borderDash === PLOT_DOT_DASHED_STYLE) {
+        pointSvg = (
+          <svg width="11" height="10">
+            <line
+              stroke={color}
+              strokeWidth="2"
+              strokeDasharray={PLOT_DOT_DASHED_STYLE.join(", ")}
+              x1="0"
+              x2="18"
+              y1="6"
+              y2="6"
+            />
+          </svg>
+        );
+      } else if (borderDash === PLOT_DASHED_STYLE) {
+        pointSvg = <span style={{ fontSize: "12px", fontWeight: "bold" }}>- -</span>;
+      } else if (pointStyle === "circle") {
+        pointSvg = (
+          <svg width="11" height="10">
+            <circle fill={color} r="3.5" cx="5" cy="6" />
+          </svg>
+        );
+      } else {
+        pointSvg = <span style={{ fontSize: "12px", fontWeight: "bold" }}>––</span>;
+      }
+      return (
+        <div key={i} style={{ color, whiteSpace: "nowrap" }}>
+          {pointSvg} <span style={{ fontSize: "10px" }}>{label}</span>
+        </div>
+      );
+    });
+  };
+
+  renderChart() {
+    const { type, width, height, data, isSynced } = this.props;
+    const minX = min(data.datasets.map((dataset) => (dataset.data.length ? dataset.data[0].x : undefined)));
+    const maxX = max(data.datasets.map((dataset) => (dataset.data.length ? last(dataset.data).x : undefined)));
+    const CoreComponent = (
+      <ChartComponent
+        redraw={this.state.shouldRedraw}
+        type={type}
+        width={width}
+        height={height}
+        key={`${width}x${height}`} // https://github.com/jerairrest/react-chartjs-2/issues/60#issuecomment-406376731
+        ref={(ref) => {
+          this._chart = ref;
+        }}
+        options={this._chartjsOptions(minX, maxX)}
+        data={data}
+      />
+    );
+    return isSynced ? (
+      <SyncTimeAxis data={{ minX, maxX }}>{({ minX, maxX }) => CoreComponent}</SyncTimeAxis>
+    ) : (
+      CoreComponent
+    );
+  }
+
   render() {
-    const { type, width, height, data } = this.props;
+    const { width, drawLegend } = this.props;
 
     return (
-      <SRoot style={{ width, height }} onDoubleClick={this._onResetZoom}>
-        <SBar innerRef={(el) => (this._bar = el)} />
-        <SyncTimeAxis
-          data={{
-            minX: min(data.datasets.map((dataset) => (dataset.data.length ? dataset.data[0].x : undefined))),
-            maxX: max(data.datasets.map((dataset) => (dataset.data.length ? last(dataset.data).x : undefined))),
-          }}>
-          {({ minX, maxX }) => (
-            <ChartComponent
-              type={type}
-              width={width}
-              height={height}
-              key={`${width}x${height}`} // https://github.com/jerairrest/react-chartjs-2/issues/60#issuecomment-406376731
-              ref={(ref) => {
-                this._chart = ref;
-              }}
-              options={this._chartjsOptions(minX, maxX)}
-              data={data}
+      <div style={{ display: "flex", width: "100%" }}>
+        <div style={{ display: "flex", width }}>
+          <SRoot onDoubleClick={this._onResetZoom}>
+            <SBar innerRef={(el) => (this._bar = el)} />
+            {this.renderChart()}
+
+            {this.state.showResetZoom && (
+              <SResetZoom>
+                <Button tooltip="(shortcut: double-click)" onClick={this._onResetZoom}>
+                  reset zoom
+                </Button>
+              </SResetZoom>
+            )}
+
+            {/* Chart.js seems to not handle tooltips while dragging super well, and this fixes that. */}
+            <DocumentEvents
+              capture
+              onMouseDown={this._onMouseMove}
+              onMouseUp={this._onMouseMove}
+              onMouseMove={this._onMouseMove}
             />
-          )}
-        </SyncTimeAxis>
-
-        {this.state.showResetZoom && (
-          <SResetZoom>
-            <Button tooltip="(shortcut: double-click)" onClick={this._onResetZoom}>
-              reset zoom
-            </Button>
-          </SResetZoom>
-        )}
-
-        {/* Chart.js seems to not handle tooltips while dragging super well, and this fixes that. */}
-        <DocumentEvents
-          capture
-          onMouseDown={this._onMouseMove}
-          onMouseUp={this._onMouseMove}
-          onMouseMove={this._onMouseMove}
-        />
-      </SRoot>
+          </SRoot>
+        </div>
+        {drawLegend && <SLegend>{this._renderLegend()}</SLegend>}
+      </div>
     );
   }
 }

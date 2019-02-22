@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// Need to import separately between disparity in import order between
+// Need to import separately because disparity in import order between
 // proprietary and open source repos.
 import KeyListener from "react-key-listener"; // eslint-disable-line
 
@@ -75,7 +75,7 @@ export default class Modal extends React.PureComponent<Props> {
             el.parentElement.id !== "root" &&
             el.parentElement.parentElement.id !== "root"
           ) {
-            throw new Error("`<Modal>` must be rendered using `renderToBody()` (or directly in `<App>`).");
+            throw new Error("`<Modal>` must be rendered using `renderToBody()` or `RenderToBodyComponent`.");
           }
         }}>
         <StyledMask onClick={this.props.onRequestClose} />

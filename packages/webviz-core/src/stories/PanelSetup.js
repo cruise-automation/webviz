@@ -10,30 +10,33 @@ import * as React from "react";
 import { DragDropContextProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import { Provider } from "react-redux";
+import { TimeUtil } from "rosbag";
 
+import { setAuxiliaryData } from "webviz-core/src/actions/extensions";
 import {
   capabilitiesReceived,
   datatypesReceived,
   frameReceived,
   playerStateChanged,
-  setAuxiliaryData,
   topicsReceived,
-} from "webviz-core/src/actions/dataSource";
+} from "webviz-core/src/actions/player";
 import rootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
-import type { Frame, PlayerState, Topic } from "webviz-core/src/types/dataSources";
+import type { Frame, PlayerStatePayload, Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+
+export type Fixture = {|
+  frame: Frame,
+  topics: Topic[],
+  capabilities?: string[],
+  playerState?: PlayerStatePayload,
+  datatypes?: RosDatatypes,
+  auxiliaryData?: Object,
+|};
 
 type Props = {|
   children: React.Node,
-  fixture: {|
-    frame: Frame,
-    topics: Topic[],
-    capabilities?: string[],
-    playerState?: PlayerState,
-    datatypes?: RosDatatypes,
-    auxiliaryData?: Object,
-  |},
+  fixture: Fixture,
   omitDragAndDrop?: boolean,
   onMount?: (HTMLDivElement) => void,
   style?: { [string]: any },
@@ -65,7 +68,18 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
     if (playerState) {
       store.dispatch(playerStateChanged(playerState));
     }
-    store.dispatch(frameReceived(frame));
+    if (frame) {
+      let currentTime;
+      for (const messages of Object.values(frame)) {
+        // $FlowFixMe - Flow doesn't seem to understand that `messages` is an array.
+        for (const message of messages) {
+          if (!currentTime || TimeUtil.isLessThan(currentTime, message.receiveTime)) {
+            currentTime = message.receiveTime;
+          }
+        }
+      }
+      store.dispatch(frameReceived(frame, currentTime));
+    }
     if (capabilities) {
       store.dispatch(capabilitiesReceived(capabilities));
     }

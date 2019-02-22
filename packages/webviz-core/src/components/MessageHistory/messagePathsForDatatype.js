@@ -15,7 +15,7 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import naturalSort from "webviz-core/src/util/naturalSort";
 
 // Generate an easily navigable flat structure given some `datatypes`. We cache
-// this loosely as `datatypes` don't change after the datasource has connected.
+// this loosely as `datatypes` don't change after the player has connected.
 // The structure looks something like this:
 //
 // {

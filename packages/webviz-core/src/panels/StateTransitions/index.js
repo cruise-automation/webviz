@@ -250,7 +250,7 @@ class StateTransitions extends React.PureComponent<Props> {
                   // Skip duplicates.
                   if (
                     previousTimestamp &&
-                    toSec(subtractTimes(previousTimestamp, item.timestamp)) === 0 &&
+                    toSec(subtractTimes(previousTimestamp, timestamp)) === 0 &&
                     previousValue === value
                   ) {
                     continue;
@@ -297,6 +297,8 @@ class StateTransitions extends React.PureComponent<Props> {
                   {({ width }) => (
                     <SChartContainerInner style={{ width, height }}>
                       <TimeBasedChart
+                        zoom
+                        isSynced
                         width={width}
                         height={height}
                         data={data}

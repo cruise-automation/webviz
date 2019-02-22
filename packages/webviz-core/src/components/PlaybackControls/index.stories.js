@@ -9,16 +9,15 @@
 import { action } from "@storybook/addon-actions";
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { Time } from "rosbag";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { UnconnectedPlaybackControls } from ".";
-import type { DataSourceState } from "webviz-core/src/reducers/dataSource";
+import type { PlayerState } from "webviz-core/src/reducers/player";
 
 const START_TIME = 1531761690;
 
-function getDataSourceState(): DataSourceState {
-  const dataSource: DataSourceState = {
+function getPlayerState(): PlayerState {
+  const player: PlayerState = {
     id: 2,
     isLive: true,
     isConnecting: false,
@@ -28,20 +27,17 @@ function getDataSourceState(): DataSourceState {
     topics: [],
     isPlaying: true,
     speed: 0.2,
-    auxiliaryData: {
-      timestamps: [],
-    },
     lastSeekTime: 0,
-    startTime: new Time(START_TIME, 331),
-    endTime: new Time(START_TIME + 20, 331),
-    currentTime: new Time(START_TIME + 5, 331),
+    startTime: { sec: START_TIME, nsec: 331 },
+    endTime: { sec: START_TIME + 20, nsec: 331 },
+    currentTime: { sec: START_TIME + 5, nsec: 331 },
     capabilities: [],
     datatypes: {},
     subscriptions: [],
     publishers: [],
     progress: {},
   };
-  return dataSource;
+  return player;
 }
 
 storiesOf("<PlaybackControls>", module)
@@ -51,17 +47,11 @@ storiesOf("<PlaybackControls>", module)
     const play = action("play");
     const setSpeed = action("setSpeed");
     const seek = action("seek");
-    const dataSource = getDataSourceState();
-    dataSource.isPlaying = true;
+    const player = getPlayerState();
+    player.isPlaying = true;
     return (
       <div style={{ padding: 20, margin: 100 }}>
-        <UnconnectedPlaybackControls
-          dataSource={dataSource}
-          pause={pause}
-          play={play}
-          setSpeed={setSpeed}
-          seek={seek}
-        />
+        <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />
       </div>
     );
   })
@@ -70,23 +60,17 @@ storiesOf("<PlaybackControls>", module)
     const play = action("play");
     const setSpeed = action("setSpeed");
     const seek = action("seek");
-    const dataSource = getDataSourceState();
+    const player = getPlayerState();
 
     // satisify flow
-    if (dataSource.startTime && dataSource.endTime) {
-      dataSource.startTime.sec += 1;
-      dataSource.endTime.sec += 1;
+    if (player.startTime && player.endTime) {
+      player.startTime.sec += 1;
+      player.endTime.sec += 1;
     }
-    dataSource.isPlaying = false;
+    player.isPlaying = false;
     return (
       <div style={{ padding: 20, margin: 100 }}>
-        <UnconnectedPlaybackControls
-          dataSource={dataSource}
-          pause={pause}
-          play={play}
-          setSpeed={setSpeed}
-          seek={seek}
-        />
+        <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />
       </div>
     );
   })
@@ -95,14 +79,14 @@ storiesOf("<PlaybackControls>", module)
     const play = action("play");
     const setSpeed = action("setSpeed");
     const seek = action("seek");
-    const dataSource = getDataSourceState();
+    const player = getPlayerState();
 
     // satisify flow
-    if (dataSource.startTime && dataSource.endTime) {
-      dataSource.startTime.sec += 1;
-      dataSource.endTime.sec += 1;
+    if (player.startTime && player.endTime) {
+      player.startTime.sec += 1;
+      player.endTime.sec += 1;
     }
-    dataSource.isPlaying = false;
+    player.isPlaying = false;
 
     // wrap the component so we can get a ref to it and force a mouse over and out event
     class ControlsWithTooltip extends React.Component<*> {
@@ -127,7 +111,7 @@ storiesOf("<PlaybackControls>", module)
         return (
           <UnconnectedPlaybackControls
             ref={(el) => (this.el = el)}
-            dataSource={dataSource}
+            player={player}
             pause={pause}
             play={play}
             setSpeed={setSpeed}

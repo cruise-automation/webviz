@@ -9,13 +9,15 @@
 import React from "react";
 import { hot } from "react-hot-loader";
 import { connect, Provider } from "react-redux";
+import type { Time } from "rosbag";
 
 import styles from "./Root.module.scss";
-import { pausePlayback, seekPlayback, setPlaybackSpeed, startPlayback } from "webviz-core/src/actions/dataSource";
 import { changePanelLayout, importPanelLayout, savePanelConfig } from "webviz-core/src/actions/panels";
+import { pausePlayback, seekPlayback, setPlaybackSpeed, startPlayback } from "webviz-core/src/actions/player";
 import Logo from "webviz-core/src/assets/logo.svg";
 import AppMenu from "webviz-core/src/components/AppMenu";
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
+import DropOverlay from "webviz-core/src/components/DropOverlay";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import ErrorDisplay from "webviz-core/src/components/ErrorDisplay";
 import LayoutMenu from "webviz-core/src/components/LayoutMenu";
@@ -25,14 +27,14 @@ import renderToBody from "webviz-core/src/components/renderToBody";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import Toolbar from "webviz-core/src/components/Toolbar";
 import withDragDropContext from "webviz-core/src/components/withDragDropContext";
-import { loadBag } from "webviz-core/src/dataSources/build";
+import { loadBag } from "webviz-core/src/players/build";
 import type { State } from "webviz-core/src/reducers";
 import type { PanelsState } from "webviz-core/src/reducers/panels";
 import type { Auth } from "webviz-core/src/types/Auth";
-import type { Timestamp } from "webviz-core/src/types/dataSources";
 import type { ImportPanelLayoutPayload, PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
 import type { Store } from "webviz-core/src/types/Store";
 import { getPanelIdForType } from "webviz-core/src/util";
+import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
 
 const LOGO_SIZE = 24;
 
@@ -45,11 +47,11 @@ type Props = AppProps & {
   // panelLayout is an opaque structure defined by react-mosaic
   changePanelLayout: (panelLayout: any) => void,
   savePanelConfig: (SaveConfigPayload) => void,
-  seekPlayback: (Timestamp) => void,
+  seekPlayback: (Time) => void,
   startPlayback: () => any,
   pausePlayback: () => any,
   setPlaybackSpeed: (speed: number) => any,
-  loadBag: (files: FileList | File[]) => any,
+  loadBag: (files: FileList | File[], addBag: boolean) => any,
   importPanelLayout: (ImportPanelLayoutPayload, boolean) => void,
 };
 class App extends React.PureComponent<Props> {
@@ -62,8 +64,8 @@ class App extends React.PureComponent<Props> {
     }
   }
 
-  onFilesSelected = (files: FileList) => {
-    this.props.loadBag(files);
+  onFilesSelected = ({ files, shiftPressed }: { files: FileList, shiftPressed: boolean }) => {
+    this.props.loadBag(files, shiftPressed);
   };
 
   onPanelSelect = (panelType: string, panelConfig?: PanelConfig) => {
@@ -97,8 +99,26 @@ class App extends React.PureComponent<Props> {
 
   render() {
     return (
-      <div ref={(el) => (this.container = el)} className="app-container" data-modalcontainer="true" tabIndex={0}>
-        <DocumentDropListener filesSelected={this.onFilesSelected} />
+      <div ref={(el) => (this.container = el)} className="app-container" tabIndex={0}>
+        <DocumentDropListener filesSelected={this.onFilesSelected}>
+          <DropOverlay>
+            <div
+              style={{
+                fontSize: "4em",
+                marginBottom: "1em",
+              }}>
+              Drop a bag file to load it!
+            </div>
+            <div
+              style={{
+                fontSize: "2em",
+              }}>
+              (hold SHIFT while dropping a second bag file to add it
+              <br />
+              with all topics prefixed with {SECOND_BAG_PREFIX})
+            </div>
+          </DropOverlay>
+        </DocumentDropListener>
         <Toolbar>
           <div className={styles.logoWrapper}>
             <div>

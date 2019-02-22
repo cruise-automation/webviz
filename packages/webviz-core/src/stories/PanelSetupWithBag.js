@@ -1,0 +1,94 @@
+// @flow
+//
+//  Copyright (c) 2018-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
+
+import * as React from "react";
+import withHooks, { useEffect, useState } from "react-with-hooks";
+import rosbag from "rosbag";
+
+import PanelSetup, { type Fixture } from "webviz-core/src/stories/PanelSetup";
+import Logger from "webviz-core/src/util/Logger";
+
+const log = new Logger(__filename);
+
+type Props = {
+  bagFileUrl?: string,
+  children: React.Node,
+  topics?: string[],
+  // merge the bag data with existing fixture data
+  getMergedFixture: (bagFixture: Fixture) => Fixture,
+  mapTopicToDatatype: (topic: string) => string,
+};
+
+// A util component for testing panels that need to load the raw ROS bags.
+// Make sure the bag is uncompressed and is small (only contains related topics).
+// If the final fixture data is a mix of bag data (e.g. audio, image) and json/js data, you can
+// merge them together using getMergedFixture
+function PanelSetupWithBag({
+  bagFileUrl,
+  children,
+  getMergedFixture = (bagFixture) => bagFixture,
+  mapTopicToDatatype = () => "dummyType",
+  topics = [],
+}: Props) {
+  const [fixture, setFixture] = useState();
+
+  async function loadBag() {
+    if (!bagFileUrl || topics.length === 0) {
+      return;
+    }
+
+    const response = await fetch(bagFileUrl);
+    if (!response) {
+      log.error("failed to fetch the bag");
+    }
+    const blobs = await response.blob();
+    const bagFile = new File([blobs], "temp.bag");
+    const bag = await rosbag.open(bagFile).catch((err) => {
+      log.error("error openning the bag", err);
+    });
+    if (bag == null) {
+      log.error("bag is not valid");
+    }
+
+    // build the basic shape for fixture
+    const tempFixture = {
+      topics: topics.map((topic) => ({ name: topic, datatype: mapTopicToDatatype(topic) })),
+      frame: topics.reduce((memo, topic) => {
+        memo[topic] = [];
+        return memo;
+      }, {}),
+    };
+
+    await bag
+      .readMessages({ topics }, (result) => {
+        const { message, topic } = result;
+        tempFixture.frame[topic].push({
+          datatype: mapTopicToDatatype(topic),
+          topic,
+          op: "message",
+          receiveTime: result.timestamp,
+          message,
+        });
+      })
+      .catch((err) => {
+        log.error("error reading messages from the bag", err);
+      });
+
+    const fixture = getMergedFixture(tempFixture);
+    // set the state twice in case the panel has nested MessageHistory like ImageView
+    setFixture(fixture);
+    setFixture(fixture);
+  }
+
+  // load the bag when component is mounted or updated
+  useEffect(async () => loadBag(), [bagFileUrl, topics]);
+
+  return fixture ? <PanelSetup fixture={fixture}>{children}</PanelSetup> : null;
+}
+
+export default withHooks(PanelSetupWithBag);

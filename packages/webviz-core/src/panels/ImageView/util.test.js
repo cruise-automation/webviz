@@ -35,26 +35,13 @@ describe("ImageView", () => {
         { name: "/unknown_camera/marker4", topic: "/unknown_camera/marker4" },
       ]);
     });
-    it("only returns markers for known cameras if the image is rectified", () => {
-      expect(getMarkerOptions("/some_camera_topic/something_else", allMarkerTopics, allCameraNamespaces)).toEqual([
-        { name: "/unknown_camera/marker4", topic: "/unknown_camera/marker4" },
-      ]);
-    });
   });
 
   describe("getMarkerTopics", () => {
-    const markerNames = ["marker1", "marker2", "/unknown_camera/marker4"];
-
     it("adds camera prefix to relative marker names", () => {
-      expect(getMarkerTopics("/some_camera_topic/image_rect_color", markerNames)).toEqual([
-        "/some_camera_topic/marker1",
-        "/some_camera_topic/marker2",
-        "/unknown_camera/marker4",
-      ]);
-    });
-
-    it("requires a rectified image topic", () => {
-      expect(getMarkerTopics("/some_camera_topic/something_else", markerNames)).toEqual([]);
+      expect(
+        getMarkerTopics("/some_camera_topic/some_image_type", ["marker1", "marker2", "/unknown_camera/marker4"])
+      ).toEqual(["/some_camera_topic/marker1", "/some_camera_topic/marker2", "/unknown_camera/marker4"]);
     });
   });
 

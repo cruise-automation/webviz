@@ -11,16 +11,16 @@ import { combineReducers } from "redux";
 import type { Reducer } from "redux";
 
 import auth from "./auth";
-import dataSource from "./dataSource";
 import extensions from "./extensions";
 import mosaic from "./mosaic";
 import panels from "./panels";
+import player from "./player";
 import type { Routing } from "webviz-core/src/types/router";
 
 const reducers = {
   routing: (routing: Reducer<Routing, any>),
   panels,
-  dataSource,
+  player,
   mosaic,
   auth,
   extensions,

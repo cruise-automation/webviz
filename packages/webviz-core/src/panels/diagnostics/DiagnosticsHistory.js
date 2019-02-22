@@ -19,7 +19,7 @@ import {
   computeDiagnosticInfo,
 } from "./util";
 import { FrameCompatibility } from "webviz-core/src/components/MessageHistory/FrameCompatibility";
-import type { Frame } from "webviz-core/src/types/dataSources";
+import type { Frame } from "webviz-core/src/types/players";
 import { DIAGNOSTIC_TOPIC } from "webviz-core/src/util/globalConstants";
 
 export type DiagnosticAutocompleteEntry = {|

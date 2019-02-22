@@ -7,65 +7,52 @@
 //  You may not use this file except in compliance with the License.
 
 import addValuesWithPathsToItems from "./addValuesWithPathsToItems";
-import type { RawItem } from "./internalCommon";
-import type { Topic } from "webviz-core/src/types/dataSources";
+import type { Message, Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 describe("addValuesWithPathsToItems", () => {
   it("traverses down the path for every item", () => {
-    const items: RawItem[] = [
+    const messages: Message[] = [
       {
-        timestamp: { sec: 0, nsec: 0 },
-        elapsedSinceStart: { sec: 0, nsec: 0 },
-        hasAccurateTimestamp: false,
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
         message: {
-          op: "message",
-          topic: "/some/topic",
-          datatype: "some_datatype",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: {
-            some_array: [
-              {
-                some_id: 10,
-                some_message: {
-                  x: 10,
-                  y: 20,
-                },
+          some_array: [
+            {
+              some_id: 10,
+              some_message: {
+                x: 10,
+                y: 20,
               },
-            ],
-          },
+            },
+          ],
         },
-        index: 0,
       },
       {
-        timestamp: { sec: 0, nsec: 0 },
-        elapsedSinceStart: { sec: 0, nsec: 0 },
-        hasAccurateTimestamp: false,
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
         message: {
-          op: "message",
-          topic: "/some/topic",
-          datatype: "some_datatype",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: {
-            some_array: [
-              {
-                some_id: 10,
-                some_message: {
-                  x: 10,
-                  y: 20,
-                },
+          some_array: [
+            {
+              some_id: 10,
+              some_message: {
+                x: 10,
+                y: 20,
               },
-              {
-                some_id: 50,
-                some_message: {
-                  x: 50,
-                  y: 60,
-                },
+            },
+            {
+              some_id: 50,
+              some_message: {
+                x: 50,
+                y: 60,
               },
-            ],
-          },
+            },
+          ],
         },
-        index: 1,
       },
     ];
     const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
@@ -101,7 +88,7 @@ describe("addValuesWithPathsToItems", () => {
 
     expect(
       addValuesWithPathsToItems(
-        items,
+        messages,
         {
           topicName: "/some/topic",
           messagePath: [
@@ -116,7 +103,7 @@ describe("addValuesWithPathsToItems", () => {
       )
     ).toEqual([
       {
-        ...items[0],
+        message: messages[0],
         queriedData: [
           {
             value: { x: 10, y: 20 },
@@ -126,7 +113,7 @@ describe("addValuesWithPathsToItems", () => {
         ],
       },
       {
-        ...items[1],
+        message: messages[1],
         queriedData: [
           {
             value: { x: 10, y: 20 },
@@ -144,51 +131,39 @@ describe("addValuesWithPathsToItems", () => {
   });
 
   it("returns empty array for invalid topics", () => {
-    const items: RawItem[] = [
+    const messages: Message[] = [
       {
-        timestamp: { sec: 0, nsec: 0 },
-        elapsedSinceStart: { sec: 0, nsec: 0 },
-        hasAccurateTimestamp: false,
-        message: {
-          op: "message",
-          topic: "/some/topic",
-          datatype: "some_datatype",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: 123,
-        },
-        index: 0,
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
+        message: 123,
       },
     ];
     expect(
-      addValuesWithPathsToItems(items, { topicName: "/some/topic", messagePath: [], modifier: undefined }, [], {})
+      addValuesWithPathsToItems(messages, { topicName: "/some/topic", messagePath: [], modifier: undefined }, [], {})
     ).toEqual([]);
   });
 
   it("filters properly, and uses the filter name in the path", () => {
-    const items: RawItem[] = [
+    const messages: Message[] = [
       {
-        timestamp: { sec: 0, nsec: 0 },
-        elapsedSinceStart: { sec: 0, nsec: 0 },
-        hasAccurateTimestamp: false,
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
         message: {
-          op: "message",
-          topic: "/some/topic",
-          datatype: "some_datatype",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: {
-            some_array: [
-              {
-                some_filter_value: 0,
-                some_id: 10,
-              },
-              {
-                some_filter_value: 1,
-                some_id: 50,
-              },
-            ],
-          },
+          some_array: [
+            {
+              some_filter_value: 0,
+              some_id: 10,
+            },
+            {
+              some_filter_value: 1,
+              some_id: 50,
+            },
+          ],
         },
-        index: 1,
       },
     ];
     const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
@@ -214,7 +189,7 @@ describe("addValuesWithPathsToItems", () => {
 
     expect(
       addValuesWithPathsToItems(
-        items,
+        messages,
         {
           topicName: "/some/topic",
           messagePath: [
@@ -230,43 +205,31 @@ describe("addValuesWithPathsToItems", () => {
       )
     ).toEqual([
       {
-        ...items[0],
+        message: messages[0],
         queriedData: [{ value: 10, path: "/some/topic.some_array[:]{some_filter_value==0}.some_id" }],
       },
     ]);
   });
 
   it("returns matching constants", () => {
-    const items: RawItem[] = [
+    const messages: Message[] = [
       {
-        timestamp: { sec: 0, nsec: 0 },
-        elapsedSinceStart: { sec: 0, nsec: 0 },
-        hasAccurateTimestamp: false,
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
         message: {
-          op: "message",
-          topic: "/some/topic",
-          datatype: "some_datatype",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: {
-            state: 0,
-          },
+          state: 0,
         },
-        index: 0,
       },
       {
-        timestamp: { sec: 0, nsec: 0 },
-        elapsedSinceStart: { sec: 0, nsec: 0 },
-        hasAccurateTimestamp: false,
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
         message: {
-          op: "message",
-          topic: "/some/topic",
-          datatype: "some_datatype",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: {
-            state: 1,
-          },
+          state: 1,
         },
-        index: 1,
       },
     ];
     const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
@@ -293,14 +256,14 @@ describe("addValuesWithPathsToItems", () => {
 
     expect(
       addValuesWithPathsToItems(
-        items,
+        messages,
         { topicName: "/some/topic", messagePath: [{ type: "name", name: "state" }], modifier: undefined },
         topics,
         datatypes
       )
     ).toEqual([
       {
-        ...items[0],
+        message: messages[0],
         queriedData: [
           {
             value: 0,
@@ -310,7 +273,7 @@ describe("addValuesWithPathsToItems", () => {
         ],
       },
       {
-        ...items[1],
+        message: messages[1],
         queriedData: [
           {
             value: 1,

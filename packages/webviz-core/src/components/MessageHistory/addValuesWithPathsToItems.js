@@ -7,16 +7,16 @@
 //  You may not use this file except in compliance with the License.
 
 import { isTypicalFilterName, type MessageHistoryItem, type MessagePathStructureItem } from ".";
-import { type RawItem, type RosPath } from "./internalCommon";
+import { type RosPath } from "./internalCommon";
 import { messagePathStructures } from "webviz-core/src/components/MessageHistory/messagePathsForDatatype";
 import { constantsByDatatype, topicsByTopicName } from "webviz-core/src/selectors";
-import type { Topic } from "webviz-core/src/types/dataSources";
+import type { Message, Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 // Get a new set of `items` that has `queriedData` set to the values and paths as
 // query by `rosPath`.
 export default function addValuesWithPathsToItems(
-  items: RawItem[],
+  messages: Message[],
   rosPath: RosPath,
   topics: Topic[],
   datatypes: RosDatatypes
@@ -24,11 +24,11 @@ export default function addValuesWithPathsToItems(
   const structures = messagePathStructures(datatypes);
 
   // Iterate over the individual messages.
-  return items
-    .map((item: RawItem) => {
+  return messages
+    .map((message: Message) => {
       const topic = topicsByTopicName(topics)[rosPath.topicName];
       // We don't care about messages that don't match the topic we're looking for.
-      if (!topic || item.message.topic !== rosPath.topicName) {
+      if (!topic || message.topic !== rosPath.topicName) {
         return undefined;
       }
 
@@ -96,8 +96,8 @@ export default function addValuesWithPathsToItems(
           console.warn(`Unknown pathItem.type ${pathItem.type} for structureType: ${structureItem.structureType}`);
         }
       }
-      traverse(item.message.message, 0, rosPath.topicName, structures[topic.datatype]);
-      return { ...item, queriedData };
+      traverse(message.message, 0, rosPath.topicName, structures[topic.datatype]);
+      return { message, queriedData };
     })
     .filter(Boolean);
 }

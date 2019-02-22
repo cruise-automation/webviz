@@ -15,9 +15,10 @@ import Flex from "webviz-core/src/components/Flex";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import type { State } from "webviz-core/src/reducers";
-import type { SubscribePayload, AdvertisePayload } from "webviz-core/src/types/dataSources";
+import type { SubscribePayload, AdvertisePayload, Topic } from "webviz-core/src/types/players";
 
 type Props = {|
+  topics: Topic[],
   subscriptions: SubscribePayload[],
   publishers: AdvertisePayload[],
 |};
@@ -77,10 +78,13 @@ class Internals extends React.PureComponent<Props> {
   static panelType = "Internals";
 
   _renderSubscriptions() {
-    if (this.props.subscriptions.length === 0) {
+    const { topics, subscriptions } = this.props;
+    if (subscriptions.length === 0) {
       return "(none)";
     }
-    const groupedSubscriptions = groupBy(this.props.subscriptions, getSubscriptionGroup);
+    const groupedSubscriptions = groupBy(subscriptions, getSubscriptionGroup);
+    const originalTopicsByName = groupBy(topics, (topic) => topic.name);
+
     return Object.keys(groupedSubscriptions)
       .sort()
       .map((key) => {
@@ -90,7 +94,11 @@ class Internals extends React.PureComponent<Props> {
             <ul>
               {sortBy(groupedSubscriptions[key], (sub) => sub.topic).map((sub, i) => (
                 <li key={i}>
-                  <tt>{sub.topic}</tt>
+                  <tt>
+                    {sub.topic}
+                    {originalTopicsByName[sub.topic] &&
+                      ` (original topic: ${originalTopicsByName[sub.topic][0].originalTopic})`}
+                  </tt>
                 </li>
               ))}
             </ul>
@@ -143,8 +151,9 @@ class Internals extends React.PureComponent<Props> {
 
 const mapStateToProps = (state: State): $Shape<Props> => {
   return {
-    subscriptions: state.dataSource.subscriptions,
-    publishers: state.dataSource.publishers,
+    subscriptions: state.player.subscriptions,
+    publishers: state.player.publishers,
+    topics: state.player.topics,
   };
 };
 

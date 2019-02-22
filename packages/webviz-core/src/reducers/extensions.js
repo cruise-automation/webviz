@@ -10,9 +10,12 @@ import type { ExtensionAction } from "webviz-core/src/actions/extensions";
 
 export type Extensions = {
   markerProviders: Object[],
+  auxiliaryData: Object,
 };
+
 const initialState: Extensions = Object.freeze({
   markerProviders: [],
+  auxiliaryData: {},
 });
 
 export default function(state: Extensions = initialState, action: ExtensionAction): Extensions {
@@ -22,10 +25,16 @@ export default function(state: Extensions = initialState, action: ExtensionActio
         console.warn("attempted to register duplicate MarkerProvider", action.payload);
         return state;
       }
-      return { markerProviders: [...state.markerProviders, action.payload] };
+      return { ...state, markerProviders: [...state.markerProviders, action.payload] };
 
     case "UNREGISTER_MARKER_PROVIDER":
-      return { markerProviders: state.markerProviders.filter((p) => p !== action.payload) };
+      return { ...state, markerProviders: state.markerProviders.filter((p) => p !== action.payload) };
+
+    case "SET_AUXILIARY_DATA":
+      return {
+        ...state,
+        auxiliaryData: { ...state.auxiliaryData, ...action.payload(state.auxiliaryData) },
+      };
 
     default:
       return state;

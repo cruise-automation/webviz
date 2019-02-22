@@ -6,18 +6,26 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// Need to import separately because disparity in import order between
+// proprietary and open source repos.
+import KeyListener from "react-key-listener"; // eslint-disable-line
+
+import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
+import cx from "classnames";
 import PropTypes from "prop-types";
 import * as React from "react";
+import DocumentEvents from "react-document-events";
 import { getNodeAtPath } from "react-mosaic-component";
 import { connect } from "react-redux";
 
+import styles from "./Panel.module.scss";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import PanelList from "webviz-core/src/panels/PanelList";
-import type { State } from "webviz-core/src/reducers";
-import type { Topic } from "webviz-core/src/types/dataSources";
+import type { State as ReduxState } from "webviz-core/src/reducers";
 import type { SaveConfigPayload, PanelConfig, SaveConfig } from "webviz-core/src/types/panels";
+import type { Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { getPanelTypeFromId } from "webviz-core/src/util";
 
@@ -33,6 +41,10 @@ import { getPanelTypeFromId } from "webviz-core/src/util";
 // The panel also gets wrapped in an error boundary and flex box.
 
 type Props<Config> = {| childId?: string, config?: Config |};
+type State = {
+  fullScreenKeyPressed: boolean,
+  fullScreen: boolean,
+};
 
 interface PanelStatics<Config> {
   panelType: string;
@@ -68,7 +80,8 @@ export default function Panel<Config: PanelConfig>(
   const defaultConfig: Config = PanelComponent.defaultConfig;
 
   class UnconnectedPanel extends React.PureComponent<
-    ReduxMappedProps & {| savePanelConfig: (SaveConfigPayload) => void |}
+    ReduxMappedProps & {| savePanelConfig: (SaveConfigPayload) => void |},
+    State
   > {
     static panelType = PanelComponent.panelType;
     static displayName = `Panel(${PanelComponent.displayName || PanelComponent.name || ""})`;
@@ -78,6 +91,8 @@ export default function Panel<Config: PanelConfig>(
       mosaicWindowActions: PropTypes.any,
       store: PropTypes.any,
     };
+
+    state = { fullScreenKeyPressed: false, fullScreen: false };
 
     // Save the config, by mixing in the partial config with the current config, or if that does
     // not exist, with the `defaultConfig`. That way we always save complete configs.
@@ -118,12 +133,53 @@ export default function Panel<Config: PanelConfig>(
       });
     };
 
+    _enterFullScreen = () => {
+      this.setState((state) => {
+        return { fullScreen: state.fullScreenKeyPressed };
+      });
+    };
+
+    _exitFullScreen = () => {
+      this.setState({ fullScreenKeyPressed: false, fullScreen: false });
+    };
+
+    _keyUpHandlers = {
+      "`": this._exitFullScreen,
+    };
+
+    _keyDownHandlers = {
+      "`": () => {
+        this.setState({ fullScreenKeyPressed: true });
+      },
+    };
+
     render() {
       const { topics, datatypes, capabilities, childId } = this.props;
+      const { fullScreenKeyPressed, fullScreen } = this.state;
       return (
         // $FlowFixMe - bug prevents requiring panelType on PanelComponent: https://stackoverflow.com/q/52508434/23649
         <PanelContext.Provider value={{ type: PanelComponent.panelType, id: childId }}>
-          <Flex col clip>
+          {/* ensures user exits full-screen mode when leaving the window, even if key is still pressed down */}
+          <DocumentEvents target={window.top} enabled onBlur={this._exitFullScreen} />
+          <KeyListener global keyUpHandlers={this._keyUpHandlers} keyDownHandlers={this._keyDownHandlers} />
+          <Flex
+            onClick={this._enterFullScreen}
+            className={cx({
+              [styles.root]: true,
+              [styles.rootFullScreen]: fullScreen,
+            })}
+            col
+            clip>
+            {fullScreenKeyPressed && (
+              <div className={styles.fullScreenKeyPressedOverlay}>
+                {!fullScreen && (
+                  <div>
+                    <p>Click to Fullscreen</p>
+                    <FullscreenIcon />
+                  </div>
+                )}
+              </div>
+            )}
             <ErrorBoundary>
               {/* $FlowFixMe - https://github.com/facebook/flow/issues/6479 */}
               <PanelComponent
@@ -141,16 +197,16 @@ export default function Panel<Config: PanelConfig>(
     }
   }
 
-  function mapStateToProps(state: State, ownProps: Props<Config>): ReduxMappedProps {
+  function mapStateToProps(state: ReduxState, ownProps: Props<Config>): ReduxMappedProps {
     // Be careful when adding something here: it should not change often, otherwise
     // all panels will rerender, which is very expensive.
     return {
       childId: ownProps.childId,
       // $FlowFixMe: if nothing went wrong, `state.panels.savedProps[ownProps.childId]` should be of type `Config`.
       config: state.panels.savedProps[ownProps.childId] || ownProps.config,
-      topics: state.dataSource.topics,
-      datatypes: state.dataSource.datatypes,
-      capabilities: state.dataSource.capabilities,
+      topics: state.player.topics,
+      datatypes: state.player.datatypes,
+      capabilities: state.player.capabilities,
     };
   }
 

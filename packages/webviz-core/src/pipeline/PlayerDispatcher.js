@@ -6,25 +6,28 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import type { Time } from "rosbag";
+
 import {
   capabilitiesReceived,
   datatypesReceived,
   frameReceived,
+  playerConnected,
+  playerConnecting,
   playerStateChanged,
-  setAuxiliaryData,
   timeUpdated,
   topicsReceived,
-} from "webviz-core/src/actions/dataSource";
-import type { Frame, Message, DataSourceMessage, Timestamp } from "webviz-core/src/types/dataSources";
+} from "webviz-core/src/actions/player";
+import type { Frame, Message, PlayerMessage } from "webviz-core/src/types/players";
 import type { Dispatch } from "webviz-core/src/types/Store";
 import { recordMark, recordAndClearMeasure } from "webviz-core/src/util/performanceMeasurements";
 
-// connects a datasource to redux and
-// dispatches messages from datasource to redux
+// connects a player to redux and
+// dispatches messages from player to redux
 // including buffered frames
-export default class DataSourceDispatcher {
+export default class PlayerDispatcher {
   _dispatch: Dispatch;
-  _lastReceiveTime: ?Timestamp;
+  _lastReceiveTime: ?Time;
   _buffer: Frame = {};
   _timer: any;
   _signal: () => void = () => {};
@@ -71,9 +74,8 @@ export default class DataSourceDispatcher {
   // so in our tests we can deterministically wait
   // for a full frame to be dispatched before we test
   // the new state within the store
-  consumeMessage(msg: DataSourceMessage): Promise<void> {
+  consumeMessage(msg: PlayerMessage): Promise<void> {
     switch (msg.op) {
-      case "msg":
       case "message":
         if (!msg.receiveTime) {
           // Should be covered by Flow, but just to make sure.
@@ -87,13 +89,21 @@ export default class DataSourceDispatcher {
         // Only update the time immediately if we don't have a frame waiting to render.
         if (!this._timer) {
           this._dispatch(timeUpdated(this._lastReceiveTime));
+          window.requestAnimationFrame(this._requestDataFn);
         }
         break;
 
       case "topics":
         this._dispatch(
           topicsReceived(
-            msg.topics.map(({ datatype, topic }) => (datatype ? { datatype, name: topic } : undefined)).filter(Boolean)
+            msg.topics
+              .map(({ datatype, topic: name, originalTopic }) => {
+                if (!datatype) {
+                  return undefined;
+                }
+                return originalTopic ? { datatype, name, originalTopic } : { datatype, name };
+              })
+              .filter(Boolean)
           )
         );
         break;
@@ -111,33 +121,24 @@ export default class DataSourceDispatcher {
         this._dispatch(capabilitiesReceived(msg.capabilities));
         break;
 
-      case "auxiliaryData": {
-        const { data } = msg;
-        this._dispatch(setAuxiliaryData(() => data));
-        break;
-      }
-
-      // noop - don't do anything with these, these are just acks
-      case "subscribe":
-        break;
-      case "unsubscribe":
-        break;
-
       case "seek":
         this._buffer = {};
         this._dispatch({ type: "PLAYBACK_RESET" });
         break;
 
       case "progress":
-        this._dispatch({ type: "DATA_SOURCE_PROGRESS", payload: msg.progress });
+        this._dispatch({ type: "PLAYER_PROGRESS", payload: msg.progress });
+        break;
+
+      case "connecting":
+        this._dispatch(playerConnecting(msg.player));
+        break;
+
+      case "connected":
+        this._dispatch(playerConnected());
         break;
 
       default:
-        if (msg.op === "msg") {
-          // appease Flow which doesn't properly understand the fallthrough above
-          throw new Error();
-        }
-        (msg.op: empty);
         console.warn("unknown UI thread op", msg.op, msg);
     }
     return Promise.resolve();

@@ -34,34 +34,36 @@ export default class TimeBasedChartTooltip extends React.PureComponent<Props> {
           <span className={styles.title}>Path:&nbsp;</span>
           {tooltip.path}
         </div>
-        <table>
-          <tbody>
-            <tr>
-              <th />
-              {timestampReceiveTime && <th>receive time</th>}
-              {timestampHeaderStamp && <th>header.stamp</th>}
-            </tr>
-            <tr>
-              <th>ROS</th>
-              {timestampReceiveTime && <td>{formatTimeRaw(timestampReceiveTime)}</td>}
-              {timestampHeaderStamp && <td>{formatTimeRaw(timestampHeaderStamp)}</td>}
-            </tr>
-            <tr>
-              <th>Time</th>
-              {timestampReceiveTime && <td>{formatTime(timestampReceiveTime)}</td>}
-              {timestampHeaderStamp && <td>{formatTime(timestampHeaderStamp)}</td>}
-            </tr>
-            <tr>
-              <th>Elapsed</th>
-              {timestampReceiveTime && (
-                <td>{toSec(subtractTimes(timestampReceiveTime, tooltip.startTime)).toFixed(9)} sec</td>
-              )}
-              {timestampHeaderStamp && (
-                <td>{toSec(subtractTimes(timestampHeaderStamp, tooltip.startTime)).toFixed(9)} sec</td>
-              )}
-            </tr>
-          </tbody>
-        </table>
+        {timestampReceiveTime && timestampHeaderStamp && (
+          <table>
+            <tbody>
+              <tr>
+                <th />
+                {timestampReceiveTime && <th>receive time</th>}
+                {timestampHeaderStamp && <th>header.stamp</th>}
+              </tr>
+              <tr>
+                <th>ROS</th>
+                {timestampReceiveTime && <td>{formatTimeRaw(timestampReceiveTime)}</td>}
+                {timestampHeaderStamp && <td>{formatTimeRaw(timestampHeaderStamp)}</td>}
+              </tr>
+              <tr>
+                <th>Time</th>
+                {timestampReceiveTime && <td>{formatTime(timestampReceiveTime)}</td>}
+                {timestampHeaderStamp && <td>{formatTime(timestampHeaderStamp)}</td>}
+              </tr>
+              <tr>
+                <th>Elapsed</th>
+                {timestampReceiveTime && (
+                  <td>{toSec(subtractTimes(timestampReceiveTime, tooltip.startTime)).toFixed(9)} sec</td>
+                )}
+                {timestampHeaderStamp && (
+                  <td>{toSec(subtractTimes(timestampHeaderStamp, tooltip.startTime)).toFixed(9)} sec</td>
+                )}
+              </tr>
+            </tbody>
+          </table>
+        )}
       </div>
     );
 

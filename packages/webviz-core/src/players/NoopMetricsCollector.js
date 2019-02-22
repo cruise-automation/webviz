@@ -5,9 +5,9 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { type DataSourceMetricsCollectorInterface } from "webviz-core/src/types/dataSources";
+import { type PlayerMetricsCollectorInterface } from "webviz-core/src/types/players";
 
-export default class NoopMetricsCollector implements DataSourceMetricsCollectorInterface {
+export default class NoopMetricsCollector implements PlayerMetricsCollectorInterface {
   initialized(): void {}
   play(): void {}
   seek(): void {}

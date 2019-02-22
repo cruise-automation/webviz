@@ -6,18 +6,19 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Time } from "rosbag";
+import { TimeUtil } from "rosbag";
 
 import ReadAheadDataProvider, { ReadResult } from "./ReadAheadDataProvider";
+import MemoryDataProvider from "webviz-core/src/players/MemoryDataProvider";
 import { fromMillis } from "webviz-core/src/util/time";
 
 function generateMessages() {
   const result = [];
-  const start = new Time(0, 0);
+  const start = { sec: 0, nsec: 0 };
   for (let i = 0; i < 100; i++) {
     const millis = i * 10;
     const message = {
-      receiveTime: Time.add(start, fromMillis(millis)),
+      receiveTime: TimeUtil.add(start, fromMillis(millis)),
       message: `message: ${i}`,
     };
     result.push({
@@ -32,53 +33,23 @@ function generateMessages() {
   return result;
 }
 
-class InMemorydataProvider {
-  messages: any;
-  constructor() {
-    this.messages = generateMessages();
-  }
-
-  close(): Promise<void> {
-    return Promise.resolve();
-  }
-
-  initialize(): any {
-    return (Promise.resolve(): any);
-  }
-
-  async getMessages(start: Time, end: Time, topics: string[]) {
-    const result = [];
-    for (const message of this.messages) {
-      if (Time.isGreaterThan(message.receiveTime, end)) {
-        break;
-      }
-      if (Time.isLessThan(message.receiveTime, start)) {
-        continue;
-      }
-      if (!topics.includes(message.topic)) {
-        continue;
-      }
-      result.push(message);
-    }
-    return result;
-  }
-}
+const dataProviderOptions = { messages: generateMessages() };
 
 describe("ReadResult", () => {
-  it("properly response to ranges it contains", () => {
-    const result = new ReadResult(new Time(0, 2), new Time(1, 0), Promise.resolve([]));
-    expect(result.contains(new Time(0, 0), new Time(0, 1))).toBe(false);
-    expect(result.contains(new Time(0, 0), new Time(0, 2))).toBe(true);
-    expect(result.contains(new Time(0, 0), new Time(2, 0))).toBe(true);
-    expect(result.contains(new Time(0, 10), new Time(0, 11))).toBe(true);
-    expect(result.contains(new Time(1, 0), new Time(2, 0))).toBe(true);
-    expect(result.contains(new Time(1, 1), new Time(2, 0))).toBe(false);
+  it("properly response to ranges it overlaps", () => {
+    const result = new ReadResult({ sec: 0, nsec: 2 }, { sec: 1, nsec: 0 }, Promise.resolve([]));
+    expect(result.overlaps({ sec: 0, nsec: 0 }, { sec: 0, nsec: 1 })).toBe(false);
+    expect(result.overlaps({ sec: 0, nsec: 0 }, { sec: 0, nsec: 2 })).toBe(true);
+    expect(result.overlaps({ sec: 0, nsec: 0 }, { sec: 2, nsec: 0 })).toBe(true);
+    expect(result.overlaps({ sec: 0, nsec: 10 }, { sec: 0, nsec: 11 })).toBe(true);
+    expect(result.overlaps({ sec: 1, nsec: 0 }, { sec: 2, nsec: 0 })).toBe(true);
+    expect(result.overlaps({ sec: 1, nsec: 1 }, { sec: 2, nsec: 0 })).toBe(false);
   });
 });
 
-describe("Message Cachce", () => {
+describe("ReadAheadDataProvider", () => {
   it("can get messages", async () => {
-    const provider = new ReadAheadDataProvider(new InMemorydataProvider());
+    const provider = new ReadAheadDataProvider(new MemoryDataProvider(dataProviderOptions));
     const messages = await provider.getMessages(fromMillis(0), fromMillis(10), ["/foo"]);
     expect(messages).toEqual([
       {
@@ -95,7 +66,7 @@ describe("Message Cachce", () => {
   });
 
   it("can get messages spanning two read ranges", async () => {
-    const provider = new ReadAheadDataProvider(new InMemorydataProvider(), fromMillis(10));
+    const provider = new ReadAheadDataProvider(new MemoryDataProvider(dataProviderOptions), fromMillis(10));
     const messages = await provider.getMessages(fromMillis(0), fromMillis(20), ["/foo"]);
     expect(messages).toEqual([
       {
@@ -117,7 +88,7 @@ describe("Message Cachce", () => {
   });
 
   it("can get messages spanning many read ranges", async () => {
-    const provider = new ReadAheadDataProvider(new InMemorydataProvider(), fromMillis(10));
+    const provider = new ReadAheadDataProvider(new MemoryDataProvider(dataProviderOptions), fromMillis(10));
     const messages = await provider.getMessages(fromMillis(0), fromMillis(40), ["/foo"]);
     expect(messages).toEqual([
       {
@@ -149,7 +120,7 @@ describe("Message Cachce", () => {
   });
 
   it("clears cache on topic change", async () => {
-    const provider = new ReadAheadDataProvider(new InMemorydataProvider(), fromMillis(10));
+    const provider = new ReadAheadDataProvider(new MemoryDataProvider(dataProviderOptions), fromMillis(10));
     const messages = await provider.getMessages(fromMillis(0), fromMillis(10), ["/foo"]);
     expect(messages).toEqual([
       {
@@ -183,6 +154,42 @@ describe("Message Cachce", () => {
       {
         receiveTime: fromMillis(10),
         topic: "/bar",
+        message: "message: 1",
+      },
+    ]);
+  });
+
+  it("clears cache when going back in time", async () => {
+    const provider = new ReadAheadDataProvider(new MemoryDataProvider(dataProviderOptions));
+    // Get messages from 10-20ms.
+    const messages = await provider.getMessages(fromMillis(10), fromMillis(20), ["/foo"]);
+    expect(messages).toEqual([
+      {
+        receiveTime: fromMillis(10),
+        topic: "/foo",
+        message: "message: 1",
+      },
+      {
+        receiveTime: fromMillis(20),
+        topic: "/foo",
+        message: "message: 2",
+      },
+    ]);
+    // Now request messages from 0-10ms. Since this has overlap with the previously requested
+    // messages (in that the message at 10ms occurs in both ranges) we previously incorrectly
+    // assumed that we could just use the previously cached result, but then we would miss the
+    // message from before 10ms. We should now properly clear the cache in that case and also
+    // return the message at 0ms.
+    const messages2 = await provider.getMessages(fromMillis(0), fromMillis(10), ["/foo"]);
+    expect(messages2).toEqual([
+      {
+        receiveTime: fromMillis(0),
+        topic: "/foo",
+        message: "message: 0",
+      },
+      {
+        receiveTime: fromMillis(10),
+        topic: "/foo",
         message: "message: 1",
       },
     ]);

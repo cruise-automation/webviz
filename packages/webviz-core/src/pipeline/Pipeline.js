@@ -6,21 +6,25 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import omit from "lodash/omit";
+import { flatten, uniq } from "lodash";
 
-import defaultNodeManager from "./defaultNodeManager";
-import DataSourceDispatcher from "webviz-core/src/pipeline/DataSourceDispatcher";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import Multiset from "webviz-core/src/pipeline/Multiset";
-import NodeManager from "webviz-core/src/pipeline/NodeManager";
+import {
+  type NodeDefinition,
+  applyNodesToMessages,
+  getNodeSubscriptions,
+  isWebvizNodeTopic,
+} from "webviz-core/src/pipeline/nodes";
+import PlayerDispatcher from "webviz-core/src/pipeline/PlayerDispatcher";
 import type {
-  DataSource,
-  Message,
+  Player,
   SubscribePayload,
   AdvertisePayload,
   PublishPayload,
-  DataSourceMessage,
+  PlayerMessage,
   TopicsMessage,
-} from "webviz-core/src/types/dataSources";
+} from "webviz-core/src/types/players";
 import type { Dispatch } from "webviz-core/src/types/Store";
 import Logger from "webviz-core/src/util/Logger";
 
@@ -34,79 +38,63 @@ function publishersEqual(a: AdvertisePayload, b: AdvertisePayload) {
   return a.topic === b.topic && a.datatype === b.datatype;
 }
 
-// don't send requester info to data sources
-function sanitizeSubscribe(payload: SubscribePayload): SubscribePayload {
-  return omit(payload, "requester");
-}
-function sanitizeAdvertise(payload: AdvertisePayload): AdvertisePayload {
-  return omit(payload, "advertiser");
-}
-
 // manages subscript/unsubscription of topics
 // and pushes messages from external topics through webviz nodes
-// and into the data source dispatcher
+// and into the player dispatcher
 export default class Pipeline {
-  dispatcher: ?DataSourceDispatcher;
-  dataSource: ?DataSource;
-  _nodeManager: NodeManager;
-  _externalTopics: {| datatype: ?string, topic: string |}[] = [];
-  _internalSubscriptions: Multiset<SubscribePayload> = new Multiset(subscriptionsEqual);
-  _externalSubscriptions: Multiset<SubscribePayload> = new Multiset(subscriptionsEqual);
+  dispatcher: ?PlayerDispatcher;
+  player: ?Player;
+  _nodeDefinitions: NodeDefinition<any>[] = [];
+  _nodeStates: any[];
+  _externalTopics: {| datatype: ?string, topic: string, originalTopic?: string |}[] = [];
+  _subscriptions: Multiset<SubscribePayload> = new Multiset(subscriptionsEqual);
   _publishers: Multiset<AdvertisePayload> = new Multiset(publishersEqual);
 
-  // support nodeManager injection for tests
-  constructor(nodeManager: NodeManager = defaultNodeManager) {
-    this._nodeManager = nodeManager;
+  // support nodeDefinitions injection for tests
+  constructor(nodeDefinitions: ?(NodeDefinition<any>[])) {
+    if (nodeDefinitions) {
+      this._nodeDefinitions = nodeDefinitions;
+    } else {
+      this._nodeDefinitions = getGlobalHooks().nodes();
+    }
   }
 
   getAllSubscriptions() {
-    return [...this._externalSubscriptions.allItems(), ...this._internalSubscriptions.allItems()];
+    return [
+      ...this._subscriptions.allItems(),
+      ...getNodeSubscriptions(this._nodeDefinitions, this._subscriptions.allItems()),
+    ];
   }
 
-  getUniqueExternalSubscriptions() {
-    return this._externalSubscriptions.uniqueItems();
-  }
-
-  getUniqueInternalSubscriptions() {
-    return this._internalSubscriptions.uniqueItems();
+  _getExternalSubscriptions() {
+    return this.getAllSubscriptions().filter(({ topic }) => !isWebvizNodeTopic(topic));
   }
 
   getAllExternalPublishers() {
     return this._publishers.allItems();
   }
 
-  getUniqueExternalPublishers() {
-    return this._publishers.uniqueItems();
+  _resetNodeStates() {
+    this._nodeStates = this._nodeDefinitions.map((def) => def.defaultState);
   }
 
-  // initialize the pipeline with a redux dispatcher and an external dataSource
-  // you should call this again whenever the dataSource changes
-  async initialize(dispatch: Dispatch, dataSource: DataSource) {
-    this.dispatcher = new DataSourceDispatcher(dispatch);
+  // initialize the pipeline with a redux dispatcher and an external player
+  // you should call this again whenever the player changes
+  async initialize(dispatch: Dispatch, player: Player) {
+    this.dispatcher = new PlayerDispatcher(dispatch);
 
     this.dispatcher.setReadyForMore(() => {
-      if (this.dataSource) {
-        this.dataSource.requestMessages();
+      if (this.player) {
+        this.player.requestMessages();
       }
     });
 
-    // set a listener on the node manager for messages webviz nodes publish
-    // when they're published, push them into the dispatcher so they're added to the next frame
-    this._nodeManager.resetNodeStates();
-    this._nodeManager.setListener((msg: Message) => {
-      if (!this.dispatcher) {
-        log.error("Could not consume webviz node message. Dispatcher is null");
-        return;
-      }
-      this.dispatcher.consumeMessage(msg);
-    });
+    this._resetNodeStates();
 
-    // wait for the listener to be set, indicating the data source is connected
+    // wait for the listener to be set, indicating the player is connected
     // and ready to start emitting messages
-    await dataSource.setListener((msg: DataSourceMessage) => {
-      this._nodeManager.consume(msg);
-
-      // append webviz node topics to the datasource topic list
+    await player.setListener((msg: PlayerMessage) => {
+      // append webviz node topics to the player topic list
       if (msg.op === "topics") {
         this._externalTopics = msg.topics || [];
         return this._publishAllTopics();
@@ -115,26 +103,32 @@ export default class Pipeline {
         log.error("Could not consume message. Dispatcher is null");
         return Promise.resolve();
       }
+      const dispatcher = this.dispatcher;
       if (msg.op === "datatypes") {
-        return this.dispatcher.consumeMessage({
-          op: "datatypes",
-          datatypes: { ...this._nodeManager.datatypes, ...msg.datatypes },
-        });
+        let datatypes = { ...msg.datatypes };
+        for (const nodeDefinition of this._nodeDefinitions) {
+          datatypes = { ...nodeDefinition.datatypes, ...datatypes };
+        }
+        return dispatcher.consumeMessage({ op: "datatypes", datatypes });
       }
-      return this.dispatcher.consumeMessage(msg);
+      if (msg.op === "seek" || msg.op === "connected") {
+        this._resetNodeStates();
+        return dispatcher.consumeMessage(msg);
+      }
+      if (msg.op === "message") {
+        const { states, messages } = applyNodesToMessages(this._nodeDefinitions, [msg], this._nodeStates);
+        this._nodeStates = states;
+        // $FlowFixMe - Flow doesn't seem to understand this.
+        return Promise.all(uniq(messages.map((message) => dispatcher.consumeMessage(message))));
+      }
+      return dispatcher.consumeMessage(msg);
     });
 
-    this.dataSource = dataSource;
+    this.player = player;
 
-    // ensure any pending subscriptions are established once the datasource is connected
-    this.getUniqueExternalSubscriptions().forEach((request) => {
-      log.debug("subscribe", request);
-      dataSource.subscribe(sanitizeSubscribe(request));
-    });
-    this.getUniqueExternalPublishers().forEach((request) => {
-      log.debug("advertise", request);
-      dataSource.advertise(sanitizeAdvertise(request));
-    });
+    // ensure any pending subscriptions are established once the player is connected
+    player.setSubscriptions(this._getExternalSubscriptions());
+    player.setPublishers(this.getAllExternalPublishers());
   }
 
   // publish a list of topics consisting of external topics
@@ -149,7 +143,7 @@ export default class Pipeline {
       op: "topics",
       topics: [
         ...this._externalTopics,
-        ...this._nodeManager.getAllOutputs().map(({ datatype, name }) => ({
+        ...flatten(this._nodeDefinitions.map((nodeDefinition) => nodeDefinition.outputs)).map(({ datatype, name }) => ({
           datatype,
           topic: name,
         })),
@@ -158,120 +152,58 @@ export default class Pipeline {
     return dispatcher.consumeMessage(msg);
   }
 
-  _subscribeToInternalTopics(request: SubscribePayload) {
-    this._internalSubscriptions.add(request);
-
-    // Represents any nested internal dependencies that these nodes may have
-    const newSubscribePayload = this._nodeManager.updateInternalSubscriptions(
-      this._internalSubscriptions.uniqueItems()
-    );
-    newSubscribePayload.forEach((subscribePayload) => {
-      this._internalSubscriptions.add(subscribePayload);
-    });
-  }
-
-  _unsubscribeFromInternalTopics(request: SubscribePayload) {
-    const toUnsubscribe: SubscribePayload[] = this._nodeManager.getInternalSubscriptionsFor(request.topic);
-    this._internalSubscriptions.remove(request);
-    toUnsubscribe.forEach((item) => {
-      this._internalSubscriptions.remove(item);
-    });
-
-    this._nodeManager.updateInternalSubscriptions(this._internalSubscriptions.uniqueItems());
-  }
-
-  // subscribes to all dependent external topics and internal nodes for a given webviz node subscription request
-  _subscribeToNode(request: SubscribePayload) {
-    this._subscribeToInternalTopics(request);
-
-    const externalSubs = this._nodeManager.getExternalSubscriptionsFor(request.topic);
-    for (const sub of externalSubs) {
-      this._subscribeToExternalTopic(sub);
-    }
-  }
-
-  // unsubscribes from all external topics and internal nodes for a given webviz node unsubscribe request
-  _unsubscribeFromNode(request: SubscribePayload) {
-    const externalSubs = this._nodeManager.getExternalSubscriptionsFor(request.topic);
-    this._unsubscribeFromInternalTopics(request);
-
-    for (const sub of externalSubs) {
-      this._unsubscribeFromExternalTopic(sub);
-    }
-  }
-
-  // subscribe once and only once to a given external topic
-  // also queues the subscription request if a datasource is not present
-  // so it can be auto-subscribed in the future when the datasource becomes available
-  _subscribeToExternalTopic(request: SubscribePayload) {
-    const isNew = this._externalSubscriptions.add(request);
-    const { dataSource } = this;
-    if (!dataSource || !isNew) {
+  // subscribe to a topic - either an external topic or webviz node
+  subscribe(request: SubscribePayload) {
+    const isNew = this._subscriptions.add(request);
+    const { player } = this;
+    if (!player || !isNew) {
       return;
     }
     log.debug("subscribe", request);
-    dataSource.subscribe(sanitizeSubscribe(request));
-  }
-
-  // unsubscribe only if there are 0 other subscriptions outstanding to an external topic
-  _unsubscribeFromExternalTopic(request: SubscribePayload) {
-    const isLast = this._externalSubscriptions.remove(request);
-    const { dataSource } = this;
-    if (!dataSource || !isLast) {
-      return;
-    }
-    log.debug("unsubscribe", request);
-    dataSource.unsubscribe(sanitizeSubscribe(request));
-  }
-
-  // subscribe to a topic - either an external topic or webviz node
-  subscribe(request: SubscribePayload) {
-    if (!this._nodeManager.isInternalTopic(request.topic)) {
-      this._subscribeToExternalTopic(request);
-    } else {
-      this._subscribeToNode(request);
-    }
+    player.setSubscriptions(this._getExternalSubscriptions());
   }
 
   // unsubscribe from a topic - either an external topic or webviz node
   unsubscribe(request: SubscribePayload) {
-    if (!this._nodeManager.isInternalTopic(request.topic)) {
-      this._unsubscribeFromExternalTopic(request);
-    } else {
-      this._unsubscribeFromNode(request);
+    const isLast = this._subscriptions.remove(request);
+    const { player } = this;
+    if (!player || !isLast) {
+      return;
     }
+    log.debug("unsubscribe", request);
+    player.setSubscriptions(this._getExternalSubscriptions());
   }
 
   advertise(request: AdvertisePayload) {
     const isNew = this._publishers.add(request);
-    const { dataSource } = this;
-    if (!dataSource || !isNew) {
+    const { player } = this;
+    if (!player || !isNew) {
       return;
     }
     log.info("advertise", request);
-    dataSource.advertise(sanitizeAdvertise(request));
+    player.setPublishers(this.getAllExternalPublishers());
   }
 
   unadvertise(request: AdvertisePayload) {
     const isLast = this._publishers.remove(request);
-    const { dataSource } = this;
-    if (!dataSource || !isLast) {
+    const { player } = this;
+    if (!player || !isLast) {
       return;
     }
     log.info("unadvertise", request);
-    dataSource.unadvertise(sanitizeAdvertise(request));
+    player.setPublishers(this.getAllExternalPublishers());
   }
 
   publish(request: PublishPayload) {
-    if (this._nodeManager.isInternalTopic(request.topic)) {
-      throw new Error("Publishing internal topics is not supported");
+    if (!this.getAllExternalPublishers().find(({ topic }) => topic === request.topic)) {
+      throw new Error("Must first register a publisher before publishing");
     }
 
-    const { dataSource } = this;
-    if (!dataSource) {
-      console.warn("Published when no data source was available", request);
+    const { player } = this;
+    if (!player) {
+      console.warn("Published when no player was available", request);
       return;
     }
-    dataSource.publish(request);
+    player.publish(request);
   }
 }

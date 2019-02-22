@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { MessageHistoryItem } from ".";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 
 export const rosPrimitives = [
@@ -42,10 +41,3 @@ export type RosPath = {|
   messagePath: MessagePathPart[],
   modifier: ?string,
 |};
-
-// MessageHistoryItem but without queriedData
-export type RawItem = $Diff<
-  MessageHistoryItem,
-  {| queriedData: {| value: mixed, path: string, constantName: ?string |}[] |}
->;
-export type RawItemsByTopic = { [string]: RawItem[] };

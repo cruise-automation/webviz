@@ -6,10 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import DataSourceDispatcher from "./DataSourceDispatcher";
-import type { Message, Timestamp } from "webviz-core/src/types/dataSources";
+import type { Time } from "rosbag";
 
-const dummyReceiveTime: Timestamp = { sec: 123, nsec: 456 };
+import PlayerDispatcher from "./PlayerDispatcher";
+import type { Message } from "webviz-core/src/types/players";
+
+const dummyReceiveTime: Time = { sec: 123, nsec: 456 };
 
 // makes a message shape
 export const makeMessage = (topic: string, message: any): Message => ({
@@ -20,14 +22,14 @@ export const makeMessage = (topic: string, message: any): Message => ({
   receiveTime: dummyReceiveTime,
 });
 
-describe("DataSourceDispatcher", () => {
+describe("PlayerDispatcher", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
 
   it("emits single message as it comes in", async () => {
     const dispatch = jest.fn();
-    const dispatcher = new DataSourceDispatcher(dispatch);
+    const dispatcher = new PlayerDispatcher(dispatch);
     const msg = makeMessage("/foo", { data: true });
     dispatcher.consumeMessage(msg);
     jest.runAllTimers();
@@ -38,7 +40,7 @@ describe("DataSourceDispatcher", () => {
 
   it("consumes multiple messages across topics", async () => {
     const dispatch = jest.fn();
-    const dispatcher = new DataSourceDispatcher(dispatch);
+    const dispatcher = new PlayerDispatcher(dispatch);
     const msg1 = makeMessage("/foo", { data: true });
     const msg2 = makeMessage("/foo", { data: false });
     const msg3 = makeMessage("/bar", { data: "baz" });
@@ -54,7 +56,7 @@ describe("DataSourceDispatcher", () => {
   describe("receiveTime support", () => {
     it("translates message receiveTime to frame time", async () => {
       const dispatch = jest.fn();
-      const dispatcher = new DataSourceDispatcher(dispatch);
+      const dispatcher = new PlayerDispatcher(dispatch);
       const receiveTime = { sec: 42, nsec: 53 };
       const msg = { ...makeMessage("/foo", { data: true }), receiveTime };
       dispatcher.consumeMessage(msg);
@@ -72,7 +74,7 @@ describe("DataSourceDispatcher", () => {
 
     it("combines update_time with frame", async () => {
       const dispatch = jest.fn();
-      const dispatcher = new DataSourceDispatcher(dispatch);
+      const dispatcher = new PlayerDispatcher(dispatch);
       const msg = { ...makeMessage("/foo", { data: true }) };
       dispatcher.consumeMessage(msg);
       const time = { sec: 42, nsec: 53 };
@@ -91,7 +93,7 @@ describe("DataSourceDispatcher", () => {
 
     it("sends TIME_UPDATED if there is no frame", async () => {
       const dispatch = jest.fn();
-      const dispatcher = new DataSourceDispatcher(dispatch);
+      const dispatcher = new PlayerDispatcher(dispatch);
       const time = { sec: 42, nsec: 53 };
       dispatcher.consumeMessage({ op: "update_time", time });
       jest.runAllTimers();

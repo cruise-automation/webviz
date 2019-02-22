@@ -34,6 +34,8 @@ type Props = {|
   scroll?: boolean,
   scrollX?: boolean,
   children?: React.Node,
+
+  onClick?: (MouseEvent) => void,
 |};
 
 const Flex = (props: Props) => {
@@ -52,6 +54,7 @@ const Flex = (props: Props) => {
     scroll,
     scrollX,
     children,
+    onClick,
   } = props;
   if (col != null && col === row) {
     throw new Error("Flex col and row are mutually exclusive");
@@ -77,7 +80,7 @@ const Flex = (props: Props) => {
   // only copy combine flex & custom style if we were passed custom style
   const fullStyle = style ? { ...flexStyle, ...style } : flexStyle;
   return (
-    <div className={combinedClasses} style={fullStyle}>
+    <div onClick={onClick} className={combinedClasses} style={fullStyle}>
       {children}
     </div>
   );

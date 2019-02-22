@@ -26,4 +26,14 @@ export const unregisterMarkerProvider = (payload: Object): UNREGISTER_MARKER_PRO
   payload,
 });
 
-export type ExtensionAction = REGISTER_MARKER_PROVIDER | UNREGISTER_MARKER_PROVIDER;
+export type SET_AUXILIARY_DATA = {
+  type: "SET_AUXILIARY_DATA",
+  payload: (Object) => Object,
+};
+
+export const setAuxiliaryData = (payload: (Object) => Object): SET_AUXILIARY_DATA => ({
+  type: "SET_AUXILIARY_DATA",
+  payload,
+});
+
+export type ExtensionAction = REGISTER_MARKER_PROVIDER | UNREGISTER_MARKER_PROVIDER | SET_AUXILIARY_DATA;

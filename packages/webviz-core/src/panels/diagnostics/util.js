@@ -6,7 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { Timestamp } from "webviz-core/src/types/dataSources";
+import type { Time } from "rosbag";
+
 import type { Header } from "webviz-core/src/types/Messages";
 
 export const LEVELS: { OK: 0, WARN: 1, ERROR: 2, STALE: 3 } = { OK: 0, WARN: 1, ERROR: 2, STALE: 3 };
@@ -39,7 +40,7 @@ export type DiagnosticStatusMessage = {|
 
 export type DiagnosticInfo = {|
   status: DiagnosticStatusMessage,
-  stamp: Timestamp,
+  stamp: Time,
   id: DiagnosticId,
   displayName: string,
 |};
@@ -64,7 +65,7 @@ export function getDisplayName(hardwareId: string, name: string) {
 }
 
 // ensures the diagnostic status message's name consists of both the hardware id and the name
-export function computeDiagnosticInfo(status: DiagnosticStatusMessage, stamp: Timestamp): DiagnosticInfo {
+export function computeDiagnosticInfo(status: DiagnosticStatusMessage, stamp: Time): DiagnosticInfo {
   const displayName = getDisplayName(status.hardware_id, status.name);
   return {
     status,

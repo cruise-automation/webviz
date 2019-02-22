@@ -6,30 +6,25 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import type { Time } from "rosbag";
+
 import type { ActionTypes } from "webviz-core/src/actions";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type {
-  Frame,
-  Topic,
-  Timestamp,
-  SubscribePayload,
-  AdvertisePayload,
-  Progress,
-} from "webviz-core/src/types/dataSources";
+import type { Frame, Topic, SubscribePayload, AdvertisePayload, Progress } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { SOCKET_KEY } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import Storage from "webviz-core/src/util/Storage";
 
-export const DataSourceCapabilities = {
+export const PlayerCapabilities = {
   advertise: "advertise",
   seekBackfill: "seekBackfill",
   initialization: "initialization",
 };
 
-let dataSourceId = 1;
+let playerId = 1;
 
-export type DataSourceState = {|
+export type PlayerState = {|
   id: number,
   isLive: boolean,
   isConnecting: boolean,
@@ -37,12 +32,11 @@ export type DataSourceState = {|
   websocket: string,
   frame: Frame,
   topics: Topic[],
-  startTime?: Timestamp,
-  endTime?: Timestamp,
-  currentTime: ?Timestamp,
+  startTime?: Time,
+  endTime?: Time,
+  currentTime: ?Time,
   isPlaying: boolean,
   speed: ?number,
-  auxiliaryData: Object,
   lastSeekTime: number,
   capabilities: string[],
   datatypes: RosDatatypes,
@@ -51,8 +45,8 @@ export type DataSourceState = {|
   progress: Progress,
 |};
 
-const defaultState: DataSourceState = {
-  id: dataSourceId,
+const defaultState: PlayerState = {
+  id: playerId,
   isLive: false,
   isConnecting: false,
   reconnectDelayMillis: 0,
@@ -64,9 +58,6 @@ const defaultState: DataSourceState = {
   startTime: undefined,
   endTime: undefined,
   currentTime: undefined,
-  auxiliaryData: {
-    timestamps: [],
-  },
   lastSeekTime: 0,
   capabilities: [],
   datatypes: {},
@@ -75,7 +66,7 @@ const defaultState: DataSourceState = {
   progress: {},
 };
 
-export default function dataSourceReducer(state: DataSourceState = defaultState, action: ActionTypes): DataSourceState {
+export default function playerReducer(state: PlayerState = defaultState, action: ActionTypes): PlayerState {
   switch (action.type) {
     case "SUBSCRIPTIONS_CHANGED":
       return { ...state, subscriptions: action.subscriptions };
@@ -96,10 +87,10 @@ export default function dataSourceReducer(state: DataSourceState = defaultState,
     case "TIME_UPDATED":
       return { ...state, currentTime: action.time };
 
-    case "DATA_SOURCE_CONNECTING":
+    case "PLAYER_CONNECTING":
       return {
         ...state,
-        id: dataSourceId++,
+        id: playerId++,
         isConnecting: true,
         isLive: false,
         // Don't clear out too much, because we immediately reconnect when losing the Websocket
@@ -107,7 +98,7 @@ export default function dataSourceReducer(state: DataSourceState = defaultState,
         // reconnect.
       };
 
-    case "DATA_SOURCE_CONNECTED":
+    case "PLAYER_CONNECTED":
       return {
         ...state,
         isConnecting: false,
@@ -115,10 +106,10 @@ export default function dataSourceReducer(state: DataSourceState = defaultState,
         topics: [],
         frame: {},
         lastSeekTime: Date.now(),
-        // Don't clear out datatypes, as we receive those only once before DATA_SOURCE_CONNECTED.
+        // Don't clear out datatypes, as we receive those only once before PLAYER_CONNECTED.
       };
 
-    case "DATA_SOURCE_DISCONNECTED":
+    case "PLAYER_DISCONNECTED":
       return {
         ...state,
         isConnecting: false,
@@ -138,14 +129,9 @@ export default function dataSourceReducer(state: DataSourceState = defaultState,
     case "PLAYER_STATE_CHANGED":
       return { ...state, ...action.payload };
 
-    case "DATA_SOURCE_PROGRESS":
+    case "PLAYER_PROGRESS":
       return { ...state, progress: { ...action.payload } };
 
-    case "SET_AUXILIARY_DATA":
-      return {
-        ...state,
-        auxiliaryData: { ...state.auxiliaryData, ...action.payload(state.auxiliaryData) },
-      };
     case "PLAYBACK_RESET":
       return { ...state, frame: {}, lastSeekTime: Date.now() };
     case "CAPABILITIES_RECEIVED":

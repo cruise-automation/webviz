@@ -6,11 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { CLOCK_TOPIC } from "webviz-core/src/util/globalConstants";
-
 export const fixture = {
   topics: [
-    { name: CLOCK_TOPIC, datatype: "ros/Clock" },
     { name: "/msgs/big_topic", datatype: "msgs/big_topic" },
     { name: "/foo", datatype: "std_msgs/String" },
     { name: "/baz/num", datatype: "baz/num" },
@@ -18,17 +15,6 @@ export const fixture = {
     { name: "/baz/array", datatype: "baz/array" },
   ],
   frame: {
-    [CLOCK_TOPIC]: [
-      {
-        op: "message",
-        datatype: "ros/Clock",
-        topic: CLOCK_TOPIC,
-        receiveTime: { sec: 123, nsec: 456789012 },
-        message: {
-          clock: { sec: 123, nsec: 456 },
-        },
-      },
-    ],
     "/msgs/big_topic": [
       {
         op: "message",

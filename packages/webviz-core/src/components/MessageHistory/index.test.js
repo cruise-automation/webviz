@@ -12,44 +12,12 @@ import React from "react";
 import { Provider } from "react-redux";
 
 import MessageHistory from ".";
-import { datatypes, messagesWithHeader } from "./fixture";
+import { datatypes, messages } from "./fixture";
 import { getRawItemsByTopicForTests } from "./MessageHistoryOnlyTopics";
-import { datatypesReceived, frameReceived, topicsReceived } from "webviz-core/src/actions/dataSource";
+import { datatypesReceived, frameReceived, topicsReceived } from "webviz-core/src/actions/player";
 import Pipeline from "webviz-core/src/pipeline/Pipeline";
 import reducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
-import { CLOCK_TOPIC } from "webviz-core/src/util/globalConstants";
-
-const messagesWithoutHeader = [
-  {
-    op: "message",
-    datatype: "topic/without/header",
-    topic: "/topic/without/header",
-    receiveTime: { sec: 100, nsec: 0 },
-    message: { index: 0 },
-  },
-  {
-    op: "message",
-    datatype: "topic/without/header",
-    topic: "/topic/without/header",
-    receiveTime: { sec: 101, nsec: 0 },
-    message: { index: 1 },
-  },
-  {
-    op: "message",
-    datatype: "topic/without/header",
-    topic: "/topic/without/header",
-    receiveTime: { sec: 102, nsec: 0 },
-    message: { index: 2 },
-  },
-  {
-    op: "message",
-    datatype: "topic/without/header",
-    topic: "/topic/without/header",
-    receiveTime: { sec: 103, nsec: 0 },
-    message: { index: 3 },
-  },
-];
 
 describe("<MessageHistory />", () => {
   beforeEach(() => {
@@ -72,11 +40,7 @@ describe("<MessageHistory />", () => {
   it("(un)subscribes based on `topics`", () => {
     const store = configureStore(reducer);
     store.dispatch(
-      topicsReceived([
-        { name: "/some/topic", datatype: "dummy" },
-        { name: "/some/other/topic", datatype: "dummy" },
-        { name: CLOCK_TOPIC, datatype: "dummy" },
-      ])
+      topicsReceived([{ name: "/some/topic", datatype: "dummy" }, { name: "/some/other/topic", datatype: "dummy" }])
     );
 
     // Initial mount.
@@ -88,34 +52,24 @@ describe("<MessageHistory />", () => {
     expect(Pipeline.prototype.subscribe.mock.calls).toEqual([
       [{ topic: "/some/topic" }],
       [{ topic: "/some/other/topic" }],
-      [{ topic: CLOCK_TOPIC }],
     ]);
     expect(Pipeline.prototype.unsubscribe.mock.calls).toEqual([]);
 
-    // Changing props. Explicitly listen to the CLOCK_TOPIC to show that we
-    // subscribe to it twice (which is intentional).
-    wrapper.setProps({ children: <MessageHistory paths={["/some/topic", CLOCK_TOPIC]}>{() => null}</MessageHistory> });
+    wrapper.setProps({ children: <MessageHistory paths={["/some/topic"]}>{() => null}</MessageHistory> });
     expect(Pipeline.prototype.subscribe.mock.calls).toEqual([
       [{ topic: "/some/topic" }],
       [{ topic: "/some/other/topic" }],
-      [{ topic: CLOCK_TOPIC }],
-      [{ topic: CLOCK_TOPIC }],
     ]);
     expect(Pipeline.prototype.unsubscribe.mock.calls).toEqual([[{ topic: "/some/other/topic" }]]);
 
-    // Unmount. Note that we also unsubscribe from CLOCK_TOPIC twice.
     wrapper.unmount();
     expect(Pipeline.prototype.subscribe.mock.calls).toEqual([
       [{ topic: "/some/topic" }],
       [{ topic: "/some/other/topic" }],
-      [{ topic: CLOCK_TOPIC }],
-      [{ topic: CLOCK_TOPIC }],
     ]);
     expect(Pipeline.prototype.unsubscribe.mock.calls).toEqual([
       [{ topic: "/some/other/topic" }],
-      [{ topic: CLOCK_TOPIC }],
       [{ topic: "/some/topic" }],
-      [{ topic: CLOCK_TOPIC }],
     ]);
 
     // Just a sanity check: in the end we should end up with the same number
@@ -134,20 +88,18 @@ describe("<MessageHistory />", () => {
         </MessageHistory>
       </Provider>
     );
-    expect(Pipeline.prototype.subscribe.mock.calls).toEqual([[{ topic: CLOCK_TOPIC }]]);
+    expect(Pipeline.prototype.subscribe.mock.calls).toEqual([]);
     expect(Pipeline.prototype.unsubscribe.mock.calls).toEqual([]);
 
     // But then it subscribes when the topic becomes available:
-    store.dispatch(
-      topicsReceived([{ name: "/some/topic", datatype: "dummy" }, { name: CLOCK_TOPIC, datatype: "dummy" }])
-    );
-    expect(Pipeline.prototype.subscribe.mock.calls).toEqual([[{ topic: CLOCK_TOPIC }], [{ topic: "/some/topic" }]]);
+    store.dispatch(topicsReceived([{ name: "/some/topic", datatype: "dummy" }]));
+    expect(Pipeline.prototype.subscribe.mock.calls).toEqual([[{ topic: "/some/topic" }]]);
     expect(Pipeline.prototype.unsubscribe.mock.calls).toEqual([]);
 
     // And unsubscribes properly, too.
     wrapper.unmount();
-    expect(Pipeline.prototype.subscribe.mock.calls).toEqual([[{ topic: CLOCK_TOPIC }], [{ topic: "/some/topic" }]]);
-    expect(Pipeline.prototype.unsubscribe.mock.calls).toEqual([[{ topic: CLOCK_TOPIC }], [{ topic: "/some/topic" }]]);
+    expect(Pipeline.prototype.subscribe.mock.calls).toEqual([[{ topic: "/some/topic" }]]);
+    expect(Pipeline.prototype.unsubscribe.mock.calls).toEqual([[{ topic: "/some/topic" }]]);
 
     // Just a sanity check: in the end we should end up with the same number
     // of subscribes and unsubscribes.
@@ -164,19 +116,13 @@ describe("<MessageHistory />", () => {
       </Provider>
     );
 
-    expect(Pipeline.prototype.subscribe.mock.calls).toContainOnly([
-      [{ requester: undefined, topic: CLOCK_TOPIC }],
-      [{ requester: undefined, topic: "/some/topic" }],
-    ]);
+    expect(Pipeline.prototype.subscribe.mock.calls).toContainOnly([[{ requester: undefined, topic: "/some/topic" }]]);
     expect(Pipeline.prototype.unsubscribe.mock.calls).toEqual([]);
 
     // And unsubscribes properly, too.
     wrapper.unmount();
-    expect(Pipeline.prototype.subscribe.mock.calls).toContainOnly([
-      [{ requester: undefined, topic: CLOCK_TOPIC }],
-      [{ requester: undefined, topic: "/some/topic" }],
-    ]);
-    expect(Pipeline.prototype.unsubscribe.mock.calls).toEqual([[{ topic: CLOCK_TOPIC }], [{ topic: "/some/topic" }]]);
+    expect(Pipeline.prototype.subscribe.mock.calls).toContainOnly([[{ requester: undefined, topic: "/some/topic" }]]);
+    expect(Pipeline.prototype.unsubscribe.mock.calls).toEqual([[{ topic: "/some/topic" }]]);
 
     // Just a sanity check: in the end we should end up with the same number
     // of subscribes and unsubscribes.
@@ -186,82 +132,80 @@ describe("<MessageHistory />", () => {
   it("properly registers the `historySize` of the first component (when it immediately loads a frame)", () => {
     const store = configureStore(reducer);
     store.dispatch(datatypesReceived(datatypes));
-    store.dispatch(topicsReceived([{ name: "/topic/with/header", datatype: "topic/with/header" }]));
-    store.dispatch(frameReceived({ "/topic/with/header": [messagesWithHeader[0], messagesWithHeader[1]] }));
+    store.dispatch(topicsReceived([{ name: "/some/topic", datatype: "some/topic" }]));
+    store.dispatch(frameReceived({ "/some/topic": [messages[0], messages[1]] }));
     mount(
       <Provider store={store}>
-        <MessageHistory historySize={1} paths={["/topic/with/header"]}>
+        <MessageHistory historySize={1} paths={["/some/topic"]}>
           {() => null}
         </MessageHistory>
       </Provider>
     );
-    store.dispatch(frameReceived({ "/topic/with/header": [] }));
+    store.dispatch(frameReceived({ "/some/topic": [] }));
 
-    expect(getRawItemsByTopicForTests()["/topic/with/header"].length).toEqual(1);
+    expect(getRawItemsByTopicForTests()["/some/topic"].length).toEqual(1);
   });
 
   it("only uses `historySize` of currently mounted components", () => {
     const store = configureStore(reducer);
     store.dispatch(datatypesReceived(datatypes));
-    store.dispatch(topicsReceived([{ name: "/topic/with/header", datatype: "topic/with/header" }]));
+    store.dispatch(topicsReceived([{ name: "/some/topic", datatype: "some/topic" }]));
 
     // Dummy component with unlimited `historySize` which we unmount before even loading a frame.
     mount(
       <Provider store={store}>
-        <MessageHistory paths={["/topic/with/header"]}>{() => null}</MessageHistory>
+        <MessageHistory paths={["/some/topic"]}>{() => null}</MessageHistory>
       </Provider>
     ).unmount();
 
     // Actual component with `historySize={1}` that loads a frame.
     mount(
       <Provider store={store}>
-        <MessageHistory historySize={1} paths={["/topic/with/header"]}>
+        <MessageHistory historySize={1} paths={["/some/topic"]}>
           {() => null}
         </MessageHistory>
       </Provider>
     );
-    store.dispatch(frameReceived({ "/topic/with/header": [messagesWithHeader[0], messagesWithHeader[1]] }));
+    store.dispatch(frameReceived({ "/some/topic": [messages[0], messages[1]] }));
 
-    expect(getRawItemsByTopicForTests()["/topic/with/header"].length).toEqual(1);
+    expect(getRawItemsByTopicForTests()["/some/topic"].length).toEqual(1);
   });
 
   it("allows changing historySize", () => {
     const store = configureStore(reducer);
     store.dispatch(datatypesReceived(datatypes));
-    store.dispatch(topicsReceived([{ name: "/topic/with/header", datatype: "topic/with/header" }]));
+    store.dispatch(topicsReceived([{ name: "/some/topic", datatype: "some/topic" }]));
 
     const wrapper = mount(
       <Provider store={store}>
-        <MessageHistory historySize={1} paths={["/topic/with/header"]}>
+        <MessageHistory historySize={1} paths={["/some/topic"]}>
           {() => null}
         </MessageHistory>
       </Provider>
     );
     wrapper.setProps({
       children: (
-        <MessageHistory historySize={2} paths={["/topic/with/header"]}>
+        <MessageHistory historySize={2} paths={["/some/topic"]}>
           {() => null}
         </MessageHistory>
       ),
     });
 
-    store.dispatch(
-      frameReceived({ "/topic/with/header": [messagesWithHeader[0], messagesWithHeader[1], messagesWithHeader[2]] })
-    );
+    store.dispatch(frameReceived({ "/some/topic": [messages[0], messages[1], messages[2]] }));
 
-    expect(getRawItemsByTopicForTests()["/topic/with/header"].length).toEqual(2);
+    expect(getRawItemsByTopicForTests()["/some/topic"].length).toEqual(2);
   });
 
-  it("buffers messages with timestamps (with historySize=2)", () => {
+  it("buffers messages (with historySize=2)", () => {
     // Start with just the first two messages.
     const store = configureStore(reducer);
     store.dispatch(datatypesReceived(datatypes));
-    store.dispatch(topicsReceived([{ name: "/topic/with/header", datatype: "topic/with/header" }]));
-    store.dispatch(frameReceived({ "/topic/with/header": [messagesWithHeader[0], messagesWithHeader[1]] }));
+    store.dispatch(topicsReceived([{ name: "/some/topic", datatype: "some/topic" }]));
+    store.dispatch(frameReceived({ "/some/topic": [messages[0], messages[1]] }));
     const childFn = jest.fn().mockReturnValue(null);
     mount(
       <Provider store={store}>
-        <MessageHistory paths={["/topic/with/header"]} historySize={2}>
+        <MessageHistory paths={["/some/topic"]} historySize={2}>
           {childFn}
         </MessageHistory>
       </Provider>
@@ -270,248 +214,59 @@ describe("<MessageHistory />", () => {
     expect(last(childFn.mock.calls)).toEqual([
       {
         itemsByPath: {
-          "/topic/with/header": [
+          "/some/topic": [
             {
-              timestamp: { sec: 100, nsec: 0 },
-              elapsedSinceStart: { sec: 100, nsec: 0 },
-              hasAccurateTimestamp: true,
-              message: messagesWithHeader[0],
-              queriedData: [{ value: messagesWithHeader[0].message, path: "/topic/with/header" }],
+              message: messages[0],
+              queriedData: [{ value: messages[0].message, path: "/some/topic" }],
             },
             {
-              timestamp: { sec: 101, nsec: 0 },
-              elapsedSinceStart: { sec: 101, nsec: 0 },
-              hasAccurateTimestamp: true,
-              message: messagesWithHeader[1],
-              queriedData: [{ value: messagesWithHeader[1].message, path: "/topic/with/header" }],
+              message: messages[1],
+              queriedData: [{ value: messages[1].message, path: "/some/topic" }],
             },
           ],
         },
         cleared: false,
-        metadataByPath: { "/topic/with/header": expect.any(Object) },
+        metadataByPath: { "/some/topic": expect.any(Object) },
         startTime: expect.any(Object),
       },
     ]);
 
     // Then let's send in the last message too, and it should discard the older message
     // (since bufferSize=2).
-    store.dispatch(frameReceived({ "/topic/with/header": [messagesWithHeader[2]] }));
+    store.dispatch(frameReceived({ "/some/topic": [messages[2]] }));
     expect(childFn.mock.calls.length).toEqual(2);
     expect(last(childFn.mock.calls)).toEqual([
       {
         itemsByPath: {
-          "/topic/with/header": [
+          "/some/topic": [
             {
-              timestamp: { sec: 101, nsec: 0 },
-              elapsedSinceStart: { sec: 101, nsec: 0 },
-              hasAccurateTimestamp: true,
-              message: messagesWithHeader[1],
-              queriedData: [{ value: messagesWithHeader[1].message, path: "/topic/with/header" }],
+              message: messages[1],
+              queriedData: [{ value: messages[1].message, path: "/some/topic" }],
             },
             {
-              timestamp: { sec: 102, nsec: 0 },
-              elapsedSinceStart: { sec: 102, nsec: 0 },
-              hasAccurateTimestamp: true,
-              message: messagesWithHeader[2],
-              queriedData: [{ value: messagesWithHeader[2].message, path: "/topic/with/header" }],
+              message: messages[2],
+              queriedData: [{ value: messages[2].message, path: "/some/topic" }],
             },
           ],
         },
         cleared: false,
-        metadataByPath: { "/topic/with/header": expect.any(Object) },
-        startTime: expect.any(Object),
-      },
-    ]);
-  });
-
-  it("uses CLOCK_TOPIC for messages without timestamps (with historySize=2)", () => {
-    const store = configureStore(reducer);
-    store.dispatch(datatypesReceived(datatypes));
-    store.dispatch(topicsReceived([{ name: "/topic/without/header", datatype: "topic/without/header" }]));
-    const childFn = jest.fn().mockReturnValue(null);
-    mount(
-      <Provider store={store}>
-        <MessageHistory paths={["/topic/without/header"]} historySize={2}>
-          {childFn}
-        </MessageHistory>
-      </Provider>
-    );
-    expect(childFn.mock.calls.length).toEqual(1);
-    expect(last(childFn.mock.calls)).toEqual([
-      {
-        itemsByPath: { "/topic/without/header": [] },
-        cleared: false,
-        metadataByPath: { "/topic/without/header": expect.any(Object) },
-        startTime: expect.any(Object),
-      },
-    ]);
-
-    // Then send a clock message, and another regular message, in the same frame.
-    store.dispatch(
-      frameReceived({
-        "/topic/without/header": [messagesWithoutHeader[1]],
-        [CLOCK_TOPIC]: [
-          {
-            op: "message",
-            datatype: "ros/Clock",
-            topic: CLOCK_TOPIC,
-            receiveTime: { sec: 101, nsec: 0 },
-            message: { clock: { sec: 101, nsec: 0 } },
-          },
-        ],
-      })
-    );
-    expect(childFn.mock.calls.length).toEqual(2);
-    expect(last(childFn.mock.calls)).toEqual([
-      {
-        itemsByPath: {
-          "/topic/without/header": [
-            {
-              timestamp: { sec: 101, nsec: 0 },
-              elapsedSinceStart: { sec: 101, nsec: 0 },
-              hasAccurateTimestamp: false,
-              message: messagesWithoutHeader[1],
-              queriedData: [{ value: messagesWithoutHeader[1].message, path: "/topic/without/header" }],
-            },
-          ],
-        },
-        cleared: false,
-        metadataByPath: { "/topic/without/header": expect.any(Object) },
-        startTime: expect.any(Object),
-      },
-    ]);
-
-    // Send another regular message; it should get the same timestamp as above.
-    store.dispatch(frameReceived({ "/topic/without/header": [messagesWithoutHeader[2]] }));
-    expect(childFn.mock.calls.length).toEqual(3);
-    expect(last(childFn.mock.calls)).toEqual([
-      {
-        itemsByPath: {
-          "/topic/without/header": [
-            {
-              timestamp: { sec: 101, nsec: 0 },
-              elapsedSinceStart: { sec: 101, nsec: 0 },
-              hasAccurateTimestamp: false,
-              message: messagesWithoutHeader[1],
-              queriedData: [{ value: messagesWithoutHeader[1].message, path: "/topic/without/header" }],
-            },
-            {
-              timestamp: { sec: 101, nsec: 0 },
-              elapsedSinceStart: { sec: 101, nsec: 0 },
-              hasAccurateTimestamp: false,
-              message: messagesWithoutHeader[2],
-              queriedData: [{ value: messagesWithoutHeader[2].message, path: "/topic/without/header" }],
-            },
-          ],
-        },
-        cleared: false,
-        metadataByPath: { "/topic/without/header": expect.any(Object) },
-        startTime: expect.any(Object),
-      },
-    ]);
-
-    // Send another clock, and another regular message, but this time in separate frames.
-    // The first message should be discarded (since bufferSize=2).
-    store.dispatch(
-      frameReceived({
-        [CLOCK_TOPIC]: [
-          {
-            op: "message",
-            datatype: "ros/Clock",
-            topic: CLOCK_TOPIC,
-            receiveTime: { sec: 102, nsec: 0 },
-            message: { clock: { sec: 102, nsec: 0 } },
-          },
-        ],
-      })
-    );
-    store.dispatch(frameReceived({ "/topic/without/header": [messagesWithoutHeader[3]] }));
-    expect(childFn.mock.calls.length).toEqual(4);
-    expect(last(childFn.mock.calls)).toEqual([
-      {
-        itemsByPath: {
-          "/topic/without/header": [
-            {
-              timestamp: { sec: 101, nsec: 0 },
-              elapsedSinceStart: { sec: 101, nsec: 0 },
-              hasAccurateTimestamp: false,
-              message: messagesWithoutHeader[2],
-              queriedData: [{ value: messagesWithoutHeader[2].message, path: "/topic/without/header" }],
-            },
-            {
-              timestamp: { sec: 102, nsec: 0 },
-              elapsedSinceStart: { sec: 102, nsec: 0 },
-              hasAccurateTimestamp: false,
-              message: messagesWithoutHeader[3],
-              queriedData: [{ value: messagesWithoutHeader[3].message, path: "/topic/without/header" }],
-            },
-          ],
-        },
-        cleared: false,
-        metadataByPath: { "/topic/without/header": expect.any(Object) },
-        startTime: expect.any(Object),
-      },
-    ]);
-  });
-
-  it("uses message.receiveTime when all else fails", () => {
-    // First start with one message which should get discarded.
-    const store = configureStore(reducer);
-    store.dispatch(datatypesReceived(datatypes));
-    store.dispatch(topicsReceived([{ name: "/topic/without/header", datatype: "topic/without/header" }]));
-    const message = { ...messagesWithoutHeader[0] };
-    store.dispatch(frameReceived({ "/topic/without/header": [message] }));
-    const childFn = jest.fn().mockReturnValue(null);
-    mount(
-      <Provider store={store}>
-        <MessageHistory paths={["/topic/without/header"]} historySize={2}>
-          {childFn}
-        </MessageHistory>
-      </Provider>
-    );
-    expect(childFn.mock.calls.length).toEqual(1);
-    expect(last(childFn.mock.calls)).toEqual([
-      {
-        itemsByPath: {
-          "/topic/without/header": [
-            {
-              elapsedSinceStart: { sec: 100, nsec: 0 },
-              hasAccurateTimestamp: false,
-              message,
-              queriedData: [{ constantName: undefined, path: "/topic/without/header", value: { index: 0 } }],
-              timestamp: { sec: 100, nsec: 0 },
-            },
-          ],
-        },
-        cleared: false,
-        metadataByPath: { "/topic/without/header": expect.any(Object) },
+        metadataByPath: { "/some/topic": expect.any(Object) },
         startTime: expect.any(Object),
       },
     ]);
   });
 
   it("clears everything on seek", () => {
-    // Initialize the component with some data, and make sure that we send a CLOCK_TOPIC message so
-    // that we can check that we forget the clock timestamp when seeking.
     const store = configureStore(reducer);
     store.dispatch(datatypesReceived(datatypes));
-    store.dispatch(topicsReceived([{ name: "/topic/without/header", datatype: "topic/without/header" }]));
+    store.dispatch(topicsReceived([{ name: "/some/topic", datatype: "some/topic" }]));
     store.dispatch(
       frameReceived({
-        [CLOCK_TOPIC]: [
+        "/some/topic": [
           {
             op: "message",
-            datatype: "ros/Clock",
-            topic: CLOCK_TOPIC,
-            receiveTime: { sec: 100, nsec: 0 },
-            message: { clock: { sec: 100, nsec: 0 } },
-          },
-        ],
-        "/topic/without/header": [
-          {
-            op: "message",
-            datatype: "topic/without/header",
-            topic: "/topic/without/header",
+            datatype: "some/topic",
+            topic: "/some/topic",
             receiveTime: { sec: 1000, nsec: 0 }, // different time than above
             message: {},
           },
@@ -521,31 +276,28 @@ describe("<MessageHistory />", () => {
     const childFn = jest.fn().mockReturnValue(null);
     mount(
       <Provider store={store}>
-        <MessageHistory paths={["/topic/without/header"]}>{childFn}</MessageHistory>
+        <MessageHistory paths={["/some/topic"]}>{childFn}</MessageHistory>
       </Provider>
     );
     expect(childFn.mock.calls.length).toEqual(1);
     expect(last(childFn.mock.calls)).toEqual([
       {
         itemsByPath: {
-          "/topic/without/header": [
+          "/some/topic": [
             {
-              timestamp: { sec: 100, nsec: 0 },
-              elapsedSinceStart: { sec: 100, nsec: 0 },
-              hasAccurateTimestamp: false,
               message: {
                 op: "message",
-                datatype: "topic/without/header",
-                topic: "/topic/without/header",
+                datatype: "some/topic",
+                topic: "/some/topic",
                 receiveTime: { sec: 1000, nsec: 0 },
                 message: {},
               },
-              queriedData: [{ value: {}, path: "/topic/without/header" }],
+              queriedData: [{ value: {}, path: "/some/topic" }],
             },
           ],
         },
         cleared: false,
-        metadataByPath: { "/topic/without/header": expect.any(Object) },
+        metadataByPath: { "/some/topic": expect.any(Object) },
         startTime: expect.any(Object),
       },
     ]);
@@ -555,9 +307,9 @@ describe("<MessageHistory />", () => {
     expect(childFn.mock.calls.length).toEqual(2);
     expect(last(childFn.mock.calls)).toEqual([
       {
-        itemsByPath: { "/topic/without/header": [] },
+        itemsByPath: { "/some/topic": [] },
         cleared: true,
-        metadataByPath: { "/topic/without/header": expect.any(Object) },
+        metadataByPath: { "/some/topic": expect.any(Object) },
         startTime: expect.any(Object),
       },
     ]);
@@ -566,18 +318,18 @@ describe("<MessageHistory />", () => {
   it("returns the same when passing in a topic twice", () => {
     const store = configureStore(reducer);
     store.dispatch(datatypesReceived(datatypes));
-    store.dispatch(topicsReceived([{ name: "/topic/with/header", datatype: "topic/with/header" }]));
-    store.dispatch(frameReceived({ "/topic/with/header": [messagesWithHeader[0], messagesWithHeader[1]] }));
+    store.dispatch(topicsReceived([{ name: "/some/topic", datatype: "some/topic" }]));
+    store.dispatch(frameReceived({ "/some/topic": [messages[0], messages[1]] }));
     const childFn1 = jest.fn().mockReturnValue(null);
     mount(
       <Provider store={store}>
-        <MessageHistory paths={["/topic/with/header"]}>{childFn1}</MessageHistory>
+        <MessageHistory paths={["/some/topic"]}>{childFn1}</MessageHistory>
       </Provider>
     );
     const childFn2 = jest.fn().mockReturnValue(null);
     mount(
       <Provider store={store}>
-        <MessageHistory paths={["/topic/with/header", "/topic/with/header"]}>{childFn2}</MessageHistory>
+        <MessageHistory paths={["/some/topic", "/some/topic"]}>{childFn2}</MessageHistory>
       </Provider>
     );
     expect(childFn2.mock.calls).toEqual(childFn1.mock.calls);
@@ -586,19 +338,19 @@ describe("<MessageHistory />", () => {
   it("caches older messages when instantiating a new component", () => {
     const store = configureStore(reducer);
     store.dispatch(datatypesReceived(datatypes));
-    store.dispatch(topicsReceived([{ name: "/topic/with/header", datatype: "topic/with/header" }]));
-    store.dispatch(frameReceived({ "/topic/with/header": [messagesWithHeader[0]] }));
+    store.dispatch(topicsReceived([{ name: "/some/topic", datatype: "some/topic" }]));
+    store.dispatch(frameReceived({ "/some/topic": [messages[0]] }));
     const childFn1 = jest.fn().mockReturnValue(null);
     mount(
       <Provider store={store}>
-        <MessageHistory paths={["/topic/with/header"]}>{childFn1}</MessageHistory>
+        <MessageHistory paths={["/some/topic"]}>{childFn1}</MessageHistory>
       </Provider>
     );
-    store.dispatch(frameReceived({ "/topic/with/header": [messagesWithHeader[1]] }));
+    store.dispatch(frameReceived({ "/some/topic": [messages[1]] }));
     const childFn2 = jest.fn().mockReturnValue(null);
     mount(
       <Provider store={store}>
-        <MessageHistory paths={["/topic/with/header"]}>{childFn2}</MessageHistory>
+        <MessageHistory paths={["/some/topic"]}>{childFn2}</MessageHistory>
       </Provider>
     );
     expect(last(childFn2.mock.calls)).toEqual(last(childFn1.mock.calls));
@@ -607,37 +359,31 @@ describe("<MessageHistory />", () => {
   it("lets you drill down in a path", () => {
     const store = configureStore(reducer);
     store.dispatch(datatypesReceived(datatypes));
-    store.dispatch(topicsReceived([{ name: "/topic/with/header", datatype: "topic/with/header" }]));
-    store.dispatch(frameReceived({ "/topic/with/header": [messagesWithHeader[0], messagesWithHeader[1]] }));
+    store.dispatch(topicsReceived([{ name: "/some/topic", datatype: "some/topic" }]));
+    store.dispatch(frameReceived({ "/some/topic": [messages[0], messages[1]] }));
     const childFn = jest.fn().mockReturnValue(null);
     mount(
       <Provider store={store}>
-        <MessageHistory paths={["/topic/with/header.header.stamp"]}>{childFn}</MessageHistory>
+        <MessageHistory paths={["/some/topic.index"]}>{childFn}</MessageHistory>
       </Provider>
     );
     expect(childFn.mock.calls).toEqual([
       [
         {
           itemsByPath: {
-            "/topic/with/header.header.stamp": [
+            "/some/topic.index": [
               {
-                message: messagesWithHeader[0],
-                timestamp: { sec: 100, nsec: 0 },
-                elapsedSinceStart: { sec: 100, nsec: 0 },
-                hasAccurateTimestamp: true,
-                queriedData: [{ path: "/topic/with/header.header.stamp", value: { sec: 100, nsec: 0 } }],
+                message: messages[0],
+                queriedData: [{ path: "/some/topic.index", value: 0 }],
               },
               {
-                message: messagesWithHeader[1],
-                timestamp: { sec: 101, nsec: 0 },
-                elapsedSinceStart: { sec: 101, nsec: 0 },
-                hasAccurateTimestamp: true,
-                queriedData: [{ path: "/topic/with/header.header.stamp", value: { sec: 101, nsec: 0 } }],
+                message: messages[1],
+                queriedData: [{ path: "/some/topic.index", value: 1 }],
               },
             ],
           },
           cleared: false,
-          metadataByPath: { "/topic/with/header.header.stamp": expect.any(Object) },
+          metadataByPath: { "/some/topic.index": expect.any(Object) },
           startTime: expect.any(Object),
         },
       ],
@@ -647,53 +393,157 @@ describe("<MessageHistory />", () => {
   it("remembers data when changing topics", () => {
     const store = configureStore(reducer);
     store.dispatch(
-      topicsReceived([
-        { name: "/topic/with/header", datatype: "dummy" },
-        { name: "/some/other/topic", datatype: "dummy" },
-        { name: CLOCK_TOPIC, datatype: "dummy" },
-      ])
+      topicsReceived([{ name: "/some/topic", datatype: "dummy" }, { name: "/some/other/topic", datatype: "dummy" }])
     );
     const childFn = jest.fn().mockReturnValue(null);
     const wrapper = mount(
       <Provider store={store}>
-        <MessageHistory paths={["/topic/with/header"]}>{childFn}</MessageHistory>
+        <MessageHistory paths={["/some/topic"]}>{childFn}</MessageHistory>
       </Provider>
     );
-    store.dispatch(frameReceived({ "/topic/with/header": [messagesWithHeader[0]] }));
+    store.dispatch(frameReceived({ "/some/topic": [messages[0]] }));
     expect(childFn.mock.calls.length).toEqual(2);
     expect(last(childFn.mock.calls)).toEqual([
       {
         itemsByPath: {
-          "/topic/with/header": [
+          "/some/topic": [
             {
-              timestamp: { sec: 100, nsec: 0 },
-              elapsedSinceStart: { sec: 100, nsec: 0 },
-              hasAccurateTimestamp: true,
-              message: messagesWithHeader[0],
+              message: messages[0],
               queriedData: [],
             },
           ],
         },
         cleared: false,
-        metadataByPath: { "/topic/with/header": undefined },
+        metadataByPath: { "/some/topic": undefined },
         startTime: expect.any(Object),
       },
     ]);
 
     // Change props, and we expect to get another call with the same data.
     wrapper.setProps({
-      children: <MessageHistory paths={["/topic/with/header", "/some/other/topic"]}>{childFn}</MessageHistory>,
+      children: <MessageHistory paths={["/some/topic", "/some/other/topic"]}>{childFn}</MessageHistory>,
     });
     expect(childFn.mock.calls.length).toEqual(3);
     expect(last(childFn.mock.calls)).toEqual([
       {
         itemsByPath: {
-          "/topic/with/header": childFn.mock.calls[1][0].itemsByPath["/topic/with/header"],
+          "/some/topic": childFn.mock.calls[1][0].itemsByPath["/some/topic"],
           "/some/other/topic": [],
         },
         cleared: false,
-        metadataByPath: { "/topic/with/header": undefined, "/some/other/topic": undefined },
+        metadataByPath: { "/some/topic": undefined, "/some/other/topic": undefined },
         startTime: expect.any(Object),
+      },
+    ]);
+  });
+
+  it("return the same itemsByPath (identity) if the MessageHistory props did not change but children changed", () => {
+    const store = configureStore(reducer);
+    const paths = ["/some/topic"];
+    store.dispatch(
+      topicsReceived([{ name: "/some/topic", datatype: "dummy" }, { name: "/some/other/topic", datatype: "dummy" }])
+    );
+    store.dispatch(frameReceived({ "/some/topic": [messages[0], messages[1]] }));
+
+    const allItemsByPath = [];
+    const ChildExample = ({ value, itemsByPath }) => {
+      allItemsByPath.push(itemsByPath);
+      return <div>{`value: ${value}`}</div>;
+    };
+
+    const Test = ({ value }) => {
+      return (
+        <Provider store={store}>
+          <MessageHistory paths={paths}>
+            {({ itemsByPath }) => <ChildExample value={value} itemsByPath={itemsByPath} />}
+          </MessageHistory>
+        </Provider>
+      );
+    };
+    const wrapper = mount(<Test value={0} />);
+    expect(wrapper.text()).toEqual("value: 0");
+    wrapper.setProps({ value: 1 });
+
+    expect(allItemsByPath).toHaveLength(2);
+    expect(allItemsByPath[0]["/some/topic"]).toBe(allItemsByPath[1]["/some/topic"]);
+    expect(wrapper.text()).toEqual("value: 1");
+  });
+
+  it("return different itemsByPath if other props have changed", () => {
+    const store = configureStore(reducer);
+    store.dispatch(
+      topicsReceived([{ name: "/some/topic", datatype: "dummy" }, { name: "/some/topic1", datatype: "dummy" }])
+    );
+    store.dispatch(frameReceived({ "/some/topic": [messages[0], messages[1]] }));
+
+    const allItemsByPath = [];
+    const ChildExample = ({ itemsByPath }) => {
+      allItemsByPath.push(itemsByPath);
+      return null;
+    };
+
+    const Test = (props) => {
+      return (
+        <Provider store={store}>
+          <MessageHistory {...props}>{({ itemsByPath }) => <ChildExample itemsByPath={itemsByPath} />}</MessageHistory>
+        </Provider>
+      );
+    };
+    const wrapper = mount(<Test paths={["/some/topic", "/some/topic1"]} historySize={1} imageScale={0.5} />);
+    wrapper.setProps({ paths: ["/some/topic1"] });
+    wrapper.setProps({ historySize: 2 });
+    store.dispatch(
+      frameReceived({
+        "/some/topic1": [
+          {
+            op: "message",
+            datatype: "some/topic1",
+            topic: "/some/topic1",
+            receiveTime: { sec: 101, nsec: 0 },
+            message: { index: 3 },
+          },
+        ],
+      })
+    );
+
+    expect(allItemsByPath).toEqual([
+      // first mount
+      {
+        "/some/topic": [
+          {
+            message: {
+              datatype: "some/topic",
+              message: { index: 1 },
+              op: "message",
+              receiveTime: { nsec: 0, sec: 101 },
+              topic: "/some/topic",
+            },
+            queriedData: [],
+          },
+        ],
+        "/some/topic1": [],
+      },
+
+      // set prop: paths
+      { "/some/topic1": [] },
+
+      // set prop: historySize
+      { "/some/topic1": [] },
+
+      // received new frames
+      {
+        "/some/topic1": [
+          {
+            message: {
+              datatype: "some/topic1",
+              message: { index: 3 },
+              op: "message",
+              receiveTime: { nsec: 0, sec: 101 },
+              topic: "/some/topic1",
+            },
+            queriedData: [],
+          },
+        ],
       },
     ]);
   });

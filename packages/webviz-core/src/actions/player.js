@@ -6,18 +6,19 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import type { Time } from "rosbag";
+
 import Pipeline from "webviz-core/src/pipeline/Pipeline";
 import type {
-  Timestamp,
-  DataSource,
+  Player,
   SubscribePayload,
   AdvertisePayload,
   PublishPayload,
-  DATA_SOURCE_CONNECTING,
-  DATA_SOURCE_DISCONNECTED,
-  DATA_SOURCE_CONNECTED,
+  PLAYER_CONNECTING,
+  PLAYER_DISCONNECTED,
+  PLAYER_CONNECTED,
   SET_WEBSOCKET_INPUT,
-  PlayerState,
+  PlayerStatePayload,
   Topic,
   Frame,
   TOPICS_RECEIVED,
@@ -28,7 +29,7 @@ import type {
   CAPABILITIES_RECEIVED,
   SUBSCRIPTIONS_CHANGED,
   PUBLISHERS_CHANGED,
-} from "webviz-core/src/types/dataSources";
+} from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 // sets the text for the websocket input
@@ -49,18 +50,18 @@ export const datatypesReceived = (datatypes: RosDatatypes): DATATYPES_RECEIVED =
   payload: datatypes,
 });
 
-export const frameReceived = (frame: Frame, currentTime: ?Timestamp): FRAME_RECEIVED => ({
+export const frameReceived = (frame: Frame, currentTime: ?Time): FRAME_RECEIVED => ({
   type: "FRAME_RECEIVED",
   frame,
   currentTime,
 });
 
-export const timeUpdated = (time: Timestamp): TIME_UPDATED => ({
+export const timeUpdated = (time: Time): TIME_UPDATED => ({
   type: "TIME_UPDATED",
   time,
 });
 
-export const playerStateChanged = (payload: PlayerState): PLAYER_STATE_CHANGED => {
+export const playerStateChanged = (payload: PlayerStatePayload): PLAYER_STATE_CHANGED => {
   return {
     type: "PLAYER_STATE_CHANGED",
     payload,
@@ -72,16 +73,16 @@ export const capabilitiesReceived = (capabilities: string[]): CAPABILITIES_RECEI
   capabilities,
 });
 
-// right now we support 1 active data source at a time
+// right now we support 1 active player at a time
 // so using a singleton is okay
-let dataSource: ?DataSource;
+let player: ?Player;
 
-export function getDataSource() {
-  return dataSource;
+export function getPlayer() {
+  return player;
 }
 
-export function setDataSourceNull() {
-  dataSource = null;
+export function setPlayerNull() {
+  player = null;
 }
 
 // There's a circular dependency in tests, which causes `Pipeline` to be undefined
@@ -97,19 +98,19 @@ export function getPipeline() {
 
 type NOOP = {| type: "NOOP" |};
 
-export const dataSourceConnecting = (ds: DataSource): DATA_SOURCE_CONNECTING => {
-  dataSource = ds;
+export const playerConnecting = (ds: Player): PLAYER_CONNECTING => {
+  player = ds;
   return {
-    type: "DATA_SOURCE_CONNECTING",
+    type: "PLAYER_CONNECTING",
   };
 };
 
-export const dataSourceConnected = (): DATA_SOURCE_CONNECTED => ({
-  type: "DATA_SOURCE_CONNECTED",
+export const playerConnected = (): PLAYER_CONNECTED => ({
+  type: "PLAYER_CONNECTED",
 });
 
-export const dataSourceDisconnected = (): DATA_SOURCE_DISCONNECTED => ({
-  type: "DATA_SOURCE_DISCONNECTED",
+export const playerDisconnected = (): PLAYER_DISCONNECTED => ({
+  type: "PLAYER_DISCONNECTED",
 });
 
 export const subscribe = (payload: SubscribePayload): SUBSCRIPTIONS_CHANGED => {
@@ -150,38 +151,28 @@ export const publish = (payload: PublishPayload): NOOP => {
 };
 
 export const startPlayback = () => async () => {
-  if (dataSource) {
-    dataSource.startPlayback();
+  if (player) {
+    player.startPlayback();
   }
 };
 
 export const pausePlayback = () => async () => {
-  if (dataSource) {
-    dataSource.pausePlayback();
+  if (player) {
+    player.pausePlayback();
   }
 };
 
-export const seekPlayback = (time: Timestamp) => (dispatch: any) => {
-  if (dataSource) {
-    dataSource.seekPlayback(time);
+export const seekPlayback = (time: Time) => (dispatch: any) => {
+  if (player) {
+    player.seekPlayback(time);
   }
 };
 
 export const setPlaybackSpeed = (speed: number) => async () => {
-  if (dataSource) {
-    dataSource.setPlaybackSpeed(speed);
+  if (player) {
+    player.setPlaybackSpeed(speed);
   }
 };
-
-export type SET_AUXILIARY_DATA = {
-  type: "SET_AUXILIARY_DATA",
-  payload: (Object) => Object,
-};
-
-export const setAuxiliaryData = (payload: (Object) => Object): SET_AUXILIARY_DATA => ({
-  type: "SET_AUXILIARY_DATA",
-  payload,
-});
 
 export const setReconnectDelay = (timeout: number) => {
   return {

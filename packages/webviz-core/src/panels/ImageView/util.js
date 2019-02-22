@@ -6,14 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { Topic } from "webviz-core/src/types/dataSources";
+import type { Topic } from "webviz-core/src/types/players";
 
 export type MarkerOption = {
   topic: string,
   name: string,
 };
-
-export const RECTIFIED_TOPIC_REGEX = /\/image_rect_color(_compressed)?$/;
 
 // given all available marker topics, filter out the names that are available for this image topic
 export function getMarkerOptions(
@@ -23,9 +21,8 @@ export function getMarkerOptions(
 ): MarkerOption[] {
   const results = [];
   const cameraNamespace = getCameraNamespace(imageTopic);
-  const isRectified = cameraNamespace && RECTIFIED_TOPIC_REGEX.test(imageTopic);
   for (const topic of markerTopics) {
-    if (isRectified && cameraNamespace && topic.startsWith(cameraNamespace)) {
+    if (cameraNamespace && topic.startsWith(cameraNamespace)) {
       results.push({ topic, name: topic.substr(cameraNamespace.length).replace(/^\//, "") });
     } else if (allCameraNamespaces.includes(getCameraNamespace(topic))) {
       // this topic corresponds to a different camera
@@ -41,7 +38,7 @@ export function getMarkerOptions(
 // (the camera topic must be rectified in order for markers to align properly)
 export function getMarkerTopics(imageTopic: string, markerNames: string[]): string[] {
   const cameraNamespace = getCameraNamespace(imageTopic);
-  if (cameraNamespace && RECTIFIED_TOPIC_REGEX.test(imageTopic)) {
+  if (cameraNamespace) {
     return markerNames.map((name) => (name.startsWith("/") ? name : `${cameraNamespace}/${name}`));
   }
   return [];

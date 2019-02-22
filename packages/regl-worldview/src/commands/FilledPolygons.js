@@ -58,7 +58,7 @@ export default function FilledPolygons({ children: polygons = [], getHitmapId, .
       ...restOfMarker,
       points: polyPoints,
       pose,
-      color: { r: color[0], g: color[1], b: color[2], a: color[3] },
+      color,
       scale: DEFAULT_SCALE,
     });
   }

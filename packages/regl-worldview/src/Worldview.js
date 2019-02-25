@@ -255,10 +255,10 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     const { worldviewContext } = this.state;
 
     return (
-      <div style={{ position: "relative", overflow: "visible", ...style }}>
+      <div style={{ position: "relative", overflow: "hidden", ...style }}>
         <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap}>
           <canvas
-            style={{ width, height }}
+            style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
             width={width}
             height={height}
             ref={this._canvas}

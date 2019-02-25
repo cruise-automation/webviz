@@ -7,7 +7,7 @@
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
 
-import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, getCSSColor, Overlay, Spheres } from "regl-worldview";
+import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
@@ -135,62 +135,59 @@ function Example() {
   }
 
   return (
-    <div style={{ width: 400, height: 300, backgroundColor: "gray", padding: 16 }}>
-      <div style={{ width: 300, height: 40, background: "red" }} />
-      <Worldview
-        cameraState={cameraState}
-        onCameraStateChange={(cameraState) => {
-          setCameraState(cameraState);
-        }}
-        onClick={(e, arg) => {
-          if (clickedId === arg.objectId) {
-            setClickedId(undefined);
-          } else {
-            setClickedId(arg.objectId);
+    <Worldview
+      cameraState={cameraState}
+      onCameraStateChange={(cameraState) => {
+        setCameraState(cameraState);
+      }}
+      onClick={(e, arg) => {
+        if (clickedId === arg.objectId) {
+          setClickedId(undefined);
+        } else {
+          setClickedId(arg.objectId);
+        }
+      }}>
+      <Cubes getHitmapId={getHitmapId}>{cubes}</Cubes>
+      <Spheres getHitmapId={getHitmapId}>{spheres}</Spheres>
+      <Overlay
+        renderItem={({ item, coordinates, dimension: { width, height } }) => {
+          if (!coordinates) {
+            return null;
           }
-        }}>
-        <Cubes getHitmapId={getHitmapId}>{cubes}</Cubes>
-        <Spheres getHitmapId={getHitmapId}>{spheres}</Spheres>
-        <Overlay
-          renderItem={({ item, coordinates, dimension: { width, height } }) => {
-            if (!coordinates) {
-              return null;
-            }
-            const [left, top] = coordinates;
-            if (left < -10 || top < -10 || left > width + 10 || top > height + 10) {
-              return null; // Don't render anything that's too far outside of the canvas
-            }
+          const [left, top] = coordinates;
+          if (left < -10 || top < -10 || left > width + 10 || top > height + 10) {
+            return null; // Don't render anything that's too far outside of the canvas
+          }
 
-            const {
-              text,
-              info: { color, title },
-            } = item;
-            return (
-              <div
-                key={item.id}
-                style={{
-                  transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
-                  flexDirection: "column",
-                  position: "absolute",
-                  background: "rgba(0, 0, 0, 0.8)",
-                  color: "white",
-                  maxWidth: 250,
-                  pointerEvents: "none",
-                  willChange: "transform",
-                  fontSize: 12,
-                  padding: 8,
-                  whiteSpace: "pre-line",
-                }}>
-                <div style={{ color: getCSSColor(color) }}>{title}</div>
-                <div>{text}</div>
-              </div>
-            );
-          }}>
-          {textMarkers}
-        </Overlay>
-        <Axes />
-      </Worldview>
-    </div>
+          const {
+            text,
+            info: { color, title },
+          } = item;
+          return (
+            <div
+              key={item.id}
+              style={{
+                transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
+                flexDirection: "column",
+                position: "absolute",
+                background: "rgba(0, 0, 0, 0.8)",
+                color: "white",
+                maxWidth: 250,
+                pointerEvents: "none",
+                willChange: "transform",
+                fontSize: 12,
+                padding: 8,
+                whiteSpace: "pre-line",
+              }}>
+              <div style={{ color: getCSSColor(color) }}>{title}</div>
+              <div>{text}</div>
+            </div>
+          );
+        }}>
+        {textMarkers}
+      </Overlay>
+      <Axes />
+    </Worldview>
   );
 }
 // #END EXAMPLE

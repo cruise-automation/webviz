@@ -9,15 +9,17 @@
 
 import * as React from "react";
 
-import type { ComponentMouseHandler, MouseEventEnum, RawCommand, Vec4, Color } from "../types";
+import type { ComponentMouseHandler, MouseEventEnum, RawCommand, Vec4, Color, Ray } from "../types";
 import { getIdFromColor, intToRGB } from "../utils/commandUtils";
 import { getNodeEnv } from "../utils/common";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
 
+export const SUPPORTED_MOUSE_EVENTS = ["onClick", "onMouseUp", "onMouseMove", "onMouseDown", "onDoubleClick"];
+
 export type HitmapProp<T> = T & ({ colors: Vec4[] } | { color: Vec4 });
-export type GetObjectFromHitmapId<T> = (objectId: number, enableInstanceHitmap: boolean) => ?T;
-export type GetHitmapProps<T> = (children: T[], enaleInstanceHitmap: boolean) => ?HitmapProp<T>;
+export type GetObjectFromHitmapId<T> = (objectId: number, hitmapProps: HitmapProps<T>[]) => ?HitmapProps<T>;
+export type GetHitmapProps<T> = (children: T[]) => ?HitmapProp<T>;
 export type MarkerDefault = {
   id?: number,
   points?: Point[],
@@ -32,7 +34,6 @@ export type HitmapMarkerDefault = {
 export type Props<T> = {
   [MouseEventEnum]: ComponentMouseHandler,
   children?: T[],
-  enableInstanceHitmap?: boolean,
   getObjectFromHitmapId?: GetObjectFromHitmapId<HitmapProp<T>>,
   hitmapProps?: HitmapProp<T>,
   layerIndex?: number,
@@ -40,7 +41,7 @@ export type Props<T> = {
 };
 
 export type MakeCommandOptions = {
-  getHitmapProps: (enableInstanceHitmap: boolean) => any,
+  getHitmapProps: GetHitmapProps,
   getObjectFromHitmapId: GetObjectFromHitmapId,
 };
 
@@ -103,14 +104,15 @@ export default class Command<T> extends React.Component<Props<T>> {
     }
   }
 
-  handleMouseEvent(objectId: number, e: any, ray: any, mouseEventName: MouseEventEnum) {
+  handleMouseEvent(objectId: number, e: MouseEvent, ray: Ray, mouseEventName: MouseEventEnum) {
     const mouseHandler = this.props[mouseEventName];
-    const { hitmapProps = [], getObjectFromHitmapId, enableInstanceHitmap } = this.props;
+    const { hitmapProps = [], getObjectFromHitmapId } = this.props;
     if (!mouseHandler || hitmapProps.length === 0 || !getObjectFromHitmapId) {
       return;
     }
 
-    const hitmapProp = getObjectFromHitmapId(objectId, hitmapProps, enableInstanceHitmap);
+    const hitmapProp = getObjectFromHitmapId(objectId, hitmapProps);
+
     if (!hitmapProp) {
       return;
     }
@@ -143,15 +145,13 @@ function defaultGetHitmapProps<T>(getHitmapId, children: T[]): ?(HitmapProp[]) {
   }
 
   return children.reduce((memo, marker) => {
-    if (marker.color) {
-      const hitmapId = getHitmapId(marker);
-      // filter out components that don't have hitmapIds
-      if (hitmapId != null) {
-        memo.push({
-          ...marker,
-          color: intToRGB(hitmapId || 0),
-        });
-      }
+    const hitmapId = getHitmapId(marker);
+    // filter out components that don't have hitmapIds
+    if (hitmapId != null) {
+      memo.push({
+        ...marker,
+        color: intToRGB(hitmapId || 0),
+      });
     }
     return memo;
   }, []);
@@ -182,15 +182,13 @@ export function makeCommand<T>(
 ): React.StatelessFunctionalComponent<T> {
   const cmd = ({
     children,
-    enableInstanceHitmap,
-    enableHitmap,
     getObjectFromHitmapId: getObjectFromHitmapIdAlt,
     getHitmapProps: getHitmapPropsAlt,
     getHitmapId,
     ...rest
   }: Props<T>) => {
     let getObjectFromHitmapId = getObjectFromHitmapIdAlt || options.getObjectFromHitmapId;
-    let getHitmapProps = getHitmapPropsAlt || options.getHitmapProps;
+    const getHitmapProps = getHitmapPropsAlt || options.getHitmapProps;
     let hitmapProps;
 
     if ((getHitmapPropsAlt && !getObjectFromHitmapIdAlt) || (!getHitmapPropsAlt && getObjectFromHitmapIdAlt)) {
@@ -198,32 +196,29 @@ export function makeCommand<T>(
         "Possible wrong hitmap id mapping in the instanced rendering. Keep or remove both `getHitmapProps` and `getObjectFromHitmapId` props."
       );
     }
+    // enable hitmap if any of the supported mouse event handlers exist in props
+    const enableHitmap = getHitmapId || SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
 
-    if (enableInstanceHitmap && (!getHitmapProps || !getObjectFromHitmapId)) {
-      getHitmapProps = null;
-      getObjectFromHitmapId = null;
-      console.error(`Default instanced hitmap for ${name} is not supported yet.`);
-    }
-
-    // TODO: deprecating, remove before 1.x release
-    if (getHitmapId) {
-      console.warn(
-        `"getHitmapId" is deprecated. Check "${name}" to use "enableHitmap" for default hitmap mapping or set the "getHitmapProps" and "getObjectFromHitmapId" props explicitly. `
-      );
-      hitmapProps = defaultGetHitmapProps(getHitmapId, children);
-      getObjectFromHitmapId = defaultGetObjectFromHitmapId;
-    } else if (getHitmapProps && getObjectFromHitmapId) {
-      if (enableHitmap) {
-        hitmapProps = getHitmapProps(children, false);
-      } else if (enableInstanceHitmap) {
-        hitmapProps = getHitmapProps(children, true);
+    if (enableHitmap) {
+      // TODO: deprecating, remove before 1.x release
+      if (getHitmapId) {
+        console.warn(
+          `"getHitmapId" is deprecated. Check "${name}" to use default hitmap mapping or set the "getHitmapProps" and "getObjectFromHitmapId" props explicitly. `
+        );
+        hitmapProps = defaultGetHitmapProps(getHitmapId, children);
+        getObjectFromHitmapId = defaultGetObjectFromHitmapId;
+      } else if (!getHitmapProps || !getObjectFromHitmapId) {
+        hitmapProps = null;
+        getObjectFromHitmapId = null;
+        console.error(`Default hitmap for ${name} is not supported yet.`);
+      } else if (getHitmapProps && getObjectFromHitmapId) {
+        hitmapProps = getHitmapProps(children);
       }
     }
 
     return (
       <Command
         {...rest}
-        enableInstanceHitmap={enableInstanceHitmap}
         reglCommand={command}
         drawProps={children}
         hitmapProps={hitmapProps}

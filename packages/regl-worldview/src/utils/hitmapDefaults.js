@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { type HitmapProp, type MarkerDefault, type HitmapMarkerDefault } from "../commands/Command";
+import { HitmapProp, MarkerDefault, HitmapMarkerDefault } from "../commands/Command";
 import { getIdFromColor, intToRGB } from "./commandUtils";
 
 export function getHitmapId<T>(marker: MarkerDefault<T>, pointIndex: ?number = 0) {
@@ -17,18 +17,18 @@ export function getHitmapId<T>(marker: MarkerDefault<T>, pointIndex: ?number = 0
 // ─── default props for Cubes, Points, Cones, and Cylinders ──────────────────────────────────────────────────────
 //
 // generate default hitmapProps
-export function getHitmapProps<T: MarkerDefault>(children: T[], enableInstanceHitmap: boolean): ?(HitmapProp<T>[]) {
+export function getHitmapProps<T: MarkerDefault>(children: T[]): ?(HitmapProp<T>[]) {
   if (!children || children.length === 0) {
     return undefined;
   }
 
   return children.reduce((memo, marker) => {
-    if (enableInstanceHitmap && marker.points) {
+    if (marker.points) {
       memo.push({
         ...marker,
         colors: marker.points.map((_, pointIndex) => intToRGB(getHitmapId(marker, pointIndex) || 0)),
       });
-    } else if (marker.color && marker.id) {
+    } else {
       const hitmapId = getHitmapId(marker);
       // filter out components that don't have hitmapIds
       if (hitmapId != null) {
@@ -43,13 +43,9 @@ export function getHitmapProps<T: MarkerDefault>(children: T[], enableInstanceHi
 }
 
 // find the the object that matches the hitmapId/objectId
-export function getObjectFromHitmapId<HitmapProp: HitmapMarkerDefault>(
-  objectId: number,
-  hitmapProps: HitmapProp[],
-  enableInstanceHitmap: boolean
-) {
+export function getObjectFromHitmapId<HitmapProp: HitmapMarkerDefault>(objectId: number, hitmapProps: HitmapProp[]) {
   return hitmapProps.find((hitmapProp) => {
-    if (hitmapProp.points && enableInstanceHitmap && hitmapProp.id) {
+    if (hitmapProp.points && hitmapProp.id) {
       // for instanced rendering, find the hitmapProp that produces the same id range and return it
       if (objectId >= hitmapProp.id && objectId < hitmapProp.id + hitmapProp.points.length) {
         return true;
@@ -67,7 +63,7 @@ export function getObjectFromHitmapId<HitmapProp: HitmapMarkerDefault>(
 //
 // ─── Points and Triangles (separate triangles props into their own if needed) ─────────────────────────────────
 //
-export function getHitmapPropsForPoints<T: MarkerDefault>(children: T[]): ?(HitmapProp<T>[]) {
+export function getHitmapPropsForInstancedCommands<T: MarkerDefault>(children: T[]): ?(HitmapProp<T>[]) {
   if (!children || children.length === 0) {
     return undefined;
   }
@@ -83,7 +79,7 @@ export function getHitmapPropsForPoints<T: MarkerDefault>(children: T[]): ?(Hitm
   }, []);
 }
 
-export function getObjectFromHitmapIdForPoints<HitmapProp: HitmapMarkerDefault>(
+export function getObjectForInstancedCommands<HitmapProp: HitmapMarkerDefault>(
   objectId: number,
   hitmapProps: HitmapProp[]
 ): ?HitmapProp {

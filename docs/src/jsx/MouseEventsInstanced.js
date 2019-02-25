@@ -7,7 +7,7 @@
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
 
-import Worldview, { Axes, Points, Spheres, Cubes, Triangles, intToRGB } from "regl-worldview";
+import Worldview, { Axes, Cubes, intToRGB, Points, Spheres, Triangles } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
@@ -88,19 +88,17 @@ function Example() {
     }
   }
 
-  function customGetHitmapProps(children, enableInstanceHitmap) {
+  function customGetHitmapProps(children) {
     return children.map((marker) => ({
       ...marker,
       colors: marker.points.map((_, pointIndex) => intToRGB(marker.id - pointIndex)),
     }));
   }
 
-  function customGetObjectFromHitmapId(objectId, hitmapProps, enableInstanceHitmap) {
+  function customGetObjectFromHitmapId(objectId, hitmapProps) {
     return hitmapProps.find((hitmapProp) => {
-      if (hitmapProp.points && enableInstanceHitmap) {
-        if (objectId <= hitmapProp.id && objectId > hitmapProp.id - hitmapProp.points.length) {
-          return true;
-        }
+      if (hitmapProp.points && objectId <= hitmapProp.id && objectId > hitmapProp.id - hitmapProp.points.length) {
+        return true;
       }
       return false;
     });
@@ -120,17 +118,14 @@ function Example() {
         }}>
         {commandMsg ? <span>{commandMsg}</span> : <span>Click any object</span>}
       </div>
-      <Points enableInstanceHitmap onClick={onObjectClick}>
-        {[pointsMarker]}
-      </Points>
+      <Points onClick={onObjectClick}>{[pointsMarker]}</Points>
       <Spheres
-        enableInstanceHitmap
         getHitmapProps={customGetHitmapProps}
         getObjectFromHitmapId={customGetObjectFromHitmapId}
         onClick={onObjectClick}>
         {[instancedSphereMarker]}
       </Spheres>
-      <Points enableHitmap onClick={onObjectClick}>
+      <Points onClick={onObjectClick}>
         {[
           {
             id: 10001,
@@ -145,7 +140,7 @@ function Example() {
           },
         ]}
       </Points>
-      <Cubes enableHitmap onClick={onObjectClick}>
+      <Cubes onClick={onObjectClick}>
         {[
           {
             id: 20001,
@@ -173,7 +168,7 @@ function Example() {
           },
         ]}
       </Spheres>
-      <Triangles enableHitmap onClick={onObjectClick}>
+      <Triangles onClick={onObjectClick}>
         {[
           {
             id: 40001,

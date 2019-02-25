@@ -7,8 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import type { TriangleList, Regl } from "../types";
-import { blend, pointToVec3Array, withPose, getVertexColors, shouldConvert, toRGBA } from "../utils/commandUtils";
-import { getObjectFromHitmapIdForPoints, getHitmapPropsForPoints } from "../utils/hitmapDefaults";
+import { blend, getVertexColors, pointToVec3Array, shouldConvert, toRGBA, withPose } from "../utils/commandUtils";
+import { getHitmapPropsForInstancedCommands, getObjectForInstancedCommands } from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
 
 const singleColor = (regl) =>
@@ -141,8 +141,8 @@ const triangles = (regl: Regl) => {
 
 // prettier-ignore
 const Triangles = makeCommand<TriangleList>('Triangles', triangles, {
-  getHitmapProps: getHitmapPropsForPoints,
-  getObjectFromHitmapId: getObjectFromHitmapIdForPoints,
+  getHitmapProps: getHitmapPropsForInstancedCommands,
+  getObjectFromHitmapId: getObjectForInstancedCommands,
 });
 
 export default Triangles;

@@ -42,7 +42,7 @@ function Example() {
   return (
     <div style={{ width: 400, height: 400, margin: 20, background: "#1e1e27", display: "block", position: "relative" }}>
       <button style={{ position: "absolute", zIndex: 10001 }} onClick={() => setOverflowVisible(!overflowVisible)}>
-        {overflowVisible ? "Clip overflow" : "Show overflow"}
+        {overflowVisible ? "Overflow visible" : "Overflow clipped"}
       </button>
       <Worldview style={{ width: 360, height: 320, overflow: overflowVisible ? "visible" : "hidden" }}>
         <Spheres>{sphereMarkers}</Spheres>

@@ -5,5 +5,8 @@
   "javascript.validate.enable": false,
   "files.associations": {
     "*.mdx": "markdown"
+  },
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": false
   }
 }

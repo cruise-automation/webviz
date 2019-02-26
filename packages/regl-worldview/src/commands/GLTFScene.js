@@ -9,10 +9,11 @@
 import { mat4 } from "gl-matrix";
 import React from "react";
 
-import { blend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
+import type { Pose, Scale } from "../types";
+import { blend, orientationToVec4, pointToVec3 } from "../utils/commandUtils";
 import parseGLB from "../utils/parseGLB";
-
-import { Command, type Pose, type Scale, WorldviewReactContext } from "..";
+import WorldviewReactContext from "../WorldviewReactContext";
+import Command from "./Command";
 
 function glConstantToRegl(value: ?number): ?string {
   if (value === undefined) {

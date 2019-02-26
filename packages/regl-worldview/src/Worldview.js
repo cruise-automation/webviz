@@ -27,6 +27,7 @@ export type BaseProps = {|
   hitmapOnMouseMove?: boolean,
   showDebug?: boolean,
   children?: React.Node,
+  style: { [styleAttribute: string]: number | string },
 
   cameraState?: CameraState,
   onCameraStateChange?: (CameraState) => void,
@@ -71,6 +72,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   static defaultProps = {
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
+    style: {},
   };
 
   constructor(props: BaseProps) {
@@ -249,15 +251,14 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, showDebug, keyMap } = this.props;
+    const { width, height, showDebug, keyMap, style } = this.props;
     const { worldviewContext } = this.state;
-    const style = { width, height };
 
     return (
-      <React.Fragment>
+      <div style={{ position: "relative", overflow: "hidden", ...style }}>
         <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap}>
           <canvas
-            style={style}
+            style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
             width={width}
             height={height}
             ref={this._canvas}
@@ -274,7 +275,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
             {this.props.children}
           </WorldviewReactContext.Provider>
         )}
-      </React.Fragment>
+      </div>
     );
   }
 }

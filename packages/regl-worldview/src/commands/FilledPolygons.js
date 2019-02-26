@@ -51,7 +51,8 @@ type Props = {
 export default function FilledPolygons({ children: polygons = [], getHitmapId, ...props }: Props) {
   const triangles = [];
   for (const poly of polygons) {
-    const points = shouldConvert(poly.points) ? poly.points.map(pointToVec3) : poly.points;
+    // $FlowFixMe flow doesn't know how shouldConvert works
+    const points: Vec3[] = shouldConvert(poly.points) ? poly.points.map(pointToVec3) : poly.points;
     const pose = poly.pose ? poly.pose : NO_POSE;
     const earcutPoints: Vec3[] = getEarcutPoints(points);
     triangles.push({

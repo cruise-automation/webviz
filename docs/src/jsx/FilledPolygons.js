@@ -23,7 +23,7 @@ function Example() {
   const polygons = [
     {
       points: vertices,
-      color: [1 - range * 0.5, range, 1, 1 - range * 0.3],
+      color: { r: 1 - range * 0.5, g: range, b: 1, a: 1 - range * 0.3 },
       id: 1,
     },
   ];

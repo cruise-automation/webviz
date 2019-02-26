@@ -187,7 +187,8 @@ export type TriangleList = BaseShape & {
 };
 
 export type PolygonType = BaseShape & {
-  points: Point[],
+  points: (Point | Vec3)[],
+  color: Color | Vec4,
   id: number,
 };
 

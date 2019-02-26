@@ -9,7 +9,8 @@
 import earcut from "earcut";
 import React from "react";
 
-import type { Vec3, Point, PolygonType, TriangleList } from "../types";
+import type { Vec3, PolygonType, TriangleList } from "../types";
+import { shouldConvert, pointToVec3 } from "../utils/commandUtils";
 import Triangles from "./Triangles";
 
 const NO_POSE = {
@@ -50,15 +51,14 @@ type Props = {
 export default function FilledPolygons({ children: polygons = [], getHitmapId, ...props }: Props) {
   const triangles = [];
   for (const poly of polygons) {
-    const { points, color, ...restOfMarker } = poly;
+    // $FlowFixMe flow doesn't know how shouldConvert works
+    const points: Vec3[] = shouldConvert(poly.points) ? poly.points.map(pointToVec3) : poly.points;
     const pose = poly.pose ? poly.pose : NO_POSE;
-    const earcutPoints: Vec3[] = getEarcutPoints(points.map(({ x, y, z }) => [x, y, z]));
-    const polyPoints: Point[] = earcutPoints.map(([x, y, z]) => ({ x, y, z }));
+    const earcutPoints: Vec3[] = getEarcutPoints(points);
     triangles.push({
-      ...restOfMarker,
-      points: polyPoints,
+      ...poly,
+      points: earcutPoints,
       pose,
-      color: { r: color[0], g: color[1], b: color[2], a: color[3] },
       scale: DEFAULT_SCALE,
     });
   }

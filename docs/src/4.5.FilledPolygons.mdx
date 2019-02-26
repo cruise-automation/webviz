@@ -28,8 +28,8 @@ type FilledPolygon = {
     g: number, // between 0 and 1
     b: number, // between 0 and 1
     a: number, // between 0 and 1
-  },
-  points:[{ x: number, y: number, z: number }],
+  } | [number, number, number, number],
+  points: [{ x: number, y: number, z: number } | [number, number, number]],
   id: number,
 }
 ```

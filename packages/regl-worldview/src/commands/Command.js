@@ -180,6 +180,7 @@ export function makeCommand<T>(
   command: RawCommand<T>,
   options: ?MakeCommandOptions = {}
 ): React.StatelessFunctionalComponent<T> {
+  let warnedAboutDeprecatedGetHitmapId = false;
   const cmd = ({
     children,
     getObjectFromHitmapId: getObjectFromHitmapIdAlt,
@@ -202,9 +203,12 @@ export function makeCommand<T>(
     if (enableHitmap) {
       // TODO: deprecating, remove before 1.x release
       if (getHitmapId) {
-        console.warn(
-          `"getHitmapId" is deprecated. Check "${name}" to use default hitmap mapping or set the "getHitmapProps" and "getObjectFromHitmapId" props explicitly. `
-        );
+        if (!warnedAboutDeprecatedGetHitmapId) {
+          console.warn(
+            `"getHitmapId" is deprecated. Check "${name}" to use default hitmap mapping or set the "getHitmapProps" and "getObjectFromHitmapId" props explicitly. `
+          );
+          warnedAboutDeprecatedGetHitmapId = true;
+        }
         hitmapProps = defaultGetHitmapProps(getHitmapId, children);
         getObjectFromHitmapId = defaultGetObjectFromHitmapId;
       } else if (!getHitmapProps || !getObjectFromHitmapId) {

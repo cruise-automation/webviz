@@ -4,16 +4,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { withKnobs, boolean } from "@storybook/addon-knobs";
+import { withKnobs } from "@storybook/addon-knobs";
 import { storiesOf } from "@storybook/react";
-import polygonGenerator from "polygon-generator";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
-import Worldview, { Axes, Lines, FilledPolygons } from "../index";
-
-import Container from "./Container";
-import withRange from "./withRange";
+import Worldview, { Axes, Lines } from "../index";
 
 const DEFAULT_CAMERA = {
   perspective: false,

@@ -1,5 +1,4 @@
-import { MouseEvents } from './jsx/allLiveEditors.js';
-
+import { MouseEvents, MouseEventsInstanced } from './jsx/allLiveEditors.js';
 
 # MouseEvents
 
@@ -13,37 +12,65 @@ Currently Worldview supports the following mouse event handlers: `onDoubleClick`
 | `onMouseMove`   | `MouseHandler` |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the `Worldview` component |
 | `onClick`       | `MouseHandler` |         |                                                                                              |
 
-## Worldview Level Handler
-- `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `objectId`: the `hitmapId` that you specified in the regl commands through `getHitmapId` mapping. Usually you'd use `getHitmapId={(marker) => marker.id}` to generate the hitmapId.
+## Event Handler
 
-Sample usage:
+There are two kinds of event handlers:
+
+**Worldview Level Handlers**
+
+- `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
+- `objectId`: the id of the object that you interacted with.
+
+**Command Component Level Handlers**
+
+- `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
+- `object`: the object that you interacted with.
+- `objectId`: the id of the object that you interacted with.
 
 ```js
 <Worldview onClick={(evt, { objectId }) => console.log("You clicked on", objectId)}>
-  <Cubes getHitmapId={(marker) => marker.id}>{cubes}</Cubes>
+  <Cubes onClick={(evt, { object, objectId }) => console.log("You clicked on", objectId)}>{cubes}</Cubes>
   {/* Other command children */}
 </Worldview>
 ```
 
+## Hitmap Id Mapping
 
+The `objectId`, also refered as `hitmapId`, is how we identify the objects that you interacted with.
 
-## Command Component Level Handlers
-- `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `object`: the object that you interacted with.
+There are two ways to manage hitmap ids:
 
-Sample usage:
+**Automatic**
+
+For some commonly supported command components such as Cubes, Spheres and Cones, when a supported mouse handler exists in props, and the marker has an `id` field, we'll automatically manage the hitmap id mapping. The returned object will contain the original marker fields and an additional (or replaced) `color` field that was generated for the hitmap id mapping.
 
 ```js
-<Worldview>
-  <Cubes
-    getHitmapId={(marker) => marker.id}
-    onClick={(evt, { object }) => console.log("You clicked on", object)}
-  >
-    {cubes}
-  </Cubes>
-</Worldview>
+<Cubes onClick={(ev, {object}) => {console.log("Cube marker with hitmap color field", object)}}>
+  [{
+    id: 212,
+    ...restOfCubeMarker
+  }]
+</Cubes>
 ```
+
+**Custom**
+
+You can also customize hitmap id mapping through `getHitmapProps` and `getObjectFromHitmapId` props. Both of the two props must be present because providing only one may cause incorrect mapping.
+
+- `getHitmapProps`: the function takes the original marker children as input, and map the children to `hitmapProps` which contains `color` or `colors` (for instanced rendering) field.
+- `getObjectFromHitmapId`: the function takes the `objectId`/`hitmapId` and `hitmapProps`. When a mouse event is fired, we read the color from the interaction point and map it back to an `objectId`. We'll try to find the exact `hitmapProp` / object that matches the `objectId` by iterating through the `hitmapProps`. If no `hitmapProp` is found, the event callback won't be triggered.
+
+_It's important to keep the object `id` unique if you want to keep track of the objects._
+
+### Hitmap for Instanced Objects
+
+Usually using instanced objects can help improve rendering performance, e.g. an instanced sphere can contain thousands of spheres. When the user clicks a single sphere, the mapped instanceId (returned as `objectId`) which was generated through `getHitmapProps` function will be returned from the event.
+
+_Commands that currently support instanced rendering: Cubes, Points, Spheres, Triangles, Cones, Cylinders. More to be added later._
+
+Check out below example for automatic/custom hitmap mapping, and regular/instanced rendering:
+
+<MouseEventsInstanced />
 
 ## Full Example
 

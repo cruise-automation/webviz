@@ -8,6 +8,7 @@
 
 import type { SphereList } from "../types";
 import fromGeometry from "../utils/fromGeometry";
+import { getObjectFromHitmapId, getHitmapProps } from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
 
 const NUM_PARALLELS = 15;
@@ -52,6 +53,9 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
 }
 
 const spheres = fromGeometry(points, faces);
-const Spheres = makeCommand<SphereList>("Spheres", spheres);
+const Spheres = makeCommand<SphereList>("Spheres", spheres, {
+  getHitmapProps,
+  getObjectFromHitmapId,
+});
 
 export default Spheres;

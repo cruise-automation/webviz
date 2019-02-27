@@ -59,7 +59,7 @@ export function getCSSColor(color: Color = DEFAULT_TEXT_COLOR) {
   return `rgba(${(r * 255).toFixed()}, ${(g * 255).toFixed()}, ${(b * 255).toFixed()}, ${a.toFixed(3)})`;
 }
 
-const toRGBAArray = (colors: Color[]) => {
+const toRGBAArray = (colors: $ReadOnlyArray<Color>): Float32Array => {
   const result = new Float32Array(colors.length * 4);
   let i = 0;
   for (const { r, g, b, a } of colors) {
@@ -71,7 +71,7 @@ const toRGBAArray = (colors: Color[]) => {
   return result;
 };
 
-const constantRGBAArray = (count: number, { r, g, b, a }: Color) => {
+const constantRGBAArray = (count: number, { r, g, b, a }: Color): Float32Array => {
   const result = new Float32Array(count * 4);
   for (let i = 0; i < count; i++) {
     result[4 * i + 0] = r;
@@ -122,11 +122,23 @@ export function withPose(command: ReglCommand): ReglCommand {
   };
 }
 
-export function getVertexColors(props: any) {
-  if (!props.colors || !props.colors.length) {
-    return constantRGBAArray(props.points.length, props.color);
+export function getVertexColors({
+  colors,
+  color,
+  points,
+}: {
+  colors?: $ReadOnlyArray<Color> | $ReadOnlyArray<Vec4>,
+  color: Color,
+  points: $ReadOnlyArray<Point>,
+}): Float32Array | $ReadOnlyArray<Vec4> {
+  if ((!colors || !colors.length) && color) {
+    return constantRGBAArray(points.length, color);
   }
-  return toRGBAArray(props.colors);
+  if (colors) {
+    // $FlowFixMe this will go away once we consolidate getVertexColors and colorBuffer
+    return shouldConvert(colors) ? toRGBAArray(colors) : colors;
+  }
+  return [];
 }
 
 function hasNestedArrays(arr: any[]) {

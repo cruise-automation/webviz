@@ -10,7 +10,7 @@ import { mat4 } from "gl-matrix";
 import React from "react";
 
 import type { Pose, Scale } from "../types";
-import { blend, orientationToVec4, pointToVec3 } from "../utils/commandUtils";
+import { blend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
 import parseGLB from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";

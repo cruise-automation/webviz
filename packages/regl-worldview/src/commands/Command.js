@@ -9,18 +9,40 @@
 
 import * as React from "react";
 
-import type { ComponentMouseHandler, MouseEventEnum, RawCommand } from "../types";
+import type { ComponentMouseHandler, MouseEventEnum, RawCommand, Vec4, Color, Ray } from "../types";
 import { getIdFromColor, intToRGB } from "../utils/commandUtils";
 import { getNodeEnv } from "../utils/common";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
 
+export const SUPPORTED_MOUSE_EVENTS = ["onClick", "onMouseUp", "onMouseMove", "onMouseDown", "onDoubleClick"];
+
+export type HitmapProp<T> = T & ({ colors: Vec4[] } | { color: Vec4 });
+export type GetObjectFromHitmapId<T> = (objectId: number, hitmapProps: HitmapProps<T>[]) => ?HitmapProps<T>;
+export type GetHitmapProps<T> = (children: T[]) => ?HitmapProp<T>;
+export type MarkerDefault = {
+  id?: number,
+  points?: Point[],
+  color?: Color,
+};
+export type HitmapMarkerDefault = {
+  id?: number,
+  points?: Point[],
+  color?: Vec4,
+};
+
 export type Props<T> = {
-  children?: T[],
-  reglCommand: RawCommand<T>,
-  getHitmapId?: (T) => ?number,
-  layerIndex?: number,
   [MouseEventEnum]: ComponentMouseHandler,
+  children?: T[],
+  getObjectFromHitmapId?: GetObjectFromHitmapId<HitmapProp<T>>,
+  hitmapProps?: HitmapProp<T>,
+  layerIndex?: number,
+  reglCommand: RawCommand<T>,
+};
+
+export type MakeCommandOptions = {
+  getHitmapProps: GetHitmapProps,
+  getObjectFromHitmapId: GetObjectFromHitmapId,
 };
 
 // Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.
@@ -82,33 +104,22 @@ export default class Command<T> extends React.Component<Props<T>> {
     }
   }
 
-  _getHitmapPropFromHitmapId(objectId: number) {
-    const { hitmapProps = [] } = this.props;
-    return hitmapProps.find((hitmapProp) => {
-      // TODO handle objects with 'colors' property
-      if (hitmapProp.color) {
-        const hitmapPropId = getIdFromColor(hitmapProp.color.map((color) => color * 255));
-        if (hitmapPropId === objectId) {
-          return true;
-        }
-      }
-      return false;
-    });
-  }
-
-  handleMouseEvent(objectId: number, e: any, ray: any, mouseEventName: MouseEventEnum) {
+  handleMouseEvent(objectId: number, e: MouseEvent, ray: Ray, mouseEventName: MouseEventEnum) {
     const mouseHandler = this.props[mouseEventName];
-    if (!mouseHandler) {
+    const { hitmapProps = [], getObjectFromHitmapId } = this.props;
+    if (!mouseHandler || hitmapProps.length === 0 || !getObjectFromHitmapId) {
       return;
     }
 
-    const hitmapProp = this._getHitmapPropFromHitmapId(objectId);
+    const hitmapProp = getObjectFromHitmapId(objectId, hitmapProps);
+
     if (!hitmapProp) {
       return;
     }
 
     mouseHandler(e, {
       ray,
+      objectId,
       object: hitmapProp,
     });
   }
@@ -127,8 +138,9 @@ export default class Command<T> extends React.Component<Props<T>> {
   }
 }
 
-function getHitmapProps(getHitmapId, children) {
-  if (!getHitmapId || !children || children.length === 0) {
+// TODO: deprecating, remove before 1.x release
+function defaultGetHitmapProps<T>(getHitmapId, children: T[]): ?(HitmapProp[]) {
+  if (!children || children.length === 0) {
     return undefined;
   }
 
@@ -138,24 +150,83 @@ function getHitmapProps(getHitmapId, children) {
     if (hitmapId != null) {
       memo.push({
         ...marker,
-        color: intToRGB(getHitmapId(marker) || 0),
+        color: intToRGB(hitmapId || 0),
       });
     }
     return memo;
   }, []);
 }
 
+// TODO: deprecating, remove before 1.x release
+function defaultGetObjectFromHitmapId(objectId: number, hitmapProps) {
+  return hitmapProps.find((hitmapProp) => {
+    if (hitmapProp.color) {
+      const hitmapPropId = getIdFromColor(hitmapProp.color.map((color) => color * 255));
+      if (hitmapPropId === objectId) {
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
 // Factory function for creating simple regl components.
 // Sample usage: const Cubes = makeCommand('Cubes', rawCommand)
 // When you have children as the drawProps input, it's useful to simply call makeCommand
 // which creates a new regl component. It also handles basic hitmap interactions.
-export function makeCommand<T>(name: string, command: RawCommand<T>): React.StatelessFunctionalComponent<T> {
-  const cmd = (props: Props<T>) => {
-    const hitmapProps = props.getHitmapProps
-      ? props.getHitmapProps()
-      : getHitmapProps(props.getHitmapId, props.children);
-    return <Command {...props} reglCommand={command} drawProps={props.children} hitmapProps={hitmapProps} />;
+// use 'options' to control the default hitmap inputs
+export function makeCommand<T>(
+  name: string,
+  command: RawCommand<T>,
+  options: ?MakeCommandOptions = {}
+): React.StatelessFunctionalComponent<T> {
+  const cmd = ({
+    children,
+    getObjectFromHitmapId: getObjectFromHitmapIdAlt,
+    getHitmapProps: getHitmapPropsAlt,
+    getHitmapId,
+    ...rest
+  }: Props<T>) => {
+    let getObjectFromHitmapId = getObjectFromHitmapIdAlt || options.getObjectFromHitmapId;
+    const getHitmapProps = getHitmapPropsAlt || options.getHitmapProps;
+    let hitmapProps;
+
+    if ((getHitmapPropsAlt && !getObjectFromHitmapIdAlt) || (!getHitmapPropsAlt && getObjectFromHitmapIdAlt)) {
+      console.error(
+        "Possible wrong hitmap id mapping in the instanced rendering. Keep or remove both `getHitmapProps` and `getObjectFromHitmapId` props."
+      );
+    }
+    // enable hitmap if any of the supported mouse event handlers exist in props
+    const enableHitmap = getHitmapId || SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
+
+    if (enableHitmap) {
+      // TODO: deprecating, remove before 1.x release
+      if (getHitmapId) {
+        console.warn(
+          `"getHitmapId" is deprecated. Check "${name}" to use default hitmap mapping or set the "getHitmapProps" and "getObjectFromHitmapId" props explicitly. `
+        );
+        hitmapProps = defaultGetHitmapProps(getHitmapId, children);
+        getObjectFromHitmapId = defaultGetObjectFromHitmapId;
+      } else if (!getHitmapProps || !getObjectFromHitmapId) {
+        hitmapProps = null;
+        getObjectFromHitmapId = null;
+        console.error(`Default hitmap for ${name} is not supported yet.`);
+      } else if (getHitmapProps && getObjectFromHitmapId) {
+        hitmapProps = getHitmapProps(children);
+      }
+    }
+
+    return (
+      <Command
+        {...rest}
+        reglCommand={command}
+        drawProps={children}
+        hitmapProps={hitmapProps}
+        getObjectFromHitmapId={getObjectFromHitmapId}
+      />
+    );
   };
+
   cmd.displayName = name;
   cmd.reglCommand = command;
   return cmd;

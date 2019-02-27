@@ -67,6 +67,11 @@ export const LinesWireframe = makeCodeComponent(require("!!raw-loader!./LinesWir
 
 export const MouseEvents = makeCodeComponent(require("!!raw-loader!./MouseEvents"), "MouseEvents", true);
 
+export const MouseEventsInstanced = makeCodeComponent(
+  require("!!raw-loader!./MouseEventsInstanced"),
+  "MouseEventsInstanced"
+);
+
 export const Overlay = makeCodeComponent(require("!!raw-loader!./Overlay"), "Overlay");
 
 export const Points = makeCodeComponent(require("!!raw-loader!./Points"), "Points");

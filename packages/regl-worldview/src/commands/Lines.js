@@ -389,7 +389,8 @@ const lines = (regl: any) => {
 
     const joined = primitive === "line strip";
     const effectiveNumPoints = numInputPoints + (shouldClose ? 1 : 0);
-    const instances = joined ? effectiveNumPoints - 1 : Math.floor(effectiveNumPoints / 2);
+    const guardedNumber = effectiveNumPoints > 0 ? effectiveNumPoints - 1 : 0;
+    const instances = joined ? guardedNumber : Math.floor(effectiveNumPoints / 2);
 
     render(debug, () => {
       command({

@@ -359,6 +359,10 @@ const lines = (regl: any) => {
     const { debug, primitive = "lines", scaleInvariant = false } = props;
     const numInputPoints = props.points.length;
 
+    if (numInputPoints < 2) {
+      return;
+    }
+
     const alreadyClosed = numInputPoints > 2 && pointsEqual(props.points[0], props.points[numInputPoints - 1]);
     // whether the first point needs to be duplicated after the last point
     const shouldClose = !alreadyClosed && props.closed;
@@ -389,8 +393,7 @@ const lines = (regl: any) => {
 
     const joined = primitive === "line strip";
     const effectiveNumPoints = numInputPoints + (shouldClose ? 1 : 0);
-    const guardedNumber = effectiveNumPoints > 0 ? effectiveNumPoints - 1 : 0;
-    const instances = joined ? guardedNumber : Math.floor(effectiveNumPoints / 2);
+    const instances = joined ? effectiveNumPoints - 1 : Math.floor(effectiveNumPoints / 2);
 
     render(debug, () => {
       command({

@@ -8,12 +8,12 @@ import { withKnobs } from "@storybook/addon-knobs";
 import { storiesOf } from "@storybook/react";
 import React from "react";
 
-import Worldview, { Axes, Lines } from "../index";
+import Worldview, { Lines } from "../index";
 
 const DEFAULT_CAMERA = {
   perspective: false,
   target: [0, 0, 0],
-  targetOffset: [5, 5, 0],
+  targetOffset: [0, 0, 0],
   thetaOffset: Math.PI / 2,
   phi: Math.PI / 4,
   distance: 20,
@@ -22,7 +22,7 @@ const DEFAULT_CAMERA = {
 
 storiesOf("Worldview", module)
   .addDecorator(withKnobs)
-  .add("<Lines> Empty points bug", () => {
+  .add("<Lines> does not render empty points", () => {
     const normalLine = [
       {
         primitive: "line strip",
@@ -30,9 +30,9 @@ storiesOf("Worldview", module)
           position: { x: 0, y: 0, z: 0 },
           orientation: { x: 0, y: 0, z: 0, w: 1 },
         },
-        scale: { x: 1.2, y: 0, z: 0 },
-        points: [[0, 0, 1], [10, 10, 1]],
-        color: [1, 0, 0.5, 0.5],
+        scale: { x: 2, y: 0, z: 0 },
+        points: [[0, -4, 0], [0, 4, 0]],
+        color: [1, 1, 1, 1],
       },
     ];
     const emptyLine = [
@@ -43,13 +43,12 @@ storiesOf("Worldview", module)
           orientation: { x: 0, y: 0, z: 0, w: 1 },
         },
         points: [],
-        color: [1, 1, 1, 0.75],
-        scale: { x: 2.2, y: 0, z: 0 },
+        color: [1, 0, 0, 1],
+        scale: { x: 6, y: 0, z: 0 },
       },
     ];
     return (
       <Worldview defaultCameraState={DEFAULT_CAMERA}>
-        <Axes />
         <Lines>{normalLine}</Lines>
         <Lines>{emptyLine}</Lines>
       </Worldview>

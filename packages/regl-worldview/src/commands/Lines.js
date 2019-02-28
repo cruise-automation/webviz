@@ -359,6 +359,10 @@ const lines = (regl: any) => {
     const { debug, primitive = "lines", scaleInvariant = false } = props;
     const numInputPoints = props.points.length;
 
+    if (numInputPoints < 2) {
+      return;
+    }
+
     const alreadyClosed = numInputPoints > 2 && pointsEqual(props.points[0], props.points[numInputPoints - 1]);
     // whether the first point needs to be duplicated after the last point
     const shouldClose = !alreadyClosed && props.closed;

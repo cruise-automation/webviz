@@ -128,7 +128,7 @@ type Props = {
   historySize?: number | { [topicName: string]: number },
   // For scaling down images, to spare bandwidth. When using this you should only
   // pass in image topics to `paths`.
-  imageScale: number,
+  imageScale?: number,
 
   // By default message history will try to subscribe to topics
   // even if they don't existing in the player topic's list.
@@ -220,7 +220,7 @@ const getMemoizedTopics = createSelector(
 class MessageHistory extends React.PureComponent<Props> {
   static Input = MessageHistoryInput;
   static topicPathSyntaxHelpContent = topicPathSyntaxHelpContent;
-  static defaultProps = { imageScale: 1, historySize: Infinity };
+  static defaultProps = { historySize: Infinity };
 
   render() {
     const { children, paths, historySize, topics, datatypes, imageScale, ignoreMissing } = this.props;

@@ -97,6 +97,7 @@ export type BaseMarker = StampedMessage & {
   text?: string,
   meshResource?: {}, // TODO Maybe make this a named resource?
   primitive?: string,
+  customMetadata?: Object,
 };
 
 type MultiPointMarker = {
@@ -190,6 +191,11 @@ export type TriangleListMarker = BaseMarker &
     type: 11,
   };
 
+export type FilledPolygonMarker = BaseMarker &
+  MultiPointMarker & {
+    type: 107,
+  };
+
 export type Marker =
   | ArrowMarker
   | CubeMarker
@@ -203,7 +209,8 @@ export type Marker =
   | PointsMarker
   | TextMarker
   | TriangleListMarker
-  | MeshMarker;
+  | MeshMarker
+  | FilledPolygonMarker;
 
 export type MarkerArray = {
   markers: Array<Marker>,

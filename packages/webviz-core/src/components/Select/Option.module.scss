@@ -1,0 +1,18 @@
+@import "~webviz-core/src/styles/mixins.module.scss";
+.container {
+  @extend %menu-item;
+  $height: 14px;
+
+  &.active {
+    @extend %menu-item-active;
+  }
+
+  &.disabled {
+    color: $text-disabled;
+    cursor: not-allowed;
+    &:hover {
+      background-color: transparent;
+      color: $text-disabled;
+    }
+  }
+}

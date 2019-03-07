@@ -231,7 +231,7 @@ class MessageHistoryOnlyTopics extends React.Component<Props> {
 
   _updateSubscriptions(newTopics: string[], playerTopics: Topic[]) {
     let encodingAndScalePayload = {};
-    if (this.props.imageScale !== 1) {
+    if (this.props.imageScale !== undefined) {
       // We might be able to remove the `encoding` field from the protocol entirely, and only
       // use scale. Or we can deal with scaling down in a different way altogether, such as having
       // special topics or syntax for scaled down versions of images or so. In any case, we should

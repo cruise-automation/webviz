@@ -106,7 +106,6 @@ export function FrameCompatibility<Props: *>(ChildComponent: React.ComponentType
                 }
               }
             }
-
             return (
               <ChildComponent
                 {...this.props}

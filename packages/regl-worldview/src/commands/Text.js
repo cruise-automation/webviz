@@ -23,9 +23,9 @@ type TextMarker = {
   name?: string,
   pose: Pose,
   scale: Scale,
-  color: Color,
-  text: string,
+  color?: Color,
   colors?: Color[],
+  text: string,
 };
 
 let cssHasBeenInserted = false;
@@ -89,20 +89,21 @@ class TextElement {
     const { color, colors = [] } = marker;
     const hasBgColor = colors.length >= 2;
     const textColor = hasBgColor ? colors[0] : color;
+    if (textColor) {
+      if (!isColorEqual(this._prevTextColor, textColor)) {
+        this._prevTextColor = textColor;
+        this.wrapper.style.color = getCSSColor(textColor);
+      }
 
-    if (!isColorEqual(this._prevTextColor, textColor)) {
-      this._prevTextColor = textColor;
-      this.wrapper.style.color = getCSSColor(textColor);
-    }
-
-    if (autoBackgroundColor && !isColorEqual(textColor, this._prevBgColor)) {
-      this._prevBgColor = textColor;
-      const isTextColorDark = isColorDark(textColor);
-      const hexBgColor = isTextColorDark ? BG_COLOR_DARK : BG_COLOR_LIGHT;
-      this._inner.style.background = hexBgColor;
-    } else if (hasBgColor && !isColorEqual(colors[1], this._prevBgColor)) {
-      this._prevBgColor = colors[1];
-      this._inner.style.background = getCSSColor(colors[1]);
+      if (autoBackgroundColor && !isColorEqual(textColor, this._prevBgColor)) {
+        this._prevBgColor = textColor;
+        const isTextColorDark = isColorDark(textColor);
+        const hexBgColor = isTextColorDark ? BG_COLOR_DARK : BG_COLOR_LIGHT;
+        this._inner.style.background = hexBgColor;
+      } else if (hasBgColor && !isColorEqual(colors[1], this._prevBgColor)) {
+        this._prevBgColor = colors[1];
+        this._inner.style.background = getCSSColor(colors[1]);
+      }
     }
 
     if (this._text.textContent !== marker.text) {

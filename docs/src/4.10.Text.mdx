@@ -7,7 +7,7 @@ import {Text} from './jsx/allLiveEditors'
 ## Props
 
 | Name                  | optional | Type      | Default | Description                                                       |
-| --------------------- | -------- | --------- | ------- |
+| --------------------- | -------- | --------- | ------- | ----------------------------------------------------------------- |
 | `children`            |          | `Text[]`  | `[]`    | array of Text markers to render                                   |
 | `autoBackgroundColor` | yes      | `boolean` |         | automatically add solid background color with contrast if enabled |
 
@@ -49,7 +49,8 @@ type Text = {
     y: number,
     z: number
   },
-  color: Color,
+  // text color, applied when colors.length < 2
+  color?: Color,
   colors?: [
     // text color, only applied when colors.length >= 2
     Color,
@@ -62,5 +63,3 @@ type Text = {
 ```
 
 <Text />
-
-

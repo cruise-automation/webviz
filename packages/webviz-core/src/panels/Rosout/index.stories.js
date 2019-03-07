@@ -23,7 +23,7 @@ const fixture = {
         op: "message",
         receiveTime: { sec: 123, nsec: 456 },
         message: {
-          file: "ros/src/some_topic_utils/src/foo.cpp",
+          file: "some_topic_utils/src/foo.cpp",
           function: "vector<int> some_topic::findInt",
           header: { stamp: { sec: 123, nsec: 0 } },
           level: 4,
@@ -38,7 +38,7 @@ const fixture = {
         op: "message",
         receiveTime: { sec: 123, nsec: 456 },
         message: {
-          file: "ros/src/other_topic_utils/src/foo.cpp",
+          file: "other_topic_utils/src/foo.cpp",
           function: "vector<int> other_node::findInt",
           header: { stamp: { sec: 123, nsec: 0 } },
           level: 4,
@@ -53,7 +53,7 @@ const fixture = {
         op: "message",
         receiveTime: { sec: 123, nsec: 456 },
         message: {
-          file: "ros/src/other_topic_utils/src/foo.cpp",
+          file: "other_topic_utils/src/foo.cpp",
           function: "vector<int> other_node::findInt",
           header: { stamp: { sec: 123, nsec: 0 } },
           level: 4,
@@ -70,11 +70,11 @@ const fixture = {
         message: {
           header: { seq: 335, stamp: { sec: 1529678605, nsec: 521518001 }, frame_id: "" },
           level: 4,
-          name: "/predictor_node",
+          name: "/some_node",
           msg:
-            "Policies for 26826:\nheader: \n  seq: 0\n  stamp: 1529678605.349576000\n  frame_id: \ntrackId: 26826\npolicies[]\n  policies[0]: \n    initialState: \n      acceleration: 0\n      turnRate: 0\n      yaw: 0\n      usesFPKF: 0\n\n",
-          file: "ros/src/policy_prediction/src/PolicySimulator.cpp",
-          function: "PolicySimulator::SimulateContext",
+            "26826:\nheader: \n  seq: 0\n  stamp: 1529678605.349576000\n  Adipisicing minim veniam sint occaecat anim laborum irure velit ut non do labore.\n",
+          file: "somefile.cpp",
+          function: "SomeFunction:SomeContext",
           line: 491,
           topics: [],
         },

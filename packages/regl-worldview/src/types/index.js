@@ -160,7 +160,7 @@ export type BaseShape = {
   id?: number,
   pose: Pose,
   scale: Scale,
-  color: Color,
+  color: Color | Vec4,
 };
 
 export type Arrow = BaseShape & {
@@ -192,8 +192,6 @@ export type TriangleList = BaseShape & {
 
 export type PolygonType = BaseShape & {
   points: (Point | Vec3)[],
-  color: Color | Vec4,
-  id: number,
 };
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";

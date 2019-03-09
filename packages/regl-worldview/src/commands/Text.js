@@ -14,10 +14,10 @@ import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
 
 const BG_COLOR_LIGHT = "#ffffff";
-const BG_COLOR_DARK = "#1f1e27";
+const BG_COLOR_DARK = "rgba(0,0,0,0.8)";
 const BRIGHTNESS_THRESHOLD = 128;
 const DEFAULT_TEXT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
-const DEFAULT_BG_COLOR = { r: 0, g: 0, b: 0, a: 0 };
+const DEFAULT_BG_COLOR = { r: 0, g: 0, b: 0, a: 0.8 };
 
 type TextMarker = {
   name?: string,
@@ -74,7 +74,8 @@ class TextElement {
   _text = document.createTextNode("");
   // store prev colors to improve perf
   _prevTextColor: Color = DEFAULT_TEXT_COLOR;
-  _prevBgColor: Color = DEFAULT_BG_COLOR;
+  _prevBgColor: ?Color = DEFAULT_BG_COLOR;
+  _prevAutoBackgroundColor: ?boolean = null;
 
   constructor() {
     insertGlobalCss();
@@ -82,6 +83,7 @@ class TextElement {
     this._inner.className = "regl-worldview-text-inner";
     this.wrapper.appendChild(this._inner);
     this._inner.appendChild(this._text);
+    this.wrapper.style.color = getCSSColor(DEFAULT_TEXT_COLOR);
   }
 
   update(marker: TextMarker, left: number, top: number, autoBackgroundColor?: boolean) {
@@ -89,22 +91,35 @@ class TextElement {
     const { color, colors = [] } = marker;
     const hasBgColor = colors.length >= 2;
     const textColor = hasBgColor ? colors[0] : color;
+
     if (textColor) {
       if (!isColorEqual(this._prevTextColor, textColor)) {
         this._prevTextColor = textColor;
         this.wrapper.style.color = getCSSColor(textColor);
       }
 
-      if (autoBackgroundColor && !isColorEqual(textColor, this._prevBgColor)) {
-        this._prevBgColor = textColor;
-        const isTextColorDark = isColorDark(textColor);
-        const hexBgColor = isTextColorDark ? BG_COLOR_DARK : BG_COLOR_LIGHT;
-        this._inner.style.background = hexBgColor;
-      } else if (hasBgColor && !isColorEqual(colors[1], this._prevBgColor)) {
-        this._prevBgColor = colors[1];
-        this._inner.style.background = getCSSColor(colors[1]);
+      if (!autoBackgroundColor && autoBackgroundColor !== this._prevAutoBackgroundColor) {
+        // remove background color if autoBackgroundColor has changed
+        this._inner.style.background = "transparent";
+        this._prevBgColor = null;
+      } else {
+        if (
+          autoBackgroundColor &&
+          (!this._prevBgColor || (this._prevBgColor && !isColorEqual(textColor, this._prevBgColor)))
+        ) {
+          // update background color with automatic dark/light color
+          this._prevBgColor = textColor;
+          const isTextColorDark = isColorDark(textColor);
+          const hexBgColor = isTextColorDark ? BG_COLOR_LIGHT : BG_COLOR_DARK;
+          this._inner.style.background = hexBgColor;
+        } else if (hasBgColor && this._prevBgColor && !isColorEqual(colors[1], this._prevBgColor)) {
+          // update background color with colors[1] data
+          this._prevBgColor = colors[1];
+          this._inner.style.background = getCSSColor(colors[1]);
+        }
       }
     }
+    this._prevAutoBackgroundColor = autoBackgroundColor;
 
     if (this._text.textContent !== marker.text) {
       this._text.textContent = marker.text || "";

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { HitmapProp, MarkerDefault, HitmapMarkerDefault } from "../commands/Command";
+import { HitmapProp, MarkerDefault, HitmapMarkerDefault } from "../commands/Command";
 import { getIdFromColor, intToRGB } from "./commandUtils";
 
 export function getHitmapId<T>(marker: MarkerDefault<T>, pointIndex: ?number = 0) {
@@ -45,7 +45,7 @@ export function getHitmapProps<T: MarkerDefault>(children: T[]): ?(HitmapProp<T>
 // find the the object that matches the hitmapId/objectId
 export function getObjectFromHitmapId<HitmapProp: HitmapMarkerDefault>(objectId: number, hitmapProps: HitmapProp[]) {
   return hitmapProps.find((hitmapProp) => {
-    if (hitmapProp.points && hitmapProp.id != null) {
+    if (hitmapProp.points && hitmapProp.id) {
       // for instanced rendering, find the hitmapProp that produces the same id range and return it
       if (objectId >= hitmapProp.id && objectId < hitmapProp.id + hitmapProp.points.length) {
         return true;
@@ -84,7 +84,7 @@ export function getObjectForInstancedCommands<HitmapProp: HitmapMarkerDefault>(
   hitmapProps: HitmapProp[]
 ): ?HitmapProp {
   return hitmapProps.find((hitmapProp) => {
-    if (hitmapProp.points && hitmapProp.id != null) {
+    if (hitmapProp.points && hitmapProp.id) {
       // for instanced rendering, find the hitmapProp that produces the same id range and return it
       if (objectId >= hitmapProp.id && objectId < hitmapProp.id + hitmapProp.points.length) {
         return true;

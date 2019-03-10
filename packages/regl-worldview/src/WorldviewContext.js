@@ -244,7 +244,7 @@ export class WorldviewContext {
         camera.draw(this.cameraStore.state, () => {
           this._drawInput(true);
 
-          let objectId = -1;
+          let objectId = 0;
 
           // it's possible to get x/y values outside the framebuffer size
           // if the mouse quickly leaves the draw area during a read operation

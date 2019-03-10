@@ -42,7 +42,7 @@ There are two ways to manage hitmap ids:
 
 **Automatic**
 
-For some commonly supported command components such as Cubes, Spheres and Cones, when a supported mouse handler exists in props, and the marker has an `id` field, we'll automatically manage the hitmap id mapping. The returned object will contain the original marker fields and an additional (or replaced) `color` field that was generated for the hitmap id mapping. _Note the `id` should be non-negative integer._
+For some commonly supported command components such as Cubes, Spheres and Cones, when a supported mouse handler exists in props, and the marker has an `id` field, we'll automatically manage the hitmap id mapping. The returned object will contain the original marker fields and an additional (or replaced) `color` field that was generated for the hitmap id mapping. _Note the `id` should be positive integer._
 
 ```js
 <Cubes onClick={(ev, {object}) => {console.log("Cube marker with hitmap color field", object)}}>

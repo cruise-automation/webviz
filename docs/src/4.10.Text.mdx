@@ -1,4 +1,4 @@
-import {Text} from './jsx/allLiveEditors'
+import { Text } from './jsx/allLiveEditors'
 
 # Text
 
@@ -6,13 +6,39 @@ import {Text} from './jsx/allLiveEditors'
 
 ## Props
 
-| Name       | Type     | Default | Description                     |
-| ---------- | -------- | ------- | ------------------------------- |
-| `children` | `Text[]` | `[]`    | array of Text markers to render |
+| Name                  | optional | Type      | Default | Description                                                       |
+| --------------------- | -------- | --------- | ------- | ----------------------------------------------------------------- |
+| `children`            |          | `Text[]`  | `[]`    | array of Text markers to render                                   |
+| `autoBackgroundColor` | yes      | `boolean` |         | automatically add solid background color with contrast if enabled |
+
+### Text and background colors
+
+There are three ways to control the text and background colors:
+
+- Text without background color: set `color` field
+- Text with automatically-chosen background color: set `color` field and set `autoBackgroundColor` to `true`
+- Custom text and background colors: set `colors` field where `colors[0]` is the text color and `colors[1]` is the background color
+
+Examples:
+
+| `colors`         | `color` | `autoBackgroundColor` | Text Color | Background Color                      | Note                            |
+| ---------------- | ------- | --------------------- | ---------- | ------------------------------------- | ------------------------------- |
+|                  | `blue`  | `false`               | `blue`     | none                                  |                                 |
+|                  | `blue`  | `true`                | `blue`     | `#1f1e27` (dark) or `#ffffff` (light) | depending on color's luma value |
+| [`red`]          | `blue`  | `false`               | `blue`     | none                                  | `colors` field is ignored       |
+| [`red`]          | `blue`  | `true`                | `blue`     | `#1f1e27` (dark) or `#ffffff` (light) | `colors` field is ignored       |
+| [`red`, `green`] |         |                       | `red`      | `green`                               | `color` field is ignored        |
 
 ### Text
 
 ```js
+type Color = {
+  r: number, // between 0 and 1
+  g: number, // between 0 and 1
+  b: number, // between 0 and 1
+  a: number, // between 0 and 1
+}
+
 type Text = {
   pose: {
     position: { x: number, y: number, z: number },
@@ -23,12 +49,14 @@ type Text = {
     y: number,
     z: number
   },
-  color: {
-    r: number, // between 0 and 1
-    g: number, // between 0 and 1
-    b: number, // between 0 and 1
-    a: number, // between 0 and 1
-  },
+  // text color, applied when colors.length < 2
+  color?: Color,
+  colors?: [
+    // text color, only applied when colors.length >= 2
+    Color,
+    // background color, only applied when colors.length >= 2
+    Color
+  ],
   name?: string,
   text: string,
 }

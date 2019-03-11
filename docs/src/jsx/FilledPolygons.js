@@ -6,14 +6,13 @@
 
 // #BEGIN EXAMPLE
 import polygonGenerator from "polygon-generator";
-import React, { useState } from "react";
+import React from "react";
 
 import useRange from "./utils/useRange";
 import Worldview, { FilledPolygons, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
-  const [selectedObj, setSelectedObj] = useState();
   const range = useRange();
   const sideLength = 5 * range + 5;
   const startingAngle = 15 * range;
@@ -28,28 +27,10 @@ function Example() {
     },
   ];
   return (
-    <div style={{ position: "relative" }}>
-      <Worldview
-        onClick={(_, clickInfo) => {
-          setSelectedObj(polygons.find(({ id }) => id === clickInfo.objectId));
-        }}>
-        <FilledPolygons getHitmapId={({ id }) => id}>{polygons}</FilledPolygons>
-        <Axes />
-        {selectedObj && (
-          <div
-            style={{
-              backgroundColor: "black",
-              position: "absolute",
-              top: 0,
-              right: 0,
-              color: "white",
-              fontSize: "10px",
-            }}>
-            {JSON.stringify(selectedObj)}
-          </div>
-        )}
-      </Worldview>
-    </div>
+    <Worldview>
+      <FilledPolygons>{polygons}</FilledPolygons>
+      <Axes />
+    </Worldview>
   );
 }
 // #END EXAMPLE

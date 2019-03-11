@@ -46,6 +46,7 @@ function getEarcutPoints(points: Vec3[]): Vec3[] {
 
 type Props = {
   children: PolygonType[],
+  getHitmapId?: (PolygonType) => number,
   getHitmapProps: GetHitmapProps<PolygonType>,
   getObjectFromHitmapId: GetObjectFromHitmapId<PolygonType>,
 };
@@ -53,9 +54,10 @@ type Props = {
 // command to draw a filled polygon
 export default function FilledPolygons({
   children: polygons = [],
+  getHitmapId,
   getHitmapProps = getHitmapPropsForFilledPolygons,
   getObjectFromHitmapId = getObjectFromHitmapIdForFilledPolygons,
-  ...props
+  ...rest
 }: Props) {
   const triangles = [];
   for (const poly of polygons) {
@@ -71,7 +73,11 @@ export default function FilledPolygons({
     });
   }
   return (
-    <Triangles getHitmapProps={getHitmapProps} getObjectFromHitmapId={getObjectFromHitmapId} {...props}>
+    <Triangles
+      getHitmapProps={getHitmapProps}
+      getObjectFromHitmapId={getObjectFromHitmapId}
+      getHitmapId={getHitmapId}
+      {...rest}>
       {triangles}
     </Triangles>
   );

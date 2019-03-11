@@ -46,6 +46,8 @@ function getEarcutPoints(points: Vec3[]): Vec3[] {
 
 type Props = {
   children: PolygonType[],
+  // TODO: deprecating getHitmapId, remove before 1.x release
+  getHitmapId?: (PolygonType) => number,
   getHitmapProps: GetHitmapProps<PolygonType>,
   getObjectFromHitmapId: GetObjectFromHitmapId<PolygonType>,
 };

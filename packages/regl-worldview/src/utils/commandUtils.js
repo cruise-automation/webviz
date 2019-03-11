@@ -98,6 +98,14 @@ export const blend = {
   },
 };
 
+// regl default depth values that can be overridden by props
+export const depth = {
+  enable: (context: Object, props: Object) => (props.depthEnable === false ? false : true),
+  mask: (context: Object, props: Object) => (props.depthMask === false ? false : true),
+  range: (context: Object, props: Object) => props.depthRange || [0, 1],
+  func: (context: Object, props: Object) => props.depthFunc || "less",
+};
+
 // takes a regl command definition object and injects
 // position and rotation from the object pose and also
 // inserts some glsl helpers to apply the pose to points in a fragment shader

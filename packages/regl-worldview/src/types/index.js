@@ -157,7 +157,7 @@ export type Pose = {
 };
 
 export type BaseShape = {
-  id?: number,
+  id?: number, // positive integer
   pose: Pose,
   scale: Scale,
   color: Color | Vec4,
@@ -196,7 +196,6 @@ export type PolygonType = BaseShape & {
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
 
-// Camera
 export type CameraAction =
   | "moveDown"
   | "moveLeft"

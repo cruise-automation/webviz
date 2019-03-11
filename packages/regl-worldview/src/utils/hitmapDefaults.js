@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { HitmapProp, MarkerDefault, HitmapMarkerDefault } from "../commands/Command";
+import type { HitmapProp, MarkerDefault, HitmapMarkerDefault } from "../commands/Command";
 import { getIdFromColor, intToRGB } from "./commandUtils";
 
 export function getHitmapId<T>(marker: MarkerDefault<T>, pointIndex: ?number = 0) {
@@ -14,7 +14,7 @@ export function getHitmapId<T>(marker: MarkerDefault<T>, pointIndex: ?number = 0
 }
 
 //
-// ─── default props for Cubes, Points, Cones, and Cylinders ──────────────────────────────────────────────────────
+// ─── Default props for Cubes, Points, Cones, and Cylinders ──────────────────────────────────────────────────────
 //
 // generate default hitmapProps
 export function getHitmapProps<T: MarkerDefault>(children: T[]): ?(HitmapProp<T>[]) {
@@ -87,6 +87,31 @@ export function getObjectForInstancedCommands<HitmapProp: HitmapMarkerDefault>(
     if (hitmapProp.points && hitmapProp.id) {
       // for instanced rendering, find the hitmapProp that produces the same id range and return it
       if (objectId >= hitmapProp.id && objectId < hitmapProp.id + hitmapProp.points.length) {
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
+//
+// ─── Default props for FilledPolygons ──────────────────────────────────────────────────────
+//
+export function getHitmapPropsForFilledPolygons<T: MarkerDefault>(children: T[]): ?(HitmapProp<T>[]) {
+  if (!children || children.length === 0) {
+    return undefined;
+  }
+  return children.map((marker) => ({ ...marker, color: intToRGB(marker.id || 0) }));
+}
+
+export function getObjectFromHitmapIdForFilledPolygons<HitmapProp: HitmapMarkerDefault>(
+  objectId: number,
+  hitmapProps: HitmapProp[]
+) {
+  return hitmapProps.find((hitmapProp) => {
+    if (hitmapProp.color) {
+      const hitmapPropId = getIdFromColor(hitmapProp.color.map((color) => color * 255));
+      if (hitmapPropId === objectId) {
         return true;
       }
     }

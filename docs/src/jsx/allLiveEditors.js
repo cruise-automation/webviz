@@ -59,6 +59,11 @@ export const DynamicCommands = makeCodeComponent(require("!!raw-loader!./Dynamic
 
 export const FilledPolygons = makeCodeComponent(require("!!raw-loader!./FilledPolygons"), "FilledPolygons");
 
+export const FilledPolygonsHitmap = makeCodeComponent(
+  require("!!raw-loader!./FilledPolygonsHitmap"),
+  "FilledPolygonsHitmap"
+);
+
 export const Hitmap = makeCodeComponent(require("!!raw-loader!./Hitmap"), "Hitmap");
 
 export const LinesDemo = makeCodeComponent(require("!!raw-loader!./LinesDemo"), "LinesDemo");

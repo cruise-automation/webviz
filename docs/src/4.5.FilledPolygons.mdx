@@ -1,4 +1,5 @@
 import { FilledPolygons } from './jsx/allLiveEditors'
+import { FilledPolygonsHitmap } from './jsx/allLiveEditors'
 
 # FilledPolygons
 
@@ -14,6 +15,7 @@ import { FilledPolygons } from './jsx/allLiveEditors'
 
 ```js
 type FilledPolygon = {
+  id?: number, // positive integer
   pose: {
     position: { x: number, y: number, z: number },
     orientation: { x: number, y: number, z: number, w: number }
@@ -30,8 +32,11 @@ type FilledPolygon = {
     a: number, // between 0 and 1
   } | [number, number, number, number],
   points: [{ x: number, y: number, z: number } | [number, number, number]],
-  id: number,
 }
 ```
 
 <FilledPolygons />
+
+## Mouse Interaction
+
+<FilledPolygonsHitmap />

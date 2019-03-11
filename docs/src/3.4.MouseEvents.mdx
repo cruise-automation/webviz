@@ -19,13 +19,13 @@ There are two kinds of event handlers:
 **Worldview Level Handlers**
 
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `objectId`: the id of the object that you interacted with.
+- `objectId`: the id of the object that you interacted with. The value is `undefined` if no object is found.
 
 **Command Component Level Handlers**
 
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `object`: the object that you interacted with.
-- `objectId`: the id of the object that you interacted with.
+- `object`: the object that you interacted with. The value is `undefined` if no object is found.
+- `objectId`: the id of the object that you interacted with. The value is `undefined` if no object is found.
 
 ```js
 <Worldview onClick={(evt, { objectId }) => console.log("You clicked on", objectId)}>
@@ -42,7 +42,7 @@ There are two ways to manage hitmap ids:
 
 **Automatic**
 
-For some commonly supported command components such as Cubes, Spheres and Cones, when a supported mouse handler exists in props, and the marker has an `id` field, we'll automatically manage the hitmap id mapping. The returned object will contain the original marker fields and an additional (or replaced) `color` field that was generated for the hitmap id mapping.
+For some commonly supported command components such as Cubes, Spheres and Cones, when a supported mouse handler exists in props, and the marker has an `id` field, we'll automatically manage the hitmap id mapping. The returned object will contain the original marker fields and an additional (or replaced) `color` field that was generated for the hitmap id mapping. _Note the `id` should be positive integer._
 
 ```js
 <Cubes onClick={(ev, {object}) => {console.log("Cube marker with hitmap color field", object)}}>

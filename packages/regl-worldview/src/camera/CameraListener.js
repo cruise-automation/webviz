@@ -217,10 +217,10 @@ export default class CameraListener extends React.Component<Props> {
     const moveSpeed = this._getMagnitude(KEYBOARD_MOVE_SPEED);
     const zoomSpeed = this._getMagnitude(KEYBOARD_ZOOM_SPEED);
     const spinSpeed = this._getMagnitude(KEYBOARD_SPIN_SPEED);
-    const { keyMap } = this.props;
+    const { keyMap, shiftKeys } = this.props;
     const action: CameraAction | false = (keyMap && keyMap[code]) || DEFAULT_KEYMAP[code] || false;
 
-    if (this._shiftKey && !this.props.shiftKeys) {
+    if (this._shiftKey && !shiftKeys) {
       return null;
     }
 

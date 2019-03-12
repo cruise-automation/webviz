@@ -12,8 +12,10 @@ import QuickStart from "./2.1.QuickStart.mdx";
 import Worldview from "./3.1.Worldview.mdx";
 import Camera from "./3.2.Camera.mdx";
 import Command from "./3.3.Command.mdx";
-import Flow from "./3.4.FlowTypes.mdx";
-import BrowserSupport from "./3.5.BrowserSupport.mdx";
+import MouseEvents from "./3.4.MouseEvents.mdx";
+import Flow from "./3.5.FlowTypes.mdx";
+import BrowserSupport from "./3.6.BrowserSupport.mdx";
+import Glossary from "./3.7.Glossary.mdx";
 import Arrows from "./4.1.Arrows.mdx";
 import Text from "./4.10.Text.mdx";
 import Triangles from "./4.11.Triangles.mdx";
@@ -36,6 +38,7 @@ export const componentList = {
   Worldview,
   Camera,
   Command,
+  MouseEvents,
   Arrows,
   Cones,
   Cubes,
@@ -50,6 +53,7 @@ export const componentList = {
   Flow,
   GLTFScene,
   BrowserSupport,
+  Glossary,
 };
 
 const ROUTE_CONFIG = [
@@ -60,7 +64,7 @@ const ROUTE_CONFIG = [
   },
   {
     name: "API",
-    subRouteNames: ["Worldview", "Camera", "Command", "Flow", "Browser Support"],
+    subRouteNames: ["Worldview", "Camera", "Command", "Mouse Events", "Flow", "Browser Support", "Glossary"],
   },
   {
     name: "Commands",
@@ -81,15 +85,31 @@ const ROUTE_CONFIG = [
   },
 ];
 
+let nameToUrlMap;
+// get the hash part of the url by subRouteName, e.g.  'arrow' => `/docs/commands/arrows`
+// used to autogen doc links by component name in CodeSandbox
+export function getHashUrlByComponentName(name) {
+  // only generate the map once
+  if (!nameToUrlMap) {
+    nameToUrlMap = {};
+    ROUTE_CONFIG.forEach(({ name, subRouteNames }) => {
+      subRouteNames.forEach((subRouteName) => {
+        const componentName = getComponentName(subRouteName);
+        const subRoutePath = getSubRoutePath(subRouteName);
+        nameToUrlMap[componentName] = `/docs/${name.toLowerCase()}/${subRoutePath}`;
+      });
+    });
+  }
+  return nameToUrlMap[name];
+}
+
 // convert route names to component names, e.g. 'Quick Start' => 'QuickStart'
-function getComponentName(str) {
-  return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, (match, index) => {
-    // or if (/\s+/.test(match)) for white spaces
-    if (+match === 0) {
-      return "";
-    }
-    return match.toUpperCase();
-  });
+function getComponentName(routeName) {
+  return routeName.replace(/\s/g, "");
+}
+
+function getSubRoutePath(subRouteName) {
+  return `${subRouteName.toLowerCase().replace(/\s/g, "-")}`;
 }
 
 export default ROUTE_CONFIG.map(({ name, subRouteNames }) => {
@@ -102,7 +122,7 @@ export default ROUTE_CONFIG.map(({ name, subRouteNames }) => {
       const subComponentName = getComponentName(subRouteName);
       return {
         exact: idx !== 0,
-        path: `/${subComponentName.toLowerCase()}`,
+        path: `/${getSubRoutePath(subRouteName)}`,
         name: subRouteName,
         main: subComponentName,
       };

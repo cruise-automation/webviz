@@ -24,10 +24,15 @@ $grey: #777;
     box-shadow: none;
   }
 
-  .mosaic-window > .mosaic-window-body {
+  .mosaic-preview {
+    max-height: none;
+  }
+
+  .mosaic-window-body {
     flex: 1 1 auto;
     display: flex;
-    background: $panel-background;
+    background: unset;
+    z-index: unset;
   }
 
   // we use custom toolbars

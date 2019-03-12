@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import CameraMeteringMatrixIcon from "@mdi/svg/svg/camera-metering-matrix.svg";
 import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import { sortBy } from "lodash";
@@ -16,28 +15,41 @@ import { createSelector } from "reselect";
 import ImageCanvas from "./ImageCanvas";
 import helpContent from "./index.help.md";
 import style from "./index.module.scss";
-import { getCameraInfoTopic, getMarkerTopics, getMarkerOptions, groupTopics, RECTIFIED_TOPIC_REGEX } from "./util";
+import { getCameraInfoTopic, getMarkerTopics, getMarkerOptions, groupTopics } from "./util";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Flex from "webviz-core/src/components/Flex";
 import { Item, SubMenu } from "webviz-core/src/components/Menu";
 import MessageHistory, { type MessageHistoryData } from "webviz-core/src/components/MessageHistory";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import Tooltip from "webviz-core/src/components/Tooltip";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { Topic } from "webviz-core/src/types/dataSources";
+import type { Topic } from "webviz-core/src/types/players";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import toggle from "webviz-core/src/util/toggle";
+
+export type ImageViewPanelHooks = {
+  defaultConfig: {
+    cameraTopic: string,
+    enabledMarkerNames: string[],
+    scale: number,
+  },
+  imageMarkerArrayDatatypes: string[],
+  imageMarkerDatatypes: string[],
+};
 
 export type Config = {
   cameraTopic: string,
   enabledMarkerNames: string[],
   scale: number,
+  panelHooks?: ImageViewPanelHooks,
+  transformMarkers: boolean,
 };
+
+export type SaveConfig = ($Shape<Config>) => void;
 
 type Props = {
   config: Config,
-  saveConfig: ($Shape<Config>) => void,
+  saveConfig: SaveConfig,
   topics: Topic[],
 };
 
@@ -54,8 +66,8 @@ const imageTopicsByNamespaceSelector = createSelector(
 
 const markerTopicSelector = createSelector(
   (topics?: Topic[]) => topics || [],
-  (topics: Topic[]): Topic[] => {
-    const imageViewHooks = getGlobalHooks().perPanelHooks().ImageView;
+  (topics: Topic[], imageViewHooksProp: ?ImageViewPanelHooks): Topic[] => {
+    const imageViewHooks = imageViewHooksProp || getGlobalHooks().perPanelHooks().ImageView;
     const markerTopics = topics.filter((topic) =>
       imageViewHooks.imageMarkerDatatypes.concat(imageViewHooks.imageMarkerArrayDatatypes).includes(topic.datatype)
     );
@@ -72,7 +84,12 @@ class ImageView extends Component<Props> {
   };
 
   onChangeTopic = (cameraTopic: string) => {
-    this.props.saveConfig({ cameraTopic });
+    this.props.saveConfig({
+      cameraTopic,
+      transformMarkers: getGlobalHooks()
+        .perPanelHooks()
+        .ImageView.isUnrectifiedTopicName(cameraTopic),
+    });
   };
 
   onChangeScale = (scale: number) => {
@@ -94,31 +111,12 @@ class ImageView extends Component<Props> {
       } // satisfy flow
       topics.sort(naturalSort("name"));
 
-      const rectifiedTopics = [`${group}/image_rect_color`, `${group}/image_rect_color_compressed`];
-      const hasRectifiedTopic = topics.some((topic) => RECTIFIED_TOPIC_REGEX.test(topic.name));
       const isSelected = topics.some((topic) => topic.name === cameraTopic);
 
       // place rectified topic above other topics
       return (
         <SubMenu direction="right" key={group} text={group} checked={isSelected}>
-          {rectifiedTopics.map((rectifiedTopic) => {
-            return (
-              <Item
-                key={rectifiedTopic}
-                value={rectifiedTopic}
-                icon={<CameraMeteringMatrixIcon />}
-                disabled={topics.map((topic) => topic.name).indexOf(rectifiedTopic) < 0}
-                onClick={() => this.onChangeTopic(rectifiedTopic)}>
-                <Tooltip contents={hasRectifiedTopic ? null : `rectified image is not available in the current bag`}>
-                  <span>{rectifiedTopic}</span>
-                </Tooltip>
-              </Item>
-            );
-          })}
           {topics.map((topic) => {
-            if (RECTIFIED_TOPIC_REGEX.test(topic.name)) {
-              return null;
-            }
             return (
               <Item
                 key={topic.name}
@@ -138,7 +136,7 @@ class ImageView extends Component<Props> {
   renderMarkerDropdown() {
     const { cameraTopic, enabledMarkerNames } = this.props.config;
     const imageTopicsByNamespace = imageTopicsByNamespaceSelector(this.props.topics);
-    const markerTopics = markerTopicSelector(this.props.topics);
+    const markerTopics = markerTopicSelector(this.props.topics, this.props.config.panelHooks);
 
     const allCameraNamespaces = imageTopicsByNamespace ? [...imageTopicsByNamespace.keys()] : [];
     const markerOptions = getMarkerOptions(cameraTopic, (markerTopics || []).map((t) => t.name), allCameraNamespaces);
@@ -184,7 +182,11 @@ class ImageView extends Component<Props> {
   }
 
   render() {
-    const { cameraTopic, enabledMarkerNames, scale } = this.props.config;
+    const {
+      saveConfig,
+      config: { cameraTopic, enabledMarkerNames, scale, panelHooks, transformMarkers },
+    } = this.props;
+
     const cameraInfoTopic = getCameraInfoTopic(cameraTopic);
     const markerTopics = getMarkerTopics(cameraTopic, enabledMarkerNames);
 
@@ -196,6 +198,9 @@ class ImageView extends Component<Props> {
             <MessageHistory paths={markerTopics.concat(cameraInfoTopic ? [cameraInfoTopic] : [])} historySize={1}>
               {({ itemsByPath }: MessageHistoryData) => (
                 <ImageCanvas
+                  transformMarkers={!!transformMarkers}
+                  saveConfig={saveConfig}
+                  panelHooks={panelHooks}
                   topic={cameraTopic}
                   image={cameraMessages[0] && cameraMessages[0].message}
                   cameraInfo={

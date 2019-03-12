@@ -9,8 +9,7 @@
 // All message types supported by Rviz
 // http://wiki.ros.org/rviz/DisplayTypes
 
-import type { Timestamp } from "./dataSources";
-import { CLOCK_TOPIC } from "webviz-core/src/util/globalConstants";
+import type { Time } from "rosbag";
 
 export type Point = {
   x: number,
@@ -21,14 +20,14 @@ type Points = Array<Point>;
 
 export type Header = {
   frame_id: string,
-  stamp: Timestamp,
+  stamp: Time,
 };
 
 export type StampedMessage = {
   header: Header,
 };
 
-opaque type Duration = Timestamp;
+opaque type Duration = Time;
 
 export type Orientation = {
   x: number,
@@ -93,11 +92,12 @@ export type BaseMarker = StampedMessage & {
   name?: string,
   scale: Scale,
   color: Color,
-  lifetime?: Timestamp,
+  lifetime?: Time,
   frameLocked?: boolean, // TODO: Do we need this?
   text?: string,
   meshResource?: {}, // TODO Maybe make this a named resource?
   primitive?: string,
+  customMetadata?: Object,
 };
 
 type MultiPointMarker = {
@@ -169,7 +169,7 @@ export type MeshMarker = BaseMarker &
   };
 
 type OccupancyGridInfo = {
-  map_load_time: Timestamp,
+  map_load_time: Time,
   resolution: number,
   width: number,
   height: number,
@@ -191,6 +191,11 @@ export type TriangleListMarker = BaseMarker &
     type: 11,
   };
 
+export type FilledPolygonMarker = BaseMarker &
+  MultiPointMarker & {
+    type: 107,
+  };
+
 export type Marker =
   | ArrowMarker
   | CubeMarker
@@ -204,7 +209,8 @@ export type Marker =
   | PointsMarker
   | TextMarker
   | TriangleListMarker
-  | MeshMarker;
+  | MeshMarker
+  | FilledPolygonMarker;
 
 export type MarkerArray = {
   markers: Array<Marker>,
@@ -244,6 +250,8 @@ export type PointCloud2 = StampedMessage & {
   // this is appended by scene builder
   name: ?string,
   colorField?: string,
+  pointSize?: number,
+  color?: string,
 };
 
 export type PointCloud = PointCloud1 | PointCloud2;
@@ -276,20 +284,31 @@ export type ImageMarker = {
   thickness: number,
 };
 
+type Roi = {
+  x_offset: number,
+  y_offset: number,
+  height: number,
+  width: number,
+  do_rectify: false,
+};
+
+type DistortionModel = "plumb_bob" | "rational_polynomial";
+
 export type CameraInfo = {
   width: number,
   height: number,
-};
-
-export type ClockMessage = {
-  topic: typeof CLOCK_TOPIC,
-  message: {
-    clock: Timestamp,
-  },
+  binning_x: number,
+  binning_y: number,
+  roi: Roi,
+  distortion_model: DistortionModel,
+  D: number[],
+  K: number[],
+  P: number[],
+  R: number[],
 };
 
 export type MapMetaData = {
-  map_load_time: Timestamp,
+  map_load_time: Time,
   resolution: number,
   width: number,
   height: number,

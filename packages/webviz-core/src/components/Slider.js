@@ -51,7 +51,7 @@ const StyledRange = styled.div.attrs({
 `;
 
 function defaultRenderSlider(value: ?number): React.Node {
-  if (value == null) {
+  if (value == null || isNaN(value)) {
     return null;
   }
   return <StyledRange width={value} />;

@@ -10,7 +10,7 @@ import React from "react";
 import Worldview, { Text, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function TextDemo() {
+function Example() {
   const labelMarker = {
     name: "randomName",
     text: "HELLO",
@@ -20,15 +20,17 @@ function TextDemo() {
       position: { x: 10, y: 10, z: 1 },
     },
     scale: { x: 1, y: 1, z: 1 },
+    // uncomment colors and remove autoBackgroundColor prop to set text and background colors
+    // colors: [{ r: 1, g: 1, b: 1, a: 1 }, { r: 1, g: 0, b: 0, a: 0.8 }],
   };
 
   return (
     <Worldview>
-      <Text>{[labelMarker]}</Text>
+      <Text autoBackgroundColor>{[labelMarker]}</Text>
       <Axes />
     </Worldview>
   );
 }
 // #END EXAMPLE
 
-export default TextDemo;
+export default Example;

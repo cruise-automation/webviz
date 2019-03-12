@@ -28,7 +28,7 @@ import { TOPICS_WITH_INCORRECT_HEADERS } from "webviz-core/src/components/Messag
 import Tooltip from "webviz-core/src/components/Tooltip";
 import type { State } from "webviz-core/src/reducers";
 import { getTopicNames } from "webviz-core/src/selectors";
-import type { Topic } from "webviz-core/src/types/dataSources";
+import type { Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 function topicHasNoHeaderStamp(topic: Topic, datatypes: RosDatatypes): boolean {
@@ -57,7 +57,7 @@ type MessageHistoryInputProps = {|
   timestampMethod?: MessageHistoryTimestampMethod,
   onTimestampMethodChange?: (MessageHistoryTimestampMethod, index: ?number) => void,
 
-  // From dataSource
+  // From player
   topics: Topic[],
   datatypes: RosDatatypes,
 |};
@@ -279,6 +279,6 @@ class MessageHistoryInput extends PureComponent<MessageHistoryInputProps, Messag
 }
 
 export default connect((state: State) => ({
-  topics: state.dataSource.topics,
-  datatypes: state.dataSource.datatypes,
+  topics: state.player.topics,
+  datatypes: state.player.datatypes,
 }))(MessageHistoryInput);

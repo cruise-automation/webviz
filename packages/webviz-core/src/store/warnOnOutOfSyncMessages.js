@@ -7,9 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import { flatten } from "lodash";
-import { Time } from "rosbag";
+import { type Time } from "rosbag";
 
-import type { Frame, Message } from "webviz-core/src/types/dataSources";
+import type { Frame, Message } from "webviz-core/src/types/players";
 import type { Store } from "webviz-core/src/types/Store";
 import Logger from "webviz-core/src/util/Logger";
 import { subtractTimes, toSec } from "webviz-core/src/util/time";
@@ -20,11 +20,11 @@ const WAIT_FOR_SEEK_SEC = 1; // How long we wait for a change in `lastSeekTime` 
 const log = new Logger(__filename);
 
 // Logs a warning when there is a significant difference (more than `DRIFT_THRESHOLD_SEC`) between
-// a message's timestamp and `dataSource.currentTime`, except when `dataSource.lastSeekTime`
+// a message's timestamp and `player.currentTime`, except when `player.lastSeekTime`
 // changes, in which case panels should be clearing out their stored data.
 //
 // This is to ensure that other mechanisms that we have in place for either discarding old messages
-// or forcing an update of `dataSource.lastSeekTime` are working properly.
+// or forcing an update of `player.lastSeekTime` are working properly.
 //
 // TODO(JP): Make this use `receiveTime` instead of /webviz/clock (which we don't have in the
 // open source version).
@@ -34,7 +34,7 @@ export default function warnOnOutOfSyncMessages(store: Store) {
 
   store.subscribe(() => {
     const state = store.getState();
-    const { frame, currentTime, lastSeekTime } = state.dataSource;
+    const { frame, currentTime, lastSeekTime } = state.player;
 
     if (lastLastSeekTime !== lastSeekTime) {
       lastLastSeekTime = lastSeekTime;
@@ -71,7 +71,7 @@ export default function warnOnOutOfSyncMessages(store: Store) {
           continue;
         }
         warningTimeout = setTimeout(() => {
-          log.warn("message.header.stamp very different from dataSource.currentTime; without updating lastSeekTime", {
+          log.warn("message.header.stamp very different from player.currentTime; without updating lastSeekTime", {
             currentTime,
             lastSeekTime,
             incorrectMessages: incorrectMessages.map((msg) => ({

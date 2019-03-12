@@ -8,9 +8,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import WorldviewCodeEditor from "./jsx/WorldviewCodeEditor";
-import { color } from "./theme";
-import Slider from "./utils/Slider";
+import Slider from "./jsx/utils/Slider";
+import { color } from "./jsx/utils/theme";
+import WorldviewCodeEditor from "./jsx/utils/WorldviewCodeEditor";
 
 const Container = styled.div`
   display: flex;
@@ -82,8 +82,10 @@ const HelloWorldview = () => {
         </div>
       </Container>
       <WorldviewCodeEditor
-        height={700}
-        code={`function HelloWorldview() {
+        height={750}
+        componentName="HelloWorld"
+        code={`
+function Example() {
   const n = ${spheresPerAxis};
   const points = [], colors = [];
   for (let x = 0; x < n; x++) {
@@ -120,6 +122,9 @@ const HelloWorldview = () => {
     </Worldview>
   );
 }`}
+        nonEditableCode={`
+import React from 'react';
+import { Worldview, Spheres } from 'regl-worldview'`}
       />
     </React.Fragment>
   );

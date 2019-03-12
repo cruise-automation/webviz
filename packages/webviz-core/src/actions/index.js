@@ -6,16 +6,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { SET_AUXILIARY_DATA } from "./dataSource";
-import type { ExtensionAction } from "./extensions";
+import type { ExtensionAction, SET_AUXILIARY_DATA } from "./extensions";
 import type { SET_MOSAIC_ID } from "./mosaic";
 import type { CHANGE_PANEL_LAYOUT, IMPORT_PANEL_LAYOUT, SAVE_PANEL_CONFIG } from "./panels";
 import type {
   SUBSCRIPTIONS_CHANGED,
   PUBLISHERS_CHANGED,
-  DATA_SOURCE_CONNECTING,
-  DATA_SOURCE_CONNECTED,
-  DATA_SOURCE_DISCONNECTED,
+  PLAYER_CONNECTING,
+  PLAYER_CONNECTED,
+  PLAYER_DISCONNECTED,
   TOPICS_RECEIVED,
   FRAME_RECEIVED,
   TIME_UPDATED,
@@ -26,8 +25,8 @@ import type {
   PLAYBACK_RESET,
   CAPABILITIES_RECEIVED,
   DATATYPES_RECEIVED,
-  DATA_SOURCE_PROGRESS,
-} from "webviz-core/src/types/dataSources";
+  PLAYER_PROGRESS,
+} from "webviz-core/src/types/players";
 
 export type ActionTypes =
   | CHANGE_PANEL_LAYOUT
@@ -36,9 +35,9 @@ export type ActionTypes =
   | SET_MOSAIC_ID
   | SUBSCRIPTIONS_CHANGED
   | PUBLISHERS_CHANGED
-  | DATA_SOURCE_CONNECTING
-  | DATA_SOURCE_CONNECTED
-  | DATA_SOURCE_DISCONNECTED
+  | PLAYER_CONNECTING
+  | PLAYER_CONNECTED
+  | PLAYER_DISCONNECTED
   | TOPICS_RECEIVED
   | DATATYPES_RECEIVED
   | FRAME_RECEIVED
@@ -51,4 +50,4 @@ export type ActionTypes =
   | PLAYBACK_RESET
   | ExtensionAction
   | CAPABILITIES_RECEIVED
-  | DATA_SOURCE_PROGRESS;
+  | PLAYER_PROGRESS;

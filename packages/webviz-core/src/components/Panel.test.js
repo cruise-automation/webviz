@@ -10,8 +10,8 @@ import { mount } from "enzyme";
 import React from "react";
 import { Provider } from "react-redux";
 
-import { datatypesReceived, frameReceived, topicsReceived } from "webviz-core/src/actions/dataSource";
 import { savePanelConfig } from "webviz-core/src/actions/panels";
+import { datatypesReceived, frameReceived, topicsReceived } from "webviz-core/src/actions/player";
 import Panel from "webviz-core/src/components/Panel";
 import rootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";

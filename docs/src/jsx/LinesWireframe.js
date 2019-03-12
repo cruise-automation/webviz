@@ -10,7 +10,7 @@ import React from "react";
 import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function LinesWireframe() {
+function Example() {
   const lines = [
     {
       pose: {
@@ -63,4 +63,4 @@ function LinesWireframe() {
 }
 // #END EXAMPLE
 
-export default LinesWireframe;
+export default Example;

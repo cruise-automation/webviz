@@ -1,6 +1,7 @@
 # Topic path syntax
 
 The topic path syntax can be used in several panels to find the exact messages in topics that you need.
+
 - First you specify the topic name: `/some/topic`
 - Then you point to the value within that topic, using dots: `/some/topic.some.deep.value`
 - You can also index into an array, like this: `/some/topic.many.values[0].x`

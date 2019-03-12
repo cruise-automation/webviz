@@ -6,9 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { createSelector } from "reselect";
+import { createSelectorCreator, defaultMemoize, createSelector } from "reselect";
+import shallowequal from "shallowequal";
 
-import type { Topic } from "webviz-core/src/types/dataSources";
+import type { Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 export const getTopicNames = createSelector(
@@ -46,3 +47,5 @@ export const constantsByDatatype = createSelector(
     return results;
   }
 );
+
+export const shallowEqualSelector = createSelectorCreator(defaultMemoize, shallowequal);

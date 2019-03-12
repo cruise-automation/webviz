@@ -25,7 +25,7 @@ import MessageHistory, {
 } from "webviz-core/src/components/MessageHistory";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import type { Message } from "webviz-core/src/types/dataSources";
+import type { Message } from "webviz-core/src/types/players";
 
 // Remove creatable warning https://github.com/JedWatson/react-select/issues/2181
 class Creatable extends React.Component<{}, {}> {
@@ -143,7 +143,7 @@ class RosoutPanel extends PureComponent<Props> {
           onChange={this._onNodeFilterChange}
           options={nodeNameOptions}
           optionHeight={parseInt(style.optionHeight)}
-          placeholder="Filter by node name substring (or message text by prefixing with 'msg:')"
+          placeholder="Filter by node name or message text"
           searchable
           selectComponent={Creatable}
           promptTextCreator={(label) => `Node names or msgs containing "${label}"`}

@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import _ from "lodash";
-import React, { Component } from "react";
+import React from "react";
 
 import LevelToString from "./LevelToString";
 import style from "./LogMessage.module.scss";
@@ -27,55 +27,47 @@ function Stamp(props) {
   );
 }
 
-class LogMessage extends Component<{
+type Props = {|
   msg: { file: string, line: string, level: number, name: string, msg: string, header: Header },
-}> {
-  // this component is readonly and never changes
-  shouldComponentUpdate() {
-    return false;
-  }
+|};
 
-  render() {
-    const props = this.props;
-    const msg = props.msg;
-    const altStr = `${msg.file}:${msg.line}`;
+// $FlowFixMe - flow doesn't have a definition for React.memo
+export default React.memo(function LogMessage({ msg }: Props) {
+  const altStr = `${msg.file}:${msg.line}`;
 
-    const strLevel = LevelToString(msg.level);
+  const strLevel = LevelToString(msg.level);
 
-    const levelClassName = style[strLevel.toLocaleLowerCase()];
+  const levelClassName = style[strLevel.toLocaleLowerCase()];
 
-    // the first message line is rendered with the info/stamp/name
-    // following newlines are rendered on their own line
-    const lines = msg.msg.split("\n");
-    return (
-      <div title={altStr} className={`${style.container} ${levelClassName}`}>
-        <div>
-          <span>[{_.padStart(strLevel, 5, " ")}]</span>
-          <span>
-            [<Stamp stamp={msg.header.stamp} />]
-          </span>
-          <span>
-            [{msg.name}
-            ]:
-          </span>
-          <span>&nbsp;</span>
-          <span>{lines[0]}</span>
-        </div>
-        {/* extra lines */}
-        <div>
-          {/* using array index as key is desired here since the index does not change */}
-          {lines.slice(1).map((line, idx) => {
-            return (
-              <div key={idx}>
-                &nbsp;&nbsp;&nbsp;&nbsp;
-                {line}
-              </div>
-            );
-          })}
-        </div>
+  // the first message line is rendered with the info/stamp/name
+  // following newlines are rendered on their own line
+  const lines = msg.msg.split("\n");
+  return (
+    <div title={altStr} className={`${style.container} ${levelClassName}`}>
+      <div>
+        <span>[{_.padStart(strLevel, 5, " ")}]</span>
+        <span>
+          [<Stamp stamp={msg.header.stamp} />]
+        </span>
+        <span>
+          [{msg.name}
+          ]:
+        </span>
+        <span>&nbsp;</span>
+        <span>{lines[0]}</span>
       </div>
-    );
-  }
-}
-
-export default LogMessage;
+      {/* extra lines */}
+      <div>
+        {/* using array index as key is desired here since the index does not change */}
+        {lines.slice(1).map((line, idx) => {
+          return (
+            <div key={idx}>
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              {line}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+});

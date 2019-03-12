@@ -5,7 +5,6 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
 import type { CameraState } from "../camera/CameraStore";
 import { Ray } from "../utils/Raycast";
 import type { BaseProps, Props } from "../Worldview";
@@ -97,10 +96,18 @@ export type ArrowSize = {
 
 export type ReglClickInfo = {
   ray: Ray,
-  clickedObjectId?: number,
+  objectId: ?number,
+};
+
+export type ComponentReglClickInfo = {
+  ray: Ray,
+  object: Object,
+  objectId: ?number,
 };
 
 export type MouseHandler = (MouseEvent, ?ReglClickInfo) => void;
+
+export type ComponentMouseHandler = (MouseEvent, ComponentReglClickInfo) => void;
 
 export type ReglComponentProps = {
   commandId: string,
@@ -150,17 +157,19 @@ export type Pose = {
 };
 
 export type BaseShape = {
-  hitmapId?: number,
+  id?: number, // positive integer
   pose: Pose,
   scale: Scale,
-  color: Color,
+  color: Color | Vec4,
 };
 
 export type Arrow = BaseShape & {
   points?: Point[],
 };
 
-export type Cube = BaseShape;
+export type Cube = BaseShape & {
+  colors?: Color[],
+};
 
 export type Cylinder = BaseShape;
 
@@ -178,14 +187,15 @@ export type SphereList = BaseShape & {
 
 export type TriangleList = BaseShape & {
   points: Point[],
+  colors?: Color[],
 };
 
 export type PolygonType = BaseShape & {
-  points: Vec3[],
-  id: number,
+  points: (Point | Vec3)[],
 };
 
-// Camera
+export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
+
 export type CameraAction =
   | "moveDown"
   | "moveLeft"

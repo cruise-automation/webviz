@@ -11,7 +11,7 @@ import seedrandom from "seedrandom";
 import Worldview, { Triangles, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
-function TrianglesDemo() {
+function Example() {
   const SEED = 123;
   const rng = seedrandom(SEED);
   const vertexColors = new Array(30).fill(0).map((_, i) => ({
@@ -47,4 +47,4 @@ function TrianglesDemo() {
 }
 // #END EXAMPLE
 
-export default TrianglesDemo;
+export default Example;

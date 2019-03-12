@@ -12,7 +12,8 @@ import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
-import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap } from "./types";
+import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap, MouseEventEnum } from "./types";
+import { getNodeEnv } from "./utils/common";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
@@ -27,6 +28,7 @@ export type BaseProps = {|
   hitmapOnMouseMove?: boolean,
   showDebug?: boolean,
   children?: React.Node,
+  style: { [styleAttribute: string]: number | string },
 
   cameraState?: CameraState,
   onCameraStateChange?: (CameraState) => void,
@@ -45,12 +47,20 @@ type State = {|
   worldviewContext: WorldviewContext,
 |};
 
-function handleMouseInteraction(objectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
+function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
+  const objectId = rawObjectId !== 0 ? rawObjectId : undefined;
+  // TODO: deprecating, remove before 1.x release
+  const args = {
+    ray,
+    objectId,
+    get clickedObjectId() {
+      console.warn('"clickedObjectId" is deprecated. Please use "objectId" instead.');
+      return objectId;
+    },
+  };
+
   try {
-    handler(e, {
-      ray,
-      clickedObjectId: objectId !== 0 ? objectId : undefined,
-    });
+    handler(e, args);
   } catch (err) {
     console.error("Error during mouse handler", err);
   }
@@ -65,6 +75,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   static defaultProps = {
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
     shiftKeys: true,
+    style: {},
   };
 
   constructor(props: BaseProps) {
@@ -140,47 +151,35 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   _onClick = (e: MouseEvent) => {
-    if (!this.props.onClick) {
-      return;
-    }
-    this._onMouseInteraction(e, this.props.onClick);
+    this._onMouseInteraction(e, "onClick");
   };
 
   _onDoubleClick = (e: MouseEvent) => {
-    if (!this.props.onDoubleClick) {
-      return;
-    }
-    this._onMouseInteraction(e, this.props.onDoubleClick);
+    this._onMouseInteraction(e, "onDoubleClick");
   };
 
   _onMouseDown = (e: MouseEvent) => {
-    if (!this.props.onMouseDown) {
-      return;
-    }
-    this._onMouseInteraction(e, this.props.onMouseDown);
+    this._onMouseInteraction(e, "onMouseDown");
   };
 
   _onMouseMove = (e: MouseEvent) => {
-    if (!this.props.onMouseMove) {
-      return;
-    }
-    this._onMouseInteraction(e, this.props.onMouseMove, this.props.hitmapOnMouseMove);
+    this._onMouseInteraction(e, "onMouseMove", this.props.hitmapOnMouseMove);
   };
 
   _onMouseUp = (e: MouseEvent) => {
-    if (!this.props.onMouseUp) {
-      return;
-    }
-    this._onMouseInteraction(e, this.props.onMouseUp);
+    this._onMouseInteraction(e, "onMouseUp");
   };
 
-  _onMouseInteraction = (e: MouseEvent, handler: MouseHandler, readHitmap: boolean = true) => {
+  _onMouseInteraction = (e: MouseEvent, mouseEventName: MouseEventEnum, readHitmap: boolean = true) => {
+    const { worldviewContext } = this.state;
+    const worldviewHandler = this.props[mouseEventName];
+
     if (!(e.target instanceof window.HTMLElement) || e.button !== 0) {
       return;
     }
-    const { worldviewContext } = this.state;
-    const { clientX, clientY } = e;
+
     const { top: clientTop, left: clientLeft } = e.target.getBoundingClientRect();
+    const { clientX, clientY } = e;
 
     const canvasX = clientX - clientLeft;
     const canvasY = clientY - clientTop;
@@ -189,15 +188,20 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       return;
     }
 
-    if (!readHitmap) {
-      return handleMouseInteraction(0, ray, e, handler);
+    if (!readHitmap && worldviewHandler) {
+      return handleWorldviewMouseInteraction(0, ray, e, worldviewHandler);
     }
 
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();
     worldviewContext
       .readHitmap(canvasX, canvasY)
-      .then((objectId) => handleMouseInteraction(objectId, ray, e, handler))
+      .then((objectId) => {
+        if (worldviewHandler) {
+          handleWorldviewMouseInteraction(objectId, ray, e, worldviewHandler);
+        }
+        worldviewContext.callComponentHandlers(objectId, ray, e, mouseEventName);
+      })
       .catch((e) => {
         console.error(e);
       });
@@ -207,7 +211,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     const { worldviewContext } = this.state;
     const initializedData = worldviewContext.initializedData;
 
-    if (process.env.NODE_ENV === "production" || !initializedData) {
+    if (getNodeEnv() === "production" || !initializedData) {
       return null;
     }
     const { regl } = initializedData;
@@ -250,15 +254,14 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, showDebug, keyMap, shiftKeys } = this.props;
+    const { width, height, showDebug, keyMap, shiftKeys, style } = this.props;
     const { worldviewContext } = this.state;
-    const style = { width, height };
 
     return (
-      <React.Fragment>
+      <div style={{ position: "relative", overflow: "hidden", ...style }}>
         <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap} shiftKeys={shiftKeys}>
           <canvas
-            style={style}
+            style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
             width={width}
             height={height}
             ref={this._canvas}
@@ -275,7 +278,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
             {this.props.children}
           </WorldviewReactContext.Provider>
         )}
-      </React.Fragment>
+      </div>
     );
   }
 }

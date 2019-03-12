@@ -22,6 +22,7 @@ import FilledPolygons from "./FilledPolygons";
 import Hitmap from "./Hitmap";
 import LinesDemo from "./LinesDemo";
 import LinesWireframe from "./LinesWireframe";
+import MouseEvents from "./MouseEvents";
 import Overlay from "./Overlay";
 import Points from "./Points";
 import SpheresInstanced from "./SpheresInstanced";
@@ -44,6 +45,7 @@ const allDemos = {
   Hitmap,
   LinesDemo,
   LinesWireframe,
+  MouseEvents,
   Overlay,
   Points,
   SpheresInstanced,

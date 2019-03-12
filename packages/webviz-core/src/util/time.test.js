@@ -6,8 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Time } from "rosbag";
-
 import * as time from "./time";
 
 describe("time.toDate & time.fromDate", () => {
@@ -27,36 +25,36 @@ describe("time.toDate & time.fromDate", () => {
   });
 });
 
-describe("time.fromNanoSecondStamp", () => {
+describe("time.fromSecondStamp", () => {
   it("converts from nanoseconds to time", () => {
-    const nanos1 = "1508410740582458241";
-    expect(time.fromNanosecondStamp(nanos1)).toEqual({ sec: 1508410740, nsec: 582458241 });
-    const nanos2 = "1508428043155306000";
-    expect(time.fromNanosecondStamp(nanos2)).toEqual({ sec: 1508428043, nsec: 155306000 });
-    expect(time.fromNanosecondStamp("5001")).toEqual({ sec: 0, nsec: 5001 });
+    const nanos1 = "1508410740.582458241";
+    expect(time.fromSecondStamp(nanos1)).toEqual({ sec: 1508410740, nsec: 582458241 });
+    const nanos2 = "1508428043.155306000";
+    expect(time.fromSecondStamp(nanos2)).toEqual({ sec: 1508428043, nsec: 155306000 });
+    expect(time.fromSecondStamp("5001")).toEqual({ sec: 5001, nsec: 0 });
     const nanos3 = `${1e10 + 1}`;
-    expect(time.fromNanosecondStamp(nanos3)).toEqual({ sec: 10, nsec: 1 });
-    expect(time.fromNanosecondStamp("0")).toEqual({ sec: 0, nsec: 0 });
+    expect(time.fromSecondStamp(nanos3)).toEqual({ sec: 1e10 + 1, nsec: 0 });
+    expect(time.fromSecondStamp("0")).toEqual({ sec: 0, nsec: 0 });
+    expect(time.fromSecondStamp("1000.000")).toEqual({ sec: 1000, nsec: 0 });
   });
 
   it("does not convert invalid times", () => {
-    expect(() => time.fromNanosecondStamp("1000x00")).toThrow();
-    expect(() => time.fromNanosecondStamp("1000 00")).toThrow();
-    expect(() => time.fromNanosecondStamp("")).toThrow();
-    expect(() => time.fromNanosecondStamp("-1")).toThrow();
-    expect(() => time.fromNanosecondStamp("1000.000")).toThrow();
+    expect(() => time.fromSecondStamp("1000x00")).toThrow();
+    expect(() => time.fromSecondStamp("1000 00")).toThrow();
+    expect(() => time.fromSecondStamp("")).toThrow();
+    expect(() => time.fromSecondStamp("-1")).toThrow();
   });
 });
 
 describe("percentOf", () => {
   it("gives percentages correctly", () => {
-    const start = new Time(0, 0);
-    const end = new Time(10, 0);
-    expect(time.percentOf(start, end, new Time(5, 0))).toEqual(50);
-    expect(time.percentOf(start, end, new Time(1, 0))).toEqual(10);
-    expect(time.percentOf(start, end, new Time(0, 1e9))).toEqual(10);
-    expect(time.percentOf(start, end, new Time(0, 1e7))).toEqual(0.1);
-    expect(time.percentOf(start, end, new Time(-1, 0))).toEqual(-10);
+    const start = { sec: 0, nsec: 0 };
+    const end = { sec: 10, nsec: 0 };
+    expect(time.percentOf(start, end, { sec: 5, nsec: 0 })).toEqual(50);
+    expect(time.percentOf(start, end, { sec: 1, nsec: 0 })).toEqual(10);
+    expect(time.percentOf(start, end, { sec: 0, nsec: 1e9 })).toEqual(10);
+    expect(time.percentOf(start, end, { sec: 0, nsec: 1e7 })).toEqual(0.1);
+    expect(time.percentOf(start, end, { sec: -1, nsec: 0 })).toEqual(-10);
   });
 });
 
@@ -147,17 +145,24 @@ describe("time.subtractTimes", () => {
 });
 
 describe("time.getNextFrame", () => {
-  const timestamps = ["1508410740582458241", "1508428043155306000"];
+  const timestamps = ["1508410740.582458241", "1508428043.155306000"];
   expect(time.getNextFrame(0, timestamps)).toEqual({ sec: 1508428043, nsec: 155306000 });
   expect(time.getNextFrame(1, timestamps)).toEqual({ sec: 1508410740, nsec: 582458241 });
   expect(time.getNextFrame(0, timestamps, -1)).toEqual({ sec: 1508428043, nsec: 155306000 });
 });
 
 describe("time.findClosestTimestampIndex", () => {
-  it("returns -1 for values that do not exist or are before the first timestamp", () => {
+  it("returns -1 for values that do not exist, are before the first timestamp or after the last", () => {
     expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 })).toEqual(-1);
     expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 }, [])).toEqual(-1);
-    expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 }, ["2000000000"])).toEqual(-1);
-    expect(time.findClosestTimestampIndex({ sec: 0, nsec: 10 }, ["1000000000"])).toEqual(-1);
+    expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 }, ["2"])).toEqual(-1);
+    expect(time.findClosestTimestampIndex({ sec: 0, nsec: 10 }, ["1"])).toEqual(-1);
+    expect(time.findClosestTimestampIndex({ sec: 2, nsec: 0 }, ["1"])).toEqual(-1);
+  });
+
+  it("returns the last index it is equal to or greater than", () => {
+    expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 }, ["1", "2"])).toEqual(0);
+    expect(time.findClosestTimestampIndex({ sec: 1, nsec: 999999999 }, ["1", "2"])).toEqual(0);
+    expect(time.findClosestTimestampIndex({ sec: 2, nsec: 999999999 }, ["1", "2", "3"])).toEqual(1);
   });
 });

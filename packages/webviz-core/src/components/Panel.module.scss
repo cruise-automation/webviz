@@ -1,0 +1,63 @@
+@import "~webviz-core/src/styles/colors.module.scss";
+
+.root {
+  z-index: 1;
+  background-color: $panel-background;
+  position: relative;
+}
+
+.rootFullScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+
+  > .fullScreenKeyPressedOverlay {
+    cursor: unset;
+
+    &:hover {
+      background-color: unset;
+    }
+  }
+}
+
+.fullScreenKeyPressedOverlay {
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100000; // highest level within panel
+
+  > div {
+    display: flex;
+    align-items: center;
+  }
+
+  p {
+    display: none;
+  }
+
+  svg {
+    fill: none;
+  }
+
+  &:hover {
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.5) inset;
+    background-color: rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: center;
+
+    p {
+      display: block;
+      margin: 0;
+    }
+
+    svg {
+      fill: white;
+    }
+  }
+}

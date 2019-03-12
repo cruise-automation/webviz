@@ -11,7 +11,7 @@ module.exports = {
     "prettier/flowtype",
     "prettier/react",
   ],
-  plugins: ["jest", "import-order-alphabetical"],
+  plugins: ["jest", "import-order-alphabetical", "react-hooks"],
   parser: "babel-eslint",
   settings: { "import/resolver": { webpack: { config: `${__dirname}/webpack.config.js` } } },
   globals: {
@@ -23,7 +23,7 @@ module.exports = {
   rules: {
     curly: "error",
     "prettier/prettier": "error",
-    "no-console": ["error", { allow: ["warn", "error"] }],
+    "no-console": ["error", { allow: ["warn", "error", "debug"] }],
     "no-unused-vars": ["error", { args: "none", varsIgnorePattern: "^_" }],
     "flowtype/no-unused-expressions": "error",
     "no-underscore-dangle": ["error", { allowAfterThis: true }],
@@ -46,5 +46,6 @@ module.exports = {
     ],
     // TODO(JP): Fix this instead of disabling it:
     "import/no-named-as-default": "off",
+    "prefer-arrow-callback": ["error", { allowNamedFunctions: true }],
   },
 };

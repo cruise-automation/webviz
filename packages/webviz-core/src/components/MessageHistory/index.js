@@ -9,6 +9,8 @@
 import { last } from "lodash";
 import * as React from "react";
 import { connect } from "react-redux";
+import { createSelector } from "reselect";
+import type { Time } from "rosbag";
 
 import addValuesWithPathsToItems from "./addValuesWithPathsToItems";
 import { TOPICS_WITH_INCORRECT_HEADERS } from "./internalCommon";
@@ -19,11 +21,11 @@ import parseRosPath from "./parseRosPath";
 import topicPathSyntaxHelpContent from "./topicPathSyntax.help.md";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import type { State } from "webviz-core/src/reducers";
-import { topicsByTopicName } from "webviz-core/src/selectors";
-import type { Topic, Timestamp, Message } from "webviz-core/src/types/dataSources";
+import { topicsByTopicName, shallowEqualSelector } from "webviz-core/src/selectors";
+import type { Topic, Message } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
-// Use `<MessageHistory>` to get data from the data source, typically a bag or ROS websocked bridge.
+// Use `<MessageHistory>` to get data from the player, typically a bag or ROS websocked bridge.
 // Typical usage looks like this:
 //
 // const path = "/some/topic.some.field";
@@ -42,15 +44,9 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 // - Filter on particular values, usually in combination with slices:
 //   `/some/topic.many.values[:]{id==123}.x` — for now only equality is supported.
 //
-// Items contain various convenient fields, defined detailed in `type MessageHistoryItem` below.
+// Items contain the following fields:
 // - `queriedData`: values as queried by the `path`, along with actual `path` strings.
-// - `timestamp`: A timestamp based on the message's `header.stamp`, or backfilled using
-//   `/webviz/clock` if the message has no header.
-// - `hasAccurateTimestamp`: true when the message has a header, false if we used `/webviz/clock`.
-// - `elapsedSinceStart`: `timestamp` minus start time of playback. Often used as x-axis in graphs.
 // - `message`: the original message.
-//
-// Note that the timestamp semantics will likely change in the future.
 //
 // Furthermore, if you don't care about the full history, you can limit the history to some set
 // number of items using `<MessageHistory historySize={10}>` (applied per path).
@@ -89,9 +85,6 @@ export type MessageHistoryQueriedDatum = {|
 
 export type MessageHistoryItem = {
   queriedData: MessageHistoryQueriedDatum[],
-  timestamp: Timestamp,
-  hasAccurateTimestamp: boolean,
-  elapsedSinceStart: Timestamp,
   message: Message,
 };
 
@@ -125,7 +118,7 @@ export type MessageHistoryData = {|
   itemsByPath: MessageHistoryItemsByPath,
   cleared: boolean,
   metadataByPath: { [string]: MessageHistoryMetadata },
-  startTime: Timestamp,
+  startTime: Time,
 |};
 
 type Props = {
@@ -135,16 +128,16 @@ type Props = {
   historySize?: number | { [topicName: string]: number },
   // For scaling down images, to spare bandwidth. When using this you should only
   // pass in image topics to `paths`.
-  imageScale: number,
+  imageScale?: number,
 
   // By default message history will try to subscribe to topics
-  // even if they don't existing in the datasource topic's list.
+  // even if they don't existing in the player topic's list.
   // You can disable this behavior for typeahead scenarios or when
-  // you expect user specified topics which are likely to not exist in the datasource
+  // you expect user specified topics which are likely to not exist in the player
   // to prevent a lot of subscribing to non-existant topics.
   ignoreMissing?: boolean,
 
-  // From dataSource
+  // From player
   topics: Topic[],
   datatypes: RosDatatypes,
 };
@@ -160,10 +153,7 @@ export function isTypicalFilterName(name: string) {
   return /^id$|_id$|I[dD]$/.test(name);
 }
 
-export function getTimestampForMessage(
-  message: Message,
-  timestampMethod?: MessageHistoryTimestampMethod
-): Timestamp | null {
+export function getTimestampForMessage(message: Message, timestampMethod?: MessageHistoryTimestampMethod): Time | null {
   if (timestampMethod === "headerStamp") {
     if (
       message.message.header &&
@@ -177,13 +167,60 @@ export function getTimestampForMessage(
   return message.receiveTime;
 }
 
+type ChildrenSelectorInput = {
+  messagesByTopic: { [string]: Message[] },
+  cleared: boolean,
+  startTime: Time,
+  paths: string[],
+  topics: Topic[],
+  datatypes: RosDatatypes,
+};
+
+const getMemoizedChildrenInput = shallowEqualSelector(
+  (input: ChildrenSelectorInput) => input,
+  ({ messagesByTopic, cleared, startTime, paths, topics, datatypes }: ChildrenSelectorInput) => {
+    const itemsByPath = {};
+    const metadataByPath = {};
+    const structures = messagePathStructures(datatypes);
+
+    for (const path of paths) {
+      itemsByPath[path] = [];
+      metadataByPath[path] = undefined;
+
+      const rosPath = parseRosPath(path);
+      if (rosPath) {
+        itemsByPath[path] = addValuesWithPathsToItems(messagesByTopic[rosPath.topicName], rosPath, topics, datatypes);
+
+        const topic = topicsByTopicName(topics)[rosPath.topicName];
+        if (topic) {
+          const { structureItem } = traverseStructure(structures[topic.datatype], rosPath.messagePath);
+          if (structureItem) {
+            metadataByPath[path] = { structureItem };
+          }
+        }
+      }
+    }
+    return { itemsByPath, cleared, metadataByPath, startTime };
+  }
+);
+
+const getMemoizedTopics = createSelector(
+  (input: string[]) => input,
+  (paths: string[]) => {
+    return paths
+      .map(parseRosPath)
+      .filter(Boolean)
+      .map(({ topicName }) => topicName);
+  }
+);
+
 // Be sure to pass in a new render function when you want to force a rerender.
 // So you probably don't want to do `<MessageHistory>{this._renderSomething}</MessageHistory>`.
 // This might be a bit counterintuitive but we do this since performance matters here.
 class MessageHistory extends React.PureComponent<Props> {
   static Input = MessageHistoryInput;
   static topicPathSyntaxHelpContent = topicPathSyntaxHelpContent;
-  static defaultProps = { imageScale: 1, historySize: Infinity };
+  static defaultProps = { historySize: Infinity };
 
   render() {
     const { children, paths, historySize, topics, datatypes, imageScale, ignoreMissing } = this.props;
@@ -196,42 +233,11 @@ class MessageHistory extends React.PureComponent<Props> {
           <MessageHistoryOnlyTopics
             panelType={(panelData || {}).type}
             ignoreMissing={ignoreMissing}
-            topics={paths
-              .map(parseRosPath)
-              .filter(Boolean)
-              .map(({ topicName }) => topicName)}
+            topics={getMemoizedTopics(paths)}
             historySize={historySize}
             imageScale={imageScale}
             key={imageScale /* need to remount when imageScale changes */}>
-            {({ itemsByTopic, cleared, startTime }) => {
-              const itemsByPath = {};
-              const metadataByPath = {};
-              const structures = messagePathStructures(datatypes);
-
-              for (const path of paths) {
-                itemsByPath[path] = [];
-                metadataByPath[path] = undefined;
-
-                const rosPath = parseRosPath(path);
-                if (rosPath) {
-                  itemsByPath[path] = addValuesWithPathsToItems(
-                    itemsByTopic[rosPath.topicName],
-                    rosPath,
-                    topics,
-                    datatypes
-                  );
-
-                  const topic = topicsByTopicName(topics)[rosPath.topicName];
-                  if (topic) {
-                    const { structureItem } = traverseStructure(structures[topic.datatype], rosPath.messagePath);
-                    if (structureItem) {
-                      metadataByPath[path] = { structureItem };
-                    }
-                  }
-                }
-              }
-              return children({ itemsByPath, cleared, metadataByPath, startTime });
-            }}
+            {(data) => children(getMemoizedChildrenInput({ ...data, paths, topics, datatypes }))}
           </MessageHistoryOnlyTopics>
         )}
       </PanelContext.Consumer>
@@ -240,6 +246,6 @@ class MessageHistory extends React.PureComponent<Props> {
 }
 
 export default connect((state: State) => ({
-  topics: state.dataSource.topics,
-  datatypes: state.dataSource.datatypes,
+  topics: state.player.topics,
+  datatypes: state.player.datatypes,
 }))(MessageHistory);

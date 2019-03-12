@@ -1,0 +1,12 @@
+# Glossary
+
+## Pose
+
+In computer vision and robotics, the **Pose** determines the _position_ and _orientation_ of the specific object in the 3D space ([wiki](<https://en.wikipedia.org/wiki/Pose_(computer_vision)>)). It describes how to bring the target object from a reference pose to the observed pose through translation and rotation. e.g. the pose of A with position `{ x: 1, y: 1, z: 1 }` and orientation `{ x: 0, y: 0, z: 0, w: 1 }` is given by the translation from origin to A's position, and the rotation of A's orientation. The data format follows ROS's [Pose Message](http://docs.ros.org/lunar/api/geometry_msgs/html/msg/Pose.html) definition where position is a point with xyz coordinates and orientation is a [quaternion](https://en.wikipedia.org/wiki/Quaternion).
+
+```js
+type pose = {
+  position: { x: number, y: number, z: number },
+  orientation: { x: number, y: number, z: number, w: number }, // quaternion
+};
+```

@@ -4,14 +4,17 @@ import CommandDemo from './jsx/Command.js';
 
 Command is the base class for all regl-based drawing commands. Subclasses should override getDrawProps and (and optionally getHitmapProps). Note: getHitmapProps is not implemented in this base class.
 
-| Name         | optional | type     | Default | Description                                                                       |
-| ------------ | -------- | -------- | ------- |
-| `layerIndex` | yes      | `number` |         | defines the draw order of each command, e.g. -1 will put the shape in lower layer |
-
+| Name                        | optional | type                                                                   | Default | Description                                                                                         |
+| --------------------------- | -------- | ---------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
+| `layerIndex`                | yes      | `number`                                                               |         | defines the draw order of each command, e.g. -1 will put the shape in lower layer                   |
+| `hitmapProps`               | yes      | `T & ({ colors: Vec4[] } | { color: Vec4 })`                           |         | hitmap props built on top of children prop with additional `colors` or `color` field                |
+| `getObjectFromHitmapId`     | yes      | `(objectId: number, hitmapProps: HitmapProps<T>[]) => ?HitmapProps<T>` |         | find the `hitmapProp` from the `hitmapProps` based on the `objectId` generated from the mouse event |
+| `getHitmapId` (deprecating) | yes      | `(T) => ?number`                                                       |         | map the marker object to a `hitmapId`                                                               |
 
 Sample usage:
+
 ```js
-import Worldview, { withPose, Command } from 'regl-worldview';
+import Worldview, { withPose, Command } from "regl-worldview";
 
 // define our regl command
 const reglTriangle = (regl) => ({
@@ -70,5 +73,11 @@ additional data processing is needed to generate the drawProps/hitmapProps.
 Sample usage:
 
 ```js
-const Cubes = makeCommand('Cubes', rawReglCommand);
+const Cubes = makeCommand("Cubes", rawReglCommand);
+
+// example for supporting hitmap, for details check the MouseEvents documentation
+const Cubes = makeCommand("Cubes", rawReglCommand, {
+  getHitmapProps: () => {...},
+  getObjectFromHitmapId:  () => {...},
+});
 ```

@@ -10,6 +10,7 @@ import { Chart } from "react-chartjs-2";
 
 export default function installChartjs() {
   // These have the side effect of installing themselves.
+  require("chartjs-plugin-annotation");
   require("chartjs-plugin-datalabels");
   require("chartjs-plugin-zoom");
   require("webviz-core/src/util/multicolorLineChart");
@@ -17,7 +18,7 @@ export default function installChartjs() {
   // Otherwise we'd get labels everywhere.
   Chart.defaults.global.plugins.datalabels.display = false;
 
-  if (Chart.plugins.count() !== 5) {
+  if (Chart.plugins.count() !== 6) {
     throw new Error(
       "Incorrect number of Chart.js plugins; one probably has not loaded correctly (make sure we don't have duplicate chart.js instances when running `yarn list`."
     );

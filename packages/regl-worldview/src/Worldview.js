@@ -277,7 +277,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
             onMouseDown={this._onMouseDown}
             onDoubleClick={this._onDoubleClick}
             onMouseMove={this._onMouseMove}
-            onClick={this._onClick}
           />
           {showDebug ? this._renderDebug() : null}
         </CameraListener>

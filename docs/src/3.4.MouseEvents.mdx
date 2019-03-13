@@ -75,3 +75,7 @@ Check out below example for automatic/custom hitmap mapping, and regular/instanc
 ## Full Example
 
 <MouseEvents />
+
+## Other
+
+We use `mouseClickRadius` prop to determine if mouseClick event is going to be triggered, specificially if the mouse has moved beyond the `mouseClickRadius` limit, the `onClick` event handler will be canceled, and `onMouseUp` will still get triggered if present.

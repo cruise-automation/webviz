@@ -19,7 +19,7 @@ import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
-const DEFAULT_MOUSE_CLICK_RADIUS = 3;
+export const DEFAULT_MOUSE_CLICK_RADIUS = 3;
 
 export type BaseProps = {|
   keyMap?: CameraKeyMap,
@@ -33,7 +33,6 @@ export type BaseProps = {|
   cameraState?: CameraState,
   onCameraStateChange?: (CameraState) => void,
   defaultCameraState?: CameraState,
-  mouseClickRadius: number,
   // interactions
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
@@ -76,7 +75,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   static defaultProps = {
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
     style: {},
-    mouseClickRadius: DEFAULT_MOUSE_CLICK_RADIUS,
   };
 
   constructor(props: BaseProps) {
@@ -171,7 +169,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       const deltaX = e.clientX - _dragStartPos.x;
       const deltaY = e.clientY - _dragStartPos.y;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      if (distance < this.props.mouseClickRadius) {
+      if (distance < DEFAULT_MOUSE_CLICK_RADIUS) {
         this._onMouseInteraction(e, "onClick");
       }
       this._dragStartPos = null;

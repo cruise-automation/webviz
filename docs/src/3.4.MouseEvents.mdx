@@ -78,4 +78,4 @@ Check out below example for automatic/custom hitmap mapping, and regular/instanc
 
 ## Other
 
-We use `mouseClickRadius` prop to determine if mouseClick event is going to be triggered, specificially if the mouse has moved beyond the `mouseClickRadius` limit, the `onClick` event handler will be canceled, and `onMouseUp` will still get triggered if present.This helps implement certain behaviors such as panning around worldview without firing `onClick` event.
+`onClick` events don't fire if the user moves their cursor for more than 3 screen pixels between mouse down and mouse up. This helps implement certain behaviors such as panning around worldview without firing `onClick` event.

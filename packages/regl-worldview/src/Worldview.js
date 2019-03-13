@@ -45,7 +45,6 @@ export type BaseProps = {|
 
 type State = {|
   worldviewContext: WorldviewContext,
-  dragStartPos: ?{ x: number, y: number },
 |};
 
 function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
@@ -72,7 +71,7 @@ function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: Mouse
 export class WorldviewBase extends React.Component<BaseProps, State> {
   _canvas: { current: HTMLCanvasElement | null } = React.createRef();
   _tick: AnimationFrameID | void;
-  _disableOnClick: boolean = false;
+  _dragStartPos: ?{ x: number, y: number } = null;
 
   static defaultProps = {
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
@@ -108,7 +107,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         cameraState: props.cameraState || props.defaultCameraState || DEFAULT_CAMERA_STATE,
         onCameraStateChange: props.onCameraStateChange || undefined,
       }),
-      dragStartPos: null,
     };
   }
 
@@ -153,21 +151,12 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
   }
 
-  _onClick = (e: MouseEvent) => {
-    if (!this._disableOnClick) {
-      this._onMouseInteraction(e, "onClick");
-    }
-    this._disableOnClick = false;
-  };
-
   _onDoubleClick = (e: MouseEvent) => {
-    this._disableOnClick = false;
     this._onMouseInteraction(e, "onDoubleClick");
   };
 
   _onMouseDown = (e: MouseEvent) => {
-    this._disableOnClick = false;
-    this.setState({ dragStartPos: { x: e.clientX, y: e.clientY } });
+    this._dragStartPos = { x: e.clientX, y: e.clientY };
     this._onMouseInteraction(e, "onMouseDown");
   };
 
@@ -176,17 +165,17 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   };
 
   _onMouseUp = (e: MouseEvent) => {
-    const { dragStartPos } = this.state;
-    if (dragStartPos) {
-      const deltaX = e.clientX - dragStartPos.x;
-      const deltaY = e.clientY - dragStartPos.y;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      if (distance > this.props.mouseClickRadius) {
-        this._disableOnClick = true;
-      }
-      this.setState({ dragStartPos: null });
-    }
     this._onMouseInteraction(e, "onMouseUp");
+    const { _dragStartPos } = this;
+    if (_dragStartPos) {
+      const deltaX = e.clientX - _dragStartPos.x;
+      const deltaY = e.clientY - _dragStartPos.y;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      if (distance < this.props.mouseClickRadius) {
+        this._onMouseInteraction(e, "onClick");
+      }
+      this._dragStartPos = null;
+    }
   };
 
   _onMouseInteraction = (e: MouseEvent, mouseEventName: MouseEventEnum, readHitmap: boolean = true) => {

@@ -19,6 +19,7 @@ import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
+export const DEFAULT_MOUSE_CLICK_RADIUS = 3;
 
 export type BaseProps = {|
   keyMap?: CameraKeyMap,
@@ -32,7 +33,6 @@ export type BaseProps = {|
   cameraState?: CameraState,
   onCameraStateChange?: (CameraState) => void,
   defaultCameraState?: CameraState,
-
   // interactions
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
@@ -70,6 +70,7 @@ function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: Mouse
 export class WorldviewBase extends React.Component<BaseProps, State> {
   _canvas: { current: HTMLCanvasElement | null } = React.createRef();
   _tick: AnimationFrameID | void;
+  _dragStartPos: ?{ x: number, y: number } = null;
 
   static defaultProps = {
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
@@ -148,15 +149,12 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
   }
 
-  _onClick = (e: MouseEvent) => {
-    this._onMouseInteraction(e, "onClick");
-  };
-
   _onDoubleClick = (e: MouseEvent) => {
     this._onMouseInteraction(e, "onDoubleClick");
   };
 
   _onMouseDown = (e: MouseEvent) => {
+    this._dragStartPos = { x: e.clientX, y: e.clientY };
     this._onMouseInteraction(e, "onMouseDown");
   };
 
@@ -166,6 +164,16 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   _onMouseUp = (e: MouseEvent) => {
     this._onMouseInteraction(e, "onMouseUp");
+    const { _dragStartPos } = this;
+    if (_dragStartPos) {
+      const deltaX = e.clientX - _dragStartPos.x;
+      const deltaY = e.clientY - _dragStartPos.y;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      if (distance < DEFAULT_MOUSE_CLICK_RADIUS) {
+        this._onMouseInteraction(e, "onClick");
+      }
+      this._dragStartPos = null;
+    }
   };
 
   _onMouseInteraction = (e: MouseEvent, mouseEventName: MouseEventEnum, readHitmap: boolean = true) => {
@@ -267,7 +275,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
             onMouseDown={this._onMouseDown}
             onDoubleClick={this._onDoubleClick}
             onMouseMove={this._onMouseMove}
-            onClick={this._onClick}
           />
           {showDebug ? this._renderDebug() : null}
         </CameraListener>

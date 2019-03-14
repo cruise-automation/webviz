@@ -1,0 +1,195 @@
+import CodeSandboxEmbed from './jsx/utils/CodeSandboxEmbed.js';
+
+# Rendering Objects
+
+In this page, you'll learn how to:
+
+- build a Hello World app with regl-worldview
+- render objects with custom position, color and scale
+- apply math equation to the rendered objects
+- use instanced rendering
+
+## Building a Hello World App
+
+Add regl-worldview to the package dependencies:
+
+```bash
+"regl-worldview": "latest"
+```
+
+Create a new `Example.js` file in the `src/` directory, add below code which create a Worldview component with a red cube and x/y/z axes inside:
+
+```js
+// src/Example.js
+import React from "react";
+import Worldview, { Cubes, Axes } from "regl-worldview";
+
+export default function Example() {
+  return (
+    <Worldview>
+      <Cubes>
+        {[
+          {
+            pose: {
+              orientation: { x: 0, y: 0, z: 0, w: 1 },
+              // position it at the center
+              position: { x: 0, y: 0, z: 0 },
+            },
+            scale: { x: 10, y: 10, z: 10 },
+            // red
+            color: { r: 1, g: 0, b: 0, a: 1 },
+          },
+        ]}
+      </Cubes>
+      <Axes />
+    </Worldview>
+  );
+}
+```
+
+Replace the contents of `src/index.js` with the following code:
+
+```js
+// src/index.js
+import React from "react";
+import ReactDOM from "react-dom";
+import Example from "./Example";
+
+function App() {
+  return (
+    <div style={{ width: "100vw", height: "100vh" }}>
+      <Example />
+    </div>
+  );
+}
+
+const rootElement = document.getElementById("root");
+ReactDOM.render(<App />, rootElement);
+```
+
+Now, you have successfully created a HelloWorld 3D app! In the browser preview, you'll see the red cube and axes. You can click and interact with Worldview with one finger (move the scene) or two fingers (rotate the scene). Learn more about [controlling the camera with keyboard](#/docs/api/worldview).
+
+<CodeSandboxEmbed src="https://codesandbox.io/s/j7vo7yz3py" />
+
+## Adding Objects With Custom Position, Scale, and Color
+
+Let's make the app dynamic by adding the cubes to the scene based a `count` state which will be incremented by each button click.
+
+```js
+// src/Example.js
+export default function Example() {
+  const [count, setCount] = useState(1);
+  const markers = new Array(count).fill().map((_, idx) => {
+    return {
+      pose: {
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+        // change the position along x axis
+        position: { x: idx * idx, y: 0, z: 0 },
+      },
+      scale: { x: idx + 1, y: idx + 1, z: idx + 1 },
+      // the rgba value of the color is between 0 and 1 (inclusive).
+      // http://wiki.ros.org/rviz/DisplayTypes/Marker
+      color: { r: Math.random(), g: Math.random(), b: Math.random(), a: 1 },
+    };
+  });
+
+  return (
+    <Worldview>
+      <button style={{ position: "absolute", top: 0, left: 0 }} onClick={() => setCount(count + 1)}>
+        Add a Cube
+      </button>
+      <Cubes>{markers}</Cubes>
+      <Axes />
+    </Worldview>
+  );
+}
+```
+
+Whenever you click the "Add a Cube” button, you'll see a new cube with a randomly generated color getting added to the scene.
+
+<CodeSandboxEmbed src="https://codesandbox.io/s/lxzrxqlpym" />
+
+## Rendering a Colorful Knot
+
+[Trefoil](https://en.wikipedia.org/wiki/Trefoil_knot) knot is the simplest example of a nontrivial knot. It can be obtained by joining together the two loose ends of a common overhand knot, resulting in a knotted loop. In this step, we are going to make our scene more interesting by applying the parametric equations of the trefoil knot and adding some color variations.
+
+```js
+// src/Example.js
+function Example() {
+  const steps = 500; // total amount of objects
+
+  // map a number/index to a specific color
+  function numberToColor(number, max, a = 1) {
+    const i = (number * 255) / max;
+    const r = Math.round(Math.sin(0.024 * i + 0) * 127 + 128) / 255;
+    const g = Math.round(Math.sin(0.024 * i + 2) * 127 + 128) / 255;
+    const b = Math.round(Math.sin(0.024 * i + 4) * 127 + 128) / 255;
+    return { r, g, b, a };
+  }
+
+  // the object index needs to multipled by this scale so it's evenly distributed in the space
+  const scale = (Math.PI * 2) / steps;
+  const markers = new Array(steps)
+    .fill()
+    .map((_, idx) => [
+      // generate x, y, z coordinates based on trefoil equation
+      Math.sin(idx * scale) + 2 * Math.sin(2 * idx * scale),
+      Math.cos(idx * scale) - 2 * Math.cos(2 * idx * scale),
+      -Math.sin(3 * idx * scale),
+    ])
+    .map(([x, y, z], idx) => ({
+      pose: {
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+        position: { x: 20 * x, y: 20 * y, z: 20 * z },
+      },
+      scale: { x: 1, y: 1, z: 1 },
+      color: numberToColor(idx, steps),
+    }));
+
+  return (
+    <Worldview>
+      <Spheres>{markers}</Spheres>
+      <Axes />
+    </Worldview>
+  );
+}
+```
+
+<CodeSandboxEmbed src="https://codesandbox.io/s/2x26ov87j0" />
+
+## Improving Performance with Instanced Rendering
+
+When drawing many instances of the same object, you'll quickly reach a performance bottleneck because of amount of drawing calls on the GPU. Instancing is a technique where we draw many objects at once with a single render call, save us all the CPU -> GPU communication time we need to render each object. Learn more about [instancing](https://learnopengl.com/Advanced-OpenGL/Instancing).
+
+Most of the existing [Command](#/docs/api/command) components support instancing. In this step, we are going to convert previous example to use instanced rendering.
+
+```js
+// src/Example.js
+function Example() {
+  // ... other code
+  new Array(steps)
+    .fill()
+    .map((_, idx) => [
+      // generate x, y, z coordinates based on trefoil equation
+      Math.sin(idx * scale) + 2 * Math.sin(2 * idx * scale),
+      Math.cos(idx * scale) - 2 * Math.cos(2 * idx * scale),
+      -Math.sin(3 * idx * scale),
+    ])
+    .forEach(([x, y, z], idx) => {
+      // add individual point and color to the single sphere object
+      marker.colors.push(numberToColor(idx, steps));
+      marker.points.push({ x: x * 20, y: y * 20, z: z * 20 });
+    });
+
+  return (
+    <Worldview>
+      <Spheres>{[marker]}</Spheres>
+      <Axes />
+    </Worldview>
+  );
+}
+```
+
+<CodeSandboxEmbed src="https://codesandbox.io/s/jl9qv2mjyy" />
+
+Next step: [Managing Cameara](#/docs/tutorial/managing-camera)

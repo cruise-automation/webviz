@@ -9,6 +9,10 @@ import Composition from "./1.2.Composition.mdx";
 import DynamicCommands from "./1.3.DynamicCommands.mdx";
 import Interactivity from "./1.4.Interactivity.mdx";
 import QuickStart from "./2.1.QuickStart.mdx";
+import Introduction from "./2.2.Introduction.mdx";
+import RenderingObjects from "./2.3.RenderingObjects.mdx";
+import ManagingCamera from "./2.4.ManagingCamera.mdx";
+import AddingInteractivity from "./2.5.AddingInteractivity.mdx";
 import Worldview from "./3.1.Worldview.mdx";
 import Camera from "./3.2.Camera.mdx";
 import Command from "./3.3.Command.mdx";
@@ -35,6 +39,10 @@ export const componentList = {
   DynamicCommands,
   Interactivity,
   QuickStart,
+  Introduction,
+  RenderingObjects,
+  ManagingCamera,
+  AddingInteractivity,
   Worldview,
   Camera,
   Command,
@@ -58,6 +66,10 @@ export const componentList = {
 
 const ROUTE_CONFIG = [
   { name: "Guides", subRouteNames: ["Quick Start"] },
+  {
+    name: "Tutorial",
+    subRouteNames: ["Introduction", "Rendering Objects", "Managing Camera", "Adding Interactivity"],
+  },
   {
     name: "Examples",
     subRouteNames: ["Basic Example", "Composition", "Dynamic Commands", "Interactivity"],

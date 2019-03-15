@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import Worldview from "./Worldview";
+import Worldview, { WorldviewBase } from "./Worldview";
 
 export { default as Bounds } from "./utils/Bounds";
 export { selectors as cameraStateSelectors, CameraStore, DEFAULT_CAMERA_STATE } from "./camera/index";
@@ -19,5 +19,5 @@ export * from "./commands/index";
 export * from "./types/index";
 export { default as WorldviewReactContext } from "./WorldviewReactContext";
 
-export { Worldview };
+export { Worldview, WorldviewBase };
 export default Worldview;

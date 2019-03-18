@@ -37,7 +37,7 @@ export default function Example() {
 }
 ```
 
-Next, we'll add a [React Hook](https://reactjs.org/docs/hooks-intro.html) that's going accept a callback which is going to be called before each browser repaint. Learn more about [window.requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
+For continuously moving the camera around, we' use need to create a state that get's updated overtime. [window.requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) is a good direction since it generally matches the display refresh rate. we'll add a [React Hook](https://reactjs.org/docs/hooks-intro.html) that's going accept a callback which is going to be called before each browser repaint.
 
 ```js
 // src/utils/useRequestAnimationFrame.js
@@ -74,7 +74,7 @@ export default function Example() {
   // use count to derive camera phi and thetaOffset values
   const [count, setCount] = useState(0);
   useRequestAnimationFrame(() => {
-    // update count upon each animation frame
+    // update count before each browser repaint
     const newCount = count + 2 >= steps ? 0 : count + 1;
     setCount(newCount);
   });
@@ -99,14 +99,14 @@ export default function Example() {
 
 Now the camera is moving around the scene, giving us 360 view of the duck model!
 
-_Notice we've added `cameraState={cameraState}` which turned worldview into a [controlled](https://reactjs.org/docs/forms.html) component which usually requires an `onChange` handler. In the case, since we don't need to know what's the new internal
+_Notice we've added `cameraState={cameraState}` which turned worldview into a [controlled](https://reactjs.org/docs/forms.html) component which usually requires an `onChange` handler. In our case here, since we don't need to know what's the new internal
 `cameraState` value, no `onCameraStateChange` prop is necessary._
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/qx5zrko8nj" />
 
 ## Follow an Object
 
-In this step, we are going to move the duck along the knot, and move the camera around as if we are following the duck around.
+In this step, we are going to move the duck along the knot, and move the camera as if we are following the duck around.
 
 To move the duck, let's first modify the Duck component to accept children input so the duck position can be updated dynamically:
 
@@ -161,7 +161,7 @@ export default function Example() {
 }
 ```
 
-Voila, the camera now folllows the duck around!
+Voila, by simply adding the `target` position to `cameraState`, the camera now folllows the duck around!
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/71k2xzj8ox" />
 

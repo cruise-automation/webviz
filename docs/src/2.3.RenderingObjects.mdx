@@ -17,7 +17,7 @@ Add regl-worldview to the package dependencies:
 "regl-worldview": "latest"
 ```
 
-Create a new `Example.js` file in the `src/` directory, add below code which create a Worldview component with a red cube and x/y/z axes inside:
+Create a new file `Example.js` in the `src/` directory, add below code which renders a Worldview component with a red cube and x/y/z axes inside:
 
 ```js
 // src/Example.js
@@ -36,7 +36,8 @@ export default function Example() {
               position: { x: 0, y: 0, z: 0 },
             },
             scale: { x: 10, y: 10, z: 10 },
-            // red
+            // red color. The rgba value of the color is between 0 and 1 (inclusive).
+            // http://wiki.ros.org/rviz/DisplayTypes/Marker
             color: { r: 1, g: 0, b: 0, a: 1 },
           },
         ]}
@@ -67,7 +68,7 @@ const rootElement = document.getElementById("root");
 ReactDOM.render(<App />, rootElement);
 ```
 
-Now, you have successfully created a HelloWorld 3D app! In the browser preview, you'll see the red cube and axes. You can click and interact with Worldview with one finger (move the scene) or two fingers (rotate the scene). Learn more about [controlling the camera with keyboard](#/docs/api/worldview).
+Now you have successfully created a HelloWorld 3D app! In the browser preview, you'll see the red cube and axes. You can click and interact with Worldview with one finger (move the scene) or two fingers (rotate the scene). Learn more about [controlling the camera with keyboard](#/docs/api/worldview).
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/j7vo7yz3py" />
 
@@ -87,8 +88,7 @@ export default function Example() {
         position: { x: idx * idx, y: 0, z: 0 },
       },
       scale: { x: idx + 1, y: idx + 1, z: idx + 1 },
-      // the rgba value of the color is between 0 and 1 (inclusive).
-      // http://wiki.ros.org/rviz/DisplayTypes/Marker
+      // random color
       color: { r: Math.random(), g: Math.random(), b: Math.random(), a: 1 },
     };
   });
@@ -127,7 +127,7 @@ function Example() {
     return { r, g, b, a };
   }
 
-  // the object index needs to multipled by this scale so it's evenly distributed in the space
+  // the object index needs to be multipled by this scale so it's evenly distributed in the space
   const scale = (Math.PI * 2) / steps;
   const markers = new Array(steps)
     .fill()
@@ -166,7 +166,7 @@ Most of the existing [Command](#/docs/api/command) components support instancing
 ```js
 // src/Example.js
 function Example() {
-  // ... other code
+  // ... other old code
   new Array(steps)
     .fill()
     .map((_, idx) => [
@@ -190,6 +190,7 @@ function Example() {
 }
 ```
 
+Notice in the updated example, instead of rendering 500 markers, we rendered a single marker with 500 colors and points? It's a very simple steps, but it saved lots of CPU -> GPU time!
 <CodeSandboxEmbed src="https://codesandbox.io/s/jl9qv2mjyy" />
 
 Next step: [Managing Cameara](#/docs/tutorial/managing-camera)

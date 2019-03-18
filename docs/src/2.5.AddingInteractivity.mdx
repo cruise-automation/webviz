@@ -4,7 +4,7 @@ import CodeSandboxEmbed from './jsx/utils/CodeSandboxEmbed.js';
 
 In this page, you'll learn how to:
 
-- set up the marker input for hitmap / mouse interaction
+- set up the marker input for hitmap/mouse interaction
 - interact with the scene through event handlers
 - retrive object and event information from the event handlers
 
@@ -12,9 +12,9 @@ In this page, you'll learn how to:
 
 In previous steps, you've learned how to interact with Worldview through mouse, keyboard, and programatic control, all of which affect the camera. Worldiview and the Commmand components also support other mouse interactions including `onClick`, `onDoubleClick`, `onMouseDown`, `onMouseMove`, and `onMouseUp`. Learn more at the [Mouse Events](#/docs/api/mouse-events) page.
 
-In this section, we are going to place obstacles (red cubes) along the duck's moving path, and when the duck hit the obstacles, it's going to stop moving until you removed the corresponding obstacles.
+In this section, we are going to place obstacles (red cubes) along the duck's moving path, and when the duck hit the obstacles, it's going to stop moving until you removed the blocking obstacles.
 
-First we are going to add `id` field to the sphere marker to enable hitmap so we scan correctly identify the specific sphere that's being clicked.
+First, let's add the `id` field to the sphere marker to enable hitmap so we correctly identify the specific sphere that's being clicked.
 
 ```js
 const marker = {
@@ -55,7 +55,7 @@ const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index
       position: position,
     },
     color: { r: 1, g: 0, b: 0, a: 1 }, // red
-    scale: { x: 4, y: 4, z: 4 }, // bigger than the spheres
+    scale: { x: 4, y: 4, z: 4 }, // scale up a little so it's bigger than the spheres
   };
 });
 ```
@@ -66,7 +66,7 @@ The next step is to get the clicked sphere id and update `clickedObjectIds` stat
  <Spheres
     onClick={(ev, { objectId, object }) => {
         // Click once to add obstacle. Even though both the small Sphere and the big Obstacle cube have
-        // hitmap, clicking again will only trigger `onClick` event on the Cube because it's a lot bigger
+        // hitmap enabled, clicking again will only trigger `onClick` event on the Cube because it's a lot bigger
         clickedObjectIds.add(objectId);
         setClickedObjectIds(new Set(clickedObjectIds));
     }}>
@@ -89,7 +89,7 @@ Lastly, we need a way to tell the duck to stop or move foward. A simple variable
 let stopDuckMoving = false;
 useRequestAnimationFrame(() => {
   if (!stopDuckMoving) {
-    // update count upon each animation frame
+    // update count before each browser repaint
     const newCount = count >= 100000 ? 0 : count + 1;
     setCount(newCount);
   }
@@ -105,7 +105,7 @@ obstacleMarkers.forEach((marker) => {
 s;
 ```
 
-Put it all together, we have a moving duck that get stuck by every red cube obstacles we put on it's path. Click the cube that the duck is stuck to remove it and the duck will continue moving forward.
+Put it all together, we now have a moving duck that get stuck by every red cube obstacles we put on it's path. Click the cube that the duck is stuck in to remove it and the duck will continue moving forward.
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/j7n5r2mkr3" />
 
@@ -113,5 +113,5 @@ Put it all together, we have a moving duck that get stuck by every red cube obst
 
 Congratulations for finishing the tutorial and building your first regl-worldview app! Here is where you can go next:
 
-- Read the [API](#/docs/api) docs to learn about some of the common APIs for Worldview, camera, mouse interaction, and type support.
-- Learn about all the [Commands](#/docs/commands) such as Arrows, Cubes, Spheres, Triangles, and Lines that we support.
+- Read the [API](#/docs/api) docs to learn about some of the common APIs for Worldview, camera, mouse interaction, type support, etc.
+- Learn about the supported [Commands](#/docs/commands) such as Cubes, Spheres, Triangles, Lines, etc.

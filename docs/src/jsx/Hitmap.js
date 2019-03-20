@@ -163,8 +163,13 @@ function Example() {
             text,
             info: { color, title },
           } = item;
+
           return (
             <div
+              onClick={(ev) => {
+                // prevents clicking on the objects underneath
+                ev.stopPropagation();
+              }}
               key={item.id}
               style={{
                 transform: `translate(${left.toFixed()}px,${top.toFixed()}px)`,
@@ -173,7 +178,6 @@ function Example() {
                 background: "rgba(0, 0, 0, 0.8)",
                 color: "white",
                 maxWidth: 250,
-                pointerEvents: "none",
                 willChange: "transform",
                 fontSize: 12,
                 padding: 8,

@@ -69,7 +69,7 @@ function Example() {
                   background: "rgba(0, 0, 0, 0.8)",
                   color: "white",
                   maxWidth: 250,
-                  pointerEvents: "none",
+                  pointerEvents: "none", // enable clicking the objects underneath
                   willChange: "transform",
                   fontSize: 12,
                   padding: 8,

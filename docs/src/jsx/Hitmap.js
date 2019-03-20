@@ -167,7 +167,7 @@ function Example() {
           return (
             <div
               onClick={(ev) => {
-                // prevent from clicking the objects underneath
+                // prevents clicking on the objects underneath
                 ev.stopPropagation();
               }}
               key={item.id}

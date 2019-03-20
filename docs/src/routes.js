@@ -68,7 +68,7 @@ const ROUTE_CONFIG = [
   { name: "Guides", subRouteNames: ["Quick Start"] },
   {
     name: "Tutorial",
-    subRouteNames: ["Introduction", "Rendering Objects", "Managing Camera", "Adding Interactivity"],
+    subRouteNames: ["Introduction", "Rendering Objects", "Managing the Camera", "Adding Interactivity"],
   },
   {
     name: "Examples",

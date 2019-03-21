@@ -14,7 +14,7 @@ The WebGL [camera](https://webglfundamentals.org/webgl/lessons/webgl-3d-camera.h
 
 In this step, let's add a duck model to the center of the scene, and move the camera to observe the duck from different angles.
 
-First, let's create a Duck component using [GLTFScene](#/docs/commands/gltfscene) which we'll use to compose with other command components inside Worldview later. Remember to add the actual `Duck.glb` model file in the `src/utils` folder.
+First, let's create a Duck component using [GLTFScene](#/docs/commands/gltfscene), which we'll use to compose with other Command components, and add the `Duck.glb` model file to the `src/utils` folder.
 
 ```js
 // src/Duck.js
@@ -41,32 +41,35 @@ To move the camera, we will need to create a state that gets updated over time. 
 
 ```js
 // src/utils/useRequestAnimationFrame.js
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useEffect, useCallback } from "react";
 
+// a react hook that accepts a callback function which will be called before each browser repaint
 export default function useRequestAnimationFrame(callback) {
-  const callbackRef = useRef();
-  useEffect(() => {
-    callbackRef.current = callback;
-  });
+  // use ref so the callback will persist for the full lifetime of the component
+  const callbackRef = useRef(callback);
+  // only update callbackRef when the callback changes
+  useEffect(() => (callbackRef.current = callback), [callback]);
 
-  useEffect(() => {
-    const stop = window.requestAnimationFrame(() => {
-      callbackRef.current();
-    });
+  // persist the requestAnimationFrameId so the last refresh callback can be cancelled when component unmounts
+  const rafId = useRef();
+  // the function to be called in every requrestAnimationFrame
+  function loop() {
+    rafId.current = requestAnimationFrame(loop);
+    callbackRef.current();
+  }
 
-    return function cleanup() {
-      cancelAnimationFrame(stop);
-    };
-  });
+  // start the loop when the component mounts and cancel the animation frame when unmounts
+  useEffect(() => {
+    rafId.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId.current);
+  }, []);
 }
 ```
 
-Lastly, let's hook everything together:
+Lastly, let's hook everything together. We'll use `useRequestAnimationFrame` to increase a counter by `1` in every requestAnimaitonFrame callback, and use the counter to adjust the camera's `phi` and `thetaOffset` accordingly.
 
 ```js
 // src/Example.js
-
-// ...other imports
 
 import Duck from "./Duck";
 import useRequestAnimationFrame from "./utils/useRequestAnimationFrame";
@@ -102,7 +105,7 @@ export default function Example() {
 
 Now the camera is moving around the scene, giving us 360° view of the duck model!
 
-_Notice we've added `cameraState={cameraState}`, which turns Worldview into a [controlled](https://reactjs.org/docs/forms.html) component. Controlled components usually require an `onChange` handler, but no `onCameraStateChange` prop is needed for our example, since we don't need to know the new internal `cameraState` value._
+Notice we've added `cameraState={cameraState}`, which turns `Worldview` into a [controlled](https://reactjs.org/docs/forms.html) component. Controlled components usually require an `onChange` handler, but no `onCameraStateChange` prop is needed for our example, since we don't need to know the new internal `cameraState` value.
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/qx5zrko8nj" />
 
@@ -133,8 +136,8 @@ Next, let's remove the camera setting for `thetaOffset` and `phi`, so that we do
 // src/Example.js
 
 export default function Example() {
-  // ... other old code
-  // move the duck along the the knot by extract the sphere position over times
+  // ... other existing code
+  // move the duck along the knot by extracting the sphere position over time
   const duckPosition = marker.points[count % steps];
   // generate cameraState from `count`
   const cameraState = {
@@ -163,7 +166,7 @@ export default function Example() {
 }
 ```
 
-Voila! By simply adding the `target` position to `cameraState`, the camera now folllows the duck around!
+Voila! By adding the `target` position to `cameraState`, the camera now folllows the duck around!
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/71k2xzj8ox" />
 

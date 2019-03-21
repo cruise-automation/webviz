@@ -11,7 +11,7 @@ import Interactivity from "./1.4.Interactivity.mdx";
 import QuickStart from "./2.1.QuickStart.mdx";
 import Introduction from "./2.2.Introduction.mdx";
 import RenderingObjects from "./2.3.RenderingObjects.mdx";
-import ManagingCamera from "./2.4.ManagingCamera.mdx";
+import ManagingTheCamera from "./2.4.ManagingTheCamera.mdx";
 import AddingInteractivity from "./2.5.AddingInteractivity.mdx";
 import Worldview from "./3.1.Worldview.mdx";
 import Camera from "./3.2.Camera.mdx";
@@ -41,7 +41,7 @@ export const componentList = {
   QuickStart,
   Introduction,
   RenderingObjects,
-  ManagingCamera,
+  ManagingTheCamera,
   AddingInteractivity,
   Worldview,
   Camera,
@@ -115,9 +115,9 @@ export function getHashUrlByComponentName(name) {
   return nameToUrlMap[name];
 }
 
-// convert route names to component names, e.g. 'Quick Start' => 'QuickStart'
+// convert route names to component names, e.g. `Managing the Camera` => `ManageTheCamera`
 function getComponentName(routeName) {
-  return routeName.replace(/\s/g, "");
+  return routeName.replace(/(\b[a-z](?!\s))/g, (firstWordLetter) => firstWordLetter.toUpperCase()).replace(/\s/g, "");
 }
 
 function getSubRoutePath(subRouteName) {

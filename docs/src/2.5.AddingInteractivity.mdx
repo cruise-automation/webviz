@@ -10,11 +10,11 @@ In this step, you'll learn how to:
 
 ## Adding and Removing Obstacles along the Duck's Path
 
-In previous steps, you've learned how to interact with Worldview through mouse, keyboard, and programatic controls, all of which affect the camera. Worldiview and its Commmand components also support other [Mouse Events](#/docs/api/mouse-events), such `onClick`, `onDoubleClick`, `onMouseDown`, `onMouseMove`, and `onMouseUp`. 
+In previous steps, you've learned how to interact with Worldview through mouse, keyboard, and programatic controls, all of which affect the camera. Worldiview and its Commmand components also support other [Mouse Events](#/docs/api/mouse-events), such `onClick`, `onDoubleClick`, `onMouseDown`, `onMouseMove`, and `onMouseUp`.
 
-In this step, let's place red Cubes as obstacles along the duck's path. When the duck hits an obstacle, it should stop moving until you removed the blocking obstacle.
+In this step, let's place red cubes as obstacles along the duck's path. When the duck hits an obstacle, it should stop moving until you removed the blocking obstacle.
 
-First, let's add an `id` field to the Sphere marker to enable a hitmap and identify the Sphere being clicked.
+First, let's add an `id` field to the sphere marker so that we can identify the sphere being clicked.
 
 ```js
 const marker = {
@@ -36,7 +36,7 @@ Let's also enable manual camera movement, so we can see the duck better.
 <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, distance: 120 }}>
 ```
 
-Next, let's add a `clickedObjectIds` state to keep track of the clicked Spheres. We'll also use this `clickedObjectIds` state to generate Cube obstacles.
+Next, let's add a `clickedObjectIds` state to keep track of the clicked spheres. We'll also use this `clickedObjectIds` state to generate cube obstacles.
 
 ```js
 const [clickedObjectIds, setClickedObjectIds] = useState(new Set());
@@ -45,10 +45,10 @@ const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index
   const pointIdx = clickedObjectId - marker.id;
   const position = marker.points[pointIdx];
   return {
-    //keep the id unique by adding sphere's id range as offset: marker.id + steps
+    // keep the id unique by adding sphere's id range as offset: marker.id + steps
     id: marker.id + steps + index,
     // remember the original clickedObjectId so when the obstacle is clicked, we can
-    // remove the obstacle quickly by update clickedObjectIds
+    // remove the obstacle quickly by updating clickedObjectIds
     clickedObjectId,
     pose: {
       orientation: { x: 0, y: 0, z: 0, w: 1 },
@@ -60,13 +60,12 @@ const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index
 });
 ```
 
-Now, let's use the clicked Sphere id to update the `clickedObjectIds` state, which will be consumed by the Cube obstacles. Clicking each obstacle should remove it from the scene.
+Now, let's use the clicked sphere id to update the `clickedObjectIds` state, which will be consumed by the cube obstacles. Clicking each obstacle should remove it from the scene.
 
 ```js
  <Spheres
     onClick={(ev, { objectId, object }) => {
-        // Click once to add obstacle. Even though both the small Sphere and the big Obstacle cube have
-        // hitmap enabled, clicking again will only trigger `onClick` event on the Cube because it's a lot bigger
+        // click on the object to add an obstacle
         clickedObjectIds.add(objectId);
         setClickedObjectIds(new Set(clickedObjectIds));
     }}>
@@ -74,7 +73,7 @@ Now, let's use the clicked Sphere id to update the `clickedObjectIds` state, whi
     </Spheres>
     <Cubes
         onClick={(ev, { objectId, object }) => {
-            // the `object` contains information of the clicked Cube, which has `clickedObjectId`
+            // the `object` contains information of the clicked cube, which has `clickedObjectId`
             clickedObjectIds.delete(object.clickedObjectId);
             setClickedObjectIds(new Set(clickedObjectIds));
         }}>
@@ -82,13 +81,13 @@ Now, let's use the clicked Sphere id to update the `clickedObjectIds` state, whi
     </Cubes>
 ```
 
-Lastly, setting an `isDuckStopped` variable will allow us to tell the duck when to stop and when to move forward. 
+Lastly, setting an `shouldStopDuck` variable will allow us to tell the duck when to stop and when to move forward.
 
 ```js
 // keep track whethere we need to stop the duck from moving
-let isDuckStopped = false;
+let shouldStopDuck = false;
 useRequestAnimationFrame(() => {
-  if (!isDuckStopped) {
+  if (!shouldStopDuck) {
     // update count before each browser repaint
     const newCount = count >= 100000 ? 0 : count + 1;
     setCount(newCount);
@@ -99,19 +98,19 @@ obstacleMarkers.forEach((marker) => {
   const position = marker.pose.position;
   // make the duck stop when the duck's current position has an obstacle
   if (position.x === duckPosition.x && position.y === duckPosition.y && position.z === duckPosition.z) {
-    isDuckStopped = true;
+    shouldStopDuck = true;
   }
 });
 s;
 ```
 
-Put it all together, and we now have a moving duck that gets stuck on every Cube obstacle in its path. Clicking a blocking Cube will remove it, allowing the duck to happily continue forward.
+Putting it all together, we now have a moving duck that gets stuck on every cube obstacle in its path. Clicking a blocking cube will remove it, allowing the duck to happily continue forward.
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/j7n5r2mkr3" />
 
 ## Next Steps
 
-Congratulations on finishing this tutorial, and building your first  `regl-worldview` app! To learn more:
+Congratulations on finishing this tutorial, and building your first `regl-worldview` app! To learn more:
 
 - Read the [API docs](#/docs/api) to learn common APIs for Worldview, the camera, mouse interaction, type support, etc.
-- Read about supported WebGL [commands](#/docs/commands) – Cubes, Spheres, Triangles, Lines, etc.
+- Read about supported WebGL [Commands](#/docs/commands) – `Cubes`, `Spheres`, `Triangles`, `Lines`, etc.

@@ -13,11 +13,11 @@ In this step, you'll learn how to:
 
 Add `regl-worldview` to your package dependencies:
 
-```bash
+```json
 "regl-worldview": "latest"
 ```
 
-Create a new file titled `Example.js` in the `src/` directory, and add the code below to render a Worldview component with a red Cube and x/y/z Axes:
+Create a new file titled `Example.js` in the `src/` directory, and add the code below which renders `Worldview` with a red cube and x/y/z axes:
 
 ```js
 // src/Example.js
@@ -48,7 +48,7 @@ export default function Example() {
 }
 ```
 
-Replace the contents of `src/index.js` with the following code to render your Example component:
+Replace the contents of `src/index.js` with the following code to render your `Example` component:
 
 ```js
 // src/index.js
@@ -68,15 +68,15 @@ const rootElement = document.getElementById("root");
 ReactDOM.render(<App />, rootElement);
 ```
 
-Check your browser to see the red Cube and Axes – you have successfully created a Hello World app using Worldview! 
+Check your browser to see the red cube and axes – you have successfully created a Hello World app using Worldview!
 
-You can interact with Worldview via touch-screen to move (using 1 finger) and rotate the scene (using 2 fingers). Learn more about [controlling the camera with your keyboard](#/docs/api/worldview).
+You can interact with `Worldview` with the left click to move the scene, or right click to rotate the scene. Learn more about [controlling the camera with your keyboard](#/docs/api/worldview).
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/j7vo7yz3py" />
 
-## Adding Objects With Custom Position, Scale, and Color
+## Adding Objects with Custom Position, Scale, and Color
 
-Let's make the app dynamic by using a button click to increment a `count` state, which will in turn add a corresponding number of Cubes to the scene.
+Let's make the app dynamic by using a button click to increment a `count` state, which will in turn add a corresponding number of cubes to the scene.
 
 ```js
 // src/Example.js
@@ -90,7 +90,7 @@ export default function Example() {
         position: { x: idx * idx, y: 0, z: 0 },
       },
       scale: { x: idx + 1, y: idx + 1, z: idx + 1 },
-      // set cube to random color
+      // set cube to a random color
       color: { r: Math.random(), g: Math.random(), b: Math.random(), a: 1 },
     };
   });
@@ -107,7 +107,7 @@ export default function Example() {
 }
 ```
 
-Whenever you click the "Add a Cube” button, you'll see a new Cube with a randomly generated color getting added to the scene.
+Whenever you click the "Add a Cube” button, you'll see a new cube with a randomly generated color added to the scene.
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/lxzrxqlpym" />
 
@@ -118,7 +118,7 @@ A [trefoil](https://en.wikipedia.org/wiki/Trefoil_knot) knot is obtained by join
 ```js
 // src/Example.js
 function Example() {
-  const steps = 500; // total # of objects
+  const steps = 500; // total number of objects
 
   // map a number/index to a specific color
   function numberToColor(number, max, a = 1) {
@@ -161,14 +161,14 @@ function Example() {
 
 ## Improving Performance with Instanced Rendering
 
-When drawing many instances of the same object, you'll quickly reach a performance bottleneck with the number of GPU calls. [Instancing](https://learnopengl.com/Advanced-OpenGL/Instancing) allows us to draw many objects at once with a single render call, saving us valuable CPU -> GPU communication time. 
+When drawing many instances of the same object, you'll quickly reach a performance bottleneck with the number of GPU calls. [Instancing](https://learnopengl.com/Advanced-OpenGL/Instancing) allows us to draw many objects at once with a single render call, saving us valuable CPU -> GPU communication time.
 
 Most of the existing [Commands](#/docs/api/command) support instancing. In this step, let's convert our previous example to use instanced rendering.
 
 ```js
 // src/Example.js
 function Example() {
-  // ... other old code
+  // ... other existing code
   new Array(steps)
     .fill()
     .map((_, idx) => [
@@ -192,8 +192,8 @@ function Example() {
 }
 ```
 
-In our new example, we are rendering a single marker with 500 colors and points, instead of 500 separate markers. This change, while change, will save us a significant amount of CPU -> GPU communication time!
+In our new example, we are rendering a single marker with 500 colors and points, instead of 500 separate markers. This change will save us a significant amount of CPU -> GPU communication time!
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/jl9qv2mjyy" />
 
-Next: [Managing the Camera](#/docs/tutorial/managing-camera)
+Next: [Managing the Camera](#/docs/tutorial/managing-the-camera)

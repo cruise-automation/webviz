@@ -66,7 +66,7 @@ export default function useRequestAnimationFrame(callback) {
 }
 ```
 
-Lastly, let's hook everything together. We'll use `useRequestAnimationFrame` to increase a counter by `1` in every requestAnimaitonFrame callback, and use the counter to adjust the camera's `phi` and `thetaOffset` accordingly.
+Lastly, let's put everything together. Each frame, when our `useRequestAnimationFrame` callback is called, we'll increase a counter by 1, and use the counter to adjust the camera's `phi` and `thetaOffset`.
 
 ```js
 // src/Example.js

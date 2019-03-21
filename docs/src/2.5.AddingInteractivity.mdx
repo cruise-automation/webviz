@@ -2,19 +2,19 @@ import CodeSandboxEmbed from './jsx/utils/CodeSandboxEmbed.js';
 
 # Adding Interactivity
 
-In this step, you'll learn how to:
+In this chapter, you'll learn how to:
 
-- Set up the marker input for hitmap/mouse interaction
-- Interact with the scene through event handlers
+- Set up the objects in the scene for mouse interaction
+- Interact with objects through event handlers
 - Retrieve object and event information from the event handlers
 
 ## Adding and Removing Obstacles along the Duck's Path
 
-In previous steps, you've learned how to interact with Worldview through mouse, keyboard, and programatic controls, all of which affect the camera. Worldiview and its Commmand components also support other [Mouse Events](#/docs/api/mouse-events), such `onClick`, `onDoubleClick`, `onMouseDown`, `onMouseMove`, and `onMouseUp`.
+In previous chapters, you've learned how to interact with Worldview through mouse, keyboard, and programmatic controls, all of which affect the camera. Worldview and its [Command components](#/docs/api/command) also support other [mouse events](#/docs/api/mouse-events), such as `onClick`, `onDoubleClick`, `onMouseDown`, `onMouseMove`, and `onMouseUp`.
 
-In this step, let's place red cubes as obstacles along the duck's path. When the duck hits an obstacle, it should stop moving until you removed the blocking obstacle.
+In this step, let's make the spheres turn into large cubes when clicked. The duck will travel until it hits one of the cubes, and stop moving until you click again on the obstacle to remove it.
 
-First, let's add an `id` field to the sphere marker so that we can identify the sphere being clicked.
+First, let's add an `id` field to each sphere so that we can identify which one was clicked.
 
 ```js
 const marker = {
@@ -81,10 +81,10 @@ Now, let's use the clicked sphere id to update the `clickedObjectIds` state, whi
     </Cubes>
 ```
 
-Lastly, setting an `shouldStopDuck` variable will allow us to tell the duck when to stop and when to move forward.
+Lastly, setting a `shouldStopDuck` variable will allow us to tell the duck when to stop and when to move forward.
 
 ```js
-// keep track whethere we need to stop the duck from moving
+// keep track of whether we need to stop the duck from moving
 let shouldStopDuck = false;
 useRequestAnimationFrame(() => {
   if (!shouldStopDuck) {
@@ -110,7 +110,7 @@ Putting it all together, we now have a moving duck that gets stuck on every cube
 
 ## Next Steps
 
-Congratulations on finishing this tutorial, and building your first `regl-worldview` app! To learn more:
+Congratulations on finishing this tutorial, and building your first app using Worldview! To learn more:
 
 - Read the [API docs](#/docs/api) to learn common APIs for Worldview, the camera, mouse interaction, type support, etc.
 - Read about supported WebGL [Commands](#/docs/commands) – `Cubes`, `Spheres`, `Triangles`, `Lines`, etc.

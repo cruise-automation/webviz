@@ -115,7 +115,7 @@ export function getHashUrlByComponentName(name) {
   return nameToUrlMap[name];
 }
 
-// convert route names to component names, e.g. `Managing the Camera` => `ManageTheCamera`
+// convert route names to component names, e.g. `Managing the Camera` => `ManagingTheCamera`
 function getComponentName(routeName) {
   return routeName.replace(/(\b[a-z](?!\s))/g, (firstWordLetter) => firstWordLetter.toUpperCase()).replace(/\s/g, "");
 }

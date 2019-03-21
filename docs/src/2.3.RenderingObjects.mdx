@@ -70,13 +70,13 @@ ReactDOM.render(<App />, rootElement);
 
 Check your browser to see the red cube and axes – you have successfully created a Hello World app using Worldview!
 
-You can interact with `Worldview` with the left click to move the scene, or right click to rotate the scene. Learn more about [controlling the camera with your keyboard](#/docs/api/worldview).
+You can interact with `Worldview` by left-clicking and dragging to move the scene, or right-clicking and dragging to rotate. Learn more about [controlling the camera with your keyboard](#/docs/api/worldview).
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/j7vo7yz3py" />
 
-## Adding Objects with Custom Position, Scale, and Color
+## Controlling Objects' Position, Size, and Color
 
-Let's make the app dynamic by using a button click to increment a `count` state, which will in turn add a corresponding number of cubes to the scene.
+Let's make the app dynamic by adding a button which adds more cubes to the scene.
 
 ```js
 // src/Example.js
@@ -107,13 +107,15 @@ export default function Example() {
 }
 ```
 
-Whenever you click the "Add a Cube” button, you'll see a new cube with a randomly generated color added to the scene.
+Whenever you click the "Add a Cube" button, you'll see a new cube with a randomly generated color added to the scene.
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/lxzrxqlpym" />
 
 ## Rendering a Colorful Knot
 
-A [trefoil](https://en.wikipedia.org/wiki/Trefoil_knot) knot is obtained by joining the 2 loose ends of a common overhand knot, resulting in a knotted loop. In this step, let's apply the parametric equations of a trefoil knot and add color variations.
+Now let's render something more interesting!
+
+A [trefoil knot](https://en.wikipedia.org/wiki/Trefoil_knot) is like a common overhand knot with its two loose ends joined, resulting in a knotted loop. In this step, we'll use parametric equations to render a trefoil knot with some color variation.
 
 ```js
 // src/Example.js
@@ -161,9 +163,9 @@ function Example() {
 
 ## Improving Performance with Instanced Rendering
 
-When drawing many instances of the same object, you'll quickly reach a performance bottleneck with the number of GPU calls. [Instancing](https://learnopengl.com/Advanced-OpenGL/Instancing) allows us to draw many objects at once with a single render call, saving us valuable CPU -> GPU communication time.
+When drawing many instances of the same object, you'll quickly reach a performance bottleneck with the number of GPU calls. [Instancing](https://learnopengl.com/Advanced-OpenGL/Instancing) allows us to draw many objects at once with a single render call, saving us valuable CPU–GPU communication time.
 
-Most of the existing [Commands](#/docs/api/command) support instancing. In this step, let's convert our previous example to use instanced rendering.
+Most of the existing [Commands](#/docs/api/command) support instancing, which is why they accept **arrays** of objects as children. In this step, let's convert our previous example to use instanced rendering.
 
 ```js
 // src/Example.js
@@ -192,7 +194,7 @@ function Example() {
 }
 ```
 
-In our new example, we are rendering a single marker with 500 colors and points, instead of 500 separate markers. This change will save us a significant amount of CPU -> GPU communication time!
+Now, we are rendering 500 spheres with unique colors and positions in a single GPU draw call, rather than 500 separate calls!
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/jl9qv2mjyy" />
 

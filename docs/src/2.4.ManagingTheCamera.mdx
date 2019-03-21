@@ -2,19 +2,18 @@ import CodeSandboxEmbed from './jsx/utils/CodeSandboxEmbed.js';
 
 # Managing Camera
 
-In this step, you'll learn how to:
+In this chapter, you'll learn how to:
 
-- Control camera state
-- Move the camera
+- Control camera position and other state
 - Update the camera to follow object movements
 
 ## Moving the Camera
 
-The WebGL [camera](https://webglfundamentals.org/webgl/lessons/webgl-3d-camera.html) is designed to mimic the way a human eye sees. We've developed a simple and intuitive API that abstracts away much of the math needed to control the camera via `cameraState`. Read the [Camera docs](#/docs/api/camera) to use the playground and learn more.
+The WebGL camera uses a [perspective projection](https://webglfundamentals.org/webgl/lessons/webgl-3d-perspective.html) to mimic the way a human eye sees. Worldview has a simple `cameraState` API that abstracts away much of the math needed to control the camera. Read the [Camera docs](#/docs/api/camera) and explore the playground to learn more.
 
-In this step, let's add a duck model to the center of the scene, and move the camera to observe the duck from different angles.
+In this step, we'll add a duck model to the center of the scene, and move the camera to observe the duck from different angles.
 
-First, let's create a Duck component using [GLTFScene](#/docs/commands/gltfscene), which we'll use to compose with other Command components, and add the `Duck.glb` model file to the `src/utils` folder.
+First, let's create a `Duck` component using [GLTFScene](#/docs/commands/gltfscene), and add the `Duck.glb` model file to the `src/utils` folder. Later we'll compose this `Duck` with other commands.
 
 ```js
 // src/Duck.js
@@ -22,7 +21,7 @@ import React from "react";
 import { GLTFScene } from "regl-worldview";
 import duckModel from "./utils/Duck.glb";
 
-export default function Example() {
+export default function Duck() {
   return (
     <GLTFScene model={duckModel}>
       {{
@@ -37,7 +36,7 @@ export default function Example() {
 }
 ```
 
-To move the camera, we will need to create a state that gets updated over time. [window.requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) generally matches the display refresh rate. Let's add a [React Hook](https://reactjs.org/docs/hooks-intro.html) that accepts a callback which will be called before each browser repaint.
+To move the camera, we will need to store some state that changes over time. Let's add a [React Hook](https://reactjs.org/docs/hooks-intro.html) that accepts a callback which will be called at each timestep. We'll use [window.requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) to keep our state updates in sync with the display refresh rate.
 
 ```js
 // src/utils/useRequestAnimationFrame.js
@@ -105,7 +104,7 @@ export default function Example() {
 
 Now the camera is moving around the scene, giving us a 360° view of the duck model!
 
-Notice we've added `cameraState={cameraState}`, which turns `Worldview` into a [controlled](https://reactjs.org/docs/forms.html) component. Controlled components usually require an `onChange` handler, but no `onCameraStateChange` prop is needed for our example, since we don't need to know the new internal `cameraState` value.
+Notice that we've added `cameraState={cameraState}`, which turns `Worldview` into a [controlled component](https://reactjs.org/docs/forms.html). Controlled components usually require an `onChange` handler, but no `onCameraStateChange` prop is needed for our example, since we don't need to do anything with the new `cameraState` value.
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/qx5zrko8nj" />
 
@@ -130,7 +129,7 @@ export default function Example({ children = DEFAULT_CHILDREN }) {
 }
 ```
 
-Next, let's remove the camera setting for `thetaOffset` and `phi`, so that we don't feel dizzy observing the scene while the duck is moving. We can derive the duck position from the spheres over time, and use the duck position as `target` input for `cameraState`.
+Next, let's remove the camera setting for `thetaOffset` and `phi`, so that we don't get dizzy watching the scene while the duck moves. We can derive the duck's position from the spheres over time, and use the duck position as `target` input for `cameraState`.
 
 ```js
 // src/Example.js
@@ -166,8 +165,8 @@ export default function Example() {
 }
 ```
 
-Voila! By adding the `target` position to `cameraState`, the camera now folllows the duck around!
+Voilà! By adding the `target` position to `cameraState`, the camera now follows the duck around!
 
 <CodeSandboxEmbed src="https://codesandbox.io/s/71k2xzj8ox" />
 
-Next: [Adding Interactivity](#/docs/tutorial/adding-interactivity)
+Next, let's [make our scene interactive](#/docs/tutorial/adding-interactivity) by handling mouse events.

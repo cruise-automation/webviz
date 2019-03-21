@@ -40,6 +40,7 @@ import Worldview, {
   getCSSColor,
   intToRGB,
   cameraStateSelectors,
+  getRayFromClick,
 } from "regl-worldview";
 
 // Add required packages and files for all examples to run
@@ -113,7 +114,7 @@ export const scope = {
   Text,
   GLTFScene,
   withPose,
-
+  getRayFromClick,
   duckModel,
 };
 

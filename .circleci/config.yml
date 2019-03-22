@@ -21,6 +21,9 @@ jobs:
             - regl-worldview-deps-{{ checksum "packages/regl-worldview/package-lock.json" }}
             - regl-worldview-deps-
 
+      - run: whoami
+      - run: ip addr
+      - run: env
       - run: docker run -v `pwd`:`pwd` -w `pwd` -it --rm -e CI cruise/webviz-ci:0.0.3 npm run ci
 
       - save_cache:

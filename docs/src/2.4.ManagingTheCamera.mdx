@@ -36,32 +36,54 @@ export default function Duck() {
 }
 ```
 
+Let's put the duck in the scene before going to the next steps:
+
+```js
+// src/Example.js
+
+import Duck from "./Duck";
+
+export default function Example() {
+  // ...other existing code
+  return (
+    <Worldview cameraState={cameraState}>
+      <Spheres>{[sphereMarker]}</Spheres>
+      <Axes />
+      <Duck />
+    </Worldview>
+  );
+}
+```
+
 To move the camera, we will need to store some state that changes over time. Let's add a [React Hook](https://reactjs.org/docs/hooks-intro.html) that accepts a callback which will be called at each timestep. We'll use [window.requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) to keep our state updates in sync with the display refresh rate.
 
 ```js
 // src/utils/useRequestAnimationFrame.js
-import { useLayoutEffect, useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect } from "react";
 
 // a react hook that accepts a callback function which will be called before each browser repaint
-export default function useRequestAnimationFrame(callback) {
-  // use ref so the callback will persist for the full lifetime of the component
-  const callbackRef = useRef(callback);
-  // only update callbackRef when the callback changes
-  useEffect(() => (callbackRef.current = callback), [callback]);
-
+export default function useRequestAnimationFrame(callback, disable, dependencies) {
   // persist the requestAnimationFrameId so the last refresh callback can be cancelled when component unmounts
   const rafId = useRef();
-  // the function to be called in every requrestAnimationFrame
-  function loop() {
-    rafId.current = requestAnimationFrame(loop);
-    callbackRef.current();
-  }
-
   // start the loop when the component mounts and cancel the animation frame when unmounts
-  useEffect(() => {
-    rafId.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafId.current);
-  }, []);
+  // or related dependency changes
+  useEffect(
+    () => {
+      if (!disable) {
+        function createAnimationFrame() {
+          rafId.current = requestAnimationFrame((timestamp) => {
+            callback(timestamp);
+            createAnimationFrame();
+          });
+        }
+        createAnimationFrame();
+      }
+      return function cleanup() {
+        cancelAnimationFrame(rafId.current);
+      };
+    },
+    [disable, callback, ...dependencies]
+  );
 }
 ```
 
@@ -79,12 +101,13 @@ export default function Example() {
   const [count, setCount] = useState(0);
   useRequestAnimationFrame(() => {
     // update count before each browser repaint
-    const newCount = count + 2 >= steps ? 0 : count + 1;
+    const newCount = (count + 1) % steps;
     setCount(newCount);
   });
 
-  // generate cameraState from `count`
   const cameraState = {
+    // Default setting for cameraState.
+    // Learn more at https://cruise-automation.github.io/webviz/worldview/#/docs/api/camera
     ...DEFAULT_CAMERA_STATE,
     phi: count * cameraMoveSpeed * Math.PI,
     thetaOffset: count * cameraMoveSpeed * 2 * Math.PI,
@@ -94,7 +117,7 @@ export default function Example() {
 
   return (
     <Worldview cameraState={cameraState}>
-      <Spheres>{[marker]}</Spheres>
+      <Spheres>{[sphereMarker]}</Spheres>
       <Axes />
       <Duck />
     </Worldview>
@@ -137,7 +160,7 @@ Next, let's remove the camera setting for `thetaOffset` and `phi`, so that we do
 export default function Example() {
   // ... other existing code
   // move the duck along the knot by extracting the sphere position over time
-  const duckPosition = marker.points[count % steps];
+  const duckPosition = sphereMarker.points[count % steps];
   // generate cameraState from `count`
   const cameraState = {
     ...DEFAULT_CAMERA_STATE,
@@ -149,7 +172,7 @@ export default function Example() {
 
   return (
     <Worldview cameraState={cameraState}>
-      <Spheres>{[marker]}</Spheres>
+      <Spheres>{[sphereMarker]}</Spheres>
       <Axes />
       <Duck>
         {{

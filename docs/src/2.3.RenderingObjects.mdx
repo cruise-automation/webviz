@@ -17,12 +17,12 @@ Add `regl-worldview` to your [package dependencies](https://docs.npmjs.com/speci
 "regl-worldview": "latest"
 ```
 
-Create a new file titled `Example.js` in the `src/` directory, and add the code below which uses the `Worldview` component to render a red cube and x/y/z axes:
+Create a new file titled `Example.js` in the `src/` directory, and add the code below which uses the `Worldview` component to render a red cube, x/y/z axes, and "Hello, Worldview!" text.
 
 ```js
 // src/Example.js
 import React from "react";
-import Worldview, { Cubes, Axes } from "regl-worldview";
+import Worldview, { Cubes, Axes, Text } from "regl-worldview";
 
 export default function Example() {
   return (
@@ -37,12 +37,24 @@ export default function Example() {
             },
             scale: { x: 10, y: 10, z: 10 },
             // rgba values are between 0 and 1 (inclusive)
-            // http://wiki.ros.org/rviz/DisplayTypes/Marker
             color: { r: 1, g: 0, b: 0, a: 1 },
           },
         ]}
       </Cubes>
       <Axes />
+      <Text autoBackgroundColor>
+        {[
+          {
+            text: "Hello, Worldview! ",
+            color: { r: 1, g: 1, b: 1, a: 1 },
+            pose: {
+              orientation: { x: 0, y: 0, z: 0, w: 1 },
+              position: { x: 0, y: 5, z: 10 },
+            },
+            scale: { x: 1, y: 1, z: 1 },
+          },
+        ]}
+      </Text>
     </Worldview>
   );
 }
@@ -58,6 +70,7 @@ import Example from "./Example";
 
 function App() {
   return (
+    {/* set the Worldview container to 100% view height and view width so it covers the whole screen */}
     <div style={{ width: "100vw", height: "100vh" }}>
       <Example />
     </div>
@@ -82,7 +95,7 @@ Let's make the app dynamic by adding a button which adds more cubes to the scene
 // src/Example.js
 export default function Example() {
   const [count, setCount] = useState(1);
-  const markers = new Array(count).fill().map((_, idx) => {
+  const sphereMarkers = new Array(count).fill().map((_, idx) => {
     return {
       pose: {
         orientation: { x: 0, y: 0, z: 0, w: 1 },
@@ -100,7 +113,7 @@ export default function Example() {
       <button style={{ position: "absolute", top: 0, left: 0 }} onClick={() => setCount(count + 1)}>
         Add a Cube
       </button>
-      <Cubes>{markers}</Cubes>
+      <Cubes>{sphereMarkers}</Cubes>
       <Axes />
     </Worldview>
   );
@@ -133,7 +146,7 @@ function Example() {
 
   // the object index needs to be multipled by this scale so it's evenly distributed in the space
   const scale = (Math.PI * 2) / steps;
-  const markers = new Array(steps)
+  const sphereMarkers = new Array(steps)
     .fill()
     .map((_, idx) => [
       // generate x, y, z coordinates based on trefoil equation
@@ -152,7 +165,7 @@ function Example() {
 
   return (
     <Worldview>
-      <Spheres>{markers}</Spheres>
+      <Spheres>{sphereMarkers}</Spheres>
       <Axes />
     </Worldview>
   );
@@ -181,13 +194,13 @@ function Example() {
     ])
     .forEach(([x, y, z], idx) => {
       // add individual point and color to the single sphere object
-      marker.colors.push(numberToColor(idx, steps));
-      marker.points.push({ x: x * 20, y: y * 20, z: z * 20 });
+      sphereMarker.colors.push(numberToColor(idx, steps));
+      sphereMarker.points.push({ x: x * 20, y: y * 20, z: z * 20 });
     });
 
   return (
     <Worldview>
-      <Spheres>{[marker]}</Spheres>
+      <Spheres>{[sphereMarker]}</Spheres>
       <Axes />
     </Worldview>
   );

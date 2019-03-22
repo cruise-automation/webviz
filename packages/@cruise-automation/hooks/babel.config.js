@@ -4,5 +4,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-export * from "../src/index";
-export { default } from "../src/index";
+const baseConfig = require("../../../babel.config");
+
+module.exports = {
+  ...baseConfig,
+  plugins: baseConfig.plugins.filter((plugin) => plugin !== "@babel/plugin-transform-modules-commonjs"),
+};

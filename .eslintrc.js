@@ -47,5 +47,8 @@ module.exports = {
     // TODO(JP): Fix this instead of disabling it:
     "import/no-named-as-default": "off",
     "prefer-arrow-callback": ["error", { allowNamedFunctions: true }],
+    // TODO(Audrey): enable after webviz-core is upgraded
+    // "react-hooks/rules-of-hooks": "error",
+    // "react-hooks/exhaustive-deps": "warn",
   },
 };

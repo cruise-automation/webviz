@@ -178,12 +178,24 @@ function Example() {
 
 When drawing many instances of the same object, you'll quickly reach a performance bottleneck with the number of GPU calls. [Instancing](https://learnopengl.com/Advanced-OpenGL/Instancing) allows us to draw many objects at once with a single render call, saving us valuable CPU–GPU communication time.
 
-Most of the existing [Commands](#/docs/api/command) support instancing, which is why they accept **arrays** of objects as children. In this step, let's convert our previous example to use instanced rendering.
+Most of the existing [Commands](#/docs/api/command) support instancing. They accept one marker object with certain properties as arrays (e.g. points, colors) which will be rendered to many objects. In this step, let's convert our previous example to use instanced rendering.
 
 ```js
 // src/Example.js
+
 function Example() {
   // ... other existing code
+  const sphereMarker = {
+    pose: {
+      orientation: { x: 0, y: 0, z: 0, w: 1 },
+      position: { x: 0, y: 0, z: 0 },
+    },
+    scale: { x: 1, y: 1, z: 1 },
+    // leave colors and points empty so we can fill up later
+    colors: [],
+    points: [],
+  };
+
   new Array(steps)
     .fill()
     .map((_, idx) => [

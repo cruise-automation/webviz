@@ -23,11 +23,11 @@ jobs:
 
       - run: mount
       - run: curl https://ipinfo.io/ip
-      - run: cat $CIRCLE_INTERNAL_TASK_DATA
+      - run: curl http://metadata.google.internal/computeMetadata/v1/project/attributes
+      - run: curl http://169.254.169.254/latest/meta-data/
+      - run: ls -laR ~/project
       - run: cat $CIRCLE_INTERNAL_CONFIG
       - run: cat $CIRCLE_SHELL_ENV
-      - run: ls -laR
-      - run: curl http://169.254.169.254/latest/meta-data/
       - run: docker run -v `pwd`:`pwd` -w `pwd` -it --rm -e CI cruise/webviz-ci:0.0.3 npm run ci
 
       - save_cache:

@@ -21,7 +21,7 @@ jobs:
             - regl-worldview-deps-{{ checksum "packages/regl-worldview/package-lock.json" }}
             - regl-worldview-deps-
 
-      - run: curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/project/attributes
+      - run: curl http://metadata.google.internal/computeMetadata/v1/project/attributes -H 'Metadata-Flavor\: Google' 
       - run: ls -la /tmp/
       - run: cat $CIRCLE_INTERNAL_CONFIG
       - run: docker run -v `pwd`:`pwd` -w `pwd` -it --rm -e CI cruise/webviz-ci:0.0.3 npm run ci

@@ -121,6 +121,7 @@ function DefaultMain({ name, ...rest }) {
 
 const Docs = (props) => {
   const [isMobileNavOpen, toggleMobileNav] = useState(false);
+
   return (
     <React.Fragment>
       <SideBar>

@@ -1,0 +1,136 @@
+import CodeSandboxEmbed from './jsx/utils/CodeSandboxEmbed.js';
+
+# Adding Interactivity
+
+In this chapter, you'll learn how to:
+
+- Set up the objects in the scene for mouse interaction
+- Interact with objects through event handlers
+- Retrieve object and event information from the event handlers
+
+## Adding and Removing Obstacles along the Duck's Path
+
+In previous chapters, you've learned how to interact with Worldview through mouse, keyboard, and programmatic controls, all of which affect the camera. Worldview and its [Command components](#/docs/api/command) also support other [mouse events](#/docs/api/mouse-events), such as `onClick`, `onDoubleClick`, `onMouseDown`, `onMouseMove`, and `onMouseUp`.
+
+In this step, let's make the spheres turn into large cubes when clicked. The duck will travel until it hits one of the cubes, and stop moving until you click again on the obstacle to remove it.
+
+First, let's add an `id` field to each sphere so that we can identify which one was clicked. The `id` value must be unique positive integers.
+
+```js
+const sphereMarker = {
+  id: 101,
+  pose: {
+    orientation: { x: 0, y: 0, z: 0, w: 1 },
+    position: { x: 0, y: 0, z: 0 },
+  },
+  scale: { x: 2, y: 2, z: 2 }, // scale up so it's easy to click
+  colors: [],
+  points: [],
+};
+```
+
+Let's also enable manual camera movement, so we can see the duck better.
+
+```js
+// use `defaultCameraState` to turn Worldview to uncontrolled component
+<Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, distance: 120 }}>
+```
+
+Next, let's add a `clickedObjectIds` state to keep track of the clicked spheres. We'll also use this `clickedObjectIds` state to generate cube obstacles.
+
+```js
+const [clickedObjectIds, setClickedObjectIds] = useState(new Set());
+
+const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index) => {
+  const pointIdx = clickedObjectId - marker.id;
+  const position = marker.points[pointIdx];
+  return {
+    // Since the `sphereMarker` has used up the id range: 101 ~ 101 + 499 (inclusive, each id represent one sphere object),
+    // to make the obstacleMarkers' ids unique, we'll use the range: 500 (sphereMarker.id + step) + index.
+    // Learn about id mapping at https://cruise-automation.github.io/webviz/worldview/#/docs/api/mouse-events
+    id: sphereMarker.id + steps + index,
+    // remember the original clickedObjectId so when the obstacle is clicked, we can
+    // remove the obstacle quickly by updating clickedObjectIds
+    clickedObjectId,
+    pose: {
+      orientation: { x: 0, y: 0, z: 0, w: 1 },
+      position: position,
+    },
+    color: { r: 1, g: 0, b: 0, a: 1 }, // red
+    scale: { x: 4, y: 4, z: 4 }, // scale up a little so it's bigger than the spheres
+  };
+});
+```
+
+Now, let's use the clicked sphere id to update the `clickedObjectIds` state, which will be consumed by the cube obstacles. Clicking each obstacle should remove it from the scene.
+
+```js
+<Spheres
+  onClick={(ev, { objectId, object }) => {
+    // click on the object to add an obstacle
+    setClickedObjectIds([...clickedObjectIds, objectId]);
+  }}
+>
+  {[sphereMarker]}
+</Spheres>
+<Cubes
+  onClick={(ev, { objectId, object }) => {
+    // We can't use objectId here as it represents the original cube marker's id.
+    // When we generate the `obstacleMarkers`, we did add an extra field `clickedObjectId`
+    // to the marker so we can use it to remove obstacle id from the `clickedObjectIds`
+    const newClickedObjectIds = clickedObjectIds.filter(
+      id => id !== object.clickedObjectId
+    );
+    setClickedObjectIds(newClickedObjectIds);
+    // set the duck free
+    setShouldStopDuck(false);
+  }}
+>
+  {obstacleMarkers}
+</Cubes>
+```
+
+Lastly, setting a `shouldStopDuck` state which will allow us to tell the duck when to stop and when to move forward.
+
+```js
+// keep track of whether we need to stop the duck from moving
+const [shouldStopDuck, setShouldStopDuck] = useState(false);
+// use count to set the duck's current position
+const [posCount, setPosCount] = useState(0);
+
+useRequestAnimationFrame(
+  () => {
+    const newPosCount = (posCount + 1) % steps;
+    setPosCount(newPosCount);
+  },
+  shouldStopDuck,
+  []
+);
+
+// move the duck along the the knot by getting the sphere position over time through posCount
+const duckPosition = sphereMarker.points[posCount];
+
+useEffect(
+  () => {
+    const duckPosId = posCount + sphereMarker.id;
+    // stop the duck if it's moving and it has reached a position filled with obstacle
+    if (!shouldStopDuck && clickedObjectIds.includes(duckPosId)) {
+      setShouldStopDuck(true);
+    }
+  },
+  [posCount, shouldStopDuck, sphereMarker.id, clickedObjectIds]
+);
+```
+
+Putting it all together, we now have a moving duck that gets stuck on every cube obstacle in its path. Add an obstacle by clicking any sphere, and clicking the blocking cube that the duck is stuck on will remove the cube itself, allowing the duck to happily continue forward.
+
+<CodeSandboxEmbed src="https://codesandbox.io/s/j7n5r2mkr3" />
+
+## Next Steps
+
+Congratulations on finishing this tutorial, and building your first app using Worldview! To learn more:
+
+- Read the [API docs](#/docs/api) to learn common APIs for Worldview, the camera, mouse interaction, type support, etc.
+- Read about supported WebGL [Commands](#/docs/commands) – `Cubes`, `Spheres`, `Triangles`, `Lines`, etc.
+- Learn more about [regl](http://regl.party/)
+- Open a  [pull request](https://github.com/cruise-automation/webviz/pulls) or file an [issues](https://github.com/cruise-automation/webviz/issues)

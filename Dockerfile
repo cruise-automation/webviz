@@ -6,7 +6,7 @@
 
 # This container is published at https://hub.docker.com/r/cruise/webviz-ci.
 
-FROM node:10.14-slim
+FROM node:10.15.3-slim
 
 # Install some general dependencies for stuff below and for CircleCI;
 # https://circleci.com/docs/2.0/custom-images/#required-tools-for-primary-containers

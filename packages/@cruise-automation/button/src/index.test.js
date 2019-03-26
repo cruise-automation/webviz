@@ -89,21 +89,6 @@ describe("<Button />", () => {
     expect(clicked).toBe(false);
   });
 
-  it("does not fire click callback if mouse leaves button before delay", (done: any) => {
-    const fail = () => done("Should not have called click callback");
-    const el = mount(
-      <Button delay={1} onClick={fail}>
-        hello
-      </Button>
-    );
-    el.simulate("mouseDown");
-    el.simulate("mouseUp");
-    setTimeout(() => {
-      done();
-      el.unmount();
-    }, 10);
-  });
-
   it("can control mousedown via external calls", (done: any) => {
     const onClick = () => {
       el.unmount(); // eslint-disable-line no-use-before-define

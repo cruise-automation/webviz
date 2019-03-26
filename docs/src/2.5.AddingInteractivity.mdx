@@ -47,7 +47,7 @@ const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index
   const position = sphereMarker.points[pointIdx];
   return {
     // Since the `sphereMarker` has used up the id range: 101 ~ 101 + 499 (inclusive, each id represent one sphere object),
-    // to make the obstacleMarkers' ids unique, we'll use the range: 500 (sphereMarker.id + step) + index.
+    // to make the obstacleMarkers' ids unique, we'll use the range: 600 (sphereMarker.id + step) + index.
     // Learn about id mapping at https://cruise-automation.github.io/webviz/worldview/#/docs/api/mouse-events
     id: sphereMarker.id + steps + index,
     // remember the original clickedObjectId so when the obstacle is clicked, we can
@@ -58,7 +58,7 @@ const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index
       position: position,
     },
     color: { r: 1, g: 0, b: 0, a: 1 }, // red
-    scale: { x: 5, y: 5, z: 5 }, // scale up a little so it's bigger than the spheres
+    scale: { x: 6, y: 6, z: 6 }, // scale up a little so it's bigger than the spheres
   };
 });
 ```

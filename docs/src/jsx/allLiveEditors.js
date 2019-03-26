@@ -49,6 +49,10 @@ export const C14InstancedRendering = makeCodeComponent(
 export const C21MoveCamea = makeCodeComponent(require("!!raw-loader!./C21MoveCamea"), "RenderingObjects");
 
 export const C22FollowObject = makeCodeComponent(require("!!raw-loader!./C22FollowObject"), "RenderingObjects");
+export const C23FollowObjectOrientation = makeCodeComponent(
+  require("!!raw-loader!./C23FollowObjectOrientation"),
+  "RenderingObjects"
+);
 
 export const C31AddRemoveObstacles = makeCodeComponent(
   require("!!raw-loader!./C31AddRemoveObstacles"),

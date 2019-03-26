@@ -80,7 +80,7 @@ function Example() {
         position,
       },
       color: { r: 1, g: 0, b: 0, a: 1 }, // red
-      scale: { x: 5, y: 5, z: 5 }, // scale up a little so it's bigger than the spheres
+      scale: { x: 6, y: 6, z: 6 }, // scale up a little so it's bigger than the spheres
     };
   });
   const duckPosition = sphereMarker.points[count];
@@ -96,7 +96,12 @@ function Example() {
   );
 
   return (
-    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, distance: 160 }}>
+    <Worldview
+      defaultCameraState={{
+        ...DEFAULT_CAMERA_STATE,
+        distance: 160,
+        thetaOffset: -Math.PI / 2, // rotate the camera so the duck is facing right
+      }}>
       <Spheres
         onClick={(ev, { objectId }) => {
           setClickedObjectIds([...clickedObjectIds, objectId]);

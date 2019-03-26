@@ -69,6 +69,7 @@ function Example() {
         ...DEFAULT_CAMERA_STATE,
         // This is the magic! Simply supply the target position and the camera will follow
         target: [duckPosition.x, duckPosition.y, duckPosition.z],
+        thetaOffset: -Math.PI / 2, // rotate the camera so the duck is facing right
         // zoom out a little so we can see better
         distance: 160,
       }}>

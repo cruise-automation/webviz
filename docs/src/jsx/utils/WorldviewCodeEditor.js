@@ -4,6 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { quat, vec3 } from "gl-matrix";
 import last from "lodash/last";
 import remove from "lodash/remove";
 import sample from "lodash/sample";
@@ -87,6 +88,8 @@ const CODE_SANDBOX_CONFIG = {
 };
 
 export const scope = {
+  quat,
+  vec3,
   intToRGB,
   cameraStateSelectors,
   getCSSColor,

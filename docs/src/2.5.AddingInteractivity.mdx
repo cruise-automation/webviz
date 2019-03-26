@@ -42,8 +42,8 @@ Next, let's add a `clickedObjectIds` state to keep track of the clicked spheres.
 const [clickedObjectIds, setClickedObjectIds] = useState(new Set());
 
 const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index) => {
-  const pointIdx = clickedObjectId - marker.id;
-  const position = marker.points[pointIdx];
+  const pointIdx = clickedObjectId - sphereMarker.id;
+  const position = sphereMarker.points[pointIdx];
   return {
     // Since the `sphereMarker` has used up the id range: 101 ~ 101 + 499 (inclusive, each id represent one sphere object),
     // to make the obstacleMarkers' ids unique, we'll use the range: 500 (sphereMarker.id + step) + index.

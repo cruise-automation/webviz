@@ -23,6 +23,7 @@ export const DEFAULT_MOUSE_CLICK_RADIUS = 3;
 
 export type BaseProps = {|
   keyMap?: CameraKeyMap,
+  shiftKeys: boolean,
   backgroundColor?: Vec4,
   // rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
@@ -74,6 +75,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   static defaultProps = {
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
+    shiftKeys: true,
     style: {},
   };
 
@@ -260,12 +262,12 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, showDebug, keyMap, style } = this.props;
+    const { width, height, showDebug, keyMap, shiftKeys, style } = this.props;
     const { worldviewContext } = this.state;
 
     return (
       <div style={{ position: "relative", overflow: "hidden", ...style }}>
-        <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap}>
+        <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap} shiftKeys={shiftKeys}>
           <canvas
             style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
             width={width}

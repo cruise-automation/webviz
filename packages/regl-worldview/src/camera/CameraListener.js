@@ -20,16 +20,16 @@ const KEYBOARD_ZOOM_SPEED = 150;
 const KEYBOARD_SPIN_SPEED = 1.5;
 
 const DEFAULT_KEYMAP: CameraKeyMap = {
-  a: "moveLeft",
-  d: "moveRight",
-  e: "rotateRight",
-  f: "tiltUp",
-  q: "rotateLeft",
-  r: "tiltDown",
-  s: "moveDown",
-  w: "moveUp",
-  x: "zoomOut",
-  z: "zoomIn",
+  KeyA: "moveLeft",
+  KeyD: "moveRight",
+  KeyE: "rotateRight",
+  KeyF: "tiltUp",
+  KeyQ: "rotateLeft",
+  KeyR: "tiltDown",
+  KeyS: "moveDown",
+  KeyW: "moveUp",
+  KeyX: "zoomOut",
+  KeyZ: "zoomIn",
 };
 
 type KeyMotion = { x?: number, y?: number, zoom?: number, yaw?: number, tilt?: number };
@@ -37,8 +37,8 @@ type KeyMotion = { x?: number, y?: number, zoom?: number, yaw?: number, tilt?: n
 type Props = {|
   cameraStore: CameraStore,
   keyMap?: CameraKeyMap,
+  shiftKeys: boolean,
   children?: React.ChildrenArray<React.Element<any> | null>,
-  onKeyDown?: (KeyboardEvent) => void,
 |};
 
 // attaches mouse and keyboard listeners to allow for moving the camera on user input
@@ -112,6 +112,7 @@ export default class CameraListener extends React.Component<Props> {
   }
 
   _getMoveMagnitude() {
+    // avoid interference with drawing tools
     if (this._ctrlKey) {
       return { x: 0, y: 0 };
     }
@@ -124,15 +125,13 @@ export default class CameraListener extends React.Component<Props> {
     if (perspective) {
       // in perspective mode its more like flying, so move by the magnitude
       // we use the camera distance as a heuristic
-      const magnitude = this._getMagnitude(distance);
-
-      return { x: magnitude, y: magnitude };
+      return { x: distance, y: distance };
     }
     // in orthographic mode we know the exact viewable area
     // which is a square so we can move exactly percentage within it
     const { width, height } = this._rect;
     const bounds = getOrthographicBounds(distance, width, height);
-    return { x: this._getMagnitude(bounds.width), y: this._getMagnitude(bounds.height) };
+    return { x: bounds.width, y: bounds.height };
   }
 
   _onWindowMouseMove = (e: MouseEvent) => {
@@ -174,7 +173,7 @@ export default class CameraListener extends React.Component<Props> {
 
     if (this._isLeftMouseDown()) {
       const { x, y } = this._getMoveMagnitude();
-      cameraMove([moveX * x, -moveY * y]);
+      cameraMove([this._getMagnitude(moveX * x), this._getMagnitude(-moveY * y)]);
     }
   };
 
@@ -214,12 +213,16 @@ export default class CameraListener extends React.Component<Props> {
     }
   }
 
-  getKeyMotion = (key: string): ?KeyMotion => {
+  _getKeyMotion = (code: string): ?KeyMotion => {
     const moveSpeed = this._getMagnitude(KEYBOARD_MOVE_SPEED);
     const zoomSpeed = this._getMagnitude(KEYBOARD_ZOOM_SPEED);
     const spinSpeed = this._getMagnitude(KEYBOARD_SPIN_SPEED);
-    const { keyMap } = this.props;
-    const action: CameraAction | false = (keyMap && keyMap[key]) || DEFAULT_KEYMAP[key] || false;
+    const { keyMap, shiftKeys } = this.props;
+    const action: CameraAction | false = (keyMap && keyMap[code]) || DEFAULT_KEYMAP[code] || false;
+
+    if (this._shiftKey && !shiftKeys) {
+      return null;
+    }
 
     switch (action) {
       case "moveRight":
@@ -251,10 +254,10 @@ export default class CameraListener extends React.Component<Props> {
     }
   };
 
-  moveKeyboard(dt: number) {
+  _moveKeyboard(dt: number) {
     const motion = { x: 0, y: 0, zoom: 0, yaw: 0, tilt: 0 };
-    this._keys.forEach((key) => {
-      const { x = 0, y = 0, zoom = 0, yaw = 0, tilt = 0 } = this.getKeyMotion(key) || {};
+    this._keys.forEach((code) => {
+      const { x = 0, y = 0, zoom = 0, yaw = 0, tilt = 0 } = this._getKeyMotion(code) || {};
       motion.x += x;
       motion.y += y;
       motion.zoom += zoom;
@@ -288,7 +291,7 @@ export default class CameraListener extends React.Component<Props> {
       return;
     }
     this._keyTimer = requestAnimationFrame((stamp) => {
-      this.moveKeyboard((lastStamp ? stamp - lastStamp : 0) / 1000);
+      this._moveKeyboard((lastStamp ? stamp - lastStamp : 0) / 1000);
       this._keyTimer = undefined;
 
       // Only start the timer if keys are still pressed.
@@ -309,45 +312,45 @@ export default class CameraListener extends React.Component<Props> {
     this._keyTimer = undefined;
   }
 
-  _onKeyDown = (e: KeyboardEvent) => {
-    const { onKeyDown, keyMap } = this.props;
+  _onKeyDown = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
+    const { keyMap } = this.props;
     this._shiftKey = e.shiftKey;
     this._metaKey = e.metaKey;
     this._ctrlKey = e.ctrlKey;
+    const code = ((e.nativeEvent: any): KeyboardEvent).code;
+
+    // ignore repeated keydown events
+    if (e.repeat || this._keys.has(code)) {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
 
     if (e.altKey || e.ctrlKey || e.metaKey) {
-      if (onKeyDown) {
-        onKeyDown(e);
-      }
       // we don't currently handle these modifiers
       return;
     }
 
     // allow null, false, or empty keymappings which explicitly cancel Worldview from processing that key
-    if (keyMap && e.key in keyMap && !keyMap[e.key]) {
+    if (keyMap && code in keyMap && !keyMap[code]) {
       return false;
     }
 
-    // ignore repeated keydown events
-    if (this._keys.has(e.key)) {
-      e.stopPropagation();
-      e.preventDefault();
-    } else if (this.getKeyMotion(e.key)) {
-      this._keys.add(e.key);
+    // if we respond to this key, start the update timer
+    if (this._getKeyMotion(code)) {
+      this._keys.add(code);
       this._startKeyTimer();
       e.stopPropagation();
       e.preventDefault();
-    } else if (onKeyDown) {
-      onKeyDown(e);
     }
   };
 
-  _onKeyUp = (e: KeyboardEvent) => {
+  _onKeyUp = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
     this._shiftKey = e.shiftKey;
     this._metaKey = e.metaKey;
     this._ctrlKey = e.ctrlKey;
 
-    this._keys.delete(e.key);
+    this._keys.delete(((e.nativeEvent: any): KeyboardEvent).code);
   };
 
   _onWheel = (e: WheelEvent) => {

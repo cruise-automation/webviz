@@ -83,7 +83,7 @@ const HelloWorldview = () => {
       </Container>
       <WorldviewCodeEditor
         height={750}
-        componentName="HelloWorld"
+        componentName=""
         code={`
 function Example() {
   const n = ${spheresPerAxis};

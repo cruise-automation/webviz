@@ -35,6 +35,28 @@ export const Arrows = makeCodeComponent(require("!!raw-loader!./Arrows"), "Arrow
 
 export const BasicExample = makeCodeComponent(require("!!raw-loader!./BasicExample"), "BasicExample");
 
+export const C11HelloWorld = makeCodeComponent(require("!!raw-loader!./C11HelloWorld"), "RenderingObjects");
+
+export const C12CustomObject = makeCodeComponent(require("!!raw-loader!./C12CustomObject"), "RenderingObjects");
+
+export const C13ColorfulKnot = makeCodeComponent(require("!!raw-loader!./C13ColorfulKnot"), "RenderingObjects");
+
+export const C14InstancedRendering = makeCodeComponent(
+  require("!!raw-loader!./C14InstancedRendering"),
+  "RenderingObjects"
+);
+
+export const C21MoveCamea = makeCodeComponent(require("!!raw-loader!./C21MoveCamea"), "RenderingObjects");
+
+export const C22FollowObject = makeCodeComponent(require("!!raw-loader!./C22FollowObject"), "RenderingObjects");
+
+export const C31AddRemoveObstacles = makeCodeComponent(
+  require("!!raw-loader!./C31AddRemoveObstacles"),
+  "RenderingObjects"
+);
+
+export const C32StopReleaseDuck = makeCodeComponent(require("!!raw-loader!./C32StopReleaseDuck"), "RenderingObjects");
+
 export const CameraStateControlled = makeCodeComponent(
   require("!!raw-loader!./CameraStateControlled"),
   "CameraStateControlled"

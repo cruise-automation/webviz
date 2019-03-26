@@ -19,6 +19,7 @@ import duckModel from "./Duck.glb";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
 import useRange from "./useRange";
+import useRequestAnimationFrame from "./useRequestAnimationFrame";
 import Worldview, {
   Command,
   Arrows,
@@ -57,8 +58,14 @@ const CODE_SANDBOX_CONFIG = {
     "utils/CameraStateInfo.js": {
       content: require("!!raw-loader!./CameraStateInfo.js"),
     },
+    "utils/Duck.glb": {
+      content: require("!!file-loader!./Duck.glb"),
+    },
     "utils/useRange.js": {
       content: require("!!raw-loader!./useRange.js"),
+    },
+    "utils/useRequestAnimationFrame.js": {
+      content: require("!!raw-loader!./useRequestAnimationFrame.js"),
     },
     "utils/InputNumber.js": {
       content: require("!!raw-loader!./InputNumber.js"),
@@ -83,6 +90,7 @@ export const scope = {
   cameraStateSelectors,
   getCSSColor,
   useRange,
+  useRequestAnimationFrame,
   useState,
   useEffect,
   Worldview,

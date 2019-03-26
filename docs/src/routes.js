@@ -112,7 +112,7 @@ export function getHashUrlByComponentName(name) {
       });
     });
   }
-  return nameToUrlMap[name];
+  return nameToUrlMap[name] || "";
 }
 
 // convert route names to component names, e.g. `Managing the Camera` => `ManagingTheCamera`

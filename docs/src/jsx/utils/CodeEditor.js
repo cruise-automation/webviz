@@ -49,7 +49,7 @@ const StyledEditor = styled.div`
   overflow: scroll;
   position: relative;
   min-height: 400px;
-  max-height: 700px;
+  max-height: 760px;
   pre {
     &:focus {
       outline: none;
@@ -127,6 +127,7 @@ function CodeEditor({
   isRowView,
   noInline,
   nonEditableCode,
+  hideNonEditableCode,
   scope,
 }) {
   const [hovered, setHovered] = useState(false);
@@ -151,7 +152,7 @@ function CodeEditor({
               )}
             </StyledActions>
           )}
-          <StyledNonEditableArea>{nonEditableCode}</StyledNonEditableArea>
+          {!hideNonEditableCode && <StyledNonEditableArea>{nonEditableCode}</StyledNonEditableArea>}
           <LiveEditor />
         </StyledEditor>
         <StyledPreview isRowView={isRowView}>

@@ -125,6 +125,7 @@ function Example() {
         nonEditableCode={`
 import React from 'react';
 import { Worldview, Spheres } from 'regl-worldview'`}
+        hideNonEditableCode
       />
     </React.Fragment>
   );

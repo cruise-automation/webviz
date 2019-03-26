@@ -147,8 +147,8 @@ describe("time.subtractTimes", () => {
 describe("time.getNextFrame", () => {
   const timestamps = ["1508410740.582458241", "1508428043.155306000"];
   expect(time.getNextFrame(0, timestamps)).toEqual({ sec: 1508428043, nsec: 155306000 });
-  expect(time.getNextFrame(1, timestamps)).toEqual({ sec: 1508410740, nsec: 582458241 });
-  expect(time.getNextFrame(0, timestamps, -1)).toEqual({ sec: 1508428043, nsec: 155306000 });
+  expect(time.getNextFrame(1, timestamps)).toEqual({ sec: 1508428043, nsec: 155306000 });
+  expect(time.getNextFrame(0, timestamps, -1)).toEqual({ sec: 1508410740, nsec: 582458241 });
 });
 
 describe("time.findClosestTimestampIndex", () => {

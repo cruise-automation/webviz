@@ -9,6 +9,11 @@
 import tinycolor from "tinycolor2";
 
 export const toolsColorScheme = {
+  base: {
+    dark: "#1F1E27",
+    medium: "#8B8B8D",
+    light: "#F7F7F3",
+  },
   red: {
     dark: "#F24366",
     medium: "#ff7c96",

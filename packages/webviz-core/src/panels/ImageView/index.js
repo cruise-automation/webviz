@@ -221,4 +221,4 @@ class ImageView extends Component<Props> {
   }
 }
 
-export default Panel(ImageView);
+export default Panel<Config>(ImageView);

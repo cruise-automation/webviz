@@ -178,7 +178,7 @@ const fixture = {
     { name: "/some_topic/state", datatype: "msgs/State" },
     { name: "/boolean_topic", datatype: "std_msgs/Bool" },
   ],
-  playerState: {
+  activeData: {
     startTime: { sec: 1527, nsec: 202050 },
     endTime: { sec: 1551, nsec: 999997069 },
     isPlaying: false,
@@ -297,63 +297,13 @@ storiesOf("<Plot>", module)
       </PanelSetup>
     );
   })
-  .add("autocomplete messagePath", () => {
-    class Story extends React.Component<{}> {
-      render() {
-        return (
-          <PanelSetup
-            fixture={fixture}
-            onMount={(el) => {
-              const firstInput = el.querySelector("input");
-              if (firstInput) {
-                firstInput.focus();
-              }
-            }}>
-            <Plot
-              config={{
-                paths: [{ value: "/some_topic/location.po", enabled: true, timestampMethod: "receiveTime" }],
-                minYValue: "",
-                maxYValue: "",
-              }}
-            />
-          </PanelSetup>
-        );
-      }
-    }
-    return <Story />;
-  })
-  .add("autocomplete filter", () => {
-    class Story extends React.Component<{}> {
-      render() {
-        return (
-          <PanelSetup
-            fixture={fixture}
-            onMount={(el) => {
-              const firstInput = el.querySelector("input");
-              if (firstInput) {
-                firstInput.focus();
-              }
-            }}>
-            <Plot
-              config={{
-                paths: [{ value: "/some_topic/state.items[:]{}", enabled: true, timestampMethod: "receiveTime" }],
-                minYValue: "",
-                maxYValue: "",
-              }}
-            />
-          </PanelSetup>
-        );
-      }
-    }
-    return <Story />;
-  })
   .add("super close values", () => {
     return (
       <PanelSetup
         fixture={{
           datatypes: { "std_msgs/Float32": [{ name: "data", type: "float32", isArray: false }] },
           topics: [{ name: "/some_number", datatype: "std_msgs/Float32" }],
-          playerState: { startTime: { sec: 0, nsec: 0 }, endTime: { sec: 10, nsec: 0 }, isPlaying: false, speed: 0.2 },
+          activeData: { startTime: { sec: 0, nsec: 0 }, endTime: { sec: 10, nsec: 0 }, isPlaying: false, speed: 0.2 },
           frame: {
             "/some_number": [
               {

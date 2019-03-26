@@ -7,11 +7,10 @@
 //  You may not use this file except in compliance with the License.
 
 import { mount } from "enzyme";
-import React from "react";
-import { Provider } from "react-redux";
+import * as React from "react";
 
 import { savePanelConfig } from "webviz-core/src/actions/panels";
-import { datatypesReceived, frameReceived, topicsReceived } from "webviz-core/src/actions/player";
+import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import rootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
@@ -38,11 +37,18 @@ function getDummyPanel(renderFn) {
 }
 
 function getStore() {
-  const store = configureStore(rootReducer);
-  store.dispatch(datatypesReceived({ some_datatype: [] }));
-  store.dispatch(topicsReceived([{ name: "/some/topic", datatype: "some_datatype" }]));
-  store.dispatch(frameReceived({ "/some/topic": [] }));
-  return store;
+  return configureStore(rootReducer);
+}
+
+function Context(props: { children: React.Node, store?: any }) {
+  return (
+    <MockMessagePipelineProvider
+      topics={[{ name: "/some/topic", datatype: "some_datatype" }]}
+      datatypes={{ some_datatype: [] }}
+      store={props.store}>
+      {props.children}
+    </MockMessagePipelineProvider>
+  );
 }
 
 describe("Panel", () => {
@@ -50,11 +56,10 @@ describe("Panel", () => {
     const renderFn = jest.fn();
     const DummyPanel = getDummyPanel(renderFn);
 
-    const store = getStore();
     mount(
-      <Provider store={store}>
+      <Context>
         <DummyPanel />
-      </Provider>
+      </Context>
     );
 
     expect(renderFn.mock.calls.length).toEqual(1);
@@ -80,9 +85,9 @@ describe("Panel", () => {
     const store = getStore();
     store.dispatch(savePanelConfig({ id: childId, config: { someString } }));
     mount(
-      <Provider store={store}>
+      <Context store={store}>
         <DummyPanel childId={childId} />
-      </Provider>
+      </Context>
     );
 
     expect(renderFn.mock.calls.length).toEqual(1);
@@ -98,19 +103,18 @@ describe("Panel", () => {
     ]);
   });
 
-  it("does not rerender when the frame or another panel changes", () => {
+  it("does not rerender when another panel changes", () => {
     const renderFn = jest.fn();
     const DummyPanel = getDummyPanel(renderFn);
 
     const store = getStore();
     mount(
-      <Provider store={store}>
+      <Context store={store}>
         <DummyPanel />
-      </Provider>
+      </Context>
     );
 
     expect(renderFn.mock.calls.length).toEqual(1);
-    store.dispatch(frameReceived({ "/some/other/topic": [] }));
     store.dispatch(savePanelConfig({ id: "someOtherId", config: {} }));
     expect(renderFn.mock.calls.length).toEqual(1);
   });

@@ -8,7 +8,6 @@
 
 import { last } from "lodash";
 import * as React from "react";
-import { connect } from "react-redux";
 import { createSelector } from "reselect";
 import type { Time } from "rosbag";
 
@@ -19,8 +18,9 @@ import MessageHistoryOnlyTopics from "./MessageHistoryOnlyTopics";
 import { messagePathStructures, traverseStructure } from "./messagePathsForDatatype";
 import parseRosPath from "./parseRosPath";
 import topicPathSyntaxHelpContent from "./topicPathSyntax.help.md";
+import GlobalVariablesAccessor from "webviz-core/src/components/GlobalVariablesAccessor";
+import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
 import PanelContext from "webviz-core/src/components/PanelContext";
-import type { State } from "webviz-core/src/reducers";
 import { topicsByTopicName, shallowEqualSelector } from "webviz-core/src/selectors";
 import type { Topic, Message } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
@@ -158,6 +158,7 @@ export function getTimestampForMessage(message: Message, timestampMethod?: Messa
     if (
       message.message.header &&
       message.message.header.stamp &&
+      (message.message.header.stamp.sec || message.message.header.stamp.nsec) &&
       !TOPICS_WITH_INCORRECT_HEADERS.includes(message.topic)
     ) {
       return message.message.header.stamp;
@@ -174,11 +175,12 @@ type ChildrenSelectorInput = {
   paths: string[],
   topics: Topic[],
   datatypes: RosDatatypes,
+  globalData: Object,
 };
 
 const getMemoizedChildrenInput = shallowEqualSelector(
   (input: ChildrenSelectorInput) => input,
-  ({ messagesByTopic, cleared, startTime, paths, topics, datatypes }: ChildrenSelectorInput) => {
+  ({ messagesByTopic, cleared, startTime, paths, topics, datatypes, globalData }: ChildrenSelectorInput) => {
     const itemsByPath = {};
     const metadataByPath = {};
     const structures = messagePathStructures(datatypes);
@@ -189,7 +191,13 @@ const getMemoizedChildrenInput = shallowEqualSelector(
 
       const rosPath = parseRosPath(path);
       if (rosPath) {
-        itemsByPath[path] = addValuesWithPathsToItems(messagesByTopic[rosPath.topicName], rosPath, topics, datatypes);
+        itemsByPath[path] = addValuesWithPathsToItems(
+          messagesByTopic[rosPath.topicName],
+          rosPath,
+          topics,
+          datatypes,
+          globalData
+        );
 
         const topic = topicsByTopicName(topics)[rosPath.topicName];
         if (topic) {
@@ -218,34 +226,42 @@ const getMemoizedTopics = createSelector(
 // So you probably don't want to do `<MessageHistory>{this._renderSomething}</MessageHistory>`.
 // This might be a bit counterintuitive but we do this since performance matters here.
 class MessageHistory extends React.PureComponent<Props> {
-  static Input = MessageHistoryInput;
-  static topicPathSyntaxHelpContent = topicPathSyntaxHelpContent;
-  static defaultProps = { historySize: Infinity };
-
   render() {
     const { children, paths, historySize, topics, datatypes, imageScale, ignoreMissing } = this.props;
 
     // Note: parseRosPath is memoized so we don't have to worry about calling it on
     // every render.
     return (
-      <PanelContext.Consumer>
-        {(panelData) => (
-          <MessageHistoryOnlyTopics
-            panelType={(panelData || {}).type}
-            ignoreMissing={ignoreMissing}
-            topics={getMemoizedTopics(paths)}
-            historySize={historySize}
-            imageScale={imageScale}
-            key={imageScale /* need to remount when imageScale changes */}>
-            {(data) => children(getMemoizedChildrenInput({ ...data, paths, topics, datatypes }))}
-          </MessageHistoryOnlyTopics>
+      <GlobalVariablesAccessor>
+        {(globalData) => (
+          <PanelContext.Consumer>
+            {(panelData) => (
+              <MessageHistoryOnlyTopics
+                panelType={(panelData || {}).type}
+                ignoreMissing={ignoreMissing}
+                topics={getMemoizedTopics(paths)}
+                historySize={historySize || Infinity}
+                imageScale={imageScale}
+                key={imageScale /* need to remount when imageScale changes */}>
+                {(data) => children(getMemoizedChildrenInput({ ...data, paths, topics, datatypes, globalData }))}
+              </MessageHistoryOnlyTopics>
+            )}
+          </PanelContext.Consumer>
         )}
-      </PanelContext.Consumer>
+      </GlobalVariablesAccessor>
     );
   }
 }
 
-export default connect((state: State) => ({
-  topics: state.player.topics,
-  datatypes: state.player.datatypes,
-}))(MessageHistory);
+export default function MessageHistoryConnected(props: any) {
+  return (
+    <MessagePipelineConsumer>
+      {(context: MessagePipelineContext) => (
+        <MessageHistory {...props} topics={context.sortedTopics} datatypes={context.datatypes} />
+      )}
+    </MessagePipelineConsumer>
+  );
+}
+
+MessageHistoryConnected.Input = MessageHistoryInput;
+MessageHistoryConnected.topicPathSyntaxHelpContent = topicPathSyntaxHelpContent;

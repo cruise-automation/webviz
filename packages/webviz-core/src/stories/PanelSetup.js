@@ -6,32 +6,27 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { flatten } from "lodash";
 import * as React from "react";
 import { DragDropContextProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
-import { Provider } from "react-redux";
-import { TimeUtil } from "rosbag";
 
 import { setAuxiliaryData } from "webviz-core/src/actions/extensions";
-import {
-  capabilitiesReceived,
-  datatypesReceived,
-  frameReceived,
-  playerStateChanged,
-  topicsReceived,
-} from "webviz-core/src/actions/player";
+import { overwriteGlobalData } from "webviz-core/src/actions/panels";
+import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import rootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
-import type { Frame, PlayerStatePayload, Topic } from "webviz-core/src/types/players";
+import type { Frame, Topic, PlayerStateActiveData } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 export type Fixture = {|
   frame: Frame,
   topics: Topic[],
   capabilities?: string[],
-  playerState?: PlayerStatePayload,
+  activeData?: $Shape<PlayerStateActiveData>,
   datatypes?: RosDatatypes,
   auxiliaryData?: Object,
+  globalData?: Object,
 |};
 
 type Props = {|
@@ -49,42 +44,12 @@ type State = {|
 export default class PanelSetup extends React.PureComponent<Props, State> {
   static getDerivedStateFromProps(props: Props, prevState: State) {
     const { store } = prevState;
-    const { frame, topics, playerState, datatypes, capabilities, auxiliaryData } = props.fixture;
-
-    // Set `lastSeekTime` to current time so the panel resets but also so the
-    // global cache is cleared.
-    store.dispatch({ type: "PLAYBACK_RESET" });
-
-    if (datatypes) {
-      store.dispatch(datatypesReceived(datatypes));
-    } else {
-      const dummyDatatypes = {};
-      for (const { datatype } of topics) {
-        dummyDatatypes[datatype] = [];
-      }
-      store.dispatch(datatypesReceived(dummyDatatypes));
-    }
-    store.dispatch(topicsReceived(topics));
-    if (playerState) {
-      store.dispatch(playerStateChanged(playerState));
-    }
-    if (frame) {
-      let currentTime;
-      for (const messages of Object.values(frame)) {
-        // $FlowFixMe - Flow doesn't seem to understand that `messages` is an array.
-        for (const message of messages) {
-          if (!currentTime || TimeUtil.isLessThan(currentTime, message.receiveTime)) {
-            currentTime = message.receiveTime;
-          }
-        }
-      }
-      store.dispatch(frameReceived(frame, currentTime));
-    }
-    if (capabilities) {
-      store.dispatch(capabilitiesReceived(capabilities));
-    }
+    const { auxiliaryData, globalData } = props.fixture;
     if (auxiliaryData) {
       store.dispatch(setAuxiliaryData(() => auxiliaryData));
+    }
+    if (globalData) {
+      store.dispatch(overwriteGlobalData(globalData));
     }
     return { store };
   }
@@ -94,18 +59,34 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
   };
 
   renderInner() {
+    const { frame, topics, datatypes, capabilities, activeData } = this.props.fixture;
+    let dTypes = datatypes;
+    if (!dTypes) {
+      const dummyDatatypes = {};
+      for (const { datatype } of topics) {
+        dummyDatatypes[datatype] = [];
+      }
+      dTypes = dummyDatatypes;
+    }
     return (
-      <Provider store={this.state.store}>
-        <div
-          style={{ width: "100%", height: "100%", display: "flex", ...this.props.style }}
-          ref={(el: ?HTMLDivElement) => {
-            if (el && this.props.onMount) {
-              this.props.onMount(el);
-            }
-          }}>
+      <div
+        style={{ width: "100%", height: "100%", display: "flex", ...this.props.style }}
+        ref={(el: ?HTMLDivElement) => {
+          if (el && this.props.onMount) {
+            this.props.onMount(el);
+          }
+        }}>
+        {/* $FlowFixMe - for some reason Flow doesn't like this :( */}
+        <MockMessagePipelineProvider
+          capabilities={capabilities}
+          topics={topics}
+          datatypes={dTypes}
+          messages={flatten(Object.values(frame || {}))}
+          activeData={activeData}
+          store={this.state.store}>
           {this.props.children}
-        </div>
-      </Provider>
+        </MockMessagePipelineProvider>
+      </div>
     );
   }
 

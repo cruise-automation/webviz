@@ -8,15 +8,25 @@
 import { useRef, useEffect } from "react-with-hooks";
 
 // for sharing the same instance variable during the react life cycle
-export function useConstant<T>(getValFn: () => T, teardown: (T) => void = () => {}): T {
+export function useConstant<T>(getValFn: () => T, teardown: (T) => any = () => {}): T {
   const ref = useRef(null);
   ref.current = ref.current || getValFn();
-  useEffect(() => () => teardown(ref.current), []);
+  useEffect(() => {
+    return () => {
+      teardown(ref.current);
+    };
+  }, []);
   return ref.current;
 }
 
 // for adding and automatically removing event listeners
-export function useEventListener(target: Element, type: string, enable: boolean, handler: (any) => void) {
+export function useEventListener(
+  target: Element,
+  type: string,
+  enable: boolean,
+  handler: (any) => void,
+  dependencies: any[]
+) {
   useEffect(
     () => {
       if (enable) {
@@ -24,6 +34,6 @@ export function useEventListener(target: Element, type: string, enable: boolean,
         return () => target.removeEventListener(type, handler);
       }
     },
-    [target, type, enable]
+    [target, type, enable, ...dependencies]
   );
 }

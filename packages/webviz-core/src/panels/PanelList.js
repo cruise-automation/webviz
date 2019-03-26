@@ -24,6 +24,7 @@ type PanelListItem = {|
   title: string,
   component: React.ComponentType<any>,
   presets?: {| title: string, panelConfig?: PanelConfig |}[],
+  hideFromList?: boolean,
 |};
 
 const panelList: PanelListItem[] = getGlobalHooks().panelList();
@@ -41,7 +42,7 @@ type PanelItemProps = {
     panelConfig?: PanelConfig,
   |},
   // this comes from react-dnd
-  connectDragSource: (any) => void,
+  connectDragSource: (any) => React.Node,
   onClick: () => void,
   // the props here are actually used in the dragSource
   // beginDrag and endDrag callbacks - the props are passed via react-dnd
@@ -90,14 +91,17 @@ const DraggablePanelItem = DragSource(MosaicDragType.WINDOW, dragConfig, (connec
   };
 })(PanelItem);
 
-type PanelListProps = {
+type OwnProps = {|
+  onPanelSelect: (panelType: string, panelConfig?: PanelConfig) => void,
+|};
+type Props = {
+  ...OwnProps,
   mosaicId: string,
   mosaicLayout: any, // this is the opaque mosiac layout config object
   changePanelLayout: (panelLayout: any) => void,
   savePanelConfig: (SaveConfigPayload) => void,
-  onPanelSelect: (panelType: string, panelConfig?: PanelConfig) => void,
 };
-class PanelList extends React.Component<PanelListProps> {
+class PanelList extends React.Component<Props> {
   static getComponentForType(type: string): any | void {
     // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
     const panel = panelList.find((item) => item.component.panelType === type);
@@ -138,13 +142,16 @@ class PanelList extends React.Component<PanelListProps> {
       // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
       const { name, displayName, panelType } = component;
       if (!panelType) {
-        throw new Error(`Panel component ${displayName || name} must declare a unique \`static panelType\``);
+        throw new Error(
+          `Panel component ${displayName || name || "<unnamed>"} must declare a unique \`static panelType\``
+        );
       }
       const existingPanel = panelTypes.get(panelType);
       if (existingPanel) {
         throw new Error(
           `Two components have the same panelType ('${panelType}'): ${existingPanel.displayName ||
-            existingPanel.name} and ${displayName || name}`
+            existingPanel.name ||
+            "<unnamed>"} and ${displayName || name || "<unnamed>"}`
         );
       }
       panelTypes.set(panelType, component);
@@ -156,35 +163,38 @@ class PanelList extends React.Component<PanelListProps> {
     const { mosaicId, onPanelSelect } = this.props;
     return (
       <React.Fragment>
-        {panelList.sort(naturalSort("title")).map(
-          // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
-          ({ presets, title, component: { panelType } }) =>
-            presets ? (
-              <SubMenu text={title} key={panelType}>
-                {presets.map((subPanelListItem) => (
-                  <DraggablePanelItem
-                    key={subPanelListItem.title}
-                    mosaicId={mosaicId}
-                    panel={{
-                      type: panelType,
-                      title: subPanelListItem.title,
-                      panelConfig: subPanelListItem.panelConfig,
-                    }}
-                    onDrop={this.onPanelMenuItemDrop}
-                    onClick={() => onPanelSelect(panelType, subPanelListItem.panelConfig)}
-                  />
-                ))}
-              </SubMenu>
-            ) : (
-              <DraggablePanelItem
-                key={panelType}
-                mosaicId={mosaicId}
-                panel={{ type: panelType, title }}
-                onDrop={this.onPanelMenuItemDrop}
-                onClick={() => onPanelSelect(panelType)}
-              />
-            )
-        )}
+        {panelList
+          .filter(({ hideFromList }) => !hideFromList)
+          .sort(naturalSort("title"))
+          .map(
+            // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
+            ({ presets, title, component: { panelType } }) =>
+              presets ? (
+                <SubMenu text={title} key={panelType}>
+                  {presets.map((subPanelListItem) => (
+                    <DraggablePanelItem
+                      key={subPanelListItem.title}
+                      mosaicId={mosaicId}
+                      panel={{
+                        type: panelType,
+                        title: subPanelListItem.title,
+                        panelConfig: subPanelListItem.panelConfig,
+                      }}
+                      onDrop={this.onPanelMenuItemDrop}
+                      onClick={() => onPanelSelect(panelType, subPanelListItem.panelConfig)}
+                    />
+                  ))}
+                </SubMenu>
+              ) : (
+                <DraggablePanelItem
+                  key={panelType}
+                  mosaicId={mosaicId}
+                  panel={{ type: panelType, title }}
+                  onDrop={this.onPanelMenuItemDrop}
+                  onClick={() => onPanelSelect(panelType)}
+                />
+              )
+          )}
       </React.Fragment>
     );
   }
@@ -194,7 +204,7 @@ const mapStateToProps = (state: State) => ({
   mosaicId: state.mosaic.mosaicId,
   mosaicLayout: state.panels.layout,
 });
-export default connect(
+export default (connect<Props, OwnProps, _, _, _, _>(
   mapStateToProps,
   { changePanelLayout, savePanelConfig }
-)(PanelList);
+)(PanelList): typeof PanelList);

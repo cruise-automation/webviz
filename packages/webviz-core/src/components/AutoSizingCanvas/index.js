@@ -24,7 +24,7 @@ type AutoSizingCanvasProps = {
 // Nested within `AutoSizingCanvas` so that componentDidUpdate fires on width/height changes.
 // Adding a hook into the 'react-container-dimensions' project on resize changes might be a good improvement!
 class Canvas extends React.Component<CanvasProps> {
-  canvas: { current: null | HTMLCanvasElement } = React.createRef();
+  canvas = React.createRef<HTMLCanvasElement>();
 
   _draw(context) {
     const { width, height } = this.props;

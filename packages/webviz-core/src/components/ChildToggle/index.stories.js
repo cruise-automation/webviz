@@ -35,7 +35,7 @@ storiesOf("<ChildToggle>", module)
       };
       const icon = state.isOpen ? <MinusCircleIcon /> : <PlusCircleIcon />;
       return (
-        <Flex col center>
+        <Flex col center style={{ position: "relative" /* shouldn't affect popup position */ }}>
           <div style={{ margin: 30, border: "1px solid gray" }}>
             <ChildToggle position="right" onToggle={onToggle} isOpen={state.isOpen}>
               <Icon>{icon}</Icon>

@@ -18,6 +18,7 @@ import Storage from "webviz-core/src/util/Storage";
 const storage = new Storage();
 export const LAYOUT_KEY = "panels.layout";
 export const PANEL_PROPS_KEY = "panels.savedProps";
+export const GLOBAL_DATA_KEY = "panels.globalData";
 
 export type PanelsState = {
   layout: any,
@@ -25,6 +26,7 @@ export type PanelsState = {
   // This should at some point be renamed to `config` or `configById` or so,
   // but it's inconvenient to have this diverge from `PANEL_PROPS_KEY`.
   savedProps: { [panelId: string]: PanelConfig },
+  globalData: Object,
 };
 
 // getDefaultState will be called once when the store initializes this reducer.
@@ -35,6 +37,7 @@ function getDefaultState() {
     layout: storage.get(LAYOUT_KEY),
     // by default we don't save props for any of the panels
     savedProps: storage.get(PANEL_PROPS_KEY) || {},
+    globalData: storage.get(GLOBAL_DATA_KEY) || {},
   };
   // if there was no previously saved layout
   // save this initial panel layout into local storage
@@ -50,9 +53,11 @@ function changePanelLayout(state: PanelsState, layout: any): PanelsState {
   // filter saved props incase a panel was removed from the layout
   // we don't want it saved props hanging around forever
   const savedProps = pick(state.savedProps, getLeaves(layout));
+  const globalData = state.globalData;
   storage.set(LAYOUT_KEY, layout);
   storage.set(PANEL_PROPS_KEY, savedProps);
-  return { ...state, layout, savedProps };
+  storage.set(GLOBAL_DATA_KEY, globalData);
+  return { ...state, layout, savedProps, globalData };
 }
 
 function savePanelConfig(state: PanelsState, payload: SaveConfigPayload): PanelsState {
@@ -82,22 +87,44 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
   const migratedPayload = getGlobalHooks().migratePanels(payload);
   storage.set(LAYOUT_KEY, migratedPayload.layout);
   storage.set(PANEL_PROPS_KEY, migratedPayload.savedProps);
+  storage.set(GLOBAL_DATA_KEY, migratedPayload.globalData || {});
   return {
     ...state,
     ...migratedPayload,
+    globalData: migratedPayload.globalData || {},
   };
 }
 
 export default function panelsReducer(state: PanelsState = getDefaultState(), action: ActionTypes) {
-  if (action.type === "CHANGE_PANEL_LAYOUT") {
-    // don't allow the last panel to be removed
-    return changePanelLayout(state, action.layout || state.layout);
+  switch (action.type) {
+    case "CHANGE_PANEL_LAYOUT":
+      // don't allow the last panel to be removed
+      return changePanelLayout(state, action.layout || state.layout);
+
+    case "SAVE_PANEL_CONFIG":
+      return savePanelConfig(state, action.payload);
+
+    case "IMPORT_PANEL_LAYOUT":
+      return importPanelLayout(state, action.payload);
+
+    case "OVERWRITE_GLOBAL_DATA":
+      storage.set(GLOBAL_DATA_KEY, action.payload);
+      return { ...state, globalData: action.payload };
+
+    case "SET_GLOBAL_DATA": {
+      const globalData = { ...state.globalData, ...action.payload };
+
+      Object.keys(globalData).forEach((key) => {
+        if (globalData[key] === undefined) {
+          delete globalData[key];
+        }
+      });
+
+      storage.set(GLOBAL_DATA_KEY, globalData);
+      return { ...state, globalData };
+    }
+
+    default:
+      return state;
   }
-  if (action.type === "SAVE_PANEL_CONFIG") {
-    return savePanelConfig(state, action.payload);
-  }
-  if (action.type === "IMPORT_PANEL_LAYOUT") {
-    return importPanelLayout(state, action.payload);
-  }
-  return state;
 }

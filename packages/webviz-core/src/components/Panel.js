@@ -21,6 +21,7 @@ import { connect } from "react-redux";
 import styles from "./Panel.module.scss";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
+import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import PanelList from "webviz-core/src/panels/PanelList";
 import type { State as ReduxState } from "webviz-core/src/reducers";
@@ -72,6 +73,9 @@ export default function Panel<Config: PanelConfig>(
   type ReduxMappedProps = {|
     childId?: string,
     config: Config,
+  |};
+
+  type PipelineProps = {|
     topics: Topic[],
     datatypes: RosDatatypes,
     capabilities: string[],
@@ -80,10 +84,9 @@ export default function Panel<Config: PanelConfig>(
   const defaultConfig: Config = PanelComponent.defaultConfig;
 
   class UnconnectedPanel extends React.PureComponent<
-    ReduxMappedProps & {| savePanelConfig: (SaveConfigPayload) => void |},
+    ReduxMappedProps & PipelineProps & {| savePanelConfig: (SaveConfigPayload) => void |},
     State
   > {
-    static panelType = PanelComponent.panelType;
     static displayName = `Panel(${PanelComponent.displayName || PanelComponent.name || ""})`;
 
     static contextTypes = {
@@ -109,7 +112,11 @@ export default function Panel<Config: PanelConfig>(
     // Open a panel next to the current panel, of the specified `panelType`. If such a panel already
     // exist, we update it with the new props.
     _openSiblingPanel = (panelType: string, siblingConfigCreator: (PanelConfig) => PanelConfig) => {
-      const defaultSiblingConfig = PanelList.getComponentForType(panelType).defaultConfig;
+      const siblingComponent = PanelList.getComponentForType(panelType);
+      if (!siblingComponent) {
+        return;
+      }
+      const defaultSiblingConfig = siblingComponent.defaultConfig;
 
       const { mosaicActions, mosaicWindowActions, store } = this.context;
       const panelConfigById = store.getState().panels.savedProps;
@@ -197,6 +204,21 @@ export default function Panel<Config: PanelConfig>(
     }
   }
 
+  function ConnectedToPipelinePanel(props: any) {
+    return (
+      <MessagePipelineConsumer>
+        {(context: MessagePipelineContext) => (
+          <UnconnectedPanel
+            {...props}
+            topics={context.sortedTopics}
+            datatypes={context.datatypes}
+            capabilities={context.playerState.capabilities}
+          />
+        )}
+      </MessagePipelineConsumer>
+    );
+  }
+
   function mapStateToProps(state: ReduxState, ownProps: Props<Config>): ReduxMappedProps {
     // Be careful when adding something here: it should not change often, otherwise
     // all panels will rerender, which is very expensive.
@@ -204,9 +226,6 @@ export default function Panel<Config: PanelConfig>(
       childId: ownProps.childId,
       // $FlowFixMe: if nothing went wrong, `state.panels.savedProps[ownProps.childId]` should be of type `Config`.
       config: state.panels.savedProps[ownProps.childId] || ownProps.config,
-      topics: state.player.topics,
-      datatypes: state.player.datatypes,
-      capabilities: state.player.capabilities,
     };
   }
 
@@ -216,9 +235,10 @@ export default function Panel<Config: PanelConfig>(
   const ConnectedPanel = connect(
     mapStateToProps,
     { savePanelConfig }
-  )(UnconnectedPanel);
+  )(ConnectedToPipelinePanel);
 
   ConnectedPanel.defaultConfig = defaultConfig;
+  ConnectedPanel.panelType = PanelComponent.panelType;
 
   return ConnectedPanel;
 }

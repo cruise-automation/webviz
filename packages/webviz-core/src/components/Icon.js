@@ -48,7 +48,7 @@ const Icon = (props: Props) => {
   };
 
   return (
-    <Tooltip contents={tooltip} {...tooltipProps}>
+    <Tooltip contents={tooltip || null} {...tooltipProps}>
       <span className={classNames} onClick={clickHandler} style={style}>
         {children}
       </span>

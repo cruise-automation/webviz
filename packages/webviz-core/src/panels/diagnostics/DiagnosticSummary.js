@@ -145,4 +145,4 @@ class DiagnosticSummary extends React.Component<Props> {
   }
 }
 
-export default Panel(DiagnosticSummary);
+export default Panel<Config>(DiagnosticSummary);

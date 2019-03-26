@@ -11,4 +11,4 @@ import HTML5Backend from "react-dnd-html5-backend";
 
 // separate creation of this into a helper module so that a second copy isn't created during
 // hot module reloading (unless this module changes)
-export default DragDropContext(HTML5Backend);
+export default DragDropContext<{}, {}>(HTML5Backend);

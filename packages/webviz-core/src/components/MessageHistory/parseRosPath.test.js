@@ -73,17 +73,36 @@ describe("parseRosPath", () => {
       topicName: "/topic",
       messagePath: [
         { type: "name", name: "foo" },
-        { type: "filter", name: "bar", value: "baz", nameLoc: "/topic.foo{".length },
+        {
+          type: "filter",
+          name: "bar",
+          value: "baz",
+          nameLoc: "/topic.foo{".length,
+          valueLoc: "/topic.foo{bar==".length,
+        },
         { type: "name", name: "a" },
-        { type: "filter", name: "bar", value: "baz", nameLoc: "/topic.foo{bar=='baz'}.a{".length },
+        {
+          type: "filter",
+          name: "bar",
+          value: "baz",
+          nameLoc: "/topic.foo{bar=='baz'}.a{".length,
+          valueLoc: "/topic.foo{bar=='baz'}.a{bar==".length,
+        },
         { type: "name", name: "b" },
-        { type: "filter", name: "bar", value: 3, nameLoc: "/topic.foo{bar=='baz'}.a{bar==\"baz\"}.b{".length },
+        {
+          type: "filter",
+          name: "bar",
+          value: 3,
+          nameLoc: "/topic.foo{bar=='baz'}.a{bar==\"baz\"}.b{".length,
+          valueLoc: "/topic.foo{bar=='baz'}.a{bar==\"baz\"}.b{bar==".length,
+        },
         { type: "name", name: "c" },
         {
           type: "filter",
           name: "bar",
           value: false,
           nameLoc: "/topic.foo{bar=='baz'}.a{bar==\"baz\"}.b{bar==3}.c{".length,
+          valueLoc: "/topic.foo{bar=='baz'}.a{bar==\"baz\"}.b{bar==3}.c{bar==".length,
         },
         { type: "name", name: "d" },
         { type: "slice", start: 0, end: Infinity },
@@ -92,6 +111,34 @@ describe("parseRosPath", () => {
           name: "bar",
           value: true,
           nameLoc: "/topic.foo{bar=='baz'}.a{bar==\"baz\"}.b{bar==3}.c{bar==false}.d[:]{".length,
+          valueLoc: "/topic.foo{bar=='baz'}.a{bar==\"baz\"}.b{bar==3}.c{bar==false}.d[:]{bar==".length,
+        },
+      ],
+      modifier: null,
+    });
+  });
+
+  it("parses filters with global variables", () => {
+    expect(parseRosPath("/topic.foo{bar==$}.a{bar==$my_var_1}")).toEqual({
+      topicName: "/topic",
+      messagePath: [
+        { type: "name", name: "foo" },
+        {
+          type: "filter",
+          name: "bar",
+          value: { variableName: "" },
+          nameLoc: "/topic.foo{".length,
+          valueLoc: "/topic.foo{bar==".length,
+        },
+        { type: "name", name: "a" },
+        {
+          type: "filter",
+          name: "bar",
+          value: {
+            variableName: "my_var_1",
+          },
+          nameLoc: "/topic.foo{bar==$}.a{".length,
+          valueLoc: "/topic.foo{bar==$}.a{bar==".length,
         },
       ],
       modifier: null,
@@ -119,7 +166,13 @@ describe("parseRosPath", () => {
       topicName: "/topic",
       messagePath: [
         { type: "name", name: "foo" },
-        { type: "filter", name: "", value: "", nameLoc: "/topic.foo{".length },
+        {
+          type: "filter",
+          name: "",
+          value: "",
+          nameLoc: "/topic.foo{".length,
+          valueLoc: "/topic.foo{".length,
+        },
       ],
       modifier: null,
     });
@@ -127,7 +180,13 @@ describe("parseRosPath", () => {
       topicName: "/topic",
       messagePath: [
         { type: "name", name: "foo" },
-        { type: "filter", name: "bar", value: "", nameLoc: "/topic.foo{".length },
+        {
+          type: "filter",
+          name: "bar",
+          value: "",
+          nameLoc: "/topic.foo{".length,
+          valueLoc: "/topic.foo{".length,
+        },
       ],
       modifier: null,
     });
@@ -135,7 +194,13 @@ describe("parseRosPath", () => {
       topicName: "/topic",
       messagePath: [
         { type: "name", name: "foo" },
-        { type: "filter", name: "", value: 1, nameLoc: "/topic.foo{".length },
+        {
+          type: "filter",
+          name: "",
+          value: 1,
+          nameLoc: "/topic.foo{".length,
+          valueLoc: "/topic.foo{==".length,
+        },
       ],
       modifier: null,
     });

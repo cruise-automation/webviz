@@ -47,7 +47,7 @@ export const savePanelConfig = (payload: SaveConfigPayload): Dispatcher<SAVE_PAN
   });
 };
 
-export type IMPORT_PANEL_LAYOUT = {
+type IMPORT_PANEL_LAYOUT = {
   type: "IMPORT_PANEL_LAYOUT",
   payload: ImportPanelLayoutPayload,
 };
@@ -77,3 +77,30 @@ export const changePanelLayout = (layout: any): Dispatcher<CHANGE_PANEL_LAYOUT> 
     layout,
   });
 };
+
+type OVERWRITE_GLOBAL_DATA = {
+  type: "OVERWRITE_GLOBAL_DATA",
+  payload: Object,
+};
+
+export const overwriteGlobalData = (payload: Object): OVERWRITE_GLOBAL_DATA => ({
+  type: "OVERWRITE_GLOBAL_DATA",
+  payload,
+});
+
+type SET_GLOBAL_DATA = {
+  type: "SET_GLOBAL_DATA",
+  payload: Object,
+};
+
+export const setGlobalData = (payload: Object): SET_GLOBAL_DATA => ({
+  type: "SET_GLOBAL_DATA",
+  payload,
+});
+
+export type PanelsActions =
+  | CHANGE_PANEL_LAYOUT
+  | IMPORT_PANEL_LAYOUT
+  | SAVE_PANEL_CONFIG
+  | OVERWRITE_GLOBAL_DATA
+  | SET_GLOBAL_DATA;

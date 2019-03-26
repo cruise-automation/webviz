@@ -13,19 +13,6 @@ import styles from "./index.module.scss";
 import HelpModal from "webviz-core/src/components/HelpModal";
 import Icon from "webviz-core/src/components/Icon";
 import renderToBody from "webviz-core/src/components/renderToBody";
-import TextContent from "webviz-core/src/components/TextContent";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-
-function Footnote() {
-  const FootnoteInternal = getGlobalHooks().helpPageFootnote;
-  return (
-    <TextContent>
-      <div className={styles.helpModalFootnote}>
-        <FootnoteInternal />
-      </div>
-    </TextContent>
-  );
-}
 
 type Props = {|
   children: React.Node | string,
@@ -40,9 +27,7 @@ export default class HelpButton extends React.Component<Props> {
           fade
           onClick={() => {
             const modal = renderToBody(
-              <HelpModal onRequestClose={() => modal.remove()} footer={<Footnote />}>
-                {this.props.children}
-              </HelpModal>
+              <HelpModal onRequestClose={() => modal.remove()}>{this.props.children}</HelpModal>
             );
           }}>
           <HelpCircleIcon className={styles.icon} />

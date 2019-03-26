@@ -57,6 +57,7 @@ const SRoot = styled.div`
   display: flex;
   flex-grow: 1;
   z-index: 0; // create new stacking context
+  overflow: hidden;
 `;
 
 const SAddButton = styled.div`
@@ -94,7 +95,7 @@ const inputLeft = 20;
 const SInputContainer = styled.div`
   display: flex;
   position: absolute;
-  left: ${inputLeft}px;
+  padding-left: ${inputLeft}px;
   margin-top: -2px;
   height: 20px;
   padding-right: 4px;
@@ -110,7 +111,7 @@ const SInputContainer = styled.div`
 const SInputDelete = styled.div`
   display: none;
   position: absolute;
-  left: 1px;
+  left: ${inputLeft}px;
   transform: translateX(-100%);
   user-select: none;
   height: 20px;
@@ -176,13 +177,19 @@ class StateTransitions extends React.PureComponent<Props> {
   static panelType = "StateTransitions";
   static defaultConfig = getGlobalHooks().perPanelHooks().StateTransitions.defaultConfig;
 
-  _onInputChange = (value: string, index: number) => {
+  _onInputChange = (value: string, index: ?number) => {
+    if (index == null) {
+      throw new Error("index not set");
+    }
     const newPaths = this.props.config.paths.slice();
     newPaths[index] = { ...newPaths[index], value: value.trim() };
     this.props.saveConfig({ paths: newPaths });
   };
 
-  _onInputTimestampMethodChange = (value: MessageHistoryTimestampMethod, index: number) => {
+  _onInputTimestampMethodChange = (value: MessageHistoryTimestampMethod, index: ?number) => {
+    if (index == null) {
+      throw new Error("index not set");
+    }
     const newPaths = this.props.config.paths.slice();
     newPaths[index] = { ...newPaths[index], timestampMethod: value };
     this.props.saveConfig({ paths: newPaths });
@@ -291,15 +298,17 @@ class StateTransitions extends React.PureComponent<Props> {
               }),
             };
 
+            const marginRight = 20;
+
             return (
               <SChartContainerOuter>
                 <Dimensions>
                   {({ width }) => (
-                    <SChartContainerInner style={{ width, height }}>
+                    <SChartContainerInner style={{ width: width - marginRight, height }}>
                       <TimeBasedChart
                         zoom
                         isSynced
-                        width={width}
+                        width={width - marginRight}
                         height={height}
                         data={data}
                         type="multicolorLine"
@@ -341,4 +350,4 @@ class StateTransitions extends React.PureComponent<Props> {
   }
 }
 
-export default Panel(StateTransitions);
+export default Panel<StateTransitionConfig>(StateTransitions);

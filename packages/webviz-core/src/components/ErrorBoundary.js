@@ -35,7 +35,7 @@ type State = {
   errorInfo: ?any,
 };
 
-export default class ErrorBoundary extends React.Component<{ children?: React.Node }, State> {
+export default class ErrorBoundary extends React.Component<{ children: React.Node }, State> {
   state = {
     error: undefined,
     errorInfo: undefined,
@@ -63,7 +63,9 @@ export default class ErrorBoundary extends React.Component<{ children?: React.No
           <PanelToolbar>
             <ErrorBanner>
               <div style={{ flexGrow: 1 }}>An error occurred in {name}.</div>
-              <Button warning onClick={() => this.setState({ error: undefined, errorInfo: undefined })}>
+              <Button
+                style={{ background: "rgba(255, 255, 255, 0.5)" }}
+                onClick={() => this.setState({ error: undefined, errorInfo: undefined })}>
                 Reload Panel
               </Button>
             </ErrorBanner>

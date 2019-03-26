@@ -195,7 +195,13 @@ describe("addValuesWithPathsToItems", () => {
           messagePath: [
             { type: "name", name: "some_array" },
             { type: "slice", start: 0, end: Infinity },
-            { type: "filter", name: "some_filter_value", value: "0", nameLoc: 0 }, // Test with a string value, should still work!
+            {
+              type: "filter",
+              name: "some_filter_value",
+              value: "0",
+              nameLoc: 0,
+              valueLoc: "/some/topic.some_array[:]{some_filter_value==".length,
+            }, // Test with a string value, should still work!
             { type: "name", name: "some_id" },
           ],
           modifier: undefined,
@@ -207,6 +213,79 @@ describe("addValuesWithPathsToItems", () => {
       {
         message: messages[0],
         queriedData: [{ value: 10, path: "/some/topic.some_array[:]{some_filter_value==0}.some_id" }],
+      },
+    ]);
+  });
+
+  it("filters properly for globalData, and uses the filter object in the path", () => {
+    const messages: Message[] = [
+      {
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
+        message: {
+          some_array: [
+            {
+              some_filter_value: 5,
+              some_id: 10,
+            },
+            {
+              some_filter_value: 1,
+              some_id: 50,
+            },
+          ],
+        },
+      },
+    ];
+    const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+    const datatypes: RosDatatypes = {
+      some_datatype: [
+        {
+          name: "some_array",
+          type: "some_other_datatype",
+          isArray: true,
+        },
+      ],
+      some_other_datatype: [
+        {
+          name: "some_filter_value",
+          type: "uint32",
+        },
+        {
+          name: "some_id",
+          type: "uint32",
+        },
+      ],
+    };
+
+    expect(
+      addValuesWithPathsToItems(
+        messages,
+        {
+          topicName: "/some/topic",
+          messagePath: [
+            { type: "name", name: "some_array" },
+            { type: "slice", start: 0, end: Infinity },
+            {
+              type: "filter",
+              name: "some_filter_value",
+              value: { variableName: "some_global_data_key" },
+              nameLoc: 0,
+              valueLoc: "/some/topic.some_array[:]{some_filter_value==".length,
+            }, // Test with a string value, should still work!
+            { type: "name", name: "some_id" },
+          ],
+          modifier: undefined,
+        },
+        topics,
+        datatypes,
+        { some_global_data_key: 5 }
+      )
+    ).toEqual([
+      {
+        message: messages[0],
+        queriedData: [{ value: 10, path: "/some/topic.some_array[:]{some_filter_value==5}.some_id" }],
       },
     ]);
   });

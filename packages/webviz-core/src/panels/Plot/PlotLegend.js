@@ -20,13 +20,19 @@ type PlotLegendProps = {|
   onChange: ({ paths: PlotPath[] }) => void,
 |};
 export default class PlotLegend extends PureComponent<PlotLegendProps> {
-  _onInputChange = (value: string, index: number) => {
+  _onInputChange = (value: string, index: ?number) => {
+    if (index == null) {
+      throw new Error("index not set");
+    }
     const newPaths = this.props.paths.slice();
     newPaths[index] = { ...newPaths[index], value: value.trim() };
     this.props.onChange({ paths: newPaths });
   };
 
-  _onInputTimestampMethodChange = (value: MessageHistoryTimestampMethod, index: number) => {
+  _onInputTimestampMethodChange = (value: MessageHistoryTimestampMethod, index: ?number) => {
+    if (index == null) {
+      throw new Error("index not set");
+    }
     const newPaths = this.props.paths.slice();
     newPaths[index] = { ...newPaths[index], timestampMethod: value };
     this.props.onChange({ paths: newPaths });

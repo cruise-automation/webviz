@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { clamp } from "lodash";
 import momentDurationFormatSetup from "moment-duration-format";
 import moment from "moment-timezone";
 import { type Time } from "rosbag";
@@ -126,8 +127,8 @@ export function findClosestTimestampIndex(currentTime: Time, frameTimestamps: st
 }
 
 export function getNextFrame(effectiveFrameIndex: number, frameTimestamps: string[], modifier: number = 1): Time {
-  const nextIndex = effectiveFrameIndex + modifier;
-  const nextFrame = frameTimestamps[(nextIndex + frameTimestamps.length) % frameTimestamps.length];
+  const nextIndex = clamp(effectiveFrameIndex + modifier, 0, frameTimestamps.length - 1);
+  const nextFrame = frameTimestamps[nextIndex];
   return fromSecondStamp(nextFrame);
 }
 

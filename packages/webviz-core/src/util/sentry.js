@@ -16,7 +16,8 @@ if (process.env.NODE_ENV !== "test" && RAVEN_URL) {
       git_commit: GIT_INFO.hash,
     },
     shouldSendCallback() {
-      return process.env.NODE_ENV === "production";
+      const { getGlobalHooks } = require("webviz-core/src/loadWebviz");
+      return process.env.NODE_ENV === "production" && getGlobalHooks().useRaven();
     },
     environment: process.env.NODE_ENV,
   };

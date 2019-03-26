@@ -57,7 +57,7 @@ const LOG_LEVEL_OPTIONS = KNOWN_LOG_LEVELS.map((level) => ({
 
 // Persist the identity of selectedOptions for React Creatable.
 // Without it, we can't create new options.
-export const stringsToOptions = createSelector(
+export const stringsToOptions = createSelector<*, *, *, _>(
   (strs: string[]) => strs,
   (strs: string[]): Option[] => strs.map((value) => ({ label: value, value }))
 );
@@ -188,4 +188,4 @@ class RosoutPanel extends PureComponent<Props> {
   }
 }
 
-export default Panel(RosoutPanel);
+export default Panel<Config>(RosoutPanel);

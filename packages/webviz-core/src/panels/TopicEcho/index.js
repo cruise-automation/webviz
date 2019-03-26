@@ -9,6 +9,7 @@
 import ChartBubbleIcon from "@mdi/svg/svg/chart-bubble.svg";
 import ChartLineVariantIcon from "@mdi/svg/svg/chart-line-variant.svg";
 import ClipboardOutlineIcon from "@mdi/svg/svg/clipboard-outline.svg";
+import ConsoleLineIcon from "@mdi/svg/svg/console-line.svg";
 import TargetIcon from "@mdi/svg/svg/target.svg";
 import LessIcon from "@mdi/svg/svg/unfold-less-horizontal.svg";
 import MoreIcon from "@mdi/svg/svg/unfold-more-horizontal.svg";
@@ -40,6 +41,7 @@ import clipboard from "webviz-core/src/util/clipboard";
 import { format, formatDuration } from "webviz-core/src/util/time";
 
 const DURATION_20_YEARS_SEC = 20 * 365 * 24 * 60 * 60;
+const DATA_ARRAY_PREVIEW_LIMIT = 20;
 
 const SMetadata = styled.div`
   margin-top: 4px;
@@ -213,7 +215,7 @@ class TopicEcho extends React.PureComponent<Props, State> {
     metadata: ?MessageHistoryMetadata,
     data: mixed[],
     queriedData: MessageHistoryQueriedDatum[],
-    itemLabel: string,
+    label: string,
     itemValue: mixed,
     ...keyPath: (number | string)[]
   ) => (
@@ -230,9 +232,31 @@ class TopicEcho extends React.PureComponent<Props, State> {
           );
         }
         const basePath: string = queriedData[lastKeyPath].path;
+        let itemLabel = label;
+        // output preview for the first x items if the data is in binary format
+        // sample output: Int8Array(331776) [-4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, ...]
+        let smallNumberArrayStr = "";
+        if (ArrayBuffer.isView(itemValue)) {
+          // $FlowFixMe flow doesn't know itemValue is an array
+          smallNumberArrayStr = `(${itemValue.length}) [${itemValue.slice(0, DATA_ARRAY_PREVIEW_LIMIT).join(", ")}${
+            // $FlowFixMe
+            itemValue.length >= DATA_ARRAY_PREVIEW_LIMIT ? ", ..." : ""
+          }] `;
+          // $FlowFixMe
+          itemLabel = itemValue.constructor.name;
+        }
         return (
           <span>
-            {itemLabel} {valueAction && this._renderIcons(valueAction, basePath)}
+            {itemLabel}
+            {smallNumberArrayStr && (
+              <React.Fragment>
+                {smallNumberArrayStr}
+                <Icon fade className={styles.icon} onClick={() => console.log(itemValue)} tooltip="Log data to console">
+                  <ConsoleLineIcon />
+                </Icon>
+              </React.Fragment>
+            )}
+            {valueAction && this._renderIcons(valueAction, basePath)}
           </span>
         );
       }}
@@ -280,7 +304,7 @@ class TopicEcho extends React.PureComponent<Props, State> {
           const singleVal = isSingleElemArray ? data[0] : data;
 
           return (
-            <Flex col scroll className={styles.container}>
+            <Flex col clip scroll className={styles.container}>
               <SMetadata>
                 <span
                   onClick={(e: SyntheticMouseEvent<HTMLSpanElement>) => {
@@ -292,7 +316,7 @@ class TopicEcho extends React.PureComponent<Props, State> {
                         return "<buffer>";
                       }
                     });
-                    clipboard.copy(JSON.stringify(dataWithoutLargeArrays, null, 2));
+                    clipboard.copy(JSON.stringify(dataWithoutLargeArrays, null, 2) || "");
                   }}>
                   <Icon>
                     <ClipboardOutlineIcon style={{ verticalAlign: "middle" }} />
@@ -344,7 +368,7 @@ class TopicEcho extends React.PureComponent<Props, State> {
     const { expandAll } = this.state;
 
     return (
-      <Flex col style={{ position: "relative" }}>
+      <Flex col clip style={{ position: "relative" }}>
         <PanelToolbar helpContent={helpContent}>
           <MessageHistory.Input path={topicName} onChange={this._onChange} inputStyle={{ height: "100%" }} />
           <Icon tooltip={expandAll ? "Collapse all" : "Expand all"} large fade onClick={this._toggleExpandAll}>
@@ -357,4 +381,4 @@ class TopicEcho extends React.PureComponent<Props, State> {
   }
 }
 
-export default Panel(TopicEcho);
+export default Panel<Config>(TopicEcho);

@@ -22,6 +22,7 @@ type Props = {
   // merge the bag data with existing fixture data
   getMergedFixture: (bagFixture: Fixture) => Fixture,
   mapTopicToDatatype: (topic: string) => string,
+  hasNestedMessageHistory: ?boolean,
 };
 
 // A util component for testing panels that need to load the raw ROS bags.
@@ -31,6 +32,7 @@ type Props = {
 function PanelSetupWithBag({
   bagFileUrl,
   children,
+  hasNestedMessageHistory,
   getMergedFixture = (bagFixture) => bagFixture,
   mapTopicToDatatype = () => "dummyType",
   topics = [],
@@ -80,9 +82,15 @@ function PanelSetupWithBag({
       });
 
     const fixture = getMergedFixture(tempFixture);
-    // set the state twice in case the panel has nested MessageHistory like ImageView
     setFixture(fixture);
-    setFixture(fixture);
+
+    // Nesting two message history components within eachother causes the message history cache of messages to topics
+    // to not be refreshed properly since both components mount at the same time.  This is a hack to support
+    // stories for the image panel, which involve nested message histories, until we can get a proper fix for having
+    // nested message histories with different topic subscriptions working.
+    if (hasNestedMessageHistory) {
+      setFixture({ ...fixture });
+    }
   }
 
   // load the bag when component is mounted or updated

@@ -8,13 +8,17 @@
 
 // mock storage object to monkeypatch missing localstorage for tests
 export default class MemoryStorage {
-  items = {};
+  _items = {};
+
+  clear() {
+    this._items = {};
+  }
 
   getItem(key: string) {
-    return this.items[key];
+    return this._items[key];
   }
 
   setItem(key: string, value: string) {
-    this.items[key] = value;
+    this._items[key] = value;
   }
 }

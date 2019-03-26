@@ -175,7 +175,7 @@ button {
     background-color: $red;
   }
   &.is-warning {
-    background-color: $orange;
+    background-color: $background-control;
   }
 
   &:hover {
@@ -184,6 +184,7 @@ button {
 
   &.is-primary {
     background-color: $green;
+    color: $background;
   }
   &.selected {
     background-color: $background-control-selected;

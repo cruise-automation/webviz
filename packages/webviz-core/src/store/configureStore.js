@@ -9,7 +9,6 @@
 import { createStore, applyMiddleware } from "redux";
 import thunk from "redux-thunk";
 
-import warnOnOutOfSyncMessages from "webviz-core/src/store/warnOnOutOfSyncMessages";
 import type { Store } from "webviz-core/src/types/Store";
 
 const configureStore = (reducer: () => any, middleware?: Array<any> = []): Store => {
@@ -18,9 +17,7 @@ const configureStore = (reducer: () => any, middleware?: Array<any> = []): Store
     const { composeWithDevTools } = require("redux-devtools-extension");
     enhancer = composeWithDevTools(enhancer);
   }
-  const store = createStore(reducer, window.initialState, enhancer);
-  warnOnOutOfSyncMessages(store);
-  return store;
+  return createStore(reducer, window.initialState, enhancer);
 };
 
 export default configureStore;

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { ExtensionAction } from "webviz-core/src/actions/extensions";
+import type { ExtensionsActions } from "webviz-core/src/actions/extensions";
 
 export type Extensions = {
   markerProviders: Object[],
@@ -18,7 +18,7 @@ const initialState: Extensions = Object.freeze({
   auxiliaryData: {},
 });
 
-export default function(state: Extensions = initialState, action: ExtensionAction): Extensions {
+export default function(state: Extensions = initialState, action: ExtensionsActions): Extensions {
   switch (action.type) {
     case "REGISTER_MARKER_PROVIDER":
       if (state.markerProviders.indexOf(action.payload) !== -1) {

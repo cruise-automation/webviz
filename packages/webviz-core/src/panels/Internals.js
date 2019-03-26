@@ -6,22 +6,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { groupBy, sortBy } from "lodash";
+import { groupBy, keyBy, sortBy } from "lodash";
 import React from "react";
-import { connect } from "react-redux";
 import styled from "styled-components";
 
 import Flex from "webviz-core/src/components/Flex";
+import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import type { State } from "webviz-core/src/reducers";
 import type { SubscribePayload, AdvertisePayload, Topic } from "webviz-core/src/types/players";
-
-type Props = {|
-  topics: Topic[],
-  subscriptions: SubscribePayload[],
-  publishers: AdvertisePayload[],
-|};
 
 const Container = styled.div`
   padding: 8px;
@@ -74,16 +67,16 @@ function getPublisherGroup({ advertiser }: AdvertisePayload): string {
 }
 
 // Display webviz internal state for debugging and for QA to view topic dependencies.
-class Internals extends React.PureComponent<Props> {
+class Internals extends React.PureComponent<{}> {
   static panelType = "Internals";
+  static defaultConfig = {};
 
-  _renderSubscriptions() {
-    const { topics, subscriptions } = this.props;
+  _renderSubscriptions(subscriptions: SubscribePayload[], topics: Topic[]) {
     if (subscriptions.length === 0) {
       return "(none)";
     }
     const groupedSubscriptions = groupBy(subscriptions, getSubscriptionGroup);
-    const originalTopicsByName = groupBy(topics, (topic) => topic.name);
+    const topicsByName = keyBy(topics, (topic) => topic.name);
 
     return Object.keys(groupedSubscriptions)
       .sort()
@@ -96,8 +89,9 @@ class Internals extends React.PureComponent<Props> {
                 <li key={i}>
                   <tt>
                     {sub.topic}
-                    {originalTopicsByName[sub.topic] &&
-                      ` (original topic: ${originalTopicsByName[sub.topic][0].originalTopic})`}
+                    {topicsByName[sub.topic] &&
+                      topicsByName[sub.topic].originalTopic &&
+                      ` (original topic: ${topicsByName[sub.topic].originalTopic})`}
                   </tt>
                 </li>
               ))}
@@ -107,11 +101,11 @@ class Internals extends React.PureComponent<Props> {
       });
   }
 
-  _renderPublishers() {
-    if (this.props.publishers.length === 0) {
+  _renderPublishers(publishers: AdvertisePayload[]) {
+    if (publishers.length === 0) {
       return "(none)";
     }
-    const groupedSubscriptions = groupBy(this.props.publishers, getPublisherGroup);
+    const groupedSubscriptions = groupBy(publishers, getPublisherGroup);
     return Object.keys(groupedSubscriptions)
       .sort()
       .map((key) => {
@@ -132,29 +126,25 @@ class Internals extends React.PureComponent<Props> {
 
   render() {
     return (
-      <Container>
-        <PanelToolbar floating />
-        <Flex row scroll>
-          <section>
-            <h1>Subscriptions</h1>
-            {this._renderSubscriptions()}
-          </section>
-          <section>
-            <h1>Publishers</h1>
-            {this._renderPublishers()}
-          </section>
-        </Flex>
-      </Container>
+      <MessagePipelineConsumer>
+        {(context: MessagePipelineContext) => (
+          <Container>
+            <PanelToolbar floating />
+            <Flex row scroll>
+              <section>
+                <h1>Subscriptions</h1>
+                {this._renderSubscriptions(context.subscriptions, context.sortedTopics)}
+              </section>
+              <section>
+                <h1>Publishers</h1>
+                {this._renderPublishers(context.publishers)}
+              </section>
+            </Flex>
+          </Container>
+        )}
+      </MessagePipelineConsumer>
     );
   }
 }
 
-const mapStateToProps = (state: State): $Shape<Props> => {
-  return {
-    subscriptions: state.player.subscriptions,
-    publishers: state.player.publishers,
-    topics: state.player.topics,
-  };
-};
-
-export default Panel(connect(mapStateToProps)(Internals));
+export default Panel<{}>(Internals);

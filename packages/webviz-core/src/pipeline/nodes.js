@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import { flatten, uniq } from "lodash";
-import type { Time } from "rosbag";
 
 import { topicsByTopicName } from "webviz-core/src/selectors";
 import type { Message, SubscribePayload, Topic } from "webviz-core/src/types/players";
@@ -29,17 +28,13 @@ export function isWebvizNodeTopic(topic: string) {
   return topic.startsWith(WEBVIZ_TOPIC_PREFIX);
 }
 
-export const makeNodeMessage = (topic: string, datatype: string, receiveTime: Time, message: any): Message => {
-  if (!receiveTime) {
-    // Should be covered by Flow, but just to make sure.
-    throw new Error("receiveTime missing");
-  }
+export const makeNodeMessage = (topic: string, datatype: string, message: any): Message => {
   return {
     op: "message",
     topic,
     datatype,
     message,
-    receiveTime,
+    receiveTime: { sec: 0, nsec: 0 }, // Gets set in `applyNodeToMessage`.
   };
 };
 
@@ -91,23 +86,26 @@ function applyNodeToMessage<State>(
   const topicNameToTopic = topicsByTopicName(nodeDefinition.outputs);
   const { messages, state } = nodeDefinition.callback({ message: inputMessage, state: inputState });
 
-  const filteredMessages = messages.filter((message) => {
-    if (!message) {
-      return false;
-    }
-    const topic: ?Topic = topicNameToTopic[message.topic];
-    if (!topic) {
-      console.warn(`message.topic "${message.topic}" not in outputs; message discarded`);
-      return false;
-    }
-    if (topic.datatype !== message.datatype) {
-      console.warn(
-        `message.datatype "${message.topic}" does not match topic.datatype "${topic.datatype}"; message discarded`
-      );
-      return false;
-    }
-    return true;
-  });
+  const filteredMessages = messages
+    .filter((message) => {
+      if (!message) {
+        return false;
+      }
+      const topic: ?Topic = topicNameToTopic[message.topic];
+      if (!topic) {
+        console.warn(`message.topic "${message.topic}" not in outputs; message discarded`);
+        return false;
+      }
+      if (topic.datatype !== message.datatype) {
+        console.warn(
+          `message.datatype "${message.topic}" does not match topic.datatype "${topic.datatype}"; message discarded`
+        );
+        return false;
+      }
+      return true;
+    })
+    // Make sure the `receiveTime` is identical to the `inputMessage` so we don't get out of order messages.
+    .map((message) => ({ ...message, receiveTime: inputMessage.receiveTime }));
 
   return { state, messages: filteredMessages };
 }
@@ -118,7 +116,7 @@ export function applyNodesToMessages(
   originalStates: ?(any[])
 ): {| states: any[], messages: Message[] |} {
   const states = originalStates ? [...originalStates] : nodeDefinitions.map(({ defaultState }) => defaultState);
-  let messages = [...originalMessages];
+  const messages = [...originalMessages];
 
   // Have to do this the old-school way since we are appending to
   // `messages` in the process.
@@ -127,7 +125,7 @@ export function applyNodesToMessages(
       if (nodeDefinition.inputs.includes(messages[i].topic)) {
         const { messages: newMessages, state } = applyNodeToMessage(nodeDefinition, messages[i], states[index]);
         states[index] = state;
-        messages = [...messages, ...newMessages];
+        messages.splice(i + 1, 0, ...newMessages);
       }
     });
   }

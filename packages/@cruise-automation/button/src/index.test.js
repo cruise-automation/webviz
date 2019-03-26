@@ -99,7 +99,7 @@ describe("<Button />", () => {
         testing
       </Button>
     );
-    el.instance().onMouseDown({ persist: () => {} });
+    el.instance().onMouseDown(({ persist: () => {} }: any));
   });
 
   it("unmounting cancels done callback", (done: any) => {
@@ -108,7 +108,7 @@ describe("<Button />", () => {
         testing
       </Button>
     );
-    el.instance().onMouseDown({ persist: () => {} });
+    el.instance().onMouseDown(({ persist: () => {} }: any));
     setImmediate(() => {
       el.unmount();
       done();

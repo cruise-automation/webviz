@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import debounce from "lodash/debounce";
+import * as React from "react";
 import createREGL from "regl";
 
 import { camera, CameraStore } from "./camera/index";
@@ -273,7 +274,7 @@ export class WorldviewContext {
 
   callComponentHandlers = (objectId: number, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
     this._hitmapCalls.forEach((_, component) => {
-      if (component.handleMouseEvent) {
+      if (component instanceof Command) {
         component.handleMouseEvent(objectId, e, ray, mouseEventName);
       }
     });

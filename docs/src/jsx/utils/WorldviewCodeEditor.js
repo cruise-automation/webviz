@@ -59,7 +59,8 @@ const CODE_SANDBOX_CONFIG = {
       content: require("!!raw-loader!./CameraStateInfo.js"),
     },
     "utils/Duck.glb": {
-      content: require("!!file-loader!./Duck.glb"),
+      content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/Zb-T-Duck.glb",
+      isBinary: true,
     },
     "utils/useRange.js": {
       content: require("!!raw-loader!./useRange.js"),
@@ -136,8 +137,7 @@ export default function WorldviewCodeEditor({
   const hashUrl = getHashUrlByComponentName(componentName);
   const docUrl = `https://cruise-automation.github.io/webviz/worldview/#${hashUrl}`;
 
-  const copyCode = `
-${nonEditableCode}
+  const copyCode = `${nonEditableCode}
 
 ${code}
     `;

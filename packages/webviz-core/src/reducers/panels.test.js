@@ -11,7 +11,7 @@ import { getLeaves } from "react-mosaic-component";
 
 import { changePanelLayout, savePanelConfig, importPanelLayout } from "webviz-core/src/actions/panels";
 import rootReducer from "webviz-core/src/reducers";
-import { LAYOUT_KEY, PANEL_PROPS_KEY } from "webviz-core/src/reducers/panels";
+import { LAYOUT_KEY, PANEL_PROPS_KEY, GLOBAL_DATA_KEY } from "webviz-core/src/reducers/panels";
 import configureStore from "webviz-core/src/store";
 import Storage from "webviz-core/src/util/Storage";
 
@@ -26,7 +26,7 @@ const getStore = () => {
 
 describe("state.panels", () => {
   beforeEach(() => {
-    window.localStorage.items = {};
+    window.localStorage.clear();
   });
 
   it("stores initial panel layout in local storage", () => {
@@ -75,6 +75,36 @@ describe("state.panels", () => {
       const storage = new Storage();
       expect(storage.get(LAYOUT_KEY)).toEqual(panels.layout);
       expect(storage.get(PANEL_PROPS_KEY)).toEqual(panels.savedProps);
+    });
+  });
+
+  it("sets default globalData value in local storage if globalData is not in migrated payload", () => {
+    const store = getStore();
+    const payload = {
+      layout: "foo!baz",
+      savedProps: { foo: { test: true } },
+    };
+
+    store.dispatch(importPanelLayout(payload, false));
+    store.checkState((panels) => {
+      const storage = new Storage();
+      expect(storage.get(GLOBAL_DATA_KEY)).toEqual({});
+    });
+  });
+
+  it("sets globalData value in local storage", () => {
+    const store = getStore();
+    const globalData = { some_global_data_var: 1 };
+    const payload = {
+      layout: "foo!baz",
+      savedProps: { foo: { test: true } },
+      globalData,
+    };
+
+    store.dispatch(importPanelLayout(payload, false));
+    store.checkState((panels) => {
+      const storage = new Storage();
+      expect(storage.get(GLOBAL_DATA_KEY)).toEqual(globalData);
     });
   });
 

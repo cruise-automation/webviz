@@ -97,7 +97,7 @@ const yAxes = createSelector(
         suggestedMin: isNaN(minYValue) ? undefined : minYValue,
         suggestedMax: isNaN(maxYValue) ? undefined : maxYValue,
         precision: 3,
-        callback: (val, idx, vals) => `${Math.round(val * 1000) / 1000}`,
+        callback: (val, idx, vals) => (idx === 0 || idx === vals.length - 1 ? "" : `${Math.round(val * 1000) / 1000}`),
       },
       gridLines: {
         color: "rgba(255, 255, 255, 0.2)",

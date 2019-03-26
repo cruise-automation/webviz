@@ -10,10 +10,11 @@
     "chartjs-plugin-datalabels": "0.4.0",
     "chartjs-plugin-zoom": "0.6.6",
     "classnames": "2.2.6",
-    "hoist-non-react-statics": "^3.0.1",
+    "hoist-non-react-statics": "3.0.1",
     "inter-ui": "3.0.0",
     "lodash": "4.17.11",
-    "memoize-weak": "^1.0.2",
+    "memoize-one": "5.0.0",
+    "memoize-weak": "1.0.2",
     "moment": "2.22.2",
     "moment-duration-format": "2.2.2",
     "moment-timezone": "0.5.23",
@@ -30,7 +31,7 @@
     "react-dom": "16.6.3",
     "react-draggable": "3.0.5",
     "react-hot-loader": "4.3.12",
-    "react-hover-observer": "^2.1.1",
+    "react-hover-observer": "2.1.1",
     "react-json-tree": "0.11.1",
     "react-markdown": "4.0.4",
     "react-mosaic-component": "1.0.3",
@@ -45,7 +46,7 @@
     "redux": "4.0.1",
     "redux-thunk": "2.3.0",
     "reselect": "4.0.0",
-    "rosbag": "2.0.0",
+    "rosbag": "2.0.1",
     "sanitize-html": "1.20.0",
     "shallowequal": "1.1.0",
     "string-hash": "1.1.3",
@@ -55,7 +56,7 @@
     "wasm-lz4": "0.0.2"
   },
   "devDependencies": {
-    "flow-bin": "0.80.0"
+    "flow-bin": "0.95.1"
   },
   "importjs": {
     "isRoot": false

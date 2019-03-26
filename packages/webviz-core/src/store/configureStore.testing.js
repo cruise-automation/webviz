@@ -13,7 +13,11 @@ import thunk from "redux-thunk";
 import type { State } from "webviz-core/src/reducers";
 
 const configureStore = (reducer: () => any, middleware?: Array<any> = [], history: any, preloadedState?: State) => {
-  const store = createStore(reducer, preloadedState, applyMiddleware(thunk, routerMiddleware(history), ...middleware));
+  const store = createStore<*, *, *>(
+    reducer,
+    preloadedState,
+    applyMiddleware(thunk, routerMiddleware(history), ...middleware)
+  );
 
   // if there is no history, initialize the router state
   // to a blank history entry so tests relying on it being present don't break

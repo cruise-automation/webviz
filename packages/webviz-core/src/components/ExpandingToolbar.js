@@ -28,6 +28,8 @@ type Props = {|
   onExpand?: ?(expanded: boolean) => void,
   className?: ?string,
   tooltip: string,
+  selectedTab?: string,
+  expanded?: boolean,
 |};
 
 type State = {
@@ -37,8 +39,8 @@ type State = {
 
 export default class ExpandingToolbar extends React.Component<Props, State> {
   state = {
-    expanded: false,
-    selectedTab: undefined,
+    expanded: !!this.props.expanded,
+    selectedTab: this.props.selectedTab,
   };
 
   toggleExpanded = () => {

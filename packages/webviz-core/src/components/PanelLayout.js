@@ -88,7 +88,7 @@ class PanelLayout extends PureComponent<Props> {
   }
 }
 
-export default connect(
+export default connect<Props, {}, _, _, _, _>(
   (state: State) => ({ layout: state.panels.layout }),
   { changePanelLayout, savePanelConfig, setMosaicId }
 )(PanelLayout);

@@ -7,5 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 export default function inScreenshotTests() {
-  return navigator.userAgent.includes("HeadlessChrome");
+  // Integration tests are not always in a headless Chrome, so need to check for "integration-test" in
+  // the URL as well.
+  return navigator.userAgent.includes("HeadlessChrome") || window.location.search.includes("integration-test");
 }

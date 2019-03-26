@@ -14,7 +14,7 @@ import rosPathGrammar from "./rosPathGrammar.ne";
 
 const grammarObj = Grammar.fromCompiled(rosPathGrammar);
 
-const parseRosPath = memoize(
+const parseRosPath: (path: string) => ?RosPath = memoize(
   (path: string): ?RosPath => {
     // Need to create a new Parser object for every new string to parse (should be cheap).
     const parser = new Parser(grammarObj);

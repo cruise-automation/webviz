@@ -35,7 +35,13 @@ export const TOPICS_WITH_INCORRECT_HEADERS = getGlobalHooks().topicsWithIncorrec
 export type MessagePathPart =
   | {| type: "name", name: string |}
   | {| type: "slice", start: number, end: number |}
-  | {| type: "filter", name: string, value: number | string, nameLoc: number |};
+  | {|
+      type: "filter",
+      name: string,
+      value: number | string | {| variableName: string |},
+      nameLoc: number,
+      valueLoc: number,
+    |};
 export type RosPath = {|
   topicName: string,
   messagePath: MessagePathPart[],

@@ -49,8 +49,8 @@ const heavyTopicsWithNoTimeDependency = createSelector(
 // likely require some expansion of its API, to allow for "reducing" messages into a certain data
 // structure. Otherwise we'd have to iterate over every array element any time we receive messages,
 // e.g. for topics that publish key-value pairs.
-export function FrameCompatibility<Props: *>(ChildComponent: React.ComponentType<Props>, options: Options = {}) {
-  class Component extends React.PureComponent<Props, { topics?: string[] }> {
+export function FrameCompatibility<Props>(ChildComponent: React.ComponentType<Props>, options: Options = {}) {
+  class Component extends React.PureComponent<Props & { forwardedRef: any, topics: Topic[] }, { topics?: string[] }> {
     static displayName = `FrameCompatibility(${ChildComponent.displayName || ChildComponent.name || ""})`;
     static contextTypes = { store: PropTypes.any };
 
@@ -63,7 +63,7 @@ export function FrameCompatibility<Props: *>(ChildComponent: React.ComponentType
     };
 
     render() {
-      const { forwardedRef } = this.props;
+      const { forwardedRef, ...childProps } = this.props;
       const topics = this.state.topics || options.topics || [];
 
       // Temporary hack to stay fast when dealing with large point clouds and such.
@@ -108,7 +108,7 @@ export function FrameCompatibility<Props: *>(ChildComponent: React.ComponentType
             }
             return (
               <ChildComponent
-                {...this.props}
+                {...childProps}
                 ref={forwardedRef}
                 key={this._key}
                 frame={frame}
@@ -122,7 +122,6 @@ export function FrameCompatibility<Props: *>(ChildComponent: React.ComponentType
     }
   }
   return hoistNonReactStatics(
-    // $FlowFixMe - missing definition for forwardRef
     React.forwardRef((props, ref) => {
       return <Component {...props} forwardedRef={ref} />;
     }),

@@ -21,7 +21,8 @@ import type { MessageHistoryItem } from "webviz-core/src/components/MessageHisto
 import { PLOT_DASHED_STYLE, PLOT_DOT_DASHED_STYLE } from "webviz-core/src/components/TimeBasedChart/constants";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
 
-const SyncTimeAxis = createSyncingComponent("SyncTimeAxis", (dataItems: {| minX: ?number, maxX: ?number |}[]) => ({
+type Bounds = {| minX: ?number, maxX: ?number |};
+const SyncTimeAxis = createSyncingComponent<Bounds, Bounds>("SyncTimeAxis", (dataItems: Bounds[]) => ({
   minX: min(dataItems.map(({ minX }) => (minX === undefined || minX === null ? undefined : floor(minX, 1)))),
   maxX: max(dataItems.map(({ maxX }) => (maxX === undefined || maxX === null ? undefined : ceil(maxX, 1)))),
 }));
@@ -160,7 +161,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
   };
 
   _onGetTick = (value: number, index: number, values: number[]): string => {
-    if (this.state.showResetZoom && (index === 0 || index === values.length - 1)) {
+    if (index === 0 || index === values.length - 1) {
       // First and last labels sometimes get super long rounding errors when zooming.
       // This fixes that.
       return "";
@@ -262,7 +263,6 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
       fontSize: 10,
       fontColor: "#eee",
       maxRotation: 0,
-      callback: this._onGetTick,
       timeBasedChartMin: minX,
       timeBasedChartMax: maxX,
     };

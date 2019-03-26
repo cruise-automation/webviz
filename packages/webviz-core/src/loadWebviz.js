@@ -13,7 +13,6 @@ import { routerMiddleware } from "react-router-redux";
 // We put all the internal requires inside functions, so that when they load the hooks have been properly set.
 
 let hooks = {
-  initialWebsocketInputValue: () => "",
   nodes: () => [],
   migratePanels: (panels) => panels,
   panelList() {
@@ -21,6 +20,7 @@ let hooks = {
     const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
     const ImageViewPanel = require("webviz-core/src/panels/ImageView").default;
     const Internals = require("webviz-core/src/panels/Internals").default;
+    const NumberOfRenders = require("webviz-core/src/panels/NumberOfRenders").default;
     const Plot = require("webviz-core/src/panels/Plot").default;
     const Rosout = require("webviz-core/src/panels/Rosout").default;
     const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
@@ -36,6 +36,7 @@ let hooks = {
       { title: `Runtime Monitor ${ndash} Summary`, component: DiagnosticSummary },
       { title: `Runtime Monitor ${ndash} Detail`, component: DiagnosticStatusPanel },
       { title: "Webviz Internals", component: Internals },
+      { title: "Number of Renders", component: NumberOfRenders, hideFromList: true },
     ];
   },
   helpPageFootnote: () => null,
@@ -63,6 +64,7 @@ let hooks = {
   ],
   rootTransformFrame: "map",
   defaultFollowTransformFrame: null,
+  useRaven: () => true,
   load: () => {},
 };
 

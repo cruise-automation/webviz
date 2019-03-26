@@ -14,20 +14,18 @@ import auth from "./auth";
 import extensions from "./extensions";
 import mosaic from "./mosaic";
 import panels from "./panels";
-import player from "./player";
 import type { Routing } from "webviz-core/src/types/router";
 
 const reducers = {
   routing: (routing: Reducer<Routing, any>),
   panels,
-  player,
   mosaic,
   auth,
   extensions,
 };
 
-const rootReducer = combineReducers(reducers);
+const rootReducer = combineReducers<typeof reducers, any>(reducers);
 export default rootReducer;
 
 export type Reducers = $Exact<typeof reducers>;
-export type State = $ObjMap<Reducers, <F>(F) => $Call<F, any, any>>;
+export type State = $ObjMap<Reducers, <F>(_: F) => $Call<F, any, any>>;

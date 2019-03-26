@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Component } from "react";
+import * as React from "react";
 import shallowequal from "shallowequal";
 import uuid from "uuid";
 
@@ -40,13 +40,14 @@ import uuid from "uuid";
 export default function createSyncingComponent<ComponentData, ReducerOutput>(
   displayName: string,
   reducer: (ComponentData[]) => ReducerOutput
-): Class<React.Component<{| data: ComponentData, children: (ReducerOutput) => React.Node |}>> {
+): React.ComponentType<{| data: ComponentData, children: (ReducerOutput) => React.Node |}> {
+  type Props = {| data: ComponentData, children: (ReducerOutput) => React.Node |};
+
   const dataById: { [string]: ComponentData } = {};
-  const componentsById: { [string]: React.Component } = {};
+  const componentsById: { [string]: React.Component<Props> } = {};
   let reducedData: ReducerOutput;
 
-  type Props = {| data: ComponentData, children: (ReducerOutput) => React.Node |};
-  return class SyncingComponent extends Component<Props> {
+  return class SyncingComponent extends React.Component<Props> {
     static displayName = displayName;
     _id: string;
 

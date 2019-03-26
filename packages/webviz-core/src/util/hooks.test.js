@@ -61,8 +61,8 @@ describe("hooks", () => {
   });
 
   describe("useEventListener", () => {
-    const Test = withHooks(({ target = window, type, enable, handler }) => {
-      useEventListener(target, type, enable, handler);
+    const Test = withHooks(({ target = window, type, enable, handler, dependencies = [] }) => {
+      useEventListener(target, type, enable, handler, dependencies);
       return null;
     });
 
@@ -112,6 +112,11 @@ describe("hooks", () => {
       const el = mount(<Test type="keyup" enable={false} handler={handler} target={target} />);
       el.setProps({ enable: true });
       expect(target.addEventListener.mock.calls).toEqual([["keyup", handler]]);
+    });
+    it("updates when dependency changes", () => {
+      const el = mount(<Test type="keyup" enable handler={handler} target={target} dependencies={["any-depdency"]} />);
+      el.setProps({ dependencies: ["changed-dependencies"] });
+      expect(target.addEventListener).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -29,11 +29,11 @@ storiesOf("<ErrorDisplay>", module)
   .add("With one error", () => {
     class Wrapper extends React.Component<any> {
       componentDidMount() {
-        reportError("Something bad happened", "This error is on purpose - it comes from the story");
+        reportError("Something bad happened", "This error is on purpose - it comes from the story", "app");
       }
 
       addError() {
-        reportError(`${Math.floor(Math.random() * 1000)} new error`, "some details");
+        reportError(`${Math.floor(Math.random() * 1000)} new error`, "some details", "app");
       }
 
       render() {
@@ -55,10 +55,10 @@ storiesOf("<ErrorDisplay>", module)
     class Wrapper extends React.Component<any> {
       el: ?HTMLDivElement;
       componentDidMount() {
-        reportError("Something bad happened 1", "This error is on purpose - it comes from the story");
-        reportError("Something bad happened 2", "This error is on purpose - it comes from the story");
-        reportError("Something bad happened 3", "This error is on purpose - it comes from the story");
-        reportError("Something bad happened 4", "This error is on purpose - it comes from the story");
+        reportError("Something bad happened 1", "This error is on purpose - it comes from the story", "app");
+        reportError("Something bad happened 2", "This error is on purpose - it comes from the story", "app");
+        reportError("Something bad happened 3", "This error is on purpose - it comes from the story", "app");
+        reportError("Something bad happened 4", "This error is on purpose - it comes from the story", "app");
         if (this.el) {
           const icon = this.el.querySelector(".icon");
           if (icon) {
@@ -68,7 +68,7 @@ storiesOf("<ErrorDisplay>", module)
       }
 
       addError() {
-        reportError(`${Math.floor(Math.random() * 1000)} new error`, "some details");
+        reportError(`${Math.floor(Math.random() * 1000)} new error`, "some details", "app");
       }
 
       render() {

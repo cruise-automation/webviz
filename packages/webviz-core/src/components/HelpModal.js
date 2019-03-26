@@ -11,6 +11,7 @@ import styled from "styled-components";
 
 import Modal from "webviz-core/src/components/Modal";
 import TextContent from "webviz-core/src/components/TextContent";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 
 const SRoot = styled.div`
   max-width: 650px; // Px value because beyond a certain absolute width the lines become harder to read.
@@ -20,18 +21,32 @@ const SRoot = styled.div`
   padding: 1.5em;
 `;
 
+const SFootnote = styled.div`
+  opacity: 0.8;
+  margin: 1em 0 0;
+  font-size: 1.1rem;
+`;
+
 type Props = {|
   children: React.Node | string,
-  footer?: React.Node,
+  linkTarget?: string,
   onRequestClose: () => void,
 |};
+
+function Footnote() {
+  const footnote = getGlobalHooks().helpPageFootnote();
+  if (!footnote) {
+    return null;
+  }
+  return <SFootnote>{footnote}</SFootnote>;
+}
 
 export default function HelpModal(props: Props) {
   return (
     <Modal onRequestClose={props.onRequestClose}>
       <SRoot>
-        <TextContent>{props.children}</TextContent>
-        {props.footer}
+        <TextContent linkTarget={props.linkTarget}>{props.children}</TextContent>
+        <Footnote />
       </SRoot>
     </Modal>
   );

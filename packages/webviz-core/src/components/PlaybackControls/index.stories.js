@@ -12,30 +12,29 @@ import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { UnconnectedPlaybackControls } from ".";
-import type { PlayerState } from "webviz-core/src/reducers/player";
+import { type PlayerState } from "webviz-core/src/types/players";
 
 const START_TIME = 1531761690;
 
 function getPlayerState(): PlayerState {
   const player: PlayerState = {
-    id: 2,
-    isLive: true,
-    isConnecting: false,
-    reconnectDelayMillis: 0,
-    websocket: "",
-    frame: {},
-    topics: [],
-    isPlaying: true,
-    speed: 0.2,
-    lastSeekTime: 0,
-    startTime: { sec: START_TIME, nsec: 331 },
-    endTime: { sec: START_TIME + 20, nsec: 331 },
-    currentTime: { sec: START_TIME + 5, nsec: 331 },
-    capabilities: [],
-    datatypes: {},
-    subscriptions: [],
-    publishers: [],
+    isPresent: true,
+    showSpinner: false,
+    showInitializing: false,
     progress: {},
+    capabilities: [],
+    playerId: "1",
+    activeData: {
+      messages: [],
+      startTime: { sec: START_TIME, nsec: 331 },
+      endTime: { sec: START_TIME + 20, nsec: 331 },
+      currentTime: { sec: START_TIME + 5, nsec: 331 },
+      isPlaying: true,
+      speed: 0.2,
+      lastSeekTime: 0,
+      topics: [],
+      datatypes: {},
+    },
   };
   return player;
 }
@@ -48,7 +47,6 @@ storiesOf("<PlaybackControls>", module)
     const setSpeed = action("setSpeed");
     const seek = action("seek");
     const player = getPlayerState();
-    player.isPlaying = true;
     return (
       <div style={{ padding: 20, margin: 100 }}>
         <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />
@@ -63,11 +61,11 @@ storiesOf("<PlaybackControls>", module)
     const player = getPlayerState();
 
     // satisify flow
-    if (player.startTime && player.endTime) {
-      player.startTime.sec += 1;
-      player.endTime.sec += 1;
+    if (player.activeData) {
+      player.activeData.isPlaying = false;
+      player.activeData.startTime.sec += 1;
+      player.activeData.endTime.sec += 1;
     }
-    player.isPlaying = false;
     return (
       <div style={{ padding: 20, margin: 100 }}>
         <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />
@@ -82,11 +80,11 @@ storiesOf("<PlaybackControls>", module)
     const player = getPlayerState();
 
     // satisify flow
-    if (player.startTime && player.endTime) {
-      player.startTime.sec += 1;
-      player.endTime.sec += 1;
+    if (player.activeData) {
+      player.activeData.isPlaying = false;
+      player.activeData.startTime.sec += 1;
+      player.activeData.endTime.sec += 1;
     }
-    player.isPlaying = false;
 
     // wrap the component so we can get a ref to it and force a mouse over and out event
     class ControlsWithTooltip extends React.Component<*> {

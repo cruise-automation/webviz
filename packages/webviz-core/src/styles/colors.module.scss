@@ -4,20 +4,20 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-$background: #1a1528;
-$background-control: #3d3146;
+$background: #1f1e27;
+$background-control: rgba(247, 247, 243, 0.1);
 // $background-control-selected: mix($background-control, #5824d0, 48%);
-$background-control-selected: rgba(88, 36, 208, 0.35);
-$toolbar-background: rgba(0, 0, 0, 0.5);
+$background-control-selected: rgba(247, 247, 243, 0.08);
+$toolbar-background: rgba(0, 0, 0, 0.9);
 $tooltip-background: rgba(71, 69, 81, 0.9);
 
 // $text-control: mix($background, white, 25%); //#ededed;
-$text-bright: rgba(255, 255, 255, 0.88);
-$text-normal: rgba(255, 255, 255, 0.77);
-$text-disabled: rgba(255, 255, 255, 0.15);
-$text-muted: rgba(255, 255, 255, 0.3);
+$text-bright: rgba(247, 247, 243, 0.88);
+$text-normal: rgba(247, 247, 243, 0.77);
+$text-disabled: rgba(247, 247, 243, 0.15);
+$text-muted: rgba(247, 247, 243, 0.3);
 $text-control: $text-normal;
-$text-control-hover: white;
+$text-control-hover: rgba(247, 247, 243, 1);
 
 $text-input: rgba(0, 0, 0, 0.8);
 $text-input-disabled: rgba(0, 0, 0, 0.3);
@@ -25,22 +25,23 @@ $text-input-disabled: rgba(0, 0, 0, 0.3);
 $highlight: #29bee7;
 
 $menu-item-selected: $background-control-selected;
-$menu-item-hover: rgba(71, 9, 215, 0.6);
+$menu-item-hover: rgba(0, 0, 0, 1);
 
-$divider: rgba(255, 255, 255, 0.1);
+$divider: rgba(247, 247, 243, 0.1);
 
-$green: #00a871;
-$light-green: #7add4e;
-$yellow: #ffd217;
+$green: #05d27d;
+$light-green: #5cd6a9;
+$yellow: #f7df71;
 $light-purple: #c1c5d6;
 $grey: #e7e9ef;
-$panel-background: rgb(22, 17, 35);
-$toolbar: #3d3146;
-$accent: rgb(232, 96, 255);
-$orange: #cb7727;
-$red: #f64847;
+$panel-background: #1f1e27;
+$toolbar: #35343c;
+$accent: #22b5ff;
+$orange: #ccb862;
+$red: #ff7c96;
 
 :export {
+  highlight: $highlight;
   green: $green;
   lightGreen: $light-green;
   accent: $accent;

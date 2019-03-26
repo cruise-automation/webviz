@@ -30,11 +30,14 @@ integer -> [0-9]:+
 string -> "'" [^']:* "'"   {% (d) => d[1].join("") %}
     | "\"" [^"]:* "\"" {% (d) => d[1].join("") %}
 
+variable -> "$" id:? {% (d) => (d[1] || "") %}
+
 # An integer, string, or boolean.
 value -> integer  {% (d) => d[0] %}
        | string  {% (d) => d[0] %}
        | "true"  {% (d) => true %}
        | "false" {% (d) => false %}
+	   | variable {% (d) => ({variableName: d[0]}) %}
 
 ## Topic part. Basically an id but with slashes.
 topicName -> slashID:+
@@ -70,9 +73,9 @@ slice -> "[" integer "]"
 # Filter part; can be empty `{}` to allow for autocomplete. Can also be half-empty,
 # like `{==0}`, also to allow for autocomplete.
 filter -> "{" id:? "}"
-            {% (d, loc) => ({ type: "filter", name: d[1] || "", value: "", nameLoc: loc+1 }) %}
+            {% (d, loc) => ({ type: "filter", name: d[1] || "", value: "", nameLoc: loc+1, valueLoc: loc+1 }) %}
         | "{" id:? "==" value "}"
-            {% (d, loc) => ({ type: "filter", name: d[1] || "", value: d[3], nameLoc: loc+1 }) %}
+            {% (d, loc) => ({ type: "filter", name: d[1] || "", value: d[3], nameLoc: loc+1, valueLoc: loc+1+(d[1] || '').length+d[2].length }) %}
 
 ## Modifier.
 # Optional modifier at the end of a path, e.g. `.@derivative`. Currently only used by the Plot

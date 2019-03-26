@@ -14,6 +14,7 @@ import BagDataProviderWorker from "./BagDataProvider.worker"; // eslint-disable-
 import type { InitializeMessage } from "./types";
 import { bagConnectionsToDatatypes, bagConnectionsToTopics } from "webviz-core/shared/bagConnectionsHelper";
 import MessageReaderStore from "webviz-core/src/util/MessageReaderStore";
+import reportError from "webviz-core/src/util/reportError";
 import Rpc from "webviz-core/src/util/Rpc";
 
 const readers = new MessageReaderStore();
@@ -47,6 +48,13 @@ export class BagDataProvider implements RandomAccessDataProvider {
     };
     await this._rpc.send("initialize", message);
     const connections = ((Object.values(bag.connections): any): Connection[]);
+
+    if (!bag.startTime || !bag.endTime || !connections.length) {
+      // This will abort video generation:
+      reportError("Invalid bag", "Bag is missing basic data.", "user");
+      return new Promise(() => {}); // Just never finish initializing.
+    }
+
     const result = {
       start: bag.startTime,
       end: bag.endTime,

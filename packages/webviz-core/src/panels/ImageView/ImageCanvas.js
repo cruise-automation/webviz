@@ -47,7 +47,7 @@ function toRGBA(color: Color) {
 }
 
 export default class ImageCanvas extends React.Component<Props, State> {
-  _canvasRef: { current: null | HTMLCanvasElement } = React.createRef();
+  _canvasRef = React.createRef<HTMLCanvasElement>();
   _ready: boolean = true;
 
   static defaultProps = {

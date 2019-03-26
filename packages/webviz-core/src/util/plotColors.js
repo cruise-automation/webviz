@@ -24,14 +24,14 @@ export const lineColors = [
   "#DDDDDD",
 ];
 
-export const lightColor = memoize(
+export const lightColor: (_: string) => string = memoize(
   (color: string): string =>
     tinycolor(color)
       .brighten(15)
       .toString()
 );
 
-export const darkColor = memoize(
+export const darkColor: (_: string) => string = memoize(
   (color: string): string =>
     tinycolor(color)
       .darken(30)

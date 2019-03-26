@@ -8,7 +8,6 @@
 
 import * as React from "react";
 import styled from "styled-components";
-import uuid from "uuid";
 
 import { markUpdate, setCallback, setupPerfMonitoring } from "./reconciliationPerf";
 import colors from "webviz-core/src/styles/colors.module.scss";
@@ -38,19 +37,18 @@ if (showPanelPerf) {
 // that the last render took), and the "base" render time (which is the time that the render would
 // have taken if all components in the tree would have `shouldComponentUpdate: true`). Also shows
 // a unique id -- if that changes rapidly then that's also a bad sign (lots of remounts).
-export default class PerfMonitor extends React.Component<{| children: React.Node |}> {
-  _id: string = uuid.v4().slice(0, 8);
+export default class PerfMonitor extends React.Component<{| id: string, children: React.Node |}> {
   _top: ?HTMLDivElement;
 
   shouldComponentUpdate() {
     if (showPanelPerf) {
-      markUpdate(this._id);
+      markUpdate(this.props.id);
     }
     return true;
   }
 
   _profilerOnRender = (id: ?string, phase: "mount" | "update", actualTime: number, baseTime: number) => {
-    const text = `actual: ${actualTime.toFixed(1)}ms\nbase: ${baseTime.toFixed(1)}ms\nid: ${this._id}`;
+    const text = `actual: ${actualTime.toFixed(1)}ms\nbase: ${baseTime.toFixed(1)}ms\nid: ${this.props.id.slice(0, 8)}`;
     if (this._top) {
       this._top.innerText = text;
     }
@@ -68,17 +66,17 @@ export default class PerfMonitor extends React.Component<{| children: React.Node
           <div
             ref={(el) => {
               if (el) {
-                setCallback(this._id, (measure: PerformanceEntry) => {
+                setCallback(this.props.id, (measure: PerformanceEntry) => {
                   el.innerText = `reconcil: ${measure.duration.toFixed(1)}ms`;
                 });
               } else {
-                setCallback(this._id, undefined);
+                setCallback(this.props.id, undefined);
               }
             }}>
             ?
           </div>
         </SPerfIndicator>
-        <Profiler id={this._id} onRender={this._profilerOnRender}>
+        <Profiler id={this.props.id} onRender={this._profilerOnRender}>
           {this.props.children}
         </Profiler>
       </React.Fragment>

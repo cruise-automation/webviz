@@ -135,7 +135,7 @@ class DiagnosticStatus extends React.Component<Props, *> {
     collapsedSections: (new Set(): Set<string>),
   };
 
-  _tableRef = React.createRef();
+  _tableRef = React.createRef<HTMLTableElement>();
 
   static defaultProps = {
     splitFraction: 0.5,

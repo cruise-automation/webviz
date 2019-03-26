@@ -92,7 +92,7 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
 
   constructor(props: AutocompleteProps) {
     super(props);
-    this._autocomplete = React.createRef();
+    this._autocomplete = React.createRef<ReactAutocomplete>();
     this.state = { focused: false, showAllItems: false };
   }
 

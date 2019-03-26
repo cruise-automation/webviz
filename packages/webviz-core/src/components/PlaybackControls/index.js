@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// Need to import separately between disparity in import order between
+// Need to import separately because disparity in import order between
 // proprietary and open source repos.
 import KeyListener from "react-key-listener"; // eslint-disable-line
 
@@ -16,21 +16,19 @@ import PauseIcon from "@mdi/svg/svg/pause.svg";
 import PlayIcon from "@mdi/svg/svg/play.svg";
 import classnames from "classnames";
 import * as React from "react";
-import { connect } from "react-redux";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 
 import styles from "./index.module.scss";
-import { pausePlayback, seekPlayback, setPlaybackSpeed, startPlayback } from "webviz-core/src/actions/player";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
+import { MessagePipelineConsumer } from "webviz-core/src/components/MessagePipeline";
 import Slider from "webviz-core/src/components/Slider";
 import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
-import type { State as ReduxState } from "webviz-core/src/reducers";
-import { PlayerCapabilities, type PlayerState } from "webviz-core/src/reducers/player";
 import colors from "webviz-core/src/styles/colors.module.scss";
+import type { PlayerState } from "webviz-core/src/types/players";
 import { times } from "webviz-core/src/util/entities";
 import { formatTime, formatTimeRaw, subtractTimes, toSec, fromSec } from "webviz-core/src/util/time";
 
@@ -82,9 +80,8 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
   keyDownHandlers = {
     " ": () => {
       const { pause, play, player } = this.props;
-      const { isPlaying } = player;
 
-      if (isPlaying) {
+      if (player.activeData && player.activeData.isPlaying) {
         pause();
       } else {
         play();
@@ -93,7 +90,11 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
   };
 
   onMouseMove = (e: SyntheticMouseEvent<HTMLDivElement>) => {
-    const { startTime, endTime } = this.props.player;
+    const { activeData } = this.props.player;
+    if (!activeData) {
+      return;
+    }
+    const { startTime, endTime } = activeData;
     const { el, slider } = this;
     if (!startTime || !endTime || !el || !slider) {
       return;
@@ -127,19 +128,18 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
 
   render() {
     const { pause, play, setSpeed, player } = this.props;
-    const { isPlaying, startTime, endTime, currentTime, speed, capabilities, isConnecting } = player;
+    const { activeData, showInitializing } = player;
 
-    if (!startTime || !endTime) {
-      const message =
-        isConnecting && capabilities.includes(PlayerCapabilities.initialization) ? (
-          "Player is initializing..."
-        ) : (
-          <span>
-            Drop a <a href="http://wiki.ros.org/ROS/Tutorials/Recording%20and%20playing%20back%20data">ROS bag file</a>{" "}
-            to get started. Or check out <a href="worldview">Worldview</a> and other pacakges on{" "}
-            <a href="https://github.com/cruise-automation">Github</a>!
-          </span>
-        );
+    if (!activeData) {
+      const message = showInitializing ? (
+        "Player is initializing..."
+      ) : (
+        <span>
+          Drop a <a href="http://wiki.ros.org/ROS/Tutorials/Recording%20and%20playing%20back%20data">ROS bag file</a> to
+          get started. Or check out <a href="worldview">Worldview</a> and other pacakges on{" "}
+          <a href="https://github.com/cruise-automation">Github</a>!
+        </span>
+      );
       return (
         <Flex row className={classnames(styles.container, styles.disconnected)}>
           <Icon large clickable={false}>
@@ -149,6 +149,8 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
         </Flex>
       );
     }
+
+    const { isPlaying, startTime, endTime, currentTime, speed } = activeData;
 
     const min = toSec(startTime);
     const max = toSec(endTime);
@@ -196,21 +198,18 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: ReduxState): $Shape<Props> => {
-  return {
-    player: state.player,
-  };
-};
-
-const PlaybackControls: React.ComponentType<{}> = connect(
-  mapStateToProps,
-  {
-    pause: pausePlayback,
-    play: startPlayback,
-    seek: seekPlayback,
-    setSpeed: setPlaybackSpeed,
-  }
-)(UnconnectedPlaybackControls);
-PlaybackControls.displayName = "PlaybackControls";
-
-export default PlaybackControls;
+export default function PlaybackControls() {
+  return (
+    <MessagePipelineConsumer>
+      {(context) => (
+        <UnconnectedPlaybackControls
+          player={context.playerState}
+          play={context.startPlayback}
+          pause={context.pausePlayback}
+          seek={context.seekPlayback}
+          setSpeed={context.setPlaybackSpeed}
+        />
+      )}
+    </MessagePipelineConsumer>
+  );
+}

@@ -60,7 +60,7 @@ const fixture = {
     ],
   },
   topics: [{ name: "/some/topic/with/state", datatype: "msgs/SystemState" }],
-  playerState: {
+  activeData: {
     startTime: { sec: 1526191527, nsec: 202050 },
     endTime: { sec: 1526191551, nsec: 999997069 },
     isPlaying: false,

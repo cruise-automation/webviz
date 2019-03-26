@@ -14,24 +14,28 @@ import styles from "./TextContent.module.scss";
 
 type Props = {
   children: React.Node | string,
+  linkTarget?: string,
 };
-
-// Make links in Markdown work with react-router.
-// Per https://github.com/rexxars/react-markdown/issues/29#issuecomment-275437798
-function RouterLink(props) {
-  return props.href.match(/^\//) ? (
-    <Link to={props.href}>{props.children}</Link>
-  ) : (
-    <a href={props.href}>{props.children}</a>
-  );
-}
 
 export default class TextContent extends React.Component<Props> {
   render() {
-    const { children } = this.props;
+    const { children, linkTarget = undefined } = this.props;
+
+    // Make links in Markdown work with react-router.
+    // Per https://github.com/rexxars/react-markdown/issues/29#issuecomment-275437798
+    function renderLink(props) {
+      return props.href.match(/^\//) ? (
+        <Link to={props.href}>{props.children}</Link>
+      ) : (
+        <a href={props.href} target={linkTarget}>
+          {props.children}
+        </a>
+      );
+    }
+
     return (
       <div className={styles.root}>
-        {typeof children === "string" ? <ReactMarkdown source={children} renderers={{ link: RouterLink }} /> : children}
+        {typeof children === "string" ? <ReactMarkdown source={children} renderers={{ link: renderLink }} /> : children}
       </div>
     );
   }

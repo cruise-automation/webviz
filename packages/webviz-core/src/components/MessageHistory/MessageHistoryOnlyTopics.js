@@ -6,16 +6,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { difference, flatten, groupBy, isEqual } from "lodash";
+import { difference, groupBy, isEqual } from "lodash";
 import * as React from "react";
-import { connect } from "react-redux";
 import type { Time } from "rosbag";
+import uuid from "uuid";
 
-import { subscribe, unsubscribe } from "webviz-core/src/actions/player";
+import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
 import PerfMonitor from "webviz-core/src/components/PerfMonitor";
-import type { State as ReduxState } from "webviz-core/src/reducers";
 import { getTopicNames, shallowEqualSelector } from "webviz-core/src/selectors";
-import type { Frame, Message, Topic } from "webviz-core/src/types/players";
+import type { Message, SubscribePayload, Topic } from "webviz-core/src/types/players";
 
 // This is an internal component which is the "old <MessageHistory>", which only supports topics,
 // not full paths. Since full paths are a superset of topics, we figured we'd not expose this
@@ -24,17 +23,15 @@ import type { Frame, Message, Topic } from "webviz-core/src/types/players";
 //
 // We store history globally so that we are not storing messages multiple times, and also to allow
 // for immediately providing messages that we were already storing when mounting a fresh component,
-// instead of having to wait until the next frame.
-// don't put { sec: 0, nsec: 0 } inline as we do identity check for memoization
-const DEFAULT_START_TIME = { sec: 0, nsec: 0 };
+// instead of having to wait until the next messages.
 
 let gMessagesByTopic: { [string]: Message[] } = {};
 let generatedId = 0;
-let gLastFrame: ?Frame;
+let gLastMessages: ?(Message[]);
 let gLastLastSeekTime: ?number;
 function resetData() {
   gMessagesByTopic = {};
-  gLastFrame = undefined;
+  gLastMessages = undefined;
   gLastLastSeekTime = undefined;
   generatedId = 0;
 }
@@ -43,7 +40,7 @@ export function getRawItemsByTopicForTests() {
   return gMessagesByTopic;
 }
 
-// Little helper function for generating a frame for in storybook / screenshot test fixtures.
+// Little helper function for generating a messages for in storybook / screenshot test fixtures.
 window.debugGetFixture = (filterTopics?: string[], historySize = Infinity) => {
   const topics = [];
   const frame = {};
@@ -69,7 +66,7 @@ if (window.beforeEach) {
   });
 }
 
-function loadFrame(frame: Frame, lastSeekTime: number, startTime: Time) {
+function loadMessages(messages: Message[], lastSeekTime: number, startTime: Time) {
   if (gLastLastSeekTime !== undefined && gLastLastSeekTime !== lastSeekTime) {
     // When `lastSeekTime` changes (which should happen when seeking, when wrapping, and
     // when attaching a new Player, clear out everything, since there is a discontinuity in playback.
@@ -77,13 +74,13 @@ function loadFrame(frame: Frame, lastSeekTime: number, startTime: Time) {
   }
   gLastLastSeekTime = lastSeekTime;
 
-  if (gLastFrame === frame) {
+  if (gLastMessages === messages) {
     return;
   }
-  gLastFrame = frame;
+  gLastMessages = messages;
 
   // $FlowFixMe - Flow does not like Object.values
-  const newMessagesByTopic = groupBy(flatten(Object.values(frame)), (message) => message.topic);
+  const newMessagesByTopic = groupBy(messages, (message) => message.topic);
   for (const topic of Object.keys(newMessagesByTopic)) {
     if (!gComponentsByTopic[topic]) {
       continue;
@@ -127,16 +124,14 @@ type Props = {
   // you expect user specified topics which are likely to not exist in the player
   // to prevent a lot of subscribing to non-existant topics.
   ignoreMissing?: boolean,
+};
 
-  // redux state
-  frame: Frame,
+type MessagePipelineProps = {
+  messages: Message[],
   lastSeekTime: number,
   startTime: Time,
   playerTopics: Topic[],
-
-  // redux actions
-  subscribe: typeof subscribe,
-  unsubscribe: typeof unsubscribe,
+  setSubscriptions(id: string, subscriptionsForId: SubscribePayload[]): void,
 };
 
 type ChildrenSelectorInput = {
@@ -168,10 +163,11 @@ const getMemoizedChildrenInput = shallowEqualSelector(
 // So you probably don't want to do
 // `<MessageHistoryOnlyTopics>{this._renderSomething}</MessageHistoryOnlyTopics>`.
 // This might be a bit counterintuitive but we do this since performance matters here.
-class MessageHistoryOnlyTopics extends React.Component<Props> {
+class MessageHistoryOnlyTopics extends React.Component<Props & MessagePipelineProps> {
   _subscribedTopics: string[] = [];
   _lastMessagesByTopic: { [string]: ?(Message[]) } = {};
   _cleared = false;
+  _id = uuid.v4();
 
   static defaultProps = {
     historySize: Infinity,
@@ -180,7 +176,7 @@ class MessageHistoryOnlyTopics extends React.Component<Props> {
   constructor(props) {
     super(props);
     this._updateSubscriptions(props.topics, props.playerTopics);
-    loadFrame(props.frame, props.lastSeekTime, props.startTime);
+    loadMessages(props.messages, props.lastSeekTime, props.startTime);
   }
 
   componentDidMount() {
@@ -194,7 +190,7 @@ class MessageHistoryOnlyTopics extends React.Component<Props> {
     this._updateSubscriptions([], this.props.playerTopics);
   }
 
-  shouldComponentUpdate(nextProps: Props): boolean {
+  shouldComponentUpdate(nextProps: Props & MessagePipelineProps): boolean {
     if (this.props.imageScale !== nextProps.imageScale) {
       throw new Error("Changing imageScale is not supported; please remount instead.");
     }
@@ -212,12 +208,12 @@ class MessageHistoryOnlyTopics extends React.Component<Props> {
     if (this.props.children !== nextProps.children) {
       shouldUpdate = true;
     }
-    if (this.props.frame !== nextProps.frame || this.props.lastSeekTime !== nextProps.lastSeekTime) {
+    if (this.props.messages !== nextProps.messages || this.props.lastSeekTime !== nextProps.lastSeekTime) {
       if (this.props.lastSeekTime !== nextProps.lastSeekTime) {
         this._cleared = true;
         shouldUpdate = true;
       }
-      loadFrame(nextProps.frame, nextProps.lastSeekTime, nextProps.startTime);
+      loadMessages(nextProps.messages, nextProps.lastSeekTime, nextProps.startTime);
       for (const topic of this._subscribedTopics) {
         if (this._lastMessagesByTopic[topic] !== gMessagesByTopic[topic]) {
           this._lastMessagesByTopic[topic] = gMessagesByTopic[topic];
@@ -248,9 +244,11 @@ class MessageHistoryOnlyTopics extends React.Component<Props> {
     const newSubscribedTopics = ignoreMissing
       ? newTopics.filter((topicName) => validTopicNames.includes(topicName))
       : newTopics;
+    if (isEqual(newSubscribedTopics, this._subscribedTopics)) {
+      return;
+    }
     const requester = this.props.panelType ? { type: "panel", name: this.props.panelType } : undefined;
     for (const topic of difference(this._subscribedTopics, newSubscribedTopics)) {
-      this.props.unsubscribe({ topic, requester, ...encodingAndScalePayload });
       delete this._lastMessagesByTopic[topic]; // Not really necessary, but nice when debugging.
       const index = gComponentsByTopic[topic].indexOf(this);
       if (index === -1) {
@@ -263,10 +261,14 @@ class MessageHistoryOnlyTopics extends React.Component<Props> {
       }
     }
     for (const topic of difference(newSubscribedTopics, this._subscribedTopics)) {
-      this.props.subscribe({ topic, requester, ...encodingAndScalePayload });
       gComponentsByTopic[topic] = gComponentsByTopic[topic] || [];
       gComponentsByTopic[topic].push(this);
     }
+
+    this.props.setSubscriptions(
+      this._id,
+      newSubscribedTopics.map((topic) => ({ topic, requester, ...encodingAndScalePayload }))
+    );
     this._subscribedTopics = newSubscribedTopics;
   }
 
@@ -286,16 +288,23 @@ class MessageHistoryOnlyTopics extends React.Component<Props> {
       startTime,
     });
 
-    return <PerfMonitor>{children(childrenInput)}</PerfMonitor>;
+    return <PerfMonitor id={this._id}>{children(childrenInput)}</PerfMonitor>;
   }
 }
 
-export default connect(
-  (state: ReduxState) => ({
-    frame: state.player.frame,
-    lastSeekTime: state.player.lastSeekTime,
-    startTime: state.player.startTime || DEFAULT_START_TIME,
-    playerTopics: state.player.topics,
-  }),
-  { subscribe, unsubscribe }
-)(MessageHistoryOnlyTopics);
+export default function MessageHistoryOnlyTopicsConnected(props: Props) {
+  return (
+    <MessagePipelineConsumer>
+      {(context: MessagePipelineContext) => (
+        <MessageHistoryOnlyTopics
+          {...props}
+          messages={context.playerState.activeData ? context.playerState.activeData.messages : []}
+          lastSeekTime={context.playerState.activeData ? context.playerState.activeData.lastSeekTime : 0}
+          startTime={context.playerState.activeData ? context.playerState.activeData.startTime : { sec: 0, nsec: 0 }}
+          playerTopics={context.playerState.activeData ? context.playerState.activeData.topics : []}
+          setSubscriptions={context.setSubscriptions}
+        />
+      )}
+    </MessagePipelineConsumer>
+  );
+}

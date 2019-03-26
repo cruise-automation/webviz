@@ -7,22 +7,26 @@
 //  You may not use this file except in compliance with the License.
 import { isEqual } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
+import uuid from "uuid";
 
 import NoopMetricsCollector from "./NoopMetricsCollector";
 import { type RandomAccessDataProvider } from "./types";
-import { PlayerCapabilities } from "webviz-core/src/reducers/player";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
-import type {
-  AdvertisePayload,
-  Player,
-  PlayerMessage,
-  PlayerMetricsCollectorInterface,
-  Message,
-  Progress,
-  PublishPayload,
-  SubscribePayload,
-  TopicMsg,
+import {
+  type AdvertisePayload,
+  type Message,
+  type Player,
+  PlayerCapabilities,
+  type PlayerMetricsCollectorInterface,
+  type PlayerState,
+  type Progress,
+  type PublishPayload,
+  type SubscribePayload,
+  type Topic,
+  type TopicMsg,
 } from "webviz-core/src/types/players";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import reportError from "webviz-core/src/util/reportError";
 import { fromMillis } from "webviz-core/src/util/time";
 
 const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
@@ -31,21 +35,32 @@ const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
 // larger values mean more oportunity to capture context before the seek event, but are slower operations
 export const SEEK_BACK_NANOSECONDS = 150 /* ms */ * 1000 * 1000;
 
+const capabilities = [PlayerCapabilities.seekBackfill, PlayerCapabilities.initialization];
+
 export default class RandomAccessPlayer implements Player {
   _provider: RandomAccessDataProvider;
   _isPlaying: boolean = false;
-  _listener: (PlayerMessage) => Promise<void>;
+  _listener: (PlayerState) => Promise<void>;
   _speed: number = 0.2;
   _start: Time;
   _end: Time;
+  // _currentTime is defined as the end of the last range that we emitted messages for.
+  // In other words, we may emit messages that <= currentTime, but not after currentTime.
   _currentTime: Time;
   _lastTickMillis: ?number;
-  _lastSeekTime: number = 0;
+  _lastSeekTime: number = Date.now();
   _subscribedTopics: Set<string> = new Set();
-  _providerTopics: TopicMsg[] = [];
+  _providerTopics: Topic[] = [];
+  _providerDatatypes: RosDatatypes = {};
   _metricsCollector: PlayerMetricsCollectorInterface;
   _autoplay: boolean;
   _topicsCallbacks: ((string[]) => void)[] = [];
+  _initializing: boolean = true;
+  _progress: Progress = {};
+  _id: string = uuid.v4();
+  _messages: Message[] = [];
+  _lastEmitPromise: Promise<void> = Promise.resolve();
+  _hasSetEmitStateCallback: boolean = false;
 
   constructor(
     provider: RandomAccessDataProvider,
@@ -57,74 +72,106 @@ export default class RandomAccessPlayer implements Player {
     this._autoplay = autoplay && !inScreenshotTests();
   }
 
-  getProvider(): RandomAccessDataProvider {
-    return this._provider;
-  }
-
-  async setListener(listener: (PlayerMessage) => Promise<void>): Promise<void> {
+  setListener(listener: (PlayerState) => Promise<void>) {
     this._listener = listener;
-    this._listener({ op: "connecting", player: this });
-    // give the provider access to the listener for custom messages and initialization
     this._metricsCollector.initialized();
-    this._listener({
-      op: "capabilities",
-      capabilities: [PlayerCapabilities.seekBackfill, PlayerCapabilities.initialization],
-    });
-    const result = await this._provider.initialize({
-      progressCallback: (progress: Progress) => {
-        this._listener({ op: "progress", progress });
-      },
-      addTopicsCallback: (topicsCallback: (string[]) => void) => {
-        this._topicsCallbacks.push(topicsCallback);
-      },
-    });
-    this._start = result.start;
-    this._currentTime = this._start;
-    this._end = result.end;
-    const { datatypes, topics } = result;
-    this._providerTopics = topics;
-    this._listener({ op: "datatypes", datatypes });
-    this._listener({ op: "connected" });
-    this._listener({
-      op: "topics",
-      topics: this._providerTopics,
-    });
     this._emitState();
-    if (this._autoplay) {
-      // Wait a bit until panels have had the chance to subscribe to topics before we start
-      // playback.
-      setTimeout(() => {
-        this.startPlayback();
-      }, 100);
-    }
+
+    this._provider
+      .initialize({
+        progressCallback: (progress: Progress) => {
+          this._progress = progress;
+          this._emitState();
+        },
+        addTopicsCallback: (topicsCallback: (string[]) => void) => {
+          this._topicsCallbacks.push(topicsCallback);
+        },
+      })
+      .then(({ start, end, topics, datatypes }) => {
+        this._start = start;
+        // Since _currentTime is defined as the end of the last range that we emitted messages for
+        // (inclusive), we have to subtract 1 nanosecond at the start, otherwise we might
+        // double-emit messages with a receiveTime that is exactly equal to _currentTime.
+        this._currentTime = TimeUtil.add(start, { sec: 0, nsec: -1 });
+        this._end = end;
+        // TODO(JP): Fix this.
+        this._providerTopics = topics.map(({ topic, datatype, originalTopic }) => ({
+          name: topic,
+          datatype: datatype || "",
+          originalTopic,
+        }));
+        this._providerDatatypes = datatypes;
+        this._initializing = false;
+        this._emitState();
+
+        if (this._autoplay) {
+          // Wait a bit until panels have had the chance to subscribe to topics before we start
+          // playback.
+          // TODO(JP).
+          setTimeout(() => {
+            this.startPlayback();
+          }, 100);
+        }
+      })
+      .catch((error: Error) => {
+        this._listener({
+          isPresent: false,
+          showSpinner: false,
+          showInitializing: false,
+          progress: {},
+          capabilities: [],
+          playerId: this._id,
+          activeData: undefined,
+        });
+        reportError("Error initializing player", error, "app");
+      });
   }
 
-  async _getMessages(start: Time, end: Time): Promise<Message[]> {
-    const messages = await this._provider.getMessages(start, end, Array.from(this._subscribedTopics));
-    return messages.map((message) => {
-      const topic: ?TopicMsg = this._providerTopics.find((t) => t.topic === message.topic);
-      if (!topic) {
-        throw new Error(`Could not find topic for message ${message.topic}`);
-      }
+  _emitState(): void {
+    if (!this._listener) {
+      return;
+    }
+    if (this._hasSetEmitStateCallback) {
+      return;
+    }
 
-      if (!topic.datatype) {
-        throw new Error(`Missing datatype for topic: ${message.topic}`);
-      }
-
-      return {
-        op: "message",
-        topic: message.topic,
-        datatype: topic.datatype,
-        receiveTime: message.receiveTime,
-        message: message.message,
-      };
+    this._hasSetEmitStateCallback = true;
+    this._lastEmitPromise.then(() => {
+      this._hasSetEmitStateCallback = false;
+      this._lastEmitPromise = this._listener({
+        isPresent: true,
+        showSpinner: this._initializing,
+        showInitializing: this._initializing,
+        progress: this._progress,
+        capabilities,
+        playerId: this._id,
+        activeData: this._initializing
+          ? undefined
+          : {
+              messages: this._messages,
+              currentTime: TimeUtil.isLessThan(this._currentTime, this._start)
+                ? this._start
+                : TimeUtil.isLessThan(this._end, this._currentTime)
+                ? this._end
+                : this._currentTime,
+              startTime: this._start,
+              endTime: this._end,
+              isPlaying: this._isPlaying,
+              speed: this._speed,
+              lastSeekTime: this._lastSeekTime,
+              topics: this._providerTopics,
+              datatypes: this._providerDatatypes,
+            },
+      });
+      this._messages = [];
     });
   }
 
   async _tick(): Promise<void> {
-    if (!this._isPlaying) {
+    if (this._initializing || !this._isPlaying) {
       return;
     }
+
     // compute how long of a time range we want to read by taking into account
     // the time since our last read and how fast we're currently playing back
     const tickTime = performance.now();
@@ -154,7 +201,9 @@ export default class RandomAccessPlayer implements Player {
 
     const seekTime = this._lastSeekTime;
     const end: Time = TimeUtil.add(this._currentTime, fromMillis(rangeMillis));
-    const messages = await this._getMessages(this._currentTime, end);
+
+    const messages = await this._getMessages(TimeUtil.add(this._currentTime, { sec: 0, nsec: 1 }), end);
+    await this._lastEmitPromise;
 
     // if we seeked while reading the do not emit messages
     // just start reading again from the new seek position
@@ -162,19 +211,17 @@ export default class RandomAccessPlayer implements Player {
       return;
     }
 
+    // Update the currentTime when we know a seek didn't happen.
+    this._currentTime = end;
+
     // if we paused while reading then do not emit messages
     // and exit the read loop
     if (!this._isPlaying) {
       return;
     }
 
-    if (messages.length === 0) {
-      this._listener({ op: "update_time", time: this._currentTime });
-    }
-
-    const promises = messages.map((message) => this._listener(message));
-    this._currentTime = TimeUtil.add(end, { sec: 0, nsec: 1 });
-    await Promise.all(promises);
+    this._messages = this._messages.concat(messages);
+    this._emitState();
   }
 
   async _read(): Promise<void> {
@@ -188,18 +235,29 @@ export default class RandomAccessPlayer implements Player {
         await delay(16 - time);
       }
     }
-    return Promise.resolve();
   }
 
-  _emitState() {
-    const msg = {
-      op: "player_state",
-      playing: this._isPlaying,
-      speed: this._speed,
-      start_time: this._start,
-      end_time: this._end,
-    };
-    this._listener(msg);
+  async _getMessages(start: Time, end: Time): Promise<Message[]> {
+    const messages = await this._provider.getMessages(start, end, Array.from(this._subscribedTopics));
+    return messages.map((message) => {
+      // $FlowFixMe - TODO(JP)
+      const topic: ?TopicMsg = this._providerTopics.find((t) => t.name === message.topic);
+      if (!topic) {
+        throw new Error(`Could not find topic for message ${message.topic}`);
+      }
+
+      if (!topic.datatype) {
+        throw new Error(`Missing datatype for topic: ${message.topic}`);
+      }
+
+      return {
+        op: "message",
+        topic: message.topic,
+        datatype: topic.datatype,
+        receiveTime: message.receiveTime,
+        message: message.message,
+      };
+    });
   }
 
   startPlayback(): void {
@@ -233,38 +291,21 @@ export default class RandomAccessPlayer implements Player {
   }
 
   seekPlayback(time: Time): void {
-    const shouldBackfill = !this._isPlaying;
-    if (shouldBackfill) {
-      // If we're backfilling, fill all the way up to the requested time, so that
-      // in a paused state you also see the messages for the exact time that was
-      // requested, which is kind of what you would expect. This is useful for
-      // Tableflow, which allows seeking to very specific timestamps.
-      // Don't do this when not backfilling, because otherwise the next frame
-      // would not include the exact time that was requested.
-      time = TimeUtil.add(time, { sec: 0, nsec: 1 });
-    }
-
     this._currentTime = time;
-
     this._metricsCollector.seek();
     const seekTime = Date.now();
     this._lastSeekTime = seekTime;
-    this._listener({ op: "seek" });
-    this._listener({ op: "update_time", time });
-    if (shouldBackfill) {
-      this._getMessages(
-        TimeUtil.add(time, { sec: 0, nsec: -SEEK_BACK_NANOSECONDS }),
-        TimeUtil.add(time, { sec: 0, nsec: -1 })
-      ).then((messages) => {
+    this._emitState();
+
+    if (!this._isPlaying) {
+      this._getMessages(TimeUtil.add(time, { sec: 0, nsec: -SEEK_BACK_NANOSECONDS }), time).then((messages) => {
         if (seekTime === this._lastSeekTime) {
-          messages.forEach((message) => this._listener(message));
+          this._messages = messages;
+          this._emitState();
         }
       });
     }
   }
-
-  // not implemented in random access player
-  requestMessages(): void {}
 
   setSubscriptions(subscriptions: SubscribePayload[]): void {
     const oldSubscribedTopics = this._subscribedTopics;
@@ -282,8 +323,8 @@ export default class RandomAccessPlayer implements Player {
     console.warn("Publishing is not supported in RandomAccessPlayer");
   }
 
-  async close(): Promise<void> {
-    this.pausePlayback();
-    return this._provider.close();
+  close() {
+    this._isPlaying = false;
+    this._provider.close();
   }
 }

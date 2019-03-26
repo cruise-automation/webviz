@@ -12,12 +12,12 @@ import shallowequal from "shallowequal";
 import type { Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
-export const getTopicNames = createSelector(
+export const getTopicNames = createSelector<*, *, *, _>(
   (topics: Topic[]) => topics,
   (topics: Topic[]): string[] => topics.map((topic) => topic.name)
 );
 
-export const topicsByTopicName = createSelector(
+export const topicsByTopicName = createSelector<*, *, *, _>(
   (topics: Topic[]) => topics,
   (topics: Topic[]): { [string]: Topic } => {
     const results = {};
@@ -28,7 +28,7 @@ export const topicsByTopicName = createSelector(
   }
 );
 
-export const constantsByDatatype = createSelector(
+export const constantsByDatatype = createSelector<*, *, *, _>(
   (datatypes: RosDatatypes) => datatypes,
   (datatypes: RosDatatypes): { [string]: { [mixed]: string } } => {
     const results = {};

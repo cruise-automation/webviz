@@ -8,7 +8,7 @@
 
 import { type Time } from "rosbag";
 
-import type { PlayerMessage, Progress, TopicMsg } from "webviz-core/src/types/players";
+import type { Progress, TopicMsg } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 export type MessageLike = {
@@ -23,8 +23,6 @@ export type InitializationResult = {
   topics: TopicMsg[],
   datatypes: RosDatatypes,
 };
-
-export type MessageCallback = (PlayerMessage) => Promise<void>;
 
 export type ExtensionPoint = {|
   progressCallback: (Progress) => void,

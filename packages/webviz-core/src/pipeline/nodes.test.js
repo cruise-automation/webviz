@@ -104,11 +104,11 @@ describe("nodes", () => {
         callback({ message, state }) {
           return {
             messages: [
-              makeNodeMessage("/webviz/a/counter", "a/counter", message.receiveTime, {
+              makeNodeMessage("/webviz/a/counter", "a/counter", {
                 count: state,
                 data: message.message.data,
               }),
-              makeNodeMessage("/webviz/a/other_message", "a/other_message", message.receiveTime, { something: "else" }),
+              makeNodeMessage("/webviz/a/other_message", "a/other_message", { something: "else" }),
             ],
             state: state + 1,
           };
@@ -121,7 +121,7 @@ describe("nodes", () => {
         outputs: [{ name: "/webviz/b", datatype: "b" }],
         callback({ message }) {
           return {
-            messages: [makeNodeMessage("/webviz/b", "b", message.receiveTime, { count: message.message.count })],
+            messages: [makeNodeMessage("/webviz/b", "b", { count: message.message.count })],
             state: undefined,
           };
         },
@@ -146,52 +146,53 @@ describe("nodes", () => {
 
       const output = applyNodesToMessages([NodeA, NodeB], messages);
 
+      // Note that the output remains sorted by `receiveTime`.
       expect(output).toEqual({
         messages: [
           {
-            op: "message",
-            topic: "/external",
             datatype: "anything",
-            receiveTime: { nsec: 0, sec: 1 },
             message: { data: "first message" },
-          },
-          {
             op: "message",
+            receiveTime: { sec: 1, nsec: 0 },
             topic: "/external",
-            datatype: "anything",
-            receiveTime: { nsec: 0, sec: 2 },
-            message: { data: "second message" },
           },
           {
-            op: "message",
-            topic: "/webviz/a/counter",
             datatype: "a/counter",
-            receiveTime: { nsec: 0, sec: 1 },
             message: { count: 0, data: "first message" },
-          },
-          {
             op: "message",
-            topic: "/webviz/a/other_message",
-            datatype: "a/other_message",
-            receiveTime: { nsec: 0, sec: 1 },
-            message: { something: "else" },
-          },
-          {
-            op: "message",
+            receiveTime: { sec: 1, nsec: 0 },
             topic: "/webviz/a/counter",
-            datatype: "a/counter",
-            receiveTime: { nsec: 0, sec: 2 },
-            message: { count: 1, data: "second message" },
+          },
+          { datatype: "b", message: { count: 0 }, op: "message", receiveTime: { sec: 1, nsec: 0 }, topic: "/webviz/b" },
+          {
+            datatype: "a/other_message",
+            message: { something: "else" },
+            op: "message",
+            receiveTime: { sec: 1, nsec: 0 },
+            topic: "/webviz/a/other_message",
           },
           {
+            datatype: "anything",
+            message: { data: "second message" },
             op: "message",
-            topic: "/webviz/a/other_message",
-            datatype: "a/other_message",
-            receiveTime: { nsec: 0, sec: 2 },
-            message: { something: "else" },
+            receiveTime: { sec: 2, nsec: 0 },
+            topic: "/external",
           },
-          { op: "message", topic: "/webviz/b", datatype: "b", receiveTime: { nsec: 0, sec: 1 }, message: { count: 0 } },
-          { op: "message", topic: "/webviz/b", datatype: "b", receiveTime: { nsec: 0, sec: 2 }, message: { count: 1 } },
+          {
+            datatype: "a/counter",
+            message: { count: 1, data: "second message" },
+            op: "message",
+            receiveTime: { sec: 2, nsec: 0 },
+            topic: "/webviz/a/counter",
+          },
+          { datatype: "b", message: { count: 1 }, op: "message", receiveTime: { sec: 2, nsec: 0 }, topic: "/webviz/b" },
+          {
+            datatype: "a/other_message",
+            message: { something: "else" },
+            op: "message",
+            receiveTime: { sec: 2, nsec: 0 },
+            topic: "/webviz/a/other_message",
+          },
         ],
         states: [2, undefined],
       });

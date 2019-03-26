@@ -19,7 +19,8 @@ export default function addValuesWithPathsToItems(
   messages: Message[],
   rosPath: RosPath,
   topics: Topic[],
-  datatypes: RosDatatypes
+  datatypes: RosDatatypes,
+  globalData: Object = {}
 ): MessageHistoryItem[] {
   const structures = messagePathStructures(datatypes);
 
@@ -85,11 +86,15 @@ export default function addValuesWithPathsToItems(
             );
           }
         } else if (pathItem.type === "filter") {
+          let filterValue = pathItem.value;
+          if (typeof filterValue === "object") {
+            filterValue = globalData[filterValue.variableName];
+          }
           // If the `pathItem` is a filter, then we might not traverse any further. Test equality
           // using `==` so we can be forgiving for comparing booleans with integers, comparing numbers
           // with strings, and so on.
           // eslint-disable-next-line eqeqeq
-          if (value[pathItem.name] == pathItem.value) {
+          if (value[pathItem.name] == filterValue) {
             traverse(value, pathIndex + 1, path, structureItem);
           }
         } else {

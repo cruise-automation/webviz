@@ -93,4 +93,4 @@ class DiagnosticStatusPanel extends Component<Props> {
   }
 }
 
-export default Panel(DiagnosticStatusPanel);
+export default Panel<Config>(DiagnosticStatusPanel);

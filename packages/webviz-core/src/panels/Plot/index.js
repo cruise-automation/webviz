@@ -93,7 +93,7 @@ class Plot extends PureComponent<Props> {
     }
 
     return (
-      <Flex col center style={{ position: "relative" }}>
+      <Flex col clip center style={{ position: "relative" }}>
         <PanelToolbar helpContent={helpContent} floating menuContent={this._renderMenuContent(minYValue, maxYValue)} />
         <PlotChart paths={paths} minYValue={parseFloat(minYValue)} maxYValue={parseFloat(maxYValue)} />
         <PlotLegend paths={paths} onChange={this.props.saveConfig} />
@@ -102,4 +102,4 @@ class Plot extends PureComponent<Props> {
   }
 }
 
-export default Panel(Plot);
+export default Panel<PlotConfig>(Plot);

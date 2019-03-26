@@ -17,13 +17,13 @@ type ContainsOpenProps = {|
   children: (containsOpen: boolean) => React.Node,
 |};
 
-let { Provider, Consumer } = React.createContext((_: number) => {});
+let { Provider, Consumer } = React.createContext<(number) => void>((_: number) => {});
 // TODO(JP): we can remove this once enzyme supports new react context
 // https://github.com/airbnb/enzyme/issues/1509
 // enzyme doesn't yet work with the new react 16.3 context api.
 if (process.env.NODE_ENV === "test") {
-  Provider = ({ children }) => children;
-  Consumer = ({ children }) => children(() => {});
+  Provider = ({ children }: { children: React.Node }) => children;
+  Consumer = ({ children }: { children: ((_: number) => void) => React.Node }) => children(() => {});
 }
 
 // Component for detecting if any child component is opened or not. Handy for
@@ -129,7 +129,6 @@ export default class ChildToggle extends React.Component<Props> {
     if (!this.el || !this.el.firstElementChild || !this.el.firstElementChild.firstElementChild) {
       return;
     }
-    const { offsetParent } = this.el;
     // position menu relative to our children[0]
     const childEl = this.el.firstElementChild.firstElementChild;
     const childRect = childEl.getBoundingClientRect();
@@ -139,6 +138,7 @@ export default class ChildToggle extends React.Component<Props> {
       bottom: padding,
       left: padding,
       right: padding,
+      height: undefined, // to appease Flow
     };
 
     let spacerSize;
@@ -149,13 +149,8 @@ export default class ChildToggle extends React.Component<Props> {
       style.top = childRect.top + childRect.height;
       spacerSize = childRect.left - padding;
     } else if (position === "above") {
-      if (offsetParent) {
-        const parentRect = offsetParent.getBoundingClientRect();
-        style.bottom = parentRect.height - childRect.top;
-      } else {
-        // shouldn't happen except in tests
-        style.bottom = 0;
-      }
+      delete style.bottom;
+      style.height = childRect.top - padding;
       spacerSize = childRect.left - padding;
     } else {
       style.top = childRect.top;

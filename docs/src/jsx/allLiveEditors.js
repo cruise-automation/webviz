@@ -102,11 +102,6 @@ export const AddRemoveObstacles = makeCodeComponent(
   "AddingInteractivity"
 );
 
-export const StopReleaseDuck = makeCodeComponent(
-  require("!!raw-loader!./tutorials/StopReleaseDuck"),
-  "AddingInteractivity"
-);
-
 export const ColorfulKnot = makeCodeComponent(require("!!raw-loader!./tutorials/ColorfulKnot"), "RenderingObjects");
 
 export const CustomObject = makeCodeComponent(require("!!raw-loader!./tutorials/CustomObject"), "RenderingObjects");
@@ -126,3 +121,8 @@ export const InstancedRendering = makeCodeComponent(
 );
 
 export const MoveCamea = makeCodeComponent(require("!!raw-loader!./tutorials/MoveCamea"), "ManagingTheCamera");
+
+export const StopReleaseDuck = makeCodeComponent(
+  require("!!raw-loader!./tutorials/StopReleaseDuck"),
+  "AddingInteractivity"
+);

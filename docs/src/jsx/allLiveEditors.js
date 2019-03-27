@@ -31,65 +31,98 @@ function makeCodeComponent(raw, componentName, isRowView) {
   );
 }
 
-export const Arrows = makeCodeComponent(require("!!raw-loader!./Arrows"), "Arrows");
-
-export const BasicExample = makeCodeComponent(require("!!raw-loader!./BasicExample"), "BasicExample");
-
 export const CameraStateControlled = makeCodeComponent(
-  require("!!raw-loader!./CameraStateControlled"),
+  require("!!raw-loader!./api/CameraStateControlled"),
   "CameraStateControlled"
 );
 
 export const CameraStateUncontrolled = makeCodeComponent(
-  require("!!raw-loader!./CameraStateUncontrolled"),
+  require("!!raw-loader!./api/CameraStateUncontrolled"),
   "CameraStateUncontrolled"
 );
 
-export const Composition = makeCodeComponent(require("!!raw-loader!./Composition"), "Composition");
-
-export const Cones = makeCodeComponent(require("!!raw-loader!./Cones"), "Cones");
-
-export const Cubes = makeCodeComponent(require("!!raw-loader!./Cubes"), "Cubes");
-
-export const Cylinders = makeCodeComponent(require("!!raw-loader!./Cylinders"), "Cylinders");
-
-export const DuckScene = makeCodeComponent(require("!!raw-loader!./DuckScene"), "DuckScene");
-
-export const DynamicCommands = makeCodeComponent(require("!!raw-loader!./DynamicCommands"), "DynamicCommands");
-
-export const FilledPolygons = makeCodeComponent(require("!!raw-loader!./FilledPolygons"), "FilledPolygons");
-
-export const FilledPolygonsHitmap = makeCodeComponent(
-  require("!!raw-loader!./FilledPolygonsHitmap"),
-  "FilledPolygonsHitmap"
-);
-
-export const Hitmap = makeCodeComponent(require("!!raw-loader!./Hitmap"), "Hitmap");
-
-export const LinesDemo = makeCodeComponent(require("!!raw-loader!./LinesDemo"), "LinesDemo");
-
-export const LinesWireframe = makeCodeComponent(require("!!raw-loader!./LinesWireframe"), "LinesWireframe");
-
-export const MouseEvents = makeCodeComponent(require("!!raw-loader!./MouseEvents"), "MouseEvents", true);
+export const MouseEvents = makeCodeComponent(require("!!raw-loader!./api/MouseEvents"), "MouseEvents", true);
 
 export const MouseEventsInstanced = makeCodeComponent(
-  require("!!raw-loader!./MouseEventsInstanced"),
+  require("!!raw-loader!./api/MouseEventsInstanced"),
   "MouseEventsInstanced"
 );
 
-export const Overlay = makeCodeComponent(require("!!raw-loader!./Overlay"), "Overlay");
+export const Arrows = makeCodeComponent(require("!!raw-loader!./commands/Arrows"), "Arrows");
 
-export const Points = makeCodeComponent(require("!!raw-loader!./Points"), "Points");
+export const Cones = makeCodeComponent(require("!!raw-loader!./commands/Cones"), "Cones");
 
-export const SpheresInstanced = makeCodeComponent(require("!!raw-loader!./SpheresInstanced"), "SpheresInstanced");
+export const Cubes = makeCodeComponent(require("!!raw-loader!./commands/Cubes"), "Cubes");
+
+export const Cylinders = makeCodeComponent(require("!!raw-loader!./commands/Cylinders"), "Cylinders");
+
+export const DuckScene = makeCodeComponent(require("!!raw-loader!./commands/DuckScene"), "DuckScene");
+
+export const FilledPolygons = makeCodeComponent(require("!!raw-loader!./commands/FilledPolygons"), "FilledPolygons");
+
+export const FilledPolygonsHitmap = makeCodeComponent(
+  require("!!raw-loader!./commands/FilledPolygonsHitmap"),
+  "FilledPolygonsHitmap"
+);
+
+export const LinesDemo = makeCodeComponent(require("!!raw-loader!./commands/LinesDemo"), "LinesDemo");
+
+export const LinesWireframe = makeCodeComponent(require("!!raw-loader!./commands/LinesWireframe"), "LinesWireframe");
+
+export const Overlay = makeCodeComponent(require("!!raw-loader!./commands/Overlay"), "Overlay");
+
+export const Points = makeCodeComponent(require("!!raw-loader!./commands/Points"), "Points");
+
+export const SpheresInstanced = makeCodeComponent(
+  require("!!raw-loader!./commands/SpheresInstanced"),
+  "SpheresInstanced"
+);
 
 export const SpheresInstancedColor = makeCodeComponent(
-  require("!!raw-loader!./SpheresInstancedColor"),
+  require("!!raw-loader!./commands/SpheresInstancedColor"),
   "SpheresInstancedColor"
 );
 
-export const SpheresSingle = makeCodeComponent(require("!!raw-loader!./SpheresSingle"), "SpheresSingle");
+export const SpheresSingle = makeCodeComponent(require("!!raw-loader!./commands/SpheresSingle"), "SpheresSingle");
 
-export const Text = makeCodeComponent(require("!!raw-loader!./Text"), "Text");
+export const Text = makeCodeComponent(require("!!raw-loader!./commands/Text"), "Text");
 
-export const Triangles = makeCodeComponent(require("!!raw-loader!./Triangles"), "Triangles");
+export const Triangles = makeCodeComponent(require("!!raw-loader!./commands/Triangles"), "Triangles");
+
+export const BasicExample = makeCodeComponent(require("!!raw-loader!./examples/BasicExample"), "BasicExample");
+
+export const Composition = makeCodeComponent(require("!!raw-loader!./examples/Composition"), "Composition");
+
+export const DynamicCommands = makeCodeComponent(require("!!raw-loader!./examples/DynamicCommands"), "DynamicCommands");
+
+export const Hitmap = makeCodeComponent(require("!!raw-loader!./examples/Hitmap"), "Hitmap");
+
+export const AddRemoveObstacles = makeCodeComponent(
+  require("!!raw-loader!./tutorials/AddRemoveObstacles"),
+  "AddingInteractivity"
+);
+
+export const ColorfulKnot = makeCodeComponent(require("!!raw-loader!./tutorials/ColorfulKnot"), "RenderingObjects");
+
+export const CustomObject = makeCodeComponent(require("!!raw-loader!./tutorials/CustomObject"), "RenderingObjects");
+
+export const FollowObject = makeCodeComponent(require("!!raw-loader!./tutorials/FollowObject"), "ManagingTheCamera");
+
+export const FollowObjectOrientation = makeCodeComponent(
+  require("!!raw-loader!./tutorials/FollowObjectOrientation"),
+  "ManagingTheCamera"
+);
+
+export const HelloWorld = makeCodeComponent(require("!!raw-loader!./tutorials/HelloWorld"), "RenderingObjects");
+
+export const InstancedRendering = makeCodeComponent(
+  require("!!raw-loader!./tutorials/InstancedRendering"),
+  "RenderingObjects"
+);
+
+export const MoveCamea = makeCodeComponent(require("!!raw-loader!./tutorials/MoveCamea"), "ManagingTheCamera");
+
+export const StopReleaseDuck = makeCodeComponent(
+  require("!!raw-loader!./tutorials/StopReleaseDuck"),
+  "AddingInteractivity"
+);

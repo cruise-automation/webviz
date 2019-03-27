@@ -38,7 +38,7 @@ const LogoLink = styled(Link)`
   }
 `;
 
-const Navigation = styled.ul`
+const Navigation = styled.div`
   max-height: calc(100vh - 88px);
   overflow-y: auto;
   padding: 0 2rem 2rem;
@@ -50,7 +50,7 @@ const Navigation = styled.ul`
   }
 `;
 
-const Section = styled.li`
+const Section = styled.div`
   margin-bottom: 1rem;
   display: block;
 

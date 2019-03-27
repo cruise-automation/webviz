@@ -8,7 +8,7 @@
 import React, { useState } from "react";
 import seedrandom from "seedrandom";
 
-import LineControls from "./utils/LineControls";
+import LineControls from "../utils/LineControls";
 import Worldview, { Lines, Points, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE

@@ -4,6 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { quat, vec3 } from "gl-matrix";
 import last from "lodash/last";
 import remove from "lodash/remove";
 import sample from "lodash/sample";
@@ -19,6 +20,7 @@ import duckModel from "./Duck.glb";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
 import useRange from "./useRange";
+import useRequestAnimationFrame from "./useRequestAnimationFrame";
 import Worldview, {
   Command,
   Arrows,
@@ -57,8 +59,15 @@ const CODE_SANDBOX_CONFIG = {
     "utils/CameraStateInfo.js": {
       content: require("!!raw-loader!./CameraStateInfo.js"),
     },
+    "utils/Duck.glb": {
+      content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/Zb-T-Duck.glb",
+      isBinary: true,
+    },
     "utils/useRange.js": {
       content: require("!!raw-loader!./useRange.js"),
+    },
+    "utils/useRequestAnimationFrame.js": {
+      content: require("!!raw-loader!./useRequestAnimationFrame.js"),
     },
     "utils/InputNumber.js": {
       content: require("!!raw-loader!./InputNumber.js"),
@@ -79,10 +88,13 @@ const CODE_SANDBOX_CONFIG = {
 };
 
 export const scope = {
+  quat,
+  vec3,
   intToRGB,
   cameraStateSelectors,
   getCSSColor,
   useRange,
+  useRequestAnimationFrame,
   useState,
   useEffect,
   Worldview,
@@ -128,8 +140,7 @@ export default function WorldviewCodeEditor({
   const hashUrl = getHashUrlByComponentName(componentName);
   const docUrl = `https://cruise-automation.github.io/webviz/worldview/#${hashUrl}`;
 
-  const copyCode = `
-${nonEditableCode}
+  const copyCode = `${nonEditableCode}
 
 ${code}
     `;

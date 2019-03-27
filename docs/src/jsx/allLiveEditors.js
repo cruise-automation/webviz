@@ -97,41 +97,32 @@ export const DynamicCommands = makeCodeComponent(require("!!raw-loader!./example
 
 export const Hitmap = makeCodeComponent(require("!!raw-loader!./examples/Hitmap"), "Hitmap");
 
-export const C11HelloWorld = makeCodeComponent(require("!!raw-loader!./tutorials/C11HelloWorld"), "RenderingObjects");
-
-export const C12CustomObject = makeCodeComponent(
-  require("!!raw-loader!./tutorials/C12CustomObject"),
-  "RenderingObjects"
-);
-
-export const C13ColorfulKnot = makeCodeComponent(
-  require("!!raw-loader!./tutorials/C13ColorfulKnot"),
-  "RenderingObjects"
-);
-
-export const C14InstancedRendering = makeCodeComponent(
-  require("!!raw-loader!./tutorials/C14InstancedRendering"),
-  "RenderingObjects"
-);
-
-export const C21MoveCamea = makeCodeComponent(require("!!raw-loader!./tutorials/C21MoveCamea"), "ManagingTheCamera");
-
-export const C22FollowObject = makeCodeComponent(
-  require("!!raw-loader!./tutorials/C22FollowObject"),
-  "ManagingTheCamera"
-);
-
-export const C23FollowObjectOrientation = makeCodeComponent(
-  require("!!raw-loader!./tutorials/C23FollowObjectOrientation"),
-  "ManagingTheCamera"
-);
-
-export const C31AddRemoveObstacles = makeCodeComponent(
-  require("!!raw-loader!./tutorials/C31AddRemoveObstacles"),
+export const AddRemoveObstacles = makeCodeComponent(
+  require("!!raw-loader!./tutorials/AddRemoveObstacles"),
   "AddingInteractivity"
 );
 
-export const C32StopReleaseDuck = makeCodeComponent(
-  require("!!raw-loader!./tutorials/C32StopReleaseDuck"),
+export const StopReleaseDuck = makeCodeComponent(
+  require("!!raw-loader!./tutorials/StopReleaseDuck"),
   "AddingInteractivity"
 );
+
+export const ColorfulKnot = makeCodeComponent(require("!!raw-loader!./tutorials/ColorfulKnot"), "RenderingObjects");
+
+export const CustomObject = makeCodeComponent(require("!!raw-loader!./tutorials/CustomObject"), "RenderingObjects");
+
+export const FollowObject = makeCodeComponent(require("!!raw-loader!./tutorials/FollowObject"), "ManagingTheCamera");
+
+export const FollowObjectOrientation = makeCodeComponent(
+  require("!!raw-loader!./tutorials/FollowObjectOrientation"),
+  "ManagingTheCamera"
+);
+
+export const HelloWorld = makeCodeComponent(require("!!raw-loader!./tutorials/HelloWorld"), "RenderingObjects");
+
+export const InstancedRendering = makeCodeComponent(
+  require("!!raw-loader!./tutorials/InstancedRendering"),
+  "RenderingObjects"
+);
+
+export const MoveCamea = makeCodeComponent(require("!!raw-loader!./tutorials/MoveCamea"), "ManagingTheCamera");

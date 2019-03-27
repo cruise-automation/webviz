@@ -5,7 +5,7 @@
 //  You may not use this file except in compliance with the License.
 
 // #BEGIN EXAMPLE
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 import duckModel from "../utils/Duck.glb";
 import useRequestAnimationFrame from "../utils/useRequestAnimationFrame";
@@ -14,15 +14,17 @@ import Worldview, { Cubes, Spheres, Axes, GLTFScene, DEFAULT_CAMERA_STATE } from
 // #BEGIN EDITABLE
 function Example() {
   const steps = 500; // total amount of objects
-  const [clickedObjectIds, setClickedObjectIds] = React.useState([]);
-  const [count, setCount] = React.useState(0);
+  const [clickedObjectIds, setClickedObjectIds] = useState([]);
+  const [count, setCount] = useState(0);
+  const [shouldStopDuck, setShouldStopDuck] = useState(false);
+
   useRequestAnimationFrame(
     () => {
       // update count before each browser repaint
       const newCount = (count + 1) % steps;
       setCount(newCount);
     },
-    false,
+    shouldStopDuck, // disable the animation when the duck is not moving
     []
   );
 
@@ -82,6 +84,16 @@ function Example() {
     };
   });
   const duckPosition = sphereMarker.points[count];
+  // make the duck stop
+  useEffect(
+    () => {
+      const duckPositionId = sphereMarker.id + count;
+      if (!shouldStopDuck && clickedObjectIds.includes(duckPositionId)) {
+        setShouldStopDuck(true);
+      }
+    },
+    [clickedObjectIds, shouldStopDuck, count, sphereMarker.id]
+  );
 
   return (
     <Worldview
@@ -100,6 +112,7 @@ function Example() {
         onClick={(ev, { object }) => {
           const newClickedObjectIds = clickedObjectIds.filter((id) => id !== object.clickedObjectId);
           setClickedObjectIds(newClickedObjectIds);
+          setShouldStopDuck(false);
         }}>
         {obstacleMarkers}
       </Cubes>

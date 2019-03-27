@@ -5,7 +5,7 @@
 //  You may not use this file except in compliance with the License.
 
 // #BEGIN EXAMPLE
-import React from "react";
+import React, { useState } from "react";
 
 import duckModel from "../utils/Duck.glb";
 import useRequestAnimationFrame from "../utils/useRequestAnimationFrame";
@@ -16,7 +16,7 @@ function Example() {
   const steps = 500; // total amount of objects
   const cameraMoveSpeed = 1 / 50;
   // use count to derive camera phi and thetaOffset values
-  const [count, setCount] = React.useState(0);
+  const [count, setCount] = useState(0);
   useRequestAnimationFrame(
     () => {
       // update count before each browser repaint

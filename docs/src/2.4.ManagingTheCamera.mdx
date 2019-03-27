@@ -1,5 +1,5 @@
 import CodeSandboxEmbed from './jsx/utils/CodeSandboxEmbed.js';
-import { C21MoveCamea, C22FollowObject, C23FollowObjectOrientation } from './jsx/allLiveEditors'
+import { MoveCamea, FollowObject, FollowObjectOrientation } from './jsx/allLiveEditors'
 
 # Managing the Camera
 
@@ -65,7 +65,7 @@ export default function useRequestAnimationFrame(callback, disable, dependencies
 
 Lastly, let's put everything together. Each frame, when our `useRequestAnimationFrame` callback is called, we'll increase a counter by 1, and use the counter to adjust the camera's `phi` and `thetaOffset`.
 
-<C21MoveCamea />
+<MoveCamea />
 
 Now the camera is moving around the scene, giving us a 360° view of the duck model!
 
@@ -77,7 +77,7 @@ In this step, let's move the duck along our knot, and move the camera to follow 
 
 First, let's remove the camera setting for `thetaOffset` and `phi`, so that we don't get dizzy watching the scene while the duck moves. We can derive the duck's position from the spheres over time, and use the duck position as `target` input for `cameraState`.
 
-<C22FollowObject />
+<FollowObject />
 
 Voilà! By adding the `target` position to `cameraState`, the camera now follows the duck around!
 
@@ -85,6 +85,6 @@ Voilà! By adding the `target` position to `cameraState`, the camera now follows
 
 The duck is moving, but not very realistically: it doesn't lean forward or backward when it goes up or down the knob curves. In this step, we'll refine the following behavior by computing the duck's orientation based on it's location on the knot, and use it as `targetOrientation` input for `cameraState`.
 
-<C23FollowObjectOrientation />
+<FollowObjectOrientation />
 
 Next, let's [make our scene interactive](#/docs/tutorial/adding-interactivity) by handling mouse events.

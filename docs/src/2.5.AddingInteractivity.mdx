@@ -1,5 +1,5 @@
 import CodeSandboxEmbed from './jsx/utils/CodeSandboxEmbed.js';
-import { C31AddRemoveObstacles, C32StopReleaseDuck } from './jsx/allLiveEditors';
+import { AddRemoveObstacles, StopReleaseDuck } from './jsx/allLiveEditors';
 
 # Adding Interactivity
 
@@ -40,7 +40,7 @@ Let's also enable manual camera movement, so we can see the duck better.
 Next, let's add a `clickedObjectIds` state to keep track of the clicked spheres. We'll also use this `clickedObjectIds` state to generate cube obstacles.
 
 ```js
-const [clickedObjectIds, setClickedObjectIds] = React.useState([]);
+const [clickedObjectIds, setClickedObjectIds] = useState([]);
 
 const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index) => {
   const pointIdx = clickedObjectId - sphereMarker.id;
@@ -94,7 +94,7 @@ Now we can interact with the scene:
 - Whenever we click on a sphere, a red cube will appear in its place.
 - Clicking a cube will make it disappear.
 
-<C31AddRemoveObstacles />
+<AddRemoveObstacles />
 
 ## Stopping and Releasing the Duck
 
@@ -139,7 +139,7 @@ useEffect(
 
 Putting it all together, we now have a moving duck that gets stuck on every cube obstacle in its path. Add an obstacle by clicking any sphere, and clicking the blocking cube that the duck is stuck on will remove the cube itself, allowing the duck to happily continue forward.
 
-<C32StopReleaseDuck />
+<StopReleaseDuck />
 
 ## Next Steps
 

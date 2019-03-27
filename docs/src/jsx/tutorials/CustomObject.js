@@ -5,13 +5,13 @@
 //  You may not use this file except in compliance with the License.
 
 // #BEGIN EXAMPLE
-import React from "react";
+import React, { useState } from "react";
 
 import Worldview, { Cubes, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
-  const [count, setCount] = React.useState(1);
+  const [count, setCount] = useState(1);
   const markers = new Array(count).fill().map((_, idx) => {
     return {
       pose: {

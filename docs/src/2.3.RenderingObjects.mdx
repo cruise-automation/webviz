@@ -1,5 +1,5 @@
 import CodeSandboxEmbed from './jsx/utils/CodeSandboxEmbed.js';
-import { C11HelloWorld, C12CustomObject, C13ColorfulKnot, C14InstancedRendering } from './jsx/allLiveEditors';
+import { HelloWorld, CustomObject, ColorfulKnot, InstancedRendering } from './jsx/allLiveEditors';
 
 # Rendering Objects
 
@@ -84,7 +84,7 @@ ReactDOM.render(<App />, rootElement);
 
 Check your browser to see the results – you have successfully created a Hello World app using `Worldview`!
 
-<C11HelloWorld />
+<HelloWorld />
 
 You can interact with `Worldview` by left-clicking and dragging to move the scene, or right-clicking and dragging to rotate. Learn more about [controlling the camera with your keyboard](#/docs/api/worldview).
 
@@ -94,7 +94,7 @@ Let's make the app dynamic by adding a button which adds more cubes to the scene
 
 Whenever you click the "Add a Cube" button, you'll see a new cube with a randomly generated color added to the scene.
 
-<C12CustomObject />
+<CustomObject />
 
 ## Rendering a Colorful Knot
 
@@ -102,7 +102,7 @@ Now let's render something more interesting!
 
 A [trefoil knot](https://en.wikipedia.org/wiki/Trefoil_knot) is like a common overhand knot with its two loose ends joined, resulting in a knotted loop. In this step, we'll use parametric equations to render a trefoil knot with some color variation.
 
-<C13ColorfulKnot />
+<ColorfulKnot />
 
 ## Improving Performance with Instanced Rendering
 
@@ -110,7 +110,7 @@ When drawing many instances of the same object, you'll quickly reach a performan
 
 Most of the existing [Commands](#/docs/api/command) support instancing. They accept one marker object with certain properties as arrays (e.g. points, colors) which will be rendered to many objects. In this step, let's convert our previous example to use instanced rendering.
 
-<C14InstancedRendering />
+<InstancedRendering />
 Now, we are rendering 500 spheres with unique colors and positions in a single GPU draw call, rather than 500 separate calls!
 
 Next: [Managing the Camera](#/docs/tutorial/managing-the-camera)

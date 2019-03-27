@@ -7,8 +7,8 @@
 // #BEGIN EXAMPLE
 import React from "react";
 
-import duckModel from "./utils/Duck.glb";
-import useRequestAnimationFrame from "./utils/useRequestAnimationFrame";
+import duckModel from "../utils/Duck.glb";
+import useRequestAnimationFrame from "../utils/useRequestAnimationFrame";
 import Worldview, { Spheres, Axes, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE

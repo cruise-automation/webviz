@@ -10,7 +10,7 @@ import { quat, vec3 } from "gl-matrix";
 // $FlowFixMe - useState is not yet in the flow definitions.
 import React, { useState } from "react";
 
-import CameraStateControls from "./utils/CameraStateControls";
+import CameraStateControls from "../utils/CameraStateControls";
 import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors, type CameraState } from "regl-worldview";
 
 export default function Example() {

@@ -7,44 +7,40 @@
 // #BEGIN EXAMPLE
 import React from "react";
 
-import useRange from "./utils/useRange";
-import Worldview, { Axes, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import useRange from "../utils/useRange";
+import Worldview, { Spheres } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
   const range = useRange();
   // create coordinates
-  const x = 3 + range * 2;
-  const y = x;
-  const z = x;
+  const x = 20;
+  const y = 20;
+  const z = 20;
   const step = 10;
-  const points = [];
+  const coords = [];
   for (let i = 0; i < x; i++) {
     for (let j = 0; j < y; j++) {
       for (let k = 0; k < z; k++) {
-        points.push({ x: i * step, y: j * step, z: k * step });
+        coords.push({ x: i * step, y: j * step, z: k * step });
       }
     }
   }
-
-  const scaleX = 3 * range;
-  const marker = {
-    points,
+  // create sphere list
+  const scaleX = 0.25 * (1 + range);
+  const sphereList = {
+    points: coords,
     scale: { x: scaleX, y: scaleX, z: scaleX },
     color: { r: 1, g: range, b: 1, a: 1 },
-    pose: { position: { x: range, y: range, z: range }, orientation: { x: 0, y: 0, z: 0, w: 1 } },
+    pose: {
+      position: { x: range, y: range, z: range },
+      orientation: { x: 0, y: 0, z: 0, w: 1 },
+    },
   };
 
   return (
-    <Worldview
-      defaultCameraState={{
-        ...DEFAULT_CAMERA_STATE,
-        distance: 124,
-        phi: 1,
-        targetOffset: [3, 6, 0],
-      }}>
-      <Points>{[marker]}</Points>
-      <Axes />
+    <Worldview>
+      <Spheres>{[sphereList]}</Spheres>
     </Worldview>
   );
 }

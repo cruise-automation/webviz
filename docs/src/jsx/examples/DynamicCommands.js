@@ -7,7 +7,7 @@
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
 
-import useRange from "./utils/useRange";
+import useRange from "../utils/useRange";
 import Worldview, { Cubes, Spheres, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE

@@ -264,22 +264,21 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   render() {
     const { width, height, showDebug, keyMap, shiftKeys, style, cameraState } = this.props;
     const { worldviewContext } = this.state;
-    const canvasHtml = [
-      <canvas
-        key={0}
-        style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
-        width={width}
-        height={height}
-        ref={this._canvas}
-        onMouseUp={this._onMouseUp}
-        onMouseDown={this._onMouseDown}
-        onDoubleClick={this._onDoubleClick}
-        onMouseMove={this._onMouseMove}
-      />,
-    ];
-    if (showDebug) {
-      canvasHtml.push(this._renderDebug());
-    }
+    const canvasHtml = (
+      <React.Fragment>
+        <canvas
+          style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
+          width={width}
+          height={height}
+          ref={this._canvas}
+          onMouseUp={this._onMouseUp}
+          onMouseDown={this._onMouseDown}
+          onDoubleClick={this._onDoubleClick}
+          onMouseMove={this._onMouseMove}
+        />
+        {showDebug && this._renderDebug()}
+      </React.Fragment>
+    );
 
     return (
       <div style={{ position: "relative", overflow: "hidden", ...style }}>

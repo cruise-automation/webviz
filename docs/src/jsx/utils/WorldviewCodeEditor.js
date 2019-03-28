@@ -138,7 +138,7 @@ export default function WorldviewCodeEditor({
   componentName,
   code,
   nonEditableCode = "",
-  shouldInsertCodeSandboxStyleFix,
+  insertCodeSandboxStyle,
   ...rest
 }) {
   const hashUrl = getHashUrlByComponentName(componentName);
@@ -153,7 +153,7 @@ ${code}
 // regl-worldview example: ${componentName}
 // docs: ${docUrl}
 
-${shouldInsertCodeSandboxStyleFix ? 'import "./utils/codeSandboxStyleFix.css"; // #CODE_SANDBOX_ONLY' : ""}
+${insertCodeSandboxStyle ? 'import "./utils/codeSandboxStyleFix.css"; // #CODE_SANDBOX_ONLY' : ""}
 import ReactDOM from "react-dom";
 ${copyCode}
 

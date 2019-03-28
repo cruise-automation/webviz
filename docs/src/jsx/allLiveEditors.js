@@ -10,7 +10,7 @@ import React from "react";
 
 import WorldviewCodeEditor from "./utils/WorldviewCodeEditor";
 
-function makeCodeComponent(raw, componentName, { isRowView, shouldInsertCodeSandboxStyleFix } = {}) {
+function makeCodeComponent(raw, componentName, { isRowView, insertCodeSandboxStyle } = {}) {
   const code = raw
     .split("// #BEGIN EXAMPLE")[1]
     .split("// #END EXAMPLE")[0]
@@ -27,7 +27,7 @@ function makeCodeComponent(raw, componentName, { isRowView, shouldInsertCodeSand
       nonEditableCode={code[0].trim()}
       componentName={componentName}
       isRowView={isRowView}
-      shouldInsertCodeSandboxStyleFix={shouldInsertCodeSandboxStyleFix}
+      insertCodeSandboxStyle={insertCodeSandboxStyle}
     />
   );
 }
@@ -89,7 +89,7 @@ export const SpheresInstancedColor = makeCodeComponent(
 export const SpheresSingle = makeCodeComponent(require("!!raw-loader!./commands/SpheresSingle"), "SpheresSingle");
 
 export const Text = makeCodeComponent(require("!!raw-loader!./commands/Text"), "Text", {
-  shouldInsertCodeSandboxStyleFix: true,
+  insertCodeSandboxStyle: true,
 });
 
 export const Triangles = makeCodeComponent(require("!!raw-loader!./commands/Triangles"), "Triangles");

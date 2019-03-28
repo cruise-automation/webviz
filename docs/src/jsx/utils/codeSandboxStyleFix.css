@@ -1,0 +1,16 @@
+/* The file is not needed if you are using Text command outside of CodeSandbox.  */
+.regl-worldview-text-wrapper {
+  position: absolute;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+.regl-worldview-text-inner {
+  position: relative;
+  left: -50%;
+  top: -0.5em;
+  white-space: pre-line;
+}

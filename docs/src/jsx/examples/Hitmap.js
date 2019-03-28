@@ -177,6 +177,8 @@ function Example() {
                 position: "absolute",
                 background: "rgba(0, 0, 0, 0.8)",
                 color: "white",
+                top: 0,
+                left: 0,
                 maxWidth: 250,
                 willChange: "transform",
                 fontSize: 12,

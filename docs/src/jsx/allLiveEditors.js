@@ -10,7 +10,7 @@ import React from "react";
 
 import WorldviewCodeEditor from "./utils/WorldviewCodeEditor";
 
-function makeCodeComponent(raw, componentName, isRowView) {
+function makeCodeComponent(raw, componentName, { isRowView, insertCodeSandboxStyle } = {}) {
   const code = raw
     .split("// #BEGIN EXAMPLE")[1]
     .split("// #END EXAMPLE")[0]
@@ -27,6 +27,7 @@ function makeCodeComponent(raw, componentName, isRowView) {
       nonEditableCode={code[0].trim()}
       componentName={componentName}
       isRowView={isRowView}
+      insertCodeSandboxStyle={insertCodeSandboxStyle}
     />
   );
 }
@@ -41,7 +42,9 @@ export const CameraStateUncontrolled = makeCodeComponent(
   "CameraStateUncontrolled"
 );
 
-export const MouseEvents = makeCodeComponent(require("!!raw-loader!./api/MouseEvents"), "MouseEvents", true);
+export const MouseEvents = makeCodeComponent(require("!!raw-loader!./api/MouseEvents"), "MouseEvents", {
+  isRowView: true,
+});
 
 export const MouseEventsInstanced = makeCodeComponent(
   require("!!raw-loader!./api/MouseEventsInstanced"),
@@ -85,7 +88,9 @@ export const SpheresInstancedColor = makeCodeComponent(
 
 export const SpheresSingle = makeCodeComponent(require("!!raw-loader!./commands/SpheresSingle"), "SpheresSingle");
 
-export const Text = makeCodeComponent(require("!!raw-loader!./commands/Text"), "Text");
+export const Text = makeCodeComponent(require("!!raw-loader!./commands/Text"), "Text", {
+  insertCodeSandboxStyle: true,
+});
 
 export const Triangles = makeCodeComponent(require("!!raw-loader!./commands/Triangles"), "Triangles");
 

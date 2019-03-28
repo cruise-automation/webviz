@@ -56,6 +56,9 @@ const CODE_SANDBOX_CONFIG = {
     "styled-components": "latest",
   },
   files: {
+    "utils/codeSandboxStyleFix.css": {
+      content: require("!!raw-loader!./codeSandboxStyleFix.css"),
+    },
     "utils/CameraStateInfo.js": {
       content: require("!!raw-loader!./CameraStateInfo.js"),
     },
@@ -135,6 +138,7 @@ export default function WorldviewCodeEditor({
   componentName,
   code,
   nonEditableCode = "",
+  insertCodeSandboxStyle,
   ...rest
 }) {
   const hashUrl = getHashUrlByComponentName(componentName);
@@ -149,6 +153,7 @@ ${code}
 // regl-worldview example: ${componentName}
 // docs: ${docUrl}
 
+${insertCodeSandboxStyle ? 'import "./utils/codeSandboxStyleFix.css"; // #CODE_SANDBOX_ONLY' : ""}
 import ReactDOM from "react-dom";
 ${copyCode}
 

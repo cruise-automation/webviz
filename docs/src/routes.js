@@ -133,7 +133,6 @@ export default ROUTE_CONFIG.map(({ name, subRouteNames }) => {
     subRoutes: subRouteNames.map((subRouteName, idx) => {
       const subComponentName = getComponentName(subRouteName);
       return {
-        exact: idx !== 0,
         path: `/${getSubRoutePath(subRouteName)}`,
         name: subRouteName,
         main: subComponentName,

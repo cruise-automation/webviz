@@ -262,24 +262,34 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, showDebug, keyMap, shiftKeys, style } = this.props;
+    const { width, height, showDebug, keyMap, shiftKeys, style, cameraState } = this.props;
     const { worldviewContext } = this.state;
+    const canvasHtml = (
+      <React.Fragment>
+        <canvas
+          style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
+          width={width}
+          height={height}
+          ref={this._canvas}
+          onMouseUp={this._onMouseUp}
+          onMouseDown={this._onMouseDown}
+          onDoubleClick={this._onDoubleClick}
+          onMouseMove={this._onMouseMove}
+        />
+        {showDebug && this._renderDebug()}
+      </React.Fragment>
+    );
 
     return (
       <div style={{ position: "relative", overflow: "hidden", ...style }}>
-        <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap} shiftKeys={shiftKeys}>
-          <canvas
-            style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
-            width={width}
-            height={height}
-            ref={this._canvas}
-            onMouseUp={this._onMouseUp}
-            onMouseDown={this._onMouseDown}
-            onDoubleClick={this._onDoubleClick}
-            onMouseMove={this._onMouseMove}
-          />
-          {showDebug ? this._renderDebug() : null}
-        </CameraListener>
+        {/* skip rendering CameraListener if Worldview is controlled */}
+        {cameraState ? (
+          canvasHtml
+        ) : (
+          <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap} shiftKeys={shiftKeys}>
+            {canvasHtml}
+          </CameraListener>
+        )}
         {worldviewContext.initializedData && (
           <WorldviewReactContext.Provider value={worldviewContext}>
             {this.props.children}

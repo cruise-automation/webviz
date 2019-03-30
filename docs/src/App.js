@@ -7,7 +7,8 @@
 import { MDXProvider } from "@mdx-js/tag";
 import createHashHistory from "history/createHashHistory";
 import React from "react";
-import { Router, Route, Redirect, Switch } from "react-router-dom";
+import { withRouter } from "react-router";
+import { Router, Route, Redirect, Switch, Link } from "react-router-dom";
 
 import Docs from "./Docs";
 import Landing from "./Landing";
@@ -15,9 +16,53 @@ import Landing from "./Landing";
 const history = createHashHistory();
 history.listen(() => window.scrollTo(0, 0));
 
+// A wrapper for generating scrollTo behavior when children text is matched with url path's last part.
+function ScrollTo({ component: Tag = "div", location, children, match, disableAnchorLink, ...rest }) {
+  const wrapperRef = React.useRef();
+  const lastPathPartials = location.pathname.split("/").pop();
+  let hasLink = false;
+  let linkStr;
+  if (typeof children === "string") {
+    linkStr = children
+      .replace(/[\W_]+/g, " ") // only keep letters, numbers and spaces
+      .toLowerCase()
+      .split(" ")
+      .join("-");
+    hasLink = linkStr === lastPathPartials;
+  }
+
+  React.useEffect(
+    () => {
+      if (hasLink) {
+        window.scrollTo({ top: wrapperRef.current.offsetTop, behavior: "smooth" });
+      }
+    },
+    [lastPathPartials]
+  );
+  return (
+    <div ref={wrapperRef}>
+      {linkStr ? (
+        <Link style={{ textDecoration: "none" }} to={disableAnchorLink ? match.path : `${match.path}/${linkStr}`}>
+          <Tag>{children}</Tag>
+        </Link>
+      ) : (
+        <Tag>{children}</Tag>
+      )}
+    </div>
+  );
+}
+
+const ScrollToWithRouter = withRouter(ScrollTo);
+
+const components = {
+  // auto generate links for h2 and h3 and scroll to the element if the url path is matched with the heading text
+  h2: (props) => <ScrollToWithRouter component="h2" {...props} />, // eslint-disable-line react/display-name
+  h3: (props) => <ScrollToWithRouter component="h3" {...props} />, // eslint-disable-line react/display-name
+  h1: (props) => <ScrollToWithRouter component="h1" disableAnchorLink {...props} />, // eslint-disable-line react/display-name
+};
 export default function App() {
   return (
-    <MDXProvider components={{}}>
+    <MDXProvider components={components}>
       <Router history={history}>
         <Switch>
           <Route path="/docs" component={Docs} />

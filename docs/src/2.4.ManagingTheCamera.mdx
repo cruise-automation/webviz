@@ -28,7 +28,7 @@ import duckModel from "../utils/Duck.glb";
     },
     scale: { x: 3, y: 3, z: 3 },
   }}
-</GLTFScene>
+</GLTFScene>;
 ```
 
 To move the camera, we will need to store some state that changes over time. Let's add a [React Hook](https://reactjs.org/docs/hooks-intro.html) that accepts a callback which will be called at each timestep. We'll use [window.requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) to keep our state updates in sync with the display refresh rate.
@@ -81,7 +81,7 @@ First, let's remove the camera setting for `thetaOffset` and `phi`, so that we d
 
 Voilà! By adding the `target` position to `cameraState`, the camera now follows the duck around!
 
-## Bonus Point: Following the Object Orientattion
+## Bonus Point: Following the Object Orientation
 
 The duck is moving, but not very realistically: it doesn't lean forward or backward when it goes up or down the knob curves. In this step, we'll refine the following behavior by computing the duck's orientation based on it's location on the knot, and use it as `targetOrientation` input for `cameraState`.
 

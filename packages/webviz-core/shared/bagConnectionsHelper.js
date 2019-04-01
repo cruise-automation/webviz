@@ -8,7 +8,7 @@
 
 import { parseMessageDefinition } from "rosbag";
 
-import type { TopicMsg } from "webviz-core/src/types/players";
+import type { Topic } from "webviz-core/src/types/players";
 // TODO(JP): Move all this stuff into rosbag.
 
 type DatatypeDescription = {
@@ -39,9 +39,9 @@ export function bagConnectionsToDatatypes(connections: $ReadOnlyArray<DatatypeDe
 }
 
 // Extract one big list of topics from the individual connections.
-export function bagConnectionsToTopics(connections: $ReadOnlyArray<Connection>): TopicMsg[] {
+export function bagConnectionsToTopics(connections: $ReadOnlyArray<Connection>): Topic[] {
   // Use an object to deduplicate topics.
-  const topics: { [string]: TopicMsg } = {};
+  const topics: { [string]: Topic } = {};
   connections.forEach((connection) => {
     const existingTopic = topics[connection.topic];
     if (existingTopic && existingTopic.datatype !== connection.type) {
@@ -49,7 +49,7 @@ export function bagConnectionsToTopics(connections: $ReadOnlyArray<Connection>):
       return;
     }
     topics[connection.topic] = {
-      topic: connection.topic,
+      name: connection.topic,
       datatype: connection.type,
     };
   });

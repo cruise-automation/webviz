@@ -11,23 +11,31 @@
   font-size: 1.1rem;
   line-height: 1.65;
 
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: normal;
+    line-height: 1.4;
+  }
+
   h1 {
     font-size: 2em;
-    line-height: 1.2;
     margin-bottom: 0.5em;
+    line-height: 1.2;
   }
 
   h2 {
     font-size: 1.3em;
     margin-bottom: 0.25em;
-    font-weight: bold;
   }
 
   h3 {
     font-size: 1.1em;
     margin-bottom: 0.25em;
     color: $text-muted;
-    font-weight: bold;
   }
 
   h4,

@@ -23,7 +23,6 @@ import {
   type PublishPayload,
   type SubscribePayload,
   type Topic,
-  type TopicMsg,
 } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import reportError from "webviz-core/src/util/reportError";
@@ -94,12 +93,7 @@ export default class RandomAccessPlayer implements Player {
         // double-emit messages with a receiveTime that is exactly equal to _currentTime.
         this._currentTime = TimeUtil.add(start, { sec: 0, nsec: -1 });
         this._end = end;
-        // TODO(JP): Fix this.
-        this._providerTopics = topics.map(({ topic, datatype, originalTopic }) => ({
-          name: topic,
-          datatype: datatype || "",
-          originalTopic,
-        }));
+        this._providerTopics = topics;
         this._providerDatatypes = datatypes;
         this._initializing = false;
         this._emitState();
@@ -240,8 +234,7 @@ export default class RandomAccessPlayer implements Player {
   async _getMessages(start: Time, end: Time): Promise<Message[]> {
     const messages = await this._provider.getMessages(start, end, Array.from(this._subscribedTopics));
     return messages.map((message) => {
-      // $FlowFixMe - TODO(JP)
-      const topic: ?TopicMsg = this._providerTopics.find((t) => t.name === message.topic);
+      const topic: ?Topic = this._providerTopics.find((t) => t.name === message.topic);
       if (!topic) {
         throw new Error(`Could not find topic for message ${message.topic}`);
       }

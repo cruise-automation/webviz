@@ -134,6 +134,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
               expect(context.subscriptions).toBe(lastSubscriptions);
               done();
             }
+            return null;
           }}
         </MessagePipelineConsumer>
       </MessagePipelineProvider>
@@ -176,6 +177,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
               expect(context.publishers).toBe(lastPublishers);
               done();
             }
+            return null;
           }}
         </MessagePipelineConsumer>
       </MessagePipelineProvider>
@@ -193,7 +195,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
           {(context) => {
             callCount++;
             if (callCount > 3) {
-              return done();
+              done();
+              return null;
             }
             // cause the player to emit a frame outside the render loop to trigger another render
             setImmediate(() => {
@@ -203,7 +206,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
             });
             // we don't have a last context yet
             if (callCount === 1) {
-              return;
+              return null;
             }
             lastContext = context;
             for (const key in context) {
@@ -212,6 +215,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
                 expect(lastContext[key]).toBe(context[key]);
               }
             }
+            return null;
           }}
         </MessagePipelineConsumer>
       </MessagePipelineProvider>
@@ -312,6 +316,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
             context.setPlaybackSpeed(1);
             context.seekPlayback({ sec: 1, nsec: 0 });
             context.publish({ topic: "/foo", msg: {} });
+            return null;
           }}
         </MessagePipelineConsumer>
       </MessagePipelineProvider>
@@ -337,6 +342,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
                 wait.resolve();
               });
             }
+            return null;
           }}
         </MessagePipelineConsumer>
       </MessagePipelineProvider>

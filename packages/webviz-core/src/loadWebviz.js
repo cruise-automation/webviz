@@ -46,7 +46,7 @@ let hooks = {
       defaultConfig: { cameraTopic: "", enabledMarkerNames: [], scale: 0.2, transformMarkers: false },
       imageMarkerDatatypes: ["visualization_msgs/ImageMarker"],
       imageMarkerArrayDatatypes: [],
-      isUnrectifiedTopicName: (topic) => !topic.includes("rect"),
+      canTransformMarkersByTopic: (topic) => !topic.includes("rect"),
     },
     StateTransitions: { defaultConfig: { paths: [] }, customStateTransitionColors: {} },
     TopicEcho: { docLinkFunction: () => undefined },

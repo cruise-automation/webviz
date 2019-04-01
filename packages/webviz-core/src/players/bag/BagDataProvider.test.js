@@ -19,15 +19,15 @@ describe("Provider", () => {
     expect(result.start).toEqual({ sec: 1396293887, nsec: 844783943 });
     expect(result.end).toEqual({ sec: 1396293909, nsec: 544870199 });
     expect(result.topics).toContainOnly([
-      { datatype: "rosgraph_msgs/Log", topic: "/rosout" },
-      { datatype: "turtlesim/Color", topic: "/turtle1/color_sensor" },
-      { datatype: "tf2_msgs/TFMessage", topic: "/tf_static" },
-      { datatype: "turtlesim/Color", topic: "/turtle2/color_sensor" },
-      { datatype: "turtlesim/Pose", topic: "/turtle1/pose" },
-      { datatype: "turtlesim/Pose", topic: "/turtle2/pose" },
-      { datatype: "tf/tfMessage", topic: "/tf" },
-      { datatype: "geometry_msgs/Twist", topic: "/turtle2/cmd_vel" },
-      { datatype: "geometry_msgs/Twist", topic: "/turtle1/cmd_vel" },
+      { datatype: "rosgraph_msgs/Log", name: "/rosout" },
+      { datatype: "turtlesim/Color", name: "/turtle1/color_sensor" },
+      { datatype: "tf2_msgs/TFMessage", name: "/tf_static" },
+      { datatype: "turtlesim/Color", name: "/turtle2/color_sensor" },
+      { datatype: "turtlesim/Pose", name: "/turtle1/pose" },
+      { datatype: "turtlesim/Pose", name: "/turtle2/pose" },
+      { datatype: "tf/tfMessage", name: "/tf" },
+      { datatype: "geometry_msgs/Twist", name: "/turtle2/cmd_vel" },
+      { datatype: "geometry_msgs/Twist", name: "/turtle1/cmd_vel" },
     ]);
     expect(Object.keys(result.datatypes)).toContainOnly([
       "rosgraph_msgs/Log",

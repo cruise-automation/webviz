@@ -21,9 +21,15 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: ${(props) => (props.alignLeft ? "left" : "center")};
-  margin: 4px;
-  font-style: italic;
+  margin: 20px;
+  line-height: 1.4;
   color: ${colors.textMuted};
+
+  code {
+    color: ${colors.highlight};
+    opacity: 0.5;
+    background: transparent;
+  }
 `;
 
 export default class EmptyState extends React.Component<Props> {

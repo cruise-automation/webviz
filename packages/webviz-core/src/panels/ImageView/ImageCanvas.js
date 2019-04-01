@@ -21,6 +21,7 @@ import ContextMenu from "webviz-core/src/components/ContextMenu";
 import Icon from "webviz-core/src/components/Icon";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { ImageMarker, CameraInfo, Color } from "webviz-core/src/types/Messages";
 import type { Message } from "webviz-core/src/types/players";
@@ -32,6 +33,7 @@ type Props = {
   markers: Message[],
   panelHooks?: ImageViewPanelHooks,
   transformMarkers: boolean,
+  canTransformMarkers?: boolean,
   saveConfig: SaveConfig,
 };
 
@@ -405,18 +407,18 @@ export default class ImageCanvas extends React.Component<Props, State> {
   }
 
   render() {
-    const { saveConfig, transformMarkers } = this.props;
+    const { saveConfig, transformMarkers, canTransformMarkers } = this.props;
     const { cameraModel } = this.state;
 
     return (
       <React.Fragment>
         <canvas onContextMenu={this.onCanvasRightClick} ref={this._canvasRef} className={styles.canvas} />
-        {cameraModel && cameraModel.initializedData && (
+        {canTransformMarkers && cameraModel && cameraModel.initializedData && (
           <ChildToggle.ContainsOpen>
             {(containsOpen) => (
               <div
                 className={cx(styles["bottom-bar"], {
-                  [styles.containsOpen]: containsOpen,
+                  [styles.containsOpen]: inScreenshotTests ? true : containsOpen,
                 })}>
                 <Icon
                   onClick={() => saveConfig({ transformMarkers: !transformMarkers })}

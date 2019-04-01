@@ -10,6 +10,7 @@
 // proprietary and open source repos.
 import KeyListener from "react-key-listener"; // eslint-disable-line
 
+import CloseIcon from "@mdi/svg/svg/close.svg";
 import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
 import cx from "classnames";
 import PropTypes from "prop-types";
@@ -45,6 +46,7 @@ type Props<Config> = {| childId?: string, config?: Config |};
 type State = {
   fullScreenKeyPressed: boolean,
   fullScreen: boolean,
+  removePanelKeyPressed: boolean,
 };
 
 interface PanelStatics<Config> {
@@ -95,7 +97,7 @@ export default function Panel<Config: PanelConfig>(
       store: PropTypes.any,
     };
 
-    state = { fullScreenKeyPressed: false, fullScreen: false };
+    state = { fullScreenKeyPressed: false, fullScreen: false, removePanelKeyPressed: false };
 
     // Save the config, by mixing in the partial config with the current config, or if that does
     // not exist, with the `defaultConfig`. That way we always save complete configs.
@@ -140,29 +142,42 @@ export default function Panel<Config: PanelConfig>(
       });
     };
 
-    _enterFullScreen = () => {
-      this.setState((state) => {
-        return { fullScreen: state.fullScreenKeyPressed };
-      });
+    _onOverlayClick = () => {
+      if (this.state.fullScreenKeyPressed) {
+        this.setState((state) => {
+          return { fullScreen: state.fullScreenKeyPressed };
+        });
+      } else if (this.state.removePanelKeyPressed) {
+        const { mosaicActions, mosaicWindowActions } = this.context;
+        mosaicActions.remove(mosaicWindowActions.getPath());
+      }
     };
 
     _exitFullScreen = () => {
       this.setState({ fullScreenKeyPressed: false, fullScreen: false });
     };
 
+    _exitRemovePanelMode = () => {
+      this.setState({ removePanelKeyPressed: false });
+    };
+
     _keyUpHandlers = {
       "`": this._exitFullScreen,
+      c: this._exitRemovePanelMode,
     };
 
     _keyDownHandlers = {
       "`": () => {
         this.setState({ fullScreenKeyPressed: true });
       },
+      c: () => {
+        this.setState({ removePanelKeyPressed: true });
+      },
     };
 
     render() {
       const { topics, datatypes, capabilities, childId } = this.props;
-      const { fullScreenKeyPressed, fullScreen } = this.state;
+      const { fullScreenKeyPressed, fullScreen, removePanelKeyPressed } = this.state;
       return (
         // $FlowFixMe - bug prevents requiring panelType on PanelComponent: https://stackoverflow.com/q/52508434/23649
         <PanelContext.Provider value={{ type: PanelComponent.panelType, id: childId }}>
@@ -170,7 +185,7 @@ export default function Panel<Config: PanelConfig>(
           <DocumentEvents target={window.top} enabled onBlur={this._exitFullScreen} />
           <KeyListener global keyUpHandlers={this._keyUpHandlers} keyDownHandlers={this._keyDownHandlers} />
           <Flex
-            onClick={this._enterFullScreen}
+            onClick={this._onOverlayClick}
             className={cx({
               [styles.root]: true,
               [styles.rootFullScreen]: fullScreen,
@@ -181,10 +196,18 @@ export default function Panel<Config: PanelConfig>(
               <div className={styles.fullScreenKeyPressedOverlay}>
                 {!fullScreen && (
                   <div>
-                    <p>Click to Fullscreen</p>
                     <FullscreenIcon />
+                    <p>Fullscreen panel</p>
                   </div>
                 )}
+              </div>
+            )}
+            {removePanelKeyPressed && (
+              <div className={styles.removePanelKeyPressOverlay}>
+                <div>
+                  <CloseIcon />
+                  <p>Remove panel</p>
+                </div>
               </div>
             )}
             <ErrorBoundary>

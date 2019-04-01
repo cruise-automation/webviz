@@ -62,8 +62,8 @@ type Props = {|
 
 const TooltipItem = ({ title, value }) => (
   <div>
-    <span className={styles.tipTitle}>{title}: </span>
-    {value}
+    <span className={styles.tipTitle}>{title}:</span>
+    <span className={styles.tipValue}>{value}</span>
   </div>
 );
 
@@ -110,9 +110,9 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
 
     const tip = (
       <div className={classnames(tooltipStyles.tooltip, styles.tip)}>
-        <TooltipItem title={"ROS"} value={formatTimeRaw(stamp)} />
-        <TooltipItem title={"Time"} value={formatTime(stamp)} />
-        <TooltipItem title={"Elapsed"} value={`${toSec(timeFromStart).toFixed(9)} sec`} />
+        <TooltipItem title="ROS" value={formatTimeRaw(stamp)} />
+        <TooltipItem title="Time" value={formatTime(stamp)} />
+        <TooltipItem title="Elapsed" value={`${toSec(timeFromStart).toFixed(9)} sec`} />
       </div>
     );
     Tooltip.show(x, y, tip, {

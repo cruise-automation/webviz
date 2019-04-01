@@ -14,7 +14,7 @@ const Outer = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.75);
   z-index: 100000;
   pointer-events: none;
 `;
@@ -25,8 +25,8 @@ const Inner = styled.div`
   left: 40px;
   right: 40px;
   bottom: 40px;
-  border-radius: 40px;
-  border: 5px dashed rgba(255, 255, 255, 0.7);
+  border-radius: 28px;
+  border: 2px dashed rgba(255, 255, 255, 0.5);
   display: flex;
   flex-direction: column;
   text-align: center;

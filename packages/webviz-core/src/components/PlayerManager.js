@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from "react";
-import withHooks, { useRef, useState } from "react-with-hooks";
+import * as React from "react"; // eslint-disable-line import/no-duplicates
+import { useRef, useState } from "react"; // eslint-disable-line import/no-duplicates
 
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
@@ -31,8 +31,8 @@ function buildPlayer(files: File[]): Player {
   return new RandomAccessPlayer(new ReadAheadDataProvider(bagProvider), undefined, true);
 }
 
-const PlayerManager = withHooks(function PlayerManager({ children }: {| children: React.Node |}) {
-  const usedFiles: { current: File[] } = useRef([]);
+export default function PlayerManager({ children }: {| children: React.Node |}) {
+  const usedFiles = useRef<File[]>([]);
   const [player, setPlayer] = useState();
 
   return (
@@ -58,6 +58,4 @@ const PlayerManager = withHooks(function PlayerManager({ children }: {| children
       <MessagePipelineProvider player={player}>{children}</MessagePipelineProvider>
     </React.Fragment>
   );
-});
-
-export default PlayerManager;
+}

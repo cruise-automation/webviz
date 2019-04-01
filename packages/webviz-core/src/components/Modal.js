@@ -45,8 +45,8 @@ const StyledMask = styled.div`
   left: 0;
   bottom: 0;
   right: 0;
-  opacity: 0.5;
-  background-color: white;
+  opacity: 0.75;
+  background-color: black;
   width: 100%;
   height: 100%;
 `;
@@ -81,7 +81,7 @@ export default class Modal extends React.PureComponent<Props> {
         <StyledMask onClick={this.props.onRequestClose} />
         <StyledContent
           style={{
-            borderRadius: 4,
+            borderRadius: 6,
             backgroundColor: colors.panelBackground,
             ...this.props.contentStyle,
           }}>
@@ -90,8 +90,8 @@ export default class Modal extends React.PureComponent<Props> {
             fade
             style={{
               position: "absolute",
-              right: 7,
-              top: 7,
+              right: 16,
+              top: 16,
               cursor: "pointer",
               fontSize: 20,
             }}

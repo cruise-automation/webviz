@@ -13,7 +13,6 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 export type Topic = {|
   datatype: string,
   name: string,
-  displayName?: string, // TODO(JP): Remove?
   originalTopic?: string,
 |};
 
@@ -31,11 +30,9 @@ export type TypedMessage<T> = {|
 |};
 export type Message = TypedMessage<any>;
 
-export type TopicMsg = {| topic: string, datatype: ?string, originalTopic?: string |}; // TODO(JP): Remove?
-
 type TopicsMessage = {|
   op: "topics",
-  topics: TopicMsg[],
+  topics: {| topic: string, datatype: ?string |}[],
 |};
 type DatatypesMessage = {|
   op: "datatypes",

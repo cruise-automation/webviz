@@ -90,6 +90,7 @@ textarea {
   border: none;
   padding: $control-padding;
   margin: $control-margin;
+  appearance: none;
 
   &:focus {
     outline: none;
@@ -97,12 +98,13 @@ textarea {
 }
 
 input,
+select,
 textarea {
-  color: $text-input;
-  background-color: transparentize($text-normal, 0.1);
+  color: $text-control;
+  background-color: rgba(255, 255, 255, 0.05);
 
   &:focus {
-    background-color: $text-normal;
+    background-color: rgba(255, 255, 255, 0.075);
   }
 
   &.disabled {
@@ -161,7 +163,7 @@ p {
 hr {
   border: none;
   display: block;
-  height: 2px;
+  height: 1px;
   margin: 0;
   padding: 0;
   background-color: $divider;
@@ -215,6 +217,6 @@ td {
 tr:hover {
   th,
   td {
-    background-color: $text-disabled;
+    background-color: $text-input;
   }
 }

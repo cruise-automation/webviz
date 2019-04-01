@@ -67,11 +67,11 @@ describe("bagConnectionsToTopics", () => {
       ])
     ).toEqual([
       {
-        topic: "/some/topic/with/points",
+        name: "/some/topic/with/points",
         datatype: "something/points",
       },
       {
-        topic: "/some/topic/with/two_points",
+        name: "/some/topic/with/two_points",
         datatype: "something/two_points",
       },
     ]);

@@ -23,13 +23,13 @@ function getProviders() {
         { topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
         { topic: "/some_topic", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
       ],
-      topics: [{ topic: "/some_topic", datatype: "some_datatype" }],
+      topics: [{ name: "/some_topic", datatype: "some_datatype" }],
       datatypes: {},
     }),
 
     provider2: new MemoryDataProvider({
       messages: [{ topic: "/some_topic", receiveTime: { sec: 102, nsec: 0 }, message: { value: 2 } }],
-      topics: [{ topic: "/some_topic", datatype: "some_datatype" }],
+      topics: [{ name: "/some_topic", datatype: "some_datatype" }],
       datatypes: {},
     }),
 
@@ -39,7 +39,7 @@ function getProviders() {
         { topic: "/some_topic", receiveTime: { sec: 102, nsec: 0 }, message: { value: 3 } },
         { topic: "/some_topic", receiveTime: { sec: 104, nsec: 0 }, message: { value: 3 } },
       ],
-      topics: [{ topic: "/some_topic", datatype: "some_datatype" }],
+      topics: [{ name: "/some_topic", datatype: "some_datatype" }],
       datatypes: {},
     }),
   };
@@ -76,13 +76,13 @@ describe("CombinedDataProvider", () => {
     it("should not allow duplicate topics", async () => {
       const provider1 = new MemoryDataProvider({
         messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
-        topics: [{ topic: "/some_topic", datatype: "some_datatype" }],
+        topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {},
       });
 
       const provider2 = new MemoryDataProvider({
         messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
-        topics: [{ topic: "/generic_topic/some_topic", datatype: "some_datatype" }],
+        topics: [{ name: "/generic_topic/some_topic", datatype: "some_datatype" }],
         datatypes: {},
       });
       const combinedProvider = new CombinedDataProvider([
@@ -94,7 +94,7 @@ describe("CombinedDataProvider", () => {
     it("should not allow conflicting datatypes", async () => {
       const provider1 = new MemoryDataProvider({
         messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
-        topics: [{ topic: "/some_topic", datatype: "some_datatype" }],
+        topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {
           some_datatype: [
             {
@@ -107,7 +107,7 @@ describe("CombinedDataProvider", () => {
 
       const provider2 = new MemoryDataProvider({
         messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
-        topics: [{ topic: "/some_topic", datatype: "some_datatype" }],
+        topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {
           some_datatype: [
             {
@@ -136,9 +136,9 @@ describe("CombinedDataProvider", () => {
       end: { nsec: 0, sec: 104 },
       start: { nsec: 0, sec: 100 },
       topics: [
-        { topic: "/some_topic", datatype: "some_datatype" },
-        { topic: `${SECOND_BAG_PREFIX}/some_topic`, originalTopic: "/some_topic", datatype: "some_datatype" },
-        { topic: `/table_1/some_topic`, originalTopic: "/some_topic", datatype: "some_datatype" },
+        { name: "/some_topic", datatype: "some_datatype" },
+        { name: `${SECOND_BAG_PREFIX}/some_topic`, originalTopic: "/some_topic", datatype: "some_datatype" },
+        { name: `/table_1/some_topic`, originalTopic: "/some_topic", datatype: "some_datatype" },
       ],
     });
   });
@@ -172,8 +172,8 @@ describe("CombinedDataProvider", () => {
       end: { nsec: 0, sec: 103 },
       start: { nsec: 0, sec: 101 },
       topics: [
-        { topic: `/table_1/some_topic`, originalTopic: "/some_topic", datatype: "some_datatype" },
-        { topic: `/table_2/some_topic`, originalTopic: "/some_topic", datatype: "some_datatype" },
+        { name: `/table_1/some_topic`, originalTopic: "/some_topic", datatype: "some_datatype" },
+        { name: `/table_2/some_topic`, originalTopic: "/some_topic", datatype: "some_datatype" },
       ],
     });
   });

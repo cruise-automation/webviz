@@ -16,9 +16,9 @@ import { useAbortable, useConstant, useEventListener, useRequestAnimationFrame }
 // Abort an fetchData action
 const [remoteData] = useAbortable(
   [], // default value
-  async () => fetchDataFromRemote(props), // action to perform
+  async () => fetchDataFromRemote(props, "dataName"), // action to perform
   () => {}, // clean up work if there is any
-  ["some dependencies"] // remount when dependencies change
+  ["dataName"] // remount when dependencies change
 );
 
 // Create an instance variable to be shared across component life cycles
@@ -35,7 +35,7 @@ useEventListener(
   (event) => {
     // do something here...
   },
-  ["some dependencies"]
+  ["someDependencies"]
 );
 
 // A count state that gets updated in every requestAnimationFrame
@@ -45,6 +45,6 @@ useRequestAnimationFrame(
     setCount(count + 1);
   },
   false, // disable or enable
-  ["some dependencies"]
+  ["someDependencies"]
 );
 ```

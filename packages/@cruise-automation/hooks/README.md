@@ -40,7 +40,7 @@ useEventListener(
   ["someDependencies"]
 );
 
-//*************** useRequestAnimationFrame **********************
+//*************** useAnimationFrame **********************
 // A count state that gets updated in every requestAnimationFrame
 const [count, setCount] = React.useState(0);
 useAnimationFrame(

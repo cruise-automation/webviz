@@ -5,6 +5,6 @@
 //  You may not use this file except in compliance with the License.
 
 export { default as useAbortable } from "./useAbortable";
-export { default as useConstant } from "./useCleanup";
+export { default as useCleanup } from "./useCleanup";
 export { default as useEventListener } from "./useEventListener";
-export { default as useRequestAnimationFrame } from "./useAnimationFrame";
+export { default as useAnimationFrame } from "./useAnimationFrame";

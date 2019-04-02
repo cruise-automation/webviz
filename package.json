@@ -97,8 +97,8 @@
   },
   "dependencies": {},
   "scripts": {
-    "bootstrap": "lerna bootstrap --ci --hoist",
-    "install-ci": "lerna bootstrap --ci --hoist",
+    "bootstrap": "npm install && lerna bootstrap --ci --hoist",
+    "install-ci": "npm ci && lerna bootstrap --ci --hoist",
     "build": "lerna run build && webpack",
     "watch": "lerna run watch --parallel",
     "clean": "lerna run clean",

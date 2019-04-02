@@ -10,7 +10,7 @@ import { useEffect } from "react";
 
 // for adding and automatically removing event listeners
 export default function useEventListener(
-  target: EventTarget,
+  target: Element,
   type: string,
   enable: boolean,
   handler: (any) => void,

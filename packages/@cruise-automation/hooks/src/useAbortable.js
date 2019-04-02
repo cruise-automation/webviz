@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from "react";
 
-// translation of https://dom.spec.whatwg.org/#abortcontroller
+// https://github.com/flow-typed/flow-typed/issues/1652
 declare interface AbortSignal extends EventTarget {
   +aborted: boolean;
   onabort: EventHandler;

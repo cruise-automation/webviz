@@ -2,52 +2,134 @@
 
 A set of resusable React Hooks.
 
-## Usage
+## Install
 
 ```bash
 npm install --save @cruise-automation/hooks
 ```
 
+## Hooks
+
+### `useAbortable`
+
+A React Hook to load async, disposable resources and fire the cleanup callback when the component unmountts. If the component unmounts before the async operation completes, the resource will still be cleaned up once it finishes loading and an abort signal will be issued to the async load operation.
+
 ```js
-import { useAbortable, useCleanup, useEventListener, useAnimationFrame } from "@cruise-automation/hooks";
+// types
+ useAbortable<T>(
+  defaultValue: T,  // default value, will be set to the actual value if action is performed successfully
+  action: (AbortController) => Promise<T>, // async action to perform
+  cleanup: (?T) => void, // clean up worrk if thtere is any
+  args: any // dependencies
+): [T, () => void] // result value and abort function
+```
 
-//*************** useAbortable **********************
-// Abort an fetchData action
-const [remoteData, abortFn] = useAbortable(
-  [], // default value
-  async (abortController) => fetchDataFromRemote(props, "dataName"), // action to perform
-  (val) => {}, // clean up work if there is any
-  ["dataName"] // remount when dependencies change
-);
+```js
+// sample usage
+import { useAbortable } from "@cruise-automation/hooks";
 
-// call abortFn somewhere else, e.g. before component unmounts
-abortFn();
+function Example(props) {
+  const [data, setDatta] = useState(null);
+  const dateName = 'dateName';
+  // fetch data from remote when the component is mounted
+  const [remoteData, abortFn] = useAbortable(
+    null,
+    async (abortController) =>  {
+      if(dataName) {
+        fetchDataFromRemote(props, dataName)
+      }
+    }
+    (val) => {},
+    [dataName]
+  );
 
-//*************** useCleanup **********************
-// Call the cleanup function before the component unmounts
-const [audioContent] = React.useState(() => new window.AudioContext));
-useCleanup(() => audioContext.close());
+  // Normally abort is called when components unmounts. It can also be called manually elsewhere.
+  function abortManually() {
+    abortFn();
+  }
 
-//*************** useEventListener **********************
-// Add an event listener to the target with option to disable it
-useEventListener(
-  window, // event target
-  "mousemove", // event type
-  isDragging, // enable during mouse dragging
-  (event) => {
-    // do something here...
-  },
-  ["someDependencies"]
-);
+  return (
+    <div>
+      <button onClick={abortManually}> Abort Manually Now</button>
+    </div>
+  );
+}
+```
 
-//*************** useAnimationFrame **********************
-// A count state that gets updated in every requestAnimationFrame
-const [count, setCount] = React.useState(0);
+### `useCleanup`
+
+A small React Hook to fire the cleanup callback when the component unmounts.
+
+```js
+// types
+ useCleanup(teardown: () => void): void
+```
+
+```js
+// sample usage
+function Example() {
+  const [audioContext] = React.useState(() => new window.AudioContext));
+  useCleanup(() => audioContext.close());
+  return null;
+}
+```
+
+### `useEventListener`
+
+A handy React Hook for automatically adding and removing event listeners.
+
+```js
+// types
+useEventListener<T>(
+  target: Element, // event target, e.g. window
+  type: string, // event type
+  enable: boolean,
+  handler: (any) => void,
+  dependencies: any[],
+): void
+```
+
+```js
+// sample usage
+function Example() {
+  const [isDragging, setIsDragging] = useState(false);
+  useEventListener(
+    window,
+    "mousemove",
+    isDragging, // enable during mouse dragging
+    (event) => {
+      /* do something here... */
+    },
+    []
+  );
+  return <div onMouseDown={() => setIsDragging(true)}>demo</div>;
+}
+```
+
+### `useAnimationFrame`
+
+A React Hook that accepts a callback function which will be called before each animation frame.
+
+```js
+// types
 useAnimationFrame(
-  (timestamp) => {
-    setCount(count + 1);
-  },
-  false, // disableAnimation, set to false by default
-  ["someDependencies"]
-);
+  callback: (timestamp: number) => void,
+  disable: boolean,
+  dependencies: any[],
+): void
+```
+
+```js
+// sample useage: a count state that gets updated in every animation frame
+function Example() {
+  const [count, setCount] = React.useState(0);
+  useAnimationFrame(
+    () => {
+      setCount(count + 1);
+    },
+    false,
+    []
+  );
+  return <span>{count}</span>;
+}
 ```

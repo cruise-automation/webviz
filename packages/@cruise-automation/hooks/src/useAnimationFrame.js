@@ -8,9 +8,12 @@
 
 import { useRef, useEffect } from "react";
 
-type Callback = (number) => void;
-// a react hook that accepts a callback function which will be called before each browser repaint
-export default function useAnimationFrame(callback: Callback, disable: boolean, dependencies: any[]) {
+// A React Hook that accepts a callback function which will be called before each animation frame.
+export default function useAnimationFrame(
+  callback: (timestamp: number) => void,
+  disable: boolean,
+  dependencies: any[]
+): void {
   // persist the requestAnimationFrameId so the last refresh callback can be cancelled when component unmounts
   const rafId = useRef();
   // start the loop when the component mounts and cancel the animation frame when unmounts

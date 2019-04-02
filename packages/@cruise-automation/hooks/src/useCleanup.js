@@ -8,8 +8,8 @@
 
 import { useEffect } from "react";
 
-// for sharing the same instance variable during the react life cycle
-export default function useCleanup(teardown: Function) {
+// A small React Hook to fire the cleanup callback when the component unmounts.
+export default function useCleanup(teardown: () => void): void {
   useEffect(() => {
     return () => {
       teardown();

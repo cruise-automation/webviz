@@ -97,8 +97,8 @@
   },
   "dependencies": {},
   "scripts": {
-    "bootstrap": "npm install && lerna bootstrap --hoist 'react|react-dom|react-dnd*'",
-    "install-ci": "npm ci && lerna bootstrap --hoist 'react|react-dom|react-dnd*'",
+    "bootstrap": "npm install && lerna bootstrap --hoist 'react|react-dom|react-dnd*' --hoist react",
+    "install-ci": "npm ci && lerna bootstrap --hoist 'react|react-dom|react-dnd*' --hoist react",
     "build": "lerna run build && webpack",
     "watch": "lerna run watch --parallel",
     "clean": "lerna run clean",

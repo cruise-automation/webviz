@@ -24,7 +24,7 @@ const [remoteData, abortFn] = useAbortable(
 abortFn();
 
 //*************** useCleanup **********************
-// Call a cleanup function before the component unmounts
+// Call the cleanup function before the component unmounts
 const [audioContent] = React.useState(() => new window.AudioContext));
 useCleanup(() => audioContext.close());
 
@@ -47,7 +47,7 @@ useAnimationFrame(
   (timestamp) => {
     setCount(count + 1);
   },
-  false, // disable or enable
+  false, // disableAnimation, set to false by default
   ["someDependencies"]
 );
 ```

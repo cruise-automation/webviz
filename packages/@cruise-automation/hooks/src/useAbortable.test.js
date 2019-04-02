@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// @flow
 import { mount } from "enzyme";
 import React, { useImperativeHandle } from "react";
 
@@ -28,7 +27,6 @@ function signal<T>(): ResolvablePromise<T> {
 }
 
 describe("useAbortable", () => {
-  // $FlowFixMe - flow does not have a definition for forwardRef
   const Test = React.forwardRef((props, ref) => {
     const { action, cleanup } = props;
     const [value, abort] = useAbortable("pending", action, cleanup || (() => {}), [action]);

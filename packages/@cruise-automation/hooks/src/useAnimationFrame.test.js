@@ -8,10 +8,10 @@
 
 import { renderHook } from "react-hooks-testing-library";
 
-import useRequestAnimationFrame from "./useRequestAnimationFrame";
+import useAnimationFrame from "./useAnimationFrame";
 
 const MOCK_TIMESTAMP = 10336878.725;
-describe("useRequestAnimationFrame", () => {
+describe("useAnimationFrame", () => {
   let rafExecutionCount = 0;
   let maxExecutionCounnt = 3;
   let count = 0;
@@ -35,7 +35,7 @@ describe("useRequestAnimationFrame", () => {
   });
 
   it("call the callback at each requestAnimationFrame", () => {
-    renderHook(() => useRequestAnimationFrame(cb, false, []));
+    renderHook(() => useAnimationFrame(cb, false, []));
     expect(count).toBe(3);
   });
 
@@ -44,18 +44,18 @@ describe("useRequestAnimationFrame", () => {
     function cbWithTimestamp(ts) {
       timestamp = ts;
     }
-    renderHook(() => useRequestAnimationFrame(cbWithTimestamp, false, []));
+    renderHook(() => useAnimationFrame(cbWithTimestamp, false, []));
     expect(timestamp).toBe(MOCK_TIMESTAMP);
   });
 
   it("doesn't call the callback if it's disabled", () => {
-    renderHook(() => useRequestAnimationFrame(cb, true, []));
+    renderHook(() => useAnimationFrame(cb, true, []));
     expect(count).toBe(0);
   });
 
   it("can stop and continue to execute when disable and dependency changes", () => {
     let input = [1];
-    const { rerender } = renderHook(() => useRequestAnimationFrame(cb, false, input));
+    const { rerender } = renderHook(() => useAnimationFrame(cb, false, input));
     expect(count).toBe(3);
 
     // stop execution when disable is true

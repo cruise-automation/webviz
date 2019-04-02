@@ -6,15 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
 // for sharing the same instance variable during the react life cycle
-export default function useConstant<T>(getValFn: () => T, teardown: (T) => any = () => {}): T {
-  const [value] = useState<T>(getValFn);
+export default function useCleanup(teardown: Function) {
   useEffect(() => {
     return () => {
-      teardown(value);
+      teardown();
     };
   }, []);
-  return value;
 }

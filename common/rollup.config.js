@@ -1,3 +1,4 @@
+// @flow
 //  Copyright (c) 2018-present, GM Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
@@ -26,9 +27,10 @@ const input = "src/index.js";
 const libraryName = "ReglWorldview";
 
 const globals = { react: "React", "react-dom": "ReactDOM" };
-const isExternal = (id) => !id.startsWith(".") && !id.startsWith("/");
+const isExternal = (id: string) => !id.startsWith(".") && !id.startsWith("/");
+const external: string[] = Object.keys(globals);
 
-export default function(pkg) {
+export default function(pkg: Object) {
   return [
     {
       input,
@@ -39,7 +41,7 @@ export default function(pkg) {
         globals,
         sourcemap: true,
       },
-      external: Object.keys(globals),
+      external,
       plugins: [
         // Preferably set as first plugin.
         peerDepsExternal(),

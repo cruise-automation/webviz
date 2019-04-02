@@ -11,9 +11,10 @@ import { renderHook } from "react-hooks-testing-library";
 import useAnimationFrame from "./useAnimationFrame";
 
 const MOCK_TIMESTAMP = 10336878.725;
+
 describe("useAnimationFrame", () => {
   let rafExecutionCount = 0;
-  let maxExecutionCounnt = 3;
+  let maxExecutionCount = 3;
   let count = 0;
   function cb() {
     count += 1;
@@ -22,8 +23,9 @@ describe("useAnimationFrame", () => {
   beforeEach(() => {
     count = 0;
     rafExecutionCount = 0;
+    maxExecutionCount = 3;
     jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
-      if (rafExecutionCount < maxExecutionCounnt) {
+      if (rafExecutionCount < maxExecutionCount) {
         rafExecutionCount++;
         return cb(MOCK_TIMESTAMP);
       }
@@ -34,18 +36,12 @@ describe("useAnimationFrame", () => {
     window.requestAnimationFrame.mockRestore();
   });
 
-  it("call the callback at each requestAnimationFrame", () => {
-    renderHook(() => useAnimationFrame(cb, false, []));
-    expect(count).toBe(3);
-  });
-
-  it("calls the callback with timestamp", () => {
-    let timestamp = "";
-    function cbWithTimestamp(ts) {
-      timestamp = ts;
-    }
-    renderHook(() => useAnimationFrame(cbWithTimestamp, false, []));
-    expect(timestamp).toBe(MOCK_TIMESTAMP);
+  it("calls the callback with timestamp upon each animation frame", () => {
+    maxExecutionCount = 1;
+    const mockCb: (any) => void = jest.fn((x) => x);
+    renderHook(() => useAnimationFrame(mockCb, false, []));
+    expect(mockCb.mock.calls.length).toBe(1);
+    expect(mockCb.mock.calls[0][0]).toBe(MOCK_TIMESTAMP);
   });
 
   it("doesn't call the callback if it's disabled", () => {
@@ -53,20 +49,21 @@ describe("useAnimationFrame", () => {
     expect(count).toBe(0);
   });
 
-  it("can stop and continue to execute when disable and dependency changes", () => {
+  it("stops and continues to execute when disable and dependencies change", () => {
     let input = [1];
     const { rerender } = renderHook(() => useAnimationFrame(cb, false, input));
     expect(count).toBe(3);
 
     // stop execution when disable is true
-    maxExecutionCounnt = 6;
-    rerender(cb, true, [cb, true, 1]);
+    maxExecutionCount = 6;
+
+    rerender(cb, true, input);
     expect(count).toBe(3);
     expect(rafExecutionCount).toBe(3);
 
     // continue the execution when disable is false and dependencies have changed
-    maxExecutionCounnt = 6;
-    input = [2];
+    maxExecutionCount = 6;
+    input = [3];
     rerender(cb, false, input);
     expect(count).toBe(6);
     expect(rafExecutionCount).toBe(6);

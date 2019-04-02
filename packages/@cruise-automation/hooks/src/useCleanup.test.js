@@ -10,21 +10,21 @@ import { renderHook } from "react-hooks-testing-library";
 import useCleanup from "./useCleanup";
 
 describe("useCleanup", () => {
-  class ExpensiveThing {
-    name: string;
+  class Example {
+    destroyed: boolean;
     constructor() {
-      this.name = "New Thing";
+      this.destroyed = false;
     }
     destroy() {
-      this.name = "Destroyed Thing";
+      this.destroyed = true;
     }
   }
 
   it("calls the teardown function when component is unmounted", () => {
-    const value = new ExpensiveThing();
+    const value = new Example();
     const { unmount } = renderHook(() => useCleanup(() => value.destroy()));
-    expect(value.name).toBe("New Thing");
+    expect(value.destroyed).toBe(false);
     unmount();
-    expect(value.name).toBe("Destroyed Thing");
+    expect(value.destroyed).toBe(true);
   });
 });

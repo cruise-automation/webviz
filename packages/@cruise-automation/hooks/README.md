@@ -8,39 +8,42 @@ A set of resusable React Hooks.
 npm install --save @cruise-automation/hooks
 ```
 
-### useAbortable
-
 ```js
-import { useAbortable, useConstant, useEventListener, useRequestAnimationFrame } from "@cruise-automation/hooks";
+import { useAbortable, useCleanup, useEventListener, useAnimationFrame } from "@cruise-automation/hooks";
 
+//*************** useAbortable **********************
 // Abort an fetchData action
-const [remoteData] = useAbortable(
+const [remoteData, abortFn] = useAbortable(
   [], // default value
-  async () => fetchDataFromRemote(props, "dataName"), // action to perform
-  () => {}, // clean up work if there is any
+  async (abortController) => fetchDataFromRemote(props, "dataName"), // action to perform
+  (val) => {}, // clean up work if there is any
   ["dataName"] // remount when dependencies change
 );
 
-// Create an instance variable to be shared across component life cycles
-const audioContext = useConstant(
-  () => new (window.AudioContext || window.webkitAudioContext)(),
-  (audioContext) => audioContext.close() // cleanup work before the component unmounts
-);
+// call abortFn somewhere else, e.g. before component unmounts
+abortFn();
 
+//*************** useCleanup **********************
+// Call a cleanup function before the component unmounts
+const [audioContent] = React.useState(() => new window.AudioContext));
+useCleanup(() => audioContext.close());
+
+//*************** useEventListener **********************
 // Add an event listener to the target with option to disable it
 useEventListener(
   window, // event target
-  "mousemove", // event name
-  !!isDragging, // disabled or enable
+  "mousemove", // event type
+  isDragging, // enable during mouse dragging
   (event) => {
     // do something here...
   },
   ["someDependencies"]
 );
 
+//*************** useRequestAnimationFrame **********************
 // A count state that gets updated in every requestAnimationFrame
 const [count, setCount] = React.useState(0);
-useRequestAnimationFrame(
+useAnimationFrame(
   (timestamp) => {
     setCount(count + 1);
   },

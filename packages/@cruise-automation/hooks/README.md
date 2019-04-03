@@ -1,6 +1,6 @@
 # @cruise-automation/hooks
 
-A set of resusable React hooks.
+A list of resusable React hooks.
 
 ## Install
 

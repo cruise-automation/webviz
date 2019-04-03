@@ -1,9 +1,9 @@
 {
   "name": "@cruise-automation/hooks",
   "version": "0.0.1",
-  "description": "A set of resusable React hooks",
+  "description": "A list of resusable React hooks",
   "license": "Apache-2.0",
-  "repository": "cruise-automation/webviz",
+  "repository": "cruise-automation/webviz/tree/master/packages/%40cruise-automation/hooks",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "browser": "dist/index.esm.js",

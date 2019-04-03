@@ -7,11 +7,11 @@
 //  You may not use this file except in compliance with the License.
 
 // $FlowFixMe - useState is not yet in the flow definitions.
+import { useEventListener } from "@cruise-automation/hooks";
 import React, { useState } from "react";
 import styled from "styled-components";
 
 import { color } from "./theme";
-import { useEventListener } from "./useEventListener";
 
 const StyledNumber = styled.span`
   color: ${color.primary};

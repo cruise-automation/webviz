@@ -58,7 +58,7 @@ function Example(props) {
 
 ### `useCleanup`
 
-A small React Hook to fire the cleanup callback when the component unmounts.
+A small React Hook to fire the cleanup callback when the component unmounts. Equivalent to `useEffect(() => () => { teardown(); }, [])`.
 
 ```js
 // types
@@ -109,7 +109,7 @@ function Example() {
 
 ### `useAnimationFrame`
 
-A React Hook that accepts a callback function which will be called before each animation frame.
+A React Hook that accepts a callback function which will be called repeatedly, synchronized with the browser's repaints via [`requestAnimationFrame`](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
 
 ```js
 // types

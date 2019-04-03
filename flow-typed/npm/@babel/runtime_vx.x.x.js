@@ -1,4 +1,4 @@
-// flow-typed signature: c41538a63ad0a275dc6f4dd302bfc31e
+// flow-typed signature: 71f6238b70ac91f4a8f40202f9f115be
 // flow-typed version: <<STUB>>/@babel/runtime_v^7.3.1/flow_v0.95.1
 
 /**
@@ -99,6 +99,14 @@ declare module '@babel/runtime/helpers/classStaticPrivateFieldSpecGet' {
 }
 
 declare module '@babel/runtime/helpers/classStaticPrivateFieldSpecSet' {
+  declare module.exports: any;
+}
+
+declare module '@babel/runtime/helpers/classStaticPrivateMethodGet' {
+  declare module.exports: any;
+}
+
+declare module '@babel/runtime/helpers/classStaticPrivateMethodSet' {
   declare module.exports: any;
 }
 
@@ -203,6 +211,14 @@ declare module '@babel/runtime/helpers/esm/classStaticPrivateFieldSpecGet' {
 }
 
 declare module '@babel/runtime/helpers/esm/classStaticPrivateFieldSpecSet' {
+  declare module.exports: any;
+}
+
+declare module '@babel/runtime/helpers/esm/classStaticPrivateMethodGet' {
+  declare module.exports: any;
+}
+
+declare module '@babel/runtime/helpers/esm/classStaticPrivateMethodSet' {
   declare module.exports: any;
 }
 
@@ -394,6 +410,10 @@ declare module '@babel/runtime/helpers/esm/wrapNativeSuper' {
   declare module.exports: any;
 }
 
+declare module '@babel/runtime/helpers/esm/wrapRegExp' {
+  declare module.exports: any;
+}
+
 declare module '@babel/runtime/helpers/extends' {
   declare module.exports: any;
 }
@@ -558,6 +578,10 @@ declare module '@babel/runtime/helpers/wrapNativeSuper' {
   declare module.exports: any;
 }
 
+declare module '@babel/runtime/helpers/wrapRegExp' {
+  declare module.exports: any;
+}
+
 declare module '@babel/runtime/regenerator/index' {
   declare module.exports: any;
 }
@@ -622,6 +646,12 @@ declare module '@babel/runtime/helpers/classStaticPrivateFieldSpecGet.js' {
 }
 declare module '@babel/runtime/helpers/classStaticPrivateFieldSpecSet.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/classStaticPrivateFieldSpecSet'>;
+}
+declare module '@babel/runtime/helpers/classStaticPrivateMethodGet.js' {
+  declare module.exports: $Exports<'@babel/runtime/helpers/classStaticPrivateMethodGet'>;
+}
+declare module '@babel/runtime/helpers/classStaticPrivateMethodSet.js' {
+  declare module.exports: $Exports<'@babel/runtime/helpers/classStaticPrivateMethodSet'>;
 }
 declare module '@babel/runtime/helpers/construct.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/construct'>;
@@ -700,6 +730,12 @@ declare module '@babel/runtime/helpers/esm/classStaticPrivateFieldSpecGet.js' {
 }
 declare module '@babel/runtime/helpers/esm/classStaticPrivateFieldSpecSet.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/esm/classStaticPrivateFieldSpecSet'>;
+}
+declare module '@babel/runtime/helpers/esm/classStaticPrivateMethodGet.js' {
+  declare module.exports: $Exports<'@babel/runtime/helpers/esm/classStaticPrivateMethodGet'>;
+}
+declare module '@babel/runtime/helpers/esm/classStaticPrivateMethodSet.js' {
+  declare module.exports: $Exports<'@babel/runtime/helpers/esm/classStaticPrivateMethodSet'>;
 }
 declare module '@babel/runtime/helpers/esm/construct.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/esm/construct'>;
@@ -842,6 +878,9 @@ declare module '@babel/runtime/helpers/esm/wrapAsyncGenerator.js' {
 declare module '@babel/runtime/helpers/esm/wrapNativeSuper.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/esm/wrapNativeSuper'>;
 }
+declare module '@babel/runtime/helpers/esm/wrapRegExp.js' {
+  declare module.exports: $Exports<'@babel/runtime/helpers/esm/wrapRegExp'>;
+}
 declare module '@babel/runtime/helpers/extends.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/extends'>;
 }
@@ -964,6 +1003,9 @@ declare module '@babel/runtime/helpers/wrapAsyncGenerator.js' {
 }
 declare module '@babel/runtime/helpers/wrapNativeSuper.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/wrapNativeSuper'>;
+}
+declare module '@babel/runtime/helpers/wrapRegExp.js' {
+  declare module.exports: $Exports<'@babel/runtime/helpers/wrapRegExp'>;
 }
 declare module '@babel/runtime/regenerator/index.js' {
   declare module.exports: $Exports<'@babel/runtime/regenerator/index'>;

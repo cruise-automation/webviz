@@ -8,7 +8,7 @@
 
 import { useRef, useEffect } from "react";
 
-// A React Hook that accepts a callback function which will be called before each animation frame.
+// A React hook that accepts a callback function which will be called before each animation frame.
 export default function useAnimationFrame(
   callback: (timestamp: number) => void,
   disable: boolean,

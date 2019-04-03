@@ -1,6 +1,6 @@
 # @cruise-automation/hooks
 
-A set of resusable React Hooks.
+A set of resusable React hooks.
 
 ## Install
 
@@ -12,7 +12,7 @@ npm install --save @cruise-automation/hooks
 
 ### `useAbortable`
 
-A React Hook to load async, disposable resources and fire the cleanup callback when the component unmountts. If the component unmounts before the async operation completes, the resource will still be cleaned up once it finishes loading and an abort signal will be issued to the async load operation.
+A React hook to load async, disposable resources and fire the cleanup callback when the component unmountts. If the component unmounts before the async operation completes, the resource will still be cleaned up once it finishes loading and an abort signal will be issued to the async load operation.
 
 ```js
 // types
@@ -58,7 +58,7 @@ function Example(props) {
 
 ### `useCleanup`
 
-A small React Hook to fire the cleanup callback when the component unmounts. Equivalent to `useEffect(() => () => { teardown(); }, [])`.
+A small React hook to fire the cleanup callback when the component unmounts. Equivalent to `useEffect(() => () => { teardown(); }, [])`.
 
 ```js
 // types
@@ -77,7 +77,7 @@ function Example() {
 
 ### `useEventListener`
 
-A handy React Hook for automatically adding and removing event listeners.
+A hook for conditionally adding and removing event listeners on DOM elements.
 
 ```js
 // types
@@ -109,7 +109,7 @@ function Example() {
 
 ### `useAnimationFrame`
 
-A React Hook that accepts a callback function which will be called repeatedly, synchronized with the browser's repaints via [`requestAnimationFrame`](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
+A React hook that accepts a callback function which will be called repeatedly, synchronized with the browser's repaints via [`requestAnimationFrame`](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
 
 ```js
 // types

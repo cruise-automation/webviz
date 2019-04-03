@@ -1,7 +1,7 @@
 {
   "name": "@cruise-automation/hooks",
   "version": "0.0.1",
-  "description": "A set of resusable React Hooks",
+  "description": "A set of resusable React hooks",
   "license": "Apache-2.0",
   "repository": "cruise-automation/webviz",
   "main": "dist/index.cjs.js",

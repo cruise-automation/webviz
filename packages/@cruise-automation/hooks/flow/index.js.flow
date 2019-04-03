@@ -7,4 +7,3 @@
 //  You may not use this file except in compliance with the License.
 
 export * from "../src/index";
-export { default } from "../src/index";

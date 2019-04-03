@@ -57,7 +57,6 @@ describe("useAnimationFrame", () => {
 
     // stop execution when disable is true
     maxExecutionCount = 6;
-
     rerender({ disable: true, dependencies: [1] });
     expect(count).toBe(3);
     expect(rafExecutionCount).toBe(3);

@@ -8,7 +8,7 @@
 
 import { useEffect } from "react";
 
-// A small React Hook to fire the cleanup callback when the component unmounts.
+// A small React hook to fire the cleanup callback when the component unmounts.
 export default function useCleanup(teardown: () => void): void {
   useEffect(() => {
     return () => {

@@ -10,13 +10,13 @@ import { last } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import type { InitializationResult, MessageLike, RandomAccessDataProvider } from "webviz-core/src/players/types";
-import type { TopicMsg } from "webviz-core/src/types/players";
+import type { Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 // In-memory data provider, for in tests.
 export default class MemoryDataProvider implements RandomAccessDataProvider {
   messages: MessageLike[];
-  topics: ?(TopicMsg[]);
+  topics: ?(Topic[]);
   datatypes: ?RosDatatypes;
 
   constructor({
@@ -25,7 +25,7 @@ export default class MemoryDataProvider implements RandomAccessDataProvider {
     datatypes,
   }: {
     messages: MessageLike[],
-    topics?: TopicMsg[],
+    topics?: Topic[],
     datatypes?: RosDatatypes,
   }) {
     this.messages = messages;

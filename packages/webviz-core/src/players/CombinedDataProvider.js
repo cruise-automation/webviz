@@ -10,8 +10,9 @@ import { flatten, uniq, isEqual } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import type { RandomAccessDataProvider, MessageLike, InitializationResult } from "./types";
-import type { TopicMsg } from "webviz-core/src/types/players";
+import type { Topic } from "webviz-core/src/types/players";
 import type { RosMsgField } from "webviz-core/src/types/RosDatatypes";
+import naturalSort from "webviz-core/src/util/naturalSort";
 
 type ProviderInfo = { provider: RandomAccessDataProvider, prefix?: string };
 
@@ -23,8 +24,8 @@ const mapTopics = (initializationResult: InitializationResult, { provider, prefi
   }
   return initializationResult.topics.map((topic) => ({
     ...topic,
-    topic: `${prefix}${topic.topic}`,
-    originalTopic: topic.topic,
+    name: `${prefix}${topic.name}`,
+    originalTopic: topic.name,
   }));
 };
 
@@ -48,14 +49,12 @@ const merge = (messages1: MessageLike[], messages2: MessageLike[]) => {
   return messages;
 };
 
-const throwOnDuplicateTopics = (topics: TopicMsg[]) => {
-  [...topics]
-    .sort((a, b) => +(a.topic > b.topic) || -1)
-    .forEach((topic, i, sortedTopics) => {
-      if (sortedTopics[i + 1] && topic.topic === sortedTopics[i + 1].topic) {
-        throw new Error(`Duplicate topic found: ${topic.topic}`);
-      }
-    });
+const throwOnDuplicateTopics = (topics: Topic[]) => {
+  [...topics].sort(naturalSort("name")).forEach((topic, i, sortedTopics) => {
+    if (sortedTopics[i + 1] && topic.name === sortedTopics[i + 1].name) {
+      throw new Error(`Duplicate topic found: ${topic.name}`);
+    }
+  });
 };
 
 const throwOnUnequalDatatypes = (datatypes: [string, RosMsgField[]][]) => {

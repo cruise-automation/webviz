@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from "react";
-import withHooks, { useEffect, useState } from "react-with-hooks";
+import * as React from "react"; // eslint-disable-line import/no-duplicates
+import { useEffect, useState } from "react"; // eslint-disable-line import/no-duplicates
 import rosbag from "rosbag";
 
 import PanelSetup, { type Fixture } from "webviz-core/src/stories/PanelSetup";
@@ -20,16 +20,16 @@ type Props = {
   children: React.Node,
   topics?: string[],
   // merge the bag data with existing fixture data
-  getMergedFixture: (bagFixture: Fixture) => Fixture,
-  mapTopicToDatatype: (topic: string) => string,
-  hasNestedMessageHistory: ?boolean,
+  getMergedFixture?: (bagFixture: Fixture) => Fixture,
+  mapTopicToDatatype?: (topic: string) => string,
+  hasNestedMessageHistory?: ?boolean,
 };
 
 // A util component for testing panels that need to load the raw ROS bags.
 // Make sure the bag is uncompressed and is small (only contains related topics).
 // If the final fixture data is a mix of bag data (e.g. audio, image) and json/js data, you can
 // merge them together using getMergedFixture
-function PanelSetupWithBag({
+export default function PanelSetupWithBag({
   bagFileUrl,
   children,
   hasNestedMessageHistory,
@@ -94,9 +94,7 @@ function PanelSetupWithBag({
   }
 
   // load the bag when component is mounted or updated
-  useEffect(async () => loadBag(), [bagFileUrl, topics]);
+  useEffect(() => void loadBag(), [bagFileUrl, topics]);
 
   return fixture ? <PanelSetup fixture={fixture}>{children}</PanelSetup> : null;
 }
-
-export default withHooks(PanelSetupWithBag);

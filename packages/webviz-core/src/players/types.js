@@ -8,7 +8,7 @@
 
 import { type Time } from "rosbag";
 
-import type { Progress, TopicMsg } from "webviz-core/src/types/players";
+import type { Progress, Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 export type MessageLike = {
@@ -20,7 +20,7 @@ export type MessageLike = {
 export type InitializationResult = {
   start: Time,
   end: Time,
-  topics: TopicMsg[],
+  topics: Topic[],
   datatypes: RosDatatypes,
 };
 

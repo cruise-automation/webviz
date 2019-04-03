@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 import { mount } from "enzyme";
 import * as React from "react";
-import withHooks from "react-with-hooks";
 
 import { useConstant, useEventListener } from "./hooks";
 
@@ -15,7 +14,12 @@ describe("hooks", () => {
   describe("useConstant", () => {
     const testVals = { name: "someName" };
 
-    const Test = withHooks(({ setup = () => testVals, dummyProp, teardown }) => {
+    type TestProps = {
+      setup?: () => typeof testVals,
+      dummyProp?: React.Node,
+      teardown?: void | ((typeof testVals) => void),
+    };
+    function Test({ setup = () => testVals, dummyProp, teardown }: TestProps) {
       const value = useConstant(setup, teardown);
       return (
         <div>
@@ -23,7 +27,7 @@ describe("hooks", () => {
           {dummyProp}
         </div>
       );
-    });
+    }
 
     it("sets the value when component is mounted", () => {
       const App = () => <Test />;
@@ -61,10 +65,17 @@ describe("hooks", () => {
   });
 
   describe("useEventListener", () => {
-    const Test = withHooks(({ target = window, type, enable, handler, dependencies = [] }) => {
+    type TestProps = {
+      target: any,
+      type: string,
+      enable: boolean,
+      handler: () => void,
+      dependencies?: any[],
+    };
+    function Test({ target = window, type, enable, handler, dependencies = [] }: TestProps) {
       useEventListener(target, type, enable, handler, dependencies);
       return null;
-    });
+    }
 
     const handler = jest.fn();
     const target = {};

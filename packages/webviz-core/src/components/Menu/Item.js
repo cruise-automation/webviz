@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import MenuLeftIcon from "@mdi/svg/svg/menu-left.svg";
-import MenuRightIcon from "@mdi/svg/svg/menu-right.svg";
+import ChevronLeftIcon from "@mdi/svg/svg/chevron-left.svg";
+import ChevronRightIcon from "@mdi/svg/svg/chevron-right.svg";
 import cx from "classnames";
 import { noop } from "lodash";
 import * as React from "react";
@@ -32,19 +32,17 @@ const Item = (props: ItemProps) => {
     [styles.active]: checked && !disabled,
     [styles.disabled]: disabled,
   });
+
   return (
     <div className={classes} onClick={disabled ? noop : onClick}>
-      {hasSubMenu && (
-        <Icon style={direction === "right" ? { float: "right" } : undefined}>
-          {direction === "left" ? <MenuLeftIcon /> : <MenuRightIcon />}
-        </Icon>
-      )}
+      {hasSubMenu && direction === "left" && <ChevronLeftIcon className={styles.submenuIcon} />}
       {icon && (
         <span className={styles.icon}>
           <Icon>{icon}</Icon>
         </span>
       )}
-      {children}
+      <div style={{ flex: "1 1 auto" }}>{children}</div>
+      {hasSubMenu && direction === "right" && <ChevronRightIcon className={styles.submenuIcon} />}
     </div>
   );
 };

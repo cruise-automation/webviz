@@ -6,9 +6,9 @@
 
 @import "./colors.module.scss";
 
-$padding: 6px;
+$padding: 8px;
 $text-size: 12px;
-$control-padding: $padding ($padding + 2px) ($padding - 1px);
+$control-padding: $padding ($padding + 4px);
 $control-margin: 0 0.2em;
 
 %bold {
@@ -28,7 +28,7 @@ $control-margin: 0 0.2em;
   background-color: $toolbar;
   border-radius: 4px;
   padding: 0;
-  box-shadow: 0 12px 80px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 40px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   pointer-events: auto;
   flex-shrink: 0;
@@ -40,6 +40,8 @@ $control-margin: 0 0.2em;
   cursor: pointer;
   color: $text-control;
   user-select: none;
+  display: flex;
+  align-items: center;
 
   &:hover {
     @extend %menu-item-hover;

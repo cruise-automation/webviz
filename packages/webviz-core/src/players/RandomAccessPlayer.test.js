@@ -22,7 +22,7 @@ import {
   type MessageLike,
   type RandomAccessDataProvider,
 } from "./types";
-import { type PlayerMetricsCollectorInterface, type TopicMsg, type PlayerState } from "webviz-core/src/types/players";
+import { type PlayerMetricsCollectorInterface, type Topic, type PlayerState } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { fromMillis } from "webviz-core/src/util/time";
 
@@ -46,20 +46,20 @@ const datatypes: RosDatatypes = {
     },
   ],
 };
-const topics: TopicMsg[] = [
+const topics: Topic[] = [
   {
-    topic: "/foo/bar",
+    name: "/foo/bar",
     datatype: "fooBar",
   },
   {
-    topic: "/baz",
+    name: "/baz",
     datatype: "baz",
   },
 ];
 class TestProvider implements RandomAccessDataProvider {
   _start: Time;
   _end: Time;
-  _topics: TopicMsg[];
+  _topics: Topic[];
   _datatypes: RosDatatypes;
   extensionPoint: ExtensionPoint;
   closed: boolean = false;

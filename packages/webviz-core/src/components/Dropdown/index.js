@@ -90,8 +90,8 @@ export default class Dropdown extends React.Component<Props, State> {
     const button = (
       <button className={cx(styles.button, { disabled })}>
         <span className={styles.title}>{text || value}</span>
-        <Icon>
-          <MenuDownIcon />
+        <Icon style={{ marginLeft: 4 }}>
+          <MenuDownIcon style={{ width: 14, height: 14, opacity: 0.5 }} />
         </Icon>
       </button>
     );

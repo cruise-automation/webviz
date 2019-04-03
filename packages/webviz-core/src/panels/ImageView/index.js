@@ -88,7 +88,7 @@ class ImageView extends Component<Props> {
       cameraTopic,
       transformMarkers: getGlobalHooks()
         .perPanelHooks()
-        .ImageView.isUnrectifiedTopicName(cameraTopic),
+        .ImageView.canTransformMarkersByTopic(cameraTopic),
     });
   };
 
@@ -198,6 +198,9 @@ class ImageView extends Component<Props> {
             <MessageHistory paths={markerTopics.concat(cameraInfoTopic ? [cameraInfoTopic] : [])} historySize={1}>
               {({ itemsByPath }: MessageHistoryData) => (
                 <ImageCanvas
+                  canTransformMarkers={getGlobalHooks()
+                    .perPanelHooks()
+                    .ImageView.canTransformMarkersByTopic(cameraTopic)}
                   transformMarkers={!!transformMarkers}
                   saveConfig={saveConfig}
                   panelHooks={panelHooks}

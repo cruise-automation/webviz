@@ -4,10 +4,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-$background: #1f1e27;
+$background: #121217;
 $background-control: rgba(247, 247, 243, 0.1);
-// $background-control-selected: mix($background-control, #5824d0, 48%);
-$background-control-selected: rgba(247, 247, 243, 0.08);
+$background-control-selected: rgba(59, 46, 118, 0.6);
 $toolbar-background: rgba(0, 0, 0, 0.9);
 $tooltip-background: rgba(71, 69, 81, 0.9);
 
@@ -25,7 +24,7 @@ $text-input-disabled: rgba(0, 0, 0, 0.3);
 $highlight: #29bee7;
 
 $menu-item-selected: $background-control-selected;
-$menu-item-hover: rgba(0, 0, 0, 1);
+$menu-item-hover: #3b2e76;
 
 $divider: rgba(247, 247, 243, 0.1);
 
@@ -34,8 +33,8 @@ $light-green: #5cd6a9;
 $yellow: #f7df71;
 $light-purple: #c1c5d6;
 $grey: #e7e9ef;
-$panel-background: #1f1e27;
-$toolbar: #35343c;
+$panel-background: #121217;
+$toolbar: #2d2c33;
 $accent: #22b5ff;
 $orange: #ccb862;
 $red: #ff7c96;

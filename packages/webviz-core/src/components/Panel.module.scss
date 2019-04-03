@@ -23,7 +23,8 @@
   }
 }
 
-.fullScreenKeyPressedOverlay {
+.fullScreenKeyPressedOverlay,
+.removePanelKeyPressOverlay {
   cursor: pointer;
   position: absolute;
   top: 0;
@@ -42,12 +43,14 @@
   }
 
   svg {
+    margin-right: 4px;
+    width: 16px;
+    height: 16px;
     fill: none;
   }
 
   &:hover {
-    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.5) inset;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
 
@@ -60,4 +63,12 @@
       fill: white;
     }
   }
+}
+
+.fullScreenKeyPressedOverlay:hover {
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.5) inset;
+}
+
+.removePanelKeyPressOverlay:hover {
+  box-shadow: 0 0 0 5px rgba(242, 67, 102, 0.75) inset;
 }

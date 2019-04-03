@@ -5,18 +5,17 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { useRef, useEffect } from "react-with-hooks";
+import { useState, useEffect } from "react";
 
 // for sharing the same instance variable during the react life cycle
 export function useConstant<T>(getValFn: () => T, teardown: (T) => any = () => {}): T {
-  const ref = useRef(null);
-  ref.current = ref.current || getValFn();
+  const [value] = useState(getValFn);
   useEffect(() => {
     return () => {
-      teardown(ref.current);
+      teardown(value);
     };
   }, []);
-  return ref.current;
+  return value;
 }
 
 // for adding and automatically removing event listeners

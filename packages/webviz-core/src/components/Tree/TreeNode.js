@@ -10,10 +10,10 @@ import BlockHelperIcon from "@mdi/svg/svg/block-helper.svg";
 import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxBlankIcon from "@mdi/svg/svg/checkbox-blank.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
+import ChevronDownIcon from "@mdi/svg/svg/chevron-down.svg";
+import ChevronRightIcon from "@mdi/svg/svg/chevron-right.svg";
 import FolderIcon from "@mdi/svg/svg/folder.svg";
 import LeadPencilIcon from "@mdi/svg/svg/lead-pencil.svg";
-import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
-import MenuUpIcon from "@mdi/svg/svg/menu-up.svg";
 import cx from "classnames";
 import React, { Component } from "react";
 
@@ -110,18 +110,26 @@ export default class TreeNode extends Component<Props> {
     const paddingLeft = parseInt(styles.paddingLeft);
     const style = { paddingLeft: paddingLeft + depth * indentWidth };
 
-    const checkboxClasses = cx(styles.checkbox);
+    const checkboxClasses = cx(styles.checkbox, {
+      [styles.disabled]: disabled,
+    });
 
-    const extraIcon = icon ? (
+    const extraIconClasses = cx(styles["type-icon"], {
+      [styles.disabled]: disabled,
+    });
+    const extraIcon = icon && (
+      <Icon className={extraIconClasses} style={{ color: hasEdit ? colors.accent : "#666" }}>
+        {icon}
+      </Icon>
+    );
+
+    const editIcon = icon && (
       <span onClick={this.onEditClick}>
-        <Icon className={styles["type-icon"]} style={{ color: hasEdit ? colors.accent : "white" }}>
-          {icon}
-        </Icon>
         <Icon className={styles["type-icon-edit"]}>
           <LeadPencilIcon />
         </Icon>
       </span>
-    ) : null;
+    );
 
     // Wrap in a fragment to avoid missing key warnings
     const tooltipContents =
@@ -133,13 +141,16 @@ export default class TreeNode extends Component<Props> {
           <Icon className={checkboxClasses} onClick={this.onCheckboxClick}>
             {this.getCheckboxIcon()}
           </Icon>
+          {extraIcon}
           <span className={styles.text}>
             <Tooltip contents={tooltipContents} offset={{ x: 0, y: 8 }}>
               <span>{node.text}</span>
             </Tooltip>
           </span>
-          {extraIcon}
-          <Icon className={expandClasses}>{expanded ? <MenuUpIcon /> : <MenuDownIcon />}</Icon>
+          {editIcon}
+          <Icon className={expandClasses} style={{ left: paddingLeft + depth * indentWidth - 16 }}>
+            {expanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
+          </Icon>
         </div>
         <div className={styles.children}>{this.renderChildren()}</div>
       </div>

@@ -7,9 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import { flatten, groupBy } from "lodash";
-import * as React from "react";
+import * as React from "react"; // eslint-disable-line import/no-duplicates
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"; // eslint-disable-line import/no-duplicates
 import { Provider } from "react-redux";
-import withHooks, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react-with-hooks";
 import { type Time, TimeUtil } from "rosbag";
 
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
@@ -59,20 +59,22 @@ function defaultPlayerState(): PlayerState {
   };
 }
 
-type ProviderProps = {| children: React.Node, player: ?Player |};
-export const MessagePipelineProvider = withHooks(function MessagePipelineProvider({ children, player }: ProviderProps) {
-  const playerId: {| current: string |} = useRef(defaultPlayerState().playerId);
-  const [playerState: PlayerState, setPlayerState: (PlayerState) => void] = useState(defaultPlayerState);
-  const [subscriptionsById: SubscribePayload[], setAllSubscriptions: (SubscribePayload[]) => void] = useState({});
+type ProviderProps = {| children: React.Node, player?: ?Player |};
+export function MessagePipelineProvider({ children, player }: ProviderProps) {
+  const playerId = useRef(defaultPlayerState().playerId);
+  const [playerState, setPlayerState] = useState<PlayerState>(defaultPlayerState);
+  const [subscriptionsById, setAllSubscriptions] = useState<{ [string]: SubscribePayload[] }>({});
   const [publishersById: AdvertisePayload[], setAllPublishers: (AdvertisePayload[]) => void] = useState({});
-  const resolveFn: {| current: ?() => void |} = useRef(undefined);
+  const resolveFn = useRef<?() => void>();
 
+  // $FlowFixMe - Object.values returns mixed[]
   const subscriptions: SubscribePayload[] = useMemo(() => flatten(Object.values(subscriptionsById)), [
     subscriptionsById,
   ]);
+  // $FlowFixMe - Object.values returns mixed[]
   const publishers: AdvertisePayload[] = useMemo(() => flatten(Object.values(publishersById)), [publishersById]);
-  useEffect(() => player && player.setSubscriptions(subscriptions), [player, subscriptions]);
-  useEffect(() => player && player.setPublishers(publishers), [player, publishers]);
+  useEffect(() => (player ? player.setSubscriptions(subscriptions) : undefined), [player, subscriptions]);
+  useEffect(() => (player ? player.setPublishers(publishers) : undefined), [player, publishers]);
 
   useLayoutEffect(
     () => {
@@ -143,21 +145,21 @@ export const MessagePipelineProvider = withHooks(function MessagePipelineProvide
         setPublishers: useCallback((id: string, publishersForId: AdvertisePayload[]) => {
           setAllPublishers((p) => ({ ...p, [id]: publishersForId }));
         }),
-        publish: useCallback((request: PublishPayload) => player && player.publish(request)),
-        startPlayback: useCallback(() => player && player.startPlayback()),
-        pausePlayback: useCallback(() => player && player.pausePlayback()),
-        setPlaybackSpeed: useCallback((speed: number) => player && player.setPlaybackSpeed(speed)),
-        seekPlayback: useCallback((time: Time) => player && player.seekPlayback(time)),
+        publish: useCallback((request: PublishPayload) => (player ? player.publish(request) : undefined)),
+        startPlayback: useCallback(() => (player ? player.startPlayback() : undefined)),
+        pausePlayback: useCallback(() => (player ? player.pausePlayback() : undefined)),
+        setPlaybackSpeed: useCallback((speed: number) => (player ? player.setPlaybackSpeed(speed) : undefined)),
+        seekPlayback: useCallback((time: Time) => (player ? player.seekPlayback(time) : undefined)),
       }}>
       {children}
     </Context.Provider>
   );
-});
+}
 
 // TODO(JP): Use `useContext` here when https://github.com/yesmeck/react-with-hooks/issues/3
 // gets fixed.
 type ConsumerProps = { children: (MessagePipelineContext) => React.Node };
-export const MessagePipelineConsumer = withHooks(function MessagePipelineConsumer({ children }: ConsumerProps) {
+export function MessagePipelineConsumer({ children }: ConsumerProps) {
   return (
     <Context.Consumer>
       {(value) => {
@@ -168,9 +170,9 @@ export const MessagePipelineConsumer = withHooks(function MessagePipelineConsume
       }}
     </Context.Consumer>
   );
-});
+}
 
-export const MockMessagePipelineProvider = withHooks(function MockMessagePipelineProvider(props: {|
+export function MockMessagePipelineProvider(props: {|
   children: React.Node,
   topics?: Topic[],
   datatypes?: RosDatatypes,
@@ -233,4 +235,4 @@ export const MockMessagePipelineProvider = withHooks(function MockMessagePipelin
       </Context.Provider>
     </Provider>
   );
-});
+}

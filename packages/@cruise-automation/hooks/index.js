@@ -4,6 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-const sharedBabelConfig = require("../../common/babel.config");
+// DON"T REMOVE THIS FILE
+// This is for the docs, stories, and linter to work
 
-module.exports = sharedBabelConfig;
+export * from "./src";

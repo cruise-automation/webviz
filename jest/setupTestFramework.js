@@ -2,6 +2,7 @@
 
 import diff from "jest-diff";
 import { isEqual } from "lodash";
+import "react-hooks-testing-library/cleanup-after-each";
 
 // this file runs once jest has injected globals so you can modify the expect matchers
 global.expect.extend({

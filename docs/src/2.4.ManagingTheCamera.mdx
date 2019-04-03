@@ -31,7 +31,7 @@ import duckModel from "../utils/Duck.glb";
 </GLTFScene>;
 ```
 
-To move the camera, we will need to store some state that changes over time. Let's add a [React Hook](https://reactjs.org/docs/hooks-intro.html) that accepts a callback which will be called at each timestep. We'll use [window.requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) to keep our state updates in sync with the display refresh rate.
+To move the camera, we will need to store some state that changes over time. Let's add a [React hook](https://reactjs.org/docs/hooks-intro.html) that accepts a callback which will be called at each timestep. We'll use [window.requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) to keep our state updates in sync with the display refresh rate.
 
 ```js
 // src/utils/useRequestAnimationFrame.js

@@ -4,6 +4,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-const sharedBabelConfig = require("../../common/babel.config");
+const baseConfig = require("../babel.config");
 
-module.exports = sharedBabelConfig;
+module.exports = {
+  ...baseConfig,
+  plugins: baseConfig.plugins.filter((plugin) => plugin !== "@babel/plugin-transform-modules-commonjs"),
+};

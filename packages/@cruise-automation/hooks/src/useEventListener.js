@@ -1,5 +1,5 @@
 // @flow
-
+//
 //  Copyright (c) 2018-present, GM Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
@@ -8,7 +8,14 @@
 
 import { useEffect } from "react";
 
-export function useEventListener(target: Element, type: string, enable: boolean, handler: (any) => void) {
+// for adding and automatically removing event listeners
+export default function useEventListener(
+  target: Element,
+  type: string,
+  enable: boolean,
+  handler: (any) => void,
+  dependencies: any[]
+) {
   useEffect(
     () => {
       if (enable) {
@@ -16,6 +23,6 @@ export function useEventListener(target: Element, type: string, enable: boolean,
         return () => target.removeEventListener(type, handler);
       }
     },
-    [target, type, enable]
+    [target, type, enable, ...dependencies]
   );
 }

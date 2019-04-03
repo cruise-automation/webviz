@@ -1,0 +1,27 @@
+{
+  "name": "@cruise-automation/hooks",
+  "version": "0.0.1",
+  "description": "A set of resusable React hooks",
+  "license": "Apache-2.0",
+  "repository": "cruise-automation/webviz",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "browser": "dist/index.esm.js",
+  "unpkg": "dist/index.umd.js",
+  "scripts": {
+    "build": "rollup -c",
+    "build:watch": "rollup -c --watch",
+    "clean": "rimraf dist",
+    "watch": "NODE_ENV=development npm run build:watch"
+  },
+  "devDependencies": {
+    "flow-bin": "0.80.0"
+  },
+  "peerDependencies": {
+    "react": "16.x",
+    "react-dom": "16.x"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

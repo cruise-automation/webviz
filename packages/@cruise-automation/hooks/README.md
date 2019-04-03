@@ -29,13 +29,13 @@ A React Hook to load async, disposable resources and fire the cleanup callback w
 import { useAbortable } from "@cruise-automation/hooks";
 
 function Example(props) {
-  const [data, setDatta] = useState(null);
-  const dateName = 'dateName';
+  const [data, setData] = useState(null);
+  const dateName = 'foo';
   // fetch data from remote when the component is mounted
   const [remoteData, abortFn] = useAbortable(
     null,
     async (abortController) =>  {
-      if(dataName) {
+      if (dataName) {
         fetchDataFromRemote(props, dataName)
       }
     }
@@ -43,14 +43,14 @@ function Example(props) {
     [dataName]
   );
 
-  // abort is usually called when the component unmounts, but it can also be called manually
+  // abort is usually called automatically when the component unmounts, but it can also be called manually
   function abortManually() {
     abortFn();
   }
 
   return (
     <div>
-      <button onClick={abortManually}> Abort Manually Now</button>
+      <button onClick={abortManually}>Stop Loading</button>
     </div>
   );
 }
@@ -97,7 +97,7 @@ function Example() {
   useEventListener(
     window,
     "mousemove",
-    isDragging, // enable during mouse dragging
+    isDragging, // add this listener only during mouse dragging
     (event) => {
       /* do something here... */
     },
@@ -121,11 +121,11 @@ useAnimationFrame(
 ```
 
 ```js
-// sample useage: a count state that gets updated in every animation frame
+// sample usage: a count state that gets updated in every animation frame
 function Example() {
   const [count, setCount] = React.useState(0);
   useAnimationFrame(
-    () => {
+    (timestamp) => {
       setCount(count + 1);
     },
     false,

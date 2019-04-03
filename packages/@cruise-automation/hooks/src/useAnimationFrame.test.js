@@ -50,22 +50,28 @@ describe("useAnimationFrame", () => {
   });
 
   it("stops and continues to execute when disable and dependencies change", () => {
-    let input = [1];
-    const { rerender } = renderHook(() => useAnimationFrame(cb, false, input));
+    const { rerender } = renderHook(({ disable, dependencies }) => useAnimationFrame(cb, disable, dependencies), {
+      initialProps: { disable: false, dependencies: [1] },
+    });
     expect(count).toBe(3);
 
     // stop execution when disable is true
     maxExecutionCount = 6;
 
-    rerender(cb, true, input);
+    rerender({ disable: true, dependencies: [1] });
     expect(count).toBe(3);
     expect(rafExecutionCount).toBe(3);
 
-    // continue the execution when disable is false and dependencies have changed
+    // continue the execution when disable changed to false
     maxExecutionCount = 6;
-    input = [3];
-    rerender(cb, false, input);
+    rerender({ disable: false, dependencies: [1] });
     expect(count).toBe(6);
     expect(rafExecutionCount).toBe(6);
+    // continue the executtion dependencies have changed
+
+    maxExecutionCount = 9;
+    rerender({ disable: false, dependencies: [2] });
+    expect(count).toBe(9);
+    expect(rafExecutionCount).toBe(9);
   });
 });

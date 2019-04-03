@@ -19,7 +19,7 @@ A React Hook to load async, disposable resources and fire the cleanup callback w
  useAbortable<T>(
   defaultValue: T,  // default value, will be set to the actual value if action is performed successfully
   action: (AbortController) => Promise<T>, // async action to perform
-  cleanup: (?T) => void, // clean up worrk if thtere is any
+  cleanup: (?T) => void, // clean up work if thtere is any
   args: any // dependencies
 ): [T, () => void] // result value and abort function
 ```
@@ -43,7 +43,7 @@ function Example(props) {
     [dataName]
   );
 
-  // Normally abort is called when components unmounts. It can also be called manually elsewhere.
+  // abort is usually called when the component unmounts, but it can also be called manually
   function abortManually() {
     abortFn();
   }
@@ -69,6 +69,7 @@ A small React Hook to fire the cleanup callback when the component unmounts.
 // sample usage
 function Example() {
   const [audioContext] = React.useState(() => new window.AudioContext));
+  // automatically close audioContext when the component unmounts
   useCleanup(() => audioContext.close());
   return null;
 }

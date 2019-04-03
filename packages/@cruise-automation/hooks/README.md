@@ -109,7 +109,7 @@ function Example() {
 
 ### `useAnimationFrame`
 
-A React Hook that accepts a callback function which will be called before each animation frame.
+A React Hook that accepts a callback function which will be called repeatedly, synchronized with the browser's repaints via [`requestAnimationFrame`](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
 
 ```js
 // types

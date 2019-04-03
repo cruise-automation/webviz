@@ -66,8 +66,8 @@ describe("useAnimationFrame", () => {
     rerender({ disable: false, dependencies: [1] });
     expect(count).toBe(6);
     expect(rafExecutionCount).toBe(6);
-    // continue the executtion dependencies have changed
 
+    // continue the execution if the dependencies have changed
     maxExecutionCount = 9;
     rerender({ disable: false, dependencies: [2] });
     expect(count).toBe(9);

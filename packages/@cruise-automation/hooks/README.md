@@ -58,7 +58,7 @@ function Example(props) {
 
 ### `useCleanup`
 
-A small React Hook to fire the cleanup callback when the component unmounts.
+A small React Hook to fire the cleanup callback when the component unmounts. Equivalent to `useEffect(() => () => { teardown(); }, [])`.
 
 ```js
 // types

@@ -4,6 +4,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { useAnimationFrame } from "@cruise-automation/hooks";
 import { quat, vec3 } from "gl-matrix";
 import last from "lodash/last";
 import remove from "lodash/remove";
@@ -20,7 +21,6 @@ import duckModel from "./Duck.glb";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
 import useRange from "./useRange";
-import useRequestAnimationFrame from "./useRequestAnimationFrame";
 import Worldview, {
   Command,
   Arrows,
@@ -51,6 +51,7 @@ const CODE_SANDBOX_CONFIG = {
     react: "latest",
     "react-dom": "latest",
     "regl-worldview": "latest",
+    "@cruise-automation/hooks": "latest",
     seedrandom: "latest",
     "polygon-generator": "latest",
     "styled-components": "latest",
@@ -68,9 +69,6 @@ const CODE_SANDBOX_CONFIG = {
     },
     "utils/useRange.js": {
       content: require("!!raw-loader!./useRange.js"),
-    },
-    "utils/useRequestAnimationFrame.js": {
-      content: require("!!raw-loader!./useRequestAnimationFrame.js"),
     },
     "utils/InputNumber.js": {
       content: require("!!raw-loader!./InputNumber.js"),
@@ -97,7 +95,7 @@ export const scope = {
   cameraStateSelectors,
   getCSSColor,
   useRange,
-  useRequestAnimationFrame,
+  useAnimationFrame,
   useState,
   useEffect,
   Worldview,

@@ -31,39 +31,7 @@ import duckModel from "../utils/Duck.glb";
 </GLTFScene>;
 ```
 
-To move the camera, we will need to store some state that changes over time. Let's add a [React hook](https://reactjs.org/docs/hooks-intro.html) that accepts a callback which will be called at each timestep. We'll use [window.requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) to keep our state updates in sync with the display refresh rate.
-
-```js
-// src/utils/useRequestAnimationFrame.js
-import { useRef, useEffect } from "react";
-
-// a react hook that accepts a callback function which will be called before each browser repaint
-export default function useRequestAnimationFrame(callback, disable, dependencies) {
-  // persist the requestAnimationFrameId so the last refresh callback can be cancelled when component unmounts
-  const rafId = useRef();
-  // start the loop when the component mounts and cancel the animation frame when unmounts
-  // or related dependency changes
-  useEffect(
-    () => {
-      if (!disable) {
-        function createAnimationFrame() {
-          rafId.current = requestAnimationFrame((timestamp) => {
-            callback(timestamp);
-            createAnimationFrame();
-          });
-        }
-        createAnimationFrame();
-      }
-      return function cleanup() {
-        cancelAnimationFrame(rafId.current);
-      };
-    },
-    [disable, callback, ...dependencies]
-  );
-}
-```
-
-Lastly, let's put everything together. Each frame, when our `useRequestAnimationFrame` callback is called, we'll increase a counter by 1, and use the counter to adjust the camera's `phi` and `thetaOffset`.
+To move the camera, we'll use a handy [useAnimationFrame](https://github.com/cruise-automation/webviz/tree/master/packages/%40cruise-automation/hooks) hook that accepts a callback which will be called at each browser repaint. In our case, whenever the callback is called, we'll increase a `count` state by 1, and use the `count` state to adjust the camera's `phi` and `thetaOffset`.
 
 <MoveCamea />
 

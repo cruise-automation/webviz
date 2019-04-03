@@ -5,17 +5,17 @@
 //  You may not use this file except in compliance with the License.
 
 // #BEGIN EXAMPLE
+import { useAnimationFrame } from "@cruise-automation/hooks";
 import React, { useState } from "react";
 
 import duckModel from "../utils/Duck.glb";
-import useRequestAnimationFrame from "../utils/useRequestAnimationFrame";
 import Worldview, { Spheres, Axes, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
   const steps = 500; // total amount of objects
   const [count, setCount] = useState(0);
-  useRequestAnimationFrame(
+  useAnimationFrame(
     () => {
       // update count before each browser repaint
       const newCount = (count + 1) % steps;

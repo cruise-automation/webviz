@@ -108,7 +108,7 @@ const [shouldStopDuck, setShouldStopDuck] = useState(false);
 // use count to set the duck's current position
 const [count, setCount] = useState(0);
 
-useRequestAnimationFrame(
+useAnimationFrame(
   () => {
     const newcount = (count + 1) % steps;
     setCount(newcount);

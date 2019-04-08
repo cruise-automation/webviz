@@ -83,7 +83,7 @@ const constantRGBAArray = (count: number, { r, g, b, a }: Color): Float32Array =
 };
 
 // default blend func params to be mixed into regl commands
-export const blend = {
+export const defaultBlend = {
   enable: true,
   // this is the same gl.BlendFunc used by three.js by default
   func: {
@@ -97,6 +97,8 @@ export const blend = {
     alpha: "add",
   },
 };
+
+export const defaultDepth = { enable: true, mask: true };
 
 // takes a regl command definition object and injects
 // position and rotation from the object pose and also

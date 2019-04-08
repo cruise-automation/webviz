@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import type { Line } from "../types";
-import { blend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
 import { makeCommand } from "./Command";
 
 /*
@@ -252,7 +252,7 @@ const lines = (regl: any) => {
     withPose({
       vert,
       frag,
-      blend,
+      blend: (context, props) => props.blend || defaultBlend,
       uniforms: {
         thickness: regl.prop("scale.x"),
         viewportWidth: regl.context("viewportWidth"),

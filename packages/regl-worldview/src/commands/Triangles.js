@@ -7,7 +7,15 @@
 //  You may not use this file except in compliance with the License.
 
 import type { TriangleList, Regl } from "../types";
-import { blend, getVertexColors, pointToVec3Array, shouldConvert, toRGBA, withPose } from "../utils/commandUtils";
+import {
+  defaultBlend,
+  defaultDepth,
+  getVertexColors,
+  pointToVec3Array,
+  shouldConvert,
+  toRGBA,
+  withPose,
+} from "../utils/commandUtils";
 import { getHitmapPropsForInstancedCommands, getObjectForInstancedCommands } from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
 
@@ -57,12 +65,10 @@ const singleColor = (regl) =>
         return props.color;
       },
     },
-
-    // turn off depth to prevent flicker
+    // can pass in {enable: true, depth: true } to turn off depth to prevent flicker
     // because multiple items are rendered to the same z plane
-    depth: { enable: true, mask: false },
-    blend,
-
+    depth: (context, props) => props.depth || defaultDepth,
+    blend: (context, props) => props.blend || defaultBlend,
     count: (context, props) => props.points.length,
   });
 
@@ -109,11 +115,12 @@ const vertexColors = (regl) =>
       },
     },
 
-    blend,
-    depth: {
-      enable: true,
-      func: "<=",
-    },
+    blend: (context, props) => props.blend || defaultBlend,
+    depth: (context, props) =>
+      props.depth || {
+        enable: true,
+        func: "<=",
+      },
 
     count: (context, props) => props.points.length,
   });

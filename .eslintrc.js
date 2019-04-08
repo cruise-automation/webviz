@@ -30,6 +30,7 @@ module.exports = {
     "react/prop-types": "off", // We use Flow instead.
     "no-useless-computed-key": "off", // https://github.com/facebook/flow/issues/380#issuecomment-224380551
     yoda: "off", // https://github.com/RyanZim/eslint-config-problems/pull/1 and https://github.com/eslint/eslint/issues/10591
+    "import/external-module-folders": ["node_modules", "packages"],
     // Some good ones that people really should be adding to import/recommended:
     "import/first": "error",
     "import/no-self-import": "error",

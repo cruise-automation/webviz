@@ -6,14 +6,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// Need to import separately because disparity in import order between
-// proprietary and open source repos.
-import KeyListener from "react-key-listener"; // eslint-disable-line
-
 import CloseIcon from "@mdi/svg/svg/close.svg";
 import * as React from "react";
 import styled from "styled-components";
 
+import KeyListener from "react-key-listener";
 import Icon from "webviz-core/src/components/Icon";
 import colors from "webviz-core/src/styles/colors.module.scss";
 

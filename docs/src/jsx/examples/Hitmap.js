@@ -6,7 +6,6 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
-
 import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
 
 // #BEGIN EDITABLE

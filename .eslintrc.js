@@ -13,7 +13,17 @@ module.exports = {
   ],
   plugins: ["jest", "import-order-alphabetical", "react-hooks"],
   parser: "babel-eslint",
-  settings: { "import/resolver": { webpack: { config: `${__dirname}/webpack.config.js` } } },
+  settings: {
+    "import/external-packages": [
+      "packages/@cruise-automation/button",
+      "packages/@cruise-automation/hooks",
+      "packages/@cruise-automation/rpc",
+      "packages/@cruise-automation/tooltip",
+      "packages/react-key-listener",
+      "packages/regl-worldview",
+    ],
+    "import/resolver": { webpack: { config: `${__dirname}/webpack.config.js` } },
+  },
   globals: {
     RAVEN_URL: false, // injected via webpack
     GIT_INFO: false, // injected via webpack
@@ -30,7 +40,6 @@ module.exports = {
     "react/prop-types": "off", // We use Flow instead.
     "no-useless-computed-key": "off", // https://github.com/facebook/flow/issues/380#issuecomment-224380551
     yoda: "off", // https://github.com/RyanZim/eslint-config-problems/pull/1 and https://github.com/eslint/eslint/issues/10591
-    "import/external-module-folders": ["node_modules", "packages"],
     // Some good ones that people really should be adding to import/recommended:
     "import/first": "error",
     "import/no-self-import": "error",
@@ -48,8 +57,6 @@ module.exports = {
     // TODO(JP): Fix this instead of disabling it:
     "import/no-named-as-default": "off",
     "prefer-arrow-callback": ["error", { allowNamedFunctions: true }],
-    // TODO(Audrey): enable after webviz-core is upgraded
-    // "react-hooks/rules-of-hooks": "error",
-    // "react-hooks/exhaustive-deps": "warn",
+    "react-hooks/rules-of-hooks": "error",
   },
 };

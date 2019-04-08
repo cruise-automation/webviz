@@ -6,9 +6,9 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
+import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 import InputNumber from "../utils/InputNumber";
-import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {

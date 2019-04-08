@@ -11,16 +11,6 @@ import remove from "lodash/remove";
 import sample from "lodash/sample";
 import polygonGenerator from "polygon-generator";
 import React, { useState, useEffect } from "react";
-import seedrandom from "seedrandom";
-import styled from "styled-components";
-
-import { getHashUrlByComponentName } from "../../routes";
-import CameraStateInfo from "./CameraStateInfo";
-import CodeEditor from "./CodeEditor";
-import duckModel from "./Duck.glb";
-import InputNumber from "./InputNumber";
-import LineControls from "./LineControls";
-import useRange from "./useRange";
 import Worldview, {
   Command,
   Arrows,
@@ -44,6 +34,16 @@ import Worldview, {
   cameraStateSelectors,
   getRayFromClick,
 } from "regl-worldview";
+import seedrandom from "seedrandom";
+import styled from "styled-components";
+
+import { getHashUrlByComponentName } from "../../routes";
+import CameraStateInfo from "./CameraStateInfo";
+import CodeEditor from "./CodeEditor";
+import duckModel from "./Duck.glb";
+import InputNumber from "./InputNumber";
+import LineControls from "./LineControls";
+import useRange from "./useRange";
 
 // Add required packages and files for all examples to run
 const CODE_SANDBOX_CONFIG = {

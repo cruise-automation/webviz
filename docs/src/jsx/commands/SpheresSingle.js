@@ -6,7 +6,6 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
-
 import Worldview, { Axes, Spheres } from "regl-worldview";
 
 // #BEGIN EDITABLE

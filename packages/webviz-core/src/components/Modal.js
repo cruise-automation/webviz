@@ -8,9 +8,9 @@
 
 import CloseIcon from "@mdi/svg/svg/close.svg";
 import * as React from "react";
+import KeyListener from "react-key-listener";
 import styled from "styled-components";
 
-import KeyListener from "react-key-listener";
 import Icon from "webviz-core/src/components/Icon";
 import colors from "webviz-core/src/styles/colors.module.scss";
 

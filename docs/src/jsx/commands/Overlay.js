@@ -6,9 +6,9 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
+import Worldview, { Axes, Overlay, Spheres } from "regl-worldview";
 
 import useRange from "../utils/useRange";
-import Worldview, { Axes, Overlay, Spheres } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {

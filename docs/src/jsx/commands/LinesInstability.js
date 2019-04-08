@@ -6,7 +6,6 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
-
 import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE

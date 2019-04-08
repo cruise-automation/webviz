@@ -7,9 +7,9 @@
 // #BEGIN EXAMPLE
 import { useAnimationFrame } from "@cruise-automation/hooks";
 import React, { useState, useEffect } from "react";
+import Worldview, { Cubes, Spheres, Axes, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 import duckModel from "../utils/Duck.glb";
-import Worldview, { Cubes, Spheres, Axes, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {

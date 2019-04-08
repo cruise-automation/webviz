@@ -7,11 +7,10 @@
 //  You may not use this file except in compliance with the License.
 
 import { quat, vec3 } from "gl-matrix";
-// $FlowFixMe - useState is not yet in the flow definitions.
 import React, { useState } from "react";
+import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors, type CameraState } from "regl-worldview";
 
 import CameraStateControls from "../utils/CameraStateControls";
-import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors, type CameraState } from "regl-worldview";
 
 export default function Example() {
   const getPoseFromVecs = (position, orientation) => {

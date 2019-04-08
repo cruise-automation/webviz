@@ -35,7 +35,7 @@
     "eslint-plugin-flowtype": "^3.2.0",
     "eslint-plugin-header": "^2.0.0",
     "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-import-order-alphabetical": "0.0.1",
+    "eslint-plugin-import-order-alphabetical": "^0.0.2",
     "eslint-plugin-jest": "^22.0.1",
     "eslint-plugin-prettier": "^3.0.0",
     "eslint-plugin-react": "^7.11.1",

@@ -65,7 +65,7 @@ const singleColor = (regl) =>
         return props.color;
       },
     },
-    // can pass in {enable: true, depth: true } to turn off depth to prevent flicker
+    // can pass in { enable: true, depth: true } to turn off depth to prevent flicker
     // because multiple items are rendered to the same z plane
     depth: (context, props) => props.depth || defaultDepth,
     blend: (context, props) => props.blend || defaultBlend,

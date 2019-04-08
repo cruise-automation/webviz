@@ -43,7 +43,11 @@ export default function Scrubber({ value, onChange, speed = 1, vertical = false 
       const delta = vertical ? start.position.clientY - event.clientY : event.clientX - start.position.clientX;
       onChange(start.value + delta * speed);
     },
+<<<<<<< HEAD
     []
+=======
+    [dragging]
+>>>>>>> Fix Camera page
   );
   useEventListener(
     window,
@@ -52,7 +56,11 @@ export default function Scrubber({ value, onChange, speed = 1, vertical = false 
     (event: MouseEvent) => {
       setDragging(false);
     },
+<<<<<<< HEAD
     []
+=======
+    [dragging]
+>>>>>>> Fix Camera page
   );
 
   return (

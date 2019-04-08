@@ -6,9 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// Need to import separately because disparity in import order between
-// proprietary and open source repos.
-import KeyListener from "react-key-listener"; // eslint-disable-line
 
 import CloseIcon from "@mdi/svg/svg/close.svg";
 import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
@@ -20,6 +17,7 @@ import { getNodeAtPath } from "react-mosaic-component";
 import { connect } from "react-redux";
 
 import styles from "./Panel.module.scss";
+import KeyListener from "react-key-listener";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
 import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";

@@ -6,9 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// Need to import separately because disparity in import order between
-// proprietary and open source repos.
-import KeyListener from "react-key-listener"; // eslint-disable-line
 
 import Tooltip from "@cruise-automation/tooltip";
 import CancelIcon from "@mdi/svg/svg/cancel.svg";
@@ -20,6 +17,7 @@ import type { Time } from "rosbag";
 import styled from "styled-components";
 
 import styles from "./index.module.scss";
+import KeyListener from "react-key-listener";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";

@@ -12,11 +12,11 @@ import PauseIcon from "@mdi/svg/svg/pause.svg";
 import PlayIcon from "@mdi/svg/svg/play.svg";
 import classnames from "classnames";
 import * as React from "react";
+import KeyListener from "react-key-listener";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 
 import styles from "./index.module.scss";
-import KeyListener from "react-key-listener";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";

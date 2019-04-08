@@ -6,9 +6,9 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
+import Worldview, { Axes, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 import useRange from "../utils/useRange";
-import Worldview, { Axes, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {

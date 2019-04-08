@@ -12,11 +12,11 @@ import cx from "classnames";
 import PropTypes from "prop-types";
 import * as React from "react";
 import DocumentEvents from "react-document-events";
+import KeyListener from "react-key-listener";
 import { getNodeAtPath } from "react-mosaic-component";
 import { connect } from "react-redux";
 
 import styles from "./Panel.module.scss";
-import KeyListener from "react-key-listener";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
 import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";

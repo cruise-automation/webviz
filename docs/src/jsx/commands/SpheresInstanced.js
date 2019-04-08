@@ -6,9 +6,9 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
+import Worldview, { Spheres } from "regl-worldview";
 
 import useRange from "../utils/useRange";
-import Worldview, { Spheres } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {

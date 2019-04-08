@@ -16,6 +16,7 @@ export default function useRange(initialRange = 0.1) {
     return range;
   }
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     const stop = requestAnimationFrame((tick) => {
       const newRange = (1 + Math.sin(count / 30)) / 2;

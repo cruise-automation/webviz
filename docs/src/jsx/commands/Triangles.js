@@ -6,9 +6,8 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
-import seedrandom from "seedrandom";
-
 import Worldview, { Triangles, Axes } from "regl-worldview";
+import seedrandom from "seedrandom";
 
 // #BEGIN EDITABLE
 function Example() {

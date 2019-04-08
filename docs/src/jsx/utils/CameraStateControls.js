@@ -7,13 +7,13 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
+import type { CameraState, Quat } from "regl-worldview";
 import styled from "styled-components";
 
 import Scrubber from "./Scrubber";
 import Slider from "./Slider";
 import Switch from "./Switch";
 import { color } from "./theme";
-import type { CameraState, Quat } from "regl-worldview";
 
 const ControlsTable = styled.table`
   color: ${color.textMuted};

@@ -9,9 +9,8 @@ import last from "lodash/last";
 import remove from "lodash/remove";
 import sample from "lodash/sample";
 import React, { useState } from "react";
-import seedrandom from "seedrandom";
-
 import Worldview, { Cubes } from "regl-worldview";
+import seedrandom from "seedrandom";
 
 // #BEGIN EDITABLE
 function Example() {

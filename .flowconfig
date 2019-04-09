@@ -1,13 +1,6 @@
 [ignore]
 .*\.ignore\.js
 dist
-.*/node_modules/react-draggable/.*
-.*/node_modules/redux-persist/.*
-.*/node_modules/jsonlint-lines-primitives/.*
-.*/node_modules/immutable/.*
-.*/node_modules/radium/.*
-# Temporarily disable reading rosbag.js Flow files until we fix them
-.*/node_modules/rosbag/.*\.js\.flow
 
 [include]
 

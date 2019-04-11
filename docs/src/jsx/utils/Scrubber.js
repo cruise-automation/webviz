@@ -35,13 +35,25 @@ export default function Scrubber({ value, onChange, speed = 1, vertical = false 
     position: { clientX: NaN, clientY: NaN },
   });
 
-  useEventListener(window, "mousemove", dragging, (event: MouseEvent) => {
-    const delta = vertical ? start.position.clientY - event.clientY : event.clientX - start.position.clientX;
-    onChange(start.value + delta * speed);
-  });
-  useEventListener(window, "mouseup", dragging, (event: MouseEvent) => {
-    setDragging(false);
-  });
+  useEventListener(
+    window,
+    "mousemove",
+    dragging,
+    (event: MouseEvent) => {
+      const delta = vertical ? start.position.clientY - event.clientY : event.clientX - start.position.clientX;
+      onChange(start.value + delta * speed);
+    },
+    []
+  );
+  useEventListener(
+    window,
+    "mouseup",
+    dragging,
+    (event: MouseEvent) => {
+      setDragging(false);
+    },
+    []
+  );
 
   return (
     <StyledNumber

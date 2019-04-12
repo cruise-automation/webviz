@@ -98,8 +98,6 @@ export const defaultBlend = {
   },
 };
 
-export const defaultDepth = { enable: true, mask: true };
-
 // takes a regl command definition object and injects
 // position and rotation from the object pose and also
 // inserts some glsl helpers to apply the pose to points in a fragment shader

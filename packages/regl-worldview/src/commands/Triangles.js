@@ -9,7 +9,6 @@
 import type { TriangleList, Regl } from "../types";
 import {
   defaultBlend,
-  defaultDepth,
   getVertexColors,
   pointToVec3Array,
   shouldConvert,
@@ -18,6 +17,12 @@ import {
 } from "../utils/commandUtils";
 import { getHitmapPropsForInstancedCommands, getObjectForInstancedCommands } from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
+
+const defaultSingleColorDepth = { enable: true, mask: true };
+const defaultVetexColorDepth = {
+  enable: true,
+  func: "<=",
+};
 
 const singleColor = (regl) =>
   withPose({
@@ -65,9 +70,9 @@ const singleColor = (regl) =>
         return props.color;
       },
     },
-    // can pass in { enable: true, depth: true } to turn off depth to prevent flicker
+    // can pass in { enable: true, depth: false } to turn off depth to prevent flicker
     // because multiple items are rendered to the same z plane
-    depth: (context, props) => props.depth || defaultDepth,
+    depth: (context, props) => props.depth || defaultSingleColorDepth,
     blend: (context, props) => props.blend || defaultBlend,
     count: (context, props) => props.points.length,
   });
@@ -116,11 +121,7 @@ const vertexColors = (regl) =>
     },
 
     blend: (context, props) => props.blend || defaultBlend,
-    depth: (context, props) =>
-      props.depth || {
-        enable: true,
-        func: "<=",
-      },
+    depth: (context, props) => props.depth || defaultVetexColorDepth,
 
     count: (context, props) => props.points.length,
   });

@@ -18,7 +18,8 @@ import {
 import { getHitmapPropsForInstancedCommands, getObjectForInstancedCommands } from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
 
-const defaultSingleColorDepth = { enable: true, mask: true };
+// TODO(Audrey): default to the actual regl defaults before 1.x release
+const defaultSingleColorDepth = { enable: true, mask: false };
 const defaultVetexColorDepth = {
   enable: true,
   func: "<=",

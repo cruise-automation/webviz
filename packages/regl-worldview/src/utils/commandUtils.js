@@ -35,6 +35,7 @@ export const orientationToVec4 = ({ x, y, z, w }: Orientation): Vec4 => {
 };
 
 export const vec3ToPoint = ([x, y, z]: Vec3): Point => ({ x, y, z });
+
 export const vec4ToOrientation = ([x, y, z, w]: Vec4): Orientation => ({ x, y, z, w });
 
 export const pointToVec3Array = (points: Point[]) => {

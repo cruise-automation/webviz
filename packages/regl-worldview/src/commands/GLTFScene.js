@@ -10,7 +10,7 @@ import { mat4 } from "gl-matrix";
 import React from "react";
 
 import type { Pose, Scale } from "../types";
-import { blend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
+import { defaultBlend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
 import parseGLB from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";
@@ -39,7 +39,7 @@ function glConstantToRegl(value: ?number): ?string {
 const drawModel = (regl) => {
   const command = regl({
     primitive: "triangles",
-    blend,
+    blend: (context, props) => props.blend || defaultBlend,
     uniforms: {
       globalAlpha: regl.context("globalAlpha"),
       poseMatrix: regl.context("poseMatrix"),

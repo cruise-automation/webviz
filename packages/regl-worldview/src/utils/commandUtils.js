@@ -35,6 +35,7 @@ export const orientationToVec4 = ({ x, y, z, w }: Orientation): Vec4 => {
 };
 
 export const vec3ToPoint = ([x, y, z]: Vec3): Point => ({ x, y, z });
+
 export const vec4ToOrientation = ([x, y, z, w]: Vec4): Orientation => ({ x, y, z, w });
 
 export const pointToVec3Array = (points: Point[]) => {
@@ -83,7 +84,7 @@ const constantRGBAArray = (count: number, { r, g, b, a }: Color): Float32Array =
 };
 
 // default blend func params to be mixed into regl commands
-export const blend = {
+export const defaultBlend = {
   enable: true,
   // this is the same gl.BlendFunc used by three.js by default
   func: {

@@ -84,6 +84,9 @@ export default (positions: Vec3[], elements: Vec3[]) => (regl: any): ReglCommand
       enable: (context, props) => {
         return (props.blend && props.blend.enable) || defaultBlend.enable;
       },
+      func: (context, props) => {
+        return (props.blend && props.blend.func) || defaultBlend.func;
+      },
     },
 
     uniforms: {

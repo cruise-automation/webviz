@@ -102,6 +102,8 @@ export const DynamicCommands = makeCodeComponent(require("!!raw-loader!./example
 
 export const Hitmap = makeCodeComponent(require("!!raw-loader!./examples/Hitmap"), "Hitmap");
 
+export const WireFrame = makeCodeComponent(require("!!raw-loader!./examples/WireFrame"), "WireFrame");
+
 export const AddRemoveObstacles = makeCodeComponent(
   require("!!raw-loader!./tutorials/AddRemoveObstacles"),
   "AddingInteractivity"

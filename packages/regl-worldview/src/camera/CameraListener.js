@@ -68,6 +68,7 @@ export default class CameraListener extends React.Component<Props> {
     };
     listen(document, "blur", this._onBlur);
     listen(window, "mouseup", this._onWindowMouseUp);
+    _el.addEventListener("wheel", this._onWheel, { passive: false });
   }
 
   componentWillUnmount() {
@@ -75,6 +76,11 @@ export default class CameraListener extends React.Component<Props> {
       listener.target.removeEventListener(listener.name, listener.fn);
     });
     this._endDragging();
+    const { _el } = this;
+    if (!_el) {
+      return;
+    }
+    _el.removeEventListener("wheel", this._onWheel, { passive: false });
   }
 
   _getMouseOnScreen = (mouse: MouseEvent) => {
@@ -405,7 +411,6 @@ export default class CameraListener extends React.Component<Props> {
         ref={(el) => (this._el = el)}
         onMouseDown={this._onMouseDown}
         onMouseUp={this._onMouseUp}
-        onWheel={this._onWheel}
         onBlur={this._onBlur}
         onContextMenu={this._onContextMenu}
         onKeyDown={this._onKeyDown}

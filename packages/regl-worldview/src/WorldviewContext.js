@@ -293,12 +293,7 @@ export class WorldviewContext {
       if (!cmd) {
         return console.warn("could not find draw command for", instance.constructor.displayName);
       }
-      // mapTiles requires additional context data
-      if (drawProps.context && drawProps.props) {
-        cmd(drawProps.props, drawProps.context);
-      } else {
-        cmd(drawProps);
-      }
+      cmd(drawProps);
     });
   };
 

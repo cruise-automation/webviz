@@ -39,7 +39,12 @@ function glConstantToRegl(value: ?number): ?string {
 const drawModel = (regl) => {
   const command = regl({
     primitive: "triangles",
-    blend: (context, props) => props.blend || defaultBlend,
+    blend: {
+      ...defaultBlend,
+      enable: (context, props) => {
+        return (props.blend && props.blend.enable) || defaultBlend.enable;
+      },
+    },
     uniforms: {
       globalAlpha: regl.context("globalAlpha"),
       poseMatrix: regl.context("poseMatrix"),

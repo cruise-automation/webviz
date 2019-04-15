@@ -82,12 +82,7 @@ const singleColor = (regl) =>
         return (props.depth && props.depth.mask) || defaultSingleColorDepth.mask;
       },
     },
-    blend: {
-      ...defaultBlend,
-      enable: (context, props) => {
-        return (props.blend && props.blend.enable) || defaultBlend.enable;
-      },
-    },
+    blend: defaultBlend,
 
     count: (context, props) => props.points.length,
   });
@@ -143,12 +138,7 @@ const vertexColors = (regl) =>
         return (props.depth && props.depth.mask) || defaultVetexColorDepth.mask;
       },
     },
-    blend: {
-      ...defaultBlend,
-      enable: (context, props) => {
-        return (props.blend && props.blend.enable) || defaultBlend.enable;
-      },
-    },
+    blend: defaultBlend,
 
     count: (context, props) => props.points.length,
   });

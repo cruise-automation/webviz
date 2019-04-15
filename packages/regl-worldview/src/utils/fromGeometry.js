@@ -71,23 +71,8 @@ export default (positions: Vec3[], elements: Vec3[]) => (regl: any): ReglCommand
 
     elements: elementsArray,
 
-    depth: {
-      enable: (context, props) => {
-        return (props.depth && props.depth.enable) || defaultDepth.enable;
-      },
-      mask: (context, props) => {
-        return (props.depth && props.depth.mask) || defaultDepth.mask;
-      },
-    },
-    blend: {
-      ...defaultBlend,
-      enable: (context, props) => {
-        return (props.blend && props.blend.enable) || defaultBlend.enable;
-      },
-      func: (context, props) => {
-        return (props.blend && props.blend.func) || defaultBlend.func;
-      },
-    },
+    depth: defaultDepth,
+    blend: defaultBlend,
 
     uniforms: {
       scale: (context, props) => (shouldConvert(props.scale) ? pointToVec3(props.scale) : props.scale),

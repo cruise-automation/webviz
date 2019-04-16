@@ -12,6 +12,19 @@ import Worldview, { Cubes, Axes } from "regl-worldview";
 function Example() {
   const markers = [
     {
+      blend: {
+        enable: true,
+        func: {
+          src: "src alpha",
+          dst: "one minus src alpha",
+          srcAlpha: 1,
+          dstAlpha: "one minus src alpha",
+        },
+        equation: {
+          rgb: "add",
+          alpha: "add",
+        },
+      },
       pose: {
         orientation: { x: 0, y: 0, z: 0, w: 1 },
         position: { x: 0, y: 0, z: 0 },

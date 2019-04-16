@@ -61,7 +61,7 @@ export function getObjectFromHitmapId<HitmapProp: HitmapMarkerDefault>(objectId:
 }
 
 //
-// ─── Points and Triangles (separate triangles props into their own if needed) ─────────────────────────────────
+// ─── Points, Lines and Triangles (separate triangles props into their own if needed) ─────────────────────────────────
 //
 export function getHitmapPropsForInstancedCommands<T: MarkerDefault>(children: T[]): ?(HitmapProp<T>[]) {
   if (!children || children.length === 0) {

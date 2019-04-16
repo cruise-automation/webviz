@@ -7,7 +7,11 @@
 //  You may not use this file except in compliance with the License.
 
 import type { Line } from "../types";
-import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import { blend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import {
+  getHitmapPropsForInstancedCommands as getHitmapProps,
+  getObjectForInstancedCommands as getObjectFromHitmapId,
+} from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
 
 /*
@@ -252,7 +256,7 @@ const lines = (regl: any) => {
     withPose({
       vert,
       frag,
-      blend: defaultBlend,
+      blend,
       uniforms: {
         thickness: regl.prop("scale.x"),
         viewportWidth: regl.context("viewportWidth"),
@@ -350,6 +354,8 @@ const lines = (regl: any) => {
     if (debug) {
       regl({ depth: { enable: false } })(commands);
     } else {
+      // regl({ depth: { enable: false } })(commands);
+
       commands();
     }
   };
@@ -429,6 +435,9 @@ const lines = (regl: any) => {
 };
 
 // prettier-ignore
-const Lines = makeCommand<Line>('Lines', lines);
+const Lines = makeCommand<Line>('Lines', lines, {
+  getHitmapProps,
+  getObjectFromHitmapId
+});
 
 export default Lines;

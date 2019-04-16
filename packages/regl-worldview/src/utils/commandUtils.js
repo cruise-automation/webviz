@@ -84,7 +84,7 @@ const constantRGBAArray = (count: number, { r, g, b, a }: Color): Float32Array =
 };
 
 // default blend func params to be mixed into regl commands
-export const defaultBlend = {
+export const defaultReglBlend = {
   enable: true,
   // this is the same gl.BlendFunc used by three.js by default
   func: {
@@ -97,6 +97,22 @@ export const defaultBlend = {
     rgb: "add",
     alpha: "add",
   },
+};
+
+export const defaultReglDepth = {
+  enable: true,
+  mask: true,
+};
+
+export const defaultDepth = {
+  enable: (context: any, props: any) => (props.depth && props.depth.enable) || defaultReglDepth.enable,
+  mask: (context: any, props: any) => (props.depth && props.depth.mask) || defaultReglDepth.mask,
+};
+
+export const defaultBlend = {
+  ...defaultReglBlend,
+  enable: (context: any, props: any) => (props.blend && props.blend.enable) || defaultReglBlend.enable,
+  func: (context: any, props: any) => (props.blend && props.blend.func) || defaultReglBlend.func,
 };
 
 // takes a regl command definition object and injects

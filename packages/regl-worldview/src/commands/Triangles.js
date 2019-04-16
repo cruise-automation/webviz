@@ -22,6 +22,7 @@ import { makeCommand } from "./Command";
 const defaultSingleColorDepth = { enable: true, mask: false };
 const defaultVetexColorDepth = {
   enable: true,
+  mask: true,
   func: "<=",
 };
 
@@ -73,8 +74,16 @@ const singleColor = (regl) =>
     },
     // can pass in { enable: true, depth: false } to turn off depth to prevent flicker
     // because multiple items are rendered to the same z plane
-    depth: (context, props) => props.depth || defaultSingleColorDepth,
-    blend: (context, props) => props.blend || defaultBlend,
+    depth: {
+      enable: (context, props) => {
+        return (props.depth && props.depth.enable) || defaultSingleColorDepth.enable;
+      },
+      mask: (context, props) => {
+        return (props.depth && props.depth.mask) || defaultSingleColorDepth.mask;
+      },
+    },
+    blend: defaultBlend,
+
     count: (context, props) => props.points.length,
   });
 
@@ -121,8 +130,15 @@ const vertexColors = (regl) =>
       },
     },
 
-    blend: (context, props) => props.blend || defaultBlend,
-    depth: (context, props) => props.depth || defaultVetexColorDepth,
+    depth: {
+      enable: (context, props) => {
+        return (props.depth && props.depth.enable) || defaultVetexColorDepth.enable;
+      },
+      mask: (context, props) => {
+        return (props.depth && props.depth.mask) || defaultVetexColorDepth.mask;
+      },
+    },
+    blend: defaultBlend,
 
     count: (context, props) => props.points.length,
   });

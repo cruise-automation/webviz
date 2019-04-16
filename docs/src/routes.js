@@ -8,6 +8,7 @@ import BasicExample from "./1.1.BasicExample.mdx";
 import Composition from "./1.2.Composition.mdx";
 import DynamicCommands from "./1.3.DynamicCommands.mdx";
 import Interactivity from "./1.4.Interactivity.mdx";
+import Wireframe from "./1.5.Wireframe.mdx";
 import QuickStart from "./2.1.QuickStart.mdx";
 import Introduction from "./2.2.Introduction.mdx";
 import RenderingObjects from "./2.3.RenderingObjects.mdx";
@@ -38,6 +39,7 @@ export const componentList = {
   Composition,
   DynamicCommands,
   Interactivity,
+  Wireframe,
   QuickStart,
   Introduction,
   RenderingObjects,
@@ -72,7 +74,7 @@ const ROUTE_CONFIG = [
   },
   {
     name: "Examples",
-    subRouteNames: ["Basic Example", "Composition", "Dynamic Commands", "Interactivity"],
+    subRouteNames: ["Basic Example", "Composition", "Dynamic Commands", "Interactivity", "Wireframe"],
   },
   {
     name: "API",

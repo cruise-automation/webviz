@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import type { ReglCommand, Vec3 } from "../types";
-import { withPose, pointToVec3, defaultBlend, shouldConvert, colorBuffer } from "./commandUtils";
+import { withPose, pointToVec3, defaultBlend, defaultDepth, shouldConvert, colorBuffer } from "./commandUtils";
 
 // Creates a regl command factory which will render any geometry described by point positions
 // and elements (indexes into the array of positions), and apply the object's pose, scale, and color to it.
@@ -71,7 +71,8 @@ export default (positions: Vec3[], elements: Vec3[]) => (regl: any): ReglCommand
 
     elements: elementsArray,
 
-    blend: (context, props) => props.blend || defaultBlend,
+    depth: defaultDepth,
+    blend: defaultBlend,
 
     uniforms: {
       scale: (context, props) => (shouldConvert(props.scale) ? pointToVec3(props.scale) : props.scale),

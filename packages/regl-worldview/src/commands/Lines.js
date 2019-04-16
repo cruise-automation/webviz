@@ -252,7 +252,7 @@ const lines = (regl: any) => {
     withPose({
       vert,
       frag,
-      blend: (context, props) => props.blend || defaultBlend,
+      blend: defaultBlend,
       uniforms: {
         thickness: regl.prop("scale.x"),
         viewportWidth: regl.context("viewportWidth"),

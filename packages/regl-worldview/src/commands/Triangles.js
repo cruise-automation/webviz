@@ -164,8 +164,7 @@ const triangles = (regl: Regl) => {
   };
 };
 
-// prettier-ignore
-const Triangles = makeCommand<TriangleList>('Triangles', triangles, {
+const Triangles = makeCommand<TriangleList>("Triangles", triangles, {
   getHitmapProps: getHitmapPropsForInstancedCommands,
   getObjectFromHitmapId: getObjectForInstancedCommands,
 });

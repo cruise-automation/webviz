@@ -10,28 +10,10 @@ import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
-  const [clickedObj, setClickedObj] = useState(null);
-  const [clickedObjId, setClickedObjId] = useState(null);
-  // map a number/index to a specific color
-  function numberToColor(number, max, a = 1) {
-    const i = (number * 255) / max;
-    const r = Math.round(Math.sin(0.024 * i + 0) * 127 + 128) / 255;
-    const g = Math.round(Math.sin(0.024 * i + 2) * 127 + 128) / 255;
-    const b = Math.round(Math.sin(0.024 * i + 4) * 127 + 128) / 255;
-    return { r, g, b, a };
-  }
-  const points = [
-    { x: 0, y: 0, z: 1 },
-    { x: 0, y: 3, z: 1 },
-    { x: 3, y: 3, z: 1 },
-    { x: 3, y: 0, z: 1 },
+  const defaultMsg = "Click on top of the green lines or inside the red area.";
+  const [msg, setMsg] = useState(defaultMsg);
 
-    // { x: 0, y: -3, z: 1 },
-    // { x: 0, y: -3, z: 0 },
-
-    // { x: 1, y: -2, z: 1 },
-    // { x: 1, y: -2, z: 0 },
-  ];
+  const points = [{ x: 0, y: 0, z: 2 }, { x: 0, y: 3, z: 2 }, { x: 3, y: 3, z: 2 }, { x: 3, y: 0, z: 2 }];
   const lines = [
     {
       id: 191,
@@ -44,36 +26,53 @@ function Example() {
       scale: { x: 0.1, y: 0.1, z: 0.1 },
       color: { r: 0, g: 1, b: 0, a: 1 },
       points,
-      colors: points.map((x, idx) => numberToColor(idx, points.length)),
     },
   ];
 
   return (
     <Worldview
       onClick={(ev, { objectId }) => {
-        setClickedObjId(objectId);
         if (!objectId) {
-          setClickedObj(null);
+          setMsg(defaultMsg);
         }
       }}
       defaultCameraState={{ ...DEFAULT_CAMERA_STATE, distance: 10 }}>
       <Lines
         onClick={(ev, { object, objectId }) => {
-          setClickedObj(object);
+          setMsg(`Clicked on the lines. objectId: ${objectId}`);
         }}>
         {lines}
+      </Lines>
+      <Lines
+        onClick={(ev, { object, objectId }) => {
+          setMsg(`Clicked on the interior of the lines. objectId: ${objectId}`);
+        }}
+        enableClickableInterior
+        showBorder
+        fillColor={{ r: 1, g: 0, b: 0, a: 0.2 }}>
+        {[
+          {
+            ...lines[0],
+            id: 200,
+            color: { r: 1, g: 0, b: 0, a: 1 },
+            points: points.map(({ x, y, z }) => ({ x: x - 1, y: y - 1, z: z - 1 })),
+          },
+        ]}
       </Lines>
       <div
         style={{
           position: "absolute",
+          display: "flex",
+          flexDirection: "column",
+          padding: 8,
           left: 0,
           top: 0,
-          width: 320,
+          right: 0,
           maxWidth: "100%",
           color: "white",
           backgroundColor: "rgba(0, 0, 0, 0.5)",
         }}>
-        {clickedObj ? <span>Clicked line point id: {clickedObjId} </span> : <span>Click on any lines</span>}
+        <div>{msg}</div>
       </div>
     </Worldview>
   );

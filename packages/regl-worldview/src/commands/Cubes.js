@@ -45,8 +45,8 @@ const cubes = fromGeometry(
     [1, 4, 5],
   ]
 );
-// prettier-ignore
-const Cubes = makeCommand<Cube>('Cubes', cubes, {
+
+const Cubes = makeCommand<Cube>("Cubes", cubes, {
   getHitmapProps,
   getObjectFromHitmapId,
 });

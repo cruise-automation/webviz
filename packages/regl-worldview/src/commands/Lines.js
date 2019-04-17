@@ -6,13 +6,16 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { Line } from "../types";
-import { blend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import React from "react";
+
+import type { Line, Color } from "../types";
+import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
 import {
   getHitmapPropsForInstancedCommands as getHitmapProps,
   getObjectForInstancedCommands as getObjectFromHitmapId,
 } from "../utils/hitmapDefaults";
-import { makeCommand } from "./Command";
+import { makeCommand, type Props } from "./Command";
+import FilledPolygons from "./FilledPolygons";
 
 /*
 Triangle-based line drawing.
@@ -256,7 +259,7 @@ const lines = (regl: any) => {
     withPose({
       vert,
       frag,
-      blend,
+      blend: defaultBlend,
       uniforms: {
         thickness: regl.prop("scale.x"),
         viewportWidth: regl.context("viewportWidth"),
@@ -354,8 +357,6 @@ const lines = (regl: any) => {
     if (debug) {
       regl({ depth: { enable: false } })(commands);
     } else {
-      // regl({ depth: { enable: false } })(commands);
-
       commands();
     }
   };
@@ -434,10 +435,53 @@ const lines = (regl: any) => {
   };
 };
 
-// prettier-ignore
-const Lines = makeCommand<Line>('Lines', lines, {
+const Lines = makeCommand<Line>("Lines", lines, {
   getHitmapProps,
-  getObjectFromHitmapId
+  getObjectFromHitmapId,
 });
 
-export default Lines;
+export type LineProps = Props<Line> & {
+  enableClickableInterior?: boolean,
+  fillColor: Color, // visually turn lines into polygons using custom fillColor
+  showBorder: boolean,
+};
+
+function LinesWithClickableInterior({
+  children,
+  enableClickableInterior,
+  fillColor,
+  onClick,
+  showBorder,
+  ...rest
+}: LineProps) {
+  if (enableClickableInterior) {
+    return (
+      <>
+        {showBorder && <Lines {...rest}>{children}</Lines>}
+        <FilledPolygons
+          onClick={(ev, { object, ...rest }) => {
+            onClick(ev, { ...rest, object: object.lineObject, objectId: object.lineObject.id });
+          }}>
+          {children.map((item) => ({
+            id: item.id,
+            points: item.points,
+            lineObject: item,
+            color: fillColor,
+          }))}
+        </FilledPolygons>
+      </>
+    );
+  }
+  return (
+    <Lines {...rest} onClick={onClick}>
+      {children}
+    </Lines>
+  );
+}
+
+LinesWithClickableInterior.defaultProps = {
+  fillColor: { r: 0, g: 0, b: 0, a: 0 },
+  showBorder: false,
+};
+
+export default LinesWithClickableInterior;

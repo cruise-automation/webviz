@@ -8,6 +8,8 @@
 import React, { useState } from "react";
 import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
+import LinesWithClickableInterior from "../utils/LinesWithClickableInterior";
+
 // #BEGIN EDITABLE
 function Example() {
   const defaultMsg = "Click on top of the green lines or inside the red area.";
@@ -43,7 +45,7 @@ function Example() {
         }}>
         {lines}
       </Lines>
-      <Lines
+      <LinesWithClickableInterior
         onClick={(ev, { object, objectId }) => {
           setMsg(`Clicked on the interior of the lines. objectId: ${objectId}`);
         }}
@@ -58,7 +60,7 @@ function Example() {
             points: points.map(({ x, y, z }) => ({ x: x - 1, y: y - 1, z: z - 1 })),
           },
         ]}
-      </Lines>
+      </LinesWithClickableInterior>
       <div
         style={{
           position: "absolute",

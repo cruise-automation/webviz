@@ -115,6 +115,9 @@ export const defaultBlend = {
   func: (context: any, props: any) => (props.blend && props.blend.func) || defaultReglBlend.func,
 };
 
+// TODO: deprecating, remove before 1.x release
+export const blend = defaultBlend;
+
 // takes a regl command definition object and injects
 // position and rotation from the object pose and also
 // inserts some glsl helpers to apply the pose to points in a fragment shader

@@ -61,8 +61,7 @@ const points = (regl: Regl) => {
   });
 };
 
-// prettier-ignore
-const Points = makeCommand<PointType>('Points', points,  {
+const Points = makeCommand<PointType>("Points", points, {
   getHitmapProps: getHitmapPropsForInstancedCommands,
   getObjectFromHitmapId: getObjectForInstancedCommands,
 });

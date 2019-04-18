@@ -1,4 +1,4 @@
-import { LinesDemo, LinesWireframe } from "./jsx/allLiveEditors";
+import { LinesDemo, LinesWireframe, LinesHitmap } from "./jsx/allLiveEditors";
 
 # Lines
 
@@ -15,6 +15,9 @@ import { LinesDemo, LinesWireframe } from "./jsx/allLiveEditors";
 ```js
 type Line = {
   id?: number, // positive integer
+  primitive:  "line strip" | "lines",
+  closed: boolean,
+  scaleInvariant: boolean,
   pose: {
     position: { x: number, y: number, z: number },
     orientation: { x: number, y: number, z: number, w: number }
@@ -34,6 +37,14 @@ type Line = {
 }
 ```
 
+## Props Example
+
 <LinesDemo />
 
+## Wireframe Example
+
 <LinesWireframe />
+
+## Mouse Interaction
+
+<LinesHitmap />

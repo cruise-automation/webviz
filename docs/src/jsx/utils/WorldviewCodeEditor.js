@@ -43,6 +43,7 @@ import CodeEditor from "./CodeEditor";
 import duckModel from "./Duck.glb";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
+import LinesWithClickableInterior from "./LinesWithClickableInterior";
 import useRange from "./useRange";
 
 // Add required packages and files for all examples to run
@@ -109,6 +110,7 @@ export const scope = {
   DEFAULT_CAMERA_STATE,
   CameraStateInfo,
   LineControls,
+  LinesWithClickableInterior,
   InputNumber,
 
   Command,

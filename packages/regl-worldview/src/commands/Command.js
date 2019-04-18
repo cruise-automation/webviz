@@ -40,6 +40,8 @@ export type Props<T> = {
   reglCommand: RawCommand<T>,
 };
 
+export type CommandProps = Props;
+
 export type MakeCommandOptions = {
   getHitmapProps: GetHitmapProps,
   getObjectFromHitmapId: GetObjectFromHitmapId,

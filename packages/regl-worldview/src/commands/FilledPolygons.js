@@ -53,12 +53,7 @@ type Props = {
 };
 
 // command to draw a filled polygon
-export default function FilledPolygons({
-  children: polygons = [],
-  getHitmapProps = getHitmapPropsForFilledPolygons,
-  getObjectFromHitmapId = getObjectFromHitmapIdForFilledPolygons,
-  ...rest
-}: Props) {
+function FilledPolygons({ children: polygons = [], getHitmapProps, getObjectFromHitmapId, ...rest }: Props) {
   const triangles = [];
   for (const poly of polygons) {
     // $FlowFixMe flow doesn't know how shouldConvert works
@@ -78,3 +73,10 @@ export default function FilledPolygons({
     </Triangles>
   );
 }
+
+FilledPolygons.defaultProps = {
+  getHitmapProps: getHitmapPropsForFilledPolygons,
+  getObjectFromHitmapId: getObjectFromHitmapIdForFilledPolygons,
+};
+
+export default FilledPolygons;

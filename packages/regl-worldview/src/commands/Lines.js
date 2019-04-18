@@ -8,6 +8,10 @@
 
 import type { Line } from "../types";
 import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import {
+  getHitmapPropsForInstancedCommands as getHitmapProps,
+  getObjectForInstancedCommands as getObjectFromHitmapId,
+} from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
 
 /*
@@ -428,7 +432,9 @@ const lines = (regl: any) => {
   };
 };
 
-// prettier-ignore
-const Lines = makeCommand<Line>('Lines', lines);
+const Lines = makeCommand<Line>("Lines", lines, {
+  getHitmapProps,
+  getObjectFromHitmapId,
+});
 
 export default Lines;

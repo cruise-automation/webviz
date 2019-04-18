@@ -70,6 +70,8 @@ export const FilledPolygonsHitmap = makeCodeComponent(
 
 export const LinesDemo = makeCodeComponent(require("!!raw-loader!./commands/LinesDemo"), "LinesDemo");
 
+export const LinesHitmap = makeCodeComponent(require("!!raw-loader!./commands/LinesHitmap"), "LinesHitmap");
+
 export const LinesWireframe = makeCodeComponent(require("!!raw-loader!./commands/LinesWireframe"), "LinesWireframe");
 
 export const Overlay = makeCodeComponent(require("!!raw-loader!./commands/Overlay"), "Overlay");

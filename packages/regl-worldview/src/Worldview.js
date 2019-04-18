@@ -262,8 +262,11 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, showDebug, keyMap, shiftKeys, style, cameraState } = this.props;
+    const { width, height, showDebug, keyMap, shiftKeys, style, cameraState, onCameraStateChange } = this.props;
     const { worldviewContext } = this.state;
+    // If we are supplied controlled camera state and no onCameraStateChange callback
+    // then there is a 'fixed' camera from outside of worldview itself.
+    const isFixedCamera = cameraState && !onCameraStateChange;
     const canvasHtml = (
       <React.Fragment>
         <canvas
@@ -282,8 +285,8 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
     return (
       <div style={{ position: "relative", overflow: "hidden", ...style }}>
-        {/* skip rendering CameraListener if Worldview is controlled */}
-        {cameraState ? (
+        {/* skip rendering CameraListener if Worldview has a fixed camera */}
+        {isFixedCamera ? (
           canvasHtml
         ) : (
           <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap} shiftKeys={shiftKeys}>

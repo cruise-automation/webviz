@@ -61,6 +61,8 @@ export const Cylinders = makeCodeComponent(require("!!raw-loader!./commands/Cyli
 
 export const DuckScene = makeCodeComponent(require("!!raw-loader!./commands/DuckScene"), "DuckScene");
 
+export const DuckSceneHitmap = makeCodeComponent(require("!!raw-loader!./commands/DuckSceneHitmap"), "DuckSceneHitmap");
+
 export const FilledPolygons = makeCodeComponent(require("!!raw-loader!./commands/FilledPolygons"), "FilledPolygons");
 
 export const FilledPolygonsHitmap = makeCodeComponent(

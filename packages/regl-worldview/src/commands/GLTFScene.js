@@ -9,8 +9,8 @@
 import { mat4 } from "gl-matrix";
 import React from "react";
 
-import type { Pose, Scale } from "../types";
-import { defaultBlend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
+import type { Pose, Scale, MouseHandler } from "../types";
+import { defaultBlend, pointToVec3, orientationToVec4, intToRGB } from "../utils/commandUtils";
 import parseGLB from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";
@@ -50,6 +50,8 @@ const drawModel = (regl) => {
       "light.direction": [0, 0, -1],
       "light.ambientIntensity": 0.5,
       "light.diffuseIntensity": 0.5,
+      hitmapColor: regl.context("hitmapColor"),
+      drawHitmap: regl.context("drawHitmap"),
     },
     attributes: {
       position: regl.prop("positions"),
@@ -76,6 +78,8 @@ const drawModel = (regl) => {
   `,
     frag: `
   precision mediump float;
+  uniform bool drawHitmap;
+  uniform vec4 hitmapColor;
   uniform float globalAlpha;
   uniform sampler2D baseColorTexture;
   uniform vec4 baseColorFactor;
@@ -94,7 +98,7 @@ const drawModel = (regl) => {
   void main() {
     vec4 baseColor = texture2D(baseColorTexture, vTexCoord) * baseColorFactor;
     float diffuse = light.diffuseIntensity * max(0.0, dot(vNormal, -light.direction));
-    gl_FragColor = vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
+    gl_FragColor = drawHitmap ? hitmapColor : vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
   }
   `,
   });
@@ -195,6 +199,8 @@ const drawModel = (regl) => {
           props.scale ? pointToVec3(props.scale) : [1, 1, 1]
         ),
       globalAlpha: (context, props) => (props.alpha == null ? 1 : props.alpha),
+      hitmapColor: (context, props) => intToRGB(props.id),
+      drawHitmap: (context, props) => !!props.drawHitmap,
     },
   });
 
@@ -208,7 +214,13 @@ const drawModel = (regl) => {
 
 type Props = {|
   model: string | (() => Promise<Object>),
+  onClick?: MouseHandler,
+  onDoubleClick?: MouseHandler,
+  onMouseDown?: MouseHandler,
+  onMouseMove?: MouseHandler,
+  onMouseUp?: MouseHandler,
   children: {|
+    id?: number,
     pose: Pose,
     scale: Scale,
     alpha: ?number,
@@ -220,7 +232,6 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
     loadedModel: undefined,
   };
   _context = undefined;
-
   async _loadModel(): Promise<Object> {
     const { model } = this.props;
     if (typeof model === "function") {
@@ -250,15 +261,30 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
   }
 
   render() {
+    const { children, ...rest } = this.props;
+
     const { loadedModel } = this.state;
     if (!loadedModel) {
       return null;
     }
+
+    const drawHitmap =
+      children.id && (rest.onDoubleClick || rest.onMouseDown || rest.onMouseUp || rest.onMouseMove || rest.onClick);
+    const sharedDrawProps = { model: loadedModel, ...children };
+
     return (
       <WorldviewReactContext.Consumer>
         {(context) => {
           this._context = context;
-          return <Command reglCommand={drawModel} drawProps={{ model: loadedModel, ...this.props.children }} />;
+          return (
+            <Command
+              {...rest}
+              reglCommand={drawModel}
+              drawProps={sharedDrawProps}
+              hitmapProps={drawHitmap ? { ...sharedDrawProps, drawHitmap } : undefined}
+              getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}
+            />
+          );
         }}
       </WorldviewReactContext.Consumer>
     );

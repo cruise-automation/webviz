@@ -261,18 +261,13 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
   }
 
   render() {
-    const {
-      children,
-      children: { id, ...restOfChildren },
-      ...rest
-    } = this.props;
-
+    const { children, ...rest } = this.props;
     const { loadedModel } = this.state;
     if (!loadedModel) {
       return null;
     }
 
-    const drawHitmap = id != null;
+    const drawHitmap = children.id != null;
 
     return (
       <WorldviewReactContext.Consumer>
@@ -282,7 +277,7 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
             <Command
               {...rest}
               reglCommand={drawModel}
-              drawProps={{ ...restOfChildren, model: loadedModel }}
+              drawProps={{ ...children, id: null, model: loadedModel }}
               hitmapProps={drawHitmap ? { ...children, model: loadedModel } : undefined}
               getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}
             />

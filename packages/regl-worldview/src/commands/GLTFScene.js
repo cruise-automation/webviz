@@ -200,7 +200,7 @@ const drawModel = (regl) => {
         ),
       globalAlpha: (context, props) => (props.alpha == null ? 1 : props.alpha),
       hitmapColor: (context, props) => intToRGB(props.id),
-      drawHitmap: (context, props) => !!props.drawHitmap,
+      drawHitmap: (context, props) => props.id != null,
     },
   });
 
@@ -262,15 +262,12 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
 
   render() {
     const { children, ...rest } = this.props;
-
     const { loadedModel } = this.state;
     if (!loadedModel) {
       return null;
     }
 
-    const drawHitmap =
-      children.id && (rest.onDoubleClick || rest.onMouseDown || rest.onMouseUp || rest.onMouseMove || rest.onClick);
-    const sharedDrawProps = { model: loadedModel, ...children };
+    const drawHitmap = children.id != null;
 
     return (
       <WorldviewReactContext.Consumer>
@@ -280,8 +277,8 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
             <Command
               {...rest}
               reglCommand={drawModel}
-              drawProps={sharedDrawProps}
-              hitmapProps={drawHitmap ? { ...sharedDrawProps, drawHitmap } : undefined}
+              drawProps={{ ...children, id: null, model: loadedModel }}
+              hitmapProps={drawHitmap ? { ...children, model: loadedModel } : undefined}
               getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}
             />
           );

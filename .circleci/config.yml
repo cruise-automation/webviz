@@ -21,7 +21,7 @@ jobs:
             - regl-worldview-deps-{{ checksum "packages/regl-worldview/package-lock.json" }}
             - regl-worldview-deps-
 
-      - run: docker run -v `pwd`:`pwd` -w `pwd` -it --rm -e CI cruise/webviz-ci:0.0.6 npm run ci
+      - run: docker run -v `pwd`:`pwd` -w `pwd` -it --rm -e CI cruise/webviz-ci:0.0.7 npm run ci
 
       - save_cache:
           paths: ["node_modules"]

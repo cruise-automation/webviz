@@ -232,6 +232,8 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
     loadedModel: undefined,
   };
   _context = undefined;
+  _drawModel = undefined;
+
   async _loadModel(): Promise<Object> {
     const { model } = this.props;
     if (typeof model === "function") {
@@ -248,6 +250,7 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
   }
 
   componentDidMount() {
+    this._drawModel = (regl) => drawModel(regl);
     this._loadModel()
       .then((loadedModel) => {
         this.setState({ loadedModel });
@@ -276,7 +279,7 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
           return (
             <Command
               {...rest}
-              reglCommand={drawModel}
+              reglCommand={this._drawModel}
               drawProps={{ ...children, id: null, model: loadedModel }}
               hitmapProps={drawHitmap ? { ...children, model: loadedModel } : undefined}
               getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}

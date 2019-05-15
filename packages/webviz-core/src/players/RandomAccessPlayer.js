@@ -83,6 +83,9 @@ export default class RandomAccessPlayer implements Player {
           this._emitState();
         },
         addTopicsCallback: (topicsCallback: (string[]) => void) => {
+          // Register any currently set subscriptions; otherwise, we wont
+          // alert the provider of new topics until the next time our subscriptions change.
+          topicsCallback(Array.from(this._subscribedTopics));
           this._topicsCallbacks.push(topicsCallback);
         },
       })

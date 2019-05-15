@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import { flatten } from "lodash";
-import memoizeOne from "memoize-one";
+import microMemoize from "micro-memoize";
 import type { Time } from "rosbag";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -41,7 +41,7 @@ export default class NodePlayer implements Player {
     this._nodeStates = this._originalNodeStates = this._nodeDefinitions.map((def) => def.defaultState);
   }
 
-  _getTopics = memoizeOne((topics: Topic[]) => [
+  _getTopics = microMemoize((topics: Topic[]) => [
     ...topics,
     ...flatten(this._nodeDefinitions.map((nodeDefinition) => nodeDefinition.outputs)).map(({ datatype, name }) => ({
       name,
@@ -49,7 +49,7 @@ export default class NodePlayer implements Player {
     })),
   ]);
 
-  _getDatatypes = memoizeOne((datatypes: RosDatatypes) => {
+  _getDatatypes = microMemoize((datatypes: RosDatatypes) => {
     let newDatatypes = { ...datatypes };
     for (const nodeDefinition of this._nodeDefinitions) {
       newDatatypes = { ...nodeDefinition.datatypes, ...newDatatypes };

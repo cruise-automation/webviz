@@ -1,0 +1,21 @@
+@import "~webviz-core/src/styles/mixins.module.scss";
+@import "~webviz-core/src/styles/colors.module.scss";
+
+.dropdown {
+  .button {
+    width: 100%;
+  }
+}
+
+.container {
+  @include sans-serif;
+
+  .topicName {
+    @extend %modal-subtitle;
+    word-wrap: break-word;
+  }
+
+  .datatype {
+    padding-bottom: 20px;
+  }
+}

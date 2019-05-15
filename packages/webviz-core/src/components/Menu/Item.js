@@ -14,10 +14,12 @@ import * as React from "react";
 
 import styles from "./index.module.scss";
 import Icon from "webviz-core/src/components/Icon";
+import Tooltip from "webviz-core/src/components/Tooltip";
 
 type ItemProps = {
   className?: string,
   checked?: boolean,
+  tooltip?: React.Node,
   children: React.Node,
   icon?: React.Node,
   disabled?: boolean,
@@ -27,24 +29,29 @@ type ItemProps = {
 };
 
 const Item = (props: ItemProps) => {
-  const { className = "", checked, children, icon, onClick, disabled, hasSubMenu, direction = "left" } = props;
+  const { className = "", checked, children, icon, onClick, disabled, hasSubMenu, direction = "left", tooltip } = props;
   const classes = cx(styles.item, className, {
     [styles.active]: checked && !disabled,
     [styles.disabled]: disabled,
   });
 
-  return (
+  const item = (
     <div className={classes} onClick={disabled ? noop : onClick}>
-      {hasSubMenu && direction === "left" && <ChevronLeftIcon className={styles.submenuIcon} />}
+      {hasSubMenu && direction === "left" && <ChevronLeftIcon className={styles.submenuIconLeft} />}
       {icon && (
         <span className={styles.icon}>
           <Icon>{icon}</Icon>
         </span>
       )}
       <div style={{ flex: "1 1 auto" }}>{children}</div>
-      {hasSubMenu && direction === "right" && <ChevronRightIcon className={styles.submenuIcon} />}
+      {hasSubMenu && direction === "right" && <ChevronRightIcon className={styles.submenuIconRight} />}
     </div>
   );
+
+  if (tooltip) {
+    return <Tooltip contents={tooltip}>{item}</Tooltip>;
+  }
+  return item;
 };
 
 Item.displayName = "Menu.Item";

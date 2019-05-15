@@ -12,6 +12,9 @@ import { Component } from "react";
 import { DragSource } from "react-dnd";
 import { MosaicDragType, createDragToUpdates } from "react-mosaic-component";
 
+import { getPanelTypeFromMosiac } from "webviz-core/src/components/PanelToolbar/utils";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+
 const dragSource = {
   beginDrag: (props, monitor, component) => {
     // TODO: Actually just delete instead of hiding
@@ -29,9 +32,12 @@ const dragSource = {
     // If the hide call hasn't happened yet, cancel it
     window.clearTimeout(hideTimer);
 
+    const { mosaicWindowActions, mosaicActions } = component.context;
+    const type = getPanelTypeFromMosiac(mosaicWindowActions, mosaicActions);
+
+    getGlobalHooks().onPanelDrag(type);
     const ownPath = component.context.mosaicWindowActions.getPath();
     const dropResult = monitor.getDropResult() || {};
-    const { mosaicActions } = component.context;
     const { position, path: destinationPath } = dropResult;
     if (position != null && destinationPath != null && !_.isEqual(destinationPath, ownPath)) {
       mosaicActions.updateTree(createDragToUpdates(mosaicActions.getRoot(), ownPath, destinationPath, position));

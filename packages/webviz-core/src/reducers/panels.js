@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { pick } from "lodash";
+import { isEmpty, pick } from "lodash";
 import { getLeaves } from "react-mosaic-component";
 
 import type { ActionTypes } from "webviz-core/src/actions";
@@ -64,15 +64,17 @@ function savePanelConfig(state: PanelsState, payload: SaveConfigPayload): Panels
   const { id, config } = payload;
 
   // imutable update of key/value pairs
-  const newProps = {
-    ...state.savedProps,
-    [id]: {
-      // merge new config with old one
-      // similar to how this.setState merges props
-      ...state.savedProps[id],
-      ...config,
-    },
-  };
+  const newProps = payload.override
+    ? { ...state.savedProps, [id]: config }
+    : {
+        ...state.savedProps,
+        [id]: {
+          // merge new config with old one
+          // similar to how this.setState merges props
+          ...state.savedProps[id],
+          ...config,
+        },
+      };
 
   // save the new saved panel props in storage
   storage.set(PANEL_PROPS_KEY, newProps);
@@ -84,7 +86,12 @@ function savePanelConfig(state: PanelsState, payload: SaveConfigPayload): Panels
 }
 
 function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload) {
-  const migratedPayload = getGlobalHooks().migratePanels(payload);
+  let migratedPayload = getGlobalHooks().migratePanels(payload);
+  if (isEmpty(migratedPayload)) {
+    storage.set(LAYOUT_KEY, migratedPayload);
+    migratedPayload = getDefaultState();
+  }
+
   storage.set(LAYOUT_KEY, migratedPayload.layout);
   storage.set(PANEL_PROPS_KEY, migratedPayload.savedProps);
   storage.set(GLOBAL_DATA_KEY, migratedPayload.globalData || {});

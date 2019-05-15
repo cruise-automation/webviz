@@ -135,6 +135,11 @@ export default class Slider extends React.Component<Props> {
   render() {
     const { min, max, value, renderSlider, draggable } = this.props;
     const { mouseDown } = this;
+
+    if (max <= min) {
+      throw new Error(`Invalid range: ${min}, ${max}`);
+    }
+
     return (
       <StyledSlider innerRef={(el) => (this.el = el)} onClick={this._onClick} onMouseDown={this._onMouseDown}>
         <DocumentEvents

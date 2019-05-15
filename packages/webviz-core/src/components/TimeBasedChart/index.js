@@ -324,7 +324,6 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
           },
         })),
       },
-      events: ["click"],
       onClick: this.props.onClick,
       pan: { enabled: true },
       zoom: { enabled: this.props.zoom },

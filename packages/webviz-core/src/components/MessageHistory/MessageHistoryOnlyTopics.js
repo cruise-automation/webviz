@@ -11,7 +11,8 @@ import * as React from "react";
 import type { Time } from "rosbag";
 import uuid from "uuid";
 
-import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
+import { getMessagesWithoutPrefix, getFilteredFormattedTopics } from "./topicPrefixUtils";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PerfMonitor from "webviz-core/src/components/PerfMonitor";
 import { getTopicNames, shallowEqualSelector } from "webviz-core/src/selectors";
 import type { Message, SubscribePayload, Topic } from "webviz-core/src/types/players";
@@ -79,7 +80,6 @@ function loadMessages(messages: Message[], lastSeekTime: number, startTime: Time
   }
   gLastMessages = messages;
 
-  // $FlowFixMe - Flow does not like Object.values
   const newMessagesByTopic = groupBy(messages, (message) => message.topic);
   for (const topic of Object.keys(newMessagesByTopic)) {
     if (!gComponentsByTopic[topic]) {
@@ -117,6 +117,7 @@ type Props = {
   // Use an object to set a specific history size for specific topics.
   historySize: number | { [topicName: string]: number },
   imageScale?: number,
+  topicPrefix: string,
 
   // By default message history will try to subscribe to topics
   // even if they don't existing in the player topic's list.
@@ -173,7 +174,7 @@ class MessageHistoryOnlyTopics extends React.Component<Props & MessagePipelinePr
     historySize: Infinity,
   };
 
-  constructor(props) {
+  constructor(props: Props & MessagePipelineProps) {
     super(props);
     this._updateSubscriptions(props.topics, props.playerTopics);
     loadMessages(props.messages, props.lastSeekTime, props.startTime);
@@ -293,18 +294,32 @@ class MessageHistoryOnlyTopics extends React.Component<Props & MessagePipelinePr
 }
 
 export default function MessageHistoryOnlyTopicsConnected(props: Props) {
+  const context = useMessagePipeline();
+  const messages = context.playerState.activeData ? context.playerState.activeData.messages : [];
+  const topics = context.playerState.activeData ? context.playerState.activeData.topics : [];
+  const msgsWithoutPrefix = getMessagesWithoutPrefix(messages, props.topicPrefix);
+
+  const topicsWithoutPrefix = React.useMemo(
+    () => {
+      return getFilteredFormattedTopics(topics, props.topicPrefix);
+    },
+    [topics, props.topicPrefix]
+  );
+
   return (
-    <MessagePipelineConsumer>
-      {(context: MessagePipelineContext) => (
-        <MessageHistoryOnlyTopics
-          {...props}
-          messages={context.playerState.activeData ? context.playerState.activeData.messages : []}
-          lastSeekTime={context.playerState.activeData ? context.playerState.activeData.lastSeekTime : 0}
-          startTime={context.playerState.activeData ? context.playerState.activeData.startTime : { sec: 0, nsec: 0 }}
-          playerTopics={context.playerState.activeData ? context.playerState.activeData.topics : []}
-          setSubscriptions={context.setSubscriptions}
-        />
-      )}
-    </MessagePipelineConsumer>
+    <MessageHistoryOnlyTopics
+      key={props.topicPrefix}
+      {...props}
+      messages={msgsWithoutPrefix}
+      lastSeekTime={context.playerState.activeData ? context.playerState.activeData.lastSeekTime : 0}
+      startTime={context.playerState.activeData ? context.playerState.activeData.startTime : { sec: 0, nsec: 0 }}
+      playerTopics={topicsWithoutPrefix}
+      setSubscriptions={(id: string, subscriptionsWithoutPrefix: SubscribePayload[]) => {
+        const subscriptionsWithPrefix = subscriptionsWithoutPrefix.map((subscription) => {
+          return { ...subscription, topic: props.topicPrefix + subscription.topic };
+        });
+        return context.setSubscriptions(id, subscriptionsWithPrefix);
+      }}
+    />
   );
 }

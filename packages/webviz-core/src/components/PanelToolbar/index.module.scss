@@ -19,12 +19,19 @@ $spacing: 4px;
   padding: 2px 2px 2px 6px;
 }
 
+.panelName {
+  font-size: 10px;
+  opacity: 0.5;
+  margin-right: 4px;
+}
+
 .panelToolbarContainer {
   transition: transform 80ms ease-in-out, opacity 80ms ease-in-out;
   display: flex;
   flex: 0 0 auto;
   flex-direction: row;
-  background-color: $toolbar;
+  justify-content: flex-end;
+  background-color: $toolbar-fixed;
   padding: 4px;
 
   &.floating {
@@ -33,28 +40,47 @@ $spacing: 4px;
     // leave some room for possible scrollbar
     padding-right: 8px;
     top: 0;
+    width: 100%;
     z-index: 5000;
     background-color: transparent;
     transform: translateY(-10px);
     opacity: 0;
+    pointer-events: none;
+
+    * {
+      pointer-events: all;
+    }
 
     &.hasChildren {
       left: 0;
-      background-color: $toolbar;
+      background-color: $toolbar-fixed;
     }
 
     &:not(.hasChildren) .iconContainer {
       background-color: $toolbar;
       border-radius: 4px;
-      box-shadow: 0 6px 40px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 6px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  &:not(.floating) {
+    min-height: 30px;
+
+    .iconContainer {
+      display: none;
+
+      :global(.mosaic-window):hover & {
+        display: flex;
+      }
     }
 
-    &.containsOpen {
-      transform: translateY(0);
+    &.containsOpen .iconContainer {
+      display: flex;
       opacity: 1;
     }
   }
 
+  &.floating.containsOpen,
   :global(.mosaic-window):hover & {
     transform: translateY(0);
     opacity: 1;
@@ -64,7 +90,7 @@ $spacing: 4px;
 .icon,
 .dragIcon {
   font-size: 14px;
-  margin: 0 0.25em;
+  margin: 0 0.2em;
 }
 
 .dragIcon {

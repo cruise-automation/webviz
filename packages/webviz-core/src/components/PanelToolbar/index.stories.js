@@ -13,16 +13,19 @@ import { Provider } from "react-redux";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import PanelToolbar from "./index";
+import ChildToggle from "webviz-core/src/components/ChildToggle";
+import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
 import rootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 
-class MosaicWrapper extends React.Component<{| layout?: any, children: React.Node |}> {
+class MosaicWrapper extends React.Component<{| layout?: any, children: React.Node, width?: number |}> {
   render() {
+    const { width = 300 } = this.props;
     return (
       <Mosaic
         renderTile={(id, path) => (
           <MosaicWindow path={path} toolbarControls={<div />}>
-            <div style={{ width: 300, height: 300, padding: 30, position: "relative" }}>
+            <div style={{ width, height: 300, padding: 30, position: "relative" }}>
               {id === "dummy" ? this.props.children : "Sibling Panel"}
             </div>
           </MosaicWindow>
@@ -40,9 +43,12 @@ class PanelToolbarWithOpenMenu extends React.PureComponent<{}> {
       <div
         ref={(el) => {
           if (el) {
-            const gearIcon = el.querySelectorAll("svg")[1];
-            // $FlowFixMe
-            gearIcon.parentElement.click();
+            // wait for react-container-dimensions
+            setImmediate(() => {
+              const gearIcon = el.querySelectorAll("svg")[1];
+              // $FlowFixMe
+              gearIcon.parentElement.click();
+            });
           }
         }}>
         <PanelToolbar helpContent={<div />}>
@@ -53,13 +59,42 @@ class PanelToolbarWithOpenMenu extends React.PureComponent<{}> {
   }
 }
 
+// Keep PanelToolbar visible by rendering an empty ChildToggle inside the toolbar
+function KeepToolbarVisibleHack() {
+  return (
+    <ChildToggle isOpen={true} onToggle={() => {}} position="above">
+      <span />
+      <span />
+    </ChildToggle>
+  );
+}
+
 storiesOf("<PanelToolbar>", module)
   .addDecorator(withScreenshot())
-  .add("non-floating", () => {
+  .addDecorator((childrenRenderFcn) => {
+    // Provide all stories with PanelContext and redux state
+    return (
+      <Provider store={configureStore(rootReducer)}>
+        <MockPanelContextProvider>{childrenRenderFcn()}</MockPanelContextProvider>
+      </Provider>
+    );
+  })
+  .add("non-floating (narrow)", () => {
     return (
       <MosaicWrapper>
         <PanelToolbar helpContent={<div />}>
           <div style={{ width: "100%", lineHeight: "22px", paddingLeft: 5 }}>Some controls here</div>
+          <KeepToolbarVisibleHack />
+        </PanelToolbar>
+      </MosaicWrapper>
+    );
+  })
+  .add("non-floating (wide with panel name)", () => {
+    return (
+      <MosaicWrapper width={500}>
+        <PanelToolbar helpContent={<div />}>
+          <div style={{ width: "100%", lineHeight: "22px", paddingLeft: 5 }}>Some controls here</div>
+          <KeepToolbarVisibleHack />
         </PanelToolbar>
       </MosaicWrapper>
     );
@@ -68,11 +103,9 @@ storiesOf("<PanelToolbar>", module)
     class Story extends React.Component<{}> {
       render() {
         return (
-          <Provider store={configureStore(rootReducer)}>
-            <MosaicWrapper>
-              <PanelToolbarWithOpenMenu />
-            </MosaicWrapper>
-          </Provider>
+          <MosaicWrapper>
+            <PanelToolbarWithOpenMenu />
+          </MosaicWrapper>
         );
       }
     }
@@ -82,11 +115,9 @@ storiesOf("<PanelToolbar>", module)
     class Story extends React.Component<{}> {
       render() {
         return (
-          <Provider store={configureStore(rootReducer)}>
-            <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "X" }}>
-              <PanelToolbarWithOpenMenu />
-            </MosaicWrapper>
-          </Provider>
+          <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "X" }}>
+            <PanelToolbarWithOpenMenu />
+          </MosaicWrapper>
         );
       }
     }

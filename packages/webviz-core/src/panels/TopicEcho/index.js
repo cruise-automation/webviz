@@ -249,12 +249,16 @@ class TopicEcho extends React.PureComponent<Props, State> {
           <span>
             {itemLabel}
             {smallNumberArrayStr && (
-              <React.Fragment>
+              <>
                 {smallNumberArrayStr}
-                <Icon fade className={styles.icon} onClick={() => console.log(itemValue)} tooltip="Log data to console">
+                <Icon
+                  fade
+                  className={styles.icon}
+                  onClick={() => console.log(itemValue)}
+                  tooltip="Log data to browser console">
                   <ConsoleLineIcon />
                 </Icon>
-              </React.Fragment>
+              </>
             )}
             {valueAction && this._renderIcons(valueAction, basePath)}
           </span>
@@ -370,10 +374,10 @@ class TopicEcho extends React.PureComponent<Props, State> {
     return (
       <Flex col clip style={{ position: "relative" }}>
         <PanelToolbar helpContent={helpContent}>
-          <MessageHistory.Input path={topicName} onChange={this._onChange} inputStyle={{ height: "100%" }} />
-          <Icon tooltip={expandAll ? "Collapse all" : "Expand all"} large fade onClick={this._toggleExpandAll}>
+          <Icon tooltip={expandAll ? "Collapse all" : "Expand all"} medium fade onClick={this._toggleExpandAll}>
             {expandAll ? <LessIcon /> : <MoreIcon />}
           </Icon>
+          <MessageHistory.Input path={topicName} onChange={this._onChange} inputStyle={{ height: "100%" }} />
         </PanelToolbar>
         {this._renderTopic()}
       </Flex>

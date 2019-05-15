@@ -29,6 +29,7 @@ const Container = styled.div`
     color: ${colors.highlight};
     opacity: 0.5;
     background: transparent;
+    padding: 0;
   }
 `;
 

@@ -4,10 +4,8 @@
   "description": "A reusable component for rendering 2D and 3D views using regl",
   "license": "Apache-2.0",
   "repository": "cruise-automation/webviz/tree/master/packages/regl-worldview",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.esm.js",
-  "browser": "dist/index.esm.js",
-  "unpkg": "dist/index.umd.js",
+  "main": "./src/index.js",
+  "source": "./src/index.js",
   "files": [
     "src",
     "dist",
@@ -35,6 +33,10 @@
     "reselect": "^3.0.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.0.0-0",
+    "@babel/plugin-proposal-class-properties": "^7.2.3",
+    "@babel/preset-flow": "^7.0.0",
+    "@babel/preset-react": "^7.0.0",
     "flow-bin": "0.80.0"
   },
   "peerDependencies": {

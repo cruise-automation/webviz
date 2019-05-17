@@ -308,17 +308,7 @@ export class WorldviewContext {
   };
 
   _instrumentCommands(regl: any) {
-    if (getNodeEnv() === "production") {
-      return regl;
-    }
-    return new Proxy(regl, {
-      apply: (target, thisArg, args) => {
-        const command = target(...args);
-        if (typeof command.stats === "object") {
-          this.reglCommandObjects.push(command);
-        }
-        return command;
-      },
-    });
+    // Never instrument; this causes a memory leak
+    return regl;
   }
 }

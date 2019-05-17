@@ -1,0 +1,19 @@
+{
+  "presets": [
+    "@babel/react",
+    "@babel/flow",
+    ["env", {
+      "targets": {
+        "browsers": "last 2 Firefox versions, last 2 Chrome versions, last 2 Edge versions, last 2 Safari versions"
+      }
+    }]
+  ],
+  "env": {
+    "test": {
+      "presets": ["@babel/react", "@babel/flow", ["@babel/preset-env"]]
+    }
+  },
+  "plugins": [
+    "@babel/plugin-proposal-class-properties",
+  ]
+}

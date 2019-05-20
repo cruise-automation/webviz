@@ -40,7 +40,7 @@ export default class AppMenu extends Component<Props, State> {
     const { isOpen } = this.state;
     return (
       <ChildToggle position="below" onToggle={this.onToggle} isOpen={isOpen}>
-        <Icon medium fade active={isOpen} tooltip="Add Panel">
+        <Icon small fade active={isOpen} tooltip="Add Panel">
           <PlusBoxIcon />
         </Icon>
         <Menu>

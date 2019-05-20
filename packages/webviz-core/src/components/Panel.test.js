@@ -10,10 +10,12 @@ import { mount } from "enzyme";
 import * as React from "react";
 
 import { savePanelConfig } from "webviz-core/src/actions/panels";
+import { getFilteredFormattedTopics } from "webviz-core/src/components/MessageHistory/topicPrefixUtils";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import rootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
+import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
 
 function getDummyPanel(renderFn) {
   type DummyConfig = {
@@ -118,4 +120,20 @@ describe("Panel", () => {
     store.dispatch(savePanelConfig({ id: "someOtherId", config: {} }));
     expect(renderFn.mock.calls.length).toEqual(1);
   });
+});
+
+it("filters and formats topics appropriately, according to topicPrefix", () => {
+  const topics = [
+    { name: "/topicA", datatype: "some/datatype" },
+    { name: "/other_prefix/topicA", datatype: "some/datatype" },
+    { name: "/topicB", datatype: "some/datatype" },
+    { name: "/other_prefix/topicB", datatype: "some/datatype" },
+    { name: "/topicC", datatype: "some/datatype" },
+    { name: "/webviz_bag_2/topicC", datatype: "some/datatype" },
+    { name: "/topicD", datatype: "some/datatype" },
+    { name: "/webviz_bag_2/topicD", datatype: "some/datatype" },
+  ];
+
+  expect(getFilteredFormattedTopics(topics, SECOND_BAG_PREFIX).map((t) => t.name)).toEqual(["/topicC", "/topicD"]);
+  expect(getFilteredFormattedTopics(topics, "")).toEqual(topics);
 });

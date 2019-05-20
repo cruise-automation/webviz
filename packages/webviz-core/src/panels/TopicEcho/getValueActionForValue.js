@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { last } from "lodash";
+import memoizeWeak from "memoize-weak";
 
 import { type MessagePathStructureItem, isTypicalFilterName } from "webviz-core/src/components/MessageHistory";
 
@@ -89,3 +90,41 @@ export function getValueActionForValue(
     };
   }
 }
+
+// Given root structureItem (e.g. a message definition),
+// and a key path (comma-joined) to navigate down, return strutureItem for the field at that path
+// Using comma-joined path to allow memoization of this function
+export const getStructureItemForPath = memoizeWeak(
+  (rootStructureItem: ?MessagePathStructureItem, keyPathJoined: string): ?MessagePathStructureItem => {
+    // split the path and parse into numbers and strings
+    const keyPath: (number | string)[] = [];
+    for (const part: string of keyPathJoined.split(",")) {
+      if (!isNaN(part)) {
+        keyPath.push(parseInt(part));
+      } else {
+        keyPath.push(part);
+      }
+    }
+    let structureItem: ?MessagePathStructureItem = rootStructureItem;
+    // Walk down the keyPath, while updating `value` and `structureItem`
+    for (const pathItem: number | string of keyPath) {
+      if (structureItem == null) {
+        break;
+      } else if (structureItem.structureType === "message" && typeof pathItem === "string") {
+        structureItem = structureItem.nextByName[pathItem];
+      } else if (structureItem.structureType === "array" && typeof pathItem === "number") {
+        structureItem = structureItem.next;
+        if (!structureItem) {
+          break;
+        }
+      } else if (structureItem.structureType === "primitive") {
+        // ROS has some primitives that contain nested data (time+duration). We currently don't
+        // support looking inside them.
+        return structureItem;
+      } else {
+        throw new Error(`Invalid strutureType: ${structureItem.structureType} for value/pathItem.`);
+      }
+    }
+    return structureItem;
+  }
+);

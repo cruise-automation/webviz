@@ -8,20 +8,28 @@
 
 import CloseIcon from "@mdi/svg/svg/close.svg";
 import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
+import GridLargeIcon from "@mdi/svg/svg/grid-large.svg";
 import cx from "classnames";
+import { omit } from "lodash";
 import PropTypes from "prop-types";
 import * as React from "react";
 import DocumentEvents from "react-document-events";
 import KeyListener from "react-key-listener";
-import { getNodeAtPath } from "react-mosaic-component";
+import { getNodeAtPath, isParent } from "react-mosaic-component";
 import { connect } from "react-redux";
 
 import styles from "./Panel.module.scss";
+import Button from "webviz-core/src/components/Button";
+import Dropdown from "webviz-core/src/components/Dropdown";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
+import { Item } from "webviz-core/src/components/Menu";
+import { getFilteredFormattedTopics } from "webviz-core/src/components/MessageHistory/topicPrefixUtils";
 import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
 import PanelContext from "webviz-core/src/components/PanelContext";
-import PanelList from "webviz-core/src/panels/PanelList";
+import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDragHandle";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import PanelList, { getPanelListItemsByType } from "webviz-core/src/panels/PanelList";
 import type { State as ReduxState } from "webviz-core/src/reducers";
 import type { SaveConfigPayload, PanelConfig, SaveConfig } from "webviz-core/src/types/panels";
 import type { Topic } from "webviz-core/src/types/players";
@@ -39,9 +47,11 @@ import { getPanelTypeFromId } from "webviz-core/src/util";
 //
 // The panel also gets wrapped in an error boundary and flex box.
 
+export const TOPIC_PREFIX_CONFIG_KEY = "webviz___topicPrefix";
+
 type Props<Config> = {| childId?: string, config?: Config |};
 type State = {
-  fullScreenKeyPressed: boolean,
+  quickActionsKeyPressed: boolean,
   fullScreen: boolean,
   removePanelKeyPressed: boolean,
 };
@@ -49,6 +59,74 @@ type State = {
 interface PanelStatics<Config> {
   panelType: string;
   defaultConfig: Config;
+  canSetTopicPrefix?: boolean;
+}
+
+const getTopicPrefixIconPrefix = (topicPrefix?: string) => {
+  return (
+    <span style={{ marginLeft: 3, marginTop: 3 }}>
+      {getGlobalHooks().perPanelHooks().Panel.topicPrefixes[topicPrefix].iconPrefix}
+    </span>
+  );
+};
+
+const getTopicPrefixTooltip = (topicPrefix?: string) => {
+  return getGlobalHooks().perPanelHooks().Panel.topicPrefixes[topicPrefix].tooltipText;
+};
+
+const getTopicPrefixOptionText = (topicPrefix?: string) => {
+  return getGlobalHooks().perPanelHooks().Panel.topicPrefixes[topicPrefix].labelText;
+};
+
+const getTopicPrefixIcon = (topicPrefix?: string) => {
+  const IconComponent = getGlobalHooks().perPanelHooks().Panel.topicPrefixes[topicPrefix].icon;
+  return <IconComponent style={{ height: 14, marginLeft: -5, marginTop: 2 }} />;
+};
+
+const TopicPrefixDropdown = (props: {|
+  topicPrefix: string,
+  saveTopicPrefix: (newTopicPrefix: string) => Function,
+|}) => {
+  const { topicPrefix, saveTopicPrefix } = props;
+  return (
+    <Dropdown
+      position="above"
+      toggleComponent={
+        <div
+          data-test-topic-prefix-toggle
+          className={cx(styles.topicPrefixLabel, {
+            [styles.hasEmptyTopicPrefix]: !topicPrefix,
+          })}>
+          {getTopicPrefixIconPrefix(topicPrefix)}
+          {getTopicPrefixIcon(topicPrefix)}
+        </div>
+      }>
+      <Item key="title">TOPICS TO SHOW:</Item>
+      {Object.keys(getGlobalHooks().perPanelHooks().Panel.topicPrefixes).map((prefix) => {
+        return (
+          <Item
+            key={prefix || "none"}
+            checked={topicPrefix === prefix}
+            icon={getTopicPrefixIcon(prefix)}
+            tooltip={prefix && getTopicPrefixTooltip(prefix)}
+            onClick={saveTopicPrefix(prefix)}>
+            {getTopicPrefixOptionText(prefix)}
+          </Item>
+        );
+      })}
+    </Dropdown>
+  );
+};
+
+export class MockPanelContextProvider extends React.Component<{ topicPrefix?: string, children: React.Node }> {
+  render() {
+    const { topicPrefix = "", children } = this.props;
+    return (
+      <PanelContext.Provider value={{ type: "foo", id: "bar", title: "Foo Panel", topicPrefix }}>
+        {children}
+      </PanelContext.Provider>
+    );
+  }
 }
 
 export default function Panel<Config: PanelConfig>(
@@ -72,6 +150,7 @@ export default function Panel<Config: PanelConfig>(
   type ReduxMappedProps = {|
     childId?: string,
     config: Config,
+    isOnlyPanel: boolean,
   |};
 
   type PipelineProps = {|
@@ -81,6 +160,7 @@ export default function Panel<Config: PanelConfig>(
   |};
 
   const defaultConfig: Config = PanelComponent.defaultConfig;
+  const canSetTopicPrefix: boolean = PanelComponent.canSetTopicPrefix || false;
 
   class UnconnectedPanel extends React.PureComponent<
     ReduxMappedProps & PipelineProps & {| savePanelConfig: (SaveConfigPayload) => void |},
@@ -94,11 +174,14 @@ export default function Panel<Config: PanelConfig>(
       store: PropTypes.any,
     };
 
-    state = { fullScreenKeyPressed: false, fullScreen: false, removePanelKeyPressed: false };
+    state = { quickActionsKeyPressed: false, fullScreen: false, removePanelKeyPressed: false };
 
     // Save the config, by mixing in the partial config with the current config, or if that does
     // not exist, with the `defaultConfig`. That way we always save complete configs.
     _saveConfig = (config: $Shape<Config>, options: { keepLayoutInUrl?: boolean } = {}) => {
+      if (config[TOPIC_PREFIX_CONFIG_KEY]) {
+        throw new Error("Panel is not allowed to set TOPIC_PREFIX_CONFIG_KEY");
+      }
       if (this.props.childId) {
         this.props.savePanelConfig({
           id: this.props.childId,
@@ -106,6 +189,19 @@ export default function Panel<Config: PanelConfig>(
           config: { ...defaultConfig, ...this.props.config, ...config },
         });
       }
+    };
+
+    // this is same as above _saveConfig, but is internal to this file / allows you to save the TOPIC_PREFIX_CONFIG_KEY
+    _saveTopicPrefix = (newTopicPrefix: string) => {
+      return () => {
+        if (this.props.childId) {
+          this.props.savePanelConfig({
+            id: this.props.childId,
+            silent: false,
+            config: { ...this.props.config, ...{ [TOPIC_PREFIX_CONFIG_KEY]: newTopicPrefix } },
+          });
+        }
+      };
     };
 
     // Open a panel next to the current panel, of the specified `panelType`. If such a panel already
@@ -140,44 +236,57 @@ export default function Panel<Config: PanelConfig>(
     };
 
     _onOverlayClick = () => {
-      if (this.state.fullScreenKeyPressed) {
-        this.setState((state) => {
-          return { fullScreen: state.fullScreenKeyPressed };
-        });
-      } else if (this.state.removePanelKeyPressed) {
-        const { mosaicActions, mosaicWindowActions } = this.context;
-        mosaicActions.remove(mosaicWindowActions.getPath());
+      if (this.state.quickActionsKeyPressed) {
+        this.setState({ fullScreen: true });
       }
     };
 
-    _exitFullScreen = () => {
-      this.setState({ fullScreenKeyPressed: false, fullScreen: false });
+    _closePanel = () => {
+      const { mosaicActions, mosaicWindowActions } = this.context;
+      mosaicActions.remove(mosaicWindowActions.getPath());
     };
 
-    _exitRemovePanelMode = () => {
-      this.setState({ removePanelKeyPressed: false });
+    _splitPanel = () => {
+      const { mosaicWindowActions } = this.context;
+      mosaicWindowActions.split({ type: PanelComponent.panelType });
+    };
+
+    _keyUpTimeout = null;
+
+    _exitFullScreen = (e) => {
+      // When using Synergy, holding down a key leads to repeated keydown/up events, so give the
+      // keydown events a chance to cancel a pending keyup.
+      this._keyUpTimeout = setTimeout(() => {
+        this.setState({ quickActionsKeyPressed: false, fullScreen: false });
+        this._keyUpTimeout = null;
+      }, 0);
     };
 
     _keyUpHandlers = {
       "`": this._exitFullScreen,
-      c: this._exitRemovePanelMode,
     };
 
     _keyDownHandlers = {
-      "`": () => {
-        this.setState({ fullScreenKeyPressed: true });
-      },
-      c: () => {
-        this.setState({ removePanelKeyPressed: true });
+      "`": (e) => {
+        if (!e.repeat || !this.state.quickActionsKeyPressed) {
+          clearTimeout(this._keyUpTimeout);
+          this.setState({ quickActionsKeyPressed: true });
+        }
       },
     };
 
     render() {
-      const { topics, datatypes, capabilities, childId } = this.props;
-      const { fullScreenKeyPressed, fullScreen, removePanelKeyPressed } = this.state;
+      const { topics, datatypes, capabilities, childId, isOnlyPanel, config = {} } = this.props;
+      const { quickActionsKeyPressed, fullScreen } = this.state;
+      const panelListItemsByType = getPanelListItemsByType();
+      const type = PanelComponent.panelType;
+      const title = panelListItemsByType[type] && panelListItemsByType[type].title;
+
+      const currentTopicPrefix = config[TOPIC_PREFIX_CONFIG_KEY] || "";
+
       return (
         // $FlowFixMe - bug prevents requiring panelType on PanelComponent: https://stackoverflow.com/q/52508434/23649
-        <PanelContext.Provider value={{ type: PanelComponent.panelType, id: childId }}>
+        <PanelContext.Provider value={{ type, id: childId, title, topicPrefix: currentTopicPrefix }}>
           {/* ensures user exits full-screen mode when leaving the window, even if key is still pressed down */}
           <DocumentEvents target={window.top} enabled onBlur={this._exitFullScreen} />
           <KeyListener global keyUpHandlers={this._keyUpHandlers} keyDownHandlers={this._keyDownHandlers} />
@@ -189,34 +298,40 @@ export default function Panel<Config: PanelConfig>(
             })}
             col
             clip>
-            {fullScreenKeyPressed && (
-              <div className={styles.fullScreenKeyPressedOverlay}>
-                {!fullScreen && (
+            {quickActionsKeyPressed && !fullScreen && (
+              <MosaicDragHandle>
+                <div className={styles.quickActionsOverlay} data-panel-overlay>
                   <div>
                     <FullscreenIcon />
-                    <p>Fullscreen panel</p>
+                    Fullscreen
                   </div>
-                )}
-              </div>
-            )}
-            {removePanelKeyPressed && (
-              <div className={styles.removePanelKeyPressOverlay}>
-                <div>
-                  <CloseIcon />
-                  <p>Remove panel</p>
+                  <div>
+                    <Button onClick={this._closePanel} disabled={isOnlyPanel}>
+                      <CloseIcon />
+                      Remove
+                    </Button>
+                    <Button onClick={this._splitPanel}>
+                      <GridLargeIcon />
+                      Split
+                    </Button>
+                  </div>
+                  {!isOnlyPanel && <p>Drag to move</p>}
                 </div>
-              </div>
+              </MosaicDragHandle>
             )}
             <ErrorBoundary>
               {/* $FlowFixMe - https://github.com/facebook/flow/issues/6479 */}
               <PanelComponent
-                config={{ ...defaultConfig, ...this.props.config }}
+                config={{ ...defaultConfig, ...omit(config, TOPIC_PREFIX_CONFIG_KEY) }}
                 saveConfig={this._saveConfig}
                 openSiblingPanel={this._openSiblingPanel}
-                topics={topics}
+                topics={getFilteredFormattedTopics(topics, currentTopicPrefix)}
                 datatypes={datatypes}
                 capabilities={capabilities}
               />
+              {canSetTopicPrefix ? (
+                <TopicPrefixDropdown topicPrefix={currentTopicPrefix} saveTopicPrefix={this._saveTopicPrefix} />
+              ) : null}
             </ErrorBoundary>
           </Flex>
         </PanelContext.Provider>
@@ -227,14 +342,16 @@ export default function Panel<Config: PanelConfig>(
   function ConnectedToPipelinePanel(props: any) {
     return (
       <MessagePipelineConsumer>
-        {(context: MessagePipelineContext) => (
-          <UnconnectedPanel
-            {...props}
-            topics={context.sortedTopics}
-            datatypes={context.datatypes}
-            capabilities={context.playerState.capabilities}
-          />
-        )}
+        {(context: MessagePipelineContext) => {
+          return (
+            <UnconnectedPanel
+              {...props}
+              topics={context.sortedTopics}
+              datatypes={context.datatypes}
+              capabilities={context.playerState.capabilities}
+            />
+          );
+        }}
       </MessagePipelineConsumer>
     );
   }
@@ -244,8 +361,8 @@ export default function Panel<Config: PanelConfig>(
     // all panels will rerender, which is very expensive.
     return {
       childId: ownProps.childId,
-      // $FlowFixMe: if nothing went wrong, `state.panels.savedProps[ownProps.childId]` should be of type `Config`.
       config: state.panels.savedProps[ownProps.childId] || ownProps.config,
+      isOnlyPanel: !isParent(state.panels.layout),
     };
   }
 
@@ -259,6 +376,7 @@ export default function Panel<Config: PanelConfig>(
 
   ConnectedPanel.defaultConfig = defaultConfig;
   ConnectedPanel.panelType = PanelComponent.panelType;
+  ConnectedPanel.canSetTopicPrefix = PanelComponent.canSetTopicPrefix;
 
   return ConnectedPanel;
 }

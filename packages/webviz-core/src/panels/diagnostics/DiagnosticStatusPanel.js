@@ -53,13 +53,13 @@ class DiagnosticStatusPanel extends Component<Props> {
     }
 
     return (
-      <Flex col>
+      <Flex scroll scrollX col>
         <DiagnosticsHistory>
           {(buffer) => {
             const selectedItem = selectedId ? buffer.diagnosticsById.get(selectedId) : null;
 
             return (
-              <React.Fragment>
+              <>
                 <PanelToolbar helpContent={helpContent}>
                   <Autocomplete
                     placeholder={hasSelection ? selectedDisplayName : "Select a diagnostic"}
@@ -84,7 +84,7 @@ class DiagnosticStatusPanel extends Component<Props> {
                 ) : (
                   <EmptyState>No diagnostic node selected</EmptyState>
                 )}
-              </React.Fragment>
+              </>
             );
           }}
         </DiagnosticsHistory>

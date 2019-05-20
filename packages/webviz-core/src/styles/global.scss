@@ -90,7 +90,6 @@ textarea {
   border: none;
   padding: $control-padding;
   margin: $control-margin;
-  appearance: none;
 
   &:focus {
     outline: none;
@@ -180,7 +179,7 @@ button {
     background-color: $background-control;
   }
 
-  &:hover {
+  &:not(.disabled):hover {
     color: $text-control-hover;
   }
 
@@ -193,7 +192,7 @@ button {
     color: $text-normal;
   }
   &.disabled {
-    color: $text-disabled;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 }

@@ -55,3 +55,9 @@ declare var expect: {
 };
 
 declare type StyleObj = { [key: string]: string | number };
+
+declare class IDBKeyRange {
+  static lowerBound(any, open?: boolean): IDBKeyRange;
+  static upperBound(any, open?: boolean): IDBKeyRange;
+  static bound(start: any, end: any): IDBKeyRange;
+}

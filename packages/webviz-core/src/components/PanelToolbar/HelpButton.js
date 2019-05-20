@@ -21,7 +21,7 @@ type Props = {|
 export default class HelpButton extends React.Component<Props> {
   render() {
     return (
-      <React.Fragment>
+      <>
         <Icon
           tooltip="Help"
           fade
@@ -32,7 +32,7 @@ export default class HelpButton extends React.Component<Props> {
           }}>
           <HelpCircleIcon className={styles.icon} />
         </Icon>
-      </React.Fragment>
+      </>
     );
   }
 }

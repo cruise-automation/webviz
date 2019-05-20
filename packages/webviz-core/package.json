@@ -10,11 +10,14 @@
     "chartjs-plugin-datalabels": "0.4.0",
     "chartjs-plugin-zoom": "0.6.6",
     "classnames": "2.2.6",
+    "history": "4.7.2",
     "hoist-non-react-statics": "3.0.1",
+    "idb": "2.1.3",
     "inter-ui": "3.0.0",
+    "intervals-fn": "3.0.3",
     "lodash": "4.17.11",
-    "memoize-one": "5.0.0",
     "memoize-weak": "1.0.2",
+    "micro-memoize": "^3.0.1",
     "moment": "2.22.2",
     "moment-duration-format": "2.2.2",
     "moment-timezone": "0.5.23",
@@ -27,7 +30,6 @@
     "react-chartjs-2": "2.7.4",
     "react-container-dimensions": "1.4.1",
     "react-dnd": "2.5.4",
-    "react-dnd-html5-backend": "2.6.0",
     "react-document-events": "1.4.0",
     "react-dom": "16.8.6",
     "react-draggable": "3.0.5",
@@ -46,7 +48,7 @@
     "redux": "4.0.1",
     "redux-thunk": "2.3.0",
     "reselect": "4.0.0",
-    "rosbag": "2.0.1",
+    "rosbag": "2.1.0",
     "sanitize-html": "1.20.0",
     "shallowequal": "1.1.0",
     "string-hash": "1.1.3",
@@ -56,6 +58,7 @@
     "wasm-lz4": "0.0.2"
   },
   "devDependencies": {
+    "fake-indexeddb": "2.0.4",
     "flow-bin": "0.95.1"
   },
   "importjs": {

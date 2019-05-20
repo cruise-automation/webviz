@@ -10,7 +10,7 @@ import { storiesOf } from "@storybook/react";
 import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
-import { fixture } from "./fixture";
+import { fixture, enumFixture } from "./fixture";
 import TopicEcho from "webviz-core/src/panels/TopicEcho";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
@@ -48,6 +48,13 @@ storiesOf("<TopicEcho>", module)
     return (
       <PanelSetup fixture={fixture} style={{ width: 350 }}>
         <TopicEcho config={{ topicName: "/baz/array" }} />
+      </PanelSetup>
+    );
+  })
+  .add("display enum", () => {
+    return (
+      <PanelSetup fixture={enumFixture} style={{ width: 350 }}>
+        <TopicEcho config={{ topicName: "/baz/enum" }} />
       </PanelSetup>
     );
   });

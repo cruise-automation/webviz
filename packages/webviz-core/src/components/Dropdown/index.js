@@ -27,6 +27,7 @@ type Props = {|
   toggleComponent?: React$Element<any>,
   flatEdges: boolean,
   tooltip?: string,
+  dataTest?: string,
 |};
 
 type State = {
@@ -88,7 +89,7 @@ export default class Dropdown extends React.Component<Props, State> {
     }
     const { text, value, disabled, tooltip } = this.props;
     const button = (
-      <button className={cx(styles.button, { disabled })}>
+      <button className={cx(styles.button, { disabled })} data-test={this.props.dataTest}>
         <span className={styles.title}>{text || value}</span>
         <Icon style={{ marginLeft: 4 }}>
           <MenuDownIcon style={{ width: 14, height: 14, opacity: 0.5 }} />

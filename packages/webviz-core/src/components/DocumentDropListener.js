@@ -67,7 +67,7 @@ export default class DocumentDropListener extends React.PureComponent<Props, Sta
 
   render() {
     return (
-      <React.Fragment>
+      <>
         <input
           // Expose a hidden input for Puppeteer to use to drop a file in.
           type="file"
@@ -77,7 +77,7 @@ export default class DocumentDropListener extends React.PureComponent<Props, Sta
           multiple
         />
         {this.state.hovering && this.props.children}
-      </React.Fragment>
+      </>
     );
   }
 }

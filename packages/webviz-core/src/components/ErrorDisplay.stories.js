@@ -15,7 +15,7 @@ import ErrorDisplay, { ErrorList, showErrorModal } from "webviz-core/src/compone
 import reportError from "webviz-core/src/util/reportError";
 
 storiesOf("<ErrorDisplay>", module)
-  .addDecorator(withScreenshot({ delay: 100 }))
+  .addDecorator(withScreenshot({ delay: 1000 }))
   .add("No errors", () => {
     return (
       <div style={{ padding: 10 }}>

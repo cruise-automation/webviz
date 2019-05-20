@@ -11,12 +11,20 @@ import { last } from "lodash";
 import React from "react";
 
 import MessageHistory from ".";
-import { datatypes, messages } from "./fixture";
+import { datatypes, messages, dualInputMessages } from "./fixture";
 import { getRawItemsByTopicForTests } from "./MessageHistoryOnlyTopics";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
+import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
 import type { SubscribePayload } from "webviz-core/src/types/players";
+import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
 
-const singleTopic = [{ name: "/some/topic", datatype: "some/topic" }];
+const singleTopic = [{ name: "/some/topic", datatype: "some/datatype" }];
+
+const allTopics = [
+  { name: "/some/topic", datatype: "some/datatype" },
+  { name: "/other/topic", datatype: "some/datatype" },
+  { name: "/webviz_bag_2/some/topic", datatype: "some/datatype" },
+];
 
 describe("<MessageHistory />", () => {
   it("passes through children", () => {
@@ -261,10 +269,10 @@ describe("<MessageHistory />", () => {
     provider.setProps({
       messages: [messages[1]],
       children: (
-        <React.Fragment>
+        <>
           <MessageHistory paths={["/some/topic"]}>{childFn1}</MessageHistory>
           <MessageHistory paths={["/some/topic"]}>{childFn2}</MessageHistory>
-        </React.Fragment>
+        </>
       ),
     });
     expect(last(childFn2.mock.calls)).toEqual(last(childFn1.mock.calls));
@@ -372,5 +380,92 @@ describe("<MessageHistory />", () => {
       ),
     });
     expect(itemsByPath1).toBe(itemsByPath2);
+  });
+
+  describe("setting topicPrefix", () => {
+    it("filters topics and strips topic names using topicPrefix", () => {
+      const childFn1 = jest.fn((x) => null);
+
+      const renderDualInputMessageHistory = () => {
+        return (
+          <MockMessagePipelineProvider
+            topics={allTopics}
+            datatypes={datatypes}
+            messages={messages.concat(dualInputMessages)}>
+            <MessageHistory paths={["/some/topic"]}>{childFn1}</MessageHistory>
+          </MockMessagePipelineProvider>
+        );
+      };
+      mount(
+        <MockPanelContextProvider topicPrefix={SECOND_BAG_PREFIX}>
+          {renderDualInputMessageHistory()}
+        </MockPanelContextProvider>
+      );
+
+      const secondBagPrefixResults = childFn1.mock.calls[0][0].itemsByPath;
+
+      expect(Object.keys(secondBagPrefixResults).length).toEqual(1);
+      expect(Object.keys(secondBagPrefixResults)[0]).toEqual("/some/topic");
+      expect(secondBagPrefixResults["/some/topic"].map((item) => item.message)).toEqual(
+        dualInputMessages.map((msg) => {
+          delete msg.queriedData;
+          return { ...msg, topic: msg.topic.slice(SECOND_BAG_PREFIX.length) };
+        })
+      );
+    });
+
+    it("will send correctly filtered and stripped topics to MessageHistory components with different topicPrefixes", () => {
+      const noPrefixRenderer = jest.fn((x) => null);
+      const secondBagPrefixRenderer = jest.fn((x) => null);
+
+      const provider = mount(
+        <MockMessagePipelineProvider topics={allTopics} datatypes={datatypes} messages={[]}>
+          <MockPanelContextProvider topicPrefix="">
+            <MessageHistory paths={["/some/topic"]}>{noPrefixRenderer}</MessageHistory>
+          </MockPanelContextProvider>
+          <MockPanelContextProvider topicPrefix={SECOND_BAG_PREFIX}>
+            <MessageHistory paths={["/some/topic"]}>{secondBagPrefixRenderer}</MessageHistory>;
+          </MockPanelContextProvider>
+        </MockMessagePipelineProvider>
+      );
+      provider.setProps({ messages: messages.concat(dualInputMessages) });
+
+      const noPrefixResults = noPrefixRenderer.mock.calls[1][0].itemsByPath;
+      const secondBagPrefixResults = secondBagPrefixRenderer.mock.calls[1][0].itemsByPath;
+      expect(noPrefixResults["/some/topic"].map((item) => item.message)).toEqual(messages);
+      expect(secondBagPrefixResults["/some/topic"].map((item) => item.message)).toEqual(
+        dualInputMessages.map((msg) => {
+          delete msg.queriedData;
+          return { ...msg, topic: msg.topic.slice(SECOND_BAG_PREFIX.length) };
+        })
+      );
+    });
+
+    it("sets subscriptions on topics with topicPrefix", () => {
+      const setSubscriptionsFn = jest.fn((x) => undefined);
+
+      const renderDualInputMessageHistory = () => {
+        return (
+          <MockMessagePipelineProvider
+            topics={allTopics}
+            datatypes={datatypes}
+            messages={messages.concat(dualInputMessages)}
+            setSubscriptions={setSubscriptionsFn}>
+            <MessageHistory paths={["/some/topic"]}>{() => null}</MessageHistory>
+          </MockMessagePipelineProvider>
+        );
+      };
+      mount(
+        <MockPanelContextProvider topicPrefix={SECOND_BAG_PREFIX}>
+          {renderDualInputMessageHistory()}
+        </MockPanelContextProvider>
+      );
+
+      expect(setSubscriptionsFn.mock.calls.length).toEqual(1);
+
+      const secondArgInCall = setSubscriptionsFn.mock.calls[0][1];
+      const firstSubscribePayload = secondArgInCall[0];
+      expect(firstSubscribePayload.topic).toEqual(`${SECOND_BAG_PREFIX}/some/topic`);
+    });
   });
 });

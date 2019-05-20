@@ -6,8 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import WavesIcon from "@mdi/svg/svg/waves.svg";
-import cx from "classnames";
 import { isEqual, omit } from "lodash";
 import React from "react";
 
@@ -15,14 +13,9 @@ import CameraModel from "./CameraModel";
 import { decodeYUV, decodeBGR, decodeFloat1c, decodeRGGB } from "./decodings";
 import styles from "./ImageCanvas.module.scss";
 import { type ImageViewPanelHooks } from "./index";
-import type { SaveConfig } from "./index";
-import ChildToggle from "webviz-core/src/components/ChildToggle";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
-import Icon from "webviz-core/src/components/Icon";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
-import colors from "webviz-core/src/styles/colors.module.scss";
 import type { ImageMarker, CameraInfo, Color } from "webviz-core/src/types/Messages";
 import type { Message } from "webviz-core/src/types/players";
 
@@ -33,8 +26,6 @@ type Props = {
   markers: Message[],
   panelHooks?: ImageViewPanelHooks,
   transformMarkers: boolean,
-  canTransformMarkers?: boolean,
-  saveConfig: SaveConfig,
 };
 
 type State = {
@@ -51,6 +42,7 @@ function toRGBA(color: Color) {
 export default class ImageCanvas extends React.Component<Props, State> {
   _canvasRef = React.createRef<HTMLCanvasElement>();
   _ready: boolean = true;
+  _droppedFrame: boolean = false;
 
   static defaultProps = {
     markers: [],
@@ -348,24 +340,31 @@ export default class ImageCanvas extends React.Component<Props, State> {
       return;
     }
 
+    // context: https://stackoverflow.com/questions/37135417/download-canvas-as-png-in-fabric-js-giving-network-error
     // create a link element to download data
     const link = document.createElement("a");
     // read the canvas data as an image (png)
-    link.setAttribute("href", canvas.toDataURL());
-    // name the image the same name as the topic
-    // note: the / characters in the file name will be replaced with _
-    // by the browser
-    // remove the leading / so the image name doesn't start with _
-    const topicName = topic.slice(1);
-    const stamp = image.message.header ? image.message.header.stamp : { sec: 0, nsec: 0 };
-    const filename = `${topicName}-${stamp.sec}-${stamp.nsec}`;
-    link.setAttribute("download", filename);
-    link.style.display = "none";
-    body.appendChild(link);
-    // click the link to trigger a download
-    link.click();
-    // remove the link after triggering download
-    body.removeChild(link);
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      // name the image the same name as the topic
+      // note: the / characters in the file name will be replaced with _
+      // by the browser
+      // remove the leading / so the image name doesn't start with _
+      const topicName = topic.slice(1);
+      const stamp = image.message.header ? image.message.header.stamp : { sec: 0, nsec: 0 };
+      const filename = `${topicName}-${stamp.sec}-${stamp.nsec}`;
+      link.setAttribute("download", filename);
+      link.style.display = "none";
+      body.appendChild(link);
+      // click the link to trigger a download
+      link.click();
+      window.requestAnimationFrame(() => {
+        // remove the link after triggering download
+        body.removeChild(link);
+        URL.revokeObjectURL(url);
+      });
+    });
   };
 
   onCanvasRightClick = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
@@ -383,6 +382,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
   renderCurrentImage() {
     if (!this._ready) {
       console.warn("Dropped frame on image canvas");
+      this._droppedFrame = true;
       return;
     }
 
@@ -393,11 +393,17 @@ export default class ImageCanvas extends React.Component<Props, State> {
     }
 
     this._ready = false;
+    this._droppedFrame = false;
 
     this.decodeMessageToBitmap(image)
       .then((bitmap) => {
         this.paintBitmap(bitmap);
         this._ready = true;
+        if (this._droppedFrame) {
+          console.warn("Retrying render of dropped frame");
+          this.renderCurrentImage();
+          this._droppedFrame = false;
+        }
       })
       .catch((err) => {
         console.warn(`failed to decode image on ${image.topic}:`, err);
@@ -407,35 +413,6 @@ export default class ImageCanvas extends React.Component<Props, State> {
   }
 
   render() {
-    const { saveConfig, transformMarkers, canTransformMarkers } = this.props;
-    const { cameraModel } = this.state;
-
-    return (
-      <React.Fragment>
-        <canvas onContextMenu={this.onCanvasRightClick} ref={this._canvasRef} className={styles.canvas} />
-        {canTransformMarkers && cameraModel && cameraModel.initializedData && (
-          <ChildToggle.ContainsOpen>
-            {(containsOpen) => (
-              <div
-                className={cx(styles["bottom-bar"], {
-                  [styles.containsOpen]: inScreenshotTests ? true : containsOpen,
-                })}>
-                <Icon
-                  onClick={() => saveConfig({ transformMarkers: !transformMarkers })}
-                  tooltip={
-                    transformMarkers
-                      ? "Markers are being transformed by webviz based on the camera model. Click to turn it off."
-                      : `Markers can be transformed by webviz based on the camera model. Click to turn it on.`
-                  }
-                  fade
-                  medium>
-                  <WavesIcon style={{ color: transformMarkers ? colors.orange : colors.textBright }} />
-                </Icon>
-              </div>
-            )}
-          </ChildToggle.ContainsOpen>
-        )}
-      </React.Fragment>
-    );
+    return <canvas onContextMenu={this.onCanvasRightClick} ref={this._canvasRef} className={styles.canvas} />;
   }
 }

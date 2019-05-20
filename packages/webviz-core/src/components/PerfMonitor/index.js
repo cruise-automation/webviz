@@ -60,7 +60,7 @@ export default class PerfMonitor extends React.Component<{| id: string, children
     }
 
     return (
-      <React.Fragment>
+      <>
         <SPerfIndicator>
           <div ref={(el) => (this._top = el)}>?</div>
           <div
@@ -79,7 +79,7 @@ export default class PerfMonitor extends React.Component<{| id: string, children
         <Profiler id={this.props.id} onRender={this._profilerOnRender}>
           {this.props.children}
         </Profiler>
-      </React.Fragment>
+      </>
     );
   }
 }

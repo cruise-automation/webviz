@@ -8,7 +8,7 @@
 
 import { flatten, groupBy } from "lodash";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"; // eslint-disable-line import/no-duplicates
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useContext } from "react"; // eslint-disable-line import/no-duplicates
 import { Provider } from "react-redux";
 import { type Time, TimeUtil } from "rosbag";
 
@@ -47,6 +47,14 @@ export type MessagePipelineContext = {|
 
 const Context: React.Context<?MessagePipelineContext> = React.createContext();
 
+export function useMessagePipeline(): MessagePipelineContext {
+  const context = useContext(Context);
+  if (!context) {
+    throw new Error("Component must be nested within a <MessagePipelineProvider> to access the message pipeline.");
+  }
+  return context;
+}
+
 function defaultPlayerState(): PlayerState {
   return {
     isPresent: false,
@@ -61,18 +69,21 @@ function defaultPlayerState(): PlayerState {
 
 type ProviderProps = {| children: React.Node, player?: ?Player |};
 export function MessagePipelineProvider({ children, player }: ProviderProps) {
-  const playerId = useRef(defaultPlayerState().playerId);
+  const currentPlayer = useRef<?Player>(undefined);
   const [playerState, setPlayerState] = useState<PlayerState>(defaultPlayerState);
+  const lastActiveData = useRef<?PlayerStateActiveData>(playerState.activeData);
   const [subscriptionsById, setAllSubscriptions] = useState<{ [string]: SubscribePayload[] }>({});
   const [publishersById: AdvertisePayload[], setAllPublishers: (AdvertisePayload[]) => void] = useState({});
   const resolveFn = useRef<?() => void>();
 
-  // $FlowFixMe - Object.values returns mixed[]
-  const subscriptions: SubscribePayload[] = useMemo(() => flatten(Object.values(subscriptionsById)), [
-    subscriptionsById,
-  ]);
-  // $FlowFixMe - Object.values returns mixed[]
-  const publishers: AdvertisePayload[] = useMemo(() => flatten(Object.values(publishersById)), [publishersById]);
+  const subscriptions: SubscribePayload[] = useMemo(
+    () => flatten(Object.keys(subscriptionsById).map((k) => subscriptionsById[k])),
+    [subscriptionsById]
+  );
+  const publishers: AdvertisePayload[] = useMemo(
+    () => flatten(Object.keys(publishersById).map((k) => publishersById[k])),
+    [publishersById]
+  );
   useEffect(() => (player ? player.setSubscriptions(subscriptions) : undefined), [player, subscriptions]);
   useEffect(() => (player ? player.setPublishers(publishers) : undefined), [player, publishers]);
 
@@ -92,23 +103,13 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
 
   useEffect(
     () => {
-      if (playerId.current) {
-        playerId.current = "";
-        if (resolveFn.current) {
-          resolveFn.current();
-          resolveFn.current = undefined;
-        }
-        setPlayerState(defaultPlayerState());
-      }
+      currentPlayer.current = player;
       if (!player) {
         return;
       }
       player.setListener((newPlayerState: PlayerState) => {
         warnOnOutOfSyncMessages(newPlayerState);
-        if (playerId.current === "") {
-          playerId.current = newPlayerState.playerId;
-        }
-        if (newPlayerState.playerId !== playerId.current) {
+        if (currentPlayer.current !== player) {
           return Promise.resolve();
         }
         if (resolveFn.current) {
@@ -117,10 +118,30 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
         const promise = new Promise((resolve) => {
           resolveFn.current = resolve;
         });
-        setPlayerState(newPlayerState);
+        setPlayerState((currentPlayerState) => {
+          if (currentPlayer.current !== player) {
+            // It's unclear how we can ever get here, but it looks like React
+            // doesn't properly order the `setPlayerState` call below. So we
+            // need this additional check. Unfortunately this is hard to test,
+            // so please make sure to manually test having an active player and
+            // disconnecting from it when changing this code. Without this line
+            // it will show the player as being in an active state even after
+            // explicitly disconnecting it.
+            return currentPlayerState;
+          }
+          lastActiveData.current = newPlayerState.activeData;
+          return newPlayerState;
+        });
         return promise;
       });
-      return () => player.close();
+      return () => {
+        currentPlayer.current = resolveFn.current = undefined;
+        player.close();
+        setPlayerState({
+          ...defaultPlayerState(),
+          activeData: lastActiveData.current,
+        });
+      };
     },
     [player]
   );
@@ -156,20 +177,10 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
   );
 }
 
-// TODO(JP): Use `useContext` here when https://github.com/yesmeck/react-with-hooks/issues/3
-// gets fixed.
 type ConsumerProps = { children: (MessagePipelineContext) => React.Node };
 export function MessagePipelineConsumer({ children }: ConsumerProps) {
-  return (
-    <Context.Consumer>
-      {(value) => {
-        if (!value) {
-          throw new Error("<MessagePipelineConsumer> must be nested within a <MessagePipelineProvider>");
-        }
-        return children(value);
-      }}
-    </Context.Consumer>
-  );
+  const value = useMessagePipeline();
+  return children(value);
 }
 
 export function MockMessagePipelineProvider(props: {|
@@ -181,6 +192,7 @@ export function MockMessagePipelineProvider(props: {|
   activeData?: $Shape<PlayerStateActiveData>,
   capabilities?: string[],
   store?: any,
+  seekPlayback?: (Time) => void,
 |}) {
   const storeRef = useRef(props.store || configureStore(rootReducer));
 
@@ -229,7 +241,7 @@ export function MockMessagePipelineProvider(props: {|
           startPlayback: () => {},
           pausePlayback: () => {},
           setPlaybackSpeed: (_) => {},
-          seekPlayback: (_) => {},
+          seekPlayback: props.seekPlayback || ((_) => {}),
         }}>
         {props.children}
       </Context.Provider>

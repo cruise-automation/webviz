@@ -18,8 +18,9 @@ describe("createSyncingComponent", () => {
 
   // since all tests use the same syncing component, allow time to ensure everything has updated
   // after unmounting at the end of each test
-  afterEach(async () => {
+  afterEach(async (done) => {
     await tick();
+    done();
   });
 
   it("returns data that was passed in to just the component itself", async () => {

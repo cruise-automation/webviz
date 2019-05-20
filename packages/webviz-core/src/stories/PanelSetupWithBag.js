@@ -23,6 +23,7 @@ type Props = {
   getMergedFixture?: (bagFixture: Fixture) => Fixture,
   mapTopicToDatatype?: (topic: string) => string,
   hasNestedMessageHistory?: ?boolean,
+  onMount?: (HTMLDivElement) => void,
 };
 
 // A util component for testing panels that need to load the raw ROS bags.
@@ -36,6 +37,7 @@ export default function PanelSetupWithBag({
   getMergedFixture = (bagFixture) => bagFixture,
   mapTopicToDatatype = () => "dummyType",
   topics = [],
+  onMount,
 }: Props) {
   const [fixture, setFixture] = useState();
 
@@ -96,5 +98,9 @@ export default function PanelSetupWithBag({
   // load the bag when component is mounted or updated
   useEffect(() => void loadBag(), [bagFileUrl, topics]);
 
-  return fixture ? <PanelSetup fixture={fixture}>{children}</PanelSetup> : null;
+  return fixture ? (
+    <PanelSetup fixture={fixture} onMount={onMount}>
+      {children}
+    </PanelSetup>
+  ) : null;
 }

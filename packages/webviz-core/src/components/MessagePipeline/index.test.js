@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { mount } from "enzyme";
+import { last } from "lodash";
 import * as React from "react";
 
 import { MessagePipelineProvider, MessagePipelineConsumer } from ".";
@@ -15,7 +16,7 @@ import signal from "webviz-core/src/util/signal";
 
 describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
   it("returns empty data when no player is given", () => {
-    const callback = jest.fn();
+    const callback = jest.fn().mockReturnValue(null);
     mount(
       <MessagePipelineProvider>
         <MessagePipelineConsumer>{callback}</MessagePipelineConsumer>
@@ -52,7 +53,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
 
   it("updates when the player emits a new state", () => {
     const player = new FakePlayer();
-    const callback = jest.fn();
+    const callback = jest.fn().mockReturnValue(null);
     mount(
       <MessagePipelineProvider player={player}>
         <MessagePipelineConsumer>{callback}</MessagePipelineConsumer>
@@ -91,7 +92,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
 
   it("throws an error when the player emits before the previous emit has been resolved", () => {
     const player = new FakePlayer();
-    const callback = jest.fn();
+    const callback = jest.fn().mockReturnValue(null);
     mount(
       <MessagePipelineProvider player={player}>
         <MessagePipelineConsumer>{callback}</MessagePipelineConsumer>
@@ -224,7 +225,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
 
   it("resolves listener promise after each render", async () => {
     const player = new FakePlayer();
-    const callback = jest.fn();
+    const callback = jest.fn().mockReturnValue(null);
     mount(
       <MessagePipelineProvider player={player}>
         <MessagePipelineConsumer>{callback}</MessagePipelineConsumer>
@@ -286,24 +287,56 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     expect(player.close).toHaveBeenCalledTimes(1);
   });
 
-  it("closes old player when new player is supplied and stops old player message flow", async () => {
-    const player = new FakePlayer();
-    jest.spyOn(player, "close");
-    const fn = jest.fn();
-    const el = mount(
-      <MessagePipelineProvider player={player}>
-        <MessagePipelineConsumer>{fn}</MessagePipelineConsumer>
-      </MessagePipelineProvider>
-    );
-    const player2 = new FakePlayer();
-    player2.playerId = "fake player 2";
-    el.setProps({ player: player2 });
-    expect(player.close).toHaveBeenCalledTimes(1);
-    expect(fn).toHaveBeenCalledTimes(2);
-    await player2.emit();
-    expect(fn).toHaveBeenCalledTimes(3);
-    await player.emit();
-    expect(fn).toHaveBeenCalledTimes(3);
+  describe("when changing the player", () => {
+    let player, player2, fn;
+    beforeEach(async (done) => {
+      player = new FakePlayer();
+      player.playerId = "fake player 1";
+      jest.spyOn(player, "close");
+      fn = jest.fn().mockReturnValue(null);
+      const el = mount(
+        <MessagePipelineProvider player={player}>
+          <MessagePipelineConsumer>{fn}</MessagePipelineConsumer>
+        </MessagePipelineProvider>
+      );
+      await player.emit();
+      expect(fn).toHaveBeenCalledTimes(2);
+
+      player2 = new FakePlayer();
+      player2.playerId = "fake player 2";
+      el.setProps({ player: player2 });
+      expect(player.close).toHaveBeenCalledTimes(1);
+      expect(fn).toHaveBeenCalledTimes(4);
+      done();
+    });
+
+    it("closes old player when new player is supplied and stops old player message flow", async () => {
+      await player2.emit();
+      expect(fn).toHaveBeenCalledTimes(5);
+      await player.emit();
+      expect(fn).toHaveBeenCalledTimes(5);
+      expect(fn.mock.calls.map((args) => args[0].playerState.playerId)).toEqual([
+        "",
+        "fake player 1",
+        "fake player 1",
+        "",
+        "fake player 2",
+      ]);
+    });
+
+    it("does not think the old player is the new player if it emits first", async () => {
+      await player.emit();
+      expect(fn).toHaveBeenCalledTimes(4);
+      await player2.emit();
+      expect(fn).toHaveBeenCalledTimes(5);
+      expect(fn.mock.calls.map((args) => args[0].playerState.playerId)).toEqual([
+        "",
+        "fake player 1",
+        "fake player 1",
+        "",
+        "fake player 2",
+      ]);
+    });
   });
 
   it("does not throw when interacting w/ context and player is missing", () => {
@@ -352,5 +385,40 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     el.setProps({ player: player2 });
     expect(player2.subscriptions).toEqual([{ topic: "/webviz/test" }, { topic: "/webviz/test2" }]);
     expect(player2.publishers).toEqual([{ topic: "/webviz/test", datatype: "test" }]);
+  });
+
+  it("keeps activeData when closing a player", async () => {
+    const player = new FakePlayer();
+    const fn = jest.fn().mockReturnValue(null);
+    const el = mount(
+      <MessagePipelineProvider player={player}>
+        <MessagePipelineConsumer>{fn}</MessagePipelineConsumer>
+      </MessagePipelineProvider>
+    );
+    const activeData = {
+      messages: [],
+      currentTime: { sec: 0, nsec: 0 },
+      startTime: { sec: 0, nsec: 0 },
+      endTime: { sec: 1, nsec: 0 },
+      isPlaying: true,
+      speed: 0.2,
+      lastSeekTime: 1234,
+      topics: [{ name: "/input/foo", datatype: "foo" }],
+      datatypes: { foo: [] },
+    };
+    await player.emit(activeData);
+    expect(fn).toHaveBeenCalledTimes(2);
+
+    el.setProps({ player: undefined });
+    expect(fn).toHaveBeenCalledTimes(4);
+    expect(last(fn.mock.calls)[0].playerState).toEqual({
+      activeData,
+      capabilities: [],
+      isPresent: false,
+      playerId: "",
+      progress: {},
+      showInitializing: false,
+      showSpinner: false,
+    });
   });
 });

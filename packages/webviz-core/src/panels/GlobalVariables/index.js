@@ -8,7 +8,7 @@
 
 import CloseIcon from "@mdi/svg/svg/close.svg";
 import { pick } from "lodash";
-import * as React from "react";
+import React, { type Node, useState } from "react";
 import styled from "styled-components";
 
 import helpContent from "./index.help.md";
@@ -17,17 +17,23 @@ import GlobalVariablesAccessor from "webviz-core/src/components/GlobalVariablesA
 import Icon from "webviz-core/src/components/Icon";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import clipboard from "webviz-core/src/util/clipboard";
 
 type Props = {};
 
-const SButton = styled.button`
-  margin-top: 10px;
+const SButtonContainer = styled.div`
+  padding: 10px 16px 0;
+  display: flex;
 `;
 
 const SInput = styled.input`
   background: transparent;
   width: 100%;
   color: white;
+`;
+
+const SSection = styled.section`
+  margin: 15px;
 `;
 
 const canParseJSON = (val) => {
@@ -69,7 +75,7 @@ class EditableJSONInput extends React.Component<InputProps, State> {
     const isValid = canParseJSON(inputVal);
     return (
       <SInput
-        style={{ color: isValid ? "" : "red" }}
+        style={{ color: isValid ? "" : "#f97d96" }}
         ref={innerRef}
         type="text"
         value={inputVal}
@@ -95,8 +101,20 @@ const changeGlobalVal = (newVal, datumKey, setGlobalData) => {
   setGlobalData({ [datumKey]: newVal === undefined ? undefined : JSON.parse(String(newVal)) });
 };
 
-function GlobalVariables(props: Props): React.Node {
+const getUpdatedURL = (globalData) => {
+  const queryParams = new URLSearchParams(window.location.search);
+  queryParams.set("global-data", JSON.stringify(globalData));
+  return `${window.location.host}/?${queryParams.toString()}`;
+};
+
+function GlobalVariables(props: Props): Node {
   const input = React.createRef<HTMLInputElement>();
+  const [btnMessage, setBtnMessage] = useState("Copy");
+
+  const copyURL = (text) => () => {
+    clipboard.copy(text);
+    setBtnMessage("Copied!");
+  };
 
   return (
     <GlobalVariablesAccessor>
@@ -119,6 +137,7 @@ function GlobalVariables(props: Props): React.Node {
                         onChange={(e) => {
                           const newKey = e.target.value.slice(1);
                           changeGlobalKey(newKey.trim(), datumKey, globalData, idx, overwriteGlobalData);
+                          setBtnMessage("Copy");
                         }}
                       />
                     </td>
@@ -130,6 +149,7 @@ function GlobalVariables(props: Props): React.Node {
                           const newVal = e.target.value;
                           if (canParseJSON(newVal)) {
                             changeGlobalVal(newVal, datumKey, setGlobalData);
+                            setBtnMessage("Copy");
                           }
                         }}
                       />
@@ -138,6 +158,7 @@ function GlobalVariables(props: Props): React.Node {
                       <Icon
                         onClick={() => {
                           changeGlobalVal(undefined, datumKey, setGlobalData);
+                          setBtnMessage("Copy");
                         }}>
                         <CloseIcon />
                       </Icon>
@@ -146,18 +167,29 @@ function GlobalVariables(props: Props): React.Node {
                 ))}
               </tbody>
             </table>
-            <SButton
-              onClick={(e) => {
-                setGlobalData({ "": "" });
-              }}>
-              + add variable
-            </SButton>
-            <SButton
-              onClick={(e) => {
-                overwriteGlobalData({});
-              }}>
-              - clear all
-            </SButton>
+            <SButtonContainer>
+              <button
+                onClick={(e) => {
+                  setGlobalData({ "": "" });
+                }}>
+                + Add variable
+              </button>
+              <button
+                onClick={(e) => {
+                  overwriteGlobalData({});
+                }}>
+                - Clear all
+              </button>
+            </SButtonContainer>
+
+            <SSection>
+              <Flex>
+                <input readOnly style={{ width: "100%" }} type="text" value={getUpdatedURL(globalData)} />
+                {document.queryCommandSupported("copy") && (
+                  <button onClick={copyURL(getUpdatedURL(globalData))}>{btnMessage}</button>
+                )}
+              </Flex>
+            </SSection>
           </Flex>
         );
       }}

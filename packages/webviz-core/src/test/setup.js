@@ -9,6 +9,7 @@
 import "babel-polyfill";
 import { TextDecoder } from "text-encoding";
 import UrlSearchParams from "url-search-params";
+import ws from "ws";
 
 import MemoryStorage from "./MemoryStorage";
 
@@ -36,3 +37,16 @@ if (typeof window !== "undefined") {
   // polyfill URLSearchParams in jsdom
   window.URLSearchParams = UrlSearchParams;
 }
+
+// you can import fakes from fake-indexeddb and attach them to the jsdom global
+// https://github.com/dumbmatter/fakeIndexedDB#use
+global.indexedDB = require("fake-indexeddb");
+global.IDBIndex = require("fake-indexeddb/lib/FDBIndex");
+global.IDBCursor = require("fake-indexeddb/lib/FDBCursor");
+global.IDBObjectStore = require("fake-indexeddb/lib/FDBObjectStore");
+global.IDBTransaction = require("fake-indexeddb/lib/FDBTransaction");
+global.IDBDatabase = require("fake-indexeddb/lib/FDBDatabase");
+global.IDBKeyRange = require("fake-indexeddb/lib/FDBKeyRange");
+
+// monkey-patch global websocket
+global.WebSocket = global.WebSocket || ws;

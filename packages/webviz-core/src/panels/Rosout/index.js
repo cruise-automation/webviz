@@ -71,20 +71,26 @@ export const getShouldDisplayMsg = (msg: Message, minLogLevel: number, searchTer
     // No search term filters so this message should be visible.
     return true;
   }
-
-  for (const searchTerm of searchTerms) {
-    if (msg.message.name.includes(searchTerm) || msg.message.msg.includes(searchTerm)) {
+  const searchTermsInLowerCase = searchTerms.map((term) => term.toLowerCase());
+  for (const searchTerm of searchTermsInLowerCase) {
+    if (msg.message.name.toLowerCase().includes(searchTerm) || msg.message.msg.toLowerCase().includes(searchTerm)) {
       return true;
     }
   }
   return false;
 };
 
+type State = {
+  disableAutoScroll: boolean,
+};
+
 const DEFAULT_CONFIG = { searchTerms: [], minLogLevel: 1 };
-class RosoutPanel extends PureComponent<Props> {
+class RosoutPanel extends PureComponent<Props, State> {
   static defaultConfig = DEFAULT_CONFIG;
   static panelType = "RosOut";
   _prevConfig: Config = DEFAULT_CONFIG;
+
+  state = { disableAutoScroll: false };
 
   _onNodeFilterChange = (selectedOptions: Option[]) => {
     this.props.saveConfig({ ...this.props.config, searchTerms: selectedOptions.map((option) => option.value) });
@@ -161,6 +167,7 @@ class RosoutPanel extends PureComponent<Props> {
 
   render() {
     const seenNodeNames = new Set();
+    const { disableAutoScroll } = this.state;
 
     return (
       <MessageHistory paths={["/rosout"]} historySize={100000}>
@@ -175,11 +182,21 @@ class RosoutPanel extends PureComponent<Props> {
               <PanelToolbar floating helpContent={helpContent}>
                 {this._renderFiltersBar(seenNodeNames)}
               </PanelToolbar>
-              <LargeList
-                cleared={cleared || configChanged}
-                items={this._getFilteredMessages(msgs)}
-                renderRow={this._renderRow}
-              />
+              <div
+                className={style.content}
+                onScroll={({ target }) => {
+                  const newDisableAutoScroll = target.scrollHeight - target.scrollTop > target.clientHeight;
+                  if (newDisableAutoScroll !== disableAutoScroll) {
+                    this.setState({ disableAutoScroll: newDisableAutoScroll });
+                  }
+                }}>
+                <LargeList
+                  disableScrollToBottom={disableAutoScroll}
+                  cleared={cleared || configChanged}
+                  items={this._getFilteredMessages(msgs)}
+                  renderRow={this._renderRow}
+                />
+              </div>
             </Flex>
           );
         }}

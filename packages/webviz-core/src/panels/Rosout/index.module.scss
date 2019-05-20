@@ -17,11 +17,15 @@ $option-font-size: $text-size;
 .message {
   line-height: 1.2;
   padding-top: 32px;
+}
+
+.content {
   @include monospace;
+  flex: 1 1 auto;
+  display: flex;
 }
 
 .filtersBar {
-  align-items: right;
   background-color: $toolbar;
   display: flex;
   flex-wrap: wrap;
@@ -32,7 +36,7 @@ $option-font-size: $text-size;
 
 .severityFilter {
   flex: 0 1 auto;
-  min-width: 200px;
+  min-width: 120px;
   margin-left: 10px;
 }
 
@@ -93,15 +97,25 @@ $option-font-size: $text-size;
   .Select--multi .Select-multi-value-wrapper {
     width: 100%;
   }
+  .Select--multi .Select-arrow {
+    opacity: 0.5;
+  }
   .Select--multi .Select-value {
     color: $text-bright;
     background-color: $background-control-selected;
-    border: 1px solid $light-purple;
+    border: 1px solid $background-control;
     margin: 2px;
   }
-
-  .Select--multi .Select-value-icon:hover {
-    background-color: $light-purple;
-    color: $background-control-selected;
+  .Select--multi .Select-value-icon {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0 0 4px;
+    opacity: 0.5;
+    border: 0;
+    &:hover {
+      color: inherit;
+      background-color: transparent;
+      opacity: 1;
+    }
   }
 }

@@ -19,7 +19,7 @@ import ReactHoverObserver from "react-hover-observer";
 import Tree from "react-json-tree";
 import styled from "styled-components";
 
-import { type ValueAction, getValueActionForValue } from "./getValueActionForValue";
+import { type ValueAction, getValueActionForValue, getStructureItemForPath } from "./getValueActionForValue";
 import helpContent from "./index.help.md";
 import styles from "./index.module.scss";
 import EmptyState from "webviz-core/src/components/EmptyState";
@@ -35,8 +35,10 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import Plot, { type PlotConfig, plotableRosTypes } from "webviz-core/src/panels/Plot";
+import { constantsByDatatype } from "webviz-core/src/selectors";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { PanelConfig } from "webviz-core/src/types/panels";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import clipboard from "webviz-core/src/util/clipboard";
 import { format, formatDuration } from "webviz-core/src/util/time";
 
@@ -107,6 +109,7 @@ type Props = {
   config: Config,
   saveConfig: ($Shape<Config>) => void,
   openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
+  datatypes: RosDatatypes,
 };
 
 type State = {|
@@ -231,6 +234,21 @@ class TopicEcho extends React.PureComponent<Props, State> {
             keyPath.slice(0, -1).reverse()
           );
         }
+
+        let constantName: ?string;
+        if (metadata) {
+          const structureItem = getStructureItemForPath(
+            metadata.structureItem,
+            keyPath
+              .slice(0, -1)
+              .reverse()
+              .join(",")
+          );
+          const { datatypes } = this.props;
+          if (structureItem) {
+            constantName = constantsByDatatype(datatypes)[structureItem.datatype][itemValue];
+          }
+        }
         const basePath: string = queriedData[lastKeyPath].path;
         let itemLabel = label;
         // output preview for the first x items if the data is in binary format
@@ -245,16 +263,23 @@ class TopicEcho extends React.PureComponent<Props, State> {
           // $FlowFixMe
           itemLabel = itemValue.constructor.name;
         }
+        if (constantName) {
+          itemLabel = `${itemLabel} (${constantName})`;
+        }
         return (
           <span>
             {itemLabel}
             {smallNumberArrayStr && (
-              <React.Fragment>
+              <>
                 {smallNumberArrayStr}
-                <Icon fade className={styles.icon} onClick={() => console.log(itemValue)} tooltip="Log data to console">
+                <Icon
+                  fade
+                  className={styles.icon}
+                  onClick={() => console.log(itemValue)}
+                  tooltip="Log data to browser console">
                   <ConsoleLineIcon />
                 </Icon>
-              </React.Fragment>
+              </>
             )}
             {valueAction && this._renderIcons(valueAction, basePath)}
           </span>
@@ -302,7 +327,6 @@ class TopicEcho extends React.PureComponent<Props, State> {
           const isSingleElemArray = Array.isArray(data) && data.length === 1 && typeof data[0] !== "object";
           const shouldDisplaySingleVal = typeof data !== "object" || isSingleElemArray;
           const singleVal = isSingleElemArray ? data[0] : data;
-
           return (
             <Flex col clip scroll className={styles.container}>
               <SMetadata>
@@ -370,10 +394,10 @@ class TopicEcho extends React.PureComponent<Props, State> {
     return (
       <Flex col clip style={{ position: "relative" }}>
         <PanelToolbar helpContent={helpContent}>
-          <MessageHistory.Input path={topicName} onChange={this._onChange} inputStyle={{ height: "100%" }} />
-          <Icon tooltip={expandAll ? "Collapse all" : "Expand all"} large fade onClick={this._toggleExpandAll}>
+          <Icon tooltip={expandAll ? "Collapse all" : "Expand all"} medium fade onClick={this._toggleExpandAll}>
             {expandAll ? <LessIcon /> : <MoreIcon />}
           </Icon>
+          <MessageHistory.Input path={topicName} onChange={this._onChange} inputStyle={{ height: "100%" }} />
         </PanelToolbar>
         {this._renderTopic()}
       </Flex>

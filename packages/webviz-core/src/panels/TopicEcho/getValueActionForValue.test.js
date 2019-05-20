@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { getValueActionForValue } from "./getValueActionForValue";
+import { getValueActionForValue, getStructureItemForPath } from "./getValueActionForValue";
 
 describe("getValueActionForValue", () => {
   it("returns undefined if it is not a primitive", () => {
@@ -120,5 +120,65 @@ describe("getValueActionForValue", () => {
       datatype: "",
     };
     expect(getValueActionForValue({ sec: 0, nsec: 0 }, structureItem, ["sec"])).toEqual(undefined);
+  });
+});
+
+describe("getStructureItemForPath", () => {
+  it("returns a structureItem for an array element", () => {
+    const structureItem = {
+      structureType: "array",
+      next: {
+        structureType: "primitive",
+        primitiveType: "uint32",
+        datatype: "",
+      },
+    };
+    expect(getStructureItemForPath(structureItem, "0")).toEqual({
+      structureType: "primitive",
+      primitiveType: "uint32",
+      datatype: "",
+    });
+  });
+
+  it("returns a structureItem for a map element", () => {
+    const structureItem = {
+      structureType: "message",
+      nextByName: {
+        some_id: {
+          structureType: "primitive",
+          primitiveType: "uint32",
+          datatype: "",
+        },
+      },
+      datatype: "",
+    };
+    expect(getStructureItemForPath(structureItem, "some_id")).toEqual({
+      structureType: "primitive",
+      primitiveType: "uint32",
+      datatype: "",
+    });
+  });
+
+  it("returns a structureItem multi elements path", () => {
+    const structureItem = {
+      structureType: "array",
+      next: {
+        structureType: "message",
+        nextByName: {
+          some_id: {
+            structureType: "primitive",
+            primitiveType: "uint32",
+            datatype: "",
+          },
+        },
+        datatype: "",
+      },
+      datatype: "",
+    };
+    expect(getStructureItemForPath(structureItem, "0,some_id")).toEqual({
+      structureType: "primitive",
+      primitiveType: "uint32",
+      datatype: "",
+    });
   });
 });

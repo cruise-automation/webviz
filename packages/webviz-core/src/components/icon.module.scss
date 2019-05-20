@@ -27,6 +27,14 @@
   vertical-align: middle;
 }
 
+.small,
+.small img {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  vertical-align: middle;
+}
+
 .clickable {
   cursor: pointer;
 }

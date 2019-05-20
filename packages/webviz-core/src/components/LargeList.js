@@ -121,6 +121,7 @@ class LargeList<Item> extends React.Component<Props<Item>, {}> {
               <List
                 width={width}
                 height={height}
+                style={{ outline: "none" }}
                 deferredMeasurementCache={this._cache}
                 rowHeight={this._cache.rowHeight}
                 rowRenderer={(rowProps) => (

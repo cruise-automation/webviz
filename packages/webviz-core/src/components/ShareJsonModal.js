@@ -111,7 +111,7 @@ export default class ShareJsonModal extends Component<Props, State> {
               Apply
             </Button>
             <Button onClick={this.onCopy}>{copied ? "Copied!" : "Copy"}</Button>
-            <Button onClick={() => this.setState({ value: "" })}>Clear</Button>
+            <Button onClick={() => this.setState({ value: "{}" })}>Clear</Button>
           </div>
         </Flex>
       </Modal>

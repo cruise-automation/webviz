@@ -220,7 +220,7 @@ export default class ErrorDisplay extends React.PureComponent<{}, State> {
               </Fader>
               <span style={iconStyle}>
                 <Fader visible={hasUnread}>{unreadCount || ""}</Fader>
-                <Icon medium tooltip="Errors">
+                <Icon small tooltip="Errors">
                   <BellIcon />
                 </Icon>
               </span>

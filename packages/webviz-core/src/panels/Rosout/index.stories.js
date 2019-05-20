@@ -43,7 +43,7 @@ const fixture = {
           header: { stamp: { sec: 123, nsec: 0 } },
           level: 4,
           line: 242,
-          msg: "Couldn't find int 83757.",
+          msg: "Couldn't find int 2121.",
           name: "/other_node",
         },
       },
@@ -92,10 +92,17 @@ storiesOf("<RosoutPanel>", module)
       </PanelSetup>
     );
   })
-  .add("filtered", () => {
+  .add(`filtered terms: "multiple", "/some_topic"`, () => {
     return (
       <PanelSetup fixture={fixture}>
         <Rosout config={{ searchTerms: ["multiple", "/some_topic"], minLogLevel: 1 }} />
+      </PanelSetup>
+    );
+  })
+  .add(`case insensitive message filtering: "could", "Ipsum"`, () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Rosout config={{ searchTerms: ["could", "Ipsum"], minLogLevel: 1 }} />
       </PanelSetup>
     );
   });

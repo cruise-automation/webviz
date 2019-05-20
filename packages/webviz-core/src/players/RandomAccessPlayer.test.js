@@ -129,6 +129,20 @@ class MessageStore {
 }
 
 describe("RandomAccessPlayer", () => {
+  it("sets initial topics when extension point registers topics callback", (done) => {
+    const provider = {
+      initialize: (extensionPoint) => {
+        extensionPoint.addTopicsCallback((topics) => {
+          expect(topics).toEqual(["/foo/bar", "/foo/baz"]);
+          done();
+        });
+        return Promise.resolve();
+      },
+    };
+    const source = new RandomAccessPlayer((provider: any));
+    source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/foo/baz" }]);
+    source.setListener(() => Promise.resolve());
+  });
   it("calls extension point topics callbacks when topics change", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer(provider);
@@ -143,15 +157,15 @@ describe("RandomAccessPlayer", () => {
     extPoint.addTopicsCallback((topics: string[]) => {
       topicCalls2.push(topics);
     });
-    expect(topicCalls1).toEqual([]);
+    expect(topicCalls1).toEqual([[]]);
     source.setSubscriptions([{ topic: "/foo/bar" }]);
-    expect(topicCalls1).toEqual([["/foo/bar"]]);
+    expect(topicCalls1).toEqual([[], ["/foo/bar"]]);
     source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/foo/bar" }]);
-    expect(topicCalls1).toEqual([["/foo/bar"]]);
+    expect(topicCalls1).toEqual([[], ["/foo/bar"]]);
     source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/foo/bar" }, { topic: "/baz" }]);
-    expect(topicCalls1).toEqual([["/foo/bar"], ["/foo/bar", "/baz"]]);
+    expect(topicCalls1).toEqual([[], ["/foo/bar"], ["/foo/bar", "/baz"]]);
     source.setSubscriptions([{ topic: "/baz" }]);
-    expect(topicCalls1).toEqual([["/foo/bar"], ["/foo/bar", "/baz"], ["/baz"]]);
+    expect(topicCalls1).toEqual([[], ["/foo/bar"], ["/foo/bar", "/baz"], ["/baz"]]);
     expect(topicCalls2).toEqual(topicCalls1);
   });
 
@@ -375,11 +389,11 @@ describe("RandomAccessPlayer", () => {
   it("seek during reading discards messages before seek", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer(provider);
-    const store = new MessageStore(3);
+    const store = new MessageStore(4);
     await source.setListener(store.add);
     source.setSubscriptions([{ topic: "/foo/bar" }]);
     let callCount = 0;
-    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    const getMessages: GetMessages = async (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
       expect(topics).toContainOnly(["/foo/bar"]);
       callCount++;
       if (callCount > 1) {
@@ -403,20 +417,22 @@ describe("RandomAccessPlayer", () => {
           message: { payload: "foo bar" },
         },
       ];
+      await new Promise((resolve) => setTimeout(resolve, 10));
       source.seekPlayback({ sec: 0, nsec: 0 });
       return Promise.resolve(result);
     };
     provider.getMessages = getMessages;
     source.startPlayback();
     const messages = await store.done;
-    expect(messages).toHaveLength(3);
+    expect(messages).toHaveLength(4);
     const activeDatas = messages.map((msg) => msg.activeData || {});
     expect(activeDatas.map((d) => d.currentTime)).toEqual([
       undefined, // "start up" message
       { sec: 0, nsec: 1 },
       { sec: 0, nsec: 1 },
+      { sec: 0, nsec: 1 },
     ]);
-    expect(activeDatas.map((d) => d.messages)).toEqual([undefined, [], []]);
+    expect(activeDatas.map((d) => d.messages)).toEqual([undefined, [], [], []]);
   });
 
   it("backfills previous messages on seek", async () => {

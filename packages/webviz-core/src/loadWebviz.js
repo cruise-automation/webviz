@@ -12,7 +12,7 @@ import { routerMiddleware } from "react-router-redux";
 
 // We put all the internal requires inside functions, so that when they load the hooks have been properly set.
 
-let hooks = {
+const defaultHooks = {
   nodes: () => [],
   migratePanels: (panels) => panels,
   panelList() {
@@ -24,6 +24,7 @@ let hooks = {
     const Plot = require("webviz-core/src/panels/Plot").default;
     const Rosout = require("webviz-core/src/panels/Rosout").default;
     const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
+    const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
     const TopicEcho = require("webviz-core/src/panels/TopicEcho").default;
     const { ndash } = require("webviz-core/src/util/entities");
 
@@ -33,6 +34,7 @@ let hooks = {
       { title: "Topic Echo", component: TopicEcho },
       { title: "Plot", component: Plot },
       { title: "State Transition Visualizer", component: StateTransitions },
+      { title: "3D", component: ThreeDimensionalViz },
       { title: `Runtime Monitor ${ndash} Summary`, component: DiagnosticSummary },
       { title: `Runtime Monitor ${ndash} Detail`, component: DiagnosticStatusPanel },
       { title: "Webviz Internals", component: Internals },
@@ -40,17 +42,99 @@ let hooks = {
     ];
   },
   helpPageFootnote: () => null,
-  perPanelHooks: () => ({
-    DiagnosticSummary: { defaultConfig: { pinnedIds: [] } },
-    ImageView: {
-      defaultConfig: { cameraTopic: "", enabledMarkerNames: [], scale: 0.2, transformMarkers: false },
-      imageMarkerDatatypes: ["visualization_msgs/ImageMarker"],
-      imageMarkerArrayDatatypes: [],
-      canTransformMarkersByTopic: (topic) => !topic.includes("rect"),
-    },
-    StateTransitions: { defaultConfig: { paths: [] }, customStateTransitionColors: {} },
-    TopicEcho: { docLinkFunction: () => undefined },
-  }),
+  perPanelHooks: () => {
+    const World = require("webviz-core/src/panels/ThreeDimensionalViz/World").default;
+    const LaserScanVert = require("webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert").default;
+    const FileMultipleIcon = require("@mdi/svg/svg/file-multiple.svg").default;
+    const CheckboxBlankCircleOutline = require("@mdi/svg/svg/checkbox-blank-circle-outline.svg").default;
+    const { defaultMapPalette } = require("webviz-core/src/panels/ThreeDimensionalViz/commands/utils");
+
+    const { SECOND_BAG_PREFIX } = require("webviz-core/src/util/globalConstants");
+
+    const getMetadata = () => {};
+    getMetadata.topics = [];
+    return {
+      Panel: {
+        topicPrefixes: {
+          "": {
+            labelText: "Default",
+            icon: CheckboxBlankCircleOutline,
+            iconPrefix: "",
+          },
+          [SECOND_BAG_PREFIX]: {
+            labelText: "Input 2",
+            icon: FileMultipleIcon,
+            iconPrefix: "2",
+            tooltipText: "topics prefixed with '/webviz_bag_2'",
+          },
+        },
+      },
+      DiagnosticSummary: { defaultConfig: { pinnedIds: [] } },
+      ImageView: {
+        defaultConfig: {
+          cameraTopic: "",
+          enabledMarkerNames: [],
+          scale: 0.2,
+          transformMarkers: false,
+          synchronize: false,
+        },
+        imageMarkerDatatypes: ["visualization_msgs/ImageMarker"],
+        imageMarkerArrayDatatypes: [],
+        canTransformMarkersByTopic: (topic) => !topic.includes("rect"),
+      },
+      StateTransitions: { defaultConfig: { paths: [] }, customStateTransitionColors: {} },
+      ThreeDimensionalViz: {
+        defaultConfig: {
+          checkedNodes: ["name:Topics"],
+          expandedNodes: ["name:Topics"],
+          followTf: null,
+          cameraState: {},
+          modifiedNamespaceTopics: [],
+          pinTopics: false,
+          topicSettings: {},
+        },
+        topics: [],
+        editableTopics: [],
+        icons: {},
+        WorldComponent: World,
+        LaserScanVert,
+        getMetadata,
+        migrateConfig: () => false,
+        setGlobalDataInSceneBuilder: (globalData, selectionState, topicsToRender) => ({
+          selectionState,
+          topicsToRender,
+        }),
+        consumeMessage: (topic, msg, consumeMethods, { errors }) => {
+          errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${msg.datatype}`);
+        },
+        getMessagePose: (msg) => msg.message.pose,
+        addMarkerToCollector: () => {},
+        getSyntheticArrowMarkerColor: () => ({ r: 0, g: 0, b: 1, a: 0.5 }),
+        getFlattenedPose: () => undefined,
+        getOccupancyGridValues: (topic) => [0.5, "map"],
+        getMapTexture(regl) {
+          return regl.texture({
+            format: "rgba",
+            type: "uint8",
+            mipmap: false,
+            data: defaultMapPalette,
+            width: 256,
+            height: 1,
+          });
+        },
+        consumePose: () => {},
+        getMarkerColor: (topic, markerColor) => markerColor,
+        getDefaultTopicTree: () => ({ name: "root" }),
+        hasBlacklistTopics: () => false,
+        renderTopicSettings: () => {},
+        ungroupedNodesCategory: "Topics",
+        rootTransformFrame: "map",
+        defaultFollowTransformFrame: null,
+        skipTransformFrame: null,
+      },
+      TopicEcho: { docLinkFunction: () => undefined },
+    };
+  },
   Root({ store }) {
     const Root = require("webviz-core/src/components/Root").default;
     return <Root store={store} />;
@@ -62,23 +146,31 @@ let hooks = {
     "sensor_msgs/LaserScan",
     "nav_msgs/OccupancyGrid",
   ],
-  rootTransformFrame: "map",
-  defaultFollowTransformFrame: null,
   useRaven: () => true,
   load: () => {},
+  onPanelClose: () => {},
+  onPanelSwap: () => {},
+  onPanelSplit: () => {},
+  onPanelDrag: () => {},
 };
+
+let hooks = defaultHooks;
 
 export function getGlobalHooks() {
   return hooks;
 }
 
-export function addGlobalHooksForStorybook(webvizHooks) {
-  hooks = { ...hooks, ...webvizHooks };
+export function setHooks(hooksToSet) {
+  hooks = { ...hooks, ...hooksToSet };
 }
 
-export function loadWebviz(webvizHooks) {
-  if (webvizHooks) {
-    hooks = webvizHooks;
+export function resetHooksToDefault() {
+  hooks = defaultHooks;
+}
+
+export function loadWebviz(hooksToSet) {
+  if (hooksToSet) {
+    setHooks(hooksToSet);
   }
 
   require("webviz-core/src/styles/global.scss");

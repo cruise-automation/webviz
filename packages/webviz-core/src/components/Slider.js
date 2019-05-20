@@ -11,6 +11,8 @@ import * as React from "react";
 import DocumentEvents from "react-document-events";
 import styled from "styled-components";
 
+import reportError from "webviz-core/src/util/reportError";
+
 // A low level slider component.
 //
 // Props:
@@ -135,6 +137,14 @@ export default class Slider extends React.Component<Props> {
   render() {
     const { min, max, value, renderSlider, draggable } = this.props;
     const { mouseDown } = this;
+
+    if (max < min) {
+      const msg = `Slider component given invalid range: ${min}, ${max}`;
+      const err = new Error(msg);
+
+      reportError(err.message, err, "user");
+    }
+
     return (
       <StyledSlider innerRef={(el) => (this.el = el)} onClick={this._onClick} onMouseDown={this._onMouseDown}>
         <DocumentEvents

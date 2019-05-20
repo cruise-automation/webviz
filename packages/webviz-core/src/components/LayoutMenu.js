@@ -42,7 +42,7 @@ export default class LayoutMenu extends PureComponent<Props, State> {
 
     return (
       <ChildToggle position="below" onToggle={this.onToggle} isOpen={isOpen}>
-        <Icon medium fade active={isOpen}>
+        <Icon small fade active={isOpen}>
           <AppsIcon />
         </Icon>
         <Menu>

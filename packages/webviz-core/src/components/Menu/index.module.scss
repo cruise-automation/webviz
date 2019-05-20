@@ -15,7 +15,6 @@
   max-height: 100%;
 
   hr {
-    margin: 1px 0;
     padding: 0;
     background-color: $divider;
   }
@@ -42,12 +41,17 @@
   }
 }
 
-.submenuIcon {
+.submenuIconLeft,
+.submenuIconRight {
   width: 16px;
   height: 16px;
   flex: none;
   fill: currentColor;
   opacity: 0.6;
+}
+.submenuIconLeft {
+  position: relative;
+  right: 6px;
 }
 
 .icon {

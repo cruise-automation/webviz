@@ -14,8 +14,9 @@ import JsonIcon from "@mdi/svg/svg/json.svg";
 import SettingsIcon from "@mdi/svg/svg/settings.svg";
 import cx from "classnames";
 import PropTypes from "prop-types";
-import * as React from "react";
-import { getNodeAtPath } from "react-mosaic-component";
+import * as React from "react"; // eslint-disable-line import/no-duplicates
+import { useContext } from "react"; // eslint-disable-line import/no-duplicates
+import Dimensions from "react-container-dimensions";
 import { connect } from "react-redux";
 
 import HelpButton from "./HelpButton";
@@ -27,17 +28,19 @@ import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
 import { Item, SubMenu } from "webviz-core/src/components/Menu";
 import PanelContext from "webviz-core/src/components/PanelContext";
+import { getPanelTypeFromMosiac } from "webviz-core/src/components/PanelToolbar/utils";
 import renderToBody from "webviz-core/src/components/renderToBody";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList from "webviz-core/src/panels/PanelList";
 import type { PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
-import { getPanelTypeFromId } from "webviz-core/src/util";
 
 type Props = {|
   children?: React.Node,
   floating?: boolean,
   helpContent?: React.Node,
   menuContent?: React.Node,
+  showPanelName?: boolean,
 |};
 
 // separated into a sub-component so it can always skip re-rendering
@@ -52,26 +55,25 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
 
   getPanelType() {
     const { mosaicWindowActions, mosaicActions } = this.context;
-    if (!mosaicWindowActions || !mosaicActions) {
-      return null;
-    }
-    const node = getNodeAtPath(mosaicActions.getRoot(), mosaicWindowActions.getPath());
-    const type = getPanelTypeFromId(node);
-    return type;
+
+    return getPanelTypeFromMosiac(mosaicWindowActions, mosaicActions);
   }
 
   close = () => {
     const { mosaicActions, mosaicWindowActions } = this.context;
+    getGlobalHooks().onPanelClose(this.getPanelType());
     mosaicActions.remove(mosaicWindowActions.getPath());
   };
 
   split = () => {
     const { mosaicWindowActions } = this.context;
     const type = this.getPanelType();
+    getGlobalHooks().onPanelSplit(type);
     mosaicWindowActions.split({ type });
   };
 
   swap = (type: string, panelConfig?: PanelConfig) => {
+    getGlobalHooks().onPanelSwap(type);
     this.context.mosaicWindowActions.replaceWithNew({ type, panelConfig });
   };
 
@@ -84,8 +86,8 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
       <ShareJsonModal
         onRequestClose={() => modal.remove()}
         value={panelConfigById[id] || {}}
-        onChange={(config) => this.props.savePanelConfig({ id, config })}
-        noun="config"
+        onChange={(config) => this.props.savePanelConfig({ id, config, override: true })}
+        noun="panel configuration"
       />
     );
   };
@@ -100,21 +102,21 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
     return (
       <PanelContext.Consumer>
         {(panelData) => (
-          <React.Fragment>
-            <SubMenu text="Change Panel" icon={<CheckboxMultipleBlankOutlineIcon />}>
+          <>
+            <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />}>
               {/* $FlowFixMe - not sure why it thinks onPanelSelect is a Redux action */}
-              <PanelList onPanelSelect={this.swap} />
+              <PanelList selectedPanelType={panelData.type} onPanelSelect={this.swap} />
             </SubMenu>
             <Item icon={<JsonIcon />} onClick={() => this._onImportClick(panelData && panelData.id)}>
-              import/export config
+              Import/export config
             </Item>
             <Item key="split" icon={<GridLargeIcon />} onClick={this.split}>
-              Split Panel
+              Split panel
             </Item>
             <Item key="close" icon={<CloseIcon />} onClick={this.close} disabled={isOnlyPanel}>
-              Remove Panel
+              Remove panel
             </Item>
-          </React.Fragment>
+          </>
         )}
       </PanelContext.Consumer>
     );
@@ -128,38 +130,35 @@ const ConnectedStandardMenuItems = connect(
 
 // Keep controls, which don't change often, in a pure component in order to avoid re-rendering the
 // whole PanelToolbar when only children change.
-class PanelToolbarControls extends React.PureComponent<Props> {
-  render() {
-    const { floating, helpContent, menuContent } = this.props;
-    return (
-      <div className={styles.iconContainer}>
-        {helpContent && <HelpButton>{helpContent}</HelpButton>}
-        <Dropdown
-          flatEdges={!floating}
-          toggleComponent={
-            <Icon fade>
-              <SettingsIcon className={styles.icon} />
-            </Icon>
-          }>
-          {menuContent && (
-            <React.Fragment>
-              {menuContent} <hr />{" "}
-            </React.Fragment>
-          )}
-          <ConnectedStandardMenuItems />
-        </Dropdown>
-        <MosaicDragHandle>
-          {/* Can only nest native nodes into <MosaicDragHandle>, so wrapping in a <span> */}
-          <span>
-            <Icon fade>
-              <DragIcon className={styles.dragIcon} />
-            </Icon>
-          </span>
-        </MosaicDragHandle>
-      </div>
-    );
-  }
-}
+const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Props) {
+  const panelData = useContext(PanelContext);
+  const { floating, helpContent, menuContent, showPanelName } = props;
+  return (
+    <div className={styles.iconContainer}>
+      {showPanelName && panelData && <div className={styles.panelName}>{panelData.title}</div>}
+      {helpContent && <HelpButton>{helpContent}</HelpButton>}
+      <Dropdown
+        flatEdges={!floating}
+        toggleComponent={
+          <Icon fade tooltip="Panel settings">
+            <SettingsIcon className={styles.icon} />
+          </Icon>
+        }>
+        <ConnectedStandardMenuItems />
+        <hr />
+        {menuContent && <>{menuContent}</>}
+      </Dropdown>
+      <MosaicDragHandle>
+        {/* Can only nest native nodes into <MosaicDragHandle>, so wrapping in a <span> */}
+        <span>
+          <Icon fade tooltip="Move panel">
+            <DragIcon className={styles.dragIcon} />
+          </Icon>
+        </span>
+      </MosaicDragHandle>
+    </div>
+  );
+});
 
 // Panel toolbar should be added to any panel that's part of the
 // react-mosaic layout.  It adds a drag handle, remove/replace controls
@@ -168,19 +167,28 @@ export default class PanelToolbar extends React.PureComponent<Props> {
   render() {
     const { children, floating, helpContent, menuContent } = this.props;
     return (
-      <ChildToggle.ContainsOpen>
-        {(containsOpen) => (
-          <div
-            className={cx(styles.panelToolbarContainer, {
-              [styles.floating]: floating,
-              [styles.containsOpen]: containsOpen,
-              [styles.hasChildren]: !!children,
-            })}>
-            {children}
-            <PanelToolbarControls floating={floating} helpContent={helpContent} menuContent={menuContent} />
-          </div>
+      <Dimensions>
+        {({ width }) => (
+          <ChildToggle.ContainsOpen>
+            {(containsOpen) => (
+              <div
+                className={cx(styles.panelToolbarContainer, {
+                  [styles.floating]: floating,
+                  [styles.containsOpen]: containsOpen,
+                  [styles.hasChildren]: !!children,
+                })}>
+                {children}
+                <PanelToolbarControls
+                  floating={floating}
+                  helpContent={helpContent}
+                  menuContent={menuContent}
+                  showPanelName={width > 360}
+                />
+              </div>
+            )}
+          </ChildToggle.ContainsOpen>
         )}
-      </ChildToggle.ContainsOpen>
+      </Dimensions>
     );
   }
 }

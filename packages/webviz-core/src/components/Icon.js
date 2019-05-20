@@ -16,6 +16,7 @@ type Props = {
   children: React.Node,
   large?: boolean,
   medium?: boolean,
+  small?: boolean,
   active?: boolean,
   fade?: boolean,
   onClick?: (e: SyntheticMouseEvent<HTMLElement>) => void,
@@ -27,13 +28,27 @@ type Props = {
 };
 
 const Icon = (props: Props) => {
-  const { children, large, medium, onClick, clickable, active, fade, className, style, tooltip, tooltipProps } = props;
+  const {
+    children,
+    large,
+    medium,
+    small,
+    onClick,
+    clickable,
+    active,
+    fade,
+    className,
+    style,
+    tooltip,
+    tooltipProps,
+  } = props;
   const classNames = cx("icon", styles.icon, className, {
     [styles.fade]: fade,
     [styles.clickable]: !!onClick || clickable == null || clickable,
     [styles.active]: active,
     [styles.large]: large,
     [styles.medium]: medium,
+    [styles.small]: small,
   });
 
   // if we have a click handler

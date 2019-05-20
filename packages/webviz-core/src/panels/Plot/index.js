@@ -56,7 +56,7 @@ class Plot extends PureComponent<Props> {
     const { saveConfig } = this.props;
 
     return (
-      <React.Fragment>
+      <>
         <Item onClick={() => saveConfig({ maxYValue: maxYValue === "" ? "10" : "" })}>
           <div className={styles.label}>Maximum</div>
           <input
@@ -81,7 +81,7 @@ class Plot extends PureComponent<Props> {
             placeholder="auto"
           />
         </Item>
-      </React.Fragment>
+      </>
     );
   }
 

@@ -36,7 +36,7 @@ export default function PlayerManager({ children }: {| children: React.Node |}) 
   const [player, setPlayer] = useState();
 
   return (
-    <React.Fragment>
+    <>
       <DocumentDropListener
         filesSelected={({ files, shiftPressed }: { files: FileList, shiftPressed: boolean }) => {
           if (shiftPressed && usedFiles.current.length === 1) {
@@ -56,6 +56,6 @@ export default function PlayerManager({ children }: {| children: React.Node |}) 
         </DropOverlay>
       </DocumentDropListener>
       <MessagePipelineProvider player={player}>{children}</MessagePipelineProvider>
-    </React.Fragment>
+    </>
   );
 }

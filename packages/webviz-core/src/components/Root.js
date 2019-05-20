@@ -53,6 +53,9 @@ class App extends React.PureComponent<Props> {
     if (this.container) {
       this.container.focus();
     }
+
+    // Add a hook for integration tests.
+    window.setPanelLayout = (payload) => this.props.importPanelLayout(payload, false);
   }
 
   onPanelSelect = (panelType: string, panelConfig?: PanelConfig) => {

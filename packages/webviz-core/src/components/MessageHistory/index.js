@@ -237,6 +237,7 @@ class MessageHistory extends React.PureComponent<Props> {
           <PanelContext.Consumer>
             {(panelData) => (
               <MessageHistoryOnlyTopics
+                topicPrefix={(panelData || {}).topicPrefix || ""}
                 panelType={(panelData || {}).type}
                 ignoreMissing={ignoreMissing}
                 topics={getMemoizedTopics(paths)}

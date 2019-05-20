@@ -80,3 +80,30 @@ export const fixture = {
     ],
   },
 };
+
+// separate fixture so that we only need to define datatypes for small subset of types
+export const enumFixture = {
+  datatypes: {
+    "baz/enum": [
+      { type: "uint8", name: "ERROR", isConstant: true, value: 0 },
+      { type: "uint8", name: "OFF", isConstant: true, value: 1 },
+      { type: "uint8", name: "BOOTING", isConstant: true, value: 2 },
+      { type: "uint8", name: "ACTIVE", isConstant: true, value: 3 },
+      { type: "uint8", name: "value", isArray: false },
+    ],
+  },
+  topics: [{ name: "/baz/enum", datatype: "baz/enum" }],
+  frame: {
+    "/baz/enum": [
+      {
+        op: "message",
+        datatype: "baz/enum",
+        topic: "/baz/enum",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: {
+          value: 2,
+        },
+      },
+    ],
+  },
+};

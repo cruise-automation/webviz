@@ -54,7 +54,12 @@ export type DiagnosticsById = Map<DiagnosticId, DiagnosticInfo>;
 export type DiagnosticsByLevel = {| [Level]: DiagnosticsById |};
 
 export function getDiagnosticId(status: DiagnosticStatusMessage): DiagnosticId {
-  return `|${status.hardware_id}|${status.name}|`;
+  // Remove leading slash from hardware_id if present.
+  let hardware_id = status.hardware_id;
+  if (hardware_id.startsWith("/")) {
+    hardware_id = hardware_id.substring(1);
+  }
+  return `|${hardware_id}|${status.name}|`;
 }
 
 export function getDisplayName(hardwareId: string, name: string) {

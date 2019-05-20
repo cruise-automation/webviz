@@ -10,9 +10,11 @@ export type PanelConfig = { [key: string]: any };
 
 export type SaveConfigPayload = {
   id: string,
-  // if you set silent to true the url will not be stripped of a layout id
+  // if you set silent to true, the url will not be stripped of a layout id
   // after the props are saved - useful for minor or background UI operations modifying insignificant panel props
   silent?: boolean,
+  // if you set override to true, existing config will be completely overriden by new passed in config
+  override?: boolean,
   config: PanelConfig,
 };
 

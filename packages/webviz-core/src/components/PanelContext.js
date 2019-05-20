@@ -9,6 +9,6 @@
 import * as React from "react";
 
 // Context used for components to know which panel they are inside
-const PanelContext: React.Context<?{ type: string, id: string }> = React.createContext();
+const PanelContext = React.createContext<?{| type: string, id: string, title: string, topicPrefix?: string |}>();
 
 export default PanelContext;

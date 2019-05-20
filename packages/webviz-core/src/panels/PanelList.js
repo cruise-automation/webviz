@@ -27,7 +27,30 @@ type PanelListItem = {|
   hideFromList?: boolean,
 |};
 
-const panelList: PanelListItem[] = getGlobalHooks().panelList();
+// getPanelList() and getPanelListItemsByType() are functions rather than top-level constants
+// in order to avoid issues with circular imports, such as
+// FooPanel -> PanelToolbar -> PanelList -> getGlobalHooks().panelList() -> FooPanel.
+let gPanelList;
+function getPanelList(): PanelListItem[] {
+  if (!gPanelList) {
+    gPanelList = getGlobalHooks().panelList();
+  }
+  return gPanelList;
+}
+
+let gPanelListItemsByType;
+export function getPanelListItemsByType(): { [type: string]: PanelListItem } {
+  if (!gPanelListItemsByType) {
+    gPanelListItemsByType = {};
+    for (const item of getPanelList()) {
+      // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
+      const panelType = item.component.panelType;
+      console.assert(panelType && !(panelType in gPanelListItemsByType));
+      gPanelListItemsByType[panelType] = item;
+    }
+  }
+  return gPanelListItemsByType;
+}
 
 type DropDescription = {
   panelType: string,
@@ -41,6 +64,7 @@ type PanelItemProps = {
     title: string,
     panelConfig?: PanelConfig,
   |},
+  checked?: boolean,
   // this comes from react-dnd
   connectDragSource: (any) => React.Node,
   onClick: () => void,
@@ -53,10 +77,12 @@ type PanelItemProps = {
 
 class PanelItem extends React.Component<PanelItemProps> {
   render() {
-    const { connectDragSource, panel, onClick } = this.props;
+    const { connectDragSource, panel, onClick, checked } = this.props;
     return connectDragSource(
       <div>
-        <Item onClick={onClick}>{panel.title}</Item>
+        <Item onClick={onClick} checked={checked}>
+          {panel.title}
+        </Item>
       </div>
     );
   }
@@ -93,6 +119,7 @@ const DraggablePanelItem = DragSource(MosaicDragType.WINDOW, dragConfig, (connec
 
 type OwnProps = {|
   onPanelSelect: (panelType: string, panelConfig?: PanelConfig) => void,
+  selectedPanelType?: string,
 |};
 type Props = {
   ...OwnProps,
@@ -104,7 +131,7 @@ type Props = {
 class PanelList extends React.Component<Props> {
   static getComponentForType(type: string): any | void {
     // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
-    const panel = panelList.find((item) => item.component.panelType === type);
+    const panel = getPanelList().find((item) => item.component.panelType === type);
     return panel && panel.component;
   }
 
@@ -138,7 +165,7 @@ class PanelList extends React.Component<Props> {
   // sanity checks to help panel authors debug issues
   _verifyPanels() {
     const panelTypes: Map<string, React.ComponentType<any>> = new Map();
-    for (const { component } of panelList) {
+    for (const { component } of getPanelList()) {
       // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
       const { name, displayName, panelType } = component;
       if (!panelType) {
@@ -160,17 +187,17 @@ class PanelList extends React.Component<Props> {
 
   render() {
     this._verifyPanels();
-    const { mosaicId, onPanelSelect } = this.props;
+    const { mosaicId, onPanelSelect, selectedPanelType } = this.props;
     return (
-      <React.Fragment>
-        {panelList
+      <>
+        {getPanelList()
           .filter(({ hideFromList }) => !hideFromList)
           .sort(naturalSort("title"))
           .map(
             // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
             ({ presets, title, component: { panelType } }) =>
               presets ? (
-                <SubMenu text={title} key={panelType}>
+                <SubMenu text={title} key={panelType} checked={panelType === selectedPanelType}>
                   {presets.map((subPanelListItem) => (
                     <DraggablePanelItem
                       key={subPanelListItem.title}
@@ -192,10 +219,11 @@ class PanelList extends React.Component<Props> {
                   panel={{ type: panelType, title }}
                   onDrop={this.onPanelMenuItemDrop}
                   onClick={() => onPanelSelect(panelType)}
+                  checked={panelType === selectedPanelType}
                 />
               )
           )}
-      </React.Fragment>
+      </>
     );
   }
 }

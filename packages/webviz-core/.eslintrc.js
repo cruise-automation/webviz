@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 module.exports = {
-  plugins: ["header"],
+  plugins: ["header", "react-hooks"],
   rules: {
     "no-restricted-imports": [
       "error",
@@ -37,6 +37,8 @@ module.exports = {
         "  You may not use this file except in compliance with the License.",
       ],
     ],
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "error",
     "no-console": "off",
   },
 };

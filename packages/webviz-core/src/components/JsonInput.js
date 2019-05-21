@@ -49,7 +49,7 @@ export default function JsonInput({ value, onChange, dataValidator }: Props) {
         onChange(null);
       }
     },
-    [error]
+    [error, onChange]
   );
 
   function handleChange(e) {

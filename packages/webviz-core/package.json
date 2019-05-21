@@ -4,6 +4,7 @@
   "description": "rosbag analysis tool",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cruise-automation/hooks": "0.0.1",
     "@mdi/svg": "3.2.89",
     "chart.js": "2.7.3",
     "chartjs-plugin-annotation": "0.5.7",
@@ -58,6 +59,7 @@
     "wasm-lz4": "0.0.2"
   },
   "devDependencies": {
+    "eslint-plugin-react-hooks": "^1.5.0",
     "fake-indexeddb": "2.0.4",
     "flow-bin": "0.95.1"
   },

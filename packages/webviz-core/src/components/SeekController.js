@@ -55,7 +55,7 @@ export default function SeekController(props: Props) {
         context.seekPlayback(seekToTime);
       }
     },
-    [shouldRunEffect, search]
+    [shouldRunEffect, search, context]
   );
   return null;
 }

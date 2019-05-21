@@ -597,6 +597,7 @@ describe("RandomAccessPlayer", () => {
       initialized(): void {
         this._initialized++;
       }
+      isPlaying(): void {}
       play(): void {
         this._played++;
       }

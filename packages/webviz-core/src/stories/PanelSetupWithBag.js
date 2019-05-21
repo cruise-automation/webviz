@@ -41,62 +41,66 @@ export default function PanelSetupWithBag({
 }: Props) {
   const [fixture, setFixture] = useState();
 
-  async function loadBag() {
-    if (!bagFileUrl || topics.length === 0) {
-      return;
-    }
-
-    const response = await fetch(bagFileUrl);
-    if (!response) {
-      log.error("failed to fetch the bag");
-    }
-    const blobs = await response.blob();
-    const bagFile = new File([blobs], "temp.bag");
-    const bag = await rosbag.open(bagFile).catch((err) => {
-      log.error("error openning the bag", err);
-    });
-    if (bag == null) {
-      log.error("bag is not valid");
-    }
-
-    // build the basic shape for fixture
-    const tempFixture = {
-      topics: topics.map((topic) => ({ name: topic, datatype: mapTopicToDatatype(topic) })),
-      frame: topics.reduce((memo, topic) => {
-        memo[topic] = [];
-        return memo;
-      }, {}),
-    };
-
-    await bag
-      .readMessages({ topics }, (result) => {
-        const { message, topic } = result;
-        tempFixture.frame[topic].push({
-          datatype: mapTopicToDatatype(topic),
-          topic,
-          op: "message",
-          receiveTime: result.timestamp,
-          message,
-        });
-      })
-      .catch((err) => {
-        log.error("error reading messages from the bag", err);
-      });
-
-    const fixture = getMergedFixture(tempFixture);
-    setFixture(fixture);
-
-    // Nesting two message history components within eachother causes the message history cache of messages to topics
-    // to not be refreshed properly since both components mount at the same time.  This is a hack to support
-    // stories for the image panel, which involve nested message histories, until we can get a proper fix for having
-    // nested message histories with different topic subscriptions working.
-    if (hasNestedMessageHistory) {
-      setFixture({ ...fixture });
-    }
-  }
-
   // load the bag when component is mounted or updated
-  useEffect(() => void loadBag(), [bagFileUrl, topics]);
+  useEffect(
+    () => {
+      async function loadBag() {
+        if (!bagFileUrl || topics.length === 0) {
+          return;
+        }
+
+        const response = await fetch(bagFileUrl);
+        if (!response) {
+          log.error("failed to fetch the bag");
+        }
+        const blobs = await response.blob();
+        const bagFile = new File([blobs], "temp.bag");
+        const bag = await rosbag.open(bagFile).catch((err) => {
+          log.error("error openning the bag", err);
+        });
+        if (bag == null) {
+          log.error("bag is not valid");
+        }
+
+        // build the basic shape for fixture
+        const tempFixture = {
+          topics: topics.map((topic) => ({ name: topic, datatype: mapTopicToDatatype(topic) })),
+          frame: topics.reduce((memo, topic) => {
+            memo[topic] = [];
+            return memo;
+          }, {}),
+        };
+
+        await bag
+          .readMessages({ topics }, (result) => {
+            const { message, topic } = result;
+            tempFixture.frame[topic].push({
+              datatype: mapTopicToDatatype(topic),
+              topic,
+              op: "message",
+              receiveTime: result.timestamp,
+              message,
+            });
+          })
+          .catch((err) => {
+            log.error("error reading messages from the bag", err);
+          });
+
+        const fixture = getMergedFixture(tempFixture);
+        setFixture(fixture);
+
+        // Nesting two message history components within eachother causes the message history cache of messages to topics
+        // to not be refreshed properly since both components mount at the same time.  This is a hack to support
+        // stories for the image panel, which involve nested message histories, until we can get a proper fix for having
+        // nested message histories with different topic subscriptions working.
+        if (hasNestedMessageHistory) {
+          setFixture({ ...fixture });
+        }
+      }
+      loadBag();
+    },
+    [bagFileUrl, topics, getMergedFixture, hasNestedMessageHistory, mapTopicToDatatype]
+  );
 
   return fixture ? (
     <PanelSetup fixture={fixture} onMount={onMount}>

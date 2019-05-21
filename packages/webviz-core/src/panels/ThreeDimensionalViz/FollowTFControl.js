@@ -146,7 +146,7 @@ const FollowTFControl = memo<Props>((props: Props) => {
     () => {
       return nodesWithoutDefaultFollowTfFrame ? newFollowTfFrame : defaultFollowTfFrame;
     },
-    [nodesWithoutDefaultFollowTfFrame, newFollowTfFrame, defaultFollowTfFrame]
+    [nodesWithoutDefaultFollowTfFrame, newFollowTfFrame]
   );
 
   const getFollowButtonTooltip = useCallback(
@@ -161,7 +161,7 @@ const FollowTFControl = memo<Props>((props: Props) => {
       }
       return "Unfollow";
     },
-    [tfToFollow, lastSelectedFrame, followingOrientation]
+    [tfToFollow, followingOrientation, lastSelectedFrame, getDefaultFollowTransformFrame]
   );
 
   const onClickFollowButton = useCallback(

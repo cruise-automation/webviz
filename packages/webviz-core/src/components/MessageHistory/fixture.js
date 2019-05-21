@@ -39,6 +39,6 @@ export const dualInputMessages: any[] = messages.map((msg, idx) => ({
   ...msg,
   topic: `${SECOND_BAG_PREFIX}${msg.topic}`,
   message: {
-    index: idx + 3,
+    index: idx + 6,
   },
 }));

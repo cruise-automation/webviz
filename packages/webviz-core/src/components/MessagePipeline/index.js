@@ -148,7 +148,6 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
 
   const messages: ?(Message[]) = playerState.activeData ? playerState.activeData.messages : undefined;
   const topics: ?(Topic[]) = playerState.activeData ? playerState.activeData.topics : undefined;
-
   return (
     <Context.Provider
       value={{
@@ -158,19 +157,27 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
         frame: useMemo(() => groupBy(messages || [], "topic"), [messages]),
         sortedTopics: useMemo(() => (topics || []).sort(naturalSort("name")), [topics]),
         datatypes: useMemo(() => (playerState.activeData ? playerState.activeData.datatypes : {}), [
-          playerState.activeData && playerState.activeData.datatypes,
+          playerState.activeData,
         ]),
-        setSubscriptions: useCallback((id: string, subscriptionsForId: SubscribePayload[]) => {
-          setAllSubscriptions((s) => ({ ...s, [id]: subscriptionsForId }));
-        }),
-        setPublishers: useCallback((id: string, publishersForId: AdvertisePayload[]) => {
-          setAllPublishers((p) => ({ ...p, [id]: publishersForId }));
-        }),
-        publish: useCallback((request: PublishPayload) => (player ? player.publish(request) : undefined)),
-        startPlayback: useCallback(() => (player ? player.startPlayback() : undefined)),
-        pausePlayback: useCallback(() => (player ? player.pausePlayback() : undefined)),
-        setPlaybackSpeed: useCallback((speed: number) => (player ? player.setPlaybackSpeed(speed) : undefined)),
-        seekPlayback: useCallback((time: Time) => (player ? player.seekPlayback(time) : undefined)),
+        setSubscriptions: useCallback(
+          (id: string, subscriptionsForId: SubscribePayload[]) => {
+            setAllSubscriptions((s) => ({ ...s, [id]: subscriptionsForId }));
+          },
+          [setAllSubscriptions]
+        ),
+        setPublishers: useCallback(
+          (id: string, publishersForId: AdvertisePayload[]) => {
+            setAllPublishers((p) => ({ ...p, [id]: publishersForId }));
+          },
+          [setAllPublishers]
+        ),
+        publish: useCallback((request: PublishPayload) => (player ? player.publish(request) : undefined), [player]),
+        startPlayback: useCallback(() => (player ? player.startPlayback() : undefined), [player]),
+        pausePlayback: useCallback(() => (player ? player.pausePlayback() : undefined), [player]),
+        setPlaybackSpeed: useCallback((speed: number) => (player ? player.setPlaybackSpeed(speed) : undefined), [
+          player,
+        ]),
+        seekPlayback: useCallback((time: Time) => (player ? player.seekPlayback(time) : undefined), [player]),
       }}>
       {children}
     </Context.Provider>

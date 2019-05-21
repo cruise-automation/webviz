@@ -384,9 +384,9 @@ describe("<MessageHistory />", () => {
 
   describe("setting topicPrefix", () => {
     it("filters topics and strips topic names using topicPrefix", () => {
-      const childFn1 = jest.fn((x) => null);
+      const childFn1 = jest.fn((x) => JSON.stringify(x));
 
-      const renderDualInputMessageHistory = () => {
+      const renderDualComputeMessageHistory = () => {
         return (
           <MockMessagePipelineProvider
             topics={allTopics}
@@ -398,42 +398,15 @@ describe("<MessageHistory />", () => {
       };
       mount(
         <MockPanelContextProvider topicPrefix={SECOND_BAG_PREFIX}>
-          {renderDualInputMessageHistory()}
+          {renderDualComputeMessageHistory()}
         </MockPanelContextProvider>
       );
 
-      const secondBagPrefixResults = childFn1.mock.calls[0][0].itemsByPath;
+      const resultingItemsByPathDualCompute = JSON.parse(childFn1.mock.results[0].value).itemsByPath;
 
-      expect(Object.keys(secondBagPrefixResults).length).toEqual(1);
-      expect(Object.keys(secondBagPrefixResults)[0]).toEqual("/some/topic");
-      expect(secondBagPrefixResults["/some/topic"].map((item) => item.message)).toEqual(
-        dualInputMessages.map((msg) => {
-          delete msg.queriedData;
-          return { ...msg, topic: msg.topic.slice(SECOND_BAG_PREFIX.length) };
-        })
-      );
-    });
-
-    it("will send correctly filtered and stripped topics to MessageHistory components with different topicPrefixes", () => {
-      const noPrefixRenderer = jest.fn((x) => null);
-      const secondBagPrefixRenderer = jest.fn((x) => null);
-
-      const provider = mount(
-        <MockMessagePipelineProvider topics={allTopics} datatypes={datatypes} messages={[]}>
-          <MockPanelContextProvider topicPrefix="">
-            <MessageHistory paths={["/some/topic"]}>{noPrefixRenderer}</MessageHistory>
-          </MockPanelContextProvider>
-          <MockPanelContextProvider topicPrefix={SECOND_BAG_PREFIX}>
-            <MessageHistory paths={["/some/topic"]}>{secondBagPrefixRenderer}</MessageHistory>;
-          </MockPanelContextProvider>
-        </MockMessagePipelineProvider>
-      );
-      provider.setProps({ messages: messages.concat(dualInputMessages) });
-
-      const noPrefixResults = noPrefixRenderer.mock.calls[1][0].itemsByPath;
-      const secondBagPrefixResults = secondBagPrefixRenderer.mock.calls[1][0].itemsByPath;
-      expect(noPrefixResults["/some/topic"].map((item) => item.message)).toEqual(messages);
-      expect(secondBagPrefixResults["/some/topic"].map((item) => item.message)).toEqual(
+      expect(Object.keys(resultingItemsByPathDualCompute).length).toEqual(1);
+      expect(Object.keys(resultingItemsByPathDualCompute)[0]).toEqual("/some/topic");
+      expect(resultingItemsByPathDualCompute["/some/topic"].map((item) => item.message)).toEqual(
         dualInputMessages.map((msg) => {
           delete msg.queriedData;
           return { ...msg, topic: msg.topic.slice(SECOND_BAG_PREFIX.length) };
@@ -444,7 +417,7 @@ describe("<MessageHistory />", () => {
     it("sets subscriptions on topics with topicPrefix", () => {
       const setSubscriptionsFn = jest.fn((x) => undefined);
 
-      const renderDualInputMessageHistory = () => {
+      const renderDualComputeMessageHistory = () => {
         return (
           <MockMessagePipelineProvider
             topics={allTopics}
@@ -457,7 +430,7 @@ describe("<MessageHistory />", () => {
       };
       mount(
         <MockPanelContextProvider topicPrefix={SECOND_BAG_PREFIX}>
-          {renderDualInputMessageHistory()}
+          {renderDualComputeMessageHistory()}
         </MockPanelContextProvider>
       );
 

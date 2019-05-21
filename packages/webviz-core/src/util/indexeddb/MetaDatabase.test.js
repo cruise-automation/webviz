@@ -62,7 +62,6 @@ describe("MetaDatabase", () => {
       expect(getDatabases().size).toEqual(4);
       await updateMetaDatabases("baz3", 1, METADATABASE_NAME);
       expect(getDatabases().size).toEqual(2);
-      await Promise.all(dbs.map((db) => db.close()));
     });
 
     it("does not throw when database deletion throws an error", async () => {

@@ -7,11 +7,11 @@
 //  You may not use this file except in compliance with the License.
 
 import { difference, groupBy, isEqual } from "lodash";
-import React, { type Node, useCallback } from "react";
+import * as React from "react";
 import type { Time } from "rosbag";
 import uuid from "uuid";
 
-import { getMessagesWithoutPrefixByTopic } from "webviz-core/src/components/MessageHistory/topicPrefixUtils";
+import { getMessagesWithoutPrefix, getFilteredFormattedTopics } from "./topicPrefixUtils";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PerfMonitor from "webviz-core/src/components/PerfMonitor";
 import { getTopicNames, shallowEqualSelector } from "webviz-core/src/selectors";
@@ -111,7 +111,7 @@ type MessageHistoryOnlyTopicsData = {|
 |};
 
 type Props = {
-  children: (MessageHistoryOnlyTopicsData) => Node,
+  children: (MessageHistoryOnlyTopicsData) => React.Node,
   panelType: ?string,
   topics: string[],
   // Use an object to set a specific history size for specific topics.
@@ -295,27 +295,31 @@ class MessageHistoryOnlyTopics extends React.Component<Props & MessagePipelinePr
 
 export default function MessageHistoryOnlyTopicsConnected(props: Props) {
   const context = useMessagePipeline();
+  const messages = context.playerState.activeData ? context.playerState.activeData.messages : [];
+  const topics = context.playerState.activeData ? context.playerState.activeData.topics : [];
+  const msgsWithoutPrefix = getMessagesWithoutPrefix(messages, props.topicPrefix);
 
-  const getChildrensInput = React.useMemo(() => getMessagesWithoutPrefixByTopic(props.topicPrefix), [
-    props.topicPrefix,
-  ]);
-
-  const topicsWithPrefix = React.useMemo(() => props.topics.map((topic) => props.topicPrefix + topic), [
-    props.topicPrefix,
-    props.topics,
-  ]);
+  const topicsWithoutPrefix = React.useMemo(
+    () => {
+      return getFilteredFormattedTopics(topics, props.topicPrefix);
+    },
+    [topics, props.topicPrefix]
+  );
 
   return (
     <MessageHistoryOnlyTopics
       key={props.topicPrefix}
       {...props}
-      messages={context.playerState.activeData ? context.playerState.activeData.messages : []}
-      topics={topicsWithPrefix}
+      messages={msgsWithoutPrefix}
       lastSeekTime={context.playerState.activeData ? context.playerState.activeData.lastSeekTime : 0}
       startTime={context.playerState.activeData ? context.playerState.activeData.startTime : { sec: 0, nsec: 0 }}
-      playerTopics={context.playerState.activeData ? context.playerState.activeData.topics : []}
-      setSubscriptions={context.setSubscriptions}>
-      {useCallback((data) => props.children(getChildrensInput(data)), [props, getChildrensInput])}
-    </MessageHistoryOnlyTopics>
+      playerTopics={topicsWithoutPrefix}
+      setSubscriptions={(id: string, subscriptionsWithoutPrefix: SubscribePayload[]) => {
+        const subscriptionsWithPrefix = subscriptionsWithoutPrefix.map((subscription) => {
+          return { ...subscription, topic: props.topicPrefix + subscription.topic };
+        });
+        return context.setSubscriptions(id, subscriptionsWithPrefix);
+      }}
+    />
   );
 }

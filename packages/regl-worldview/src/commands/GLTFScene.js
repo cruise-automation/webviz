@@ -47,6 +47,7 @@ const drawModel = (regl) => {
       baseColorTexture: regl.prop("baseColorTexture"),
       baseColorFactor: regl.prop("baseColorFactor"),
       nodeMatrix: regl.prop("nodeMatrix"),
+      localTransform: regl.context("localTransform"),
       "light.direction": [0, 0, -1],
       "light.ambientIntensity": 0.5,
       "light.diffuseIntensity": 0.5,
@@ -63,6 +64,8 @@ const drawModel = (regl) => {
   uniform mat4 projection, view;
   uniform mat4 nodeMatrix;
   uniform mat4 poseMatrix;
+  // Transformation to apply in local space
+  uniform mat4 localTransform;
   attribute vec3 position, normal;
   varying vec3 vNormal;
   attribute vec2 texCoord;
@@ -70,10 +73,11 @@ const drawModel = (regl) => {
 
   void main() {
     // using the projection matrix for normals breaks lighting for orthographic mode
-    mat4 mv = view * poseMatrix * nodeMatrix;
+    vec4 transformed = poseMatrix * nodeMatrix * vec4(position, 1);
+    mat4 mv = view;
     vNormal = normalize((mv * vec4(normal, 0)).xyz);
     vTexCoord = texCoord;
-    gl_Position = projection * mv * vec4(position, 1);
+    gl_Position = projection * view * localTransform * vec4(transformed.xyz, 1);
   }
   `,
     frag: `
@@ -191,13 +195,16 @@ const drawModel = (regl) => {
   // create a regl command to set the context for each draw call
   const withContext = regl({
     context: {
+      localTransform: (context, props) => (props.localTransform ? props.localTransform : mat4.create()),
       poseMatrix: (context, props) =>
-        mat4.fromRotationTranslationScale(
-          mat4.create(),
-          orientationToVec4(props.pose.orientation),
-          pointToVec3(props.pose.position),
-          props.scale ? pointToVec3(props.scale) : [1, 1, 1]
-        ),
+        props.poseMatrix
+          ? props.poseMatrix
+          : mat4.fromRotationTranslationScale(
+              mat4.create(),
+              orientationToVec4(props.pose.orientation),
+              pointToVec3(props.pose.position),
+              props.scale ? pointToVec3(props.scale) : [1, 1, 1]
+            ),
       globalAlpha: (context, props) => (props.alpha == null ? 1 : props.alpha),
       hitmapColor: (context, props) => intToRGB(props.id),
       drawHitmap: (context, props) => props.id != null,
@@ -251,7 +258,7 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
   }
 
   componentDidMount() {
-    this._drawModel = (regl: any) => drawModel(regl)
+    this._drawModel = (regl: any) => drawModel(regl);
     this._loadModel()
       .then((loadedModel) => {
         this.setState({ loadedModel });

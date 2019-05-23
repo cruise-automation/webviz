@@ -75,7 +75,7 @@ const drawModel = (regl) => {
     // using the projection matrix for normals breaks lighting for orthographic mode
     vec4 transformed = poseMatrix * nodeMatrix * vec4(position, 1);
     mat4 mv = view;
-    vNormal = normalize((mv * vec4(normal, 0)).xyz);
+    vNormal = normalize((view * poseMatrix * nodeMatrix * localTransform * vec4(normal, 0)).xyz);
     vTexCoord = texCoord;
     gl_Position = projection * view * localTransform * vec4(transformed.xyz, 1);
   }

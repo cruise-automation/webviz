@@ -13,6 +13,7 @@ import {
   getObjectForInstancedCommands as getObjectFromHitmapId,
 } from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
+import { mat4 } from 'gl-matrix'
 
 /*
 Triangle-based line drawing.
@@ -89,7 +90,7 @@ attribute vec3 positionB;
 attribute vec3 positionC;
 attribute vec3 positionD;
 
-uniform mat4 projection, view;
+uniform mat4 projection, view, localTransform;
 uniform float viewportWidth;
 uniform float viewportHeight;
 uniform float alpha;
@@ -145,11 +146,16 @@ void main () {
 
   float scale = isTop ? 1. : -1.;
 
+  vec4 localA = localTransform * vec4(positionA, 1);
+  vec4 localB = localTransform * vec4(positionB, 1);
+  vec4 localC = localTransform * vec4(positionC, 1);
+  vec4 localD = localTransform * vec4(positionD, 1);
+
   mat4 projView = projection * view;
-  vec4 projA = projView * vec4(applyPose(positionA), 1);
-  vec4 projB = projView * vec4(applyPose(positionB), 1);
-  vec4 projC = projView * vec4(applyPose(positionC), 1);
-  vec4 projD = projView * vec4(applyPose(positionD), 1);
+  vec4 projA = projView * vec4(applyPose(localA.xyz), 1);
+  vec4 projB = projView * vec4(applyPose(localB.xyz), 1);
+  vec4 projC = projView * vec4(applyPose(localC.xyz), 1);
+  vec4 projD = projView * vec4(applyPose(localD.xyz), 1);
 
   vec2 aspectVec = vec2(viewportWidth / viewportHeight, 1.0);
   vec2 screenA = projA.xy / projA.w * aspectVec;
@@ -263,6 +269,7 @@ const lines = (regl: any) => {
         viewportHeight: regl.context("viewportHeight"),
         alpha: regl.prop("alpha"),
         joined: regl.prop("joined"),
+        localTransform: (context, { localTransform }) => localTransform || mat4.create(),
         scaleInvariant: regl.prop("scaleInvariant"),
       },
       attributes: {

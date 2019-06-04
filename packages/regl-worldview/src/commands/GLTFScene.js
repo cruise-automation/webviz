@@ -7,9 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import { mat4 } from "gl-matrix";
-import React from "react";
+import React, { useState } from "react";
 
-import type { Pose, Scale, MouseHandler } from "../types";
+import type { Pose, Scale, MouseHandler, RawCommand } from "../types";
 import { defaultBlend, pointToVec3, orientationToVec4, intToRGB } from "../utils/commandUtils";
 import parseGLB from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
@@ -212,8 +212,9 @@ const drawModel = (regl) => {
   };
 };
 
+type Model = string | (() => Promise<Object>);
 type Props = {|
-  model: string | (() => Promise<Object>),
+  model: Model,
   onClick?: MouseHandler,
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
@@ -227,11 +228,14 @@ type Props = {|
   |},
 |};
 
-export default class GLTFScene extends React.Component<Props, {| loadedModel: ?Object |}> {
+type State = {| loadedModel: ?Object, reglCommand: ?RawCommand<any> |};
+export class GLTFScene extends React.Component<Props, State> {
   state = {
     loadedModel: undefined,
+    reglCommand: undefined,
   };
   _context = undefined;
+
   async _loadModel(): Promise<Object> {
     const { model } = this.props;
     if (typeof model === "function") {
@@ -250,7 +254,7 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
   componentDidMount() {
     this._loadModel()
       .then((loadedModel) => {
-        this.setState({ loadedModel });
+        this.setState({ loadedModel, reglCommand: (regl) => drawModel(regl) });
         if (this._context) {
           this._context.onDirty();
         }
@@ -262,7 +266,7 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
 
   render() {
     const { children, ...rest } = this.props;
-    const { loadedModel } = this.state;
+    const { loadedModel, reglCommand } = this.state;
     if (!loadedModel) {
       return null;
     }
@@ -276,7 +280,7 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
           return (
             <Command
               {...rest}
-              reglCommand={drawModel}
+              reglCommand={reglCommand}
               drawProps={{ ...children, id: null, model: loadedModel }}
               hitmapProps={drawHitmap ? { ...children, model: loadedModel } : undefined}
               getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}
@@ -286,4 +290,20 @@ export default class GLTFScene extends React.Component<Props, {| loadedModel: ?O
       </WorldviewReactContext.Consumer>
     );
   }
+}
+
+// Add unique key to GLTFScene so that it will unmount when the model changes
+export default function GLTFWrapper(props: Props) {
+  const [model, setModel] = useState(props.model);
+  const [id, setId] = useState(0);
+  React.useEffect(
+    () => {
+      if (props.model !== model) {
+        setModel(props.model);
+        setId((id + 1) % 1000000);
+      }
+    },
+    [props.model]
+  );
+  return <GLTFScene {...props} key={id} />;
 }

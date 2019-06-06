@@ -7,13 +7,17 @@
 //  You may not use this file except in compliance with the License.
 
 import { mat4 } from "gl-matrix";
-import React, { useState } from "react";
+import React from "react";
 
-import type { Pose, Scale, MouseHandler, RawCommand } from "../types";
+import type { Pose, Scale, MouseHandler } from "../types";
 import { defaultBlend, pointToVec3, orientationToVec4, intToRGB } from "../utils/commandUtils";
 import parseGLB from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";
+
+type Model = Object;
+type ModelProp = string | (() => Promise<Model>);
+const MAX_CACHED_MODELS = 10000;
 
 function glConstantToRegl(value: ?number): ?string {
   if (value === undefined) {
@@ -111,12 +115,13 @@ const drawModel = (regl) => {
     height: 1,
   });
 
-  // Build the draw calls needed to draw the model. This only needs to happen once, since they
-  // are the same each time, with only poseMatrix changing.
-  let drawCalls;
-  function prepareDrawCallsIfNeeded(model) {
-    if (drawCalls) {
-      return;
+  // store the computed draw calls per model to avoid heavy recomputing
+  const cachedDrawCallsMap: Map<ModelProp, Object[]> = new Map();
+  // build the draw calls needed to draw the model. This will happen whenever the model changes.
+  function prepareDrawCallsIfNeeded(model, modelKey) {
+    // return the cached drawCalls
+    if (cachedDrawCallsMap.get(modelKey)) {
+      return cachedDrawCallsMap.get(modelKey);
     }
 
     // upload textures to the GPU
@@ -137,13 +142,14 @@ const drawModel = (regl) => {
     if (model.images) {
       model.images.forEach((bitmap: ImageBitmap) => bitmap.close());
     }
-    drawCalls = [];
 
+    const drawCalls = [];
     // helper to draw the primitives comprising a mesh
     function drawMesh(mesh, nodeMatrix) {
       for (const primitive of mesh.primitives) {
         const material = model.json.materials[primitive.material];
         const texInfo = material.pbrMetallicRoughness.baseColorTexture;
+        // $FlowFixMe
         drawCalls.push({
           indices: model.accessors[primitive.indices],
           positions: model.accessors[primitive.attributes.POSITION],
@@ -186,6 +192,13 @@ const drawModel = (regl) => {
       mat4.rotateY(rootTransform, rootTransform, Math.PI / 2);
       drawNode(model.json.nodes[nodeIdx], rootTransform);
     }
+    cachedDrawCallsMap.set(modelKey, drawCalls);
+
+    // clear the cache if there are too many models
+    if (cachedDrawCallsMap.size > MAX_CACHED_MODELS) {
+      cachedDrawCallsMap.clear();
+    }
+    return drawCalls;
   }
 
   // create a regl command to set the context for each draw call
@@ -205,16 +218,14 @@ const drawModel = (regl) => {
   });
 
   return (props) => {
-    prepareDrawCallsIfNeeded(props.model);
+    const drawCalls = prepareDrawCallsIfNeeded(props.model, props.modelKey);
     withContext(props, () => {
       command(drawCalls);
     });
   };
 };
 
-type Model = string | (() => Promise<Object>);
 type Props = {|
-  model: Model,
   onClick?: MouseHandler,
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
@@ -226,53 +237,48 @@ type Props = {|
     scale: Scale,
     alpha: ?number,
   |},
+  model: Model,
+  // use modelKey as unique identifier to cache the models
+  modelKey: ModelProp,
 |};
 
-type State = {| loadedModel: ?Object, reglCommand: ?RawCommand<any> |};
-export class GLTFScene extends React.Component<Props, State> {
-  state = {
-    loadedModel: undefined,
-    reglCommand: undefined,
-  };
+type WrapperProps = {|
+  onClick?: MouseHandler,
+  onDoubleClick?: MouseHandler,
+  onMouseDown?: MouseHandler,
+  onMouseMove?: MouseHandler,
+  onMouseUp?: MouseHandler,
+  children: {|
+    id?: number,
+    pose: Pose,
+    scale: Scale,
+    alpha: ?number,
+  |},
+  model: ModelProp,
+|};
+
+export class GLTFScene extends React.Component<Props> {
   _context = undefined;
 
-  async _loadModel(): Promise<Object> {
-    const { model } = this.props;
-    if (typeof model === "function") {
-      return model();
-    } else if (typeof model === "string") {
-      const response = await fetch(model);
-      if (!response.ok) {
-        throw new Error(`failed to fetch GLB: ${response.status}`);
-      }
-      return parseGLB(await response.arrayBuffer());
-    }
-    /*:: (model: empty) */
-    throw new Error(`unsupported model prop: ${typeof model}`);
+  componentDidMount() {
+    this._callDrawOnContext();
   }
 
-  componentDidMount() {
-    this._loadModel()
-      .then((loadedModel) => {
-        this.setState({ loadedModel, reglCommand: (regl) => drawModel(regl) });
-        if (this._context) {
-          this._context.onDirty();
-        }
-      })
-      .catch((err) => {
-        console.error("error loading GLB model:", err);
-      });
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.model !== this.props.model) {
+      this._callDrawOnContext();
+    }
   }
+
+  _callDrawOnContext = () => {
+    if (this._context) {
+      this._context.onDirty();
+    }
+  };
 
   render() {
-    const { children, ...rest } = this.props;
-    const { loadedModel, reglCommand } = this.state;
-    if (!loadedModel) {
-      return null;
-    }
-
+    const { children, model, modelKey, ...rest } = this.props;
     const drawHitmap = children.id != null;
-
     return (
       <WorldviewReactContext.Consumer>
         {(context) => {
@@ -280,9 +286,9 @@ export class GLTFScene extends React.Component<Props, State> {
           return (
             <Command
               {...rest}
-              reglCommand={reglCommand}
-              drawProps={{ ...children, id: null, model: loadedModel }}
-              hitmapProps={drawHitmap ? { ...children, model: loadedModel } : undefined}
+              reglCommand={drawModel}
+              drawProps={{ ...children, id: null, model, modelKey }}
+              hitmapProps={drawHitmap ? { ...children, model, modelKey } : undefined}
               getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}
             />
           );
@@ -292,18 +298,30 @@ export class GLTFScene extends React.Component<Props, State> {
   }
 }
 
-// Add unique key to GLTFScene so that it will unmount when the model changes
-export default function GLTFWrapper(props: Props) {
-  const [model, setModel] = useState(props.model);
-  const [id, setId] = useState(0);
+export default function GLTFSceneWrapper({ model, ...rest }: WrapperProps) {
+  const [loadedModel, setLoadedModel] = React.useState<Model>(null);
   React.useEffect(
     () => {
-      if (props.model !== model) {
-        setModel(props.model);
-        setId((id + 1) % 1000000);
+      async function loadModel(): Promise<Model> {
+        let newModel;
+        if (typeof model === "function") {
+          newModel = model();
+          return;
+        } else if (typeof model === "string") {
+          const response = await fetch(model);
+          if (!response.ok) {
+            throw new Error(`failed to fetch GLB: ${response.status}`);
+          }
+          newModel = await parseGLB(await response.arrayBuffer());
+          setLoadedModel(newModel);
+          return;
+        }
+        /*:: (model: empty) */
+        throw new Error(`unsupported model prop: ${typeof model}`);
       }
+      loadModel();
     },
-    [props.model]
+    [model]
   );
-  return <GLTFScene {...props} key={id} />;
+  return loadedModel ? <GLTFScene {...rest} model={loadedModel} modelKey={model} /> : null;
 }

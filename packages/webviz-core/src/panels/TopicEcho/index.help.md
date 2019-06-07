@@ -1,4 +1,4 @@
-# Topic Echo
+# Raw Messages
 
 Displays the data from a specific topic in an easier to read format. As new messages are received the structure shows the latest data, but doesn't reset the view (e.g if you unfold a specific key - it'll stay that way with the values under it updating as messages come in).
 

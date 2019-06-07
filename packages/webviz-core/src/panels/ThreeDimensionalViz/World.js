@@ -25,7 +25,12 @@ import {
   type Vec4,
 } from "regl-worldview";
 
-import { OccupancyGrids, LaserScans, PointClouds } from "webviz-core/src/panels/ThreeDimensionalViz/commands";
+import {
+  OccupancyGrids,
+  LaserScans,
+  PointClouds,
+  PoseMarkers,
+} from "webviz-core/src/panels/ThreeDimensionalViz/commands";
 import MarkerMetadata from "webviz-core/src/panels/ThreeDimensionalViz/MarkerMetadata";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { Scene, MarkerProvider } from "webviz-core/src/types/Scene";
@@ -75,6 +80,7 @@ function getMarkers(markerProviders: (?MarkerProvider)[], clickedObject?: Clicke
     spheres: [],
     points: [],
     pointclouds: [],
+    poseMarkers: [],
     triangles: [],
     laserScans: [],
     cylinders: [],
@@ -93,6 +99,7 @@ function getMarkers(markerProviders: (?MarkerProvider)[], clickedObject?: Clicke
     points: (o) => markers.points.push(o),
     text: (o) => markers.texts.push(o),
     triangleList: (o) => markers.triangles.push(o),
+    poseMarker: (o) => markers.poseMarkers.push(o),
 
     grid: (o) => markers.grids.push(o),
     pointcloud: (o) => markers.pointclouds.push(o),
@@ -129,6 +136,7 @@ function Markers(props: MarkersProps) {
     spheres,
     points,
     triangles,
+    poseMarkers,
     cylinders,
     grids,
     pointclouds,
@@ -144,6 +152,7 @@ function Markers(props: MarkersProps) {
       <PointClouds key="PointClouds">{pointclouds}</PointClouds>,<Triangles key="TriangleLists">{triangles}</Triangles>
       <Spheres key="Spheres">{spheres}</Spheres>,<Cylinders key="Cylinders">{cylinders}</Cylinders>
       <Cubes key="Cubes">{cubes}</Cubes>
+      <PoseMarkers key="PoseMarkers">{poseMarkers}</PoseMarkers>
       <LaserScans key="LaserScans">{laserScans}</LaserScans>
       <Text key="Text" autoBackgroundColor={props.autoTextBackgroundColor}>
         {texts}

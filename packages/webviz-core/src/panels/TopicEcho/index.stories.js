@@ -57,4 +57,11 @@ storiesOf("<TopicEcho>", module)
         <TopicEcho config={{ topicName: "/baz/enum" }} />
       </PanelSetup>
     );
+  })
+  .add("display geometry types - length", () => {
+    return (
+      <PanelSetup fixture={fixture} style={{ width: 350 }}>
+        <TopicEcho config={{ topicName: "/geometry/types" }} />
+      </PanelSetup>
+    );
   });

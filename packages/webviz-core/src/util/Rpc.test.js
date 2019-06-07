@@ -10,7 +10,7 @@ import Rpc, { type Channel, createLinkedChannels } from "./Rpc";
 
 const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
-describe("rpc", () => {
+describe("Rpc", () => {
   it("only allows setting Rpc once per channel", () => {
     const { local: mainChannel } = createLinkedChannels();
     new Rpc(mainChannel);
@@ -92,6 +92,7 @@ describe("rpc", () => {
   it("can send and receive transferrables", async () => {
     const expectedTransfer = new ArrayBuffer(1);
     const mainChannel: Channel = {
+      onmessage: undefined,
       postMessage(data: any, transfer?: ArrayBuffer[]) {
         const ev = new MessageEvent("message", { data });
         // eslint-disable-next-line no-use-before-define
@@ -102,6 +103,7 @@ describe("rpc", () => {
     };
 
     const workerChannel: Channel = {
+      onmessage: undefined,
       postMessage(data: any, transfer?: ArrayBuffer[]) {
         const ev = new MessageEvent("message", { data });
         expect(transfer).toHaveLength(1);

@@ -62,12 +62,29 @@ function getItemString(type, data, itemType, itemString) {
       }
       return <span>{format(data)}</span>;
     }
-  } else {
-    // Surface typically-used keys directly in the object summary so the user doesn't have to expand it.
-    const filterKeys = keys.filter(isTypicalFilterName);
-    if (filterKeys.length > 0) {
-      itemString = filterKeys.map((key) => `${key}: ${data[key]}`).join(", ");
+  }
+
+  // for vectors/points display length
+  if (keys.length === 2) {
+    const { x, y } = data;
+    if (x != null && y != null) {
+      const length = Math.sqrt(x * x + y * y);
+      return <span> norm = {length.toFixed(2)} </span>;
     }
+  }
+
+  if (keys.length === 3) {
+    const { x, y, z } = data;
+    if (x != null && y != null && z != null) {
+      const length = Math.sqrt(x * x + y * y + z * z);
+      return <span> norm = {length.toFixed(2)} </span>;
+    }
+  }
+
+  // Surface typically-used keys directly in the object summary so the user doesn't have to expand it.
+  const filterKeys = keys.filter(isTypicalFilterName);
+  if (filterKeys.length > 0) {
+    itemString = filterKeys.map((key) => `${key}: ${data[key]}`).join(", ");
   }
   return (
     <span>

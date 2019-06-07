@@ -15,7 +15,7 @@ import type { Marker, OccupancyGridMessage, Pose } from "webviz-core/src/types/M
 import type { Frame, Namespace, Message } from "webviz-core/src/types/players";
 import type { MarkerProvider, MarkerCollector, Scene } from "webviz-core/src/types/Scene";
 import Bounds from "webviz-core/src/util/Bounds";
-import { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE } from "webviz-core/src/util/globalConstants";
+import { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE, POSE_MARKER_SCALE } from "webviz-core/src/util/globalConstants";
 import { emptyPose } from "webviz-core/src/util/Pose";
 import { fromSec } from "webviz-core/src/util/time";
 
@@ -27,6 +27,11 @@ export type TopicSettings = {
   useCarModel?: boolean,
   alpha?: number,
   decayTime?: number,
+  size?: {
+    headLength: number,
+    headWidth: number,
+    shaftWidth: number,
+  },
 };
 
 export type TopicSettingsCollection = {
@@ -43,13 +48,7 @@ export function buildSyntheticArrowMarker(msg: any, flattenedZHeightPose: ?Pose)
     type: 103,
     header: msg.message.header,
     pose: msg.message.pose,
-    size: {
-      shaftLength: 3.5,
-      shaftWidth: 2,
-      headLength: 1,
-      headWidth: 2,
-    },
-    scale: { x: 1, y: 1, z: 1 },
+    scale: POSE_MARKER_SCALE,
     color: getGlobalHooks()
       .perPanelHooks()
       .ThreeDimensionalViz.getSyntheticArrowMarkerColor(msg.topic),
@@ -505,6 +504,7 @@ export default class SceneBuilder implements MarkerProvider {
       case 11: return add.triangleList(marker);
       case 101: return add.grid(marker);
       case 102: return add.pointcloud(marker);
+      case 103: return add.poseMarker(marker);
       case 104: return add.laserScan(marker);
       case 107: return add.filledPolygon(marker);
       default: {

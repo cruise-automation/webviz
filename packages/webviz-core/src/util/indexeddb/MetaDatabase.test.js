@@ -9,19 +9,15 @@
 import idb from "idb";
 
 import Database from "./Database";
+import { getDatabasesInTests } from "./getDatabasesInTests";
 import { updateMetaDatabases, doesDatabaseExist } from "./MetaDatabase";
-
-export function getDatabases(): Map<string, any> {
-  // until indexedDB.databases() lands in the spec, get the databases on the fake by reaching into it
-  return global.indexedDB._databases; // eslint-disable-line no-underscore-dangle
-}
 
 describe("MetaDatabase", () => {
   const MAX = 3;
   const METADATABASE_NAME = "meta";
 
   beforeEach(() => {
-    getDatabases().clear();
+    getDatabasesInTests().clear();
   });
 
   afterEach(async () => {
@@ -41,7 +37,7 @@ describe("MetaDatabase", () => {
       await createAndClose("baz");
       await createAndClose("biz");
       await createAndClose("boz");
-      expect(getDatabases().size).toEqual(4);
+      expect(getDatabasesInTests().size).toEqual(4);
     });
 
     it("does not delete databases which are still open", async () => {
@@ -56,12 +52,12 @@ describe("MetaDatabase", () => {
       await createAndClose("baz2");
       await createAndClose("biz2");
       await createAndClose("boz2");
-      expect(getDatabases().size).toEqual(6);
+      expect(getDatabasesInTests().size).toEqual(6);
       await Promise.all(dbs.map((db) => db.close()));
       await createAndClose("boz3");
-      expect(getDatabases().size).toEqual(4);
+      expect(getDatabasesInTests().size).toEqual(4);
       await updateMetaDatabases("baz3", 1, METADATABASE_NAME);
-      expect(getDatabases().size).toEqual(2);
+      expect(getDatabasesInTests().size).toEqual(2);
       await Promise.all(dbs.map((db) => db.close()));
     });
 

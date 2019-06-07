@@ -106,7 +106,6 @@ type MultiPointMarker = {
 };
 
 type ArrowSize = {
-  shaftLength: number,
   shaftWidth: number,
   headLength: number,
   headWidth: number,

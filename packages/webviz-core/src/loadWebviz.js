@@ -29,14 +29,14 @@ const defaultHooks = {
     const { ndash } = require("webviz-core/src/util/entities");
 
     return [
-      { title: "Ros Out", component: Rosout },
-      { title: "Image View", component: ImageViewPanel },
-      { title: "Topic Echo", component: TopicEcho },
+      { title: "rosout", component: Rosout },
+      { title: "Image", component: ImageViewPanel },
+      { title: "Raw Messages", component: TopicEcho },
       { title: "Plot", component: Plot },
-      { title: "State Transition Visualizer", component: StateTransitions },
+      { title: "State Transitions", component: StateTransitions },
       { title: "3D", component: ThreeDimensionalViz },
-      { title: `Runtime Monitor ${ndash} Summary`, component: DiagnosticSummary },
-      { title: `Runtime Monitor ${ndash} Detail`, component: DiagnosticStatusPanel },
+      { title: `Diagnostics ${ndash} Summary`, component: DiagnosticSummary },
+      { title: `Diagnostics ${ndash} Detail`, component: DiagnosticStatusPanel },
       { title: "Webviz Internals", component: Internals },
       { title: "Number of Renders", component: NumberOfRenders, hideFromList: true },
     ];

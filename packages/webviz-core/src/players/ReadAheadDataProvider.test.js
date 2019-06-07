@@ -33,11 +33,17 @@ function generateMessages() {
   return result;
 }
 
-const dataProviderOptions = { messages: generateMessages() };
+function getProvider() {
+  return new ReadAheadDataProvider(
+    { readAheadRange: { sec: 0, nsec: 10 * 1e6 } },
+    [{ name: "MemoryDataProvider", args: {}, children: [] }],
+    () => new MemoryDataProvider({ messages: generateMessages() })
+  );
+}
 
 describe("ReadResult", () => {
   it("properly response to ranges it overlaps", () => {
-    const result = new ReadResult({ sec: 0, nsec: 2 }, { sec: 1, nsec: 0 }, Promise.resolve([]));
+    const result = new ReadResult({ sec: 0, nsec: 2 }, { sec: 1, nsec: 0 }, Promise.resolve([]), () => {});
     expect(result.overlaps({ sec: 0, nsec: 0 }, { sec: 0, nsec: 1 })).toBe(false);
     expect(result.overlaps({ sec: 0, nsec: 0 }, { sec: 0, nsec: 2 })).toBe(true);
     expect(result.overlaps({ sec: 0, nsec: 0 }, { sec: 2, nsec: 0 })).toBe(true);
@@ -49,7 +55,7 @@ describe("ReadResult", () => {
 
 describe("ReadAheadDataProvider", () => {
   it("can get messages", async () => {
-    const provider = new ReadAheadDataProvider(new MemoryDataProvider(dataProviderOptions));
+    const provider = getProvider();
     const messages = await provider.getMessages(fromMillis(0), fromMillis(10), ["/foo"]);
     expect(messages).toEqual([
       {
@@ -66,7 +72,7 @@ describe("ReadAheadDataProvider", () => {
   });
 
   it("can get messages spanning two read ranges", async () => {
-    const provider = new ReadAheadDataProvider(new MemoryDataProvider(dataProviderOptions), fromMillis(10));
+    const provider = getProvider();
     const messages = await provider.getMessages(fromMillis(0), fromMillis(20), ["/foo"]);
     expect(messages).toEqual([
       {
@@ -88,7 +94,7 @@ describe("ReadAheadDataProvider", () => {
   });
 
   it("can get messages spanning many read ranges", async () => {
-    const provider = new ReadAheadDataProvider(new MemoryDataProvider(dataProviderOptions), fromMillis(10));
+    const provider = getProvider();
     const messages = await provider.getMessages(fromMillis(0), fromMillis(40), ["/foo"]);
     expect(messages).toEqual([
       {
@@ -120,7 +126,7 @@ describe("ReadAheadDataProvider", () => {
   });
 
   it("clears cache on topic change", async () => {
-    const provider = new ReadAheadDataProvider(new MemoryDataProvider(dataProviderOptions), fromMillis(10));
+    const provider = getProvider();
     const messages = await provider.getMessages(fromMillis(0), fromMillis(10), ["/foo"]);
     expect(messages).toEqual([
       {
@@ -160,7 +166,7 @@ describe("ReadAheadDataProvider", () => {
   });
 
   it("clears cache when going back in time", async () => {
-    const provider = new ReadAheadDataProvider(new MemoryDataProvider(dataProviderOptions));
+    const provider = getProvider();
     // Get messages from 10-20ms.
     const messages = await provider.getMessages(fromMillis(10), fromMillis(20), ["/foo"]);
     expect(messages).toEqual([

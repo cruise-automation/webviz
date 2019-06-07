@@ -26,6 +26,8 @@ import { type PlayerMetricsCollectorInterface, type Topic, type PlayerState } fr
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { fromMillis } from "webviz-core/src/util/time";
 
+jest.mock("webviz-core/src/util/reportError");
+
 type GetMessages = (start: Time, end: Time, topics: string[]) => Promise<MessageLike[]>;
 
 // start at 1 nanosecond because RandomAccesPlayer rewinds by 1 nano when before starting playback
@@ -71,10 +73,7 @@ class TestProvider implements RandomAccessDataProvider {
     this._datatypes = datatypes;
   }
 
-  initialize(extensionPoint: ?ExtensionPoint): Promise<InitializationResult> {
-    if (!extensionPoint) {
-      throw new Error("RandomAccessPlayer should always pass in an extensionPoint");
-    }
+  initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
     this.extensionPoint = extensionPoint;
     return Promise.resolve({
       start: this._start,
@@ -138,6 +137,7 @@ describe("RandomAccessPlayer", () => {
         });
         return Promise.resolve();
       },
+      async close() {},
     };
     const source = new RandomAccessPlayer((provider: any));
     source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/foo/baz" }]);
@@ -501,6 +501,46 @@ describe("RandomAccessPlayer", () => {
     ]);
   });
 
+  it("clamps times passed to the DataProvider", async () => {
+    const provider = new TestProvider();
+    const source = new RandomAccessPlayer(provider);
+    source.setSubscriptions([{ topic: "/foo/bar" }]);
+    let lastGetMessagesCall;
+    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+      return new Promise((resolve) => {
+        lastGetMessagesCall = { start, end, topics, resolve };
+      });
+    };
+    provider.getMessages = getMessages;
+
+    await source.setListener(async () => {});
+
+    // Test clamping to start time.
+    source.seekPlayback({ sec: 0, nsec: 100 });
+    if (!lastGetMessagesCall) {
+      throw new Error("lastGetMessagesCall not set");
+    }
+    lastGetMessagesCall.resolve([]);
+    expect(lastGetMessagesCall).toEqual({
+      start: { nsec: 1, sec: 0 },
+      end: { nsec: 100, sec: 0 },
+      topics: ["/foo/bar"],
+      resolve: expect.any(Function),
+    });
+
+    // Test clamping to end time.
+    lastGetMessagesCall.resolve([]);
+    source.seekPlayback(TimeUtil.add({ sec: 100, nsec: 0 }, { sec: 0, nsec: -100 }));
+    lastGetMessagesCall.resolve([]);
+    source.startPlayback();
+    expect(lastGetMessagesCall).toEqual({
+      start: { nsec: 999999901, sec: 99 },
+      end: { nsec: 0, sec: 100 },
+      topics: ["/foo/bar"],
+      resolve: expect.any(Function),
+    });
+  });
+
   it("reads a bunch of messages", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer(provider);
@@ -586,6 +626,49 @@ describe("RandomAccessPlayer", () => {
     expect(provider.closed).toBe(true);
   });
 
+  it("reports an error and stops playing when an error is reported", (done) => {
+    let closed = false;
+    const provider = {
+      initialize: (extensionPoint) => {
+        extensionPoint.reportMetadataCallback({
+          type: "error",
+          source: "test",
+          errorType: "user",
+          message: "test error",
+        });
+        return new Promise(() => {});
+      },
+      async close() {
+        closed = true;
+      },
+    };
+    const source = new RandomAccessPlayer((provider: any));
+    source.setListener((state) => {
+      if (!state.isPresent) {
+        expect(closed).toBe(true);
+        done();
+      }
+      return Promise.resolve();
+    });
+  });
+
+  it("shows a spinner when a provider is reconnecting", (done) => {
+    const provider = new TestProvider();
+    const source = new RandomAccessPlayer((provider: any));
+    source.setListener((state) => {
+      if (!state.showInitializing) {
+        if (!state.showSpinner) {
+          setImmediate(() =>
+            provider.extensionPoint.reportMetadataCallback({ type: "updateReconnecting", reconnecting: true })
+          );
+        } else {
+          done();
+        }
+      }
+      return Promise.resolve();
+    });
+  });
+
   describe("metrics collecting", () => {
     class TestMetricsCollector implements PlayerMetricsCollectorInterface {
       _initialized: number = 0;
@@ -597,11 +680,10 @@ describe("RandomAccessPlayer", () => {
       initialized(): void {
         this._initialized++;
       }
-      isPlaying(): void {}
-      play(): void {
+      play(speed: number): void {
         this._played++;
       }
-      seek(): void {
+      seek(time: Time): void {
         this._seeked++;
       }
       setSpeed(speed: number): void {
@@ -610,6 +692,8 @@ describe("RandomAccessPlayer", () => {
       pause(): void {
         this._paused++;
       }
+      close(): void {}
+      recordPlaybackTime(time: Time): void {}
       recordBytesReceived(bytes: number): void {}
       stats() {
         return {

@@ -9,32 +9,40 @@
 import { intersection } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
-import {
-  type RandomAccessDataProvider,
-  type MessageLike,
-  type InitializationResult,
-  type ExtensionPoint,
-} from "./types";
-import Logger from "webviz-core/src/util/Logger";
-import { fromMillis } from "webviz-core/src/util/time";
+import type {
+  ChainableDataProvider,
+  ChainableDataProviderDescriptor,
+  DataProviderMetadata,
+  ExtensionPoint,
+  GetDataProvider,
+  InitializationResult,
+  MessageLike,
+} from "webviz-core/src/players/types";
 
-const log = new Logger(__filename);
 export class ReadResult {
   start: Time;
   end: Time;
   _isEmpty: boolean = false;
   _promise: Promise<MessageLike[]>;
   _isResolved: boolean = false;
-  constructor(start: Time, end: Time, promise: Promise<MessageLike[]>) {
+  _reportMetadataCallback: (DataProviderMetadata) => void;
+
+  constructor(
+    start: Time,
+    end: Time,
+    promise: Promise<MessageLike[]>,
+    reportMetadataCallback: (DataProviderMetadata) => void
+  ) {
     this.start = start;
     this.end = end;
     this._isEmpty = TimeUtil.compare(start, end) === 0;
     this._promise = promise;
+    this._reportMetadataCallback = reportMetadataCallback;
     promise.then(() => (this._isResolved = true));
   }
 
-  static empty() {
-    return new ReadResult({ sec: 0, nsec: 0 }, { sec: 0, nsec: 0 }, Promise.resolve([]));
+  static empty(reportMetadataCallback: (DataProviderMetadata) => void) {
+    return new ReadResult({ sec: 0, nsec: 0 }, { sec: 0, nsec: 0 }, Promise.resolve([]), reportMetadataCallback);
   }
 
   overlaps(start: Time, end: Time) {
@@ -46,9 +54,13 @@ export class ReadResult {
 
   async getMessages(start: Time, end: Time): Promise<MessageLike[]> {
     if (!this._isResolved) {
-      log.info(
-        "reading from cache before cache is loaded - this should not happen too often or playback will be degraded"
-      );
+      this._reportMetadataCallback({
+        type: "log",
+        source: "ReadAheadDataProvider",
+        level: "info",
+        message:
+          "reading from cache before cache is loaded - this should not happen too often or playback will be degraded",
+      });
     }
     const all = await this._promise;
     return all.filter(
@@ -58,23 +70,31 @@ export class ReadResult {
 }
 
 const oneNanoSecond = { sec: 0, nsec: 1 };
-
 // a caching adapter for a DataProvider which does eager, non-blocking read ahead of time ranges
 // based on a readAheadRange (default to 100 milliseconds)
-export default class ReadAheadDataProvider implements RandomAccessDataProvider {
-  _provider: RandomAccessDataProvider;
+export default class ReadAheadDataProvider implements ChainableDataProvider {
+  _provider: ChainableDataProvider;
+  _topics: string[] = [];
+  _current: ReadResult = ReadResult.empty(() => {});
+  _next: ReadResult = ReadResult.empty(() => {});
   _topics: string[] = [];
   _readAheadRange: Time;
-  _current: ReadResult = ReadResult.empty();
-  _next: ReadResult = ReadResult.empty();
-  _topics: string[] = [];
+  _reportMetadataCallback: (DataProviderMetadata) => void = () => {};
 
-  constructor(provider: RandomAccessDataProvider, readAheadRange: Time = fromMillis(100)) {
-    this._provider = provider;
-    this._readAheadRange = readAheadRange;
+  constructor(
+    { readAheadRange }: { readAheadRange?: Time },
+    children: ChainableDataProviderDescriptor[],
+    getDataProvider: GetDataProvider
+  ) {
+    if (children.length !== 1) {
+      throw new Error(`Incorrect number of children to ReadAheadDataProvider: ${children.length}`);
+    }
+    this._provider = getDataProvider(children[0]);
+    this._readAheadRange = readAheadRange || { sec: 0, nsec: 100 * 1e6 };
   }
 
-  initialize(extensionPoint: ?ExtensionPoint): Promise<InitializationResult> {
+  initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
+    this._reportMetadataCallback = extensionPoint.reportMetadataCallback;
     return this._provider.initialize(extensionPoint);
   }
 
@@ -83,7 +103,7 @@ export default class ReadAheadDataProvider implements RandomAccessDataProvider {
   }
 
   _makeReadResult(start: Time, end: Time, topics: string[]): ReadResult {
-    return new ReadResult(start, end, this._provider.getMessages(start, end, topics));
+    return new ReadResult(start, end, this._provider.getMessages(start, end, topics), this._reportMetadataCallback);
   }
 
   async getMessages(start: Time, end: Time, topics: string[]): Promise<MessageLike[]> {
@@ -94,8 +114,8 @@ export default class ReadAheadDataProvider implements RandomAccessDataProvider {
       TimeUtil.compare(start, this._current.start) < 0
     ) {
       this._topics = topics;
-      this._current = ReadResult.empty();
-      this._next = ReadResult.empty();
+      this._current = ReadResult.empty(this._reportMetadataCallback);
+      this._next = ReadResult.empty(this._reportMetadataCallback);
     }
     let messages = [];
     const currentMatches = this._current.overlaps(start, end);
@@ -109,10 +129,16 @@ export default class ReadAheadDataProvider implements RandomAccessDataProvider {
     if ((!currentMatches && !nextMatches) || TimeUtil.isGreaterThan(end, this._next.end)) {
       let startTime = start;
       if (nextMatches) {
-        log.info("readahead cache overrun - consider expanding readAheadRange");
+        this._reportMetadataCallback({
+          type: "log",
+          source: "ReadAheadDataProvider",
+          level: "info",
+          message: "readahead cache overrun - consider expanding readAheadRange",
+        });
         startTime = TimeUtil.add(this._next.end, oneNanoSecond);
       }
       this._current = this._makeReadResult(startTime, end, topics);
+      await this._current.getMessages(startTime, end);
       const nextStart = TimeUtil.add(end, oneNanoSecond);
       this._next = this._makeReadResult(nextStart, TimeUtil.add(nextStart, this._readAheadRange), topics);
       return messages.concat(await this.getMessages(startTime, end, topics));

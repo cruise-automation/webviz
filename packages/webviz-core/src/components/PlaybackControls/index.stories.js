@@ -123,4 +123,17 @@ storiesOf("<PlaybackControls>", module)
         <ControlsWithTooltip />
       </div>
     );
+  })
+  .add("download progress by ranges", () => {
+    const player = getPlayerState();
+    const pause = action("pause");
+    const play = action("play");
+    const setSpeed = action("setSpeed");
+    const seek = action("seek");
+    player.progress.fullyLoadedFractionRanges = [{ start: 0.23, end: 0.6 }, { start: 0.7, end: 1 }];
+    return (
+      <div style={{ padding: 20, margin: 100 }}>
+        <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />
+      </div>
+    );
   });

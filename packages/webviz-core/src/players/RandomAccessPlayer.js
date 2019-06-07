@@ -11,6 +11,7 @@ import uuid from "uuid";
 
 import NoopMetricsCollector from "./NoopMetricsCollector";
 import { type RandomAccessDataProvider } from "./types";
+import type { DataProviderMetadata } from "webviz-core/src/players/types";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import {
   type AdvertisePayload,
@@ -25,10 +26,13 @@ import {
   type Topic,
 } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import reportError from "webviz-core/src/util/reportError";
-import { fromMillis } from "webviz-core/src/util/time";
+import Logger from "webviz-core/src/util/Logger";
+import reportError, { type ErrorType } from "webviz-core/src/util/reportError";
+import { clampTime, fromMillis } from "webviz-core/src/util/time";
 
 const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
+
+const log = new Logger(__filename);
 
 // the number of nanoseconds to seek backwards to build context during a seek operation
 // larger values mean more oportunity to capture context before the seek event, but are slower operations
@@ -55,11 +59,13 @@ export default class RandomAccessPlayer implements Player {
   _autoplay: boolean;
   _topicsCallbacks: ((string[]) => void)[] = [];
   _initializing: boolean = true;
+  _reconnecting: boolean = false;
   _progress: Progress = {};
   _id: string = uuid.v4();
   _messages: Message[] = [];
   _lastEmitPromise: Promise<void> = Promise.resolve();
   _hasSetEmitStateCallback: boolean = false;
+  _hasError = false;
 
   constructor(
     provider: RandomAccessDataProvider,
@@ -71,9 +77,16 @@ export default class RandomAccessPlayer implements Player {
     this._autoplay = autoplay && !inScreenshotTests();
   }
 
+  _setError(message: string, details: string | Error, errorType: ErrorType) {
+    reportError(message, details, errorType);
+    this._hasError = true;
+    this._isPlaying = false;
+    this._provider.close();
+    this._emitState();
+  }
+
   setListener(listener: (PlayerState) => Promise<void>) {
     this._listener = listener;
-    this._metricsCollector.initialized();
     this._emitState();
 
     this._provider
@@ -88,13 +101,33 @@ export default class RandomAccessPlayer implements Player {
           topicsCallback(Array.from(this._subscribedTopics));
           this._topicsCallbacks.push(topicsCallback);
         },
+        reportMetadataCallback: (metadata: DataProviderMetadata) => {
+          switch (metadata.type) {
+            case "error":
+              this._setError(metadata.message, `Thrown in ${metadata.source}`, metadata.errorType);
+              break;
+            case "log":
+              log.log(metadata.level, `${metadata.source}: ${metadata.message}`);
+              break;
+            case "updateReconnecting":
+              this._reconnecting = metadata.reconnecting;
+              this._emitState();
+              break;
+            default:
+              (metadata.type: empty);
+          }
+        },
       })
-      .then(({ start, end, topics, datatypes }) => {
+      .then(({ start, end, topics, datatypes, connectionsByTopic }) => {
+        if (connectionsByTopic) {
+          throw new Error("Use ParseMessagesDataProvider to parse raw messages");
+        }
+
         this._start = start;
         // Since _currentTime is defined as the end of the last range that we emitted messages for
         // (inclusive), we have to subtract 1 nanosecond at the start, otherwise we might
         // double-emit messages with a receiveTime that is exactly equal to _currentTime.
-        this._currentTime = TimeUtil.add(start, { sec: 0, nsec: -1 });
+        this._setCurrentTime(TimeUtil.add(start, { sec: 0, nsec: -1 }));
         this._end = end;
         this._providerTopics = topics;
         this._providerDatatypes = datatypes;
@@ -111,16 +144,7 @@ export default class RandomAccessPlayer implements Player {
         }
       })
       .catch((error: Error) => {
-        this._listener({
-          isPresent: false,
-          showSpinner: false,
-          showInitializing: false,
-          progress: {},
-          capabilities: [],
-          playerId: this._id,
-          activeData: undefined,
-        });
-        reportError("Error initializing player", error, "app");
+        this._setError("Error initializing player", error, "app");
       });
   }
 
@@ -131,13 +155,27 @@ export default class RandomAccessPlayer implements Player {
     if (this._hasSetEmitStateCallback) {
       return;
     }
+    this._reportInitialized();
 
     this._hasSetEmitStateCallback = true;
     this._lastEmitPromise.then(() => {
       this._hasSetEmitStateCallback = false;
+      if (this._hasError) {
+        this._lastEmitPromise = this._listener({
+          isPresent: false,
+          showSpinner: false,
+          showInitializing: false,
+          progress: {},
+          capabilities: [],
+          playerId: this._id,
+          activeData: undefined,
+        });
+        return;
+      }
+
       this._lastEmitPromise = this._listener({
         isPresent: true,
-        showSpinner: this._initializing,
+        showSpinner: this._initializing || this._reconnecting,
         showInitializing: this._initializing,
         progress: this._progress,
         capabilities,
@@ -165,7 +203,7 @@ export default class RandomAccessPlayer implements Player {
   }
 
   async _tick(): Promise<void> {
-    if (this._initializing || !this._isPlaying) {
+    if (this._initializing || !this._isPlaying || this._hasError) {
       return;
     }
 
@@ -182,7 +220,7 @@ export default class RandomAccessPlayer implements Player {
     const rangeMillis = Math.min(durationMillis, 80) * this._speed;
 
     // loop to the beginning if we pass the end of the playback range
-    if (TimeUtil.isGreaterThan(this._currentTime, this._end)) {
+    if (isEqual(this._currentTime, this._end)) {
       if (inScreenshotTests()) {
         return; // Just don't loop at all in screenshot / integration tests.
       }
@@ -197,9 +235,9 @@ export default class RandomAccessPlayer implements Player {
     }
 
     const seekTime = this._lastSeekTime;
-    const end: Time = TimeUtil.add(this._currentTime, fromMillis(rangeMillis));
-
-    const messages = await this._getMessages(TimeUtil.add(this._currentTime, { sec: 0, nsec: 1 }), end);
+    const start: Time = clampTime(TimeUtil.add(this._currentTime, { sec: 0, nsec: 1 }), this._start, this._end);
+    const end: Time = clampTime(TimeUtil.add(this._currentTime, fromMillis(rangeMillis)), this._start, this._end);
+    const messages = await this._getMessages(start, end);
     await this._lastEmitPromise;
 
     // if we seeked while reading the do not emit messages
@@ -209,7 +247,7 @@ export default class RandomAccessPlayer implements Player {
     }
 
     // Update the currentTime when we know a seek didn't happen.
-    this._currentTime = end;
+    this._setCurrentTime(end);
 
     // if we paused while reading then do not emit messages
     // and exit the read loop
@@ -222,7 +260,7 @@ export default class RandomAccessPlayer implements Player {
   }
 
   async _read(): Promise<void> {
-    while (this._isPlaying) {
+    while (this._isPlaying && !this._hasError) {
       const start = Date.now();
       await this._tick();
       const time = Date.now() - start;
@@ -260,12 +298,11 @@ export default class RandomAccessPlayer implements Player {
     if (this._isPlaying) {
       return;
     }
-    this._metricsCollector.play();
+    this._metricsCollector.play(this._speed);
     this._isPlaying = true;
     this._emitState();
     this._read().catch((e: Error) => {
-      this._isPlaying = false;
-      throw e;
+      this._setError(e.message, e, "app");
     });
   }
 
@@ -286,15 +323,40 @@ export default class RandomAccessPlayer implements Player {
     this._emitState();
   }
 
-  seekPlayback(time: Time): void {
+  _reportInitialized() {
+    if (this._initializing) {
+      return;
+    }
+
+    if (
+      !this._progress.percentageByTopic ||
+      Object.values(this._progress.percentageByTopic).every((percentage) => Number(percentage) >= 100)
+    ) {
+      this._metricsCollector.initialized();
+    }
+  }
+
+  _setCurrentTime(time: Time): void {
+    this._metricsCollector.recordPlaybackTime(time);
     this._currentTime = time;
-    this._metricsCollector.seek();
+  }
+
+  seekPlayback(time: Time): void {
+    this._metricsCollector.seek(time);
+    this._setCurrentTime(time);
+
     const seekTime = Date.now();
     this._lastSeekTime = seekTime;
     this._emitState();
 
     if (!this._isPlaying) {
-      this._getMessages(TimeUtil.add(time, { sec: 0, nsec: -SEEK_BACK_NANOSECONDS }), time).then((messages) => {
+      this._getMessages(
+        TimeUtil.add(clampTime(time, TimeUtil.add(this._start, { sec: 0, nsec: SEEK_BACK_NANOSECONDS }), this._end), {
+          sec: 0,
+          nsec: -SEEK_BACK_NANOSECONDS,
+        }),
+        time
+      ).then((messages) => {
         if (seekTime === this._lastSeekTime) {
           this._messages = messages;
           this._emitState();
@@ -322,5 +384,6 @@ export default class RandomAccessPlayer implements Player {
   close() {
     this._isPlaying = false;
     this._provider.close();
+    this._metricsCollector.close();
   }
 }

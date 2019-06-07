@@ -1,6 +1,6 @@
-# Runtime Monitor - Summary
+# Diagnostics - Summary
 
-The runtime monitor summary panel shows the status of all the nodes it has seen in groups from:
+Displays the status of all the nodes it has seen in groups from:
 
 - Pinned nodes
 - Stale

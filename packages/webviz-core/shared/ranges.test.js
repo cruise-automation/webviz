@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isRangeCoveredByRanges } from "./ranges";
+import { isRangeCoveredByRanges, deepIntersect, missingRanges } from "./ranges";
 
 describe("ranges", () => {
   describe("isRangeCoveredByRanges", () => {
@@ -26,6 +26,47 @@ describe("ranges", () => {
       expect(isRangeCoveredByRanges({ start: 5, end: 7 }, [{ start: 3, end: 6 }, { start: 7, end: 10 }])).toEqual(
         false
       );
+    });
+  });
+
+  describe("deepIntersect", () => {
+    it("returns an empty array when given an empty array", () => {
+      expect(deepIntersect([])).toEqual([]);
+    });
+
+    it("returns the original array of ranges when only given that", () => {
+      const ranges = [{ start: 0, end: 10 }, { start: 20, end: 30 }];
+      expect(deepIntersect([ranges])).toEqual(ranges);
+    });
+
+    it("intersects multiple arrays of ranges", () => {
+      const ranges1 = [{ start: 0, end: 10 }, { start: 20, end: 30 }];
+      const ranges2 = [{ start: 5, end: 15 }, { start: 18, end: 28 }];
+      expect(deepIntersect([ranges1, ranges2])).toEqual([{ start: 5, end: 10 }, { start: 20, end: 28 }]);
+    });
+  });
+
+  describe("missingRanges", () => {
+    it("returns the bounds when `ranges` is empty", () => {
+      const bounds = { start: 0, end: 10 };
+      const ranges = [];
+      expect(missingRanges(bounds, ranges)).toEqual([bounds]);
+    });
+
+    it("returns the complement of the ranges within the bounds", () => {
+      const bounds = { start: 0, end: 10 };
+      const ranges = [{ start: 1, end: 2 }, { start: 7, end: 9 }];
+      expect(missingRanges(bounds, ranges)).toEqual([
+        { start: 0, end: 1 },
+        { start: 2, end: 7 },
+        { start: 9, end: 10 },
+      ]);
+    });
+
+    it("works with ranges outside of the bounds", () => {
+      const bounds = { start: 0, end: 10 };
+      const ranges = [{ start: -10, end: 2 }, { start: 7, end: 20 }];
+      expect(missingRanges(bounds, ranges)).toEqual([{ start: 2, end: 7 }]);
     });
   });
 });

@@ -17,6 +17,7 @@ import type { Time } from "rosbag";
 import styled from "styled-components";
 
 import styles from "./index.module.scss";
+import { ProgressPlot } from "./ProgressPlot";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
@@ -125,7 +126,7 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
 
   render() {
     const { pause, play, setSpeed, player } = this.props;
-    const { activeData, showInitializing } = player;
+    const { activeData, showInitializing, progress } = player;
 
     if (!activeData) {
       const message = showInitializing ? (
@@ -173,6 +174,9 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
 
         <div className={styles.bar}>
           <StyledFullWidthBar />
+          <div className={styles.stateBar}>
+            <ProgressPlot progress={progress} />
+          </div>
           <div
             ref={(el) => (this.el = el)}
             className={styles.sliderContainer}

@@ -322,7 +322,7 @@ describe("PointCloudBuilder", () => {
     width: 1,
   };
 
-  it("builts point cloud based on velodyne_organized containing nan values", () => {
+  it("builts point cloud based on lidar_organized containing nan values", () => {
     const result = mapMarker(vel);
     expect(result.points).toHaveLength(0);
   });

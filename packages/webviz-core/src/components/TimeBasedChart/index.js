@@ -342,7 +342,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
   _renderLegend = () => {
     const { data } = this.props;
     return data.datasets.map((dataset, i) => {
-      const { label, color, pointStyle, borderDash } = dataset;
+      const { label, color, borderDash } = dataset;
       let pointSvg;
       if (borderDash === PLOT_DOT_DASHED_STYLE) {
         pointSvg = (
@@ -360,12 +360,6 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
         );
       } else if (borderDash === PLOT_DASHED_STYLE) {
         pointSvg = <span style={{ fontSize: "12px", fontWeight: "bold" }}>- -</span>;
-      } else if (pointStyle === "circle") {
-        pointSvg = (
-          <svg width="11" height="10">
-            <circle fill={color} r="3.5" cx="5" cy="6" />
-          </svg>
-        );
       } else {
         pointSvg = <span style={{ fontSize: "12px", fontWeight: "bold" }}>––</span>;
       }
@@ -379,7 +373,9 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
 
   renderChart() {
     const { type, width, height, data, isSynced } = this.props;
-    const minX = min(data.datasets.map((dataset) => (dataset.data.length ? dataset.data[0].x : undefined)));
+    const minX = data.minIsZero
+      ? 0
+      : min(data.datasets.map((dataset) => (dataset.data.length ? dataset.data[0].x : undefined)));
     const maxX = max(data.datasets.map((dataset) => (dataset.data.length ? last(dataset.data).x : undefined)));
     const CoreComponent = (
       <ChartComponent

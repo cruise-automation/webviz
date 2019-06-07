@@ -38,6 +38,7 @@ export interface MarkerCollector {
   sphere(SphereMarker): any;
   sphereList(SphereListMarker): any;
   cylinder(CylinderMarker): any;
+  poseMarker(ArrowMarker): any;
   lineStrip(LineStripMarker): any;
   lineList(LineListMarker): any;
   points(PointsMarker): any;

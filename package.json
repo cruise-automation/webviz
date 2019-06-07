@@ -40,6 +40,7 @@
     "eslint-plugin-prettier": "^3.0.0",
     "eslint-plugin-react": "^7.11.1",
     "eslint-plugin-react-hooks": "^1.6.0",
+    "file-loader": "^4.0.0",
     "flow-bin": "0.95.1",
     "flow-copy-source": "^2.0.2",
     "flow-typed": "2.5.1",

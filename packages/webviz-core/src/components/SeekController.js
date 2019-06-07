@@ -55,7 +55,7 @@ export default function SeekController(props: Props) {
         context.seekPlayback(seekToTime);
       }
     },
-    [shouldRunEffect, search, context]
+    [shouldRunEffect, search] // eslint-disable-line react-hooks/exhaustive-deps
   );
   return null;
 }

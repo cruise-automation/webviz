@@ -8,6 +8,7 @@
 
 import type { Time } from "rosbag";
 
+import type { Range } from "webviz-core/shared/ranges";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 export type Topic = {|
@@ -64,7 +65,19 @@ export type WebSocketPlayerMessage =
   | UnsubscribeMessage
   | SeekMessage;
 
-export type Progress = { [string]: ?number };
+export type Progress = {
+  // Percentages by topic. Currently only used by the old Airavata code path,
+  // should be considered deprecated.
+  percentageByTopic?: { [string]: ?number },
+
+  // Used to show progress bar. Ranges are fractions, e.g. `{ start: 0, end: 0.5 }`.
+  fullyLoadedFractionRanges?: Range[],
+
+  // Time ranges in nanoseconds since bag start per topic. Used by
+  // `IdbCacheReaderDataProvider` to determine if a range is already available
+  // in IndexedDB. Is not directly shown in the UI.
+  nsTimeRangesSinceBagStart?: { [string]: Range[] },
+};
 
 export type Frame = {
   [topic: string]: Message[],
@@ -144,9 +157,11 @@ export interface Player {
 
 export interface PlayerMetricsCollectorInterface {
   initialized(): void;
-  play(): void;
-  seek(): void;
+  play(speed: number): void;
+  seek(time: Time): void;
   setSpeed(speed: number): void;
   pause(): void;
+  close(): void;
   recordBytesReceived(bytes: number): void;
+  recordPlaybackTime(time: Time): void;
 }

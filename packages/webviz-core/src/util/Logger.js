@@ -40,4 +40,20 @@ export default class Logger {
     }
     sentry.captureMessage(message, { level: "error", extra: { name: this.name, args } });
   }
+
+  log(level: "debug" | "info" | "warn" | "error", message: string, ...args: any[]) {
+    switch (level) {
+      case "debug":
+        return this.debug(message, ...args);
+      case "info":
+        return this.info(message, ...args);
+      case "warn":
+        return this.warn(message, ...args);
+      case "error":
+        return this.error(message, ...args);
+      default:
+        (level: empty);
+        throw new Error(`Unknown level: ${level}`);
+    }
+  }
 }

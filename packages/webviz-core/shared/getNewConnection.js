@@ -5,9 +5,10 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { complement, intersect, isOverlapping } from "intervals-fn";
+import { isOverlapping } from "intervals-fn";
 
 import type { Range } from "./ranges";
+import { isRangeCoveredByRanges, missingRanges } from "./ranges";
 
 // Based on a number of properties this function determines if a new connection should be opened or
 // not. It can be used for any type of ranges, be it bytes, timestamps, or something else.
@@ -105,8 +106,14 @@ function getNewConnectionWithoutExistingConnection({
   // reading ahead as much data as we can!
   let readAheadRange: ?Range;
   if (cacheSize >= fileSize) {
-    // If we have an unlimited cache, we want to read the entire file.
-    readAheadRange = { start: 0, end: fileSize };
+    // If we have an unlimited cache, we want to read the entire file, but still prefer downloading
+    // first near where the last request happened.
+    const potentialRange = { start: lastResolvedCallbackEnd || 0, end: fileSize };
+    if (!isRangeCoveredByRanges(potentialRange, downloadedRanges)) {
+      readAheadRange = potentialRange;
+    } else {
+      readAheadRange = { start: 0, end: fileSize };
+    }
   } else if (lastResolvedCallbackEnd != null) {
     // Otherwise, if we have a limited cache, we want to read the data right after the last
     // read request, because usually read requests are sequential without gaps.
@@ -120,11 +127,4 @@ function getNewConnectionWithoutExistingConnection({
     // within it that has not already been downloaded.
     return missingRanges(readAheadRange, downloadedRanges)[0];
   }
-}
-
-// Get the ranges in `bounds` that are NOT covered by `ranges`.
-function missingRanges(bounds: Range, ranges: Range[]) {
-  // `complement` works in unexpected ways when `ranges` has a range that exceeds `bounds`,
-  // so we first clip `ranges` to `bounds`.
-  return complement(bounds, intersect([bounds], ranges));
 }

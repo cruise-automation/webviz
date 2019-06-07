@@ -156,7 +156,12 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
         publishers,
         frame: useMemo(() => groupBy(messages || [], "topic"), [messages]),
         sortedTopics: useMemo(() => (topics || []).sort(naturalSort("name")), [topics]),
-        datatypes: useMemo(() => (playerState.activeData ? playerState.activeData.datatypes : {}), [playerState.activeData && playerState.activeData.datatypes] ), // eslint-disable-line
+        datatypes: useMemo(
+          () => {
+            return playerState.activeData ? playerState.activeData.datatypes : {};
+          },
+          [playerState.activeData && playerState.activeData.datatypes] // eslint-disable-line react-hooks/exhaustive-deps
+        ),
         setSubscriptions: useCallback(
           (id: string, subscriptionsForId: SubscribePayload[]) => {
             setAllSubscriptions((s) => ({ ...s, [id]: subscriptionsForId }));

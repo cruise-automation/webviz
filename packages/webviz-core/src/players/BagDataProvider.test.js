@@ -6,16 +6,21 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { BagDataProvider } from "./BagDataProvider";
-import { BagProviderWorker } from "./BagDataProvider.worker";
-import Rpc, { createLinkedChannels } from "webviz-core/src/util/Rpc";
+import BagDataProvider from "./BagDataProvider";
 
-describe("Provider", () => {
+const dummyExtensionPoint = {
+  progressCallback() {},
+  addTopicsCallback() {},
+  reportMetadataCallback() {},
+};
+
+describe("BagDataProvider", () => {
   it("initializes", async () => {
-    const channels = createLinkedChannels();
-    new BagProviderWorker(new Rpc(channels.remote));
-    const provider = new BagDataProvider(`${__dirname}/example.bag`, new Rpc(channels.local));
-    const result = await provider.initialize();
+    const provider = new BagDataProvider(
+      { bagPath: { type: "file", file: `${__dirname}/../../public/fixtures/example.bag` } },
+      []
+    );
+    const result = await provider.initialize(dummyExtensionPoint);
     expect(result.start).toEqual({ sec: 1396293887, nsec: 844783943 });
     expect(result.end).toEqual({ sec: 1396293909, nsec: 544870199 });
     expect(result.topics).toContainOnly([
@@ -45,10 +50,11 @@ describe("Provider", () => {
   });
 
   it("gets messages", async () => {
-    const channels = createLinkedChannels();
-    new BagProviderWorker(new Rpc(channels.remote));
-    const provider = new BagDataProvider(`${__dirname}/example.bag`, new Rpc(channels.local));
-    await provider.initialize();
+    const provider = new BagDataProvider(
+      { bagPath: { type: "file", file: `${__dirname}/../../public/fixtures/example.bag` } },
+      []
+    );
+    await provider.initialize(dummyExtensionPoint);
     const start = { sec: 1396293887, nsec: 844783943 };
     const end = { sec: 1396293888, nsec: 60000000 };
     const messages = await provider.getMessages(start, end, ["/tf"]);
@@ -60,32 +66,13 @@ describe("Provider", () => {
         sec: 1396293888,
         nsec: 56251251,
       },
-      message: {
-        transforms: [
-          {
-            child_frame_id: "turtle2",
-            header: { frame_id: "world", seq: 0, stamp: { nsec: 56065082, sec: 1396293888 } },
-            transform: { rotation: { w: 1, x: 0, y: 0, z: 0 }, translation: { x: 4, y: 9.088889122009277, z: 0 } },
-          },
-        ],
-      },
+      message: expect.any(ArrayBuffer),
     });
     expect(messages[1]).toEqual({
-      datatype: "tf/tfMessage",
-      message: {
-        transforms: [
-          {
-            child_frame_id: "turtle1",
-            header: { frame_id: "world", seq: 0, stamp: { nsec: 56102037, sec: 1396293888 } },
-            transform: {
-              rotation: { w: 1, x: 0, y: 0, z: 0 },
-              translation: { x: 5.544444561004639, y: 5.544444561004639, z: 0 },
-            },
-          },
-        ],
-      },
-      receiveTime: { nsec: 56262848, sec: 1396293888 },
       topic: "/tf",
+      datatype: "tf/tfMessage",
+      receiveTime: { nsec: 56262848, sec: 1396293888 },
+      message: expect.any(ArrayBuffer),
     });
   });
 });

@@ -13,6 +13,7 @@ export const fixture = {
     { name: "/baz/num", datatype: "baz/num" },
     { name: "/baz/text", datatype: "baz/text" },
     { name: "/baz/array", datatype: "baz/array" },
+    { name: "/geometry/types", datatype: "geometry/types" },
   ],
   frame: {
     "/msgs/big_topic": [
@@ -32,7 +33,7 @@ export const fixture = {
           timestamp_example_1: { sec: 0, nsec: 0 },
           timestamp_example_2: { sec: 1, nsec: 1 },
           timestamp_example_3: { sec: 1500000000, nsec: 1 },
-          some_id_example_1: { someId: 123 },
+          some_id_example_1: { someId: 123, additional_data: 42 },
           some_id_example_2: { some_id: 123 },
           some_short_data: new Int8Array(6),
           some_long_data: new Uint8ClampedArray(2000),
@@ -76,6 +77,25 @@ export const fixture = {
         topic: "/baz/array",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: [false],
+      },
+    ],
+    "/geometry/types": [
+      {
+        op: "message",
+        datatype: "geometry/types",
+        topic: "/geometry/types",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: {
+          point2d: {
+            x: 1.0,
+            y: 2.0,
+          },
+          point3d: {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+          },
+        },
       },
     ],
   },

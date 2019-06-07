@@ -21,6 +21,12 @@ import VirtualLRUBuffer from "./VirtualLRUBuffer";
 //     becomes the largest range of data that can be requested.
 // - logFn (optional): a log function. Useful for logging in a particular format. Defaults to
 //     `console.log`.
+// - rangesCallback (optional): a callback that gets called any time the available ranges change.
+// - keepReconnectingCallback (optional): if set, we assume that we want to keep retrying on connection
+//     error, in which case the callback gets called with an update on whether we are currently
+//     reconnecting. This is useful when the connection is expected to be spotty, e.g. when
+//     running this code in a browser instead of on a server. If omitted, we will retry for a short
+//     amount of time and then reject read requests.
 //
 // Under the hood this uses a `VirtualLRUBuffer`, which represents the entire file in memory, even
 // though only parts of it may actually be stored in memory. It also manages evicting least recently
@@ -40,7 +46,7 @@ export type FileStream = {
   destroy: () => void,
 };
 export interface FileReader {
-  open(): Promise<{| size: number |}>;
+  open(): Promise<{ size: number }>;
   fetch(offset: number, length: number): FileStream;
   +recordBytesPerSecond?: (number) => void; // For logging / metrics.
 }
@@ -59,6 +65,8 @@ export default class CachedFilelike implements Filelike {
   _virtualBuffer: VirtualLRUBuffer;
   _logFn: (string) => void = (msg) => console.log(msg);
   _closed: boolean = false;
+  _rangesCallback: (Range[]) => void = () => {};
+  _keepReconnectingCallback: ?(reconnecting: boolean) => void;
 
   // The current active connection, if there is one. `remainingRange.start` gets updated whenever
   // we receive new data, so it truly is the remaining range that it is going to download.
@@ -73,10 +81,18 @@ export default class CachedFilelike implements Filelike {
   // The last time we've encountered an error;
   _lastErrorTime: ?number;
 
-  constructor(options: {| fileReader: FileReader, cacheSizeInBytes?: ?number, logFn?: (string) => void |}) {
+  constructor(options: {|
+    fileReader: FileReader,
+    cacheSizeInBytes?: ?number,
+    logFn?: (string) => void,
+    rangesCallback?: (Range[]) => void,
+    keepReconnectingCallback?: (reconnecting: boolean) => void,
+  |}) {
     this._fileReader = options.fileReader;
     this._cacheSizeInBytes = options.cacheSizeInBytes || this._cacheSizeInBytes;
     this._logFn = options.logFn || this._logFn;
+    this._rangesCallback = options.rangesCallback || this._rangesCallback;
+    this._keepReconnectingCallback = options.keepReconnectingCallback;
   }
 
   async open() {
@@ -167,6 +183,8 @@ export default class CachedFilelike implements Filelike {
     if (newConnection) {
       this._setConnection(newConnection);
     }
+
+    this._rangesCallback(this._virtualBuffer.getRangesWithData());
   }
 
   // Replace the current connection with a new one, spanning a certain range.
@@ -185,20 +203,31 @@ export default class CachedFilelike implements Filelike {
     this._currentConnection = { stream, remainingRange: range };
 
     stream.on("error", (error: Error) => {
-      // If we get two errors in a short timespan (100ms) then there is probably a serious error, so
-      // we resolve all remaining callbacks with errors and close out.
-      const lastErrorTime = this._lastErrorTime;
-      if (lastErrorTime && Date.now() - lastErrorTime < 100) {
-        this._logFn(`Connection @ ${rangeToString(range)} threw another error; closing: ${error.toString()}`);
+      const currentConnection = this._currentConnection;
+      if (!currentConnection || stream !== currentConnection.stream) {
+        return; // Ignore errors from old streams.
+      }
 
-        this._closed = true;
-        if (this._currentConnection) {
-          this._currentConnection.stream.destroy();
+      if (this._keepReconnectingCallback) {
+        // If this callback is set, just keep retrying.
+        if (!this._lastErrorTime) {
+          // And if this is the first error, let the callback know.
+          this._keepReconnectingCallback(true);
         }
-        for (const request of this._readRequests) {
-          request.callback(error);
+      } else {
+        // Otherwise, if we get two errors in a short timespan (100ms) then there is probably a
+        // serious error, we resolve all remaining callbacks with errors and close out.
+        const lastErrorTime = this._lastErrorTime;
+        if (lastErrorTime && Date.now() - lastErrorTime < 100) {
+          this._logFn(`Connection @ ${rangeToString(range)} threw another error; closing: ${error.toString()}`);
+
+          this._closed = true;
+          currentConnection.stream.destroy();
+          for (const request of this._readRequests) {
+            request.callback(error);
+          }
+          return;
         }
-        return;
       }
 
       // When we encounter an error there is usually a bad connection or timeout or so, so just
@@ -217,6 +246,15 @@ export default class CachedFilelike implements Filelike {
       const currentConnection = this._currentConnection;
       if (!currentConnection || stream !== currentConnection.stream) {
         return; // Ignore data from old streams.
+      }
+
+      if (this._lastErrorTime) {
+        // If we had an error before, then that has clearly been resolved since we received some data.
+        this._lastErrorTime = undefined;
+        if (this._keepReconnectingCallback) {
+          // And if we had a callback, let it know that the issue has been resolved.
+          this._keepReconnectingCallback(false);
+        }
       }
 
       // Copy the data into the VirtualLRUBuffer.

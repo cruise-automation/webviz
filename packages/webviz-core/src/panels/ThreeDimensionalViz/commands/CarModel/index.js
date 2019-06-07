@@ -9,7 +9,7 @@ import { vec3 } from "gl-matrix";
 import React from "react";
 import { GLTFScene, parseGLB, type Pose, type Scale } from "regl-worldview";
 
-import carModelURL from "./carModel.glb";
+import carModelURL from "webviz-core/src/panels/ThreeDimensionalViz/commands/CarModel/carModel.glb";
 
 async function loadCarModel() {
   const response = await fetch(carModelURL);

@@ -19,3 +19,5 @@ module.name_mapper.extension='scss' -> '<PROJECT_ROOT>/packages/webviz-core/src/
 module.name_mapper.extension='md' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/Markdown.js.flow'
 module.name_mapper.extension='ne' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/Nearley.js.flow'
 module.name_mapper.extension='worker.js' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/WorkerLoader.js.flow'
+
+module.file_ext=.glb

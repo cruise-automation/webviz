@@ -1,4 +1,4 @@
-# Webviz [![CircleCI](https://circleci.com/gh/cruise-automation/webviz.svg?style=svg)](https://circleci.com/gh/cruise-automation/webviz)
+# [Webviz](https://cruise-automation.github.io/webviz/webviz-core.html) [![CircleCI](https://circleci.com/gh/cruise-automation/webviz.svg?style=svg)](https://circleci.com/gh/cruise-automation/webviz)
 
 **Drag and drop your own bag files into the Webviz application [here](https://cruise-automation.github.io/webviz/webviz-core.html) to explore your robotics data.**
 

@@ -211,6 +211,7 @@ const drawModel = (regl) => {
 };
 
 type Props = {|
+  model: string | (() => Promise<Model>),
   onClick?: MouseHandler,
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
@@ -222,9 +223,6 @@ type Props = {|
     scale: Scale,
     alpha: ?number,
   |},
-  model: Model,
-  // use modelKey as unique identifier to cache the models
-  modelKey: ModelProp,
 |};
 
 function useAsyncValue<T>(fn: () => Promise<T>, deps: ?(any[])): ?T {

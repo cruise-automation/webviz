@@ -21,7 +21,7 @@ type Props = {|
 export default class TimeBasedChartTooltip extends React.PureComponent<Props> {
   render() {
     const { tooltip } = this.props;
-    const value = JSON.stringify(tooltip.value);
+    const value = typeof tooltip.value === "string" ? tooltip.value : JSON.stringify(tooltip.value);
     const timestampReceiveTime = getTimestampForMessage(tooltip.item.message, "receiveTime");
     const timestampHeaderStamp = getTimestampForMessage(tooltip.item.message, "headerStamp");
     const content = (

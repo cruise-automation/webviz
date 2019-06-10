@@ -246,6 +246,16 @@ describe("getNewConnection", () => {
         });
         expect(newConnection).toEqual({ start: 30, end: 50 });
       });
+
+      it("downloads from the last request if there was one", () => {
+        // This can happen if the definition of `downloadedRanges` changes after the file has already
+        // been downloaded, e.g. if the user subscribes to a new topic.
+        const newConnection = getNewConnection({
+          ...defaults,
+          lastResolvedCallbackEnd: 30,
+        });
+        expect(newConnection).toEqual({ start: 30, end: 100 });
+      });
     });
   });
 });

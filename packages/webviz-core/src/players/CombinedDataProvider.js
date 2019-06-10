@@ -9,7 +9,13 @@
 import { flatten, uniq, isEqual } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
-import type { RandomAccessDataProvider, MessageLike, InitializationResult } from "./types";
+import type {
+  RandomAccessDataProvider,
+  MessageLike,
+  InitializationResult,
+  DataProviderMetadata,
+  ExtensionPoint,
+} from "webviz-core/src/players/types";
 import type { Topic } from "webviz-core/src/types/players";
 import type { RosMsgField } from "webviz-core/src/types/RosDatatypes";
 import naturalSort from "webviz-core/src/util/naturalSort";
@@ -92,8 +98,27 @@ export default class CombinedDataProvider implements RandomAccessDataProvider {
     this._providers = providers;
   }
 
-  async initialize(): Promise<InitializationResult> {
-    const results = await Promise.all(this._providers.map(({ provider }) => provider.initialize()));
+  async initialize(extensionPoint: ?ExtensionPoint): Promise<InitializationResult> {
+    let childExtensionPoint;
+    if (extensionPoint) {
+      const { reportMetadataCallback } = extensionPoint;
+      childExtensionPoint = {
+        progressCallback: () => {
+          throw new Error(
+            "Unsupported extensionPoint callback in CombinedDataProvider: progressCallback (still need to implement)"
+          );
+        },
+        addTopicsCallback: () => {
+          throw new Error(
+            "Unsupported extensionPoint callback in CombinedDataProvider: addTopicsCallback (still need to implement)"
+          );
+        },
+        reportMetadataCallback: (data: DataProviderMetadata) => {
+          reportMetadataCallback(data);
+        },
+      };
+    }
+    const results = await Promise.all(this._providers.map(({ provider }) => provider.initialize(childExtensionPoint)));
     const start = sortTimes(results.map(({ start }) => start)).shift();
     const end = sortTimes(results.map(({ end }) => end)).pop();
     const topics = flatten(

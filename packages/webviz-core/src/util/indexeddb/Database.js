@@ -213,8 +213,8 @@ export default class Database {
     return items;
   }
 
-  transaction(objectStore: string, transactionMode?: IDBTransactionMode = "readonly"): Transaction {
-    return this.db.transaction(objectStore, transactionMode);
+  transaction(storeNames: string | Array<string>, transactionMode?: IDBTransactionMode = "readonly"): Transaction {
+    return this.db.transaction(storeNames, transactionMode);
   }
 
   // returns a writable (object mode) stream which does batching writes of records to the database

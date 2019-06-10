@@ -8,6 +8,7 @@
 
 import AppsIcon from "@mdi/svg/svg/apps.svg";
 import JsonIcon from "@mdi/svg/svg/json.svg";
+import ScriptTextOutlineIcon from "@mdi/svg/svg/script-text-outline.svg";
 import React, { PureComponent } from "react";
 
 import ChildToggle from "webviz-core/src/components/ChildToggle";
@@ -47,7 +48,13 @@ export default class LayoutMenu extends PureComponent<Props, State> {
         </Icon>
         <Menu>
           <Item icon={<JsonIcon />} onClick={this.onImportClick}>
-            import/export layout
+            Import/export layout
+          </Item>
+          <hr />
+          <Item
+            icon={<ScriptTextOutlineIcon />}
+            onClick={() => window.open("https://github.com/cruise-automation/webviz/blob/master/LICENSE", "_blank")}>
+            License
           </Item>
         </Menu>
       </ChildToggle>

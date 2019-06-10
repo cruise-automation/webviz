@@ -9,6 +9,7 @@
 import buffer from "buffer";
 
 import CachedFilelike, { type FileReader, type FileStream } from "./CachedFilelike";
+import delay from "webviz-core/shared/delay";
 
 class InMemoryFileReader implements FileReader {
   _buffer: Buffer;
@@ -78,6 +79,56 @@ describe("CachedFilelike", () => {
         expect(destroyed).toEqual(true);
         done();
       });
+    });
+
+    it("keeps reconnecting when keepReconnectingCallback is set", async () => {
+      const fileReader = new InMemoryFileReader(buffer.Buffer.from([0, 1, 2, 3]));
+      let interval, dataCallback;
+      let stopSendingErrors = false;
+      jest.spyOn(fileReader, "fetch").mockImplementation(() => {
+        return {
+          on: (type, callback) => {
+            if (type === "data") {
+              dataCallback = callback;
+            }
+            if (type === "error") {
+              interval = setInterval(() => {
+                if (!stopSendingErrors) {
+                  return callback(new Error("Dummy error"));
+                }
+              }, 2);
+            }
+          },
+          destroy() {
+            clearInterval(interval);
+          },
+        };
+      });
+
+      const keepReconnectingCallback = jest.fn();
+      const cachedFileReader = new CachedFilelike({ fileReader, logFn: () => {}, keepReconnectingCallback });
+
+      const readerPromise = new Promise((resolve, reject) => {
+        cachedFileReader.read(1, 2, (error, data) => {
+          if (data) {
+            resolve(data);
+          } else {
+            reject(error);
+          }
+        });
+      });
+
+      await delay(10);
+      expect(keepReconnectingCallback.mock.calls).toEqual([[true]]);
+
+      stopSendingErrors = true;
+      if (!dataCallback) {
+        throw new Error("dataCallback not set");
+      }
+      dataCallback(buffer.Buffer.from([1, 2]));
+      const data = await readerPromise;
+      expect(keepReconnectingCallback.mock.calls).toEqual([[true], [false]]);
+      expect([...data]).toEqual([1, 2]);
     });
   });
 });

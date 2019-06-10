@@ -9,7 +9,7 @@
 import { clamp } from "lodash";
 import momentDurationFormatSetup from "moment-duration-format";
 import moment from "moment-timezone";
-import { type Time } from "rosbag";
+import { type Time, TimeUtil } from "rosbag";
 
 type BatchTimestamp = {
   seconds: number,
@@ -89,17 +89,27 @@ export function subtractTimes({ sec: sec1, nsec: nsec1 }: Time, { sec: sec2, nse
   return { sec: sec1 - sec2, nsec: nsec1 - nsec2 };
 }
 
+export function toNanoSec({ sec, nsec }: Time) {
+  return sec * 1e9 + nsec;
+}
+
 export function toSec({ sec, nsec }: Time) {
   return sec + nsec * 1e-9;
 }
 
 export function fromSec(value: number): Time {
-  // https://github.com/ros/roscpp_core/blob/indigo-devel/rostime/include/ros/time.h#L153
+  // From https://github.com/ros/roscpp_core/blob/indigo-devel/rostime/include/ros/time.h#L153
   let sec = Math.trunc(value);
   let nsec = Math.round((value - sec) * 1e9);
   sec += Math.trunc(nsec / 1e9);
   nsec %= 1e9;
   return { sec, nsec };
+}
+
+export function fromNanoSec(nsec: number): Time {
+  // From https://github.com/ros/roscpp_core/blob/86720717c0e1200234cc0a3545a255b60fb541ec/rostime/include/ros/impl/time.h#L63
+  // and https://github.com/ros/roscpp_core/blob/7583b7d38c6e1c2e8623f6d98559c483f7a64c83/rostime/src/time.cpp#L536
+  return { sec: Math.trunc(nsec / 1e9), nsec: nsec % 1e9 };
 }
 
 export function fromMillis(value: number): Time {
@@ -138,4 +148,39 @@ export function formatFrame({ sec, nsec }: Time): string {
 
 export function transformBatchTimestamp({ seconds, nanoseconds }: BatchTimestamp): string {
   return formatFrame({ sec: seconds, nsec: nanoseconds });
+}
+
+export function clampTime(time: Time, start: Time, end: Time): Time {
+  if (TimeUtil.compare(start, time) > 0) {
+    return start;
+  }
+  if (TimeUtil.compare(end, time) < 0) {
+    return end;
+  }
+  return time;
+}
+
+export function parseRosTimeStr(str: string): ?Time {
+  if (/^\d+\.?$/.test(str)) {
+    return { sec: parseInt(str, 10) || 0, nsec: 0 };
+  }
+  if (!/^\d+\.\d+$/.test(str)) {
+    return null;
+  }
+  const partials = str.split(".");
+  if (partials.length === 0) {
+    return null;
+  }
+  return { sec: parseInt(partials[0], 10) || 0, nsec: parseInt(partials[1], 10) || 0 };
+}
+
+export function parseTimeStr(str: string): ?Time {
+  const newMomentTimeObj = moment(str, "YYYY-MM-DD h:mm:ss.SSS A z");
+  const date = newMomentTimeObj.toDate();
+  const result = (newMomentTimeObj.isValid() && fromDate(date)) || null;
+
+  if (!result || result.sec <= 0 || result.nsec < 0) {
+    return null;
+  }
+  return result;
 }

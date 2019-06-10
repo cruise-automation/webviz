@@ -9,7 +9,12 @@
 import { last } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
-import type { InitializationResult, MessageLike, RandomAccessDataProvider } from "webviz-core/src/players/types";
+import type {
+  ExtensionPoint,
+  InitializationResult,
+  MessageLike,
+  RandomAccessDataProvider,
+} from "webviz-core/src/players/types";
 import type { Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
@@ -18,6 +23,7 @@ export default class MemoryDataProvider implements RandomAccessDataProvider {
   messages: MessageLike[];
   topics: ?(Topic[]);
   datatypes: ?RosDatatypes;
+  extensionPoint: ExtensionPoint;
 
   constructor({
     messages,
@@ -33,7 +39,9 @@ export default class MemoryDataProvider implements RandomAccessDataProvider {
     this.datatypes = datatypes;
   }
 
-  async initialize(): Promise<InitializationResult> {
+  async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
+    this.extensionPoint = extensionPoint;
+
     return {
       start: this.messages[0].receiveTime,
       end: last(this.messages).receiveTime,

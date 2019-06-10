@@ -1,6 +1,6 @@
-# Ros Out
+# rosout
 
-The rosout panel prints out messages from the `/rosout` topic. The messages can be filtered using the filter dropdowns at the top of the panel. These hide away when unused, so you need to hover over the top section of the panel to reveal them. There are two filtering options:
+Displays messages from the `/rosout` topic. The messages can be filtered using the filter dropdowns at the top of the panel. These hide away when unused, so you need to hover over the top section of the panel to reveal them. There are two filtering options:
 
 - Minimum Severity: The left dropdown lets you choose a severity below which to hide messages.
 - Node Name/Message: The text field lets you add search terms by which to filter the log messages. The filter applies to both node names and message text.

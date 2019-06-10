@@ -46,6 +46,8 @@ export const MARKER_MSG_TYPES = {
   TRIANGLE_LIST: 11,
 };
 
+export const POSE_MARKER_SCALE = { x: 2, y: 2, z: 0.1 };
+
 // Planning
 export const MILES_PER_HOUR_TO_METERS_PER_SECOND = 0.44703;
 export const METERS_PER_SECOND_TO_MILES_PER_HOUR = 2.23694;

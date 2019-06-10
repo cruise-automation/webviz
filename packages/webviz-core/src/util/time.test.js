@@ -166,3 +166,52 @@ describe("time.findClosestTimestampIndex", () => {
     expect(time.findClosestTimestampIndex({ sec: 2, nsec: 999999999 }, ["1", "2", "3"])).toEqual(1);
   });
 });
+
+describe("time.clampTime", () => {
+  const start = { sec: 0, nsec: 100 };
+  const end = { sec: 100, nsec: 100 };
+  it("returns the clamped time", () => {
+    expect(time.clampTime({ sec: 0, nsec: 99 }, start, end)).toEqual(start);
+    expect(time.clampTime({ sec: 0, nsec: 101 }, start, end)).toEqual({ sec: 0, nsec: 101 });
+    expect(time.clampTime({ sec: 100, nsec: 102 }, start, end)).toEqual(end);
+  });
+});
+
+describe("time.parseRosTimeStr", () => {
+  it("returns null if the input string is formatted incorrectly", () => {
+    expect(time.parseRosTimeStr("")).toEqual(null);
+    expect(time.parseRosTimeStr(".12121")).toEqual(null);
+    expect(time.parseRosTimeStr(".")).toEqual(null);
+  });
+
+  it("returns the correct time", () => {
+    expect(time.parseRosTimeStr("12121.")).toEqual({ sec: 12121, nsec: 0 });
+    expect(time.parseRosTimeStr("1")).toEqual({ sec: 1, nsec: 0 });
+    expect(time.parseRosTimeStr("1.")).toEqual({ sec: 1, nsec: 0 });
+    expect(time.parseRosTimeStr("1.12")).toEqual({ sec: 1, nsec: 12 });
+    expect(time.parseRosTimeStr("100.100")).toEqual({ sec: 100, nsec: 100 });
+    expect(time.parseRosTimeStr("100")).toEqual({ sec: 100, nsec: 0 });
+  });
+});
+
+describe("time.parseTimeStr", () => {
+  // create the time string input from current time zone so the test results are always consistent
+  // sample output: 2018-07-23 2:45:20.317 PM PDT
+  function getCombinedTimeStr(timestamp) {
+    return `${time.formatDate(timestamp)} ${time.formatTime(timestamp)}`;
+  }
+
+  it("returns null if the input string is formatted incorrectly", () => {
+    expect(time.parseTimeStr("")).toEqual(null);
+    expect(time.parseTimeStr("018-07")).toEqual(null);
+    expect(time.parseTimeStr("0")).toEqual(null);
+  });
+
+  it("returns the correct time", () => {
+    const timeStr = getCombinedTimeStr({ sec: 1532382320, nsec: 317124567 });
+    expect(time.parseTimeStr(timeStr)).toEqual({
+      nsec: 317000000, // losing some accuracy when converting back
+      sec: 1532382320,
+    });
+  });
+});

@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { isBefore, isDuring } from "intervals-fn";
+import { complement, intersect, isBefore, isDuring, simplify } from "intervals-fn";
 
 export type Range = {| start: number /* inclusive */, end: number /* exclusive */ |};
 
@@ -19,4 +19,19 @@ export function isRangeCoveredByRanges(queryRange: Range, nonOverlappingMergedAn
     }
   }
   return false;
+}
+
+export function deepIntersect(arraysOfRanges: Range[][]): Range[] {
+  let result = arraysOfRanges[0] || [];
+  for (const arrayOfRanges: Range[] of arraysOfRanges.slice(1)) {
+    result = intersect(result, arrayOfRanges);
+  }
+  return simplify(result);
+}
+
+// Get the ranges in `bounds` that are NOT covered by `ranges`.
+export function missingRanges(bounds: Range, ranges: Range[]) {
+  // `complement` works in unexpected ways when `ranges` has a range that exceeds `bounds`,
+  // so we first clip `ranges` to `bounds`.
+  return complement(bounds, intersect([bounds], ranges));
 }

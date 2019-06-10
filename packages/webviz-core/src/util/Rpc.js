@@ -8,10 +8,10 @@
 
 // this type mirrors the MessageChannel api which is available on
 // instances of web-workers as well as avaiable on 'global' within a worker
-export type Channel = {
-  postMessage: (data: any, transfer?: any[]) => void,
-  onmessage?: (ev: MessageEvent) => void,
-};
+export interface Channel {
+  postMessage(data: any, transfer?: any[]): void;
+  onmessage: ?(ev: MessageEvent) => void;
+}
 
 const RESPONSE = "$$RESPONSE";
 const ERROR = "$$ERROR";
@@ -19,6 +19,7 @@ const ERROR = "$$ERROR";
 // helper function to create linked channels for testing
 export function createLinkedChannels(): { local: Channel, remote: Channel } {
   const local: Channel = {
+    onmessage: undefined,
     postMessage(data: any, transfer?: Array<ArrayBuffer>) {
       const ev = new MessageEvent("message", { data });
       // eslint-disable-next-line no-use-before-define
@@ -29,6 +30,7 @@ export function createLinkedChannels(): { local: Channel, remote: Channel } {
   };
 
   const remote: Channel = {
+    onmessage: undefined,
     postMessage(data: any, transfer?: Array<ArrayBuffer>) {
       const ev = new MessageEvent("message", { data });
       if (local.onmessage) {
@@ -99,7 +101,9 @@ export default class Rpc {
           id,
           data: {
             [ERROR]: true,
+            name: err.name,
             message: err.message,
+            stack: err.stack,
           },
         };
         this._channel.postMessage(message);
@@ -115,7 +119,10 @@ export default class Rpc {
     const result = new Promise((resolve, reject) => {
       this._pendingCallbacks[id] = (info) => {
         if (info.data && info.data[ERROR]) {
-          reject(new Error(info.data.message));
+          const error = new Error(info.data.message);
+          error.name = info.data.name;
+          error.stack = info.data.stack;
+          reject(error);
         } else {
           resolve(info.data);
         }

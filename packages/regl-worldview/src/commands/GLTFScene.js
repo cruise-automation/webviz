@@ -229,8 +229,16 @@ function useAsyncValue<T>(fn: () => Promise<T>, deps: ?(any[])): ?T {
   const [value, setValue] = useState<?T>();
   useEffect(
     useCallback(() => {
-      fn().then((result) => setValue(result));
-      return () => setValue(undefined);
+      let unloaded = false;
+      fn().then((result) => {
+        if (!unloaded) {
+          setValue(result);
+        }
+      });
+      return () => {
+        unloaded = true;
+        setValue(undefined);
+      };
     }, deps || [fn]),
     deps || [fn]
   );

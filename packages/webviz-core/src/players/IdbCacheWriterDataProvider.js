@@ -18,8 +18,6 @@ import {
   TOPIC_RANGES_STORE_NAME,
   getIdbCacheDataProviderDatabase,
 } from "./IdbCacheDataProviderDatabase";
-import { getNewConnection } from "webviz-core/shared/getNewConnection";
-import { type Range, deepIntersect, isRangeCoveredByRanges, missingRanges } from "webviz-core/shared/ranges";
 import type {
   ChainableDataProvider,
   ChainableDataProviderDescriptor,
@@ -28,8 +26,13 @@ import type {
   InitializationResult,
   MessageLike,
 } from "webviz-core/src/players/types";
+import { getNewConnection } from "webviz-core/src/util/getNewConnection";
 import Database from "webviz-core/src/util/indexeddb/Database";
+import Logger from "webviz-core/src/util/Logger";
+import { type Range, deepIntersect, isRangeCoveredByRanges, missingRanges } from "webviz-core/src/util/ranges";
 import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time";
+
+const log = new Logger(__filename);
 
 export const BLOCK_SIZE_NS = 0.1 * 1e9; // 0.1 seconds.
 const CONTINUE_DOWNLOADING_THRESHOLD = 3 * BLOCK_SIZE_NS;
@@ -236,12 +239,7 @@ export default class IdbCacheWriterDataProvider implements ChainableDataProvider
       const messagesStore = tx.objectStore(MESSAGES_STORE_NAME);
       for (const message of messages) {
         if (message.message instanceof ArrayBuffer && message.message.byteLength > 10000000) {
-          this._extensionPoint.reportMetadataCallback({
-            type: "log",
-            source: "IDBCacheWriteDataProvider",
-            level: "warn",
-            message: `Message on ${message.topic} is suspiciously large (${message.message.byteLength} bytes)`,
-          });
+          log.warn(`Message on ${message.topic} is suspiciously large (${message.message.byteLength} bytes)`);
         }
         messagesStore
           .put({

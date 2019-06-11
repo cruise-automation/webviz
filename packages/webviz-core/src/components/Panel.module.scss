@@ -101,7 +101,7 @@
     display: none;
 
     :global(.mosaic-window):hover & {
-      display: block;
+      display: flex;
     }
   }
 }

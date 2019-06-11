@@ -7,6 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import Database from "webviz-core/src/util/indexeddb/Database";
+import Logger from "webviz-core/src/util/Logger";
+
+const log = new Logger(__filename);
 
 /*
 
@@ -48,7 +51,7 @@ const getConfig = (metadataDatabaseName: string) => ({
 // the next creation of a database will clean up all the old ones.
 function tryDelete(databaseName: string): Promise<boolean> {
   return new Promise((resolve, reject) => {
-    console.info("Deleting old database", databaseName);
+    log.info("Deleting old database", databaseName);
     let resolved = false;
     const done = (success: boolean) => {
       if (resolved) {
@@ -62,11 +65,11 @@ function tryDelete(databaseName: string): Promise<boolean> {
     setTimeout(() => done(false), 500);
     deleteRequest.onsuccess = () => done(true);
     deleteRequest.onerror = (err) => {
-      console.error(`Unable to delete indexeddb database ${databaseName}`, err);
+      log.error(`Unable to delete indexeddb database ${databaseName}`, err);
       done(false);
     };
     deleteRequest.onblocked = () => {
-      console.info(`Could not delete ${databaseName} - request blocked.  This database is likey open in another tab.`);
+      log.info(`Could not delete ${databaseName} - request blocked.  This database is likey open in another tab.`);
       done(false);
     };
   });

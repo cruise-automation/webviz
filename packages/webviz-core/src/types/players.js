@@ -8,8 +8,8 @@
 
 import type { Time } from "rosbag";
 
-import type { Range } from "webviz-core/shared/ranges";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import type { Range } from "webviz-core/src/util/ranges";
 
 export type Topic = {|
   datatype: string,

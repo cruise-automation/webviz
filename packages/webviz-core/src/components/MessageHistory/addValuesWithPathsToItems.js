@@ -9,7 +9,7 @@
 import { isTypicalFilterName, type MessageHistoryItem, type MessagePathStructureItem } from ".";
 import { type RosPath } from "./internalCommon";
 import { messagePathStructures } from "webviz-core/src/components/MessageHistory/messagePathsForDatatype";
-import { constantsByDatatype, topicsByTopicName } from "webviz-core/src/selectors";
+import { enumValuesByDatatypeAndField, topicsByTopicName } from "webviz-core/src/selectors";
 import type { Message, Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
@@ -44,10 +44,19 @@ export default function addValuesWithPathsToItems(
         const nextPathItem = rosPath.messagePath[pathIndex + 1];
         if (!pathItem) {
           // If we're at the end of the `messagePath`, we're done! Just store the point.
+          let constantName: ?string;
+          const prevPathItem = rosPath.messagePath[pathIndex - 1];
+          if (prevPathItem && prevPathItem.type === "name") {
+            const fieldName = prevPathItem.name;
+            const enumMap = enumValuesByDatatypeAndField(datatypes)[structureItem.datatype];
+            if (enumMap && enumMap[fieldName]) {
+              constantName = enumMap[fieldName][value];
+            }
+          }
           queriedData.push({
             value,
             path,
-            constantName: constantsByDatatype(datatypes)[structureItem.datatype][value],
+            constantName,
           });
         } else if (pathItem.type === "name" && structureItem.structureType === "message") {
           // If the `pathItem` is a name, we're traversing down using that name.

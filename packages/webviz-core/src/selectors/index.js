@@ -28,6 +28,7 @@ export const topicsByTopicName = createSelector<*, *, *, _>(
   }
 );
 
+// Only exported for tests
 export const constantsByDatatype = createSelector<*, *, *, _>(
   (datatypes: RosDatatypes) => datatypes,
   (datatypes: RosDatatypes): { [string]: { [mixed]: string } } => {
@@ -42,6 +43,73 @@ export const constantsByDatatype = createSelector<*, *, *, _>(
             results[datatype][field.value] = field.name;
           }
         }
+      }
+    }
+    return results;
+  }
+);
+
+// webviz enum annotations are of the form: "Foo__webviz_enum" (notice double underscore)
+// This method returns type name from "Foo" or undefined name doesn't match this format
+export function extractTypeFromWebizEnumAnnotation(name: string) {
+  const match = /(.*)__webviz_enum$/.exec(name);
+  if (match) {
+    return match[1];
+  }
+  return undefined;
+}
+
+// returns a map of the form {datatype -> {field -> {value -> name}}}
+export const enumValuesByDatatypeAndField = createSelector<*, *, *, _>(
+  (datatypes: RosDatatypes) => datatypes,
+  (datatypes: RosDatatypes): { [string]: { [string]: { [mixed]: string } } } => {
+    const results = {};
+    for (const datatype of Object.keys(datatypes)) {
+      const currentResult = {};
+      // keep track of parsed constants
+      let constants: { [mixed]: string } = {};
+      // constants' types
+      let lastType;
+      for (const field of datatypes[datatype]) {
+        if (lastType && field.type !== lastType) {
+          // encountering new type resets the accumulated constants
+          constants = {};
+          lastType = undefined;
+        }
+
+        if (field.isConstant) {
+          lastType = field.type;
+          if (constants[field.value]) {
+            constants[field.value] = "<multiple constants match>";
+          } else {
+            constants[field.value] = field.name;
+          }
+          continue;
+        }
+        // check if current field is annotation of the form: "Foo bar__webviz_enum"
+        // This means that "bar" is enum of type "Foo"
+        const fieldName = extractTypeFromWebizEnumAnnotation(field.name);
+        if (fieldName) {
+          // associate all constants of type field.type with the annotated field
+          currentResult[fieldName] = constantsByDatatype(datatypes)[field.type];
+          continue;
+        }
+
+        // this field was already covered by annotation, skip it
+        if (currentResult[field.name]) {
+          continue;
+        }
+
+        // otherwise assign accumulated constants for that field
+        if (Object.keys(constants).length > 0) {
+          currentResult[field.name] = constants;
+        }
+        // and start over - reset constants
+        constants = {};
+      }
+      // only assign result if we found non-empty mapping into constants
+      if (Object.keys(currentResult).length > 0) {
+        results[datatype] = currentResult;
       }
     }
     return results;

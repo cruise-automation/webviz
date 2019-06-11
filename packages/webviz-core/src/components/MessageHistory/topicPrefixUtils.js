@@ -11,7 +11,7 @@ import type { Topic } from "webviz-core/src/types/players";
 
 export const getFilteredFormattedTopics: (topics: Topic[], currentTopicPrefix: string) => Topic[] = microMemoize(
   (topics: Topic[], currentTopicPrefix: string): Topic[] => {
-    const filteredTopics = topics.filter((topic) => topic.name.includes(currentTopicPrefix));
+    const filteredTopics = topics.filter((topic) => topic.name.startsWith(currentTopicPrefix));
     return filteredTopics.map((topic) => ({
       ...topic,
       name: topic.name.slice(currentTopicPrefix.length),

@@ -127,3 +127,42 @@ export const enumFixture = {
     ],
   },
 };
+
+export const enumAdvancedFixture = {
+  datatypes: {
+    "baz/enum_advanced": [
+      { type: "uint32", name: "OFF", isConstant: true, value: 0 },
+      { type: "uint32", name: "ON", isConstant: true, value: 1 },
+      { type: "uint32", name: "state", isArray: false },
+      { type: "uint32", name: "justField", isArray: false },
+      { type: "uint8", name: "RED", isConstant: true, value: 0 },
+      { type: "uint8", name: "YELLOW", isConstant: true, value: 1 },
+      { type: "uint8", name: "GREEN", isConstant: true, value: 2 },
+      { type: "uint8", name: "color", isArray: false },
+      { type: "baz/animals", name: "animal__webviz_enum", isArray: false },
+      { type: "uint32", name: "animal", isArray: false },
+    ],
+    "baz/animals": [
+      { type: "uint32", name: "CAT", isConstant: true, value: 10000 },
+      { type: "uint32", name: "DOG", isConstant: true, value: 10001 },
+    ],
+  },
+  topics: [{ name: "/baz/enum_advanced", datatype: "baz/enum_advanced" }],
+  frame: {
+    "/baz/enum_advanced": [
+      {
+        op: "message",
+        datatype: "baz/enum_advanced",
+        topic: "/baz/enum_advanced",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: {
+          state: 1,
+          justField: 0,
+          color: 2,
+          animal__webviz_enum: {},
+          animal: 10000,
+        },
+      },
+    ],
+  },
+};

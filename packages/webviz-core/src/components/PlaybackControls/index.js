@@ -134,8 +134,8 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
       ) : (
         <span>
           Drop a <a href="http://wiki.ros.org/ROS/Tutorials/Recording%20and%20playing%20back%20data">ROS bag file</a> to
-          get started. Or check out <a href="worldview">Worldview</a> and other pacakges on{" "}
-          <a href="https://github.com/cruise-automation">Github</a>!
+          get started. Or check out <a href="/worldview">Worldview</a> and other packages on{" "}
+          <a href="https://github.com/cruise-automation">GitHub</a>!
         </span>
       );
       return (

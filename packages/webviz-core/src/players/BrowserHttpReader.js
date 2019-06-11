@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { FileReader, FileStream } from "webviz-core/shared/CachedFilelike";
 import FetchReader from "webviz-core/src/players/FetchReader";
+import type { FileReader, FileStream } from "webviz-core/src/util/CachedFilelike";
 
 export default class BrowserHttpReader implements FileReader {
   _url: string;

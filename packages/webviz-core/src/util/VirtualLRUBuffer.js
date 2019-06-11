@@ -40,7 +40,8 @@ import { isRangeCoveredByRanges, type Range } from "./ranges";
 export default class VirtualLRUBuffer {
   byteLength: number; // How many bytes does this buffer represent.
   _blocks: Buffer[] = []; // Actual `Buffer` for each block.
-  _blockSize: number = buffer.kMaxLength; // How many bytes is each block.
+  // How many bytes is each block; for some reason in browsers we need to subtract 1 from kMaxLength.
+  _blockSize: number = buffer.kMaxLength - 1;
   _numberOfBlocks: number = Infinity; // How many blocks are we allowed to have at any time.
   _lastAccessedBlockIndices: number[] = []; // Indexes of blocks, from least to most recently accessed.
   _rangesWithData: Range[] = []; // Ranges for which we have data copied in (and have not been evicted).

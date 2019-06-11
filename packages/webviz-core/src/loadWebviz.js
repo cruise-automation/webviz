@@ -25,13 +25,13 @@ const defaultHooks = {
     const Rosout = require("webviz-core/src/panels/Rosout").default;
     const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
     const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
-    const TopicEcho = require("webviz-core/src/panels/TopicEcho").default;
+    const RawMessages = require("webviz-core/src/panels/RawMessages").default;
     const { ndash } = require("webviz-core/src/util/entities");
 
     return [
       { title: "rosout", component: Rosout },
       { title: "Image", component: ImageViewPanel },
-      { title: "Raw Messages", component: TopicEcho },
+      { title: "Raw Messages", component: RawMessages },
       { title: "Plot", component: Plot },
       { title: "State Transitions", component: StateTransitions },
       { title: "3D", component: ThreeDimensionalViz },
@@ -112,15 +112,8 @@ const defaultHooks = {
         getSyntheticArrowMarkerColor: () => ({ r: 0, g: 0, b: 1, a: 0.5 }),
         getFlattenedPose: () => undefined,
         getOccupancyGridValues: (topic) => [0.5, "map"],
-        getMapTexture(regl) {
-          return regl.texture({
-            format: "rgba",
-            type: "uint8",
-            mipmap: false,
-            data: defaultMapPalette,
-            width: 256,
-            height: 1,
-          });
+        getMapPalette() {
+          return defaultMapPalette;
         },
         consumePose: () => {},
         getMarkerColor: (topic, markerColor) => markerColor,
@@ -132,7 +125,7 @@ const defaultHooks = {
         defaultFollowTransformFrame: null,
         skipTransformFrame: null,
       },
-      TopicEcho: { docLinkFunction: () => undefined },
+      RawMessages: { docLinkFunction: () => undefined },
     };
   },
   Root({ store }) {

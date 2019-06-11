@@ -12,12 +12,14 @@ import { TimeUtil, type Time } from "rosbag";
 import type {
   ChainableDataProvider,
   ChainableDataProviderDescriptor,
-  DataProviderMetadata,
   ExtensionPoint,
   GetDataProvider,
   InitializationResult,
   MessageLike,
 } from "webviz-core/src/players/types";
+import Logger from "webviz-core/src/util/Logger";
+
+const log = new Logger(__filename);
 
 export class ReadResult {
   start: Time;
@@ -25,24 +27,17 @@ export class ReadResult {
   _isEmpty: boolean = false;
   _promise: Promise<MessageLike[]>;
   _isResolved: boolean = false;
-  _reportMetadataCallback: (DataProviderMetadata) => void;
 
-  constructor(
-    start: Time,
-    end: Time,
-    promise: Promise<MessageLike[]>,
-    reportMetadataCallback: (DataProviderMetadata) => void
-  ) {
+  constructor(start: Time, end: Time, promise: Promise<MessageLike[]>) {
     this.start = start;
     this.end = end;
     this._isEmpty = TimeUtil.compare(start, end) === 0;
     this._promise = promise;
-    this._reportMetadataCallback = reportMetadataCallback;
     promise.then(() => (this._isResolved = true));
   }
 
-  static empty(reportMetadataCallback: (DataProviderMetadata) => void) {
-    return new ReadResult({ sec: 0, nsec: 0 }, { sec: 0, nsec: 0 }, Promise.resolve([]), reportMetadataCallback);
+  static empty() {
+    return new ReadResult({ sec: 0, nsec: 0 }, { sec: 0, nsec: 0 }, Promise.resolve([]));
   }
 
   overlaps(start: Time, end: Time) {
@@ -54,13 +49,9 @@ export class ReadResult {
 
   async getMessages(start: Time, end: Time): Promise<MessageLike[]> {
     if (!this._isResolved) {
-      this._reportMetadataCallback({
-        type: "log",
-        source: "ReadAheadDataProvider",
-        level: "info",
-        message:
-          "reading from cache before cache is loaded - this should not happen too often or playback will be degraded",
-      });
+      log.info(
+        "reading from cache before cache is loaded - this should not happen too often or playback will be degraded"
+      );
     }
     const all = await this._promise;
     return all.filter(
@@ -75,11 +66,10 @@ const oneNanoSecond = { sec: 0, nsec: 1 };
 export default class ReadAheadDataProvider implements ChainableDataProvider {
   _provider: ChainableDataProvider;
   _topics: string[] = [];
-  _current: ReadResult = ReadResult.empty(() => {});
-  _next: ReadResult = ReadResult.empty(() => {});
+  _current: ReadResult = ReadResult.empty();
+  _next: ReadResult = ReadResult.empty();
   _topics: string[] = [];
   _readAheadRange: Time;
-  _reportMetadataCallback: (DataProviderMetadata) => void = () => {};
 
   constructor(
     { readAheadRange }: { readAheadRange?: Time },
@@ -94,7 +84,6 @@ export default class ReadAheadDataProvider implements ChainableDataProvider {
   }
 
   initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
-    this._reportMetadataCallback = extensionPoint.reportMetadataCallback;
     return this._provider.initialize(extensionPoint);
   }
 
@@ -103,7 +92,7 @@ export default class ReadAheadDataProvider implements ChainableDataProvider {
   }
 
   _makeReadResult(start: Time, end: Time, topics: string[]): ReadResult {
-    return new ReadResult(start, end, this._provider.getMessages(start, end, topics), this._reportMetadataCallback);
+    return new ReadResult(start, end, this._provider.getMessages(start, end, topics));
   }
 
   async getMessages(start: Time, end: Time, topics: string[]): Promise<MessageLike[]> {
@@ -114,8 +103,8 @@ export default class ReadAheadDataProvider implements ChainableDataProvider {
       TimeUtil.compare(start, this._current.start) < 0
     ) {
       this._topics = topics;
-      this._current = ReadResult.empty(this._reportMetadataCallback);
-      this._next = ReadResult.empty(this._reportMetadataCallback);
+      this._current = ReadResult.empty();
+      this._next = ReadResult.empty();
     }
     let messages = [];
     const currentMatches = this._current.overlaps(start, end);
@@ -129,12 +118,7 @@ export default class ReadAheadDataProvider implements ChainableDataProvider {
     if ((!currentMatches && !nextMatches) || TimeUtil.isGreaterThan(end, this._next.end)) {
       let startTime = start;
       if (nextMatches) {
-        this._reportMetadataCallback({
-          type: "log",
-          source: "ReadAheadDataProvider",
-          level: "info",
-          message: "readahead cache overrun - consider expanding readAheadRange",
-        });
+        log.info("readahead cache overrun - consider expanding readAheadRange");
         startTime = TimeUtil.add(this._next.end, oneNanoSecond);
       }
       this._current = this._makeReadResult(startTime, end, topics);

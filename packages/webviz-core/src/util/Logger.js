@@ -6,8 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import sentry from "webviz-core/src/util/sentry";
-
 export default class Logger {
   name: string;
 
@@ -31,14 +29,12 @@ export default class Logger {
     if (process.env.NODE_ENV !== "test") {
       console.warn(this.name, message, ...args);
     }
-    sentry.captureMessage(message, { level: "warning", extra: { name: this.name, args } });
   }
 
   error(message: string, ...args: any[]) {
     if (process.env.NODE_ENV !== "test") {
       console.error(this.name, message, ...args);
     }
-    sentry.captureMessage(message, { level: "error", extra: { name: this.name, args } });
   }
 
   log(level: "debug" | "info" | "warn" | "error", message: string, ...args: any[]) {

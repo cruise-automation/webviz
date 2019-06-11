@@ -6,6 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+// URL params
+export const REMOTE_BAG_URL_QUERY_KEY = "remote-bag-url";
+export const LOAD_ENTIRE_BAG_QUERY_KEY = "load-entire-bag";
+export const MEASURE_DATA_PROVIDERS_QUERY_KEY = "_measureDataProviders";
+export const PANEL_PERF_QUERY_KEY = "_panelperf";
+
 export const TRANSFORM_TOPIC = "/tf";
 export const DIAGNOSTIC_TOPIC = "/diagnostics";
 export const SOCKET_KEY = "dataSource.websocket";

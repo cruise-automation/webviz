@@ -56,7 +56,7 @@ module.exports = {
   },
   output: {
     path: path.resolve(`${__dirname}/docs/public/dist`),
-    publicPath: process.env.DEV_SERVER ? "/dist/" : "/webviz/dist/",
+    publicPath: "/dist/",
     pathinfo: true,
     filename: "[name].js",
     devtoolModuleFilenameTemplate: (info) => path.resolve(info.absoluteResourcePath),

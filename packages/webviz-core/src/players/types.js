@@ -38,7 +38,6 @@ export type InitializationResult = {
 
 export type DataProviderMetadata =
   | {| type: "error", source: string, errorType: ErrorType, message: string |}
-  | {| type: "log", source: string, level: "debug" | "info" | "warn", message: string |}
   | {| type: "updateReconnecting", reconnecting: boolean |};
 export type ExtensionPoint = {|
   progressCallback: (Progress) => void,

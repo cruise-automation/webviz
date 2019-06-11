@@ -10,10 +10,10 @@ import { Time } from "rosbag";
 
 import { MESSAGES_STORE_NAME, getIdbCacheDataProviderDatabase, TIMESTAMP_INDEX } from "./IdbCacheDataProviderDatabase";
 import { type ChainableDataProvider, type InitializationResult, type MessageLike } from "./types";
-import { type Range, deepIntersect, isRangeCoveredByRanges } from "webviz-core/shared/ranges";
 import type { ChainableDataProviderDescriptor, ExtensionPoint, GetDataProvider } from "webviz-core/src/players/types";
 import type { Progress } from "webviz-core/src/types/players";
 import Database from "webviz-core/src/util/indexeddb/Database";
+import { type Range, deepIntersect, isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
 import { subtractTimes, toNanoSec } from "webviz-core/src/util/time";
 
 // This reads from an IndexedDB (Idb) database, which gets populated by an

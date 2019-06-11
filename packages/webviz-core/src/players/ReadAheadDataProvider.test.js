@@ -43,7 +43,7 @@ function getProvider() {
 
 describe("ReadResult", () => {
   it("properly response to ranges it overlaps", () => {
-    const result = new ReadResult({ sec: 0, nsec: 2 }, { sec: 1, nsec: 0 }, Promise.resolve([]), () => {});
+    const result = new ReadResult({ sec: 0, nsec: 2 }, { sec: 1, nsec: 0 }, Promise.resolve([]));
     expect(result.overlaps({ sec: 0, nsec: 0 }, { sec: 0, nsec: 1 })).toBe(false);
     expect(result.overlaps({ sec: 0, nsec: 0 }, { sec: 0, nsec: 2 })).toBe(true);
     expect(result.overlaps({ sec: 0, nsec: 0 }, { sec: 2, nsec: 0 })).toBe(true);

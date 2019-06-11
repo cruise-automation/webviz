@@ -26,13 +26,12 @@ import {
   type Topic,
 } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import Logger from "webviz-core/src/util/Logger";
 import reportError, { type ErrorType } from "webviz-core/src/util/reportError";
-import { clampTime, fromMillis } from "webviz-core/src/util/time";
+import { clampTime, fromMillis, subtractTimes, toSec } from "webviz-core/src/util/time";
+
+const LOOP_MIN_BAG_TIME_IN_SEC = 1;
 
 const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
-
-const log = new Logger(__filename);
 
 // the number of nanoseconds to seek backwards to build context during a seek operation
 // larger values mean more oportunity to capture context before the seek event, but are slower operations
@@ -105,9 +104,6 @@ export default class RandomAccessPlayer implements Player {
           switch (metadata.type) {
             case "error":
               this._setError(metadata.message, `Thrown in ${metadata.source}`, metadata.errorType);
-              break;
-            case "log":
-              log.log(metadata.level, `${metadata.source}: ${metadata.message}`);
               break;
             case "updateReconnecting":
               this._reconnecting = metadata.reconnecting;
@@ -224,7 +220,9 @@ export default class RandomAccessPlayer implements Player {
       if (inScreenshotTests()) {
         return; // Just don't loop at all in screenshot / integration tests.
       }
-
+      if (toSec(subtractTimes(this._end, this._start)) < LOOP_MIN_BAG_TIME_IN_SEC) {
+        return; // Don't loop for short bags.
+      }
       // Wait a little bit before we loop back. This helps with extremely small bags; otherwise
       // it looks like it's stuck at the beginning of the bag.
       await delay(500);

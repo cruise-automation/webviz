@@ -20,6 +20,7 @@ import { connect } from "react-redux";
 
 import styles from "./Panel.module.scss";
 import Button from "webviz-core/src/components/Button";
+import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
@@ -89,32 +90,38 @@ const TopicPrefixDropdown = (props: {|
 |}) => {
   const { topicPrefix, saveTopicPrefix } = props;
   return (
-    <Dropdown
-      position="above"
-      toggleComponent={
-        <div
-          data-test-topic-prefix-toggle
-          className={cx(styles.topicPrefixLabel, {
-            [styles.hasEmptyTopicPrefix]: !topicPrefix,
-          })}>
-          {getTopicPrefixIconPrefix(topicPrefix)}
-          {getTopicPrefixIcon(topicPrefix)}
-        </div>
-      }>
-      <Item key="title">TOPICS TO SHOW:</Item>
-      {Object.keys(getGlobalHooks().perPanelHooks().Panel.topicPrefixes).map((prefix) => {
-        return (
-          <Item
-            key={prefix || "none"}
-            checked={topicPrefix === prefix}
-            icon={getTopicPrefixIcon(prefix)}
-            tooltip={prefix && getTopicPrefixTooltip(prefix)}
-            onClick={saveTopicPrefix(prefix)}>
-            {getTopicPrefixOptionText(prefix)}
+    <ChildToggle.ContainsOpen>
+      {(containsOpen) => (
+        <Dropdown
+          position="above"
+          toggleComponent={
+            <div
+              data-test-topic-prefix-toggle
+              className={cx(styles.topicPrefixLabel, {
+                [styles.hasEmptyTopicPrefix]: !topicPrefix && !containsOpen,
+              })}>
+              {getTopicPrefixIconPrefix(topicPrefix)}
+              {getTopicPrefixIcon(topicPrefix)}
+            </div>
+          }>
+          <Item key="title" disabled>
+            Show topics from:
           </Item>
-        );
-      })}
-    </Dropdown>
+          {Object.keys(getGlobalHooks().perPanelHooks().Panel.topicPrefixes).map((prefix) => {
+            return (
+              <Item
+                key={prefix || "none"}
+                checked={topicPrefix === prefix}
+                icon={getTopicPrefixIcon(prefix)}
+                tooltip={prefix && getTopicPrefixTooltip(prefix)}
+                onClick={saveTopicPrefix(prefix)}>
+                {getTopicPrefixOptionText(prefix)}
+              </Item>
+            );
+          })}
+        </Dropdown>
+      )}
+    </ChildToggle.ContainsOpen>
   );
 };
 

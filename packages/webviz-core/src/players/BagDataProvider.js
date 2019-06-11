@@ -10,9 +10,6 @@ import { keyBy } from "lodash";
 import Bag, { open, Time, BagReader } from "rosbag";
 import decompress from "wasm-lz4";
 
-import { bagConnectionsToDatatypes, bagConnectionsToTopics } from "webviz-core/shared/bagConnectionsHelper";
-import CachedFilelike from "webviz-core/shared/CachedFilelike";
-import type { Range } from "webviz-core/shared/ranges";
 import BrowserHttpReader from "webviz-core/src/players/BrowserHttpReader";
 import type {
   ChainableDataProvider,
@@ -22,10 +19,16 @@ import type {
   InitializationResult,
   MessageLike,
 } from "webviz-core/src/players/types";
+import { bagConnectionsToDatatypes, bagConnectionsToTopics } from "webviz-core/src/util/bagConnectionsHelper";
+import CachedFilelike from "webviz-core/src/util/CachedFilelike";
+import Logger from "webviz-core/src/util/Logger";
+import type { Range } from "webviz-core/src/util/ranges";
 
 type BagPath = { type: "file", file: File | string } | { type: "remoteBagUrl", url: string };
 
 type Options = {| bagPath: BagPath, cacheSizeInBytes?: ?number |};
+
+const log = new Logger(__filename);
 
 export default class BagDataProvider implements ChainableDataProvider {
   _options: Options;
@@ -50,12 +53,7 @@ export default class BagDataProvider implements ChainableDataProvider {
         fileReader,
         cacheSizeInBytes: cacheSizeInBytes || 1024 * 1024 * 200, // 200MiB
         logFn: (message) => {
-          extensionPoint.reportMetadataCallback({
-            type: "log",
-            source: "BagDataProvider/CachedFilelike",
-            level: "info",
-            message,
-          });
+          log.info(`CachedFilelike: ${message}`);
         },
         keepReconnectingCallback: (reconnecting: boolean) => {
           extensionPoint.reportMetadataCallback({

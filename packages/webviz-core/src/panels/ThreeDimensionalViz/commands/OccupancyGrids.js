@@ -18,6 +18,7 @@ const occupancyGrids = (regl: any) => {
   const positionBuffer = regl.buffer([0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0]);
 
   const cache = new TextureCache(regl);
+  const paletteTextures = {};
 
   return withPose({
     primitive: "triangle strip",
@@ -94,9 +95,23 @@ const occupancyGrids = (regl: any) => {
         return pointToVec3(props.info.origin.position);
       },
       palette: (context: any, props: OccupancyGridMessage) => {
-        return getGlobalHooks()
+        const palette = getGlobalHooks()
           .perPanelHooks()
-          .ThreeDimensionalViz.getMapTexture(regl, props.map);
+          .ThreeDimensionalViz.getMapPalette(props.map);
+        // track which palettes we've uploaded as textures
+        if (paletteTextures[palette]) {
+          return paletteTextures[palette];
+        }
+        // if we haven't already uploaded this palette, upload it to the GPU
+        paletteTextures[palette] = regl.texture({
+          format: "rgba",
+          type: "uint8",
+          mipmap: false,
+          data: palette,
+          width: 256,
+          height: 1,
+        });
+        return paletteTextures[palette];
       },
       data: (context: any, props: any) => {
         return cache.get(props);

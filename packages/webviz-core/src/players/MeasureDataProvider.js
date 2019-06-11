@@ -17,6 +17,9 @@ import type {
   InitializationResult,
   MessageLike,
 } from "webviz-core/src/players/types";
+import Logger from "webviz-core/src/util/Logger";
+
+const log = new Logger(__filename);
 
 export function instrumentDataProviderTree(
   treeRoot: ChainableDataProviderDescriptor,
@@ -60,12 +63,7 @@ export default class MeasureDataProvider implements ChainableDataProvider {
     const startMs = Date.now();
     const argsString = `${start.sec}.${start.nsec}, ${end.sec}.${end.nsec}`;
     const result = await this._provider.getMessages(start, end, topics);
-    this._reportMetadataCallback({
-      type: "log",
-      source: `MeasureDataProvider(${this._name})`,
-      level: "info",
-      message: `${Date.now() - startMs}ms for getMessages(${argsString})`,
-    });
+    log.info(`MeasureDataProvider(${this._name}): ${Date.now() - startMs}ms for getMessages(${argsString})`);
     return result;
   }
 

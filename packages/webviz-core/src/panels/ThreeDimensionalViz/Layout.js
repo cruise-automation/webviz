@@ -23,6 +23,7 @@ import Icon from "webviz-core/src/components/Icon";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import CameraInfo from "webviz-core/src/panels/ThreeDimensionalViz/CameraInfo";
+import DebugStats from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
 import FollowTFControl from "webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/MeasuringTool";
@@ -36,6 +37,7 @@ import TopicSettingsEditor from "webviz-core/src/panels/ThreeDimensionalViz/Topi
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
+import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import type { Frame, Topic } from "webviz-core/src/types/players";
@@ -439,6 +441,7 @@ export default class Layout extends React.Component<Props, State> implements Mar
         extensions={selections.extensions}
         metadata={metadata}>
         {children}
+        {process.env.NODE_ENV !== "production" && !inScreenshotTests() && <DebugStats />}
       </WorldComponent>
     );
   }

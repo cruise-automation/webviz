@@ -315,10 +315,6 @@ describe("addValuesWithPathsToItems", () => {
     const datatypes: RosDatatypes = {
       some_datatype: [
         {
-          name: "state",
-          type: "uint32",
-        },
-        {
           name: "OFF",
           type: "uint32",
           isConstant: true,
@@ -329,6 +325,10 @@ describe("addValuesWithPathsToItems", () => {
           type: "uint32",
           isConstant: true,
           value: 1,
+        },
+        {
+          name: "state",
+          type: "uint32",
         },
       ],
     };

@@ -12,11 +12,12 @@ import styled from "styled-components";
 import { markUpdate, setCallback, setupPerfMonitoring } from "./reconciliationPerf";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
+import { PANEL_PERF_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
 // $FlowFixMe - apparently this is not in the flowtyped definitions yet.
 const Profiler = React.unstable_Profiler;
 
-const showPanelPerf = new URLSearchParams(location.search).has("_panelperf");
+const showPanelPerf = new URLSearchParams(location.search).has(PANEL_PERF_QUERY_KEY);
 
 const SPerfIndicator = styled.div`
   font-family: ${mixins.monospaceFont};

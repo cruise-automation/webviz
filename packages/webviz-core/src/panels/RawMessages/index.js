@@ -35,7 +35,7 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import Plot, { type PlotConfig, plotableRosTypes } from "webviz-core/src/panels/Plot";
-import { constantsByDatatype } from "webviz-core/src/selectors";
+import { enumValuesByDatatypeAndField } from "webviz-core/src/selectors";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
@@ -115,7 +115,7 @@ function getMessageDocumentationLink(datatype: string): ?string {
   }
   return getGlobalHooks()
     .perPanelHooks()
-    .TopicEcho.docLinkFunction(filename);
+    .RawMessages.docLinkFunction(filename);
 }
 
 type Config = {|
@@ -135,9 +135,9 @@ type State = {|
   expandedFields: Set<string>,
 |};
 
-class TopicEcho extends React.PureComponent<Props, State> {
+class RawMessages extends React.PureComponent<Props, State> {
   static defaultConfig = { topicName: "" };
-  static panelType = "TopicEcho";
+  static panelType = "RawMessages";
 
   state = { expandAll: false, expandedFields: new Set() };
 
@@ -263,7 +263,14 @@ class TopicEcho extends React.PureComponent<Props, State> {
           );
           const { datatypes } = this.props;
           if (structureItem) {
-            constantName = constantsByDatatype(datatypes)[structureItem.datatype][itemValue];
+            const field = keyPath[0];
+            if (typeof field === "string") {
+              const enumMapping = enumValuesByDatatypeAndField(datatypes);
+              const datatype = structureItem.datatype;
+              if (enumMapping[datatype] && enumMapping[datatype][field] && enumMapping[datatype][field][itemValue]) {
+                constantName = enumMapping[datatype][field][itemValue];
+              }
+            }
           }
         }
         const basePath: string = queriedData[lastKeyPath].path;
@@ -422,4 +429,4 @@ class TopicEcho extends React.PureComponent<Props, State> {
   }
 }
 
-export default Panel<Config>(TopicEcho);
+export default Panel<Config>(RawMessages);

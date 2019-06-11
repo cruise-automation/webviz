@@ -93,10 +93,10 @@ class App extends React.PureComponent<Props> {
         <PlayerManager>
           <Toolbar>
             <div className={styles.logoWrapper}>
-              <div>
+              <a href="/">
                 <Logo width={LOGO_SIZE} height={LOGO_SIZE} />
-                Cruise Webviz
-              </div>
+              </a>
+              webviz
             </div>
             <div className={styles.block} style={{ marginRight: 5 }}>
               <ErrorDisplay />

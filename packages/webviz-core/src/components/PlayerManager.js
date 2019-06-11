@@ -26,7 +26,12 @@ import { getLocalBagDescriptor, getRemoteBagDescriptor } from "webviz-core/src/p
 import type { ChainableDataProvider, ChainableDataProviderDescriptor } from "webviz-core/src/players/types";
 import WorkerDataProvider from "webviz-core/src/players/WorkerDataProvider";
 import type { Player } from "webviz-core/src/types/players";
-import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
+import {
+  LOAD_ENTIRE_BAG_QUERY_KEY,
+  MEASURE_DATA_PROVIDERS_QUERY_KEY,
+  REMOTE_BAG_URL_QUERY_KEY,
+  SECOND_BAG_PREFIX,
+} from "webviz-core/src/util/globalConstants";
 
 const getDataProviderBase = createGetDataProvider({
   BagDataProvider,
@@ -37,7 +42,7 @@ const getDataProviderBase = createGetDataProvider({
   IdbCacheWriterDataProvider,
 });
 function getDataProvider(tree: ChainableDataProviderDescriptor): ChainableDataProvider {
-  if (new URLSearchParams(location.search).has("_measureDataProviders")) {
+  if (new URLSearchParams(location.search).has(MEASURE_DATA_PROVIDERS_QUERY_KEY)) {
     tree = instrumentDataProviderTree(tree);
     console.log("tree", tree);
   }
@@ -61,13 +66,13 @@ export default function PlayerManager({ children }: {| children: React.Node |}) 
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.has("remote-bag-url")) {
-      const url = params.get("remote-bag-url") || "";
+    if (params.has(REMOTE_BAG_URL_QUERY_KEY)) {
+      const url = params.get(REMOTE_BAG_URL_QUERY_KEY) || "";
       getRemoteBagGuid(url).then((guid: ?string) => {
         setPlayer(
           new NodePlayer(
             new RandomAccessPlayer(
-              getDataProvider(getRemoteBagDescriptor(url, guid, params.has("load-entire-bag"))),
+              getDataProvider(getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY))),
               undefined,
               true
             )

@@ -59,16 +59,16 @@ export const Cubes = makeCodeComponent(require("!!raw-loader!./commands/Cubes"),
 
 export const Cylinders = makeCodeComponent(require("!!raw-loader!./commands/Cylinders"), "Cylinders");
 
-export const DuckScene = makeCodeComponent(require("!!raw-loader!./commands/DuckScene"), "DuckScene");
-
-export const DuckSceneHitmap = makeCodeComponent(require("!!raw-loader!./commands/DuckSceneHitmap"), "DuckSceneHitmap");
-
 export const FilledPolygons = makeCodeComponent(require("!!raw-loader!./commands/FilledPolygons"), "FilledPolygons");
 
 export const FilledPolygonsHitmap = makeCodeComponent(
   require("!!raw-loader!./commands/FilledPolygonsHitmap"),
   "FilledPolygonsHitmap"
 );
+
+export const GLTFScene = makeCodeComponent(require("!!raw-loader!./commands/GLTFScene"), "GLTFScene");
+
+export const GLTFSceneHitmap = makeCodeComponent(require("!!raw-loader!./commands/GLTFSceneHitmap"), "GLTFSceneHitmap");
 
 export const LinesDemo = makeCodeComponent(require("!!raw-loader!./commands/LinesDemo"), "LinesDemo");
 

@@ -39,6 +39,7 @@ import styled from "styled-components";
 
 import { getHashUrlByComponentName } from "../../routes";
 import CameraStateInfo from "./CameraStateInfo";
+import cesiumManModel from "./CesiumMan.glb";
 import CodeEditor from "./CodeEditor";
 import duckModel from "./Duck.glb";
 import InputNumber from "./InputNumber";
@@ -66,6 +67,10 @@ const CODE_SANDBOX_CONFIG = {
     },
     "utils/Duck.glb": {
       content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/Zb-T-Duck.glb",
+      isBinary: true,
+    },
+    "utils/CesiumMan.glb": {
+      content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/04aB-CesiumMan.glb",
       isBinary: true,
     },
     "utils/useRange.js": {
@@ -131,6 +136,7 @@ export const scope = {
   withPose,
   getRayFromClick,
   duckModel,
+  cesiumManModel,
 };
 
 export default function WorldviewCodeEditor({

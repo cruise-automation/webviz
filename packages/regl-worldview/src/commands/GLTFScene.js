@@ -7,13 +7,16 @@
 //  You may not use this file except in compliance with the License.
 
 import { mat4 } from "gl-matrix";
-import React from "react";
+import memoizeWeak from "memoize-weak";
+import React, { useContext, useState, useEffect, useCallback, useDebugValue } from "react";
 
 import type { Pose, Scale, MouseHandler } from "../types";
 import { defaultBlend, pointToVec3, orientationToVec4, intToRGB } from "../utils/commandUtils";
 import parseGLB from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";
+
+type Model = {};
 
 function glConstantToRegl(value: ?number): ?string {
   if (value === undefined) {
@@ -111,14 +114,8 @@ const drawModel = (regl) => {
     height: 1,
   });
 
-  // Build the draw calls needed to draw the model. This only needs to happen once, since they
-  // are the same each time, with only poseMatrix changing.
-  let drawCalls;
-  function prepareDrawCallsIfNeeded(model) {
-    if (drawCalls) {
-      return;
-    }
-
+  // build the draw calls needed to draw the model. This will happen whenever the model changes.
+  const getDrawCalls = memoizeWeak((model: Model) => {
     // upload textures to the GPU
     const textures =
       model.json.textures &&
@@ -137,8 +134,8 @@ const drawModel = (regl) => {
     if (model.images) {
       model.images.forEach((bitmap: ImageBitmap) => bitmap.close());
     }
-    drawCalls = [];
 
+    const drawCalls = [];
     // helper to draw the primitives comprising a mesh
     function drawMesh(mesh, nodeMatrix) {
       for (const primitive of mesh.primitives) {
@@ -186,7 +183,8 @@ const drawModel = (regl) => {
       mat4.rotateY(rootTransform, rootTransform, Math.PI / 2);
       drawNode(model.json.nodes[nodeIdx], rootTransform);
     }
-  }
+    return drawCalls;
+  });
 
   // create a regl command to set the context for each draw call
   const withContext = regl({
@@ -205,7 +203,7 @@ const drawModel = (regl) => {
   });
 
   return (props) => {
-    prepareDrawCallsIfNeeded(props.model);
+    const drawCalls = getDrawCalls(props.model);
     withContext(props, () => {
       command(drawCalls);
     });
@@ -213,7 +211,7 @@ const drawModel = (regl) => {
 };
 
 type Props = {|
-  model: string | (() => Promise<Object>),
+  model: string | (() => Promise<Model>),
   onClick?: MouseHandler,
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
@@ -227,63 +225,74 @@ type Props = {|
   |},
 |};
 
-export default class GLTFScene extends React.Component<Props, {| loadedModel: ?Object |}> {
-  state = {
-    loadedModel: undefined,
-  };
-  _context = undefined;
-  async _loadModel(): Promise<Object> {
-    const { model } = this.props;
-    if (typeof model === "function") {
-      return model();
-    } else if (typeof model === "string") {
-      const response = await fetch(model);
-      if (!response.ok) {
-        throw new Error(`failed to fetch GLB: ${response.status}`);
-      }
-      return parseGLB(await response.arrayBuffer());
-    }
-    /*:: (model: empty) */
-    throw new Error(`unsupported model prop: ${typeof model}`);
-  }
-
-  componentDidMount() {
-    this._loadModel()
-      .then((loadedModel) => {
-        this.setState({ loadedModel });
-        if (this._context) {
-          this._context.onDirty();
+function useAsyncValue<T>(fn: () => Promise<T>, deps: ?(any[])): ?T {
+  const [value, setValue] = useState<?T>();
+  useEffect(
+    useCallback(() => {
+      let unloaded = false;
+      fn().then((result) => {
+        if (!unloaded) {
+          setValue(result);
         }
-      })
-      .catch((err) => {
-        console.error("error loading GLB model:", err);
       });
+      return () => {
+        unloaded = true;
+        setValue(undefined);
+      };
+    }, deps || [fn]),
+    deps || [fn]
+  );
+  return value;
+}
+
+function useModel(model: string | (() => Promise<Model>)): ?Model {
+  useDebugValue(model);
+  return useAsyncValue(
+    async () => {
+      if (typeof model === "function") {
+        return model();
+      }
+      if (typeof model === "string") {
+        const response = await fetch(model);
+        if (!response.ok) {
+          throw new Error(`failed to fetch GLTF model: ${response.status}`);
+        }
+        return parseGLB(await response.arrayBuffer());
+      }
+
+      /*:: (model: empty) */
+      throw new Error(`unsupported model prop: ${typeof model}`);
+    },
+    [model]
+  );
+}
+
+export default function GLTFScene(props: Props) {
+  const { children, model, ...rest } = props;
+  const drawHitmap = children.id != null;
+
+  const context = useContext(WorldviewReactContext);
+  const loadedModel = useModel(model);
+  useEffect(
+    () => {
+      if (context) {
+        context.onDirty();
+      }
+    },
+    [context, loadedModel]
+  );
+
+  if (!loadedModel) {
+    return null;
   }
 
-  render() {
-    const { children, ...rest } = this.props;
-    const { loadedModel } = this.state;
-    if (!loadedModel) {
-      return null;
-    }
-
-    const drawHitmap = children.id != null;
-
-    return (
-      <WorldviewReactContext.Consumer>
-        {(context) => {
-          this._context = context;
-          return (
-            <Command
-              {...rest}
-              reglCommand={drawModel}
-              drawProps={{ ...children, id: null, model: loadedModel }}
-              hitmapProps={drawHitmap ? { ...children, model: loadedModel } : undefined}
-              getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}
-            />
-          );
-        }}
-      </WorldviewReactContext.Consumer>
-    );
-  }
+  return (
+    <Command
+      {...rest}
+      reglCommand={drawModel}
+      drawProps={{ ...children, id: null, model: loadedModel }}
+      hitmapProps={drawHitmap ? { ...children, model: loadedModel } : undefined}
+      getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}
+    />
+  );
 }

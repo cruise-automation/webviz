@@ -15,8 +15,8 @@ import Arrows from "./commands/Arrows";
 import Cones from "./commands/Cones";
 import Cubes from "./commands/Cubes";
 import Cylinders from "./commands/Cylinders";
-import DuckScene from "./commands/DuckScene";
 import FilledPolygons from "./commands/FilledPolygons";
+import GLTFScene from "./commands/GLTFScene";
 import LinesDemo from "./commands/LinesDemo";
 import LinesWireframe from "./commands/LinesWireframe";
 import Overlay from "./commands/Overlay";
@@ -53,7 +53,7 @@ const allDemos = {
   SpheresSingle,
   Text,
   Triangles,
-  DuckScene,
+  GLTFScene,
 };
 
 const stories = storiesOf("Worldview docs", module);

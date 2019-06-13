@@ -6,10 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { mat4 } from "gl-matrix";
+import { mat4, vec4 } from "gl-matrix";
 import React from "react";
 
-import type { Pose, Scale, MouseHandler } from "../types";
+import type { Pose, Scale, MouseHandler, Color, Vec4 } from "../types";
 import { defaultBlend, pointToVec3, orientationToVec4, intToRGB } from "../utils/commandUtils";
 import parseGLB from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
@@ -48,6 +48,7 @@ const drawModel = (regl) => {
       baseColorFactor: regl.prop("baseColorFactor"),
       nodeMatrix: regl.prop("nodeMatrix"),
       localTransform: regl.context("localTransform"),
+      color: regl.context("color"),
       "light.direction": [0, 0, -1],
       "light.ambientIntensity": 0.5,
       "light.diffuseIntensity": 0.5,
@@ -66,10 +67,12 @@ const drawModel = (regl) => {
   uniform mat4 poseMatrix;
   // Transformation to apply in local space
   uniform mat4 localTransform;
+  uniform vec4 color;
   attribute vec3 position, normal;
   varying vec3 vNormal;
   attribute vec2 texCoord;
   varying vec2 vTexCoord;
+  varying vec4 vColor;
 
   void main() {
     // using the projection matrix for normals breaks lighting for orthographic mode
@@ -77,6 +80,7 @@ const drawModel = (regl) => {
     mat4 mv = view;
     vNormal = normalize((view * poseMatrix * nodeMatrix * localTransform * vec4(normal, 0)).xyz);
     vTexCoord = texCoord;
+    vColor = color;
     gl_Position = projection * view * localTransform * vec4(transformed.xyz, 1);
   }
   `,
@@ -89,6 +93,7 @@ const drawModel = (regl) => {
   uniform vec4 baseColorFactor;
   varying mediump vec2 vTexCoord;
   varying mediump vec3 vNormal;
+  varying vec4 vColor;
 
   // Basic directional lighting from:
   // http://ogldev.atspace.co.uk/www/tutorial18/tutorial18.html
@@ -100,7 +105,7 @@ const drawModel = (regl) => {
   uniform DirectionalLight light;
 
   void main() {
-    vec4 baseColor = texture2D(baseColorTexture, vTexCoord) * baseColorFactor;
+    vec4 baseColor = vColor.w > 0.0 ? vColor : texture2D(baseColorTexture, vTexCoord) * baseColorFactor;
     float diffuse = light.diffuseIntensity * max(0.0, dot(vNormal, -light.direction));
     gl_FragColor = drawHitmap ? hitmapColor : vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
   }
@@ -196,6 +201,7 @@ const drawModel = (regl) => {
   const withContext = regl({
     context: {
       localTransform: (context, props) => (props.localTransform ? props.localTransform : mat4.create()),
+      color: (context, props) => (props.color ? props.color : vec4.create()),
       poseMatrix: (context, props) =>
         props.poseMatrix
           ? props.poseMatrix
@@ -230,6 +236,7 @@ type Props = {|
     id?: number,
     pose: Pose,
     scale: Scale,
+    color: Color | Vec4,
     alpha: ?number,
   |},
 |};

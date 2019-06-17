@@ -2,6 +2,8 @@
 
 **Drag and drop your own bag files into [Webviz](https://webviz.io/try/) to explore your robotics data.**
 
+**View a demo of Webviz in action [here](https://webviz.io/try/?demo).**
+
 **Webviz** is a web-based application for playback and visualization of [ROS](http://www.ros.org/) [bag files](http://wiki.ros.org/Bags). This repository also contains some libraries that can be used independently to build web-based visualization tools.
 
 - **webviz-core** ([homepage](https://webviz.io/webviz/), [github](https://github.com/cruise-automation/webviz/tree/master/packages/webviz-core)): A tool to inspect [ROS bags](http://wiki.ros.org/ROS/Tutorials/Recording%20and%20playing%20back%20data).

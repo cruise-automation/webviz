@@ -37,7 +37,7 @@ const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
 // larger values mean more oportunity to capture context before the seek event, but are slower operations
 export const SEEK_BACK_NANOSECONDS = 150 /* ms */ * 1000 * 1000;
 
-const capabilities = [PlayerCapabilities.seekBackfill, PlayerCapabilities.initialization];
+const capabilities = [PlayerCapabilities.initialization];
 
 export default class RandomAccessPlayer implements Player {
   _provider: RandomAccessDataProvider;

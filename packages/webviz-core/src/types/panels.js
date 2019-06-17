@@ -20,9 +20,10 @@ export type SaveConfigPayload = {
 
 export type ImportPanelLayoutPayload = {
   // layout is the object passed to react-mosaic
-  layout: any,
-  savedProps: { [panelId: string]: PanelConfig },
+  layout?: any,
+  savedProps?: { [panelId: string]: PanelConfig },
   globalData?: Object,
+  skipSettingLocalStorage?: boolean,
 };
 
 export type SaveConfig<Config> = ($Shape<Config>, ?{ keepLayoutInUrl?: boolean }) => void;

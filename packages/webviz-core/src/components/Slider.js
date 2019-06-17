@@ -43,7 +43,7 @@ const StyledSlider = styled.div`
   border-radius: 2px;
 `;
 
-const StyledRange = styled.div.attrs({
+export const StyledRange = styled.div.attrs({
   style: ({ width = 0 }) => ({ width: `${width * 100}%` }),
 })`
   background-color: rgba(255, 255, 255, 0.2);

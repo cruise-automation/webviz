@@ -7,7 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import * as React from "react";
+import { connect } from "react-redux";
 
+import { importPanelLayout } from "webviz-core/src/actions/panels";
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
@@ -25,11 +27,14 @@ import ReadAheadDataProvider from "webviz-core/src/players/ReadAheadDataProvider
 import { getLocalBagDescriptor, getRemoteBagDescriptor } from "webviz-core/src/players/standardDataProviderDescriptors";
 import type { ChainableDataProvider, ChainableDataProviderDescriptor } from "webviz-core/src/players/types";
 import WorkerDataProvider from "webviz-core/src/players/WorkerDataProvider";
+import type { ImportPanelLayoutPayload } from "webviz-core/src/types/panels";
 import type { Player } from "webviz-core/src/types/players";
+import demoLayoutJson from "webviz-core/src/util/demoLayout.json";
 import {
   LOAD_ENTIRE_BAG_QUERY_KEY,
   MEASURE_DATA_PROVIDERS_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
+  DEMO_QUERY_KEY,
   SECOND_BAG_PREFIX,
 } from "webviz-core/src/util/globalConstants";
 
@@ -44,7 +49,6 @@ const getDataProviderBase = createGetDataProvider({
 function getDataProvider(tree: ChainableDataProviderDescriptor): ChainableDataProvider {
   if (new URLSearchParams(location.search).has(MEASURE_DATA_PROVIDERS_QUERY_KEY)) {
     tree = instrumentDataProviderTree(tree);
-    console.log("tree", tree);
   }
   return getDataProviderBase(tree);
 }
@@ -60,27 +64,42 @@ function buildPlayer(files: File[]): Player {
   return new RandomAccessPlayer(bagProvider, undefined, true);
 }
 
-export default function PlayerManager({ children }: {| children: React.Node |}) {
+type OwnProps = { children: React.Node };
+
+type Props = OwnProps & {
+  importPanelLayout: (payload: ImportPanelLayoutPayload, isFromUrl: boolean, skipSettingLocalStorage: boolean) => void,
+};
+
+function PlayerManager({ importPanelLayout, children }: Props) {
   const usedFiles = React.useRef<File[]>([]);
   const [player, setPlayer] = React.useState();
 
-  React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.has(REMOTE_BAG_URL_QUERY_KEY)) {
-      const url = params.get(REMOTE_BAG_URL_QUERY_KEY) || "";
-      getRemoteBagGuid(url).then((guid: ?string) => {
-        setPlayer(
-          new NodePlayer(
-            new RandomAccessPlayer(
-              getDataProvider(getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY))),
-              undefined,
-              true
+  React.useEffect(
+    () => {
+      const params = new URLSearchParams(window.location.search);
+      const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
+      if (params.has(REMOTE_BAG_URL_QUERY_KEY) || params.has(DEMO_QUERY_KEY)) {
+        const url = params.has(REMOTE_BAG_URL_QUERY_KEY)
+          ? params.get(REMOTE_BAG_URL_QUERY_KEY) || ""
+          : remoteDemoBagUrl;
+        getRemoteBagGuid(url).then((guid: ?string) => {
+          setPlayer(
+            new NodePlayer(
+              new RandomAccessPlayer(
+                getDataProvider(getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY))),
+                undefined,
+                true
+              )
             )
-          )
-        );
-      });
-    }
-  }, []);
+          );
+        });
+        if (params.has(DEMO_QUERY_KEY)) {
+          importPanelLayout(demoLayoutJson, false, true);
+        }
+      }
+    },
+    [importPanelLayout]
+  );
 
   return (
     <>
@@ -108,3 +127,8 @@ export default function PlayerManager({ children }: {| children: React.Node |}) 
     </>
   );
 }
+
+export default connect<Props, OwnProps, _, _, _, _>(
+  () => {},
+  { importPanelLayout }
+)(PlayerManager);

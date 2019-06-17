@@ -19,6 +19,7 @@ import { messagePathStructures, traverseStructure } from "./messagePathsForDatat
 import parseRosPath from "./parseRosPath";
 import topicPathSyntaxHelpContent from "./topicPathSyntax.help.md";
 import GlobalVariablesAccessor from "webviz-core/src/components/GlobalVariablesAccessor";
+import { getFilteredFormattedTopics } from "webviz-core/src/components/MessageHistory/topicPrefixUtils";
 import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import { topicsByTopicName, shallowEqualSelector } from "webviz-core/src/selectors";
@@ -235,18 +236,31 @@ class MessageHistory extends React.PureComponent<Props> {
       <GlobalVariablesAccessor>
         {(globalData) => (
           <PanelContext.Consumer>
-            {(panelData) => (
-              <MessageHistoryOnlyTopics
-                topicPrefix={(panelData || {}).topicPrefix || ""}
-                panelType={(panelData || {}).type}
-                ignoreMissing={ignoreMissing}
-                topics={getMemoizedTopics(paths)}
-                historySize={historySize || Infinity}
-                imageScale={imageScale}
-                key={imageScale /* need to remount when imageScale changes */}>
-                {(data) => children(getMemoizedChildrenInput({ ...data, paths, topics, datatypes, globalData }))}
-              </MessageHistoryOnlyTopics>
-            )}
+            {(panelData) => {
+              const topicPrefix = (panelData || {}).topicPrefix || "";
+              return (
+                <MessageHistoryOnlyTopics
+                  topicPrefix={topicPrefix}
+                  panelType={(panelData || {}).type}
+                  ignoreMissing={ignoreMissing}
+                  topics={getMemoizedTopics(paths)}
+                  historySize={historySize || Infinity}
+                  imageScale={imageScale}
+                  key={imageScale /* need to remount when imageScale changes */}>
+                  {(data) =>
+                    children(
+                      getMemoizedChildrenInput({
+                        ...data,
+                        paths,
+                        topics: getFilteredFormattedTopics(topics, topicPrefix),
+                        datatypes,
+                        globalData,
+                      })
+                    )
+                  }
+                </MessageHistoryOnlyTopics>
+              );
+            }}
           </PanelContext.Consumer>
         )}
       </GlobalVariablesAccessor>

@@ -181,7 +181,7 @@ describe("RandomAccessPlayer", () => {
     expect(messages).toEqual([
       {
         activeData: undefined,
-        capabilities: ["seekBackfill", "initialization"],
+        capabilities: ["initialization"],
         isPresent: true,
         progress: {},
         showInitializing: true,
@@ -199,7 +199,7 @@ describe("RandomAccessPlayer", () => {
           startTime: { sec: 0, nsec: 1 },
           topics: [{ datatype: "fooBar", name: "/foo/bar" }, { datatype: "baz", name: "/baz" }],
         },
-        capabilities: ["seekBackfill", "initialization"],
+        capabilities: ["initialization"],
         isPresent: true,
         progress: {},
         showInitializing: false,

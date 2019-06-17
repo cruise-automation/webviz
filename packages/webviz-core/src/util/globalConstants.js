@@ -11,6 +11,7 @@ export const REMOTE_BAG_URL_QUERY_KEY = "remote-bag-url";
 export const LOAD_ENTIRE_BAG_QUERY_KEY = "load-entire-bag";
 export const MEASURE_DATA_PROVIDERS_QUERY_KEY = "_measureDataProviders";
 export const PANEL_PERF_QUERY_KEY = "_panelperf";
+export const DEMO_QUERY_KEY = "demo";
 
 export const TRANSFORM_TOPIC = "/tf";
 export const DIAGNOSTIC_TOPIC = "/diagnostics";

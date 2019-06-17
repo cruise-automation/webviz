@@ -1,0 +1,208 @@
+{
+    "layout": {
+      "direction": "row",
+      "first": {
+        "direction": "column",
+        "second": "3D Panel!1bkpp87",
+        "first": "3D Panel!309p5r8"
+      },
+      "second": {
+        "direction": "column",
+        "second": {
+          "first": "Plot!ry117m",
+          "second": "Plot!4eo7dlv",
+          "direction": "row"
+        },
+        "first": {
+          "direction": "row",
+          "second": "RawMessages!1aree1f",
+          "first": "3D Panel!2ucxm0s"
+        }
+      }
+    },
+    "savedProps": {
+      "3D Panel!309p5r8": {
+        "checkedNodes": [
+          "name:Topics",
+          "/cloud_nodelet/parameter_descriptions",
+          "/cloud_nodelet/parameter_updates",
+          "/diagnostics",
+          "/diagnostics_agg",
+          "/diagnostics_toplevel_state",
+          "/gps/fix",
+          "/gps/rtkfix",
+          "/gps/time",
+          "/image_raw",
+          "/obs1/gps/fix",
+          "/obs1/gps/rtkfix",
+          "/obs1/gps/time",
+          "/radar/range",
+          "/radar/tracks",
+          "/rosout",
+          "/tf",
+          "/velodyne_nodelet_manager/bond",
+          "/velodyne_packets",
+          "/velodyne_points"
+        ],
+        "expandedNodes": [
+          "name:Topics"
+        ],
+        "followTf": "velodyne",
+        "cameraState": {
+          "targetOffset": [
+            0,
+            0,
+            0
+          ],
+          "distance": 64.9136785575918,
+          "perspective": true,
+          "phi": 0.1404642426926016,
+          "thetaOffset": 1.3186328555678077
+        },
+        "modifiedNamespaceTopics": [],
+        "pinTopics": false,
+        "topicSettings": {
+          "/velodyne_points": {
+            "colorField": "ring"
+          }
+        }
+      },
+      "3D Panel!1bkpp87": {
+        "checkedNodes": [
+          "name:Topics",
+          "/cloud_nodelet/parameter_descriptions",
+          "/cloud_nodelet/parameter_updates",
+          "/diagnostics",
+          "/diagnostics_agg",
+          "/diagnostics_toplevel_state",
+          "/gps/fix",
+          "/gps/rtkfix",
+          "/gps/time",
+          "/image_raw",
+          "/obs1/gps/fix",
+          "/obs1/gps/rtkfix",
+          "/obs1/gps/time",
+          "/radar/range",
+          "/radar/tracks",
+          "/rosout",
+          "/tf",
+          "/velodyne_nodelet_manager/bond",
+          "/velodyne_packets",
+          "/velodyne_points"
+        ],
+        "expandedNodes": [
+          "name:Topics"
+        ],
+        "followTf": "velodyne",
+        "cameraState": {
+          "targetOffset": [
+            2.460426157758374,
+            0.24321332222014067,
+            0
+          ],
+          "distance": 3.367117886084984,
+          "perspective": true,
+          "phi": 1.2286699312074771,
+          "thetaOffset": 1.477398015435503
+        },
+        "modifiedNamespaceTopics": [],
+        "pinTopics": false,
+        "topicSettings": {
+          "/velodyne_points": {
+            "colorField": "ring",
+            "pointSize": 1,
+            "pointShape": "square"
+          }
+        }
+      },
+      "3D Panel!2ucxm0s": {
+        "checkedNodes": [
+          "name:Topics",
+          "/cloud_nodelet/parameter_descriptions",
+          "/cloud_nodelet/parameter_updates",
+          "/diagnostics",
+          "/diagnostics_agg",
+          "/diagnostics_toplevel_state",
+          "/gps/fix",
+          "/gps/rtkfix",
+          "/gps/time",
+          "/image_raw",
+          "/obs1/gps/fix",
+          "/obs1/gps/rtkfix",
+          "/obs1/gps/time",
+          "/radar/points",
+          "/radar/range",
+          "/radar/tracks",
+          "/rosout",
+          "/tf",
+          "/velodyne_nodelet_manager/bond",
+          "/velodyne_packets"
+        ],
+        "expandedNodes": [
+          "name:Topics"
+        ],
+        "followTf": "base_link",
+        "cameraState": {
+          "targetOffset": [
+            50.491071537202004,
+            6.9964605838524845,
+            0
+          ],
+          "distance": 134.60878845826525,
+          "perspective": false,
+          "phi": 0.7853981633974483,
+          "thetaOffset": 0,
+          "target": [
+            0,
+            0,
+            0
+          ],
+          "targetOrientation": [
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        "modifiedNamespaceTopics": [],
+        "pinTopics": false,
+        "topicSettings": {
+          "/radar/points": {
+            "colorField": "y",
+            "decayTime": 2
+          }
+        }
+      },
+      "RawMessages!1aree1f": {
+        "topicName": "/diagnostics_agg"
+      },
+      "Plot!ry117m": {
+        "paths": [
+          {
+            "value": "/obs1/gps/fix.latitude",
+            "enabled": true,
+            "timestampMethod": "receiveTime"
+          }
+        ],
+        "minYValue": "",
+        "maxYValue": ""
+      },
+      "Plot!4eo7dlv": {
+        "paths": [
+          {
+            "value": "/obs1/gps/fix.longitude",
+            "enabled": true,
+            "timestampMethod": "receiveTime"
+          },
+          {
+            "value": "",
+            "enabled": true,
+            "timestampMethod": "receiveTime"
+          }
+        ],
+        "minYValue": "",
+        "maxYValue": ""
+      }
+    },
+    "globalData": {}
+  }

@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { clamp } from "lodash";
 import momentDurationFormatSetup from "moment-duration-format";
 import moment from "moment-timezone";
 import { type Time, TimeUtil } from "rosbag";
@@ -118,12 +117,22 @@ export function fromMillis(value: number): Time {
 
 export function findClosestTimestampIndex(currentTime: Time, frameTimestamps: string[] = []): number {
   const currT = toSec(currentTime);
-  let [l, r] = [0, frameTimestamps.length - 1];
+  const timestamps = frameTimestamps.map(Number);
+  const maxIdx = frameTimestamps.length - 1;
+  if (frameTimestamps.length === 0) {
+    return -1;
+  }
+  let [l, r] = [0, maxIdx];
+  if (currT <= timestamps[0]) {
+    return 0;
+  } else if (currT >= timestamps[maxIdx]) {
+    return maxIdx;
+  }
 
   while (l <= r) {
     const m = l + Math.floor((r - l) / 2);
-    const prevT = Number(frameTimestamps[m]);
-    const nextT = Number(frameTimestamps[m + 1]);
+    const prevT = timestamps[m];
+    const nextT = timestamps[m + 1];
 
     if (prevT <= currT && currT < nextT) {
       return m;
@@ -136,9 +145,27 @@ export function findClosestTimestampIndex(currentTime: Time, frameTimestamps: st
   return -1;
 }
 
-export function getNextFrame(effectiveFrameIndex: number, frameTimestamps: string[], modifier: number = 1): Time {
-  const nextIndex = clamp(effectiveFrameIndex + modifier, 0, frameTimestamps.length - 1);
-  const nextFrame = frameTimestamps[nextIndex];
+export function getNextFrame(currentTime: Time, timestamps: string[] = [], goLeft?: boolean): ?Time {
+  if (!timestamps.length) {
+    return null;
+  }
+  const effectiveIdx = findClosestTimestampIndex(currentTime, timestamps);
+  if (effectiveIdx === -1) {
+    return null;
+  }
+  let nextIdx = 0;
+  const maxIdx = timestamps.length - 1;
+  if (effectiveIdx === -1) {
+    nextIdx = goLeft ? maxIdx : 0;
+  } else {
+    nextIdx = effectiveIdx + (goLeft ? -1 : 1);
+    if (nextIdx < 0) {
+      nextIdx = maxIdx;
+    } else if (nextIdx > maxIdx) {
+      nextIdx = 0;
+    }
+  }
+  const nextFrame = timestamps[nextIdx];
   return fromSecondStamp(nextFrame);
 }
 

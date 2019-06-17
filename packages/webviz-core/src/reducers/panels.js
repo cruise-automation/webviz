@@ -41,7 +41,8 @@ function getDefaultState() {
   };
   // if there was no previously saved layout
   // save this initial panel layout into local storage
-  if (!result.layout) {
+  const layoutIsEmptyObj = typeof result.layout === "object" && isEmpty(result.layout);
+  if (!result.layout || layoutIsEmptyObj) {
     const layout = getPanelIdForType("RosOut");
     storage.set(LAYOUT_KEY, layout);
     result.layout = layout;
@@ -88,13 +89,14 @@ function savePanelConfig(state: PanelsState, payload: SaveConfigPayload): Panels
 function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload) {
   let migratedPayload = getGlobalHooks().migratePanels(payload);
   if (isEmpty(migratedPayload)) {
-    storage.set(LAYOUT_KEY, migratedPayload);
     migratedPayload = getDefaultState();
   }
 
-  storage.set(LAYOUT_KEY, migratedPayload.layout);
-  storage.set(PANEL_PROPS_KEY, migratedPayload.savedProps);
-  storage.set(GLOBAL_DATA_KEY, migratedPayload.globalData || {});
+  if (!payload.skipSettingLocalStorage) {
+    storage.set(LAYOUT_KEY, migratedPayload.layout);
+    storage.set(PANEL_PROPS_KEY, migratedPayload.savedProps);
+    storage.set(GLOBAL_DATA_KEY, migratedPayload.globalData || {});
+  }
   return {
     ...state,
     ...migratedPayload,

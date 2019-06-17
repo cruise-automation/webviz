@@ -111,7 +111,6 @@ export type PublishPayload = {|
 
 export const PlayerCapabilities = {
   advertise: "advertise",
-  seekBackfill: "seekBackfill",
   initialization: "initialization",
 };
 

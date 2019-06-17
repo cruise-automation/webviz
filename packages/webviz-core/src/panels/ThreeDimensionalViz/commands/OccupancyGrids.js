@@ -28,6 +28,7 @@ const occupancyGrids = (regl: any) => {
 
     uniform mat4 projection, view;
     uniform vec3 offset;
+    uniform vec4 orientation;
     uniform float width, height, resolution, alpha;
 
     attribute vec3 point;
@@ -45,8 +46,8 @@ const occupancyGrids = (regl: any) => {
       float planeWidth = width * resolution;
       float planeHeight = height * resolution;
 
-      // scale the point by the plane vertex dimensions
-      vec3 position = point * vec3(planeWidth, planeHeight, 1.);
+      // rotate the point by the ogrid orientation & scale the point by the plane vertex dimensions
+      vec3 position = rotate(point, orientation) * vec3(planeWidth, planeHeight, 1.);
 
       // move the vertex by the marker offset
       vec3 loc = applyPose(position + offset);
@@ -93,6 +94,10 @@ const occupancyGrids = (regl: any) => {
       },
       offset: (context: any, props: OccupancyGridMessage) => {
         return pointToVec3(props.info.origin.position);
+      },
+      orientation: (context: any, props: OccupancyGridMessage) => {
+        const { x, y, z, w } = props.info.origin.orientation;
+        return [x, y, z, w];
       },
       palette: (context: any, props: OccupancyGridMessage) => {
         const palette = getGlobalHooks()

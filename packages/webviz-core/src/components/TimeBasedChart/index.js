@@ -5,7 +5,6 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
 import { ceil, floor, last, max, min, minBy } from "lodash";
 import * as React from "react";
 import ChartComponent from "react-chartjs-2";
@@ -18,7 +17,7 @@ import TimeBasedChartTooltip from "./TimeBasedChartTooltip";
 import Button from "webviz-core/src/components/Button";
 import createSyncingComponent from "webviz-core/src/components/createSyncingComponent";
 import type { MessageHistoryItem } from "webviz-core/src/components/MessageHistory";
-import { PLOT_DASHED_STYLE, PLOT_DOT_DASHED_STYLE } from "webviz-core/src/components/TimeBasedChart/constants";
+import TimeBasedChartLegend from "webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
 
 type Bounds = {| minX: ?number, maxX: ?number |};
@@ -81,6 +80,10 @@ type Props = {|
   annotations?: any[],
   drawLegend?: boolean,
   isSynced?: boolean,
+  canToggleLines?: boolean,
+  toggleLine?: (datasetId: string | typeof undefined, lineToHide: string) => void,
+  linesToHide?: { [string]: boolean },
+  datasetId?: string,
   onClick?: (e: (Object) => Object) => void,
 |};
 type State = {| showResetZoom: boolean, shouldRedraw: boolean, annotations: any[] |};
@@ -339,40 +342,8 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
     return options;
   };
 
-  _renderLegend = () => {
-    const { data } = this.props;
-    return data.datasets.map((dataset, i) => {
-      const { label, color, borderDash } = dataset;
-      let pointSvg;
-      if (borderDash === PLOT_DOT_DASHED_STYLE) {
-        pointSvg = (
-          <svg width="11" height="10">
-            <line
-              stroke={color}
-              strokeWidth="2"
-              strokeDasharray={PLOT_DOT_DASHED_STYLE.join(", ")}
-              x1="0"
-              x2="18"
-              y1="6"
-              y2="6"
-            />
-          </svg>
-        );
-      } else if (borderDash === PLOT_DASHED_STYLE) {
-        pointSvg = <span style={{ fontSize: "12px", fontWeight: "bold" }}>- -</span>;
-      } else {
-        pointSvg = <span style={{ fontSize: "12px", fontWeight: "bold" }}>––</span>;
-      }
-      return (
-        <div key={i} style={{ color, whiteSpace: "nowrap" }}>
-          {pointSvg} <span style={{ fontSize: "10px" }}>{label}</span>
-        </div>
-      );
-    });
-  };
-
   renderChart() {
-    const { type, width, height, data, isSynced } = this.props;
+    const { type, width, height, data, isSynced, linesToHide = {} } = this.props;
     const minX = data.minIsZero
       ? 0
       : min(data.datasets.map((dataset) => (dataset.data.length ? dataset.data[0].x : undefined)));
@@ -388,7 +359,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
           this._chart = ref;
         }}
         options={this._chartjsOptions(minX, maxX)}
-        data={data}
+        data={{ ...data, datasets: data.datasets.filter((dataset) => !linesToHide[dataset.label]) }}
       />
     );
     return isSynced ? (
@@ -399,7 +370,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
   }
 
   render() {
-    const { width, drawLegend } = this.props;
+    const { width, drawLegend, canToggleLines, toggleLine, data, linesToHide = {} } = this.props;
 
     return (
       <div style={{ display: "flex", width: "100%" }}>
@@ -425,7 +396,17 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
             />
           </SRoot>
         </div>
-        {drawLegend && <SLegend>{this._renderLegend()}</SLegend>}
+        {drawLegend && (
+          <SLegend>
+            <TimeBasedChartLegend
+              datasetId={this.props.datasetId}
+              canToggleLines={canToggleLines}
+              datasets={data.datasets}
+              linesToHide={linesToHide}
+              toggleLine={toggleLine || (() => {})}
+            />
+          </SLegend>
+        )}
       </div>
     );
   }

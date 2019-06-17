@@ -8,6 +8,7 @@
 
 import * as time from "./time";
 
+const { fromSecondStamp } = time;
 describe("time.toDate & time.fromDate", () => {
   it("converts to date and from date", () => {
     const totalSeconds = Math.round(Date.now() / 1000);
@@ -144,26 +145,53 @@ describe("time.subtractTimes", () => {
   expect(time.subtractTimes({ sec: 0, nsec: 0 }, { sec: 0, nsec: 1 })).toEqual({ sec: 0, nsec: -1 });
 });
 
-describe("time.getNextFrame", () => {
-  const timestamps = ["1508410740.582458241", "1508428043.155306000"];
-  expect(time.getNextFrame(0, timestamps)).toEqual({ sec: 1508428043, nsec: 155306000 });
-  expect(time.getNextFrame(1, timestamps)).toEqual({ sec: 1508428043, nsec: 155306000 });
-  expect(time.getNextFrame(0, timestamps, -1)).toEqual({ sec: 1508410740, nsec: 582458241 });
-});
-
 describe("time.findClosestTimestampIndex", () => {
-  it("returns -1 for values that do not exist, are before the first timestamp or after the last", () => {
-    expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 })).toEqual(-1);
-    expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 }, [])).toEqual(-1);
-    expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 }, ["2"])).toEqual(-1);
-    expect(time.findClosestTimestampIndex({ sec: 0, nsec: 10 }, ["1"])).toEqual(-1);
-    expect(time.findClosestTimestampIndex({ sec: 2, nsec: 0 }, ["1"])).toEqual(-1);
+  it("returns 0 for value before the first timestamp", () => {
+    expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 }, ["2", "3"])).toEqual(0);
   });
 
-  it("returns the last index it is equal to or greater than", () => {
+  it("returns last timestamp index for value after the last timestamp", () => {
+    expect(time.findClosestTimestampIndex({ sec: 11, nsec: 0 }, ["2", "3"])).toEqual(1);
+  });
+
+  it("returns -1 for empty timestamps", () => {
+    expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 })).toEqual(-1);
+  });
+
+  it("returns the correct timestamp index on the lower bound", () => {
     expect(time.findClosestTimestampIndex({ sec: 1, nsec: 0 }, ["1", "2"])).toEqual(0);
     expect(time.findClosestTimestampIndex({ sec: 1, nsec: 999999999 }, ["1", "2"])).toEqual(0);
     expect(time.findClosestTimestampIndex({ sec: 2, nsec: 999999999 }, ["1", "2", "3"])).toEqual(1);
+  });
+});
+
+describe("time.getNextFrame", () => {
+  const timestamps = ["4.049839000", "4.249933000", "4.449961000", "5.650058000"];
+  it("returns null for empty timestamps", async () => {
+    expect(time.getNextFrame({ sec: 3, nsec: 0 }, [])).toEqual(null);
+  });
+
+  it("returns the next frame ", async () => {
+    expect(time.getNextFrame({ sec: 3, nsec: 0 }, timestamps)).toEqual(fromSecondStamp(timestamps[1]));
+    expect(time.getNextFrame({ sec: 4, nsec: 240000000 }, timestamps)).toEqual(fromSecondStamp(timestamps[1]));
+    expect(time.getNextFrame({ sec: 4, nsec: 249933000 }, timestamps)).toEqual(fromSecondStamp(timestamps[2]));
+    expect(time.getNextFrame({ sec: 5, nsec: 650058000 }, timestamps)).toEqual(fromSecondStamp(timestamps[0]));
+    expect(time.getNextFrame({ sec: 6, nsec: 0 }, timestamps)).toEqual(fromSecondStamp(timestamps[0]));
+  });
+
+  it("returns the previous frame ", async () => {
+    expect(time.getNextFrame({ sec: 3, nsec: 0 }, timestamps, true)).toEqual(
+      fromSecondStamp(timestamps[timestamps.length - 1])
+    );
+    expect(time.getNextFrame({ sec: 6, nsec: 0 }, timestamps, true)).toEqual(
+      fromSecondStamp(timestamps[timestamps.length - 2])
+    );
+    expect(time.getNextFrame({ sec: 5, nsec: 650058000 }, timestamps, true)).toEqual(
+      fromSecondStamp(timestamps[timestamps.length - 2])
+    );
+    expect(time.getNextFrame({ sec: 5, nsec: 640058000 }, timestamps, true)).toEqual(
+      fromSecondStamp(timestamps[timestamps.length - 3])
+    );
   });
 });
 

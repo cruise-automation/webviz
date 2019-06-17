@@ -54,14 +54,15 @@ type IMPORT_PANEL_LAYOUT = {
 
 export const importPanelLayout = (
   payload: ImportPanelLayoutPayload,
-  isFromUrl: boolean
+  isFromUrl: boolean,
+  skipSettingLocalStorage: boolean = false
 ): Dispatcher<IMPORT_PANEL_LAYOUT> => (dispatch, getState) => {
   if (!isFromUrl) {
     maybeStripLayoutId(dispatch, getState);
   }
   return dispatch({
     type: "IMPORT_PANEL_LAYOUT",
-    payload,
+    payload: skipSettingLocalStorage ? { ...payload, skipSettingLocalStorage } : payload,
   });
 };
 

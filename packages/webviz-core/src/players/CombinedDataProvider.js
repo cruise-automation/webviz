@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { flatten, uniq, isEqual } from "lodash";
+import { flatten, uniq, isEqual, intersection } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import type {
@@ -16,23 +16,30 @@ import type {
   DataProviderMetadata,
   ExtensionPoint,
 } from "webviz-core/src/players/types";
-import type { Topic } from "webviz-core/src/types/players";
+import type { Progress, Topic } from "webviz-core/src/types/players";
 import type { RosMsgField } from "webviz-core/src/types/RosDatatypes";
 import naturalSort from "webviz-core/src/util/naturalSort";
 
-type ProviderInfo = { provider: RandomAccessDataProvider, prefix?: string };
+type ProviderInfo = { provider: RandomAccessDataProvider, prefix?: string, deleteTopics?: string[] };
 
 const sortTimes = (times: Time[]) => times.sort(TimeUtil.compare);
 
-const mapTopics = (initializationResult: InitializationResult, { provider, prefix }: ProviderInfo) => {
+const mapTopics = (
+  initializationResult: InitializationResult,
+  { provider, prefix, deleteTopics = [] }: ProviderInfo
+): Topic[] => {
+  let resTopics: Topic[] = [];
   if (!prefix) {
-    return initializationResult.topics;
+    resTopics = initializationResult.topics;
+  } else {
+    resTopics = initializationResult.topics.map((topic) => ({
+      ...topic,
+      name: `${prefix}${topic.name}`,
+      originalTopic: topic.name,
+    }));
   }
-  return initializationResult.topics.map((topic) => ({
-    ...topic,
-    name: `${prefix}${topic.name}`,
-    originalTopic: topic.name,
-  }));
+
+  return deleteTopics.length ? resTopics.filter(({ name }) => !deleteTopics.includes(name)) : resTopics;
 };
 
 const merge = (messages1: MessageLike[], messages2: MessageLike[]) => {
@@ -85,6 +92,7 @@ const throwOnUnequalDatatypes = (datatypes: [string, RosMsgField[]][]) => {
 // based on a readAheadRange (default to 100 milliseconds)
 export default class CombinedDataProvider implements RandomAccessDataProvider {
   _providers: ProviderInfo[];
+  _availableTopicsForAllProviders: string[][] = [];
 
   constructor(providers: ProviderInfo[]) {
     const prefixes = providers.filter(({ prefix }) => prefix).map(({ prefix }) => prefix);
@@ -98,32 +106,41 @@ export default class CombinedDataProvider implements RandomAccessDataProvider {
     this._providers = providers;
   }
 
-  async initialize(extensionPoint: ?ExtensionPoint): Promise<InitializationResult> {
-    let childExtensionPoint;
-    if (extensionPoint) {
-      const { reportMetadataCallback } = extensionPoint;
-      childExtensionPoint = {
-        progressCallback: () => {
-          throw new Error(
-            "Unsupported extensionPoint callback in CombinedDataProvider: progressCallback (still need to implement)"
-          );
-        },
-        addTopicsCallback: () => {
-          throw new Error(
-            "Unsupported extensionPoint callback in CombinedDataProvider: addTopicsCallback (still need to implement)"
-          );
-        },
-        reportMetadataCallback: (data: DataProviderMetadata) => {
-          reportMetadataCallback(data);
-        },
-      };
-    }
-    const results = await Promise.all(this._providers.map(({ provider }) => provider.initialize(childExtensionPoint)));
+  async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
+    const results = await Promise.all(
+      this._providers.map(({ provider, prefix, deleteTopics }: ProviderInfo, idx) => {
+        const childExtensionPoint = {
+          progressCallback: (progress: Progress) => {
+            // For now just pass through progress from all underlying providers, without combining
+            // them in a meaningful way, because that's all we need right now.
+            // TODO(JP): Do some smarter combining of progress when we need that, e.g. when allowing
+            // playing multiple remote bags.
+            extensionPoint.progressCallback(progress);
+          },
+          addTopicsCallback: (fn: (string[]) => void) => {
+            extensionPoint.addTopicsCallback((topics) => {
+              // filter out the topics that are not in the provider's availableTopics list
+              const filteredTopics = intersection(topics, this._availableTopicsForAllProviders[idx]);
+              const topicsWithoutPrefix = filteredTopics
+                .map((topic) => (topic.startsWith(prefix || "") ? topic.slice((prefix || "").length) : undefined))
+                .filter(Boolean);
+              fn(topicsWithoutPrefix);
+            });
+          },
+          reportMetadataCallback: (data: DataProviderMetadata) => {
+            extensionPoint.reportMetadataCallback(data);
+          },
+        };
+        return provider.initialize(childExtensionPoint);
+      })
+    );
     const start = sortTimes(results.map(({ start }) => start)).shift();
     const end = sortTimes(results.map(({ end }) => end)).pop();
-    const topics = flatten(
-      results.map((initializationResult, i) => mapTopics(initializationResult, this._providers[i]))
+    const topicsPerProvider = results.map((initializationResult, i) =>
+      mapTopics(initializationResult, this._providers[i])
     );
+    this._availableTopicsForAllProviders = topicsPerProvider.map((pTopics) => pTopics.map((t) => t.name));
+    const topics = flatten(topicsPerProvider);
 
     // Error handling
     throwOnDuplicateTopics([...topics]);

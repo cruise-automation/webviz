@@ -37,6 +37,20 @@ describe("state.panels", () => {
     });
   });
 
+  it("stores default settings in local storage when layout payload is empty", () => {
+    const store = getStore();
+    const emptyPayload = {};
+
+    store.dispatch(importPanelLayout(emptyPayload, false));
+    store.checkState((panels) => {
+      expect(panels.layout.slice(0, 7)).toEqual("RosOut!");
+      expect(panels.savedProps).toEqual({});
+      const storage = new Storage();
+      expect((storage.get(LAYOUT_KEY) || "").slice(0, 7)).toEqual("RosOut!");
+      expect(storage.get(PANEL_PROPS_KEY)).toEqual({});
+    });
+  });
+
   it("stores state changes in local storage", () => {
     const store = getStore();
     const payload = {
@@ -155,6 +169,26 @@ describe("state.panels", () => {
     store.dispatch(importPanelLayout({ layout: null, savedProps: {} }, true));
     store.checkState((panels, routing) => {
       expect(routing.location.search).toEqual("?layout=foo&name=bar");
+    });
+  });
+
+  it("will set local storage when importing a panel layout, if reducer is not told to skipSettingLocalStorage", () => {
+    const store = getStore();
+    const storage = new Storage();
+
+    store.dispatch(importPanelLayout({ layout: "myNewLayout", savedProps: {} }, true));
+    store.checkState((panels) => {
+      expect(storage.get(LAYOUT_KEY)).toEqual("myNewLayout");
+    });
+  });
+
+  it("will not set local storage when importing a panel layout, if reducer is told to skipSettingLocalStorage", () => {
+    const store = getStore();
+    const storage = new Storage();
+
+    store.dispatch(importPanelLayout({ layout: null, savedProps: {} }, true, true));
+    store.checkState((panels) => {
+      expect(storage.get(LAYOUT_KEY)).not.toEqual(panels.layout);
     });
   });
 

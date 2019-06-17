@@ -88,11 +88,12 @@ function savePanelConfig(state: PanelsState, payload: SaveConfigPayload): Panels
 
 function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload) {
   let migratedPayload = getGlobalHooks().migratePanels(payload);
-  if (isEmpty(migratedPayload)) {
-    migratedPayload = getDefaultState();
-  }
 
   if (!payload.skipSettingLocalStorage) {
+    if (isEmpty(migratedPayload)) {
+      storage.set(LAYOUT_KEY, migratedPayload);
+      migratedPayload = getDefaultState();
+    }
     storage.set(LAYOUT_KEY, migratedPayload.layout);
     storage.set(PANEL_PROPS_KEY, migratedPayload.savedProps);
     storage.set(GLOBAL_DATA_KEY, migratedPayload.globalData || {});

@@ -22,98 +22,109 @@ maximum-scale=1.0, user-scalable=no" />
 
 <div class="container-overflow">
 
-<body>
-    <header>
-      <a target="_blank" href="https://webviz.io/try/">Use Webviz</a>
-      <a target="_blank" href="https://github.com/cruise-automation/webviz">Github</a>
-      <a target="_blank" href="https://getcruise.com/">Cruise</a>
-    </header>
-    <section id="intro">
-        <img class="bg" id="img-props" src="./assets/illustrations/header.png" />
-        <div id="container-headline">
-            <p id="text-webviz">WEBVIZ</p>
-            <h1>Visualizing robotics data in the browser</h1>
-            <div style="width: 100%; display: flex">
-                <a target="_blank" href="https://webviz.io/try/?demo">
-                    <button>
-                        View demo
-                    </button>
-                </a>
+    <body>
+        <header>
+            <a target="_blank" href="https://webviz.io/try/">Use Webviz</a>
+            <a target="_blank" href="https://github.com/cruise-automation/webviz">Github</a>
+            <a target="_blank" href="https://getcruise.com/">Cruise</a>
+        </header>
+        <section id="intro">
+            <img class="bg" id="img-props" src="./assets/illustrations/header.png" />
+            <div id="container-headline">
+                <p id="text-webviz">WEBVIZ</p>
+                <h1>Visualizing robotics data in the browser</h1>
+                <div style="width: 100%; display: flex">
+                    <a target="_blank" href="https://webviz.io/try/?demo">
+                        <button>
+                            View demo
+                        </button>
+                    </a>
+                </div>
             </div>
-        </div>
-        <div>
-            <video id="img-hero" width="500" autoplay loop muted poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/wobble2.gif">
-              <source src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/hero.webm" type="video/webm" >
-            </video>
-        </div>
-    </section>
+            <div>
+                <video id="img-hero" width="500" autoplay loop muted
+                    poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/wobble2.gif">
+                    <source src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/hero.webm"
+                        type="video/webm">
+                </video>
+            </div>
+        </section>
 
-    <section>
-        <img class="bg" id="img-props-2" src="./assets/illustrations/header.png" />
-        <h2>
-            Cruise uses Webviz to visualize thousands of complex decisions our vehicles make–both on the road and in simulation.
-            Drag and drop your own <a target="_blank" class="in-copy" href="http://wiki.ros.org/Bags">ROS bag files</a> into Webviz to get immediate visual insight into your robotics data.
-        </h2>
-
-        <h2>
-
-        </h2>
-        <video id="img-demo" height="" autoplay loop muted poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/fullsmall.gif">
-          <source src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/rawvelodyne.webm" type="video/webm" >
-        </video>
-    </section>
-
-    <section class="gallery">
-        <div style="padding-bottom: 40px">
+        <section>
+            <img class="bg" id="img-props-2" src="./assets/illustrations/header.png" />
             <h2>
-                Webviz is powerful because it is modular.
-                Using Webviz, you can compose your own data visualization layouts from a collection of configurable panels.
+                Cruise uses Webviz to visualize thousands of complex decisions our vehicles make–both on the road and in
+                simulation.
+                Drag and drop your own <a target="_blank" class="in-copy" href="http://wiki.ros.org/Bags">ROS bag
+                    files</a> into Webviz to get immediate visual insight into your robotics data.
             </h2>
-            <h2 class="attribution">
-                <i> // rosbags used in these examples:
-                <a target="_blank" href="https://github.com/udacity/didi-competition"> 1, </a>
-                <a target="_blank" href="https://projects.csail.mit.edu/stata/downloads.php"> 2 </a>
-                <!-- <a target="_blank" href="https://github.com/Hypha-ROS/hypharos_racecar"> 3 </a> -->
-              </i>
+
+            <h2>
+
             </h2>
-        </div>
-        <div class="gallery-row">
+            <video id="img-demo" height="" autoplay loop muted
+                poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/fullsmall.gif">
+                <source src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/rawvelodyne.webm"
+                    type="video/webm">
+            </video>
+        </section>
+
+        <section class="gallery">
+            <div style="padding-bottom: 40px">
+                <h2>
+                    Webviz is powerful because it is modular.
+                    Using Webviz, you can compose your own data visualization layouts from a collection of configurable
+                    panels.
+                </h2>
+                <h2 class="attribution">
+                    <i> // rosbags used in these examples:
+                        <a target="_blank" href="https://github.com/udacity/didi-competition"> 1, </a>
+                        <a target="_blank" href="https://projects.csail.mit.edu/stata/downloads.php"> 2 </a>
+                        <!-- <a target="_blank" href="https://github.com/Hypha-ROS/hypharos_racecar"> 3 </a> -->
+                    </i>
+                </h2>
+            </div>
+            <div class="gallery-row">
 
 
 
-            <div class="gallery-item" id="threed">
-                <h3>
-                    3D panel
-                </h3>
-                <div class="gallery-caption">
-                    Visualizes ROS marker messages
+                <div class="gallery-item" id="threed">
+                    <h3>
+                        3D panel
+                    </h3>
+                    <div class="gallery-caption">
+                        Visualizes ROS marker messages
+                    </div>
+                    <div class="panel-img-border">
+                        <video class="panel-img" id="panel-threed" autoplay loop muted
+                            poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/tframe.gif">
+                            <!-- <source src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/.webm" type="video/webm"> -->
+                        </video>
+                    </div>
                 </div>
-                <div class="panel-img-border" >
-                    <video class="panel-img" id="panel-threed"   autoplay loop muted poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/tframe.gif">
-                    <!-- <source src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/.webm" type="video/webm"> -->
-          </video>
+
+                <div class="gallery-item" id="plot">
+                    <h3>
+                        Plot panel
+                    </h3>
+                    <div class="gallery-caption">
+                        Charts topic values for easy comparison
+                    </div>
+                    <div class="panel-img-border">
+                        <video class="panel-img" id="panel-plot" autoplay loop muted
+                            poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/plot1.mov.gif">
+                            <source
+                                src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/plot1.mov.webm"
+                                type="video/webm">\
+                        </video>
+                    </div>
                 </div>
+
+
             </div>
 
-            <div class="gallery-item" id="plot">
-                <h3>
-                    Plot panel
-                </h3>
-                <div class="gallery-caption">
-                    Charts topic values for easy comparison
-                </div>
-                <div class="panel-img-border">
-                    <video class="panel-img" id="panel-plot"  autoplay loop muted poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/plot1.mov.gif">
-                      <source src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/plot1.mov.webm" type="video/webm">\
-                    </video>
-                </div>
-            </div>
-
-
-        </div>
-
-        <div class="gallery-row">
-            <!-- <div class="gallery-item" id="rosout">
+            <div class="gallery-row">
+                <!-- <div class="gallery-item" id="rosout">
                 <h3>
                     Rosout panel
                 </h3>
@@ -129,51 +140,60 @@ maximum-scale=1.0, user-scalable=no" />
             </div> -->
 
 
-            <div class="gallery-item">
-                <h3>
-                    Image panel
-                </h3>
-                <div class="gallery-caption">
-                    Displays ROS image messages
+                <div class="gallery-item">
+                    <h3>
+                        Image panel
+                    </h3>
+                    <div class="gallery-caption">
+                        Displays ROS image messages
+                    </div>
+                    <div class="panel-img-border">
+                        <video class="panel-img" id="panel-image" height="" autoplay loop muted
+                            poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/image1.mov.gif">
+                            <source
+                                src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/image1.mov.webm"
+                                type="video/webm">
+                        </video>
+                    </div>
                 </div>
-                <div class="panel-img-border" >
-                    <video class="panel-img" id="panel-image"  height="" autoplay loop muted poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/image1.mov.gif">
-                      <source src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/image1.mov.webm" type="video/webm">
-                    </video>
-                </div>
+
+
             </div>
 
+        </section>
 
-        </div>
+        <section>
+            <img class="bg" id="img-props-3" src="./assets/illustrations/footer.png"> </img>
+            <h2>
+                Cruise's work could not have been possible without the help of countless open-source resources. We hope
+                our own contributions (like Webviz, <a target="_blank" class="in-copy"
+                    href="https://cruise-automation.github.io/webviz/worldview/">Worldview</a>, and <a target="_blank"
+                    class="in-copy" href="">rosbag.js</a>) will help others in the robotics community build the next
+                generation of visionary technology.
 
-    </section>
+            </h2>
+            <h2>
+                If you are interested in working on the most challenging problems in the self-driving industry, <a
+                    target="_blank" class="in-copy" href="https://getcruise.com/careers">join us</a> on Cruise's
+                Engineering Productivity team.
+            </h2>
+            <div style="width: 100%; justify-content: start; display: flex  ; max-width: 720px;">
 
-    <section>
-        <img class="bg" id="img-props-3" src="./assets/illustrations/footer.png"> </img>
-        <h2>
-            Cruise's work could not have been possible without the help of countless open-source resources. We hope our own contributions (like Webviz, <a target="_blank" class="in-copy" href="https://cruise-automation.github.io/webviz/worldview/">Worldview</a>, and <a target="_blank" class="in-copy" href="">rosbag.js</a>) will help others in the robotics community build the next generation of visionary technology.
+                </a>
+                <a target="_blank" href="https://webviz.io/try/?demo">
+                    <button>
+                        View demo
+                    </button>
+                </a>
+            </div>
+        </section>
 
-        </h2>
-        <h2>
-            If you are interested in working on the most challenging problems in the self-driving industry, <a target="_blank" class="in-copy" href="https://getcruise.com/careers">join us</a> on Cruise's Engineering Productivity team.
-        </h2>
-        <div style="width: 100%; justify-content: start; display: flex  ; max-width: 720px;">
-
-            </a>
-            <a target="_blank" href="https://webviz.io/try/?demo">
-                <button>
-                    View demo
-                </button>
-            </a>
-        </div>
-    </section>
-
-    <footer>
-        <a target="_blank" href="https://webviz.io/try/">Use Webviz</a>
-        <a target="_blank" href="https://github.com/cruise-automation/webviz">Github</a>
-        <a target="_blank" href="https://getcruise.com/">Cruise</a>
-    </footer>
-</body>
+        <footer>
+            <a target="_blank" href="https://webviz.io/try/">Use Webviz</a>
+            <a target="_blank" href="https://github.com/cruise-automation/webviz">Github</a>
+            <a target="_blank" href="https://getcruise.com/">Cruise</a>
+        </footer>
+    </body>
 
 </div>
 

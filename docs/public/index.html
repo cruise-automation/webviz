@@ -18,6 +18,554 @@ maximum-scale=1.0, user-scalable=no" />
     <title>Webviz</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="./style.css">
+    <style>
+      @import url('https://rsms.me/inter/inter.css');
+      html {
+          font-family: 'Inter', sans-serif;
+      }
+
+      @supports (font-variation-settings: normal) {
+          html {
+              font-family: 'Inter var', sans-serif;
+          }
+      }
+
+      @font-face {
+          font-family: "GT Cinetype";
+          src: url(./assets/font/cinetype-reg.ttf);
+      }
+
+      html {
+          -webkit-appearance: none;
+          padding: 0;
+          height: 100%;
+      }
+
+      body {
+          font-family: 'GT Cinetype', 'Inter var', monospace;
+          color: #f7f7f3;
+          background-color: #141419;
+          text-align: center;
+          position: relative;
+          padding-bottom: 6rem;
+          margin: 0px;
+      }
+
+      .container-overflow {
+        overflow-x: hidden;
+        overflow-y: hidden;
+      }
+
+      h3,
+      .gallery-item-caption,
+      button,
+      #text-webviz {
+          font-family: 'Roboto Mono', monospace;
+      }
+
+      header,
+      footer {
+          padding: 12px;
+          margin: auto;
+
+      }
+
+      header {
+        padding: 20px;
+
+      }
+
+      footer {
+          position: absolute;
+          right: 0;
+          z-index: 99;
+      }
+
+      a {
+          text-decoration: none;
+      }
+
+      header a,
+      footer a {
+          color: #c6b9ff;
+          padding: 8px;
+          opacity: 0.7;
+          letter-spacing: 0.2px;
+          text-transform: lowercase;
+      }
+
+      header a:hover,
+      footer a:hover {
+          opacity: 1.0;
+      }
+
+      a.in-copy {
+          text-decoration: underline;
+      }
+
+
+      a.in-copy:hover {
+          text-decoration: none;
+          background-color: #c6b9ff;
+          color: black;
+      }
+
+      .attribution {
+      font-size: 16px;
+      color: grey;
+      }
+
+      .attribution a {
+        color: orange;
+        opacity: 0.8;
+      }
+      .attribution a:hover {
+
+        opacity: 1.0;
+      }
+
+
+
+      header {
+          text-align: right;
+      }
+
+      footer {
+          text-align: center;
+          position: absolute;
+          bottom: 0;
+          width: 100%;
+          padding-bottom: 32px;
+
+      }
+
+      h1,
+      h2,
+      h3,
+      p,
+      button,
+      a,
+      .gallery-caption {
+          color: #fafafa;
+          font-weight: 400;
+          text-align: left;
+          max-width: 420px;
+      }
+
+      h1 {
+          font-size: 54px;
+          line-height: 64px;
+          margin: 0px;
+      }
+
+      h2 {
+          font-size: 28px;
+          line-height: 40px;
+          max-width: 720px;
+          margin-bottom: 4px;
+      }
+
+      h3 {
+          font-size: 20px;
+          line-height: 30px;
+          margin: 10px 0px 4px;
+          font-size: 12px;
+          letter-spacing: 0.2px;
+          opacity: 0.4;
+      }
+
+      button {
+          border: none;
+          background-color: rgba(20,20,25,0.0);
+          border: 1px solid #c6b9ff;
+          color: #c6b9ff;
+          color: lightgreen;
+          border-color: lightgreen;
+          border-radius: 20px;
+          padding: 6px 16px 8px 16px;
+          margin: 24px 16px 16px 0;
+          font-size: 14px;
+          letter-spacing: 0.5px;
+          display: block;
+          text-align: center;
+          margin-top: 52px;
+          text-transform: lowercase;
+          cursor: pointer;
+      }
+
+      button:hover {
+          background-color: lightgreen;
+          color: #141419;
+          border-color: transparent;
+      }
+
+      button:focus {
+          outline: none;
+      }
+
+      section {
+          display: flex;
+          min-height: 540px;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          margin: auto;
+          flex-direction: column;
+          padding: 30px;
+          padding-top: 16px;
+          padding-bottom: 64px;
+          /*padding-top: 64px;*/
+      }
+
+      section#intro {
+          height: 84vh;
+          flex-direction: row;
+          justify-content: center;
+      }
+
+      .bg {
+          position: absolute;
+          top: 0;
+          opacity: 1.0;
+          width: 1200px;
+          z-index: -1;
+      }
+
+      .gallery {
+          position: relative;
+          align-items: center;
+          justify-content: space-evenly;
+          flex-direction: column;
+          flex-wrap: wrap;
+          padding-top: 48px;
+          height: auto;
+      }
+
+      .gallery-row {
+          display: flex;
+          justify-content: space-around;
+      }
+
+      .gallery-item {
+          flex: 1;
+          padding: 0px 36px 56px 36px;
+      }
+
+      .gallery-caption {
+          text-align: left;
+          padding: 16px;
+          padding-left: 0;
+          padding-top: 0;
+          padding-bottom: 32px;
+          font-size: 16px;
+          /*color: #c6b9ff;*/
+          z-index: 10000;
+          max-width: 316px;
+          /*font-family: 'Roboto Mono', monospace;*/
+      }
+
+      #text-webviz {
+          font-size: 12px;
+          letter-spacing: 3.4px;
+          font-weight: 100;
+
+
+          width: fit-content;
+          /*padding: 0px 4px 0px 4px;*/
+          margin-bottom: 12px;
+          /*border: 1px solid #fc6d83;*/
+          color: white;
+
+      }
+
+      #img-hero {
+        width:500px;
+        border: 1px solid #ab91e6;
+        padding: 1px;
+      }
+
+      #img-demo {
+          width: 100%;
+          margin-bottom: 16px;
+      }
+
+
+      #img-props {
+          bottom: -840px;
+          left: -600px;
+          width: 1270px;
+          transform: rotate(340deg);
+      }
+
+      #img-props-2 {
+          top:  200px;
+          left: 570px;
+          width: 1500px;
+          transform: rotate(71deg);
+          opacity: 0.8;
+      }
+
+      #img-props-3 {
+          left: -1250px;
+          top: -1060px;
+          transform: rotate(-18deg);
+          width: 1564px;
+      }
+
+      .panel-img-border {
+          border: 1px solid #ab91e685;
+          padding: 1px;
+          background-color: #141119;
+      }
+
+
+
+
+      .panel-img {
+          opacity: 1.0;
+          background-color: #141419;
+          height: auto;
+      }
+
+      /* xlarge monitor */
+      /*@media only screen
+      and (min-width : 1654px) {
+        h1,
+        h2,
+        h3,
+        p,
+        button,
+        a,
+        .gallery-caption {
+            max-width: 900px;
+        }
+
+        h1 {
+          font-size: 100px;
+          line-height: 104px;
+          width: 740px;
+
+        }
+
+        h2 {
+
+        }
+
+        h3 {
+
+        }
+
+        button {
+
+        }
+
+        #img-hero {
+          width: 800px;
+        }
+
+        #img-demo {
+        }
+      }*/
+
+
+
+
+      /* laptop */
+      @media only screen
+      /*and (max-width: 1654px)*/
+      and (min-width: 730px) {
+
+        section {
+          margin: auto;
+        }
+        #img-hero {
+          width: 50vw;
+          margin-left: 2vw;
+          max-width: 540px;
+        }
+
+        #img-demo {
+          max-width: 1200px;
+        }
+
+        h1 {
+          margin-right: 2vw;
+          min-width: 276px;
+        }
+
+
+        .gallery-caption {
+          max-width: 20vw;
+        }
+
+        #panel-threed {
+            width: 28vw;
+
+        }
+        #panel-image {
+          width: 28vw;
+        }
+        #panel-plot {
+          width: 40vw;
+        }
+        #panel-rosout  {
+          width: 50vw;
+
+        }
+
+        #rosout {
+          margin-top: -132px;
+        }
+
+        #plot {
+          margin-top: 40px;
+
+        }
+
+        #threed {
+          margin-top: 0px;
+        }
+      }
+
+      /* tablet */
+      @media only screen
+      and (max-width: 730px)
+       {
+        h1 {
+
+          font-size: 52px;
+          line-height: 50px;
+          max-width: 470px;
+
+        }
+
+        h2 {
+          font-size: 24px;
+          line-height: 36px;
+          margin-bottom: 8px;
+          margin-top: 8px;
+        }
+
+        h3 {
+          margin: 0;
+        }
+
+        section#intro {
+            flex-direction: column-reverse;
+            justify-content: center;
+            min-height: 0;
+            margin: 0;
+            margin-right: auto;
+            margin-left: auto;
+            width: 84vw;
+            height: 90vh;
+          }
+
+        header {
+          position: absolute;
+          z-index: 99;
+          right: 0;
+        }
+
+
+        #text-webviz {
+          font-size: 12px;
+          margin-bottom: 8px;
+        }
+        #img-hero {
+          width: 54vw;
+          margin-left: 0;
+          max-width: 500px;
+          margin-bottom: 1.4vh;
+          /*position: absolute;*/
+        }
+
+        button {
+          display: none;
+        }
+
+        #img-demo {
+
+        }
+
+        #container-headline {
+
+        }
+
+        .gallery-item {
+          padding: 0px;
+          padding-bottom: 28px;
+        }
+
+        .gallery-row {
+          flex-direction: column;
+        }
+
+        .gallery-caption {
+          max-width: 80vw;
+          padding-bottom: 20px;
+        }
+
+        .panel-img {
+          height: auto;
+          width: 84vw;
+        }
+
+      }
+
+      /* phone */
+      @media only screen
+      and (max-width : 480px)
+       {
+
+         section {
+           padding: 12px;
+         }
+
+         h1 {
+
+         }
+
+         h2 {
+           font-size: 20px;
+           line-height: 26px;
+         }
+
+         #img-hero {
+           width: 83vw;
+         }
+
+
+         .gallery-row {
+           flex-direction: column;
+         }
+
+         .panel-img {
+           height: auto;
+           width: 84vw;
+         }
+      }
+
+      @media only screen
+      and (max-width: 340px) {
+
+        section#intro {
+            height: 100vh;
+          }
+      }
+
+      @media only screen
+      and (max-height: 620px)
+      and (min-width: 400px) {
+
+        #img-hero {
+          width: 40vh;
+        }
+
+      }
+
+    </style>
+
 </head>
 
 <div class="container-overflow">

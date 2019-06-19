@@ -56,7 +56,7 @@ maximum-scale=1.0, user-scalable=no" />
         overflow-y: hidden;
       }
 
-      h3,
+      .attribution,
       .gallery-item-caption,
       button,
       #text-webviz {
@@ -67,18 +67,23 @@ maximum-scale=1.0, user-scalable=no" />
       footer {
           padding: 12px;
           margin: auto;
+          position: absolute;
+          z-index: 9;
+          width: 100%;
 
       }
 
       header {
-        padding: 20px;
-
+          padding: 20px;
+          text-align: right;
+          background-color: #14141a70;
+          right: 0;
       }
 
       footer {
-          position: absolute;
-          right: 0;
-          z-index: 99;
+          padding: 0;
+          text-align: center;
+          padding-bottom: 32px;
       }
 
       a {
@@ -111,8 +116,9 @@ maximum-scale=1.0, user-scalable=no" />
       }
 
       .attribution {
-      font-size: 16px;
+      font-size: 12px;
       color: grey;
+      letter-spacing: 0.5px
       }
 
       .attribution a {
@@ -125,19 +131,6 @@ maximum-scale=1.0, user-scalable=no" />
       }
 
 
-
-      header {
-          text-align: right;
-      }
-
-      footer {
-          text-align: center;
-          position: absolute;
-          bottom: 0;
-          width: 100%;
-          padding-bottom: 32px;
-
-      }
 
       h1,
       h2,
@@ -166,12 +159,10 @@ maximum-scale=1.0, user-scalable=no" />
       }
 
       h3 {
-          font-size: 20px;
-          line-height: 30px;
-          margin: 10px 0px 4px;
-          font-size: 12px;
-          letter-spacing: 0.2px;
-          opacity: 0.4;
+          line-height: 20px;
+          margin: 16px 0px 4px;
+          font-size: 16px;
+          opacity: 1.0;
       }
 
       button {
@@ -396,18 +387,21 @@ maximum-scale=1.0, user-scalable=no" />
 
 
         .gallery-caption {
-          max-width: 20vw;
+          max-width: 28vw;
         }
 
         #panel-threed {
-            width: 28vw;
+          width: 28vw;
+          max-width: 700px;
 
         }
         #panel-image {
           width: 28vw;
+          max-width: 560px;
         }
         #panel-plot {
           width: 40vw;
+          max-width: 560px;
         }
         #panel-rosout  {
           width: 50vw;
@@ -448,7 +442,8 @@ maximum-scale=1.0, user-scalable=no" />
         }
 
         h3 {
-          margin: 0;
+          margin-top: 8px;
+          width: 84vw;
         }
 
         section#intro {
@@ -461,12 +456,6 @@ maximum-scale=1.0, user-scalable=no" />
             width: 84vw;
             height: 90vh;
           }
-
-        header {
-          position: absolute;
-          z-index: 99;
-          right: 0;
-        }
 
 
         #text-webviz {
@@ -519,9 +508,7 @@ maximum-scale=1.0, user-scalable=no" />
       and (max-width : 480px)
        {
 
-         section {
-           padding: 12px;
-         }
+
 
          h1 {
 
@@ -625,34 +612,24 @@ maximum-scale=1.0, user-scalable=no" />
                     panels.
                 </h2>
                 <h2 class="attribution">
-                    <i> // rosbags used in these examples:
+                     // rosbags used in these examples:
                         <a target="_blank" href="https://github.com/udacity/didi-competition"> 1, </a>
                         <a target="_blank" href="https://projects.csail.mit.edu/stata/downloads.php"> 2 </a>
-                    </i>
                 </h2>
             </div>
             <div class="gallery-row">
                 <div class="gallery-item" id="threed">
-                    <h3>
-                        3D panel
-                    </h3>
-                    <div class="gallery-caption">
-                        Visualizes ROS marker messages
-                    </div>
                     <div class="panel-img-border">
                         <video class="panel-img" id="panel-threed" autoplay loop muted
                             poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/tframe.gif">
                         </video>
                     </div>
+                    <h3>
+                        3D panel visualizes ROS marker messages
+                    </h3>
                 </div>
 
                 <div class="gallery-item" id="plot">
-                    <h3>
-                        Plot panel
-                    </h3>
-                    <div class="gallery-caption">
-                        Charts topic values for easy comparison
-                    </div>
                     <div class="panel-img-border">
                         <video class="panel-img" id="panel-plot" autoplay loop muted
                             poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/plot1.mov.gif">
@@ -661,25 +638,25 @@ maximum-scale=1.0, user-scalable=no" />
                                 type="video/webm">
                         </video>
                     </div>
+                    <h3>
+                        Plot panel charts topic values for easy comparison
+                    </h3>
                 </div>
             </div>
 
             <div class="gallery-row">
                 <div class="gallery-item">
+                  <div class="panel-img-border">
+                      <video class="panel-img" id="panel-image" height="" autoplay loop muted
+                          poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/image1.mov.gif">
+                          <source
+                              src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/image1.mov.webm"
+                              type="video/webm">
+                      </video>
+                  </div>
                     <h3>
-                        Image panel
+                        Image panel displays ROS image messages
                     </h3>
-                    <div class="gallery-caption">
-                        Displays ROS image messages
-                    </div>
-                    <div class="panel-img-border">
-                        <video class="panel-img" id="panel-image" height="" autoplay loop muted
-                            poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/image1.mov.gif">
-                            <source
-                                src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/image1.mov.webm"
-                                type="video/webm">
-                        </video>
-                    </div>
                 </div>
             </div>
         </section>
@@ -690,7 +667,7 @@ maximum-scale=1.0, user-scalable=no" />
                 Cruise's work could not have been possible without the help of countless open-source resources. We hope
                 our own contributions (like Webviz, <a target="_blank" class="in-copy"
                     href="https://cruise-automation.github.io/webviz/worldview/">Worldview</a>, and <a target="_blank"
-                    class="in-copy" href="">rosbag.js</a>) will help others in the robotics community build the next
+                    class="in-copy" href="https://github.com/cruise-automation/rosbag.js">rosbag.js</a>) will help others in the robotics community build the next
                 generation of visionary technology.
 
             </h2>
@@ -700,8 +677,6 @@ maximum-scale=1.0, user-scalable=no" />
                 Engineering Productivity team.
             </h2>
             <div style="width: 100%; justify-content: start; display: flex  ; max-width: 720px;">
-
-                </a>
                 <a target="_blank" href="https://webviz.io/try/?demo">
                     <button>
                         View demo

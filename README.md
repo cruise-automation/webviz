@@ -1,4 +1,6 @@
-# [Webviz](https://webviz.io/) [![CircleCI](https://circleci.com/gh/cruise-automation/webviz.svg?style=svg)](https://circleci.com/gh/cruise-automation/webviz)
+# [Webviz](https://webviz.io/)
+[![CircleCI](https://circleci.com/gh/cruise-automation/webviz.svg?style=svg)](https://circleci.com/gh/cruise-automation/webviz)
+[![Codecov Test Coverage](https://codecov.io/gh/cruise-automation/webviz/branch/master/graphs/badge.svg?style=flat)](https://codecov.io/gh/cruise-automation/webviz)
 
 **Drag and drop your own bag files into [Webviz](https://webviz.io/try/) to explore your robotics data.**
 

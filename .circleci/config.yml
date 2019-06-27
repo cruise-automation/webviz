@@ -23,6 +23,10 @@ jobs:
 
       - run: docker run -v `pwd`:`pwd` -w `pwd` -it --rm -e CI cruise/webviz-ci:0.0.7 npm run ci
 
+      - run:
+          name: "Upload coverage reports to Codecov"
+          command: curl -s https://codecov.io/bash | bash -s
+
       - save_cache:
           paths: ["node_modules"]
           key: global-deps-{{ checksum "package-lock.json" }}

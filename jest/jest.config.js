@@ -29,4 +29,6 @@ module.exports = {
     "worker-loader!./PngWorker.js": "<rootDir>/packages/webviz-core/src/test/MockWorker.js",
     "\\.svg$": "<rootDir>/packages/webviz-core/src/test/MockSvg.js",
   },
+  coverageDirectory: "./coverage/",
+  collectCoverage: true,
 };

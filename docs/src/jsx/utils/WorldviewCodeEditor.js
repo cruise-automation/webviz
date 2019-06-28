@@ -73,6 +73,9 @@ const CODE_SANDBOX_CONFIG = {
       content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/04aB-CesiumMan.glb",
       isBinary: true,
     },
+    "utils/LinesWithClickableInterior.js": {
+      content: require("!!raw-loader!./LinesWithClickableInterior.js"),
+    },
     "utils/useRange.js": {
       content: require("!!raw-loader!./useRange.js"),
     },

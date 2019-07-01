@@ -114,3 +114,19 @@ export function decodeRGGB(rggb: Uint8Array, width: number, height: number, outp
     }
   }
 }
+
+
+
+export function decodeMono8(mono8: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+  let inIdx = 0;
+  let outIdx = 0;
+
+  for (let i = 0; i < width * height; i++) {
+    const v = mono8[inIdx++];
+    // const r = mono8[inIdx++];
+    output[outIdx++] = v;
+    output[outIdx++] = v;
+    output[outIdx++] = v;
+    output[outIdx++] = 255;
+  }
+}

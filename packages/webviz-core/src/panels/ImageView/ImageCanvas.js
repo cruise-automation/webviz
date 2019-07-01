@@ -10,7 +10,7 @@ import { isEqual, omit } from "lodash";
 import React from "react";
 
 import CameraModel from "./CameraModel";
-import { decodeYUV, decodeBGR, decodeFloat1c, decodeRGGB } from "./decodings";
+import { decodeYUV, decodeBGR, decodeFloat1c, decodeRGGB, decodeMono8 } from "./decodings";
 import styles from "./ImageCanvas.module.scss";
 import { type ImageViewPanelHooks } from "./index";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
@@ -89,6 +89,9 @@ export default class ImageCanvas extends React.Component<Props, State> {
           case "bgr8": decodeBGR(rawData, width, height, image.data); break;
           case "32FC1": decodeFloat1c(rawData, width, height, image.data); break;
           case "bayer_rggb8": decodeRGGB(rawData, width, height, image.data); break;
+          case "mono8": decodeMono8(rawData, width, height, image.data); break;
+          case "8UC1": decodeMono8(rawData, width, height, image.data); break;
+          case "16UC1": decodeMono8(rawData, width, height, image.data); break;
           default: break;
         }
       } else if (msg.datatype === "sensor_msgs/CompressedImage") {

@@ -122,11 +122,10 @@ export function decodeMono8(mono8: Uint8Array, width: number, height: number, ou
   let outIdx = 0;
 
   for (let i = 0; i < width * height; i++) {
-    const v = mono8[inIdx++];
-    // const r = mono8[inIdx++];
-    output[outIdx++] = v;
-    output[outIdx++] = v;
-    output[outIdx++] = v;
+    const ch = mono8[inIdx++];
+    output[outIdx++] = ch;
+    output[outIdx++] = ch;
+    output[outIdx++] = ch;
     output[outIdx++] = 255;
   }
 }

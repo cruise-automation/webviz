@@ -92,8 +92,9 @@ export default class ImageCanvas extends React.Component<Props, State> {
           case "mono8":
           case "8UC1":
             decodeMono8(rawData, width, height, image.data); break;
-          case "16UC1": decodeMono8(rawData, width, height, image.data); break;
+          case "16UC1": decodeMono16(rawData, width, height, image.data); break;
           default: break;
+
         }
       } else if (msg.datatype === "sensor_msgs/CompressedImage") {
         image = new Blob([rawData], { type: `image/${msg.message.format}` });

@@ -130,7 +130,7 @@ export function decodeMono8(mono8: Uint8Array, width: number, height: number, ou
 
 export function decodeMono16(mono16: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
   let inIdx = 0;
-  let outIdx = 0; t
+  let outIdx = 0;
 
   for (let i = 0; i < width * height; i++) {
     const ch = (mono16[inIdx << 8]) | mono16[inIdx];

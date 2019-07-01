@@ -127,3 +127,18 @@ export function decodeMono8(mono8: Uint8Array, width: number, height: number, ou
     output[outIdx++] = 255;
   }
 }
+
+
+export function decodeMono16(mono16: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+  let inIdx = 0;
+  let outIdx = 0;
+
+  for (let i = 0; i < width * height; i++) {
+    const ch = (mono16[inIdx << 8]) | mono16[inIdx];
+    inIdx += 2;
+    output[outIdx++] = ch;
+    output[outIdx++] = ch;
+    output[outIdx++] = ch;
+    output[outIdx++] = 255;
+  }
+}

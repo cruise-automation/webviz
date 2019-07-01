@@ -115,8 +115,6 @@ export function decodeRGGB(rggb: Uint8Array, width: number, height: number, outp
   }
 }
 
-
-
 export function decodeMono8(mono8: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
   let inIdx = 0;
   let outIdx = 0;

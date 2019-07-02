@@ -51,7 +51,7 @@ export function decodeBGR(bgr: Uint8Array, width: number, height: number, output
   }
 }
 
-export function decodeFloat1c(gray: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+export function decodeFloat1c(gray: Uint8Array, width: number, height: number, is_bigendian: boolean, output: Uint8ClampedArray) {
   const view = new DataView(gray.buffer, gray.byteOffset);
 
   let outIdx = 0;

@@ -62,7 +62,7 @@ export function decodeFloat1c(
 
   let outIdx = 0;
   for (let i = 0; i < width * height * 4; i += 4) {
-    const val = view.getFloat32(i, !is_bigendian ? true : false) * 255;
+    const val = view.getFloat32(i, !is_bigendian) * 255;
     output[outIdx++] = val;
     output[outIdx++] = val;
     output[outIdx++] = val;

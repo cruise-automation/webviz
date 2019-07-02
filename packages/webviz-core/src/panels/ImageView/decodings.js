@@ -56,7 +56,7 @@ export function decodeFloat1c(gray: Uint8Array, width: number, height: number, o
 
   let outIdx = 0;
   for (let i = 0; i < width * height * 4; i += 4) {
-    const val = view.getFloat32(i, true) * 255;
+    const val = view.getFloat32(i, !is_bigendian ? true : false) * 255;
     output[outIdx++] = val;
     output[outIdx++] = val;
     output[outIdx++] = val;
@@ -128,16 +128,16 @@ export function decodeMono8(mono8: Uint8Array, width: number, height: number, ou
   }
 }
 
-export function decodeMono16(mono16: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+export function decodeMono16(mono16: Uint8Array, width: number, height: number, is_bigendian: boolean, output: Uint8ClampedArray) {
   let inIdx = 0;
   let outIdx = 0;
 
   for (let i = 0; i < width * height; i++) {
-    const ch = mono16[inIdx << 8] | mono16[inIdx];
+    const val = !is_bigendian ? mono16[inIdx] : mono16[inIdx - 1];
     inIdx += 2;
-    output[outIdx++] = ch;
-    output[outIdx++] = ch;
-    output[outIdx++] = ch;
+    output[outIdx++] = val;
+    output[outIdx++] = val;
+    output[outIdx++] = val;
     output[outIdx++] = 255;
   }
 }

@@ -81,18 +81,20 @@ export default class ImageCanvas extends React.Component<Props, State> {
     if (rawData instanceof Uint8Array) {
       // Binary message processing
       if (msg.datatype === "sensor_msgs/Image") {
-        const { width, height, encoding } = msg.message;
+        const { width, height, is_bigendian, encoding } = msg.message;
         image = new ImageData(width, height);
         // prettier-ignore
         switch (encoding) {
           case "yuv422": decodeYUV(rawData, width, height, image.data); break;
-          case "bgr8": decodeBGR(rawData, width, height, image.data); break;
+          case "bgr8": decodeBGR(rawData, width, height, is_bigendian, image.data); break;
           case "32FC1": decodeFloat1c(rawData, width, height, image.data); break;
           case "bayer_rggb8": decodeRGGB(rawData, width, height, image.data); break;
           case "mono8":
           case "8UC1":
             decodeMono8(rawData, width, height, image.data); break;
-          case "16UC1": decodeMono16(rawData, width, height, image.data); break;
+          case "mono16":
+          case "16UC1":
+            decodeMono16(rawData, width, height, is_bigendian, image.data); break;
           default: break;
 
         }

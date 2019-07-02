@@ -51,7 +51,13 @@ export function decodeBGR(bgr: Uint8Array, width: number, height: number, output
   }
 }
 
-export function decodeFloat1c(gray: Uint8Array, width: number, height: number, is_bigendian: boolean, output: Uint8ClampedArray) {
+export function decodeFloat1c(
+  gray: Uint8Array,
+  width: number,
+  height: number,
+  is_bigendian: boolean,
+  output: Uint8ClampedArray
+) {
   const view = new DataView(gray.buffer, gray.byteOffset);
 
   let outIdx = 0;
@@ -128,7 +134,13 @@ export function decodeMono8(mono8: Uint8Array, width: number, height: number, ou
   }
 }
 
-export function decodeMono16(mono16: Uint8Array, width: number, height: number, is_bigendian: boolean, output: Uint8ClampedArray) {
+export function decodeMono16(
+  mono16: Uint8Array,
+  width: number,
+  height: number,
+  is_bigendian: boolean,
+  output: Uint8ClampedArray
+) {
   let inIdx = 0;
   let outIdx = 0;
 

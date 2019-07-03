@@ -86,8 +86,8 @@ export default class ImageCanvas extends React.Component<Props, State> {
         // prettier-ignore
         switch (encoding) {
           case "yuv422": decodeYUV(rawData, width, height, image.data); break;
-          case "bgr8": decodeBGR(rawData, width, height, is_bigendian, image.data); break;
-          case "32FC1": decodeFloat1c(rawData, width, height, image.data); break;
+          case "bgr8": decodeBGR(rawData, width, height, image.data); break;
+          case "32FC1": decodeFloat1c(rawData, width, height, is_bigendian, image.data); break;
           case "bayer_rggb8": decodeRGGB(rawData, width, height, image.data); break;
           case "mono8":
           case "8UC1":

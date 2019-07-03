@@ -145,8 +145,11 @@ export function decodeMono16(
   let outIdx = 0;
 
   for (let i = 0; i < width * height; i++) {
+    console.log("before:" + i);
     const val = !is_bigendian ? mono16[inIdx] : mono16[inIdx - 1];
+    console.log("after2:" + i);
     inIdx += 2;
+    console.log("after3:" + i);
     output[outIdx++] = val;
     output[outIdx++] = val;
     output[outIdx++] = val;

@@ -11,7 +11,7 @@ import cx from "classnames";
 import * as React from "react";
 
 import type { MessageHistoryTimestampMethod } from ".";
-import type { RosPath } from "./internalCommon";
+import type { RosPath, RosPrimitive } from "./internalCommon";
 import styles from "./MessageHistoryInput.module.scss";
 import {
   type StructureTraversalResult,
@@ -61,6 +61,32 @@ function getFirstInvalidVariableFromRosPath(
     .find(Boolean);
 }
 
+function getExamplePrimitive(primitiveType: RosPrimitive) {
+  switch (primitiveType) {
+    case "string":
+      return '""';
+    case "bool":
+      return "true";
+    case "float32":
+    case "float64":
+    case "uint8":
+    case "uint16":
+    case "uint32":
+    case "uint64":
+    case "int8":
+    case "int16":
+    case "int32":
+    case "int64":
+      return "0";
+    case "duration":
+    case "time":
+      return "";
+    default:
+      (primitiveType: empty);
+      return "";
+  }
+}
+
 type MessageHistoryInputBaseProps = {
   path: string, // A path of the form `/topic.some_field[:]{id==42}.x`
   index?: number, // Optional index field which gets passed to `onChange` (so you don't have to create anonymous functions)
@@ -70,6 +96,7 @@ type MessageHistoryInputBaseProps = {
   autoSize?: boolean,
   placeholder?: string,
   inputStyle?: Object,
+  disableAutocomplete?: boolean, // Treat this as a normal input, with no autocomplete.
 
   timestampMethod?: MessageHistoryTimestampMethod,
   onTimestampMethodChange?: (MessageHistoryTimestampMethod, index: ?number) => void,
@@ -157,6 +184,7 @@ class MessageHistoryInput extends React.PureComponent<MessageHistoryInputProps, 
       noMultiSlices,
       timestampMethod,
       inputStyle,
+      disableAutocomplete,
       globalData,
     } = this.props;
 
@@ -191,10 +219,12 @@ class MessageHistoryInput extends React.PureComponent<MessageHistoryInputProps, 
     let autocompleteItems = [];
     let autocompleteFilterText = "";
     let autocompleteRange = { start: 0, end: Infinity };
-    if (autocompleteType === "topicName") {
+    if (disableAutocomplete) {
+      autocompleteItems = [];
+    } else if (autocompleteType === "topicName") {
       autocompleteItems = getTopicNames(topics);
       autocompleteFilterText = path;
-    } else if (autocompleteType === "messagePath" && topic) {
+    } else if (autocompleteType === "messagePath" && topic /*:: && rosPath */) {
       if (
         structureTraversalResult &&
         !structureTraversalResult.valid &&
@@ -203,18 +233,41 @@ class MessageHistoryInput extends React.PureComponent<MessageHistoryInputProps, 
         structureTraversalResult.structureItem &&
         structureTraversalResult.structureItem.structureType === "message"
       ) {
-        autocompleteItems = Object.keys(structureTraversalResult.structureItem.nextByName);
-        autocompleteFilterText = structureTraversalResult.msgPathPart.name;
+        const { msgPathPart } = structureTraversalResult;
+
+        // Provide filter suggestions for primitive values, since they're the only kinds of values
+        // that can be filtered on.
+        // TODO: add support for nested paths to primitives, such as "/some_topic{foo.bar==3}".
+        for (const name of Object.keys(structureTraversalResult.structureItem.nextByName)) {
+          const item = structureTraversalResult.structureItem.nextByName[name];
+          if (item.structureType === "primitive") {
+            autocompleteItems.push(`${name}==${getExamplePrimitive(item.primitiveType)}`);
+          }
+        }
+
+        autocompleteFilterText = msgPathPart.path.join(".");
         autocompleteRange = {
-          start: structureTraversalResult.msgPathPart.nameLoc,
-          end: structureTraversalResult.msgPathPart.nameLoc + structureTraversalResult.msgPathPart.name.length,
+          start: msgPathPart.nameLoc,
+          end: msgPathPart.nameLoc + autocompleteFilterText.length,
         };
       } else {
         autocompleteItems = messagePathsForDatatype(topic.datatype, datatypes, validTypes, noMultiSlices).filter(
           // .header.seq is pretty useless but shows up everryyywhere.
           (msgPath) => msgPath !== "" && !msgPath.endsWith(".header.seq")
         );
-        autocompleteRange = { start: topic.name.length, end: Infinity };
+
+        // Exclude any initial filters ("/topic{foo=='bar'}") from the range that will be replaced
+        // when the user chooses a new message path.
+        let initialFilterLength = 0;
+        for (const item of rosPath.messagePath) {
+          if (item.type === "filter") {
+            initialFilterLength += item.repr.length + 2; // add { and }
+          } else {
+            break;
+          }
+        }
+
+        autocompleteRange = { start: topic.name.length + initialFilterLength, end: Infinity };
         // Filter out filters (hah!) in a pretty crude way, so autocomplete still works
         // when already having specified a filter and you want to see what other object
         // names you can complete it with. Kind of an edge case, and this doesn't work
@@ -248,7 +301,7 @@ class MessageHistoryInput extends React.PureComponent<MessageHistoryInputProps, 
           onSelect={(value: string, item: any, autocomplete: Autocomplete) =>
             this._onSelect(value, autocomplete, autocompleteType, autocompleteRange)
           }
-          hasError={!!autocompleteType}
+          hasError={!!autocompleteType && !disableAutocomplete}
           autocompleteKey={autocompleteType}
           placeholder={placeholder || "/some/topic.msgs[0].field"}
           autoSize={autoSize}

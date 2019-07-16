@@ -16,11 +16,11 @@ export default class FetchReader extends Readable {
   _aborted: boolean = false;
   _url: string;
 
-  constructor(url: string, headers?: Headers) {
+  constructor(url: string, options: ?Object) {
     super();
     this._url = url;
     this._controller = new AbortController();
-    this._response = fetch(url, { headers, signal: this._controller.signal });
+    this._response = fetch(url, { ...options, signal: this._controller.signal });
   }
 
   // you can only call getReader once on a response body

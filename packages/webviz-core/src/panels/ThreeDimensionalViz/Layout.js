@@ -6,27 +6,33 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import BugIcon from "@mdi/svg/svg/bug.svg";
 import CloseIcon from "@mdi/svg/svg/close.svg";
-import RulerIcon from "@mdi/svg/svg/ruler.svg";
-import Video3dIcon from "@mdi/svg/svg/video-3d.svg";
 import cx from "classnames";
 import { vec3, quat } from "gl-matrix";
 import * as React from "react";
 import Draggable from "react-draggable";
 import KeyListener from "react-key-listener";
-import { cameraStateSelectors, type CameraState, type ReglClickInfo, type MouseHandler } from "regl-worldview";
+import {
+  cameraStateSelectors,
+  PolygonBuilder,
+  DrawPolygons,
+  type CameraState,
+  type ReglClickInfo,
+  type MouseHandler,
+} from "regl-worldview";
 
 import type { ThreeDimensionalVizConfig } from ".";
-import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import CameraInfo from "webviz-core/src/panels/ThreeDimensionalViz/CameraInfo";
 import DebugStats from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
+import DrawingTools, {
+  DRAWING_CONFIG,
+  type DrawingType,
+} from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import FollowTFControl from "webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
-import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/MeasuringTool";
+import MainToolbar from "webviz-core/src/panels/ThreeDimensionalViz/MainToolbar";
 import SceneBuilder, {
   type TopicSettingsCollection,
   type TopicSettings,
@@ -38,11 +44,15 @@ import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
-import colors from "webviz-core/src/styles/colors.module.scss";
-import type { SaveConfig } from "webviz-core/src/types/panels";
+import type { SaveConfig, UpdatePanelConfig } from "webviz-core/src/types/panels";
 import type { Frame, Topic } from "webviz-core/src/types/players";
 import type { MarkerCollector, MarkerProvider } from "webviz-core/src/types/Scene";
 import videoRecordingMode from "webviz-core/src/util/videoRecordingMode";
+
+const POLYGON_TYPE = DRAWING_CONFIG.Polygons.type;
+const CAMERA_TYPE = DRAWING_CONFIG.Camera.type;
+
+type EventName = "onDoubleClick" | "onMouseMove" | "onMouseDown" | "onMouseUp";
 
 type Props = {
   autoTextBackgroundColor?: boolean,
@@ -50,8 +60,11 @@ type Props = {
   frame?: Frame,
   transforms: Transforms,
   saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
+  updatePanelConfig: UpdatePanelConfig,
+  selectedPolygonEditFormat: "json" | "yaml",
   followTf?: string | false,
   followOrientation: boolean,
+  showCrosshair: ?boolean,
   onFollowChange: (followTf?: string | false, followOrientation?: boolean) => void,
   onAlignXYAxis: () => void,
   topicSettings: TopicSettingsCollection,
@@ -63,7 +76,6 @@ type Props = {
   pinTopics: boolean,
   cameraState: $Shape<CameraState>,
   onCameraStateChange: (CameraState) => void,
-  showCameraPosition?: ?boolean,
   helpContent: React.Node | string,
 
   children?: React.Node,
@@ -87,75 +99,18 @@ type State = {
   editedTopics: string[],
 
   debug: boolean,
-  showCameraPosition: boolean,
   showTopics: boolean,
   metadata: Object,
   editTipX: ?number,
   editTipY: ?number,
   editTopic: ?Topic,
-  measureInfo: MeasureInfo,
+  drawingType: ?DrawingType,
+  polygonBuilder: PolygonBuilder,
 };
-
-class MainToolbar extends React.PureComponent<{|
-  perspective: boolean,
-  measuringTool: ?MeasuringTool,
-  measureInfo: MeasureInfo,
-  debug: boolean,
-  onToggleCameraMode: () => void,
-  onToggleDebug: () => void,
-|}> {
-  render() {
-    const {
-      measuringTool,
-      measureInfo: { measureState },
-      debug,
-      onToggleCameraMode,
-      onToggleDebug,
-      perspective = false,
-    } = this.props;
-    const cameraModeTip = perspective ? "Switch to 2D camera" : "Switch to 3D camera";
-    const measureActive = measureState === "place-start" || measureState === "place-finish";
-
-    return (
-      <div className={styles.buttons}>
-        <Button tooltip={cameraModeTip} onClick={onToggleCameraMode}>
-          <Icon style={{ color: perspective ? colors.accent : "white" }}>
-            <Video3dIcon />
-          </Icon>
-        </Button>
-        <Button
-          disabled={perspective}
-          tooltip={
-            perspective
-              ? "Switch to 2D Camera to Measure Distance"
-              : measureActive
-              ? "Cancel Measuring"
-              : "Measure Distance"
-          }
-          onClick={measuringTool ? measuringTool.toggleMeasureState : undefined}>
-          <Icon
-            style={{
-              color: measureActive ? colors.accent : perspective ? undefined : "white",
-            }}>
-            <RulerIcon />
-          </Icon>
-        </Button>
-        {process.env.NODE_ENV === "development" && (
-          <Button tooltip="Debug" onClick={onToggleDebug}>
-            <Icon style={{ color: debug ? colors.accent : "white" }}>
-              <BugIcon />
-            </Icon>
-          </Button>
-        )}
-      </div>
-    );
-  }
-}
 
 export default class Layout extends React.Component<Props, State> implements MarkerProvider {
   // overall element containing everything in this component
   el: ?HTMLDivElement;
-  measuringTool: ?MeasuringTool;
 
   static defaultProps = {
     checkedNodes: [],
@@ -172,16 +127,13 @@ export default class Layout extends React.Component<Props, State> implements Mar
     cachedTopicSettings: {},
     editedTopics: [],
     debug: false,
-    showCameraPosition: !!this.props.showCameraPosition,
     showTopics: false,
     metadata: {},
     editTipX: undefined,
     editTipY: undefined,
     editTopic: undefined,
-    measureInfo: {
-      measureState: "idle",
-      measurePoints: { start: null, end: null },
-    },
+    drawingType: null,
+    polygonBuilder: new PolygonBuilder(),
   };
 
   static getDerivedStateFromProps(nextProps: Props, prevState: State) {
@@ -232,43 +184,35 @@ export default class Layout extends React.Component<Props, State> implements Mar
     return newState;
   }
 
-  onMouseDown: MouseHandler = (e, args: ?ReglClickInfo) => {
-    const handler = this.measuringTool && this.measuringTool.canvasMouseDown;
-    if (handler && args) {
-      return handler(e, args);
-    }
-    const { onMouseDown } = this.props;
-    if (onMouseDown) {
-      onMouseDown(e, args);
-    }
+  onDoubleClick = (ev: MouseEvent, args: ?ReglClickInfo) => {
+    this._handleEvent("onDoubleClick", ev, args);
+  };
+  onMouseDown = (ev: MouseEvent, args: ?ReglClickInfo) => {
+    this._handleEvent("onMouseDown", ev, args);
+  };
+  onMouseMove = (ev: MouseEvent, args: ?ReglClickInfo) => {
+    this._handleEvent("onMouseMove", ev, args);
+  };
+  onMouseUp = (ev: MouseEvent, args: ?ReglClickInfo) => {
+    this._handleEvent("onMouseUp", ev, args);
   };
 
-  onMouseUp: MouseHandler = (e, args: ?ReglClickInfo) => {
-    const handler = this.measuringTool && this.measuringTool.canvasMouseUp;
-    if (handler && args) {
-      return handler(e, args);
-    }
-    const { onMouseUp } = this.props;
-    if (onMouseUp) {
-      onMouseUp(e, args);
-    }
+  _handleDrawPolygons = (eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
+    this.state.polygonBuilder[eventName](ev, args);
+    this.forceUpdate();
   };
 
-  onMouseMove: MouseHandler = (e, args: ?ReglClickInfo) => {
-    const handler = this.measuringTool && this.measuringTool.canvasMouseMove;
-    if (handler && args) {
-      return handler(e, args);
+  _handleEvent = (eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
+    const propsHandler = this.props[eventName];
+    const { drawingType } = this.state;
+    if (!args) {
+      return;
     }
-    const { onMouseMove } = this.props;
-    if (onMouseMove) {
-      onMouseMove(e, args);
+    if (drawingType === POLYGON_TYPE) {
+      this._handleDrawPolygons(eventName, ev, args);
     }
-  };
-
-  onDoubleClick: MouseHandler = (e, args: ?ReglClickInfo) => {
-    const { onDoubleClick } = this.props;
-    if (onDoubleClick) {
-      onDoubleClick(e, args);
+    if (propsHandler) {
+      propsHandler(ev, args);
     }
   };
 
@@ -276,16 +220,48 @@ export default class Layout extends React.Component<Props, State> implements Mar
     "3": () => {
       this.toggleCameraMode();
     },
+    [DRAWING_CONFIG.Polygons.key]: () => {
+      this._toggleDrawing(POLYGON_TYPE);
+    },
+    [DRAWING_CONFIG.Camera.key]: () => {
+      this._toggleDrawing(CAMERA_TYPE);
+    },
+    Control: () => {
+      // support default DrawPolygon key
+      this._toggleDrawing(POLYGON_TYPE);
+    },
+    Escape: () => {
+      this._exitDrawing();
+    },
+  };
+
+  _toggleDrawing = (drawingType: DrawingType) => {
+    // can enter into drawing from null or non-new-drawing-type to the new drawingType
+    const enterDrawing = this.state.drawingType !== drawingType;
+    this.setState({ drawingType: enterDrawing ? drawingType : null });
+    if (drawingType !== CAMERA_TYPE) {
+      this.switchTo2DCameraIfNeeded();
+    }
+  };
+
+  _exitDrawing = () => {
+    this.setState({ drawingType: null });
+  };
+
+  switchTo2DCameraIfNeeded = () => {
+    const {
+      cameraState,
+      cameraState: { perspective },
+      saveConfig,
+    } = this.props;
+    if (this.state.drawingType && perspective) {
+      saveConfig({ cameraState: { ...cameraState, perspective: false } });
+    }
   };
 
   toggleCameraMode = () => {
     const { cameraState, saveConfig } = this.props;
-    const perspective = !cameraState.perspective;
-
-    saveConfig({ cameraState: { ...cameraState, perspective } });
-    if (this.measuringTool && perspective) {
-      this.measuringTool.reset();
-    }
+    saveConfig({ cameraState: { ...cameraState, perspective: !cameraState.perspective } });
   };
 
   toggleShowTopics = () => {
@@ -368,14 +344,18 @@ export default class Layout extends React.Component<Props, State> implements Mar
     const {
       cameraState,
       cameraState: { perspective },
-      onCameraStateChange,
-      transforms,
-      followTf,
       followOrientation,
+      followTf,
       onAlignXYAxis,
+      onCameraStateChange,
+      onFollowChange,
       saveConfig,
+      selectedPolygonEditFormat,
+      showCrosshair,
+      transforms,
+      updatePanelConfig,
     } = this.props;
-    const { measureInfo, showCameraPosition } = this.state;
+    const { debug, polygonBuilder, drawingType } = this.state;
 
     return (
       <div className={cx(styles.toolbar, styles.right)}>
@@ -384,34 +364,35 @@ export default class Layout extends React.Component<Props, State> implements Mar
             transforms={transforms}
             tfToFollow={followTf ? followTf : undefined}
             followingOrientation={followOrientation}
-            onFollowChange={this.props.onFollowChange}
+            onFollowChange={onFollowChange}
           />
         </div>
         <MainToolbar
           perspective={perspective}
-          measureInfo={measureInfo}
-          measuringTool={this.measuringTool}
-          debug={this.state.debug}
+          debug={debug}
           onToggleCameraMode={this.toggleCameraMode}
           onToggleDebug={this.toggleDebug}
         />
-        <CameraInfo
+        <DrawingTools
           cameraState={cameraState}
-          expanded={showCameraPosition}
-          onExpand={(expanded) => this.setState({ showCameraPosition: expanded })}
-          onCameraStateChange={onCameraStateChange}
-          followTf={followTf}
           followOrientation={followOrientation}
+          followTf={followTf}
           onAlignXYAxis={onAlignXYAxis}
+          onCameraStateChange={onCameraStateChange}
+          onSetPolygons={(polygons) => this.setState({ polygonBuilder: new PolygonBuilder(polygons) })}
+          polygonBuilder={polygonBuilder}
           saveConfig={saveConfig}
+          selectedPolygonEditFormat={selectedPolygonEditFormat}
+          showCrosshair={!!showCrosshair}
+          type={drawingType}
+          updatePanelConfig={updatePanelConfig}
         />
-        {this.measuringTool && this.measuringTool.measureDistance}
       </div>
     );
   }
 
   render3d() {
-    const { sceneBuilder, transformsBuilder, debug, metadata } = this.state;
+    const { sceneBuilder, transformsBuilder, debug, metadata, polygonBuilder } = this.state;
     const scene = sceneBuilder.getScene();
     const {
       autoTextBackgroundColor,
@@ -424,13 +405,14 @@ export default class Layout extends React.Component<Props, State> implements Mar
     } = this.props;
 
     const WorldComponent = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.WorldComponent;
+    // TODO(Audrey): update DrawPolygons to support custom key so the users don't have to press ctrl key all the time
 
     return (
       <WorldComponent
         autoTextBackgroundColor={!!autoTextBackgroundColor}
         cameraState={cameraState}
         debug={debug}
-        markerProviders={extensions.markerProviders.concat([sceneBuilder, this.measuringTool, transformsBuilder, this])}
+        markerProviders={extensions.markerProviders.concat([sceneBuilder, transformsBuilder, this])}
         mouseClick={mouseClick}
         onCameraStateChange={onCameraStateChange}
         onDoubleClick={this.onDoubleClick}
@@ -441,6 +423,7 @@ export default class Layout extends React.Component<Props, State> implements Mar
         extensions={selections.extensions}
         metadata={metadata}>
         {children}
+        <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
         {process.env.NODE_ENV !== "production" && !inScreenshotTests() && <DebugStats />}
       </WorldComponent>
     );
@@ -448,13 +431,11 @@ export default class Layout extends React.Component<Props, State> implements Mar
 
   // draw a crosshair to show the center of the viewport
   renderMarkers(add: MarkerCollector) {
-    const { cameraState } = this.props;
-    if (!this.state.showCameraPosition || cameraState.perspective) {
+    const { cameraState, showCrosshair } = this.props;
+    if (!cameraState || cameraState.perspective || !showCrosshair) {
       return;
     }
-    if (!cameraState) {
-      return;
-    }
+
     const { target, targetOffset, distance, thetaOffset } = cameraState;
     const targetHeading = cameraStateSelectors.targetHeading(cameraState);
 
@@ -580,8 +561,8 @@ export default class Layout extends React.Component<Props, State> implements Mar
   }
 
   render() {
-    const { measureState, measurePoints } = this.state.measureInfo;
-    const cursorType = measureState === "place-start" || measureState === "place-finish" ? "crosshair" : "";
+    const { drawingType } = this.state;
+    const cursorType = drawingType && drawingType !== CAMERA_TYPE ? "crosshair" : "";
 
     return (
       <div
@@ -589,12 +570,6 @@ export default class Layout extends React.Component<Props, State> implements Mar
         ref={(el) => (this.el = el)}
         style={{ cursor: cursorType }}
         onClick={this.onControlsOverlayClick}>
-        <MeasuringTool
-          ref={(el) => (this.measuringTool = el)}
-          measureState={measureState}
-          measurePoints={measurePoints}
-          onMeasureInfoChange={(measureInfo) => this.setState({ measureInfo })}
-        />
         <KeyListener keyDownHandlers={this.keyDownHandlers} />
         <PanelToolbar floating helpContent={this.props.helpContent} />
         <div style={{ visibility: videoRecordingMode() ? "hidden" : "visible" }}>

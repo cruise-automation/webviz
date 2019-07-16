@@ -28,9 +28,7 @@ export default function SeekController(props: Props) {
   // It doesn't make sense to apply a seek to a different instance of a player.
   // e.g. a user links to ?segment=foo&seek-to=4814814710 and then drops a bag - we don't
   // want to seek into the bag later.
-  const shouldRunEffect = Boolean(
-    context && context.playerState.activeData && context.playerState.activeData.isPlaying && !seekApplied.current
-  );
+  const shouldRunEffect = Boolean(context && context.playerState.activeData && !seekApplied.current);
   useEffect(
     () => {
       const { activeData, playerId } = context.playerState;
@@ -38,9 +36,6 @@ export default function SeekController(props: Props) {
         return;
       }
       if (seekApplied.current) {
-        return;
-      }
-      if (!activeData.isPlaying) {
         return;
       }
       seekApplied.current = true;

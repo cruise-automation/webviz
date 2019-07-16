@@ -112,7 +112,19 @@ export function fromNanoSec(nsec: number): Time {
 }
 
 export function fromMillis(value: number): Time {
-  return fromSec(value / 1000);
+  let sec = Math.trunc(value / 1000);
+  let nsec = Math.round((value - sec * 1000) * 1e6);
+  sec += Math.trunc(nsec / 1e9);
+  nsec %= 1e9;
+  return { sec, nsec };
+}
+
+export function fromMicros(value: number): Time {
+  let sec = Math.trunc(value / 1e6);
+  let nsec = Math.round((value - sec * 1e6) * 1e3);
+  sec += Math.trunc(nsec / 1e9);
+  nsec %= 1e9;
+  return { sec, nsec };
 }
 
 export function findClosestTimestampIndex(currentTime: Time, frameTimestamps: string[] = []): number {

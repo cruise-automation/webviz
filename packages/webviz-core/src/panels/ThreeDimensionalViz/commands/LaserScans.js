@@ -34,7 +34,10 @@ const laserScan = (regl: Regl) =>
     attributes: {
       index: (context, props) => range(props.ranges.length),
       range: regl.prop("ranges"),
-      intensity: regl.prop("intensities"),
+      intensity: (context, props) =>
+        props.intensities.length === props.ranges.length
+          ? props.intensities
+          : new Float32Array(props.ranges.length).fill(1),
     },
 
     count: regl.prop("ranges.length"),

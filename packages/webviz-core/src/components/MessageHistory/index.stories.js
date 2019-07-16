@@ -32,10 +32,13 @@ const fixture = {
     "msgs/State": [
       { name: "header", type: "std_msgs/Header", isArray: false },
       { name: "items", type: "msgs/OtherState", isArray: true },
+      { name: "foo_id", type: "uint32", isArray: false },
     ],
     "msgs/OtherState": [
       { name: "id", type: "int32", isArray: false },
       { name: "speed", type: "float32", isArray: false },
+      { name: "name", type: "string", isArray: false },
+      { name: "valid", type: "bool", isArray: false },
     ],
     "std_msgs/Header": [
       { name: "seq", type: "uint32", isArray: false },
@@ -92,8 +95,11 @@ storiesOf("<MessageHistory.Input>", module)
   .add("autocomplete filter", () => {
     return <MessageHistoryInputStory path="/some_topic/state.items[:]{}" />;
   })
+  .add("autocomplete top level filter", () => {
+    return <MessageHistoryInputStory path="/some_topic/state{}" />;
+  })
   .add("autocomplete for globalData variables", () => {
-    return <MessageHistoryInputStory path="/some_topic/state.items[:]{id==$}" />;
+    return <MessageHistoryInputStory path="/some_topic/state{foo_id==0}.items[:]{id==$}" />;
   })
   .add("path with valid globalData variable", () => {
     return <MessageHistoryInputStory path="/some_topic/state.items[:]{id==$global_var_2}" />;

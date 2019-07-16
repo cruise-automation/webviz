@@ -11,11 +11,13 @@ import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
 import WavesIcon from "@mdi/svg/svg/waves.svg";
 import cx from "classnames";
-import { sortBy, pick, get } from "lodash";
+import { sortBy, pick, get, isEqual, omit } from "lodash";
+import memoizeOne from "memoize-one";
 import * as React from "react";
 import { createSelector } from "reselect";
 import styled from "styled-components";
 
+import CameraModel from "./CameraModel";
 import ImageCanvas from "./ImageCanvas";
 import imageCanvasStyles from "./ImageCanvas.module.scss";
 import helpContent from "./index.help.md";
@@ -38,8 +40,10 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import type { Topic } from "webviz-core/src/types/players";
+import type { CameraInfo } from "webviz-core/src/types/Messages";
+import type { Topic, Message } from "webviz-core/src/types/players";
 import naturalSort from "webviz-core/src/util/naturalSort";
+import reportError from "webviz-core/src/util/reportError";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 import toggle from "webviz-core/src/util/toggle";
 
@@ -158,6 +162,63 @@ function renderEmptyState(cameraTopic: string, markerTopics: string[], shouldSyn
   );
 }
 
+const getCameraModel = memoizeOne(
+  function getCameraModel(cameraInfo: ?CameraInfo): ?CameraModel {
+    if (!cameraInfo) {
+      return null;
+    }
+    try {
+      return new CameraModel(cameraInfo);
+    } catch (err) {
+      reportError(`Failed to initialize camera model from CameraInfo`, err, "user");
+      return null;
+    }
+  },
+  ([cameraInfo]: mixed[], [prevCameraInfo]: mixed[]) => {
+    return isEqual(omit(cameraInfo, "header"), omit(prevCameraInfo, "header"));
+  }
+);
+
+export function buildMarkerData(markers: Message[], scale: number, transformMarkers: boolean, cameraInfo: ?CameraInfo) {
+  if (markers.length === 0) {
+    return {
+      markers,
+      cameraModel: null,
+      originalHeight: undefined,
+      originalWidth: undefined,
+    };
+  }
+  let cameraModel;
+  if (transformMarkers) {
+    cameraModel = getCameraModel(cameraInfo);
+    if (!cameraModel) {
+      return null;
+    }
+  }
+
+  // Markers can only be rendered if we know the original size of the image.
+  let originalWidth;
+  let originalHeight;
+  if (cameraInfo && cameraInfo.width && cameraInfo.height) {
+    // Prefer using CameraInfo can be used to determine the image size.
+    originalWidth = cameraInfo.width;
+    originalHeight = cameraInfo.height;
+  } else if (scale === 1) {
+    // Otherwise, if scale === 1, the image was not downsampled, so the size of the bitmap is accurate.
+    originalWidth = undefined;
+    originalHeight = undefined;
+  } else {
+    return null;
+  }
+
+  return {
+    markers,
+    cameraModel,
+    originalWidth,
+    originalHeight,
+  };
+}
+
 class ImageView extends React.Component<Props> {
   static panelType = "ImageViewPanel";
   static defaultConfig = getGlobalHooks().perPanelHooks().ImageView.defaultConfig;
@@ -216,12 +277,17 @@ class ImageView extends React.Component<Props> {
   }
 
   renderMarkerDropdown(allItemsByPath: MessageHistoryItemsByPath) {
-    const { cameraTopic, enabledMarkerNames } = this.props.config;
+    const { cameraTopic, enabledMarkerNames, scale } = this.props.config;
     const imageTopicsByNamespace = imageTopicsByNamespaceSelector(this.props.topics);
     const markerTopics = markerTopicSelector(this.props.topics, this.props.config.panelHooks);
 
     const allCameraNamespaces = imageTopicsByNamespace ? [...imageTopicsByNamespace.keys()] : [];
     const markerOptions = getMarkerOptions(cameraTopic, (markerTopics || []).map((t) => t.name), allCameraNamespaces);
+
+    const cameraInfoTopic = getCameraInfoTopic(cameraTopic);
+    const hasCameraInfo = cameraInfoTopic && get(allItemsByPath, [cameraInfoTopic, "length"]) > 0;
+    const missingRequiredCameraInfo = scale !== 1 && !hasCameraInfo;
+
     return (
       <Dropdown
         dataTest={"markers-dropdown"}
@@ -229,8 +295,12 @@ class ImageView extends React.Component<Props> {
         onChange={this.onToggleMarkerName}
         value={enabledMarkerNames}
         text={markerOptions.length > 0 ? "markers" : "no markers"}
-        tooltip={markerOptions.length === 0 ? "camera_info must be available to render markers" : undefined}
-        disabled={markerOptions.length === 0}>
+        tooltip={
+          missingRequiredCameraInfo
+            ? "camera_info is required when image resolution is set to less than 100%.\nResolution can be changed in the panel settings."
+            : undefined
+        }
+        disabled={markerOptions.length === 0 || missingRequiredCameraInfo}>
         {markerOptions.map((option) => (
           <Item
             icon={enabledMarkerNames.includes(option.name) ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
@@ -304,7 +374,7 @@ class ImageView extends React.Component<Props> {
     const markerHistorySize = shouldSynchronize ? MARKER_QUEUE_SIZE : 1;
 
     return (
-      <Flex col>
+      <Flex col clip>
         <MessageHistory paths={[cameraTopic]} imageScale={scale} historySize={imageHistorySize}>
           {({ itemsByPath: imageItemsByPath }: MessageHistoryData) => (
             <MessageHistory
@@ -327,20 +397,26 @@ class ImageView extends React.Component<Props> {
                     </>
                   );
                 }
+                if (cameraInfoTopic) {
+                  // _renderToolbar needs access to camera info
+                  allItemsByPath[cameraInfoTopic] = markerItemsByPath[cameraInfoTopic];
+                }
+
+                const markerData = buildMarkerData(
+                  markerTopics.map((topic) => get(allItemsByPath[topic], [0, "message"])).filter(Boolean),
+                  scale,
+                  transformMarkers,
+                  cameraInfoTopic ? get(markerItemsByPath, [cameraInfoTopic, 0, "message", "message"]) : null
+                );
 
                 return (
                   <>
                     {this._renderToolbar(allItemsByPath)}
                     <ImageCanvas
-                      transformMarkers={!!transformMarkers}
-                      saveConfig={saveConfig}
                       panelHooks={panelHooks}
                       topic={cameraTopic}
                       image={allItemsByPath[cameraTopic][0] && allItemsByPath[cameraTopic][0].message}
-                      cameraInfo={
-                        cameraInfoTopic ? get(markerItemsByPath, [cameraInfoTopic, 0, "message", "message"]) : undefined
-                      }
-                      markers={markerTopics.map((topic) => get(allItemsByPath[topic], [0, "message"])).filter(Boolean)}
+                      markerData={markerData}
                     />
                     <ChildToggle.ContainsOpen>
                       {(containsOpen) => {

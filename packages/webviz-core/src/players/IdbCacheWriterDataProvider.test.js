@@ -11,7 +11,6 @@ import { TimeUtil } from "rosbag";
 
 import { getIdbCacheDataProviderDatabase, MESSAGES_STORE_NAME, TIMESTAMP_INDEX } from "./IdbCacheDataProviderDatabase";
 import IdbCacheWriterDataProvider, { BLOCK_SIZE_NS } from "./IdbCacheWriterDataProvider";
-import delay from "webviz-core/shared/delay";
 import MemoryDataProvider from "webviz-core/src/players/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/players/mockExtensionPoint";
 import type { MessageLike } from "webviz-core/src/players/types";
@@ -72,22 +71,6 @@ describe("IdbCacheWriterDataProvider", () => {
     ]);
   });
 
-  it("loads when topics are selected", async () => {
-    const { provider } = getProvider();
-    const { extensionPoint, topicCallbacks } = mockExtensionPoint();
-    jest.spyOn(extensionPoint, "progressCallback");
-
-    await provider.initialize(extensionPoint);
-    topicCallbacks[0](["/foo"]);
-    await delay(1000); // Wait until fully loaded and written to local db.
-
-    expect(extensionPoint.progressCallback.mock.calls.length).toEqual(3 + 2e9 / BLOCK_SIZE_NS);
-
-    const db = await getIdbCacheDataProviderDatabase("some-id");
-    const messages = await db.getRange(MESSAGES_STORE_NAME, TIMESTAMP_INDEX, 0, 2e9);
-    expect(messages.map(({ value }) => value.message)).toEqual(generateMessages(["/foo"]));
-  });
-
   it("loads when calling getMessages", async () => {
     const { provider } = getProvider();
     const { extensionPoint } = mockExtensionPoint();
@@ -96,7 +79,8 @@ describe("IdbCacheWriterDataProvider", () => {
     await provider.initialize(extensionPoint);
     const emptyArray = await provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo"]);
 
-    expect(extensionPoint.progressCallback.mock.calls.length).toEqual(3 + 2e9 / BLOCK_SIZE_NS);
+    // See comment in previous test for why we make this many calls.
+    expect(extensionPoint.progressCallback.mock.calls.length).toEqual(4 + 4e9 / BLOCK_SIZE_NS);
     expect(emptyArray).toEqual([]);
 
     const db = await getIdbCacheDataProviderDatabase("some-id");
@@ -118,5 +102,25 @@ describe("IdbCacheWriterDataProvider", () => {
     expect(sortMessages(messages.map(({ value }) => value.message))).toEqual(
       generateMessages(["/foo", "/bar", "/baz"])
     );
+  });
+
+  // When this happens, we still have a promise to resolve, and we can't keep it unresolved because
+  // then the part of the application that is waiting for that promise might lock up, and we cannot
+  // resolve it with the newer topics because that would violate the API.
+  it("still loads old topics when there is a getMessages call pending while getMessages gets called", async () => {
+    const { provider } = getProvider();
+    const { extensionPoint } = mockExtensionPoint();
+    jest.spyOn(extensionPoint, "progressCallback");
+
+    await provider.initialize(extensionPoint);
+    const getMessagesPromise1 = provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo"]);
+    const getMessagesPromise2 = provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo", "/bar"]);
+
+    expect(await getMessagesPromise1).toEqual([]);
+    expect(await getMessagesPromise2).toEqual([]);
+
+    const db = await getIdbCacheDataProviderDatabase("some-id");
+    const messages = await db.getRange(MESSAGES_STORE_NAME, TIMESTAMP_INDEX, 0, 6e9);
+    expect(sortMessages(messages.map(({ value }) => value.message))).toEqual(generateMessages(["/foo", "/bar"]));
   });
 });

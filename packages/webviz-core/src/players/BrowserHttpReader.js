@@ -57,7 +57,7 @@ export default class BrowserHttpReader implements FileReader {
   fetch(offset: number, length: number): FileStream {
     const headers = new Headers({ range: `bytes=${offset}-${offset + (length - 1)}` });
     // $FlowFixMe - Flow doesn't understand that this *does* have the right type.
-    return new FetchReader(this._url, headers);
+    return new FetchReader(this._url, { headers });
   }
 
   recordBytesPerSecond(bytesPerSecond: number): void {}

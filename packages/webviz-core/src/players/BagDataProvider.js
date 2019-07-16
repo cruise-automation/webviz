@@ -12,8 +12,8 @@ import decompress from "wasm-lz4";
 
 import BrowserHttpReader from "webviz-core/src/players/BrowserHttpReader";
 import type {
-  ChainableDataProvider,
-  ChainableDataProviderDescriptor,
+  RandomAccessDataProvider,
+  DataProviderDescriptor,
   Connection,
   ExtensionPoint,
   InitializationResult,
@@ -30,12 +30,12 @@ type Options = {| bagPath: BagPath, cacheSizeInBytes?: ?number |};
 
 const log = new Logger(__filename);
 
-export default class BagDataProvider implements ChainableDataProvider {
+export default class BagDataProvider implements RandomAccessDataProvider {
   _options: Options;
   _bag: Bag;
   _connectionsByTopic: { [topic: string]: Connection } = {};
 
-  constructor(options: Options, children: ChainableDataProviderDescriptor[]) {
+  constructor(options: Options, children: DataProviderDescriptor[]) {
     if (children.length > 0) {
       throw new Error("BagDataProvider cannot have children");
     }
@@ -47,6 +47,7 @@ export default class BagDataProvider implements ChainableDataProvider {
     await decompress.isLoaded;
 
     if (bagPath.type === "remoteBagUrl") {
+      extensionPoint.progressCallback({ fullyLoadedFractionRanges: [] });
       let approximateSize = 0;
       const fileReader = new BrowserHttpReader(bagPath.url);
       const remoteReader = new CachedFilelike({
@@ -79,6 +80,7 @@ export default class BagDataProvider implements ChainableDataProvider {
       await this._bag.open();
     } else {
       this._bag = await open(bagPath.file);
+      extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] });
     }
 
     const { startTime, endTime } = this._bag;

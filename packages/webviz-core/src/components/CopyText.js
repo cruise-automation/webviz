@@ -27,18 +27,17 @@ const SCopyTextWrapper = styled.div`
 `;
 
 type Props = {|
-  copyText?: string,
+  copyText: string,
   tooltip: string,
   children: React.Node,
-  getCopyText?: () => string,
 |};
 
-function CopyText({ copyText, tooltip, children, getCopyText }: Props) {
+function CopyText({ copyText, tooltip, children }: Props) {
   if (!copyText || !children) {
     return null;
   }
   return (
-    <SCopyTextWrapper onClick={() => clipboard.copy(copyText || getCopyText)}>
+    <SCopyTextWrapper onClick={() => clipboard.copy(copyText)}>
       {children ? children : copyText}
       <Icon fade style={{ margin: "0 8px", verticalAlign: "middle" }} tooltip={tooltip}>
         <ClipboardOutlineIcon />

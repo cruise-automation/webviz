@@ -8,18 +8,18 @@
 
 import { Time } from "rosbag";
 
-import { type ChainableDataProvider, type InitializationResult, type MessageLike } from "./types";
-import WorkerDataProviderWorker from "./WorkerDataProvider.worker"; // eslint-disable-line
+import { type RandomAccessDataProvider, type InitializationResult, type MessageLike } from "./types";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import RpcDataProvider from "webviz-core/src/players/RpcDataProvider";
-import type { ChainableDataProviderDescriptor, ExtensionPoint } from "webviz-core/src/players/types";
+import type { DataProviderDescriptor, ExtensionPoint } from "webviz-core/src/players/types";
 import Rpc from "webviz-core/src/util/Rpc";
 
-export default class WorkerDataProvider implements ChainableDataProvider {
+export default class WorkerDataProvider implements RandomAccessDataProvider {
   _worker: Worker;
   _provider: RpcDataProvider;
-  _child: ChainableDataProviderDescriptor;
+  _child: DataProviderDescriptor;
 
-  constructor(args: Object, children: ChainableDataProviderDescriptor[]) {
+  constructor(args: Object, children: DataProviderDescriptor[]) {
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to WorkerDataProvider: ${children.length}`);
     }
@@ -27,9 +27,9 @@ export default class WorkerDataProvider implements ChainableDataProvider {
   }
 
   initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
-    // $FlowFixMe - flow doesn't understand webpack imports this as a WebWorker constructor
+    const WorkerDataProviderWorker = getGlobalHooks().getWorkerDataProviderWorker();
     this._worker = new WorkerDataProviderWorker();
-    this._provider = new RpcDataProvider(new Rpc(this._worker), this._child);
+    this._provider = new RpcDataProvider(new Rpc(this._worker), [this._child]);
     return this._provider.initialize(extensionPoint);
   }
 

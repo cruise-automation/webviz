@@ -6,78 +6,83 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEqual, omit } from "lodash";
 import React from "react";
+import shallowequal from "shallowequal";
+import styled from "styled-components";
 
 import CameraModel from "./CameraModel";
-import { decodeYUV, decodeBGR, decodeFloat1c, decodeRGGB } from "./decodings";
+import {
+  decodeYUV,
+  decodeBGR,
+  decodeFloat1c,
+  decodeBayerRGGB8,
+  decodeBayerBGGR8,
+  decodeBayerGBRG8,
+  decodeBayerGRBG8,
+  decodeMono8,
+  decodeMono16,
+} from "./decodings";
 import styles from "./ImageCanvas.module.scss";
 import { type ImageViewPanelHooks } from "./index";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { ImageMarker, CameraInfo, Color } from "webviz-core/src/types/Messages";
+import colors from "webviz-core/src/styles/colors.module.scss";
+import type { ImageMarker, Color, Point } from "webviz-core/src/types/Messages";
 import type { Message } from "webviz-core/src/types/players";
+import { downloadFiles } from "webviz-core/src/util";
+import debouncePromise from "webviz-core/src/util/debouncePromise";
 
-type Props = {
+type Props = {|
   topic: string,
   image: ?Message,
-  cameraInfo: ?CameraInfo,
-  markers: Message[],
+  markerData: ?{|
+    markers: Message[],
+    originalWidth: ?number, // null means no scaling is needed (use the image's size)
+    originalHeight: ?number, // null means no scaling is needed (use the image's size)
+    cameraModel: ?CameraModel, // null means no transformation is needed
+  |},
   panelHooks?: ImageViewPanelHooks,
-  transformMarkers: boolean,
-};
+|};
 
-type State = {
-  cameraModel: ?CameraModel,
-  prevCameraInfo: ?CameraInfo,
-  prevTransformMarkers: boolean,
-};
+type State = {|
+  error: ?Error,
+|};
 
 function toRGBA(color: Color) {
   const { r, g, b, a } = color;
   return `rgba(${r}, ${g}, ${b}, ${a || 1})`;
 }
 
+function maybeUnrectifyPoint(cameraModel: ?CameraModel, point: Point): { x: number, y: number } {
+  if (cameraModel) {
+    return cameraModel.unrectifyPoint(point);
+  }
+  return point;
+}
+
+const SErrorMessage = styled.div`
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  position: absolute;
+  align-items: center;
+  justify-content: center;
+  color: ${colors.red};
+`;
+
 export default class ImageCanvas extends React.Component<Props, State> {
   _canvasRef = React.createRef<HTMLCanvasElement>();
-  _ready: boolean = true;
-  _droppedFrame: boolean = false;
 
-  static defaultProps = {
-    markers: [],
+  state = {
+    error: undefined,
   };
-
-  state = { cameraModel: null, prevCameraInfo: null, prevTransformMarkers: false };
-
-  static getDerivedStateFromProps({ cameraInfo, topic, transformMarkers }: Props, prevState: State) {
-    if (!cameraInfo && prevState.prevCameraInfo) {
-      return {
-        prevCameraInfo: cameraInfo,
-        cameraModel: null,
-        transformMarkers: false,
-      };
-    }
-    // only reset the cameraModel when cameraInfo or transformMarkers change
-    if (
-      cameraInfo &&
-      (transformMarkers !== prevState.prevTransformMarkers ||
-        cameraInfo !== prevState.prevCameraInfo ||
-        (!prevState.prevCameraInfo || !isEqual(omit(cameraInfo, "header"), omit(prevState.prevCameraInfo, "header"))))
-    ) {
-      return {
-        prevTransformMarkers: transformMarkers,
-        prevCameraInfo: cameraInfo,
-        cameraModel: new CameraModel(cameraInfo, transformMarkers),
-      };
-    }
-
-    return null;
-  }
 
   decodeMessageToBitmap = async (msg: any): Promise<?ImageBitmap> => {
     let image: ImageData | Image | Blob | void;
-    const { data: rawData } = msg.message;
+    const { data: rawData, is_bigendian } = msg.message;
     if (rawData instanceof Uint8Array) {
       // Binary message processing
       if (msg.datatype === "sensor_msgs/Image") {
@@ -87,9 +92,19 @@ export default class ImageCanvas extends React.Component<Props, State> {
         switch (encoding) {
           case "yuv422": decodeYUV(rawData, width, height, image.data); break;
           case "bgr8": decodeBGR(rawData, width, height, image.data); break;
-          case "32FC1": decodeFloat1c(rawData, width, height, image.data); break;
-          case "bayer_rggb8": decodeRGGB(rawData, width, height, image.data); break;
-          default: break;
+          case "32FC1": decodeFloat1c(rawData, width, height, is_bigendian, image.data); break;
+          case "bayer_rggb8": decodeBayerRGGB8(rawData, width, height, image.data); break;
+          case "bayer_bggr8": decodeBayerBGGR8(rawData, width, height, image.data); break;
+          case "bayer_gbrg8": decodeBayerGBRG8(rawData, width, height, image.data); break;
+          case "bayer_grbg8": decodeBayerGRBG8(rawData, width, height, image.data); break;
+          case "mono8":
+          case "8UC1":
+              decodeMono8(rawData, width, height, image.data); break;
+          case "mono16":
+          case "16UC1":
+              decodeMono16(rawData, width, height, is_bigendian, image.data); break;
+          default:
+            throw new Error(`Unsupported encoding ${encoding}`);
         }
       } else if (msg.datatype === "sensor_msgs/CompressedImage") {
         image = new Blob([rawData], { type: `image/${msg.message.format}` });
@@ -126,10 +141,8 @@ export default class ImageCanvas extends React.Component<Props, State> {
   };
 
   paintBitmap = (bitmap: ?ImageBitmap) => {
-    const { cameraInfo: info } = this.props;
-    const { cameraModel } = this.state;
+    const { markerData } = this.props;
     const canvas = this._canvasRef.current;
-    const cameraModelWithInitializedData = cameraModel && cameraModel.initializedData ? cameraModel : null;
 
     if (!canvas) {
       return;
@@ -139,26 +152,38 @@ export default class ImageCanvas extends React.Component<Props, State> {
       return;
     }
     const ctx = canvas.getContext("2d");
-    if (info && info.width && info.height) {
-      this.resizeCanvas(info.width, info.height);
-      ctx.save();
-      ctx.scale(info.width / bitmap.width, info.height / bitmap.height);
-      ctx.drawImage(bitmap, 0, 0);
-      ctx.restore();
-      ctx.save();
-      if (cameraModelWithInitializedData) {
-        this.paintMarkers(ctx, cameraModelWithInitializedData);
-        ctx.restore();
-      }
-    } else {
+
+    if (!markerData) {
       this.resizeCanvas(bitmap.width, bitmap.height);
       ctx.drawImage(bitmap, 0, 0);
+      return;
     }
-    bitmap.close();
+
+    const { markers, cameraModel } = markerData;
+    let { originalWidth, originalHeight } = markerData;
+    if (originalWidth == null) {
+      originalWidth = bitmap.width;
+    }
+    if (originalHeight == null) {
+      originalHeight = bitmap.height;
+    }
+
+    this.resizeCanvas(originalWidth, originalHeight);
+    ctx.save();
+    ctx.scale(originalWidth / bitmap.width, originalHeight / bitmap.height);
+    ctx.drawImage(bitmap, 0, 0);
+    ctx.restore();
+    ctx.save();
+    try {
+      this.paintMarkers(ctx, markers, cameraModel);
+    } catch (err) {
+      console.warn("error painting markers:", err);
+    } finally {
+      ctx.restore();
+    }
   };
 
-  paintMarkers(ctx: CanvasRenderingContext2D, cameraModel: CameraModel) {
-    const { markers } = this.props;
+  paintMarkers(ctx: CanvasRenderingContext2D, markers: Message[], cameraModel: ?CameraModel) {
     const imageViewHooks = this.props.panelHooks || getGlobalHooks().perPanelHooks().ImageView;
 
     for (const msg of markers) {
@@ -176,12 +201,12 @@ export default class ImageCanvas extends React.Component<Props, State> {
     }
   }
 
-  paintMarker(ctx: CanvasRenderingContext2D, marker: ImageMarker, cameraModel: CameraModel) {
+  paintMarker(ctx: CanvasRenderingContext2D, marker: ImageMarker, cameraModel: ?CameraModel) {
     switch (marker.type) {
       case 0: {
         // CIRCLE
         ctx.beginPath();
-        const { x, y } = cameraModel.maybeUnrectifyPoint(marker.position);
+        const { x, y } = maybeUnrectifyPoint(cameraModel, marker.position);
         ctx.arc(x, y, marker.scale, 0, 2 * Math.PI);
         if (marker.thickness <= 0) {
           ctx.fillStyle = toRGBA(marker.outline_color);
@@ -202,8 +227,8 @@ export default class ImageCanvas extends React.Component<Props, State> {
         ctx.strokeStyle = toRGBA(marker.outline_color);
         ctx.lineWidth = marker.thickness;
         for (let i = 0; i < marker.points.length; i += 2) {
-          const { x: x1, y: y1 } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
-          const { x: x2, y: y2 } = cameraModel.maybeUnrectifyPoint(marker.points[i + 1]);
+          const { x: x1, y: y1 } = maybeUnrectifyPoint(cameraModel, marker.points[i]);
+          const { x: x2, y: y2 } = maybeUnrectifyPoint(cameraModel, marker.points[i + 1]);
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
@@ -218,10 +243,10 @@ export default class ImageCanvas extends React.Component<Props, State> {
           break;
         }
         ctx.beginPath();
-        const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[0]);
+        const { x, y } = maybeUnrectifyPoint(cameraModel, marker.points[0]);
         ctx.moveTo(x, y);
         for (let i = 1; i < marker.points.length; i++) {
-          const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
+          const { x, y } = maybeUnrectifyPoint(cameraModel, marker.points[i]);
           ctx.lineTo(x, y);
         }
         if (marker.type === 3) {
@@ -247,7 +272,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
         const size = marker.scale || 4;
         if (marker.outline_colors && marker.outline_colors.length === marker.points.length) {
           for (let i = 0; i < marker.points.length; i++) {
-            const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
+            const { x, y } = maybeUnrectifyPoint(cameraModel, marker.points[i]);
             ctx.fillStyle = toRGBA(marker.outline_colors[i]);
             ctx.beginPath();
             ctx.arc(x, y, size, 0, 2 * Math.PI);
@@ -256,7 +281,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
         } else {
           ctx.beginPath();
           for (let i = 0; i < marker.points.length; i++) {
-            const { x, y } = cameraModel.maybeUnrectifyPoint(marker.points[i]);
+            const { x, y } = maybeUnrectifyPoint(cameraModel, marker.points[i]);
             ctx.arc(x, y, size, 0, 2 * Math.PI);
             ctx.closePath();
           }
@@ -268,7 +293,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
 
       case 5: {
         // TEXT (our own extension on visualization_msgs/Marker)
-        const { x, y } = cameraModel.maybeUnrectifyPoint(marker.position);
+        const { x, y } = maybeUnrectifyPoint(cameraModel, marker.position);
 
         const fontSize = marker.scale * 12;
         const padding = 4 * marker.scale;
@@ -313,40 +338,33 @@ export default class ImageCanvas extends React.Component<Props, State> {
     document.removeEventListener("visibilitychange", this._onVisibilityChange);
   }
 
-  shouldComponentUpdate(nextProps: Props) {
-    return (
-      nextProps.transformMarkers !== this.props.transformMarkers ||
-      // shallow equality to avoid comparing image data
-      nextProps.image !== this.props.image ||
-      // deep equality since camera info is re-published but never actually changes
-      !isEqual(nextProps.cameraInfo, this.props.cameraInfo) ||
-      // shallow equality because marker list may be rebuilt with the same markers
-      nextProps.markers.length !== this.props.markers.length ||
-      nextProps.markers.some((marker, i) => marker !== this.props.markers[i])
-    );
-  }
-
   componentDidUpdate(prevProps: Props) {
-    this.renderCurrentImage();
+    const imageChanged = !shallowequal(prevProps, this.props, (a, b, key) => {
+      if (key === "markerData") {
+        return shallowequal(a, b, (a, b, key) => {
+          if (key === "markers") {
+            return shallowequal(a, b);
+          }
+        });
+      }
+    });
+    if (imageChanged) {
+      this.renderCurrentImage();
+    }
   }
 
   downloadImage = () => {
     const { topic, image } = this.props;
     const canvas = this._canvasRef.current;
-    const { body } = document;
 
     // satisfy flow
-    if (!body || !canvas || !image) {
+    if (!canvas || !image) {
       return;
     }
 
     // context: https://stackoverflow.com/questions/37135417/download-canvas-as-png-in-fabric-js-giving-network-error
-    // create a link element to download data
-    const link = document.createElement("a");
     // read the canvas data as an image (png)
     canvas.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
       // name the image the same name as the topic
       // note: the / characters in the file name will be replaced with _
       // by the browser
@@ -354,16 +372,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
       const topicName = topic.slice(1);
       const stamp = image.message.header ? image.message.header.stamp : { sec: 0, nsec: 0 };
       const filename = `${topicName}-${stamp.sec}-${stamp.nsec}`;
-      link.setAttribute("download", filename);
-      link.style.display = "none";
-      body.appendChild(link);
-      // click the link to trigger a download
-      link.click();
-      window.requestAnimationFrame(() => {
-        // remove the link after triggering download
-        body.removeChild(link);
-        URL.revokeObjectURL(url);
-      });
+      downloadFiles([blob], filename);
     });
   };
 
@@ -379,40 +388,35 @@ export default class ImageCanvas extends React.Component<Props, State> {
     );
   };
 
-  renderCurrentImage() {
-    if (!this._ready) {
-      console.warn("Dropped frame on image canvas");
-      this._droppedFrame = true;
-      return;
-    }
-
+  renderCurrentImage = debouncePromise(async () => {
     const { image } = this.props;
     if (!image) {
       this.clearCanvas();
       return;
     }
 
-    this._ready = false;
-    this._droppedFrame = false;
-
-    this.decodeMessageToBitmap(image)
-      .then((bitmap) => {
-        this.paintBitmap(bitmap);
-        this._ready = true;
-        if (this._droppedFrame) {
-          console.warn("Retrying render of dropped frame");
-          this.renderCurrentImage();
-          this._droppedFrame = false;
-        }
-      })
-      .catch((err) => {
-        console.warn(`failed to decode image on ${image.topic}:`, err);
-        this.clearCanvas();
-        this._ready = true;
-      });
-  }
+    try {
+      const bitmap = await this.decodeMessageToBitmap(image);
+      this.paintBitmap(bitmap);
+      if (bitmap) {
+        bitmap.close();
+      }
+      if (this.state.error) {
+        this.setState({ error: undefined });
+      }
+    } catch (error) {
+      console.warn(`failed to decode image on ${image.topic}:`, error);
+      this.clearCanvas();
+      this.setState({ error });
+    }
+  });
 
   render() {
-    return <canvas onContextMenu={this.onCanvasRightClick} ref={this._canvasRef} className={styles.canvas} />;
+    return (
+      <div style={{ height: "100%", position: "relative", display: "flex" }}>
+        {this.state.error && <SErrorMessage>Error: {this.state.error.message}</SErrorMessage>}
+        <canvas onContextMenu={this.onCanvasRightClick} ref={this._canvasRef} className={styles.canvas} />
+      </div>
+    );
   }
 }

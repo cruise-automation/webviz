@@ -12,7 +12,7 @@ import { createSelector } from "reselect";
 import type { Time } from "rosbag";
 
 import addValuesWithPathsToItems from "./addValuesWithPathsToItems";
-import { TOPICS_WITH_INCORRECT_HEADERS } from "./internalCommon";
+import { TOPICS_WITH_INCORRECT_HEADERS, type RosPrimitive } from "./internalCommon";
 import MessageHistoryInput from "./MessageHistoryInput";
 import MessageHistoryOnlyTopics from "./MessageHistoryOnlyTopics";
 import { messagePathStructures, traverseStructure } from "./messagePathsForDatatype";
@@ -26,7 +26,7 @@ import { topicsByTopicName, shallowEqualSelector } from "webviz-core/src/selecto
 import type { Topic, Message } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
-// Use `<MessageHistory>` to get data from the player, typically a bag or ROS websocked bridge.
+// Use `<MessageHistory>` to get data from the player, typically a bag or ROS websocket bridge.
 // Typical usage looks like this:
 //
 // const path = "/some/topic.some.field";
@@ -105,7 +105,7 @@ type MessagePathStructureItemArray = {|
 |};
 type MessagePathStructureItemPrimitive = {|
   structureType: "primitive",
-  primitiveType: string,
+  primitiveType: RosPrimitive,
   datatype: string,
 |};
 export type MessagePathStructureItem =

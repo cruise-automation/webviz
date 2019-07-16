@@ -128,14 +128,17 @@ export class TopicTreeNode {
   legacyIds: string[];
 
   // create a topic node from a json config file node
-  static fromJson(config: TopicTreeConfig) {
+  static fromJson(config: TopicTreeConfig, topics: Topic[]) {
     const result = new TopicTreeNode(config);
     // extension nodes start as enabled-by-default for now
     if (!config.extension) {
       result.disabled = true;
     }
     if (config.children) {
-      config.children.forEach((child) => result.add(TopicTreeNode.fromJson(child)));
+      const childTopics = Array.isArray(config.children)
+        ? config.children
+        : topics.filter(config.children).map((topic) => ({ topic: topic.name }));
+      childTopics.forEach((child) => result.add(TopicTreeNode.fromJson(child, topics)));
     }
     return result;
   }
@@ -403,7 +406,7 @@ export default function buildTree(
 ): TopicTreeNode {
   const { topics, transforms } = props;
 
-  const rootNode = TopicTreeNode.fromJson(jsonConfig);
+  const rootNode = TopicTreeNode.fromJson(jsonConfig, props.topics);
 
   rootNode.disabled = false;
   rootNode.checked = true;

@@ -69,7 +69,7 @@ describe("<SeekController />", () => {
     el.unmount();
   });
 
-  it("does not call seek until player starts playing", () => {
+  it("calls seek regardless of whether the player is playing", () => {
     const activeData = {
       startTime: { sec: 1, nsec: 0 },
       endTime: { sec: 10, nsec: 0 },
@@ -81,7 +81,7 @@ describe("<SeekController />", () => {
         <SeekController search="?seek-to=3000" />
       </MockMessagePipelineProvider>
     );
-    expect(onSeek).toHaveBeenCalledTimes(0);
+    expect(onSeek).toHaveBeenCalledTimes(1);
     const newActiveData = {
       ...activeData,
       isPlaying: true,

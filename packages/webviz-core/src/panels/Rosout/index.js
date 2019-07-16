@@ -195,6 +195,8 @@ class RosoutPanel extends PureComponent<Props, State> {
                   cleared={cleared || configChanged}
                   items={this._getFilteredMessages(msgs)}
                   renderRow={this._renderRow}
+                  copyButtonTooltip="Copy rosout to clipboard"
+                  enableCopying
                 />
               </div>
             </Flex>

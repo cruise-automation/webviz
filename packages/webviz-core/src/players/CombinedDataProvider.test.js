@@ -18,89 +18,105 @@ import { mockExtensionPoint } from "webviz-core/src/players/mockExtensionPoint";
 import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
 
 // reusable providers
-const provider1 = new MemoryDataProvider({
-  messages: [
-    { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
-    { topic: "/some_topic1", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
-  ],
-  topics: [{ name: "/some_topic1", datatype: "some_datatype" }],
-  datatypes: {},
-});
+function provider1(initiallyLoaded = false) {
+  return new MemoryDataProvider({
+    messages: [
+      { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
+      { topic: "/some_topic1", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
+    ],
+    topics: [{ name: "/some_topic1", datatype: "some_datatype" }],
+    datatypes: {},
+    initiallyLoaded,
+  });
+}
 
-const provider1Duplicate = new MemoryDataProvider({
-  messages: [
-    { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
-    { topic: "/some_topic1", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
-  ],
-  topics: [{ name: "/some_topic1", datatype: "some_datatype" }],
-  datatypes: {},
-});
+function provider1Duplicate() {
+  return new MemoryDataProvider({
+    messages: [
+      { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
+      { topic: "/some_topic1", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
+    ],
+    topics: [{ name: "/some_topic1", datatype: "some_datatype" }],
+    datatypes: {},
+  });
+}
 
-const provider2 = new MemoryDataProvider({
-  messages: [{ topic: "/some_topic2", receiveTime: { sec: 102, nsec: 0 }, message: { value: 2 } }],
-  topics: [{ name: "/some_topic2", datatype: "some_datatype" }],
-  datatypes: {},
-});
+function provider2() {
+  return new MemoryDataProvider({
+    messages: [{ topic: "/some_topic2", receiveTime: { sec: 102, nsec: 0 }, message: { value: 2 } }],
+    topics: [{ name: "/some_topic2", datatype: "some_datatype" }],
+    datatypes: {},
+  });
+}
 
-const provider3 = new MemoryDataProvider({
-  messages: [
-    { topic: "/some_topic3", receiveTime: { sec: 100, nsec: 0 }, message: { value: 3 } },
-    { topic: "/some_topic3", receiveTime: { sec: 102, nsec: 0 }, message: { value: 3 } },
-    { topic: "/some_topic3", receiveTime: { sec: 104, nsec: 0 }, message: { value: 3 } },
-  ],
-  topics: [{ name: "/some_topic3", datatype: "some_datatype" }],
-  datatypes: {},
-});
+function provider3() {
+  return new MemoryDataProvider({
+    messages: [
+      { topic: "/some_topic3", receiveTime: { sec: 100, nsec: 0 }, message: { value: 3 } },
+      { topic: "/some_topic3", receiveTime: { sec: 102, nsec: 0 }, message: { value: 3 } },
+      { topic: "/some_topic3", receiveTime: { sec: 104, nsec: 0 }, message: { value: 3 } },
+    ],
+    topics: [{ name: "/some_topic3", datatype: "some_datatype" }],
+    datatypes: {},
+  });
+}
+
+function getCombinedDataProvider(data: any[]) {
+  const providerInfos = [];
+  const children = [];
+  for (const item of data) {
+    const { provider, deleteTopics, prefix } = item;
+    providerInfos.push({ deleteTopics, prefix });
+    children.push({ name: "TestProvider", args: { provider }, children: [] });
+  }
+  return new CombinedDataProvider({ providerInfos }, children, () => {
+    throw new Error("Should never be called");
+  });
+}
 
 describe("CombinedDataProvider", () => {
   describe("error handling", () => {
     it("throws if a prefix does not have a leading forward slash", () => {
-      expect(
-        () => new CombinedDataProvider([{ provider: provider1, prefix: "foo" }, { provider: provider2 }])
+      expect(() =>
+        getCombinedDataProvider([{ provider: provider1(), prefix: "foo" }, { provider: provider2() }])
       ).toThrow();
     });
 
     it("throws if two providers have the same topics without a prefix", async () => {
-      const combinedProvider = new CombinedDataProvider([{ provider: provider1 }, { provider: provider1Duplicate }]);
+      const combinedProvider = getCombinedDataProvider([{ provider: provider1() }, { provider: provider1Duplicate() }]);
       await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
     });
 
     it("throws if duplicate prefixes are provided", () => {
-      expect(
-        () =>
-          new CombinedDataProvider([{ provider: provider1, prefix: "/foo" }, { provider: provider2, prefix: "/foo" }])
+      expect(() =>
+        getCombinedDataProvider([{ provider: provider1(), prefix: "/foo" }, { provider: provider2(), prefix: "/foo" }])
       ).toThrow();
-      expect(
-        () =>
-          new CombinedDataProvider([
-            { provider: provider1, prefix: "/foo" },
-            { provider: provider2 },
-            { provider: provider3, prefix: "/foo" },
-          ])
+      expect(() =>
+        getCombinedDataProvider([
+          { provider: provider1(), prefix: "/foo" },
+          { provider: provider2() },
+          { provider: provider3(), prefix: "/foo" },
+        ])
       ).toThrow();
     });
 
     it("should not allow duplicate topics", async () => {
-      const provider1 = new MemoryDataProvider({
+      const p1 = new MemoryDataProvider({
         messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {},
       });
-
-      const provider2 = new MemoryDataProvider({
+      const p2 = new MemoryDataProvider({
         messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
         topics: [{ name: "/generic_topic/some_topic", datatype: "some_datatype" }],
         datatypes: {},
       });
-      const combinedProvider = new CombinedDataProvider([
-        { provider: provider1, prefix: "/generic_topic" },
-        { provider: provider2 },
-      ]);
+      const combinedProvider = getCombinedDataProvider([{ provider: p1, prefix: "/generic_topic" }, { provider: p2 }]);
       await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
     });
 
     it("should not allow conflicting datatypes", async () => {
-      const provider1 = new MemoryDataProvider({
+      const p1 = new MemoryDataProvider({
         messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {
@@ -113,7 +129,7 @@ describe("CombinedDataProvider", () => {
         },
       });
 
-      const provider2 = new MemoryDataProvider({
+      const p2 = new MemoryDataProvider({
         messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {
@@ -125,88 +141,107 @@ describe("CombinedDataProvider", () => {
           ],
         },
       });
-      const combinedProvider = new CombinedDataProvider([
-        { provider: provider1, prefix: "/some_prefix" },
-        { provider: provider2 },
-      ]);
+      const combinedProvider = getCombinedDataProvider([{ provider: p1, prefix: "/some_prefix" }, { provider: p2 }]);
       await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
     });
   });
+
   describe("features", () => {
     it("combines initialization data", async () => {
-      const combinedProvider = new CombinedDataProvider([
-        { provider: provider1 },
-        { provider: provider3, prefix: SECOND_BAG_PREFIX },
-        { provider: provider2, prefix: "/table_1" },
+      const combinedProvider = getCombinedDataProvider([
+        { provider: provider1() },
+        { provider: provider3(), prefix: SECOND_BAG_PREFIX },
+        { provider: provider2(), prefix: "/table_1" },
       ]);
       expect(await combinedProvider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
-        datatypes: {},
-        end: { nsec: 0, sec: 104 },
         start: { nsec: 0, sec: 100 },
+        end: { nsec: 0, sec: 104 },
         topics: [
           { datatype: "some_datatype", name: "/some_topic1" },
           { datatype: "some_datatype", name: `${SECOND_BAG_PREFIX}/some_topic3`, originalTopic: "/some_topic3" },
           { datatype: "some_datatype", name: "/table_1/some_topic2", originalTopic: "/some_topic2" },
         ],
+        datatypes: {},
       });
     });
 
-    describe("delete topics", () => {
-      const providerWithTopicToDelete = new MemoryDataProvider({
-        messages: [
-          { topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
-          { topic: "/some_topic_to_delete", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
-        ],
-        topics: [
-          { name: "/some_topic", datatype: "some_datatype" },
-          { name: "/some_topic_to_delete", datatype: "some_datatype" },
-        ],
-        datatypes: {},
-      });
-      it("delete topics from providers", async () => {
-        const combinedProvider = new CombinedDataProvider([
-          { provider: provider1 },
+    describe("deleting topics", () => {
+      function providerWithTopicToDelete() {
+        return new MemoryDataProvider({
+          messages: [
+            { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
+            { topic: "/some_topic2", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
+          ],
+          topics: [
+            { name: "/some_topic1", datatype: "some_datatype" },
+            { name: "/some_topic2", datatype: "some_datatype" },
+          ],
+          datatypes: {},
+        });
+      }
+
+      it("deletes topics from providers without prefixes", async () => {
+        const combinedProvider = getCombinedDataProvider([
+          { provider: provider1() },
           {
-            provider: providerWithTopicToDelete,
-            deleteTopics: ["/some_topic_to_delete"],
+            provider: providerWithTopicToDelete(),
+            deleteTopics: ["/some_topic1"],
           },
         ]);
         expect(await combinedProvider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
-          datatypes: {},
-          end: { nsec: 0, sec: 103 },
           start: { nsec: 0, sec: 101 },
+          end: { nsec: 0, sec: 103 },
           topics: [
             { datatype: "some_datatype", name: "/some_topic1" },
-            { datatype: "some_datatype", name: "/some_topic" },
+            { datatype: "some_datatype", name: "/some_topic2" },
           ],
+          datatypes: {},
         });
       });
 
-      it("delete topics from providers with prefix", async () => {
-        const combinedProvider = new CombinedDataProvider([
-          { provider: provider1 },
+      it("deletes topics from providers with prefixes", async () => {
+        const combinedProvider = getCombinedDataProvider([
+          { provider: provider1() },
           {
-            provider: providerWithTopicToDelete,
+            provider: providerWithTopicToDelete(),
             prefix: "/table_1",
-            deleteTopics: ["/table_1/some_topic_to_delete"],
+            deleteTopics: ["/some_topic1"],
           },
         ]);
         expect(await combinedProvider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
-          datatypes: {},
-          end: { nsec: 0, sec: 103 },
           start: { nsec: 0, sec: 101 },
+          end: { nsec: 0, sec: 103 },
           topics: [
             { datatype: "some_datatype", name: "/some_topic1" },
-            { datatype: "some_datatype", name: "/table_1/some_topic", originalTopic: "/some_topic" },
+            { datatype: "some_datatype", name: "/table_1/some_topic2", originalTopic: "/some_topic2" },
           ],
+          datatypes: {},
         });
+      });
+
+      it("removes deleted topics from getMessages calls", async () => {
+        const p1 = provider1();
+        const p2 = providerWithTopicToDelete();
+        const combinedProvider = getCombinedDataProvider([
+          { provider: p1 },
+          { provider: p2, deleteTopics: ["/some_topic1"] },
+        ]);
+        await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
+        jest.spyOn(p1, "getMessages");
+        jest.spyOn(p2, "getMessages");
+        await combinedProvider.getMessages({ nsec: 0, sec: 101 }, { nsec: 0, sec: 103 }, [
+          "/some_topic1",
+          "/some_topic2",
+        ]);
+        expect(p1.getMessages.mock.calls[0][2]).toEqual(["/some_topic1"]);
+        expect(p2.getMessages.mock.calls[0][2]).toEqual(["/some_topic2"]);
       });
     });
 
     it("combines messages", async () => {
-      const combinedProvider = new CombinedDataProvider([
-        { provider: provider1 },
-        { provider: provider1Duplicate, prefix: SECOND_BAG_PREFIX },
+      const combinedProvider = getCombinedDataProvider([
+        { provider: provider1() },
+        { provider: provider1Duplicate(), prefix: SECOND_BAG_PREFIX },
       ]);
       await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
       expect(
@@ -221,10 +256,11 @@ describe("CombinedDataProvider", () => {
         { message: { value: 3 }, receiveTime: { nsec: 0, sec: 103 }, topic: `${SECOND_BAG_PREFIX}/some_topic1` },
       ]);
     });
+
     it("allows customization of prefixes", async () => {
-      const combinedProvider = new CombinedDataProvider([
-        { provider: provider1, prefix: "/table_1" },
-        { provider: provider2, prefix: "/table_2" },
+      const combinedProvider = getCombinedDataProvider([
+        { provider: provider1(), prefix: "/table_1" },
+        { provider: provider2(), prefix: "/table_2" },
       ]);
       expect(await combinedProvider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
         datatypes: {},
@@ -236,57 +272,103 @@ describe("CombinedDataProvider", () => {
         ],
       });
     });
+
+    it("does not call getMessages with out of bound times", async () => {
+      const p1 = new MemoryDataProvider({
+        messages: [
+          { topic: "/some_topic", receiveTime: { sec: 100, nsec: 0 }, message: undefined },
+          { topic: "/some_topic", receiveTime: { sec: 130, nsec: 0 }, message: undefined },
+        ],
+        topics: [{ name: "/some_topic", datatype: "some_datatype" }],
+        datatypes: {},
+      });
+      jest.spyOn(p1, "getMessages");
+      const p2 = new MemoryDataProvider({
+        messages: [
+          { topic: "/some_topic2", receiveTime: { sec: 170, nsec: 0 }, message: undefined },
+          { topic: "/some_topic2", receiveTime: { sec: 200, nsec: 0 }, message: undefined },
+        ],
+        topics: [{ name: "/some_topic2", datatype: "some_datatype" }],
+        datatypes: {},
+      });
+      jest.spyOn(p2, "getMessages");
+      const combinedProvider = getCombinedDataProvider([{ provider: p1 }, { provider: p2 }]);
+      const result = await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
+
+      // Sanity check:
+      expect(result.start).toEqual({ sec: 100, nsec: 0 });
+      expect(result.end).toEqual({ sec: 200, nsec: 0 });
+
+      const messages = await combinedProvider.getMessages({ sec: 100, nsec: 0 }, { sec: 150, nsec: 0 }, [
+        "/some_topic",
+        "/some_topic2",
+      ]);
+      expect(messages.length).toEqual(2);
+      expect(p1.getMessages.mock.calls[0]).toEqual([{ sec: 100, nsec: 0 }, { sec: 130, nsec: 0 }, ["/some_topic"]]);
+      expect(p2.getMessages.mock.calls.length).toEqual(0);
+    });
   });
 
   describe("extensionPoint", () => {
     describe("progressCallback", () => {
       it("calls progressCallback with the progress data passed from child provider", async () => {
-        const combinedProvider = new CombinedDataProvider([{ provider: provider1, prefix: "/generic_topic" }]);
+        const p1 = provider1();
+        const combinedProvider = getCombinedDataProvider([{ provider: p1, prefix: "/generic_topic" }]);
         const extensionPoint = mockExtensionPoint().extensionPoint;
         jest.spyOn(extensionPoint, "progressCallback");
         await combinedProvider.initialize(extensionPoint);
-        provider1.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }] });
-        expect(extensionPoint.progressCallback.mock.calls).toEqual([
-          [{ fullyLoadedFractionRanges: [{ end: 0.5, start: 0 }] }],
+        p1.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }] });
+        const calls = extensionPoint.progressCallback.mock.calls;
+        expect(calls[calls.length - 1]).toEqual([{ fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }] }]);
+      });
+
+      it("intersects progress from multiple child providers", async () => {
+        const p1 = provider1();
+        const p2 = provider2();
+        const combinedProvider = getCombinedDataProvider([
+          { provider: p1, prefix: "/generic_topic" },
+          { provider: p2 },
         ]);
+        const extensionPoint = mockExtensionPoint().extensionPoint;
+        jest.spyOn(extensionPoint, "progressCallback");
+        await combinedProvider.initialize(extensionPoint);
+        p1.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0.1, end: 0.5 }] });
+        let calls = extensionPoint.progressCallback.mock.calls;
+        // Assume that p2 has no progress yet since it has not reported, so intersected range is empty
+        expect(calls[calls.length - 1]).toEqual([{ fullyLoadedFractionRanges: [] }]);
+        p2.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 0.3 }] });
+        calls = extensionPoint.progressCallback.mock.calls;
+        expect(calls[calls.length - 1]).toEqual([{ fullyLoadedFractionRanges: [{ end: 0.3, start: 0.1 }] }]);
+      });
+
+      it("assumes providers that don't report progress in initialize are fully loaded", async () => {
+        const p1 = provider1(true);
+        const p2 = provider2();
+        const combinedProvider = getCombinedDataProvider([
+          { provider: p1, prefix: "/generic_topic" },
+          { provider: p2 },
+        ]);
+        const extensionPoint = mockExtensionPoint().extensionPoint;
+        jest.spyOn(extensionPoint, "progressCallback");
+        await combinedProvider.initialize(extensionPoint);
+        p2.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0.1, end: 0.5 }] });
+        const calls = extensionPoint.progressCallback.mock.calls;
+        // Assume that p1 is fully loaded since it did not report during initialize, so intersected range is the one from p2
+        expect(calls[calls.length - 1]).toEqual([{ fullyLoadedFractionRanges: [{ start: 0.1, end: 0.5 }] }]);
       });
     });
+
     describe("reportMetadataCallback", () => {
       it("calls reportMetadataCallback with the progress data passed from child provider", async () => {
-        const combinedProvider = new CombinedDataProvider([{ provider: provider1, prefix: "/generic_topic" }]);
+        const p1 = provider1();
+        const combinedProvider = getCombinedDataProvider([{ provider: p1, prefix: "/generic_topic" }]);
         const extensionPoint = mockExtensionPoint().extensionPoint;
         jest.spyOn(extensionPoint, "reportMetadataCallback");
         await combinedProvider.initialize(extensionPoint);
-        provider1.extensionPoint.reportMetadataCallback({ type: "updateReconnecting", reconnecting: true });
+        p1.extensionPoint.reportMetadataCallback({ type: "updateReconnecting", reconnecting: true });
         expect(extensionPoint.reportMetadataCallback.mock.calls).toEqual([
           [{ reconnecting: true, type: "updateReconnecting" }],
         ]);
-      });
-    });
-
-    describe("addTopicsCallback", () => {
-      it("filters out topics that doesn't belong to the child provider", async () => {
-        const combinedProvider = new CombinedDataProvider([
-          { provider: provider1 },
-          { provider: provider2, prefix: "/table_1" },
-          { provider: provider3, prefix: SECOND_BAG_PREFIX },
-        ]);
-
-        const { extensionPoint, topicCallbacks } = mockExtensionPoint();
-        const cbMockProvider2 = jest.fn();
-        const cbMockProvider3 = jest.fn();
-        jest.spyOn(extensionPoint, "addTopicsCallback");
-        await combinedProvider.initialize(extensionPoint);
-        provider2.extensionPoint.addTopicsCallback(cbMockProvider2);
-        provider3.extensionPoint.addTopicsCallback(cbMockProvider3);
-        expect(extensionPoint.addTopicsCallback.mock.calls).toEqual([[expect.any(Function)], [expect.any(Function)]]);
-        expect(topicCallbacks).toEqual([expect.any(Function), expect.any(Function)]);
-
-        topicCallbacks.forEach((cb) => {
-          cb(["/table_1/some_topic2", `${SECOND_BAG_PREFIX}/some_topic3`]);
-        });
-        expect(cbMockProvider2).toHaveBeenNthCalledWith(1, ["/some_topic2"]);
-        expect(cbMockProvider3).toHaveBeenNthCalledWith(1, ["/some_topic3"]);
       });
     });
   });

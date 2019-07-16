@@ -111,7 +111,7 @@ export type PublishPayload = {|
 
 export const PlayerCapabilities = {
   advertise: "advertise",
-  initialization: "initialization",
+  setSpeed: "setSpeed",
 };
 
 export type PlayerStateActiveData = {|

@@ -57,10 +57,14 @@ export default class ShareJsonModal extends Component<Props, State> {
   };
 
   onChange = () => {
-    const { onChange } = this.props;
-    const { value } = this.state;
+    const { onChange, onRequestClose } = this.props;
+    let { value } = this.state;
+    if (value.length === 0) {
+      value = JSON.stringify({});
+    }
     try {
-      return onChange(decode(value));
+      onChange(decode(value));
+      onRequestClose();
     } catch (e) {
       if (process.env.NODE_ENV !== "test") {
         console.error("Error parsing value from base64 json", e);
@@ -107,7 +111,7 @@ export default class ShareJsonModal extends Component<Props, State> {
           />
           {this.renderError()}
           <div className={styles.buttonBar}>
-            <Button primary onClick={this.onChange}>
+            <Button primary onClick={this.onChange} className="test-apply">
               Apply
             </Button>
             <Button onClick={this.onCopy}>{copied ? "Copied!" : "Copy"}</Button>

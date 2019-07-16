@@ -8,4 +8,13 @@
 
 import type { MessageHistoryTimestampMethod } from "webviz-core/src/components/MessageHistory";
 
-export type PlotPath = {| value: string, enabled: boolean, timestampMethod: MessageHistoryTimestampMethod |};
+export type PlotPath = {|
+  value: string,
+  enabled: boolean,
+  timestampMethod: MessageHistoryTimestampMethod,
+|};
+
+// A "reference line" plot path is a numeric value. It creates a horizontal line on the plot at the specified value.
+export function isReferenceLinePlotPathType(path: PlotPath): boolean {
+  return !isNaN(Number.parseFloat(path.value));
+}

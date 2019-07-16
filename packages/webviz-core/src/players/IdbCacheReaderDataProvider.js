@@ -6,15 +6,21 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import microMemoize from "micro-memoize";
 import { Time } from "rosbag";
 
 import { MESSAGES_STORE_NAME, getIdbCacheDataProviderDatabase, TIMESTAMP_INDEX } from "./IdbCacheDataProviderDatabase";
-import { type ChainableDataProvider, type InitializationResult, type MessageLike } from "./types";
-import type { ChainableDataProviderDescriptor, ExtensionPoint, GetDataProvider } from "webviz-core/src/players/types";
+import { type RandomAccessDataProvider, type InitializationResult, type MessageLike } from "./types";
+import type { DataProviderDescriptor, ExtensionPoint, GetDataProvider } from "webviz-core/src/players/types";
 import type { Progress } from "webviz-core/src/types/players";
 import Database from "webviz-core/src/util/indexeddb/Database";
 import { type Range, deepIntersect, isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
 import { subtractTimes, toNanoSec } from "webviz-core/src/util/time";
+
+// Can take a few ms, so worth memoizing.
+const deeplyIntersectedTopics = microMemoize((topics, rangesByTopic) => {
+  return deepIntersect(topics.map((topic) => rangesByTopic[topic] || []));
+});
 
 // This reads from an IndexedDB (Idb) database, which gets populated by an
 // `IdbCacheWriterDataProvider` (which has to be used below this provider). The writer communicates
@@ -28,14 +34,14 @@ import { subtractTimes, toNanoSec } from "webviz-core/src/util/time";
 // all the downloading, processing, and writing without blocking the main thread. For more details
 // on how stuff is stored in IndexedDB, see IdbCacheWriterDataProvider.js and
 // IdbCacheDataProviderDatabase.js.
-export default class IdbCacheReaderDataProvider implements ChainableDataProvider {
+export default class IdbCacheReaderDataProvider implements RandomAccessDataProvider {
   _id: string;
-  _provider: ChainableDataProvider;
+  _provider: RandomAccessDataProvider;
   _db: Database;
   _startTime: Time;
   _rangesByTopic: { [string]: Range[] } = {};
 
-  constructor({ id }: {| id: string |}, children: ChainableDataProviderDescriptor[], getDataProvider: GetDataProvider) {
+  constructor({ id }: {| id: string |}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
     this._id = id;
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to IdbCacheReaderDataProvider: ${children.length}`);
@@ -66,7 +72,7 @@ export default class IdbCacheReaderDataProvider implements ChainableDataProvider
       start: toNanoSec(subtractTimes(startTime, this._startTime)),
       end: toNanoSec(subtractTimes(endTime, this._startTime)) + 1, // `Range` is defined with `end` being exclusive.
     };
-    if (!isRangeCoveredByRanges(range, deepIntersect(topics.map((topic) => this._rangesByTopic[topic] || [])))) {
+    if (!isRangeCoveredByRanges(range, deeplyIntersectedTopics(topics, this._rangesByTopic))) {
       // We use the child's `getMessages` promise to signal that the data is available in the database,
       // but we don't expect it to return actual messages.
       const getMessagesResult = await this._provider.getMessages(startTime, endTime, topics);

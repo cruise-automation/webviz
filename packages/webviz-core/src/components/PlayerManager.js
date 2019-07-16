@@ -14,54 +14,36 @@ import DocumentDropListener from "webviz-core/src/components/DocumentDropListene
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import NodePlayer from "webviz-core/src/components/MessagePipeline/NodePlayer";
-import BagDataProvider from "webviz-core/src/players/BagDataProvider";
-import CombinedDataProvider from "webviz-core/src/players/CombinedDataProvider";
-import createGetDataProvider from "webviz-core/src/players/createGetDataProvider";
 import { getRemoteBagGuid } from "webviz-core/src/players/getRemoteBagGuid";
-import IdbCacheReaderDataProvider from "webviz-core/src/players/IdbCacheReaderDataProvider";
-import IdbCacheWriterDataProvider from "webviz-core/src/players/IdbCacheWriterDataProvider";
-import { instrumentDataProviderTree } from "webviz-core/src/players/MeasureDataProvider";
-import ParseMessagesDataProvider from "webviz-core/src/players/ParseMessagesDataProvider";
 import RandomAccessPlayer from "webviz-core/src/players/RandomAccessPlayer";
-import ReadAheadDataProvider from "webviz-core/src/players/ReadAheadDataProvider";
 import { getLocalBagDescriptor, getRemoteBagDescriptor } from "webviz-core/src/players/standardDataProviderDescriptors";
-import type { ChainableDataProvider, ChainableDataProviderDescriptor } from "webviz-core/src/players/types";
-import WorkerDataProvider from "webviz-core/src/players/WorkerDataProvider";
 import type { ImportPanelLayoutPayload } from "webviz-core/src/types/panels";
 import type { Player } from "webviz-core/src/types/players";
 import demoLayoutJson from "webviz-core/src/util/demoLayout.json";
 import {
   LOAD_ENTIRE_BAG_QUERY_KEY,
-  MEASURE_DATA_PROVIDERS_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
   DEMO_QUERY_KEY,
   SECOND_BAG_PREFIX,
 } from "webviz-core/src/util/globalConstants";
 
-const getDataProviderBase = createGetDataProvider({
-  BagDataProvider,
-  ParseMessagesDataProvider,
-  ReadAheadDataProvider,
-  WorkerDataProvider,
-  IdbCacheReaderDataProvider,
-  IdbCacheWriterDataProvider,
-});
-function getDataProvider(tree: ChainableDataProviderDescriptor): ChainableDataProvider {
-  if (new URLSearchParams(location.search).has(MEASURE_DATA_PROVIDERS_QUERY_KEY)) {
-    tree = instrumentDataProviderTree(tree);
+function buildPlayer(files: File[]): ?Player {
+  if (files.length === 0) {
+    return undefined;
+  } else if (files.length === 1) {
+    return new RandomAccessPlayer(getLocalBagDescriptor(files[0]), undefined, true);
+  } else if (files.length === 2) {
+    return new RandomAccessPlayer(
+      {
+        name: "CombinedDataProvider",
+        args: { providerInfos: [{}, { prefix: SECOND_BAG_PREFIX }] },
+        children: [getLocalBagDescriptor(files[0]), getLocalBagDescriptor(files[1])],
+      },
+      undefined,
+      true
+    );
   }
-  return getDataProviderBase(tree);
-}
-
-function buildPlayer(files: File[]): Player {
-  let bagProvider = getDataProvider(getLocalBagDescriptor(files[0]));
-  if (files.length === 2) {
-    bagProvider = new CombinedDataProvider([
-      { provider: getDataProvider(getLocalBagDescriptor(files[0])) },
-      { provider: getDataProvider(getLocalBagDescriptor(files[1])), prefix: SECOND_BAG_PREFIX },
-    ]);
-  }
-  return new RandomAccessPlayer(bagProvider, undefined, true);
+  throw new Error(`Unsupported number of files: ${files.length}`);
 }
 
 type OwnProps = { children: React.Node };
@@ -86,7 +68,7 @@ function PlayerManager({ importPanelLayout, children }: Props) {
           setPlayer(
             new NodePlayer(
               new RandomAccessPlayer(
-                getDataProvider(getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY))),
+                getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
                 undefined,
                 true
               )
@@ -104,7 +86,7 @@ function PlayerManager({ importPanelLayout, children }: Props) {
   return (
     <>
       <DocumentDropListener
-        filesSelected={({ files, shiftPressed }: { files: FileList, shiftPressed: boolean }) => {
+        filesSelected={({ files, shiftPressed }: { files: FileList | File[], shiftPressed: boolean }) => {
           if (shiftPressed && usedFiles.current.length === 1) {
             usedFiles.current = [usedFiles.current[0], files[0]];
           } else if (files.length === 2) {
@@ -112,7 +94,8 @@ function PlayerManager({ importPanelLayout, children }: Props) {
           } else {
             usedFiles.current = [files[0]];
           }
-          setPlayer(new NodePlayer(buildPlayer(usedFiles.current)));
+          const player = buildPlayer(usedFiles.current);
+          setPlayer(player ? new NodePlayer(player) : undefined);
         }}>
         <DropOverlay>
           <div style={{ fontSize: "4em", marginBottom: "1em" }}>Drop a bag file to load it!</div>

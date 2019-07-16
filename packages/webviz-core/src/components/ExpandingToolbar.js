@@ -23,74 +23,61 @@ export class ToolGroup extends React.Component<{ name: string, children: React.N
 }
 
 type Props = {|
-  icon: React.Node,
   children: React.ChildrenArray<React.Element<typeof ToolGroup>>,
-  onExpand?: ?(expanded: boolean) => void,
   className?: ?string,
-  tooltip: string,
-  selectedTab?: string,
   expanded?: boolean,
+  icon: React.Node,
+  onSelectTab: (name: string) => void,
+  onSetExpanded: (expanded: boolean) => void,
+  selectedTab: string,
+  tooltip: string,
 |};
 
-type State = {
-  expanded: boolean,
-  selectedTab?: string,
-};
-
-export default class ExpandingToolbar extends React.Component<Props, State> {
-  state = {
-    expanded: !!this.props.expanded,
-    selectedTab: this.props.selectedTab,
-  };
-
-  toggleExpanded = () => {
-    const { expanded } = this.state;
-    const { onExpand } = this.props;
-    if (onExpand) {
-      onExpand(!expanded);
-    }
-    this.setState({ expanded: !expanded });
-  };
-
-  render() {
-    const { expanded, selectedTab } = this.state;
-    const { icon, children, className, tooltip } = this.props;
-    if (!expanded) {
-      return (
-        <div className={className}>
-          <Button tooltip={tooltip} onClick={this.toggleExpanded}>
-            <Icon>{icon}</Icon>
-          </Button>
-        </div>
-      );
-    }
-    let selectedChild;
-    React.Children.forEach(children, (child) => {
-      if (!selectedChild || child.props.name === selectedTab) {
-        selectedChild = child;
-      }
-    });
+export default function ExpandingToolbar({
+  children,
+  className,
+  expanded,
+  icon,
+  onSelectTab,
+  onSetExpanded,
+  selectedTab,
+  tooltip,
+}: Props) {
+  if (!expanded) {
     return (
-      <div className={cx(className, styles.expanded)}>
-        <Flex row className={styles.tabBar}>
-          {React.Children.map(children, (child) => {
-            return (
-              <Button
-                className={cx(styles.tab, { [styles.selected]: child === selectedChild })}
-                onClick={() => this.setState({ selectedTab: child.props.name })}>
-                {child.props.name}
-              </Button>
-            );
-          })}
-          <div className={styles.spaceSeparator} />
-          <Button onClick={this.toggleExpanded}>
-            <Icon>
-              <ArrowCollapseIcon />
-            </Icon>
-          </Button>
-        </Flex>
-        <div className={styles.tabBody}>{selectedChild}</div>
+      <div className={className}>
+        <Button tooltip={tooltip} onClick={() => onSetExpanded(true)}>
+          <Icon>{icon}</Icon>
+        </Button>
       </div>
     );
   }
+  let selectedChild;
+  React.Children.forEach(children, (child) => {
+    if (!selectedChild || child.props.name === selectedTab) {
+      selectedChild = child;
+    }
+  });
+  return (
+    <div className={cx(className, styles.expanded)}>
+      <Flex row className={styles.tabBar}>
+        {React.Children.map(children, (child) => {
+          return (
+            <Button
+              className={cx(styles.tab, { [styles.selected]: child === selectedChild })}
+              onClick={() => onSelectTab(child.props.name)}>
+              {child.props.name}
+            </Button>
+          );
+        })}
+        <div className={styles.spaceSeparator} />
+        <Button onClick={() => onSetExpanded(false)}>
+          <Icon>
+            <ArrowCollapseIcon />
+          </Icon>
+        </Button>
+      </Flex>
+      <div className={styles.tabBody}>{selectedChild}</div>
+    </div>
+  );
 }

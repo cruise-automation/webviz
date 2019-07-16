@@ -11,6 +11,7 @@ import { range } from "lodash";
 import * as React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
+import CameraModel from "webviz-core/src/panels/ImageView/CameraModel";
 import ImageCanvas from "webviz-core/src/panels/ImageView/ImageCanvas";
 
 const cameraInfo = {
@@ -190,28 +191,130 @@ const markers = [
 
 const topics = ["/camera_front_medium/image_rect_color_compressed", "/storybook_image"];
 
+function BayerStory({ encoding }: { encoding: string }) {
+  const width = 256;
+  const height = 200;
+  const data = new Uint8Array(height * width);
+  for (let row = 0; row < height; row++) {
+    for (let col = 0; col < width; col++) {
+      const r = Math.max(0, 1 - Math.hypot(1 - row / height, col / width)) * 256;
+      const g = Math.max(0, 1 - Math.hypot(row / height, 1 - col / width)) * 256;
+      const b = Math.max(0, 1 - Math.hypot(1 - row / height, 1 - col / width)) * 256;
+      switch (encoding) {
+        case "bayer_rggb8":
+          data[row * width + col] = row % 2 === 0 ? (col % 2 === 0 ? r : g) : col % 2 === 0 ? g : b;
+          break;
+        case "bayer_bggr8":
+          data[row * width + col] = row % 2 === 0 ? (col % 2 === 0 ? b : g) : col % 2 === 0 ? g : r;
+          break;
+        case "bayer_gbrg8":
+          data[row * width + col] = row % 2 === 0 ? (col % 2 === 0 ? g : b) : col % 2 === 0 ? r : g;
+          break;
+        case "bayer_grbg8":
+          data[row * width + col] = row % 2 === 0 ? (col % 2 === 0 ? g : r) : col % 2 === 0 ? b : g;
+          break;
+      }
+    }
+  }
+  return (
+    <ImageCanvas
+      topic={topics[0]}
+      image={{
+        op: "message",
+        datatype: "sensor_msgs/Image",
+        topic: "/foo",
+        receiveTime: { sec: 0, nsec: 0 },
+        message: { data, width, height, encoding },
+      }}
+      markerData={null}
+    />
+  );
+}
+
+function Mono16Story({ bigEndian }: { bigEndian: boolean }) {
+  const width = 200;
+  const height = 100;
+  const data = new Uint8Array(width * height * 2);
+  const view = new DataView(data.buffer);
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      const val = Math.round(Math.min(1, Math.hypot(c / width, r / height)) * 10000);
+      view.setUint16(2 * (r * width + c), val, true);
+    }
+  }
+  return (
+    <ImageCanvas
+      topic={topics[0]}
+      image={{
+        op: "message",
+        datatype: "sensor_msgs/Image",
+        topic: "/foo",
+        receiveTime: { sec: 0, nsec: 0 },
+        message: { data, width, height, encoding: "16UC1", is_bigendian: 0 },
+      }}
+      markerData={null}
+    />
+  );
+}
+
 storiesOf("<ImageCanvas>", module)
   .addDecorator(withScreenshot())
   .add("markers", () => (
     <div>
       <h2>original markers</h2>
       <ImageCanvas
-        transformMarkers={false}
-        saveConfig={() => {}}
         topic={topics[0]}
         image={imageMessage}
-        cameraInfo={cameraInfo}
-        markers={markers}
+        markerData={{
+          markers,
+          cameraModel: null,
+          originalWidth: null,
+          originalHeight: null,
+        }}
       />
       <br />
       <h2>transformed markers</h2>
       <ImageCanvas
-        transformMarkers
-        saveConfig={() => {}}
         topic={topics[1]}
         image={imageMessage}
-        cameraInfo={cameraInfo}
-        markers={markers}
+        markerData={{
+          markers,
+          cameraModel: new CameraModel(cameraInfo),
+          originalWidth: null,
+          originalHeight: null,
+        }}
+      />
+      <h2>markers with different original image size</h2>
+      <ImageCanvas
+        topic={topics[1]}
+        image={imageMessage}
+        markerData={{
+          markers,
+          cameraModel: new CameraModel(cameraInfo),
+          originalWidth: 200,
+          originalHeight: 150,
+        }}
       />
     </div>
-  ));
+  ))
+  .add("error state", () => {
+    return (
+      <ImageCanvas
+        topic={topics[0]}
+        image={{
+          op: "message",
+          datatype: "sensor_msgs/Image",
+          topic: "/foo",
+          receiveTime: { sec: 0, nsec: 0 },
+          message: { data: new Uint8Array([]), width: 100, height: 50, encoding: "Foo" },
+        }}
+        markerData={null}
+      />
+    );
+  })
+  .add("mono16 big endian", () => <Mono16Story bigEndian={true} />)
+  .add("mono16 little endian", () => <Mono16Story bigEndian={false} />)
+  .add("bayer_rggb8", () => <BayerStory encoding={"bayer_rggb8"} />)
+  .add("bayer_bggr8", () => <BayerStory encoding={"bayer_bggr8"} />)
+  .add("bayer_gbrg8", () => <BayerStory encoding={"bayer_gbrg8"} />)
+  .add("bayer_grbg8", () => <BayerStory encoding={"bayer_grbg8"} />);

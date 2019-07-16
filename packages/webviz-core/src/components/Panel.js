@@ -32,7 +32,13 @@ import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDrag
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList, { getPanelListItemsByType } from "webviz-core/src/panels/PanelList";
 import type { State as ReduxState } from "webviz-core/src/reducers";
-import type { SaveConfigPayload, PanelConfig, SaveConfig } from "webviz-core/src/types/panels";
+import type {
+  SaveConfigPayload,
+  SaveFullConfigPayload,
+  PanelConfig,
+  SaveConfig,
+  PerPanelFunc,
+} from "webviz-core/src/types/panels";
 import type { Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { getPanelTypeFromId } from "webviz-core/src/util";
@@ -144,6 +150,7 @@ export default function Panel<Config: PanelConfig>(
           config: Config,
           saveConfig: SaveConfig<Config>,
           openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
+          updatePanelConfig: (panelType: string, perPanelFunc: PerPanelFunc<PanelConfig>) => void,
           topics: Topic[],
           capabilities: string[],
           datatypes: RosDatatypes,
@@ -170,7 +177,11 @@ export default function Panel<Config: PanelConfig>(
   const canSetTopicPrefix: boolean = PanelComponent.canSetTopicPrefix || false;
 
   class UnconnectedPanel extends React.PureComponent<
-    ReduxMappedProps & PipelineProps & {| savePanelConfig: (SaveConfigPayload) => void |},
+    ReduxMappedProps &
+      PipelineProps & {|
+        savePanelConfig: (SaveConfigPayload) => void,
+        saveFullPanelConfig: (SaveFullConfigPayload) => PanelConfig,
+      |},
     State
   > {
     static displayName = `Panel(${PanelComponent.displayName || PanelComponent.name || ""})`;
@@ -196,6 +207,10 @@ export default function Panel<Config: PanelConfig>(
           config: { ...defaultConfig, ...this.props.config, ...config },
         });
       }
+    };
+
+    _updatePanelConfig = (panelType: string, perPanelFunc: (PanelConfig) => PanelConfig) => {
+      this.props.saveFullPanelConfig({ panelType, perPanelFunc });
     };
 
     // this is same as above _saveConfig, but is internal to this file / allows you to save the TOPIC_PREFIX_CONFIG_KEY
@@ -331,6 +346,7 @@ export default function Panel<Config: PanelConfig>(
               <PanelComponent
                 config={{ ...defaultConfig, ...omit(config, TOPIC_PREFIX_CONFIG_KEY) }}
                 saveConfig={this._saveConfig}
+                updatePanelConfig={this._updatePanelConfig}
                 openSiblingPanel={this._openSiblingPanel}
                 topics={getFilteredFormattedTopics(topics, currentTopicPrefix)}
                 datatypes={datatypes}
@@ -374,11 +390,11 @@ export default function Panel<Config: PanelConfig>(
   }
 
   // There seems to be a circular dependency here, so defer loading a bit.
-  const { savePanelConfig } = require("webviz-core/src/actions/panels");
+  const { savePanelConfig, saveFullPanelConfig } = require("webviz-core/src/actions/panels");
 
   const ConnectedPanel = connect(
     mapStateToProps,
-    { savePanelConfig }
+    { savePanelConfig, saveFullPanelConfig }
   )(ConnectedToPipelinePanel);
 
   ConnectedPanel.defaultConfig = defaultConfig;

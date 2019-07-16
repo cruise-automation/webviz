@@ -7,24 +7,26 @@
 //  You may not use this file except in compliance with the License.
 import * as React from "react";
 
+import { type Topic } from "webviz-core/src/types/players";
+
 export type TopicTreeConfig = (
   | {
       name: string,
       topic?: void,
       extension?: void,
-      children: TopicTreeConfig[],
+      children: TopicTreeConfig[] | ((topic: Topic) => boolean),
     }
   | {
       name?: string,
       topic: string,
       extension?: void,
-      children?: TopicTreeConfig[],
+      children?: TopicTreeConfig[] | ((topic: Topic) => boolean),
     }
   | {
       name: string,
       topic?: void,
       extension: string,
-      children?: TopicTreeConfig[],
+      children?: TopicTreeConfig[] | ((topic: Topic) => boolean),
     }
 ) & {
   // Previous names or ids for this item under which it might be saved in old layouts.

@@ -20,10 +20,13 @@ import { emptyPose } from "webviz-core/src/util/Pose";
 import { fromSec } from "webviz-core/src/util/time";
 
 export type TopicSettings = {
+  channel?: ?string,
+  color?: ?string,
   colorField?: ?string,
+  minPoint?: ?number,
+  maxPoint?: ?number,
   pointSize?: ?number,
   pointShape?: ?string,
-  color?: ?string,
   useCarModel?: boolean,
   alpha?: number,
   decayTime?: number,
@@ -153,7 +156,12 @@ export default class SceneBuilder implements MarkerProvider {
   setGlobalData = (globalData: Object = {}) => {
     const { selectionState, topicsToRender } = getGlobalHooks()
       .perPanelHooks()
-      .ThreeDimensionalViz.setGlobalDataInSceneBuilder(globalData, this.selectionState, this.topicsToRender);
+      .ThreeDimensionalViz.setGlobalDataInSceneBuilder(
+        globalData,
+        this.selectionState,
+        this.topicsToRender,
+        this.topics
+      );
     this.selectionState = selectionState;
     this.topicsToRender = topicsToRender;
   };

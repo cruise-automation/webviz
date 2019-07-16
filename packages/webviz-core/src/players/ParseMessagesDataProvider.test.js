@@ -26,7 +26,6 @@ function getProvider() {
 
 const dummyExtensionPoint = {
   progressCallback() {},
-  addTopicsCallback() {},
   reportMetadataCallback() {},
 };
 

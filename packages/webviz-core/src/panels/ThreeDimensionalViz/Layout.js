@@ -49,9 +49,6 @@ import type { Frame, Topic } from "webviz-core/src/types/players";
 import type { MarkerCollector, MarkerProvider } from "webviz-core/src/types/Scene";
 import videoRecordingMode from "webviz-core/src/util/videoRecordingMode";
 
-const POLYGON_TYPE = DRAWING_CONFIG.Polygons.type;
-const CAMERA_TYPE = DRAWING_CONFIG.Camera.type;
-
 type EventName = "onDoubleClick" | "onMouseMove" | "onMouseDown" | "onMouseUp";
 
 type Props = {
@@ -208,7 +205,7 @@ export default class Layout extends React.Component<Props, State> implements Mar
     if (!args) {
       return;
     }
-    if (drawingType === POLYGON_TYPE) {
+    if (drawingType === DRAWING_CONFIG.Polygons.type) {
       this._handleDrawPolygons(eventName, ev, args);
     }
     if (propsHandler) {
@@ -221,14 +218,14 @@ export default class Layout extends React.Component<Props, State> implements Mar
       this.toggleCameraMode();
     },
     [DRAWING_CONFIG.Polygons.key]: () => {
-      this._toggleDrawing(POLYGON_TYPE);
+      this._toggleDrawing(DRAWING_CONFIG.Polygons.type);
     },
     [DRAWING_CONFIG.Camera.key]: () => {
-      this._toggleDrawing(CAMERA_TYPE);
+      this._toggleDrawing(DRAWING_CONFIG.Camera.type);
     },
     Control: () => {
       // support default DrawPolygon key
-      this._toggleDrawing(POLYGON_TYPE);
+      this._toggleDrawing(DRAWING_CONFIG.Polygons.type);
     },
     Escape: () => {
       this._exitDrawing();
@@ -239,7 +236,7 @@ export default class Layout extends React.Component<Props, State> implements Mar
     // can enter into drawing from null or non-new-drawing-type to the new drawingType
     const enterDrawing = this.state.drawingType !== drawingType;
     this.setState({ drawingType: enterDrawing ? drawingType : null });
-    if (drawingType !== CAMERA_TYPE) {
+    if (drawingType !== DRAWING_CONFIG.Camera.type) {
       this.switchTo2DCameraIfNeeded();
     }
   };
@@ -562,7 +559,7 @@ export default class Layout extends React.Component<Props, State> implements Mar
 
   render() {
     const { drawingType } = this.state;
-    const cursorType = drawingType && drawingType !== CAMERA_TYPE ? "crosshair" : "";
+    const cursorType = drawingType && drawingType !== DRAWING_CONFIG.Camera.type ? "crosshair" : "";
 
     return (
       <div

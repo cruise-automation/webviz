@@ -57,7 +57,7 @@ export default function warnOnOutOfSyncMessages(playerState: PlayerState) {
               currentTime,
               lastSeekTime,
               incorrectMessages: incorrectMessages.map((msg) => ({
-                receiveTime: message.receiveTime,
+                receiveTime: msg.receiveTime,
                 topic: msg.topic,
               })),
             });
@@ -71,7 +71,7 @@ export default function warnOnOutOfSyncMessages(playerState: PlayerState) {
           lastReceiveTime,
           lastSeekTime,
           incorrectMessages: incorrectMessages.map((msg) => ({
-            receiveTime: message.receiveTime,
+            receiveTime: msg.receiveTime,
             topic: msg.topic,
           })),
         });

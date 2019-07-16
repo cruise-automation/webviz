@@ -7,11 +7,12 @@
 //  You may not use this file except in compliance with the License.
 
 import { intersection } from "lodash";
+import PromiseQueue from "promise-queue";
 import { TimeUtil, type Time } from "rosbag";
 
 import type {
-  ChainableDataProvider,
-  ChainableDataProviderDescriptor,
+  RandomAccessDataProvider,
+  DataProviderDescriptor,
   ExtensionPoint,
   GetDataProvider,
   InitializationResult,
@@ -24,14 +25,12 @@ const log = new Logger(__filename);
 export class ReadResult {
   start: Time;
   end: Time;
-  _isEmpty: boolean = false;
   _promise: Promise<MessageLike[]>;
   _isResolved: boolean = false;
 
   constructor(start: Time, end: Time, promise: Promise<MessageLike[]>) {
     this.start = start;
     this.end = end;
-    this._isEmpty = TimeUtil.compare(start, end) === 0;
     this._promise = promise;
     promise.then(() => (this._isResolved = true));
   }
@@ -41,10 +40,7 @@ export class ReadResult {
   }
 
   overlaps(start: Time, end: Time) {
-    if (this._isEmpty) {
-      return false;
-    }
-    return TimeUtil.compare(this.start, end) < 1 && TimeUtil.compare(this.end, start) > -1;
+    return !TimeUtil.isLessThan(end, this.start) && !TimeUtil.isLessThan(this.end, start);
   }
 
   async getMessages(start: Time, end: Time): Promise<MessageLike[]> {
@@ -63,17 +59,18 @@ export class ReadResult {
 const oneNanoSecond = { sec: 0, nsec: 1 };
 // a caching adapter for a DataProvider which does eager, non-blocking read ahead of time ranges
 // based on a readAheadRange (default to 100 milliseconds)
-export default class ReadAheadDataProvider implements ChainableDataProvider {
-  _provider: ChainableDataProvider;
+export default class ReadAheadDataProvider implements RandomAccessDataProvider {
+  _provider: RandomAccessDataProvider;
   _topics: string[] = [];
-  _current: ReadResult = ReadResult.empty();
-  _next: ReadResult = ReadResult.empty();
+  _current: ?ReadResult;
+  _next: ?ReadResult;
   _topics: string[] = [];
   _readAheadRange: Time;
+  _taskQueue = new PromiseQueue(1);
 
   constructor(
     { readAheadRange }: { readAheadRange?: Time },
-    children: ChainableDataProviderDescriptor[],
+    children: DataProviderDescriptor[],
     getDataProvider: GetDataProvider
   ) {
     if (children.length !== 1) {
@@ -95,44 +92,49 @@ export default class ReadAheadDataProvider implements ChainableDataProvider {
     return new ReadResult(start, end, this._provider.getMessages(start, end, topics));
   }
 
-  async getMessages(start: Time, end: Time, topics: string[]): Promise<MessageLike[]> {
+  getMessages(start: Time, end: Time, topics: string[]): Promise<MessageLike[]> {
+    // The implementation of _getMessages() is not reentrant, so wait for all previous calls to return before starting a new one.
+    return this._taskQueue.add(() => this._getMessages(start, end, topics));
+  }
+
+  async _getMessages(start: Time, end: Time, topics: string[]): Promise<MessageLike[]> {
     // if our topics change we need to clear out the cached ranges, or if we're
     // reading from before the first range.
     if (
       intersection(this._topics, topics).length !== topics.length ||
-      TimeUtil.compare(start, this._current.start) < 0
+      !this._current ||
+      TimeUtil.isLessThan(start, this._current.start)
     ) {
       this._topics = topics;
-      this._current = ReadResult.empty();
-      this._next = ReadResult.empty();
+      this._current = undefined;
+      this._next = undefined;
     }
     let messages = [];
-    const currentMatches = this._current.overlaps(start, end);
-    const nextMatches = this._next.overlaps(start, end);
-    if (currentMatches) {
+    const currentMatches = this._current && this._current.overlaps(start, end);
+    const nextMatches = this._next && this._next.overlaps(start, end);
+    if (/*:: this._current && */ currentMatches) {
       messages = messages.concat(await this._current.getMessages(start, end));
     }
-    if (nextMatches) {
+    if (/*:: this._next && */ nextMatches) {
       messages = messages.concat(await this._next.getMessages(start, end));
     }
-    if ((!currentMatches && !nextMatches) || TimeUtil.isGreaterThan(end, this._next.end)) {
+    if ((!currentMatches && !nextMatches) || (this._next && TimeUtil.isGreaterThan(end, this._next.end))) {
       let startTime = start;
-      if (nextMatches) {
-        log.info("readahead cache overrun - consider expanding readAheadRange");
+      if (/*:: this._next && */ nextMatches) {
         startTime = TimeUtil.add(this._next.end, oneNanoSecond);
+        log.info("readahead cache overrun - consider expanding readAheadRange");
       }
       this._current = this._makeReadResult(startTime, end, topics);
       await this._current.getMessages(startTime, end);
       const nextStart = TimeUtil.add(end, oneNanoSecond);
       this._next = this._makeReadResult(nextStart, TimeUtil.add(nextStart, this._readAheadRange), topics);
-      return messages.concat(await this.getMessages(startTime, end, topics));
-    }
-    if (nextMatches) {
+      messages = messages.concat(await this._getMessages(startTime, end, topics));
+    } else if (/*:: this._next && */ nextMatches) {
       this._current = this._next;
       const nextStart = TimeUtil.add(this._current.end, oneNanoSecond);
       const nextEnd = TimeUtil.add(nextStart, this._readAheadRange);
       this._next = this._makeReadResult(nextStart, nextEnd, topics);
     }
-    return messages;
+    return messages.filter((message) => topics.includes(message.topic));
   }
 }

@@ -14,6 +14,8 @@ import ReadAheadDataProvider from "webviz-core/src/players/ReadAheadDataProvider
 import RpcDataProviderRemote from "webviz-core/src/players/RpcDataProviderRemote";
 import Rpc from "webviz-core/src/util/Rpc";
 
+// This is the open source version. There is also an internal variant.
+
 const getDataProvider = createGetDataProvider({
   BagDataProvider,
   MeasureDataProvider,

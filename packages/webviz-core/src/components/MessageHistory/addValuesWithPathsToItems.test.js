@@ -197,10 +197,11 @@ describe("addValuesWithPathsToItems", () => {
             { type: "slice", start: 0, end: Infinity },
             {
               type: "filter",
-              name: "some_filter_value",
+              path: ["some_filter_value"],
               value: "0",
               nameLoc: 0,
               valueLoc: "/some/topic.some_array[:]{some_filter_value==".length,
+              repr: "some_filter_value==0",
             }, // Test with a string value, should still work!
             { type: "name", name: "some_id" },
           ],
@@ -269,10 +270,11 @@ describe("addValuesWithPathsToItems", () => {
             { type: "slice", start: 0, end: Infinity },
             {
               type: "filter",
-              name: "some_filter_value",
+              path: ["some_filter_value"],
               value: { variableName: "some_global_data_key" },
               nameLoc: 0,
               valueLoc: "/some/topic.some_array[:]{some_filter_value==".length,
+              repr: "some_filter_value==$some_global_data_key",
             }, // Test with a string value, should still work!
             { type: "name", name: "some_id" },
           ],
@@ -285,9 +287,210 @@ describe("addValuesWithPathsToItems", () => {
     ).toEqual([
       {
         message: messages[0],
-        queriedData: [{ value: 10, path: "/some/topic.some_array[:]{some_filter_value==5}.some_id" }],
+        queriedData: [
+          { value: 10, path: "/some/topic.some_array[:]{some_filter_value==$some_global_data_key}.some_id" },
+        ],
       },
     ]);
+  });
+
+  it("filters entire messages", () => {
+    const messages: Message[] = [
+      {
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
+        message: {
+          str_field: "A",
+          num_field: 1,
+        },
+      },
+      {
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
+        message: {
+          str_field: "A",
+          num_field: 2,
+        },
+      },
+      {
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
+        message: {
+          str_field: "B",
+          num_field: 2,
+        },
+      },
+    ];
+    const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+    const datatypes: RosDatatypes = {
+      some_datatype: [
+        {
+          name: "str_field",
+          type: "string",
+        },
+        {
+          name: "num_field",
+          type: "uint32",
+        },
+      ],
+    };
+
+    expect(
+      addValuesWithPathsToItems(
+        messages,
+        {
+          topicName: "/some/topic",
+          messagePath: [
+            {
+              type: "filter",
+              path: ["str_field"],
+              value: "A",
+              nameLoc: 0,
+              valueLoc: 0,
+              repr: "str_field=='A'",
+            },
+            { type: "name", name: "num_field" },
+          ],
+          modifier: undefined,
+        },
+        topics,
+        datatypes
+      )
+    ).toEqual([
+      {
+        message: messages[0],
+        queriedData: [{ value: 1, path: "/some/topic{str_field=='A'}.num_field" }],
+      },
+      {
+        message: messages[1],
+        queriedData: [{ value: 2, path: "/some/topic{str_field=='A'}.num_field" }],
+      },
+    ]);
+
+    expect(
+      addValuesWithPathsToItems(
+        messages,
+        {
+          topicName: "/some/topic",
+          messagePath: [
+            {
+              type: "filter",
+              path: ["str_field"],
+              value: "B",
+              nameLoc: 0,
+              valueLoc: 0,
+              repr: "str_field=='B'",
+            },
+            { type: "name", name: "num_field" },
+          ],
+          modifier: undefined,
+        },
+        topics,
+        datatypes
+      )
+    ).toEqual([
+      {
+        message: messages[2],
+        queriedData: [{ value: 2, path: "/some/topic{str_field=='B'}.num_field" }],
+      },
+    ]);
+
+    expect(
+      addValuesWithPathsToItems(
+        messages,
+        {
+          topicName: "/some/topic",
+          messagePath: [
+            {
+              type: "filter",
+              path: ["num_field"],
+              value: 2,
+              nameLoc: 0,
+              valueLoc: 0,
+              repr: "num_field==2",
+            },
+            { type: "name", name: "num_field" },
+          ],
+          modifier: undefined,
+        },
+        topics,
+        datatypes
+      )
+    ).toEqual([
+      {
+        message: messages[1],
+        queriedData: [{ value: 2, path: "/some/topic{num_field==2}.num_field" }],
+      },
+      {
+        message: messages[2],
+        queriedData: [{ value: 2, path: "/some/topic{num_field==2}.num_field" }],
+      },
+    ]);
+
+    expect(
+      addValuesWithPathsToItems(
+        messages,
+        {
+          topicName: "/some/topic",
+          messagePath: [
+            {
+              type: "filter",
+              path: ["str_field"],
+              value: "A",
+              nameLoc: 0,
+              valueLoc: 0,
+              repr: "str_field=='A'",
+            },
+            {
+              type: "filter",
+              path: ["num_field"],
+              value: 2,
+              nameLoc: 0,
+              valueLoc: 0,
+              repr: "num_field==2",
+            },
+            { type: "name", name: "num_field" },
+          ],
+          modifier: undefined,
+        },
+        topics,
+        datatypes
+      )
+    ).toEqual([
+      {
+        message: messages[1],
+        queriedData: [{ value: 2, path: "/some/topic{str_field=='A'}{num_field==2}.num_field" }],
+      },
+    ]);
+
+    expect(
+      addValuesWithPathsToItems(
+        messages,
+        {
+          topicName: "/some/topic",
+          messagePath: [
+            {
+              type: "filter",
+              path: ["str_field"],
+              value: "C",
+              nameLoc: 0,
+              valueLoc: 0,
+              repr: "str_field=='C'",
+            },
+            { type: "name", name: "num_field" },
+          ],
+          modifier: undefined,
+        },
+        topics,
+        datatypes
+      )
+    ).toEqual([]);
   });
 
   it("returns matching constants", () => {

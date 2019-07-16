@@ -17,3 +17,14 @@ In 3D camera mode, you can also use "shooter controls" (like those found in most
 Holding down `shift` in while performing any interaction with the camera will adjust values by 1/10th of their normal adjustments.  This allows precision movements and adjustments to the camera.
 
 _tip: If you get 'lost' in the scene and end up looking into infinite blank space and can't find your way back try clicking on 'follow' to snap the camera back to the default position._
+
+## Drawing Polygons
+
+- To start a drawing, hold `ctrl` and click on the canvas. This will place the first point of the polygon. Continue holding ctrl and click as may times as you want to create a `string` of points connected by lines. To terminate your drawing release `ctrl` and click a final time. This will place one final point at the mouse location and 'close' the polygon. The polygon will still be selected until you click "off" of the polygon to anywhere else on the canvas.
+- To select a polygon, click it once.
+- To select a point within a polygon click it once.
+- To move a polygon you have drawn you can click + drag on the polygon.
+- To resize a polygon you can click + drag on an individual point within the polygon to move it. This will resize the polygon: all the points will remain connected to one another.
+- To place a new point within an existing polygon, double click on a line within the polygon. This will bisect the line at the current double-click position, inserting a new point you may drag around to move.
+- To delete the entire polygon, press the `delete` key when the polygon is selected.
+- To delete an existing point in a polygon, double-click it, or press `delete` with a point selected.

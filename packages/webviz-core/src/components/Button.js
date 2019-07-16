@@ -48,7 +48,7 @@ export default class Button extends React.Component<Props> {
       return (
         <Tooltip contents={tooltip} {...tooltipProps}>
           {/* Extra div allows Tooltip to insert the necessary event listeners */}
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "inline-flex" }}>
             <BaseButton {...otherProps} {...eventHandlers} className={newClassName} ref={innerRef} />
           </div>
         </Tooltip>

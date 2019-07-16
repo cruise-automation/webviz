@@ -182,8 +182,13 @@ export const RenderPointSettings = ({
   );
 };
 
-export const renderDecaySettings = (props: Props, onFieldChange: (string) => Function) => {
-  const { settings } = props;
+export const renderDecaySettings = ({
+  settings,
+  onFieldChange,
+}: {
+  settings: TopicSettings,
+  onFieldChange: (string) => Function,
+}) => {
   const decayTime = settings.decayTime;
   const decayTimeValue = decayTime === undefined ? "" : decayTime;
 
@@ -269,7 +274,7 @@ export default class TopicSettingsEditor extends PureComponent<Props> {
             this._onFieldChange("color")(e.target.value);
           }}
         />
-        {renderDecaySettings(this.props, this._onFieldChange)}
+        {renderDecaySettings({ settings: this.props.settings, onFieldChange: this._onFieldChange })}
         {RenderResetButton({ onSettingsChange })}
       </Flex>
     );

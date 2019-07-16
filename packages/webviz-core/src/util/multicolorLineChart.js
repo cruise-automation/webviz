@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import { Chart } from "react-chartjs-2";
-
 /* eslint-disable no-underscore-dangle */
 // From https://github.com/chartjs/Chart.js/issues/4895#issuecomment-341874938
 Chart.defaults.multicolorLine = Chart.defaults.scatter;

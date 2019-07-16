@@ -12,7 +12,7 @@ import React, { PureComponent } from "react";
 import { plotableRosTypes } from "./index";
 import styles from "./PlotLegend.module.scss";
 import MessageHistory, { type MessageHistoryTimestampMethod } from "webviz-core/src/components/MessageHistory";
-import type { PlotPath } from "webviz-core/src/panels/Plot/internalTypes";
+import { type PlotPath, isReferenceLinePlotPathType } from "webviz-core/src/panels/Plot/internalTypes";
 import { lineColors } from "webviz-core/src/util/plotColors";
 
 type PlotLegendProps = {|
@@ -44,6 +44,13 @@ export default class PlotLegend extends PureComponent<PlotLegendProps> {
     return (
       <div className={styles.root}>
         {paths.map((path: PlotPath, index: number) => {
+          const isReferenceLinePlotPath = isReferenceLinePlotPathType(path);
+          let timestampMethod;
+          // Only allow chosing the timestamp method if it is applicable (not a reference line) and there is at least
+          // one character typed.
+          if (!isReferenceLinePlotPath && path.value.length > 0) {
+            timestampMethod = path.timestampMethod;
+          }
           return (
             <React.Fragment key={index}>
               <div className={styles.item}>
@@ -78,9 +85,11 @@ export default class PlotLegend extends PureComponent<PlotLegendProps> {
                     onChange={this._onInputChange}
                     onTimestampMethodChange={this._onInputTimestampMethodChange}
                     validTypes={plotableRosTypes}
+                    placeholder="Enter a topic name or a number"
                     index={index}
                     autoSize
-                    timestampMethod={path.timestampMethod}
+                    disableAutocomplete={isReferenceLinePlotPath}
+                    timestampMethod={timestampMethod}
                   />
                 </div>
               </div>

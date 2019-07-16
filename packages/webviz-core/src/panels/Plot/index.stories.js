@@ -219,18 +219,35 @@ storiesOf("<Plot>", module)
         <Plot
           config={{
             paths: [
-              { value: "/some_topic/location.pose.velocity", enabled: true, timestampMethod: "receiveTime" },
-              { value: "/some_topic/location.pose.acceleration", enabled: true, timestampMethod: "receiveTime" },
+              {
+                value: "/some_topic/location.pose.velocity",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+              {
+                value: "/some_topic/location.pose.acceleration",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
               {
                 value: "/some_topic/location.pose.acceleration.@derivative",
                 enabled: true,
                 timestampMethod: "receiveTime",
               },
-              { value: "/boolean_topic.data", enabled: true, timestampMethod: "receiveTime" },
-              { value: "/some_topic/state.items[0].speed", enabled: true, timestampMethod: "receiveTime" },
+              {
+                value: "/boolean_topic.data",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+              {
+                value: "/some_topic/state.items[0].speed",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
             ],
             minYValue: "",
             maxYValue: "5.5",
+            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
@@ -242,11 +259,20 @@ storiesOf("<Plot>", module)
         <Plot
           config={{
             paths: [
-              { value: "/some_topic/location.pose.velocity", enabled: true, timestampMethod: "headerStamp" },
-              { value: "/boolean_topic.data", enabled: true, timestampMethod: "headerStamp" },
+              {
+                value: "/some_topic/location.pose.velocity",
+                enabled: true,
+                timestampMethod: "headerStamp",
+              },
+              {
+                value: "/boolean_topic.data",
+                enabled: true,
+                timestampMethod: "headerStamp",
+              },
             ],
             minYValue: "",
             maxYValue: "",
+            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
@@ -257,9 +283,16 @@ storiesOf("<Plot>", module)
       <PanelSetup fixture={fixture} style={{ maxWidth: 250 }}>
         <Plot
           config={{
-            paths: [{ value: "/some_topic/location.pose.velocity", enabled: true, timestampMethod: "receiveTime" }],
+            paths: [
+              {
+                value: "/some_topic/location.pose.velocity",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
             minYValue: "",
             maxYValue: "",
+            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
@@ -271,27 +304,126 @@ storiesOf("<Plot>", module)
         <Plot
           config={{
             paths: [
-              { value: "/some_topic/location.pose.velocity", enabled: false, timestampMethod: "receiveTime" },
-              { value: "/some_topic/location.pose.acceleration", enabled: true, timestampMethod: "receiveTime" },
+              {
+                value: "/some_topic/location.pose.velocity",
+                enabled: false,
+                timestampMethod: "receiveTime",
+              },
+              {
+                value: "/some_topic/location.pose.acceleration",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
             ],
             minYValue: "",
             maxYValue: "",
+            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
     );
   })
-  .add("scatter plot plus line graph", () => {
+  .add("reference line", () => {
     return (
       <PanelSetup fixture={fixture}>
         <Plot
           config={{
             paths: [
-              { value: "/some_topic/state.items[:].speed", enabled: true, timestampMethod: "receiveTime" },
-              { value: "/some_topic/location.pose.velocity", enabled: true, timestampMethod: "receiveTime" },
+              {
+                value: "0",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+              {
+                // Test typing a period for decimal values.
+                value: "1.",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+              {
+                value: "1.5",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+              {
+                value: "1",
+                enabled: false,
+                timestampMethod: "receiveTime",
+              },
+            ],
+            minYValue: "-1",
+            maxYValue: "2",
+            isYAxisLocked: false,
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("with min and max Y values and YAxis NOT locked", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            paths: [
+              {
+                value: "/some_topic/location.pose.velocity",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
+            minYValue: "1",
+            maxYValue: "1.8",
+            isYAxisLocked: false,
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("with min and max Y values and YAxis locked", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            paths: [
+              {
+                value: "/some_topic/location.pose.velocity",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
+            minYValue: "1",
+            maxYValue: "1.8",
+            isYAxisLocked: true,
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("scatter plot plus line graph plus reference line", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            paths: [
+              {
+                value: "/some_topic/state.items[:].speed",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+              {
+                value: "/some_topic/location.pose.velocity",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+              {
+                value: "3",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
             ],
             minYValue: "",
             maxYValue: "5.5",
+            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
@@ -325,9 +457,16 @@ storiesOf("<Plot>", module)
         }}>
         <Plot
           config={{
-            paths: [{ value: "/some_number.data", enabled: true, timestampMethod: "receiveTime" }],
+            paths: [
+              {
+                value: "/some_number.data",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
             minYValue: "",
             maxYValue: "",
+            isYAxisLocked: false,
           }}
         />
       </PanelSetup>

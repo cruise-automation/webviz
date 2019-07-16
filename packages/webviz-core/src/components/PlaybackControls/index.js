@@ -26,7 +26,7 @@ import { MessagePipelineConsumer } from "webviz-core/src/components/MessagePipel
 import Slider from "webviz-core/src/components/Slider";
 import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import type { PlayerState } from "webviz-core/src/types/players";
+import { type PlayerState, PlayerCapabilities } from "webviz-core/src/types/players";
 import { times } from "webviz-core/src/util/entities";
 import { formatTime, formatTimeRaw, subtractTimes, toSec, fromSec } from "webviz-core/src/util/time";
 
@@ -126,7 +126,7 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
 
   render() {
     const { pause, play, setSpeed, player } = this.props;
-    const { activeData, showInitializing, progress } = player;
+    const { activeData, showInitializing, progress, capabilities } = player;
 
     if (!activeData) {
       const message = showInitializing ? (
@@ -162,7 +162,7 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
           <Icon large>{isPlaying ? <PauseIcon /> : <PlayIcon />}</Icon>
         </div>
         <div>
-          {speed != null && speed !== 0 && (
+          {capabilities.includes(PlayerCapabilities.setSpeed) && speed != null && speed !== 0 && (
             <Dropdown position="above" value={speed} text={`${speed.toFixed(1)}${times}`} onChange={setSpeed}>
               <span value={0.1}>0.1&times;</span>
               <span value={0.2}>0.2&times;</span>

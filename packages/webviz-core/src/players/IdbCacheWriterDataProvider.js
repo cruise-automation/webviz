@@ -19,8 +19,8 @@ import {
   getIdbCacheDataProviderDatabase,
 } from "./IdbCacheDataProviderDatabase";
 import type {
-  ChainableDataProvider,
-  ChainableDataProviderDescriptor,
+  RandomAccessDataProvider,
+  DataProviderDescriptor,
   ExtensionPoint,
   GetDataProvider,
   InitializationResult,
@@ -34,8 +34,13 @@ import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time
 
 const log = new Logger(__filename);
 
-export const BLOCK_SIZE_NS = 0.1 * 1e9; // 0.1 seconds.
+const BLOCK_SIZE_MILLISECONDS = 100;
+export const BLOCK_SIZE_NS = BLOCK_SIZE_MILLISECONDS * 1e6;
 const CONTINUE_DOWNLOADING_THRESHOLD = 3 * BLOCK_SIZE_NS;
+
+function getNormalizedTopics(topics: string[]): string[] {
+  return uniq(topics).sort();
+}
 
 // This writer is a companion to the `IdbCacheReaderDataProvider`. The writer fills up
 // IndexedDB (Idb) with messages, and the reader reads them. The writer gets signals from the reader
@@ -44,16 +49,17 @@ const CONTINUE_DOWNLOADING_THRESHOLD = 3 * BLOCK_SIZE_NS;
 // support `Time`). This also lets us use `getNewConnection`, which contains logic to determine
 // which range to download next.
 // For more details on how stuff is stored in IndexedDB, see IdbCacheDataProviderDatabase.js.
-export default class IdbCacheWriterDataProvider implements ChainableDataProvider {
+export default class IdbCacheWriterDataProvider implements RandomAccessDataProvider {
   _id: string;
-  _provider: ChainableDataProvider;
+  _provider: RandomAccessDataProvider;
   _db: Database;
 
   // The start time of the bag. Used for computing from and to nanoseconds since the start.
   _startTime: Time;
 
-  // The topics that we care about. This is always set by the last `getMessages` or topic callback.
-  _topics: string[] = [];
+  // The topics that we were most recently asked to load.
+  // This is always set by the last `getMessages` call.
+  _preloadTopics: string[] = [];
 
   // Total length of the data in nanoseconds. Used to compute progress with.
   _totalNs: number;
@@ -74,7 +80,7 @@ export default class IdbCacheWriterDataProvider implements ChainableDataProvider
 
   _extensionPoint: ExtensionPoint;
 
-  constructor({ id }: {| id: string |}, children: ChainableDataProviderDescriptor[], getDataProvider: GetDataProvider) {
+  constructor({ id }: {| id: string |}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
     this._id = id;
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to IdbCacheReaderDataProvider: ${children.length}`);
@@ -91,13 +97,17 @@ export default class IdbCacheWriterDataProvider implements ChainableDataProvider
     const result = await this._provider.initialize({ ...extensionPoint, progressCallback: () => {} });
     this._startTime = result.start;
     this._totalNs = toNanoSec(subtractTimes(result.end, result.start)) + 1; // +1 since times are inclusive.
-    extensionPoint.addTopicsCallback((topics: string[]) => this._updateTopics(topics));
+    if (this._totalNs > Number.MAX_SAFE_INTEGER * 0.9) {
+      throw new Error("Time range is too long to be supported");
+    }
+
     return result;
   }
 
   async getMessages(startTime: Time, endTime: Time, topics: string[]): Promise<MessageLike[]> {
     // We might have a new set of topics.
-    this._updateTopics(topics);
+    topics = getNormalizedTopics(topics);
+    this._preloadTopics = topics;
 
     // Push a new entry to `this._readRequests`, and call `this._updateState()`.
     const range = {
@@ -116,25 +126,23 @@ export default class IdbCacheWriterDataProvider implements ChainableDataProvider
     return this._provider.close();
   }
 
-  _updateTopics(topics: string[]) {
-    const newTopics = uniq(topics).sort();
-    if (!isEqual(this._topics, newTopics)) {
-      // If we have a different set of topics, stop the current "connection", and refresh everything.
-      delete this._currentConnection;
-      this._topics = newTopics;
-      this._updateProgress();
-      this._updateState();
+  // We're primarily interested in the topics for the first outstanding read request, and after that
+  // we're interested in preloading topics (based on the *last* read request).
+  _getCurrentTopics(): string[] {
+    if (this._readRequests[0]) {
+      return this._readRequests[0].topics;
     }
+    return this._preloadTopics;
   }
 
   // Gets called any time our "connection", read requests, or topics change.
   _updateState() {
-    if (this._topics.length === 0) {
-      return;
-    }
-
     // First, see if there are any read requests that we can resolve now.
     this._readRequests = this._readRequests.filter(({ range, topics, resolve }) => {
+      if (topics.length === 0) {
+        resolve([]);
+        return false;
+      }
       const downloadedRanges: Range[] = this._getDownloadedRanges(topics);
       if (!isRangeCoveredByRanges(range, downloadedRanges)) {
         return true;
@@ -144,11 +152,16 @@ export default class IdbCacheWriterDataProvider implements ChainableDataProvider
       return false;
     });
 
+    if (this._currentConnection && !isEqual(this._currentConnection.topics, this._getCurrentTopics())) {
+      // If we have a different set of topics, stop the current "connection", and refresh everything.
+      delete this._currentConnection;
+    }
+
     // Then see if we need to set a new connection based on the new connection and read requests state.
     const newConnection = getNewConnection({
       currentRemainingRange: this._currentConnection ? this._currentConnection.remainingRange : undefined,
       readRequestRange: this._readRequests[0] ? this._readRequests[0].range : undefined,
-      downloadedRanges: this._getDownloadedRanges(this._topics),
+      downloadedRanges: this._getDownloadedRanges(this._getCurrentTopics()),
       lastResolvedCallbackEnd: this._lastResolvedCallbackEnd,
       cacheSize: Infinity,
       fileSize: this._totalNs,
@@ -164,12 +177,19 @@ export default class IdbCacheWriterDataProvider implements ChainableDataProvider
         });
       });
     }
+
+    this._updateProgress();
   }
 
   // Replace the current connection with a new one, spanning a certain range.
   async _setConnection(range: Range) {
+    if (!this._getCurrentTopics().length) {
+      delete this._currentConnection;
+      return;
+    }
+
     const id = uuid.v4();
-    this._currentConnection = { id, topics: this._topics, remainingRange: range };
+    this._currentConnection = { id, topics: this._getCurrentTopics(), remainingRange: range };
 
     const reportTransactionError = (err) => {
       this._extensionPoint.reportMetadataCallback({
@@ -281,7 +301,7 @@ export default class IdbCacheWriterDataProvider implements ChainableDataProvider
 
   _updateProgress() {
     this._extensionPoint.progressCallback({
-      fullyLoadedFractionRanges: this._getDownloadedRanges(this._topics).map((range) => ({
+      fullyLoadedFractionRanges: this._getDownloadedRanges(this._getCurrentTopics()).map((range) => ({
         start: range.start / this._totalNs,
         end: range.end / this._totalNs,
       })),

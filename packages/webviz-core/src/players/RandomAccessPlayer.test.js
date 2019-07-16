@@ -22,17 +22,19 @@ import {
   type MessageLike,
   type RandomAccessDataProvider,
 } from "./types";
-import { type PlayerMetricsCollectorInterface, type Topic, type PlayerState } from "webviz-core/src/types/players";
+import {
+  type PlayerMetricsCollectorInterface,
+  type Topic,
+  type PlayerState,
+  PlayerCapabilities,
+} from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { fromMillis } from "webviz-core/src/util/time";
 
 jest.mock("webviz-core/src/util/reportError");
 
 type GetMessages = (start: Time, end: Time, topics: string[]) => Promise<MessageLike[]>;
 
-// start at 1 nanosecond because RandomAccesPlayer rewinds by 1 nano when before starting playback
-// and subtracting 1 nanosecond from {0, 0} throws an error
-const start = { sec: 0, nsec: 1 };
+const start = { sec: 0, nsec: 0 };
 const end = { sec: 100, nsec: 0 };
 const datatypes: RosDatatypes = {
   fooBar: [
@@ -128,60 +130,24 @@ class MessageStore {
 }
 
 describe("RandomAccessPlayer", () => {
-  it("sets initial topics when extension point registers topics callback", (done) => {
-    const provider = {
-      initialize: (extensionPoint) => {
-        extensionPoint.addTopicsCallback((topics) => {
-          expect(topics).toEqual(["/foo/bar", "/foo/baz"]);
-          done();
-        });
-        return Promise.resolve();
-      },
-      async close() {},
-    };
-    const source = new RandomAccessPlayer((provider: any));
-    source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/foo/baz" }]);
-    source.setListener(() => Promise.resolve());
+  let mockDateNow;
+  beforeEach(() => {
+    mockDateNow = jest.spyOn(Date, "now").mockReturnValue(0);
   });
-  it("calls extension point topics callbacks when topics change", async () => {
-    const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
-    const listener = (msg) => Promise.resolve();
-    await source.setListener(listener);
-    const extPoint = provider.extensionPoint;
-    const topicCalls1 = [];
-    const topicCalls2 = [];
-    extPoint.addTopicsCallback((topics: string[]) => {
-      topicCalls1.push(topics);
-    });
-    extPoint.addTopicsCallback((topics: string[]) => {
-      topicCalls2.push(topics);
-    });
-    expect(topicCalls1).toEqual([[]]);
-    source.setSubscriptions([{ topic: "/foo/bar" }]);
-    expect(topicCalls1).toEqual([[], ["/foo/bar"]]);
-    source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/foo/bar" }]);
-    expect(topicCalls1).toEqual([[], ["/foo/bar"]]);
-    source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/foo/bar" }, { topic: "/baz" }]);
-    expect(topicCalls1).toEqual([[], ["/foo/bar"], ["/foo/bar", "/baz"]]);
-    source.setSubscriptions([{ topic: "/baz" }]);
-    expect(topicCalls1).toEqual([[], ["/foo/bar"], ["/foo/bar", "/baz"], ["/baz"]]);
-    expect(topicCalls2).toEqual(topicCalls1);
+  afterEach(() => {
+    mockDateNow.mockRestore();
   });
 
   it("calls listener with player initial player state and data types", async () => {
     const provider = new TestProvider();
-    // player gets its lastSeekTime initially from Date.now()
-    const mockDateNow = jest.spyOn(Date, "now").mockReturnValue(0);
-    const source = new RandomAccessPlayer(provider);
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     const store = new MessageStore(2);
     await source.setListener(store.add);
     const messages = await store.done;
-    mockDateNow.mockRestore();
     expect(messages).toEqual([
       {
         activeData: undefined,
-        capabilities: ["initialization"],
+        capabilities: [PlayerCapabilities.setSpeed],
         isPresent: true,
         progress: {},
         showInitializing: true,
@@ -189,17 +155,17 @@ describe("RandomAccessPlayer", () => {
       },
       {
         activeData: {
-          currentTime: { sec: 0, nsec: 1 },
+          currentTime: { sec: 0, nsec: 0 },
           datatypes: { baz: [{ name: "val", type: "number" }], fooBar: [{ name: "val", type: "number" }] },
           endTime: { sec: 100, nsec: 0 },
           isPlaying: false,
           lastSeekTime: 0,
           messages: [],
           speed: 0.2,
-          startTime: { sec: 0, nsec: 1 },
+          startTime: { sec: 0, nsec: 0 },
           topics: [{ datatype: "fooBar", name: "/foo/bar" }, { datatype: "baz", name: "/baz" }],
         },
-        capabilities: ["initialization"],
+        capabilities: ["setSpeed"],
         isPresent: true,
         progress: {},
         showInitializing: false,
@@ -212,7 +178,7 @@ describe("RandomAccessPlayer", () => {
 
   it("calls listener with player state changes on play/pause", async () => {
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     const store = new MessageStore(2);
     await source.setListener(store.add);
     // make getMessages do nothing since we're going to start reading
@@ -232,7 +198,7 @@ describe("RandomAccessPlayer", () => {
 
   it("calls listener with speed changes", async () => {
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     const store = new MessageStore(2);
     await source.setListener(store.add);
     // allow initialization messages to come in
@@ -250,41 +216,51 @@ describe("RandomAccessPlayer", () => {
   });
 
   it("reads messages when playing back", async () => {
+    expect.assertions(6);
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
-    const store = new MessageStore(4);
-    await source.setListener(store.add);
-    source.setSubscriptions([{ topic: "/foo/bar" }]);
     let callCount = 0;
-    let firstEnd;
-    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
       callCount++;
-      if (callCount > 1) {
-        // our second start should be exactly 1 nano after our first end
-        expect(TimeUtil.compare(start, TimeUtil.add(firstEnd, { sec: 0, nsec: 1 }))).toBe(0);
-        expect(TimeUtil.isGreaterThan(end, start)).toBeTruthy();
-        return Promise.resolve([]);
+      switch (callCount) {
+        case 1:
+          // initial getMessages from player initialization
+          expect(start).toEqual({ sec: 0, nsec: 0 });
+          expect(end).toEqual({ sec: 0, nsec: 0 });
+          return Promise.resolve([]);
+
+        case 2: {
+          expect(start).toEqual({ sec: 0, nsec: 1 });
+          expect(end).toEqual({ sec: 0, nsec: 4000000 });
+          expect(topics).toEqual(["/foo/bar"]);
+          const result: MessageLike[] = [
+            {
+              topic: "/foo/bar",
+              receiveTime: { sec: 0, nsec: 2 },
+              message: { payload: "foo bar" },
+            },
+          ];
+          return Promise.resolve(result);
+        }
+
+        default:
+          throw new Error("getMessages called too many times");
       }
-      firstEnd = end;
-      expect(start).toEqual({ sec: 0, nsec: 1 });
-      expect(end).toEqual(fromMillis(20 * 0.2));
-      expect(topics).toContainOnly(["/foo/bar"]);
-      const result: MessageLike[] = [
-        {
-          topic: "/foo/bar",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: { payload: "foo bar" },
-        },
-      ];
-      return Promise.resolve(result);
     };
-    provider.getMessages = getMessages;
+
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
+    const store = new MessageStore(6);
+    await source.setListener(store.add);
+
+    source.setSubscriptions([{ topic: "/foo/bar" }]);
     source.startPlayback();
     const messages = await store.done;
     // close the player to stop more reads
     source.close();
+
     const messagePayloads = messages.map((msg) => (msg.activeData || {}).messages || []);
     expect(messagePayloads).toEqual([
+      [],
+      [],
       [],
       [],
       [
@@ -292,7 +268,7 @@ describe("RandomAccessPlayer", () => {
           op: "message",
           topic: "/foo/bar",
           datatype: "fooBar",
-          receiveTime: { sec: 0, nsec: 0 },
+          receiveTime: { sec: 0, nsec: 2 },
           message: { payload: "foo bar" },
         },
       ],
@@ -302,75 +278,96 @@ describe("RandomAccessPlayer", () => {
 
   it("still moves forward time if there are no messages", async () => {
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
-    const store = new MessageStore(4);
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
+
+    let callCount = 0;
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+      callCount++;
+      switch (callCount) {
+        case 1:
+          // initial getMessages from player initialization
+          expect(start).toEqual({ sec: 0, nsec: 0 });
+          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(topics).toContainOnly(["/foo/bar"]);
+          return Promise.resolve([]);
+
+        case 2:
+          expect(start).toEqual({ sec: 0, nsec: 2 });
+          expect(end).toEqual({ sec: 0, nsec: 4000001 });
+          expect(topics).toEqual(["/foo/bar"]);
+          source.pausePlayback();
+          return Promise.resolve([]);
+
+        default:
+          throw new Error("getMessages called too many times");
+      }
+    };
+
+    const store = new MessageStore(5);
     await source.setListener(store.add);
     source.setSubscriptions([{ topic: "/foo/bar" }]);
-    let callCount = 0;
-    let firstEnd;
-    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
-      callCount++;
-      if (callCount > 2) {
-        throw new Error("should not be called again");
-      }
-      if (callCount > 1) {
-        // our second start should be exactly 1 nano after our first end
-        expect(TimeUtil.compare(start, TimeUtil.add(firstEnd, { sec: 0, nsec: 1 }))).toBe(0);
-        expect(TimeUtil.isGreaterThan(end, start)).toBeTruthy();
-        source.pausePlayback();
-        return Promise.resolve([]);
-      }
-      firstEnd = end;
-      expect(start).toEqual({ sec: 0, nsec: 1 });
-      expect(end).toEqual(fromMillis(20 * 0.2));
-      expect(topics).toContainOnly(["/foo/bar"]);
-      return Promise.resolve([]);
-    };
-    provider.getMessages = getMessages;
     source.startPlayback();
     const messages = await store.done;
     // close the player to stop more reads
     source.close();
     const messagePayloads = messages.map((msg) => (msg.activeData || {}).messages || []);
-    expect(messagePayloads).toEqual([[], [], [], []]);
+    expect(messagePayloads).toEqual([[], [], [], [], []]);
   });
 
   it("pauses and does not emit messages after pause", async () => {
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
-    const store = new MessageStore(4);
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
+
+    let callCount = 0;
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+      callCount++;
+      switch (callCount) {
+        case 1:
+          // initial getMessages from player initialization
+          expect(start).toEqual({ sec: 0, nsec: 0 });
+          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(topics).toContainOnly(["/foo/bar"]);
+          return Promise.resolve([]);
+
+        case 2: {
+          expect(start).toEqual({ sec: 0, nsec: 1 });
+          expect(end).toEqual({ sec: 0, nsec: 4000000 });
+          expect(topics).toContainOnly(["/foo/bar"]);
+          const result: MessageLike[] = [
+            {
+              topic: "/foo/bar",
+              receiveTime: { sec: 0, nsec: 0 },
+              message: { payload: "foo bar" },
+            },
+          ];
+          return Promise.resolve(result);
+        }
+
+        case 3:
+          source.pausePlayback();
+          return Promise.resolve([
+            {
+              topic: "/foo/bar",
+              receiveTime: start,
+              message: "this message should not be emitted",
+            },
+          ]);
+
+        default:
+          throw new Error("getMessages called too many times");
+      }
+    };
+
+    const store = new MessageStore(6);
     await source.setListener(store.add);
     source.setSubscriptions([{ topic: "/foo/bar" }]);
-    let callCount = 0;
-    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
-      callCount++;
-      if (callCount > 1) {
-        source.pausePlayback();
-        return Promise.resolve([
-          {
-            topic: "/foo/bar",
-            receiveTime: start,
-            message: "this message should not be emitted",
-          },
-        ]);
-      }
-      expect(start).toEqual({ sec: 0, nsec: 1 });
-      expect(end).toEqual(fromMillis(20 * 0.2));
-      expect(topics).toContainOnly(["/foo/bar"]);
-      const result: MessageLike[] = [
-        {
-          topic: "/foo/bar",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: { payload: "foo bar" },
-        },
-      ];
-      return Promise.resolve(result);
-    };
-    provider.getMessages = getMessages;
+
     source.startPlayback();
     const messages = await store.done;
     const messagePayloads = messages.map((msg) => (msg.activeData || {}).messages || []);
     expect(messagePayloads).toEqual([
+      [],
+      [],
       [],
       [],
       [
@@ -388,87 +385,124 @@ describe("RandomAccessPlayer", () => {
 
   it("seek during reading discards messages before seek", async () => {
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
-    const store = new MessageStore(4);
-    await source.setListener(store.add);
-    source.setSubscriptions([{ topic: "/foo/bar" }]);
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     let callCount = 0;
-    const getMessages: GetMessages = async (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = async (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
       expect(topics).toContainOnly(["/foo/bar"]);
       callCount++;
-      if (callCount > 1) {
-        source.pausePlayback();
-        return Promise.resolve([
-          {
-            topic: "/foo/bar",
-            receiveTime: start,
-            message: "this message should not be emitted",
-          },
-        ]);
-      }
+      switch (callCount) {
+        case 1:
+          // initial getMessages from player initialization
+          expect(start).toEqual({ sec: 0, nsec: 0 });
+          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(topics).toContainOnly(["/foo/bar"]);
+          return Promise.resolve([]);
+        case 2: {
+          expect(start).toEqual({ sec: 0, nsec: 1 });
+          expect(end).toEqual({ sec: 0, nsec: 4000000 });
+          expect(topics).toContainOnly(["/foo/bar"]);
+          const result: MessageLike[] = [
+            {
+              topic: "/foo/bar",
+              receiveTime: { sec: 0, nsec: 0 },
+              message: { payload: "foo bar" },
+            },
+          ];
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          mockDateNow.mockReturnValue(Date.now() + 1);
+          source.seekPlayback({ sec: 0, nsec: 0 });
+          return Promise.resolve(result);
+        }
 
-      expect(start).toEqual({ sec: 0, nsec: 1 });
-      expect(end).toEqual(fromMillis(20 * 0.2));
-      expect(topics).toContainOnly(["/foo/bar"]);
-      const result: MessageLike[] = [
-        {
-          topic: "/foo/bar",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: { payload: "foo bar" },
-        },
-      ];
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      source.seekPlayback({ sec: 0, nsec: 0 });
-      return Promise.resolve(result);
+        case 3:
+          source.pausePlayback();
+          return Promise.resolve([
+            {
+              topic: "/foo/bar",
+              receiveTime: start,
+              message: "this message should not be emitted",
+            },
+          ]);
+
+        default:
+          throw new Error("getMessages called too many times");
+      }
     };
-    provider.getMessages = getMessages;
+
+    const store = new MessageStore(6);
+    await source.setListener(store.add);
+    source.setSubscriptions([{ topic: "/foo/bar" }]);
     source.startPlayback();
+
     const messages = await store.done;
-    expect(messages).toHaveLength(4);
+    expect(messages).toHaveLength(6);
     const activeDatas = messages.map((msg) => msg.activeData || {});
     expect(activeDatas.map((d) => d.currentTime)).toEqual([
       undefined, // "start up" message
-      { sec: 0, nsec: 1 },
-      { sec: 0, nsec: 1 },
-      { sec: 0, nsec: 1 },
+      { sec: 0, nsec: 0 },
+      { sec: 0, nsec: 0 },
+      { sec: 0, nsec: 0 },
+      { sec: 0, nsec: 0 },
+      { sec: 0, nsec: 0 },
     ]);
-    expect(activeDatas.map((d) => d.messages)).toEqual([undefined, [], [], []]);
+    expect(activeDatas.map((d) => d.messages)).toEqual([undefined, [], [], [], [], []]);
   });
 
   it("backfills previous messages on seek", async () => {
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
-    const store = new MessageStore(3);
-    await source.setListener(store.add);
-    source.setSubscriptions([{ topic: "/foo/bar" }]);
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     let callCount = 0;
-    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
       callCount++;
-      if (callCount > 2) {
-        source.pausePlayback();
-        return Promise.resolve([]);
+      switch (callCount) {
+        case 1:
+          // initial getMessages from player initialization
+          expect(start).toEqual({ sec: 0, nsec: 0 });
+          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(topics).toContainOnly(["/foo/bar"]);
+          return Promise.resolve([]);
+
+        case 2: {
+          expect(start).toEqual({ sec: 19, nsec: 1e9 + 50 - SEEK_BACK_NANOSECONDS });
+          expect(end).toEqual({ sec: 20, nsec: 50 });
+          expect(topics).toContainOnly(["/foo/bar"]);
+          const result: MessageLike[] = [
+            {
+              topic: "/foo/bar",
+              receiveTime: { sec: 0, nsec: 5 },
+              message: { payload: "foo bar" },
+            },
+          ];
+          return Promise.resolve(result);
+        }
+        case 3:
+          // make sure after we seek & read again we read exactly from the right nanosecond
+          expect(start).toEqual({ sec: 20, nsec: 51 });
+          return Promise.resolve([
+            { topic: "/foo/bar", receiveTime: { sec: 0, nsec: 101 }, message: { payload: "baz" } },
+          ]);
+        case 4:
+          source.pausePlayback();
+          return Promise.resolve([]);
+        default:
+          throw new Error("getMessages called too many times");
       }
-      if (callCount > 1) {
-        // make sure after we seek & read again we read exactly from the right nanosecond
-        expect(start).toEqual({ sec: 20, nsec: 51 });
-        return Promise.resolve([
-          { topic: "/foo/bar", receiveTime: { sec: 0, nsec: 101 }, message: { payload: "baz" } },
-        ]);
-      }
-      expect(start).toEqual({ sec: 19, nsec: 1e9 + 50 - SEEK_BACK_NANOSECONDS });
-      expect(end).toEqual({ sec: 20, nsec: 50 });
-      expect(topics).toContainOnly(["/foo/bar"]);
-      const result: MessageLike[] = [
-        {
-          topic: "/foo/bar",
-          receiveTime: { sec: 0, nsec: 5 },
-          message: { payload: "foo bar" },
-        },
-      ];
-      return Promise.resolve(result);
     };
-    provider.getMessages = getMessages;
+
+    const store = new MessageStore(2);
+    source.setListener(store.add);
+    expect(await store.done).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      expect.objectContaining({ activeData: expect.any(Object) }),
+    ]);
+
+    store.reset(3);
+    source.setSubscriptions([{ topic: "/foo/bar" }]);
+    // ensure results from the automatic backfill during setSubscriptions are always thrown away
+    // after the new seek, by making the lastSeekTime change
+    mockDateNow.mockReturnValue(Date.now() + 1);
     source.seekPlayback({ sec: 20, nsec: 50 });
+
     const messages = await store.done;
     expect(messages.map((msg) => (msg.activeData ? msg.activeData.messages : []))).toEqual([
       [],
@@ -503,7 +537,7 @@ describe("RandomAccessPlayer", () => {
 
   it("clamps times passed to the DataProvider", async () => {
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     source.setSubscriptions([{ topic: "/foo/bar" }]);
     let lastGetMessagesCall;
     const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
@@ -522,8 +556,8 @@ describe("RandomAccessPlayer", () => {
     }
     lastGetMessagesCall.resolve([]);
     expect(lastGetMessagesCall).toEqual({
-      start: { nsec: 1, sec: 0 },
-      end: { nsec: 100, sec: 0 },
+      start: { sec: 0, nsec: 0 },
+      end: { sec: 0, nsec: 100 },
       topics: ["/foo/bar"],
       resolve: expect.any(Function),
     });
@@ -543,13 +577,6 @@ describe("RandomAccessPlayer", () => {
 
   it("reads a bunch of messages", async () => {
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
-    const received = [];
-    await source.setListener((msg) => {
-      received.push(...((msg.activeData || {}).messages || []));
-      return Promise.resolve();
-    });
-    source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/baz" }]);
     const items: MessageLike[] = [
       {
         topic: "/foo/bar",
@@ -574,7 +601,7 @@ describe("RandomAccessPlayer", () => {
     ];
     let resolve;
     const done = new Promise((_resolve) => (resolve = _resolve));
-    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
       expect(topics).toContainOnly(["/foo/bar", "/baz"]);
       const next = items.shift();
       if (!next) {
@@ -583,7 +610,14 @@ describe("RandomAccessPlayer", () => {
       }
       return Promise.resolve([next]);
     };
-    provider.getMessages = getMessages;
+
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
+    const received = [];
+    await source.setListener((msg) => {
+      received.push(...((msg.activeData || {}).messages || []));
+      return Promise.resolve();
+    });
+    source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/baz" }]);
     source.startPlayback();
     await done;
     source.pausePlayback();
@@ -621,7 +655,7 @@ describe("RandomAccessPlayer", () => {
 
   it("closes provider when closed", async () => {
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer(provider);
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     await source.close();
     expect(provider.closed).toBe(true);
   });
@@ -642,7 +676,7 @@ describe("RandomAccessPlayer", () => {
         closed = true;
       },
     };
-    const source = new RandomAccessPlayer((provider: any));
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     source.setListener((state) => {
       if (!state.isPresent) {
         expect(closed).toBe(true);
@@ -654,7 +688,7 @@ describe("RandomAccessPlayer", () => {
 
   it("shows a spinner when a provider is reconnecting", (done) => {
     const provider = new TestProvider();
-    const source = new RandomAccessPlayer((provider: any));
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     source.setListener((state) => {
       if (!state.showInitializing) {
         if (!state.showSpinner) {
@@ -711,7 +745,7 @@ describe("RandomAccessPlayer", () => {
       provider.getMessages = () => Promise.resolve([]);
 
       const collector = new TestMetricsCollector();
-      const source = new RandomAccessPlayer(provider, collector);
+      const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, collector);
       expect(collector.stats()).toEqual({
         initialized: 0,
         played: 0,

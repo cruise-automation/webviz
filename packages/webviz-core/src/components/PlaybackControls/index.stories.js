@@ -12,7 +12,7 @@ import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { UnconnectedPlaybackControls } from ".";
-import { type PlayerState } from "webviz-core/src/types/players";
+import { PlayerCapabilities, type PlayerState } from "webviz-core/src/types/players";
 
 const START_TIME = 1531761690;
 
@@ -22,7 +22,7 @@ function getPlayerState(): PlayerState {
     showSpinner: false,
     showInitializing: false,
     progress: {},
-    capabilities: [],
+    capabilities: [PlayerCapabilities.setSpeed],
     playerId: "1",
     activeData: {
       messages: [],
@@ -47,6 +47,19 @@ storiesOf("<PlaybackControls>", module)
     const setSpeed = action("setSpeed");
     const seek = action("seek");
     const player = getPlayerState();
+    return (
+      <div style={{ padding: 20, margin: 100 }}>
+        <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />
+      </div>
+    );
+  })
+  .add("without speed control", () => {
+    const pause = action("pause");
+    const play = action("play");
+    const setSpeed = action("setSpeed");
+    const seek = action("seek");
+    const player = getPlayerState();
+    player.capabilities = [];
     return (
       <div style={{ padding: 20, margin: 100 }}>
         <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />

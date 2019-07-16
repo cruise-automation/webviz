@@ -19,6 +19,10 @@ const tempPos = [0, 0, 0];
 const tempScale = [0, 0, 0];
 const tempOrient = [0, 0, 0, 0];
 
+function stripLeadingSlash(name: string) {
+  return name.startsWith("/") ? name.slice(1) : name;
+}
+
 export class Transform {
   id: string;
   matrix: Mat4 = mat4.create();
@@ -26,7 +30,7 @@ export class Transform {
   valid = false;
 
   constructor(id: string) {
-    this.id = id;
+    this.id = stripLeadingSlash(id);
   }
 
   reset() {
@@ -44,6 +48,7 @@ export class Transform {
   }
 
   isChildOfTransform(rootId: string): boolean {
+    rootId = stripLeadingSlash(rootId);
     if (!this.parent) {
       return this.id === rootId;
     }
@@ -58,6 +63,7 @@ export class Transform {
   }
 
   apply(output: Pose, input: Pose, rootId: string): ?Pose {
+    rootId = stripLeadingSlash(rootId);
     if (this.id === rootId) {
       output.position.x = input.position.x;
       output.position.y = input.position.y;
@@ -123,6 +129,7 @@ export class Transform {
 class TfStore {
   storage = {};
   get(key: string): Transform {
+    key = stripLeadingSlash(key);
     let result = this.storage[key];
     if (result) {
       return result;

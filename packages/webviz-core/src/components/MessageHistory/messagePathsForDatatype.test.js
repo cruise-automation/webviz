@@ -150,7 +150,7 @@ describe("validTerminatingStructureItem", () => {
     expect(validTerminatingStructureItem()).toEqual(false);
   });
 
-  it("works for strutureType", () => {
+  it("works for structureType", () => {
     expect(
       validTerminatingStructureItem({ structureType: "message", nextByName: {}, datatype: "" }, ["message"])
     ).toEqual(true);
@@ -193,7 +193,7 @@ describe("traverseStructure", () => {
     expect(
       traverseStructure(structure, [
         { type: "name", name: "some_pose" },
-        { type: "filter", name: "x", value: 10, nameLoc: 123 },
+        { type: "filter", path: ["x"], value: 10, nameLoc: 123 },
         { type: "name", name: "dummy_array" },
         { type: "slice", start: 50, end: 100 },
       ])
@@ -202,6 +202,16 @@ describe("traverseStructure", () => {
       msgPathPart: undefined,
       // $FlowFixMe
       structureItem: structure.nextByName.some_pose.nextByName.dummy_array.next,
+    });
+    expect(
+      traverseStructure(structure, [
+        { type: "name", name: "some_pose" },
+        { type: "filter", path: ["header", "seq"], value: 10, nameLoc: 123 },
+      ])
+    ).toEqual({
+      valid: true,
+      msgPathPart: undefined,
+      structureItem: structure.nextByName.some_pose,
     });
     expect(traverseStructure(structure, [{ type: "name", name: "some_pose" }])).toEqual({
       valid: true,
@@ -213,11 +223,21 @@ describe("traverseStructure", () => {
     expect(
       traverseStructure(structure, [
         { type: "name", name: "some_pose" },
-        { type: "filter", name: "y", value: 10, nameLoc: 123 },
+        { type: "filter", path: ["y"], value: 10, nameLoc: 123 },
       ])
     ).toEqual({
       valid: false,
-      msgPathPart: { name: "y", nameLoc: 123, type: "filter", value: 10 },
+      msgPathPart: { type: "filter", path: ["y"], value: 10, nameLoc: 123 },
+      structureItem: messagePathStructures(datatypes)["pose_msgs/SomePose"],
+    });
+    expect(
+      traverseStructure(structure, [
+        { type: "name", name: "some_pose" },
+        { type: "filter", path: ["header", "y"], value: 10, nameLoc: 123 },
+      ])
+    ).toEqual({
+      valid: false,
+      msgPathPart: { type: "filter", path: ["header", "y"], value: 10, nameLoc: 123 },
       structureItem: messagePathStructures(datatypes)["pose_msgs/SomePose"],
     });
   });

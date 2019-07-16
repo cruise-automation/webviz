@@ -11,12 +11,25 @@
 // etc). We should generally prevent users from making mistakes in the first place, but sometimes
 // its unavoidable to bail out with a generic error message (e.g. when dragging in a malformed
 // ROS bag).
+import * as React from "react";
+
 export type ErrorType = "app" | "user";
+export type DetailsType = string | Error | React.Node;
 
-type ErrorHandler = (message: string, details: string | Error, type: ErrorType) => void;
+type ErrorHandler = (message: string, details: DetailsType, type: ErrorType) => void;
 
-const defaultErrorHandler: ErrorHandler = (message: string, details: string | Error, type: ErrorType): void => {
-  if (process.env.NODE_ENV === "test") {
+const defaultErrorHandler: ErrorHandler = (message: string, details: DetailsType, type: ErrorType): void => {
+  // eslint-disable-next-line no-undef
+  if (typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope) {
+    const webWorkerError =
+      "Web Worker has uninitialized reportError function; this means this error message cannot show up in the UI (so we show it here in the console instead).";
+    if (process.env.NODE_ENV === "test") {
+      throw new Error(webWorkerError);
+    } else {
+      console.error(webWorkerError, message, details, type);
+    }
+    return;
+  } else if (process.env.NODE_ENV === "test") {
     return;
   }
   console.error("Error before error display is mounted", message, details, type);
@@ -30,14 +43,30 @@ export function setErrorHandler(handler: ErrorHandler): void {
   }
   addError = handler;
   // attach to window in dev mode for testing errors
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
     window.addError = handler;
   }
 }
 
+export function unsetErrorHandler() {
+  if (addError === defaultErrorHandler) {
+    throw new Error("Tried to unset ErrorHandler but it was already the default");
+  }
+  addError = defaultErrorHandler;
+}
+
+export function detailsToString(details: DetailsType): string {
+  if (typeof details === "string") {
+    return details;
+  }
+  if (details instanceof Error) {
+    return details.toString();
+  }
+  return "unable to convert details to string type";
+}
+
 // Call this to add an error to the application nav bar error component if mounted
 // if the component is not mounted, console.error is used as a fallback.
-//
-export default function reportError(message: string, details: string | Error, type: ErrorType): void {
+export default function reportError(message: string, details: DetailsType, type: ErrorType): void {
   addError(message, details, type);
 }

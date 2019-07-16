@@ -24,23 +24,34 @@ export default class MemoryDataProvider implements RandomAccessDataProvider {
   topics: ?(Topic[]);
   datatypes: ?RosDatatypes;
   extensionPoint: ExtensionPoint;
+  initiallyLoaded: boolean;
 
   constructor({
     messages,
     topics,
     datatypes,
+    initiallyLoaded,
   }: {
     messages: MessageLike[],
     topics?: Topic[],
     datatypes?: RosDatatypes,
+    initiallyLoaded?: boolean,
   }) {
     this.messages = messages;
     this.topics = topics;
     this.datatypes = datatypes;
+    this.initiallyLoaded = !!initiallyLoaded;
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
     this.extensionPoint = extensionPoint;
+
+    if (!this.initiallyLoaded) {
+      // Report progress during `initialize` to state intention to provide progress (for testing)
+      this.extensionPoint.progressCallback({
+        fullyLoadedFractionRanges: [{ start: 0, end: 0 }],
+      });
+    }
 
     return {
       start: this.messages[0].receiveTime,

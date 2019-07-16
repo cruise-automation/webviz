@@ -10,7 +10,7 @@ import * as React from "react";
 
 type Props = {
   children: React.Node, // Shown when dragging in a file.
-  filesSelected: ({ files: FileList, shiftPressed: boolean }) => any,
+  filesSelected: ({ files: FileList | File[], shiftPressed: boolean }) => any,
 };
 
 type State = {

@@ -8,14 +8,9 @@
 import type { ExtensionPoint } from "webviz-core/src/players/types";
 
 export function mockExtensionPoint() {
-  const topicCallbacks: ((string[]) => void)[] = [];
   return {
-    topicCallbacks,
     extensionPoint: ({
       progressCallback() {},
-      addTopicsCallback(callback: (string[]) => void) {
-        topicCallbacks.push(callback);
-      },
       reportMetadataCallback() {},
     }: ExtensionPoint),
   };

@@ -6,40 +6,38 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { flatten, uniq, isEqual, intersection } from "lodash";
+import { flatten, uniq, isEqual } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import type {
-  RandomAccessDataProvider,
-  MessageLike,
-  InitializationResult,
+  DataProviderDescriptor,
   DataProviderMetadata,
   ExtensionPoint,
+  GetDataProvider,
+  InitializationResult,
+  MessageLike,
+  RandomAccessDataProvider,
 } from "webviz-core/src/players/types";
+import { intersectProgress, emptyProgress, fullyLoadedProgress } from "webviz-core/src/players/util";
 import type { Progress, Topic } from "webviz-core/src/types/players";
 import type { RosMsgField } from "webviz-core/src/types/RosDatatypes";
 import naturalSort from "webviz-core/src/util/naturalSort";
+import { clampTime } from "webviz-core/src/util/time";
 
-type ProviderInfo = { provider: RandomAccessDataProvider, prefix?: string, deleteTopics?: string[] };
+export type ProviderInfo = { prefix?: string, deleteTopics?: string[] };
+type InternalProviderInfo = { provider: RandomAccessDataProvider, prefix?: string, deleteTopics?: string[] };
 
 const sortTimes = (times: Time[]) => times.sort(TimeUtil.compare);
 
-const mapTopics = (
-  initializationResult: InitializationResult,
-  { provider, prefix, deleteTopics = [] }: ProviderInfo
-): Topic[] => {
-  let resTopics: Topic[] = [];
+const mapTopics = (topics: Topic[], { provider, prefix }: InternalProviderInfo): Topic[] => {
   if (!prefix) {
-    resTopics = initializationResult.topics;
-  } else {
-    resTopics = initializationResult.topics.map((topic) => ({
-      ...topic,
-      name: `${prefix}${topic.name}`,
-      originalTopic: topic.name,
-    }));
+    return topics;
   }
-
-  return deleteTopics.length ? resTopics.filter(({ name }) => !deleteTopics.includes(name)) : resTopics;
+  return topics.map((topic) => ({
+    ...topic,
+    name: `${prefix}${topic.name}`,
+    originalTopic: topic.name,
+  }));
 };
 
 const merge = (messages1: MessageLike[], messages2: MessageLike[]) => {
@@ -91,11 +89,21 @@ const throwOnUnequalDatatypes = (datatypes: [string, RosMsgField[]][]) => {
 // a caching adapter for a DataProvider which does eager, non-blocking read ahead of time ranges
 // based on a readAheadRange (default to 100 milliseconds)
 export default class CombinedDataProvider implements RandomAccessDataProvider {
-  _providers: ProviderInfo[];
-  _availableTopicsForAllProviders: string[][] = [];
+  _providers: InternalProviderInfo[];
+  _initializationResultsPerProvider: { start: Time, end: Time, topicSet: Set<string> }[] = [];
+  _progressPerProvider: (Progress | null)[];
 
-  constructor(providers: ProviderInfo[]) {
-    const prefixes = providers.filter(({ prefix }) => prefix).map(({ prefix }) => prefix);
+  constructor(
+    { providerInfos }: {| providerInfos: ProviderInfo[] |},
+    children: DataProviderDescriptor[],
+    getDataProvider: GetDataProvider
+  ) {
+    if (providerInfos.length !== children.length) {
+      throw new Error(
+        `Number of providerInfos (${providerInfos.length}) does not match number of children (${children.length})`
+      );
+    }
+    const prefixes = providerInfos.filter(({ prefix }) => prefix).map(({ prefix }) => prefix);
     if (uniq(prefixes).length !== prefixes.length) {
       throw new Error(`Duplicate prefixes are not allowed: ${JSON.stringify(prefixes)}`);
     }
@@ -103,29 +111,27 @@ export default class CombinedDataProvider implements RandomAccessDataProvider {
       throw new Error(`Each prefix must have a leading forward slash: ${JSON.stringify(prefixes)}`);
     }
 
-    this._providers = providers;
+    this._providers = providerInfos.map((providerInfo, index) => ({
+      ...providerInfo,
+      provider:
+        process.env.NODE_ENV === "test" && children[index].name === "TestProvider"
+          ? children[index].args.provider
+          : getDataProvider(children[index]),
+    }));
+    // initialize progress to an empty range for each provider
+    this._progressPerProvider = providerInfos.map((_) => null);
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
-    const results = await Promise.all(
-      this._providers.map(({ provider, prefix, deleteTopics }: ProviderInfo, idx) => {
+    const results: InitializationResult[] = await Promise.all(
+      this._providers.map(({ provider, prefix, deleteTopics }: InternalProviderInfo, idx) => {
         const childExtensionPoint = {
           progressCallback: (progress: Progress) => {
-            // For now just pass through progress from all underlying providers, without combining
-            // them in a meaningful way, because that's all we need right now.
-            // TODO(JP): Do some smarter combining of progress when we need that, e.g. when allowing
-            // playing multiple remote bags.
-            extensionPoint.progressCallback(progress);
-          },
-          addTopicsCallback: (fn: (string[]) => void) => {
-            extensionPoint.addTopicsCallback((topics) => {
-              // filter out the topics that are not in the provider's availableTopics list
-              const filteredTopics = intersection(topics, this._availableTopicsForAllProviders[idx]);
-              const topicsWithoutPrefix = filteredTopics
-                .map((topic) => (topic.startsWith(prefix || "") ? topic.slice((prefix || "").length) : undefined))
-                .filter(Boolean);
-              fn(topicsWithoutPrefix);
-            });
+            this._progressPerProvider[idx] = progress;
+            // Assume empty for unreported progress
+            const cleanProgresses = this._progressPerProvider.map((p) => p || emptyProgress());
+            const intersected = intersectProgress(cleanProgresses);
+            extensionPoint.progressCallback(intersected);
           },
           reportMetadataCallback: (data: DataProviderMetadata) => {
             extensionPoint.reportMetadataCallback(data);
@@ -134,13 +140,28 @@ export default class CombinedDataProvider implements RandomAccessDataProvider {
         return provider.initialize(childExtensionPoint);
       })
     );
+
+    // Any providers that didn't report progress in `initialize` are assumed fully loaded
+    this._progressPerProvider.forEach((p, i) => {
+      this._progressPerProvider[i] = p || fullyLoadedProgress();
+    });
+
     const start = sortTimes(results.map(({ start }) => start)).shift();
     const end = sortTimes(results.map(({ end }) => end)).pop();
-    const topicsPerProvider = results.map((initializationResult, i) =>
-      mapTopics(initializationResult, this._providers[i])
-    );
-    this._availableTopicsForAllProviders = topicsPerProvider.map((pTopics) => pTopics.map((t) => t.name));
-    const topics = flatten(topicsPerProvider);
+
+    this._initializationResultsPerProvider = [];
+    let topics: Topic[] = [];
+    results.forEach((result, i) => {
+      const deleteTopics: string[] = this._providers[i].deleteTopics || [];
+      const filteredTopics: Topic[] = result.topics.filter(({ name }) => !deleteTopics.includes(name));
+      topics = [...topics, ...mapTopics(filteredTopics, this._providers[i])];
+
+      this._initializationResultsPerProvider.push({
+        start: result.start,
+        end: result.end,
+        topicSet: new Set(filteredTopics.map((t) => t.name)),
+      });
+    });
 
     // Error handling
     throwOnDuplicateTopics([...topics]);
@@ -161,13 +182,32 @@ export default class CombinedDataProvider implements RandomAccessDataProvider {
 
   async getMessages(start: Time, end: Time, topics: string[]): Promise<MessageLike[]> {
     const messagesPerProvider = await Promise.all(
-      this._providers.map(async ({ provider, prefix: suppliedPrefix }) => {
-        const prefix = suppliedPrefix || "";
-        const filteredTopics = (prefix ? topics.filter((topic) => topic.startsWith(prefix)) : topics).map((topic) =>
-          topic.slice(prefix.length)
-        );
-        const messages = await provider.getMessages(start, end, filteredTopics);
-        return Promise.resolve(messages.map((message) => ({ ...message, topic: `${prefix}${message.topic}` })));
+      this._providers.map(async ({ provider, prefix }, index) => {
+        const initializationResult = this._initializationResultsPerProvider[index];
+        const availableTopics = initializationResult.topicSet;
+        const filteredTopics = topics
+          .map((topic) => topic.slice((prefix || "").length))
+          .filter((topic) => availableTopics.has(topic));
+        if (!filteredTopics.length) {
+          // If we don't need any topics from this provider, we shouldn't call getMessages at all.
+          return Promise.resolve([]);
+        }
+        if (
+          TimeUtil.isLessThan(end, initializationResult.start) ||
+          TimeUtil.isLessThan(initializationResult.end, start)
+        ) {
+          // If we're totally out of bounds for this provider, we shouldn't call getMessages at all.
+          return Promise.resolve([]);
+        }
+        const clampedStart = clampTime(start, initializationResult.start, initializationResult.end);
+        const clampedEnd = clampTime(end, initializationResult.start, initializationResult.end);
+        const messages = await provider.getMessages(clampedStart, clampedEnd, filteredTopics);
+        for (const message of messages) {
+          if (!availableTopics.has(message.topic)) {
+            throw new Error(`Saw unexpected topic from provider ${index}: ${message.topic}`);
+          }
+        }
+        return Promise.resolve(messages.map((message) => ({ ...message, topic: `${prefix || ""}${message.topic}` })));
       })
     );
 

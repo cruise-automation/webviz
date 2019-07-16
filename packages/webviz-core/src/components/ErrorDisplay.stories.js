@@ -152,4 +152,18 @@ storiesOf("<ErrorDisplay>", module)
       created: new Date(),
     });
     return <div />;
+  })
+  .add("Error Modal with details in React.Node type", () => {
+    showErrorModal({
+      id: "1",
+      message: "Error 1",
+      details: (
+        <p>
+          This is <b style={{ color: "red" }}>customized</b> error detail.
+        </p>
+      ),
+      read: false,
+      created: new Date(),
+    });
+    return <div />;
   });

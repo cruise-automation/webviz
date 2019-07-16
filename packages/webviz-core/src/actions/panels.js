@@ -8,15 +8,18 @@
 
 import { push } from "react-router-redux";
 
-import type { ImportPanelLayoutPayload, SaveConfigPayload } from "webviz-core/src/types/panels";
+import type { ImportPanelLayoutPayload, SaveConfigPayload, SaveFullConfigPayload } from "webviz-core/src/types/panels";
 import type { Dispatch, GetState } from "webviz-core/src/types/Store";
-
 // DANGER: if you change this you break existing layout urls
 export const URL_KEY = "layout";
 
 export type SAVE_PANEL_CONFIG = {
   type: "SAVE_PANEL_CONFIG",
   payload: SaveConfigPayload,
+};
+export type SAVE_FULL_PANEL_CONFIG = {
+  type: "SAVE_FULL_PANEL_CONFIG",
+  payload: SaveFullConfigPayload,
 };
 
 export type Dispatcher<T> = (dispatch: Dispatch, getState: GetState) => T;
@@ -43,6 +46,16 @@ export const savePanelConfig = (payload: SaveConfigPayload): Dispatcher<SAVE_PAN
   }
   return dispatch({
     type: "SAVE_PANEL_CONFIG",
+    payload,
+  });
+};
+
+export const saveFullPanelConfig = (payload: SaveFullConfigPayload): Dispatcher<SAVE_FULL_PANEL_CONFIG> => (
+  dispatch,
+  getState
+) => {
+  return dispatch({
+    type: "SAVE_FULL_PANEL_CONFIG",
     payload,
   });
 };
@@ -103,5 +116,6 @@ export type PanelsActions =
   | CHANGE_PANEL_LAYOUT
   | IMPORT_PANEL_LAYOUT
   | SAVE_PANEL_CONFIG
+  | SAVE_FULL_PANEL_CONFIG
   | OVERWRITE_GLOBAL_DATA
   | SET_GLOBAL_DATA;

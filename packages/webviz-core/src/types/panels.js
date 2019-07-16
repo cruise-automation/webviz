@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 export type PanelConfig = { [key: string]: any };
+export type PerPanelFunc<Config> = (Config) => Config;
 
 export type SaveConfigPayload = {
   id: string,
@@ -18,6 +19,11 @@ export type SaveConfigPayload = {
   config: PanelConfig,
 };
 
+export type SaveFullConfigPayload = {
+  panelType: string,
+  perPanelFunc: PerPanelFunc<any>,
+};
+
 export type ImportPanelLayoutPayload = {
   // layout is the object passed to react-mosaic
   layout?: any,
@@ -27,3 +33,5 @@ export type ImportPanelLayoutPayload = {
 };
 
 export type SaveConfig<Config> = ($Shape<Config>, ?{ keepLayoutInUrl?: boolean }) => void;
+
+export type UpdatePanelConfig = (panelType: string, perPanelFunc: (PanelConfig) => PanelConfig) => void;

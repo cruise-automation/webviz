@@ -21,11 +21,12 @@ const data = {
   topics: [{ name: "/some_topic", datatype: "some_datatype" }],
   datatypes: { some_datatype: [{ name: "data", type: "string" }] },
 };
+const dummyChildren = [{ name: "MemoryDataProvider", args: {}, children: [] }];
 
 describe("RpcDataProvider", () => {
   it("passes the initialization result through the Rpc channel", async () => {
     const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
-    const provider = new RpcDataProvider(new Rpc(mainChannel), { name: "MemoryDataProvider", args: {}, children: [] });
+    const provider = new RpcDataProvider(new Rpc(mainChannel), dummyChildren);
     const memoryDataProvider = new MemoryDataProvider(data);
     new RpcDataProviderRemote(new Rpc(workerChannel), () => memoryDataProvider);
 
@@ -39,7 +40,7 @@ describe("RpcDataProvider", () => {
 
   it("passes messages with ArrayBuffers through the Rpc channel", async () => {
     const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
-    const provider = new RpcDataProvider(new Rpc(mainChannel), { name: "MemoryDataProvider", args: {}, children: [] });
+    const provider = new RpcDataProvider(new Rpc(mainChannel), dummyChildren);
     const memoryDataProvider = new MemoryDataProvider(data);
     new RpcDataProviderRemote(new Rpc(workerChannel), () => memoryDataProvider);
 
@@ -51,11 +52,10 @@ describe("RpcDataProvider", () => {
   it("passes calls to extensionPoint.reportMetadataCallback through the Rpc channel", async () => {
     const extensionPoint = {
       progressCallback() {},
-      addTopicsCallback() {},
       reportMetadataCallback: jest.fn(),
     };
     const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
-    const provider = new RpcDataProvider(new Rpc(mainChannel), { name: "MemoryDataProvider", args: {}, children: [] });
+    const provider = new RpcDataProvider(new Rpc(mainChannel), dummyChildren);
     const memoryDataProvider = new MemoryDataProvider(data);
     new RpcDataProviderRemote(new Rpc(workerChannel), () => memoryDataProvider);
     const error = { type: "error", source: "test", errorType: "user", message: "test error" };

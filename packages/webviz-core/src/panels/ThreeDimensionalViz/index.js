@@ -24,7 +24,7 @@ import type { TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimens
 import treeBuilder, { Selections } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/treeBuilder";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTransforms";
-import type { SaveConfig } from "webviz-core/src/types/panels";
+import type { SaveConfig, UpdatePanelConfig } from "webviz-core/src/types/panels";
 import type { Frame, Topic } from "webviz-core/src/types/players";
 import type { MarkerProvider } from "webviz-core/src/types/Scene";
 import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
@@ -46,6 +46,8 @@ export type ThreeDimensionalVizConfig = {
   useHeightMap?: ?boolean, // eslint-disable-line react/no-unused-prop-types
   follow?: boolean,
   flattenMarkers?: boolean,
+  selectedPolygonEditFormat?: "json" | "yaml",
+  showCrosshair?: boolean,
 };
 
 export type Props = {
@@ -59,6 +61,7 @@ export type Props = {
   helpContent: React.Node | string,
 
   saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
+  updatePanelConfig: UpdatePanelConfig,
   setSubscriptions: (string[]) => void,
   registerMarkerProvider: (MarkerProvider) => void,
   unregisterMarkerProvider: (MarkerProvider) => void,

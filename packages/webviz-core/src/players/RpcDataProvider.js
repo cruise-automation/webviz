@@ -9,7 +9,7 @@
 import { Time } from "rosbag";
 
 import {
-  type ChainableDataProviderDescriptor,
+  type DataProviderDescriptor,
   type ExtensionPoint,
   type InitializationResult,
   type MessageLike,
@@ -19,26 +19,24 @@ import Rpc from "webviz-core/src/util/Rpc";
 
 export default class RpcDataProvider implements RandomAccessDataProvider {
   _rpc: Rpc;
-  _childDescriptor: ChainableDataProviderDescriptor;
+  _childDescriptor: DataProviderDescriptor;
 
-  constructor(rpc: Rpc, childDescriptor: ChainableDataProviderDescriptor) {
+  constructor(rpc: Rpc, children: DataProviderDescriptor[]) {
     this._rpc = rpc;
-    this._childDescriptor = childDescriptor;
+    if (children.length !== 1) {
+      throw new Error(`RpcDataProvider requires exactly 1 child, but received ${children.length}`);
+    }
+    this._childDescriptor = children[0];
   }
 
   initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
     if (extensionPoint) {
-      const { progressCallback, addTopicsCallback, reportMetadataCallback } = extensionPoint;
+      const { progressCallback, reportMetadataCallback } = extensionPoint;
 
       this._rpc.receive("extensionPointCallback", ({ type, data }) => {
         switch (type) {
           case "progressCallback":
             progressCallback(data);
-            break;
-          case "addTopicsCallback":
-            addTopicsCallback((topics: string[]) => {
-              this._rpc.send(data.rpcCommand, topics);
-            });
             break;
           case "reportMetadataCallback":
             reportMetadataCallback(data);

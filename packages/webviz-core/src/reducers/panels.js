@@ -11,8 +11,13 @@ import { getLeaves } from "react-mosaic-component";
 
 import type { ActionTypes } from "webviz-core/src/actions";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { SaveConfigPayload, ImportPanelLayoutPayload, PanelConfig } from "webviz-core/src/types/panels";
-import { getPanelIdForType } from "webviz-core/src/util";
+import type {
+  SaveConfigPayload,
+  SaveFullConfigPayload,
+  ImportPanelLayoutPayload,
+  PanelConfig,
+} from "webviz-core/src/types/panels";
+import { getPanelIdForType, getPanelTypeFromId } from "webviz-core/src/util";
 import Storage from "webviz-core/src/util/Storage";
 
 const storage = new Storage();
@@ -63,7 +68,6 @@ function changePanelLayout(state: PanelsState, layout: any): PanelsState {
 
 function savePanelConfig(state: PanelsState, payload: SaveConfigPayload): PanelsState {
   const { id, config } = payload;
-
   // imutable update of key/value pairs
   const newProps = payload.override
     ? { ...state.savedProps, [id]: config }
@@ -76,6 +80,31 @@ function savePanelConfig(state: PanelsState, payload: SaveConfigPayload): Panels
           ...config,
         },
       };
+
+  // save the new saved panel props in storage
+  storage.set(PANEL_PROPS_KEY, newProps);
+
+  return {
+    ...state,
+    savedProps: newProps,
+  };
+}
+
+// eslint-disable-next-line no-unused-vars
+function saveFullPanelConfig(state: PanelsState, payload: SaveFullConfigPayload): PanelsState {
+  const { panelType, perPanelFunc } = payload;
+  const newProps = { ...state.savedProps };
+  if (panelType && perPanelFunc) {
+    const fullConfig = state.savedProps;
+    Object.keys(fullConfig).forEach((panelId) => {
+      if (getPanelTypeFromId(panelId) === panelType) {
+        const newPanelConfig = perPanelFunc(fullConfig[panelId]);
+        if (newPanelConfig) {
+          newProps[panelId] = newPanelConfig;
+        }
+      }
+    });
+  }
 
   // save the new saved panel props in storage
   storage.set(PANEL_PROPS_KEY, newProps);
@@ -113,6 +142,9 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
 
     case "SAVE_PANEL_CONFIG":
       return savePanelConfig(state, action.payload);
+
+    case "SAVE_FULL_PANEL_CONFIG":
+      return saveFullPanelConfig(state, action.payload);
 
     case "IMPORT_PANEL_LAYOUT":
       return importPanelLayout(state, action.payload);

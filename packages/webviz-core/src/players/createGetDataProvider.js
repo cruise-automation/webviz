@@ -6,19 +6,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type {
-  ChainableDataProvider,
-  ChainableDataProviderDescriptor,
-  GetDataProvider,
-} from "webviz-core/src/players/types";
+import type { RandomAccessDataProvider, DataProviderDescriptor, GetDataProvider } from "webviz-core/src/players/types";
 
 export default function createGetDataProvider(descriptorMap: {
-  [name: string]: Class<ChainableDataProvider>,
+  [name: string]: Class<RandomAccessDataProvider>,
 }): GetDataProvider {
-  return function getDataProvider(descriptor: ChainableDataProviderDescriptor): ChainableDataProvider {
+  return function getDataProvider(descriptor: DataProviderDescriptor): RandomAccessDataProvider {
     const Provider = descriptorMap[descriptor.name];
     if (!Provider) {
-      throw new Error(`Unknown ChainableDataProviderDescriptor#name: ${descriptor.name}`);
+      throw new Error(`Unknown DataProviderDescriptor#name: ${descriptor.name}`);
     }
     return new Provider(descriptor.args, descriptor.children, getDataProvider);
   };

@@ -9,6 +9,7 @@
 export type RosMsgField = {|
   type: string,
   name: string,
+  isComplex?: boolean,
 
   // For arrays
   isArray?: boolean,

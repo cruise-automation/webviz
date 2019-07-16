@@ -9,8 +9,8 @@
 import type { Time } from "rosbag";
 
 import type {
-  ChainableDataProvider,
-  ChainableDataProviderDescriptor,
+  RandomAccessDataProvider,
+  DataProviderDescriptor,
   DataProviderMetadata,
   ExtensionPoint,
   GetDataProvider,
@@ -22,9 +22,9 @@ import Logger from "webviz-core/src/util/Logger";
 const log = new Logger(__filename);
 
 export function instrumentDataProviderTree(
-  treeRoot: ChainableDataProviderDescriptor,
+  treeRoot: DataProviderDescriptor,
   depth: number = 1
-): ChainableDataProviderDescriptor {
+): DataProviderDescriptor {
   return {
     name: "MeasureDataProvider",
     args: { name: `${new Array(depth * 2 + 1).join("-")}> ${treeRoot.name}` },
@@ -37,16 +37,12 @@ export function instrumentDataProviderTree(
   };
 }
 
-export default class MeasureDataProvider implements ChainableDataProvider {
+export default class MeasureDataProvider implements RandomAccessDataProvider {
   _name: string;
-  _provider: ChainableDataProvider;
+  _provider: RandomAccessDataProvider;
   _reportMetadataCallback: (DataProviderMetadata) => void = () => {};
 
-  constructor(
-    { name }: { name: string },
-    children: ChainableDataProviderDescriptor[],
-    getDataProvider: GetDataProvider
-  ) {
+  constructor({ name }: { name: string }, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to MeasureDataProvider: ${children.length}`);
     }
@@ -63,7 +59,11 @@ export default class MeasureDataProvider implements ChainableDataProvider {
     const startMs = Date.now();
     const argsString = `${start.sec}.${start.nsec}, ${end.sec}.${end.nsec}`;
     const result = await this._provider.getMessages(start, end, topics);
-    log.info(`MeasureDataProvider(${this._name}): ${Date.now() - startMs}ms for getMessages(${argsString})`);
+    log.info(
+      `MeasureDataProvider(${this._name}): ${Date.now() - startMs}ms for ${
+        result.length
+      } messages from getMessages(${argsString})`
+    );
     return result;
   }
 

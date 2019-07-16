@@ -6,28 +6,21 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import uuid from "uuid";
-
 import type {
-  ChainableDataProvider,
-  ChainableDataProviderDescriptor,
+  RandomAccessDataProvider,
+  DataProviderDescriptor,
   DataProviderMetadata,
 } from "webviz-core/src/players/types";
 import Rpc from "webviz-core/src/util/Rpc";
 
 export default class RpcDataProviderRemote {
-  constructor(rpc: Rpc, getDataProvider: (ChainableDataProviderDescriptor) => ChainableDataProvider) {
-    let provider: ChainableDataProvider;
+  constructor(rpc: Rpc, getDataProvider: (DataProviderDescriptor) => RandomAccessDataProvider) {
+    let provider: RandomAccessDataProvider;
     rpc.receive("initialize", async ({ childDescriptor, hasExtensionPoint }) => {
       provider = getDataProvider(childDescriptor);
       return provider.initialize({
         progressCallback: (data) => {
           rpc.send("extensionPointCallback", { type: "progressCallback", data });
-        },
-        addTopicsCallback: (fn: (string[]) => void) => {
-          const rpcCommand = uuid.v4();
-          rpc.receive(rpcCommand, fn);
-          rpc.send("extensionPointCallback", { type: "addTopicsCallback", data: { rpcCommand } });
         },
         reportMetadataCallback: (data: DataProviderMetadata) => {
           rpc.send("extensionPointCallback", { type: "reportMetadataCallback", data });

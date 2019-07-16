@@ -18,12 +18,12 @@ import Menu from "webviz-core/src/components/Menu";
 import Modal, { Title } from "webviz-core/src/components/Modal";
 import renderToBody from "webviz-core/src/components/renderToBody";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import { setErrorHandler } from "webviz-core/src/util/reportError";
+import { setErrorHandler, unsetErrorHandler, type DetailsType } from "webviz-core/src/util/reportError";
 
 type ErrorMessage = {
   +id: string,
   +message: string,
-  +details: string,
+  +details: DetailsType,
   +read: boolean,
   +created: Date,
 };
@@ -139,12 +139,16 @@ const ModalBody = styled.div`
 `;
 
 // Exporting for tests.
-export function showErrorModal(errorMessage: ErrorMessage): void {
+export function showErrorModal({ details, message }: ErrorMessage): void {
+  const detailsNode = React.isValidElement(details) ? details : null;
+  const detailsStr =
+    details instanceof Error ? details.stack : typeof details === "string" ? details : "No details provided";
+
   const modal = renderToBody(
     <Modal onRequestClose={() => modal.remove()}>
       <ModalBody>
-        <Title style={{ color: colors.red }}>{errorMessage.message}</Title>
-        <pre style={{ whiteSpace: "pre-wrap", lineHeight: 1.3 }}>{errorMessage.details}</pre>
+        <Title style={{ color: colors.red }}>{message}</Title>
+        {detailsNode ? detailsNode : <pre style={{ whiteSpace: "pre-wrap", lineHeight: 1.3 }}>{detailsStr}</pre>}
       </ModalBody>
     </Modal>
   );
@@ -167,10 +171,9 @@ export default class ErrorDisplay extends React.PureComponent<{}, State> {
 
   componentDidMount() {
     setErrorHandler(
-      (message: string, details: string | Error): void => {
+      (message: string, details: DetailsType): void => {
         this.setState((state: State) => {
-          const detailsAsError: string = typeof details !== "string" ? details.stack : details || "No details provided";
-          const newErrors = [{ id: uuid(), created: new Date(), message, details: detailsAsError, read: false }];
+          const newErrors = [{ id: uuid(), created: new Date(), message, details, read: false }];
           // shift errors in to the front of the array and keep a max of 100
           const errors = newErrors.concat(state.errors).slice(0, 100);
           return {
@@ -187,6 +190,10 @@ export default class ErrorDisplay extends React.PureComponent<{}, State> {
         }, FLASH_DURATION_MILLIS);
       }
     );
+  }
+
+  componentWillUnmount() {
+    unsetErrorHandler();
   }
 
   toggleErrorList = () => {

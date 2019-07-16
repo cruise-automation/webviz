@@ -72,6 +72,7 @@ describe("Panel", () => {
         datatypes: { some_datatype: [] },
         openSiblingPanel: expect.any(Function),
         saveConfig: expect.any(Function),
+        updatePanelConfig: expect.any(Function),
         topics: [{ datatype: "some_datatype", name: "/some/topic" }],
       },
     ]);
@@ -100,6 +101,7 @@ describe("Panel", () => {
         datatypes: { some_datatype: [] },
         openSiblingPanel: expect.any(Function),
         saveConfig: expect.any(Function),
+        updatePanelConfig: expect.any(Function),
         topics: [{ datatype: "some_datatype", name: "/some/topic" }],
       },
     ]);

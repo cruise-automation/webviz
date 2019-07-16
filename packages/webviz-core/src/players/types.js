@@ -25,6 +25,15 @@ export type MessageLike = {
   message: any,
 };
 
+// DataProviders can be instantiated using a DataProviderDescriptor and a GetDataProvider function.
+// Because the descriptor is a plain JavaScript object, it can be sent over an Rpc Channel, which
+// means that you can describe a chain of data providers that includes a Worker or a WebSocket.
+export type DataProviderDescriptor = {|
+  name: string,
+  args: any,
+  children: DataProviderDescriptor[],
+|};
+
 export type InitializationResult = {
   start: Time,
   end: Time,
@@ -41,11 +50,15 @@ export type DataProviderMetadata =
   | {| type: "updateReconnecting", reconnecting: boolean |};
 export type ExtensionPoint = {|
   progressCallback: (Progress) => void,
-  addTopicsCallback: ((string[]) => void) => void,
   reportMetadataCallback: (DataProviderMetadata) => void,
 |};
 
+// eslint-disable-next-line no-use-before-define
+export type GetDataProvider = (DataProviderDescriptor) => RandomAccessDataProvider;
+
 export interface RandomAccessDataProvider {
+  constructor(args: any, children: DataProviderDescriptor[], getDataProvider: GetDataProvider): void;
+
   // Do any up-front initializing of the provider, and takes an optional extension point for
   // callbacks that only some implementations care about.
   initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult>;
@@ -56,18 +69,3 @@ export interface RandomAccessDataProvider {
   // Close the provider.
   close(): Promise<void>;
 }
-
-// ChainableDataProviders are RandomAccessDataProviders that can be nested. They can be instantiated
-// using a ChainableDataProviderDescriptor and a GetDataProvider function. Because the descriptor
-// is a plain Javascript object, it can be sent over an Rpc Channel, which means that you can
-// describe a chain of data providers that includes a WebWorker or a Websocket.
-export type ChainableDataProviderDescriptor = {|
-  name: string,
-  args: Object,
-  children: ChainableDataProviderDescriptor[],
-|};
-export interface ChainableDataProvider extends RandomAccessDataProvider {
-  // eslint-disable-next-line no-use-before-define
-  constructor(args: Object, children: ChainableDataProviderDescriptor[], getDataProvider: GetDataProvider): void;
-}
-export type GetDataProvider = (ChainableDataProviderDescriptor) => ChainableDataProvider;

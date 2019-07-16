@@ -27,6 +27,7 @@ const defaultHooks = {
     const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
     const RawMessages = require("webviz-core/src/panels/RawMessages").default;
     const { ndash } = require("webviz-core/src/util/entities");
+    const Note = require("webviz-core/src/panels/Note").default;
 
     return [
       { title: "rosout", component: Rosout },
@@ -39,6 +40,7 @@ const defaultHooks = {
       { title: `Diagnostics ${ndash} Detail`, component: DiagnosticStatusPanel },
       { title: "Webviz Internals", component: Internals },
       { title: "Number of Renders", component: NumberOfRenders, hideFromList: true },
+      { title: "Notes", component: Note },
     ];
   },
   helpPageFootnote: () => null,
@@ -132,7 +134,6 @@ const defaultHooks = {
     const Root = require("webviz-core/src/components/Root").default;
     return <Root store={store} />;
   },
-  skipBrowserConfirmation: () => false,
   topicsWithIncorrectHeaders: () => [],
   heavyDatatypesWithNoTimeDependency: () => [
     "sensor_msgs/PointCloud2",
@@ -145,6 +146,10 @@ const defaultHooks = {
   onPanelSwap: () => {},
   onPanelSplit: () => {},
   onPanelDrag: () => {},
+  getWorkerDataProviderWorker: () => {
+    return require("webviz-core/src/players/WorkerDataProvider.worker");
+  },
+  getAdditionalDataProviders: () => {},
 };
 
 let hooks = defaultHooks;
@@ -169,9 +174,11 @@ export function loadWebviz(hooksToSet) {
   require("webviz-core/src/styles/global.scss");
   const prepareForScreenshots = require("webviz-core/src/stories/prepareForScreenshots").default;
   const installChartjs = require("webviz-core/src/util/installChartjs").default;
+  const installDevtoolsFormatters = require("webviz-core/src/util/installDevtoolsFormatters").default;
 
   installChartjs();
   prepareForScreenshots(); // For integration screenshot tests.
+  installDevtoolsFormatters();
 
   hooks.load();
 
@@ -199,7 +206,7 @@ export function loadWebviz(hooksToSet) {
   // From https://stackoverflow.com/a/4900484
   const chromeMatch = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
   const chromeVersion = chromeMatch ? parseInt(chromeMatch[2], 10) : 0;
-  if (chromeVersion < MINIMUM_CHROME_VERSION && !hooks.skipBrowserConfirmation()) {
+  if (chromeVersion < MINIMUM_CHROME_VERSION) {
     Confirm({
       title: "Update your browser",
       prompt:

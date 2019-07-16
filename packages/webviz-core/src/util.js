@@ -67,3 +67,30 @@ export function encodeURLQueryParamValue(value: string): string {
     return allowedChar || encodeURIComponent(char);
   });
 }
+
+export function downloadFiles(blobs: Blob[], filePrefixOrName: string) {
+  const { body } = document;
+  if (!body) {
+    return;
+  }
+
+  const link = document.createElement("a");
+  link.style.display = "none";
+  body.appendChild(link);
+
+  const urls = blobs.map((blob) => window.URL.createObjectURL(blob));
+  urls.forEach((url, idx) => {
+    const fileName = blobs.length === 1 ? filePrefixOrName : `${filePrefixOrName}_${idx}`;
+    link.setAttribute("download", fileName);
+    link.setAttribute("href", url);
+    link.click();
+  });
+
+  // remove the link after triggering download
+  window.requestAnimationFrame(() => {
+    body.removeChild(link);
+    urls.forEach((url) => {
+      URL.revokeObjectURL(url);
+    });
+  });
+}

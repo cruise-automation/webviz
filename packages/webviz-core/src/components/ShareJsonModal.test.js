@@ -50,4 +50,29 @@ describe("<ShareJsonModal />", () => {
     expect(wrapper.find(".is-danger").exists()).toBe(true);
     done();
   });
+
+  it("fires no error when resetting an actual layout to default", (done) => {
+    const pass = (value) => {
+      expect(value.layout).toEqual("RosOut!cuuf9u");
+      done();
+    };
+    const wrapper = mount(
+      <div data-modalcontainer="true">
+        <ShareJsonModal onRequestClose={() => {}} value={{}} onChange={pass} noun="layout" />
+      </div>
+    );
+    const newValue = btoa(
+      JSON.stringify({
+        layout: "RosOut!cuuf9u",
+        savedProps: {},
+        globalData: {},
+      })
+    );
+    wrapper.find(".textarea").simulate("change", { target: { value: newValue } });
+    wrapper
+      .find("Button[children='Apply']")
+      .first()
+      .simulate("click");
+    expect(wrapper.find(".is-danger").exists()).toBe(false);
+  });
 });

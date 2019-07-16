@@ -8,22 +8,25 @@
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 
-export const rosPrimitives = [
-  "bool",
-  "int8",
-  "uint8",
-  "int16",
-  "uint16",
-  "int32",
-  "uint32",
-  "int64",
-  "uint64",
-  "float32",
-  "float64",
-  "string",
-  "time",
-  "duration",
-];
+const RosPrimitives = {
+  bool: null,
+  int8: null,
+  uint8: null,
+  int16: null,
+  uint16: null,
+  int32: null,
+  uint32: null,
+  int64: null,
+  uint64: null,
+  float32: null,
+  float64: null,
+  string: null,
+  time: null,
+  duration: null,
+};
+
+export type RosPrimitive = $Keys<typeof RosPrimitives>;
+export const rosPrimitives: RosPrimitive[] = Object.keys(RosPrimitives);
 
 // It sometimes happens that topics have headers, but those headers don't have
 // useful timestamps in them. This is done for internal reasons, as some APIs
@@ -31,17 +34,21 @@ export const rosPrimitives = [
 // these topics.
 export const TOPICS_WITH_INCORRECT_HEADERS = getGlobalHooks().topicsWithIncorrectHeaders();
 
+export type MessagePathFilter = {|
+  type: "filter",
+  path: string[],
+  value: void | number | string | {| variableName: string |},
+  nameLoc: number,
+  valueLoc: number,
+  repr: string, // the original string representation of the filter
+|};
+
 // A parsed version of paths.
 export type MessagePathPart =
   | {| type: "name", name: string |}
   | {| type: "slice", start: number, end: number |}
-  | {|
-      type: "filter",
-      name: string,
-      value: number | string | {| variableName: string |},
-      nameLoc: number,
-      valueLoc: number,
-    |};
+  | MessagePathFilter;
+
 export type RosPath = {|
   topicName: string,
   messagePath: MessagePathPart[],

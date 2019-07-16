@@ -87,6 +87,7 @@ export default class Database {
   static async get(definition: DatabaseDefinition): Promise<Database> {
     const { name, version, objectStores } = definition;
     const db = await idb.open(name, version, (change) => {
+      [...change.objectStoreNames].forEach((name) => change.deleteObjectStore(name));
       objectStores.forEach((storeDefinition) => {
         const { indexes = [] } = storeDefinition;
         const store = change.createObjectStore(storeDefinition.name, storeDefinition.options);

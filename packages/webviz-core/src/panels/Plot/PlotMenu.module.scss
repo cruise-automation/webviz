@@ -19,3 +19,13 @@
 .inputError {
   color: $red;
 }
+
+.lockItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lockIcon {
+  fill: currentColor;
+}

@@ -6,10 +6,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import ClipboardOutlineIcon from "@mdi/svg/svg/clipboard-outline.svg";
 import _ from "lodash";
 import * as React from "react";
 import { List, AutoSizer, CellMeasurer, CellMeasurerCache } from "react-virtualized";
 import styled from "styled-components";
+
+import Icon from "webviz-core/src/components/Icon";
+import clipboard from "webviz-core/src/util/clipboard";
+import { toolsColorScheme } from "webviz-core/src/util/toolsColorScheme";
 
 const RenderRowContainer = styled.div`
   display: flex;
@@ -25,6 +30,11 @@ const LogMsg = styled.div`
   top: 32px;
   right: 12px;
   z-index: 1;
+  display: flex;
+  border-radius: 4px;
+  background: ${toolsColorScheme.base.dark};
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0px 8px;
 `;
 
 const DEFAULT_ROW_HEIGHT = 16;
@@ -56,6 +66,8 @@ type Props<Item> = {
   renderRow: RenderRow<Item>,
   disableScrollToBottom: boolean,
   cleared?: boolean,
+  enableCopying?: boolean,
+  copyButtonTooltip?: string,
 };
 
 const defaultRenderRow: RenderRow<any> = ({ index, key, style, items }) => {
@@ -67,6 +79,17 @@ const defaultRenderRow: RenderRow<any> = ({ index, key, style, items }) => {
     </RenderRowContainer>
   );
 };
+
+function CopyIcon({ tooltip, getCopyText }: { tooltip: string, getCopyText: () => string }) {
+  return (
+    <Icon
+      style={{ padding: "1px 0px 0px 6px", verticalAlign: "middle" }}
+      onClick={() => clipboard.copy(getCopyText())}
+      tooltip={tooltip}>
+      <ClipboardOutlineIcon />
+    </Icon>
+  );
+}
 
 /**
  * <LargeList> is a reusable responsive component for displaying large amount of logs or similar data.
@@ -104,7 +127,7 @@ class LargeList<Item> extends React.Component<Props<Item>, {}> {
   }
 
   render() {
-    const { items, renderRow, disableScrollToBottom } = this.props;
+    const { items, renderRow, disableScrollToBottom, enableCopying, copyButtonTooltip } = this.props;
     const addedProps = disableScrollToBottom ? {} : { scrollToIndex: items.length - 1 };
     const logCounts = items.length;
 
@@ -113,6 +136,9 @@ class LargeList<Item> extends React.Component<Props<Item>, {}> {
         {logCounts > 0 && (
           <LogMsg>
             {logCounts} {logCounts > 1 ? "items" : "item"}
+            {enableCopying && (
+              <CopyIcon getCopyText={() => JSON.stringify(items, null, 2)} tooltip={copyButtonTooltip || "Copy"} />
+            )}
           </LogMsg>
         )}
         <AutoSizer>

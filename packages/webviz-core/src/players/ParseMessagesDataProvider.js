@@ -8,17 +8,22 @@
 
 import { type Time } from "rosbag";
 
-import { type ChainableDataProvider, type MessageLike, type InitializationResult, type ExtensionPoint } from "./types";
-import type { ChainableDataProviderDescriptor, Connection, GetDataProvider } from "webviz-core/src/players/types";
+import {
+  type RandomAccessDataProvider,
+  type MessageLike,
+  type InitializationResult,
+  type ExtensionPoint,
+} from "./types";
+import type { DataProviderDescriptor, Connection, GetDataProvider } from "webviz-core/src/players/types";
 import MessageReaderStore from "webviz-core/src/util/MessageReaderStore";
 
 const readers = new MessageReaderStore();
 
-export default class ParseMessagesDataProvider implements ChainableDataProvider {
-  _provider: ChainableDataProvider;
+export default class ParseMessagesDataProvider implements RandomAccessDataProvider {
+  _provider: RandomAccessDataProvider;
   _connectionsByTopic: { [topic: string]: Connection } = {};
 
-  constructor(_: {}, children: ChainableDataProviderDescriptor[], getDataProvider: GetDataProvider) {
+  constructor(_: {}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to ParseMessagesDataProvider: ${children.length}`);
     }

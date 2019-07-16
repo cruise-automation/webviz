@@ -6,11 +6,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import BagDataProvider from "./BagDataProvider";
+import BagDataProvider from "webviz-core/src/players/BagDataProvider";
+import { mockExtensionPoint } from "webviz-core/src/players/mockExtensionPoint";
 
 const dummyExtensionPoint = {
   progressCallback() {},
-  addTopicsCallback() {},
   reportMetadataCallback() {},
 };
 
@@ -47,6 +47,17 @@ describe("BagDataProvider", () => {
       "tf/tfMessage",
       "geometry_msgs/Twist",
     ]);
+  });
+
+  it("calls progress callback while initializing with a local bag", async () => {
+    const provider = new BagDataProvider(
+      { bagPath: { type: "file", file: `${__dirname}/../../public/fixtures/example.bag` } },
+      []
+    );
+    const extensionPoint = mockExtensionPoint().extensionPoint;
+    jest.spyOn(extensionPoint, "progressCallback");
+    await provider.initialize(extensionPoint);
+    expect(extensionPoint.progressCallback).toHaveBeenCalledWith({ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] });
   });
 
   it("gets messages", async () => {

@@ -157,7 +157,6 @@ export type Pose = {
 };
 
 export type BaseShape = {
-  id?: number, // positive integer
   pose: Pose,
   scale: Scale,
   color: Color | Vec4,

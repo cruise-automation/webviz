@@ -93,36 +93,24 @@ export default class Command<T> extends React.Component<Props<T>> {
       command: this.props.reglCommand,
       drawProps,
       layerIndex: this.props.layerIndex,
+      hasEvent: true,
     });
-
-    const hitmapProps = this.props.hitmapProps;
-    if (hitmapProps) {
-      context.registerHitmapCall({
-        instance: this,
-        command: this.props.reglCommand,
-        drawProps: hitmapProps,
-        layerIndex: this.props.layerIndex,
-      });
-    }
   }
 
   handleMouseEvent(objectId: number, e: MouseEvent, ray: Ray, mouseEventName: MouseEventEnum) {
+    const context = this.context;
+    if (!context) {
+      return;
+    }
     const mouseHandler = this.props[mouseEventName];
-    const { hitmapProps = [], getObjectFromHitmapId } = this.props;
-    if (!mouseHandler || hitmapProps.length === 0 || !getObjectFromHitmapId) {
+    const drawProp = this.context.getDrawPropByHitmapId(objectId);
+    if (!mouseHandler || !drawProp) {
       return;
     }
-
-    const hitmapProp = getObjectFromHitmapId(objectId, hitmapProps);
-
-    if (!hitmapProp) {
-      return;
-    }
-
     mouseHandler(e, {
       ray,
       objectId,
-      object: hitmapProp,
+      object: drawProp,
     });
   }
 
@@ -222,15 +210,7 @@ export function makeCommand<T>(
       }
     }
 
-    return (
-      <Command
-        {...rest}
-        reglCommand={command}
-        drawProps={children}
-        hitmapProps={hitmapProps}
-        getObjectFromHitmapId={getObjectFromHitmapId}
-      />
-    );
+    return <Command {...rest} reglCommand={command} drawProps={children} />;
   };
 
   cmd.displayName = name;

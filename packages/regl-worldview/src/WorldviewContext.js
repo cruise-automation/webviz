@@ -14,6 +14,7 @@ import { camera, CameraStore } from "./camera/index";
 import Command from "./commands/Command";
 import type {
   Dimensions,
+  BaseShape,
   RawCommand,
   CompiledReglCommand,
   CameraCommand,
@@ -21,7 +22,7 @@ import type {
   CameraState,
   MouseEventEnum,
 } from "./types";
-import { getIdFromColor } from "./utils/commandUtils";
+import { getIdFromColor, intToRGB } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
 import type { Ray } from "./utils/Raycast";
 import { getRayFromClick } from "./utils/Raycast";
@@ -74,7 +75,10 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
 // This is made available to every Command component as `this.context`.
 // It contains all the regl interaction code and is responsible for collecting and executing
 // draw calls, hitmap calls, and raycasting.
+
 export class WorldviewContext {
+  _hitmapIdMap: { [key: number]: BaseShape } = {};
+  _hitmapIdCounter: number = 1;
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, any> = new Map();
@@ -211,8 +215,8 @@ export class WorldviewContext {
       this.counters.paint = Date.now() - x;
     });
 
-    this._paintCalls.forEach((paint) => {
-      paint();
+    this._paintCalls.forEach((paintCall) => {
+      paintCall();
     });
     this.counters.render = Date.now() - start;
   }
@@ -273,17 +277,21 @@ export class WorldviewContext {
   }
 
   callComponentHandlers = (objectId: number, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
-    this._hitmapCalls.forEach((_, component) => {
-      if (component instanceof Command) {
+    this._drawCalls.forEach((drawInput, component) => {
+      if (drawInput.hasEvent && component instanceof Command) {
         component.handleMouseEvent(objectId, e, ray, mouseEventName);
       }
     });
   };
 
   _drawInput = (isHitmap?: boolean) => {
-    const drawCallsMap = isHitmap ? this._hitmapCalls : this._drawCalls;
+    const drawCallsMap = this._drawCalls;
     const sortedDrawCalls = Array.from(drawCallsMap.values()).sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
-
+    // for drawing hitmap, empty the hitmapIdMap, reset hitmapIdCounter
+    if (isHitmap) {
+      this._hitmapIdMap = {};
+      this._hitmapIdCounter = 1;
+    }
     sortedDrawCalls.forEach((drawInput: DrawInput) => {
       const { command, drawProps, instance } = drawInput;
       if (!drawProps) {
@@ -293,8 +301,29 @@ export class WorldviewContext {
       if (!cmd) {
         return console.warn("could not find draw command for", instance.constructor.displayName);
       }
-      cmd(drawProps);
+      // assign hitmapId, map drawProps to hitmapProps by map id to color, and call command with the hitmapProps
+      // TODO: impelment custom id mapping for instanced command
+      if (isHitmap && drawInput.hasEvent) {
+        const hitmapProps = drawProps.map((drawProp) => {
+          const hitmapProp = { ...drawProp };
+          const id = this._hitmapIdCounter++;
+          const hitmapColor = intToRGB(id);
+          hitmapProp.color = hitmapColor;
+          if (hitmapProp.points) {
+            hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
+          }
+          this._hitmapIdMap[id] = drawProp;
+          return hitmapProp;
+        });
+        cmd(hitmapProps);
+      } else if (!isHitmap) {
+        cmd(drawProps);
+      }
     });
+  };
+
+  getDrawPropByHitmapId = (hitmapId: number) => {
+    return this._hitmapIdMap[hitmapId];
   };
 
   _clearCanvas = (regl: any) => {

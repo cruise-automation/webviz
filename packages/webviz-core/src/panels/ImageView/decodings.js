@@ -61,7 +61,6 @@ export function decodeRGB(rgb: Uint8Array, width: number, height: number, output
     const g = rgb[inIdx++];
     const b = rgb[inIdx++];
 
-
     output[outIdx++] = r;
     output[outIdx++] = g;
     output[outIdx++] = b;

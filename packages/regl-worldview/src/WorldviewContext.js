@@ -48,6 +48,7 @@ export type DrawInput = {
   command: Command<any>,
   drawProps: Props,
   layerIndex: ?number,
+  enableHitmap: boolean,
 };
 
 export type PaintFn = () => void;
@@ -55,7 +56,6 @@ export type PaintFn = () => void;
 export type WorldviewContextType = {
   onMount(instance: Command<any>, command: RawCommand<any>): void,
   registerDrawCall(drawInput: DrawInput): void,
-  registerHitmapCall(drawInput: DrawInput): void,
   registerPaintCallback(PaintFn): void,
   unregisterPaintCallback(PaintFn): void,
   onUnmount(instance: Command<any>): void,
@@ -82,7 +82,6 @@ export class WorldviewContext {
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, any> = new Map();
-  _hitmapCalls: Map<React.Component<any>, any> = new Map();
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
@@ -163,7 +162,6 @@ export class WorldviewContext {
 
   // unregister children hitmap and draw calls
   onUnmount(instance: React.Component<any>) {
-    this._hitmapCalls.delete(instance);
     this._drawCalls.delete(instance);
   }
 
@@ -177,10 +175,6 @@ export class WorldviewContext {
 
   registerPaintCallback(paintFn: PaintFn) {
     this._paintCalls.set(paintFn, paintFn);
-  }
-
-  registerHitmapCall(drawInput: DrawInput) {
-    this._hitmapCalls.set(drawInput.instance, drawInput);
   }
 
   setDimension(dimension: Dimensions) {
@@ -278,15 +272,18 @@ export class WorldviewContext {
 
   callComponentHandlers = (objectId: number, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
     this._drawCalls.forEach((drawInput, component) => {
-      if (drawInput.hasEvent && component instanceof Command) {
+      if (drawInput.enableHitmap && component instanceof Command) {
         component.handleMouseEvent(objectId, e, ray, mouseEventName);
       }
     });
   };
 
   _drawInput = (isHitmap?: boolean) => {
-    const drawCallsMap = this._drawCalls;
-    const sortedDrawCalls = Array.from(drawCallsMap.values()).sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+    let drawCalls = Array.from(this._drawCalls.values());
+    if (isHitmap) {
+      drawCalls = drawCalls.filter(({ enableHitmap }) => enableHitmap);
+    }
+    const sortedDrawCalls = drawCalls.sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
     // for drawing hitmap, empty the hitmapIdMap, reset hitmapIdCounter
     if (isHitmap) {
       this._hitmapIdMap = {};
@@ -303,7 +300,7 @@ export class WorldviewContext {
       }
       // assign hitmapId, map drawProps to hitmapProps by map id to color, and call command with the hitmapProps
       // TODO: impelment custom id mapping for instanced command
-      if (isHitmap && drawInput.hasEvent) {
+      if (isHitmap) {
         const hitmapProps = drawProps.map((drawProp) => {
           const hitmapProp = { ...drawProp };
           const id = this._hitmapIdCounter++;

@@ -14,6 +14,7 @@ import CameraModel from "./CameraModel";
 import {
   decodeYUV,
   decodeBGR,
+  decodeRGB,
   decodeFloat1c,
   decodeBayerRGGB8,
   decodeBayerBGGR8,
@@ -92,6 +93,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
         switch (encoding) {
           case "yuv422": decodeYUV(rawData, width, height, image.data); break;
           case "bgr8": decodeBGR(rawData, width, height, image.data); break;
+          case "rgb8": decodeRGB(rawData, width, height, image.data); break;
           case "32FC1": decodeFloat1c(rawData, width, height, is_bigendian, image.data); break;
           case "bayer_rggb8": decodeBayerRGGB8(rawData, width, height, image.data); break;
           case "bayer_bggr8": decodeBayerBGGR8(rawData, width, height, image.data); break;

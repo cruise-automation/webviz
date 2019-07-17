@@ -35,7 +35,7 @@ export type Props<T> = {
   [MouseEventEnum]: ComponentMouseHandler,
   children?: T[],
   getObjectFromHitmapId?: GetObjectFromHitmapId<HitmapProp<T>>,
-  hitmapProps?: HitmapProp<T>,
+  enableHitmap: boolean,
   layerIndex?: number,
   reglCommand: RawCommand<T>,
 };
@@ -93,7 +93,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       command: this.props.reglCommand,
       drawProps,
       layerIndex: this.props.layerIndex,
-      hasEvent: true,
+      enableHitmap: this.props.enableHitmap,
     });
   }
 
@@ -170,47 +170,10 @@ export function makeCommand<T>(
   command: RawCommand<T>,
   options: ?MakeCommandOptions = {}
 ): React.StatelessFunctionalComponent<T> {
-  let warnedAboutDeprecatedGetHitmapId = false;
-  const cmd = ({
-    children,
-    getObjectFromHitmapId: getObjectFromHitmapIdAlt,
-    getHitmapProps: getHitmapPropsAlt,
-    getHitmapId,
-    ...rest
-  }: Props<T>) => {
-    let getObjectFromHitmapId = getObjectFromHitmapIdAlt || options.getObjectFromHitmapId;
-    const getHitmapProps = getHitmapPropsAlt || options.getHitmapProps;
-    let hitmapProps;
-
-    if ((getHitmapPropsAlt && !getObjectFromHitmapIdAlt) || (!getHitmapPropsAlt && getObjectFromHitmapIdAlt)) {
-      console.error(
-        "Possible wrong hitmap id mapping in the instanced rendering. Keep or remove both `getHitmapProps` and `getObjectFromHitmapId` props."
-      );
-    }
+  const cmd = ({ children, getHitmapId, ...rest }: Props<T>) => {
     // enable hitmap if any of the supported mouse event handlers exist in props
     const enableHitmap = getHitmapId || SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
-
-    if (enableHitmap) {
-      // TODO: deprecating, remove before 1.x release
-      if (getHitmapId) {
-        if (!warnedAboutDeprecatedGetHitmapId) {
-          console.warn(
-            `"getHitmapId" is deprecated. Check "${name}" to use default hitmap mapping or set the "getHitmapProps" and "getObjectFromHitmapId" props explicitly. `
-          );
-          warnedAboutDeprecatedGetHitmapId = true;
-        }
-        hitmapProps = defaultGetHitmapProps(getHitmapId, children);
-        getObjectFromHitmapId = defaultGetObjectFromHitmapId;
-      } else if (!getHitmapProps || !getObjectFromHitmapId) {
-        hitmapProps = null;
-        getObjectFromHitmapId = null;
-        console.error(`Default hitmap for ${name} is not supported yet.`);
-      } else if (getHitmapProps && getObjectFromHitmapId) {
-        hitmapProps = getHitmapProps(children);
-      }
-    }
-
-    return <Command {...rest} reglCommand={command} drawProps={children} />;
+    return <Command {...rest} reglCommand={command} drawProps={children} enableHitmap={enableHitmap} />;
   };
 
   cmd.displayName = name;

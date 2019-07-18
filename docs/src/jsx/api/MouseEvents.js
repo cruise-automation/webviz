@@ -63,14 +63,14 @@ function Example() {
     };
   }
 
-  function onContainerClick(e, args) {
-    if (!args.objectId) {
+  function onContainerClick(e, eventInfo) {
+    if (!eventInfo) {
       setCubeDetails({});
     }
   }
 
-  function onContainerMouseMove(e, args) {
-    if (!args.objectId) {
+  function onContainerMouseMove(e, eventInfo) {
+    if (!eventInfo) {
       setCursor("auto");
     }
   }

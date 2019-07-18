@@ -64,17 +64,13 @@ function Example() {
       sphereMarker.points.push({ x: x * 20, y: y * 20, z: z * 20 });
     });
 
-  const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index) => {
-    const pointIdx = clickedObjectId - sphereMarker.id;
-    const position = sphereMarker.points[pointIdx];
+  const obstacleMarkers = Array.from(clickedObjectIds).map(({ objectId, instanceIndex }, index) => {
+    const position = sphereMarker.points[instanceIndex];
     return {
-      // Since the `sphereMarker` has used up the id range: 101 ~ 101 + 499 (inclusive, each id represent one sphere object),
-      // to make the obstacleMarkers' ids unique, we'll use the range: 500 (sphereMarker.id + step) + index.
-      // Learn about id mapping at https://cruise-automation.github.io/webviz/worldview/#/docs/api/mouse-events
       id: sphereMarker.id + steps + index,
       // remember the original clickedObjectId so when the obstacle is clicked, we can
       // remove the obstacle quickly by updating clickedObjectIds
-      clickedObjectId,
+      clickedObjectId: objectId + instanceIndex,
       pose: {
         orientation: { x: 0, y: 0, z: 0, w: 1 },
         position,
@@ -103,14 +99,16 @@ function Example() {
         thetaOffset: -Math.PI / 2, // rotate the camera so the duck is facing right
       }}>
       <Spheres
-        onClick={(ev, { objectId }) => {
-          setClickedObjectIds([...clickedObjectIds, objectId]);
+        onClick={(ev, { object, instanceIndex }) => {
+          setClickedObjectIds([...clickedObjectIds, { id: object.id, instanceIndex }]);
         }}>
         {[sphereMarker]}
       </Spheres>
       <Cubes
         onClick={(ev, { object }) => {
-          const newClickedObjectIds = clickedObjectIds.filter((id) => id !== object.clickedObjectId);
+          const newClickedObjectIds = clickedObjectIds.filter(
+            ({ id, instanceIndex }) => id + instanceIndex !== object.clickedObjectId
+          );
           setClickedObjectIds(newClickedObjectIds);
           setShouldStopDuck(false);
         }}>

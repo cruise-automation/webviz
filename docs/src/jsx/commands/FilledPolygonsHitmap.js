@@ -38,8 +38,8 @@ function Example() {
   ];
   return (
     <Worldview
-      onClick={(_, { objectId }) => {
-        if (!objectId) {
+      onClick={(_, eventInfo) => {
+        if (!eventInfo) {
           setClickedObj(null);
         }
       }}>

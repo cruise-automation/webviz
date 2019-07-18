@@ -141,10 +141,8 @@ export function makeCommand<T>(
   command: RawCommand<T>,
   options: ?MakeCommandOptions = {}
 ): React.StatelessFunctionalComponent<T> {
-  const cmd = ({ children, interactive, ...rest }: Props<T>) => {
-    // enable hitmap if any of the supported mouse event handlers exist in props
-    const enableHitmap = interactive || SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
-    return <Command {...rest} reglCommand={command} drawProps={children} enableHitmap={enableHitmap} />;
+  const cmd = ({ children, ...rest }: Props<T>) => {
+    return <Command {...rest} reglCommand={command} drawProps={children} />;
   };
 
   cmd.displayName = name;

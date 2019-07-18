@@ -20,7 +20,7 @@ import {
   Triangles,
   FilledPolygons,
   type CameraState,
-  type ComponentReglClickInfo,
+  type ReglClickInfo,
   type MouseHandler,
   type Vec4,
 } from "regl-worldview";
@@ -124,7 +124,7 @@ type MarkersProps = {
   autoTextBackgroundColor: boolean,
   markerProviders: (?MarkerProvider)[],
   clickedObject?: ClickedObject,
-  onMarkerDoubleClick: (event: MouseEvent, clickInfo: ?ComponentReglClickInfo, markerName: string) => void,
+  onMarkerDoubleClick: (event: MouseEvent, clickInfo: ?ReglClickInfo, markerName: string) => void,
 };
 
 function Markers(props: MarkersProps) {
@@ -209,18 +209,18 @@ export default class World extends React.Component<Props, State> {
     };
   }
 
-  onMarkerDoubleClick = (event: MouseEvent, clickInfo: ?ComponentReglClickInfo, markerName: string) => {
+  onMarkerDoubleClick = (event: MouseEvent, clickInfo: ?ReglClickInfo, markerName: string) => {
     if (!clickInfo) {
       return;
     }
-    const { object } = clickInfo;
+    const { objectId } = clickInfo;
     this.setState((state) => ({
       ...state,
-      clickedObject: object ? { id: object.id, markerName } : undefined,
+      clickedObject: objectId ? { id: objectId, markerName } : undefined,
     }));
   };
 
-  onDoubleClick = (event: MouseEvent, clickInfo: ?ComponentReglClickInfo) => {
+  onDoubleClick = (event: MouseEvent, clickInfo: ?ReglClickInfo) => {
     if (!clickInfo) {
       return;
     }
@@ -234,7 +234,7 @@ export default class World extends React.Component<Props, State> {
     }
   };
 
-  onClick = (event: MouseEvent, clickInfo: ?ComponentReglClickInfo) => {
+  onClick = (event: MouseEvent, clickInfo: ?ReglClickInfo) => {
     if (!clickInfo) {
       return;
     }

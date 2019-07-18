@@ -53,9 +53,15 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
 }
 
 const spheres = fromGeometry(points, faces);
+
+function defaultMapObjectToInstanceCount(object) {
+  return object.points.length;
+}
+
 const Spheres = makeCommand<SphereList>("Spheres", spheres, {
   getHitmapProps,
   getObjectFromHitmapId,
+  mapObjectToInstanceCount: defaultMapObjectToInstanceCount,
 });
 
 export default Spheres;

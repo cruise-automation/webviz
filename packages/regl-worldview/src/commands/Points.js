@@ -61,9 +61,14 @@ const points = (regl: Regl) => {
   });
 };
 
+function defaultMapObjectToInstanceCount(object) {
+  return object.points.length;
+}
+
 const Points = makeCommand<PointType>("Points", points, {
   getHitmapProps: getHitmapPropsForInstancedCommands,
   getObjectFromHitmapId: getObjectForInstancedCommands,
+  mapObjectToInstanceCount: defaultMapObjectToInstanceCount,
 });
 
 export default Points;

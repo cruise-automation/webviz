@@ -34,8 +34,6 @@ function Example() {
 
   const pointsMarker = {
     // Unique identifier for the object that contains multiple instances.
-    // If an object starts with 1000 and has 500 colors, the returned objectId
-    // will be in the range of 1000 ~ 1499
     id: 1000,
     pose: {
       orientation: { x: 0, y: 0, z: 0, w: 1 },
@@ -57,23 +55,21 @@ function Example() {
     colors: points.map((_, idx) => numberToColor(idx, points.length)),
     points: spheresPoints,
     info: "an instanced sphere",
-    hasCustomHitmapProps: true, // with customGetHitmapProps and customGetObjectFromHitmapId
   };
 
-  function onObjectClick(ev, { objectId, object }) {
+  function onObjectClick(ev, { object, instanceIndex }) {
     let msg = "";
-    // use the objectId to find the particular object that's been clicked
-    if (object && objectId) {
+    // use the instanceIndex to find the particular object that's been clicked
+    if (object) {
       if (object.points) {
         // instanced spheres has reverse id, from 6000 to 5001
-        const idx = object.hasCustomHitmapProps ? object.id - objectId : objectId - object.id;
-        if (idx >= 0 && idx <= points.length) {
-          msg = `Clicked ${object.info}. The objectId is ${objectId} and its position is ${JSON.stringify(
-            object.points[idx]
+        if (instanceIndex >= 0 && instanceIndex <= points.length) {
+          msg = `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
+            object.points[instanceIndex]
           )}`;
         }
       } else {
-        msg = `Clicked ${object.info}. The objectId is ${objectId} and its position is ${JSON.stringify(
+        msg = `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
           object.pose.position
         )}`;
       }
@@ -81,26 +77,10 @@ function Example() {
     setCommandMsg(msg);
   }
 
-  function onWorldviewClick(ev, { objectId }) {
-    if (!objectId) {
+  function onWorldviewClick(ev, { object }) {
+    if (!object) {
       setCommandMsg("");
     }
-  }
-
-  function customGetHitmapProps(children) {
-    return children.map((marker) => ({
-      ...marker,
-      colors: marker.points.map((_, pointIndex) => intToRGB(marker.id - pointIndex)),
-    }));
-  }
-
-  function customGetObjectFromHitmapId(objectId, hitmapProps) {
-    return hitmapProps.find((hitmapProp) => {
-      if (hitmapProp.points && objectId <= hitmapProp.id && objectId > hitmapProp.id - hitmapProp.points.length) {
-        return true;
-      }
-      return false;
-    });
   }
 
   return (

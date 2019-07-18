@@ -77,7 +77,7 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
 // draw calls, hitmap calls, and raycasting.
 
 export class WorldviewContext {
-  _hitmapIdMap: { [key: number]: BaseShape } = {};
+  _hitmapIdMap: { [key: number]: { marker: BaseShape, instanceIndex?: number } } = {};
   _hitmapIdCounter: number = 1;
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
@@ -307,9 +307,14 @@ export class WorldviewContext {
           const hitmapColor = intToRGB(id);
           hitmapProp.color = hitmapColor;
           if (hitmapProp.points) {
-            hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
+            // Assign a unique color to each point
+            hitmapProp.colors = new Array(hitmapProp.points.length).fill().map((_, idx) => {
+              const pointId = this._hitmapIdCounter++;
+              this._hitmapIdMap[pointId] = { marker: drawProp, instanceIndex: idx };
+              return intToRGB(pointId);
+            });
           }
-          this._hitmapIdMap[id] = drawProp;
+          this._hitmapIdMap[id] = { marker: drawProp };
           return hitmapProp;
         });
         cmd(hitmapProps);

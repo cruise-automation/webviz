@@ -34,8 +34,7 @@ export type HitmapMarkerDefault = {
 export type Props<T> = {
   [MouseEventEnum]: ComponentMouseHandler,
   children?: T[],
-  getObjectFromHitmapId?: GetObjectFromHitmapId<HitmapProp<T>>,
-  enableHitmap: boolean,
+  interactive?: boolean,
   layerIndex?: number,
   reglCommand: RawCommand<T>,
 };
@@ -103,15 +102,15 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
     const mouseHandler = this.props[mouseEventName];
-    const drawProp = this.context.getDrawPropByHitmapId(objectId);
-    if (!mouseHandler || !drawProp) {
+    const { marker, instanceIndex } = this.context.getDrawPropByHitmapId(objectId);
+    if (!mouseHandler || !marker) {
       return;
     }
-    mouseHandler(e, {
-      ray,
-      objectId,
-      object: drawProp,
-    });
+    const clickInfo = { ray, object: marker };
+    if (instanceIndex !== null) {
+      clickInfo.instanceIndex = instanceIndex;
+    }
+    mouseHandler(e, clickInfo);
   }
 
   render() {
@@ -170,9 +169,9 @@ export function makeCommand<T>(
   command: RawCommand<T>,
   options: ?MakeCommandOptions = {}
 ): React.StatelessFunctionalComponent<T> {
-  const cmd = ({ children, getHitmapId, ...rest }: Props<T>) => {
+  const cmd = ({ children, interactive, ...rest }: Props<T>) => {
     // enable hitmap if any of the supported mouse event handlers exist in props
-    const enableHitmap = getHitmapId || SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
+    const enableHitmap = interactive || SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
     return <Command {...rest} reglCommand={command} drawProps={children} enableHitmap={enableHitmap} />;
   };
 

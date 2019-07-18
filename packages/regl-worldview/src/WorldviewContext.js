@@ -50,6 +50,7 @@ export type DrawInput = {
   drawProps: Props,
   layerIndex: ?number,
   enableHitmap: boolean,
+  mapObjectToInstanceCount?: ?(object: Props) => number,
 };
 
 export type PaintFn = () => void;

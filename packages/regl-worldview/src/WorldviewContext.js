@@ -338,7 +338,6 @@ export class WorldviewContext {
             }
             this._hitmapIdMap[id] = drawProp;
           }
-          console.log("hit", hitmapProp, drawProp);
           return hitmapProp;
         });
         cmd(hitmapProps);

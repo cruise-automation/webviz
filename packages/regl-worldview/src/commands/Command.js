@@ -41,8 +41,7 @@ export type Props<T> = {
 export type CommandProps = Props;
 
 export type MakeCommandOptions = {
-  getHitmapProps: GetHitmapProps,
-  getObjectFromHitmapId: GetObjectFromHitmapId,
+  mapObjectToInstanceCount: (any) => number,
 };
 
 // Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.
@@ -141,7 +140,7 @@ export function makeCommand<T>(
   options: ?MakeCommandOptions = {}
 ): React.StatelessFunctionalComponent<T> {
   const cmd = ({ children, ...rest }: Props<T>) => {
-    return <Command {...rest} reglCommand={command} drawProps={children} />;
+    return <Command {...options} {...rest} reglCommand={command} drawProps={children} />;
   };
 
   cmd.displayName = name;

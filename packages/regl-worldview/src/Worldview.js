@@ -56,13 +56,13 @@ type State = {|
 |};
 
 function handleWorldviewMouseInteraction(
-  mouseEventObject: MouseEventObject,
+  mouseEventObject: ?MouseEventObject,
   ray: Ray,
   e: MouseEvent,
   handler: MouseHandler
 ) {
   let args = null;
-  if (mouseEventObject.object) {
+  if (mouseEventObject) {
     args = { ray, ...mouseEventObject };
   }
 

@@ -12,7 +12,15 @@ import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
-import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap, MouseEventEnum } from "./types";
+import type {
+  MouseHandler,
+  Dimensions,
+  Vec4,
+  CameraState,
+  CameraKeyMap,
+  MouseEventEnum,
+  MouseEventObject,
+} from "./types";
 import { getNodeEnv } from "./utils/common";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
@@ -47,10 +55,15 @@ type State = {|
   worldviewContext: WorldviewContext,
 |};
 
-function handleWorldviewMouseInteraction(object: ?Object, ray: Ray, e: MouseEvent, handler: MouseHandler) {
+function handleWorldviewMouseInteraction(
+  mouseEventObject: MouseEventObject,
+  ray: Ray,
+  e: MouseEvent,
+  handler: MouseHandler
+) {
   let args = null;
-  if (object) {
-    args = { ray, object };
+  if (mouseEventObject.object) {
+    args = { ray, ...mouseEventObject };
   }
 
   try {
@@ -203,6 +216,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     worldviewContext
       .readHitmap(canvasX, canvasY)
       .then((objectId) => {
+        console.log("objectId: ", objectId);
         if (worldviewHandler) {
           handleWorldviewMouseInteraction(worldviewContext.getDrawPropByHitmapId(objectId), ray, e, worldviewHandler);
         }

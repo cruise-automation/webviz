@@ -10,7 +10,6 @@
 import * as React from "react";
 
 import type { ComponentMouseHandler, MouseEventEnum, RawCommand, Vec4, Color, Ray } from "../types";
-import { getIdFromColor, intToRGB } from "../utils/commandUtils";
 import { getNodeEnv } from "../utils/common";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
@@ -83,16 +82,21 @@ export default class Command<T> extends React.Component<Props<T>> {
     if (!context) {
       return;
     }
-    const drawProps = this.props.drawProps;
+    console.warn("this.", this.props);
+
+    const { interactive, mapObjectToInstanceCount, drawProps, reglCommand, layerIndex, ...rest } = this.props;
     if (drawProps == null) {
       return;
     }
+    const enableHitmap =
+      interactive || mapObjectToInstanceCount || SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
     context.registerDrawCall({
       instance: this,
-      command: this.props.reglCommand,
+      command: reglCommand,
       drawProps,
-      layerIndex: this.props.layerIndex,
-      enableHitmap: this.props.enableHitmap,
+      layerIndex,
+      enableHitmap,
+      mapObjectToInstanceCount,
     });
   }
 
@@ -125,38 +129,6 @@ export default class Command<T> extends React.Component<Props<T>> {
       </WorldviewReactContext.Consumer>
     );
   }
-}
-
-// TODO: deprecating, remove before 1.x release
-function defaultGetHitmapProps<T>(getHitmapId, children: T[]): ?(HitmapProp[]) {
-  if (!children || children.length === 0) {
-    return undefined;
-  }
-
-  return children.reduce((memo, marker) => {
-    const hitmapId = getHitmapId(marker);
-    // filter out components that don't have hitmapIds
-    if (hitmapId != null) {
-      memo.push({
-        ...marker,
-        color: intToRGB(hitmapId || 0),
-      });
-    }
-    return memo;
-  }, []);
-}
-
-// TODO: deprecating, remove before 1.x release
-function defaultGetObjectFromHitmapId(objectId: number, hitmapProps) {
-  return hitmapProps.find((hitmapProp) => {
-    if (hitmapProp.color) {
-      const hitmapPropId = getIdFromColor(hitmapProp.color.map((color) => color * 255));
-      if (hitmapPropId === objectId) {
-        return true;
-      }
-    }
-    return false;
-  });
 }
 
 // Factory function for creating simple regl components.

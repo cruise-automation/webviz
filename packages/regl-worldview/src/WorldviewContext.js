@@ -21,6 +21,7 @@ import type {
   Vec4,
   CameraState,
   MouseEventEnum,
+  MouseEventObject,
 } from "./types";
 import { getIdFromColor, intToRGB } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
@@ -77,7 +78,8 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
 // draw calls, hitmap calls, and raycasting.
 
 export class WorldviewContext {
-  _hitmapIdMap: { [key: number]: { marker: BaseShape, instanceIndex?: number } } = {};
+  _hitmapIdMap: { [key: number]: BaseShape } = {}; // map hitmapId to the original marker object
+  _hitmapInstancedIdMap: { [key: number]: number } = {}; // map hitmapId to the instance index
   _hitmapIdCounter: number = 1;
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
@@ -281,16 +283,18 @@ export class WorldviewContext {
   _drawInput = (isHitmap?: boolean) => {
     let drawCalls = Array.from(this._drawCalls.values());
     if (isHitmap) {
+      // remove non-hitmap drawCalls
       drawCalls = drawCalls.filter(({ enableHitmap }) => enableHitmap);
     }
     const sortedDrawCalls = drawCalls.sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
     // for drawing hitmap, empty the hitmapIdMap, reset hitmapIdCounter
     if (isHitmap) {
       this._hitmapIdMap = {};
+      this._hitmapInstancedIdMap = {};
       this._hitmapIdCounter = 1;
     }
     sortedDrawCalls.forEach((drawInput: DrawInput) => {
-      const { command, drawProps, instance } = drawInput;
+      const { command, drawProps, instance, mapObjectToInstanceCount } = drawInput;
       if (!drawProps) {
         return console.debug(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`, drawInput);
       }
@@ -299,22 +303,41 @@ export class WorldviewContext {
         return console.warn("could not find draw command for", instance.constructor.displayName);
       }
       // assign hitmapId, map drawProps to hitmapProps by map id to color, and call command with the hitmapProps
-      // TODO: impelment custom id mapping for instanced command
+      // TODO: implement custom id mapping for instanced command
       if (isHitmap) {
         const hitmapProps = drawProps.map((drawProp) => {
           const hitmapProp = { ...drawProp };
-          const id = this._hitmapIdCounter++;
-          const hitmapColor = intToRGB(id);
-          hitmapProp.color = hitmapColor;
-          if (hitmapProp.points) {
-            // Assign a unique color to each point
-            hitmapProp.colors = new Array(hitmapProp.points.length).fill().map((_, idx) => {
-              const pointId = this._hitmapIdCounter++;
-              this._hitmapIdMap[pointId] = { marker: drawProp, instanceIndex: idx };
-              return intToRGB(pointId);
+          if (mapObjectToInstanceCount) {
+            const instanceCount = mapObjectToInstanceCount(drawProp);
+            const startColor = intToRGB(this._hitmapIdCounter);
+            const allColors = new Array(drawProp.points.length).fill().map(() => startColor);
+            const pointCountPerInstance = Math.ceil(drawProp.points.length / instanceCount);
+            const ids = new Array(instanceCount).fill().map((_, idx) => idx + this._hitmapIdCounter);
+            const idColors = ids.map((id) => intToRGB(id));
+            for (let i = 0; i < instanceCount; i++) {
+              for (let j = 0; j < pointCountPerInstance; j++) {
+                const idx = i * pointCountPerInstance + j;
+                allColors[idx] = idColors[i];
+              }
+            }
+
+            this._hitmapIdCounter += ids.length;
+            ids.forEach((id, index) => {
+              this._hitmapIdMap[id] = drawProp;
+              // map the new ids back to the original id (instance index) 0 - 100 in order to return to the consumer later
+              this._hitmapInstancedIdMap[id] = index;
             });
+            hitmapProp.colors = allColors;
+          } else {
+            const id = this._hitmapIdCounter++;
+            const hitmapColor = intToRGB(id);
+            hitmapProp.color = hitmapColor;
+            if (hitmapProp.points) {
+              hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
+            }
+            this._hitmapIdMap[id] = drawProp;
           }
-          this._hitmapIdMap[id] = { marker: drawProp };
+          console.log("hit", hitmapProp, drawProp);
           return hitmapProp;
         });
         cmd(hitmapProps);
@@ -324,8 +347,8 @@ export class WorldviewContext {
     });
   };
 
-  getDrawPropByHitmapId = (hitmapId: number) => {
-    return this._hitmapIdMap[hitmapId];
+  getDrawPropByHitmapId = (hitmapId: number): MouseEventObject => {
+    return { object: this._hitmapIdMap[hitmapId], instanceIndex: this._hitmapInstancedIdMap[hitmapId] };
   };
 
   _clearCanvas = (regl: any) => {

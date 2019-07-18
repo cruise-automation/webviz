@@ -190,6 +190,11 @@ export type PolygonType = BaseShape & {
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
 
+export type MouseEventObject = {
+  object: ?BaseShape,
+  instanceIndex: ?number,
+};
+
 export type CameraAction =
   | "moveDown"
   | "moveLeft"

@@ -97,6 +97,23 @@ function Example() {
         }}>
         {commandMsg ? <span>{commandMsg}</span> : <span>Click any object</span>}
       </div>
+      {/*<Points onClick={onObjectClick}>{[pointsMarker]}</Points>
+      <Spheres onClick={onObjectClick}>{[instancedSphereMarker]}</Spheres>
+      <Points onClick={onObjectClick}>
+        {[
+          {
+            id: 10001,
+            pose: {
+              orientation: { x: 0, y: 0, z: 0, w: 1 },
+              position: { x: 0, y: 0, z: 0 },
+            },
+            points: [{ x: 10, y: -10, z: 0 }],
+            color: { r: 1, g: 0, b: 0, a: 1 },
+            scale: { x: 20, y: 20, z: 20 },
+            info: "a point",
+          },
+        ]}
+      </Points>
 
       <Cubes onClick={onObjectClick}>
         {[
@@ -112,6 +129,33 @@ function Example() {
           },
         ]}
       </Cubes>
+      <Spheres onClick={onObjectClick}>
+        {[
+          {
+            myId: 30001,
+            pose: {
+              orientation: { x: 0, y: 0, z: 0, w: 1 },
+              position: { x: -10, y: -10, z: 0 },
+            },
+            color: { r: 1, g: 0, b: 0, a: 1 },
+            scale: { x: 4, y: 4, z: 4 },
+            info: `a sphere with deprecated api "getHitmapId"`,
+          },
+        ]}
+      </Spheres>*/}
+      <Triangles
+        onClick={onObjectClick}
+        mapObjectToInstanceCount={(drawProp) => Math.floor(drawProp.points.length / 3)}>
+        {[
+          {
+            id: 40001,
+            pose: pointsMarker.pose,
+            points: [[-20, -10, 0], [-20, -5, 0], [-15, -10, 0], [-15, -5, 0], [-15, -10, 0], [-10, -5, 0]],
+            colors: pointsMarker.colors.slice(0, 6),
+            info: "one point in a triangle",
+          },
+        ]}
+      </Triangles>
       <Axes />
     </Worldview>
   );

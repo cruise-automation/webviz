@@ -97,7 +97,7 @@ function Example() {
         }}>
         {commandMsg ? <span>{commandMsg}</span> : <span>Click any object</span>}
       </div>
-      {/*<Points onClick={onObjectClick}>{[pointsMarker]}</Points>
+      <Points onClick={onObjectClick}>{[pointsMarker]}</Points>
       <Spheres onClick={onObjectClick}>{[instancedSphereMarker]}</Spheres>
       <Points onClick={onObjectClick}>
         {[
@@ -142,7 +142,7 @@ function Example() {
             info: `a sphere with deprecated api "getHitmapId"`,
           },
         ]}
-      </Spheres>*/}
+      </Spheres>
       <Triangles
         onClick={onObjectClick}
         mapObjectToInstanceCount={(drawProp) => Math.floor(drawProp.points.length / 3)}>

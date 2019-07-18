@@ -82,7 +82,6 @@ export default class Command<T> extends React.Component<Props<T>> {
     if (!context) {
       return;
     }
-    console.warn("this.", this.props);
 
     const { interactive, mapObjectToInstanceCount, drawProps, reglCommand, layerIndex, ...rest } = this.props;
     if (drawProps == null) {
@@ -106,11 +105,11 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
     const mouseHandler = this.props[mouseEventName];
-    const { marker, instanceIndex } = this.context.getDrawPropByHitmapId(objectId);
-    if (!mouseHandler || !marker) {
+    const { object, instanceIndex } = this.context.getDrawPropByHitmapId(objectId);
+    if (!mouseHandler || !object) {
       return;
     }
-    const clickInfo = { ray, object: marker };
+    const clickInfo = { ray, object };
     if (instanceIndex !== null) {
       clickInfo.instanceIndex = instanceIndex;
     }

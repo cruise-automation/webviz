@@ -47,17 +47,11 @@ type State = {|
   worldviewContext: WorldviewContext,
 |};
 
-function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
-  const objectId = rawObjectId !== 0 ? rawObjectId : undefined;
-  // TODO: deprecating, remove before 1.x release
-  const args = {
-    ray,
-    objectId,
-    get clickedObjectId() {
-      console.warn('"clickedObjectId" is deprecated. Please use "objectId" instead.');
-      return objectId;
-    },
-  };
+function handleWorldviewMouseInteraction(object: ?Object, ray: Ray, e: MouseEvent, handler: MouseHandler) {
+  let args = null;
+  if (object) {
+    args = { ray, object };
+  }
 
   try {
     handler(e, args);
@@ -199,7 +193,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     // rendering the hitmap on mouse move is expensive, so disable it by default
     if (mouseEventName === "onMouseMove" && !this.props.hitmapOnMouseMove) {
       if (worldviewHandler) {
-        return handleWorldviewMouseInteraction(0, ray, e, worldviewHandler);
+        return handleWorldviewMouseInteraction(null, ray, e, worldviewHandler);
       }
       return;
     }
@@ -209,9 +203,8 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     worldviewContext
       .readHitmap(canvasX, canvasY)
       .then((objectId) => {
-        console.log("objectId: ", objectId);
         if (worldviewHandler) {
-          handleWorldviewMouseInteraction(objectId, ray, e, worldviewHandler);
+          handleWorldviewMouseInteraction(worldviewContext.getDrawPropByHitmapId(objectId), ray, e, worldviewHandler);
         }
         worldviewContext.callComponentHandlers(objectId, ray, e, mouseEventName);
       })

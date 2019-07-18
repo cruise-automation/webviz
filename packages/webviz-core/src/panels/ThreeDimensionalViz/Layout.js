@@ -12,6 +12,7 @@ import { vec3, quat } from "gl-matrix";
 import * as React from "react";
 import Draggable from "react-draggable";
 import KeyListener from "react-key-listener";
+<<<<<<< HEAD
 import {
   cameraStateSelectors,
   PolygonBuilder,
@@ -20,6 +21,9 @@ import {
   type ReglClickInfo,
   type MouseHandler,
 } from "regl-worldview";
+=======
+import { cameraStateSelectors, type CameraState, type ComponentReglClickInfo, type MouseHandler } from "regl-worldview";
+>>>>>>> Remove getHitmapProps from worldview
 
 import type { ThreeDimensionalVizConfig } from ".";
 import Icon from "webviz-core/src/components/Icon";
@@ -188,6 +192,7 @@ export default class Layout extends React.Component<Props, State> implements Mar
     return newState;
   }
 
+<<<<<<< HEAD
   onDoubleClick = (ev: MouseEvent, args: ?ReglClickInfo) => {
     this._handleEvent("onDoubleClick", ev, args);
   };
@@ -211,6 +216,34 @@ export default class Layout extends React.Component<Props, State> implements Mar
     const { drawingType } = this.state;
     if (!args) {
       return;
+=======
+  onMouseDown: MouseHandler = (e, args: ?ComponentReglClickInfo) => {
+    const handler = this.measuringTool && this.measuringTool.canvasMouseDown;
+    if (handler && args) {
+      return handler(e, args);
+    }
+    const { onMouseDown } = this.props;
+    if (onMouseDown) {
+      onMouseDown(e, args);
+    }
+  };
+
+  onMouseUp: MouseHandler = (e, args: ?ComponentReglClickInfo) => {
+    const handler = this.measuringTool && this.measuringTool.canvasMouseUp;
+    if (handler && args) {
+      return handler(e, args);
+    }
+    const { onMouseUp } = this.props;
+    if (onMouseUp) {
+      onMouseUp(e, args);
+    }
+  };
+
+  onMouseMove: MouseHandler = (e, args: ?ComponentReglClickInfo) => {
+    const handler = this.measuringTool && this.measuringTool.canvasMouseMove;
+    if (handler && args) {
+      return handler(e, args);
+>>>>>>> Remove getHitmapProps from worldview
     }
     // $FlowFixMe
     const measuringHandler = this.measuringTool && this.measuringTool[eventName];
@@ -221,8 +254,17 @@ export default class Layout extends React.Component<Props, State> implements Mar
     } else if (drawingType === DRAWING_CONFIG.Polygons.type) {
       this._handleDrawPolygons(eventName, ev, args);
     }
+<<<<<<< HEAD
     if (propsHandler) {
       propsHandler(ev, args);
+=======
+  };
+
+  onDoubleClick: MouseHandler = (e, args: ?ComponentReglClickInfo) => {
+    const { onDoubleClick } = this.props;
+    if (onDoubleClick) {
+      onDoubleClick(e, args);
+>>>>>>> Remove getHitmapProps from worldview
     }
   };
 

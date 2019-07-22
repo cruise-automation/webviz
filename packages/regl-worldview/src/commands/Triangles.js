@@ -8,7 +8,7 @@
 
 import * as React from "react";
 
-import type { TriangleList, Regl } from "../types";
+import type { Regl } from "../types";
 import {
   defaultBlend,
   getVertexColors,
@@ -17,7 +17,7 @@ import {
   toRGBA,
   withPose,
 } from "../utils/commandUtils";
-import Command, { makeCommand } from "./Command";
+import Command from "./Command";
 
 // TODO(Audrey): default to the actual regl defaults before 1.x release
 const defaultSingleColorDepth = { enable: true, mask: false };

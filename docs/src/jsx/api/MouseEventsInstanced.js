@@ -139,7 +139,7 @@ function Example() {
             },
             color: { r: 1, g: 0, b: 0, a: 1 },
             scale: { x: 4, y: 4, z: 4 },
-            info: `a sphere with deprecated api "getHitmapId"`,
+            info: "a sphere",
           },
         ]}
       </Spheres>

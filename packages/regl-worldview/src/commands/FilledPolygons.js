@@ -11,8 +11,6 @@ import React from "react";
 
 import type { Vec3, PolygonType } from "../types";
 import { shouldConvert, pointToVec3 } from "../utils/commandUtils";
-import { getHitmapPropsForFilledPolygons, getObjectFromHitmapIdForFilledPolygons } from "../utils/hitmapDefaults";
-import type { GetHitmapProps, GetObjectFromHitmapId } from "./Command";
 import Triangles from "./Triangles";
 
 const NO_POSE = {
@@ -46,14 +44,10 @@ function getEarcutPoints(points: Vec3[]): Vec3[] {
 
 type Props = {
   children: PolygonType[],
-  // TODO: deprecating getHitmapId, remove before 1.x release
-  getHitmapId?: (PolygonType) => number,
-  getHitmapProps: GetHitmapProps<PolygonType>,
-  getObjectFromHitmapId: GetObjectFromHitmapId<PolygonType>,
 };
 
 // command to draw a filled polygon
-function FilledPolygons({ children: polygons = [], getHitmapProps, getObjectFromHitmapId, ...rest }: Props) {
+function FilledPolygons({ children: polygons = [], ...rest }: Props) {
   const triangles = [];
   for (const poly of polygons) {
     // $FlowFixMe flow doesn't know how shouldConvert works
@@ -67,16 +61,7 @@ function FilledPolygons({ children: polygons = [], getHitmapProps, getObjectFrom
       scale: DEFAULT_SCALE,
     });
   }
-  return (
-    <Triangles getHitmapProps={getHitmapProps} getObjectFromHitmapId={getObjectFromHitmapId} {...rest}>
-      {triangles}
-    </Triangles>
-  );
+  return <Triangles {...rest}>{triangles}</Triangles>;
 }
-
-FilledPolygons.defaultProps = {
-  getHitmapProps: getHitmapPropsForFilledPolygons,
-  getObjectFromHitmapId: getObjectFromHitmapIdForFilledPolygons,
-};
 
 export default FilledPolygons;

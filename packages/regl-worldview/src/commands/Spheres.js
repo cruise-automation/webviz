@@ -8,7 +8,6 @@
 
 import type { SphereList } from "../types";
 import fromGeometry from "../utils/fromGeometry";
-import { getObjectFromHitmapId, getHitmapProps } from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
 
 const NUM_PARALLELS = 15;
@@ -59,8 +58,6 @@ function defaultMapObjectToInstanceCount(object) {
 }
 
 const Spheres = makeCommand<SphereList>("Spheres", spheres, {
-  getHitmapProps,
-  getObjectFromHitmapId,
   mapObjectToInstanceCount: defaultMapObjectToInstanceCount,
 });
 

@@ -114,11 +114,7 @@ function Example() {
             Add Cube
           </button>
         </div>
-        <Cubes
-          onMouseMove={onCubeHover}
-          onClick={onCubeClick}
-          onDoubleClick={onCubeDoubleClick}
-          getHitmapId={(marker) => marker.id}>
+        <Cubes onMouseMove={onCubeHover} onClick={onCubeClick} onDoubleClick={onCubeDoubleClick}>
           {cubes}
         </Cubes>
       </Worldview>

@@ -2,7 +2,7 @@ import CommandDemo from './jsx/api/Command.js';
 
 # Command
 
-Command is the base class for all regl-based drawing commands. Subclasses should override getDrawProps and (and optionally getHitmapProps). Note: getHitmapProps is not implemented in this base class.
+Command is the base class for all regl-based drawing commands. Subclasses should override getDrawProps and (and optionally mapObjectToInstanceCount). Note: mapObjectToInstanceCount is not implemented in this base class.
 
 | Name                        | optional | type                                                                   | Default | Description                                                                                         |
 | --------------------------- | -------- | ---------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
@@ -75,9 +75,8 @@ Sample usage:
 ```js
 const Cubes = makeCommand("Cubes", rawReglCommand);
 
-// example for supporting hitmap, for details check the MouseEvents documentation
+// example for supporting interactions, for details check the MouseEvents documentation
 const Cubes = makeCommand("Cubes", rawReglCommand, {
-  getHitmapProps: () => {...},
-  getObjectFromHitmapId:  () => {...},
+  mapObjectToInstanceCount: () => {...},
 });
 ```

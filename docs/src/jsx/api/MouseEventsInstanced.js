@@ -6,7 +6,7 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
-import Worldview, { Axes, Cubes, intToRGB, Points, Spheres, Triangles } from "regl-worldview";
+import Worldview, { Axes, Cubes, Points, Spheres, Triangles } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {

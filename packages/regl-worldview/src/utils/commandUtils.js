@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { Color, CommandProps, Point, Orientation, ReglCommand, Vec4, Vec3 } from "../types";
+import type { Color, Point, Orientation, ReglCommand, Vec4, Vec3 } from "../types";
 
 const rotateGLSL = `
   uniform vec3 _position;
@@ -24,7 +24,6 @@ const rotateGLSL = `
   }
 `;
 
-const BLACK = [0, 0, 0, 1];
 const DEFAULT_TEXT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
 
 export const pointToVec3 = ({ x, y, z }: Point): Vec3 => {
@@ -216,33 +215,8 @@ function rgbToInt(rgb: Uint8Array) {
   return b | (g << 8) | (r << 16);
 }
 
-function getHitmapColorId(commandProps: CommandProps) {
-  if (!commandProps.hitmapId) {
-    return BLACK;
-  }
-  const rgb = intToRGB(commandProps.hitmapId);
-  if (!commandProps.points) {
-    return rgb;
-  }
-  return commandProps.points.map(() => rgb);
-}
-
 export function getIdFromColor(rgb: Uint8Array) {
   return rgbToInt(rgb);
-}
-
-export function changePropsColors(commandProps: CommandProps) {
-  const { color, colors } = commandProps;
-  if (!color && !colors) {
-    throw new Error("No color/colors attribute found, could not produce a hitmap color");
-  }
-  const newColor = getHitmapColorId(commandProps);
-  if (commandProps.color) {
-    return { ...commandProps, color: newColor };
-  }
-  if (commandProps.colors) {
-    return { ...commandProps, colors: newColor };
-  }
 }
 
 // gl-matrix clone of three.js Vector3.setFromSpherical

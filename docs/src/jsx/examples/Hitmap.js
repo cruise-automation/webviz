@@ -10,7 +10,6 @@ import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSC
 
 // #BEGIN EDITABLE
 function Example() {
-  const getHitmapId = (shape) => shape.id || 0;
   const numberToColor = (number, max, a = 1) => {
     const i = (number * 255) / max;
     const r = Math.round(Math.sin(0.024 * i + 0) * 127 + 128) / 255;
@@ -146,8 +145,8 @@ function Example() {
           setClickedId(arg.object.id);
         }
       }}>
-      <Cubes getHitmapId={getHitmapId}>{cubes}</Cubes>
-      <Spheres getHitmapId={getHitmapId}>{spheres}</Spheres>
+      <Cubes interactive>{cubes}</Cubes>
+      <Spheres interactive>{spheres}</Spheres>
       <Overlay
         renderItem={({ item, coordinates, dimension: { width, height } }) => {
           if (!coordinates) {

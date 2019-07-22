@@ -18,7 +18,6 @@ export const SUPPORTED_MOUSE_EVENTS = ["onClick", "onMouseUp", "onMouseMove", "o
 
 export type HitmapProp<T> = T & ({ colors: Vec4[] } | { color: Vec4 });
 export type GetObjectFromHitmapId<T> = (objectId: number, hitmapProps: HitmapProps<T>[]) => ?HitmapProps<T>;
-export type GetHitmapProps<T> = (children: T[]) => ?HitmapProp<T>;
 export type MarkerDefault = {
   id?: number,
   points?: Point[],

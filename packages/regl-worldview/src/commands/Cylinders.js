@@ -8,7 +8,6 @@
 
 import type { Cylinder } from "../types";
 import fromGeometry from "../utils/fromGeometry";
-import { getObjectFromHitmapId, getHitmapProps } from "../utils/hitmapDefaults";
 import { makeCommand } from "./Command";
 
 export function createCylinderGeometry(numSegments: number, cone: boolean) {
@@ -47,9 +46,6 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, false);
 
 const cylinders = fromGeometry(points, sideFaces.concat(endCapFaces));
 
-const Cylinders = makeCommand<Cylinder>("Cylinders", cylinders, {
-  getHitmapProps,
-  getObjectFromHitmapId,
-});
+const Cylinders = makeCommand<Cylinder>("Cylinders", cylinders, {});
 
 export default Cylinders;

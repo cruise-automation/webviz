@@ -15,6 +15,6 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, true);
 
 const cones = fromGeometry(points, sideFaces.concat(endCapFaces));
 
-const Cylinders = makeCommand<BaseShape>("Cylinders", cones, {});
+const Cones = makeCommand<BaseShape>("Cones", cones, {});
 
-export default Cylinders;
+export default Cones;

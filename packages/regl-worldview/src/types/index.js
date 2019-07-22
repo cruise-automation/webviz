@@ -94,15 +94,19 @@ export type ArrowSize = {
   headWidth: number,
 };
 
+export type ReglClickInfo = {
+  ray: Ray,
+  object?: Object,
+  instanceIndex?: number,
+};
+
 export type ComponentReglClickInfo = {
   ray: Ray,
   object: Object,
   instanceIndex?: number,
 };
 
-export type ReglClickInfo = ComponentReglClickInfo;
-
-export type MouseHandler = (MouseEvent, ?ReglClickInfo) => void;
+export type MouseHandler = (MouseEvent, ReglClickInfo) => void;
 
 export type ComponentMouseHandler = (MouseEvent, ComponentReglClickInfo) => void;
 

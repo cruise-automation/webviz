@@ -19,17 +19,16 @@ There are two kinds of event handlers:
 **Worldview Level Handlers**
 
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `objectId`: the id of the object that you interacted with. The value is `undefined` if no object is found.
+- `object`: the the object that you interacted with. The value is `undefined` if no object is found.
 
 **Command Component Level Handlers**
 
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `object`: the object that you interacted with. The value is `undefined` if no object is found.
-- `objectId`: the id of the object that you interacted with. The value is `undefined` if no object is found.
+- `object`: the object that you interacted with.
 
 ```js
-<Worldview onClick={(evt, { objectId }) => console.log("You clicked on", objectId)}>
-  <Cubes onClick={(evt, { object, objectId }) => console.log("You clicked on", objectId)}>{cubes}</Cubes>
+<Worldview onClick={(evt, { object }) => console.log("You clicked on", object && object.id)}>
+  <Cubes onClick={(evt, { object }) => console.log("You clicked on", object && object.id)}>{cubes}</Cubes>
   {/* Other command children */}
 </Worldview>
 ```

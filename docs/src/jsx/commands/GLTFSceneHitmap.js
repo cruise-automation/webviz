@@ -32,8 +32,8 @@ function Example() {
         distance: 15,
         thetaOffset: (-3 * Math.PI) / 4,
       }}
-      onClick={(ev, eventInfo) => {
-        if (!eventInfo || !duckMarkerIds.includes(eventInfo.object.id)) {
+      onClick={(ev, { object }) => {
+        if (!object || !duckMarkerIds.includes(object.id)) {
           setMsg(defaultMsg);
         }
       }}>

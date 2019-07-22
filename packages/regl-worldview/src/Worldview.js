@@ -61,7 +61,7 @@ function handleWorldviewMouseInteraction(
   e: MouseEvent,
   handler: MouseHandler
 ) {
-  let args = null;
+  let args = { ray };
   if (mouseEventObject) {
     args = { ray, ...mouseEventObject };
   }

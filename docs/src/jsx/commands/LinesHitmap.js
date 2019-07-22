@@ -33,8 +33,8 @@ function Example() {
 
   return (
     <Worldview
-      onClick={(ev, eventInfo) => {
-        if (!eventInfo) {
+      onClick={(ev, { object }) => {
+        if (!object) {
           setMsg(defaultMsg);
         }
       }}

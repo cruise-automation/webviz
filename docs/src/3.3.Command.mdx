@@ -7,9 +7,7 @@ Command is the base class for all regl-based drawing commands. Subclasses should
 | Name                        | optional | type                                                                   | Default | Description                                                                                         |
 | --------------------------- | -------- | ---------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
 | `layerIndex`                | yes      | `number`                                                               |         | defines the draw order of each command, e.g. -1 will put the shape in lower layer                   |
-| `hitmapProps`               | yes      | `T & ({ colors: Vec4[] } | { color: Vec4 })`                           |         | hitmap props built on top of children prop with additional `colors` or `color` field                |
-| `getObjectFromHitmapId`     | yes      | `(objectId: number, hitmapProps: HitmapProps<T>[]) => ?HitmapProps<T>` |         | find the `hitmapProp` from the `hitmapProps` based on the `objectId` generated from the mouse event |
-| `getHitmapId` (deprecating) | yes      | `(T) => ?number`                                                       |         | map the marker object to a `hitmapId`                                                               |
+| `mapObjectToInstanceCount`  | yes      | `(T) => number`                                                       |         | map the marker object to the number of instances it has. See "Instanced Commands" below             |
 
 Sample usage:
 
@@ -80,3 +78,7 @@ const Cubes = makeCommand("Cubes", rawReglCommand, {
   mapObjectToInstanceCount: () => {...},
 });
 ```
+
+## Instanced Commands
+
+

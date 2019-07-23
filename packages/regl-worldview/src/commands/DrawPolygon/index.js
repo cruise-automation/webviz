@@ -76,7 +76,7 @@ type Props = {
  * Draw the polygon lines
  */
 class PolygonLines extends React.Component<Props> {
-  _getProps = (isHitmapProps) => {
+  render() {
     const polygons = this.props.children;
     const lines: Line[] = [];
     for (const poly of polygons) {
@@ -87,15 +87,22 @@ class PolygonLines extends React.Component<Props> {
         primitive: LINE_STRIP,
         pose: POSE,
         points,
-        scale: isHitmapProps ? HITMAP_SCALE : DRAW_SCALE,
-        color: vec4ToRGBA(isHitmapProps ? intToRGB(poly.id) : color),
+        scale: DRAW_SCALE,
+        color: vec4ToRGBA(color),
       });
     }
-    return lines;
-  };
 
-  render() {
-    return <Command reglCommand={Lines.reglCommand} drawProps={this._getProps()} hitmapProps={this._getProps(true)} />;
+    return (
+      <Command
+        reglCommand={Lines.reglCommand}
+        drawProps={lines}
+        mapDrawPropToHitmapProp={(drawProp) => {
+          const hitmapProp = { ...drawProp };
+          hitmapProp.scale = HITMAP_SCALE;
+          return hitmapProp;
+        }}
+      />
+    );
   }
 }
 
@@ -103,13 +110,13 @@ class PolygonLines extends React.Component<Props> {
  * Draw the polygon points at the end of each lines
  */
 class PolygonPoints extends React.Component<Props> {
-  _getProps = (isHitmapProps) => {
+  render() {
     const polygons = this.props.children;
     const sphereList: DrawPolygonSphere = {
       points: [],
       colors: [],
       pose: POSE,
-      scale: isHitmapProps ? HITMAP_POINT_SCALE : DRAW_POINT_SCALE,
+      scale: DRAW_POINT_SCALE,
     };
 
     for (const poly of polygons) {
@@ -117,20 +124,20 @@ class PolygonPoints extends React.Component<Props> {
       for (const point of poly.points) {
         const convertedPoint = vec3ToPoint(point.point);
         sphereList.points.push(convertedPoint);
-        if (isHitmapProps) {
-          // use different color for each point so the points can be identified through hitmap
-          sphereList.colors.push(intToRGB(point.id));
-        } else {
-          sphereList.colors.push(point.active ? ACTIVE_POINT_COLOR : color);
-        }
+        sphereList.colors.push(point.active ? ACTIVE_POINT_COLOR : color);
       }
     }
-    return sphereList;
-  };
 
-  render() {
     return (
-      <Command reglCommand={Spheres.reglCommand} drawProps={this._getProps()} hitmapProps={this._getProps(true)} />
+      <Command
+        reglCommand={Spheres.reglCommand}
+        drawProps={sphereList}
+        mapDrawPropToHitmapProp={(drawProp) => {
+          const hitmapProp = { ...drawProp };
+          hitmapProp.scale = HITMAP_POINT_SCALE;
+          return hitmapProp;
+        }}
+      />
     );
   }
 }

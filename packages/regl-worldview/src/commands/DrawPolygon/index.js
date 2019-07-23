@@ -61,7 +61,6 @@ export class Polygon {
 export type DrawPolygonType = Polygon;
 
 type DrawPolygonSphere = {
-  hitmapId?: number,
   points: Point[],
   pose: Pose,
   scale: Scale,

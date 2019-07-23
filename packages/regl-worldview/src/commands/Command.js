@@ -16,16 +16,10 @@ import WorldviewReactContext from "../WorldviewReactContext";
 
 export const SUPPORTED_MOUSE_EVENTS = ["onClick", "onMouseUp", "onMouseMove", "onMouseDown", "onDoubleClick"];
 
-export type HitmapProp<T> = T & ({ colors: Vec4[] } | { color: Vec4 });
 export type MarkerDefault = {
   id?: number,
   points?: Point[],
   color?: Color,
-};
-export type HitmapMarkerDefault = {
-  id?: number,
-  points?: Point[],
-  color?: Vec4,
 };
 
 export type Props<T> = {

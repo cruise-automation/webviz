@@ -17,7 +17,6 @@ import WorldviewReactContext from "../WorldviewReactContext";
 export const SUPPORTED_MOUSE_EVENTS = ["onClick", "onMouseUp", "onMouseMove", "onMouseDown", "onDoubleClick"];
 
 export type HitmapProp<T> = T & ({ colors: Vec4[] } | { color: Vec4 });
-export type GetObjectFromHitmapId<T> = (objectId: number, hitmapProps: HitmapProps<T>[]) => ?HitmapProps<T>;
 export type MarkerDefault = {
   id?: number,
   points?: Point[],
@@ -108,7 +107,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
     const clickInfo = { ray, object };
-    if (instanceIndex !== null) {
+    if (instanceIndex != null) {
       clickInfo.instanceIndex = instanceIndex;
     }
     mouseHandler(e, clickInfo);

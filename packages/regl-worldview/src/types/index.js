@@ -110,16 +110,6 @@ export type MouseHandler = (MouseEvent, ReglClickInfo) => void;
 
 export type ComponentMouseHandler = (MouseEvent, ComponentReglClickInfo) => void;
 
-export type ReglComponentProps = {
-  commandId: string,
-  commandProps: Array<{}> | {},
-};
-
-export interface ReglComponent {
-  paint: (ReglContext) => void;
-  paintHitmap: (ReglContext) => void;
-}
-
 export type Coordinate = [number, number];
 
 export type Point = {

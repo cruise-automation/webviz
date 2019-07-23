@@ -197,8 +197,8 @@ const drawModel = (regl) => {
           props.scale ? pointToVec3(props.scale) : [1, 1, 1]
         ),
       globalAlpha: (context, props) => (props.alpha == null ? 1 : props.alpha),
-      hitmapColor: (context, props) => intToRGB(props.id),
-      drawHitmap: (context, props) => props.id != null,
+      hitmapColor: (context, props) => props.color || [0, 0, 0, 1],
+      drawHitmap: (context, props) => !!props.isHitmap,
     },
   });
 
@@ -269,7 +269,6 @@ function useModel(model: string | (() => Promise<Model>)): ?Model {
 
 export default function GLTFScene(props: Props) {
   const { children, model, ...rest } = props;
-  const drawHitmap = children.id != null;
 
   const context = useContext(WorldviewReactContext);
   const loadedModel = useModel(model);
@@ -290,9 +289,8 @@ export default function GLTFScene(props: Props) {
     <Command
       {...rest}
       reglCommand={drawModel}
-      drawProps={{ ...children, id: null, model: loadedModel }}
-      hitmapProps={drawHitmap ? { ...children, model: loadedModel } : undefined}
-      getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}
+      drawProps={{ ...children, model: loadedModel }}
+      mapDrawPropToHitmapProp={(drawProp) => ({ ...drawProp, isHitmap: true })}
     />
   );
 }

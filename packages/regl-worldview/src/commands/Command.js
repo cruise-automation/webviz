@@ -31,15 +31,20 @@ export type HitmapMarkerDefault = {
 export type Props<T> = {
   [MouseEventEnum]: ComponentMouseHandler,
   children?: T[],
-  interactive?: boolean,
   layerIndex?: number,
   reglCommand: RawCommand<T>,
+
+  // Interactivity
+  interactive?: boolean,
+  mapObjectToInstanceCount?: (any) => number,
+  mapDrawPropToHitmapProp?: (any, number) => ?any,
 };
 
 export type CommandProps = Props;
 
 export type MakeCommandOptions = {
-  mapObjectToInstanceCount: (any) => number,
+  mapObjectToInstanceCount?: (any) => number,
+  mapDrawPropToHitmapProp?: (any, number) => ?any,
 };
 
 // Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.
@@ -80,12 +85,23 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
 
-    const { interactive, mapObjectToInstanceCount, drawProps, reglCommand, layerIndex, ...rest } = this.props;
+    const {
+      interactive,
+      mapObjectToInstanceCount,
+      mapDrawPropToHitmapProp,
+      drawProps,
+      reglCommand,
+      layerIndex,
+      ...rest
+    } = this.props;
     if (drawProps == null) {
       return;
     }
     const enableHitmap =
-      interactive || mapObjectToInstanceCount || SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
+      interactive ||
+      mapObjectToInstanceCount ||
+      mapDrawPropToHitmapProp ||
+      SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
     context.registerDrawCall({
       instance: this,
       command: reglCommand,
@@ -93,6 +109,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       layerIndex,
       enableHitmap,
       mapObjectToInstanceCount,
+      mapDrawPropToHitmapProp,
     });
   }
 

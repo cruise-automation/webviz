@@ -281,6 +281,43 @@ export class WorldviewContext {
     });
   };
 
+  _mapDrawPropToHitmapProp = (drawProp: Props, mapObjectToInstanceCount: ?(Props) => number) => {
+    const hitmapProp = { ...drawProp };
+    // Instanced command: one ID per instance
+    if (mapObjectToInstanceCount) {
+      const instanceCount = mapObjectToInstanceCount(drawProp);
+      const startColor = intToRGB(this._hitmapIdCounter);
+      const allColors = new Array(drawProp.points.length).fill().map(() => startColor);
+      const pointCountPerInstance = Math.ceil(drawProp.points.length / instanceCount);
+      const ids = new Array(instanceCount).fill().map((_, idx) => idx + this._hitmapIdCounter);
+      const idColors = ids.map((id) => intToRGB(id));
+      for (let i = 0; i < instanceCount; i++) {
+        for (let j = 0; j < pointCountPerInstance; j++) {
+          const idx = i * pointCountPerInstance + j;
+          allColors[idx] = idColors[i];
+        }
+      }
+
+      this._hitmapIdCounter += ids.length;
+      ids.forEach((id, index) => {
+        this._hitmapIdMap[id] = drawProp;
+        // map the new ids back to the original id (instance index) 0 - 100 in order to return to the consumer later
+        this._hitmapInstancedIdMap[id] = index;
+      });
+      hitmapProp.colors = allColors;
+    } else {
+      // non-instanced command: single ID
+      const id = this._hitmapIdCounter++;
+      const hitmapColor = intToRGB(id);
+      hitmapProp.color = hitmapColor;
+      if (hitmapProp.points) {
+        hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
+      }
+      this._hitmapIdMap[id] = drawProp;
+    }
+    return hitmapProp;
+  };
+
   _drawInput = (isHitmap?: boolean) => {
     let drawCalls = Array.from(this._drawCalls.values());
     if (isHitmap) {
@@ -306,40 +343,12 @@ export class WorldviewContext {
       // assign hitmapId, map drawProps to hitmapProps by map id to color, and call command with the hitmapProps
       // TODO: implement custom id mapping for instanced command
       if (isHitmap) {
-        const hitmapProps = drawProps.map((drawProp) => {
-          const hitmapProp = { ...drawProp };
-          if (mapObjectToInstanceCount) {
-            const instanceCount = mapObjectToInstanceCount(drawProp);
-            const startColor = intToRGB(this._hitmapIdCounter);
-            const allColors = new Array(drawProp.points.length).fill().map(() => startColor);
-            const pointCountPerInstance = Math.ceil(drawProp.points.length / instanceCount);
-            const ids = new Array(instanceCount).fill().map((_, idx) => idx + this._hitmapIdCounter);
-            const idColors = ids.map((id) => intToRGB(id));
-            for (let i = 0; i < instanceCount; i++) {
-              for (let j = 0; j < pointCountPerInstance; j++) {
-                const idx = i * pointCountPerInstance + j;
-                allColors[idx] = idColors[i];
-              }
-            }
-
-            this._hitmapIdCounter += ids.length;
-            ids.forEach((id, index) => {
-              this._hitmapIdMap[id] = drawProp;
-              // map the new ids back to the original id (instance index) 0 - 100 in order to return to the consumer later
-              this._hitmapInstancedIdMap[id] = index;
-            });
-            hitmapProp.colors = allColors;
-          } else {
-            const id = this._hitmapIdCounter++;
-            const hitmapColor = intToRGB(id);
-            hitmapProp.color = hitmapColor;
-            if (hitmapProp.points) {
-              hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
-            }
-            this._hitmapIdMap[id] = drawProp;
-          }
-          return hitmapProp;
-        });
+        let hitmapProps;
+        if (Array.isArray(drawProps)) {
+          hitmapProps = drawProps.map((drawProp) => this._mapDrawPropToHitmapProp(drawProp, mapObjectToInstanceCount));
+        } else {
+          hitmapProps = this._mapDrawPropToHitmapProp(drawProps, mapObjectToInstanceCount);
+        }
         cmd(hitmapProps);
       } else if (!isHitmap) {
         cmd(drawProps);

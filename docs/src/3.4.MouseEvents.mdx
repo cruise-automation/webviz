@@ -33,41 +33,54 @@ There are two kinds of event handlers:
 </Worldview>
 ```
 
-## Hitmap Id Mapping
+### Mouse events for instanced objects
 
-The `objectId`, also refered as `hitmapId`, is how we identify the objects that you interacted with.
-
-There are two ways to manage hitmap ids:
-
-**Automatic**
-
-For some commonly supported command components such as Cubes, Spheres and Cones, when a supported mouse handler exists in props, and the marker has an `id` field, we'll automatically manage the hitmap id mapping. The returned object will contain the original marker fields and an additional (or replaced) `color` field that was generated for the hitmap id mapping. _Note the `id` should be positive integer._
-
-```js
-<Cubes onClick={(ev, {object}) => {console.log("Cube marker with hitmap color field", object)}}>
-  [{
-    id: 212,
-    ...restOfCubeMarker
-  }]
-</Cubes>
-```
-
-**Custom**
-
-You can also customize hitmap id mapping through `getHitmapProps` and `getObjectFromHitmapId` props. Both of the two props must be present because providing only one may cause incorrect mapping.
-
-- `getHitmapProps`: the function takes the original marker children as input, and map the children to `hitmapProps` which contains `color` or `colors` (for instanced rendering) field.
-- `getObjectFromHitmapId`: the function takes the `objectId`/`hitmapId` and `hitmapProps`. When a mouse event is fired, we read the color from the interaction point and map it back to an `objectId`. We'll try to find the exact `hitmapProp` / object that matches the `objectId` by iterating through the `hitmapProps`. If no `hitmapProp` is found, the event callback won't be triggered.
-
-_It's important to keep the object `id` unique if you want to keep track of the objects._
-
-### Hitmap for Instanced Objects
-
-Usually using instanced objects can help improve rendering performance, e.g. an instanced sphere can contain thousands of spheres. When the user clicks a single sphere, the mapped instanceId (returned as `objectId`) which was generated through `getHitmapProps` function will be returned from the event.
+Usually using instanced objects can help improve rendering performance, e.g. an instanced sphere can contain thousands of spheres. When the user clicks a single sphere, the object and instance index which was generated will be returned from the event.
 
 _Commands that currently support instanced rendering: Cubes, Points, Spheres, Triangles, Cones, Cylinders. More to be added later._
 
-Check out below example for automatic/custom hitmap mapping, and regular/instanced rendering:
+##### Figuring out which instance was clicked on
+
+Commands can optionally implement the `mapObjectToInstanceCount` function. Implementing this function indicates to the Worldview events system that the command has different instances that can be interacted with. The command takes the object to render and returns the number of instances in that object.
+
+Example:
+
+```js
+<Worldview>
+  <Cubes
+    onClick={(evt, { object, instanceIndex }) => console.log(`You clicked on ${object.id} at index ${instanceIndex}`)}
+    mapObjectToInstanceCount={(cube) => cube.points.length}
+  >
+    {cubes}
+  </Cubes>
+</Worldview>
+```
+
+##### Interacting with an object in a different way than how it is rendered
+
+Some commands may want to do something special when the user interacts with them. For example, a Point instance may want to allow clicking close to a point and not directly on a point to still trigger a click event. `mapDrawPropToHitmapProp` allows this by taking in the object to be rendered and returning a new object that will be rendered into the hitmap only.
+
+Example:
+
+```js
+<Worldview>
+  <Points
+    onClick={(evt, { object }) => console.log(`You clicked on ${object.id}`)}
+    mapDrawPropToHitmapProp={(prop, index) => {
+      // Only allow interaction with every second object
+      if (index % 2) {
+        return null;
+      }
+      // Scale the points up, assuming the default scale is 1,1,1
+      return { ...prop, scale: { x: 1.2, y: 1.2, z: 1.2 } };
+    }}
+  >
+    {points}
+  </Points>
+</Worldview>
+```
+
+### Instanced/regular rendering example
 
 <MouseEventsInstanced />
 

@@ -290,7 +290,7 @@ export default function GLTFScene(props: Props) {
       {...rest}
       reglCommand={drawModel}
       drawProps={{ ...children, model: loadedModel }}
-      mapDrawPropToHitmapProp={(drawProp) => ({ ...drawProp, isHitmap: true })}
+      mapDrawObjectToHitmapObject={(drawProp) => ({ ...drawProp, isHitmap: true })}
     />
   );
 }

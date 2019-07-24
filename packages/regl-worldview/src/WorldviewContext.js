@@ -52,7 +52,7 @@ export type DrawInput = {
   layerIndex: ?number,
   enableHitmap: boolean,
   mapObjectToInstanceCount?: ?(object: Props) => number,
-  mapDrawPropToHitmapProp?: ?(object: Props, index: number) => ?Props,
+  mapDrawObjectToHitmapObject?: ?(object: Props, index: number) => ?Props,
 };
 
 export type PaintFn = () => void;
@@ -286,12 +286,12 @@ export class WorldviewContext {
   _mapDrawPropToHitmapProp = (
     drawProp: Prop,
     mapObjectToInstanceCount: ?(Prop) => number,
-    mapDrawPropToHitmapProp: ?(Prop, number) => ?Prop,
+    mapDrawObjectToHitmapObject: ?(Prop, number) => ?Prop,
     index: number
   ): ?Prop => {
     let hitmapProp;
-    if (mapDrawPropToHitmapProp) {
-      hitmapProp = mapDrawPropToHitmapProp(drawProp, index);
+    if (mapDrawObjectToHitmapObject) {
+      hitmapProp = mapDrawObjectToHitmapObject(drawProp, index);
       if (!hitmapProp) {
         return null;
       }
@@ -348,7 +348,7 @@ export class WorldviewContext {
       this._hitmapIdCounter = 1;
     }
     sortedDrawCalls.forEach((drawInput: DrawInput) => {
-      const { command, drawProps, instance, mapObjectToInstanceCount, mapDrawPropToHitmapProp } = drawInput;
+      const { command, drawProps, instance, mapObjectToInstanceCount, mapDrawObjectToHitmapObject } = drawInput;
       if (!drawProps) {
         return console.debug(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`, drawInput);
       }
@@ -363,11 +363,16 @@ export class WorldviewContext {
         if (Array.isArray(drawProps)) {
           hitmapProps = drawProps
             .map((drawProp, index) =>
-              this._mapDrawPropToHitmapProp(drawProp, mapObjectToInstanceCount, mapDrawPropToHitmapProp, index)
+              this._mapDrawPropToHitmapProp(drawProp, mapObjectToInstanceCount, mapDrawObjectToHitmapObject, index)
             )
             .filter(Boolean);
         } else {
-          hitmapProps = this._mapDrawPropToHitmapProp(drawProps, mapObjectToInstanceCount, mapDrawPropToHitmapProp, 0);
+          hitmapProps = this._mapDrawPropToHitmapProp(
+            drawProps,
+            mapObjectToInstanceCount,
+            mapDrawObjectToHitmapObject,
+            0,
+          );
         }
 
         if (hitmapProps) {

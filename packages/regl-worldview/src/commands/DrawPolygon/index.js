@@ -95,7 +95,7 @@ class PolygonLines extends React.Component<Props> {
       <Command
         reglCommand={Lines.reglCommand}
         drawProps={lines}
-        mapDrawPropToHitmapProp={(drawProp) => {
+        mapDrawObjectToHitmapObject={(drawProp) => {
           const hitmapProp = { ...drawProp };
           hitmapProp.scale = HITMAP_SCALE;
           return hitmapProp;
@@ -131,7 +131,7 @@ class PolygonPoints extends React.Component<Props> {
       <Command
         reglCommand={Spheres.reglCommand}
         drawProps={sphereList}
-        mapDrawPropToHitmapProp={(drawProp) => {
+        mapDrawObjectToHitmapObject={(drawProp) => {
           const hitmapProp = { ...drawProp };
           hitmapProp.scale = HITMAP_POINT_SCALE;
           return hitmapProp;

@@ -33,6 +33,15 @@ describe("synchronizeMessages", () => {
         "/foo": [item("/foo", undefined)],
       })
     ).toEqual(null);
+
+    expect(
+      synchronizeMessages(
+        {
+          "/foo": [item("/foo", { sec: 1, nsec: 2 })],
+        },
+        (item) => null
+      )
+    ).toEqual(null);
   });
 
   it("works with single message", () => {

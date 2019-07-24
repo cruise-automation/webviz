@@ -46,8 +46,8 @@ export const SEEK_BACK_NANOSECONDS = 99 /* ms */ * 1000 * 1000;
 const capabilities = [PlayerCapabilities.setSpeed];
 
 const getTopics = microMemoize(
-  (topics: Set<string>, availableTopics: Topic[]): string[] => {
-    return intersection(Array.from(topics), availableTopics.map(({ name }) => name));
+  (subscribedTopics: Set<string>, providerTopics: Topic[]): string[] => {
+    return intersection(Array.from(subscribedTopics), providerTopics.map(({ name }) => name));
   }
 );
 

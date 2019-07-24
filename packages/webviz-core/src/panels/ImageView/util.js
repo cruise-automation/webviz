@@ -24,6 +24,8 @@ export function getMarkerOptions(
   for (const topic of markerTopics) {
     if (cameraNamespace && topic.startsWith(cameraNamespace)) {
       results.push({ topic, name: topic.substr(cameraNamespace.length).replace(/^\//, "") });
+    } else if (cameraNamespace && topic.startsWith(`/old${cameraNamespace}`)) {
+      results.push({ topic, name: topic });
     } else if (allCameraNamespaces.includes(getCameraNamespace(topic))) {
       // this topic corresponds to a different camera
       continue;
@@ -62,7 +64,7 @@ export function getCameraNamespace(topicName: string): ?string {
 export function groupTopics(topics: Topic[]): Map<string, Topic[]> {
   const imageTopicsByNamespace: Map<string, Topic[]> = new Map();
   for (const topic of topics) {
-    const key = getCameraNamespace(topic.name) || "";
+    const key = getCameraNamespace(topic.name) || topic.name;
     const vals = imageTopicsByNamespace.get(key);
     if (vals) {
       vals.push(topic);

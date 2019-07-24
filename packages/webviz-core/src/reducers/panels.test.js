@@ -13,6 +13,7 @@ import { changePanelLayout, savePanelConfig, importPanelLayout } from "webviz-co
 import rootReducer from "webviz-core/src/reducers";
 import { LAYOUT_KEY, PANEL_PROPS_KEY, GLOBAL_DATA_KEY } from "webviz-core/src/reducers/panels";
 import configureStore from "webviz-core/src/store";
+import { defaultLayout } from "webviz-core/src/util/defaultLayoutConfig";
 import Storage from "webviz-core/src/util/Storage";
 
 const getStore = () => {
@@ -43,10 +44,10 @@ describe("state.panels", () => {
 
     store.dispatch(importPanelLayout(emptyPayload, false));
     store.checkState((panels) => {
-      expect(panels.layout.slice(0, 7)).toEqual("RosOut!");
+      expect(panels.layout).toEqual(defaultLayout);
       expect(panels.savedProps).toEqual({});
       const storage = new Storage();
-      expect((storage.get(LAYOUT_KEY) || "").slice(0, 7)).toEqual("RosOut!");
+      expect(storage.get(LAYOUT_KEY) || "").toEqual(defaultLayout);
       expect(storage.get(PANEL_PROPS_KEY)).toEqual({});
     });
   });

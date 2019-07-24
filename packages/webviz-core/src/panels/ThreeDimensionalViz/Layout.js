@@ -30,6 +30,7 @@ import DrawingTools, {
   DRAWING_CONFIG,
   type DrawingType,
 } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
+import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
 import FollowTFControl from "webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import MainToolbar from "webviz-core/src/panels/ThreeDimensionalViz/MainToolbar";
@@ -103,11 +104,13 @@ type State = {
   editTopic: ?Topic,
   drawingType: ?DrawingType,
   polygonBuilder: PolygonBuilder,
+  measureInfo: MeasureInfo,
 };
 
 export default class Layout extends React.Component<Props, State> implements MarkerProvider {
   // overall element containing everything in this component
   el: ?HTMLDivElement;
+  measuringTool: ?MeasuringTool;
 
   static defaultProps = {
     checkedNodes: [],
@@ -131,6 +134,10 @@ export default class Layout extends React.Component<Props, State> implements Mar
     editTopic: undefined,
     drawingType: null,
     polygonBuilder: new PolygonBuilder(),
+    measureInfo: {
+      measureState: "idle",
+      measurePoints: { start: null, end: null },
+    },
   };
 
   static getDerivedStateFromProps(nextProps: Props, prevState: State) {
@@ -205,7 +212,13 @@ export default class Layout extends React.Component<Props, State> implements Mar
     if (!args) {
       return;
     }
-    if (drawingType === DRAWING_CONFIG.Polygons.type) {
+    // $FlowFixMe
+    const measuringHandler = this.measuringTool && this.measuringTool[eventName];
+    const measureActive = this.measuringTool && this.measuringTool.measureActive;
+
+    if (measuringHandler && measureActive) {
+      return measuringHandler(ev, args);
+    } else if (drawingType === DRAWING_CONFIG.Polygons.type) {
       this._handleDrawPolygons(eventName, ev, args);
     }
     if (propsHandler) {
@@ -223,19 +236,14 @@ export default class Layout extends React.Component<Props, State> implements Mar
     [DRAWING_CONFIG.Camera.key]: () => {
       this._toggleDrawing(DRAWING_CONFIG.Camera.type);
     },
-    Control: () => {
-      // support default DrawPolygon key
-      this._toggleDrawing(DRAWING_CONFIG.Polygons.type);
-    },
     Escape: () => {
       this._exitDrawing();
     },
   };
 
   _toggleDrawing = (drawingType: DrawingType) => {
-    // can enter into drawing from null or non-new-drawing-type to the new drawingType
-    const enterDrawing = this.state.drawingType !== drawingType;
-    this.setState({ drawingType: enterDrawing ? drawingType : null });
+    const newDrawingType = this.state.drawingType === drawingType ? null : drawingType;
+    this.setState({ drawingType: newDrawingType });
     if (drawingType !== DRAWING_CONFIG.Camera.type) {
       this.switchTo2DCameraIfNeeded();
     }
@@ -259,6 +267,9 @@ export default class Layout extends React.Component<Props, State> implements Mar
   toggleCameraMode = () => {
     const { cameraState, saveConfig } = this.props;
     saveConfig({ cameraState: { ...cameraState, perspective: !cameraState.perspective } });
+    if (this.measuringTool && cameraState.perspective) {
+      this.measuringTool.reset();
+    }
   };
 
   toggleShowTopics = () => {
@@ -352,7 +363,7 @@ export default class Layout extends React.Component<Props, State> implements Mar
       transforms,
       updatePanelConfig,
     } = this.props;
-    const { debug, polygonBuilder, drawingType } = this.state;
+    const { measureInfo, debug, polygonBuilder, drawingType } = this.state;
 
     return (
       <div className={cx(styles.toolbar, styles.right)}>
@@ -365,11 +376,14 @@ export default class Layout extends React.Component<Props, State> implements Mar
           />
         </div>
         <MainToolbar
+          measureInfo={measureInfo}
+          measuringTool={this.measuringTool}
           perspective={perspective}
           debug={debug}
           onToggleCameraMode={this.toggleCameraMode}
           onToggleDebug={this.toggleDebug}
         />
+        {this.measuringTool && this.measuringTool.measureDistance}
         <DrawingTools
           cameraState={cameraState}
           followOrientation={followOrientation}
@@ -380,6 +394,7 @@ export default class Layout extends React.Component<Props, State> implements Mar
           polygonBuilder={polygonBuilder}
           saveConfig={saveConfig}
           selectedPolygonEditFormat={selectedPolygonEditFormat}
+          setType={(newDrawingType) => this.setState({ drawingType: newDrawingType })}
           showCrosshair={!!showCrosshair}
           type={drawingType}
           updatePanelConfig={updatePanelConfig}
@@ -409,7 +424,7 @@ export default class Layout extends React.Component<Props, State> implements Mar
         autoTextBackgroundColor={!!autoTextBackgroundColor}
         cameraState={cameraState}
         debug={debug}
-        markerProviders={extensions.markerProviders.concat([sceneBuilder, transformsBuilder, this])}
+        markerProviders={extensions.markerProviders.concat([sceneBuilder, this.measuringTool, transformsBuilder, this])}
         mouseClick={mouseClick}
         onCameraStateChange={onCameraStateChange}
         onDoubleClick={this.onDoubleClick}
@@ -558,8 +573,12 @@ export default class Layout extends React.Component<Props, State> implements Mar
   }
 
   render() {
-    const { drawingType } = this.state;
-    const cursorType = drawingType && drawingType !== DRAWING_CONFIG.Camera.type ? "crosshair" : "";
+    const {
+      drawingType,
+      measureInfo: { measureState, measurePoints },
+    } = this.state;
+    const measureActive = this.measuringTool && this.measuringTool.measureActive;
+    const cursorType = (drawingType && drawingType !== DRAWING_CONFIG.Camera.type) || measureActive ? "crosshair" : "";
 
     return (
       <div
@@ -567,6 +586,12 @@ export default class Layout extends React.Component<Props, State> implements Mar
         ref={(el) => (this.el = el)}
         style={{ cursor: cursorType }}
         onClick={this.onControlsOverlayClick}>
+        <MeasuringTool
+          ref={(el) => (this.measuringTool = el)}
+          measureState={measureState}
+          measurePoints={measurePoints}
+          onMeasureInfoChange={(measureInfo) => this.setState({ measureInfo })}
+        />
         <KeyListener keyDownHandlers={this.keyDownHandlers} />
         <PanelToolbar floating helpContent={this.props.helpContent} />
         <div style={{ visibility: videoRecordingMode() ? "hidden" : "visible" }}>

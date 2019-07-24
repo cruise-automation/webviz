@@ -55,7 +55,7 @@ describe("ImageView", () => {
         new Map([
           ["/camera_1", [topic("/camera_1/foo"), topic("/camera_1/bar")]],
           ["/camera_2", [topic("/camera_2/foo")]],
-          ["", [topic("/weird_topic")]],
+          ["/weird_topic", [topic("/weird_topic")]],
         ])
       );
     });
@@ -66,13 +66,14 @@ describe("ImageView", () => {
           topic("/camera_1/foo"),
           topic("/old/camera_2/foo"),
           topic("/old/camera_1/bar"),
-          topic("/old/weird_topic"),
+          topic("/camera_2/old/foo"),
+          topic("/weird_topic"),
         ])
       ).toEqual(
         new Map([
           ["/camera_1", [topic("/camera_1/foo"), topic("/old/camera_1/bar")]],
-          ["/camera_2", [topic("/old/camera_2/foo")]],
-          ["", [topic("/old/weird_topic")]],
+          ["/camera_2", [topic("/old/camera_2/foo"), topic("/camera_2/old/foo")]],
+          ["/weird_topic", [topic("/weird_topic")]],
         ])
       );
     });

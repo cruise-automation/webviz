@@ -10,7 +10,7 @@ import { validateNodeDefinitions, makeNodeMessage, applyNodesToMessages, type No
 
 const EmptyNode: $Shape<NodeDefinition<void>> = {
   inputs: [],
-  outputs: [],
+  output: { name: "", datatype: "" },
   datatypes: {},
   defaultState: undefined,
   callback() {
@@ -26,8 +26,7 @@ describe("nodes", () => {
     it("does not throw for a valid definition", () => {
       const GoodNode: NodeDefinition<void> = {
         ...EmptyNode,
-        name: "GoodNode",
-        outputs: [{ name: "/webviz/foo", datatype: "foo/Bar" }],
+        output: { name: "/webviz/foo", datatype: "foo/Bar" },
       };
       expect(() => validateNodeDefinitions([GoodNode])).not.toThrow();
     });
@@ -35,8 +34,7 @@ describe("nodes", () => {
     it("does not allow nodes to output non webviz topics", () => {
       const BadNode: NodeDefinition<void> = {
         ...EmptyNode,
-        name: "BadNode",
-        outputs: [{ name: "/foo", datatype: "foo/Bar" }],
+        output: { name: "/foo", datatype: "foo/Bar" },
       };
       expect(() => validateNodeDefinitions([BadNode])).toThrow();
     });
@@ -44,9 +42,8 @@ describe("nodes", () => {
     it("does not allow self-referring nodes", () => {
       const SelfReferringNode: NodeDefinition<void> = {
         ...EmptyNode,
-        name: "SelfReferringNode",
         inputs: ["/webviz/foo"],
-        outputs: [{ name: "/webviz/foo", datatype: "foo/Bar" }],
+        output: { name: "/webviz/foo", datatype: "foo/Bar" },
       };
       expect(() => validateNodeDefinitions([SelfReferringNode])).toThrow();
     });
@@ -54,15 +51,13 @@ describe("nodes", () => {
     it("does not allow circular dependencies", () => {
       const NodeA: NodeDefinition<void> = {
         ...EmptyNode,
-        name: "NodeA",
         inputs: ["/webviz/b"],
-        outputs: [{ name: "/webviz/a", datatype: "a" }],
+        output: { name: "/webviz/a", datatype: "a" },
       };
       const NodeB: NodeDefinition<void> = {
         ...EmptyNode,
-        name: "NodeB",
         inputs: ["/webviz/a"],
-        outputs: [{ name: "/webviz/b", datatype: "b" }],
+        output: { name: "/webviz/b", datatype: "b" },
       };
       expect(() => validateNodeDefinitions([NodeA, NodeB])).toThrow();
       // For sanity, the individual nodes should be fine:
@@ -73,15 +68,13 @@ describe("nodes", () => {
     it("does not allow nodes to output to the same topic", () => {
       const NodeA: NodeDefinition<void> = {
         ...EmptyNode,
-        name: "NodeA",
         inputs: ["/external/1"],
-        outputs: [{ name: "/webviz/internal", datatype: "internal" }],
+        output: { name: "/webviz/internal", datatype: "internal" },
       };
       const NodeB: NodeDefinition<void> = {
         ...EmptyNode,
-        name: "NodeB",
         inputs: ["/external/2"],
-        outputs: [{ name: "/webviz/internal", datatype: "internal" }],
+        output: { name: "/webviz/internal", datatype: "internal" },
       };
       expect(() => validateNodeDefinitions([NodeA, NodeB])).toThrow();
       // For sanity, the individual nodes should be fine:
@@ -93,12 +86,8 @@ describe("nodes", () => {
   describe("applyNodesToMessages", () => {
     it("runs all nodes on a set of messages, even recursively", () => {
       const NodeA: NodeDefinition<number> = {
-        name: "NodeA",
         inputs: ["/external"],
-        outputs: [
-          { name: "/webviz/a/counter", datatype: "a/counter" },
-          { name: "/webviz/a/other_message", datatype: "a/other_message" },
-        ],
+        output: { name: "/webviz/a/counter", datatype: "a/counter" },
         datatypes: {},
         defaultState: 0,
         callback({ message, state }) {
@@ -108,7 +97,6 @@ describe("nodes", () => {
                 count: state,
                 data: message.message.data,
               }),
-              makeNodeMessage("/webviz/a/other_message", "a/other_message", { something: "else" }),
             ],
             state: state + 1,
           };
@@ -116,9 +104,8 @@ describe("nodes", () => {
       };
       const NodeB: NodeDefinition<void> = {
         ...EmptyNode,
-        name: "NodeB",
         inputs: ["/webviz/a/counter"],
-        outputs: [{ name: "/webviz/b", datatype: "b" }],
+        output: { name: "/webviz/b", datatype: "b" },
         callback({ message }) {
           return {
             messages: [makeNodeMessage("/webviz/b", "b", { count: message.message.count })],
@@ -165,13 +152,6 @@ describe("nodes", () => {
           },
           { datatype: "b", message: { count: 0 }, op: "message", receiveTime: { sec: 1, nsec: 0 }, topic: "/webviz/b" },
           {
-            datatype: "a/other_message",
-            message: { something: "else" },
-            op: "message",
-            receiveTime: { sec: 1, nsec: 0 },
-            topic: "/webviz/a/other_message",
-          },
-          {
             datatype: "anything",
             message: { data: "second message" },
             op: "message",
@@ -186,13 +166,6 @@ describe("nodes", () => {
             topic: "/webviz/a/counter",
           },
           { datatype: "b", message: { count: 1 }, op: "message", receiveTime: { sec: 2, nsec: 0 }, topic: "/webviz/b" },
-          {
-            datatype: "a/other_message",
-            message: { something: "else" },
-            op: "message",
-            receiveTime: { sec: 2, nsec: 0 },
-            topic: "/webviz/a/other_message",
-          },
         ],
         states: [2, undefined],
       });

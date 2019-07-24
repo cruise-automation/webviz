@@ -57,33 +57,7 @@ describe("<MessageHistory />", () => {
     expect(subscriptions).toEqual([]);
   });
 
-  it("filters out non-existing topics when ignoreMissing is set", () => {
-    // Initial mount. Note that we haven't received any topics yet.
-    let subscriptions: SubscribePayload[] = [];
-    function setSubscriptions(_, s: SubscribePayload[]) {
-      subscriptions = s;
-    }
-    const provider = mount(
-      <MockMessagePipelineProvider setSubscriptions={setSubscriptions}>
-        <MessageHistory ignoreMissing paths={["/some/topic"]}>
-          {() => null}
-        </MessageHistory>
-      </MockMessagePipelineProvider>
-    );
-    expect(subscriptions).toEqual([]);
-
-    // But then it subscribes when the topic becomes available:
-    provider.setProps({
-      topics: [{ name: "/some/topic", datatype: "dummy" }, { name: "/some/other/topic", datatype: "dummy" }],
-    });
-    expect(subscriptions).toEqual([{ topic: "/some/topic" }]);
-
-    // And unsubscribes properly, too.
-    provider.unmount();
-    expect(subscriptions).toEqual([]);
-  });
-
-  it("does not filter out non-existing topics when ignoreMissing is not set", () => {
+  it("does not filter out non-existing topics", () => {
     // Initial mount. Note that we haven't received any topics yet.
     let subscriptions: SubscribePayload[] = [];
     function setSubscriptions(_, s: SubscribePayload[]) {

@@ -166,7 +166,7 @@ const triangles = (regl: Regl) => {
 };
 
 function defaultMapObjectToInstanceCount(drawProp) {
-  return Math.floor(drawProp.points.length / 3);
+  return (drawProp.points && Math.floor(drawProp.points.length / 3)) || 1;
 }
 
 export default function Triangles({ children, ...rest }) {

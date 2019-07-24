@@ -300,7 +300,7 @@ export class WorldviewContext {
     }
 
     // Instanced command: one ID per instance
-    if (mapObjectToInstanceCount) {
+    if (mapObjectToInstanceCount && drawProp.points) {
       const instanceCount = mapObjectToInstanceCount(drawProp);
       const startColor = intToRGB(this._hitmapIdCounter);
       const allColors = new Array(drawProp.points.length).fill().map(() => startColor);
@@ -371,7 +371,7 @@ export class WorldviewContext {
             drawProps,
             mapObjectToInstanceCount,
             mapDrawObjectToHitmapObject,
-            0,
+            0
           );
         }
 

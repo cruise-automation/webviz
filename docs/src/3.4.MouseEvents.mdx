@@ -58,7 +58,7 @@ Example:
 
 ##### Interacting with an object in a different way than how it is rendered
 
-Some commands may want to do something special when the user interacts with them. For example, a Point instance may want to allow clicking close to a point and not directly on a point to still trigger a click event. `mapDrawPropToHitmapProp` allows this by taking in the object to be rendered and returning a new object that will be rendered into the hitmap only.
+Some commands may want to do something special when the user interacts with them. For example, a Point instance may want to allow clicking close to a point and not directly on a point to still trigger a click event. `mapDrawObjectToHitmapObject` allows this by taking in the object to be rendered and returning a new object that will be rendered into the hitmap only.
 
 Example:
 
@@ -66,7 +66,7 @@ Example:
 <Worldview>
   <Points
     onClick={(evt, { object }) => console.log(`You clicked on ${object.id}`)}
-    mapDrawPropToHitmapProp={(prop, index) => {
+    mapDrawObjectToHitmapObject={(prop, index) => {
       // Only allow interaction with every second object
       if (index % 2) {
         return null;

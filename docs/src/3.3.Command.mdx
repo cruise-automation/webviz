@@ -10,7 +10,7 @@ Command is the base class for all regl-based drawing commands. Subclasses should
 | --------------------------- | -------- | ---------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
 | `reglCommand`               | no       | `(Regl) => (Props) => void`                                       |         | The command that takes the `regl` function and drawProps and draws the shape                        |
 | `mapObjectToInstanceCount`  | yes      | `(T) => number`                                                       |         | map the marker object to the number of instances it has. See Mouse Events for more |
-| `mapDrawPropToHitmapProp`  | yes       | `(T, number) => ?T`                                               |         | map the marker object to an object that should be used instead when rendering to the hitmap for detecting mouse events. See Mouse Events for more |
+| `mapDrawObjectToHitmapObject` | yes    | `(T, number) => ?T`                                               |         | map the marker object to an object that should be used instead when rendering to the hitmap for detecting mouse events. See Mouse Events for more |
 
 ##### Properties generally passed through wrapping classes
 

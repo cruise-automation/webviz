@@ -31,14 +31,14 @@ export type Props<T> = {
   // Interactivity
   interactive?: boolean,
   mapObjectToInstanceCount?: (any) => number,
-  mapDrawPropToHitmapProp?: (any, number) => ?any,
+  mapDrawObjectToHitmapObject?: (any, number) => ?any,
 };
 
 export type CommandProps = Props;
 
 export type MakeCommandOptions = {
   mapObjectToInstanceCount?: (any) => number,
-  mapDrawPropToHitmapProp?: (any, number) => ?any,
+  mapDrawObjectToHitmapObject?: (any, number) => ?any,
 };
 
 // Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.
@@ -82,7 +82,7 @@ export default class Command<T> extends React.Component<Props<T>> {
     const {
       interactive,
       mapObjectToInstanceCount,
-      mapDrawPropToHitmapProp,
+      mapDrawObjectToHitmapObject,
       drawProps,
       reglCommand,
       layerIndex,
@@ -94,7 +94,7 @@ export default class Command<T> extends React.Component<Props<T>> {
     const enableHitmap =
       interactive ||
       mapObjectToInstanceCount ||
-      mapDrawPropToHitmapProp ||
+      mapDrawObjectToHitmapObject ||
       SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
     context.registerDrawCall({
       instance: this,
@@ -103,7 +103,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       layerIndex,
       enableHitmap,
       mapObjectToInstanceCount,
-      mapDrawPropToHitmapProp,
+      mapDrawObjectToHitmapObject,
     });
   }
 

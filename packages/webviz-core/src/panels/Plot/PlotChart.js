@@ -171,7 +171,7 @@ export default class PlotChart extends PureComponent<PlotChartProps> {
     return (
       // Don't filter out disabled paths when passing into <MessageHistory>, because we still want
       // easy access to the history when turning the disabled paths back on.
-      <MessageHistory ignoreMissing paths={paths.map((path) => path.value)}>
+      <MessageHistory paths={paths.map((path) => path.value)}>
         {({ itemsByPath, startTime }: MessageHistoryData) => {
           const datasets = getDatasets(paths, itemsByPath, startTime);
           const annotations = getAnnotations(paths);

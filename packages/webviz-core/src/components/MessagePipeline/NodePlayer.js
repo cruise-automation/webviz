@@ -5,7 +5,6 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { flatten } from "lodash";
 import microMemoize from "micro-memoize";
 import type { Time } from "rosbag";
 
@@ -43,10 +42,7 @@ export default class NodePlayer implements Player {
 
   _getTopics = microMemoize((topics: Topic[]) => [
     ...topics,
-    ...flatten(this._nodeDefinitions.map((nodeDefinition) => nodeDefinition.outputs)).map(({ datatype, name }) => ({
-      name,
-      datatype,
-    })),
+    ...this._nodeDefinitions.map((nodeDefinition) => nodeDefinition.output),
   ]);
 
   _getDatatypes = microMemoize((datatypes: RosDatatypes) => {

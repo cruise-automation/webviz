@@ -15,7 +15,7 @@ import type { Message } from "webviz-core/src/types/players";
 // Get all timestamps of all messages, newest first
 function allStampsNewestFirst(
   itemsByPath: MessageHistoryItemsByPath,
-  getHeaderStamp?: (itemMessage: Message) => Time
+  getHeaderStamp?: (itemMessage: Message) => ?Time
 ): Time[] {
   const stamps = [];
   for (const path in itemsByPath) {
@@ -34,7 +34,7 @@ function allStampsNewestFirst(
 function messagesMatchingStamp(
   stamp: Time,
   itemsByPath: MessageHistoryItemsByPath,
-  getHeaderStamp?: (itemMessage: Message) => Time
+  getHeaderStamp?: (itemMessage: Message) => ?Time
 ): ?MessageHistoryItemsByPath {
   const synchronizedItemsByPath = {};
   for (const path in itemsByPath) {
@@ -60,7 +60,7 @@ function messagesMatchingStamp(
 // If multiple sets of synchronized messages are included, the one with the later header.stamp is returned.
 export default function synchronizeMessages(
   itemsByPath: MessageHistoryItemsByPath,
-  getHeaderStamp?: (itemMessage: Message) => Time
+  getHeaderStamp?: (itemMessage: Message) => ?Time
 ): ?MessageHistoryItemsByPath {
   for (const stamp of allStampsNewestFirst(itemsByPath, getHeaderStamp)) {
     const synchronizedItemsByPath = messagesMatchingStamp(stamp, itemsByPath, getHeaderStamp);

@@ -155,7 +155,7 @@ export default class Slider extends React.Component<Props> {
         />
         {/* include mouseup on window.top for storybook */}
         <DocumentEvents target={window.top} enabled={mouseDown && draggable} onMouseUp={this._onMouseUp} />
-        {renderSlider(value != null ? (value - min) / (max - min) : undefined)}
+        {renderSlider(value != null && min !== max ? (value - min) / (max - min) : undefined)}
       </StyledSlider>
     );
   }

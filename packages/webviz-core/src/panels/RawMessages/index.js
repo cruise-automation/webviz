@@ -331,7 +331,7 @@ class RawMessages extends React.PureComponent<Props, State> {
     }
 
     return (
-      <MessageHistory ignoreMissing paths={[topicName]} historySize={1}>
+      <MessageHistory paths={[topicName]} historySize={1}>
         {({ itemsByPath, metadataByPath }: MessageHistoryData) => {
           const item = itemsByPath[topicName][0];
           const metadata = metadataByPath[topicName];

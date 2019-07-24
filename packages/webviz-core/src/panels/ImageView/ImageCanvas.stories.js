@@ -191,6 +191,36 @@ const markers = [
 
 const topics = ["/camera_front_medium/image_rect_color_compressed", "/storybook_image"];
 
+function RGBStory({ encoding }: { encoding: string }) {
+  const width = 256;
+  const height = 200;
+  const data = new Uint8Array(3 * height * width);
+  let idx = 0;
+  for (let row = 0; row < height; row++) {
+    for (let col = 0; col < width; col++) {
+      const r = Math.max(0, 1 - Math.hypot(1 - row / height, col / width)) * 256;
+      const g = Math.max(0, 1 - Math.hypot(row / height, 1 - col / width)) * 256;
+      const b = Math.max(0, 1 - Math.hypot(1 - row / height, 1 - col / width)) * 256;
+      data[idx++] = encoding === "bgr8" ? b : r;
+      data[idx++] = g;
+      data[idx++] = encoding === "bgr8" ? r : b;
+    }
+  }
+  return (
+    <ImageCanvas
+      topic={topics[0]}
+      image={{
+        op: "message",
+        datatype: "sensor_msgs/Image",
+        topic: "/foo",
+        receiveTime: { sec: 0, nsec: 0 },
+        message: { data, width, height, encoding },
+      }}
+      markerData={null}
+    />
+  );
+}
+
 function BayerStory({ encoding }: { encoding: string }) {
   const width = 256;
   const height = 200;
@@ -312,9 +342,11 @@ storiesOf("<ImageCanvas>", module)
       />
     );
   })
+  .add("rgb8", () => <RGBStory encoding="rgb8" />)
+  .add("bgr8", () => <RGBStory encoding="bgr8" />)
   .add("mono16 big endian", () => <Mono16Story bigEndian={true} />)
   .add("mono16 little endian", () => <Mono16Story bigEndian={false} />)
-  .add("bayer_rggb8", () => <BayerStory encoding={"bayer_rggb8"} />)
-  .add("bayer_bggr8", () => <BayerStory encoding={"bayer_bggr8"} />)
-  .add("bayer_gbrg8", () => <BayerStory encoding={"bayer_gbrg8"} />)
-  .add("bayer_grbg8", () => <BayerStory encoding={"bayer_grbg8"} />);
+  .add("bayer_rggb8", () => <BayerStory encoding="bayer_rggb8" />)
+  .add("bayer_bggr8", () => <BayerStory encoding="bayer_bggr8" />)
+  .add("bayer_gbrg8", () => <BayerStory encoding="bayer_gbrg8" />)
+  .add("bayer_grbg8", () => <BayerStory encoding="bayer_grbg8" />);

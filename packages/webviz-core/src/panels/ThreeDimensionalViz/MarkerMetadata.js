@@ -14,8 +14,7 @@ import type { BaseMarker } from "webviz-core/src/types/Messages";
 
 const MarkerWrapper = styled.div`
   position: absolute;
-  background-color: rgb(22, 17, 35);
-  border: 1px solid rgba(255, 255, 255, 0.77);
+  background-color: ${colors.panelBackground};
   bottom: 15px;
   right: 15px;
   padding: 15px;

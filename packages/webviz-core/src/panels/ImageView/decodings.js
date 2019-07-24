@@ -35,7 +35,23 @@ export function decodeYUV(yuv: Int8Array, width: number, height: number, output:
   }
 }
 
-export function decodeBGR(bgr: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+export function decodeRGB8(rgb: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
+  let inIdx = 0;
+  let outIdx = 0;
+
+  for (let i = 0; i < width * height; i++) {
+    const r = rgb[inIdx++];
+    const g = rgb[inIdx++];
+    const b = rgb[inIdx++];
+
+    output[outIdx++] = r;
+    output[outIdx++] = g;
+    output[outIdx++] = b;
+    output[outIdx++] = 255;
+  }
+}
+
+export function decodeBGR8(bgr: Uint8Array, width: number, height: number, output: Uint8ClampedArray) {
   let inIdx = 0;
   let outIdx = 0;
 

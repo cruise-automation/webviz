@@ -11,8 +11,9 @@ import * as React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import GlobalVariables from "./index";
-import { GLOBAL_DATA_KEY } from "webviz-core/src/reducers/panels";
+import { GLOBAL_DATA_KEY, LAYOUT_KEY } from "webviz-core/src/reducers/panels";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
+import { defaultLayout } from "webviz-core/src/util/defaultLayoutConfig";
 import Storage from "webviz-core/src/util/Storage";
 
 const exampleGlobalData = {
@@ -28,6 +29,7 @@ storiesOf("<GlobalVariables>", module)
   .add("example", () => {
     const storage = new Storage();
     storage.set(GLOBAL_DATA_KEY, exampleGlobalData);
+    storage.set(LAYOUT_KEY, defaultLayout);
     const fixture = {
       topics: [],
       frame: {},

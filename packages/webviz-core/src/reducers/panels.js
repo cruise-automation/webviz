@@ -17,7 +17,8 @@ import type {
   ImportPanelLayoutPayload,
   PanelConfig,
 } from "webviz-core/src/types/panels";
-import { getPanelIdForType, getPanelTypeFromId } from "webviz-core/src/util";
+import { getPanelTypeFromId } from "webviz-core/src/util";
+import { defaultLayout } from "webviz-core/src/util/defaultLayoutConfig";
 import Storage from "webviz-core/src/util/Storage";
 
 const storage = new Storage();
@@ -48,9 +49,12 @@ function getDefaultState() {
   // save this initial panel layout into local storage
   const layoutIsEmptyObj = typeof result.layout === "object" && isEmpty(result.layout);
   if (!result.layout || layoutIsEmptyObj) {
-    const layout = getPanelIdForType("RosOut");
-    storage.set(LAYOUT_KEY, layout);
-    result.layout = layout;
+    storage.set(LAYOUT_KEY, defaultLayout);
+    result.layout = defaultLayout;
+    storage.set(PANEL_PROPS_KEY, {});
+    result.savedProps = {};
+    storage.set(GLOBAL_DATA_KEY, {});
+    result.globalData = {};
   }
   return getGlobalHooks().migratePanels(result);
 }

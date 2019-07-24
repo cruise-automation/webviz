@@ -61,7 +61,7 @@ const points = (regl: Regl) => {
 };
 
 function defaultMapObjectToInstanceCount(object) {
-  return object.points.length;
+  return (object.points && object.points.length) || 1;
 }
 
 const Points = makeCommand<PointType>("Points", points, {

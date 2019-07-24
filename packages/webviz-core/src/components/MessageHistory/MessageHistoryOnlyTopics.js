@@ -14,7 +14,7 @@ import uuid from "uuid";
 import { getMessagesWithoutPrefixByTopic } from "webviz-core/src/components/MessageHistory/topicPrefixUtils";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PerfMonitor from "webviz-core/src/components/PerfMonitor";
-import { getTopicNames, shallowEqualSelector } from "webviz-core/src/selectors";
+import { shallowEqualSelector } from "webviz-core/src/selectors";
 import type { Message, SubscribePayload, Topic } from "webviz-core/src/types/players";
 
 // This is an internal component which is the "old <MessageHistory>", which only supports topics,
@@ -118,13 +118,6 @@ type Props = {
   historySize: number | { [topicName: string]: number },
   imageScale?: number,
   topicPrefix: string,
-
-  // By default message history will try to subscribe to topics
-  // even if they don't existing in the player topic's list.
-  // You can disable this behavior for typeahead scenarios or when
-  // you expect user specified topics which are likely to not exist in the player
-  // to prevent a lot of subscribing to non-existant topics.
-  ignoreMissing?: boolean,
 };
 
 type MessagePipelineProps = {
@@ -237,19 +230,11 @@ class MessageHistoryOnlyTopics extends React.Component<Props & MessagePipelinePr
       encodingAndScalePayload = { encoding: "image/compressed", scale: this.props.imageScale };
     }
 
-    const { ignoreMissing } = this.props;
-    // Filter out valid topic names, otherwise things might be slow when typing in an autocomplete.
-    // TODO(JP): It would be nice to move this to the player or Pipeline or so, so that the
-    // Internals panel can still show these subscriptions.
-    const validTopicNames = getTopicNames(playerTopics);
-    const newSubscribedTopics = ignoreMissing
-      ? newTopics.filter((topicName) => validTopicNames.includes(topicName))
-      : newTopics;
-    if (isEqual(newSubscribedTopics, this._subscribedTopics)) {
+    if (isEqual(newTopics, this._subscribedTopics)) {
       return;
     }
     const requester = this.props.panelType ? { type: "panel", name: this.props.panelType } : undefined;
-    for (const topic of difference(this._subscribedTopics, newSubscribedTopics)) {
+    for (const topic of difference(this._subscribedTopics, newTopics)) {
       delete this._lastMessagesByTopic[topic]; // Not really necessary, but nice when debugging.
       const index = gComponentsByTopic[topic].indexOf(this);
       if (index === -1) {
@@ -261,16 +246,13 @@ class MessageHistoryOnlyTopics extends React.Component<Props & MessagePipelinePr
         delete gMessagesByTopic[topic];
       }
     }
-    for (const topic of difference(newSubscribedTopics, this._subscribedTopics)) {
+    for (const topic of difference(newTopics, this._subscribedTopics)) {
       gComponentsByTopic[topic] = gComponentsByTopic[topic] || [];
       gComponentsByTopic[topic].push(this);
     }
 
-    this.props.setSubscriptions(
-      this._id,
-      newSubscribedTopics.map((topic) => ({ topic, requester, ...encodingAndScalePayload }))
-    );
-    this._subscribedTopics = newSubscribedTopics;
+    this.props.setSubscriptions(this._id, newTopics.map((topic) => ({ topic, requester, ...encodingAndScalePayload })));
+    this._subscribedTopics = newTopics;
   }
 
   componentDidUpdate() {

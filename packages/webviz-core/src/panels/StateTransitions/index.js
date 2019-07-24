@@ -62,8 +62,8 @@ const SRoot = styled.div`
 
 const SAddButton = styled.div`
   position: absolute;
-  top: 0;
-  right: 65px;
+  top: 30px;
+  right: 5px;
   opacity: 0;
   transition: opacity 0.1s ease-in-out;
   z-index: 1;

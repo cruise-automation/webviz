@@ -41,6 +41,7 @@ const DEFAULT_PROPS = {
   polygonBuilder: new PolygonBuilder(polygons),
   saveConfig: () => {},
   selectedPolygonEditFormat: "yaml",
+  setType: () => {},
   showCrosshair: false,
   type: POLYGON_TYPE,
   updatePanelConfig: () => {},

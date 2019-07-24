@@ -15,38 +15,46 @@ import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 
-// eslint-disable-next-line react/no-unused-prop-types
-export class ToolGroup extends React.Component<{ name: string, children: React.Node }> {
+export class ToolGroup<T: string> extends React.Component<{ name: T, children: React.Node }> {
   render() {
     return this.props.children;
   }
 }
 
-type Props = {|
-  children: React.ChildrenArray<React.Element<typeof ToolGroup>>,
+type Props<T: string> = {|
+  // $FlowFixMe typeof does not work with generics well, getting "`typeof` can only be used to get the type of variables"
+  children: React.ChildrenArray<React.Element<typeof ToolGroup<T>>>,
   className?: ?string,
-  expanded?: boolean,
   icon: React.Node,
-  onSelectTab: (name: string) => void,
-  onSetExpanded: (expanded: boolean) => void,
-  selectedTab: string,
+  onSelectTab: (name: ?T) => void,
+  selectedTab: ?T, // collapse the toolbar if selectedTab is null
   tooltip: string,
+  style?: StyleObj,
 |};
 
-export default function ExpandingToolbar({
+export default function ExpandingToolbar<T: string>({
   children,
   className,
-  expanded,
   icon,
   onSelectTab,
-  onSetExpanded,
   selectedTab,
   tooltip,
-}: Props) {
+  style,
+}: Props<T>) {
+  const expanded = !!selectedTab;
   if (!expanded) {
+    let selectedTabLocal = selectedTab;
+    if (!selectedTabLocal) {
+      // default to the first child's name if no tab is selected
+      React.Children.forEach(children, (child) => {
+        if (!selectedTabLocal) {
+          selectedTabLocal = child.props.name;
+        }
+      });
+    }
     return (
       <div className={className}>
-        <Button tooltip={tooltip} onClick={() => onSetExpanded(true)}>
+        <Button tooltip={tooltip} onClick={() => onSelectTab(selectedTabLocal)}>
           <Icon>{icon}</Icon>
         </Button>
       </div>
@@ -71,13 +79,15 @@ export default function ExpandingToolbar({
           );
         })}
         <div className={styles.spaceSeparator} />
-        <Button onClick={() => onSetExpanded(false)}>
+        <Button onClick={() => onSelectTab(null)}>
           <Icon>
             <ArrowCollapseIcon />
           </Icon>
         </Button>
       </Flex>
-      <div className={styles.tabBody}>{selectedChild}</div>
+      <div className={styles.tabBody} style={style}>
+        {selectedChild}
+      </div>
     </div>
   );
 }

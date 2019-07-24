@@ -54,11 +54,11 @@ type Props = {
   polygonBuilder: PolygonBuilder,
   saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
   selectedPolygonEditFormat: EditFormat,
+  setType: (?DrawingType) => void,
   type: ?DrawingType,
   updatePanelConfig: UpdatePanelConfig,
 } & CameraInfoProps;
 
-const DEFAULT_SELECTED_TAB = DRAWING_CONFIG.Polygons.type;
 // add more drawing shapes later, e.g. Grid, Axes, Crosshairs
 export default function DrawingTools({
   cameraState,
@@ -70,22 +70,11 @@ export default function DrawingTools({
   polygonBuilder,
   saveConfig,
   selectedPolygonEditFormat,
+  setType,
   showCrosshair,
   type,
   updatePanelConfig,
 }: Props) {
-  const [selectedTab, setSelectedTab] = React.useState<string>(type || DEFAULT_SELECTED_TAB);
-  const [expanded, setExpanded] = React.useState<boolean>(!!type);
-
-  // reset local state when drawing type changes
-  React.useEffect(
-    () => {
-      setExpanded(!!type);
-      setSelectedTab(type || DEFAULT_SELECTED_TAB);
-    },
-    [type]
-  );
-
   const config = (type && DRAWING_CONFIG[type]) || DRAWING_CONFIG.Polygons;
   const IconName = type ? config.icon : PencilIcon;
 
@@ -98,10 +87,8 @@ export default function DrawingTools({
         </Icon>
       }
       className={styles.buttons}
-      expanded={expanded}
-      selectedTab={selectedTab}
-      onSelectTab={(newSelectedTab) => setSelectedTab(newSelectedTab)}
-      onSetExpanded={(newExpanded) => setExpanded(newExpanded)}>
+      selectedTab={type}
+      onSelectTab={(newSelectedTab) => setType(newSelectedTab)}>
       <ToolGroup name={DRAWING_CONFIG.Polygons.type}>
         <Polygons
           onSetPolygons={onSetPolygons}

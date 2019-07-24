@@ -11,9 +11,8 @@ import FakePlayer from "webviz-core/src/components/MessagePipeline/FakePlayer";
 import signal from "webviz-core/src/util/signal";
 
 const node = {
-  name: "foo",
   inputs: ["/input/foo", "/input/bar"],
-  outputs: [{ name: "/webviz/test", datatype: "test" }],
+  output: { name: "/webviz/test", datatype: "test" },
   datatypes: {
     test: [{ type: "string", name: "foo" }],
   },
@@ -92,8 +91,8 @@ describe("NodePlayer", () => {
       [
         [
           { topic: "/input/baz" },
-          { requester: { name: "foo", type: "node" }, topic: "/input/foo" },
-          { requester: { name: "foo", type: "node" }, topic: "/input/bar" },
+          { requester: { name: "/webviz/test", type: "node" }, topic: "/input/foo" },
+          { requester: { name: "/webviz/test", type: "node" }, topic: "/input/bar" },
         ],
       ],
     ]);

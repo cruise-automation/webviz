@@ -306,7 +306,7 @@ class ImageView extends React.Component<Props> {
             icon={enabledMarkerNames.includes(option.name) ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
             key={option.name}
             value={option.name}>
-            <span>{option.name}</span>
+            <span>{option.topic}</span>
             <TopicTimestamp text={formatTimeForPath(allItemsByPath, option.topic)} />
           </Item>
         ))}

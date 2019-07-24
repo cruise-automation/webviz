@@ -131,13 +131,6 @@ type Props = {
   // pass in image topics to `paths`.
   imageScale?: number,
 
-  // By default message history will try to subscribe to topics
-  // even if they don't existing in the player topic's list.
-  // You can disable this behavior for typeahead scenarios or when
-  // you expect user specified topics which are likely to not exist in the player
-  // to prevent a lot of subscribing to non-existant topics.
-  ignoreMissing?: boolean,
-
   // From player
   topics: Topic[],
   datatypes: RosDatatypes,
@@ -228,7 +221,7 @@ const getMemoizedTopics = createSelector(
 // This might be a bit counterintuitive but we do this since performance matters here.
 class MessageHistory extends React.PureComponent<Props> {
   render() {
-    const { children, paths, historySize, topics, datatypes, imageScale, ignoreMissing } = this.props;
+    const { children, paths, historySize, topics, datatypes, imageScale } = this.props;
 
     // Note: parseRosPath is memoized so we don't have to worry about calling it on
     // every render.
@@ -242,7 +235,6 @@ class MessageHistory extends React.PureComponent<Props> {
                 <MessageHistoryOnlyTopics
                   topicPrefix={topicPrefix}
                   panelType={(panelData || {}).type}
-                  ignoreMissing={ignoreMissing}
                   topics={getMemoizedTopics(paths)}
                   historySize={historySize || Infinity}
                   imageScale={imageScale}

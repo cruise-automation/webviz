@@ -8,17 +8,27 @@
 
 import { last } from "lodash";
 
+import type { HitmapId, MouseEventObject } from "../types";
+
 export function fillArray(start: number, length: number): Array<number> {
   return new Array(length).fill(0).map((_, index) => start + index);
 }
 
-export default class HitmapIdManager {
-  _invalidatedHitmapIdRanges: Array<[number, number]> = []; // Ranges are [closed, closed]
+// UniqueCommandType can be any type that is unique to each command using this hitmap id manager, such as an ID or the
+// instance itself.
+export default class HitmapIdManager<UniqueCommandType: mixed, DrawProp: mixed> {
+  _invalidatedHitmapIdRanges: Array<[HitmapId, HitmapId]> = []; // Ranges are [closed, closed]
+  _hitmapIdMap: { [HitmapId]: DrawProp } = {}; // map hitmapId to the original marker object
   _nextHitmapId = 1;
-  _commandInstanceIdToHitmapIdRanges: { [string]: Array<[number, number]> } = {};
-  _hitmapInstancedIdMap: { [key: number]: number } = {}; // map hitmapId to the instance index
+  _commandInstanceToHitmapIdRanges: Map<UniqueCommandType, HitmapId> = new Map();
+  _hitmapInstancedIdMap: { [HitmapId]: number } = {}; // map hitmapId to the instance index
 
-  assignNextIds(commandInstanceId: string, idCount: number, { isInstanced }: { isInstanced?: boolean } = {}) {
+  assignNextIds = (
+    command: UniqueCommandType,
+    idCount: number,
+    drawProp: DrawProp,
+    options?: { isInstanced?: boolean }
+  ): Array<HitmapId> => {
     if (idCount < 1) {
       throw new Error("Must get at least 1 id");
     }
@@ -49,31 +59,36 @@ export default class HitmapIdManager {
       ids.push(...newIds);
     }
 
-    this._commandInstanceIdToHitmapIdRanges[commandInstanceId] =
-      this._commandInstanceIdToHitmapIdRanges[commandInstanceId] || [];
-    this._commandInstanceIdToHitmapIdRanges[commandInstanceId].push([ids[0], last(ids)]);
-    if (isInstanced) {
+    const commandHitmapRange = this._commandInstanceToHitmapIdRanges.get(command) || [];
+    commandHitmapRange.push([ids[0], last(ids)]);
+    this._commandInstanceToHitmapIdRanges.set(command, commandHitmapRange);
+    if (options && options.isInstanced) {
       ids.forEach((id, index) => {
         this._hitmapInstancedIdMap[id] = index;
       });
     }
 
+    // Store the mapping of ID to original marker object
+    for (const id of ids) {
+      this._hitmapIdMap[id] = drawProp;
+    }
+
     return ids;
-  }
+  };
 
-  getInstanceIndex(hitmapId: number): ?number {
-    return this._hitmapInstancedIdMap[hitmapId];
-  }
+  getDrawPropByHitmapId = (hitmapId: number): MouseEventObject => {
+    return { object: this._hitmapIdMap[hitmapId], instanceIndex: this._hitmapInstancedIdMap[hitmapId] };
+  };
 
-  invalidateHitmapIds(commandInstanceId: string) {
-    const assignedHitmapIdRanges = this._commandInstanceIdToHitmapIdRanges[commandInstanceId];
+  invalidateHitmapIds = (command: UniqueCommandType) => {
+    const assignedHitmapIdRanges = this._commandInstanceToHitmapIdRanges.get(command);
     if (!assignedHitmapIdRanges) {
-      throw new Error("Command instance ID not found");
+      return;
     }
 
     // Mark all assigned hitmap ids as invalid
     this._invalidatedHitmapIdRanges.push(...assignedHitmapIdRanges);
-    delete this._commandInstanceIdToHitmapIdRanges[commandInstanceId];
+    this._commandInstanceToHitmapIdRanges.delete(command);
     // Delete all instanced
     for (const [start, end] of assignedHitmapIdRanges) {
       if (this._hitmapInstancedIdMap[start] != null) {

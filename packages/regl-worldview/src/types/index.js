@@ -184,6 +184,14 @@ export type PolygonType = BaseShape & {
   points: (Point | Vec3)[],
 };
 
+export type HitmapId = number;
+export type CommandBoundAssignNextIds = (
+  idCount: number,
+  drawProp: BaseShape,
+  options?: { isInstanced?: boolean }
+) => Array<HitmapId>;
+export type GetHitmap = <T>(prop: T, CommandBoundAssignNextIds) => T;
+
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
 
 export type MouseEventObject = {

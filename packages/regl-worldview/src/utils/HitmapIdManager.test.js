@@ -13,7 +13,7 @@ describe("HitmapIdManager", () => {
     const commandInstanceId = "test";
 
     it("assigns a single ID correctly", () => {
-      const manager = new HitmapIdManager();
+      const manager = new HitmapIdManager<*, *>();
       const ids = manager.assignNextIds(commandInstanceId, 1);
       expect(ids).toEqual([1]);
       const nextIds = manager.assignNextIds(commandInstanceId, 1);
@@ -21,7 +21,7 @@ describe("HitmapIdManager", () => {
     });
 
     it("assigns multiple IDs correctly", () => {
-      const manager = new HitmapIdManager();
+      const manager = new HitmapIdManager<*, *>();
       const ids = manager.assignNextIds(commandInstanceId, 2);
       expect(ids).toEqual([1, 2]);
       const nextIds = manager.assignNextIds(commandInstanceId, 2);
@@ -29,14 +29,14 @@ describe("HitmapIdManager", () => {
     });
 
     it("assigns instance indices isInstanced is true", () => {
-      const manager = new HitmapIdManager();
+      const manager = new HitmapIdManager<*, *>();
       const ids = manager.assignNextIds(commandInstanceId, 2, { isInstanced: true });
       expect(manager.getInstanceIndex(ids[0])).toEqual(0);
       expect(manager.getInstanceIndex(ids[1])).toEqual(1);
     });
 
     it("does not assign instance indices isInstanced is false", () => {
-      const manager = new HitmapIdManager();
+      const manager = new HitmapIdManager<*, *>();
       const ids = manager.assignNextIds(commandInstanceId, 2);
       expect(manager.getInstanceIndex(ids[0])).toEqual(undefined);
       expect(manager.getInstanceIndex(ids[1])).toEqual(undefined);
@@ -49,7 +49,7 @@ describe("HitmapIdManager", () => {
 
     function createTest(name, invalidatedCount, initialCount, nextCount) {
       it(name, () => {
-        const manager = new HitmapIdManager();
+        const manager = new HitmapIdManager<*, *>();
         manager.assignNextIds(commandInstanceId, invalidatedCount);
 
         manager.invalidateHitmapIds(commandInstanceId);
@@ -69,7 +69,7 @@ describe("HitmapIdManager", () => {
     createTest("invalidates a range with a single ID and then a range", 2, 1, 2);
 
     it("invalidates instance indices", () => {
-      const manager = new HitmapIdManager();
+      const manager = new HitmapIdManager<*, *>();
       const ids = manager.assignNextIds(commandInstanceId, 2, { isInstanced: true });
       manager.invalidateHitmapIds(commandInstanceId);
       expect(Object.keys(manager._hitmapInstancedIdMap)).toEqual([]);

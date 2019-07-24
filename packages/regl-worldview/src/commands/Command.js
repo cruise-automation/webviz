@@ -9,7 +9,7 @@
 
 import * as React from "react";
 
-import type { ComponentMouseHandler, MouseEventEnum, RawCommand, Vec4, Color, Ray } from "../types";
+import type { ComponentMouseHandler, GetHitmap, MouseEventEnum, RawCommand, Color, Ray } from "../types";
 import { getNodeEnv } from "../utils/common";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
@@ -32,6 +32,7 @@ export type Props<T> = {
   interactive?: boolean,
   mapObjectToInstanceCount?: (any) => number,
   mapDrawObjectToHitmapObject?: (any, number) => ?any,
+  getHitmap: GetHitmap,
 };
 
 export type CommandProps = Props;
@@ -39,6 +40,7 @@ export type CommandProps = Props;
 export type MakeCommandOptions = {
   mapObjectToInstanceCount?: (any) => number,
   mapDrawObjectToHitmapObject?: (any, number) => ?any,
+  getHitmap: GetHitmap,
 };
 
 // Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.
@@ -86,6 +88,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       drawProps,
       reglCommand,
       layerIndex,
+      getHitmap,
       ...rest
     } = this.props;
     if (drawProps == null) {
@@ -104,6 +107,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       enableHitmap,
       mapObjectToInstanceCount,
       mapDrawObjectToHitmapObject,
+      getHitmap,
     });
   }
 

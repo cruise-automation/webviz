@@ -161,7 +161,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   };
 
   _onMouseMove = (e: MouseEvent) => {
-    this._onMouseInteraction(e, "onMouseMove", this.props.hitmapOnMouseMove);
+    this._onMouseInteraction(e, "onMouseMove");
   };
 
   _onMouseUp = (e: MouseEvent) => {
@@ -178,7 +178,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
   };
 
-  _onMouseInteraction = (e: MouseEvent, mouseEventName: MouseEventEnum, readHitmap: boolean = true) => {
+  _onMouseInteraction = (e: MouseEvent, mouseEventName: MouseEventEnum) => {
     const { worldviewContext } = this.state;
     const worldviewHandler = this.props[mouseEventName];
 
@@ -196,8 +196,12 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       return;
     }
 
-    if (!readHitmap && worldviewHandler) {
-      return handleWorldviewMouseInteraction(0, ray, e, worldviewHandler);
+    // rendering the hitmap on mouse move is expensive, so disable it by default
+    if (mouseEventName === "onMouseMove" && !this.props.hitmapOnMouseMove) {
+      if (worldviewHandler) {
+        return handleWorldviewMouseInteraction(0, ray, e, worldviewHandler);
+      }
+      return;
     }
 
     // reading hitmap is async so we need to persist the event to use later in the event handler

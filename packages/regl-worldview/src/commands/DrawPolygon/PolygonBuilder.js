@@ -84,7 +84,7 @@ export default class PolygonBuilder {
       if (!isClosed(activePolygon)) {
         const newPoint = new PolygonPoint(point);
         activePolygon.points.push(newPoint);
-        this.selectObject(newPoint.id);
+        this.selectObject(newPoint);
         return;
       }
     }
@@ -94,7 +94,7 @@ export default class PolygonBuilder {
     const floatingPoint = new PolygonPoint(point);
     polygon.points.push(floatingPoint);
     this.polygons.push(polygon);
-    this.selectObject(floatingPoint.id);
+    this.selectObject(floatingPoint);
     this.onChange();
   }
 
@@ -243,7 +243,7 @@ export default class PolygonBuilder {
   };
 
   // select either a point or polygon by id
-  selectObject(objectId: number = 0) {
+  selectObject(object?: Polygon | PolygonPoint) {
     // clear out any previously active objects
     this.activePolygon = null;
     if (this.activePoint) {
@@ -252,13 +252,13 @@ export default class PolygonBuilder {
     this.activePoint = null;
 
     for (const polygon of this.polygons) {
-      let isActive = polygon.id === objectId;
+      let isActive = polygon === object;
       polygon.active = isActive;
       if (isActive) {
         this.activePolygon = polygon;
       }
       for (const point of polygon.points) {
-        if (point.id === objectId) {
+        if (point === object) {
           // if a point is selected, activate both it
           // and the polygon it belongs to
           this.activePoint = point;
@@ -286,11 +286,11 @@ export default class PolygonBuilder {
     if (!args) {
       return;
     }
-    if (!args.objectId) {
+    if (!args.object) {
       return;
     }
 
-    this.selectObject(args.objectId);
+    this.selectObject(args.object);
 
     // if a point was double-clicked, delete it
     if (this.activePoint) {
@@ -362,7 +362,7 @@ export default class PolygonBuilder {
 
     // single click or click+drag is for selection & moving
     if (isFirstClick && !isCtrlClick) {
-      this.selectObject(args.objectId);
+      this.selectObject(args.object);
       return this.onChange();
     }
 

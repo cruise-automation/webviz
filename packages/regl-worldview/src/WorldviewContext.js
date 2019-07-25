@@ -23,6 +23,7 @@ import type {
   MouseEventObject,
   GetHitmap,
   HitmapId,
+  CommandBoundAssignNextIds,
 } from "./types";
 import { getIdFromColor } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
@@ -31,7 +32,6 @@ import type { Ray } from "./utils/Raycast";
 import { getRayFromClick } from "./utils/Raycast";
 
 type Props = any;
-type Prop = any;
 
 type ConstructorArgs = {
   dimension: Dimensions,
@@ -90,7 +90,7 @@ export class WorldviewContext {
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInputWithHitmap> = new Map();
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
-  _hitmapIdManager: HitmapIdManager = new HitmapIdManager<Command<any>, Prop>();
+  _hitmapIdManager: HitmapIdManager<Command<any>> = new HitmapIdManager();
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
   counters: { paint?: number, render?: number } = {};
@@ -182,7 +182,10 @@ export class WorldviewContext {
     // Invalidate previous ids
     this._hitmapIdManager.invalidateHitmapIds(instance);
     // assign next ids
-    const commandBoundAssignNextIds = this._hitmapIdManager.assignNextIds.bind(this._hitmapIdManager, instance);
+    const commandBoundAssignNextIds: CommandBoundAssignNextIds = this._hitmapIdManager.assignNextIds.bind(
+      this._hitmapIdManager,
+      instance
+    );
     const hitmapProps = getHitmap ? getHitmap(drawProps, commandBoundAssignNextIds) : null;
     this._drawCalls.set(drawInput.instance, { ...drawInput, hitmapProps });
   }
@@ -302,7 +305,7 @@ export class WorldviewContext {
       }
       const cmd = this._compiled.get(command);
       if (!cmd) {
-        return console.warn("could not find draw command for", instance.constructor.displayName);
+        return console.warn("could not find draw command for", instance ? instance.constructor.displayName : "Unknown");
       }
       if (isHitmap && hitmapProps) {
         cmd(hitmapProps);

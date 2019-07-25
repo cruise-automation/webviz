@@ -9,12 +9,9 @@
 import type { CommandBoundAssignNextIds } from "../types";
 import { intToRGB } from "./commandUtils";
 
-export const nonInstancedGetHitmap = <T: Array<Object> | Object>(
-  props: T,
-  assignNextIds: CommandBoundAssignNextIds
-) => {
+export const nonInstancedGetHitmap = <T: Object>(props: Array<T> | T, assignNextIds: CommandBoundAssignNextIds) => {
   const propsArray = Array.isArray(props) ? props : [props];
-  return propsArray.map((prop) => {
+  const hitmapArray: Array<T> = propsArray.map((prop) => {
     const hitmapProp = { ...prop };
     const [id] = assignNextIds(1, prop);
     const hitmapColor = intToRGB(id);
@@ -24,16 +21,19 @@ export const nonInstancedGetHitmap = <T: Array<Object> | Object>(
     }
     return hitmapProp;
   });
+
+  if (Array.isArray(props)) {
+    return hitmapArray;
+  }
+  return hitmapArray[0];
 };
 
-export const createInstancedGetHitmap = ({ pointCountPerInstance }: { pointCountPerInstance: number }) => <
-  T: Array<Object> | Object
->(
-  props: T,
+export const createInstancedGetHitmap = ({ pointCountPerInstance }: { pointCountPerInstance: number }) => <T: Object>(
+  props: Array<T> | T,
   assignNextIds: CommandBoundAssignNextIds
 ) => {
   const propsArray = Array.isArray(props) ? props : [props];
-  return propsArray.map((prop) => {
+  const hitmapArray: Array<T> = propsArray.map((prop: T) => {
     const hitmapProp = { ...prop };
     const instanceCount = (hitmapProp.points && Math.floor(hitmapProp.points.length / pointCountPerInstance)) || 1;
     const newIds = assignNextIds(instanceCount, prop, { isInstanced: true });
@@ -53,4 +53,9 @@ export const createInstancedGetHitmap = ({ pointCountPerInstance }: { pointCount
     }
     return hitmapProp;
   });
+
+  if (Array.isArray(props)) {
+    return hitmapArray;
+  }
+  return hitmapArray[0];
 };

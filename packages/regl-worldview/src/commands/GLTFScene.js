@@ -13,11 +13,9 @@ import React, { useContext, useState, useEffect, useCallback, useDebugValue } fr
 import type { Pose, Scale, MouseHandler, GetHitmap } from "../types";
 import { defaultBlend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
 import { nonInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import parseGLB from "../utils/parseGLB";
+import parseGLB, { type GLBModel } from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";
-
-type Model = {};
 
 function glConstantToRegl(value: ?number): ?string {
   if (value === undefined) {
@@ -116,13 +114,15 @@ const drawModel = (regl) => {
   });
 
   // build the draw calls needed to draw the model. This will happen whenever the model changes.
-  const getDrawCalls = memoizeWeak((model: Model) => {
+  const getDrawCalls = memoizeWeak((model: GLBModel) => {
     // upload textures to the GPU
+    const { images, accessors } = model;
     const textures =
       model.json.textures &&
+      images &&
       model.json.textures.map((textureInfo) => {
         const sampler = model.json.samplers[textureInfo.sampler];
-        const bitmap: ImageBitmap = model.images[textureInfo.source];
+        const bitmap: ImageBitmap = images[textureInfo.source];
         const texture = regl.texture({
           data: bitmap,
           min: glConstantToRegl(sampler.minFilter),
@@ -142,12 +142,15 @@ const drawModel = (regl) => {
       for (const primitive of mesh.primitives) {
         const material = model.json.materials[primitive.material];
         const texInfo = material.pbrMetallicRoughness.baseColorTexture;
+        if (!accessors || !textures) {
+          throw new Error("Error decoding GLB file");
+        }
         drawCalls.push({
-          indices: model.accessors[primitive.indices],
-          positions: model.accessors[primitive.attributes.POSITION],
-          normals: model.accessors[primitive.attributes.NORMAL],
+          indices: accessors[primitive.indices],
+          positions: accessors[primitive.attributes.POSITION],
+          normals: accessors[primitive.attributes.NORMAL],
           texCoords: texInfo
-            ? model.accessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]]
+            ? accessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]]
             : { divisor: 1, buffer: singleTexCoord },
           baseColorTexture: texInfo ? textures[texInfo.index] : whiteTexture,
           baseColorFactor: material.pbrMetallicRoughness.baseColorFactor || [1, 1, 1, 1],
@@ -212,7 +215,7 @@ const drawModel = (regl) => {
 };
 
 type Props = {|
-  model: string | (() => Promise<Model>),
+  model: string | (() => Promise<GLBModel>),
   onClick?: MouseHandler,
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
@@ -246,7 +249,7 @@ function useAsyncValue<T>(fn: () => Promise<T>, deps: ?(any[])): ?T {
   return value;
 }
 
-function useModel(model: string | (() => Promise<Model>)): ?Model {
+function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
   useDebugValue(model);
   return useAsyncValue(
     async () => {

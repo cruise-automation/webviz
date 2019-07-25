@@ -97,13 +97,13 @@ export type ArrowSize = {
 export type ReglClickInfo = {
   ray: Ray,
   object?: Object,
-  instanceIndex?: number,
+  instanceIndex?: ?number,
 };
 
 export type ComponentReglClickInfo = {
   ray: Ray,
   object: Object,
-  instanceIndex?: number,
+  instanceIndex?: ?number,
 };
 
 export type MouseHandler = (MouseEvent, ReglClickInfo) => void;

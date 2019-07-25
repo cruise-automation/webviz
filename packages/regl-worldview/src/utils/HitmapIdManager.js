@@ -8,7 +8,7 @@
 
 import last from "lodash/last";
 
-import type { HitmapId, MouseEventObject } from "../types";
+import type { HitmapId, MouseEventObject, BaseShape } from "../types";
 
 export function fillArray(start: number, length: number): Array<number> {
   return new Array(length).fill(0).map((_, index) => start + index);
@@ -16,17 +16,17 @@ export function fillArray(start: number, length: number): Array<number> {
 
 // UniqueCommandType can be any type that is unique to each command using this hitmap id manager, such as an ID or the
 // instance itself.
-export default class HitmapIdManager<UniqueCommandType: mixed, DrawProp: mixed> {
+export default class HitmapIdManager<UniqueCommandType> {
   _invalidatedHitmapIdRanges: Array<[HitmapId, HitmapId]> = []; // Ranges are [closed, closed]
-  _hitmapIdMap: { [HitmapId]: DrawProp } = {}; // map hitmapId to the original marker object
+  _hitmapIdMap: { [HitmapId]: BaseShape } = {}; // map hitmapId to the original marker object
   _nextHitmapId = 1;
-  _commandInstanceToHitmapIdRanges: Map<UniqueCommandType, HitmapId> = new Map();
+  _commandInstanceToHitmapIdRanges: Map<UniqueCommandType, Array<[HitmapId, HitmapId]>> = new Map();
   _hitmapInstancedIdMap: { [HitmapId]: number } = {}; // map hitmapId to the instance index
 
   assignNextIds = (
     command: UniqueCommandType,
     idCount: number,
-    drawProp: DrawProp,
+    drawProp: BaseShape,
     options?: { isInstanced?: boolean }
   ): Array<HitmapId> => {
     if (idCount < 1) {

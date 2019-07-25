@@ -8,6 +8,7 @@
 
 import type { Line } from "../types";
 import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import { nonInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import { makeCommand } from "./Command";
 
 /*
@@ -428,6 +429,6 @@ const lines = (regl: any) => {
   };
 };
 
-const Lines = makeCommand<Line>("Lines", lines, {});
+const Lines = makeCommand<Line>("Lines", lines, { getHitmap: nonInstancedGetHitmap });
 
 export default Lines;

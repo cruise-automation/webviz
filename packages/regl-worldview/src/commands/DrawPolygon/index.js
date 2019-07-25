@@ -9,8 +9,9 @@
 // TODO(Audrey): add documentation for DrawPolygons
 import React from "react";
 
-import type { Line, Point, Pose, Vec4, Vec3, Scale } from "../../types";
-import { vec4ToRGBA, intToRGB, vec3ToPoint } from "../../utils/commandUtils";
+import type { Line, Point, Pose, Vec4, Vec3, Scale, GetHitmap } from "../../types";
+import { vec4ToRGBA, vec3ToPoint } from "../../utils/commandUtils";
+import { nonInstancedGetHitmap } from "../../utils/getHitmapDefaults";
 import Command from "../Command";
 import Lines from "../Lines";
 import Spheres from "../Spheres";
@@ -71,6 +72,12 @@ type Props = {
   children: DrawPolygonType[],
 };
 
+const polygonLinesGetHitmap: GetHitmap = <T>(prop: T, assignNextIds) => {
+  const hitmapProp = nonInstancedGetHitmap(prop, assignNextIds);
+  hitmapProp.scale = HITMAP_SCALE;
+  return hitmapProp;
+};
+
 /**
  * Draw the polygon lines
  */
@@ -91,19 +98,15 @@ class PolygonLines extends React.Component<Props> {
       });
     }
 
-    return (
-      <Command
-        reglCommand={Lines.reglCommand}
-        drawProps={lines}
-        mapDrawObjectToHitmapObject={(drawProp) => {
-          const hitmapProp = { ...drawProp };
-          hitmapProp.scale = HITMAP_SCALE;
-          return hitmapProp;
-        }}
-      />
-    );
+    return <Command reglCommand={Lines.reglCommand} drawProps={lines} getHitmap={polygonLinesGetHitmap} />;
   }
 }
+
+const polygonPointsGetHitmap: GetHitmap = <T>(prop: T, assignNextIds) => {
+  const hitmapProp = nonInstancedGetHitmap(prop, assignNextIds);
+  hitmapProp.scale = HITMAP_POINT_SCALE;
+  return hitmapProp;
+};
 
 /**
  * Draw the polygon points at the end of each lines
@@ -127,17 +130,7 @@ class PolygonPoints extends React.Component<Props> {
       }
     }
 
-    return (
-      <Command
-        reglCommand={Spheres.reglCommand}
-        drawProps={sphereList}
-        mapDrawObjectToHitmapObject={(drawProp) => {
-          const hitmapProp = { ...drawProp };
-          hitmapProp.scale = HITMAP_POINT_SCALE;
-          return hitmapProp;
-        }}
-      />
-    );
+    return <Command reglCommand={Spheres.reglCommand} drawProps={sphereList} getHitmap={polygonPointsGetHitmap} />;
   }
 }
 

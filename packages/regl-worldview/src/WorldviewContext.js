@@ -53,8 +53,6 @@ export type DrawInput = {
   drawProps: Props,
   layerIndex: ?number,
   enableHitmap: boolean,
-  mapObjectToInstanceCount?: ?(object: Props) => number,
-  mapDrawObjectToHitmapObject?: ?(object: Props, index: number) => ?Props,
   getHitmap: GetHitmap,
 };
 

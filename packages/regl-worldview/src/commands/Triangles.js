@@ -17,6 +17,7 @@ import {
   toRGBA,
   withPose,
 } from "../utils/commandUtils";
+import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import Command from "./Command";
 
 // TODO(Audrey): default to the actual regl defaults before 1.x release
@@ -165,14 +166,10 @@ const triangles = (regl: Regl) => {
   };
 };
 
-function defaultMapObjectToInstanceCount(drawProp) {
-  return (drawProp.points && Math.floor(drawProp.points.length / 3)) || 1;
-}
-
 export default function Triangles({ children, ...rest }) {
   return (
     <Command
-      mapObjectToInstanceCount={defaultMapObjectToInstanceCount}
+      getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 3 })}
       {...rest}
       drawProps={children}
       reglCommand={triangles}

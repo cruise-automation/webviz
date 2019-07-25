@@ -8,6 +8,7 @@
 
 import type { BaseShape } from "../types";
 import fromGeometry from "../utils/fromGeometry";
+import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import { makeCommand } from "./Command";
 import { createCylinderGeometry } from "./Cylinders";
 
@@ -15,6 +16,8 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, true);
 
 const cones = fromGeometry(points, sideFaces.concat(endCapFaces));
 
-const Cones = makeCommand<BaseShape>("Cones", cones, {});
+const Cones = makeCommand<BaseShape>("Cones", cones, {
+  getHitmap: createInstancedGetHitmap({ pointCountPerInstance: 1 }),
+});
 
 export default Cones;

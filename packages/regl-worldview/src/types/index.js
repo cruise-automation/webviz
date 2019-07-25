@@ -164,11 +164,11 @@ export type Cube = BaseShape & {
 export type Cylinder = BaseShape;
 
 export type Line = BaseShape & {
-  points: (Point | Vec3)[],
+  points: Point[] | Vec3[],
 };
 
 export type PointType = BaseShape & {
-  points: (Point | Vec3)[],
+  points: (Point[] | Vec3)[],
 };
 
 export type SphereList = BaseShape & {

@@ -14,7 +14,7 @@ describe("HitmapIdManager", () => {
     const drawProp: any = { isDrawProp: true };
 
     it("assigns a single ID correctly", () => {
-      const manager = new HitmapIdManager<*>();
+      const manager: HitmapIdManager = new HitmapIdManager();
       const ids = manager.assignNextIds(commandInstanceId, 1, drawProp);
       expect(ids).toEqual([1]);
       const nextIds = manager.assignNextIds(commandInstanceId, 1, drawProp);
@@ -22,7 +22,7 @@ describe("HitmapIdManager", () => {
     });
 
     it("assigns multiple IDs correctly", () => {
-      const manager = new HitmapIdManager<*>();
+      const manager: HitmapIdManager = new HitmapIdManager();
       const ids = manager.assignNextIds(commandInstanceId, 2, drawProp);
       expect(ids).toEqual([1, 2]);
       const nextIds = manager.assignNextIds(commandInstanceId, 2, drawProp);
@@ -30,14 +30,14 @@ describe("HitmapIdManager", () => {
     });
 
     it("assigns instance indices isInstanced is true", () => {
-      const manager = new HitmapIdManager<*>();
+      const manager: HitmapIdManager = new HitmapIdManager();
       const ids = manager.assignNextIds(commandInstanceId, 2, drawProp, { isInstanced: true });
       expect(manager.getDrawPropByHitmapId(ids[0]).instanceIndex).toEqual(0);
       expect(manager.getDrawPropByHitmapId(ids[1]).instanceIndex).toEqual(1);
     });
 
     it("does not assign instance indices isInstanced is false", () => {
-      const manager = new HitmapIdManager<*>();
+      const manager = new HitmapIdManager();
       const ids = manager.assignNextIds(commandInstanceId, 2, drawProp);
       expect(manager.getDrawPropByHitmapId(ids[0]).instanceIndex).toEqual(undefined);
       expect(manager.getDrawPropByHitmapId(ids[1]).instanceIndex).toEqual(undefined);
@@ -49,12 +49,12 @@ describe("HitmapIdManager", () => {
     const drawProp: any = { isDrawProp: true };
 
     it("does not error when the hitmap id is not found", () => {
-      const manager = new HitmapIdManager<*>();
-      expect(manager.getDrawPropByHitmapId("random")).toEqual({ object: undefined, instanceIndex: undefined });
+      const manager: HitmapIdManager = new HitmapIdManager();
+      expect(manager.getDrawPropByHitmapId(100)).toEqual({ object: undefined, instanceIndex: undefined });
     });
 
     it("returns the right hitmap object", () => {
-      const manager = new HitmapIdManager<*>();
+      const manager: HitmapIdManager = new HitmapIdManager();
       const ids = manager.assignNextIds(commandInstanceId, 2, drawProp);
       // Require exact equality here
       expect(manager.getDrawPropByHitmapId(ids[0]).object).toBe(drawProp);
@@ -69,16 +69,16 @@ describe("HitmapIdManager", () => {
 
     function createTest(name, invalidatedCount, initialCount, nextCount) {
       it(name, () => {
-        const manager = new HitmapIdManager<*>();
+        const manager: HitmapIdManager = new HitmapIdManager();
         manager.assignNextIds(commandInstanceId, invalidatedCount, drawProp);
 
         manager.invalidateHitmapIds(commandInstanceId);
         // eslint-disable-next-line no-underscore-dangle
         expect(manager._commandInstanceToHitmapIdRanges[commandInstanceId]).toEqual(undefined);
 
-        const ids = manager.assignNextIds(commandInstanceId2, initialCount);
+        const ids = manager.assignNextIds(commandInstanceId2, initialCount, drawProp);
         expect(ids).toEqual(fillArray(1, initialCount));
-        const nextIds = manager.assignNextIds(commandInstanceId2, nextCount);
+        const nextIds = manager.assignNextIds(commandInstanceId2, nextCount, drawProp);
         expect(nextIds).toEqual(fillArray(1 + initialCount, nextCount));
       });
     }
@@ -90,7 +90,7 @@ describe("HitmapIdManager", () => {
     createTest("invalidates a range with a single ID and then a range", 2, 1, 2);
 
     it("invalidates instance indices", () => {
-      const manager = new HitmapIdManager<*>();
+      const manager: HitmapIdManager = new HitmapIdManager();
       const ids = manager.assignNextIds(commandInstanceId, 2, drawProp, { isInstanced: true });
       manager.invalidateHitmapIds(commandInstanceId);
       // eslint-disable-next-line no-underscore-dangle

@@ -8,7 +8,7 @@
 
 import * as React from "react";
 
-import type { Regl } from "../types";
+import type { Regl, TriangleList } from "../types";
 import {
   defaultBlend,
   getVertexColors,
@@ -18,7 +18,7 @@ import {
   withPose,
 } from "../utils/commandUtils";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import Command from "./Command";
+import Command, { type OptionalCommandProps } from "./Command";
 
 // TODO(Audrey): default to the actual regl defaults before 1.x release
 const defaultSingleColorDepth = { enable: true, mask: false };
@@ -166,7 +166,7 @@ const triangles = (regl: Regl) => {
   };
 };
 
-export default function Triangles({ children, ...rest }) {
+export default function Triangles({ children, ...rest }: { ...OptionalCommandProps, children: Array<TriangleList> }) {
   return (
     <Command
       getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 3 })}

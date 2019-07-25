@@ -30,7 +30,7 @@ import HitmapIdManager from "./utils/HitmapIdManager";
 import type { Ray } from "./utils/Raycast";
 import { getRayFromClick } from "./utils/Raycast";
 
-type Props = Array<any>;
+type Props = any;
 type Prop = any;
 
 type ConstructorArgs = {
@@ -54,6 +54,11 @@ export type DrawInput = {
   layerIndex: ?number,
   enableHitmap: boolean,
   getHitmap: GetHitmap,
+};
+
+type DrawInputWithHitmap = {
+  ...DrawInput,
+  hitmapProps: ?Props,
 };
 
 export type PaintFn = () => void;
@@ -84,7 +89,7 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
 export class WorldviewContext {
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
-  _drawCalls: Map<React.Component<any>, any> = new Map();
+  _drawCalls: Map<React.Component<any>, DrawInputWithHitmap> = new Map();
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
   _hitmapIdManager: HitmapIdManager = new HitmapIdManager<Command<any>, Prop>();
   // store every compiled command object compiled for debugging purposes
@@ -174,7 +179,13 @@ export class WorldviewContext {
   }
 
   registerDrawCall(drawInput: DrawInput) {
-    this._drawCalls.set(drawInput.instance, drawInput);
+    const { getHitmap, drawProps, instance } = drawInput;
+    // Invalidate previous ids
+    this._hitmapIdManager.invalidateHitmapIds(instance);
+    // assign next ids
+    const commandBoundAssignNextIds = this._hitmapIdManager.assignNextIds.bind(this._hitmapIdManager, instance);
+    const hitmapProps = drawInput.getHitmap ? getHitmap(drawProps, commandBoundAssignNextIds) : null;
+    this._drawCalls.set(drawInput.instance, { ...drawInput, hitmapProps });
   }
 
   registerPaintCallback(paintFn: PaintFn) {
@@ -289,8 +300,8 @@ export class WorldviewContext {
       drawCalls = drawCalls.filter(({ enableHitmap }) => enableHitmap);
     }
     const sortedDrawCalls = drawCalls.sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
-    sortedDrawCalls.forEach((drawInput: DrawInput) => {
-      const { command, drawProps, instance, getHitmap } = drawInput;
+    sortedDrawCalls.forEach((drawInput: DrawInputWithHitmap) => {
+      const { command, drawProps, instance, hitmapProps } = drawInput;
       if (!drawProps) {
         return console.debug(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`, drawInput);
       }
@@ -298,9 +309,7 @@ export class WorldviewContext {
       if (!cmd) {
         return console.warn("could not find draw command for", instance.constructor.displayName);
       }
-      if (isHitmap) {
-        const commandBoundAssignNextIds = this._hitmapIdManager.assignNextIds.bind(this._hitmapIdManager, instance);
-        const hitmapProps = getHitmap(drawProps, commandBoundAssignNextIds);
+      if (isHitmap && hitmapProps) {
         cmd(hitmapProps);
       } else if (!isHitmap) {
         cmd(drawProps);

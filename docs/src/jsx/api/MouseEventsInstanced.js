@@ -143,8 +143,7 @@ function Example() {
           },
         ]}
       </Spheres>
-      <Triangles
-        onClick={onObjectClick}
+      <Triangles onClick={onObjectClick}>
         {[
           {
             id: 40001,

@@ -29,14 +29,10 @@ class FakeRay {
   }
 }
 
-const getArgs: (Array<number>, ?number) => ReglClickInfo = (point, objectId) => {
+const getArgs: (Array<number>, ?Object) => ReglClickInfo = (point, object) => {
   return {
     ray: (new FakeRay(point): any),
-    object: objectId
-      ? {
-          id: objectId,
-        }
-      : null,
+    object,
   };
 };
 
@@ -93,8 +89,8 @@ describe("Polygon builder", () => {
       const builder = new PolygonBuilder([polygon]);
       builder.selectObject(polygon);
       expect(builder.activePolygon).toBe(polygon);
-      builder.onDoubleClick(event(), getArgs([mag, mag, 0], polygon.points[0].id));
-      builder.onDoubleClick(event(), getArgs([mag, mag, 0], polygon.points[0].id));
+      builder.onDoubleClick(event(), getArgs([mag, mag, 0], polygon.points[0]));
+      builder.onDoubleClick(event(), getArgs([mag, mag, 0], polygon.points[0]));
       builder.onMouseDown(event(), getArgs([1, 1, 0]));
       expect(builder.polygons).toHaveLength(0);
       expect(builder.activePoint).toBeNull();

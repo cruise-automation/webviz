@@ -270,7 +270,7 @@ function useModel(model: string | (() => Promise<Model>)): ?Model {
 
 // Override the default mapHitmap with our own implementation.
 const getHitmap: GetHitmap = <T>(prop: T, assignNextIds) => {
-  const hitmapProp = nonInstancedGetHitmap(prop, assignNextIds);
+  const [hitmapProp] = nonInstancedGetHitmap([prop], assignNextIds);
   hitmapProp.isHitmap = true;
   return hitmapProp;
 };
@@ -294,11 +294,6 @@ export default function GLTFScene(props: Props) {
   }
 
   return (
-    <Command
-      {...rest}
-      reglCommand={drawModel}
-      drawProps={[{ ...children, model: loadedModel }]}
-      getHitmap={getHitmap}
-    />
+    <Command {...rest} reglCommand={drawModel} drawProps={{ ...children, model: loadedModel }} getHitmap={getHitmap} />
   );
 }

@@ -300,7 +300,7 @@ export class WorldviewContext {
       }
       if (isHitmap) {
         const commandBoundAssignNextIds = this._hitmapIdManager.assignNextIds.bind(this._hitmapIdManager, instance);
-        const hitmapProps = drawProps.map((drawProp) => getHitmap(drawProp, commandBoundAssignNextIds)).filter(Boolean);
+        const hitmapProps = getHitmap(drawProps, commandBoundAssignNextIds);
         cmd(hitmapProps);
       } else if (!isHitmap) {
         cmd(drawProps);

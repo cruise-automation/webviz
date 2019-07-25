@@ -22,9 +22,15 @@ export type MarkerDefault = {
   color?: Color,
 };
 
+export type OptionalCommandProps = {
+  [MouseEventEnum]: ComponentMouseHandler,
+  layerIndex?: number,
+  getHitmap?: GetHitmap,
+};
+
 export type Props<T> = {
   [MouseEventEnum]: ComponentMouseHandler,
-  children?: T[],
+  drawProps: T[],
   layerIndex?: number,
   reglCommand: RawCommand<T>,
 
@@ -35,7 +41,7 @@ export type Props<T> = {
 export type CommandProps = Props;
 
 export type MakeCommandOptions = {
-  getHitmap: GetHitmap,
+  getHitmap?: GetHitmap,
 };
 
 // Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.

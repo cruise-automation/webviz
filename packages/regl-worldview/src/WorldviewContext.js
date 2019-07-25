@@ -49,7 +49,7 @@ type InitializedData = {
 
 export type DrawInput = {
   instance: React.Component<any>,
-  command: Command<any>,
+  command: RawCommand<any>,
   drawProps: Props,
   layerIndex: ?number,
   getHitmap: ?GetHitmap,
@@ -90,7 +90,7 @@ export class WorldviewContext {
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInputWithHitmap> = new Map();
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
-  _hitmapIdManager: HitmapIdManager<Command<any>> = new HitmapIdManager();
+  _hitmapIdManager: HitmapIdManager = new HitmapIdManager();
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
   counters: { paint?: number, render?: number } = {};
@@ -182,10 +182,9 @@ export class WorldviewContext {
     // Invalidate previous ids
     this._hitmapIdManager.invalidateHitmapIds(instance);
     // assign next ids
-    const commandBoundAssignNextIds: CommandBoundAssignNextIds = this._hitmapIdManager.assignNextIds.bind(
-      this._hitmapIdManager,
-      instance
-    );
+    const commandBoundAssignNextIds: CommandBoundAssignNextIds = (...rest) => {
+      return this._hitmapIdManager.assignNextIds(instance, ...rest);
+    };
     const hitmapProps = getHitmap ? getHitmap(drawProps, commandBoundAssignNextIds) : null;
     this._drawCalls.set(drawInput.instance, { ...drawInput, hitmapProps });
   }

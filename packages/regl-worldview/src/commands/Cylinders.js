@@ -7,8 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import type { Cylinder } from "../types";
-import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import fromGeometry from "../utils/fromGeometry";
+import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import { makeCommand } from "./Command";
 
 export function createCylinderGeometry(numSegments: number, cone: boolean) {

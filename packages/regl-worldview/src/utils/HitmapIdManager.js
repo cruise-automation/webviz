@@ -97,5 +97,5 @@ export default class HitmapIdManager<UniqueCommandType: mixed, DrawProp: mixed> 
         }
       }
     }
-  }
+  };
 }

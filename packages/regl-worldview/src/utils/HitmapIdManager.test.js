@@ -53,6 +53,7 @@ describe("HitmapIdManager", () => {
         manager.assignNextIds(commandInstanceId, invalidatedCount);
 
         manager.invalidateHitmapIds(commandInstanceId);
+        // eslint-disable-next-line no-underscore-dangle
         expect(manager._commandInstanceIdToHitmapIdRanges[commandInstanceId]).toEqual(undefined);
 
         const ids = manager.assignNextIds(commandInstanceId2, initialCount);
@@ -72,6 +73,7 @@ describe("HitmapIdManager", () => {
       const manager = new HitmapIdManager<*, *>();
       const ids = manager.assignNextIds(commandInstanceId, 2, { isInstanced: true });
       manager.invalidateHitmapIds(commandInstanceId);
+      // eslint-disable-next-line no-underscore-dangle
       expect(Object.keys(manager._hitmapInstancedIdMap)).toEqual([]);
       expect(manager.getInstanceIndex(ids[0])).toEqual(undefined);
       expect(manager.getInstanceIndex(ids[1])).toEqual(undefined);

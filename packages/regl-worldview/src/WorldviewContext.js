@@ -53,7 +53,7 @@ export type DrawInput = {
   drawProps: Props,
   layerIndex: ?number,
   enableHitmap: boolean,
-  getHitmap: GetHitmap,
+  getHitmap: ?GetHitmap,
 };
 
 type DrawInputWithHitmap = {
@@ -184,7 +184,7 @@ export class WorldviewContext {
     this._hitmapIdManager.invalidateHitmapIds(instance);
     // assign next ids
     const commandBoundAssignNextIds = this._hitmapIdManager.assignNextIds.bind(this._hitmapIdManager, instance);
-    const hitmapProps = drawInput.getHitmap ? getHitmap(drawProps, commandBoundAssignNextIds) : null;
+    const hitmapProps = getHitmap ? getHitmap(drawProps, commandBoundAssignNextIds) : null;
     this._drawCalls.set(drawInput.instance, { ...drawInput, hitmapProps });
   }
 

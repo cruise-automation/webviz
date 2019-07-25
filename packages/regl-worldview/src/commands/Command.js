@@ -30,7 +30,7 @@ export type Props<T> = {
 
   // Interactivity
   interactive?: boolean,
-  getHitmap: GetHitmap,
+  getHitmap?: GetHitmap,
 };
 
 export type CommandProps = Props;

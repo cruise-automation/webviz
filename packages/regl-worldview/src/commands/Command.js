@@ -30,16 +30,12 @@ export type Props<T> = {
 
   // Interactivity
   interactive?: boolean,
-  mapObjectToInstanceCount?: (any) => number,
-  mapDrawObjectToHitmapObject?: (any, number) => ?any,
   getHitmap: GetHitmap,
 };
 
 export type CommandProps = Props;
 
 export type MakeCommandOptions = {
-  mapObjectToInstanceCount?: (any) => number,
-  mapDrawObjectToHitmapObject?: (any, number) => ?any,
   getHitmap: GetHitmap,
 };
 
@@ -81,32 +77,17 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
 
-    const {
-      interactive,
-      mapObjectToInstanceCount,
-      mapDrawObjectToHitmapObject,
-      drawProps,
-      reglCommand,
-      layerIndex,
-      getHitmap,
-      ...rest
-    } = this.props;
+    const { interactive, drawProps, reglCommand, layerIndex, getHitmap, ...rest } = this.props;
     if (drawProps == null) {
       return;
     }
-    const enableHitmap =
-      interactive ||
-      mapObjectToInstanceCount ||
-      mapDrawObjectToHitmapObject ||
-      SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
+    const enableHitmap = interactive || SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
     context.registerDrawCall({
       instance: this,
       command: reglCommand,
       drawProps,
       layerIndex,
       enableHitmap,
-      mapObjectToInstanceCount,
-      mapDrawObjectToHitmapObject,
       getHitmap,
     });
   }

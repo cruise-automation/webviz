@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import type { Cube } from "../types";
+import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import fromGeometry from "../utils/fromGeometry";
 import { makeCommand } from "./Command";
 
@@ -45,6 +46,8 @@ const cubes = fromGeometry(
   ]
 );
 
-const Cubes = makeCommand<Cube>("Cubes", cubes, {});
+const Cubes = makeCommand<Cube>("Cubes", cubes, {
+  getHitmap: createInstancedGetHitmap({ pointCountPerInstance: 1 }),
+});
 
 export default Cubes;

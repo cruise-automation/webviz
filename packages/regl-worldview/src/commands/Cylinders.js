@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import type { Cylinder } from "../types";
+import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import fromGeometry from "../utils/fromGeometry";
 import { makeCommand } from "./Command";
 
@@ -46,6 +47,8 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, false);
 
 const cylinders = fromGeometry(points, sideFaces.concat(endCapFaces));
 
-const Cylinders = makeCommand<Cylinder>("Cylinders", cylinders, {});
+const Cylinders = makeCommand<Cylinder>("Cylinders", cylinders, {
+  getHitmap: createInstancedGetHitmap({ pointCountPerInstance: 1 }),
+});
 
 export default Cylinders;

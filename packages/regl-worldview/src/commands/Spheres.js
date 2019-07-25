@@ -8,6 +8,7 @@
 
 import type { SphereList } from "../types";
 import fromGeometry from "../utils/fromGeometry";
+import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import { makeCommand } from "./Command";
 
 const NUM_PARALLELS = 15;
@@ -53,12 +54,8 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
 
 const spheres = fromGeometry(points, faces);
 
-function defaultMapObjectToInstanceCount(object) {
-  return (object.points && object.points.length) || 1;
-}
-
 const Spheres = makeCommand<SphereList>("Spheres", spheres, {
-  mapObjectToInstanceCount: defaultMapObjectToInstanceCount,
+  getHitmap: createInstancedGetHitmap({ pointCountPerInstance: 1 }),
 });
 
 export default Spheres;

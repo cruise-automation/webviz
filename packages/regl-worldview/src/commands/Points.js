@@ -8,6 +8,7 @@
 
 import type { PointType, Regl } from "../types";
 import { getVertexColors, pointToVec3, withPose } from "../utils/commandUtils";
+import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import { makeCommand } from "./Command";
 
 const points = (regl: Regl) => {
@@ -60,12 +61,8 @@ const points = (regl: Regl) => {
   });
 };
 
-function defaultMapObjectToInstanceCount(object) {
-  return (object.points && object.points.length) || 1;
-}
-
 const Points = makeCommand<PointType>("Points", points, {
-  mapObjectToInstanceCount: defaultMapObjectToInstanceCount,
+  getHitmap: createInstancedGetHitmap({ pointCountPerInstance: 1 }),
 });
 
 export default Points;

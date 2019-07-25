@@ -10,8 +10,9 @@ import { mat4 } from "gl-matrix";
 import memoizeWeak from "memoize-weak";
 import React, { useContext, useState, useEffect, useCallback, useDebugValue } from "react";
 
-import type { Pose, Scale, MouseHandler } from "../types";
-import { defaultBlend, pointToVec3, orientationToVec4, intToRGB } from "../utils/commandUtils";
+import type { Pose, Scale, MouseHandler, GetHitmap } from "../types";
+import { defaultBlend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
+import { nonInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import parseGLB from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";
@@ -267,6 +268,13 @@ function useModel(model: string | (() => Promise<Model>)): ?Model {
   );
 }
 
+// Override the default mapHitmap with our own implementation.
+const getHitmap: GetHitmap = <T>(prop: T, assignNextIds) => {
+  const hitmapProp = nonInstancedGetHitmap(prop, assignNextIds);
+  hitmapProp.isHitmap = true;
+  return hitmapProp;
+};
+
 export default function GLTFScene(props: Props) {
   const { children, model, ...rest } = props;
 
@@ -289,8 +297,8 @@ export default function GLTFScene(props: Props) {
     <Command
       {...rest}
       reglCommand={drawModel}
-      drawProps={{ ...children, model: loadedModel }}
-      mapDrawObjectToHitmapObject={(drawProp) => ({ ...drawProp, isHitmap: true })}
+      drawProps={[{ ...children, model: loadedModel }]}
+      getHitmap={getHitmap}
     />
   );
 }

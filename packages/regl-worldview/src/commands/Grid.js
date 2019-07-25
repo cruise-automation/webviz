@@ -9,6 +9,7 @@
 import React from "react";
 
 import { withPose } from "../utils/commandUtils";
+import { nonInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import Command from "./Command";
 
 export function grid() {
@@ -65,6 +66,6 @@ export default class Grid extends React.Component<Props> {
   };
 
   render() {
-    return <Command reglCommand={grid} drawProps={this.props} />;
+    return <Command getHitmap={nonInstancedGetHitmap} reglCommand={grid} drawProps={this.props} />;
   }
 }

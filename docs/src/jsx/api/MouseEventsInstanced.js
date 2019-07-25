@@ -145,7 +145,6 @@ function Example() {
       </Spheres>
       <Triangles
         onClick={onObjectClick}
-        mapObjectToInstanceCount={(drawProp) => Math.floor(drawProp.points.length / 3)}>
         {[
           {
             id: 40001,

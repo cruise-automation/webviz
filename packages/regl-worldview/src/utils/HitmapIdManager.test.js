@@ -62,41 +62,19 @@ describe("HitmapIdManager", () => {
     });
   });
 
-  describe("invalidateHitmapIds", () => {
+  describe("reset", () => {
     const commandInstanceId: any = "test";
-    const commandInstanceId2: any = "test2";
     const drawProp: any = { isDrawProp: true };
 
-    function createTest(name, invalidatedCount, initialCount, nextCount) {
-      it(name, () => {
-        const manager: HitmapIdManager = new HitmapIdManager();
-        manager.assignNextIds(commandInstanceId, invalidatedCount, drawProp);
-
-        manager.invalidateHitmapIds(commandInstanceId);
-        // eslint-disable-next-line no-underscore-dangle
-        expect(manager._commandInstanceToHitmapIdRanges[commandInstanceId]).toEqual(undefined);
-
-        const ids = manager.assignNextIds(commandInstanceId2, initialCount, drawProp);
-        expect(ids).toEqual(fillArray(1, initialCount));
-        const nextIds = manager.assignNextIds(commandInstanceId2, nextCount, drawProp);
-        expect(nextIds).toEqual(fillArray(1 + initialCount, nextCount));
-      });
-    }
-
-    createTest("invalidates a single ID with single IDs after", 1, 1, 1);
-    createTest("invalidates a range with ranges after", 2, 2, 2);
-    createTest("invalidates a single ID with ranges after", 1, 2, 2);
-    createTest("invalidates a long range with smaller ranges after", 3, 2, 2);
-    createTest("invalidates a range with a single ID and then a range", 2, 1, 2);
-
-    it("invalidates instance indices", () => {
+    it("resets the hitmap", () => {
       const manager: HitmapIdManager = new HitmapIdManager();
-      const ids = manager.assignNextIds(commandInstanceId, 2, drawProp, { isInstanced: true });
-      manager.invalidateHitmapIds(commandInstanceId);
-      // eslint-disable-next-line no-underscore-dangle
-      expect(Object.keys(manager._hitmapInstancedIdMap)).toEqual([]);
-      expect(manager.getDrawPropByHitmapId(ids[0]).instanceIndex).toEqual(undefined);
-      expect(manager.getDrawPropByHitmapId(ids[1]).instanceIndex).toEqual(undefined);
+      manager.assignNextIds(commandInstanceId, 1, drawProp);
+
+      manager.reset(commandInstanceId);
+      expect(manager.getDrawPropByHitmapId(1).object).toEqual(undefined);
+
+      const ids = manager.assignNextIds(commandInstanceId, 1, drawProp);
+      expect(ids).toEqual([1]);
     });
   });
 });

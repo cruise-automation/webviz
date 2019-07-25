@@ -55,11 +55,6 @@ export type DrawInput = {
   getHitmap: ?GetHitmap,
 };
 
-type DrawInputWithHitmap = {
-  ...DrawInput,
-  hitmapProps: ?Props,
-};
-
 export type PaintFn = () => void;
 
 export type WorldviewContextType = {
@@ -88,7 +83,7 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
 export class WorldviewContext {
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
-  _drawCalls: Map<React.Component<any>, DrawInputWithHitmap> = new Map();
+  _drawCalls: Map<React.Component<any>, DrawInput> = new Map();
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
   _hitmapIdManager: HitmapIdManager = new HitmapIdManager();
   // store every compiled command object compiled for debugging purposes
@@ -178,15 +173,7 @@ export class WorldviewContext {
   }
 
   registerDrawCall(drawInput: DrawInput) {
-    const { getHitmap, drawProps, instance } = drawInput;
-    // Invalidate previous ids
-    this._hitmapIdManager.invalidateHitmapIds(instance);
-    // assign next ids
-    const commandBoundAssignNextIds: CommandBoundAssignNextIds = (...rest) => {
-      return this._hitmapIdManager.assignNextIds(instance, ...rest);
-    };
-    const hitmapProps = getHitmap ? getHitmap(drawProps, commandBoundAssignNextIds) : null;
-    this._drawCalls.set(drawInput.instance, { ...drawInput, hitmapProps });
+    this._drawCalls.set(drawInput.instance, drawInput);
   }
 
   registerPaintCallback(paintFn: PaintFn) {
@@ -295,10 +282,14 @@ export class WorldviewContext {
   };
 
   _drawInput = (isHitmap?: boolean) => {
+    if (isHitmap) {
+      this._hitmapIdManager.reset();
+    }
+
     const drawCalls = Array.from(this._drawCalls.values());
     const sortedDrawCalls = drawCalls.sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
-    sortedDrawCalls.forEach((drawInput: DrawInputWithHitmap) => {
-      const { command, drawProps, instance, hitmapProps } = drawInput;
+    sortedDrawCalls.forEach((drawInput: DrawInput) => {
+      const { command, drawProps, instance, getHitmap } = drawInput;
       if (!drawProps) {
         return console.debug(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`, drawInput);
       }
@@ -306,7 +297,11 @@ export class WorldviewContext {
       if (!cmd) {
         return console.warn("could not find draw command for", instance ? instance.constructor.displayName : "Unknown");
       }
-      if (isHitmap && hitmapProps) {
+      if (isHitmap && getHitmap) {
+        const commandBoundAssignNextIds: CommandBoundAssignNextIds = (...rest) => {
+          return this._hitmapIdManager.assignNextIds(instance, ...rest);
+        };
+        const hitmapProps = getHitmap(drawInput.drawProps, commandBoundAssignNextIds);
         cmd(hitmapProps);
       } else if (!isHitmap) {
         cmd(drawProps);

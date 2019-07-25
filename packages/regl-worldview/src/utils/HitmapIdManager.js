@@ -18,10 +18,8 @@ export function fillArray(start: number, length: number): Array<number> {
 type CommandInstance = React.Component<any>;
 
 export default class HitmapIdManager {
-  _invalidatedHitmapIdRanges: Array<[HitmapId, HitmapId]> = []; // Ranges are [closed, closed]
   _hitmapIdMap: { [HitmapId]: BaseShape } = {}; // map hitmapId to the original marker object
   _nextHitmapId = 1;
-  _commandInstanceToHitmapIdRanges: Map<CommandInstance, Array<[HitmapId, HitmapId]>> = new Map();
   _hitmapInstancedIdMap: { [HitmapId]: number } = {}; // map hitmapId to the instance index
 
   assignNextIds = (
@@ -36,33 +34,11 @@ export default class HitmapIdManager {
 
     const ids: Array<number> = [];
     // First, pull from old hitmap ids ranges
-    while (this._invalidatedHitmapIdRanges.length && ids.length < idCount) {
-      const [rangeStart, rangeEnd] = this._invalidatedHitmapIdRanges.shift();
-      const rangeLength = rangeEnd - rangeStart + 1;
-      const neededIdsCount = idCount - ids.length;
-      if (rangeLength >= neededIdsCount) {
-        const newIds = fillArray(rangeStart, neededIdsCount);
-        ids.push(...newIds);
-        // We still have more room in the range, so push it back as a hitmap range.
-        if (rangeLength > neededIdsCount) {
-          const newRange = [last(ids) + 1, rangeEnd];
-          this._invalidatedHitmapIdRanges.unshift(newRange);
-        }
-      } else {
-        const newIds = fillArray(rangeStart, rangeLength);
-        ids.push(...newIds);
-      }
-    }
 
-    if (ids.length < idCount) {
-      const newIds = fillArray(this._nextHitmapId, idCount - ids.length);
-      this._nextHitmapId = last(newIds) + 1;
-      ids.push(...newIds);
-    }
+    const newIds = fillArray(this._nextHitmapId, idCount - ids.length);
+    this._nextHitmapId = last(newIds) + 1;
+    ids.push(...newIds);
 
-    const commandHitmapRange = this._commandInstanceToHitmapIdRanges.get(command) || [];
-    commandHitmapRange.push([ids[0], last(ids)]);
-    this._commandInstanceToHitmapIdRanges.set(command, commandHitmapRange);
     if (options && options.isInstanced) {
       ids.forEach((id, index) => {
         this._hitmapInstancedIdMap[id] = index;
@@ -77,26 +53,13 @@ export default class HitmapIdManager {
     return ids;
   };
 
-  getDrawPropByHitmapId = (hitmapId: number): MouseEventObject => {
-    return { object: this._hitmapIdMap[hitmapId], instanceIndex: this._hitmapInstancedIdMap[hitmapId] };
+  reset = () => {
+    this._hitmapIdMap = {};
+    this._nextHitmapId = 1;
+    this._hitmapInstancedIdMap = {};
   };
 
-  invalidateHitmapIds = (command: CommandInstance): void => {
-    const assignedHitmapIdRanges = this._commandInstanceToHitmapIdRanges.get(command);
-    if (!assignedHitmapIdRanges) {
-      return;
-    }
-
-    // Mark all assigned hitmap ids as invalid
-    this._invalidatedHitmapIdRanges.push(...assignedHitmapIdRanges);
-    this._commandInstanceToHitmapIdRanges.delete(command);
-    // Delete all instanced
-    for (const [start, end] of assignedHitmapIdRanges) {
-      if (this._hitmapInstancedIdMap[start] != null) {
-        for (let id = start; id <= end; id++) {
-          delete this._hitmapInstancedIdMap[id];
-        }
-      }
-    }
+  getDrawPropByHitmapId = (hitmapId: number): MouseEventObject => {
+    return { object: this._hitmapIdMap[hitmapId], instanceIndex: this._hitmapInstancedIdMap[hitmapId] };
   };
 }

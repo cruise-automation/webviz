@@ -52,7 +52,6 @@ export type DrawInput = {
   command: Command<any>,
   drawProps: Props,
   layerIndex: ?number,
-  enableHitmap: boolean,
   getHitmap: ?GetHitmap,
 };
 
@@ -287,18 +286,14 @@ export class WorldviewContext {
 
   callComponentHandlers = (objectId: number, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
     this._drawCalls.forEach((drawInput, component) => {
-      if (drawInput.enableHitmap && component instanceof Command) {
+      if (drawInput.getHitmap && component instanceof Command) {
         component.handleMouseEvent(objectId, e, ray, mouseEventName);
       }
     });
   };
 
   _drawInput = (isHitmap?: boolean) => {
-    let drawCalls = Array.from(this._drawCalls.values());
-    if (isHitmap) {
-      // remove non-hitmap drawCalls
-      drawCalls = drawCalls.filter(({ enableHitmap }) => enableHitmap);
-    }
+    const drawCalls = Array.from(this._drawCalls.values());
     const sortedDrawCalls = drawCalls.sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
     sortedDrawCalls.forEach((drawInput: DrawInputWithHitmap) => {
       const { command, drawProps, instance, hitmapProps } = drawInput;

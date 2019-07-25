@@ -29,7 +29,6 @@ export type Props<T> = {
   reglCommand: RawCommand<T>,
 
   // Interactivity
-  interactive?: boolean,
   getHitmap?: GetHitmap,
 };
 
@@ -77,17 +76,15 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
 
-    const { interactive, drawProps, reglCommand, layerIndex, getHitmap, ...rest } = this.props;
+    const { drawProps, reglCommand, layerIndex, getHitmap } = this.props;
     if (drawProps == null) {
       return;
     }
-    const enableHitmap = interactive || SUPPORTED_MOUSE_EVENTS.some((eventName) => eventName in rest);
     context.registerDrawCall({
       instance: this,
       command: reglCommand,
       drawProps,
       layerIndex,
-      enableHitmap,
       getHitmap,
     });
   }

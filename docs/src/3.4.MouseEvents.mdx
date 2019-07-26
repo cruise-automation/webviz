@@ -11,6 +11,7 @@ Currently Worldview supports the following mouse event handlers: `onDoubleClick`
 | `onMouseUp`     | `MouseHandler` |         |                                                                                              |
 | `onMouseMove`   | `MouseHandler` |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the Worldview component |
 | `onClick`       | `MouseHandler` |         |                                                                                              |
+| `getHitmap`     | `CommandBoundAssignNextIds` |                                                                            | Maps the `drawProps` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
 
 ## Event Handler
 
@@ -39,40 +40,95 @@ Usually using instanced objects can help improve rendering performance, e.g. an 
 
 _Commands that currently support instanced rendering: Cubes, Points, Spheres, Triangles, Cones, Cylinders. More to be added later._
 
-##### Figuring out which instance was clicked on
-
-Commands can optionally implement the `mapObjectToInstanceCount` function. Implementing this function indicates to the Worldview events system that the command has different instances that can be interacted with. The command takes the object to render and returns the number of instances in that object.
-
 Example:
 
 ```js
 <Worldview>
   <Cubes
     onClick={(evt, { object, instanceIndex }) => console.log(`You clicked on ${object.id} at index ${instanceIndex}`)}
-    mapObjectToInstanceCount={(cube) => cube.points.length}
   >
     {cubes}
   </Cubes>
 </Worldview>
 ```
 
-##### Interacting with an object in a different way than how it is rendered
+### getHitmap and mapping for interactive objects
 
-Some commands may want to do something special when the user interacts with them. For example, a Point instance may want to allow clicking close to a point and not directly on a point to still trigger a click event. `mapDrawObjectToHitmapObject` allows this by taking in the object to be rendered and returning a new object that will be rendered into the hitmap only.
+How do we detect which object was interacted with? We use a process called picking, in which we generate an off-screen "canvas", or hitmap, to paint our objects into, assign each object a unique color, and then paint each object into this hitmap. We then detect which object was clicked on by testing which color was underneath the cursor.
 
-Example:
+The Worldview library allows a lot of control over this interaction, but most Commands can use one of two default `getHitmap` functions.
+
+| Name | Description | Usage |
+| ---- | ----------- | ----- |
+| `nonInstancedGetHitmap` | A default `getHitmap` function for non-instanced commands. | `<Command getHitmap={nonInstancedGetHitmap} ... />` |
+| `createInstancedGetHitmap` | A factory function for instanced commands. It takes the number of points per instance: for example, a triangle has 3 points, whereas a sphere has 1 point (just the center). | `<Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} ... />`
+
+##### Turning off interactivity for a layer
+
+All built in commands allow overriding the `getHitmap` function, and we recommend that you also allow users to override it. If a user passes in `null` or `undefined` for `getHitmap` in a command, any objects drawn by that command instance will not be visible for interaction purposes. Disabling interaction in this way may help improve performance.
+
+##### Customizing the getHitmap function
+
+Each Command is passed the `reglCommand` function `drawProps` for rendering into the scene using the `reglCommand` function. `getHitmap` takes in those `drawProps` and returns new version of them that will be rendered into the hitmap.
+
+Some important things to remember:
+ * The first argument of `getHitmap` is the `drawProps`.
+ * The second argument is a function that helps us assign IDs to each object.
+```js
+/*
+ * type: "instanced" if mapping multiple IDs to a single callback object, "single" if 1:1.
+ * callbackObject: the object to pass to event callbacks when this object is interacted with.
+ * count: If "instanced", how many IDs to map to the callback object.
+ * return type: an array of the IDs assigned.
+ */
+type CommandBoundAssignNextIds = (
+  { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
+) => Array<HitmapId>;
+```
+ * Each unique object that you want to event on should get a unique ID. If you want to map parts of a single object to multiple IDs (instancing), use the `type: "instanced"` call to `assignNextIds`.
+ * Once you have this ID, pass it to `intToRGB()` to get the color to paint your object. Don't apply any transparency or shading to your object or this will mess up the hitmap.
+
+Example using composition of the default `mapHitmap` functions:
 
 ```js
 <Worldview>
   <Points
     onClick={(evt, { object }) => console.log(`You clicked on ${object.id}`)}
-    mapDrawObjectToHitmapObject={(prop, index) => {
-      // Only allow interaction with every second object
-      if (index % 2) {
-        return null;
+    mapHitmap={(props, assignNextIds) => {
+      const hitmapProps = nonInstancedGetHitmap(props, assignNextIds);
+      // Points are hard to click, so expand their hitmap so that clicking slightly outside of a point still selects it.
+      for (hitmapProp of hitmapProps) {
+        hitmapProp.scale = { x: hitmapProps.scale.x * 1.1, y: hitmapProps.scale.y * 1.1, z: hitmapProps.scale.z * 1.1 };
       }
-      // Scale the points up, assuming the default scale is 1,1,1
-      return { ...prop, scale: { x: 1.2, y: 1.2, z: 1.2 } };
+      return hitmapProps;
+    }}
+  >
+    {points}
+  </Points>
+</Worldview>
+```
+
+Example using a custom `mapHitmap` function:
+
+```js
+<Worldview>
+  <Points
+    onClick={(evt, { object }) => console.log(`You clicked on ${object.id}`)}
+    mapHitmap={(props, assignNextIds) => {
+      // This is a simplified version of nonInstancedGetHitmap, for explanation purposes.
+      return propsArray.map((prop) => {
+        // We copy each point array.
+        const hitmapProp = { ...prop };
+        // We get 1 new ID, and pass in the original prop so it will be the object passed to any event handlers.
+        const [id] = assignNextIds({ type: "single", callbackObject: prop });
+        // We turn the hitmapId into a color and use it for the points.
+        const hitmapColor = intToRGB(id);
+        hitmapProp.color = hitmapColor;
+        if (hitmapProp.points) {
+          hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
+        }
+        return hitmapProp;
+      });
     }}
   >
     {points}

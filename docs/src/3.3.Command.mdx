@@ -17,6 +17,8 @@ Command is the base class for all regl-based drawing commands. Wrap this class i
 | `drawProps`                 | no       | `Array<any> | any`                                                     |         | Arbitrary properties passed into reglCommand.                |
 | `layerIndex`                | yes      | `number`                                                               |         | defines the draw order of each command, e.g. -1 will put the shape in lower layer                   |
 
+Props relating to events are also passed through to Command instances. See Mouse Events for more.
+
 Sample usage:
 
 ```js

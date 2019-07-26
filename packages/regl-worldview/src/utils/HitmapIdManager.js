@@ -11,7 +11,7 @@ import React from "react";
 
 import type { HitmapId, MouseEventObject, BaseShape } from "../types";
 
-export function fillArray(start: number, length: number): Array<number> {
+function fillArray(start: number, length: number): Array<number> {
   return new Array(length).fill(0).map((_, index) => start + index);
 }
 
@@ -24,10 +24,11 @@ export default class HitmapIdManager {
 
   assignNextIds = (
     command: CommandInstance,
-    idCount: number,
-    drawProp: BaseShape,
-    options?: { isInstanced?: boolean }
+    options:
+      | { type: "single", callbackObject: BaseShape }
+      | { type: "instanced", callbackObject: BaseShape, count: number }
   ): Array<HitmapId> => {
+    const idCount = options.type === "instanced" ? options.count : 1;
     if (idCount < 1) {
       throw new Error("Must get at least 1 id");
     }
@@ -39,7 +40,7 @@ export default class HitmapIdManager {
     this._nextHitmapId = last(newIds) + 1;
     ids.push(...newIds);
 
-    if (options && options.isInstanced) {
+    if (options.type === "instanced") {
       ids.forEach((id, index) => {
         this._hitmapInstancedIdMap[id] = index;
       });
@@ -47,7 +48,7 @@ export default class HitmapIdManager {
 
     // Store the mapping of ID to original marker object
     for (const id of ids) {
-      this._hitmapIdMap[id] = drawProp;
+      this._hitmapIdMap[id] = options.callbackObject;
     }
 
     return ids;

@@ -145,8 +145,8 @@ function Example() {
           setClickedId(object.id);
         }
       }}>
-      <Cubes interactive>{cubes}</Cubes>
-      <Spheres interactive>{spheres}</Spheres>
+      <Cubes>{cubes}</Cubes>
+      <Spheres>{spheres}</Spheres>
       <Overlay
         renderItem={({ item, coordinates, dimension: { width, height } }) => {
           if (!coordinates) {

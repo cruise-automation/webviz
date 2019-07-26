@@ -13,7 +13,7 @@ export const nonInstancedGetHitmap = <T: Object>(props: Array<T> | T, assignNext
   const propsArray = Array.isArray(props) ? props : [props];
   const hitmapArray: Array<T> = propsArray.map((prop) => {
     const hitmapProp = { ...prop };
-    const [id] = assignNextIds(1, prop);
+    const [id] = assignNextIds({ type: "single", callbackObject: prop });
     const hitmapColor = intToRGB(id);
     hitmapProp.color = hitmapColor;
     if (hitmapProp.points) {
@@ -36,7 +36,7 @@ export const createInstancedGetHitmap = ({ pointCountPerInstance }: { pointCount
   const hitmapArray: Array<T> = propsArray.map((prop: T) => {
     const hitmapProp = { ...prop };
     const instanceCount = (hitmapProp.points && Math.floor(hitmapProp.points.length / pointCountPerInstance)) || 1;
-    const newIds = assignNextIds(instanceCount, prop, { isInstanced: true });
+    const newIds = assignNextIds({ type: "instanced", count: instanceCount, callbackObject: prop });
     const startColor = intToRGB(newIds[0]);
     if (hitmapProp.points && hitmapProp.points.length) {
       const allColors = new Array(hitmapProp.points.length).fill().map(() => startColor);

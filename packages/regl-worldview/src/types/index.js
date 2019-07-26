@@ -185,10 +185,14 @@ export type PolygonType = BaseShape & {
 };
 
 export type HitmapId = number;
+/*
+ * type: "instanced" if mapping multiple IDs to a single callback object, "single" if 1:1.
+ * callbackObject: the object to pass to event callbacks when this object is interacted with.
+ * count: If "instanced", how many IDs to map to the callback object.
+ * return type: an array of the IDs assigned.
+ */
 export type CommandBoundAssignNextIds = (
-  idCount: number,
-  drawProp: BaseShape,
-  options?: { isInstanced?: boolean }
+  { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
 ) => Array<HitmapId>;
 export type GetHitmap = <T>(prop: T, CommandBoundAssignNextIds) => T;
 

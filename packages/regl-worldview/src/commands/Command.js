@@ -28,7 +28,7 @@ export type OptionalCommandProps = {
   getHitmap?: GetHitmap,
 };
 
-export type Props<T> = {
+type Props<T> = {
   [MouseEventEnum]: ComponentMouseHandler,
   drawProps: T[],
   layerIndex?: number,

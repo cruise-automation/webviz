@@ -80,8 +80,8 @@ Sample usage:
 ```js
 const Cubes = makeCommand("Cubes", rawReglCommand);
 
-// example for supporting interactions for instanced objects, for details check the MouseEvents documentation
+// example for supporting interactions, for details check the MouseEvents documentation
 const Cubes = makeCommand("Cubes", rawReglCommand, {
-  mapObjectToInstanceCount: () => {...},
+  getHitmap: () => {...},
 });
 ```

@@ -22,6 +22,7 @@ import type {
   MouseEventEnum,
   MouseEventObject,
   GetHitmap,
+  GetActive,
   HitmapId,
   CommandBoundAssignNextIds,
 } from "./types";
@@ -53,6 +54,7 @@ export type DrawInput = {
   drawProps: Props,
   layerIndex: ?number,
   getHitmap: ?GetHitmap,
+  getActive: ?GetActive,
 };
 
 export type PaintFn = () => void;
@@ -289,7 +291,7 @@ export class WorldviewContext {
     const drawCalls = Array.from(this._drawCalls.values());
     const sortedDrawCalls = drawCalls.sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
     sortedDrawCalls.forEach((drawInput: DrawInput) => {
-      const { command, drawProps, instance, getHitmap } = drawInput;
+      const { command, drawProps, instance, getHitmap, getActive } = drawInput;
       if (!drawProps) {
         return console.debug(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`, drawInput);
       }
@@ -297,15 +299,19 @@ export class WorldviewContext {
       if (!cmd) {
         return console.warn("could not find draw command for", instance ? instance.constructor.displayName : "Unknown");
       }
+      // draw hitmap
       if (isHitmap && getHitmap) {
         const commandBoundAssignNextIds: CommandBoundAssignNextIds = (...rest) => {
           return this._hitmapIdManager.assignNextIds(instance, ...rest);
         };
         const hitmapProps = getHitmap(drawInput.drawProps, commandBoundAssignNextIds);
-        cmd(hitmapProps);
-      } else if (!isHitmap) {
-        cmd(drawProps);
+        return cmd(hitmapProps);
       }
+      if (getActive) {
+        const drawPropsWithActive = getActive(drawProps);
+        return cmd(drawPropsWithActive);
+      }
+      cmd(drawProps);
     });
   };
 

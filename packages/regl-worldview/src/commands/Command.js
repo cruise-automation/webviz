@@ -9,7 +9,7 @@
 
 import * as React from "react";
 
-import type { ComponentMouseHandler, GetHitmap, MouseEventEnum, RawCommand, Color, Ray } from "../types";
+import type { ComponentMouseHandler, GetHitmap, GetActive, MouseEventEnum, RawCommand, Color, Ray } from "../types";
 import { getNodeEnv } from "../utils/common";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
@@ -26,6 +26,7 @@ export type OptionalCommandProps = {
   [MouseEventEnum]: ComponentMouseHandler,
   layerIndex?: number,
   getHitmap?: GetHitmap,
+  getActive?: GetActive,
 };
 
 type Props<T> = {
@@ -82,7 +83,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
 
-    const { drawProps, reglCommand, layerIndex, getHitmap } = this.props;
+    const { drawProps, reglCommand, layerIndex, getHitmap, getActive } = this.props;
     if (drawProps == null) {
       return;
     }
@@ -92,6 +93,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       drawProps,
       layerIndex,
       getHitmap,
+      getActive,
     });
   }
 

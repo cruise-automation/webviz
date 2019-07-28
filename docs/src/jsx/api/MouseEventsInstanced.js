@@ -88,8 +88,6 @@ function Example() {
     }
   }
 
-  console.warn("selected", selectedObject, instanceIndex);
-
   return (
     <Worldview onClick={onWorldviewClick}>
       <div

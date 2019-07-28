@@ -17,7 +17,7 @@ export { default as parseGLB } from "./utils/parseGLB";
 export * from "./utils/Raycast";
 export * from "./commands/index";
 export * from "./types/index";
+export * from "./utils/getHitmapDefaults";
 export { default as WorldviewReactContext } from "./WorldviewReactContext";
-
 export { Worldview };
 export default Worldview;

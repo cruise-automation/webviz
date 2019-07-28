@@ -195,6 +195,7 @@ export type CommandBoundAssignNextIds = (
   { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
 ) => Array<HitmapId>;
 export type GetHitmap = <T>(prop: T, CommandBoundAssignNextIds) => T;
+export type GetActive = <T>(prop: T) => T;
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
 

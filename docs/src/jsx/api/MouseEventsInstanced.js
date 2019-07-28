@@ -10,7 +10,10 @@ import Worldview, { Axes, Cubes, Points, Spheres, Triangles } from "regl-worldvi
 
 // #BEGIN EDITABLE
 function Example() {
+  const HIGHLIGHT_COLOR = { r: 0.16, g: 0.75, b: 0.9, a: 0.8 };
   const [commandMsg, setCommandMsg] = useState("");
+  const [selectedObject, setSelectedObject] = useState(null);
+  const [instanceIndex, setInstanceIndex] = useState(null);
 
   function numberToColor(number, max, a = 1) {
     const i = (number * 255) / max;
@@ -59,6 +62,8 @@ function Example() {
 
   function onObjectClick(ev, { object, instanceIndex }) {
     let msg = "";
+    setSelectedObject(object);
+    setInstanceIndex(instanceIndex);
     // use the instanceIndex to find the particular object that's been clicked
     if (object) {
       if (object.points) {
@@ -83,6 +88,8 @@ function Example() {
     }
   }
 
+  console.warn("selected", selectedObject, instanceIndex);
+
   return (
     <Worldview onClick={onWorldviewClick}>
       <div
@@ -97,8 +104,32 @@ function Example() {
         }}>
         {commandMsg ? <span>{commandMsg}</span> : <span>Click any object</span>}
       </div>
-      <Points onClick={onObjectClick}>{[pointsMarker]}</Points>
-      <Spheres onClick={onObjectClick}>{[instancedSphereMarker]}</Spheres>
+      <Points
+        onClick={onObjectClick}
+        getActive={(drawProps) => {
+          return drawProps.map((drawProp) => {
+            // highlight the selected point
+            if (selectedObject && selectedObject.id === drawProp.id && drawProp.colors[instanceIndex]) {
+              drawProp.colors[instanceIndex] = HIGHLIGHT_COLOR;
+            }
+            return drawProp;
+          });
+        }}>
+        {[pointsMarker]}
+      </Points>
+      <Spheres
+        onClick={onObjectClick}
+        getActive={(drawProps) => {
+          return drawProps.map((drawProp) => {
+            // highlight the selected point
+            if (selectedObject && selectedObject.id === drawProp.id && drawProp.colors[instanceIndex]) {
+              drawProp.colors[instanceIndex] = { r: 1, g: 0, b: 0, a: 1 };
+            }
+            return drawProp;
+          });
+        }}>
+        {[instancedSphereMarker]}
+      </Spheres>
       <Points onClick={onObjectClick}>
         {[
           {

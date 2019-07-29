@@ -56,15 +56,12 @@ type State = {|
 |};
 
 function handleWorldviewMouseInteraction(
-  mouseEventObject: ?MouseEventObject,
+  objects: Array<MouseEventObject>,
   ray: Ray,
   e: MouseEvent,
   handler: MouseHandler
 ) {
-  let args = { ray };
-  if (mouseEventObject) {
-    args = { ray, ...mouseEventObject };
-  }
+  const args = { ray, objects };
 
   try {
     handler(e, args);
@@ -206,7 +203,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     // rendering the hitmap on mouse move is expensive, so disable it by default
     if (mouseEventName === "onMouseMove" && !this.props.hitmapOnMouseMove) {
       if (worldviewHandler) {
-        return handleWorldviewMouseInteraction(null, ray, e, worldviewHandler);
+        return handleWorldviewMouseInteraction([], ray, e, worldviewHandler);
       }
       return;
     }
@@ -215,12 +212,14 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     (e: any).persist();
     worldviewContext
       .readHitmap(canvasX, canvasY)
-      .then((objectId) => {
+      .then((objects) => {
         if (worldviewHandler) {
-          const mouseEventObject = worldviewContext.getDrawPropByHitmapId(objectId);
-          handleWorldviewMouseInteraction(mouseEventObject, ray, e, worldviewHandler);
+          // const mouseEventObject = worldviewContext.getDrawPropByHitmapId(objectId);
+          // handleWorldviewMouseInteraction(mouseEventObject, ray, e, worldviewHandler);
+          handleWorldviewMouseInteraction(objects, ray, e, worldviewHandler);
         }
-        worldviewContext.callComponentHandlers(objectId, ray, e, mouseEventName);
+        // TODO Fix this again
+        // worldviewContext.callComponentHandlers(objectId, ray, e, mouseEventName);
       })
       .catch((e) => {
         console.error(e);

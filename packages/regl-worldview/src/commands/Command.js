@@ -9,7 +9,16 @@
 
 import * as React from "react";
 
-import type { ComponentMouseHandler, GetHitmap, GetActive, MouseEventEnum, RawCommand, Color, Ray } from "../types";
+import type {
+  ComponentMouseHandler,
+  GetHitmap,
+  GetActive,
+  MouseEventEnum,
+  RawCommand,
+  Color,
+  Ray,
+  MouseEventObject,
+} from "../types";
 import { getNodeEnv } from "../utils/common";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
@@ -97,13 +106,13 @@ export default class Command<T> extends React.Component<Props<T>> {
     });
   }
 
-  handleMouseEvent(objectId: number, e: MouseEvent, ray: Ray, mouseEventName: MouseEventEnum) {
-    const context = this.context;
-    if (!context) {
-      return;
-    }
+  handleMouseEvent(
+    { object, instanceIndex }: MouseEventObject,
+    e: MouseEvent,
+    ray: Ray,
+    mouseEventName: MouseEventEnum
+  ) {
     const mouseHandler = this.props[mouseEventName];
-    const { object, instanceIndex } = this.context.getDrawPropByHitmapId(objectId);
     if (!mouseHandler || !object) {
       return;
     }

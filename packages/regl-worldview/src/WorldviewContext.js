@@ -222,7 +222,7 @@ export class WorldviewContext {
 
   _debouncedPaint = debounce(this.paint, 10);
 
-  readHitmap(canvasX: number, canvasY: number): Promise<number> {
+  readHitmap(canvasX: number, canvasY: number): Promise<HitmapId> {
     if (!this.initializedData) {
       return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
     }
@@ -275,10 +275,11 @@ export class WorldviewContext {
     });
   }
 
-  callComponentHandlers = (objectId: number, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
+  callComponentHandlers = (hitmapId: HitmapId, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
     this._drawCalls.forEach((drawInput, component) => {
-      if (drawInput.getHitmap && component instanceof Command) {
-        component.handleMouseEvent(objectId, e, ray, mouseEventName);
+      if (component instanceof Command && this._hitmapIdManager.commandHasHitmapId(drawInput.instance, hitmapId)) {
+        const mouseEventObject = this.getDrawPropByHitmapId(hitmapId);
+        component.handleMouseEvent(mouseEventObject, e, ray, mouseEventName);
       }
     });
   };

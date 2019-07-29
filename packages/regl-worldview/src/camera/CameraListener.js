@@ -114,7 +114,7 @@ export default class CameraListener extends React.Component<Props> {
   }
 
   _getMagnitude(base: number = 1) {
-    return this._shiftKey ? base / 10 : base;
+    return base;
   }
 
   _getMoveMagnitude() {
@@ -149,6 +149,7 @@ export default class CameraListener extends React.Component<Props> {
       cameraStore: {
         cameraMove,
         cameraRotate,
+        cameraZoom,
         state: { perspective },
       },
     } = this.props;
@@ -168,18 +169,23 @@ export default class CameraListener extends React.Component<Props> {
     }
     this._initialMouse = mouse;
 
-    if (this._isRightMouseDown()) {
-      const magnitude = this._getMagnitude(PAN_SPEED);
-      // in orthographic mode, flip the direction of rotation so "left" means "counterclockwise"
-      const x = (perspective ? moveX : -moveX) * magnitude;
-      // do not rotate vertically in orthograhpic mode
-      const y = perspective ? moveY * magnitude : 0;
-      cameraRotate([x, y]);
+    if (this._isLeftMouseDown()) {
+      if (this._shiftKey) {
+        const { x, y } = this._getMoveMagnitude();
+        cameraMove([this._getMagnitude(moveX * x), this._getMagnitude(-moveY * y)]);
+      } else {
+        const magnitude = this._getMagnitude(PAN_SPEED);
+        // in orthographic mode, flip the direction of rotation so "left" means "counterclockwise"
+        const x = (perspective ? moveX : -moveX) * magnitude;
+        // do not rotate vertically in orthograhpic mode
+        const y = perspective ? moveY * magnitude : 0;
+        cameraRotate([x, y]);
+      }
     }
 
-    if (this._isLeftMouseDown()) {
-      const { x, y } = this._getMoveMagnitude();
-      cameraMove([this._getMagnitude(moveX * x), this._getMagnitude(-moveY * y)]);
+    if (this._isRightMouseDown()) {
+      const magnitude = this._getMagnitude(PAN_SPEED);
+      cameraZoom(Math.sign(moveY) * magnitude);
     }
   };
 

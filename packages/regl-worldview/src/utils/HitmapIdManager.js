@@ -19,6 +19,7 @@ type CommandInstance = React.Component<any>;
 
 export default class HitmapIdManager {
   _hitmapIdMap: { [HitmapId]: BaseShape } = {}; // map hitmapId to the original marker object
+  _hitmapIdToCommandMap: { [HitmapId]: CommandInstance } = {};
   _nextHitmapId = 1;
   _hitmapInstancedIdMap: { [HitmapId]: number } = {}; // map hitmapId to the instance index
 
@@ -49,6 +50,7 @@ export default class HitmapIdManager {
     // Store the mapping of ID to original marker object
     for (const id of ids) {
       this._hitmapIdMap[id] = options.callbackObject;
+      this._hitmapIdToCommandMap[id] = command;
     }
 
     return ids;
@@ -62,5 +64,9 @@ export default class HitmapIdManager {
 
   getDrawPropByHitmapId = (hitmapId: number): MouseEventObject => {
     return { object: this._hitmapIdMap[hitmapId], instanceIndex: this._hitmapInstancedIdMap[hitmapId] };
+  };
+
+  commandHasHitmapId = (command: CommandInstance, hitmapId: number): boolean => {
+    return this._hitmapIdToCommandMap[hitmapId] === command;
   };
 }

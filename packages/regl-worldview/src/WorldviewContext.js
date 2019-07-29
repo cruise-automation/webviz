@@ -245,8 +245,7 @@ export class WorldviewContext {
       regl({ framebuffer: _fbo })(() => {
         // clear the framebuffer
         regl.clear({ color: [0, 0, 0, 1], depth: 1 });
-        let topObjectId = 0;
-        let currentObjectId = Infinity;
+        let currentObjectId = 0;
         const seenObjects = [];
         let counter = 0;
 
@@ -279,16 +278,13 @@ export class WorldviewContext {
                 data: pixel,
               });
 
-              if (topObjectId === 0) {
-                topObjectId = getIdFromColor(pixel);
-              }
               currentObjectId = getIdFromColor(pixel);
               if (currentObjectId && this.getDrawPropByHitmapId(currentObjectId).object) {
                 seenObjects.push(this.getDrawPropByHitmapId(currentObjectId));
               }
             }
           } while (currentObjectId !== 0);
-          resolve(topObjectId);
+          resolve(seenObjects);
         });
       });
     });

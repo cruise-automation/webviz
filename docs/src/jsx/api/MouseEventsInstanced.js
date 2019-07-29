@@ -10,10 +10,7 @@ import Worldview, { Axes, Cubes, Points, Spheres, Triangles } from "regl-worldvi
 
 // #BEGIN EDITABLE
 function Example() {
-  const HIGHLIGHT_COLOR = { r: 0.16, g: 0.75, b: 0.9, a: 0.8 };
-  const [commandMsg, setCommandMsg] = useState("");
-  const [selectedObject, setSelectedObject] = useState(null);
-  const [instanceIndex, setInstanceIndex] = useState(null);
+  const [commandMsgs, setCommandMsgs] = useState([]);
 
   function numberToColor(number, max, a = 1) {
     const i = (number * 255) / max;
@@ -60,32 +57,22 @@ function Example() {
     info: "an instanced sphere",
   };
 
-  function onObjectClick(ev, { object, instanceIndex }) {
-    let msg = "";
-    setSelectedObject(object);
-    setInstanceIndex(instanceIndex);
-    // use the instanceIndex to find the particular object that's been clicked
-    if (object) {
+  function onWorldviewClick(ev, { objects }) {
+    const messages = objects.map(({ object, instanceIndex }) => {
       if (object.points) {
         // instanced spheres has reverse id, from 6000 to 5001
         if (instanceIndex >= 0 && instanceIndex <= points.length) {
-          msg = `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
+          return `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
             object.points[instanceIndex]
           )}`;
         }
       } else {
-        msg = `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
+        return `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
           object.pose.position
         )}`;
       }
-    }
-    setCommandMsg(msg);
-  }
-
-  function onWorldviewClick(ev, { object }) {
-    if (!object) {
-      setCommandMsg("");
-    }
+    });
+    setCommandMsgs(messages);
   }
 
   return (
@@ -100,35 +87,11 @@ function Example() {
           color: "white",
           backgroundColor: "rgba(0, 0, 0, 0.5)",
         }}>
-        {commandMsg ? <span>{commandMsg}</span> : <span>Click any object</span>}
+        {commandMsgs.length ? <span>{commandMsgs.join('\n')}</span> : <span>Click any object</span>}
       </div>
-      <Points
-        onClick={onObjectClick}
-        getActive={(drawProps) => {
-          return drawProps.map((drawProp) => {
-            // highlight the selected point
-            if (selectedObject && selectedObject.id === drawProp.id && drawProp.colors[instanceIndex]) {
-              drawProp.colors[instanceIndex] = HIGHLIGHT_COLOR;
-            }
-            return drawProp;
-          });
-        }}>
-        {[pointsMarker]}
-      </Points>
-      <Spheres
-        onClick={onObjectClick}
-        getActive={(drawProps) => {
-          return drawProps.map((drawProp) => {
-            // highlight the selected point
-            if (selectedObject && selectedObject.id === drawProp.id && drawProp.colors[instanceIndex]) {
-              drawProp.colors[instanceIndex] = { r: 1, g: 0, b: 0, a: 1 };
-            }
-            return drawProp;
-          });
-        }}>
-        {[instancedSphereMarker]}
-      </Spheres>
-      <Points onClick={onObjectClick}>
+      <Points>{[pointsMarker]}</Points>
+      <Spheres>{[instancedSphereMarker]}</Spheres>
+      <Points>
         {[
           {
             id: 10001,
@@ -144,7 +107,7 @@ function Example() {
         ]}
       </Points>
 
-      <Cubes onClick={onObjectClick}>
+      <Cubes>
         {[
           {
             id: 20001,
@@ -158,7 +121,7 @@ function Example() {
           },
         ]}
       </Cubes>
-      <Spheres onClick={onObjectClick}>
+      <Spheres>
         {[
           {
             myId: 30001,
@@ -172,7 +135,7 @@ function Example() {
           },
         ]}
       </Spheres>
-      <Triangles onClick={onObjectClick}>
+      <Triangles>
         {[
           {
             id: 40001,

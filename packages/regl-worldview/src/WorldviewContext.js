@@ -78,6 +78,8 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
   return typeof src === "function" ? src : regl(src);
 }
 
+const MAX_NUMBER_OF_LAYERS = 100;
+
 // This is made available to every Command component as `this.context`.
 // It contains all the regl interaction code and is responsible for collecting and executing
 // draw calls, hitmap calls, and raycasting.
@@ -243,33 +245,50 @@ export class WorldviewContext {
       regl({ framebuffer: _fbo })(() => {
         // clear the framebuffer
         regl.clear({ color: [0, 0, 0, 1], depth: 1 });
+        let topObjectId = 0;
+        let currentObjectId = Infinity;
+        const seenObjects = [];
+        let counter = 0;
 
         // draw the hitmap components to the framebuffer
+
         camera.draw(this.cameraStore.state, () => {
-          this._drawInput(true);
+          do {
+            if (counter === MAX_NUMBER_OF_LAYERS) {
+              console.error(`Hit ${MAX_NUMBER_OF_LAYERS} iterations. There is either that number of rendered layers or a bug with hitmap events.`);
+              break;
+            }
+            counter++;
+            regl.clear({ color: [0, 0, 0, 1], depth: 1 });
+            this._drawInput(true, seenObjects);
 
-          let objectId = 0;
+            // it's possible to get x/y values outside the framebuffer size
+            // if the mouse quickly leaves the draw area during a read operation
+            // reading outside the bounds of the framebuffer causes errors
+            // and puts regl into a bad internal state.
+            // https://github.com/regl-project/regl/blob/28fbf71c871498c608d9ec741d47e34d44af0eb5/lib/read.js#L57
+            if (x < Math.floor(width) && y < Math.floor(height) && x >= 0 && y >= 0) {
+              const pixel = new Uint8Array(4);
 
-          // it's possible to get x/y values outside the framebuffer size
-          // if the mouse quickly leaves the draw area during a read operation
-          // reading outside the bounds of the framebuffer causes errors
-          // and puts regl into a bad internal state.
-          // https://github.com/regl-project/regl/blob/28fbf71c871498c608d9ec741d47e34d44af0eb5/lib/read.js#L57
-          if (x < Math.floor(width) && y < Math.floor(height) && x >= 0 && y >= 0) {
-            const pixel = new Uint8Array(4);
+              // read pixel value from the frame buffer
+              regl.read({
+                x,
+                y,
+                width: 1,
+                height: 1,
+                data: pixel,
+              });
 
-            // read pixel value from the frame buffer
-            regl.read({
-              x,
-              y,
-              width: 1,
-              height: 1,
-              data: pixel,
-            });
-
-            objectId = getIdFromColor(pixel);
-          }
-          resolve(objectId);
+              if (topObjectId === 0) {
+                topObjectId = getIdFromColor(pixel);
+              }
+              currentObjectId = getIdFromColor(pixel);
+              if (currentObjectId && this.getDrawPropByHitmapId(currentObjectId).object) {
+                seenObjects.push(this.getDrawPropByHitmapId(currentObjectId));
+              }
+            }
+          } while (currentObjectId !== 0);
+          resolve(topObjectId);
         });
       });
     });
@@ -284,7 +303,7 @@ export class WorldviewContext {
     });
   };
 
-  _drawInput = (isHitmap?: boolean) => {
+  _drawInput = (isHitmap?: boolean, seenObjects?: Array<MouseEventObject>) => {
     if (isHitmap) {
       this._hitmapIdManager.reset();
     }
@@ -305,14 +324,17 @@ export class WorldviewContext {
         const commandBoundAssignNextIds: CommandBoundAssignNextIds = (...rest) => {
           return this._hitmapIdManager.assignNextIds(instance, ...rest);
         };
-        const hitmapProps = getHitmap(drawProps, commandBoundAssignNextIds);
-        return cmd(hitmapProps);
+        const hitmapProps = getHitmap(drawProps, commandBoundAssignNextIds, seenObjects || []);
+        if (hitmapProps) {
+          cmd(hitmapProps);
+        }
+      } else if (!isHitmap) {
+        if (getActive) {
+          const drawPropsWithActive = getActive(drawProps);
+          return cmd(drawPropsWithActive);
+        }
+        cmd(drawProps);
       }
-      if (getActive) {
-        const drawPropsWithActive = getActive(drawProps);
-        return cmd(drawPropsWithActive);
-      }
-      cmd(drawProps);
     });
   };
 

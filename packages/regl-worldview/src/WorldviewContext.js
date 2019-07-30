@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import debounce from "lodash/debounce";
+import intersection from "lodash/intersection";
 import * as React from "react";
 import createREGL from "regl";
 
@@ -224,7 +225,7 @@ export class WorldviewContext {
 
   _debouncedPaint = debounce(this.paint, 10);
 
-  readHitmap(canvasX: number, canvasY: number): Promise<HitmapId> {
+  readHitmap(canvasX: number, canvasY: number): Promise<Array<HitmapId>> {
     if (!this.initializedData) {
       return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
     }
@@ -247,6 +248,7 @@ export class WorldviewContext {
         regl.clear({ color: [0, 0, 0, 1], depth: 1 });
         let currentObjectId = 0;
         const seenObjects = [];
+        const seenIds: Array<HitmapId> = [];
         let counter = 0;
 
         // draw the hitmap components to the framebuffer
@@ -280,21 +282,23 @@ export class WorldviewContext {
 
               currentObjectId = getIdFromColor(pixel);
               if (currentObjectId && this.getDrawPropByHitmapId(currentObjectId).object) {
+                seenIds.push(currentObjectId);
                 seenObjects.push(this.getDrawPropByHitmapId(currentObjectId));
               }
             }
           } while (currentObjectId !== 0);
-          resolve(seenObjects);
+          resolve(seenIds);
         });
       });
     });
   }
 
-  callComponentHandlers = (hitmapId: HitmapId, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
+  callComponentHandlers = (hitmapIds: Array<HitmapId>, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
     this._drawCalls.forEach((drawInput, component) => {
-      if (component instanceof Command && this._hitmapIdManager.commandHasHitmapId(drawInput.instance, hitmapId)) {
-        const mouseEventObject = this.getDrawPropByHitmapId(hitmapId);
-        component.handleMouseEvent(mouseEventObject, e, ray, mouseEventName);
+      if (component instanceof Command) {
+        const hitmapIdsForCommand = intersection(this._hitmapIdManager.getHitmapIdsForCommand(component), hitmapIds);
+        const mouseEvents = hitmapIdsForCommand.map((hitmapId) => this.getDrawPropByHitmapId(hitmapId));
+        component.handleMouseEvent(mouseEvents, e, ray, mouseEventName);
       }
     });
   };

@@ -6,12 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { CommandBoundAssignNextIds, MouseEventObject } from "../types";
+import type { AssignNextIdsFn, MouseEventObject } from "../types";
 import { intToRGB } from "./commandUtils";
 
 export const nonInstancedGetHitmap = <T: Object>(
   props: Array<T> | T,
-  assignNextIds: CommandBoundAssignNextIds,
+  assignNextIds: AssignNextIdsFn,
   alreadySeenObjects: Array<MouseEventObject>
 ) => {
   const propsArray = Array.isArray(props) ? props : [props];
@@ -39,7 +39,7 @@ export const nonInstancedGetHitmap = <T: Object>(
 
 export const createInstancedGetHitmap = ({ pointCountPerInstance }: { pointCountPerInstance: number }) => <T: Object>(
   props: Array<T> | T,
-  assignNextIds: CommandBoundAssignNextIds,
+  assignNextIds: AssignNextIdsFn,
   alreadySeenObjects: Array<MouseEventObject>
 ) => {
   const propsArray = Array.isArray(props) ? props : [props];

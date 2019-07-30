@@ -196,10 +196,10 @@ export type HitmapId = number;
  * count: If "instanced", how many IDs to map to the callback object.
  * return type: an array of the IDs assigned.
  */
-export type CommandBoundAssignNextIds = (
+export type AssignNextIdsFn = (
   { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
 ) => Array<HitmapId>;
-export type GetHitmap = <T>(prop: T, CommandBoundAssignNextIds, Array<MouseEventObject>) => T;
+export type GetHitmap = <T>(prop: T, AssignNextIdsFn, Array<MouseEventObject>) => T;
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
 

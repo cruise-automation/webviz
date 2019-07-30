@@ -24,7 +24,7 @@ import type {
   MouseEventObject,
   GetHitmap,
   HitmapId,
-  CommandBoundAssignNextIds,
+  AssignNextIdsFn,
 } from "./types";
 import { getIdFromColor } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
@@ -325,10 +325,10 @@ export class WorldviewContext {
       }
       // draw hitmap
       if (isHitmap && getHitmap) {
-        const commandBoundAssignNextIds: CommandBoundAssignNextIds = (...rest) => {
+        const AssignNextIdsFn: AssignNextIdsFn = (...rest) => {
           return this._hitmapIdManager.assignNextIds(instance, ...rest);
         };
-        const hitmapProps = getHitmap(drawProps, commandBoundAssignNextIds, seenObjects || []);
+        const hitmapProps = getHitmap(drawProps, AssignNextIdsFn, seenObjects || []);
         if (hitmapProps) {
           cmd(hitmapProps);
         }

@@ -11,7 +11,7 @@ Currently Worldview supports the following mouse event handlers: `onDoubleClick`
 | `onMouseUp`     | `MouseHandler` |         |                                                                                              |
 | `onMouseMove`   | `MouseHandler` |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the Worldview component |
 | `onClick`       | `MouseHandler` |         |                                                                                              |
-| `getHitmap`     | `CommandBoundAssignNextIds` |                                                                            | Maps the `drawProps` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
+| `getHitmap`     | `AssignNextIdsFn` |                                                                            | Maps the `drawProps` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
 
 ## Event Handler
 
@@ -70,7 +70,7 @@ All built in commands allow overriding the `getHitmap` function, and we recommen
 
 ##### Customizing the getHitmap function
 
-Each Command is passed the `reglCommand` function `drawProps` for rendering into the scene using the `reglCommand` function. `getHitmap` takes in those `drawProps` and returns new version of them that will be rendered into the hitmap.
+Each Command is passed the `reglCommand` function and `drawProps`. Worldview calls compiled version of the `reglCommand` function with `drawProps`. `getHitmap` takes in those `drawProps` and returns new version of them that will be rendered into the hitmap.
 
 Some important things to remember:
  * The first argument of `getHitmap` is the `drawProps`.
@@ -82,7 +82,7 @@ Some important things to remember:
  * count: If "instanced", how many IDs to map to the callback object.
  * return type: an array of the IDs assigned.
  */
-type CommandBoundAssignNextIds = (
+type AssignNextIdsFn = (
   { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
 ) => Array<HitmapId>;
 ```

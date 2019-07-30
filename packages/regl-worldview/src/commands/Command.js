@@ -12,7 +12,6 @@ import * as React from "react";
 import type {
   ComponentMouseHandler,
   GetHitmap,
-  GetActive,
   MouseEventEnum,
   RawCommand,
   Color,
@@ -35,7 +34,6 @@ export type OptionalCommandProps = {
   [MouseEventEnum]: ComponentMouseHandler,
   layerIndex?: number,
   getHitmap?: GetHitmap,
-  getActive?: GetActive,
 };
 
 type Props<T> = {
@@ -92,7 +90,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
 
-    const { drawProps, reglCommand, layerIndex, getHitmap, getActive } = this.props;
+    const { drawProps, reglCommand, layerIndex, getHitmap } = this.props;
     if (drawProps == null) {
       return;
     }
@@ -102,7 +100,6 @@ export default class Command<T> extends React.Component<Props<T>> {
       drawProps,
       layerIndex,
       getHitmap,
-      getActive,
     });
   }
 

@@ -129,7 +129,6 @@ describe("getHitmapDefaults", () => {
       expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", callbackObject: object, count: 1 });
     });
 
-
     it("handles objects with an empty point array", () => {
       const object = { some: "garbage", points: [] };
       const hitmapProps = createInstancedGetHitmap({ pointCountPerInstance: 2 })(object, assignNextIds, []);

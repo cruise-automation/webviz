@@ -257,7 +257,9 @@ export class WorldviewContext {
           do {
             if (counter === MAX_NUMBER_OF_LAYERS) {
               // Provide a max number of layers so this while loop doesn't crash the page.
-              console.error(`Hit ${MAX_NUMBER_OF_LAYERS} iterations. There is either that number of rendered layers or a bug with hitmap events.`);
+              console.error(
+                `Hit ${MAX_NUMBER_OF_LAYERS} iterations. There is either that number of rendered layers or a bug with hitmap events.`
+              );
               break;
             } else if (counter > 0 && !enableStackedObjectEvents) {
               // Only allow multiple object selection if we've explicitly enabled it.

@@ -184,6 +184,11 @@ export type PolygonType = BaseShape & {
   points: (Point | Vec3)[],
 };
 
+export type MouseEventObject = {
+  object: ?BaseShape,
+  instanceIndex: ?number,
+};
+
 export type HitmapId = number;
 /*
  * type: "instanced" if mapping multiple IDs to a single callback object, "single" if 1:1.
@@ -198,11 +203,6 @@ export type GetHitmap = <T>(prop: T, CommandBoundAssignNextIds, Array<MouseEvent
 export type GetActive = <T>(prop: T) => T;
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
-
-export type MouseEventObject = {
-  object: ?BaseShape,
-  instanceIndex: ?number,
-};
 
 export type CameraAction =
   | "moveDown"

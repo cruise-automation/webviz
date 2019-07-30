@@ -113,7 +113,7 @@ export default class Command<T> extends React.Component<Props<T>> {
     mouseEventName: MouseEventEnum
   ) {
     const mouseHandler = this.props[mouseEventName];
-    if (!mouseHandler || !object.length) {
+    if (!mouseHandler || !objects.length) {
       return;
     }
     mouseHandler(e, { ray, objects });

@@ -213,7 +213,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();
     worldviewContext
-      .readHitmap(canvasX, canvasY, enableStackedObjectEvents)
+      .readHitmap(canvasX, canvasY, !!this.props.enableStackedObjectEvents)
       .then((hitmapIds) => {
         if (worldviewHandler) {
           const objects = hitmapIds.map((id) => worldviewContext.getDrawPropByHitmapId(id));

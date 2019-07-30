@@ -63,31 +63,31 @@ function Example() {
     };
   }
 
-  function onContainerClick(e, { object }) {
-    if (!object) {
+  function onContainerClick(e, { objects }) {
+    if (!objects.length) {
       setCubeDetails({});
     }
   }
 
-  function onContainerMouseMove(e, { object }) {
-    if (!object) {
+  function onContainerMouseMove(e, { objects }) {
+    if (!objects.length) {
       setCursor("auto");
     }
   }
 
-  function onCubeClick(e, { object }) {
-    setCubeDetails(object);
+  function onCubeClick(e, { objects }) {
+    setCubeDetails(objects[0].object);
   }
 
-  function onCubeDoubleClick(id, { object }) {
+  function onCubeDoubleClick(id, { objects }) {
     const newCubes = [...cubes];
-    remove(newCubes, (cube) => cube.id === object.id);
+    remove(newCubes, (cube) => cube.id === objects[0].object.id);
 
     setCubes(newCubes);
   }
 
-  function onCubeHover(e, { object }) {
-    setCursor(object.mouseCursor);
+  function onCubeHover(e, { objects }) {
+    setCursor(objects[0].object.mouseCursor);
   }
 
   return (

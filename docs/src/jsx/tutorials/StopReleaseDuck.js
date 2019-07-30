@@ -99,15 +99,18 @@ function Example() {
         thetaOffset: -Math.PI / 2, // rotate the camera so the duck is facing right
       }}>
       <Spheres
-        onClick={(ev, { object, instanceIndex }) => {
-          setClickedObjectIds([...clickedObjectIds, { id: object.id, instanceIndex }]);
+        onClick={(ev, { objects }) => {
+          setClickedObjectIds([
+            ...clickedObjectIds,
+            { id: objects[0].object.id, instanceIndex: objects[0].instanceIndex },
+          ]);
         }}>
         {[sphereMarker]}
       </Spheres>
       <Cubes
-        onClick={(ev, { object }) => {
+        onClick={(ev, { objects }) => {
           const newClickedObjectIds = clickedObjectIds.filter(
-            ({ id, instanceIndex }) => id + instanceIndex !== object.clickedObjectId
+            ({ id, instanceIndex }) => id + instanceIndex !== objects[0].object.clickedObjectId
           );
           setClickedObjectIds(newClickedObjectIds);
           setShouldStopDuck(false);

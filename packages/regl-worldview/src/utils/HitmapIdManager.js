@@ -19,7 +19,7 @@ type CommandInstance = React.Component<any>;
 
 export default class HitmapIdManager {
   _hitmapIdMap: { [HitmapId]: BaseShape } = {}; // map hitmapId to the original marker object
-  _hitmapIdToCommandMap: { [HitmapId]: CommandInstance } = {};
+  _commandToHitmapIdsMap: Map<CommandInstance, Array<HitmapId>> = new Map();
   _nextHitmapId = 1;
   _hitmapInstancedIdMap: { [HitmapId]: number } = {}; // map hitmapId to the instance index
 
@@ -50,14 +50,16 @@ export default class HitmapIdManager {
     // Store the mapping of ID to original marker object
     for (const id of ids) {
       this._hitmapIdMap[id] = options.callbackObject;
-      this._hitmapIdToCommandMap[id] = command;
     }
+    const existingIds = this._commandToHitmapIdsMap.get(command) || [];
+    this._commandToHitmapIdsMap.set(command, existingIds.concat(ids));
 
     return ids;
   };
 
   reset = () => {
     this._hitmapIdMap = {};
+    this._commandToHitmapIdsMap = new Map();
     this._nextHitmapId = 1;
     this._hitmapInstancedIdMap = {};
   };
@@ -66,7 +68,7 @@ export default class HitmapIdManager {
     return { object: this._hitmapIdMap[hitmapId], instanceIndex: this._hitmapInstancedIdMap[hitmapId] };
   };
 
-  commandHasHitmapId = (command: CommandInstance, hitmapId: number): boolean => {
-    return this._hitmapIdToCommandMap[hitmapId] === command;
+  getHitmapIdsForCommand = (command: CommandInstance): Array<HitmapId> => {
+    return this._commandToHitmapIdsMap.get(command) || [];
   };
 }

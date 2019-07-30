@@ -212,14 +212,12 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     (e: any).persist();
     worldviewContext
       .readHitmap(canvasX, canvasY)
-      .then((objects) => {
+      .then((hitmapIds) => {
         if (worldviewHandler) {
-          // const mouseEventObject = worldviewContext.getDrawPropByHitmapId(objectId);
-          // handleWorldviewMouseInteraction(mouseEventObject, ray, e, worldviewHandler);
+          const objects = hitmapIds.map((id) => worldviewContext.getDrawPropByHitmapId(id));
           handleWorldviewMouseInteraction(objects, ray, e, worldviewHandler);
         }
-        // TODO Fix this again
-        // worldviewContext.callComponentHandlers(objectId, ray, e, mouseEventName);
+        worldviewContext.callComponentHandlers(hitmapIds, ray, e, mouseEventName);
       })
       .catch((e) => {
         console.error(e);

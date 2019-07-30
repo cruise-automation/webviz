@@ -273,7 +273,7 @@ function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
 
 // Override the default mapHitmap with our own implementation.
 const getHitmap: GetHitmap = <T>(prop: T, assignNextIds) => {
-  const [hitmapProp] = nonInstancedGetHitmap([prop], assignNextIds);
+  const hitmapProp = nonInstancedGetHitmap(prop, assignNextIds);
   hitmapProp.isHitmap = true;
   return hitmapProp;
 };

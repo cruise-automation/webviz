@@ -97,7 +97,7 @@ function Example() {
             return;
           }
           const newClickedObjectIds = clickedObjectIds.filter(
-            ({ id, instanceIndex }) => id + instanceIndex === eventInfo.object.clickedObjectId
+            ({ id, instanceIndex }) => id + instanceIndex !== eventInfo.object.clickedObjectId
           );
           setClickedObjectIds(newClickedObjectIds);
         }}>

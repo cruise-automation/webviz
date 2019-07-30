@@ -64,13 +64,13 @@ function Example() {
       sphereMarker.points.push({ x: x * 20, y: y * 20, z: z * 20 });
     });
 
-  const obstacleMarkers = Array.from(clickedObjectIds).map(({ objectId, instanceIndex }, index) => {
+  const obstacleMarkers = Array.from(clickedObjectIds).map(({ id, instanceIndex }, index) => {
     const position = sphereMarker.points[instanceIndex];
     return {
       id: sphereMarker.id + steps + index,
       // remember the original clickedObjectId so when the obstacle is clicked, we can
       // remove the obstacle quickly by updating clickedObjectIds
-      clickedObjectId: objectId + instanceIndex,
+      clickedObjectId: id + instanceIndex,
       pose: {
         orientation: { x: 0, y: 0, z: 0, w: 1 },
         position,
@@ -84,7 +84,7 @@ function Example() {
   useEffect(
     () => {
       const duckPositionId = sphereMarker.id + count;
-      if (!shouldStopDuck && clickedObjectIds.includes(duckPositionId)) {
+      if (!shouldStopDuck && clickedObjectIds.some(({ id, instanceIndex }) => id + instanceIndex === duckPositionId)) {
         setShouldStopDuck(true);
       }
     },

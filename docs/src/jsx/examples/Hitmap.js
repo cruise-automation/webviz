@@ -138,11 +138,13 @@ function Example() {
       onCameraStateChange={(cameraState) => {
         setCameraState(cameraState);
       }}
-      onClick={(e, { object }) => {
-        if (object && clickedId === object.id) {
-          setClickedId(undefined);
-        } else if (object) {
-          setClickedId(object.id);
+      onClick={(e, { objects }) => {
+        if (objects[0]) {
+          if (clickedId === objects[0].object.id) {
+            setClickedId(undefined);
+          } else {
+            setClickedId(objects[0].object.id);
+          }
         }
       }}>
       <Cubes>{cubes}</Cubes>

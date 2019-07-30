@@ -28,8 +28,8 @@ There are two kinds of event handlers:
 - `object`: the object that you interacted with.
 
 ```js
-<Worldview onClick={(evt, { object }) => console.log("You clicked on", object && object.id)}>
-  <Cubes onClick={(evt, { object }) => console.log("You clicked on", object && object.id)}>{cubes}</Cubes>
+<Worldview onClick={(evt, { objects }) => console.log("You clicked on", objects.length && objects[0].object.id)}>
+  <Cubes onClick={(evt, { objects }) => console.log("You clicked on", objects[0].object.id)}>{cubes}</Cubes>
   {/* Other command children */}
 </Worldview>
 ```
@@ -45,7 +45,7 @@ Example:
 ```js
 <Worldview>
   <Cubes
-    onClick={(evt, { object, instanceIndex }) => console.log(`You clicked on ${object.id} at index ${instanceIndex}`)}
+    onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id} at index ${objects[0].instanceIndex}`)}
   >
     {cubes}
   </Cubes>
@@ -93,7 +93,7 @@ Example using composition of the default `mapHitmap` functions:
 ```js
 <Worldview>
   <Points
-    onClick={(evt, { object }) => console.log(`You clicked on ${object.id}`)}
+    onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id}`)}
     mapHitmap={(props, assignNextIds) => {
       const hitmapProps = nonInstancedGetHitmap(props, assignNextIds);
       // Points are hard to click, so expand their hitmap so that clicking slightly outside of a point still selects it.
@@ -113,7 +113,7 @@ Example using a custom `mapHitmap` function:
 ```js
 <Worldview>
   <Points
-    onClick={(evt, { object }) => console.log(`You clicked on ${object.id}`)}
+    onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id}`)}
     mapHitmap={(props, assignNextIds) => {
       // This is a simplified version of nonInstancedGetHitmap, for explanation purposes.
       return propsArray.map((prop) => {

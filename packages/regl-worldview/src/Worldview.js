@@ -35,6 +35,8 @@ export type BaseProps = {|
   backgroundColor?: Vec4,
   // rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
+  // getting events for objects stacked on top of each other is expensive, so disable it by default
+  enableStackedObjectEvents?: boolean,
   showDebug?: boolean,
   children?: React.Node,
   style: { [styleAttribute: string]: number | string },
@@ -211,7 +213,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();
     worldviewContext
-      .readHitmap(canvasX, canvasY)
+      .readHitmap(canvasX, canvasY, enableStackedObjectEvents)
       .then((hitmapIds) => {
         if (worldviewHandler) {
           const objects = hitmapIds.map((id) => worldviewContext.getDrawPropByHitmapId(id));

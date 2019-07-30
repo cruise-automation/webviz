@@ -225,7 +225,7 @@ export class WorldviewContext {
 
   _debouncedPaint = debounce(this.paint, 10);
 
-  readHitmap(canvasX: number, canvasY: number): Promise<Array<HitmapId>> {
+  readHitmap(canvasX: number, canvasY: number, enableStackedObjectEvents: boolean): Promise<Array<HitmapId>> {
     if (!this.initializedData) {
       return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
     }
@@ -256,7 +256,11 @@ export class WorldviewContext {
         camera.draw(this.cameraStore.state, () => {
           do {
             if (counter === MAX_NUMBER_OF_LAYERS) {
+              // Provide a max number of layers so this while loop doesn't crash the page.
               console.error(`Hit ${MAX_NUMBER_OF_LAYERS} iterations. There is either that number of rendered layers or a bug with hitmap events.`);
+              break;
+            } else if (counter > 0 && !enableStackedObjectEvents) {
+              // Only allow multiple object selection if we've explicitly enabled it.
               break;
             }
             counter++;

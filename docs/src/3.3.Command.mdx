@@ -70,18 +70,3 @@ function CommandDemo() {
 ```
 
 <CommandDemo />
-
-## makeCommand
-
-When you have children as the drawProps input, it's useful to simply call makeCommand which creates a regl component automatically based on the regl command supplied. You'll want to return a `<Command />` component directly from render if the React children is not the drawProps input or if additional data processing is needed to generate the drawProps.
-
-Sample usage:
-
-```js
-const Cubes = makeCommand("Cubes", rawReglCommand);
-
-// example for supporting interactions, for details check the MouseEvents documentation
-const Cubes = makeCommand("Cubes", rawReglCommand, {
-  getHitmap: () => {...},
-});
-```

@@ -6,10 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import * as React from "react";
+
 import type { SphereList } from "../types";
 import fromGeometry from "../utils/fromGeometry";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import { makeCommand } from "./Command";
+import Command, { type OptionalCommandProps } from "./Command";
 
 const NUM_PARALLELS = 15;
 const NUM_MERIDIANS = 15;
@@ -54,8 +56,15 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
 
 const spheres = fromGeometry(points, faces);
 
-const Spheres = makeCommand<SphereList>("Spheres", spheres, {
-  getHitmap: createInstancedGetHitmap({ pointCountPerInstance: 1 }),
-});
+export default function Spheres({ children, ...rest }: { ...OptionalCommandProps, children: Array<SphereList> }) {
+  return (
+    <Command
+      getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })}
+      {...rest}
+      drawProps={children}
+      reglCommand={spheres}
+    />
+  );
+}
 
-export default Spheres;
+Spheres.reglCommand = spheres;

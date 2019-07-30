@@ -6,10 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import * as React from "react";
+
 import type { Line } from "../types";
 import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
 import { nonInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import { makeCommand } from "./Command";
+import Command, { type OptionalCommandProps } from "./Command";
 
 /*
 Triangle-based line drawing.
@@ -429,6 +431,8 @@ const lines = (regl: any) => {
   };
 };
 
-const Lines = makeCommand<Line>("Lines", lines, { getHitmap: nonInstancedGetHitmap });
+export default function Lines({ children, ...rest }: { ...OptionalCommandProps, children: Array<Line> }) {
+  return <Command getHitmap={nonInstancedGetHitmap} {...rest} drawProps={children} reglCommand={lines} />;
+}
 
-export default Lines;
+Lines.reglCommand = lines;

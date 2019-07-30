@@ -48,10 +48,6 @@ type Props<T> = {
 
 export type CommandProps = Props;
 
-export type MakeCommandOptions = {
-  getHitmap?: GetHitmap,
-};
-
 // Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.
 export default class Command<T> extends React.Component<Props<T>> {
   context: ?WorldviewContextType;
@@ -123,23 +119,4 @@ export default class Command<T> extends React.Component<Props<T>> {
       </WorldviewReactContext.Consumer>
     );
   }
-}
-
-// Factory function for creating simple regl components.
-// Sample usage: const Cubes = makeCommand('Cubes', rawCommand)
-// When you have children as the drawProps input, it's useful to simply call makeCommand
-// which creates a new regl component. It also handles basic hitmap interactions.
-// use 'options' to control the default hitmap inputs
-export function makeCommand<T>(
-  name: string,
-  command: RawCommand<T>,
-  options: ?MakeCommandOptions = {}
-): React.StatelessFunctionalComponent<T> {
-  const cmd = ({ children, ...rest }: Props<T>) => {
-    return <Command {...options} {...rest} reglCommand={command} drawProps={children} />;
-  };
-
-  cmd.displayName = name;
-  cmd.reglCommand = command;
-  return cmd;
 }

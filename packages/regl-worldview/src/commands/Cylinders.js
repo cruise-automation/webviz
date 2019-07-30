@@ -6,10 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import * as React from "react";
+
 import type { Cylinder } from "../types";
 import fromGeometry from "../utils/fromGeometry";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import { makeCommand } from "./Command";
+import Command, { type OptionalCommandProps } from "./Command";
 
 export function createCylinderGeometry(numSegments: number, cone: boolean) {
   // "poles" are the centers of top/bottom faces
@@ -47,8 +49,15 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, false);
 
 const cylinders = fromGeometry(points, sideFaces.concat(endCapFaces));
 
-const Cylinders = makeCommand<Cylinder>("Cylinders", cylinders, {
-  getHitmap: createInstancedGetHitmap({ pointCountPerInstance: 1 }),
-});
+export default function Cylinders({ children, ...rest }: { ...OptionalCommandProps, children: Array<Cylinder> }) {
+  return (
+    <Command
+      getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })}
+      {...rest}
+      drawProps={children}
+      reglCommand={cylinders}
+    />
+  );
+}
 
-export default Cylinders;
+Cylinders.reglCommand = cylinders;

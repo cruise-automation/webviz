@@ -6,10 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import * as React from "react";
+
 import type { Cube } from "../types";
 import fromGeometry from "../utils/fromGeometry";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import { makeCommand } from "./Command";
+import Command, { type OptionalCommandProps } from "./Command";
 
 const cubes = fromGeometry(
   [
@@ -46,8 +48,15 @@ const cubes = fromGeometry(
   ]
 );
 
-const Cubes = makeCommand<Cube>("Cubes", cubes, {
-  getHitmap: createInstancedGetHitmap({ pointCountPerInstance: 1 }),
-});
+export default function Cubes({ children, ...rest }: { ...OptionalCommandProps, children: Array<Cube> }) {
+  return (
+    <Command
+      getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })}
+      {...rest}
+      drawProps={children}
+      reglCommand={cubes}
+    />
+  );
+}
 
-export default Cubes;
+Cubes.reglCommand = cubes;

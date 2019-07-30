@@ -6,10 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import * as React from "react";
+
 import type { PointType, Regl } from "../types";
 import { getVertexColors, pointToVec3, withPose } from "../utils/commandUtils";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import { makeCommand } from "./Command";
+import Command, { type OptionalCommandProps } from "./Command";
 
 const points = (regl: Regl) => {
   const [min, max] = regl.limits.pointSizeDims;
@@ -61,8 +63,15 @@ const points = (regl: Regl) => {
   });
 };
 
-const Points = makeCommand<PointType>("Points", points, {
-  getHitmap: createInstancedGetHitmap({ pointCountPerInstance: 1 }),
-});
+export default function Points({ children, ...rest }: { ...OptionalCommandProps, children: Array<PointType> }) {
+  return (
+    <Command
+      getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })}
+      {...rest}
+      drawProps={children}
+      reglCommand={points}
+    />
+  );
+}
 
-export default Points;
+Points.reglCommand = points;

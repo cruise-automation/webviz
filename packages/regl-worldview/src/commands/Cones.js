@@ -6,18 +6,27 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import * as React from "react";
+
 import type { BaseShape } from "../types";
 import fromGeometry from "../utils/fromGeometry";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import { makeCommand } from "./Command";
+import Command, { type OptionalCommandProps } from "./Command";
 import { createCylinderGeometry } from "./Cylinders";
 
 const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, true);
 
 const cones = fromGeometry(points, sideFaces.concat(endCapFaces));
 
-const Cones = makeCommand<BaseShape>("Cones", cones, {
-  getHitmap: createInstancedGetHitmap({ pointCountPerInstance: 1 }),
-});
+export default function Cones({ children, ...rest }: { ...OptionalCommandProps, children: Array<BaseShape> }) {
+  return (
+    <Command
+      getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })}
+      {...rest}
+      drawProps={children}
+      reglCommand={cones}
+    />
+  );
+}
 
-export default Cones;
+Cones.reglCommand = cones;

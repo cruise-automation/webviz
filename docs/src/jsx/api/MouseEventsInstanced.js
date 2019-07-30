@@ -76,7 +76,7 @@ function Example() {
   }
 
   return (
-    <Worldview onClick={onWorldviewClick}>
+    <Worldview onClick={onWorldviewClick} enableStackedObjectEvents>
       <div
         style={{
           position: "absolute",

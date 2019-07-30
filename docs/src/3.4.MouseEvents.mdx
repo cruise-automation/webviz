@@ -20,12 +20,13 @@ There are two kinds of event handlers:
 **Worldview Level Handlers**
 
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `object`: the the object that you interacted with. The value is `undefined` if no object is found.
+- `objects`: an array of objects (`{ object, instanceIndex }`) that you interacted with. The value is `[]` if no object is found. The `enableStackedObjectEvents` option must be set to `true` on `<Worldview` for this handler to return more than one object.
 
 **Command Component Level Handlers**
 
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `object`: the object that you interacted with.
+- `objects`: an array of objects (`{ object, instanceIndex }`) from this command that you interacted with. There will always be at least one object. The `enableStackedObjectEvents` option must be set to `true` on `<Worldview` for this handler to return more than one object.
+
 
 ```js
 <Worldview onClick={(evt, { objects }) => console.log("You clicked on", objects.length && objects[0].object.id)}>

@@ -305,7 +305,7 @@ export class WorldviewContext {
         const commandBoundAssignNextIds: CommandBoundAssignNextIds = (...rest) => {
           return this._hitmapIdManager.assignNextIds(instance, ...rest);
         };
-        const hitmapProps = getHitmap(drawInput.drawProps, commandBoundAssignNextIds);
+        const hitmapProps = getHitmap(drawProps, commandBoundAssignNextIds);
         return cmd(hitmapProps);
       }
       if (getActive) {

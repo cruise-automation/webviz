@@ -41,6 +41,7 @@
     "react-hover-observer": "2.1.1",
     "react-json-tree": "0.11.1",
     "react-markdown": "4.0.4",
+    "react-monaco-editor": "0.28.0",
     "react-mosaic-component": "1.0.3",
     "react-redux": "5.1.1",
     "react-router": "4.3.1",

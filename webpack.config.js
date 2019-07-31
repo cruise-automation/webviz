@@ -7,6 +7,7 @@
 const rehypePrism = require("@mapbox/rehype-prism");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const { spawnSync } = require("child_process");
+const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const path = require("path");
 const retext = require("retext");
 const retextSmartypants = require("retext-smartypants");
@@ -153,6 +154,10 @@ module.exports = {
     new CaseSensitivePathsPlugin(),
     // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new MonacoWebpackPlugin({
+      // available options: https://github.com/Microsoft/monaco-editor-webpack-plugin#options
+      languages: ["typescript", "javascript"],
+    }),
   ],
   node: {
     fs: "empty",

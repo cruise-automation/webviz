@@ -28,5 +28,6 @@ module.exports = {
   moduleNameMapper: {
     "worker-loader!./PngWorker.js": "<rootDir>/packages/webviz-core/src/test/MockWorker.js",
     "\\.svg$": "<rootDir>/packages/webviz-core/src/test/MockSvg.js",
+    "react-monaco-editor": "<rootDir>/packages/webviz-core/src/test/stubs/MonacoEditor.js",
   },
 };

@@ -24,7 +24,7 @@
     "moment": "2.22.2",
     "moment-duration-format": "2.2.2",
     "moment-timezone": "0.5.23",
-    "monaco-editor": "^0.17.1",
+    "monaco-editor": "0.17.1",
     "natsort": "2.0.0",
     "nearley": "2.15.1",
     "promise-queue": "2.2.5",
@@ -42,7 +42,7 @@
     "react-hover-observer": "2.1.1",
     "react-json-tree": "0.11.1",
     "react-markdown": "4.0.4",
-    "react-monaco-editor": "^0.28.0",
+    "react-monaco-editor": "0.28.0",
     "react-mosaic-component": "1.0.3",
     "react-redux": "5.1.1",
     "react-router": "4.3.1",
@@ -67,8 +67,7 @@
     "eslint-plugin-react-hooks": "^1.5.0",
     "fake-indexeddb": "2.0.4",
     "fetch-mock": "7.2.5",
-    "flow-bin": "0.95.1",
-    "monaco-editor-webpack-plugin": "^1.7.0"
+    "flow-bin": "0.95.1"
   },
   "importjs": {
     "isRoot": false

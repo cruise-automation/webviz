@@ -4,14 +4,14 @@ import { MouseEvents, MouseEventsInstanced } from './jsx/allLiveEditors';
 
 Currently Worldview supports the following mouse event handlers: `onDoubleClick`, `onMouseDown`, `onMouseUp`, `onMouseMove`, and `onClick`. When a supported DOM event is fired, the event handler will be triggered with the original event object and additional event information which can help build interactive views.
 
-| Name            | type           | Default | Description                                                                                  |
-| --------------- | -------------- | ------- | -------------------------------------------------------------------------------------------- |
-| `onDoubleClick` | `MouseHandler` |         |                                                                                              |
-| `onMouseDown`   | `MouseHandler` |         |                                                                                              |
-| `onMouseUp`     | `MouseHandler` |         |                                                                                              |
-| `onMouseMove`   | `MouseHandler` |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the Worldview component |
-| `onClick`       | `MouseHandler` |         |                                                                                              |
-| `getHitmap`     | `AssignNextIdsFn` |                                                                            | Maps the `drawProps` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
+| Name            | type              | Default | Description                                                                                                                                                              |
+| --------------- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `onDoubleClick` | `MouseHandler`    |         |                                                                                                                                                                          |
+| `onMouseDown`   | `MouseHandler`    |         |                                                                                                                                                                          |
+| `onMouseUp`     | `MouseHandler`    |         |                                                                                                                                                                          |
+| `onMouseMove`   | `MouseHandler`    |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the Worldview component                                                                               |
+| `onClick`       | `MouseHandler`    |         |                                                                                                                                                                          |
+| `getHitmap`     | `AssignNextIdsFn` |         | Maps the `children` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
 
 ## Event Handler
 
@@ -59,10 +59,10 @@ How do we detect which object was interacted with? We use a process called picki
 
 The Worldview library allows a lot of control over this interaction, but most Commands can use one of two default `getHitmap` functions.
 
-| Name | Description | Usage |
-| ---- | ----------- | ----- |
-| `nonInstancedGetHitmap` | A default `getHitmap` function for non-instanced commands. | `<Command getHitmap={nonInstancedGetHitmap} ... />` |
-| `createInstancedGetHitmap` | A factory function for instanced commands. It takes the number of points per instance: for example, a triangle has 3 points, whereas a sphere has 1 point (just the center). | `<Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} ... />`
+| Name                       | Description                                                                                                                                                                  | Usage                                                                                |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `nonInstancedGetHitmap`    | A default `getHitmap` function for non-instanced commands.                                                                                                                   | `<Command getHitmap={nonInstancedGetHitmap} ... />`                                  |
+| `createInstancedGetHitmap` | A factory function for instanced commands. It takes the number of points per instance: for example, a triangle has 3 points, whereas a sphere has 1 point (just the center). | `<Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} ... />` |
 
 ##### Turning off interactivity for a layer
 
@@ -70,10 +70,10 @@ All built in commands allow overriding the `getHitmap` function, and we recommen
 
 ##### Customizing the getHitmap function
 
-Each Command is passed the `reglCommand` function and `drawProps`. Worldview calls compiled version of the `reglCommand` function with `drawProps`. `getHitmap` takes in those `drawProps` and returns new version of them that will be rendered into the hitmap.
+Each Command is passed the `reglCommand` function and `children`. Worldview calls compiled version of the `reglCommand` function with `children`. `getHitmap` takes in those `children` and returns new version of them that will be rendered into the hitmap.
 
 Some important things to remember:
- * The first argument of `getHitmap` is the `drawProps`.
+ * The first argument of `getHitmap` is the `children`.
  * The second argument is a function that helps us assign IDs to each object.
 ```js
 /*

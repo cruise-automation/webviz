@@ -166,14 +166,9 @@ const triangles = (regl: Regl) => {
   };
 };
 
-export default function Triangles({ children, ...rest }: { ...OptionalCommandProps, children: Array<TriangleList> }) {
+export default function Triangles(props: { ...OptionalCommandProps, children: Array<TriangleList> }) {
   return (
-    <Command
-      getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 3 })}
-      {...rest}
-      drawProps={children}
-      reglCommand={triangles}
-    />
+    <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 3 })} {...props} reglCommand={triangles} />
   );
 }
 

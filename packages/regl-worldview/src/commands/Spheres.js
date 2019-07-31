@@ -56,14 +56,9 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
 
 const spheres = fromGeometry(points, faces);
 
-export default function Spheres({ children, ...rest }: { ...OptionalCommandProps, children: Array<SphereList> }) {
+export default function Spheres(props: { ...OptionalCommandProps, children: Array<SphereList> }) {
   return (
-    <Command
-      getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })}
-      {...rest}
-      drawProps={children}
-      reglCommand={spheres}
-    />
+    <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={spheres} />
   );
 }
 

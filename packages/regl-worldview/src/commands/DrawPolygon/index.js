@@ -100,7 +100,11 @@ class PolygonLines extends React.Component<Props> {
       });
     }
 
-    return <Command reglCommand={Lines.reglCommand} drawProps={lines} getHitmap={polygonLinesGetHitmap} />;
+    return (
+      <Command reglCommand={Lines.reglCommand} getHitmap={polygonLinesGetHitmap}>
+        {lines}
+      </Command>
+    );
   }
 }
 
@@ -134,7 +138,11 @@ class PolygonPoints extends React.Component<Props> {
       }
     }
 
-    return <Command reglCommand={Spheres.reglCommand} drawProps={sphereList} getHitmap={polygonPointsGetHitmap} />;
+    return (
+      <Command reglCommand={Spheres.reglCommand} getHitmap={polygonPointsGetHitmap}>
+        {sphereList}
+      </Command>
+    );
   }
 }
 

@@ -51,7 +51,7 @@ type InitializedData = {
 export type DrawInput = {
   instance: React.Component<any>,
   command: RawCommand<any>,
-  drawProps: Props,
+  children: Props,
   layerIndex: ?number,
   getHitmap: ?GetHitmap,
 };
@@ -315,8 +315,8 @@ export class WorldviewContext {
     const drawCalls = Array.from(this._drawCalls.values());
     const sortedDrawCalls = drawCalls.sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
     sortedDrawCalls.forEach((drawInput: DrawInput) => {
-      const { command, drawProps, instance, getHitmap } = drawInput;
-      if (!drawProps) {
+      const { command, children, instance, getHitmap } = drawInput;
+      if (!children) {
         return console.debug(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`, drawInput);
       }
       const cmd = this._compiled.get(command);
@@ -325,15 +325,15 @@ export class WorldviewContext {
       }
       // draw hitmap
       if (isHitmap && getHitmap) {
-        const AssignNextIdsFn: AssignNextIdsFn = (...rest) => {
+        const assignNextIdsFn: AssignNextIdsFn = (...rest) => {
           return this._hitmapIdManager.assignNextIds(instance, ...rest);
         };
-        const hitmapProps = getHitmap(drawProps, AssignNextIdsFn, seenObjects || []);
+        const hitmapProps = getHitmap(children, assignNextIdsFn, seenObjects || []);
         if (hitmapProps) {
           cmd(hitmapProps);
         }
       } else if (!isHitmap) {
-        cmd(drawProps);
+        cmd(children);
       }
     });
   };

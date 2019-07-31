@@ -6,16 +6,16 @@ Command is the base class for all regl-based drawing commands. Wrap this class i
 
 ##### Properties generally implemented by wrapping classes
 
-| Name                        | optional | type                                                                   | Default | Description                                                                                         |
-| --------------------------- | -------- | ---------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| `reglCommand`               | no       | `(Regl) => (Props) => void`                                       |         | The command that takes the `regl` function and drawProps and draws the shape                        |
+| Name          | optional | type                        | Default | Description                                                                 |
+| ------------- | -------- | --------------------------- | ------- | --------------------------------------------------------------------------- |
+| `reglCommand` | no       | `(Regl) => (Props) => void` |         | The command that takes the `regl` function and children and draws the shape |
 
 ##### Properties generally passed through wrapping classes
 
-| Name                        | optional | type                                                                   | Default | Description                                                                                         |
-| --------------------------- | -------- | ---------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| `drawProps`                 | no       | `Array<any> | any`                                                     |         | Arbitrary properties passed into reglCommand.                |
-| `layerIndex`                | yes      | `number`                                                               |         | defines the draw order of each command, e.g. -1 will put the shape in lower layer                   |
+| Name         | optional | type               | Default | Description                                                                       |
+| ------------ | -------- | ------------------ | ------- | --------------------------------------------------------------------------------- |
+| `children`   | no       | `Array<any> | any` |         | Arbitrary properties passed into reglCommand.                                     |
+| `layerIndex` | yes      | `number`           |         | defines the draw order of each command, e.g. -1 will put the shape in lower layer |
 
 Props relating to events are also passed through to Command instances. See Mouse Events for more.
 
@@ -50,11 +50,14 @@ const reglTriangle = (regl) => ({
 
 // define a Triangle React component to render with our regl command
 function Triangle({ color }) {
-  const drawProps = {
-    color,
-    points: [[-1, 0], [0, -1], [1, 1]],
-  };
-  return <Command reglCommand={reglTriangle} drawProps={drawProps} />;
+  return (
+    <Command reglCommand={reglTriangle}>
+      {{
+        color,
+        points: [[-1, 0], [0, -1], [1, 1]],
+      }}
+    </Command>
+  );
 }
 
 // pass our Triangle component to worldview

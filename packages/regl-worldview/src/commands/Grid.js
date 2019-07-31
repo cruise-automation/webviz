@@ -59,13 +59,10 @@ type Props = {
 };
 
 // useful for rendering a grid for debugging in stories
-export default class Grid extends React.Component<Props> {
-  static displayName = "Grid";
-  static defaultProps = {
-    count: 6,
-  };
 
-  render() {
-    return <Command getHitmap={nonInstancedGetHitmap} reglCommand={grid} drawProps={this.props} />;
-  }
+export default function Grid(props: Props) {
+  return <Command getHitmap={nonInstancedGetHitmap} {...props} reglCommand={grid} />;
 }
+
+Grid.displayName = "Grid";
+Grid.defaultProps = { count: 6 };

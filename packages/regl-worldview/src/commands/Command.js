@@ -38,17 +38,16 @@ export type OptionalCommandProps = {
 
 type Props<T> = {
   [MouseEventEnum]: ComponentMouseHandler,
-  drawProps: T[],
+  children: T[],
   layerIndex?: number,
   reglCommand: RawCommand<T>,
-
   // Interactivity
   getHitmap?: GetHitmap,
 };
 
 export type CommandProps = Props;
 
-// Component to dispatch draw props and hitmap props and a reglCommand to the render loop to render with regl.
+// Component to dispatch children (for drawing) and hitmap props and a reglCommand to the render loop to render with regl.
 export default class Command<T> extends React.Component<Props<T>> {
   context: ?WorldviewContextType;
   static displayName = "Command";
@@ -86,14 +85,14 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
 
-    const { drawProps, reglCommand, layerIndex, getHitmap } = this.props;
-    if (drawProps == null) {
+    const { children, reglCommand, layerIndex, getHitmap } = this.props;
+    if (children == null) {
       return;
     }
     context.registerDrawCall({
       instance: this,
       command: reglCommand,
-      drawProps,
+      children,
       layerIndex,
       getHitmap,
     });

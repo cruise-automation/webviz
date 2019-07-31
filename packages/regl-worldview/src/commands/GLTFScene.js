@@ -299,6 +299,8 @@ export default function GLTFScene(props: Props) {
   }
 
   return (
-    <Command {...rest} reglCommand={drawModel} drawProps={{ ...children, model: loadedModel }} getHitmap={getHitmap} />
+    <Command {...rest} reglCommand={drawModel} getHitmap={getHitmap}>
+      {{ ...children, model: loadedModel }}
+    </Command>
   );
 }

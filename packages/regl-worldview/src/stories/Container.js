@@ -8,8 +8,7 @@
 /* eslint-disable flowtype/no-types-missing-file-annotation */
 
 import React from "react";
-
-import Worldview, { type Props } from "../index";
+import Worldview, { type Props } from "regl-worldview";
 
 export default class Container extends React.Component<Props> {
   state = {

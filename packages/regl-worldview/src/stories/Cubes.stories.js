@@ -2,8 +2,8 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
+import { intToRGB } from "regl-worldview";
 
-import { intToRGB } from "../utils/commandUtils";
 import Container from "./Container";
 import { cube, p, UNIT_QUATERNION, buildMatrix, rng } from "./util";
 import withRange from "./withRange";

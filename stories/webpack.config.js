@@ -1,3 +1,4 @@
+const path = require("path");
 const webpack = require("webpack");
 
 const webpackConfig = require("../webpack.config");
@@ -7,7 +8,10 @@ module.exports = (storybookBaseConfig, configType) => ({
   ...storybookBaseConfig,
   node: webpackConfig.node,
   module: webpackConfig.module,
-  resolve: webpackConfig.resolve,
+  resolve: {
+    ...webpackConfig.resolve,
+    modules: [path.resolve("."), path.resolve(`${__dirname}/packages`), "node_modules"],
+  },
   output: { ...storybookBaseConfig.output, globalObject: "this" }, // Workaround for https://github.com/webpack/webpack/issues/6642#issuecomment-370222543
   plugins: [
     ...storybookBaseConfig.plugins,

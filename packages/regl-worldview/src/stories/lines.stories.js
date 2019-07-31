@@ -7,8 +7,7 @@
 import { withKnobs } from "@storybook/addon-knobs";
 import { storiesOf } from "@storybook/react";
 import React from "react";
-
-import Worldview, { Lines } from "../index";
+import Worldview, { Lines } from "regl-worldview";
 
 const DEFAULT_CAMERA = {
   perspective: false,

@@ -14,6 +14,7 @@ import prepareForScreenshots from "./prepareForScreenshots";
 import waitForFonts from "webviz-core/src/styles/waitForFonts";
 import installChartjs from "webviz-core/src/util/installChartjs";
 
+
 global.GIT_INFO = {};
 installChartjs();
 
@@ -34,8 +35,17 @@ const req = require.context("../packages", true, /\.stories\.js$/);
 const reqDocs = require.context("../docs", true, /\.stories\.js$/);
 
 function loadStories() {
-  req.keys().forEach((filename) => req(filename));
-  reqDocs.keys().forEach((filename) => reqDocs(filename));
+  req.keys().forEach((filename) => {
+    // skip any stories inside the node_modules
+    if (!filename.includes("node_modules")) {
+      req(filename);
+    }
+  });
+  reqDocs.keys().forEach((filename) => {
+    if (!filename.includes("node_modules")) {
+      reqDocs(filename);
+    }
+  });
 }
 
 waitForFonts(() => {

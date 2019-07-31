@@ -5,6 +5,10 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cruise-automation/hooks": "0.0.1",
+    "@cruise-automation/button": "0.0.7",
+    "@cruise-automation/tooltip": "0.0.7",
+    "react-key-listener": "0.0.7",
+    "regl-worldview": "0.1.4",
     "@mdi/svg": "3.2.89",
     "chart.js": "2.7.3",
     "chartjs-plugin-annotation": "0.5.7",

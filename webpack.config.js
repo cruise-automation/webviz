@@ -62,7 +62,10 @@ module.exports = {
     devtoolModuleFilenameTemplate: (info) => path.resolve(info.absoluteResourcePath),
   },
   resolve: {
-    modules: [path.resolve("."), path.resolve(`${__dirname}/packages`), "node_modules"],
+    // add path.resolve(`${__dirname}/packages`) to the modules for quick development without publishing the packages
+    modules: process.env.USE_LOCAL_PACKAGES
+      ? [path.resolve("."), "node_modules", path.resolve(`${__dirname}/packages`)]
+      : [path.resolve("."), "node_modules"],
     extensions: [".js"],
     // Doesn't work properly with linked packages, see
     // https://webpack.js.org/configuration/resolve/#resolve-symlinks

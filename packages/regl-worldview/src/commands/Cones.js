@@ -20,5 +20,3 @@ const cones = fromGeometry(points, sideFaces.concat(endCapFaces));
 export default function Cones(props: { ...OptionalCommandProps, children: Array<BaseShape> }) {
   return <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={cones} />;
 }
-
-Cones.reglCommand = cones;

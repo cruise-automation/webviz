@@ -434,5 +434,3 @@ const lines = (regl: any) => {
 export default function Lines(props: { ...OptionalCommandProps, children: Array<Line> }) {
   return <Command getHitmap={nonInstancedGetHitmap} {...props} reglCommand={lines} />;
 }
-
-Lines.reglCommand = lines;

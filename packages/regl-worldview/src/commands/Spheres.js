@@ -61,5 +61,3 @@ export default function Spheres(props: { ...OptionalCommandProps, children: Arra
     <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={spheres} />
   );
 }
-
-Spheres.reglCommand = spheres;

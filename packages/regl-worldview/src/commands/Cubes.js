@@ -51,5 +51,3 @@ const cubes = fromGeometry(
 export default function Cubes(props: { ...OptionalCommandProps, children: Array<Cube> }) {
   return <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={cubes} />;
 }
-
-Cubes.reglCommand = cubes;

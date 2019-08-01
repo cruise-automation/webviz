@@ -171,5 +171,3 @@ export default function Triangles(props: { ...OptionalCommandProps, children: Ar
     <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 3 })} {...props} reglCommand={triangles} />
   );
 }
-
-Triangles.reglCommand = triangles;

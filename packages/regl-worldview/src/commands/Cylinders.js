@@ -54,5 +54,3 @@ export default function Cylinders(props: { ...OptionalCommandProps, children: Ar
     <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={cylinders} />
   );
 }
-
-Cylinders.reglCommand = cylinders;

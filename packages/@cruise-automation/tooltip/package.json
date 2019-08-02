@@ -1,7 +1,8 @@
 {
   "name": "@cruise-automation/tooltip",
   "version": "0.0.7",
-  "main": "lib/index.js",
+  "main": "src/index.js",
+  "source": "src/index.js",
   "description": "Cruise tooltip",
   "license": "Apache-2.0",
   "repository": "cruise-automation/webviz",
@@ -11,13 +12,18 @@
     "watch": "NODE_ENV=development npm run build-dev --watch"
   },
   "dependencies": {
+    "@babel/runtime": "^7.3.1",
     "react-popper": "1.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0-0",
+    "@babel/plugin-proposal-class-properties": "^7.2.3",
+    "@babel/preset-flow": "^7.0.0",
+    "@babel/preset-react": "^7.0.0",
+    "flow-bin": "0.80.0"
   },
   "peerDependencies": {
     "react": "16.x"
-  },
-  "devDependencies": {
-    "flow-bin": "0.80.0"
   },
   "publishConfig": {
     "access": "public"

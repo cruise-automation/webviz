@@ -21,3 +21,6 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 ENV WEBVIZ_IN_DOCKER=true
+
+# Bumped up from the default old_space size (512mb) as it was being exceeded during builds.
+ENV NODE_OPTIONS="--max_old_space_size=4096"

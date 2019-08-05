@@ -12,6 +12,9 @@ export const LOAD_ENTIRE_BAG_QUERY_KEY = "load-entire-bag";
 export const MEASURE_DATA_PROVIDERS_QUERY_KEY = "_measureDataProviders";
 export const PANEL_PERF_QUERY_KEY = "_panelperf";
 export const DEMO_QUERY_KEY = "demo";
+export const ENABLE_NODE_PLAYGROUND_QUERY_KEY = "enable-node-playground";
+
+export const DEFAULT_WEBVIZ_NODE_NAME = "/webviz/tmp/node";
 
 export const TRANSFORM_TOPIC = "/tf";
 export const DIAGNOSTIC_TOPIC = "/diagnostics";

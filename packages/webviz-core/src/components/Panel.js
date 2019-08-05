@@ -30,7 +30,7 @@ import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-cor
 import PanelContext from "webviz-core/src/components/PanelContext";
 import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDragHandle";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import PanelList, { getPanelListItemsByType } from "webviz-core/src/panels/PanelList";
+import PanelList, { getPanelsByType } from "webviz-core/src/panels/PanelList";
 import type { State as ReduxState } from "webviz-core/src/reducers";
 import type {
   SaveConfigPayload,
@@ -300,9 +300,9 @@ export default function Panel<Config: PanelConfig>(
     render() {
       const { topics, datatypes, capabilities, childId, isOnlyPanel, config = {} } = this.props;
       const { quickActionsKeyPressed, fullScreen } = this.state;
-      const panelListItemsByType = getPanelListItemsByType();
+      const panelsByType = getPanelsByType();
       const type = PanelComponent.panelType;
-      const title = panelListItemsByType[type] && panelListItemsByType[type].title;
+      const title = panelsByType[type] && panelsByType[type].title;
 
       const currentTopicPrefix = config[TOPIC_PREFIX_CONFIG_KEY] || "";
 

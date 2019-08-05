@@ -92,6 +92,10 @@ export function toNanoSec({ sec, nsec }: Time) {
   return sec * 1e9 + nsec;
 }
 
+export function toMicroSec({ sec, nsec }: Time) {
+  return (sec * 1e9 + nsec) / 1000;
+}
+
 export function toSec({ sec, nsec }: Time) {
   return sec + nsec * 1e-9;
 }

@@ -9,6 +9,10 @@
 export type PanelConfig = { [key: string]: any };
 export type PerPanelFunc<Config> = (Config) => Config;
 
+export type NodePayload = {
+  [outputName: string]: ?string,
+};
+
 export type SaveConfigPayload = {
   id: string,
   // if you set silent to true, the url will not be stripped of a layout id

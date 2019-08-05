@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
+import { flatten } from "lodash";
 import * as React from "react";
 import { DragSource } from "react-dnd";
 import { MosaicDragType, getNodeAtPath, updateTree } from "react-mosaic-component";
@@ -27,29 +27,36 @@ type PanelListItem = {|
   hideFromList?: boolean,
 |};
 
-// getPanelList() and getPanelListItemsByType() are functions rather than top-level constants
+// getPanelsByCategory() and getPanelsByType() are functions rather than top-level constants
 // in order to avoid issues with circular imports, such as
-// FooPanel -> PanelToolbar -> PanelList -> getGlobalHooks().panelList() -> FooPanel.
-let gPanelList;
-function getPanelList(): PanelListItem[] {
-  if (!gPanelList) {
-    gPanelList = getGlobalHooks().panelList();
-  }
-  return gPanelList;
-}
+// FooPanel -> PanelToolbar -> PanelList -> getGlobalHooks().panelsByCategory() -> FooPanel.
+let gPanelsByCategory;
+function getPanelsByCategory(): { [string]: PanelListItem[] } {
+  if (!gPanelsByCategory) {
+    gPanelsByCategory = getGlobalHooks().panelsByCategory();
 
-let gPanelListItemsByType;
-export function getPanelListItemsByType(): { [type: string]: PanelListItem } {
-  if (!gPanelListItemsByType) {
-    gPanelListItemsByType = {};
-    for (const item of getPanelList()) {
-      // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
-      const panelType = item.component.panelType;
-      console.assert(panelType && !(panelType in gPanelListItemsByType));
-      gPanelListItemsByType[panelType] = item;
+    for (const category in gPanelsByCategory) {
+      gPanelsByCategory[category] = gPanelsByCategory[category].filter(Boolean);
     }
   }
-  return gPanelListItemsByType;
+  return gPanelsByCategory;
+}
+
+let gPanelsByType;
+export function getPanelsByType(): { [type: string]: PanelListItem } {
+  if (!gPanelsByType) {
+    gPanelsByType = {};
+    const panelsByCategory = getPanelsByCategory();
+    for (const category in panelsByCategory) {
+      for (const item of panelsByCategory[category]) {
+        // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
+        const panelType = item.component.panelType;
+        console.assert(panelType && !(panelType in gPanelsByType));
+        gPanelsByType[panelType] = item;
+      }
+    }
+  }
+  return gPanelsByType;
 }
 
 type DropDescription = {
@@ -130,8 +137,10 @@ type Props = {
 };
 class PanelList extends React.Component<Props> {
   static getComponentForType(type: string): any | void {
+    const panelsByCategory = getPanelsByCategory();
+    const allPanels = flatten(Object.keys(panelsByCategory).map((category) => panelsByCategory[category]));
     // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
-    const panel = getPanelList().find((item) => item.component.panelType === type);
+    const panel = allPanels.find((item) => item.component.panelType === type);
     return panel && panel.component;
   }
 
@@ -165,65 +174,75 @@ class PanelList extends React.Component<Props> {
   // sanity checks to help panel authors debug issues
   _verifyPanels() {
     const panelTypes: Map<string, React.ComponentType<any>> = new Map();
-    for (const { component } of getPanelList()) {
-      // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
-      const { name, displayName, panelType } = component;
-      if (!panelType) {
-        throw new Error(
-          `Panel component ${displayName || name || "<unnamed>"} must declare a unique \`static panelType\``
-        );
+    const panelsByCategory = getPanelsByCategory();
+    for (const category in panelsByCategory) {
+      for (const { component } of panelsByCategory[category]) {
+        // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
+        const { name, displayName, panelType } = component;
+        if (!panelType) {
+          throw new Error(
+            `Panel component ${displayName || name || "<unnamed>"} must declare a unique \`static panelType\``
+          );
+        }
+        const existingPanel = panelTypes.get(panelType);
+        if (existingPanel) {
+          throw new Error(
+            `Two components have the same panelType ('${panelType}'): ${existingPanel.displayName ||
+              existingPanel.name ||
+              "<unnamed>"} and ${displayName || name || "<unnamed>"}`
+          );
+        }
+        panelTypes.set(panelType, component);
       }
-      const existingPanel = panelTypes.get(panelType);
-      if (existingPanel) {
-        throw new Error(
-          `Two components have the same panelType ('${panelType}'): ${existingPanel.displayName ||
-            existingPanel.name ||
-            "<unnamed>"} and ${displayName || name || "<unnamed>"}`
-        );
-      }
-      panelTypes.set(panelType, component);
     }
   }
 
   render() {
     this._verifyPanels();
     const { mosaicId, onPanelSelect, selectedPanelType } = this.props;
+    const panelCategories = getGlobalHooks().panelCategories();
+    const panelsByCategory = getPanelsByCategory();
+
     return (
-      <>
-        {getPanelList()
-          .filter(({ hideFromList }) => !hideFromList)
-          .sort(naturalSort("title"))
-          .map(
-            // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
-            ({ presets, title, component: { panelType } }) =>
-              presets ? (
-                <SubMenu text={title} key={panelType} checked={panelType === selectedPanelType}>
-                  {presets.map((subPanelListItem) => (
+      <div data-test-panel-category>
+        {panelCategories.map(({ label, key }) => (
+          <SubMenu text={label} key={key} direction="left">
+            {panelsByCategory[key]
+              .filter(({ hideFromList }) => !hideFromList)
+              .sort(naturalSort("title"))
+              .map(
+                // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
+                ({ presets, title, component: { panelType } }) =>
+                  presets ? (
+                    <SubMenu text={title} key={panelType} checked={panelType === selectedPanelType}>
+                      {presets.map((subPanelListItem) => (
+                        <DraggablePanelItem
+                          key={subPanelListItem.title}
+                          mosaicId={mosaicId}
+                          panel={{
+                            type: panelType,
+                            title: subPanelListItem.title,
+                            panelConfig: subPanelListItem.panelConfig,
+                          }}
+                          onDrop={this.onPanelMenuItemDrop}
+                          onClick={() => onPanelSelect(panelType, subPanelListItem.panelConfig)}
+                        />
+                      ))}
+                    </SubMenu>
+                  ) : (
                     <DraggablePanelItem
-                      key={subPanelListItem.title}
+                      key={panelType}
                       mosaicId={mosaicId}
-                      panel={{
-                        type: panelType,
-                        title: subPanelListItem.title,
-                        panelConfig: subPanelListItem.panelConfig,
-                      }}
+                      panel={{ type: panelType, title }}
                       onDrop={this.onPanelMenuItemDrop}
-                      onClick={() => onPanelSelect(panelType, subPanelListItem.panelConfig)}
+                      onClick={() => onPanelSelect(panelType)}
+                      checked={panelType === selectedPanelType}
                     />
-                  ))}
-                </SubMenu>
-              ) : (
-                <DraggablePanelItem
-                  key={panelType}
-                  mosaicId={mosaicId}
-                  panel={{ type: panelType, title }}
-                  onDrop={this.onPanelMenuItemDrop}
-                  onClick={() => onPanelSelect(panelType)}
-                  checked={panelType === selectedPanelType}
-                />
-              )
-          )}
-      </>
+                  )
+              )}
+          </SubMenu>
+        ))}
+      </div>
     );
   }
 }

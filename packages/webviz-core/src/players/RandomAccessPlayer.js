@@ -63,12 +63,14 @@ export default class RandomAccessPlayer implements Player {
   _currentTime: Time;
   _lastTickMillis: ?number;
   _lastSeekTime: number = Date.now();
+  _cancelSeekBackfill: boolean = false;
   _subscribedTopics: Set<string> = new Set();
   _providerTopics: Topic[] = [];
   _providerDatatypes: RosDatatypes = {};
   _metricsCollector: PlayerMetricsCollectorInterface;
   _autoplay: boolean;
   _initializing: boolean = true;
+  _initialized: boolean = false;
   _reconnecting: boolean = false;
   _progress: Progress = {};
   _id: string = uuid.v4();
@@ -154,11 +156,18 @@ export default class RandomAccessPlayer implements Player {
       });
   }
 
-  _emitState = debouncePromise(() => {
+  _emitState() {
+    // reportInitialized needs to be outside of the debounced function, because we don't want
+    // the listener's callback (which may be waiting on a requestAnimationFrame) to block us from
+    // measuring when initialization finished.
+    this._reportInitialized();
+    return this._emitStateDebounced();
+  }
+
+  _emitStateDebounced = debouncePromise(() => {
     if (!this._listener) {
       return Promise.resolve();
     }
-    this._reportInitialized();
 
     if (this._hasError) {
       return this._listener({
@@ -174,6 +183,11 @@ export default class RandomAccessPlayer implements Player {
 
     const messages = this._messages;
     this._messages = [];
+    if (messages.length > 0) {
+      // If we're outputting any messages, we need to cancel any in-progress backfills. Otherwise
+      // we'd be "traveling back in time".
+      this._cancelSeekBackfill = true;
+    }
     return this._listener({
       isPresent: true,
       showSpinner: this._initializing || this._reconnecting,
@@ -239,7 +253,7 @@ export default class RandomAccessPlayer implements Player {
     const start: Time = clampTime(TimeUtil.add(this._currentTime, { sec: 0, nsec: 1 }), this._start, this._end);
     const end: Time = clampTime(TimeUtil.add(this._currentTime, fromMillis(rangeMillis)), this._start, this._end);
     const messages = await this._getMessages(start, end);
-    await this._emitState.currentPromise;
+    await this._emitStateDebounced.currentPromise;
 
     // if we seeked while reading the do not emit messages
     // just start reading again from the new seek position
@@ -352,7 +366,7 @@ export default class RandomAccessPlayer implements Player {
   }
 
   _reportInitialized() {
-    if (this._initializing) {
+    if (this._initializing || this._initialized) {
       return;
     }
 
@@ -361,6 +375,7 @@ export default class RandomAccessPlayer implements Player {
       Object.values(this._progress.percentageByTopic).every((percentage) => Number(percentage) >= 100)
     ) {
       this._metricsCollector.initialized();
+      this._initialized = true;
     }
   }
 
@@ -375,6 +390,7 @@ export default class RandomAccessPlayer implements Player {
 
     const seekTime = Date.now();
     this._lastSeekTime = seekTime;
+    this._cancelSeekBackfill = false;
     this._emitState();
 
     if (!this._isPlaying) {
@@ -385,8 +401,11 @@ export default class RandomAccessPlayer implements Player {
         }),
         time
       ).then((messages) => {
-        // Only emit the messages if we haven't seeked again since we started loading them.
-        if (seekTime === this._lastSeekTime) {
+        // Only emit the messages if we haven't seeked again / emitted messages since we
+        // started loading them. Note that for the latter part just checking for `isPlaying`
+        // is not enough because the user might have started playback and then paused again!
+        // Therefore we really need something like `this._cancelSeekBackfill`.
+        if (this._lastSeekTime === seekTime && !this._cancelSeekBackfill) {
           this._messages = messages;
           this._emitState();
         }

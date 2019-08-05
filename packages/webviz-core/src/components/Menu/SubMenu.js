@@ -22,6 +22,7 @@ type Props = {
   checked?: boolean,
   direction: "left" | "right",
   icon?: React.Node,
+  dataTest?: string,
 };
 
 export default class SubMenu extends React.Component<Props, State> {
@@ -49,10 +50,15 @@ export default class SubMenu extends React.Component<Props, State> {
   }
 
   render() {
-    const { text, children, checked, direction, icon } = this.props;
+    const { text, children, checked, direction, icon, dataTest } = this.props;
     const { open } = this.state;
     return (
-      <ChildToggle noPortal position={direction === "left" ? "left" : "right"} onToggle={this.toggle} isOpen={open}>
+      <ChildToggle
+        noPortal
+        position={direction === "left" ? "left" : "right"}
+        onToggle={this.toggle}
+        isOpen={open}
+        dataTest={dataTest}>
         <Item hasSubMenu direction={direction} checked={open || checked} icon={icon}>
           {text}
         </Item>

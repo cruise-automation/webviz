@@ -12,6 +12,7 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { DEFAULT_CAMERA_STATE, cameraStateSelectors, type Vec3, type Vec4, type CameraState } from "regl-worldview";
 
+import getDebugStorybook from "./getDebugStorybook";
 import { registerMarkerProvider, unregisterMarkerProvider } from "webviz-core/src/actions/extensions";
 import GlobalVariablesAccessor from "webviz-core/src/components/GlobalVariablesAccessor";
 import { FrameCompatibility } from "webviz-core/src/components/MessageHistory/FrameCompatibility";
@@ -283,6 +284,7 @@ export class Renderer extends React.Component<Props, State> {
       <MessagePipelineConsumer>
         {({ playerState }: MessagePipelineContext) => {
           const currentTime = playerState.activeData ? playerState.activeData.currentTime : { sec: 0, nsec: 0 };
+          getDebugStorybook(playerState, selections.topics, topics, this.props.config);
           return (
             <GlobalVariablesAccessor>
               {(globalData) => (

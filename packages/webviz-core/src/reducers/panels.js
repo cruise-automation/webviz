@@ -25,6 +25,7 @@ const storage = new Storage();
 export const LAYOUT_KEY = "panels.layout";
 export const PANEL_PROPS_KEY = "panels.savedProps";
 export const GLOBAL_DATA_KEY = "panels.globalData";
+export const WEBVIZ_NODES_KEY = "panels.webvizNodes";
 
 export type PanelsState = {
   layout: any,
@@ -33,6 +34,7 @@ export type PanelsState = {
   // but it's inconvenient to have this diverge from `PANEL_PROPS_KEY`.
   savedProps: { [panelId: string]: PanelConfig },
   globalData: Object,
+  webvizNodes: Object,
 };
 
 // getDefaultState will be called once when the store initializes this reducer.
@@ -44,6 +46,7 @@ function getDefaultState() {
     // by default we don't save props for any of the panels
     savedProps: storage.get(PANEL_PROPS_KEY) || {},
     globalData: storage.get(GLOBAL_DATA_KEY) || {},
+    webvizNodes: storage.get(WEBVIZ_NODES_KEY) || {},
   };
   // if there was no previously saved layout
   // save this initial panel layout into local storage
@@ -168,6 +171,22 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
 
       storage.set(GLOBAL_DATA_KEY, globalData);
       return { ...state, globalData };
+    }
+    case "OVERWRITE_WEBVIZ_NODES":
+      storage.set(WEBVIZ_NODES_KEY, action.payload);
+      return { ...state, webvizNodes: action.payload };
+
+    case "SET_WEBVIZ_NODES": {
+      const webvizNodes = { ...state.webvizNodes, ...action.payload };
+
+      Object.keys(action.payload).forEach((key) => {
+        if (webvizNodes[key] === undefined) {
+          delete webvizNodes[key];
+        }
+      });
+
+      storage.set(WEBVIZ_NODES_KEY, webvizNodes);
+      return { ...state, webvizNodes };
     }
 
     default:

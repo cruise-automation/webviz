@@ -22,6 +22,7 @@ import {
   type MessageLike,
   type RandomAccessDataProvider,
 } from "./types";
+import delay from "webviz-core/shared/delay";
 import {
   type PlayerMetricsCollectorInterface,
   type Topic,
@@ -535,6 +536,89 @@ describe("RandomAccessPlayer", () => {
     ]);
   });
 
+  it("discards backfilled messages if we started playing after the seek", async () => {
+    const provider = new TestProvider();
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
+    let callCount = 0;
+    let backfillPromiseCallback;
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+      callCount++;
+      switch (callCount) {
+        case 1:
+          // initial getMessages from player initialization
+          expect(start).toEqual({ sec: 0, nsec: 0 });
+          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(topics).toContainOnly(["/foo/bar"]);
+          return Promise.resolve([]);
+
+        case 2: {
+          expect(start).toEqual({ sec: 19, nsec: 1e9 + 50 - SEEK_BACK_NANOSECONDS });
+          expect(end).toEqual({ sec: 20, nsec: 50 });
+          expect(topics).toContainOnly(["/foo/bar"]);
+          return new Promise((resolve) => {
+            backfillPromiseCallback = resolve;
+          });
+        }
+        case 3:
+          // make sure after we seek & read again we read exactly from the right nanosecond
+          expect(start).toEqual({ sec: 20, nsec: 51 });
+          return Promise.resolve([
+            { topic: "/foo/bar", receiveTime: { sec: 20, nsec: 51 }, message: { payload: "baz" } },
+          ]);
+        case 4:
+          source.pausePlayback();
+          return Promise.resolve([]);
+        default:
+          throw new Error("getMessages called too many times");
+      }
+    };
+
+    const store = new MessageStore(2);
+    source.setListener(store.add);
+    expect(await store.done).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      expect.objectContaining({ activeData: expect.any(Object) }),
+    ]);
+
+    store.reset(5);
+    source.setSubscriptions([{ topic: "/foo/bar" }]);
+    // ensure results from the automatic backfill during setSubscriptions are always thrown away
+    // after the new seek, by making the lastSeekTime change
+    mockDateNow.mockReturnValue(Date.now() + 1);
+    source.seekPlayback({ sec: 20, nsec: 50 });
+
+    await delay(10);
+    if (!backfillPromiseCallback) {
+      throw new Error("backfillPromiseCallback should be set");
+    }
+    source.startPlayback();
+    const messages = await store.done;
+    expect(messages.map((msg) => (msg.activeData || {}).messages)).toEqual([
+      [], // seek from setSubscriptions
+      [], // seekPlayback
+      [], // startPlayback
+      [
+        {
+          topic: "/foo/bar",
+          datatype: "fooBar",
+          op: "message",
+          receiveTime: { sec: 20, nsec: 51 },
+          message: { payload: "baz" },
+        },
+      ],
+      [], // pausePlayback
+    ]);
+
+    store.reset(0); // We expect 0 more messages; this will throw an error later if we received more.
+    const result: MessageLike = {
+      topic: "/foo/bar",
+      receiveTime: { sec: 0, nsec: 5 },
+      message: { payload: "foo bar" },
+    };
+    backfillPromiseCallback([result]);
+    await delay(10);
+  });
+
   it("clamps times passed to the DataProvider", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
@@ -753,9 +837,23 @@ describe("RandomAccessPlayer", () => {
         seeked: 0,
         speed: [],
       });
-      await source.setListener(async (msg) => {
+      const listener = jest.fn().mockImplementation(async (msg) => {
         // just discard messages
       });
+
+      // player should initialize even if the listener promise hasn't resolved yet
+      let resolveListener;
+      listener.mockImplementationOnce(() => {
+        return new Promise((resolve) => {
+          resolveListener = resolve;
+        });
+      });
+      source.setListener(listener);
+      // appease Flow
+      if (!resolveListener) {
+        throw new Error("listener wasn't called");
+      }
+      await Promise.resolve();
       expect(collector.stats()).toEqual({
         initialized: 1,
         played: 0,
@@ -763,6 +861,16 @@ describe("RandomAccessPlayer", () => {
         seeked: 0,
         speed: [],
       });
+      resolveListener();
+      await Promise.resolve();
+      expect(collector.stats()).toEqual({
+        initialized: 1,
+        played: 0,
+        paused: 0,
+        seeked: 0,
+        speed: [],
+      });
+
       source.startPlayback();
       source.startPlayback();
       expect(collector.stats()).toEqual({

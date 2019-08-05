@@ -56,6 +56,7 @@ type Props = {|
   position: "above" | "below" | "left" | "right",
   // don't use a portal, e.g. if you are nesting this already in a portal
   noPortal?: boolean,
+  dataTest?: string,
 |};
 
 // a component which takes 2 child components: toggle trigger and content
@@ -182,7 +183,7 @@ export default class ChildToggle extends React.Component<Props> {
   }
 
   render() {
-    const { style, children, onToggle, isOpen } = this.props;
+    const { style, children, onToggle, isOpen, dataTest } = this.props;
     return (
       <Consumer>
         {(updateOpenNumber: (number) => void) => {
@@ -196,7 +197,9 @@ export default class ChildToggle extends React.Component<Props> {
 
           return (
             <div ref={(el) => (this.el = el)} className={cx({ ["open"]: isOpen })} style={style}>
-              <div onClick={onToggle}>{children[0]}</div>
+              <div onClick={onToggle} data-test={dataTest}>
+                {children[0]}
+              </div>
               {this.renderFloating()}
             </div>
           );

@@ -6,8 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import UnlockIcon from "@mdi/svg/svg/lock-open-outline.svg";
-import LockIcon from "@mdi/svg/svg/lock-outline.svg";
 import cx from "classnames";
 import React from "react";
 
@@ -22,19 +20,14 @@ function isValidInput(value: string) {
 export default function PlotMenu({
   minYValue,
   maxYValue,
-  isYAxisLocked,
   saveConfig,
+  setMinMax,
 }: {
   minYValue: string,
   maxYValue: string,
-  isYAxisLocked: boolean,
   saveConfig: ($Shape<PlotConfig>) => void,
+  setMinMax: () => void,
 }) {
-  const lockIconProps = {
-    width: 16,
-    height: 16,
-  };
-
   return (
     <>
       <Item onClick={() => saveConfig({ maxYValue: maxYValue === "" ? "10" : "" })}>
@@ -61,13 +54,8 @@ export default function PlotMenu({
           placeholder="auto"
         />
       </Item>
-      <Item onClick={() => saveConfig({ isYAxisLocked: !isYAxisLocked })}>
-        <div className={styles.lockItem}>
-          {isYAxisLocked ? "Unlock Y-axis" : "Lock Y-axis"}
-          <span className={styles.lockIcon}>
-            {isYAxisLocked ? <UnlockIcon {...lockIconProps} /> : <LockIcon {...lockIconProps} />}
-          </span>
-        </div>
+      <Item>
+        <button onClick={setMinMax}>Set min and max</button>
       </Item>
     </>
   );

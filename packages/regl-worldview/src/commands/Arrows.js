@@ -11,6 +11,7 @@ import * as React from "react";
 
 import type { Arrow } from "../types";
 import { pointToVec3, vec3ToPoint, orientationToVec4, vec4ToOrientation } from "../utils/commandUtils";
+import { nonInstancedGetHitmap } from "../utils/getHitmapDefaults";
 import Cones from "./Cones";
 import Cylinders from "./Cylinders";
 
@@ -31,7 +32,6 @@ export default class Arrows extends React.PureComponent<{ children: Arrow[] }> {
       let basePosition;
       let orientation;
       let dir;
-
       if (marker.points && marker.points.length === 2) {
         const [start, end] = marker.points;
         basePosition = [start.x, start.y, start.z];
@@ -67,6 +67,7 @@ export default class Arrows extends React.PureComponent<{ children: Arrow[] }> {
       const headPosition = vec3.scaleAndAdd([0, 0, 0], basePosition, dir, shaftLength + headLength / 2);
 
       cylinders.push({
+        interactionData: marker.interactionData,
         scale: { x: shaftWidthX, y: shaftWidthY, z: shaftLength },
         color: marker.color,
         pose: {
@@ -75,6 +76,7 @@ export default class Arrows extends React.PureComponent<{ children: Arrow[] }> {
         },
       });
       cones.push({
+        interactionData: marker.interactionData,
         scale: { x: headWidthX, y: headWidthY, z: headLength },
         color: marker.color,
         pose: {
@@ -85,8 +87,8 @@ export default class Arrows extends React.PureComponent<{ children: Arrow[] }> {
     }
     return (
       <React.Fragment>
-        <Cylinders>{cylinders}</Cylinders>
-        <Cones>{cones}</Cones>
+        <Cylinders getHitmap={nonInstancedGetHitmap}>{cylinders}</Cylinders>
+        <Cones getHitmap={nonInstancedGetHitmap}>{cones}</Cones>
       </React.Fragment>
     );
   }

@@ -11,7 +11,7 @@ import * as React from "react";
 import type { Cylinder } from "../types";
 import fromGeometry from "../utils/fromGeometry";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import Command, { type OptionalCommandProps } from "./Command";
+import Command, { type CommonCommandProps } from "./Command";
 
 export function createCylinderGeometry(numSegments: number, cone: boolean) {
   // "poles" are the centers of top/bottom faces
@@ -49,7 +49,7 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, false);
 
 const cylinders = fromGeometry(points, sideFaces.concat(endCapFaces));
 
-export default function Cylinders(props: { ...OptionalCommandProps, children: Cylinder[] }) {
+export default function Cylinders(props: { ...CommonCommandProps, children: Cylinder[] }) {
   return (
     <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={cylinders} />
   );

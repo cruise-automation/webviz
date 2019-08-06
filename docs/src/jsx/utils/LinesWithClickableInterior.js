@@ -6,7 +6,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import { Lines, FilledPolygons, type OptionalCommandProps, type Line } from "regl-worldview";
+import { Lines, FilledPolygons, type CommonCommandProps, type Line } from "regl-worldview";
 
 // type LineProps = CommandProps<Line> & {
 //   // when enabled, a polygon will be drawn using the line points, and the user will get the original
@@ -26,7 +26,7 @@ function LinesWithClickableInterior({
   showBorder,
   ...rest
 }: {
-  ...OptionalCommandProps,
+  ...CommonCommandProps,
   children: Line[],
   enableClickableInterior: boolean,
   fillColor: Object,

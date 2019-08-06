@@ -11,7 +11,7 @@ import * as React from "react";
 import type { PointType, Regl } from "../types";
 import { getVertexColors, pointToVec3, withPose } from "../utils/commandUtils";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import Command, { type OptionalCommandProps } from "./Command";
+import Command, { type CommonCommandProps } from "./Command";
 
 const points = (regl: Regl) => {
   const [min, max] = regl.limits.pointSizeDims;
@@ -63,6 +63,6 @@ const points = (regl: Regl) => {
   });
 };
 
-export default function Points(props: { ...OptionalCommandProps, children: PointType[] }) {
+export default function Points(props: { ...CommonCommandProps, children: PointType[] }) {
   return <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={points} />;
 }

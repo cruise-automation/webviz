@@ -11,7 +11,7 @@ import * as React from "react";
 import type { Line } from "../types";
 import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
 import { nonInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import Command, { type OptionalCommandProps } from "./Command";
+import Command, { type CommonCommandProps } from "./Command";
 
 /*
 Triangle-based line drawing.
@@ -431,6 +431,6 @@ const lines = (regl: any) => {
   };
 };
 
-export default function Lines(props: { ...OptionalCommandProps, children: Line[] }) {
+export default function Lines(props: { ...CommonCommandProps, children: Line[] }) {
   return <Command getHitmap={nonInstancedGetHitmap} {...props} reglCommand={lines} />;
 }

@@ -30,19 +30,16 @@ export type MarkerDefault = {
   color?: Color,
 };
 
-export type OptionalCommandProps = {
+export type CommonCommandProps = {
   [MouseEventEnum]: ComponentMouseHandler,
   layerIndex?: number,
   getHitmap?: GetHitmap,
 };
 
 type Props<T> = {
-  [MouseEventEnum]: ComponentMouseHandler,
   children: T[],
-  layerIndex?: number,
   reglCommand: RawCommand<T>,
-  // Interactivity
-  getHitmap?: GetHitmap,
+  ...CommonCommandProps,
 };
 
 export type CommandProps = Props;
@@ -91,7 +88,7 @@ export default class Command<T> extends React.Component<Props<T>> {
     }
     context.registerDrawCall({
       instance: this,
-      command: reglCommand,
+      reglCommand,
       children,
       layerIndex,
       getHitmap,

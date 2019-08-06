@@ -50,7 +50,7 @@ type InitializedData = {
 
 export type DrawInput = {
   instance: React.Component<any>,
-  command: RawCommand<any>,
+  reglCommand: RawCommand<any>,
   children: Props,
   layerIndex: ?number,
   getHitmap: ?GetHitmap,
@@ -322,11 +322,11 @@ export class WorldviewContext {
 
     const drawCalls = Array.from(this._drawCalls.values()).sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
     drawCalls.forEach((drawInput: DrawInput) => {
-      const { command, children, instance, getHitmap } = drawInput;
+      const { reglCommand, children, instance, getHitmap } = drawInput;
       if (!children) {
         return console.debug(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`, drawInput);
       }
-      const cmd = this._compiled.get(command);
+      const cmd = this._compiled.get(reglCommand);
       if (!cmd) {
         return console.warn("could not find draw command for", instance ? instance.constructor.displayName : "Unknown");
       }

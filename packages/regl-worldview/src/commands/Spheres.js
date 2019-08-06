@@ -11,7 +11,7 @@ import * as React from "react";
 import type { SphereList } from "../types";
 import fromGeometry from "../utils/fromGeometry";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import Command, { type OptionalCommandProps } from "./Command";
+import Command, { type CommonCommandProps } from "./Command";
 
 const NUM_PARALLELS = 15;
 const NUM_MERIDIANS = 15;
@@ -56,7 +56,7 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
 
 const spheres = fromGeometry(points, faces);
 
-export default function Spheres(props: { ...OptionalCommandProps, children: SphereList[] }) {
+export default function Spheres(props: { ...CommonCommandProps, children: SphereList[] }) {
   return (
     <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={spheres} />
   );

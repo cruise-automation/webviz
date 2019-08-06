@@ -11,7 +11,7 @@ import * as React from "react";
 import type { Cube } from "../types";
 import fromGeometry from "../utils/fromGeometry";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import Command, { type OptionalCommandProps } from "./Command";
+import Command, { type CommonCommandProps } from "./Command";
 
 const cubes = fromGeometry(
   [
@@ -48,6 +48,6 @@ const cubes = fromGeometry(
   ]
 );
 
-export default function Cubes(props: { ...OptionalCommandProps, children: Cube[] }) {
+export default function Cubes(props: { ...CommonCommandProps, children: Cube[] }) {
   return <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={cubes} />;
 }

@@ -18,7 +18,7 @@ import {
   withPose,
 } from "../utils/commandUtils";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
-import Command, { type OptionalCommandProps } from "./Command";
+import Command, { type CommonCommandProps } from "./Command";
 
 // TODO(Audrey): default to the actual regl defaults before 1.x release
 const defaultSingleColorDepth = { enable: true, mask: false };
@@ -166,7 +166,7 @@ const triangles = (regl: Regl) => {
   };
 };
 
-export default function Triangles(props: { ...OptionalCommandProps, children: TriangleList[] }) {
+export default function Triangles(props: { ...CommonCommandProps, children: TriangleList[] }) {
   return (
     <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 3 })} {...props} reglCommand={triangles} />
   );

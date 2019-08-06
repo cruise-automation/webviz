@@ -77,7 +77,8 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
   return typeof src === "function" ? src : regl(src);
 }
 
-const MAX_NUMBER_OF_LAYERS = 100;
+// The max number of layered objects we can process events for when drawing the hitmap. Limited for performance reasons.
+const MAX_NUMBER_OF_HITMAP_LAYERS = 100;
 
 // This is made available to every Command component as `this.context`.
 // It contains all the regl interaction code and is responsible for collecting and executing
@@ -246,21 +247,18 @@ export class WorldviewContext {
         regl.clear({ color: [0, 0, 0, 1], depth: 1 });
         let currentObjectId = 0;
         const seenObjects = [];
-        const seenIds: Array<HitmapId> = [];
+        const seenObjectIds: Array<HitmapId> = [];
         let counter = 0;
 
         // draw the hitmap components to the framebuffer
 
         camera.draw(this.cameraStore.state, () => {
           do {
-            if (counter === MAX_NUMBER_OF_LAYERS) {
+            if (counter === MAX_NUMBER_OF_HITMAP_LAYERS) {
               // Provide a max number of layers so this while loop doesn't crash the page.
               console.error(
-                `Hit ${MAX_NUMBER_OF_LAYERS} iterations. There is either that number of rendered layers or a bug with hitmap events.`
+                `Hit ${MAX_NUMBER_OF_HITMAP_LAYERS} iterations. There is either a bug or that number of rendered hitmap layers under the mouse cursor.`
               );
-              break;
-            } else if (counter > 0 && !enableStackedObjectEvents) {
-              // Only allow multiple object selection if we've explicitly enabled it.
               break;
             }
             counter++;
@@ -286,12 +284,14 @@ export class WorldviewContext {
 
               currentObjectId = getIdFromColor(pixel);
               if (currentObjectId && this.getDrawPropByHitmapId(currentObjectId).object) {
-                seenIds.push(currentObjectId);
+                seenObjectIds.push(currentObjectId);
                 seenObjects.push(this.getDrawPropByHitmapId(currentObjectId));
               }
             }
-          } while (currentObjectId !== 0);
-          resolve(seenIds);
+            // If we haven't enabled stacked object events, break out of the loop immediately.
+            // eslint-disable-next-line no-unmodified-loop-condition
+          } while (currentObjectId !== 0 && enableStackedObjectEvents);
+          resolve(seenObjectIds);
         });
       });
     });
@@ -312,9 +312,8 @@ export class WorldviewContext {
       this._hitmapIdManager.reset();
     }
 
-    const drawCalls = Array.from(this._drawCalls.values());
-    const sortedDrawCalls = drawCalls.sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
-    sortedDrawCalls.forEach((drawInput: DrawInput) => {
+    const drawCalls = Array.from(this._drawCalls.values()).sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+    drawCalls.forEach((drawInput: DrawInput) => {
       const { command, children, instance, getHitmap } = drawInput;
       if (!children) {
         return console.debug(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`, drawInput);

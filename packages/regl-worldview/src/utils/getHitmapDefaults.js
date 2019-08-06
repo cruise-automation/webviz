@@ -12,12 +12,12 @@ import { intToRGB } from "./commandUtils";
 export const nonInstancedGetHitmap = <T: Object>(
   props: T[] | T,
   assignNextIds: AssignNextIdsFn,
-  alreadySeenObjects: MouseEventObject[]
+  seenObjects: MouseEventObject[]
 ) => {
   const propsArray = Array.isArray(props) ? props : [props];
   const hitmapArray = propsArray
     .map((prop) => {
-      if (alreadySeenObjects.some(({ object }) => object === prop)) {
+      if (seenObjects.some(({ object }) => object === prop)) {
         return null;
       }
       const hitmapProp = { ...prop };
@@ -40,12 +40,12 @@ export const nonInstancedGetHitmap = <T: Object>(
 export const createInstancedGetHitmap = ({ pointCountPerInstance }: { pointCountPerInstance: number }) => <T: Object>(
   props: T[] | T,
   assignNextIds: AssignNextIdsFn,
-  alreadySeenObjects: MouseEventObject[]
+  seenObjects: MouseEventObject[]
 ) => {
   const propsArray = Array.isArray(props) ? props : [props];
   const hitmapArray = propsArray
     .map((prop: T) => {
-      const filteredIndicies = alreadySeenObjects
+      const filteredIndicies = seenObjects
         .map(({ object, instanceIndex }) => (object === prop ? instanceIndex : null))
         .filter((instanceIndex) => typeof instanceIndex === "number");
       const hitmapProp = { ...prop };

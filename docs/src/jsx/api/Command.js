@@ -41,8 +41,6 @@ function Triangle({ color }) {
   );
 }
 
-Triangle.displayName = "triangle";
-
 Triangle.defaultProps = {
   color: [1, 0, 0, 1],
 };

@@ -64,5 +64,4 @@ export default function Grid(props: Props) {
   return <Command getHitmap={nonInstancedGetHitmap} {...props} reglCommand={grid} />;
 }
 
-Grid.displayName = "Grid";
 Grid.defaultProps = { count: 6 };

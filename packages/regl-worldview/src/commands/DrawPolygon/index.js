@@ -71,8 +71,8 @@ type Props = {
   children: DrawPolygonType[],
 };
 
-const polygonLinesGetHitmap: GetHitmap = <T>(props: T, assignNextIds, alreadySeenObjects) => {
-  const hitmapProps = nonInstancedGetHitmap(props, assignNextIds, alreadySeenObjects);
+const polygonLinesGetHitmap: GetHitmap = <T>(props: T, assignNextIds, seenObjects) => {
+  const hitmapProps = nonInstancedGetHitmap(props, assignNextIds, seenObjects);
   for (const prop of hitmapProps) {
     prop.scale = HITMAP_SCALE;
   }
@@ -103,8 +103,8 @@ class PolygonLines extends React.Component<Props> {
   }
 }
 
-const polygonPointsGetHitmap: GetHitmap = <T>(props: T, assignNextIds, alreadySeenObjects) => {
-  const hitmapProps = nonInstancedGetHitmap(props, assignNextIds, alreadySeenObjects);
+const polygonPointsGetHitmap: GetHitmap = <T>(props: T, assignNextIds, seenObjects) => {
+  const hitmapProps = nonInstancedGetHitmap(props, assignNextIds, seenObjects);
   for (const prop of hitmapProps) {
     prop.scale = HITMAP_POINT_SCALE;
   }

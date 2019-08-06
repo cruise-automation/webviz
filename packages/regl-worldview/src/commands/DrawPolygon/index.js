@@ -12,7 +12,6 @@ import React from "react";
 import type { Line, Point, Pose, Vec4, Vec3, Scale, GetHitmap } from "../../types";
 import { vec4ToRGBA, vec3ToPoint } from "../../utils/commandUtils";
 import { nonInstancedGetHitmap } from "../../utils/getHitmapDefaults";
-import Command from "../Command";
 import Lines from "../Lines";
 import Spheres from "../Spheres";
 

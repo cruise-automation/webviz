@@ -23,12 +23,12 @@ import type {
   MouseEventEnum,
   MouseEventObject,
   GetHitmap,
-  HitmapId,
+  ObjectHitmapId,
   AssignNextIdsFn,
 } from "./types";
 import { getIdFromColor } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
-import HitmapIdManager from "./utils/HitmapIdManager";
+import HitmapObjectIdManager from "./utils/HitmapObjectIdManager";
 import type { Ray } from "./utils/Raycast";
 import { getRayFromClick } from "./utils/Raycast";
 
@@ -89,7 +89,7 @@ export class WorldviewContext {
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInput> = new Map();
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
-  _hitmapIdManager: HitmapIdManager = new HitmapIdManager();
+  _hitmapIdManager: HitmapObjectIdManager = new HitmapObjectIdManager();
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
   counters: { paint?: number, render?: number } = {};
@@ -224,7 +224,7 @@ export class WorldviewContext {
 
   _debouncedPaint = debounce(this.paint, 10);
 
-  readHitmap(canvasX: number, canvasY: number, enableStackedObjectEvents: boolean): Promise<HitmapId[]> {
+  readHitmap(canvasX: number, canvasY: number, enableStackedObjectEvents: boolean): Promise<ObjectHitmapId[]> {
     if (!this.initializedData) {
       return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
     }
@@ -247,7 +247,7 @@ export class WorldviewContext {
         regl.clear({ color: [0, 0, 0, 1], depth: 1 });
         let currentObjectId = 0;
         const seenObjects = [];
-        const seenObjectIds: HitmapId[] = [];
+        const seenObjectIds: ObjectHitmapId[] = [];
         let counter = 0;
 
         // draw the hitmap components to the framebuffer
@@ -283,9 +283,9 @@ export class WorldviewContext {
               });
 
               currentObjectId = getIdFromColor(pixel);
-              if (currentObjectId && this.getDrawPropByHitmapId(currentObjectId).object) {
+              if (currentObjectId && this.getDrawPropByObjectHitmapId(currentObjectId).object) {
                 seenObjectIds.push(currentObjectId);
-                seenObjects.push(this.getDrawPropByHitmapId(currentObjectId));
+                seenObjects.push(this.getDrawPropByObjectHitmapId(currentObjectId));
               }
             }
             // If we haven't enabled stacked object events, break out of the loop immediately.
@@ -297,11 +297,19 @@ export class WorldviewContext {
     });
   }
 
-  callComponentHandlers = (hitmapIds: HitmapId[], ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
+  callComponentHandlers = (
+    objectHitmapIds: ObjectHitmapId[],
+    ray: Ray,
+    e: MouseEvent,
+    mouseEventName: MouseEventEnum
+  ) => {
     this._drawCalls.forEach((drawInput, component) => {
       if (component instanceof Command) {
-        const hitmapIdsForCommand = intersection(this._hitmapIdManager.getHitmapIdsForCommand(component), hitmapIds);
-        const mouseEvents = hitmapIdsForCommand.map((hitmapId) => this.getDrawPropByHitmapId(hitmapId));
+        const objectHitmapIdsForCommand = intersection(
+          this._hitmapIdManager.getObjectHitmapIdsForCommand(component),
+          objectHitmapIds
+        );
+        const mouseEvents = objectHitmapIdsForCommand.map((id) => this.getDrawPropByObjectHitmapId(id));
         component.handleMouseEvent(mouseEvents, e, ray, mouseEventName);
       }
     });
@@ -337,8 +345,8 @@ export class WorldviewContext {
     });
   };
 
-  getDrawPropByHitmapId = (hitmapId: HitmapId): MouseEventObject => {
-    return this._hitmapIdManager.getDrawPropByHitmapId(hitmapId);
+  getDrawPropByObjectHitmapId = (objectHitmapId: ObjectHitmapId): MouseEventObject => {
+    return this._hitmapIdManager.getDrawPropByObjectHitmapId(objectHitmapId);
   };
 
   _clearCanvas = (regl: any) => {

@@ -57,12 +57,7 @@ type State = {|
   worldviewContext: WorldviewContext,
 |};
 
-function handleWorldviewMouseInteraction(
-  objects: MouseEventObject[],
-  ray: Ray,
-  e: MouseEvent,
-  handler: MouseHandler
-) {
+function handleWorldviewMouseInteraction(objects: MouseEventObject[], ray: Ray, e: MouseEvent, handler: MouseHandler) {
   const args = { ray, objects };
 
   try {
@@ -214,12 +209,12 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     (e: any).persist();
     worldviewContext
       .readHitmap(canvasX, canvasY, !!this.props.enableStackedObjectEvents)
-      .then((hitmapIds) => {
+      .then((objectHitmapIds) => {
         if (worldviewHandler) {
-          const objects = hitmapIds.map((id) => worldviewContext.getDrawPropByHitmapId(id));
+          const objects = objectHitmapIds.map((id) => worldviewContext.getDrawPropByObjectHitmapId(id));
           handleWorldviewMouseInteraction(objects, ray, e, worldviewHandler);
         }
-        worldviewContext.callComponentHandlers(hitmapIds, ray, e, mouseEventName);
+        worldviewContext.callComponentHandlers(objectHitmapIds, ray, e, mouseEventName);
       })
       .catch((e) => {
         console.error(e);

@@ -189,7 +189,7 @@ export type MouseEventObject = {
   instanceIndex: ?number,
 };
 
-export type HitmapId = number;
+export type ObjectHitmapId = number;
 /*
  * type: "instanced" if mapping multiple IDs to a single callback object, "single" if 1:1.
  * callbackObject: the object to pass to event callbacks when this object is interacted with.
@@ -198,7 +198,7 @@ export type HitmapId = number;
  */
 export type AssignNextIdsFn = (
   { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
-) => HitmapId[];
+) => ObjectHitmapId[];
 export type GetHitmap = <T>(prop: T, AssignNextIdsFn, MouseEventObject[]) => T;
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";

@@ -20,12 +20,12 @@ There are two kinds of event handlers:
 **Worldview Level Handlers**
 
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `objects`: an array of objects (`{ object, instanceIndex }`) that you interacted with. The value is `[]` if no object is found. The `enableStackedObjectEvents` option must be set to `true` on `<Worldview` for this handler to return more than one object.
+- `objects`: an array of objects (`{ object, instanceIndex }`) that you interacted with. The value is `[]` if no object is found. The `enableStackedObjectEvents` option must be set to `true` on `<Worldview>` for this handler to return more than one object.
 
 **Command Component Level Handlers**
 
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
-- `objects`: an array of objects (`{ object, instanceIndex }`) from this command that you interacted with. There will always be at least one object. The `enableStackedObjectEvents` option must be set to `true` on `<Worldview` for this handler to return more than one object.
+- `objects`: an array of objects (`{ object, instanceIndex }`) from this command that you interacted with. There will always be at least one object. The `enableStackedObjectEvents` option must be set to `true` on `<Worldview>` for this handler to return more than one object.
 
 
 ```js
@@ -55,7 +55,7 @@ Example:
 
 ### getHitmap and mapping for interactive objects
 
-How do we detect which object was interacted with? We use a process called picking, in which we generate an off-screen "canvas", or hitmap, to paint our objects into, assign each object a unique color, and then paint each object into this hitmap. We then detect which object was clicked on by testing which color was underneath the cursor.
+How do we detect which object was interacted with? We use a process called picking, in which we generate an off-screen canvas, or "hitmap", to paint our objects into, assign each object a unique color, and then paint each object into this hitmap. We then detect which object was clicked on by testing which color was underneath the cursor.
 
 The Worldview library allows a lot of control over this interaction, but most Commands can use one of two default `getHitmap` functions.
 
@@ -70,7 +70,7 @@ All built in commands allow overriding the `getHitmap` function, and we recommen
 
 ##### Customizing the getHitmap function
 
-Each Command is passed the `reglCommand` function and `children`. Worldview calls compiled version of the `reglCommand` function with `children`. `getHitmap` takes in those `children` and returns new version of them that will be rendered into the hitmap.
+Each Command is passed the `reglCommand` function and `children`. Worldview compiles the `reglCommand` once by calling it with the `regl` object as an argument, and calls the resulting command each frame with `children`. `getHitmap` takes in those `children` and returns new version of them that will be rendered into the hitmap.
 
 Some important things to remember:
  * The first argument of `getHitmap` is the `children`.
@@ -86,16 +86,16 @@ type AssignNextIdsFn = (
   { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
 ) => Array<HitmapId>;
 ```
- * Each unique object that you want to event on should get a unique ID. If you want to map parts of a single object to multiple IDs (instancing), use the `type: "instanced"` call to `assignNextIds`.
+ *  * Each object that you want to support mouse events on requires a unique ID. If your command actually renders multiple items per input object (such as when using [instanced drawing](https://github.com/regl-project/regl/blob/gh-pages/example/instance-triangle.js)), you may want a separate ID for each item — in this case, call `assignNextIds` with `type: "instanced"`.
  * Once you have this ID, pass it to `intToRGB()` to get the color to paint your object. Don't apply any transparency or shading to your object or this will mess up the hitmap.
 
-Example using composition of the default `mapHitmap` functions:
+Example using composition of the default `getHitmap` functions:
 
 ```js
 <Worldview>
   <Points
     onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id}`)}
-    mapHitmap={(props, assignNextIds) => {
+    getHitmap={(props, assignNextIds) => {
       const hitmapProps = nonInstancedGetHitmap(props, assignNextIds);
       // Points are hard to click, so expand their hitmap so that clicking slightly outside of a point still selects it.
       for (hitmapProp of hitmapProps) {
@@ -109,13 +109,13 @@ Example using composition of the default `mapHitmap` functions:
 </Worldview>
 ```
 
-Example using a custom `mapHitmap` function:
+Example using a custom `getHitmap` function:
 
 ```js
 <Worldview>
   <Points
     onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id}`)}
-    mapHitmap={(props, assignNextIds) => {
+    getHitmap={(props, assignNextIds) => {
       // This is a simplified version of nonInstancedGetHitmap, for explanation purposes.
       return propsArray.map((prop) => {
         // We copy each point array.

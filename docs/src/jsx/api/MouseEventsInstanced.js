@@ -59,7 +59,6 @@ function Example() {
 
   function onWorldviewClick(ev, { objects }) {
     const messages = objects.map(({ object, instanceIndex }) => {
-      // instanced spheres has reverse id, from 6000 to 5001
       if (object.points && instanceIndex >= 0 && instanceIndex <= points.length) {
         return `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
           object.points[instanceIndex]

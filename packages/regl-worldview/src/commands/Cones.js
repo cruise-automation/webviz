@@ -17,6 +17,6 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, true);
 
 const cones = fromGeometry(points, sideFaces.concat(endCapFaces));
 
-export default function Cones(props: { ...OptionalCommandProps, children: Array<BaseShape> }) {
+export default function Cones(props: { ...OptionalCommandProps, children: BaseShape[] }) {
   return <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={cones} />;
 }

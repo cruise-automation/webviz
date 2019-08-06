@@ -10,8 +10,8 @@ type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Uint32Arra
 
 export type GLBModel = {
   json: Object,
-  accessors?: Array<TypedArray>,
-  images?: Array<ImageBitmap>,
+  accessors?: TypedArray[],
+  images?: ImageBitmap[],
 };
 
 // Parse a GLB file: https://github.com/KhronosGroup/glTF/tree/master/specification/2.0

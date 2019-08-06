@@ -49,7 +49,7 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, false);
 
 const cylinders = fromGeometry(points, sideFaces.concat(endCapFaces));
 
-export default function Cylinders(props: { ...OptionalCommandProps, children: Array<Cylinder> }) {
+export default function Cylinders(props: { ...OptionalCommandProps, children: Cylinder[] }) {
   return (
     <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={cylinders} />
   );

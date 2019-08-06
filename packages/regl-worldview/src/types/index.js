@@ -198,8 +198,8 @@ export type HitmapId = number;
  */
 export type AssignNextIdsFn = (
   { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
-) => Array<HitmapId>;
-export type GetHitmap = <T>(prop: T, AssignNextIdsFn, Array<MouseEventObject>) => T;
+) => HitmapId[];
+export type GetHitmap = <T>(prop: T, AssignNextIdsFn, MouseEventObject[]) => T;
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
 

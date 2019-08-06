@@ -58,7 +58,7 @@ type State = {|
 |};
 
 function handleWorldviewMouseInteraction(
-  objects: Array<MouseEventObject>,
+  objects: MouseEventObject[],
   ray: Ray,
   e: MouseEvent,
   handler: MouseHandler

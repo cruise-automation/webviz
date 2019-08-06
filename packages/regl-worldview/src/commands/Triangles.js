@@ -166,7 +166,7 @@ const triangles = (regl: Regl) => {
   };
 };
 
-export default function Triangles(props: { ...OptionalCommandProps, children: Array<TriangleList> }) {
+export default function Triangles(props: { ...OptionalCommandProps, children: TriangleList[] }) {
   return (
     <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 3 })} {...props} reglCommand={triangles} />
   );

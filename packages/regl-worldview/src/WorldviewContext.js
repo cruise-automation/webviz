@@ -224,7 +224,7 @@ export class WorldviewContext {
 
   _debouncedPaint = debounce(this.paint, 10);
 
-  readHitmap(canvasX: number, canvasY: number, enableStackedObjectEvents: boolean): Promise<Array<HitmapId>> {
+  readHitmap(canvasX: number, canvasY: number, enableStackedObjectEvents: boolean): Promise<HitmapId[]> {
     if (!this.initializedData) {
       return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
     }
@@ -247,7 +247,7 @@ export class WorldviewContext {
         regl.clear({ color: [0, 0, 0, 1], depth: 1 });
         let currentObjectId = 0;
         const seenObjects = [];
-        const seenObjectIds: Array<HitmapId> = [];
+        const seenObjectIds: HitmapId[] = [];
         let counter = 0;
 
         // draw the hitmap components to the framebuffer
@@ -297,7 +297,7 @@ export class WorldviewContext {
     });
   }
 
-  callComponentHandlers = (hitmapIds: Array<HitmapId>, ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
+  callComponentHandlers = (hitmapIds: HitmapId[], ray: Ray, e: MouseEvent, mouseEventName: MouseEventEnum) => {
     this._drawCalls.forEach((drawInput, component) => {
       if (component instanceof Command) {
         const hitmapIdsForCommand = intersection(this._hitmapIdManager.getHitmapIdsForCommand(component), hitmapIds);
@@ -307,7 +307,7 @@ export class WorldviewContext {
     });
   };
 
-  _drawInput = (isHitmap?: boolean, seenObjects?: Array<MouseEventObject>) => {
+  _drawInput = (isHitmap?: boolean, seenObjects?: MouseEventObject[]) => {
     if (isHitmap) {
       this._hitmapIdManager.reset();
     }

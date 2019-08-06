@@ -27,7 +27,7 @@ function LinesWithClickableInterior({
   ...rest
 }: {
   ...OptionalCommandProps,
-  children: Array<Line>,
+  children: Line[],
   enableClickableInterior: boolean,
   fillColor: Object,
   showBorder: boolean,

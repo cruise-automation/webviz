@@ -11,7 +11,7 @@ import React from "react";
 
 import type { HitmapId, MouseEventObject, BaseShape } from "../types";
 
-function fillArray(start: number, length: number): Array<number> {
+function fillArray(start: number, length: number): number[] {
   return new Array(length).fill(0).map((_, index) => start + index);
 }
 
@@ -19,7 +19,7 @@ type CommandInstance = React.Component<any>;
 
 export default class HitmapIdManager {
   _hitmapIdMap: { [HitmapId]: BaseShape } = {}; // map hitmapId to the original marker object
-  _commandToHitmapIdsMap: Map<CommandInstance, Array<HitmapId>> = new Map();
+  _commandToHitmapIdsMap: Map<CommandInstance, HitmapId[]> = new Map();
   _nextHitmapId = 1;
   _hitmapInstancedIdMap: { [HitmapId]: number } = {}; // map hitmapId to the instance index
 
@@ -28,13 +28,13 @@ export default class HitmapIdManager {
     options:
       | { type: "single", callbackObject: BaseShape }
       | { type: "instanced", callbackObject: BaseShape, count: number }
-  ): Array<HitmapId> => {
+  ): HitmapId[] => {
     const idCount = options.type === "instanced" ? options.count : 1;
     if (idCount < 1) {
       throw new Error("Must get at least 1 id");
     }
 
-    const ids: Array<number> = [];
+    const ids: HitmapId[] = [];
     // First, pull from old hitmap ids ranges
 
     const newIds = fillArray(this._nextHitmapId, idCount - ids.length);
@@ -68,7 +68,7 @@ export default class HitmapIdManager {
     return { object: this._hitmapIdMap[hitmapId], instanceIndex: this._hitmapInstancedIdMap[hitmapId] };
   };
 
-  getHitmapIdsForCommand = (command: CommandInstance): Array<HitmapId> => {
+  getHitmapIdsForCommand = (command: CommandInstance): HitmapId[] => {
     return this._commandToHitmapIdsMap.get(command) || [];
   };
 }

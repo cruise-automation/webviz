@@ -14,7 +14,7 @@ function fillArray(length: number) {
   return new Array(length).fill(null).map(() => []);
 }
 
-function toSeenObjects(objects: Array<Object>, instanceIndicies?: Array<?number>): Array<MouseEventObject> {
+function toSeenObjects(objects: Object[], instanceIndicies?: Array<?number>): MouseEventObject[] {
   return objects.map((object, index) => ({
     object,
     instanceIndex: instanceIndicies ? instanceIndicies[index] : undefined,

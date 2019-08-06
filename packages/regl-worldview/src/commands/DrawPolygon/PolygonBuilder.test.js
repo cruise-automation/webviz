@@ -19,7 +19,7 @@ const buildPolygon = () => {
   return poly;
 };
 class FakeRay {
-  point: Array<number>;
+  point: number[];
   constructor(point) {
     this.point = point;
   }
@@ -29,7 +29,7 @@ class FakeRay {
   }
 }
 
-const getArgs: (Array<number>, ?Object) => ReglClickInfo = (point, object) => {
+const getArgs: (number[], ?Object) => ReglClickInfo = (point, object) => {
   return {
     ray: (new FakeRay(point): any),
     object,

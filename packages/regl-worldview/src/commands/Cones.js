@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import * as React from "react";
+
 import type { BaseShape } from "../types";
 import fromGeometry from "../utils/fromGeometry";
 import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";

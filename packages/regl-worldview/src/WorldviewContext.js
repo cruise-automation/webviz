@@ -26,7 +26,7 @@ import type {
   ObjectHitmapId,
   AssignNextIdsFn,
 } from "./types";
-import { getIdFromColor } from "./utils/commandUtils";
+import { getIdFromColor, intToRGB } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
 import HitmapObjectIdManager from "./utils/HitmapObjectIdManager";
 import type { Ray } from "./utils/Raycast";
@@ -244,15 +244,17 @@ export class WorldviewContext {
       // tell regl to use a framebuffer for this render
       regl({ framebuffer: _fbo })(() => {
         // clear the framebuffer
-        regl.clear({ color: [0, 0, 0, 1], depth: 1 });
+        regl.clear({ color: intToRGB(0), depth: 1 });
         let currentObjectId = 0;
         const seenObjects = [];
         const seenObjectIds: ObjectHitmapId[] = [];
         let counter = 0;
 
-        // draw the hitmap components to the framebuffer
-
         camera.draw(this.cameraStore.state, () => {
+          // Every iteration in this loop clears the framebuffer, draws the hitmap objects that have NOT already been
+          // seen to the framebuffer, and then reads the pixel under the cursor to find the object on top.
+          // If `enableStackedObjectEvents` is false, we only do this iteration once - we only resolve with 0 or 1
+          // `ObjectHitmapId`s.
           do {
             if (counter === MAX_NUMBER_OF_HITMAP_LAYERS) {
               // Provide a max number of layers so this while loop doesn't crash the page.
@@ -262,7 +264,7 @@ export class WorldviewContext {
               break;
             }
             counter++;
-            regl.clear({ color: [0, 0, 0, 1], depth: 1 });
+            regl.clear({ color: intToRGB(0), depth: 1 });
             this._drawInput(true, seenObjects);
 
             // it's possible to get x/y values outside the framebuffer size
@@ -283,7 +285,7 @@ export class WorldviewContext {
               });
 
               currentObjectId = getIdFromColor(pixel);
-              if (currentObjectId && this.getDrawPropByObjectHitmapId(currentObjectId).object) {
+              if (currentObjectId > 0 && this.getDrawPropByObjectHitmapId(currentObjectId).object) {
                 seenObjectIds.push(currentObjectId);
                 seenObjects.push(this.getDrawPropByObjectHitmapId(currentObjectId));
               }

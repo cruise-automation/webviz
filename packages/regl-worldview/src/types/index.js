@@ -155,6 +155,7 @@ export type BaseShape = {
 
 export type Arrow = BaseShape & {
   points?: Point[],
+  interactionData?: any,
 };
 
 export type Cube = BaseShape & {

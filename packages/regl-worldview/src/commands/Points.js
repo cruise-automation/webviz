@@ -64,5 +64,5 @@ const points = (regl: Regl) => {
 };
 
 export default function Points(props: { ...CommonCommandProps, children: PointType[] }) {
-  return <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={points} />;
+  return <Command getHitmap={createInstancedGetHitmap(1)} {...props} reglCommand={points} />;
 }

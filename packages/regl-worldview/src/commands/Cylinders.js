@@ -51,6 +51,6 @@ const cylinders = fromGeometry(points, sideFaces.concat(endCapFaces));
 
 export default function Cylinders(props: { ...CommonCommandProps, children: Cylinder[] }) {
   return (
-    <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={cylinders} />
+    <Command getHitmap={createInstancedGetHitmap(1)} {...props} reglCommand={cylinders} />
   );
 }

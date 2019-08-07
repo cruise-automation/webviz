@@ -37,7 +37,7 @@ export const nonInstancedGetHitmap = <T: Object>(
   return hitmapArray[0];
 };
 
-export const createInstancedGetHitmap = ({ pointCountPerInstance }: { pointCountPerInstance: number }) => <T: Object>(
+export const createInstancedGetHitmap = (pointCountPerInstance: number) => <T: Object>(
   props: T[] | T,
   assignNextIds: AssignNextIdsFn,
   seenObjects: MouseEventObject[]

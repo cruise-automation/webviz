@@ -58,6 +58,6 @@ const spheres = fromGeometry(points, faces);
 
 export default function Spheres(props: { ...CommonCommandProps, children: SphereList[] }) {
   return (
-    <Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} {...props} reglCommand={spheres} />
+    <Command getHitmap={createInstancedGetHitmap(1)} {...props} reglCommand={spheres} />
   );
 }

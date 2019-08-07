@@ -62,7 +62,7 @@ The Worldview library allows a lot of control over this interaction, but most Co
 | Name                       | Description                                                                                                                                                                  | Usage                                                                                |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `nonInstancedGetHitmap`    | A default `getHitmap` function for non-instanced commands.                                                                                                                   | `<Command getHitmap={nonInstancedGetHitmap} ... />`                                  |
-| `createInstancedGetHitmap` | A factory function for instanced commands. It takes the number of points per instance: for example, a triangle has 3 points, whereas a sphere has 1 point (just the center). | `<Command getHitmap={createInstancedGetHitmap({ pointCountPerInstance: 1 })} ... />` |
+| `createInstancedGetHitmap` | A factory function for instanced commands. It takes the number of points per instance: for example, a triangle has 3 points, whereas a sphere has 1 point (just the center). | `<Command getHitmap={createInstancedGetHitmap(1)} ... />` |
 
 ##### Turning off interactivity for a layer
 

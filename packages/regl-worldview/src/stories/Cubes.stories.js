@@ -3,6 +3,7 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 
+import type { MouseHandler } from "../types";
 import Container from "./Container";
 import { cube, p, UNIT_QUATERNION, buildMatrix, rng } from "./util";
 import withRange from "./withRange";
@@ -45,9 +46,9 @@ const instancedCameraState = {
 
 class DynamicCubes extends React.Component<any, any> {
   state = { cubeCount: 1, cubeId: -1 };
-  onContainerClick = (e, clickInfo) => {
-    if (clickInfo && clickInfo.object.id % 2) {
-      this.setState({ cubeId: clickInfo.object.id || -1 });
+  onContainerClick: MouseHandler = (e, clickInfo) => {
+    if (clickInfo.objects.length && clickInfo.objects[0].object.id % 2) {
+      this.setState({ cubeId: clickInfo.objects[0].object.id || -1 });
     }
   };
 

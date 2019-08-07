@@ -32,7 +32,7 @@ class FakeRay {
 const getArgs: (number[], ?Object) => ReglClickInfo = (point, object) => {
   return {
     ray: (new FakeRay(point): any),
-    object,
+    objects: [{ object }],
   };
 };
 
@@ -42,7 +42,7 @@ const event: (?boolean) => MouseEvent = (ctrlKey): any => ({
   preventDefault: () => {},
 });
 
-describe("Polygon builder", () => {
+describe("PolygonBuilder", () => {
   describe("delete point", () => {
     it("can remove a point", () => {
       const polygon = buildPolygon();

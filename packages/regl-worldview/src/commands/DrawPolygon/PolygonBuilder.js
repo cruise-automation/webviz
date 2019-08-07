@@ -286,11 +286,11 @@ export default class PolygonBuilder {
     if (!args) {
       return;
     }
-    if (!args.object) {
+    if (!args.objects.length) {
       return;
     }
 
-    this.selectObject(args.object);
+    this.selectObject(args.objects[0].object);
 
     // if a point was double-clicked, delete it
     if (this.activePoint) {
@@ -362,7 +362,8 @@ export default class PolygonBuilder {
 
     // single click or click+drag is for selection & moving
     if (isFirstClick && !isCtrlClick) {
-      this.selectObject(args.object);
+      const clickObject = args.objects[0];
+      this.selectObject(clickObject && clickObject.object);
       return this.onChange();
     }
 

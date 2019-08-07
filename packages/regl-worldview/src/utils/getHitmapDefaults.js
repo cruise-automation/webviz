@@ -24,7 +24,7 @@ export const nonInstancedGetHitmap = <T: Object>(
       const [id] = assignNextIds({ type: "single", callbackObject: prop });
       const hitmapColor = intToRGB(id);
       hitmapProp.color = hitmapColor;
-      if (hitmapProp.points) {
+      if (hitmapProp.points && hitmapProp.points.length) {
         hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
       }
       return hitmapProp;
@@ -45,7 +45,7 @@ export const createInstancedGetHitmap = ({ pointCountPerInstance }: { pointCount
   const propsArray = Array.isArray(props) ? props : [props];
   const hitmapArray = propsArray
     .map((prop: T) => {
-      const filteredIndicies = seenObjects
+      const filteredIndices = seenObjects
         .map(({ object, instanceIndex }) => (object === prop ? instanceIndex : null))
         .filter((instanceIndex) => typeof instanceIndex === "number");
       const hitmapProp = { ...prop };
@@ -64,17 +64,17 @@ export const createInstancedGetHitmap = ({ pointCountPerInstance }: { pointCount
           }
         }
         hitmapProp.colors = allColors;
-        if (filteredIndicies.length) {
+        if (filteredIndices.length) {
           hitmapProp.points = hitmapProp.points.filter(
-            (_, index) => !filteredIndicies.includes(Math.floor(index / pointCountPerInstance))
+            (_, index) => !filteredIndices.includes(Math.floor(index / pointCountPerInstance))
           );
           hitmapProp.colors = hitmapProp.colors.filter(
-            (_, index) => !filteredIndicies.includes(Math.floor(index / pointCountPerInstance))
+            (_, index) => !filteredIndices.includes(Math.floor(index / pointCountPerInstance))
           );
         }
       } else {
         hitmapProp.color = startColor;
-        if (filteredIndicies.length) {
+        if (filteredIndices.length) {
           return null;
         }
       }

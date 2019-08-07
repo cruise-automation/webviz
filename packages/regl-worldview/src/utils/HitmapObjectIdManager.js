@@ -18,7 +18,7 @@ function fillArray(start: number, length: number): number[] {
 type CommandInstance = React.Component<any>;
 
 export default class HitmapObjectIdManager {
-  _objectHitmapIdMap: { [ObjectHitmapId]: BaseShape } = {}; // map objectHitmapId to the original marker object
+  _objectsByObjectHitmapIdMap: { [ObjectHitmapId]: BaseShape } = {};
   _commandToObjectHitmapIdsMap: Map<CommandInstance, ObjectHitmapId[]> = new Map();
   _nextObjectHitmapId = 1;
   _hitmapInstancedIdMap: { [ObjectHitmapId]: number } = {}; // map objectHitmapId to the instance index
@@ -49,7 +49,7 @@ export default class HitmapObjectIdManager {
 
     // Store the mapping of ID to original marker object
     for (const id of ids) {
-      this._objectHitmapIdMap[id] = options.callbackObject;
+      this._objectsByObjectHitmapIdMap[id] = options.callbackObject;
     }
     const existingIds = this._commandToObjectHitmapIdsMap.get(command) || [];
     this._commandToObjectHitmapIdsMap.set(command, existingIds.concat(ids));
@@ -58,7 +58,7 @@ export default class HitmapObjectIdManager {
   };
 
   reset = () => {
-    this._objectHitmapIdMap = {};
+    this._objectsByObjectHitmapIdMap = {};
     this._commandToObjectHitmapIdsMap = new Map();
     this._nextObjectHitmapId = 1;
     this._hitmapInstancedIdMap = {};
@@ -66,7 +66,7 @@ export default class HitmapObjectIdManager {
 
   getDrawPropByObjectHitmapId = (objectHitmapId: ObjectHitmapId): MouseEventObject => {
     return {
-      object: this._objectHitmapIdMap[objectHitmapId],
+      object: this._objectsByObjectHitmapIdMap[objectHitmapId],
       instanceIndex: this._hitmapInstancedIdMap[objectHitmapId],
     };
   };

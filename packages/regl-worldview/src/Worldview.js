@@ -211,7 +211,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       .readHitmap(canvasX, canvasY, !!this.props.enableStackedObjectEvents)
       .then((objectHitmapIds) => {
         if (worldviewHandler) {
-          const objects = objectHitmapIds.map((id) => worldviewContext.getDrawPropByObjectHitmapId(id));
+          const objects = objectHitmapIds.map((id) => worldviewContext.getObjectByObjectHitmapId(id));
           handleWorldviewMouseInteraction(objects, ray, e, worldviewHandler);
         }
         worldviewContext.callComponentHandlers(objectHitmapIds, ray, e, mouseEventName);

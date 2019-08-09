@@ -17,6 +17,10 @@ function fillArray(start: number, length: number): number[] {
 
 type CommandInstance = React.Component<any>;
 
+/*
+ * This object manages the mapping between objects that are rendered into the scene and their IDs.
+ * It supplies an API for generating IDs for a rendered object and then accessing those objects based on their ID.
+ */
 export default class HitmapObjectIdManager {
   _objectsByObjectHitmapIdMap: { [ObjectHitmapId]: BaseShape } = {};
   _commandToObjectHitmapIdsMap: Map<CommandInstance, ObjectHitmapId[]> = new Map();
@@ -64,7 +68,7 @@ export default class HitmapObjectIdManager {
     this._hitmapInstancedIdMap = {};
   };
 
-  getDrawPropByObjectHitmapId = (objectHitmapId: ObjectHitmapId): MouseEventObject => {
+  getObjectByObjectHitmapId = (objectHitmapId: ObjectHitmapId): MouseEventObject => {
     return {
       object: this._objectsByObjectHitmapIdMap[objectHitmapId],
       instanceIndex: this._hitmapInstancedIdMap[objectHitmapId],

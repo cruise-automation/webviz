@@ -285,9 +285,9 @@ export class WorldviewContext {
               });
 
               currentObjectId = getIdFromColor(pixel);
-              if (currentObjectId > 0 && this.getDrawPropByObjectHitmapId(currentObjectId).object) {
+              if (currentObjectId > 0 && this.getObjectByObjectHitmapId(currentObjectId).object) {
                 excludedObjectIds.push(currentObjectId);
-                excludedObjects.push(this.getDrawPropByObjectHitmapId(currentObjectId));
+                excludedObjects.push(this.getObjectByObjectHitmapId(currentObjectId));
               }
             }
             // If we haven't enabled stacked object events, break out of the loop immediately.
@@ -311,7 +311,7 @@ export class WorldviewContext {
           this._hitmapIdManager.getObjectHitmapIdsForCommand(component),
           objectHitmapIds
         );
-        const mouseEvents = objectHitmapIdsForCommand.map((id) => this.getDrawPropByObjectHitmapId(id));
+        const mouseEvents = objectHitmapIdsForCommand.map((id) => this.getObjectByObjectHitmapId(id));
         component.handleMouseEvent(mouseEvents, e, ray, mouseEventName);
       }
     });
@@ -347,8 +347,8 @@ export class WorldviewContext {
     });
   };
 
-  getDrawPropByObjectHitmapId = (objectHitmapId: ObjectHitmapId): MouseEventObject => {
-    return this._hitmapIdManager.getDrawPropByObjectHitmapId(objectHitmapId);
+  getObjectByObjectHitmapId = (objectHitmapId: ObjectHitmapId): MouseEventObject => {
+    return this._hitmapIdManager.getObjectByObjectHitmapId(objectHitmapId);
   };
 
   _clearCanvas = (regl: any) => {

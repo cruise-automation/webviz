@@ -36,32 +36,32 @@ describe("HitmapObjectIdManager", () => {
     it("assigns instance indices isInstanced is true", () => {
       const manager: HitmapObjectIdManager = new HitmapObjectIdManager();
       const ids = manager.assignNextIds(commandInstanceId, { type: "instanced", callbackObject: drawProp, count: 2 });
-      expect(manager.getDrawPropByObjectHitmapId(ids[0]).instanceIndex).toEqual(0);
-      expect(manager.getDrawPropByObjectHitmapId(ids[1]).instanceIndex).toEqual(1);
+      expect(manager.getObjectByObjectHitmapId(ids[0]).instanceIndex).toEqual(0);
+      expect(manager.getObjectByObjectHitmapId(ids[1]).instanceIndex).toEqual(1);
     });
 
     it("does not assign instance indices isInstanced is false", () => {
       const manager = new HitmapObjectIdManager();
       const ids = manager.assignNextIds(commandInstanceId, { type: "single", callbackObject: drawProp });
-      expect(manager.getDrawPropByObjectHitmapId(ids[0]).instanceIndex).toEqual(undefined);
+      expect(manager.getObjectByObjectHitmapId(ids[0]).instanceIndex).toEqual(undefined);
     });
   });
 
-  describe("getDrawPropByObjectHitmapId", () => {
+  describe("getObjectByObjectHitmapId", () => {
     const commandInstanceId: any = "test";
     const drawProp: any = { isDrawProp: true };
 
     it("does not error when the hitmap id is not found", () => {
       const manager: HitmapObjectIdManager = new HitmapObjectIdManager();
-      expect(manager.getDrawPropByObjectHitmapId(100)).toEqual({ object: undefined, instanceIndex: undefined });
+      expect(manager.getObjectByObjectHitmapId(100)).toEqual({ object: undefined, instanceIndex: undefined });
     });
 
     it("returns the right hitmap object", () => {
       const manager: HitmapObjectIdManager = new HitmapObjectIdManager();
       const ids = manager.assignNextIds(commandInstanceId, { type: "instanced", callbackObject: drawProp, count: 2 });
       // Require exact equality here
-      expect(manager.getDrawPropByObjectHitmapId(ids[0]).object).toBe(drawProp);
-      expect(manager.getDrawPropByObjectHitmapId(ids[1]).object).toBe(drawProp);
+      expect(manager.getObjectByObjectHitmapId(ids[0]).object).toBe(drawProp);
+      expect(manager.getObjectByObjectHitmapId(ids[1]).object).toBe(drawProp);
     });
   });
 
@@ -74,7 +74,7 @@ describe("HitmapObjectIdManager", () => {
       manager.assignNextIds(commandInstanceId, { type: "single", callbackObject: drawProp });
 
       manager.reset(commandInstanceId);
-      expect(manager.getDrawPropByObjectHitmapId(1).object).toEqual(undefined);
+      expect(manager.getObjectByObjectHitmapId(1).object).toEqual(undefined);
 
       const ids = manager.assignNextIds(commandInstanceId, { type: "single", callbackObject: drawProp });
       expect(ids).toEqual([1]);

@@ -221,12 +221,12 @@ type Props = {|
   onMouseDown?: MouseHandler,
   onMouseMove?: MouseHandler,
   onMouseUp?: MouseHandler,
-  children: {|
+  children: {
     id?: number,
     pose: Pose,
     scale: Scale,
     alpha: ?number,
-  |},
+  },
 |};
 
 function useAsyncValue<T>(fn: () => Promise<T>, deps: ?(any[])): ?T {
@@ -272,8 +272,8 @@ function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
 }
 
 // Override the default getHitmap with our own implementation.
-const getHitmap: GetHitmap = <T>(prop: T, assignNextIds, seenObjects) => {
-  const [hitmapProp] = nonInstancedGetHitmap([prop], assignNextIds, seenObjects);
+const getHitmap: GetHitmap = <T: any>(prop: T, assignNextIds, seenObjects) => {
+  const hitmapProp = nonInstancedGetHitmap(prop, assignNextIds, seenObjects);
   if (hitmapProp) {
     hitmapProp.isHitmap = true;
   }

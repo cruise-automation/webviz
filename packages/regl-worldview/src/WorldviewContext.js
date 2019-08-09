@@ -246,8 +246,8 @@ export class WorldviewContext {
         // clear the framebuffer
         regl.clear({ color: intToRGB(0), depth: 1 });
         let currentObjectId = 0;
-        const seenObjects = [];
-        const seenObjectIds: ObjectHitmapId[] = [];
+        const excludedObjects = [];
+        const excludedObjectIds: ObjectHitmapId[] = [];
         let counter = 0;
 
         camera.draw(this.cameraStore.state, () => {
@@ -265,7 +265,7 @@ export class WorldviewContext {
             }
             counter++;
             regl.clear({ color: intToRGB(0), depth: 1 });
-            this._drawInput(true, seenObjects);
+            this._drawInput(true, excludedObjects);
 
             // it's possible to get x/y values outside the framebuffer size
             // if the mouse quickly leaves the draw area during a read operation
@@ -286,14 +286,14 @@ export class WorldviewContext {
 
               currentObjectId = getIdFromColor(pixel);
               if (currentObjectId > 0 && this.getDrawPropByObjectHitmapId(currentObjectId).object) {
-                seenObjectIds.push(currentObjectId);
-                seenObjects.push(this.getDrawPropByObjectHitmapId(currentObjectId));
+                excludedObjectIds.push(currentObjectId);
+                excludedObjects.push(this.getDrawPropByObjectHitmapId(currentObjectId));
               }
             }
             // If we haven't enabled stacked object events, break out of the loop immediately.
             // eslint-disable-next-line no-unmodified-loop-condition
           } while (currentObjectId !== 0 && enableStackedObjectEvents);
-          resolve(seenObjectIds);
+          resolve(excludedObjectIds);
         });
       });
     });
@@ -317,7 +317,7 @@ export class WorldviewContext {
     });
   };
 
-  _drawInput = (isHitmap?: boolean, seenObjects?: MouseEventObject[]) => {
+  _drawInput = (isHitmap?: boolean, excludedObjects?: MouseEventObject[]) => {
     if (isHitmap) {
       this._hitmapIdManager.reset();
     }
@@ -337,7 +337,7 @@ export class WorldviewContext {
         const assignNextIdsFn: AssignNextIdsFn = (...rest) => {
           return this._hitmapIdManager.assignNextIds(instance, ...rest);
         };
-        const hitmapProps = getHitmap(children, assignNextIdsFn, seenObjects || []);
+        const hitmapProps = getHitmap(children, assignNextIdsFn, excludedObjects || []);
         if (hitmapProps) {
           cmd(hitmapProps);
         }

@@ -272,8 +272,8 @@ function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
 }
 
 // Override the default getHitmap with our own implementation.
-const getHitmap: GetHitmap = <T: any>(prop: T, assignNextIds, seenObjects) => {
-  const hitmapProp = nonInstancedGetHitmap(prop, assignNextIds, seenObjects);
+const getHitmap: GetHitmap = <T: any>(prop: T, assignNextIds, excludedObjects) => {
+  const hitmapProp = nonInstancedGetHitmap(prop, assignNextIds, excludedObjects);
   if (hitmapProp) {
     hitmapProp.isHitmap = true;
   }

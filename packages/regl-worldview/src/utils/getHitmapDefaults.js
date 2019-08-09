@@ -12,9 +12,9 @@ import { intToRGB } from "./commandUtils";
 function nonInstancedGetHitmapFromSingleProp<T: any>(
   prop: T,
   assignNextIds: AssignNextIdsFn,
-  seenObjects: MouseEventObject[]
+  excludedObjects: MouseEventObject[]
 ): ?T {
-  if (seenObjects.some(({ object }) => object === prop)) {
+  if (excludedObjects.some(({ object }) => object === prop)) {
     return null;
   }
   const hitmapProp = { ...prop };
@@ -30,21 +30,23 @@ function nonInstancedGetHitmapFromSingleProp<T: any>(
 export const nonInstancedGetHitmap = <T: any>(
   props: T,
   assignNextIds: AssignNextIdsFn,
-  seenObjects: MouseEventObject[]
+  excludedObjects: MouseEventObject[]
 ): ?T => {
   if (Array.isArray(props)) {
-    return props.map((prop) => nonInstancedGetHitmapFromSingleProp(prop, assignNextIds, seenObjects)).filter(Boolean);
+    return props
+      .map((prop) => nonInstancedGetHitmapFromSingleProp(prop, assignNextIds, excludedObjects))
+      .filter(Boolean);
   }
-  return nonInstancedGetHitmapFromSingleProp(props, assignNextIds, seenObjects);
+  return nonInstancedGetHitmapFromSingleProp(props, assignNextIds, excludedObjects);
 };
 
 function instancedGetHitmapFromSingleProp<T: any>(
   prop: T,
   assignNextIds: AssignNextIdsFn,
-  seenObjects: MouseEventObject[],
+  excludedObjects: MouseEventObject[],
   pointCountPerInstance
 ): ?T {
-  const filteredIndices = seenObjects
+  const filteredIndices = excludedObjects
     .map(({ object, instanceIndex }) => (object === prop ? instanceIndex : null))
     .filter((instanceIndex) => typeof instanceIndex === "number");
   const hitmapProp = { ...prop };
@@ -83,12 +85,12 @@ function instancedGetHitmapFromSingleProp<T: any>(
 export const createInstancedGetHitmap = (pointCountPerInstance: number) => <T: any>(
   props: T,
   assignNextIds: AssignNextIdsFn,
-  seenObjects: MouseEventObject[]
+  excludedObjects: MouseEventObject[]
 ): ?T => {
   if (Array.isArray(props)) {
     return props
-      .map((prop) => instancedGetHitmapFromSingleProp(prop, assignNextIds, seenObjects, pointCountPerInstance))
+      .map((prop) => instancedGetHitmapFromSingleProp(prop, assignNextIds, excludedObjects, pointCountPerInstance))
       .filter(Boolean);
   }
-  return instancedGetHitmapFromSingleProp(props, assignNextIds, seenObjects, pointCountPerInstance);
+  return instancedGetHitmapFromSingleProp(props, assignNextIds, excludedObjects, pointCountPerInstance);
 };

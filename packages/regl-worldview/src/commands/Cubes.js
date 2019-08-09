@@ -10,7 +10,7 @@ import * as React from "react";
 
 import type { Cube } from "../types";
 import fromGeometry from "../utils/fromGeometry";
-import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
+import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 
 const cubes = fromGeometry(
@@ -49,5 +49,5 @@ const cubes = fromGeometry(
 );
 
 export default function Cubes(props: { ...CommonCommandProps, children: Cube[] }) {
-  return <Command getHitmap={createInstancedGetHitmap(1)} {...props} reglCommand={cubes} />;
+  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={cubes} />;
 }

@@ -17,7 +17,7 @@ import {
   toRGBA,
   withPose,
 } from "../utils/commandUtils";
-import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
+import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 
 // TODO(Audrey): default to the actual regl defaults before 1.x release
@@ -167,7 +167,5 @@ const triangles = (regl: Regl) => {
 };
 
 export default function Triangles(props: { ...CommonCommandProps, children: TriangleList[] }) {
-  return (
-    <Command getHitmap={createInstancedGetHitmap(3)} {...props} reglCommand={triangles} />
-  );
+  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(3)} {...props} reglCommand={triangles} />;
 }

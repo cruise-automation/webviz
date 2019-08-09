@@ -8,7 +8,7 @@
 
 import type { MouseEventObject } from "../types";
 import { intToRGB } from "./commandUtils";
-import { nonInstancedGetHitmap, createInstancedGetHitmap } from "./getHitmapDefaults";
+import { nonInstancedGetChildrenForHitmap, createInstancedGetChildrenForHitmap } from "./getChildrenForHitmapDefaults";
 
 function fillArray(length: number) {
   return new Array(length).fill(null).map(() => []);
@@ -21,7 +21,7 @@ function toexcludedObjects(objects: Object[], instanceIndicies?: Array<?number>)
   }));
 }
 
-describe("getHitmapDefaults", () => {
+describe("getChildrenForHitmapDefaults", () => {
   let nextId;
   let assignNextIds;
 
@@ -40,10 +40,10 @@ describe("getHitmapDefaults", () => {
     });
   });
 
-  describe("nonInstancedGetHitmap", () => {
+  describe("nonInstancedGetChildrenForHitmap", () => {
     it("handles single objects correctly", () => {
       const object = { some: "garbage", points: [[], []], colors: [[], []] };
-      const hitmapProps = nonInstancedGetHitmap(object, assignNextIds, []);
+      const hitmapProps = nonInstancedGetChildrenForHitmap(object, assignNextIds, []);
       expect(hitmapProps).toEqual({
         some: "garbage",
         points: [[], []],
@@ -55,21 +55,21 @@ describe("getHitmapDefaults", () => {
 
     it("filters already seen single objects correctly", () => {
       const object = { some: "garbage", points: [[], []], colors: [[], []] };
-      const hitmapProps = nonInstancedGetHitmap(object, assignNextIds, toexcludedObjects([object]));
+      const hitmapProps = nonInstancedGetChildrenForHitmap(object, assignNextIds, toexcludedObjects([object]));
       expect(hitmapProps).toEqual(undefined);
       expect(assignNextIds).not.toHaveBeenCalled();
     });
 
     it("handles single objects without points correctly", () => {
       const object = { some: "garbage", color: [] };
-      const hitmapProps = nonInstancedGetHitmap(object, assignNextIds, []);
+      const hitmapProps = nonInstancedGetChildrenForHitmap(object, assignNextIds, []);
       expect(hitmapProps).toEqual({ some: "garbage", color: intToRGB(1) });
       expect(assignNextIds).toHaveBeenCalledWith({ type: "single", callbackObject: object });
     });
 
     it("handles arrays correctly", () => {
       const objects = [{ some: "garbage", color: [] }, { some: "other_garbage", color: [] }];
-      const hitmapProps = nonInstancedGetHitmap(objects, assignNextIds, []);
+      const hitmapProps = nonInstancedGetChildrenForHitmap(objects, assignNextIds, []);
       expect(hitmapProps).toEqual([
         {
           some: "garbage",
@@ -87,7 +87,7 @@ describe("getHitmapDefaults", () => {
 
     it("filters already seen array members correctly", () => {
       const objects = [{ some: "garbage", color: [] }, { some: "other_garbage", color: [] }];
-      const hitmapProps = nonInstancedGetHitmap(objects, assignNextIds, toexcludedObjects([objects[0]]));
+      const hitmapProps = nonInstancedGetChildrenForHitmap(objects, assignNextIds, toexcludedObjects([objects[0]]));
       expect(hitmapProps).toEqual([
         {
           some: "other_garbage",
@@ -99,16 +99,16 @@ describe("getHitmapDefaults", () => {
 
     it("filters all array members correctly", () => {
       const objects = [{ some: "garbage", color: [] }, { some: "other_garbage", color: [] }];
-      const hitmapProps = nonInstancedGetHitmap(objects, assignNextIds, toexcludedObjects(objects));
+      const hitmapProps = nonInstancedGetChildrenForHitmap(objects, assignNextIds, toexcludedObjects(objects));
       expect(hitmapProps).toEqual([]);
       expect(assignNextIds).toHaveBeenCalledTimes(0);
     });
   });
 
-  describe("createInstancedGetHitmap", () => {
+  describe("createInstancedGetChildrenForHitmap", () => {
     it("handles single objects correctly", () => {
       const object = { some: "garbage", points: fillArray(6), colors: fillArray(6) };
-      const hitmapProps = createInstancedGetHitmap(2)(object, assignNextIds, []);
+      const hitmapProps = createInstancedGetChildrenForHitmap(2)(object, assignNextIds, []);
       expect(hitmapProps).toEqual({
         some: "garbage",
         points: fillArray(6),
@@ -120,7 +120,7 @@ describe("getHitmapDefaults", () => {
 
     it("handles single objects without points correctly", () => {
       const object = { some: "garbage", color: [] };
-      const hitmapProps = createInstancedGetHitmap(2)(object, assignNextIds, []);
+      const hitmapProps = createInstancedGetChildrenForHitmap(2)(object, assignNextIds, []);
       expect(hitmapProps).toEqual({
         some: "garbage",
         color: intToRGB(1),
@@ -131,7 +131,7 @@ describe("getHitmapDefaults", () => {
 
     it("handles objects with an empty point array", () => {
       const object = { some: "garbage", points: [] };
-      const hitmapProps = createInstancedGetHitmap(2)(object, assignNextIds, []);
+      const hitmapProps = createInstancedGetChildrenForHitmap(2)(object, assignNextIds, []);
       expect(hitmapProps).toEqual({
         some: "garbage",
         points: [],
@@ -143,7 +143,7 @@ describe("getHitmapDefaults", () => {
 
     it("handles single point counts", () => {
       const object = { some: "garbage", points: fillArray(3), colors: fillArray(3) };
-      const hitmapProps = createInstancedGetHitmap(1)(object, assignNextIds, []);
+      const hitmapProps = createInstancedGetChildrenForHitmap(1)(object, assignNextIds, []);
       expect(hitmapProps).toEqual({
         some: "garbage",
         points: fillArray(3),
@@ -155,7 +155,7 @@ describe("getHitmapDefaults", () => {
 
     it("handles offset point counts", () => {
       const object = { some: "garbage", points: fillArray(4), colors: fillArray(4) };
-      const hitmapProps = createInstancedGetHitmap(3)(object, assignNextIds, []);
+      const hitmapProps = createInstancedGetChildrenForHitmap(3)(object, assignNextIds, []);
       expect(hitmapProps).toEqual({
         some: "garbage",
         points: fillArray(4),
@@ -167,7 +167,11 @@ describe("getHitmapDefaults", () => {
 
     it("filters instances correctly", () => {
       const object = { some: "garbage", points: fillArray(6), colors: fillArray(6) };
-      const hitmapProps = createInstancedGetHitmap(2)(object, assignNextIds, toexcludedObjects([object], [1]));
+      const hitmapProps = createInstancedGetChildrenForHitmap(2)(
+        object,
+        assignNextIds,
+        toexcludedObjects([object], [1])
+      );
       expect(hitmapProps).toEqual({
         some: "garbage",
         points: fillArray(4),
@@ -179,7 +183,11 @@ describe("getHitmapDefaults", () => {
 
     it("filters objects without points correctly", () => {
       const object = { some: "garbage" };
-      const hitmapProps = createInstancedGetHitmap(1)(object, assignNextIds, toexcludedObjects([object], [0]));
+      const hitmapProps = createInstancedGetChildrenForHitmap(1)(
+        object,
+        assignNextIds,
+        toexcludedObjects([object], [0])
+      );
       expect(hitmapProps).toEqual(undefined);
     });
 
@@ -188,7 +196,7 @@ describe("getHitmapDefaults", () => {
         { some: "garbage", points: fillArray(6), colors: fillArray(6) },
         { some: "other_garbage", points: fillArray(8), colors: fillArray(8) },
       ];
-      const hitmapProps = createInstancedGetHitmap(2)(objects, assignNextIds, []);
+      const hitmapProps = createInstancedGetChildrenForHitmap(2)(objects, assignNextIds, []);
       expect(hitmapProps).toEqual([
         {
           some: "garbage",

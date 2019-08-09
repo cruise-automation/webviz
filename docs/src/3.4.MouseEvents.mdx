@@ -11,7 +11,7 @@ Currently Worldview supports the following mouse event handlers: `onDoubleClick`
 | `onMouseUp`     | `MouseHandler`    |         |                                                                                                                                                                          |
 | `onMouseMove`   | `MouseHandler`    |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the Worldview component                                                                               |
 | `onClick`       | `MouseHandler`    |         |                                                                                                                                                                          |
-| `getHitmap`     | `AssignNextIdsFn` |         | Maps the `children` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
+| `getChildrenForHitmap`     | `AssignNextIdsFn` |         | Maps the `children` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
 
 ## Event Handler
 
@@ -53,27 +53,27 @@ Example:
 </Worldview>
 ```
 
-### getHitmap and mapping for interactive objects
+### getChildrenForHitmap and mapping for interactive objects
 
 How do we detect which object was interacted with? We use a process called picking, in which we generate an off-screen canvas, or "hitmap", to paint our objects into, assign each object a unique color, and then paint each object into this hitmap. We then detect which object was clicked on by testing which color was underneath the cursor.
 
-The Worldview library allows a lot of control over this interaction, but most Commands can use one of two default `getHitmap` functions.
+The Worldview library allows a lot of control over this interaction, but most Commands can use one of two default `getChildrenForHitmap` functions.
 
 | Name                       | Description                                                                                                                                                                  | Usage                                                                                |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `nonInstancedGetHitmap`    | A default `getHitmap` function for non-instanced commands.                                                                                                                   | `<Command getHitmap={nonInstancedGetHitmap} ... />`                                  |
-| `createInstancedGetHitmap` | A factory function for instanced commands. It takes the number of points per instance: for example, a triangle has 3 points, whereas a sphere has 1 point (just the center). | `<Command getHitmap={createInstancedGetHitmap(1)} ... />` |
+| `nonInstancedGetChildrenForHitmap`    | A default `getChildrenForHitmap` function for non-instanced commands.                                                                                                                   | `<Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} ... />`                                  |
+| `createInstancedGetChildrenForHitmap` | A factory function for instanced commands. It takes the number of points per instance: for example, a triangle has 3 points, whereas a sphere has 1 point (just the center). | `<Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} ... />` |
 
 ##### Turning off interactivity for a layer
 
-All built in commands allow overriding the `getHitmap` function, and we recommend that you also allow users to override it. If a user passes in `null` or `undefined` for `getHitmap` in a command, any objects drawn by that command instance will not be visible for interaction purposes. Disabling interaction in this way may help improve performance.
+All built in commands allow overriding the `getChildrenForHitmap` function, and we recommend that you also allow users to override it. If a user passes in `null` or `undefined` for `getChildrenForHitmap` in a command, any objects drawn by that command instance will not be visible for interaction purposes. Disabling interaction in this way may help improve performance.
 
-##### Customizing the getHitmap function
+##### Customizing the getChildrenForHitmap function
 
-Each Command is passed the `reglCommand` function and `children`. Worldview compiles the `reglCommand` once by calling it with the `regl` object as an argument, and calls the resulting command each frame with `children`. `getHitmap` takes in those `children` and returns new version of them that will be rendered into the hitmap.
+Each Command is passed the `reglCommand` function and `children`. Worldview compiles the `reglCommand` once by calling it with the `regl` object as an argument, and calls the resulting command each frame with `children`. `getChildrenForHitmap` takes in those `children` and returns new version of them that will be rendered into the hitmap.
 
 Some important things to remember:
- * The first argument of `getHitmap` is the `children`.
+ * The first argument of `getChildrenForHitmap` is the `children`.
  * The second argument is a function that helps us assign IDs to each object.
 ```js
 /*
@@ -89,14 +89,14 @@ type AssignNextIdsFn = (
  *  * Each object that you want to support mouse events on requires a unique ID. If your command actually renders multiple items per input object (such as when using [instanced drawing](https://github.com/regl-project/regl/blob/gh-pages/example/instance-triangle.js)), you may want a separate ID for each item — in this case, call `assignNextIds` with `type: "instanced"`.
  * Once you have this ID, pass it to `intToRGB()` to get the color to paint your object. Don't apply any transparency or shading to your object or this will mess up the hitmap.
 
-Example using composition of the default `getHitmap` functions:
+Example using composition of the default `getChildrenForHitmap` functions:
 
 ```js
 <Worldview>
   <Points
     onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id}`)}
-    getHitmap={(props, assignNextIds) => {
-      const hitmapProps = nonInstancedGetHitmap(props, assignNextIds);
+    getChildrenForHitmap={(props, assignNextIds) => {
+      const hitmapProps = nonInstancedGetChildrenForHitmap(props, assignNextIds);
       // Points are hard to click, so expand their hitmap so that clicking slightly outside of a point still selects it.
       for (hitmapProp of hitmapProps) {
         hitmapProp.scale = { x: hitmapProps.scale.x * 1.1, y: hitmapProps.scale.y * 1.1, z: hitmapProps.scale.z * 1.1 };
@@ -109,14 +109,14 @@ Example using composition of the default `getHitmap` functions:
 </Worldview>
 ```
 
-Example using a custom `getHitmap` function:
+Example using a custom `getChildrenForHitmap` function:
 
 ```js
 <Worldview>
   <Points
     onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id}`)}
-    getHitmap={(props, assignNextIds) => {
-      // This is a simplified version of nonInstancedGetHitmap, for explanation purposes.
+    getChildrenForHitmap={(props, assignNextIds) => {
+      // This is a simplified version of nonInstancedGetChildrenForHitmap, for explanation purposes.
       return propsArray.map((prop) => {
         // We copy each point array.
         const hitmapProp = { ...prop };

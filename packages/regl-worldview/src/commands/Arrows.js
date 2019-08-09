@@ -11,7 +11,7 @@ import * as React from "react";
 
 import type { Arrow } from "../types";
 import { pointToVec3, vec3ToPoint, orientationToVec4, vec4ToOrientation } from "../utils/commandUtils";
-import { nonInstancedGetHitmap } from "../utils/getHitmapDefaults";
+import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Cones from "./Cones";
 import Cylinders from "./Cylinders";
 
@@ -87,8 +87,8 @@ export default class Arrows extends React.PureComponent<{ children: Arrow[] }> {
     }
     return (
       <React.Fragment>
-        <Cylinders getHitmap={nonInstancedGetHitmap}>{cylinders}</Cylinders>
-        <Cones getHitmap={nonInstancedGetHitmap}>{cones}</Cones>
+        <Cylinders getChildrenForHitmap={nonInstancedGetChildrenForHitmap}>{cylinders}</Cylinders>
+        <Cones getChildrenForHitmap={nonInstancedGetChildrenForHitmap}>{cones}</Cones>
       </React.Fragment>
     );
   }

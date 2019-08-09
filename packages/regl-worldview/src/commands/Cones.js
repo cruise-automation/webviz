@@ -10,7 +10,7 @@ import * as React from "react";
 
 import type { BaseShape } from "../types";
 import fromGeometry from "../utils/fromGeometry";
-import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
+import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 import { createCylinderGeometry } from "./Cylinders";
 
@@ -19,5 +19,5 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, true);
 const cones = fromGeometry(points, sideFaces.concat(endCapFaces));
 
 export default function Cones(props: { ...CommonCommandProps, children: BaseShape[] }) {
-  return <Command getHitmap={createInstancedGetHitmap(1)} {...props} reglCommand={cones} />;
+  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={cones} />;
 }

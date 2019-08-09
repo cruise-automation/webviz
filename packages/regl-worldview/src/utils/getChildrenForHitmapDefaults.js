@@ -9,7 +9,7 @@
 import type { AssignNextIdsFn, MouseEventObject } from "../types";
 import { intToRGB } from "./commandUtils";
 
-function nonInstancedGetHitmapFromSingleProp<T: any>(
+function nonInstancedGetChildrenForHitmapFromSingleProp<T: any>(
   prop: T,
   assignNextIds: AssignNextIdsFn,
   excludedObjects: MouseEventObject[]
@@ -27,20 +27,20 @@ function nonInstancedGetHitmapFromSingleProp<T: any>(
   return hitmapProp;
 }
 
-export const nonInstancedGetHitmap = <T: any>(
+export const nonInstancedGetChildrenForHitmap = <T: any>(
   props: T,
   assignNextIds: AssignNextIdsFn,
   excludedObjects: MouseEventObject[]
 ): ?T => {
   if (Array.isArray(props)) {
     return props
-      .map((prop) => nonInstancedGetHitmapFromSingleProp(prop, assignNextIds, excludedObjects))
+      .map((prop) => nonInstancedGetChildrenForHitmapFromSingleProp(prop, assignNextIds, excludedObjects))
       .filter(Boolean);
   }
-  return nonInstancedGetHitmapFromSingleProp(props, assignNextIds, excludedObjects);
+  return nonInstancedGetChildrenForHitmapFromSingleProp(props, assignNextIds, excludedObjects);
 };
 
-function instancedGetHitmapFromSingleProp<T: any>(
+function instancedGetChildrenForHitmapFromSingleProp<T: any>(
   prop: T,
   assignNextIds: AssignNextIdsFn,
   excludedObjects: MouseEventObject[],
@@ -82,15 +82,17 @@ function instancedGetHitmapFromSingleProp<T: any>(
   return hitmapProp;
 }
 
-export const createInstancedGetHitmap = (pointCountPerInstance: number) => <T: any>(
+export const createInstancedGetChildrenForHitmap = (pointCountPerInstance: number) => <T: any>(
   props: T,
   assignNextIds: AssignNextIdsFn,
   excludedObjects: MouseEventObject[]
 ): ?T => {
   if (Array.isArray(props)) {
     return props
-      .map((prop) => instancedGetHitmapFromSingleProp(prop, assignNextIds, excludedObjects, pointCountPerInstance))
+      .map((prop) =>
+        instancedGetChildrenForHitmapFromSingleProp(prop, assignNextIds, excludedObjects, pointCountPerInstance)
+      )
       .filter(Boolean);
   }
-  return instancedGetHitmapFromSingleProp(props, assignNextIds, excludedObjects, pointCountPerInstance);
+  return instancedGetChildrenForHitmapFromSingleProp(props, assignNextIds, excludedObjects, pointCountPerInstance);
 };

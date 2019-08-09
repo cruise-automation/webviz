@@ -9,7 +9,7 @@
 import React from "react";
 
 import { withPose } from "../utils/commandUtils";
-import { nonInstancedGetHitmap } from "../utils/getHitmapDefaults";
+import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command from "./Command";
 
 export function grid() {
@@ -61,7 +61,7 @@ type Props = {
 // useful for rendering a grid for debugging in stories
 
 export default function Grid(props: Props) {
-  return <Command getHitmap={nonInstancedGetHitmap} {...props} reglCommand={grid} />;
+  return <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...props} reglCommand={grid} />;
 }
 
 Grid.defaultProps = { count: 6 };

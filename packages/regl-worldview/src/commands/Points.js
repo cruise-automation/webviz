@@ -10,7 +10,7 @@ import * as React from "react";
 
 import type { PointType, Regl } from "../types";
 import { getVertexColors, pointToVec3, withPose } from "../utils/commandUtils";
-import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
+import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 
 const points = (regl: Regl) => {
@@ -64,5 +64,5 @@ const points = (regl: Regl) => {
 };
 
 export default function Points(props: { ...CommonCommandProps, children: PointType[] }) {
-  return <Command getHitmap={createInstancedGetHitmap(1)} {...props} reglCommand={points} />;
+  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={points} />;
 }

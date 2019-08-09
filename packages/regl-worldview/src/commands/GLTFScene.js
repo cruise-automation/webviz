@@ -10,9 +10,9 @@ import { mat4 } from "gl-matrix";
 import memoizeWeak from "memoize-weak";
 import React, { useContext, useState, useEffect, useCallback, useDebugValue } from "react";
 
-import type { Pose, Scale, MouseHandler, GetHitmap } from "../types";
+import type { Pose, Scale, MouseHandler, GetChildrenForHitmap } from "../types";
 import { defaultBlend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
-import { nonInstancedGetHitmap } from "../utils/getHitmapDefaults";
+import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import parseGLB, { type GLBModel } from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";
@@ -271,9 +271,9 @@ function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
   );
 }
 
-// Override the default getHitmap with our own implementation.
-const getHitmap: GetHitmap = <T: any>(prop: T, assignNextIds, excludedObjects) => {
-  const hitmapProp = nonInstancedGetHitmap(prop, assignNextIds, excludedObjects);
+// Override the default getChildrenForHitmap with our own implementation.
+const getChildrenForHitmap: GetChildrenForHitmap = <T: any>(prop: T, assignNextIds, excludedObjects) => {
+  const hitmapProp = nonInstancedGetChildrenForHitmap(prop, assignNextIds, excludedObjects);
   if (hitmapProp) {
     hitmapProp.isHitmap = true;
   }
@@ -299,7 +299,7 @@ export default function GLTFScene(props: Props) {
   }
 
   return (
-    <Command {...rest} reglCommand={drawModel} getHitmap={getHitmap}>
+    <Command {...rest} reglCommand={drawModel} getChildrenForHitmap={getChildrenForHitmap}>
       {{ ...children, model: loadedModel }}
     </Command>
   );

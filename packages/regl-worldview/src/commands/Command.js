@@ -11,7 +11,7 @@ import * as React from "react";
 
 import type {
   ComponentMouseHandler,
-  GetHitmap,
+  GetChildrenForHitmap,
   MouseEventEnum,
   RawCommand,
   Color,
@@ -33,7 +33,7 @@ export type MarkerDefault = {
 export type CommonCommandProps = {
   [MouseEventEnum]: ComponentMouseHandler,
   layerIndex?: number,
-  getHitmap?: GetHitmap,
+  getChildrenForHitmap?: GetChildrenForHitmap,
 };
 
 type Props<T> = {
@@ -82,7 +82,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
 
-    const { children, reglCommand, layerIndex, getHitmap } = this.props;
+    const { children, reglCommand, layerIndex, getChildrenForHitmap } = this.props;
     if (children == null) {
       return;
     }
@@ -91,7 +91,7 @@ export default class Command<T> extends React.Component<Props<T>> {
       reglCommand,
       children,
       layerIndex,
-      getHitmap,
+      getChildrenForHitmap,
     });
   }
 

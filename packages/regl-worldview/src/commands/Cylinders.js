@@ -10,7 +10,7 @@ import * as React from "react";
 
 import type { Cylinder } from "../types";
 import fromGeometry from "../utils/fromGeometry";
-import { createInstancedGetHitmap } from "../utils/getHitmapDefaults";
+import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 
 export function createCylinderGeometry(numSegments: number, cone: boolean) {
@@ -50,7 +50,5 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, false);
 const cylinders = fromGeometry(points, sideFaces.concat(endCapFaces));
 
 export default function Cylinders(props: { ...CommonCommandProps, children: Cylinder[] }) {
-  return (
-    <Command getHitmap={createInstancedGetHitmap(1)} {...props} reglCommand={cylinders} />
-  );
+  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={cylinders} />;
 }

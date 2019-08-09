@@ -203,7 +203,7 @@ export type ObjectHitmapId = number;
 export type AssignNextIdsFn = (
   { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
 ) => ObjectHitmapId[];
-export type GetHitmap = <T>(prop: T, AssignNextIdsFn, MouseEventObject[]) => T;
+export type GetChildrenForHitmap = <T>(prop: T, AssignNextIdsFn, MouseEventObject[]) => T;
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
 

@@ -9,9 +9,9 @@
 // TODO(Audrey): add documentation for DrawPolygons
 import React from "react";
 
-import type { Line, Point, Pose, Vec4, Vec3, Scale, GetHitmap } from "../../types";
+import type { Line, Point, Pose, Vec4, Vec3, Scale, GetChildrenForHitmap } from "../../types";
 import { vec4ToRGBA, vec3ToPoint } from "../../utils/commandUtils";
-import { nonInstancedGetHitmap } from "../../utils/getHitmapDefaults";
+import { nonInstancedGetChildrenForHitmap } from "../../utils/getChildrenForHitmapDefaults";
 import Lines from "../Lines";
 import Spheres from "../Spheres";
 
@@ -71,8 +71,8 @@ type Props = {
   children: DrawPolygonType[],
 };
 
-const polygonLinesGetHitmap: GetHitmap = <T: any>(props: T, assignNextIds, excludedObjects) => {
-  const hitmapProps = nonInstancedGetHitmap(props, assignNextIds, excludedObjects) || [];
+const polygonLinesGetChildrenForHitmap: GetChildrenForHitmap = <T: any>(props: T, assignNextIds, excludedObjects) => {
+  const hitmapProps = nonInstancedGetChildrenForHitmap(props, assignNextIds, excludedObjects) || [];
   for (const prop of hitmapProps) {
     prop.scale = HITMAP_SCALE;
   }
@@ -99,12 +99,12 @@ class PolygonLines extends React.Component<Props> {
       });
     }
 
-    return <Lines getHitmap={polygonLinesGetHitmap}>{lines}</Lines>;
+    return <Lines getChildrenForHitmap={polygonLinesGetChildrenForHitmap}>{lines}</Lines>;
   }
 }
 
-const polygonPointsGetHitmap: GetHitmap = <T: any>(props: T, assignNextIds, excludedObjects) => {
-  const hitmapProps = nonInstancedGetHitmap(props, assignNextIds, excludedObjects) || [];
+const polygonPointsGetChildrenForHitmap: GetChildrenForHitmap = <T: any>(props: T, assignNextIds, excludedObjects) => {
+  const hitmapProps = nonInstancedGetChildrenForHitmap(props, assignNextIds, excludedObjects) || [];
   for (const prop of hitmapProps) {
     prop.scale = HITMAP_POINT_SCALE;
   }
@@ -133,7 +133,7 @@ class PolygonPoints extends React.Component<Props> {
       }
     }
 
-    return <Spheres getHitmap={polygonPointsGetHitmap}>{sphereList}</Spheres>;
+    return <Spheres getChildrenForHitmap={polygonPointsGetChildrenForHitmap}>{sphereList}</Spheres>;
   }
 }
 

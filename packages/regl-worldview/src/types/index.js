@@ -176,7 +176,7 @@ export type Line = BaseShape & {
 };
 
 export type PointType = BaseShape & {
-  points: (Point[] | Vec3)[],
+  points: (Point | Vec3)[],
 };
 
 export type SphereList = BaseShape & {

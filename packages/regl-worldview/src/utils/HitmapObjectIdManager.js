@@ -9,13 +9,11 @@
 import last from "lodash/last";
 import React from "react";
 
-import type { ObjectHitmapId, MouseEventObject, BaseShape } from "../types";
+import type { CommandComponentInstance, ObjectHitmapId, MouseEventObject, BaseShape } from "../types";
 
 function fillArray(start: number, length: number): number[] {
   return new Array(length).fill(0).map((_, index) => start + index);
 }
-
-type CommandInstance = React.Component<any>;
 
 /*
  * This object manages the mapping between objects that are rendered into the scene and their IDs.
@@ -23,12 +21,12 @@ type CommandInstance = React.Component<any>;
  */
 export default class HitmapObjectIdManager {
   _objectsByObjectHitmapIdMap: { [ObjectHitmapId]: BaseShape } = {};
-  _commandToObjectHitmapIdsMap: Map<CommandInstance, ObjectHitmapId[]> = new Map();
+  _objectToCommandMap: Map<BaseShape, CommandComponentInstance> = new Map();
   _nextObjectHitmapId = 1;
   _hitmapInstancedIdMap: { [ObjectHitmapId]: number } = {}; // map objectHitmapId to the instance index
 
   assignNextIds = (
-    command: CommandInstance,
+    command: CommandComponentInstance,
     options:
       | { type: "single", callbackObject: BaseShape }
       | { type: "instanced", callbackObject: BaseShape, count: number }
@@ -55,15 +53,14 @@ export default class HitmapObjectIdManager {
     for (const id of ids) {
       this._objectsByObjectHitmapIdMap[id] = options.callbackObject;
     }
-    const existingIds = this._commandToObjectHitmapIdsMap.get(command) || [];
-    this._commandToObjectHitmapIdsMap.set(command, existingIds.concat(ids));
+    this._objectToCommandMap.set(options.callbackObject, command);
 
     return ids;
   };
 
   reset = () => {
     this._objectsByObjectHitmapIdMap = {};
-    this._commandToObjectHitmapIdsMap = new Map();
+    this._objectToCommandMap = new Map();
     this._nextObjectHitmapId = 1;
     this._hitmapInstancedIdMap = {};
   };
@@ -75,7 +72,7 @@ export default class HitmapObjectIdManager {
     };
   };
 
-  getObjectHitmapIdsForCommand = (command: CommandInstance): ObjectHitmapId[] => {
-    return this._commandToObjectHitmapIdsMap.get(command) || [];
+  getCommandForObject = (object: BaseShape): ?CommandComponentInstance => {
+    return this._objectToCommandMap.get(object);
   };
 }

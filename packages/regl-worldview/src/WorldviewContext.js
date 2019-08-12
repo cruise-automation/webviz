@@ -7,29 +7,26 @@
 //  You may not use this file except in compliance with the License.
 
 import debounce from "lodash/debounce";
-import intersection from "lodash/intersection";
 import * as React from "react";
 import createREGL from "regl";
 
 import { camera, CameraStore } from "./camera/index";
 import Command from "./commands/Command";
 import type {
+  CommandComponentInstance,
   Dimensions,
   RawCommand,
   CompiledReglCommand,
   CameraCommand,
   Vec4,
   CameraState,
-  MouseEventEnum,
   MouseEventObject,
   GetChildrenForHitmap,
-  ObjectHitmapId,
   AssignNextIdsFn,
 } from "./types";
 import { getIdFromColor, intToRGB } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
 import HitmapObjectIdManager from "./utils/HitmapObjectIdManager";
-import type { Ray } from "./utils/Raycast";
 import { getRayFromClick } from "./utils/Raycast";
 
 type Props = any;
@@ -224,7 +221,11 @@ export class WorldviewContext {
 
   _debouncedPaint = debounce(this.paint, 10);
 
-  readHitmap(canvasX: number, canvasY: number, enableStackedObjectEvents: boolean): Promise<ObjectHitmapId[]> {
+  readHitmap(
+    canvasX: number,
+    canvasY: number,
+    enableStackedObjectEvents: boolean
+  ): Promise<Array<[MouseEventObject, CommandComponentInstance]>> {
     if (!this.initializedData) {
       return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
     }
@@ -247,7 +248,7 @@ export class WorldviewContext {
         regl.clear({ color: intToRGB(0), depth: 1 });
         let currentObjectId = 0;
         const excludedObjects = [];
-        const excludedObjectIds: ObjectHitmapId[] = [];
+        const mouseEventsWithCommands = [];
         let counter = 0;
 
         camera.draw(this.cameraStore.state, () => {
@@ -285,37 +286,24 @@ export class WorldviewContext {
               });
 
               currentObjectId = getIdFromColor(pixel);
-              if (currentObjectId > 0 && this.getObjectByObjectHitmapId(currentObjectId).object) {
-                excludedObjectIds.push(currentObjectId);
-                excludedObjects.push(this.getObjectByObjectHitmapId(currentObjectId));
+              const mouseEventObject = this._hitmapObjectIdManager.getObjectByObjectHitmapId(currentObjectId);
+              if (currentObjectId > 0 && mouseEventObject.object) {
+                const command = this._hitmapObjectIdManager.getCommandForObject(mouseEventObject.object);
+                excludedObjects.push(mouseEventObject);
+                if (command) {
+                  mouseEventsWithCommands.push([mouseEventObject, command]);
+                }
               }
             }
             // If we haven't enabled stacked object events, break out of the loop immediately.
             // eslint-disable-next-line no-unmodified-loop-condition
           } while (currentObjectId !== 0 && enableStackedObjectEvents);
-          resolve(excludedObjectIds);
+
+          resolve(mouseEventsWithCommands);
         });
       });
     });
   }
-
-  callComponentHandlers = (
-    objectHitmapIds: ObjectHitmapId[],
-    ray: Ray,
-    e: MouseEvent,
-    mouseEventName: MouseEventEnum
-  ) => {
-    this._drawCalls.forEach((drawInput, component) => {
-      if (component instanceof Command) {
-        const objectHitmapIdsForCommand = intersection(
-          this._hitmapObjectIdManager.getObjectHitmapIdsForCommand(component),
-          objectHitmapIds
-        );
-        const mouseEvents = objectHitmapIdsForCommand.map((id) => this.getObjectByObjectHitmapId(id));
-        component.handleMouseEvent(mouseEvents, e, ray, mouseEventName);
-      }
-    });
-  };
 
   _drawInput = (isHitmap?: boolean, excludedObjects?: MouseEventObject[]) => {
     if (isHitmap) {
@@ -345,10 +333,6 @@ export class WorldviewContext {
         cmd(children);
       }
     });
-  };
-
-  getObjectByObjectHitmapId = (objectHitmapId: ObjectHitmapId): MouseEventObject => {
-    return this._hitmapObjectIdManager.getObjectByObjectHitmapId(objectHitmapId);
   };
 
   _clearCanvas = (regl: any) => {

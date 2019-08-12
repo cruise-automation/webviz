@@ -14,6 +14,7 @@ import ContainerDimensions from "react-container-dimensions";
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
 import type {
   MouseHandler,
+  CommandComponentInstance,
   Dimensions,
   Vec4,
   CameraState,
@@ -21,6 +22,7 @@ import type {
   MouseEventEnum,
   MouseEventObject,
 } from "./types";
+import aggregate from "./utils/aggregate";
 import { getNodeEnv } from "./utils/common";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
@@ -209,12 +211,18 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     (e: any).persist();
     worldviewContext
       .readHitmap(canvasX, canvasY, !!this.props.enableStackedObjectEvents)
-      .then((objectHitmapIds) => {
+      .then((mouseEventsWithCommands) => {
         if (worldviewHandler) {
-          const objects = objectHitmapIds.map((id) => worldviewContext.getObjectByObjectHitmapId(id));
-          handleWorldviewMouseInteraction(objects, ray, e, worldviewHandler);
+          const mouseEvents = mouseEventsWithCommands.map(([mouseEventObject]) => mouseEventObject);
+          handleWorldviewMouseInteraction(mouseEvents, ray, e, worldviewHandler);
         }
-        worldviewContext.callComponentHandlers(objectHitmapIds, ray, e, mouseEventName);
+        const mouseEventsByCommand: Map<CommandComponentInstance, Array<MouseEventObject>> = aggregate(
+          mouseEventsWithCommands
+        );
+        mouseEventsByCommand.entries.forEach((command) => {
+          const mouseEvents = mouseEventsByCommand[command].map(([mouseEventObject]) => mouseEventObject);
+          command.handleMouseEvent(mouseEvents, ray, e, mouseEventName);
+        });
       })
       .catch((e) => {
         console.error(e);

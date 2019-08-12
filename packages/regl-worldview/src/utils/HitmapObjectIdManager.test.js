@@ -73,7 +73,7 @@ describe("HitmapObjectIdManager", () => {
       const manager: HitmapObjectIdManager = new HitmapObjectIdManager();
       manager.assignNextIds(commandInstanceId, { type: "single", callbackObject: drawProp });
 
-      manager.reset(commandInstanceId);
+      manager.reset();
       expect(manager.getObjectByObjectHitmapId(1).object).toEqual(undefined);
 
       const ids = manager.assignNextIds(commandInstanceId, { type: "single", callbackObject: drawProp });

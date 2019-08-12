@@ -89,7 +89,7 @@ export class WorldviewContext {
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInput> = new Map();
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
-  _hitmapIdManager: HitmapObjectIdManager = new HitmapObjectIdManager();
+  _hitmapObjectIdManager: HitmapObjectIdManager = new HitmapObjectIdManager();
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
   counters: { paint?: number, render?: number } = {};
@@ -308,7 +308,7 @@ export class WorldviewContext {
     this._drawCalls.forEach((drawInput, component) => {
       if (component instanceof Command) {
         const objectHitmapIdsForCommand = intersection(
-          this._hitmapIdManager.getObjectHitmapIdsForCommand(component),
+          this._hitmapObjectIdManager.getObjectHitmapIdsForCommand(component),
           objectHitmapIds
         );
         const mouseEvents = objectHitmapIdsForCommand.map((id) => this.getObjectByObjectHitmapId(id));
@@ -319,7 +319,7 @@ export class WorldviewContext {
 
   _drawInput = (isHitmap?: boolean, excludedObjects?: MouseEventObject[]) => {
     if (isHitmap) {
-      this._hitmapIdManager.reset();
+      this._hitmapObjectIdManager.reset();
     }
 
     const drawCalls = Array.from(this._drawCalls.values()).sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
@@ -335,7 +335,7 @@ export class WorldviewContext {
       // draw hitmap
       if (isHitmap && getChildrenForHitmap) {
         const assignNextIdsFn: AssignNextIdsFn = (...rest) => {
-          return this._hitmapIdManager.assignNextIds(instance, ...rest);
+          return this._hitmapObjectIdManager.assignNextIds(instance, ...rest);
         };
         const hitmapProps = getChildrenForHitmap(children, assignNextIdsFn, excludedObjects || []);
         if (hitmapProps) {
@@ -348,7 +348,7 @@ export class WorldviewContext {
   };
 
   getObjectByObjectHitmapId = (objectHitmapId: ObjectHitmapId): MouseEventObject => {
-    return this._hitmapIdManager.getObjectByObjectHitmapId(objectHitmapId);
+    return this._hitmapObjectIdManager.getObjectByObjectHitmapId(objectHitmapId);
   };
 
   _clearCanvas = (regl: any) => {

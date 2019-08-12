@@ -75,8 +75,8 @@ module.exports = {
     rules: [
       {
         test: /\.wasm$/,
-        // Bypass webpack's default importing logic, and just import the file
-        // as-is.
+        // Bypass webpack's default importing logic for .wasm files.
+        // https://webpack.js.org/configuration/module/#ruletype
         type: "javascript/auto",
         use: {
           loader: "file-loader",

@@ -185,7 +185,7 @@ export type SphereList = BaseShape & {
 
 export type TriangleList = BaseShape & {
   points: Point[],
-  colors?: Color[],
+  colors?: (Color | Vec4)[],
 };
 
 export type PolygonType = BaseShape & {
@@ -204,10 +204,10 @@ export type ObjectHitmapId = number;
  * count: If "instanced", how many IDs to map to the callback object.
  * return type: an array of the IDs assigned.
  */
-export type AssignNextIdsFn = (
+export type AssignNextColorsFn = (
   { type: "single", object: Object } | { type: "instanced", object: Object, count: number }
-) => ObjectHitmapId[];
-export type GetChildrenForHitmap = <T>(prop: T, AssignNextIdsFn, MouseEventObject[]) => T;
+) => Vec4[];
+export type GetChildrenForHitmap = <T>(prop: T, AssignNextColorsFn, MouseEventObject[]) => T;
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";
 

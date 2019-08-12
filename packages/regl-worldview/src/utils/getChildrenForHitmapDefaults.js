@@ -6,20 +6,19 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { AssignNextIdsFn, MouseEventObject } from "../types";
+import type { AssignNextColorsFn, MouseEventObject } from "../types";
 import { intToRGB } from "./commandUtils";
 
 function nonInstancedGetChildrenForHitmapFromSingleProp<T: any>(
   prop: T,
-  assignNextIds: AssignNextIdsFn,
+  assignNextColors: AssignNextColorsFn,
   excludedObjects: MouseEventObject[]
 ): ?T {
   if (excludedObjects.some(({ object }) => object === prop)) {
     return null;
   }
   const hitmapProp = { ...prop };
-  const [id] = assignNextIds({ type: "single", object: prop });
-  const hitmapColor = intToRGB(id);
+  const [hitmapColor] = assignNextColors({ type: "single", object: prop });
   hitmapProp.color = hitmapColor;
   if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
     hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
@@ -29,20 +28,20 @@ function nonInstancedGetChildrenForHitmapFromSingleProp<T: any>(
 
 export const nonInstancedGetChildrenForHitmap = <T: any>(
   props: T,
-  assignNextIds: AssignNextIdsFn,
+  assignNextColors: AssignNextColorsFn,
   excludedObjects: MouseEventObject[]
 ): ?T => {
   if (Array.isArray(props)) {
     return props
-      .map((prop) => nonInstancedGetChildrenForHitmapFromSingleProp(prop, assignNextIds, excludedObjects))
+      .map((prop) => nonInstancedGetChildrenForHitmapFromSingleProp(prop, assignNextColors, excludedObjects))
       .filter(Boolean);
   }
-  return nonInstancedGetChildrenForHitmapFromSingleProp(props, assignNextIds, excludedObjects);
+  return nonInstancedGetChildrenForHitmapFromSingleProp(props, assignNextColors, excludedObjects);
 };
 
 function instancedGetChildrenForHitmapFromSingleProp<T: any>(
   prop: T,
-  assignNextIds: AssignNextIdsFn,
+  assignNextColors: AssignNextColorsFn,
   excludedObjects: MouseEventObject[],
   pointCountPerInstance
 ): ?T {
@@ -51,11 +50,12 @@ function instancedGetChildrenForHitmapFromSingleProp<T: any>(
     .filter((instanceIndex) => typeof instanceIndex === "number");
   const hitmapProp = { ...prop };
   const instanceCount = (hitmapProp.points && Math.ceil(hitmapProp.points.length / pointCountPerInstance)) || 1;
-  const newIds = assignNextIds({ type: "instanced", count: instanceCount, object: prop });
-  const startColor = intToRGB(newIds[0]);
-  if (hitmapProp.points && hitmapProp.points.length) {
+  // This returns 1 color per instance.
+  const idColors = assignNextColors({ type: "instanced", count: instanceCount, object: prop });
+  const startColor = idColors[0];
+  // We have to map these instance colors to `pointCountPerInstance` number of points
+  if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
     const allColors = new Array(hitmapProp.points.length).fill().map(() => startColor);
-    const idColors = newIds.map((id) => intToRGB(id));
     for (let i = 0; i < instanceCount; i++) {
       for (let j = 0; j < pointCountPerInstance; j++) {
         const idx = i * pointCountPerInstance + j;
@@ -84,15 +84,15 @@ function instancedGetChildrenForHitmapFromSingleProp<T: any>(
 
 export const createInstancedGetChildrenForHitmap = (pointCountPerInstance: number) => <T: any>(
   props: T,
-  assignNextIds: AssignNextIdsFn,
+  assignNextColors: AssignNextColorsFn,
   excludedObjects: MouseEventObject[]
 ): ?T => {
   if (Array.isArray(props)) {
     return props
       .map((prop) =>
-        instancedGetChildrenForHitmapFromSingleProp(prop, assignNextIds, excludedObjects, pointCountPerInstance)
+        instancedGetChildrenForHitmapFromSingleProp(prop, assignNextColors, excludedObjects, pointCountPerInstance)
       )
       .filter(Boolean);
   }
-  return instancedGetChildrenForHitmapFromSingleProp(props, assignNextIds, excludedObjects, pointCountPerInstance);
+  return instancedGetChildrenForHitmapFromSingleProp(props, assignNextColors, excludedObjects, pointCountPerInstance);
 };

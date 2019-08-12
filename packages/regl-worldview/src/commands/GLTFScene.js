@@ -272,8 +272,8 @@ function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
 }
 
 // Override the default getChildrenForHitmap with our own implementation.
-const getChildrenForHitmap: GetChildrenForHitmap = <T: any>(prop: T, assignNextIds, excludedObjects) => {
-  const hitmapProp = nonInstancedGetChildrenForHitmap(prop, assignNextIds, excludedObjects);
+const getChildrenForHitmap: GetChildrenForHitmap = <T: any>(prop: T, assignNextColors, excludedObjects) => {
+  const hitmapProp = nonInstancedGetChildrenForHitmap(prop, assignNextColors, excludedObjects);
   if (hitmapProp) {
     hitmapProp.isHitmap = true;
   }

@@ -208,14 +208,14 @@ export function intToRGB(i: number = 0) {
   return [r, g, b, 1];
 }
 
-function rgbToInt(rgb: Uint8Array) {
+function rgbToInt(rgb: Uint8Array | number[]) {
   const r = rgb[0];
   const g = rgb[1];
   const b = rgb[2];
   return b | (g << 8) | (r << 16);
 }
 
-export function getIdFromColor(rgb: Uint8Array) {
+export function getIdFromColor(rgb: Uint8Array | number[]) {
   return rgbToInt(rgb);
 }
 

@@ -22,7 +22,7 @@ import type {
   CameraState,
   MouseEventObject,
   GetChildrenForHitmap,
-  AssignNextIdsFn,
+  AssignNextColorsFn,
 } from "./types";
 import { getIdFromColor, intToRGB } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
@@ -322,10 +322,10 @@ export class WorldviewContext {
       }
       // draw hitmap
       if (isHitmap && getChildrenForHitmap) {
-        const assignNextIdsFn: AssignNextIdsFn = (...rest) => {
-          return this._hitmapObjectIdManager.assignNextIds(instance, ...rest);
+        const assignNextColorsFn: AssignNextColorsFn = (...rest) => {
+          return this._hitmapObjectIdManager.assignNextColors(instance, ...rest);
         };
-        const hitmapProps = getChildrenForHitmap(children, assignNextIdsFn, excludedObjects || []);
+        const hitmapProps = getChildrenForHitmap(children, assignNextColorsFn, excludedObjects || []);
         if (hitmapProps) {
           cmd(hitmapProps);
         }

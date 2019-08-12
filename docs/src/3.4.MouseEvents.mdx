@@ -82,11 +82,11 @@ Some important things to remember:
  * count: If "instanced", how many IDs to map to the callback object.
  * return type: an array of the IDs assigned.
  */
-type AssignNextIdsFn = (
+type AssignNextColorsFn = (
   { type: "single", object: Object } | { type: "instanced", object: Object, count: number }
 ) => ObjectHitmapId[];
 ```
- *  * Each object that you want to support mouse events on requires a unique ID. If your command actually renders multiple items per input object (such as when using [instanced drawing](https://github.com/regl-project/regl/blob/gh-pages/example/instance-triangle.js)), you may want a separate ID for each item — in this case, call `assignNextIds` with `type: "instanced"`.
+ *  * Each object that you want to support mouse events on requires a unique ID. If your command actually renders multiple items per input object (such as when using [instanced drawing](https://github.com/regl-project/regl/blob/gh-pages/example/instance-triangle.js)), you may want a separate ID for each item — in this case, call `assignNextColors` with `type: "instanced"`.
  * Once you have this ID, pass it to `intToRGB()` to get the color to paint your object. Don't apply any transparency or shading to your object or this will mess up the hitmap.
 
 Example using composition of the default `getChildrenForHitmap` functions:
@@ -95,8 +95,8 @@ Example using composition of the default `getChildrenForHitmap` functions:
 <Worldview>
   <Points
     onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id}`)}
-    getChildrenForHitmap={(props, assignNextIds, excludedObjects) => {
-      const hitmapProps = nonInstancedGetChildrenForHitmap(props, assignNextIds, excludedObjects);
+    getChildrenForHitmap={(props, assignNextColors, excludedObjects) => {
+      const hitmapProps = nonInstancedGetChildrenForHitmap(props, assignNextColors, excludedObjects);
       // Points are hard to click, so expand their hitmap so that clicking slightly outside of a point still selects it.
       for (hitmapProp of hitmapProps) {
         hitmapProp.scale = { x: hitmapProps.scale.x * 1.1, y: hitmapProps.scale.y * 1.1, z: hitmapProps.scale.z * 1.1 };
@@ -115,7 +115,7 @@ Example using a custom `getChildrenForHitmap` function:
 <Worldview>
   <Points
     onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id}`)}
-    getChildrenForHitmap={(props, assignNextIds, excludedObjects) => {
+    getChildrenForHitmap={(props, assignNextColors, excludedObjects) => {
       // This is a simplified version of nonInstancedGetChildrenForHitmap, for explanation purposes.
       return propsArray.map((prop) => {
         // Don't render objects that have been excluded.
@@ -127,7 +127,7 @@ Example using a custom `getChildrenForHitmap` function:
         // We copy each point array.
         const hitmapProp = { ...prop };
         // We get 1 new ID, and pass in the original prop so it will be the object passed to any event handlers.
-        const [id] = assignNextIds({ type: "single", object: prop });
+        const [id] = assignNextColors({ type: "single", object: prop });
         // We turn the objectHitmapId into a color and use it for the points.
         const hitmapColor = intToRGB(id);
         hitmapProp.color = hitmapColor;

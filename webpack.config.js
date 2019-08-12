@@ -74,6 +74,18 @@ module.exports = {
     strictExportPresence: true,
     rules: [
       {
+        test: /\.wasm$/,
+        // Bypass webpack's default importing logic, and just import the file
+        // as-is.
+        type: "javascript/auto",
+        use: {
+          loader: "file-loader",
+          options: {
+            name: "[name]-[hash].[ext]",
+          },
+        },
+      },
+      {
         test: /\.worker\.js$/,
         use: {
           loader: "worker-loader",

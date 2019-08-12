@@ -31,7 +31,7 @@ describe("getChildrenForHitmapDefaults", () => {
       if (obj.type === "single") {
         const currentId = nextId;
         nextId++;
-        return [intToRGB(nextId)];
+        return [intToRGB(currentId)];
       }
       const { count } = obj;
       const idArray = new Array(count).fill(null).map((_, index) => intToRGB(index + nextId));
@@ -56,7 +56,7 @@ describe("getChildrenForHitmapDefaults", () => {
     it("filters already seen single objects correctly", () => {
       const object = { some: "garbage", points: [[], []], colors: [[], []] };
       const hitmapProps = nonInstancedGetChildrenForHitmap(object, assignNextColors, toexcludedObjects([object]));
-      expect(hitmapProps).toEqual(undefined);
+      expect(hitmapProps).toEqual(null);
       expect(assignNextColors).not.toHaveBeenCalled();
     });
 
@@ -188,7 +188,7 @@ describe("getChildrenForHitmapDefaults", () => {
         assignNextColors,
         toexcludedObjects([object], [0])
       );
-      expect(hitmapProps).toEqual(undefined);
+      expect(hitmapProps).toEqual(null);
     });
 
     it("handles arrays correctly", () => {

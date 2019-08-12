@@ -11,6 +11,7 @@ import React from "react";
 
 import type { Vec3, PolygonType } from "../types";
 import { shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Triangles from "./Triangles";
 
 const NO_POSE = {
@@ -61,7 +62,8 @@ function FilledPolygons({ children: polygons = [], ...rest }: Props) {
       scale: DEFAULT_SCALE,
     });
   }
-  return <Triangles {...rest}>{triangles}</Triangles>;
+  // Overwrite the triangles default getChildrenForHitmap because we want to event as if this is a single object.
+  return <Triangles getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...rest}>{triangles}</Triangles>;
 }
 
 export default FilledPolygons;

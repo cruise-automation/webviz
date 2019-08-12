@@ -50,7 +50,7 @@ describe("getChildrenForHitmapDefaults", () => {
         color: intToRGB(1),
         colors: [intToRGB(1), intToRGB(1)],
       });
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "single", callbackObject: object });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "single", object });
     });
 
     it("filters already seen single objects correctly", () => {
@@ -64,7 +64,7 @@ describe("getChildrenForHitmapDefaults", () => {
       const object = { some: "garbage", color: [] };
       const hitmapProps = nonInstancedGetChildrenForHitmap(object, assignNextIds, []);
       expect(hitmapProps).toEqual({ some: "garbage", color: intToRGB(1) });
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "single", callbackObject: object });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "single", object });
     });
 
     it("handles arrays correctly", () => {
@@ -81,8 +81,8 @@ describe("getChildrenForHitmapDefaults", () => {
         },
       ]);
       expect(assignNextIds).toHaveBeenCalledTimes(2);
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "single", callbackObject: objects[0] });
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "single", callbackObject: objects[1] });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "single", object: objects[0] });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "single", object: objects[1] });
     });
 
     it("filters already seen array members correctly", () => {
@@ -115,7 +115,7 @@ describe("getChildrenForHitmapDefaults", () => {
         colors: [intToRGB(1), intToRGB(1), intToRGB(2), intToRGB(2), intToRGB(3), intToRGB(3)],
       });
       expect(assignNextIds).toHaveBeenCalledTimes(1);
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", callbackObject: object, count: 3 });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", object, count: 3 });
     });
 
     it("handles single objects without points correctly", () => {
@@ -126,7 +126,7 @@ describe("getChildrenForHitmapDefaults", () => {
         color: intToRGB(1),
       });
       expect(assignNextIds).toHaveBeenCalledTimes(1);
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", callbackObject: object, count: 1 });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", object, count: 1 });
     });
 
     it("handles objects with an empty point array", () => {
@@ -138,7 +138,7 @@ describe("getChildrenForHitmapDefaults", () => {
         color: intToRGB(1),
       });
       expect(assignNextIds).toHaveBeenCalledTimes(1);
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", callbackObject: object, count: 1 });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", object, count: 1 });
     });
 
     it("handles single point counts", () => {
@@ -150,7 +150,7 @@ describe("getChildrenForHitmapDefaults", () => {
         colors: [intToRGB(1), intToRGB(2), intToRGB(3)],
       });
       expect(assignNextIds).toHaveBeenCalledTimes(1);
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", callbackObject: object, count: 3 });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", object, count: 3 });
     });
 
     it("handles offset point counts", () => {
@@ -162,7 +162,7 @@ describe("getChildrenForHitmapDefaults", () => {
         colors: [intToRGB(1), intToRGB(1), intToRGB(1), intToRGB(2)],
       });
       expect(assignNextIds).toHaveBeenCalledTimes(1);
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", callbackObject: object, count: 2 });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", object, count: 2 });
     });
 
     it("filters instances correctly", () => {
@@ -178,7 +178,7 @@ describe("getChildrenForHitmapDefaults", () => {
         colors: [intToRGB(1), intToRGB(1), intToRGB(3), intToRGB(3)],
       });
       expect(assignNextIds).toHaveBeenCalledTimes(1);
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", callbackObject: object, count: 3 });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", object, count: 3 });
     });
 
     it("filters objects without points correctly", () => {
@@ -219,8 +219,8 @@ describe("getChildrenForHitmapDefaults", () => {
         },
       ]);
       expect(assignNextIds).toHaveBeenCalledTimes(2);
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", callbackObject: objects[0], count: 3 });
-      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", callbackObject: objects[1], count: 4 });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", object: objects[0], count: 3 });
+      expect(assignNextIds).toHaveBeenCalledWith({ type: "instanced", object: objects[1], count: 4 });
     });
   });
 });

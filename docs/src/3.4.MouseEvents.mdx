@@ -11,7 +11,7 @@ Currently Worldview supports the following mouse event handlers: `onDoubleClick`
 | `onMouseUp`     | `MouseHandler`    |         |                                                                                                                                                                          |
 | `onMouseMove`   | `MouseHandler`    |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the Worldview component                                                                               |
 | `onClick`       | `MouseHandler`    |         |                                                                                                                                                                          |
-| `getChildrenForHitmap`     | `AssignNextIdsFn` |         | Maps the `children` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
+| `getChildrenForHitmap`     | `GetChildrenForHitmap` |         | Maps the `children` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
 
 ## Event Handler
 
@@ -78,12 +78,12 @@ Some important things to remember:
 ```js
 /*
  * type: "instanced" if mapping multiple IDs to a single callback object, "single" if 1:1.
- * callbackObject: the object to pass to event callbacks when this object is interacted with.
+ * object: the object to pass to event callbacks when this object is interacted with.
  * count: If "instanced", how many IDs to map to the callback object.
  * return type: an array of the IDs assigned.
  */
 type AssignNextIdsFn = (
-  { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
+  { type: "single", object: Object } | { type: "instanced", object: Object, count: number }
 ) => ObjectHitmapId[];
 ```
  *  * Each object that you want to support mouse events on requires a unique ID. If your command actually renders multiple items per input object (such as when using [instanced drawing](https://github.com/regl-project/regl/blob/gh-pages/example/instance-triangle.js)), you may want a separate ID for each item — in this case, call `assignNextIds` with `type: "instanced"`.
@@ -95,8 +95,8 @@ Example using composition of the default `getChildrenForHitmap` functions:
 <Worldview>
   <Points
     onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id}`)}
-    getChildrenForHitmap={(props, assignNextIds) => {
-      const hitmapProps = nonInstancedGetChildrenForHitmap(props, assignNextIds);
+    getChildrenForHitmap={(props, assignNextIds, excludedObjects) => {
+      const hitmapProps = nonInstancedGetChildrenForHitmap(props, assignNextIds, excludedObjects);
       // Points are hard to click, so expand their hitmap so that clicking slightly outside of a point still selects it.
       for (hitmapProp of hitmapProps) {
         hitmapProp.scale = { x: hitmapProps.scale.x * 1.1, y: hitmapProps.scale.y * 1.1, z: hitmapProps.scale.z * 1.1 };
@@ -115,13 +115,19 @@ Example using a custom `getChildrenForHitmap` function:
 <Worldview>
   <Points
     onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id}`)}
-    getChildrenForHitmap={(props, assignNextIds) => {
+    getChildrenForHitmap={(props, assignNextIds, excludedObjects) => {
       // This is a simplified version of nonInstancedGetChildrenForHitmap, for explanation purposes.
       return propsArray.map((prop) => {
+        // Don't render objects that have been excluded.
+        // Objects are excluded when we enable stacked object events. If this object has already been evented on, we
+        // want to event on the objects underneath it, so don't allow drawing it.
+        if (excludedObjects.find({ object }) => object === prop)) {
+          return null;
+        }
         // We copy each point array.
         const hitmapProp = { ...prop };
         // We get 1 new ID, and pass in the original prop so it will be the object passed to any event handlers.
-        const [id] = assignNextIds({ type: "single", callbackObject: prop });
+        const [id] = assignNextIds({ type: "single", object: prop });
         // We turn the objectHitmapId into a color and use it for the points.
         const hitmapColor = intToRGB(id);
         hitmapProp.color = hitmapColor;
@@ -129,7 +135,7 @@ Example using a custom `getChildrenForHitmap` function:
           hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
         }
         return hitmapProp;
-      });
+      }).filter(Boolean); // filter out any excluded objects here
     }}
   >
     {points}

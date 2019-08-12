@@ -200,12 +200,12 @@ export type MouseEventObject = {
 export type ObjectHitmapId = number;
 /*
  * type: "instanced" if mapping multiple IDs to a single callback object, "single" if 1:1.
- * callbackObject: the object to pass to event callbacks when this object is interacted with.
+ * object: the object to pass to event callbacks when this object is interacted with.
  * count: If "instanced", how many IDs to map to the callback object.
  * return type: an array of the IDs assigned.
  */
 export type AssignNextIdsFn = (
-  { type: "single", callbackObject: BaseShape } | { type: "instanced", callbackObject: BaseShape, count: number }
+  { type: "single", object: Object } | { type: "instanced", object: Object, count: number }
 ) => ObjectHitmapId[];
 export type GetChildrenForHitmap = <T>(prop: T, AssignNextIdsFn, MouseEventObject[]) => T;
 

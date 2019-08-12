@@ -219,10 +219,9 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         const mouseEventsByCommand: Map<CommandComponentInstance, Array<MouseEventObject>> = aggregate(
           mouseEventsWithCommands
         );
-        mouseEventsByCommand.entries.forEach((command) => {
-          const mouseEvents = mouseEventsByCommand[command].map(([mouseEventObject]) => mouseEventObject);
+        for (const [command, mouseEvents] of mouseEventsByCommand.entries()) {
           command.handleMouseEvent(mouseEvents, ray, e, mouseEventName);
-        });
+        }
       })
       .catch((e) => {
         console.error(e);

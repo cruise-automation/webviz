@@ -21,7 +21,7 @@ function nonInstancedGetChildrenForHitmapFromSingleProp<T: any>(
   const [id] = assignNextIds({ type: "single", object: prop });
   const hitmapColor = intToRGB(id);
   hitmapProp.color = hitmapColor;
-  if (hitmapProp.points && hitmapProp.points.length) {
+  if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
     hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
   }
   return hitmapProp;

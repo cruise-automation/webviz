@@ -7,11 +7,10 @@
 //  You may not use this file except in compliance with the License.
 
 import last from "lodash/last";
-import React from "react";
 
-import { intToRGB } from "./commandUtils";
-import type { ObjectHitmapId, Vec4, MouseEventObject } from "../types";
 import Command from "../commands/Command";
+import type { ObjectHitmapId, Vec4, MouseEventObject } from "../types";
+import { intToRGB } from "./commandUtils";
 
 function fillArray(start: number, length: number): number[] {
   return new Array(length).fill(0).map((_, index) => start + index);
@@ -29,9 +28,7 @@ export default class HitmapObjectIdManager {
 
   assignNextColors = (
     command: Command,
-    options:
-      | { type: "single", object: Object }
-      | { type: "instanced", object: Object, count: number }
+    options: { type: "single", object: Object } | { type: "instanced", object: Object, count: number }
   ): Vec4[] => {
     const idCount = options.type === "instanced" ? options.count : 1;
     if (idCount < 1) {

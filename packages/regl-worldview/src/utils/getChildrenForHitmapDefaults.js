@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import type { AssignNextColorsFn, MouseEventObject } from "../types";
-import { intToRGB } from "./commandUtils";
 
 function nonInstancedGetChildrenForHitmapFromSingleProp<T: any>(
   prop: T,

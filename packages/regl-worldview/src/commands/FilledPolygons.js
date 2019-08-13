@@ -64,7 +64,11 @@ function FilledPolygons({ children: polygons = [], ...rest }: Props) {
 
   // Overwrite the triangle's default getChildrenForHitmap because we want to event as if each triangle is a single
   // polygon.
-  return <Triangles getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...rest}>{triangles}</Triangles>;
+  return (
+    <Triangles getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...rest}>
+      {triangles}
+    </Triangles>
+  );
 }
 
 export default FilledPolygons;

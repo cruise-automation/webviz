@@ -73,9 +73,6 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
   return typeof src === "function" ? src : regl(src);
 }
 
-// The max number of layered objects we can process events for when drawing the hitmap. Limited for performance reasons.
-const MAX_NUMBER_OF_HITMAP_LAYERS = 100;
-
 // This is made available to every Command component as `this.context`.
 // It contains all the regl interaction code and is responsible for collecting and executing
 // draw calls, hitmap calls, and raycasting.
@@ -223,7 +220,8 @@ export class WorldviewContext {
   readHitmap(
     canvasX: number,
     canvasY: number,
-    enableStackedObjectEvents: boolean
+    enableStackedObjectEvents: boolean,
+    maxStackedObjectCount: number
   ): Promise<Array<[MouseEventObject, Command]>> {
     if (!this.initializedData) {
       return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
@@ -255,12 +253,12 @@ export class WorldviewContext {
           // Every iteration in this loop clears the framebuffer, draws the hitmap objects that have NOT already been
           // seen to the framebuffer, and then reads the pixel under the cursor to find the object on top.
           // If `enableStackedObjectEvents` is false, we only do this iteration once - we only resolve with 0 or 1
-          // `ObjectHitmapId`s.
+          // objects.
           do {
-            if (counter === MAX_NUMBER_OF_HITMAP_LAYERS) {
+            if (counter >= maxStackedObjectCount) {
               // Provide a max number of layers so this while loop doesn't crash the page.
               console.error(
-                `Hit ${MAX_NUMBER_OF_HITMAP_LAYERS} iterations. There is either a bug or that number of rendered hitmap layers under the mouse cursor.`
+                `Hit ${maxStackedObjectCount} iterations. There is either a bug or that number of rendered hitmap layers under the mouse cursor.`
               );
               break;
             }

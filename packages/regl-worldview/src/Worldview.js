@@ -30,6 +30,7 @@ import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 export const DEFAULT_MOUSE_CLICK_RADIUS = 3;
+const DEFAULT_MAX_NUMBER_OF_HITMAP_LAYERS = 100;
 
 export type BaseProps = {|
   keyMap?: CameraKeyMap,
@@ -39,6 +40,8 @@ export type BaseProps = {|
   hitmapOnMouseMove?: boolean,
   // getting events for objects stacked on top of each other is expensive, so disable it by default
   enableStackedObjectEvents?: boolean,
+  // allow users to specify the max stacked object count
+  maxStackedObjectCount: number,
   showDebug?: boolean,
   children?: React.Node,
   style: { [styleAttribute: string]: number | string },
@@ -77,6 +80,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   _dragStartPos: ?{ x: number, y: number } = null;
 
   static defaultProps = {
+    maxStackedObjectCount: DEFAULT_MAX_NUMBER_OF_HITMAP_LAYERS,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
     shiftKeys: true,
     style: {},
@@ -210,7 +214,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();
     worldviewContext
-      .readHitmap(canvasX, canvasY, !!this.props.enableStackedObjectEvents)
+      .readHitmap(canvasX, canvasY, !!this.props.enableStackedObjectEvents, this.props.maxStackedObjectCount)
       .then((mouseEventsWithCommands) => {
         if (worldviewHandler) {
           const mouseEvents = mouseEventsWithCommands.map(([mouseEventObject]) => mouseEventObject);

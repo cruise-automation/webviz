@@ -53,6 +53,11 @@ export const MouseEventsInstanced = makeCodeComponent(
 
 export const Arrows = makeCodeComponent(require("!!raw-loader!./commands/Arrows"), "Arrows");
 
+export const ArrowsInteractive = makeCodeComponent(
+  require("!!raw-loader!./commands/ArrowsInteractive"),
+  "ArrowsInteractive"
+);
+
 export const Cones = makeCodeComponent(require("!!raw-loader!./commands/Cones"), "Cones");
 
 export const Cubes = makeCodeComponent(require("!!raw-loader!./commands/Cubes"), "Cubes");

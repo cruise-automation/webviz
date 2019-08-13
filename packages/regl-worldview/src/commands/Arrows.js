@@ -7,18 +7,50 @@
 //  You may not use this file except in compliance with the License.
 
 import { vec3, quat } from "gl-matrix";
+import fromPairs from "lodash/fromPairs";
+import omit from "lodash/omit";
 import * as React from "react";
 
 import type { Arrow } from "../types";
 import { pointToVec3, vec3ToPoint, orientationToVec4, vec4ToOrientation } from "../utils/commandUtils";
 import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
+import { SUPPORTED_MOUSE_EVENTS, type CommonCommandProps } from "./Command";
 import Cones from "./Cones";
 import Cylinders from "./Cylinders";
 
 const UNIT_X_VECTOR = Object.freeze([0, 0, 1]);
 
-export default class Arrows extends React.PureComponent<{ children: Arrow[] }> {
+type Props = {
+  children: Arrow[],
+  ...CommonCommandProps,
+};
+
+export default class Arrows extends React.PureComponent<Props> {
+  constructor(props: Props) {
+    super(props);
+
+    // Wrap mouse events so that any cylinder/cone events are propagated correctly.
+    for (const eventName of SUPPORTED_MOUSE_EVENTS) {
+      // $FlowFixMe
+      this[eventName] = (event, mouseEventObject) => {
+        if (this.props[eventName]) {
+          const newMouseEventObject = {
+            ...mouseEventObject,
+            objects: mouseEventObject.objects.map(({ object }) => {
+              // Pull the original marker off of this marker
+              return { object: object.originalMarker };
+            }),
+          };
+          this.props[eventName](event, newMouseEventObject);
+        }
+      };
+    }
+  }
+
   render() {
+    const passedProps = omit(this.props, [...SUPPORTED_MOUSE_EVENTS, "children"]);
+    // $FlowFixMe
+    const mouseEventProps = fromPairs(SUPPORTED_MOUSE_EVENTS.map((eventName) => [eventName, this[eventName]]));
     const cylinders = [];
     const cones = [];
     for (const marker of this.props.children) {
@@ -67,7 +99,8 @@ export default class Arrows extends React.PureComponent<{ children: Arrow[] }> {
       const headPosition = vec3.scaleAndAdd([0, 0, 0], basePosition, dir, shaftLength + headLength / 2);
 
       cylinders.push({
-        interactionData: marker.interactionData,
+        // Set the original marker so we can use it in mouse events
+        originalMarker: marker,
         scale: { x: shaftWidthX, y: shaftWidthY, z: shaftLength },
         color: marker.color,
         pose: {
@@ -76,7 +109,8 @@ export default class Arrows extends React.PureComponent<{ children: Arrow[] }> {
         },
       });
       cones.push({
-        interactionData: marker.interactionData,
+        // Set the original marker so we can use it in mouse events
+        originalMarker: marker,
         scale: { x: headWidthX, y: headWidthY, z: headLength },
         color: marker.color,
         pose: {
@@ -85,10 +119,15 @@ export default class Arrows extends React.PureComponent<{ children: Arrow[] }> {
         },
       });
     }
+
     return (
       <React.Fragment>
-        <Cylinders getChildrenForHitmap={nonInstancedGetChildrenForHitmap}>{cylinders}</Cylinders>
-        <Cones getChildrenForHitmap={nonInstancedGetChildrenForHitmap}>{cones}</Cones>
+        <Cylinders getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...passedProps} {...mouseEventProps}>
+          {cylinders}
+        </Cylinders>
+        <Cones getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...passedProps} {...mouseEventProps}>
+          {cones}
+        </Cones>
       </React.Fragment>
     );
   }

@@ -33,6 +33,7 @@ import Hitmap from "./examples/Hitmap";
 
 const allDemos = {
   Arrows,
+  ArrowsInteractive,
   BasicExample,
   CameraStateControlled,
   CameraStateUncontrolled,

@@ -10,7 +10,8 @@ import last from "lodash/last";
 import React from "react";
 
 import { intToRGB } from "./commandUtils";
-import type { CommandComponentInstance, ObjectHitmapId, Vec4, MouseEventObject } from "../types";
+import type { ObjectHitmapId, Vec4, MouseEventObject } from "../types";
+import Command from "../commands/Command";
 
 function fillArray(start: number, length: number): number[] {
   return new Array(length).fill(0).map((_, index) => start + index);
@@ -22,12 +23,12 @@ function fillArray(start: number, length: number): number[] {
  */
 export default class HitmapObjectIdManager {
   _objectsByObjectHitmapIdMap: { [ObjectHitmapId]: Object } = {};
-  _objectToCommandMap: Map<Object, CommandComponentInstance> = new Map();
+  _objectToCommandMap: Map<Object, Command> = new Map();
   _nextObjectHitmapId = 1;
   _hitmapInstancedIdMap: { [ObjectHitmapId]: number } = {}; // map objectHitmapId to the instance index
 
   assignNextColors = (
-    command: CommandComponentInstance,
+    command: Command,
     options:
       | { type: "single", object: Object }
       | { type: "instanced", object: Object, count: number }
@@ -71,7 +72,7 @@ export default class HitmapObjectIdManager {
     };
   };
 
-  getCommandForObject = (object: Object): ?CommandComponentInstance => {
+  getCommandForObject = (object: Object): ?Command => {
     return this._objectToCommandMap.get(object);
   };
 }

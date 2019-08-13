@@ -44,8 +44,6 @@ export type Regl = {
   prop: (string) => any,
 };
 
-export type CommandComponentInstance = React.Component<any>;
-
 export type CommandProps = {
   [string]: any,
 };

@@ -12,9 +12,9 @@ import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
+import Command from "./commands/Command";
 import type {
   MouseHandler,
-  CommandComponentInstance,
   Dimensions,
   Vec4,
   CameraState,
@@ -216,9 +216,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
           const mouseEvents = mouseEventsWithCommands.map(([mouseEventObject]) => mouseEventObject);
           handleWorldviewMouseInteraction(mouseEvents, ray, e, worldviewHandler);
         }
-        const mouseEventsByCommand: Map<CommandComponentInstance, Array<MouseEventObject>> = aggregate(
-          mouseEventsWithCommands
-        );
+        const mouseEventsByCommand: Map<Command, Array<MouseEventObject>> = aggregate(mouseEventsWithCommands);
         for (const [command, mouseEvents] of mouseEventsByCommand.entries()) {
           command.handleMouseEvent(mouseEvents, ray, e, mouseEventName);
         }

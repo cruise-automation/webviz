@@ -13,7 +13,6 @@ import createREGL from "regl";
 import { camera, CameraStore } from "./camera/index";
 import Command from "./commands/Command";
 import type {
-  CommandComponentInstance,
   Dimensions,
   RawCommand,
   CompiledReglCommand,
@@ -225,7 +224,7 @@ export class WorldviewContext {
     canvasX: number,
     canvasY: number,
     enableStackedObjectEvents: boolean
-  ): Promise<Array<[MouseEventObject, CommandComponentInstance]>> {
+  ): Promise<Array<[MouseEventObject, Command]>> {
     if (!this.initializedData) {
       return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
     }

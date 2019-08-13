@@ -37,7 +37,9 @@ export type CommonCommandProps = {
 };
 
 type Props<T> = {
-  children: T[],
+  children?: T[],
+  // Deprecated, but here for backwards compatibility
+  drawProps?: T[],
   reglCommand: RawCommand<T>,
   ...CommonCommandProps,
 };
@@ -82,7 +84,8 @@ export default class Command<T> extends React.Component<Props<T>> {
       return;
     }
 
-    const { children, reglCommand, layerIndex, getChildrenForHitmap } = this.props;
+    const { reglCommand, layerIndex, getChildrenForHitmap } = this.props;
+    const children = this.props.children || this.props.drawProps;
     if (children == null) {
       return;
     }

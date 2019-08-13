@@ -23,7 +23,7 @@ import type {
   GetChildrenForHitmap,
   AssignNextColorsFn,
 } from "./types";
-import { getIdFromColor, intToRGB } from "./utils/commandUtils";
+import { getIdFromPixel, intToRGB } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
 import HitmapObjectIdManager from "./utils/HitmapObjectIdManager";
 import { getRayFromClick } from "./utils/Raycast";
@@ -285,7 +285,7 @@ export class WorldviewContext {
                 data: pixel,
               });
 
-              currentObjectId = getIdFromColor(pixel);
+              currentObjectId = getIdFromPixel(pixel);
               const mouseEventObject = this._hitmapObjectIdManager.getObjectByObjectHitmapId(currentObjectId);
               // Check an error case: if we've already seen this hitmapObjectId, then the getHitmapFromChildren function
               // is not respecting the excludedObjects correctly and we should notify the user of a bug.

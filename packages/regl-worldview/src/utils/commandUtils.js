@@ -201,22 +201,25 @@ export function shouldConvert(props: any) {
   return true;
 }
 
-export function intToRGB(i: number = 0) {
+export function intToRGB(i: number = 0): Vec4 {
   const r = ((i >> 16) & 255) / 255;
   const g = ((i >> 8) & 255) / 255;
   const b = (i & 255) / 255;
   return [r, g, b, 1];
 }
 
-function rgbToInt(rgb: Uint8Array | number[]) {
+export function getIdFromColor(rgb: Vec4): number {
+  const r = rgb[0] * 255;
+  const g = rgb[1] * 255;
+  const b = rgb[2] * 255;
+  return b | (g << 8) | (r << 16);
+}
+
+export function getIdFromPixel(rgb: Uint8Array): number {
   const r = rgb[0];
   const g = rgb[1];
   const b = rgb[2];
   return b | (g << 8) | (r << 16);
-}
-
-export function getIdFromColor(rgb: Uint8Array | number[]) {
-  return rgbToInt(rgb);
 }
 
 // gl-matrix clone of three.js Vector3.setFromSpherical

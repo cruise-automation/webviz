@@ -10,7 +10,6 @@ import React from "react";
 
 import type { Line, Point, Pose, Vec4, Vec3, Scale, GetChildrenForHitmap } from "../../types";
 import { vec4ToRGBA, vec3ToPoint } from "../../utils/commandUtils";
-import { nonInstancedGetChildrenForHitmap } from "../../utils/getChildrenForHitmapDefaults";
 import Lines from "../Lines";
 import Spheres from "../Spheres";
 
@@ -77,22 +76,24 @@ const polygonLinesGetChildrenForHitmap: GetChildrenForHitmap = <T: any>(
   excludedObjects
 ) => {
   // This is almost identical to the default nonInstancedGetChildrenForHitmap, with changes marked.
-  return props.map((prop) => {
-    if (excludedObjects.some(({ object }) => object === prop)) {
-      return null;
-    }
-    const hitmapProp = { ...prop };
-    // Change from original: pass the original marker as a callback object instead of this marker.
-    const [hitmapColor] = assignNextColors({ type: "single", object: prop.originalMarker });
-    // Change from original: increase scale for hitmap
-    hitmapProp.scale = HITMAP_SCALE;
+  return props
+    .map((prop) => {
+      if (excludedObjects.some(({ object }) => object === prop)) {
+        return null;
+      }
+      const hitmapProp = { ...prop };
+      // Change from original: pass the original marker as a callback object instead of this marker.
+      const [hitmapColor] = assignNextColors({ type: "single", object: prop.originalMarker });
+      // Change from original: increase scale for hitmap
+      hitmapProp.scale = HITMAP_SCALE;
 
-    hitmapProp.color = hitmapColor;
-    if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
-      hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
-    }
-    return hitmapProp;
-  }).filter(Boolean);
+      hitmapProp.color = hitmapColor;
+      if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
+        hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
+      }
+      return hitmapProp;
+    })
+    .filter(Boolean);
 };
 
 /**
@@ -126,20 +127,22 @@ const polygonPointsGetChildrenForHitmap: GetChildrenForHitmap = <T: any>(
   excludedObjects
 ) => {
   // This is similar to the default nonInstancedGetChildrenForHitmap, with changes marked.
-  return props.map((prop) => {
-    if (excludedObjects.some(({ object }) => object === prop)) {
-      return null;
-    }
-    const hitmapProp = { ...prop };
-    // Change from original: assign a non-instanced color to each point color, even though this marker uses instancing.
-    // This is so that we can have a unique callback object for each point.
-    hitmapProp.colors = hitmapProp.colors.map((color, index) => {
-      return assignNextColors({ type: "single", object: prop.originalMarkers[index] });
+  return props
+    .map((prop) => {
+      if (excludedObjects.some(({ object }) => object === prop)) {
+        return null;
+      }
+      const hitmapProp = { ...prop };
+      // Change from original: assign a non-instanced color to each point color, even though this marker uses instancing.
+      // This is so that we can have a unique callback object for each point.
+      hitmapProp.colors = hitmapProp.colors.map((color, index) => {
+        return assignNextColors({ type: "single", object: prop.originalMarkers[index] });
+      });
+      // Change from original: increase scale for hitmap
+      hitmapProp.scale = HITMAP_POINT_SCALE;
+      return hitmapProp;
     })
-    // Change from original: increase scale for hitmap
-    hitmapProp.scale = HITMAP_POINT_SCALE;
-    return hitmapProp;
-  }).filter(Boolean);
+    .filter(Boolean);
 };
 
 /**

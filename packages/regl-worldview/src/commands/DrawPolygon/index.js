@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// TODO(Audrey): add documentation for DrawPolygons
 import React from "react";
 
 import type { Line, Point, Pose, Vec4, Vec3, Scale, GetChildrenForHitmap } from "../../types";
@@ -65,6 +64,7 @@ type DrawPolygonSphere = {
   pose: Pose,
   scale: Scale,
   colors: Vec4[],
+  originalMarkers: Object[],
 };
 
 type Props = {
@@ -76,11 +76,23 @@ const polygonLinesGetChildrenForHitmap: GetChildrenForHitmap = <T: any>(
   assignNextColors,
   excludedObjects
 ) => {
-  const hitmapProps = nonInstancedGetChildrenForHitmap(props, assignNextColors, excludedObjects) || [];
-  for (const prop of hitmapProps) {
-    prop.scale = HITMAP_SCALE;
-  }
-  return hitmapProps;
+  // This is almost identical to the default nonInstancedGetChildrenForHitmap, with changes marked.
+  return props.map((prop) => {
+    if (excludedObjects.some(({ object }) => object === prop)) {
+      return null;
+    }
+    const hitmapProp = { ...prop };
+    // Change from original: pass the original marker as a callback object instead of this marker.
+    const [hitmapColor] = assignNextColors({ type: "single", object: prop.originalMarker });
+    // Change from original: increase scale for hitmap
+    hitmapProp.scale = HITMAP_SCALE;
+
+    hitmapProp.color = hitmapColor;
+    if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
+      hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
+    }
+    return hitmapProp;
+  }).filter(Boolean);
 };
 
 /**
@@ -100,6 +112,7 @@ class PolygonLines extends React.Component<Props> {
         points,
         scale: DRAW_SCALE,
         color: vec4ToRGBA(color),
+        originalMarker: poly,
       });
     }
 
@@ -112,11 +125,21 @@ const polygonPointsGetChildrenForHitmap: GetChildrenForHitmap = <T: any>(
   assignNextColors,
   excludedObjects
 ) => {
-  const hitmapProps = nonInstancedGetChildrenForHitmap(props, assignNextColors, excludedObjects) || [];
-  for (const prop of hitmapProps) {
-    prop.scale = HITMAP_POINT_SCALE;
-  }
-  return hitmapProps;
+  // This is similar to the default nonInstancedGetChildrenForHitmap, with changes marked.
+  return props.map((prop) => {
+    if (excludedObjects.some(({ object }) => object === prop)) {
+      return null;
+    }
+    const hitmapProp = { ...prop };
+    // Change from original: assign a non-instanced color to each point color, even though this marker uses instancing.
+    // This is so that we can have a unique callback object for each point.
+    hitmapProp.colors = hitmapProp.colors.map((color, index) => {
+      return assignNextColors({ type: "single", object: prop.originalMarkers[index] });
+    })
+    // Change from original: increase scale for hitmap
+    hitmapProp.scale = HITMAP_POINT_SCALE;
+    return hitmapProp;
+  }).filter(Boolean);
 };
 
 /**
@@ -130,6 +153,7 @@ class PolygonPoints extends React.Component<Props> {
       colors: [],
       pose: POSE,
       scale: DRAW_POINT_SCALE,
+      originalMarkers: [],
     };
 
     for (const poly of polygons) {
@@ -138,10 +162,11 @@ class PolygonPoints extends React.Component<Props> {
         const convertedPoint = vec3ToPoint(point.point);
         sphereList.points.push(convertedPoint);
         sphereList.colors.push(point.active ? ACTIVE_POINT_COLOR : color);
+        sphereList.originalMarkers.push(point);
       }
     }
 
-    return <Spheres getChildrenForHitmap={polygonPointsGetChildrenForHitmap}>{sphereList}</Spheres>;
+    return <Spheres getChildrenForHitmap={polygonPointsGetChildrenForHitmap}>{[sphereList]}</Spheres>;
   }
 }
 

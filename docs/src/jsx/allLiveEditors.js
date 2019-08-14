@@ -64,6 +64,8 @@ export const Cubes = makeCodeComponent(require("!!raw-loader!./commands/Cubes"),
 
 export const Cylinders = makeCodeComponent(require("!!raw-loader!./commands/Cylinders"), "Cylinders");
 
+export const DrawPolygons = makeCodeComponent(require("!!raw-loader!./commands/DrawPolygons"), "DrawPolygons");
+
 export const FilledPolygons = makeCodeComponent(require("!!raw-loader!./commands/FilledPolygons"), "FilledPolygons");
 
 export const FilledPolygonsHitmap = makeCodeComponent(

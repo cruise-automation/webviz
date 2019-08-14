@@ -58,6 +58,10 @@ export default class PolygonBuilder {
     this.polygons = polygons;
   }
 
+  isActivePolygonClosed(): boolean {
+    return !!this.activePolygon && isClosed(this.activePolygon);
+  }
+
   // adds a polygon to the builder, transforming it into the internal representation
   addPolygon(cmd: PolygonAddCommand): void {
     const { points, name } = cmd;

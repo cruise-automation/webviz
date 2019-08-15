@@ -11,13 +11,17 @@ import type { AssignNextColorsFn, MouseEventObject } from "../types";
 function nonInstancedGetChildrenForHitmapFromSingleProp<T: any>(
   prop: T,
   assignNextColors: AssignNextColorsFn,
-  excludedObjects: MouseEventObject[]
+  excludedObjects: MouseEventObject[],
+  useOriginalMarkerProp: boolean = false
 ): ?T {
   if (excludedObjects.some(({ object }) => object === prop)) {
     return null;
   }
   const hitmapProp = { ...prop };
-  const [hitmapColor] = assignNextColors({ type: "single", object: prop });
+  const [hitmapColor] = assignNextColors({
+    type: "single",
+    object: useOriginalMarkerProp ? prop.originalMarker : prop,
+  });
   hitmapProp.color = hitmapColor;
   if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
     hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
@@ -36,6 +40,21 @@ export const nonInstancedGetChildrenForHitmap = <T: any>(
       .filter(Boolean);
   }
   return nonInstancedGetChildrenForHitmapFromSingleProp(props, assignNextColors, excludedObjects);
+};
+
+// Almost identical to nonInstancedGetChildrenForHitmap, but instead the object passed to event callbacks is the object
+// at `prop.originalMarker`, not just `prop`.
+export const getChildrenForHitmapWithOriginalMarker = <T: any>(
+  props: T,
+  assignNextColors: AssignNextColorsFn,
+  excludedObjects: MouseEventObject[]
+) => {
+  if (Array.isArray(props)) {
+    return props
+      .map((prop) => nonInstancedGetChildrenForHitmapFromSingleProp(prop, assignNextColors, excludedObjects, true))
+      .filter(Boolean);
+  }
+  return nonInstancedGetChildrenForHitmapFromSingleProp(props, assignNextColors, excludedObjects, true);
 };
 
 function instancedGetChildrenForHitmapFromSingleProp<T: any>(

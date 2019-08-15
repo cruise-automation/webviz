@@ -10,8 +10,9 @@ import { vec3, quat } from "gl-matrix";
 import omit from "lodash/omit";
 import React, { memo, Fragment } from "react";
 
-import type { Arrow, GetChildrenForHitmap } from "../types";
+import type { Arrow } from "../types";
 import { pointToVec3, vec3ToPoint, orientationToVec4, vec4ToOrientation } from "../utils/commandUtils";
+import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
 import type { CommonCommandProps } from "./Command";
 import Cones from "./Cones";
 import Cylinders from "./Cylinders";
@@ -21,26 +22,6 @@ const UNIT_X_VECTOR = Object.freeze([0, 0, 1]);
 type Props = {
   children: Arrow[],
   ...CommonCommandProps,
-};
-
-const getChildrenForHitmapWithOriginalMarker: GetChildrenForHitmap = <T: any>(
-  props: T,
-  assignNextColors,
-  excludedObjects
-) => {
-  // This is almost identical to the default nonInstancedGetChildrenForHitmap, with changes marked.
-  return props
-    .map((prop) => {
-      if (excludedObjects.some(({ object }) => object === prop)) {
-        return null;
-      }
-      const hitmapProp = { ...prop };
-      // Change from original: pass the original marker as a callback object instead of this marker.
-      const [hitmapColor] = assignNextColors({ type: "single", object: prop.originalMarker });
-      hitmapProp.color = hitmapColor;
-      return hitmapProp;
-    })
-    .filter(Boolean);
 };
 
 function Arrows(props: Props) {
@@ -126,4 +107,4 @@ function Arrows(props: Props) {
   );
 }
 
-export default memo(Arrows);
+export default memo<Props>(Arrows);

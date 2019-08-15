@@ -11,7 +11,7 @@ import React from "react";
 
 import type { Vec3, PolygonType } from "../types";
 import { shouldConvert, pointToVec3 } from "../utils/commandUtils";
-import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
+import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
 import Triangles from "./Triangles";
 
 const NO_POSE = {
@@ -59,13 +59,14 @@ function FilledPolygons({ children: polygons = [], ...rest }: Props) {
       points: earcutPoints,
       pose,
       scale: DEFAULT_SCALE,
+      originalMarker: poly,
     };
   });
 
   // Overwrite the triangle's default getChildrenForHitmap because we want to event as if each triangle is a single
   // polygon.
   return (
-    <Triangles getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...rest}>
+    <Triangles getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker} {...rest}>
       {triangles}
     </Triangles>
   );

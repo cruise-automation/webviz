@@ -190,7 +190,7 @@ export type PolygonType = BaseShape & {
 };
 
 export type MouseEventObject = {
-  object: ?BaseShape,
+  object: BaseShape,
   instanceIndex: ?number,
 };
 

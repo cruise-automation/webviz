@@ -196,14 +196,12 @@ export type MouseEventObject = {
 
 export type ObjectHitmapId = number;
 /*
- * type: "instanced" if mapping multiple IDs to a single callback object, "single" if 1:1.
  * object: the object to pass to event callbacks when this object is interacted with.
- * count: If "instanced", how many IDs to map to the callback object.
- * return type: an array of the IDs assigned.
+ * count: How many colors to map to the callback object. If this is greater than 1, this assigns instance indices for
+          the object.
+ * return type: an array of the colors assigned.
  */
-export type AssignNextColorsFn = (
-  { type: "single", object: Object } | { type: "instanced", object: Object, count: number }
-) => Vec4[];
+export type AssignNextColorsFn = (object: Object, count: number) => Vec4[];
 export type GetChildrenForHitmap = <T>(prop: T, AssignNextColorsFn, MouseEventObject[]) => T;
 
 export type MouseEventEnum = "onClick" | "onMouseUp" | "onMouseMove" | "onMouseDown" | "onDoubleClick";

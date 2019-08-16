@@ -83,7 +83,7 @@ const polygonLinesGetChildrenForHitmap: GetChildrenForHitmap = <T: any>(
       }
       const hitmapProp = { ...prop };
       // Change from original: pass the original marker as a callback object instead of this marker.
-      const [hitmapColor] = assignNextColors({ type: "single", object: prop.originalMarker });
+      const [hitmapColor] = assignNextColors(prop.originalMarker, 1);
       // Change from original: increase scale for hitmap
       hitmapProp.scale = HITMAP_SCALE;
 
@@ -133,10 +133,11 @@ const polygonPointsGetChildrenForHitmap: GetChildrenForHitmap = <T: any>(
         return null;
       }
       const hitmapProp = { ...prop };
-      // Change from original: assign a non-instanced color to each point color, even though this marker uses instancing.
+      // Change from original: assign a non-instanced color to each point color, even though this marker uses
+      // instancing.
       // This is so that we can have a unique callback object for each point.
       hitmapProp.colors = hitmapProp.colors.map((color, index) => {
-        return assignNextColors({ type: "single", object: prop.originalMarkers[index] });
+        return assignNextColors(prop.originalMarkers[index], 1);
       });
       // Change from original: increase scale for hitmap
       hitmapProp.scale = HITMAP_POINT_SCALE;

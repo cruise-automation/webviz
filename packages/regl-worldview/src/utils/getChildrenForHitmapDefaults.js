@@ -18,10 +18,7 @@ function nonInstancedGetChildrenForHitmapFromSingleProp<T: any>(
     return null;
   }
   const hitmapProp = { ...prop };
-  const [hitmapColor] = assignNextColors({
-    type: "single",
-    object: useOriginalMarkerProp ? prop.originalMarker : prop,
-  });
+  const [hitmapColor] = assignNextColors(useOriginalMarkerProp ? prop.originalMarker : prop, 1);
   hitmapProp.color = hitmapColor;
   if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
     hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
@@ -69,7 +66,7 @@ function instancedGetChildrenForHitmapFromSingleProp<T: any>(
   const hitmapProp = { ...prop };
   const instanceCount = (hitmapProp.points && Math.ceil(hitmapProp.points.length / pointCountPerInstance)) || 1;
   // This returns 1 color per instance.
-  const idColors = assignNextColors({ type: "instanced", count: instanceCount, object: prop });
+  const idColors = assignNextColors(prop, instanceCount);
   const startColor = idColors[0];
   // We have to map these instance colors to `pointCountPerInstance` number of points
   if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {

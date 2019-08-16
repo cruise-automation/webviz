@@ -26,19 +26,16 @@ export default class HitmapObjectIdManager {
   _nextObjectHitmapId = 1;
   _hitmapInstancedIdMap: { [ObjectHitmapId]: number } = {}; // map objectHitmapId to the instance index
 
-  assignNextColors = (
-    command: Command,
-    options: { type: "single", object: Object } | { type: "instanced", object: Object, count: number }
-  ): Vec4[] => {
-    const idCount = options.type === "instanced" ? options.count : 1;
-    if (idCount < 1) {
+  assignNextColors = (command: Command, object: Object, count: number): Vec4[] => {
+    if (count < 1) {
       throw new Error("Must get at least 1 id");
     }
 
-    const ids: ObjectHitmapId[] = fillArray(this._nextObjectHitmapId, idCount);
+    const ids: ObjectHitmapId[] = fillArray(this._nextObjectHitmapId, count);
     this._nextObjectHitmapId = last(ids) + 1;
 
-    if (options.type === "instanced") {
+    // Instanced rendering - add to the instanced ID map.
+    if (count > 1) {
       ids.forEach((id, index) => {
         this._hitmapInstancedIdMap[id] = index;
       });
@@ -46,9 +43,9 @@ export default class HitmapObjectIdManager {
 
     // Store the mapping of ID to original marker object
     for (const id of ids) {
-      this._objectsByObjectHitmapIdMap[id] = options.object;
+      this._objectsByObjectHitmapIdMap[id] = object;
     }
-    this._objectToCommandMap.set(options.object, command);
+    this._objectToCommandMap.set(object, command);
 
     // Return colors from the IDs.
     const colors = ids.map((id) => intToRGB(id));

@@ -14,36 +14,32 @@ describe("HitmapObjectIdManager", () => {
     const commandInstanceId: any = "test";
     const childObject: any = { isChildObject: true };
 
-    it("assigns a single ID correctly", () => {
+    it("assigns a single color correctly", () => {
       const manager: HitmapObjectIdManager = new HitmapObjectIdManager();
-      const colors = manager.assignNextColors(commandInstanceId, { type: "single", object: childObject });
+      const colors = manager.assignNextColors(commandInstanceId, childObject, 1);
       expect(colors).toEqual([intToRGB(1)]);
-      const nextColors = manager.assignNextColors(commandInstanceId, { type: "single", object: childObject });
+      const nextColors = manager.assignNextColors(commandInstanceId, childObject, 1);
       expect(nextColors).toEqual([intToRGB(2)]);
     });
 
-    it("assigns multiple IDs correctly", () => {
+    it("assigns multiple colors correctly", () => {
       const manager: HitmapObjectIdManager = new HitmapObjectIdManager();
-      const colors = manager.assignNextColors(commandInstanceId, { type: "instanced", object: childObject, count: 2 });
+      const colors = manager.assignNextColors(commandInstanceId, childObject, 2);
       expect(colors).toEqual([intToRGB(1), intToRGB(2)]);
-      const nextColors = manager.assignNextColors(commandInstanceId, {
-        type: "instanced",
-        object: childObject,
-        count: 2,
-      });
+      const nextColors = manager.assignNextColors(commandInstanceId, childObject, 2);
       expect(nextColors).toEqual([intToRGB(3), intToRGB(4)]);
     });
 
-    it("assigns instance indices isInstanced is true", () => {
+    it("assigns instance indices if there is more than 1 color to assign", () => {
       const manager: HitmapObjectIdManager = new HitmapObjectIdManager();
-      const colors = manager.assignNextColors(commandInstanceId, { type: "instanced", object: childObject, count: 2 });
+      const colors = manager.assignNextColors(commandInstanceId, childObject, 2);
       expect(manager.getObjectByObjectHitmapId(getIdFromColor(colors[0])).instanceIndex).toEqual(0);
       expect(manager.getObjectByObjectHitmapId(getIdFromColor(colors[1])).instanceIndex).toEqual(1);
     });
 
-    it("does not assign instance indices isInstanced is false", () => {
+    it("does not assign instance indices if there is only 1 color to assign", () => {
       const manager = new HitmapObjectIdManager();
-      const colors = manager.assignNextColors(commandInstanceId, { type: "single", object: childObject });
+      const colors = manager.assignNextColors(commandInstanceId, childObject, 1);
       expect(manager.getObjectByObjectHitmapId(getIdFromColor(colors[0])).instanceIndex).toEqual(undefined);
     });
   });
@@ -59,7 +55,7 @@ describe("HitmapObjectIdManager", () => {
 
     it("returns the correct hitmap object", () => {
       const manager: HitmapObjectIdManager = new HitmapObjectIdManager();
-      const colors = manager.assignNextColors(commandInstanceId, { type: "instanced", object: childObject, count: 2 });
+      const colors = manager.assignNextColors(commandInstanceId, childObject, 2);
       // Require exact equality here
       expect(manager.getObjectByObjectHitmapId(getIdFromColor(colors[0])).object).toBe(childObject);
       expect(manager.getObjectByObjectHitmapId(getIdFromColor(colors[1])).object).toBe(childObject);
@@ -72,12 +68,12 @@ describe("HitmapObjectIdManager", () => {
 
     it("resets the hitmap", () => {
       const manager: HitmapObjectIdManager = new HitmapObjectIdManager();
-      manager.assignNextColors(commandInstanceId, { type: "single", object: childObject });
+      manager.assignNextColors(commandInstanceId, childObject, 1);
 
       manager.reset();
       expect(manager.getObjectByObjectHitmapId(1).object).toEqual(undefined);
 
-      const colors = manager.assignNextColors(commandInstanceId, { type: "single", object: childObject });
+      const colors = manager.assignNextColors(commandInstanceId, childObject, 1);
       expect(colors).toEqual([intToRGB(1)]);
     });
   });

@@ -27,13 +27,7 @@ describe("getChildrenForHitmapDefaults", () => {
 
   beforeEach(() => {
     nextId = 1;
-    assignNextColors = jest.fn((obj) => {
-      if (obj.type === "single") {
-        const currentId = nextId;
-        nextId++;
-        return [intToRGB(currentId)];
-      }
-      const { count } = obj;
+    assignNextColors = jest.fn((object, count) => {
       const idArray = new Array(count).fill(null).map((_, index) => intToRGB(index + nextId));
       nextId += count;
       return idArray;
@@ -50,7 +44,7 @@ describe("getChildrenForHitmapDefaults", () => {
         color: intToRGB(1),
         colors: [intToRGB(1), intToRGB(1)],
       });
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "single", object });
+      expect(assignNextColors).toHaveBeenCalledWith(object, 1);
     });
 
     it("filters already seen single objects correctly", () => {
@@ -64,7 +58,7 @@ describe("getChildrenForHitmapDefaults", () => {
       const object = { some: "garbage", color: [] };
       const hitmapProps = nonInstancedGetChildrenForHitmap(object, assignNextColors, []);
       expect(hitmapProps).toEqual({ some: "garbage", color: intToRGB(1) });
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "single", object });
+      expect(assignNextColors).toHaveBeenCalledWith(object, 1);
     });
 
     it("handles arrays correctly", () => {
@@ -81,8 +75,8 @@ describe("getChildrenForHitmapDefaults", () => {
         },
       ]);
       expect(assignNextColors).toHaveBeenCalledTimes(2);
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "single", object: objects[0] });
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "single", object: objects[1] });
+      expect(assignNextColors).toHaveBeenCalledWith(objects[0], 1);
+      expect(assignNextColors).toHaveBeenCalledWith(objects[1], 1);
     });
 
     it("filters already seen array members correctly", () => {
@@ -115,7 +109,7 @@ describe("getChildrenForHitmapDefaults", () => {
         colors: [intToRGB(1), intToRGB(1), intToRGB(2), intToRGB(2), intToRGB(3), intToRGB(3)],
       });
       expect(assignNextColors).toHaveBeenCalledTimes(1);
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "instanced", object, count: 3 });
+      expect(assignNextColors).toHaveBeenCalledWith(object, 3);
     });
 
     it("handles single objects without points correctly", () => {
@@ -126,7 +120,7 @@ describe("getChildrenForHitmapDefaults", () => {
         color: intToRGB(1),
       });
       expect(assignNextColors).toHaveBeenCalledTimes(1);
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "instanced", object, count: 1 });
+      expect(assignNextColors).toHaveBeenCalledWith(object, 1);
     });
 
     it("handles objects with an empty point array", () => {
@@ -138,7 +132,7 @@ describe("getChildrenForHitmapDefaults", () => {
         color: intToRGB(1),
       });
       expect(assignNextColors).toHaveBeenCalledTimes(1);
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "instanced", object, count: 1 });
+      expect(assignNextColors).toHaveBeenCalledWith(object, 1);
     });
 
     it("handles single point counts", () => {
@@ -150,7 +144,7 @@ describe("getChildrenForHitmapDefaults", () => {
         colors: [intToRGB(1), intToRGB(2), intToRGB(3)],
       });
       expect(assignNextColors).toHaveBeenCalledTimes(1);
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "instanced", object, count: 3 });
+      expect(assignNextColors).toHaveBeenCalledWith(object, 3);
     });
 
     it("handles offset point counts", () => {
@@ -162,7 +156,7 @@ describe("getChildrenForHitmapDefaults", () => {
         colors: [intToRGB(1), intToRGB(1), intToRGB(1), intToRGB(2)],
       });
       expect(assignNextColors).toHaveBeenCalledTimes(1);
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "instanced", object, count: 2 });
+      expect(assignNextColors).toHaveBeenCalledWith(object, 2);
     });
 
     it("filters instances correctly", () => {
@@ -178,7 +172,7 @@ describe("getChildrenForHitmapDefaults", () => {
         colors: [intToRGB(1), intToRGB(1), intToRGB(3), intToRGB(3)],
       });
       expect(assignNextColors).toHaveBeenCalledTimes(1);
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "instanced", object, count: 3 });
+      expect(assignNextColors).toHaveBeenCalledWith(object, 3);
     });
 
     it("filters objects without points correctly", () => {
@@ -219,8 +213,8 @@ describe("getChildrenForHitmapDefaults", () => {
         },
       ]);
       expect(assignNextColors).toHaveBeenCalledTimes(2);
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "instanced", object: objects[0], count: 3 });
-      expect(assignNextColors).toHaveBeenCalledWith({ type: "instanced", object: objects[1], count: 4 });
+      expect(assignNextColors).toHaveBeenCalledWith(objects[0], 3);
+      expect(assignNextColors).toHaveBeenCalledWith(objects[1], 4);
     });
   });
 });

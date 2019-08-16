@@ -18,9 +18,9 @@ Please see the individual package READMEs for details on how to install and use 
 ## Developing
 
 - `npm run bootstrap` in the root directory to install dependencies.
-- `npm run docs` to run the docs app (e.g. go to http://localhost:8080/try to open Webviz).
 - `npm run build` to run a single build or `npm run watch` to watch and build.
-- `npm run storybook` to run storybook.
+- `npm run docs` to run the docs app (e.g. go to http://localhost:8080/try to open Webviz). Requires `build` to be run first.
+- `npm run storybook` to run storybook. Requires `build` to be run first.
 - `npm run screenshot-debug` to generate screenshots from stories.
 - `npm run lint` to run the linters (and `npm run lint:fix` to automatically fix issues).
 - `npm run flow` to run Flow.

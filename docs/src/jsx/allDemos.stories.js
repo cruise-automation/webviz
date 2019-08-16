@@ -12,6 +12,7 @@ import CameraStateControlled from "./api/CameraStateControlled";
 import CameraStateUncontrolled from "./api/CameraStateUncontrolled";
 import MouseEvents from "./api/MouseEvents";
 import Arrows from "./commands/Arrows";
+import ArrowsInteractive from "./commands/ArrowsInteractive";
 import Cones from "./commands/Cones";
 import Cubes from "./commands/Cubes";
 import Cylinders from "./commands/Cylinders";
@@ -33,6 +34,7 @@ import Hitmap from "./examples/Hitmap";
 
 const allDemos = {
   Arrows,
+  ArrowsInteractive,
   BasicExample,
   CameraStateControlled,
   CameraStateUncontrolled,

@@ -6,7 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { makeCommand, withPose, type Regl } from "regl-worldview";
+import React from "react";
+import {
+  Command,
+  createInstancedGetChildrenForHitmap,
+  withPose,
+  type CommonCommandProps,
+  type Regl,
+} from "regl-worldview";
 
 import { mapMarker } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import { type PointCloud } from "webviz-core/src/types/Messages";
@@ -88,4 +95,6 @@ const pointCloud = (regl: Regl) => {
   };
 };
 
-export default makeCommand<PointCloud>("PointClouds", pointCloud);
+export default function PointClouds(props: { ...CommonCommandProps, children: Array<PointCloud> }) {
+  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={pointCloud} />;
+}

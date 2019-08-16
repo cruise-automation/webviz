@@ -7,7 +7,14 @@
 //  You may not use this file except in compliance with the License.
 
 import { range } from "lodash";
-import { makeCommand, withPose, type Regl } from "regl-worldview";
+import React from "react";
+import {
+  Command,
+  type CommonCommandProps,
+  createInstancedGetChildrenForHitmap,
+  withPose,
+  type Regl,
+} from "regl-worldview";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { LaserScan } from "webviz-core/src/types/Messages";
@@ -43,4 +50,6 @@ const laserScan = (regl: Regl) =>
     count: regl.prop("ranges.length"),
   });
 
-export default makeCommand<LaserScan>("LaserScans", laserScan);
+export default function LaserScans(props: { ...CommonCommandProps, children: Array<LaserScan> }) {
+  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={laserScan} />;
+}

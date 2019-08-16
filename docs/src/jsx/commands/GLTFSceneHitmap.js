@@ -32,8 +32,8 @@ function Example() {
         distance: 15,
         thetaOffset: (-3 * Math.PI) / 4,
       }}
-      onClick={(ev, { objectId }) => {
-        if (!duckMarkerIds.includes(objectId)) {
+      onClick={(ev, { objects }) => {
+        if (!objects[0] || !duckMarkerIds.includes(objects[0].object.id)) {
           setMsg(defaultMsg);
         }
       }}>
@@ -41,8 +41,8 @@ function Example() {
       {duckMarkers.map((duckMarker) => (
         <GLTFScene
           key={duckMarker.id}
-          onClick={(ev, { object, objectId }) => {
-            setMsg(`Clicked on the duck. objectId: ${objectId}`);
+          onClick={(ev, { objects }) => {
+            setMsg(`Clicked on the duck. objectId: ${objects[0].object.id}`);
           }}
           model={duckModel}>
           {duckMarker}

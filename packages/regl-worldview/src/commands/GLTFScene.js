@@ -53,7 +53,7 @@ const drawModel = (regl) => {
       "light.ambientIntensity": 0.5,
       "light.diffuseIntensity": 0.5,
       hitmapColor: regl.context("hitmapColor"),
-      drawHitmap: regl.context("drawHitmap"),
+      isHitmap: regl.context("isHitmap"),
     },
     attributes: {
       position: regl.prop("positions"),
@@ -80,7 +80,7 @@ const drawModel = (regl) => {
   `,
     frag: `
   precision mediump float;
-  uniform bool drawHitmap;
+  uniform bool isHitmap;
   uniform vec4 hitmapColor;
   uniform float globalAlpha;
   uniform sampler2D baseColorTexture;
@@ -100,7 +100,7 @@ const drawModel = (regl) => {
   void main() {
     vec4 baseColor = texture2D(baseColorTexture, vTexCoord) * baseColorFactor;
     float diffuse = light.diffuseIntensity * max(0.0, dot(vNormal, -light.direction));
-    gl_FragColor = drawHitmap ? hitmapColor : vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
+    gl_FragColor = isHitmap ? hitmapColor : vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
   }
   `,
   });
@@ -202,7 +202,7 @@ const drawModel = (regl) => {
         ),
       globalAlpha: (context, props) => (props.alpha == null ? 1 : props.alpha),
       hitmapColor: (context, props) => props.color || [0, 0, 0, 1],
-      drawHitmap: (context, props) => !!props.isHitmap,
+      isHitmap: (context, props) => !!props.isHitmap,
     },
   });
 
@@ -275,7 +275,7 @@ function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
 const getChildrenForHitmap: GetChildrenForHitmap = <T: any>(prop: T, assignNextColors, excludedObjects) => {
   const hitmapProp = nonInstancedGetChildrenForHitmap(prop, assignNextColors, excludedObjects);
   if (hitmapProp) {
-    hitmapProp.isHitmap = true;
+    return { ...hitmapProp, isHitmap: true };
   }
   return hitmapProp;
 };

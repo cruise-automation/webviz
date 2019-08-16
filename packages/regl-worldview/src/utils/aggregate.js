@@ -13,19 +13,9 @@ export default function aggregate<T, K>(array: Array<[T, K]>): Map<K, T[]> {
   array.forEach(([item, key]) => {
     const existingItems = aggregationMap.get(key) || [];
     existingItems.push(item);
-    aggregationMap.set(key, existingItems);
-  });
-  // Since later `set` calls overwrite the earlier ones in ordering, we have to use a new map to ensure that the order
-  // of the keys is correct.
-  const orderedAggregationMap = new Map<K, T[]>();
-  array.forEach(([item, key]) => {
-    if (!orderedAggregationMap.has(key)) {
-      const values = aggregationMap.get(key);
-      // should always be true, check done for flow.
-      if (values) {
-        orderedAggregationMap.set(key, values);
-      }
+    if (!aggregationMap.has(key)) {
+      aggregationMap.set(key, existingItems);
     }
   });
-  return orderedAggregationMap;
+  return aggregationMap;
 }

@@ -321,7 +321,7 @@ export class WorldviewContext {
 
   _drawInput = (isHitmap?: boolean, excludedObjects?: MouseEventObject[]) => {
     if (isHitmap) {
-      this._hitmapObjectIdManager.reset();
+      this._hitmapObjectIdManager = new HitmapObjectIdManager();
     }
 
     const drawCalls = Array.from(this._drawCalls.values()).sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));

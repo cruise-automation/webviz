@@ -14,7 +14,7 @@ function fillArray(length: number) {
   return new Array(length).fill(null).map(() => []);
 }
 
-function toexcludedObjects(objects: Object[], instanceIndicies?: Array<?number>): MouseEventObject[] {
+function toExcludedObjects(objects: Object[], instanceIndicies?: Array<?number>): MouseEventObject[] {
   return objects.map((object, index) => ({
     object,
     instanceIndex: instanceIndicies ? instanceIndicies[index] : undefined,
@@ -49,7 +49,7 @@ describe("getChildrenForHitmapDefaults", () => {
 
     it("filters already seen single objects correctly", () => {
       const object = { some: "garbage", points: [[], []], colors: [[], []] };
-      const hitmapProps = nonInstancedGetChildrenForHitmap(object, assignNextColors, toexcludedObjects([object]));
+      const hitmapProps = nonInstancedGetChildrenForHitmap(object, assignNextColors, toExcludedObjects([object]));
       expect(hitmapProps).toEqual(null);
       expect(assignNextColors).not.toHaveBeenCalled();
     });
@@ -81,7 +81,7 @@ describe("getChildrenForHitmapDefaults", () => {
 
     it("filters already seen array members correctly", () => {
       const objects = [{ some: "garbage", color: [] }, { some: "other_garbage", color: [] }];
-      const hitmapProps = nonInstancedGetChildrenForHitmap(objects, assignNextColors, toexcludedObjects([objects[0]]));
+      const hitmapProps = nonInstancedGetChildrenForHitmap(objects, assignNextColors, toExcludedObjects([objects[0]]));
       expect(hitmapProps).toEqual([
         {
           some: "other_garbage",
@@ -93,7 +93,7 @@ describe("getChildrenForHitmapDefaults", () => {
 
     it("filters all array members correctly", () => {
       const objects = [{ some: "garbage", color: [] }, { some: "other_garbage", color: [] }];
-      const hitmapProps = nonInstancedGetChildrenForHitmap(objects, assignNextColors, toexcludedObjects(objects));
+      const hitmapProps = nonInstancedGetChildrenForHitmap(objects, assignNextColors, toExcludedObjects(objects));
       expect(hitmapProps).toEqual([]);
       expect(assignNextColors).toHaveBeenCalledTimes(0);
     });
@@ -164,7 +164,7 @@ describe("getChildrenForHitmapDefaults", () => {
       const hitmapProps = createInstancedGetChildrenForHitmap(2)(
         object,
         assignNextColors,
-        toexcludedObjects([object], [1])
+        toExcludedObjects([object], [1])
       );
       expect(hitmapProps).toEqual({
         some: "garbage",
@@ -180,7 +180,7 @@ describe("getChildrenForHitmapDefaults", () => {
       const hitmapProps = createInstancedGetChildrenForHitmap(1)(
         object,
         assignNextColors,
-        toexcludedObjects([object], [0])
+        toExcludedObjects([object], [0])
       );
       expect(hitmapProps).toEqual(null);
     });

@@ -61,20 +61,4 @@ describe("HitmapObjectIdManager", () => {
       expect(manager.getObjectByObjectHitmapId(getIdFromColor(colors[1])).object).toBe(childObject);
     });
   });
-
-  describe("reset", () => {
-    const commandInstanceId: any = "test";
-    const childObject: any = { isChildObject: true };
-
-    it("resets the hitmap", () => {
-      const manager: HitmapObjectIdManager = new HitmapObjectIdManager();
-      manager.assignNextColors(commandInstanceId, childObject, 1);
-
-      manager.reset();
-      expect(manager.getObjectByObjectHitmapId(1).object).toEqual(undefined);
-
-      const colors = manager.assignNextColors(commandInstanceId, childObject, 1);
-      expect(colors).toEqual([intToRGB(1)]);
-    });
-  });
 });

@@ -22,9 +22,9 @@ function fillArray(start: number, length: number): number[] {
  */
 export default class HitmapObjectIdManager {
   _objectsByObjectHitmapIdMap: { [ObjectHitmapId]: Object } = {};
-  _objectToCommandMap: Map<Object, Command> = new Map();
+  _commandsByObjectMap: Map<Object, Command> = new Map();
   _nextObjectHitmapId = 1;
-  _hitmapInstancedIdMap: { [ObjectHitmapId]: number } = {}; // map objectHitmapId to the instance index
+  _instanceIndexByObjectHitmapIdMap: { [ObjectHitmapId]: number } = {};
 
   assignNextColors = (command: Command, object: Object, count: number): Vec4[] => {
     if (count < 1) {
@@ -37,7 +37,7 @@ export default class HitmapObjectIdManager {
     // Instanced rendering - add to the instanced ID map.
     if (count > 1) {
       ids.forEach((id, index) => {
-        this._hitmapInstancedIdMap[id] = index;
+        this._instanceIndexByObjectHitmapIdMap[id] = index;
       });
     }
 
@@ -45,28 +45,21 @@ export default class HitmapObjectIdManager {
     for (const id of ids) {
       this._objectsByObjectHitmapIdMap[id] = object;
     }
-    this._objectToCommandMap.set(object, command);
+    this._commandsByObjectMap.set(object, command);
 
     // Return colors from the IDs.
     const colors = ids.map((id) => intToRGB(id));
     return colors;
   };
 
-  reset = () => {
-    this._objectsByObjectHitmapIdMap = {};
-    this._objectToCommandMap = new Map();
-    this._nextObjectHitmapId = 1;
-    this._hitmapInstancedIdMap = {};
-  };
-
   getObjectByObjectHitmapId = (objectHitmapId: ObjectHitmapId): MouseEventObject => {
     return {
       object: this._objectsByObjectHitmapIdMap[objectHitmapId],
-      instanceIndex: this._hitmapInstancedIdMap[objectHitmapId],
+      instanceIndex: this._instanceIndexByObjectHitmapIdMap[objectHitmapId],
     };
   };
 
   getCommandForObject = (object: Object): ?Command => {
-    return this._objectToCommandMap.get(object);
+    return this._commandsByObjectMap.get(object);
   };
 }

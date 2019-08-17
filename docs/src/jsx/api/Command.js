@@ -31,15 +31,14 @@ const reglTriangle = (regl) => ({
 });
 
 function Triangle({ color }) {
-  return (
-    <Command reglCommand={reglTriangle}>
-      {{
-        color,
-        points: [[-1, 0], [0, -1], [1, 1]],
-      }}
-    </Command>
-  );
+  const drawProps = {
+    color,
+    points: [[-1, 0], [0, -1], [1, 1]],
+  };
+  return <Command reglCommand={reglTriangle} drawProps={drawProps} />;
 }
+
+Triangle.displayName = "triangle";
 
 Triangle.defaultProps = {
   color: [1, 0, 0, 1],

@@ -6,15 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from "react";
-import {
-  Command,
-  createInstancedGetChildrenForHitmap,
-  withPose,
-  pointToVec3,
-  defaultBlend,
-  type CommonCommandProps,
-} from "regl-worldview";
+import { makeCommand, withPose, pointToVec3, defaultBlend } from "regl-worldview";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { TextureCache } from "webviz-core/src/panels/ThreeDimensionalViz/commands/utils";
@@ -135,8 +127,4 @@ const occupancyGrids = (regl: any) => {
   });
 };
 
-export default function OccupancyGrids(props: { ...CommonCommandProps, children: Array<OccupancyGridMessage> }) {
-  return (
-    <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={occupancyGrids} />
-  );
-}
+export default makeCommand<OccupancyGridMessage>("OccupancyGrids", occupancyGrids);

@@ -9,7 +9,6 @@
 import React from "react";
 
 import { withPose } from "../utils/commandUtils";
-import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command from "./Command";
 
 export function grid() {
@@ -59,9 +58,13 @@ type Props = {
 };
 
 // useful for rendering a grid for debugging in stories
+export default class Grid extends React.Component<Props> {
+  static displayName = "Grid";
+  static defaultProps = {
+    count: 6,
+  };
 
-export default function Grid(props: Props) {
-  return <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...props} reglCommand={grid} />;
+  render() {
+    return <Command reglCommand={grid} drawProps={this.props} />;
+  }
 }
-
-Grid.defaultProps = { count: 6 };

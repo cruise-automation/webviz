@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { ReglClickInfo } from "../../types";
 import { Polygon, PolygonPoint } from "./index";
 import PolygonBuilder from "./PolygonBuilder";
 
@@ -19,7 +18,6 @@ const buildPolygon = () => {
   return poly;
 };
 class FakeRay {
-  point: number[];
   constructor(point) {
     this.point = point;
   }
@@ -29,25 +27,25 @@ class FakeRay {
   }
 }
 
-const getArgs: (number[], ?Object) => ReglClickInfo = (point, object) => {
-  return {
-    ray: (new FakeRay(point): any),
-    objects: [{ object }],
-  };
-};
+class Args {
+  constructor(point, objectId) {
+    this.ray = new FakeRay(point);
+    this.objectId = objectId || 0;
+  }
+}
 
-const event: (?boolean) => MouseEvent = (ctrlKey): any => ({
+const event = (ctrlKey) => ({
   ctrlKey,
   stopPropagation: () => {},
   preventDefault: () => {},
 });
 
-describe("PolygonBuilder", () => {
+describe("Polygon builder", () => {
   describe("delete point", () => {
     it("can remove a point", () => {
       const polygon = buildPolygon();
       const builder = new PolygonBuilder([polygon]);
-      builder.selectObject(polygon);
+      builder.selectObject(polygon.id);
       expect(builder.activePolygon).toBe(polygon);
       builder.deletePoint(polygon.points[1]);
       expect(polygon.points.map((point) => point.point)).toEqual([
@@ -61,7 +59,7 @@ describe("PolygonBuilder", () => {
     it('can remove "overlap" point', () => {
       const polygon = buildPolygon();
       const builder = new PolygonBuilder([polygon]);
-      builder.selectObject(polygon);
+      builder.selectObject(polygon.id);
       expect(builder.activePolygon).toBe(polygon);
       builder.deletePoint(polygon.points[0]);
       expect(polygon.points.map((point) => point.point)).toEqual([
@@ -75,7 +73,7 @@ describe("PolygonBuilder", () => {
     it("removes polygon entirely if it is only 2 points long", () => {
       const polygon = buildPolygon();
       const builder = new PolygonBuilder([polygon]);
-      builder.selectObject(polygon);
+      builder.selectObject(polygon.id);
       expect(builder.activePolygon).toBe(polygon);
       builder.deletePoint(polygon.points[0]);
       builder.deletePoint(polygon.points[0]);
@@ -87,11 +85,11 @@ describe("PolygonBuilder", () => {
     it("removes polygon entirely if it is only 2 points long with dblclick", () => {
       const polygon = buildPolygon();
       const builder = new PolygonBuilder([polygon]);
-      builder.selectObject(polygon);
+      builder.selectObject(polygon.id);
       expect(builder.activePolygon).toBe(polygon);
-      builder.onDoubleClick(event(), getArgs([mag, mag, 0], polygon.points[0]));
-      builder.onDoubleClick(event(), getArgs([mag, mag, 0], polygon.points[0]));
-      builder.onMouseDown(event(), getArgs([1, 1, 0]));
+      builder.onDoubleClick(event(), new Args([mag, mag, 0], polygon.points[0].id));
+      builder.onDoubleClick(event(), new Args([mag, mag, 0], polygon.points[0].id));
+      builder.onMouseDown(event(), new Args([1, 1, 0]));
       expect(builder.polygons).toHaveLength(0);
       expect(builder.activePoint).toBeNull();
       expect(builder.activePolygon).toBeNull();
@@ -101,12 +99,12 @@ describe("PolygonBuilder", () => {
   describe("build polygon", () => {
     it("builds with mouse", () => {
       const builder = new PolygonBuilder();
-      builder.onMouseDown(event(true), getArgs([1, 1, 0]));
-      builder.onMouseMove(event(true), getArgs([1, -1, 0]));
-      builder.onMouseDown(event(true), getArgs([1, -1, 0]));
-      builder.onMouseMove(event(true), getArgs([-1, -1, 0]));
-      builder.onMouseDown(event(false), getArgs([-1, -1, 0]));
-      builder.onMouseUp(event(true), getArgs([]));
+      builder.onMouseDown(event(true), new Args([1, 1, 0]));
+      builder.onMouseMove(event(true), new Args([1, -1, 0]));
+      builder.onMouseDown(event(true), new Args([1, -1, 0]));
+      builder.onMouseMove(event(true), new Args([-1, -1, 0]));
+      builder.onMouseDown(event(false), new Args([-1, -1, 0]));
+      builder.onMouseUp({});
       expect(builder.polygons).toHaveLength(1);
       const [polygon] = builder.polygons;
       expect(polygon.points.map((p) => p.point)).toEqual([[1, 1, 0], [1, -1, 0], [-1, -1, 0], [1, 1, 0]]);

@@ -58,10 +58,6 @@ export default class PolygonBuilder {
     this.polygons = polygons;
   }
 
-  isActivePolygonClosed(): boolean {
-    return !!this.activePolygon && isClosed(this.activePolygon);
-  }
-
   // adds a polygon to the builder, transforming it into the internal representation
   addPolygon(cmd: PolygonAddCommand): void {
     const { points, name } = cmd;
@@ -88,7 +84,7 @@ export default class PolygonBuilder {
       if (!isClosed(activePolygon)) {
         const newPoint = new PolygonPoint(point);
         activePolygon.points.push(newPoint);
-        this.selectObject(newPoint);
+        this.selectObject(newPoint.id);
         return;
       }
     }
@@ -98,7 +94,7 @@ export default class PolygonBuilder {
     const floatingPoint = new PolygonPoint(point);
     polygon.points.push(floatingPoint);
     this.polygons.push(polygon);
-    this.selectObject(floatingPoint);
+    this.selectObject(floatingPoint.id);
     this.onChange();
   }
 
@@ -247,7 +243,7 @@ export default class PolygonBuilder {
   };
 
   // select either a point or polygon by id
-  selectObject(object?: Polygon | PolygonPoint) {
+  selectObject(objectId: number = 0) {
     // clear out any previously active objects
     this.activePolygon = null;
     if (this.activePoint) {
@@ -256,13 +252,13 @@ export default class PolygonBuilder {
     this.activePoint = null;
 
     for (const polygon of this.polygons) {
-      let isActive = polygon === object;
+      let isActive = polygon.id === objectId;
       polygon.active = isActive;
       if (isActive) {
         this.activePolygon = polygon;
       }
       for (const point of polygon.points) {
-        if (point === object) {
+        if (point.id === objectId) {
           // if a point is selected, activate both it
           // and the polygon it belongs to
           this.activePoint = point;
@@ -290,11 +286,11 @@ export default class PolygonBuilder {
     if (!args) {
       return;
     }
-    if (!args.objects.length) {
+    if (!args.objectId) {
       return;
     }
 
-    this.selectObject(args.objects[0].object);
+    this.selectObject(args.objectId);
 
     // if a point was double-clicked, delete it
     if (this.activePoint) {
@@ -366,8 +362,7 @@ export default class PolygonBuilder {
 
     // single click or click+drag is for selection & moving
     if (isFirstClick && !isCtrlClick) {
-      const clickObject = args.objects[0];
-      this.selectObject(clickObject && clickObject.object);
+      this.selectObject(args.objectId);
       return this.onChange();
     }
 

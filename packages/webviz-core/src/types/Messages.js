@@ -83,6 +83,8 @@ export type PoseStamped = StampedMessage & {
 
 // Markers
 export type BaseMarker = StampedMessage & {
+  // Need to add hitmapId field to avoid flow errors: https://github.com/facebook/flow/issues/5997
+  hitmapId?: number,
   ns: string,
   id: string,
   action: 0 | 1 | 2 | 3,

@@ -3,7 +3,7 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 
-import type { MouseHandler } from "../types";
+import { intToRGB } from "../utils/commandUtils";
 import Container from "./Container";
 import { cube, p, UNIT_QUATERNION, buildMatrix, rng } from "./util";
 import withRange from "./withRange";
@@ -46,10 +46,8 @@ const instancedCameraState = {
 
 class DynamicCubes extends React.Component<any, any> {
   state = { cubeCount: 1, cubeId: -1 };
-  onContainerClick: MouseHandler = (e, clickInfo) => {
-    if (clickInfo.objects.length && clickInfo.objects[0].object.id % 2) {
-      this.setState({ cubeId: clickInfo.objects[0].object.id || -1 });
-    }
+  onContainerClick = (e, args) => {
+    this.setState({ cubeId: args.objectId || -1 });
   };
 
   render() {
@@ -69,6 +67,16 @@ class DynamicCubes extends React.Component<any, any> {
       };
     });
 
+    function getHitmapProps() {
+      const result = cubes
+        .filter((cube) => cube.id % 2)
+        .map((cube) => ({
+          ...cube,
+          color: intToRGB(cube.id),
+        }));
+      return result;
+    }
+
     return (
       <Container cameraState={DEFAULT_CAMERA_STATE} onClick={this.onContainerClick}>
         <div style={{ position: "absolute", top: 30, left: 30 }}>
@@ -76,7 +84,7 @@ class DynamicCubes extends React.Component<any, any> {
           <div>you clicked on cube: {this.state.cubeId} </div>
           <button onClick={() => this.setState({ cubeCount: cubeCount + 1 })}>Add Cube</button>
         </div>
-        <Cubes>{cubes}</Cubes>
+        <Cubes getHitmapProps={getHitmapProps}>{cubes}</Cubes>
       </Container>
     );
   }

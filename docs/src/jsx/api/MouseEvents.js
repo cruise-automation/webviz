@@ -63,31 +63,31 @@ function Example() {
     };
   }
 
-  function onContainerClick(e, { objects }) {
-    if (!objects.length) {
+  function onContainerClick(e, args) {
+    if (!args.objectId) {
       setCubeDetails({});
     }
   }
 
-  function onContainerMouseMove(e, { objects }) {
-    if (!objects.length) {
+  function onContainerMouseMove(e, args) {
+    if (!args.objectId) {
       setCursor("auto");
     }
   }
 
-  function onCubeClick(e, { objects }) {
-    setCubeDetails(objects[0].object);
+  function onCubeClick(e, { object }) {
+    setCubeDetails(object);
   }
 
-  function onCubeDoubleClick(id, { objects }) {
+  function onCubeDoubleClick(id, { object }) {
     const newCubes = [...cubes];
-    remove(newCubes, (cube) => cube.id === objects[0].object.id);
+    remove(newCubes, (cube) => cube.id === object.id);
 
     setCubes(newCubes);
   }
 
-  function onCubeHover(e, { objects }) {
-    setCursor(objects[0].object.mouseCursor);
+  function onCubeHover(e, { object }) {
+    setCursor(object.mouseCursor);
   }
 
   return (
@@ -114,7 +114,11 @@ function Example() {
             Add Cube
           </button>
         </div>
-        <Cubes onMouseMove={onCubeHover} onClick={onCubeClick} onDoubleClick={onCubeDoubleClick}>
+        <Cubes
+          onMouseMove={onCubeHover}
+          onClick={onCubeClick}
+          onDoubleClick={onCubeDoubleClick}
+          getHitmapId={(marker) => marker.id}>
           {cubes}
         </Cubes>
       </Worldview>

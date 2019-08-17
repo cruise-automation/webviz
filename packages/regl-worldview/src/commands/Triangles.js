@@ -6,9 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from "react";
-
-import type { Regl, TriangleList } from "../types";
+import type { TriangleList, Regl } from "../types";
 import {
   defaultBlend,
   getVertexColors,
@@ -17,8 +15,8 @@ import {
   toRGBA,
   withPose,
 } from "../utils/commandUtils";
-import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
-import Command, { type CommonCommandProps } from "./Command";
+import { getHitmapPropsForInstancedCommands, getObjectForInstancedCommands } from "../utils/hitmapDefaults";
+import { makeCommand } from "./Command";
 
 // TODO(Audrey): default to the actual regl defaults before 1.x release
 const defaultSingleColorDepth = { enable: true, mask: false };
@@ -166,6 +164,9 @@ const triangles = (regl: Regl) => {
   };
 };
 
-export default function Triangles(props: { ...CommonCommandProps, children: TriangleList[] }) {
-  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(3)} {...props} reglCommand={triangles} />;
-}
+const Triangles = makeCommand<TriangleList>("Triangles", triangles, {
+  getHitmapProps: getHitmapPropsForInstancedCommands,
+  getObjectFromHitmapId: getObjectForInstancedCommands,
+});
+
+export default Triangles;

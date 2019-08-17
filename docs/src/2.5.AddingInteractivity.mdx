@@ -67,19 +67,20 @@ Let's use the clicked sphere id to update the `clickedObjectIds` state, which wi
 
 ```js
 <Spheres
-  onClick={(ev, { objects }) => {
+  onClick={(ev, { objectId, object }) => {
     // click on the object to add an obstacle
-    setClickedObjectIds([...clickedObjectIds, objects[0].object.id]);
+    setClickedObjectIds([...clickedObjectIds, objectId]);
   }}
 >
   {[sphereMarker]}
 </Spheres>
 <Cubes
-  onClick={(ev, { objects }) => {
+  onClick={(ev, { objectId, object }) => {
+    // We can't use objectId here as it represents the original cube marker's id.
     // When we generate the `obstacleMarkers`, we did add an extra field `clickedObjectId`
     // to the marker so we can use it to remove obstacle id from the `clickedObjectIds`
     const newClickedObjectIds = clickedObjectIds.filter(
-      id => id !== objects[0].object.clickedObjectId
+      id => id !== object.clickedObjectId
     );
     setClickedObjectIds(newClickedObjectIds);
   }}
@@ -128,7 +129,7 @@ useEffect(
 );
 
 <Cubes
-  onClick={(ev, { objects }) => {
+  onClick={(ev, { object }) => {
     // ... other existing code
     setShouldStopDuck(false); // release the duck when any cube is clicked
   }}>

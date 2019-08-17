@@ -64,13 +64,17 @@ function Example() {
       sphereMarker.points.push({ x: x * 20, y: y * 20, z: z * 20 });
     });
 
-  const obstacleMarkers = Array.from(clickedObjectIds).map(({ id, instanceIndex }, index) => {
-    const position = sphereMarker.points[instanceIndex];
+  const obstacleMarkers = Array.from(clickedObjectIds).map((clickedObjectId, index) => {
+    const pointIdx = clickedObjectId - sphereMarker.id;
+    const position = sphereMarker.points[pointIdx];
     return {
+      // Since the `sphereMarker` has used up the id range: 101 ~ 101 + 499 (inclusive, each id represent one sphere object),
+      // to make the obstacleMarkers' ids unique, we'll use the range: 500 (sphereMarker.id + step) + index.
+      // Learn about id mapping at https://cruise-automation.github.io/webviz/worldview/#/docs/api/mouse-events
       id: sphereMarker.id + steps + index,
       // remember the original clickedObjectId so when the obstacle is clicked, we can
       // remove the obstacle quickly by updating clickedObjectIds
-      clickedObjectId: id + instanceIndex,
+      clickedObjectId,
       pose: {
         orientation: { x: 0, y: 0, z: 0, w: 1 },
         position,
@@ -84,7 +88,7 @@ function Example() {
   useEffect(
     () => {
       const duckPositionId = sphereMarker.id + count;
-      if (!shouldStopDuck && clickedObjectIds.some(({ id, instanceIndex }) => id + instanceIndex === duckPositionId)) {
+      if (!shouldStopDuck && clickedObjectIds.includes(duckPositionId)) {
         setShouldStopDuck(true);
       }
     },
@@ -99,19 +103,14 @@ function Example() {
         thetaOffset: -Math.PI / 2, // rotate the camera so the duck is facing right
       }}>
       <Spheres
-        onClick={(ev, { objects }) => {
-          setClickedObjectIds([
-            ...clickedObjectIds,
-            { id: objects[0].object.id, instanceIndex: objects[0].instanceIndex },
-          ]);
+        onClick={(ev, { objectId }) => {
+          setClickedObjectIds([...clickedObjectIds, objectId]);
         }}>
         {[sphereMarker]}
       </Spheres>
       <Cubes
-        onClick={(ev, { objects }) => {
-          const newClickedObjectIds = clickedObjectIds.filter(
-            ({ id, instanceIndex }) => id + instanceIndex !== objects[0].object.clickedObjectId
-          );
+        onClick={(ev, { object }) => {
+          const newClickedObjectIds = clickedObjectIds.filter((id) => id !== object.clickedObjectId);
           setClickedObjectIds(newClickedObjectIds);
           setShouldStopDuck(false);
         }}>

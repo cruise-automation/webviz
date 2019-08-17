@@ -20,8 +20,4 @@ module.name_mapper.extension='md' -> '<PROJECT_ROOT>/packages/webviz-core/src/ty
 module.name_mapper.extension='ne' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/Nearley.js.flow'
 module.name_mapper.extension='worker.js' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/WorkerLoader.js.flow'
 
-module.file_ext=.js
-module.file_ext=.jsx
-module.file_ext=.json
 module.file_ext=.glb
-module.file_ext=.bag

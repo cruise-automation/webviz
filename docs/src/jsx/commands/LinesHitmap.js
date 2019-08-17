@@ -33,21 +33,21 @@ function Example() {
 
   return (
     <Worldview
-      onClick={(ev, { objects }) => {
-        if (!objects.length) {
+      onClick={(ev, { objectId }) => {
+        if (!objectId) {
           setMsg(defaultMsg);
         }
       }}
       defaultCameraState={{ ...DEFAULT_CAMERA_STATE, distance: 10 }}>
       <Lines
-        onClick={(ev, { objects }) => {
-          setMsg(`Clicked on the lines. objectId: ${objects[0].object.id}`);
+        onClick={(ev, { object, objectId }) => {
+          setMsg(`Clicked on the lines. objectId: ${objectId}`);
         }}>
         {lines}
       </Lines>
       <LinesWithClickableInterior
-        onClick={(ev, { objects }) => {
-          setMsg(`Clicked on the interior of the lines. objectId: ${objects[0].object.id}`);
+        onClick={(ev, { object, objectId }) => {
+          setMsg(`Clicked on the interior of the lines. objectId: ${objectId}`);
         }}
         enableClickableInterior
         showBorder

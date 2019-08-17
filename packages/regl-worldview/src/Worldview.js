@@ -12,17 +12,7 @@ import * as React from "react";
 import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
-import Command from "./commands/Command";
-import type {
-  MouseHandler,
-  Dimensions,
-  Vec4,
-  CameraState,
-  CameraKeyMap,
-  MouseEventEnum,
-  MouseEventObject,
-} from "./types";
-import aggregate from "./utils/aggregate";
+import type { MouseHandler, Dimensions, Vec4, CameraState, CameraKeyMap, MouseEventEnum } from "./types";
 import { getNodeEnv } from "./utils/common";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
@@ -30,7 +20,6 @@ import WorldviewReactContext from "./WorldviewReactContext";
 
 const DEFAULT_BACKGROUND_COLOR = [0, 0, 0, 1];
 export const DEFAULT_MOUSE_CLICK_RADIUS = 3;
-const DEFAULT_MAX_NUMBER_OF_HITMAP_LAYERS = 100;
 
 export type BaseProps = {|
   keyMap?: CameraKeyMap,
@@ -38,10 +27,6 @@ export type BaseProps = {|
   backgroundColor?: Vec4,
   // rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
-  // getting events for objects stacked on top of each other is expensive, so disable it by default
-  enableStackedObjectEvents?: boolean,
-  // allow users to specify the max stacked object count
-  maxStackedObjectCount: number,
   showDebug?: boolean,
   children?: React.Node,
   style: { [styleAttribute: string]: number | string },
@@ -62,8 +47,17 @@ type State = {|
   worldviewContext: WorldviewContext,
 |};
 
-function handleWorldviewMouseInteraction(objects: MouseEventObject[], ray: Ray, e: MouseEvent, handler: MouseHandler) {
-  const args = { ray, objects };
+function handleWorldviewMouseInteraction(rawObjectId: number, ray: Ray, e: MouseEvent, handler: MouseHandler) {
+  const objectId = rawObjectId !== 0 ? rawObjectId : undefined;
+  // TODO: deprecating, remove before 1.x release
+  const args = {
+    ray,
+    objectId,
+    get clickedObjectId() {
+      console.warn('"clickedObjectId" is deprecated. Please use "objectId" instead.');
+      return objectId;
+    },
+  };
 
   try {
     handler(e, args);
@@ -80,7 +74,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   _dragStartPos: ?{ x: number, y: number } = null;
 
   static defaultProps = {
-    maxStackedObjectCount: DEFAULT_MAX_NUMBER_OF_HITMAP_LAYERS,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
     shiftKeys: true,
     style: {},
@@ -206,7 +199,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     // rendering the hitmap on mouse move is expensive, so disable it by default
     if (mouseEventName === "onMouseMove" && !this.props.hitmapOnMouseMove) {
       if (worldviewHandler) {
-        return handleWorldviewMouseInteraction([], ray, e, worldviewHandler);
+        return handleWorldviewMouseInteraction(0, ray, e, worldviewHandler);
       }
       return;
     }
@@ -214,16 +207,12 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();
     worldviewContext
-      .readHitmap(canvasX, canvasY, !!this.props.enableStackedObjectEvents, this.props.maxStackedObjectCount)
-      .then((mouseEventsWithCommands) => {
+      .readHitmap(canvasX, canvasY)
+      .then((objectId) => {
         if (worldviewHandler) {
-          const mouseEvents = mouseEventsWithCommands.map(([mouseEventObject]) => mouseEventObject);
-          handleWorldviewMouseInteraction(mouseEvents, ray, e, worldviewHandler);
+          handleWorldviewMouseInteraction(objectId, ray, e, worldviewHandler);
         }
-        const mouseEventsByCommand: Map<Command, Array<MouseEventObject>> = aggregate(mouseEventsWithCommands);
-        for (const [command, mouseEvents] of mouseEventsByCommand.entries()) {
-          command.handleMouseEvent(mouseEvents, ray, e, mouseEventName);
-        }
+        worldviewContext.callComponentHandlers(objectId, ray, e, mouseEventName);
       })
       .catch((e) => {
         console.error(e);

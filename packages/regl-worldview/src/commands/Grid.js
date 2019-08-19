@@ -10,7 +10,9 @@ import React from "react";
 
 import { withPose } from "../utils/commandUtils";
 import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
-import Command from "./Command";
+import Command, { type CommonCommandProps } from "./Command";
+
+const DEFAULT_GRID_COLOR = [0.3, 0.3, 0.3, 1];
 
 export function grid() {
   return withPose({
@@ -19,8 +21,11 @@ export function grid() {
     uniform mat4 projection, view;
 
     attribute vec3 point;
+    attribute vec4 color;
+    varying vec4 fragColor;
 
     void main () {
+      fragColor = color;
       vec3 p = point;
       gl_Position = projection * view * vec4(p, 1);
     }
@@ -44,9 +49,13 @@ export function grid() {
         }
         return points;
       },
+      color: (context, props) => {
+        const color = props.color || DEFAULT_GRID_COLOR;
+        return new Array(props.count * 4 * 2).fill(color);
+      },
     },
     count: (context, props) => {
-      // 6 points per count
+      // 8 points per count
       const count = props.count * 4 * 2;
       return count;
     },
@@ -54,14 +63,21 @@ export function grid() {
 }
 
 type Props = {
-  layerIndex?: ?number,
   count: number,
+  ...CommonCommandProps,
 };
 
 // useful for rendering a grid for debugging in stories
 
-export default function Grid(props: Props) {
-  return <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...props} reglCommand={grid} />;
+function Grid({ count, ...rest }: Props) {
+  const children = { count };
+  return (
+    <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...rest} reglCommand={grid}>
+      {children}
+    </Command>
+  );
 }
 
 Grid.defaultProps = { count: 6 };
+
+export default React.memo<Props>(Grid);

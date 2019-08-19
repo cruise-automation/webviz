@@ -77,6 +77,8 @@ export const GLTFScene = makeCodeComponent(require("!!raw-loader!./commands/GLTF
 
 export const GLTFSceneHitmap = makeCodeComponent(require("!!raw-loader!./commands/GLTFSceneHitmap"), "GLTFSceneHitmap");
 
+export const Grid = makeCodeComponent(require("!!raw-loader!./commands/Grid"), "Grid");
+
 export const LinesDemo = makeCodeComponent(require("!!raw-loader!./commands/LinesDemo"), "LinesDemo");
 
 export const LinesHitmap = makeCodeComponent(require("!!raw-loader!./commands/LinesHitmap"), "LinesHitmap");

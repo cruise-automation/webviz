@@ -60,8 +60,9 @@ function instancedGetChildrenForHitmapFromSingleProp<T: any>(
   excludedObjects: MouseEventObject[],
   pointCountPerInstance
 ): ?T {
-  const filteredIndices = excludedObjects
-    .map(({ object, instanceIndex }) => (object === prop ? instanceIndex : null))
+  const matchedExcludedObjects = excludedObjects.filter(({ object, instanceIndex }) => object === prop);
+  const filteredIndices = matchedExcludedObjects
+    .map(({ object, instanceIndex }) => instanceIndex)
     .filter((instanceIndex) => typeof instanceIndex === "number");
   const hitmapProp = { ...prop };
   const instanceCount = (hitmapProp.points && Math.ceil(hitmapProp.points.length / pointCountPerInstance)) || 1;
@@ -90,7 +91,7 @@ function instancedGetChildrenForHitmapFromSingleProp<T: any>(
     }
   } else {
     hitmapProp.color = startColor;
-    if (filteredIndices.length) {
+    if (matchedExcludedObjects.length) {
       return null;
     }
   }

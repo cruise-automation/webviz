@@ -32,10 +32,13 @@ prepareForScreenshots();
 const req = require.context("../packages", true, /\.stories\.js$/);
 // $FlowFixMe - require.context seems not correctly typed.
 const reqDocs = require.context("../docs", true, /\.stories\.js$/);
+// $FlowFixMe - require.context seems not correctly typed.
+const integrationTests = require.context("../integrationTests", true, /\.stories\.js$/);
 
 function loadStories() {
   req.keys().forEach((filename) => req(filename));
   reqDocs.keys().forEach((filename) => reqDocs(filename));
+  integrationTests.keys().forEach((filename) => integrationTests(filename));
 }
 
 waitForFonts(() => {

@@ -11,7 +11,8 @@
       "bucketName": "open-source-webviz-ui"
     },
     "reg-notify-github-plugin": {
-      "clientId": "MzQzsDQzNjc30y9PTSrLrNI3MzQxNDbUTy4qzSxO1U0sLcnPTSzJzM8DAA=="
+      "clientId": "MzQzsDQzNjc30y9PTSrLrNI3MzQxNDbUTy4qzSxO1U0sLcnPTSzJzM8DAA==",
+      "setCommitStatus": false
     }
   }
 }

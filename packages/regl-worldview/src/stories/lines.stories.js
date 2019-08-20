@@ -7,6 +7,7 @@
 import { withKnobs } from "@storybook/addon-knobs";
 import { storiesOf } from "@storybook/react";
 import React from "react";
+import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Worldview, { Lines } from "../index";
 
@@ -20,8 +21,9 @@ const DEFAULT_CAMERA = {
   targetOrientation: [0, 0, 0, 1],
 };
 
-storiesOf("Worldview", module)
+storiesOf("Worldview/Lines", module)
   .addDecorator(withKnobs)
+  .addDecorator(withScreenshot())
   .add("<Lines> does not render empty points", () => {
     const normalLine = [
       {

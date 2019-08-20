@@ -13,9 +13,6 @@ import getOrthographicBounds from "../utils/getOrthographicBounds";
 import project from "./cameraProject";
 import { selectors, DEFAULT_CAMERA_STATE, type CameraState } from "./CameraStore";
 
-const NEAR_PLANE_DISTANCE = 0.01;
-const FAR_PLANE_DISTANCE = 5000;
-
 const TEMP_MAT = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 // This is the regl command which encapsulates the camera projection and view matrices.
@@ -27,6 +24,7 @@ export default (regl: any) => {
     cameraState: CameraState = DEFAULT_CAMERA_STATE;
 
     getProjection(): Mat4 {
+      const { near, far } = this.cameraState;
       if (!this.cameraState.perspective) {
         const bounds = getOrthographicBounds(this.cameraState.distance, this.viewportWidth, this.viewportHeight);
         const { left, right, bottom, top } = bounds;
@@ -36,18 +34,18 @@ export default (regl: any) => {
           right,
           bottom,
           top,
-          NEAR_PLANE_DISTANCE,
-          FAR_PLANE_DISTANCE
+          near,
+          far
         );
       }
-      const fov = Math.PI / 4;
+      const fov = this.cameraState.fov;
       const aspect = this.viewportWidth / this.viewportHeight;
       return mat4.perspective(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         fov,
         aspect,
-        NEAR_PLANE_DISTANCE,
-        FAR_PLANE_DISTANCE
+        near,
+        far
       );
     }
 

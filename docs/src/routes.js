@@ -35,6 +35,7 @@ import Lines from "./4.6.Lines.mdx";
 import Overlay from "./4.7.Overlay.mdx";
 import Points from "./4.8.Points.mdx";
 import Spheres from "./4.9.Spheres.mdx";
+import MigratingToVersion02x from "./5.1.MigratingToVersion0.2.x.mdx";
 
 export const componentList = {
   BasicExample,
@@ -68,6 +69,7 @@ export const componentList = {
   Grid,
   BrowserSupport,
   Glossary,
+  ["MigratingToVersion0.2.X"]: MigratingToVersion02x,
 };
 
 const ROUTE_CONFIG = [
@@ -103,6 +105,10 @@ const ROUTE_CONFIG = [
       "Grid",
     ],
   },
+  {
+    name: "Migration Notes",
+    subRouteNames: ["Migrating To Version 0.2.x"],
+  },
 ];
 
 let nameToUrlMap;
@@ -125,7 +131,7 @@ export function getHashUrlByComponentName(name) {
 
 // convert route names to component names, e.g. `Managing the Camera` => `ManagingTheCamera`
 function getComponentName(routeName) {
-  return routeName.replace(/(\b[a-z](?!\s))/g, (firstWordLetter) => firstWordLetter.toUpperCase()).replace(/\s/g, "");
+  return routeName.replace(/(\b[a-z.](?!\s))/g, (firstWordLetter) => firstWordLetter.toUpperCase()).replace(/\s/g, "");
 }
 
 function getSubRoutePath(subRouteName) {

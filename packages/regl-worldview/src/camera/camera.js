@@ -28,25 +28,11 @@ export default (regl: any) => {
       if (!this.cameraState.perspective) {
         const bounds = getOrthographicBounds(this.cameraState.distance, this.viewportWidth, this.viewportHeight);
         const { left, right, bottom, top } = bounds;
-        return mat4.ortho(
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          left,
-          right,
-          bottom,
-          top,
-          near,
-          far
-        );
+        return mat4.ortho([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], left, right, bottom, top, near, far);
       }
       const fov = this.cameraState.fovy;
       const aspect = this.viewportWidth / this.viewportHeight;
-      return mat4.perspective(
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        fov,
-        aspect,
-        near,
-        far
-      );
+      return mat4.perspective([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], fov, aspect, near, far);
     }
 
     getView(): Mat4 {

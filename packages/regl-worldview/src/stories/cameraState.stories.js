@@ -12,6 +12,7 @@ import { quat, vec3 } from "gl-matrix";
 import * as React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
+import { DEFAULT_CAMERA_STATE } from "../camera";
 import Container from "./Container";
 
 import { Arrows, Spheres, Axes, Grid, cameraStateSelectors, type CameraState } from "..";
@@ -129,6 +130,7 @@ class CameraStateStory extends React.Component<Props, State> {
           <Container
             hideState
             defaultCameraState={{
+              ...DEFAULT_CAMERA_STATE,
               perspective: true,
               distance: 150,
               thetaOffset: 0.5,
@@ -231,6 +233,25 @@ stories
       step: 0.1,
     });
 
+    const fovy = number("fovy", Math.PI / 4, {
+      range: true,
+      min: 0,
+      max: Math.PI,
+      step: 0.01,
+    });
+    const near = number("near", 0.01, {
+      range: true,
+      min: 0.001,
+      max: 1000,
+      step: 0.01,
+    });
+    const far = number("far", 5000, {
+      range: true,
+      min: 10,
+      max: 10000,
+      step: 0.01,
+    });
+
     let length = Math.hypot(orientationX, orientationY, orientationZ);
     if (length > 1) {
       length /= 2;
@@ -248,6 +269,9 @@ stories
       target,
       targetOffset,
       targetOrientation,
+      fovy,
+      near,
+      far,
     };
     return <CameraStateStory controlled={controlled} cameraStateFromKnobs={cameraState} />;
   });

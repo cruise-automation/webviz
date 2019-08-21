@@ -11,6 +11,7 @@ import { MosaicWithoutDragDropContext, MosaicWindow } from "react-mosaic-compone
 import { connect } from "react-redux";
 import "react-mosaic-component/react-mosaic-component.css";
 
+import ErrorBoundary from "./ErrorBoundary";
 import { type SET_MOSAIC_ID, setMosaicId } from "webviz-core/src/actions/mosaic";
 import { changePanelLayout, savePanelConfig } from "webviz-core/src/actions/panels";
 import type { CHANGE_PANEL_LAYOUT, Dispatcher, SAVE_PANEL_CONFIG } from "webviz-core/src/actions/panels";
@@ -76,19 +77,23 @@ class PanelLayout extends PureComponent<Props> {
   render() {
     const { changePanelLayout, setMosaicId, layout } = this.props;
     return (
-      <MosaicRoot
-        renderTile={this.renderTile}
-        className="none"
-        resize={{ minimumPaneSizePercentage: 10 }}
-        value={layout}
-        onChange={changePanelLayout}
-        setMosaicId={setMosaicId}
-      />
+      <ErrorBoundary>
+        <MosaicRoot
+          renderTile={this.renderTile}
+          className="none"
+          resize={{ minimumPaneSizePercentage: 10 }}
+          value={layout}
+          onChange={changePanelLayout}
+          setMosaicId={setMosaicId}
+        />
+      </ErrorBoundary>
     );
   }
 }
 
 export default connect<Props, {}, _, _, _, _>(
   (state: State) => ({ layout: state.panels.layout }),
-  { changePanelLayout, savePanelConfig, setMosaicId }
+  { changePanelLayout, savePanelConfig, setMosaicId },
+  undefined,
+  { forwardRef: true }
 )(PanelLayout);

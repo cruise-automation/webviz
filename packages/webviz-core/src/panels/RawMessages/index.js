@@ -15,6 +15,7 @@ import LessIcon from "@mdi/svg/svg/unfold-less-horizontal.svg";
 import MoreIcon from "@mdi/svg/svg/unfold-more-horizontal.svg";
 import { cloneDeepWith, first, last, uniq } from "lodash";
 import * as React from "react";
+import { hot } from "react-hot-loader/root";
 import ReactHoverObserver from "react-hover-observer";
 import Tree from "react-json-tree";
 import styled from "styled-components";
@@ -26,6 +27,7 @@ import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import MessageHistory, {
+  MessageHistoryInput,
   type MessageHistoryData,
   type MessageHistoryMetadata,
   type MessageHistoryQueriedDatum,
@@ -36,10 +38,10 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import Plot, { type PlotConfig, plotableRosTypes } from "webviz-core/src/panels/Plot";
 import { enumValuesByDatatypeAndField } from "webviz-core/src/selectors";
-import colors from "webviz-core/src/styles/colors.module.scss";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import clipboard from "webviz-core/src/util/clipboard";
+import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
 import { format, formatDuration } from "webviz-core/src/util/time";
 
 const DURATION_20_YEARS_SEC = 20 * 365 * 24 * 60 * 60;
@@ -50,6 +52,13 @@ const SMetadata = styled.div`
   font-size: 11px;
   color: #aaa;
 `;
+
+function getArrow(x: number, y: number) {
+  if (x === 0 && y === 0) {
+    return;
+  }
+  return <span style={{ transform: `rotate(${Math.atan2(-y, x)}rad)`, display: "inline-block" }}>→</span>;
+}
 
 function getItemString(type, data, itemType, itemString) {
   const keys = Object.keys(data);
@@ -69,7 +78,11 @@ function getItemString(type, data, itemType, itemString) {
     const { x, y } = data;
     if (x != null && y != null) {
       const length = Math.sqrt(x * x + y * y);
-      return <span> norm = {length.toFixed(2)} </span>;
+      return (
+        <span>
+          norm = {length.toFixed(2)} {getArrow(x, y)}
+        </span>
+      );
     }
   }
 
@@ -77,7 +90,12 @@ function getItemString(type, data, itemType, itemString) {
     const { x, y, z } = data;
     if (x != null && y != null && z != null) {
       const length = Math.sqrt(x * x + y * y + z * z);
-      return <span> norm = {length.toFixed(2)} </span>;
+      return (
+        <span>
+          {" "}
+          norm = {length.toFixed(2)} {z === 0 ? getArrow(x, y) : undefined}{" "}
+        </span>
+      );
     }
   }
 
@@ -118,13 +136,13 @@ function getMessageDocumentationLink(datatype: string): ?string {
     .RawMessages.docLinkFunction(filename);
 }
 
-type Config = {|
+export type RawMessagesConfig = {|
   topicName: string,
 |};
 
 type Props = {
-  config: Config,
-  saveConfig: ($Shape<Config>) => void,
+  config: RawMessagesConfig,
+  saveConfig: ($Shape<RawMessagesConfig>) => void,
   openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
   datatypes: RosDatatypes,
 };
@@ -400,7 +418,7 @@ class RawMessages extends React.PureComponent<Props, State> {
                       }
                       return this._valueRenderer(metadata, data, item.queriedData, ...args);
                     }}
-                    theme={{ base00: colors.panelBackground, tree: { margin: 0 } }}
+                    theme={{ ...jsonTreeTheme, tree: { margin: 0 } }}
                     data={data}
                   />
                 ))}
@@ -421,7 +439,7 @@ class RawMessages extends React.PureComponent<Props, State> {
           <Icon tooltip={expandAll ? "Collapse all" : "Expand all"} medium fade onClick={this._toggleExpandAll}>
             {expandAll ? <LessIcon /> : <MoreIcon />}
           </Icon>
-          <MessageHistory.Input path={topicName} onChange={this._onChange} inputStyle={{ height: "100%" }} />
+          <MessageHistoryInput path={topicName} onChange={this._onChange} inputStyle={{ height: "100%" }} />
         </PanelToolbar>
         {this._renderTopic()}
       </Flex>
@@ -429,4 +447,4 @@ class RawMessages extends React.PureComponent<Props, State> {
   }
 }
 
-export default Panel<Config>(RawMessages);
+export default hot(Panel<RawMessagesConfig>(RawMessages));

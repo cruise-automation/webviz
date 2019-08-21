@@ -6,20 +6,26 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import createHistory from "history/createMemoryHistory";
+import { createMemoryHistory } from "history";
 import { getLeaves } from "react-mosaic-component";
 
-import { changePanelLayout, savePanelConfig, importPanelLayout } from "webviz-core/src/actions/panels";
-import rootReducer from "webviz-core/src/reducers";
+import {
+  changePanelLayout,
+  savePanelConfig,
+  importPanelLayout,
+  setWebvizNodes,
+  overwriteWebvizNodes,
+} from "webviz-core/src/actions/panels";
+import createRootReducer from "webviz-core/src/reducers";
 import { LAYOUT_KEY, PANEL_PROPS_KEY, GLOBAL_DATA_KEY } from "webviz-core/src/reducers/panels";
 import configureStore from "webviz-core/src/store";
 import { defaultLayout } from "webviz-core/src/util/defaultLayoutConfig";
 import Storage from "webviz-core/src/util/Storage";
 
 const getStore = () => {
-  const history = createHistory();
-  const store = configureStore(rootReducer, [], history);
-  store.checkState = (fn) => fn(store.getState().panels, store.getState().routing);
+  const history = createMemoryHistory();
+  const store = configureStore(createRootReducer(history), [], history);
+  store.checkState = (fn) => fn(store.getState().panels, store.getState().router);
   // attach a helper method to the test store
   store.push = (path) => history.push(path);
   return store;
@@ -209,6 +215,28 @@ describe("state.panels", () => {
     );
     store.checkState((panels, routing) => {
       expect(routing.location.search).toEqual("?layout=foo&name=bar");
+    });
+  });
+
+  it("saves and overwrites Webviz nodes", () => {
+    const store = getStore();
+    const firstPayload = { foo: "bar" };
+    const secondPayload = { bar: "baz" };
+    const lastPayload = { foo: "moo", abc: "def" };
+
+    store.dispatch(setWebvizNodes(firstPayload));
+    store.checkState((panelState) => {
+      expect(panelState.webvizNodes).toEqual(firstPayload);
+    });
+
+    store.dispatch(setWebvizNodes(secondPayload));
+    store.checkState((panelState) => {
+      expect(panelState.webvizNodes).toEqual({ ...firstPayload, ...secondPayload });
+    });
+
+    store.dispatch(overwriteWebvizNodes(lastPayload));
+    store.checkState((panelState) => {
+      expect(panelState.webvizNodes).toEqual(lastPayload);
     });
   });
 

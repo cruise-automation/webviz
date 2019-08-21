@@ -41,10 +41,10 @@ const SError = styled.div`
   padding: 8px 4px;
 `;
 
-type Value = Object;
-type OnChange = (obj: Object) => void;
+type Value = any;
+type OnChange = (obj: any) => void;
 type ParseAndStringifyFn = {
-  stringify: (obj: Object) => string,
+  stringify: (obj: any) => string,
   parse: (val: string) => any,
 };
 export type EditFormat = $Values<typeof EDIT_FORMAT>;

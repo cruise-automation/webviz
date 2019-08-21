@@ -6,18 +6,21 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import ArrowSplitHorizontalIcon from "@mdi/svg/svg/arrow-split-horizontal.svg";
+import ArrowSplitVerticalIcon from "@mdi/svg/svg/arrow-split-vertical.svg";
 import CheckboxMultipleBlankOutlineIcon from "@mdi/svg/svg/checkbox-multiple-blank-outline.svg";
-import CloseIcon from "@mdi/svg/svg/close.svg";
 import DragIcon from "@mdi/svg/svg/drag.svg";
-import GridLargeIcon from "@mdi/svg/svg/grid-large.svg";
 import JsonIcon from "@mdi/svg/svg/json.svg";
 import SettingsIcon from "@mdi/svg/svg/settings.svg";
+import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
 import PropTypes from "prop-types";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
 import { useContext } from "react"; // eslint-disable-line import/no-duplicates
 import Dimensions from "react-container-dimensions";
-import { connect } from "react-redux";
+import { getNodeAtPath } from "react-mosaic-component";
+// $FlowFixMe
+import { connect, ReactReduxContext } from "react-redux";
 
 import HelpButton from "./HelpButton";
 import styles from "./index.module.scss";
@@ -34,6 +37,7 @@ import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList from "webviz-core/src/panels/PanelList";
 import type { PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
+import { getPanelIdForType } from "webviz-core/src/util";
 
 type Props = {|
   children?: React.Node,
@@ -50,7 +54,6 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
     mosaicWindowActions: PropTypes.any,
     mosaicActions: PropTypes.any,
     mosaicId: PropTypes.any,
-    store: PropTypes.any,
   };
 
   getPanelType() {
@@ -65,11 +68,22 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
     mosaicActions.remove(mosaicWindowActions.getPath());
   };
 
-  split = () => {
-    const { mosaicWindowActions } = this.context;
+  split = (store, id: ?string, direction: "row" | "column") => {
+    const { mosaicActions, mosaicWindowActions } = this.context;
     const type = this.getPanelType();
+    if (!id || !type) {
+      throw new Error("Trying to split unknown panel!");
+    }
+
     getGlobalHooks().onPanelSplit(type);
-    mosaicWindowActions.split({ type });
+
+    const config = store.getState().panels.savedProps[id];
+    const newId = getPanelIdForType(type);
+    this.props.savePanelConfig({ id: newId, config });
+
+    const path = mosaicWindowActions.getPath();
+    const root = mosaicActions.getRoot();
+    mosaicActions.replaceWith(path, { direction, first: getNodeAtPath(root, path), second: newId });
   };
 
   swap = (type: string, panelConfig?: PanelConfig) => {
@@ -77,11 +91,11 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
     this.context.mosaicWindowActions.replaceWithNew({ type, panelConfig });
   };
 
-  _onImportClick = (id) => {
+  _onImportClick = (store, id) => {
     if (!id) {
       return;
     }
-    const panelConfigById = this.context.store.getState().panels.savedProps;
+    const panelConfigById = store.getState().panels.savedProps;
     const modal = renderToBody(
       <ShareJsonModal
         onRequestClose={() => modal.remove()}
@@ -100,25 +114,41 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
 
     const isOnlyPanel = this.context.mosaicWindowActions.getPath().length === 0;
     return (
-      <PanelContext.Consumer>
-        {(panelData) => (
-          <>
-            <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />}>
-              {/* $FlowFixMe - not sure why it thinks onPanelSelect is a Redux action */}
-              <PanelList selectedPanelType={panelData.type} onPanelSelect={this.swap} />
-            </SubMenu>
-            <Item icon={<JsonIcon />} onClick={() => this._onImportClick(panelData && panelData.id)}>
-              Import/export config
-            </Item>
-            <Item key="split" icon={<GridLargeIcon />} onClick={this.split}>
-              Split panel
-            </Item>
-            <Item key="close" icon={<CloseIcon />} onClick={this.close} disabled={isOnlyPanel}>
-              Remove panel
-            </Item>
-          </>
+      <ReactReduxContext.Consumer>
+        {({ store }) => (
+          <PanelContext.Consumer>
+            {(panelData) => (
+              <>
+                <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />}>
+                  {/* $FlowFixMe - not sure why it thinks onPanelSelect is a Redux action */}
+                  <PanelList selectedPanelType={panelData.type} onPanelSelect={this.swap} />
+                </SubMenu>
+                <Item
+                  icon={<ArrowSplitHorizontalIcon />}
+                  onClick={() => this.split(store, panelData && panelData.id, "column")}
+                  dataTest="panel-settings-hsplit">
+                  Split horizontal
+                </Item>
+                <Item
+                  icon={<ArrowSplitVerticalIcon />}
+                  onClick={() => this.split(store, panelData && panelData.id, "row")}
+                  dataTest="panel-settings-vsplit">
+                  Split vertical
+                </Item>
+                <Item icon={<TrashCanOutlineIcon />} onClick={this.close} disabled={isOnlyPanel}>
+                  Remove panel
+                </Item>
+                <Item
+                  icon={<JsonIcon />}
+                  onClick={() => this._onImportClick(store, panelData && panelData.id)}
+                  dataTest="panel-settings-config">
+                  Import/export panel settings
+                </Item>
+              </>
+            )}
+          </PanelContext.Consumer>
         )}
-      </PanelContext.Consumer>
+      </ReactReduxContext.Consumer>
     );
   }
 }
@@ -140,13 +170,13 @@ const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Pro
       <Dropdown
         flatEdges={!floating}
         toggleComponent={
-          <Icon fade tooltip="Panel settings">
+          <Icon fade tooltip="Panel settings" dataTest="panel-settings">
             <SettingsIcon className={styles.icon} />
           </Icon>
         }>
         <ConnectedStandardMenuItems />
-        <hr />
-        {menuContent && <>{menuContent}</>}
+        {menuContent && <hr />}
+        {menuContent}
       </Dropdown>
       <MosaicDragHandle>
         {/* Can only nest native nodes into <MosaicDragHandle>, so wrapping in a <span> */}

@@ -9,6 +9,7 @@
 import _ from "lodash";
 import * as React from "react";
 import Dimensions from "react-container-dimensions";
+import { hot } from "react-hot-loader/root";
 import stringHash from "string-hash";
 import styled from "styled-components";
 import textWidth from "text-width";
@@ -18,6 +19,7 @@ import helpContent from "./index.help.md";
 import labelVisibilityMap from "./labelVisibilityMap";
 import Button from "webviz-core/src/components/Button";
 import MessageHistory, {
+  MessageHistoryInput,
   type MessageHistoryData,
   type MessageHistoryItem,
   type MessageHistoryTimestampMethod,
@@ -326,7 +328,7 @@ class StateTransitions extends React.PureComponent<Props> {
                             }}>
                             ✕
                           </SInputDelete>
-                          <MessageHistory.Input
+                          <MessageHistoryInput
                             path={path}
                             onChange={this._onInputChange}
                             index={index}
@@ -350,4 +352,4 @@ class StateTransitions extends React.PureComponent<Props> {
   }
 }
 
-export default Panel<StateTransitionConfig>(StateTransitions);
+export default hot(Panel<StateTransitionConfig>(StateTransitions));

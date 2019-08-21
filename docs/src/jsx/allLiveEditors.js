@@ -53,11 +53,18 @@ export const MouseEventsInstanced = makeCodeComponent(
 
 export const Arrows = makeCodeComponent(require("!!raw-loader!./commands/Arrows"), "Arrows");
 
+export const ArrowsInteractive = makeCodeComponent(
+  require("!!raw-loader!./commands/ArrowsInteractive"),
+  "ArrowsInteractive"
+);
+
 export const Cones = makeCodeComponent(require("!!raw-loader!./commands/Cones"), "Cones");
 
 export const Cubes = makeCodeComponent(require("!!raw-loader!./commands/Cubes"), "Cubes");
 
 export const Cylinders = makeCodeComponent(require("!!raw-loader!./commands/Cylinders"), "Cylinders");
+
+export const DrawPolygons = makeCodeComponent(require("!!raw-loader!./commands/DrawPolygons"), "DrawPolygons");
 
 export const FilledPolygons = makeCodeComponent(require("!!raw-loader!./commands/FilledPolygons"), "FilledPolygons");
 
@@ -69,6 +76,8 @@ export const FilledPolygonsHitmap = makeCodeComponent(
 export const GLTFScene = makeCodeComponent(require("!!raw-loader!./commands/GLTFScene"), "GLTFScene");
 
 export const GLTFSceneHitmap = makeCodeComponent(require("!!raw-loader!./commands/GLTFSceneHitmap"), "GLTFSceneHitmap");
+
+export const Grid = makeCodeComponent(require("!!raw-loader!./commands/Grid"), "Grid");
 
 export const LinesDemo = makeCodeComponent(require("!!raw-loader!./commands/LinesDemo"), "LinesDemo");
 

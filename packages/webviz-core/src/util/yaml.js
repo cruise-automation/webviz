@@ -12,7 +12,7 @@ export default {
   parse<T>(str: string): T {
     return yaml.safeLoad(str);
   },
-  stringify(obj: any, options: Object = {}): string {
+  stringify(obj: any, options: any = {}): string {
     // do not quote 'y' and 'yes' for older yaml versions
     return yaml
       .safeDump(obj, { noCompatMode: true, ...options })

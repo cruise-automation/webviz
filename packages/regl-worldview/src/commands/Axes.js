@@ -46,7 +46,6 @@ const zAxis = {
 };
 
 type Axis = {
-  hitmapId?: number,
   pose: Pose,
   points: Point[],
   scale: Scale,

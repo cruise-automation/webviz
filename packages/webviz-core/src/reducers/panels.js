@@ -10,7 +10,9 @@ import { isEmpty, pick } from "lodash";
 import { getLeaves } from "react-mosaic-component";
 
 import type { ActionTypes } from "webviz-core/src/actions";
+import { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type {
   SaveConfigPayload,
   SaveFullConfigPayload,
@@ -25,6 +27,10 @@ const storage = new Storage();
 export const LAYOUT_KEY = "panels.layout";
 export const PANEL_PROPS_KEY = "panels.savedProps";
 export const GLOBAL_DATA_KEY = "panels.globalData";
+export const WEBVIZ_NODES_KEY = "panels.webvizNodes";
+export const LINKED_GLOBAL_VARIABLES_KEY = "panels.linkedGlobalVariables";
+
+export type UserWebvizNodes = { [nodeName: string]: ?string };
 
 export type PanelsState = {
   layout: any,
@@ -32,7 +38,9 @@ export type PanelsState = {
   // This should at some point be renamed to `config` or `configById` or so,
   // but it's inconvenient to have this diverge from `PANEL_PROPS_KEY`.
   savedProps: { [panelId: string]: PanelConfig },
-  globalData: Object,
+  globalData: GlobalData,
+  webvizNodes: UserWebvizNodes,
+  linkedGlobalVariables: LinkedGlobalVariables,
 };
 
 // getDefaultState will be called once when the store initializes this reducer.
@@ -44,11 +52,14 @@ function getDefaultState() {
     // by default we don't save props for any of the panels
     savedProps: storage.get(PANEL_PROPS_KEY) || {},
     globalData: storage.get(GLOBAL_DATA_KEY) || {},
+    webvizNodes: storage.get(WEBVIZ_NODES_KEY) || {},
+    linkedGlobalVariables: storage.get(LINKED_GLOBAL_VARIABLES_KEY) || [],
   };
   // if there was no previously saved layout
   // save this initial panel layout into local storage
   const layoutIsEmptyObj = typeof result.layout === "object" && isEmpty(result.layout);
   if (!result.layout || layoutIsEmptyObj) {
+    // TODO(Audrey): we are duplicating the fields. We should clean this up later.
     storage.set(LAYOUT_KEY, defaultLayout);
     result.layout = defaultLayout;
     storage.set(PANEL_PROPS_KEY, {});
@@ -120,7 +131,13 @@ function saveFullPanelConfig(state: PanelsState, payload: SaveFullConfigPayload)
 }
 
 function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload) {
-  let migratedPayload = getGlobalHooks().migratePanels(payload);
+  let migratedPayload;
+  try {
+    migratedPayload = getGlobalHooks().migratePanels(payload);
+  } catch (err) {
+    console.error("Error importing layout", payload, err);
+    return state;
+  }
 
   if (!payload.skipSettingLocalStorage) {
     if (isEmpty(migratedPayload)) {
@@ -168,6 +185,27 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
 
       storage.set(GLOBAL_DATA_KEY, globalData);
       return { ...state, globalData };
+    }
+    case "OVERWRITE_WEBVIZ_NODES":
+      storage.set(WEBVIZ_NODES_KEY, action.payload);
+      return { ...state, webvizNodes: action.payload };
+
+    case "SET_WEBVIZ_NODES": {
+      const webvizNodes = { ...state.webvizNodes, ...action.payload };
+
+      Object.keys(action.payload).forEach((key) => {
+        if (webvizNodes[key] === undefined) {
+          delete webvizNodes[key];
+        }
+      });
+
+      storage.set(WEBVIZ_NODES_KEY, webvizNodes);
+      return { ...state, webvizNodes };
+    }
+
+    case "SET_LINKED_GLOBAL_VARIABLES": {
+      storage.set(LINKED_GLOBAL_VARIABLES_KEY, action.payload);
+      return { ...state, linkedGlobalVariables: action.payload };
     }
 
     default:

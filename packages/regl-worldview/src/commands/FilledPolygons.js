@@ -11,8 +11,7 @@ import React from "react";
 
 import type { Vec3, PolygonType } from "../types";
 import { shouldConvert, pointToVec3 } from "../utils/commandUtils";
-import { getHitmapPropsForFilledPolygons, getObjectFromHitmapIdForFilledPolygons } from "../utils/hitmapDefaults";
-import type { GetHitmapProps, GetObjectFromHitmapId } from "./Command";
+import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
 import Triangles from "./Triangles";
 
 const NO_POSE = {
@@ -46,37 +45,31 @@ function getEarcutPoints(points: Vec3[]): Vec3[] {
 
 type Props = {
   children: PolygonType[],
-  // TODO: deprecating getHitmapId, remove before 1.x release
-  getHitmapId?: (PolygonType) => number,
-  getHitmapProps: GetHitmapProps<PolygonType>,
-  getObjectFromHitmapId: GetObjectFromHitmapId<PolygonType>,
 };
 
 // command to draw a filled polygon
-function FilledPolygons({ children: polygons = [], getHitmapProps, getObjectFromHitmapId, ...rest }: Props) {
-  const triangles = [];
-  for (const poly of polygons) {
+function FilledPolygons({ children: polygons = [], ...rest }: Props) {
+  const triangles = polygons.map((poly) => {
     // $FlowFixMe flow doesn't know how shouldConvert works
     const points: Vec3[] = shouldConvert(poly.points) ? poly.points.map(pointToVec3) : poly.points;
     const pose = poly.pose ? poly.pose : NO_POSE;
     const earcutPoints: Vec3[] = getEarcutPoints(points);
-    triangles.push({
+    return {
       ...poly,
       points: earcutPoints,
       pose,
       scale: DEFAULT_SCALE,
-    });
-  }
+      originalMarker: poly,
+    };
+  });
+
+  // Overwrite the triangle's default getChildrenForHitmap because we want to event as if each triangle is a single
+  // polygon.
   return (
-    <Triangles getHitmapProps={getHitmapProps} getObjectFromHitmapId={getObjectFromHitmapId} {...rest}>
+    <Triangles getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker} {...rest}>
       {triangles}
     </Triangles>
   );
 }
-
-FilledPolygons.defaultProps = {
-  getHitmapProps: getHitmapPropsForFilledPolygons,
-  getObjectFromHitmapId: getObjectFromHitmapIdForFilledPolygons,
-};
 
 export default FilledPolygons;

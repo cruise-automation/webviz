@@ -10,13 +10,12 @@ import { mat4 } from "gl-matrix";
 import memoizeWeak from "memoize-weak";
 import React, { useContext, useState, useEffect, useCallback, useDebugValue } from "react";
 
-import type { Pose, Scale, MouseHandler } from "../types";
-import { defaultBlend, pointToVec3, orientationToVec4, intToRGB } from "../utils/commandUtils";
-import parseGLB from "../utils/parseGLB";
+import type { Pose, Scale, MouseHandler, GetChildrenForHitmap } from "../types";
+import { defaultBlend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
+import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
+import parseGLB, { type GLBModel } from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";
-
-type Model = {};
 
 function glConstantToRegl(value: ?number): ?string {
   if (value === undefined) {
@@ -54,7 +53,7 @@ const drawModel = (regl) => {
       "light.ambientIntensity": 0.5,
       "light.diffuseIntensity": 0.5,
       hitmapColor: regl.context("hitmapColor"),
-      drawHitmap: regl.context("drawHitmap"),
+      isHitmap: regl.context("isHitmap"),
     },
     attributes: {
       position: regl.prop("positions"),
@@ -81,7 +80,7 @@ const drawModel = (regl) => {
   `,
     frag: `
   precision mediump float;
-  uniform bool drawHitmap;
+  uniform bool isHitmap;
   uniform vec4 hitmapColor;
   uniform float globalAlpha;
   uniform sampler2D baseColorTexture;
@@ -101,7 +100,7 @@ const drawModel = (regl) => {
   void main() {
     vec4 baseColor = texture2D(baseColorTexture, vTexCoord) * baseColorFactor;
     float diffuse = light.diffuseIntensity * max(0.0, dot(vNormal, -light.direction));
-    gl_FragColor = drawHitmap ? hitmapColor : vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
+    gl_FragColor = isHitmap ? hitmapColor : vec4((light.ambientIntensity + diffuse) * baseColor.rgb, baseColor.a * globalAlpha);
   }
   `,
   });
@@ -115,13 +114,15 @@ const drawModel = (regl) => {
   });
 
   // build the draw calls needed to draw the model. This will happen whenever the model changes.
-  const getDrawCalls = memoizeWeak((model: Model) => {
+  const getDrawCalls = memoizeWeak((model: GLBModel) => {
     // upload textures to the GPU
+    const { images, accessors } = model;
     const textures =
       model.json.textures &&
+      images &&
       model.json.textures.map((textureInfo) => {
         const sampler = model.json.samplers[textureInfo.sampler];
-        const bitmap: ImageBitmap = model.images[textureInfo.source];
+        const bitmap: ImageBitmap = images[textureInfo.source];
         const texture = regl.texture({
           data: bitmap,
           min: glConstantToRegl(sampler.minFilter),
@@ -141,12 +142,15 @@ const drawModel = (regl) => {
       for (const primitive of mesh.primitives) {
         const material = model.json.materials[primitive.material];
         const texInfo = material.pbrMetallicRoughness.baseColorTexture;
+        if (!accessors || !textures) {
+          throw new Error("Error decoding GLB file");
+        }
         drawCalls.push({
-          indices: model.accessors[primitive.indices],
-          positions: model.accessors[primitive.attributes.POSITION],
-          normals: model.accessors[primitive.attributes.NORMAL],
+          indices: accessors[primitive.indices],
+          positions: accessors[primitive.attributes.POSITION],
+          normals: accessors[primitive.attributes.NORMAL],
           texCoords: texInfo
-            ? model.accessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]]
+            ? accessors[primitive.attributes[`TEXCOORD_${texInfo.texCoord || 0}`]]
             : { divisor: 1, buffer: singleTexCoord },
           baseColorTexture: texInfo ? textures[texInfo.index] : whiteTexture,
           baseColorFactor: material.pbrMetallicRoughness.baseColorFactor || [1, 1, 1, 1],
@@ -197,8 +201,8 @@ const drawModel = (regl) => {
           props.scale ? pointToVec3(props.scale) : [1, 1, 1]
         ),
       globalAlpha: (context, props) => (props.alpha == null ? 1 : props.alpha),
-      hitmapColor: (context, props) => intToRGB(props.id),
-      drawHitmap: (context, props) => props.id != null,
+      hitmapColor: (context, props) => props.color || [0, 0, 0, 1],
+      isHitmap: (context, props) => !!props.isHitmap,
     },
   });
 
@@ -211,18 +215,18 @@ const drawModel = (regl) => {
 };
 
 type Props = {|
-  model: string | (() => Promise<Model>),
+  model: string | (() => Promise<GLBModel>),
   onClick?: MouseHandler,
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,
   onMouseMove?: MouseHandler,
   onMouseUp?: MouseHandler,
-  children: {|
+  children: {
     id?: number,
     pose: Pose,
     scale: Scale,
     alpha: ?number,
-  |},
+  },
 |};
 
 function useAsyncValue<T>(fn: () => Promise<T>, deps: ?(any[])): ?T {
@@ -245,7 +249,7 @@ function useAsyncValue<T>(fn: () => Promise<T>, deps: ?(any[])): ?T {
   return value;
 }
 
-function useModel(model: string | (() => Promise<Model>)): ?Model {
+function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
   useDebugValue(model);
   return useAsyncValue(
     async () => {
@@ -267,9 +271,17 @@ function useModel(model: string | (() => Promise<Model>)): ?Model {
   );
 }
 
+// Override the default getChildrenForHitmap with our own implementation.
+const getChildrenForHitmap: GetChildrenForHitmap = <T: any>(prop: T, assignNextColors, excludedObjects) => {
+  const hitmapProp = nonInstancedGetChildrenForHitmap(prop, assignNextColors, excludedObjects);
+  if (hitmapProp) {
+    return { ...hitmapProp, isHitmap: true };
+  }
+  return hitmapProp;
+};
+
 export default function GLTFScene(props: Props) {
   const { children, model, ...rest } = props;
-  const drawHitmap = children.id != null;
 
   const context = useContext(WorldviewReactContext);
   const loadedModel = useModel(model);
@@ -287,12 +299,8 @@ export default function GLTFScene(props: Props) {
   }
 
   return (
-    <Command
-      {...rest}
-      reglCommand={drawModel}
-      drawProps={{ ...children, id: null, model: loadedModel }}
-      hitmapProps={drawHitmap ? { ...children, model: loadedModel } : undefined}
-      getObjectFromHitmapId={(objId, hitmapProps) => (hitmapProps.id === objId ? hitmapProps : undefined)}
-    />
+    <Command {...rest} reglCommand={drawModel} getChildrenForHitmap={getChildrenForHitmap}>
+      {{ ...children, model: loadedModel }}
+    </Command>
   );
 }

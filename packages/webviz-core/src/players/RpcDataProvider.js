@@ -15,6 +15,7 @@ import {
   type MessageLike,
   type RandomAccessDataProvider,
 } from "webviz-core/src/players/types";
+import reportError from "webviz-core/src/util/reportError";
 import Rpc from "webviz-core/src/util/Rpc";
 
 export default class RpcDataProvider implements RandomAccessDataProvider {
@@ -23,6 +24,9 @@ export default class RpcDataProvider implements RandomAccessDataProvider {
 
   constructor(rpc: Rpc, children: DataProviderDescriptor[]) {
     this._rpc = rpc;
+    this._rpc.receive("reportError", ({ message, details, type }) => {
+      reportError(message, details, type);
+    });
     if (children.length !== 1) {
       throw new Error(`RpcDataProvider requires exactly 1 child, but received ${children.length}`);
     }

@@ -7,20 +7,23 @@
 //  You may not use this file except in compliance with the License.
 import { isEqual } from "lodash";
 
+type Rule = (value: any) => ?string;
 type Rules = {
-  [name: string]: Function[],
+  [name: string]: ((value: any) => ?string)[],
 };
 
 function isEmpty(value: any) {
   return value == null;
 }
-export const isRequired = (value: any) => (value == null ? "is required" : undefined);
+export const isRequired = (value: any): ?string => (value == null ? "is required" : undefined);
 
-export const isNumber = (value: any) => (!isEmpty(value) && typeof value !== "number" ? "must be a number" : undefined);
-export const isBoolean = (value: any) =>
+export const isNumber = (value: any): ?string =>
+  !isEmpty(value) && typeof value !== "number" ? "must be a number" : undefined;
+
+export const isBoolean = (value: any): ?string =>
   !isEmpty(value) && typeof value !== "boolean" ? `must be "true" or "false"` : undefined;
 
-export const isNumberArray = (expectArrLen: number = 0) => (value: any) => {
+export const isNumberArray = (expectArrLen: number = 0) => (value: any): ?string => {
   if (Array.isArray(value)) {
     if (value.length !== expectArrLen) {
       return `must contain ${expectArrLen} array items`;
@@ -33,7 +36,7 @@ export const isNumberArray = (expectArrLen: number = 0) => (value: any) => {
   }
 };
 
-export const isOrientation = (value: any) => {
+export const isOrientation = (value: any): ?string => {
   const isNumberArrayErr = isNumberArray(4)(value);
   if (isNumberArrayErr) {
     return isNumberArrayErr;
@@ -46,21 +49,53 @@ export const isOrientation = (value: any) => {
   }
 };
 
+export const isString = (value: any): ?string => (typeof value !== "string" ? "must be string" : undefined);
+
+export const minLen = (minLength: number = 0) => (value: any): ?string => {
+  if (Array.isArray(value)) {
+    return value.length < minLength ? `must contain at least ${minLength} array items` : undefined;
+  } else if (typeof value === "string") {
+    return value.length < minLength ? `must contain at least ${minLength} characters` : undefined;
+  }
+};
+
+export const maxLen = (maxLength: number = 0) => (value: any): ?string => {
+  if (Array.isArray(value)) {
+    return value.length > maxLength ? `must contain at most ${maxLength} array items` : undefined;
+  } else if (typeof value === "string") {
+    return value.length > maxLength ? `must contain at most ${maxLength} characters` : undefined;
+  }
+};
+
+export const isNotPrivate = (value: any): ?string =>
+  typeof value !== "string" && value.startsWith("_") ? "must not start with _" : undefined;
+
 // return the first error
-const join = (rules) => (value, data) => rules.map((rule) => rule(value, data)).filter((error) => !!error)[0];
+const join = (rules) => (value) => rules.map((rule) => rule(value)).filter((error) => !!error)[0];
 
 export const createValidator = (rules: Rules) => {
-  return (data: Object = {}) => {
+  return (data: any = {}): { [field: string]: string } => {
     const errors = {};
     Object.keys(rules).forEach((key) => {
       // concat enables both functions and arrays of functions
       const rule = join([].concat(rules[key]));
-      const error = rule(data[key], data);
+      const error = rule(data[key]);
       if (error) {
         errors[key] = error;
       }
     });
     return errors;
+  };
+};
+
+export const createPrimitiveValidator = (rules: Rule[]) => {
+  return (data: any): ?string => {
+    for (let i = 0; i < rules.length; i++) {
+      const error = rules[i](data);
+      if (error) {
+        return error;
+      }
+    }
   };
 };
 
@@ -95,10 +130,10 @@ export const cameraStateValidator = (jsonData: any): ?ValidationResult => {
   return Object.keys(result).length === 0 ? undefined : result;
 };
 
-const isXYPointArray = (value: any) => {
+const isXYPointArray = (value: any): ?string => {
   if (Array.isArray(value)) {
     for (const item of value) {
-      if (!item || !item.x || !item.y) {
+      if (!item || item.x == null || item.y == null) {
         return `must contain x and y points`;
       }
       if (typeof item.x !== "number" || typeof item.y !== "number") {
@@ -110,7 +145,7 @@ const isXYPointArray = (value: any) => {
   }
 };
 
-const isPolygons = (value: any) => {
+const isPolygons = (value: any): ?string => {
   if (Array.isArray(value)) {
     for (const item of value) {
       const error = isXYPointArray(item);

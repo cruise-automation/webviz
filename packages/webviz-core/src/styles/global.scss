@@ -7,6 +7,7 @@
 @import "./reset.scss";
 @import "./colors.module.scss";
 @import "./mixins.module.scss";
+@import "./roboto-fonts.module.scss";
 
 @font-face {
   font-family: "Inter UI";
@@ -169,7 +170,9 @@ hr {
 }
 
 button {
-  cursor: pointer;
+  &:not(.disabled):not([disabled]) {
+    cursor: pointer;
+  }
   text-align: center;
 
   &.is-danger {
@@ -194,6 +197,9 @@ button {
   &.disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+  &.is-small {
+    padding: 4px 8px;
   }
 }
 

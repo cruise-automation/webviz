@@ -11,7 +11,7 @@ import React, { PureComponent } from "react";
 
 import { plotableRosTypes } from "./index";
 import styles from "./PlotLegend.module.scss";
-import MessageHistory, { type MessageHistoryTimestampMethod } from "webviz-core/src/components/MessageHistory";
+import { MessageHistoryInput, type MessageHistoryTimestampMethod } from "webviz-core/src/components/MessageHistory";
 import { type PlotPath, isReferenceLinePlotPathType } from "webviz-core/src/panels/Plot/internalTypes";
 import { lineColors } from "webviz-core/src/util/plotColors";
 
@@ -80,7 +80,7 @@ export default class PlotLegend extends PureComponent<PlotLegendProps> {
                     [styles.itemInput]: true,
                     [styles.itemInputDisabled]: !path.enabled,
                   })}>
-                  <MessageHistory.Input
+                  <MessageHistoryInput
                     path={path.value}
                     onChange={this._onInputChange}
                     onTimestampMethodChange={this._onInputTimestampMethodChange}

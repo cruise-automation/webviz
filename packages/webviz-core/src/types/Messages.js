@@ -36,7 +36,7 @@ export type Orientation = {
   w: number,
 };
 
-type Scale = {
+export type Scale = {
   x: number,
   y: number,
   z: number,
@@ -83,8 +83,6 @@ export type PoseStamped = StampedMessage & {
 
 // Markers
 export type BaseMarker = StampedMessage & {
-  // Need to add hitmapId field to avoid flow errors: https://github.com/facebook/flow/issues/5997
-  hitmapId?: number,
   ns: string,
   id: string,
   action: 0 | 1 | 2 | 3,
@@ -92,12 +90,13 @@ export type BaseMarker = StampedMessage & {
   name?: string,
   scale: Scale,
   color: Color,
+  colors?: Color[],
   lifetime?: Time,
   frameLocked?: boolean, // TODO: Do we need this?
   text?: string,
   meshResource?: {}, // TODO Maybe make this a named resource?
   primitive?: string,
-  customMetadata?: Object,
+  customMetadata?: any,
 };
 
 type MultiPointMarker = {

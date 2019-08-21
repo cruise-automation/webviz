@@ -8,6 +8,7 @@
 
 import { groupBy, keyBy, sortBy } from "lodash";
 import React from "react";
+import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
 
 import Flex from "webviz-core/src/components/Flex";
@@ -147,4 +148,4 @@ class Internals extends React.PureComponent<{}> {
   }
 }
 
-export default Panel<{}>(Internals);
+export default hot(Panel<{}>(Internals));

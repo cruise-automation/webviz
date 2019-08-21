@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { PureComponent } from "react";
+import { hot } from "react-hot-loader/root";
 
 import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
@@ -35,7 +36,6 @@ export type PlotConfig = {
   paths: PlotPath[],
   minYValue: string,
   maxYValue: string,
-  isYAxisLocked: boolean,
 };
 
 type Props = {
@@ -43,13 +43,37 @@ type Props = {
   saveConfig: ($Shape<PlotConfig>) => void,
 };
 
-class Plot extends PureComponent<Props> {
+type State = {
+  currentMinY: ?number,
+  currentMaxY: ?number,
+};
+
+class Plot extends PureComponent<Props, State> {
   static panelType = "Plot";
-  static defaultConfig = { paths: [], minYValue: "", maxYValue: "", isYAxisLocked: false };
+  static defaultConfig = { paths: [], minYValue: "", maxYValue: "" };
+
+  state = {
+    currentMinY: null,
+    currentMaxY: null,
+  };
+
+  saveCurrentYs = (minY: number, maxY: number) => {
+    this.setState({
+      currentMinY: minY,
+      currentMaxY: maxY,
+    });
+  };
+
+  setMinMax = () => {
+    const { currentMinY, currentMaxY } = this.state;
+    this.props.saveConfig({
+      minYValue: currentMinY ? currentMinY.toString() : "",
+      maxYValue: currentMaxY ? currentMaxY.toString() : "",
+    });
+  };
 
   render() {
-    const { saveConfig } = this.props;
-    const { minYValue, maxYValue, isYAxisLocked } = this.props.config;
+    const { minYValue, maxYValue } = this.props.config;
     let { paths } = this.props.config;
     if (!paths.length) {
       paths = [{ value: "", enabled: true, timestampMethod: "receiveTime" }];
@@ -64,8 +88,8 @@ class Plot extends PureComponent<Props> {
             <PlotMenu
               minYValue={minYValue}
               maxYValue={maxYValue}
-              isYAxisLocked={isYAxisLocked}
-              saveConfig={saveConfig}
+              saveConfig={this.props.saveConfig}
+              setMinMax={this.setMinMax}
             />
           }
         />
@@ -73,7 +97,7 @@ class Plot extends PureComponent<Props> {
           paths={paths}
           minYValue={parseFloat(minYValue)}
           maxYValue={parseFloat(maxYValue)}
-          isYAxisLocked={isYAxisLocked}
+          saveCurrentYs={this.saveCurrentYs}
         />
         <PlotLegend paths={paths} onChange={this.props.saveConfig} />
       </Flex>
@@ -81,4 +105,4 @@ class Plot extends PureComponent<Props> {
   }
 }
 
-export default Panel<PlotConfig>(Plot);
+export default hot(Panel<PlotConfig>(Plot));

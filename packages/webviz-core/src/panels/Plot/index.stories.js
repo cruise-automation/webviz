@@ -247,7 +247,6 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "",
             maxYValue: "5.5",
-            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
@@ -272,7 +271,6 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "",
             maxYValue: "",
-            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
@@ -292,7 +290,6 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "",
             maxYValue: "",
-            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
@@ -317,7 +314,6 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "",
             maxYValue: "",
-            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
@@ -353,13 +349,12 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "-1",
             maxYValue: "2",
-            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
     );
   })
-  .add("with min and max Y values and YAxis NOT locked", () => {
+  .add("with min and max Y values", () => {
     return (
       <PanelSetup fixture={fixture}>
         <Plot
@@ -373,13 +368,12 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "1",
             maxYValue: "1.8",
-            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
     );
   })
-  .add("with min and max Y values and YAxis locked", () => {
+  .add("with just min Y value", () => {
     return (
       <PanelSetup fixture={fixture}>
         <Plot
@@ -392,8 +386,26 @@ storiesOf("<Plot>", module)
               },
             ],
             minYValue: "1",
+            maxYValue: "",
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("with just max Y value", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            paths: [
+              {
+                value: "/some_topic/location.pose.velocity",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
+            minYValue: "",
             maxYValue: "1.8",
-            isYAxisLocked: true,
           }}
         />
       </PanelSetup>
@@ -423,7 +435,6 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "",
             maxYValue: "5.5",
-            isYAxisLocked: false,
           }}
         />
       </PanelSetup>
@@ -466,7 +477,6 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "",
             maxYValue: "",
-            isYAxisLocked: false,
           }}
         />
       </PanelSetup>

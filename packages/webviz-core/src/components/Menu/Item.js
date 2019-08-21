@@ -18,6 +18,7 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 
 type ItemProps = {
   className?: string,
+  isHeader?: boolean,
   checked?: boolean,
   tooltip?: React.Node,
   children: React.Node,
@@ -26,17 +27,32 @@ type ItemProps = {
   onClick?: () => void,
   hasSubMenu?: boolean,
   direction?: "left" | "right",
+  dataTest?: string,
 };
 
 const Item = (props: ItemProps) => {
-  const { className = "", checked, children, icon, onClick, disabled, hasSubMenu, direction = "left", tooltip } = props;
+  const {
+    className = "",
+    isHeader = false,
+    checked,
+    children,
+    icon,
+    onClick,
+    disabled,
+    hasSubMenu,
+    direction = "left",
+    tooltip,
+    dataTest,
+  } = props;
   const classes = cx(styles.item, className, {
     [styles.active]: checked && !disabled,
     [styles.disabled]: disabled,
+    disabled,
+    [styles.header]: isHeader,
   });
 
   const item = (
-    <div className={classes} onClick={disabled ? noop : onClick}>
+    <div className={classes} onClick={disabled ? noop : onClick} data-test={dataTest}>
       {hasSubMenu && direction === "left" && <ChevronLeftIcon className={styles.submenuIconLeft} />}
       {icon && (
         <span className={styles.icon}>

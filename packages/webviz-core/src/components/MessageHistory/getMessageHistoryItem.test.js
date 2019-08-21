@@ -6,11 +6,21 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import addValuesWithPathsToItems from "./addValuesWithPathsToItems";
+import getMessageHistoryItem from "./getMessageHistoryItem";
+import { messagePathStructures } from "webviz-core/src/components/MessageHistory/messagePathsForDatatype";
+import { topicsByTopicName } from "webviz-core/src/selectors";
 import type { Message, Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
-describe("addValuesWithPathsToItems", () => {
+function addValuesWithPathsToItems(messages, rosPath, topics, datatypes, globalData) {
+  const structures = messagePathStructures(datatypes);
+  const topic = topicsByTopicName(topics)[rosPath.topicName];
+  return messages
+    .map((message) => getMessageHistoryItem(message, rosPath, topic, datatypes, globalData, structures))
+    .filter(Boolean);
+}
+
+describe("getMessageHistoryItem", () => {
   it("traverses down the path for every item", () => {
     const messages: Message[] = [
       {
@@ -130,7 +140,7 @@ describe("addValuesWithPathsToItems", () => {
     ]);
   });
 
-  it("returns empty array for invalid topics", () => {
+  it("returns nothing for invalid topics", () => {
     const messages: Message[] = [
       {
         op: "message",

@@ -5,6 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import { colors } from "webviz-core/src/util/colors";
 
 // URL params
 export const REMOTE_BAG_URL_QUERY_KEY = "remote-bag-url";
@@ -12,6 +13,10 @@ export const LOAD_ENTIRE_BAG_QUERY_KEY = "load-entire-bag";
 export const MEASURE_DATA_PROVIDERS_QUERY_KEY = "_measureDataProviders";
 export const PANEL_PERF_QUERY_KEY = "_panelperf";
 export const DEMO_QUERY_KEY = "demo";
+export const AUTOPLAY_QUERY_KEY = "autoplay";
+export const ENABLE_NODE_PLAYGROUND_QUERY_KEY = "enable-node-playground";
+
+export const DEFAULT_WEBVIZ_NODE_NAME = "/webviz/tmp/node";
 
 export const TRANSFORM_TOPIC = "/tf";
 export const DIAGNOSTIC_TOPIC = "/diagnostics";
@@ -58,3 +63,13 @@ export const POSE_MARKER_SCALE = { x: 2, y: 2, z: 0.1 };
 // Planning
 export const MILES_PER_HOUR_TO_METERS_PER_SECOND = 0.44703;
 export const METERS_PER_SECOND_TO_MILES_PER_HOUR = 2.23694;
+
+export const jsonTreeTheme = {
+  base00: colors.DARK2, // bg
+  base07: colors.BLUEL1, // text
+  base0B: colors.YELLOW1, // string & date, item string
+  base09: colors.REDL1, // # & boolean
+  base08: colors.RED, // null, undefined, function, & symbol
+  base0D: colors.BLUEL1, // label & arrow
+  base03: colors.DARK9, // item string expanded
+};

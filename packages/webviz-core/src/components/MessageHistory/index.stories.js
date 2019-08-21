@@ -11,7 +11,7 @@ import * as React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Flex from "webviz-core/src/components/Flex";
-import MessageHistory from "webviz-core/src/components/MessageHistory";
+import { MessageHistoryInput } from "webviz-core/src/components/MessageHistory";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 const fixture = {
@@ -74,7 +74,7 @@ class MessageHistoryInputStory extends React.Component<MessageHistoryInputStoryP
     return (
       <PanelSetup fixture={fixture} onMount={clickInput}>
         <Flex style={{ margin: "10px" }}>
-          <MessageHistory.Input
+          <MessageHistoryInput
             path={this.state.path}
             onChange={(newPath) => {
               this.setState({ path: newPath });
@@ -87,7 +87,7 @@ class MessageHistoryInputStory extends React.Component<MessageHistoryInputStoryP
   }
 }
 
-storiesOf("<MessageHistory.Input>", module)
+storiesOf("<MessageHistoryInput>", module)
   .addDecorator(withScreenshot())
   .add("autocomplete messagePath", () => {
     return <MessageHistoryInputStory path="/some_topic/location.po" />;

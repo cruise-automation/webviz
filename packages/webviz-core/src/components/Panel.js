@@ -6,9 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import CloseIcon from "@mdi/svg/svg/close.svg";
 import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
 import GridLargeIcon from "@mdi/svg/svg/grid-large.svg";
+import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
 import { omit } from "lodash";
 import PropTypes from "prop-types";
@@ -16,7 +16,9 @@ import * as React from "react";
 import DocumentEvents from "react-document-events";
 import KeyListener from "react-key-listener";
 import { getNodeAtPath, isParent } from "react-mosaic-component";
-import { connect } from "react-redux";
+// $FlowFixMe
+import { useSelector, useDispatch, ReactReduxContext } from "react-redux";
+import { bindActionCreators } from "redux";
 
 import styles from "./Panel.module.scss";
 import Button from "webviz-core/src/components/Button";
@@ -26,12 +28,11 @@ import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
 import { Item } from "webviz-core/src/components/Menu";
 import { getFilteredFormattedTopics } from "webviz-core/src/components/MessageHistory/topicPrefixUtils";
-import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
-import PanelContext from "webviz-core/src/components/PanelContext";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
+import PanelContext, { type PanelContextType } from "webviz-core/src/components/PanelContext";
 import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDragHandle";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import PanelList, { getPanelListItemsByType } from "webviz-core/src/panels/PanelList";
-import type { State as ReduxState } from "webviz-core/src/reducers";
+import PanelList, { getPanelsByType } from "webviz-core/src/panels/PanelList";
 import type {
   SaveConfigPayload,
   SaveFullConfigPayload,
@@ -92,7 +93,7 @@ const getTopicPrefixIcon = (topicPrefix?: string) => {
 
 const TopicPrefixDropdown = (props: {|
   topicPrefix: string,
-  saveTopicPrefix: (newTopicPrefix: string) => Function,
+  saveTopicPrefix: (newTopicPrefix: string) => () => void,
 |}) => {
   const { topicPrefix, saveTopicPrefix } = props;
   return (
@@ -131,11 +132,26 @@ const TopicPrefixDropdown = (props: {|
   );
 };
 
-export class MockPanelContextProvider extends React.Component<{ topicPrefix?: string, children: React.Node }> {
+type MockProps = $Shape<PanelContextType<any>>;
+const DEFAULT_MOCK_PANEL_CONTEXT = {
+  type: "foo",
+  id: "bar",
+  title: "Foo Panel",
+  topicPrefix: "",
+  config: {},
+  saveConfig: () => {},
+  updatePanelConfig: () => {},
+  openSiblingPanel: () => {},
+};
+export class MockPanelContextProvider extends React.Component<{ ...MockProps, children: React.Node }> {
   render() {
-    const { topicPrefix = "", children } = this.props;
+    const { children, ...rest } = this.props;
     return (
-      <PanelContext.Provider value={{ type: "foo", id: "bar", title: "Foo Panel", topicPrefix }}>
+      <PanelContext.Provider
+        value={{
+          ...DEFAULT_MOCK_PANEL_CONTEXT,
+          ...rest,
+        }}>
         {children}
       </PanelContext.Provider>
     );
@@ -165,6 +181,10 @@ export default function Panel<Config: PanelConfig>(
     childId?: string,
     config: Config,
     isOnlyPanel: boolean,
+
+    // keep the whole store to avoid unnecessary re-renders when panel state changes
+    // (we only read the state on demand in openSiblingPanel)
+    store: any,
   |};
 
   type PipelineProps = {|
@@ -189,7 +209,6 @@ export default function Panel<Config: PanelConfig>(
     static contextTypes = {
       mosaicActions: PropTypes.any,
       mosaicWindowActions: PropTypes.any,
-      store: PropTypes.any,
     };
 
     state = { quickActionsKeyPressed: false, fullScreen: false, removePanelKeyPressed: false };
@@ -235,8 +254,8 @@ export default function Panel<Config: PanelConfig>(
       }
       const defaultSiblingConfig = siblingComponent.defaultConfig;
 
-      const { mosaicActions, mosaicWindowActions, store } = this.context;
-      const panelConfigById = store.getState().panels.savedProps;
+      const panelConfigById = this.props.store.getState().panels.savedProps;
+      const { mosaicActions, mosaicWindowActions } = this.context;
       const ownPath = mosaicWindowActions.getPath();
 
       // Try to find a sibling summary panel and update it with the `siblingConfig`.
@@ -300,15 +319,25 @@ export default function Panel<Config: PanelConfig>(
     render() {
       const { topics, datatypes, capabilities, childId, isOnlyPanel, config = {} } = this.props;
       const { quickActionsKeyPressed, fullScreen } = this.state;
-      const panelListItemsByType = getPanelListItemsByType();
+      const panelsByType = getPanelsByType();
       const type = PanelComponent.panelType;
-      const title = panelListItemsByType[type] && panelListItemsByType[type].title;
+      const title = panelsByType[type] && panelsByType[type].title;
 
       const currentTopicPrefix = config[TOPIC_PREFIX_CONFIG_KEY] || "";
 
       return (
         // $FlowFixMe - bug prevents requiring panelType on PanelComponent: https://stackoverflow.com/q/52508434/23649
-        <PanelContext.Provider value={{ type, id: childId, title, topicPrefix: currentTopicPrefix }}>
+        <PanelContext.Provider
+          value={{
+            type,
+            id: childId,
+            title,
+            topicPrefix: currentTopicPrefix,
+            config,
+            saveConfig: this._saveConfig,
+            updatePanelConfig: this._updatePanelConfig,
+            openSiblingPanel: this._openSiblingPanel,
+          }}>
           {/* ensures user exits full-screen mode when leaving the window, even if key is still pressed down */}
           <DocumentEvents target={window.top} enabled onBlur={this._exitFullScreen} />
           <KeyListener global keyUpHandlers={this._keyUpHandlers} keyDownHandlers={this._keyDownHandlers} />
@@ -329,7 +358,7 @@ export default function Panel<Config: PanelConfig>(
                   </div>
                   <div>
                     <Button onClick={this._closePanel} disabled={isOnlyPanel}>
-                      <CloseIcon />
+                      <TrashCanOutlineIcon />
                       Remove
                     </Button>
                     <Button onClick={this._splitPanel}>
@@ -362,40 +391,31 @@ export default function Panel<Config: PanelConfig>(
     }
   }
 
-  function ConnectedToPipelinePanel(props: any) {
-    return (
-      <MessagePipelineConsumer>
-        {(context: MessagePipelineContext) => {
-          return (
-            <UnconnectedPanel
-              {...props}
-              topics={context.sortedTopics}
-              datatypes={context.datatypes}
-              capabilities={context.playerState.capabilities}
-            />
-          );
-        }}
-      </MessagePipelineConsumer>
-    );
-  }
-
-  function mapStateToProps(state: ReduxState, ownProps: Props<Config>): ReduxMappedProps {
-    // Be careful when adding something here: it should not change often, otherwise
-    // all panels will rerender, which is very expensive.
-    return {
-      childId: ownProps.childId,
-      config: state.panels.savedProps[ownProps.childId] || ownProps.config,
-      isOnlyPanel: !isParent(state.panels.layout),
-    };
-  }
-
   // There seems to be a circular dependency here, so defer loading a bit.
   const { savePanelConfig, saveFullPanelConfig } = require("webviz-core/src/actions/panels");
 
-  const ConnectedPanel = connect(
-    mapStateToProps,
-    { savePanelConfig, saveFullPanelConfig }
-  )(ConnectedToPipelinePanel);
+  function ConnectedPanel(props: Props<Config>) {
+    const store = React.useContext(ReactReduxContext).store;
+    const panelState = useSelector((state) => state.panels);
+    const context = useMessagePipeline();
+    const dispatch = useDispatch();
+    const actions = React.useMemo(() => bindActionCreators({ savePanelConfig, saveFullPanelConfig }, dispatch), [
+      dispatch,
+    ]);
+    return (
+      <UnconnectedPanel
+        {...props}
+        store={store}
+        childId={props.childId}
+        config={panelState.savedProps[props.childId] || props.config}
+        isOnlyPanel={!isParent(panelState.layout)}
+        topics={context.sortedTopics}
+        datatypes={context.datatypes}
+        capabilities={context.playerState.capabilities}
+        {...actions}
+      />
+    );
+  }
 
   ConnectedPanel.defaultConfig = defaultConfig;
   ConnectedPanel.panelType = PanelComponent.panelType;

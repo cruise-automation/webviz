@@ -30,6 +30,7 @@ import { getNewConnection } from "webviz-core/src/util/getNewConnection";
 import Database from "webviz-core/src/util/indexeddb/Database";
 import Logger from "webviz-core/src/util/Logger";
 import { type Range, deepIntersect, isRangeCoveredByRanges, missingRanges } from "webviz-core/src/util/ranges";
+import reportError from "webviz-core/src/util/reportError";
 import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time";
 
 const log = new Logger(__filename);
@@ -169,12 +170,11 @@ export default class IdbCacheWriterDataProvider implements RandomAccessDataProvi
     });
     if (newConnection) {
       this._setConnection(newConnection).catch((err) => {
-        this._extensionPoint.reportMetadataCallback({
-          type: "error",
-          source: `IdbCacheWriter connection ${this._currentConnection ? this._currentConnection.id : ""}`,
-          errorType: "app",
-          message: err ? err.message : "<unknown error>",
-        });
+        reportError(
+          `IdbCacheWriter connection ${this._currentConnection ? this._currentConnection.id : ""}`,
+          err ? err.message : "<unknown error>",
+          "app"
+        );
       });
     }
 
@@ -192,12 +192,7 @@ export default class IdbCacheWriterDataProvider implements RandomAccessDataProvi
     this._currentConnection = { id, topics: this._getCurrentTopics(), remainingRange: range };
 
     const reportTransactionError = (err) => {
-      this._extensionPoint.reportMetadataCallback({
-        type: "error",
-        source: `IDBTransaction for ${id}`,
-        errorType: "app",
-        message: err ? err.message : "<unknown error>",
-      });
+      reportError(`IDBTransaction for ${id}`, err ? err.message : "<unknown error>", "app");
     };
 
     const isCurrent = () => {

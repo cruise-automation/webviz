@@ -92,6 +92,10 @@ export function toNanoSec({ sec, nsec }: Time) {
   return sec * 1e9 + nsec;
 }
 
+export function toMicroSec({ sec, nsec }: Time) {
+  return (sec * 1e9 + nsec) / 1000;
+}
+
 export function toSec({ sec, nsec }: Time) {
   return sec + nsec * 1e-9;
 }
@@ -109,6 +113,12 @@ export function fromNanoSec(nsec: number): Time {
   // From https://github.com/ros/roscpp_core/blob/86720717c0e1200234cc0a3545a255b60fb541ec/rostime/include/ros/impl/time.h#L63
   // and https://github.com/ros/roscpp_core/blob/7583b7d38c6e1c2e8623f6d98559c483f7a64c83/rostime/src/time.cpp#L536
   return { sec: Math.trunc(nsec / 1e9), nsec: nsec % 1e9 };
+}
+
+export function toMillis(time: Time, roundDirection: "round-up" | "round-down"): number {
+  const secondsMillis = time.sec * 1e3;
+  const nsecMillis = time.nsec / 1e6;
+  return roundDirection === "round-up" ? secondsMillis + Math.ceil(nsecMillis) : secondsMillis + Math.floor(nsecMillis);
 }
 
 export function fromMillis(value: number): Time {

@@ -49,7 +49,7 @@ storiesOf("<PoseMarkers>", module)
         orientation: { x: -0.9928242172830276, y: 0, z: 0, w: 0.11958291506876588 },
       },
       settings: {
-        color: text("color", "220, 150, 120, 0.3"),
+        color: text("color", "50,150,50,0.3"),
         size: {
           shaftWidth: 0.5,
           headWidth: 2,

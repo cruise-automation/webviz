@@ -38,14 +38,14 @@ function Example() {
   ];
   return (
     <Worldview
-      onClick={(_, { objectId }) => {
-        if (!objectId) {
+      onClick={(_, { objects }) => {
+        if (!objects.length) {
           setClickedObj(null);
         }
       }}>
       <FilledPolygons
-        onClick={(ev, { object }) => {
-          setClickedObj(object);
+        onClick={(ev, { objects }) => {
+          setClickedObj(objects[0].object);
         }}>
         {polygons}
       </FilledPolygons>

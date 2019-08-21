@@ -7,7 +7,14 @@
 //  You may not use this file except in compliance with the License.
 
 import { range } from "lodash";
-import { makeCommand, withPose, type Regl } from "regl-worldview";
+import * as React from "react";
+import {
+  Command,
+  withPose,
+  type Regl,
+  type CommonCommandProps,
+  nonInstancedGetChildrenForHitmap,
+} from "regl-worldview";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { LaserScan } from "webviz-core/src/types/Messages";
@@ -19,12 +26,23 @@ const laserScan = (regl: Regl) =>
     frag: `
   precision mediump float;
   varying vec4 vColor;
+  uniform bool isCircle;
   void main () {
+    if (isCircle && length(gl_PointCoord * 2.0 - 1.0) > 1.0) {
+      discard;
+    }
+
     gl_FragColor = vColor;
   }
   `,
 
     uniforms: {
+      pointSize: (context, props) => (props.settings && props.settings.pointSize) || 4,
+      isCircle: (context, props) => (props.settings && props.settings.pointShape === "circle") || false,
+      // Color is not included in the LaserScan message - it's only included if the color is added by
+      // getChildrenForHitmap.
+      isHitmap: (context, props) => !!props.color,
+
       angle_min: regl.prop("angle_min"),
       angle_increment: regl.prop("angle_increment"),
       range_min: regl.prop("range_min"),
@@ -38,9 +56,14 @@ const laserScan = (regl: Regl) =>
         props.intensities.length === props.ranges.length
           ? props.intensities
           : new Float32Array(props.ranges.length).fill(1),
+      hitmapColor: (context, props) => new Array(props.ranges.length).fill(props.color || [0, 0, 0, 1]),
     },
 
     count: regl.prop("ranges.length"),
   });
 
-export default makeCommand<LaserScan>("LaserScans", laserScan);
+type Props = { ...CommonCommandProps, children: LaserScan[] };
+
+export default function LaserScans(props: Props) {
+  return <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...props} reglCommand={laserScan} />;
+}

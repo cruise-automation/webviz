@@ -9,9 +9,17 @@
 import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
 import * as React from "react";
 import { createPortal } from "react-dom";
+import styled from "styled-components";
 
 import styles from "./Select.module.scss";
 import Icon from "webviz-core/src/components/Icon";
+import colors from "webviz-core/src/styles/colors.module.scss";
+
+const SEmpty = styled.div`
+  padding: 8px 12px;
+  color: ${colors.textMuted};
+  font-style: italic;
+`;
 
 type Props = {
   children: React.Node,
@@ -89,7 +97,7 @@ export default class Select extends React.Component<Props, State> {
     };
     return createPortal(
       <div style={style} className={styles.menu}>
-        {mappedChildren}
+        {mappedChildren && mappedChildren.length ? mappedChildren : <SEmpty>No options available</SEmpty>}
       </div>,
       body
     );

@@ -10,7 +10,6 @@ import { type Time } from "rosbag";
 
 import type { Progress, Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import type { ErrorType } from "webviz-core/src/util/reportError";
 
 export type Connection = {
   messageDefinition: string,
@@ -45,9 +44,12 @@ export type InitializationResult = {
   connectionsByTopic?: { [topic: string]: Connection },
 };
 
-export type DataProviderMetadata =
-  | {| type: "error", source: string, errorType: ErrorType, message: string |}
-  | {| type: "updateReconnecting", reconnecting: boolean |};
+export type PlayerOptions = {
+  autoplay: ?boolean,
+  seekToTime: ?Time,
+};
+
+export type DataProviderMetadata = {| type: "updateReconnecting", reconnecting: boolean |};
 export type ExtensionPoint = {|
   progressCallback: (Progress) => void,
   reportMetadataCallback: (DataProviderMetadata) => void,

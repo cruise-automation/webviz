@@ -21,16 +21,11 @@ storiesOf("<PlotMenu>", module)
   .addDecorator(withScreenshot())
   .add("With min and max y set", () => (
     <Wrapper>
-      <PlotMenu minYValue="-5" maxYValue="5" isYAxisLocked={false} saveConfig={noop} />
+      <PlotMenu minYValue="-5" maxYValue="5" saveConfig={noop} setMinMax={noop} />
     </Wrapper>
   ))
   .add("With min and max y not set", () => (
     <Wrapper>
-      <PlotMenu minYValue="" maxYValue="" isYAxisLocked={false} saveConfig={noop} />
-    </Wrapper>
-  ))
-  .add("With y axis locked", () => (
-    <Wrapper>
-      <PlotMenu minYValue="-5" maxYValue="5" isYAxisLocked saveConfig={noop} />
+      <PlotMenu minYValue="" maxYValue="" saveConfig={noop} setMinMax={noop} />
     </Wrapper>
   ));

@@ -6,12 +6,19 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
-import type { ImportPanelLayoutPayload, SaveConfigPayload, SaveFullConfigPayload } from "webviz-core/src/types/panels";
+import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import type {
+  ImportPanelLayoutPayload,
+  SaveConfigPayload,
+  SaveFullConfigPayload,
+  NodePayload,
+} from "webviz-core/src/types/panels";
 import type { Dispatch, GetState } from "webviz-core/src/types/Store";
 // DANGER: if you change this you break existing layout urls
 export const URL_KEY = "layout";
+export const LAYOUT_URL = "layout-url";
 
 export type SAVE_PANEL_CONFIG = {
   type: "SAVE_PANEL_CONFIG",
@@ -26,7 +33,7 @@ export type Dispatcher<T> = (dispatch: Dispatch, getState: GetState) => T;
 
 function maybeStripLayoutId(dispatch: Dispatch, getState: GetState): void {
   const state = getState();
-  const { location } = state.routing;
+  const { location } = state.router;
 
   if (location) {
     const params = new URLSearchParams(location.search);
@@ -94,21 +101,51 @@ export const changePanelLayout = (layout: any): Dispatcher<CHANGE_PANEL_LAYOUT> 
 
 type OVERWRITE_GLOBAL_DATA = {
   type: "OVERWRITE_GLOBAL_DATA",
-  payload: Object,
+  payload: any,
 };
 
-export const overwriteGlobalData = (payload: Object): OVERWRITE_GLOBAL_DATA => ({
+export const overwriteGlobalData = (payload: any): OVERWRITE_GLOBAL_DATA => ({
   type: "OVERWRITE_GLOBAL_DATA",
   payload,
 });
 
 type SET_GLOBAL_DATA = {
   type: "SET_GLOBAL_DATA",
-  payload: Object,
+  payload: any,
 };
 
-export const setGlobalData = (payload: Object): SET_GLOBAL_DATA => ({
+export const setGlobalData = (payload: any): SET_GLOBAL_DATA => ({
   type: "SET_GLOBAL_DATA",
+  payload,
+});
+
+type OVERWRITE_WEBVIZ_NODES = {
+  type: "OVERWRITE_WEBVIZ_NODES",
+  payload: NodePayload,
+};
+
+export const overwriteWebvizNodes = (payload: NodePayload): OVERWRITE_WEBVIZ_NODES => ({
+  type: "OVERWRITE_WEBVIZ_NODES",
+  payload,
+});
+
+type SET_WEBVIZ_NODES = {
+  type: "SET_WEBVIZ_NODES",
+  payload: NodePayload,
+};
+
+export const setWebvizNodes = (payload: NodePayload): SET_WEBVIZ_NODES => ({
+  type: "SET_WEBVIZ_NODES",
+  payload,
+});
+
+type SET_LINKED_GLOBAL_VARIABLES = {
+  type: "SET_LINKED_GLOBAL_VARIABLES",
+  payload: LinkedGlobalVariables,
+};
+
+export const setLinkedGlobalVariables = (payload: LinkedGlobalVariables): SET_LINKED_GLOBAL_VARIABLES => ({
+  type: "SET_LINKED_GLOBAL_VARIABLES",
   payload,
 });
 
@@ -118,4 +155,7 @@ export type PanelsActions =
   | SAVE_PANEL_CONFIG
   | SAVE_FULL_PANEL_CONFIG
   | OVERWRITE_GLOBAL_DATA
-  | SET_GLOBAL_DATA;
+  | SET_GLOBAL_DATA
+  | OVERWRITE_WEBVIZ_NODES
+  | SET_WEBVIZ_NODES
+  | SET_LINKED_GLOBAL_VARIABLES;

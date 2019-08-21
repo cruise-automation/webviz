@@ -6,20 +6,29 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import CloseIcon from "@mdi/svg/svg/close.svg";
-import { pick } from "lodash";
+import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
+import { pick, partition } from "lodash";
 import React, { type Node, useState } from "react";
+import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
 
 import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
-import GlobalVariablesAccessor from "webviz-core/src/components/GlobalVariablesAccessor";
 import Icon from "webviz-core/src/components/Icon";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import useGlobalData from "webviz-core/src/hooks/useGlobalData";
+import { UnlinkGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
+import { memoizedGetLinkedGlobalVariablesKeyByName } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/interactionUtils";
+import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import clipboard from "webviz-core/src/util/clipboard";
 
 type Props = {};
+const SGlobalVariables = styled.div`
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+`;
 
 const SButtonContainer = styled.div`
   padding: 10px 16px 0;
@@ -36,6 +45,16 @@ const SSection = styled.section`
   margin: 15px;
 `;
 
+const SBorderlessCell = styled.td`
+  border: 0;
+  background: none;
+`;
+
+const Placeholder = styled.span`
+  display: inline-block;
+  height: 32px;
+`;
+
 const canParseJSON = (val) => {
   try {
     JSON.parse(val);
@@ -48,7 +67,7 @@ const canParseJSON = (val) => {
 type InputProps = {
   innerRef: { current: null | HTMLInputElement },
   inputVal: string,
-  onChange: (Object) => void,
+  onChange: (SyntheticInputEvent<any>) => void,
 };
 
 type State = {
@@ -97,8 +116,8 @@ const changeGlobalKey = (newKey, oldKey, globalData, idx, overwriteGlobalData) =
   });
 };
 
-const changeGlobalVal = (newVal, datumKey, setGlobalData) => {
-  setGlobalData({ [datumKey]: newVal === undefined ? undefined : JSON.parse(String(newVal)) });
+const changeGlobalVal = (newVal, name, setGlobalData) => {
+  setGlobalData({ [name]: newVal === undefined ? undefined : JSON.parse(String(newVal)) });
 };
 
 const getUpdatedURL = (globalData) => {
@@ -116,88 +135,120 @@ function GlobalVariables(props: Props): Node {
     setBtnMessage("Copied!");
   };
 
-  return (
-    <GlobalVariablesAccessor>
-      {(globalData, { setGlobalData, overwriteGlobalData }) => {
-        return (
-          <Flex col>
-            <PanelToolbar helpContent={helpContent} floating />
-            <table>
-              <tbody>
-                <tr>
-                  <th>key</th>
-                  <th>value</th>
-                </tr>
-                {Object.keys(globalData).map((datumKey, idx) => (
-                  <tr key={idx}>
-                    <td style={{ display: "flex" }}>
-                      <SInput
-                        type="text"
-                        value={`$${datumKey}`}
-                        onChange={(e) => {
-                          const newKey = e.target.value.slice(1);
-                          changeGlobalKey(newKey.trim(), datumKey, globalData, idx, overwriteGlobalData);
-                          setBtnMessage("Copy");
-                        }}
-                      />
-                    </td>
-                    <td>
-                      <EditableJSONInput
-                        innerRef={input}
-                        inputVal={JSON.stringify(globalData[datumKey])}
-                        onChange={(e) => {
-                          const newVal = e.target.value;
-                          if (canParseJSON(newVal)) {
-                            changeGlobalVal(newVal, datumKey, setGlobalData);
-                            setBtnMessage("Copy");
-                          }
-                        }}
-                      />
-                    </td>
-                    <td style={{ border: 0, background: "none" }}>
-                      <Icon
-                        onClick={() => {
-                          changeGlobalVal(undefined, datumKey, setGlobalData);
-                          setBtnMessage("Copy");
-                        }}>
-                        <CloseIcon />
-                      </Icon>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <SButtonContainer>
-              <button
-                onClick={(e) => {
-                  setGlobalData({ "": "" });
-                }}>
-                + Add variable
-              </button>
-              <button
-                onClick={(e) => {
-                  overwriteGlobalData({});
-                }}>
-                - Clear all
-              </button>
-            </SButtonContainer>
+  const { globalData, setGlobalData, overwriteGlobalData } = useGlobalData();
+  const { linkedGlobalVariables } = useLinkedGlobalVariables();
 
-            <SSection>
-              <Flex>
-                <input readOnly style={{ width: "100%" }} type="text" value={getUpdatedURL(globalData)} />
-                {document.queryCommandSupported("copy") && (
-                  <button onClick={copyURL(getUpdatedURL(globalData))}>{btnMessage}</button>
-                )}
-              </Flex>
-            </SSection>
-          </Flex>
-        );
-      }}
-    </GlobalVariablesAccessor>
+  const globalVariableNames = Object.keys(globalData);
+  const linkedGlobalVariablesKeyByName = memoizedGetLinkedGlobalVariablesKeyByName(linkedGlobalVariables);
+  const [linked, unlinked] = partition(globalVariableNames, (key) => !!linkedGlobalVariablesKeyByName[key]);
+
+  return (
+    <SGlobalVariables>
+      <PanelToolbar helpContent={helpContent} floating />
+      <table>
+        <tbody>
+          <tr>
+            <th>key</th>
+            <th>value</th>
+          </tr>
+          {unlinked.map((name, idx) => (
+            <tr key={idx}>
+              <td style={{ paddingLeft: 12 }}>
+                <SInput
+                  type="text"
+                  value={`$${name}`}
+                  onChange={(e) => {
+                    const newKey = e.target.value.slice(1);
+                    changeGlobalKey(newKey.trim(), name, globalData, idx, overwriteGlobalData);
+                    setBtnMessage("Copy");
+                  }}
+                />
+              </td>
+              <td>
+                <EditableJSONInput
+                  innerRef={input}
+                  inputVal={JSON.stringify(globalData[name])}
+                  onChange={(e) => {
+                    const newVal = e.target.value;
+                    if (canParseJSON(newVal)) {
+                      changeGlobalVal(newVal, name, setGlobalData);
+                      setBtnMessage("Copy");
+                    }
+                  }}
+                />
+              </td>
+              <SBorderlessCell>
+                <Icon
+                  onClick={() => {
+                    changeGlobalVal(undefined, name, setGlobalData);
+                    setBtnMessage("Copy");
+                  }}>
+                  <TrashCanOutlineIcon />
+                </Icon>
+              </SBorderlessCell>
+            </tr>
+          ))}
+          {linked.map((name, idx) => {
+            return (
+              <tr key={name}>
+                <td style={{ paddingRight: "0.6em", verticalAlign: "middle" }}>
+                  <UnlinkGlobalVariables name={name} />
+                </td>
+                <td>
+                  {globalData[name] == null ? (
+                    <Placeholder />
+                  ) : (
+                    <EditableJSONInput
+                      innerRef={input}
+                      inputVal={JSON.stringify(globalData[name])}
+                      onChange={(e) => {
+                        const newVal = e.target.value;
+                        if (canParseJSON(newVal)) {
+                          changeGlobalVal(newVal, name, setGlobalData);
+                          setBtnMessage("Copy");
+                        }
+                      }}
+                    />
+                  )}
+                </td>
+                <SBorderlessCell />
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <SButtonContainer>
+        <button
+          onClick={(e) => {
+            setGlobalData({ "": "" });
+          }}>
+          + Add variable
+        </button>
+        <button
+          data-test="clear-all-button"
+          onClick={(e) => {
+            const newGlobalVariables = linked.reduce((memo, name) => {
+              memo[name] = undefined;
+              return memo;
+            }, {});
+            overwriteGlobalData(newGlobalVariables);
+          }}>
+          - Clear all
+        </button>
+      </SButtonContainer>
+      <SSection>
+        <Flex>
+          <input readOnly style={{ width: "100%" }} type="text" value={getUpdatedURL(globalData)} />
+          {document.queryCommandSupported("copy") && (
+            <button onClick={copyURL(getUpdatedURL(globalData))}>{btnMessage}</button>
+          )}
+        </Flex>
+      </SSection>
+    </SGlobalVariables>
   );
 }
 
 GlobalVariables.panelType = "Global";
 GlobalVariables.defaultConfig = {};
 
-export default Panel<{}>(GlobalVariables);
+export default hot(Panel<{}>(GlobalVariables));

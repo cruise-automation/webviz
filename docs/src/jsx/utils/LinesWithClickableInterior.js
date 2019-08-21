@@ -6,7 +6,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import { Lines, FilledPolygons } from "regl-worldview";
+import { Lines, FilledPolygons, type CommonCommandProps, type Line } from "regl-worldview";
 
 // type LineProps = CommandProps<Line> & {
 //   // when enabled, a polygon will be drawn using the line points, and the user will get the original
@@ -18,15 +18,25 @@ import { Lines, FilledPolygons } from "regl-worldview";
 //   showBorder: boolean,
 // };
 
-function LinesWithClickableInterior({ children, enableClickableInterior, fillColor, onClick, showBorder, ...rest }) {
+function LinesWithClickableInterior({
+  children,
+  enableClickableInterior,
+  fillColor,
+  onClick,
+  showBorder,
+  ...rest
+}: {
+  ...CommonCommandProps,
+  children: Line[],
+  enableClickableInterior: boolean,
+  fillColor: Object,
+  showBorder: boolean,
+}) {
   if (enableClickableInterior) {
     return (
       <React.Fragment>
         {showBorder && <Lines {...rest}>{children}</Lines>}
-        <FilledPolygons
-          onClick={(ev, { object, ...rest }) => {
-            onClick(ev, { ...rest, object: object.lineObject, objectId: object.lineObject.id });
-          }}>
+        <FilledPolygons onClick={onClick}>
           {children.map((item) => ({
             id: item.id,
             points: item.points,

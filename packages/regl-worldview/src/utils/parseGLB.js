@@ -6,11 +6,19 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Uint32Array | Float32Array;
+
+export type GLBModel = {
+  json: Object,
+  accessors?: TypedArray[],
+  images?: ImageBitmap[],
+};
+
 // Parse a GLB file: https://github.com/KhronosGroup/glTF/tree/master/specification/2.0
 //
 // Returns an object containing the raw json data as well as parsed images (Image) and
 // accessors (TypedArray).
-export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<{}> {
+export default async function parseGLB(arrayBuffer: ArrayBuffer): Promise<GLBModel> {
   const data = new DataView(arrayBuffer);
   let offset = 0;
 

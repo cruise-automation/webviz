@@ -143,6 +143,51 @@ export default function CameraStateControls({ cameraState, setCameraState }: Pro
             />
           </td>
         </tr>
+        <tr>
+          <td>fov</td>
+          <td>
+            <Slider
+              showEndpoints
+              minLabel
+              maxLabel="π"
+              value={cameraState.fov}
+              min={0}
+              max={Math.PI}
+              step={0.01}
+              onChange={(fov) => setCameraState({ ...cameraState, fov })}
+            />
+          </td>
+        </tr>
+        <tr>
+          <td>near</td>
+          <td>
+            <Slider
+              showEndpoints
+              minLabel
+              maxLabel
+              value={cameraState.near}
+              min={0.01}
+              max={200}
+              step={0.01}
+              onChange={(near) => setCameraState({ ...cameraState, near })}
+            />
+          </td>
+        </tr>
+        <tr>
+          <td>far</td>
+          <td>
+            <Slider
+              showEndpoints
+              minLabel
+              maxLabel
+              value={cameraState.far}
+              min={10}
+              max={1000}
+              step={0.001}
+              onChange={(far) => setCameraState({ ...cameraState, far })}
+            />
+          </td>
+        </tr>
       </tbody>
     </ControlsTable>
   );

@@ -8,7 +8,15 @@
 
 import { quat, vec3 } from "gl-matrix";
 import React, { useState } from "react";
-import Worldview, { Arrows, Spheres, Axes, Grid, cameraStateSelectors, type CameraState } from "regl-worldview";
+import Worldview, {
+  DEFAULT_CAMERA_STATE,
+  Arrows,
+  Spheres,
+  Axes,
+  Grid,
+  cameraStateSelectors,
+  type CameraState,
+} from "regl-worldview";
 
 import CameraStateControls from "../utils/CameraStateControls";
 
@@ -29,6 +37,9 @@ export default function Example() {
     target: [0, 0, 0],
     targetOrientation: [0, 0, 0, 1],
     targetOffset: [0, 0, 0],
+    fov: Math.PI / 4,
+    near: 0.01,
+    far: 1000,
   });
 
   const targetHeading = cameraStateSelectors.targetHeading(cameraState);
@@ -101,6 +112,7 @@ export default function Example() {
         <div style={{ flex: "1 1 0" }}>
           <Worldview
             defaultCameraState={{
+              ...DEFAULT_CAMERA_STATE,
               perspective: true,
               distance: 150,
               thetaOffset: 0.5,

@@ -23,11 +23,11 @@ import {
 import parseRosPath from "./parseRosPath";
 import Autocomplete from "webviz-core/src/components/Autocomplete";
 import Dropdown from "webviz-core/src/components/Dropdown";
-import GlobalVariablesAccessor from "webviz-core/src/components/GlobalVariablesAccessor";
 import Icon from "webviz-core/src/components/Icon";
 import { TOPICS_WITH_INCORRECT_HEADERS } from "webviz-core/src/components/MessageHistory/internalCommon";
-import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Tooltip from "webviz-core/src/components/Tooltip";
+import useGlobalData, { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
 import { getTopicNames } from "webviz-core/src/selectors";
 import type { Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
@@ -47,7 +47,7 @@ function topicHasNoHeaderStamp(topic: Topic, datatypes: RosDatatypes): boolean {
 
 function getFirstInvalidVariableFromRosPath(
   rosPath: RosPath,
-  globalData: Object
+  globalData: GlobalData
 ): ?{| variableName: string, loc: number |} {
   const { messagePath } = rosPath;
   return messagePath
@@ -95,7 +95,7 @@ type MessageHistoryInputBaseProps = {
   noMultiSlices?: boolean, // Don't suggest slices with multiple values `[:]`, only single values like `[0]`.
   autoSize?: boolean,
   placeholder?: string,
-  inputStyle?: Object,
+  inputStyle?: any,
   disableAutocomplete?: boolean, // Treat this as a normal input, with no autocomplete.
 
   timestampMethod?: MessageHistoryTimestampMethod,
@@ -104,10 +104,10 @@ type MessageHistoryInputBaseProps = {
 type MessageHistoryInputProps = MessageHistoryInputBaseProps & {
   topics: Topic[],
   datatypes: RosDatatypes,
-  globalData: Object,
+  globalData: GlobalData,
 };
 type MessageHistoryInputState = {| focused: boolean |};
-class MessageHistoryInput extends React.PureComponent<MessageHistoryInputProps, MessageHistoryInputState> {
+class MessageHistoryInputUnconnected extends React.PureComponent<MessageHistoryInputProps, MessageHistoryInputState> {
   _input: ?HTMLInputElement;
 
   constructor(props: MessageHistoryInputProps) {
@@ -362,23 +362,17 @@ class MessageHistoryInput extends React.PureComponent<MessageHistoryInputProps, 
   }
 }
 
-export default class MessageHistoryInputConnected extends React.PureComponent<MessageHistoryInputBaseProps> {
-  render(): React.Node {
-    return (
-      <GlobalVariablesAccessor>
-        {(globalData, _) => (
-          <MessagePipelineConsumer>
-            {(context: MessagePipelineContext) => (
-              <MessageHistoryInput
-                {...this.props}
-                topics={context.sortedTopics}
-                datatypes={context.datatypes}
-                globalData={globalData}
-              />
-            )}
-          </MessagePipelineConsumer>
-        )}
-      </GlobalVariablesAccessor>
-    );
-  }
-}
+export default React.memo<MessageHistoryInputBaseProps>(function MessageHistoryInput(
+  props: MessageHistoryInputBaseProps
+) {
+  const { globalData } = useGlobalData();
+  const context = useMessagePipeline();
+  return (
+    <MessageHistoryInputUnconnected
+      {...props}
+      topics={context.sortedTopics}
+      datatypes={context.datatypes}
+      globalData={globalData}
+    />
+  );
+});

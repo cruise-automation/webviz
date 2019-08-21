@@ -6,26 +6,27 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { routerReducer as routing } from "react-router-redux";
+import { connectRouter } from "connected-react-router";
 import { combineReducers } from "redux";
-import type { Reducer } from "redux";
 
 import auth from "./auth";
 import extensions from "./extensions";
 import mosaic from "./mosaic";
 import panels from "./panels";
-import type { Routing } from "webviz-core/src/types/router";
 
 const reducers = {
-  routing: (routing: Reducer<Routing, any>),
   panels,
   mosaic,
   auth,
   extensions,
 };
 
-const rootReducer = combineReducers<typeof reducers, any>(reducers);
-export default rootReducer;
+export default function createRootReducer(history: any) {
+  return combineReducers<typeof reducers, any>({
+    ...reducers,
+    router: connectRouter(history),
+  });
+}
 
-export type Reducers = $Exact<typeof reducers>;
+export type Reducers = $Exact<{ ...typeof reducers, router: $Call<connectRouter> }>;
 export type State = $ObjMap<Reducers, <F>(_: F) => $Call<F, any, any>>;

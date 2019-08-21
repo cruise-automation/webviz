@@ -14,17 +14,8 @@
 // appear in screenshot tests.
 
 export default function waitForFonts(callback: () => void) {
-  const dummy = document.createElement("span");
-  dummy.style.font = "'Inter UI'";
-  dummy.style.position = "absolute";
-  dummy.style.visibility = "hidden";
-  dummy.innerText = "x";
-  if (!document.body) {
-    return callback();
-  }
-  document.body.appendChild(dummy);
-  setTimeout(() => {
-    dummy.remove();
+  // $FlowFixMe - doesn't understand document.fonts.
+  Promise.all([document.fonts.load("10pt 'Inter UI'"), document.fonts.load("10pt 'Roboto Mono'")]).then(() => {
     callback();
-  }, 0);
+  });
 }

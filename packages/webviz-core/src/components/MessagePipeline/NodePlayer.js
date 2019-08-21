@@ -100,7 +100,7 @@ export default class NodePlayer implements Player {
   pausePlayback = () => this._player.pausePlayback();
   setPlaybackSpeed = (speed: number) => this._player.setPlaybackSpeed(speed);
   seekPlayback = (time: Time) => this._player.seekPlayback(time);
-
+  useUserWebvizNodes = (data: any) => {};
   getUnderlyingPlayer() {
     if (process.env.NODE_ENV !== "test") {
       throw new Error("Only allowed to be used in tests.");

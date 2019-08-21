@@ -10,6 +10,7 @@ import PinIcon from "@mdi/svg/svg/pin.svg";
 import cx from "classnames";
 import { sortBy, compact } from "lodash";
 import React from "react";
+import { hot } from "react-hot-loader/root";
 
 import DiagnosticsHistory from "./DiagnosticsHistory";
 import type { Config as DiagnosticStatusConfig } from "./DiagnosticStatusPanel";
@@ -53,7 +54,10 @@ class NodeRow extends React.PureComponent<NodeRowProps> {
     const { info, isPinned } = this.props;
 
     return (
-      <div className={cx(LevelClasses[info.status.level], styles.nodeRow)} onClick={this.onClick}>
+      <div
+        className={cx(LevelClasses[info.status.level], styles.nodeRow)}
+        onClick={this.onClick}
+        data-test-diagnostic-row>
         <Icon fade={!isPinned} onClick={this.onClickPin} className={cx(styles.pinIcon, { [styles.pinned]: isPinned })}>
           <PinIcon />
         </Icon>
@@ -145,4 +149,4 @@ class DiagnosticSummary extends React.Component<Props> {
   }
 }
 
-export default Panel<Config>(DiagnosticSummary);
+export default hot(Panel<Config>(DiagnosticSummary));

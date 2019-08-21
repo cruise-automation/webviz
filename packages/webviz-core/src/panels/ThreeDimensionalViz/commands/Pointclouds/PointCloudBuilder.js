@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { find } from "lodash";
+import { find, omit } from "lodash";
 
 import log from "webviz-core/src/panels/ThreeDimensionalViz/logger";
 import type { PointCloud2, PointCloud2Field } from "webviz-core/src/types/Messages";
@@ -271,7 +271,7 @@ export function mapMarker(marker: PointCloud2) {
   }
 
   return {
-    ...marker,
+    ...omit(marker, "data"), // no need to show data in the Object details since we already translated to markers
     points: new Float32Array(points.buffer, 0, pointCount * 3),
     colors,
   };

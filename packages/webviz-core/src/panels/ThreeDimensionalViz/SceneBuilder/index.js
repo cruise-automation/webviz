@@ -10,35 +10,18 @@ import type { Time } from "rosbag";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import MessageCollector from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector";
+import { parseColorSetting, getTopicSettings } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { Marker, OccupancyGridMessage, Pose } from "webviz-core/src/types/Messages";
-import type { Frame, Namespace, Message } from "webviz-core/src/types/players";
+import type { Topic, Frame, Namespace, Message } from "webviz-core/src/types/players";
 import type { MarkerProvider, MarkerCollector, Scene } from "webviz-core/src/types/Scene";
 import Bounds from "webviz-core/src/util/Bounds";
 import { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE, POSE_MARKER_SCALE } from "webviz-core/src/util/globalConstants";
 import { emptyPose } from "webviz-core/src/util/Pose";
 import { fromSec } from "webviz-core/src/util/time";
 
-export type TopicSettings = {
-  channel?: ?string,
-  color?: ?string,
-  colorField?: ?string,
-  minPoint?: ?number,
-  maxPoint?: ?number,
-  pointSize?: ?number,
-  pointShape?: ?string,
-  useCarModel?: boolean,
-  alpha?: number,
-  decayTime?: number,
-  size?: {
-    headLength: number,
-    headWidth: number,
-    shaftWidth: number,
-  },
-};
-
 export type TopicSettingsCollection = {
-  [topic: string]: TopicSettings,
+  [topic: string]: any,
 };
 
 // builds a syntehtic arrow marker from a geometry_msgs/PoseStamped
@@ -70,11 +53,11 @@ export type SceneErrors = {
 // constructs a scene containing all objects to be rendered
 // by consuming visualization topics from frames
 export default class SceneBuilder implements MarkerProvider {
-  topics: string[] = [];
+  topics: Topic[] = [];
   markers: Marker[] = [];
   transforms: Transforms;
   rootTransformID: string;
-  selectionState: Object = {};
+  selectionState: any = {};
   frame: Frame;
   errors: SceneErrors = {
     rootTransformID: "",
@@ -110,7 +93,7 @@ export default class SceneBuilder implements MarkerProvider {
 
   clear() {
     for (const topic of this.topics) {
-      const collector = this.collectors[topic];
+      const collector = this.collectors[topic.name];
       if (collector) {
         collector.flush();
       }
@@ -122,7 +105,7 @@ export default class SceneBuilder implements MarkerProvider {
   }
 
   // set the topics the scene builder should consume from each frame
-  setTopics(topics: string[]) {
+  setTopics(topics: Topic[]) {
     this.topics = topics;
     // IMPORTANT: when topics change, we also need to reset the frame so that
     // setFrame gets called correctly to set the topicsToRender and lastSeenMessages
@@ -136,8 +119,8 @@ export default class SceneBuilder implements MarkerProvider {
     }
     this.frame = frame;
     for (const topic of this.topics) {
-      if (topic in frame) {
-        this.topicsToRender.add(topic);
+      if (topic.name in frame) {
+        this.topicsToRender.add(topic.name);
       }
     }
 
@@ -153,7 +136,7 @@ export default class SceneBuilder implements MarkerProvider {
     this.enabledNamespaces = namespaces;
   }
 
-  setGlobalData = (globalData: Object = {}) => {
+  setGlobalData = (globalData: any = {}) => {
     const { selectionState, topicsToRender } = getGlobalHooks()
       .perPanelHooks()
       .ThreeDimensionalViz.setGlobalDataInSceneBuilder(
@@ -287,6 +270,14 @@ export default class SceneBuilder implements MarkerProvider {
     marker.color = getGlobalHooks()
       .perPanelHooks()
       .ThreeDimensionalViz.getMarkerColor(topic, marker.color);
+
+    // allow topic settings to override marker color (see MarkerSettingsEditor.js)
+    const { overrideColor } = this._topicSettings[topic] || {};
+    if (overrideColor) {
+      marker.color = parseColorSetting(overrideColor);
+      marker.colors = [];
+    }
+
     this.collectors[topic].addMarker(topic, marker);
   }
 
@@ -389,10 +380,10 @@ export default class SceneBuilder implements MarkerProvider {
     this.topicsToRender.clear();
   }
 
-  _consumeMessage = (topic: string, msg: any): void => {
-    const { message } = msg;
+  _consumeMessage = (topic: string, msg: Message): void => {
+    const { message, datatype } = msg;
 
-    switch (msg.datatype) {
+    switch (datatype) {
       case "visualization_msgs/Marker":
         this._consumeMarker(topic, message);
         break;
@@ -473,29 +464,45 @@ export default class SceneBuilder implements MarkerProvider {
 
   renderMarkers(add: MarkerCollector) {
     for (const topic of this.topics) {
-      const collector = this.collectors[topic];
+      const collector = this.collectors[topic.name];
       if (!collector) {
         continue;
       }
       const topicMarkers = collector.getMessages();
-      for (const marker of topicMarkers) {
+      for (const message of topicMarkers) {
+        const marker: any = message;
         if (marker.ns) {
-          if (!this.namespaceIsEnabled(topic, marker.ns)) {
+          if (!this.namespaceIsEnabled(topic.name, marker.ns)) {
             continue;
           }
         }
         // TODO(bmc): once we support more topic settings
         // flesh this out to be more marker type agnostic
-        const settings = this._topicSettings[topic];
+        const settings = getTopicSettings(topic, this._topicSettings[topic.name]);
         if (settings) {
           marker.settings = settings;
         }
-        this._addMarkerToCollector(add, topic, marker);
+        this._addMarkerToCollector(add, topic.name, marker);
       }
     }
   }
 
-  _addMarkerToCollector(add: MarkerCollector, topic: string, marker: any) {
+  _addMarkerToCollector(add: MarkerCollector, topic: string, originalMarker: any) {
+    let marker = originalMarker;
+    switch (marker.type) {
+      case 1:
+      case 2:
+      case 3:
+        marker = { ...marker, points: undefined };
+        break;
+      case 4:
+        marker = { ...marker, primitive: "line strip" };
+        break;
+      case 6:
+        marker = { ...marker, primitive: "lines" };
+        break;
+    }
+    marker = { ...marker, interactionData: { topic } };
     // prettier-ignore
     switch (marker.type) {
       case 0: return add.arrow(marker);

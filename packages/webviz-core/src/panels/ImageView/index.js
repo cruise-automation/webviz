@@ -14,6 +14,7 @@ import cx from "classnames";
 import { sortBy, pick, get, isEqual, omit } from "lodash";
 import memoizeOne from "memoize-one";
 import * as React from "react";
+import { hot } from "react-hot-loader/root";
 import { createSelector } from "reselect";
 import styled from "styled-components";
 
@@ -106,9 +107,17 @@ const BottomBar = ({ children, containsOpen }: { children?: React.Node, contains
   </div>
 );
 
-const ToggleComponent = ({ text, disabled = false }: { text: string, disabled?: boolean }) => {
+const ToggleComponent = ({
+  text,
+  disabled = false,
+  dataTest,
+}: {
+  text: string,
+  disabled?: boolean,
+  dataTest?: string,
+}) => {
   return (
-    <button style={{ maxWidth: "100%", padding: "4px 8px" }} className={cx({ disabled })}>
+    <button style={{ maxWidth: "100%", padding: "4px 8px" }} className={cx({ disabled })} data-test={dataTest}>
       <span className={dropDownStyles.title}>{text}</span>
       <Icon style={{ marginLeft: 4 }}>
         <MenuDownIcon style={{ width: 14, height: 14, opacity: 0.5 }} />
@@ -246,7 +255,13 @@ class ImageView extends React.Component<Props> {
     const imageTopicsByNamespace = imageTopicsByNamespaceSelector(this.props.topics);
 
     if (!imageTopicsByNamespace || imageTopicsByNamespace.size === 0) {
-      return <Dropdown toggleComponent={<ToggleComponent text={cameraTopic || "no image topics yet"} disabled />} />;
+      return (
+        <Dropdown
+          toggleComponent={
+            <ToggleComponent dataTest={"topics-dropdown"} text={cameraTopic || "no image topics yet"} disabled />
+          }
+        />
+      );
     }
 
     const items = [...imageTopicsByNamespace.keys()].sort().map((group) => {
@@ -258,7 +273,12 @@ class ImageView extends React.Component<Props> {
 
       // place rectified topic above other topics
       return (
-        <SubMenu direction="right" key={group} text={group} checked={group === cameraNamespace}>
+        <SubMenu
+          direction="right"
+          key={group}
+          text={group}
+          checked={group === cameraNamespace}
+          dataTest={group.substr(1)}>
           {topics.map((topic) => {
             return (
               <Item
@@ -273,7 +293,9 @@ class ImageView extends React.Component<Props> {
         </SubMenu>
       );
     });
-    return <Dropdown toggleComponent={<ToggleComponent text={cameraTopic} />}>{items}</Dropdown>;
+    return (
+      <Dropdown toggleComponent={<ToggleComponent dataTest={"topics-dropdown"} text={cameraTopic} />}>{items}</Dropdown>
+    );
   }
 
   renderMarkerDropdown(allItemsByPath: MessageHistoryItemsByPath) {
@@ -464,4 +486,4 @@ class ImageView extends React.Component<Props> {
   }
 }
 
-export default Panel<Config>(ImageView);
+export default hot(Panel<Config>(ImageView));

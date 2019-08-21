@@ -6,15 +6,18 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { createMemoryHistory } from "history";
 import { flatten } from "lodash";
 import * as React from "react";
 import { DragDropContextProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 
 import { setAuxiliaryData } from "webviz-core/src/actions/extensions";
-import { overwriteGlobalData } from "webviz-core/src/actions/panels";
+import { overwriteGlobalData, overwriteWebvizNodes, setLinkedGlobalVariables } from "webviz-core/src/actions/panels";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
-import rootReducer from "webviz-core/src/reducers";
+import { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
+import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import type { Frame, Topic, PlayerStateActiveData } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
@@ -25,8 +28,10 @@ export type Fixture = {|
   capabilities?: string[],
   activeData?: $Shape<PlayerStateActiveData>,
   datatypes?: RosDatatypes,
-  auxiliaryData?: Object,
-  globalData?: Object,
+  auxiliaryData?: any,
+  globalData?: GlobalData,
+  linkedGlobalVariables?: LinkedGlobalVariables,
+  webvizNodes?: any,
 |};
 
 type Props = {|
@@ -44,18 +49,24 @@ type State = {|
 export default class PanelSetup extends React.PureComponent<Props, State> {
   static getDerivedStateFromProps(props: Props, prevState: State) {
     const { store } = prevState;
-    const { auxiliaryData, globalData } = props.fixture;
+    const { auxiliaryData, globalData, webvizNodes, linkedGlobalVariables } = props.fixture;
     if (auxiliaryData) {
       store.dispatch(setAuxiliaryData(() => auxiliaryData));
     }
     if (globalData) {
       store.dispatch(overwriteGlobalData(globalData));
     }
+    if (webvizNodes) {
+      store.dispatch(overwriteWebvizNodes(webvizNodes));
+    }
+    if (linkedGlobalVariables) {
+      store.dispatch(setLinkedGlobalVariables(linkedGlobalVariables));
+    }
     return { store };
   }
 
   state = {
-    store: configureStore(rootReducer),
+    store: configureStore(createRootReducer(createMemoryHistory())),
   };
 
   renderInner() {

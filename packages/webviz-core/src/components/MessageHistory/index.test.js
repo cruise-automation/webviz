@@ -12,10 +12,8 @@ import React from "react";
 
 import MessageHistory from ".";
 import { datatypes, messages, dualInputMessages } from "./fixture";
-import { getRawItemsByTopicForTests } from "./MessageHistoryOnlyTopics";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
-import type { SubscribePayload } from "webviz-core/src/types/players";
 import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
 
 const singleTopic = [{ name: "/some/topic", datatype: "some/datatype" }];
@@ -37,10 +35,7 @@ describe("<MessageHistory />", () => {
   });
 
   it("(un)subscribes based on `topics`", () => {
-    let subscriptions: SubscribePayload[] = [];
-    function setSubscriptions(_, s: SubscribePayload[]) {
-      subscriptions = s;
-    }
+    const setSubscriptions = jest.fn();
     const provider = mount(
       <MockMessagePipelineProvider
         topics={[{ name: "/some/topic", datatype: "dummy" }, { name: "/some/other/topic", datatype: "dummy" }]}
@@ -48,82 +43,87 @@ describe("<MessageHistory />", () => {
         <MessageHistory paths={["/some/topic", "/some/other/topic"]}>{() => null}</MessageHistory>
       </MockMessagePipelineProvider>
     );
-    expect(subscriptions).toEqual([{ topic: "/some/topic" }, { topic: "/some/other/topic" }]);
 
     provider.setProps({ children: <MessageHistory paths={["/some/topic"]}>{() => null}</MessageHistory> });
-    expect(subscriptions).toEqual([{ topic: "/some/topic" }]);
 
     provider.unmount();
-    expect(subscriptions).toEqual([]);
+
+    expect(setSubscriptions.mock.calls).toEqual([
+      [expect.any(String), [{ topic: "/some/topic" }, { topic: "/some/other/topic" }]],
+      [expect.any(String), [{ topic: "/some/topic" }]],
+      [expect.any(String), []],
+    ]);
   });
 
   it("does not filter out non-existing topics", () => {
     // Initial mount. Note that we haven't received any topics yet.
-    let subscriptions: SubscribePayload[] = [];
-    function setSubscriptions(_, s: SubscribePayload[]) {
-      subscriptions = s;
-    }
+    const setSubscriptions = jest.fn();
     const provider = mount(
       <MockMessagePipelineProvider setSubscriptions={setSubscriptions}>
         <MessageHistory paths={["/some/topic"]}>{() => null}</MessageHistory>
       </MockMessagePipelineProvider>
     );
-    expect(subscriptions).toEqual([{ topic: "/some/topic" }]);
+
+    // Updating to change topics
+    provider.setProps({
+      children: <MessageHistory paths={["/some/topic", "/some/other/topic"]}>{() => null}</MessageHistory>,
+    });
 
     // And unsubscribes properly, too.
     provider.unmount();
-    expect(subscriptions).toEqual([]);
-  });
-
-  it("properly registers the `historySize` of the first component (when it immediately loads messages)", () => {
-    mount(
-      <MockMessagePipelineProvider messages={[messages[0], messages[1]]}>
-        <MessageHistory paths={["/some/topic"]} historySize={1}>
-          {() => null}
-        </MessageHistory>
-      </MockMessagePipelineProvider>
-    );
-    expect(getRawItemsByTopicForTests()["/some/topic"].length).toEqual(1);
-  });
-
-  it("only uses `historySize` of currently mounted components", () => {
-    // Dummy component with unlimited `historySize` which we unmount before even loading messages.
-    mount(
-      <MockMessagePipelineProvider>
-        <MessageHistory paths={["/some/topic"]}>{() => null}</MessageHistory>
-      </MockMessagePipelineProvider>
-    ).unmount();
-
-    // Actual component with `historySize={1}` that loads messages.
-    mount(
-      <MockMessagePipelineProvider messages={[messages[0], messages[1]]}>
-        <MessageHistory historySize={1} paths={["/some/topic"]}>
-          {() => null}
-        </MessageHistory>
-      </MockMessagePipelineProvider>
-    );
-
-    expect(getRawItemsByTopicForTests()["/some/topic"].length).toEqual(1);
+    expect(setSubscriptions.mock.calls).toEqual([
+      [expect.any(String), [{ topic: "/some/topic" }]],
+      [expect.any(String), [{ topic: "/some/topic" }, { topic: "/some/other/topic" }]],
+      [expect.any(String), []],
+    ]);
   });
 
   it("allows changing historySize", () => {
+    const childFn = jest.fn().mockReturnValue(null);
     const provider = mount(
-      <MockMessagePipelineProvider>
+      <MockMessagePipelineProvider datatypes={{}} topics={singleTopic}>
         <MessageHistory historySize={1} paths={["/some/topic"]}>
-          {() => null}
+          {childFn}
         </MessageHistory>
       </MockMessagePipelineProvider>
     );
     provider.setProps({
       children: (
         <MessageHistory historySize={2} paths={["/some/topic"]}>
-          {() => null}
+          {childFn}
         </MessageHistory>
       ),
     });
     provider.setProps({ messages: [messages[0], messages[1], messages[2]] });
 
-    expect(getRawItemsByTopicForTests()["/some/topic"].length).toEqual(2);
+    expect(childFn.mock.calls).toEqual([
+      [
+        {
+          cleared: false,
+          itemsByPath: { "/some/topic": [] },
+          metadataByPath: {},
+          startTime: { sec: 100, nsec: 0 },
+        },
+      ],
+      [
+        {
+          cleared: false,
+          itemsByPath: { "/some/topic": [] },
+          metadataByPath: {},
+          startTime: { sec: 100, nsec: 0 },
+        },
+      ],
+      [
+        {
+          cleared: false,
+          itemsByPath: {
+            "/some/topic": [{ message: messages[1], queriedData: [] }, { message: messages[2], queriedData: [] }],
+          },
+          metadataByPath: {},
+          startTime: { sec: 100, nsec: 0 },
+        },
+      ],
+    ]);
   });
 
   it("buffers messages (with historySize=2)", () => {
@@ -232,26 +232,6 @@ describe("<MessageHistory />", () => {
     expect(childFn2.mock.calls).toEqual(childFn1.mock.calls);
   });
 
-  it("caches older messages when instantiating a new component", () => {
-    const childFn1 = jest.fn().mockReturnValue(null);
-    const provider = mount(
-      <MockMessagePipelineProvider topics={singleTopic} datatypes={datatypes} messages={[messages[0]]}>
-        <MessageHistory paths={["/some/topic"]}>{childFn1}</MessageHistory>
-      </MockMessagePipelineProvider>
-    );
-    const childFn2 = jest.fn().mockReturnValue(null);
-    provider.setProps({
-      messages: [messages[1]],
-      children: (
-        <>
-          <MessageHistory paths={["/some/topic"]}>{childFn1}</MessageHistory>
-          <MessageHistory paths={["/some/topic"]}>{childFn2}</MessageHistory>
-        </>
-      ),
-    });
-    expect(last(childFn2.mock.calls)).toEqual(last(childFn1.mock.calls));
-  });
-
   it("lets you drill down in a path", () => {
     const childFn = jest.fn().mockReturnValue(null);
     mount(
@@ -286,7 +266,7 @@ describe("<MessageHistory />", () => {
     const childFn = jest.fn().mockReturnValue(null);
     const provider = mount(
       <MockMessagePipelineProvider
-        topics={[{ name: "/some/topic", datatype: "dummy" }, { name: "/some/other/topic", datatype: "dummy" }]}
+        topics={[{ name: "/some/topic", datatype: "some/datatype" }, { name: "/some/other/topic", datatype: "dummy" }]}
         datatypes={datatypes}
         messages={[messages[0]]}>
         <MessageHistory paths={["/some/topic"]}>{childFn}</MessageHistory>
@@ -299,17 +279,17 @@ describe("<MessageHistory />", () => {
           "/some/topic": [
             {
               message: messages[0],
-              queriedData: [],
+              queriedData: [{ path: "/some/topic", value: messages[0].message }],
             },
           ],
         },
         cleared: false,
-        metadataByPath: {},
+        metadataByPath: { "/some/topic": expect.any(Object) },
         startTime: expect.any(Object),
       },
     ]);
 
-    // Change props, and we expect to get another call with the same data.
+    // Add a new path, and we should get another call with the same data
     provider.setProps({
       children: <MessageHistory paths={["/some/topic", "/some/other/topic"]}>{childFn}</MessageHistory>,
     });
@@ -317,13 +297,148 @@ describe("<MessageHistory />", () => {
     expect(last(childFn.mock.calls)).toEqual([
       {
         itemsByPath: {
-          "/some/topic": childFn.mock.calls[1][0].itemsByPath["/some/topic"],
+          "/some/topic": [
+            {
+              message: messages[0],
+              queriedData: [{ path: "/some/topic", value: messages[0].message }],
+            },
+          ],
           "/some/other/topic": [],
+        },
+        cleared: false,
+        metadataByPath: { "/some/topic": expect.any(Object) },
+        startTime: expect.any(Object),
+      },
+    ]);
+  });
+
+  it("remembers data when changing paths on an existing topic", () => {
+    const childFn = jest.fn().mockReturnValue(null);
+    const provider = mount(
+      <MockMessagePipelineProvider
+        topics={[{ name: "/some/topic", datatype: "some/datatype" }, { name: "/some/other/topic", datatype: "dummy" }]}
+        datatypes={datatypes}
+        messages={[messages[0]]}>
+        <MessageHistory paths={["/some/topic"]}>{childFn}</MessageHistory>
+      </MockMessagePipelineProvider>
+    );
+    expect(childFn.mock.calls.length).toEqual(1);
+    expect(last(childFn.mock.calls)).toEqual([
+      {
+        itemsByPath: {
+          "/some/topic": [
+            {
+              message: messages[0],
+              queriedData: [{ path: "/some/topic", value: messages[0].message }],
+            },
+          ],
+        },
+        cleared: false,
+        metadataByPath: { "/some/topic": expect.any(Object) },
+        startTime: expect.any(Object),
+      },
+    ]);
+
+    // Change an existing path, and we should restore the data from the previous path on the same topic
+    provider.setProps({
+      children: <MessageHistory paths={["/some/topic.index"]}>{childFn}</MessageHistory>,
+    });
+    expect(childFn.mock.calls.length).toEqual(2);
+    expect(last(childFn.mock.calls)).toEqual([
+      {
+        itemsByPath: {
+          "/some/topic.index": [
+            {
+              message: messages[0],
+              queriedData: [{ path: "/some/topic.index", value: 0 }],
+            },
+          ],
+        },
+        cleared: false,
+        metadataByPath: { "/some/topic.index": expect.any(Object) },
+        startTime: expect.any(Object),
+      },
+    ]);
+  });
+
+  it("supports changing a path for a previously-existing topic that no longer exists", () => {
+    const childFn = jest.fn().mockReturnValue(null);
+    const provider = mount(
+      <MockMessagePipelineProvider
+        topics={[{ name: "/some/topic", datatype: "some/datatype" }]}
+        datatypes={datatypes}
+        messages={[messages[0]]}>
+        <MessageHistory paths={["/some/topic"]}>{childFn}</MessageHistory>
+      </MockMessagePipelineProvider>
+    );
+    expect(childFn.mock.calls.length).toEqual(1);
+    expect(last(childFn.mock.calls)).toEqual([
+      {
+        itemsByPath: {
+          "/some/topic": [
+            {
+              message: messages[0],
+              queriedData: [{ path: "/some/topic", value: messages[0].message }],
+            },
+          ],
+        },
+        cleared: false,
+        metadataByPath: { "/some/topic": expect.any(Object) },
+        startTime: expect.any(Object),
+      },
+    ]);
+
+    provider.setProps({
+      topics: [],
+      datatypes: {},
+      messages: [],
+      children: <MessageHistory paths={["/some/topic.index"]}>{childFn}</MessageHistory>,
+    });
+    expect(childFn.mock.calls.length).toEqual(2);
+    expect(last(childFn.mock.calls)).toEqual([
+      {
+        itemsByPath: {
+          "/some/topic.index": [],
         },
         cleared: false,
         metadataByPath: {},
         startTime: expect.any(Object),
       },
+    ]);
+  });
+
+  it("ignores messages from non-subscribed topics", () => {
+    const childFn = jest.fn().mockReturnValue(null);
+    const provider = mount(
+      <MockMessagePipelineProvider
+        topics={[{ name: "/some/topic", datatype: "dummy" }, { name: "/some/other/topic", datatype: "dummy" }]}
+        datatypes={datatypes}
+        messages={[messages[0]]}>
+        <MessageHistory paths={["/some/other/topic"]}>{childFn}</MessageHistory>
+      </MockMessagePipelineProvider>
+    );
+    expect(childFn.mock.calls).toEqual([
+      [
+        {
+          itemsByPath: { "/some/other/topic": [] },
+          cleared: false,
+          metadataByPath: {},
+          startTime: expect.any(Object),
+        },
+      ],
+    ]);
+
+    provider.setProps({ messages: [messages[1], messages[2]] });
+
+    expect(childFn.mock.calls).toEqual([
+      [
+        {
+          itemsByPath: { "/some/other/topic": [] },
+          cleared: false,
+          metadataByPath: {},
+          startTime: expect.any(Object),
+        },
+      ],
     ]);
   });
 
@@ -378,14 +493,13 @@ describe("<MessageHistory />", () => {
 
       const secondBagPrefixResults = childFn1.mock.calls[0][0].itemsByPath;
 
-      expect(Object.keys(secondBagPrefixResults).length).toEqual(1);
-      expect(Object.keys(secondBagPrefixResults)[0]).toEqual("/some/topic");
-      expect(secondBagPrefixResults["/some/topic"].map((item) => item.message)).toEqual(
-        dualInputMessages.map((msg) => {
-          delete msg.queriedData;
-          return { ...msg, topic: msg.topic.slice(SECOND_BAG_PREFIX.length) };
-        })
-      );
+      expect(secondBagPrefixResults).toEqual({
+        "/some/topic": dualInputMessages.map((msg) =>
+          expect.objectContaining({
+            message: { ...msg, topic: msg.topic.slice(SECOND_BAG_PREFIX.length) },
+          })
+        ),
+      });
     });
 
     it("will send correctly filtered and stripped topics to MessageHistory components with different topicPrefixes", () => {
@@ -415,7 +529,7 @@ describe("<MessageHistory />", () => {
       );
     });
 
-    it("sets subscriptions on topics with topicPrefix", () => {
+    it("sets subscriptions on topics with topicPrefix, and changes subscription when changing topicPrefix", () => {
       const setSubscriptionsFn = jest.fn((x) => undefined);
 
       const renderDualInputMessageHistory = () => {
@@ -429,17 +543,19 @@ describe("<MessageHistory />", () => {
           </MockMessagePipelineProvider>
         );
       };
-      mount(
+
+      const provider = mount(
         <MockPanelContextProvider topicPrefix={SECOND_BAG_PREFIX}>
           {renderDualInputMessageHistory()}
         </MockPanelContextProvider>
       );
 
-      expect(setSubscriptionsFn.mock.calls.length).toEqual(1);
+      provider.setProps({ topicPrefix: "" });
 
-      const secondArgInCall = setSubscriptionsFn.mock.calls[0][1];
-      const firstSubscribePayload = secondArgInCall[0];
-      expect(firstSubscribePayload.topic).toEqual(`${SECOND_BAG_PREFIX}/some/topic`);
+      expect(setSubscriptionsFn.mock.calls).toEqual([
+        [expect.any(String), [expect.objectContaining({ topic: `${SECOND_BAG_PREFIX}/some/topic` })]],
+        [expect.any(String), [expect.objectContaining({ topic: "/some/topic" })]],
+      ]);
     });
   });
 });

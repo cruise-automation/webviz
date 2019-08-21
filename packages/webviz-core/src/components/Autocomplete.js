@@ -56,8 +56,8 @@ type AutocompleteProps = {|
   sortWhenFiltering: boolean,
   clearOnFocus: boolean, // only for uncontrolled use (when onChange is not set)
   minWidth: number,
-  menuStyle?: Object,
-  inputStyle?: Object,
+  menuStyle?: any,
+  inputStyle?: any,
 |};
 
 type AutocompleteState = {|

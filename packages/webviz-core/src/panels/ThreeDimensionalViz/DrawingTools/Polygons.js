@@ -10,8 +10,8 @@ import * as React from "react";
 import { PolygonBuilder, Polygon } from "regl-worldview";
 import styled from "styled-components";
 
-import type { ThreeDimensionalVizConfig } from "../index";
 import Button from "webviz-core/src/components/Button";
+import PanelContext from "webviz-core/src/components/PanelContext";
 import ValidatedInput, { type EditFormat } from "webviz-core/src/components/ValidatedInput";
 import { polygonPointsValidator } from "webviz-core/src/components/validators";
 import { SValue } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/CameraInfo";
@@ -21,7 +21,6 @@ import {
   pointsToPolygons,
   getPolygonLineDistances,
 } from "webviz-core/src/panels/ThreeDimensionalViz/utils/drawToolUtils";
-import type { SaveConfig } from "webviz-core/src/types/panels";
 import clipboard from "webviz-core/src/util/clipboard";
 
 export type Point2D = {| x: number, y: number |};
@@ -38,13 +37,13 @@ export const SLabel = styled.label`
 `;
 
 type Props = {
-  saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
   onSetPolygons: (polygons: Polygon[]) => void,
   polygonBuilder: PolygonBuilder,
   selectedPolygonEditFormat: EditFormat,
 };
 
-export default function Polygons({ saveConfig, onSetPolygons, polygonBuilder, selectedPolygonEditFormat }: Props) {
+export default function Polygons({ onSetPolygons, polygonBuilder, selectedPolygonEditFormat }: Props) {
+  const { saveConfig } = React.useContext(PanelContext);
   const polygons: Polygon[] = polygonBuilder.polygons;
   const [polygonPoints, setPolygonPoints] = React.useState<Point2D[][]>(() => polygonsToPoints(polygons));
   function polygonBuilderOnChange() {
@@ -53,7 +52,7 @@ export default function Polygons({ saveConfig, onSetPolygons, polygonBuilder, se
   polygonBuilder.onChange = polygonBuilderOnChange;
 
   return (
-    <div style={{ width: 236 }}>
+    <>
       <ValidatedInput
         format={selectedPolygonEditFormat}
         value={polygonPoints}
@@ -81,6 +80,6 @@ export default function Polygons({ saveConfig, onSetPolygons, polygonBuilder, se
           Start drawing by holding <b>ctrl</b> and clicking on the 3D panel.
         </em>
       </p>
-    </div>
+    </>
   );
 }

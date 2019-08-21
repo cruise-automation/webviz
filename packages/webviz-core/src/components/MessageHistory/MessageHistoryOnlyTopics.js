@@ -6,298 +6,172 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { difference, groupBy, isEqual } from "lodash";
-import React, { type Node, useCallback } from "react";
+import { useCleanup } from "@cruise-automation/hooks";
+import React, { type Node, useRef, useCallback, useMemo, useState, useEffect } from "react";
 import type { Time } from "rosbag";
 import uuid from "uuid";
 
-import { getMessagesWithoutPrefixByTopic } from "webviz-core/src/components/MessageHistory/topicPrefixUtils";
+import { useChangeDetector, useShallowMemo, useMustNotChange, useShouldNotChangeOften } from "./hooks";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PerfMonitor from "webviz-core/src/components/PerfMonitor";
-import { shallowEqualSelector } from "webviz-core/src/selectors";
-import type { Message, SubscribePayload, Topic } from "webviz-core/src/types/players";
+import type { Message, SubscribePayload } from "webviz-core/src/types/players";
 
-// This is an internal component which is the "old <MessageHistory>", which only supports topics,
+// This is an internal component which only supports topics,
 // not full paths. Since full paths are a superset of topics, we figured we'd not expose this
 // internal component to end users, but it's useful to keep as a separate abstraction so the logic
 // here is not tangled up with the logic of paths.
-//
-// We store history globally so that we are not storing messages multiple times, and also to allow
-// for immediately providing messages that we were already storing when mounting a fresh component,
-// instead of having to wait until the next messages.
 
-let gMessagesByTopic: { [string]: Message[] } = {};
-let generatedId = 0;
-let gLastMessages: ?(Message[]);
-let gLastLastSeekTime: ?number;
-function resetData() {
-  gMessagesByTopic = {};
-  gLastMessages = undefined;
-  gLastLastSeekTime = undefined;
-  generatedId = 0;
-}
-
-export function getRawItemsByTopicForTests() {
-  return gMessagesByTopic;
-}
-
-// Little helper function for generating a messages for in storybook / screenshot test fixtures.
-window.debugGetFixture = (filterTopics?: string[], historySize = Infinity) => {
-  const topics = [];
-  const frame = {};
-  for (const topic of filterTopics || Object.keys(gMessagesByTopic)) {
-    const messages = gMessagesByTopic[topic] || [];
-    if (messages.length > 0) {
-      topics.push({ name: topic, datatype: messages[0].datatype });
-      frame[topic] = messages.slice(-historySize);
-    }
-  }
-  return { topics, frame };
-};
-
-// eslint-disable-next-line no-use-before-define
-type ComponentsByTopic = { [string]: MessageHistoryOnlyTopics[] };
-let gComponentsByTopic: ComponentsByTopic = {};
-
-// When in tests, reset everything before each test.
-if (window.beforeEach) {
-  beforeEach(() => {
-    resetData();
-    gComponentsByTopic = {};
-  });
-}
-
-function loadMessages(messages: Message[], lastSeekTime: number, startTime: Time) {
-  if (gLastLastSeekTime !== undefined && gLastLastSeekTime !== lastSeekTime) {
-    // When `lastSeekTime` changes (which should happen when seeking, when wrapping, and
-    // when attaching a new Player, clear out everything, since there is a discontinuity in playback.
-    resetData();
-  }
-  gLastLastSeekTime = lastSeekTime;
-
-  if (gLastMessages === messages) {
-    return;
-  }
-  gLastMessages = messages;
-
-  const newMessagesByTopic = groupBy(messages, (message) => message.topic);
-  for (const topic of Object.keys(newMessagesByTopic)) {
-    if (!gComponentsByTopic[topic]) {
-      continue;
-    }
-
-    const historySize = Math.max(
-      0,
-      ...gComponentsByTopic[topic].map(
-        (comp) =>
-          (typeof comp.props.historySize === "object" ? comp.props.historySize[topic] : comp.props.historySize) ||
-          Infinity
-      )
-    );
-
-    gMessagesByTopic[topic] = (gMessagesByTopic[topic] || []).concat(newMessagesByTopic[topic]).slice(-historySize);
-    // mark gMessageByTopic as changed by incrementing the id, reset if it's getting too big
-    generatedId++;
-    if (generatedId > 4294967295) {
-      generatedId = 0;
-    }
-  }
-}
-
-type MessageHistoryOnlyTopicsData = {|
-  messagesByTopic: { [string]: Message[] },
+type MessageHistoryOnlyTopicsData<T> = {|
+  reducedValue: T,
   cleared: boolean,
   startTime: Time,
 |};
 
-type Props = {
-  children: (MessageHistoryOnlyTopicsData) => Node,
+type MessageReducer<T> = (T, message: Message) => T;
+
+type Props<T> = {|
+  children: (MessageHistoryOnlyTopicsData<T>) => Node,
   panelType: ?string,
-  topics: string[],
-  // Use an object to set a specific history size for specific topics.
-  historySize: number | { [topicName: string]: number },
-  imageScale?: number,
   topicPrefix: string,
-};
-
-type MessagePipelineProps = {
-  messages: Message[],
-  lastSeekTime: number,
-  startTime: Time,
-  playerTopics: Topic[],
-  setSubscriptions(id: string, subscriptionsForId: SubscribePayload[]): void,
-};
-
-type ChildrenSelectorInput = {
   topics: string[],
-  historySize: number | { [topicName: string]: number },
-  gMessagesByTopic: { [string]: Message[] },
-  generatedId: number,
-  cleared: boolean,
-  startTime: Time,
-};
+  imageScale?: number,
 
-const getMemoizedChildrenInput = shallowEqualSelector(
-  (input: ChildrenSelectorInput): ChildrenSelectorInput => input,
-  ({ topics, historySize, gMessagesByTopic, generatedId, cleared, startTime }: ChildrenSelectorInput) => {
-    const messagesByTopic = {};
-    for (const topic of topics) {
-      const historySizeForThisTopic = typeof historySize === "object" ? historySize[topic] : historySize;
-      messagesByTopic[topic] = (gMessagesByTopic[topic] || []).slice(-(historySizeForThisTopic || Infinity));
-    }
-    return {
-      messagesByTopic,
-      cleared,
-      startTime,
-    };
+  // Functions called when the reducers change and for each newly received message.
+  // The object is assumed to be immutable, so in order to trigger a re-render, the reducers must
+  // return a new object.
+  restore: (?T) => T,
+  addMessage: MessageReducer<T>,
+|};
+
+// Apply changes in topics or messages to the reduced value. clearedRef will be set to true when the reducers or seek time change.
+function useReducedValue<T>(
+  restore: (?T) => T,
+  addMessage: MessageReducer<T>,
+  lastSeekTime: number,
+  messages: Message[],
+  clearedRef: { current: boolean }
+): T {
+  const reducedValueRef = useRef<?T>();
+
+  const shouldClear = useChangeDetector([lastSeekTime], false);
+  const reducersChanged = useChangeDetector([restore, addMessage], false);
+  const messagesChanged = useChangeDetector([messages], true);
+
+  if (shouldClear) {
+    clearedRef.current = true;
   }
-);
+
+  if (!reducedValueRef.current || shouldClear) {
+    // Call restore to create an initial state and whenever seek time changes.
+    reducedValueRef.current = restore(undefined);
+  } else if (reducersChanged) {
+    // Allow new reducers to restore the previous state when the reducers change.
+    reducedValueRef.current = restore(reducedValueRef.current);
+  }
+
+  // Use the addMessage reducer to process new messages.
+  if (messagesChanged) {
+    reducedValueRef.current = messages.reduce(addMessage, reducedValueRef.current);
+  }
+
+  return reducedValueRef.current;
+}
+
+// Create modified versions of topics and addMessage to support topic prefixes.
+function useTopicPrefix<T>(
+  topicPrefix: string,
+  unprefixedRequestedTopics: string[],
+  unprefixedAddMessage: MessageReducer<T>
+): [string[], MessageReducer<T>] {
+  const memoizedUnprefixedRequestedTopics = useShallowMemo(unprefixedRequestedTopics);
+  const requestedTopics = useMemo(
+    () => {
+      return memoizedUnprefixedRequestedTopics.map((topic) => topicPrefix + topic);
+    },
+    [topicPrefix, memoizedUnprefixedRequestedTopics]
+  );
+
+  const addMessage = useCallback(
+    (value: T, message) =>
+      message.topic.startsWith(topicPrefix)
+        ? unprefixedAddMessage(value, {
+            ...message,
+            topic: message.topic.slice(topicPrefix.length),
+          })
+        : value,
+    [unprefixedAddMessage, topicPrefix]
+  );
+
+  return [requestedTopics, addMessage];
+}
+
+// Compute the subscriptions to be requested from the player.
+function useSubscriptions(requestedTopics: string[], imageScale?: ?number, panelType?: ?string): SubscribePayload[] {
+  useMustNotChange(imageScale, "Changing imageScale is not supported; please remount instead.");
+  return useMemo(
+    () => {
+      let encodingAndScalePayload = {};
+      if (imageScale !== undefined) {
+        // We might be able to remove the `encoding` field from the protocol entirely, and only
+        // use scale. Or we can deal with scaling down in a different way altogether, such as having
+        // special topics or syntax for scaled down versions of images or so. In any case, we should
+        // be cautious about having metadata on subscriptions, as that leads to the problem of how to
+        // deal with multiple subscriptions to the same topic but with different metadata.
+        encodingAndScalePayload = { encoding: "image/compressed", scale: imageScale };
+      }
+
+      const requester = panelType ? { type: "panel", name: panelType } : undefined;
+      return requestedTopics.map((topic) => ({ topic, requester, ...encodingAndScalePayload }));
+    },
+    [requestedTopics, imageScale, panelType]
+  );
+}
 
 // Be sure to pass in a new render function when you want to force a rerender.
 // So you probably don't want to do
 // `<MessageHistoryOnlyTopics>{this._renderSomething}</MessageHistoryOnlyTopics>`.
 // This might be a bit counterintuitive but we do this since performance matters here.
-class MessageHistoryOnlyTopics extends React.Component<Props & MessagePipelineProps> {
-  _subscribedTopics: string[] = [];
-  _lastMessagesByTopic: { [string]: ?(Message[]) } = {};
-  _cleared = false;
-  _id = uuid.v4();
+export default function MessageHistoryOnlyTopics<T>(props: Props<T>) {
+  const [id] = useState(() => uuid.v4());
+  const {
+    playerState: { activeData },
+    setSubscriptions,
+  } = useMessagePipeline();
 
-  static defaultProps = {
-    historySize: Infinity,
-  };
+  useShouldNotChangeOften(
+    props.restore,
+    "MessageHistoryOnlyTopics restore() is changing frequently. " +
+      "restore() will be called each time it changes, so a new function " +
+      "shouldn't be created on each render. (If you're using Hooks, try useCallback.)"
+  );
+  useShouldNotChangeOften(
+    props.addMessage,
+    "MessageHistoryOnlyTopics addMessage() is changing frequently. " +
+      "restore() will be called each time it changes, so a new function " +
+      "shouldn't be created on each render. (If you're using Hooks, try useCallback.)"
+  );
 
-  constructor(props: Props & MessagePipelineProps) {
-    super(props);
-    this._updateSubscriptions(props.topics, props.playerTopics);
-    loadMessages(props.messages, props.lastSeekTime, props.startTime);
-  }
+  const [requestedTopics, addMessage] = useTopicPrefix<T>(props.topicPrefix, props.topics, props.addMessage);
 
-  componentDidMount() {
-    // These are kept in componentDidMount in addition to the constructor so we don't end up with
-    // incorrect subscriptions when using hot module reloading.
-    const { topics, playerTopics } = this.props;
-    this._updateSubscriptions(topics, playerTopics);
-  }
+  const subscriptions = useSubscriptions(requestedTopics, props.imageScale, props.panelType);
+  useEffect(() => setSubscriptions(id, subscriptions), [id, setSubscriptions, subscriptions]);
+  useCleanup(() => setSubscriptions(id, []));
 
-  componentWillUnmount() {
-    this._updateSubscriptions([], this.props.playerTopics);
-  }
+  const { children } = props;
 
-  shouldComponentUpdate(nextProps: Props & MessagePipelineProps): boolean {
-    if (this.props.imageScale !== nextProps.imageScale) {
-      throw new Error("Changing imageScale is not supported; please remount instead.");
-    }
+  const messages = activeData ? activeData.messages : [];
+  const lastSeekTime = activeData ? activeData.lastSeekTime : 0;
+  const startTime = activeData ? activeData.startTime : { sec: 0, nsec: 0 };
 
-    let shouldUpdate = false;
-    if (!isEqual(this.props.topics, nextProps.topics)) {
-      this._updateSubscriptions(nextProps.topics, nextProps.playerTopics);
-      shouldUpdate = true;
-    }
-    if (this.props.playerTopics !== nextProps.playerTopics) {
-      // If the list of valid topics have changed, be sure to subscribe to the
-      // right topics. No need to set `shouldUpdate` though.
-      this._updateSubscriptions(nextProps.topics, nextProps.playerTopics);
-    }
-    if (this.props.children !== nextProps.children) {
-      shouldUpdate = true;
-    }
-    if (this.props.messages !== nextProps.messages || this.props.lastSeekTime !== nextProps.lastSeekTime) {
-      if (this.props.lastSeekTime !== nextProps.lastSeekTime) {
-        this._cleared = true;
-        shouldUpdate = true;
-      }
-      loadMessages(nextProps.messages, nextProps.lastSeekTime, nextProps.startTime);
-      for (const topic of this._subscribedTopics) {
-        if (this._lastMessagesByTopic[topic] !== gMessagesByTopic[topic]) {
-          this._lastMessagesByTopic[topic] = gMessagesByTopic[topic];
-          shouldUpdate = true;
-        }
-      }
-    }
+  const clearedRef = useRef(false);
+  const reducedValue = useReducedValue<T>(props.restore, addMessage, lastSeekTime, messages, clearedRef);
 
-    return shouldUpdate;
-  }
-
-  _updateSubscriptions(newTopics: string[], playerTopics: Topic[]) {
-    let encodingAndScalePayload = {};
-    if (this.props.imageScale !== undefined) {
-      // We might be able to remove the `encoding` field from the protocol entirely, and only
-      // use scale. Or we can deal with scaling down in a different way altogether, such as having
-      // special topics or syntax for scaled down versions of images or so. In any case, we should
-      // be cautious about having metadata on subscriptions, as that leads to the problem of how to
-      // deal with multiple subscriptions to the same topic but with different metadata.
-      encodingAndScalePayload = { encoding: "image/compressed", scale: this.props.imageScale };
-    }
-
-    if (isEqual(newTopics, this._subscribedTopics)) {
-      return;
-    }
-    const requester = this.props.panelType ? { type: "panel", name: this.props.panelType } : undefined;
-    for (const topic of difference(this._subscribedTopics, newTopics)) {
-      delete this._lastMessagesByTopic[topic]; // Not really necessary, but nice when debugging.
-      const index = gComponentsByTopic[topic].indexOf(this);
-      if (index === -1) {
-        throw new Error(`Current component not found in gComponentsByTopic["${topic}"]!`);
-      }
-      gComponentsByTopic[topic].splice(index, 1);
-      if (gComponentsByTopic[topic].length === 0) {
-        delete gComponentsByTopic[topic];
-        delete gMessagesByTopic[topic];
-      }
-    }
-    for (const topic of difference(newTopics, this._subscribedTopics)) {
-      gComponentsByTopic[topic] = gComponentsByTopic[topic] || [];
-      gComponentsByTopic[topic].push(this);
-    }
-
-    this.props.setSubscriptions(this._id, newTopics.map((topic) => ({ topic, requester, ...encodingAndScalePayload })));
-    this._subscribedTopics = newTopics;
-  }
-
-  componentDidUpdate() {
-    this._cleared = false;
-  }
-
-  render() {
-    const { historySize, topics, startTime, children } = this.props;
-
-    const childrenInput = getMemoizedChildrenInput({
-      topics,
-      historySize,
-      gMessagesByTopic,
-      generatedId,
-      cleared: this._cleared,
-      startTime,
-    });
-
-    return <PerfMonitor id={this._id}>{children(childrenInput)}</PerfMonitor>;
-  }
-}
-
-export default function MessageHistoryOnlyTopicsConnected(props: Props) {
-  const context = useMessagePipeline();
-
-  const getChildrensInput = React.useMemo(() => getMessagesWithoutPrefixByTopic(props.topicPrefix), [
-    props.topicPrefix,
-  ]);
-
-  const topicsWithPrefix = React.useMemo(() => props.topics.map((topic) => props.topicPrefix + topic), [
-    props.topicPrefix,
-    props.topics,
-  ]);
-
-  return (
-    <MessageHistoryOnlyTopics
-      key={props.topicPrefix}
-      {...props}
-      messages={context.playerState.activeData ? context.playerState.activeData.messages : []}
-      topics={topicsWithPrefix}
-      lastSeekTime={context.playerState.activeData ? context.playerState.activeData.lastSeekTime : 0}
-      startTime={context.playerState.activeData ? context.playerState.activeData.startTime : { sec: 0, nsec: 0 }}
-      playerTopics={context.playerState.activeData ? context.playerState.activeData.topics : []}
-      setSubscriptions={context.setSubscriptions}>
-      {useCallback((data) => props.children(getChildrensInput(data)), [props, getChildrensInput])}
-    </MessageHistoryOnlyTopics>
+  return useMemo(
+    () => {
+      const cleared = clearedRef.current;
+      clearedRef.current = false;
+      return <PerfMonitor id={id}>{children({ reducedValue, cleared, startTime })}</PerfMonitor>;
+    },
+    [children, id, reducedValue, startTime]
   );
 }

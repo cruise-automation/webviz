@@ -38,7 +38,8 @@
 .clickable {
   cursor: pointer;
 }
-:global(.disabled) .clickable {
+:global(.disabled) .clickable,
+[disabled] .clickable {
   cursor: unset;
 }
 

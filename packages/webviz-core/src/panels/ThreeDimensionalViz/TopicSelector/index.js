@@ -13,13 +13,13 @@ import * as React from "react";
 
 import styles from "../Layout.module.scss";
 import type { SceneErrors, ErrorDetails } from "../SceneBuilder";
+import TopicSelectorMenu from "./TopicSelectorMenu";
 import treeBuilder, { TopicTreeNode, Selections, getId } from "./treeBuilder";
 import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import Tree, { type Node } from "webviz-core/src/components/Tree";
-import TopicSelectorMenu from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelectorMenu";
-import type { Transform } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import type { Namespace, Topic } from "webviz-core/src/types/players";
 import toggle from "webviz-core/src/util/toggle";
@@ -37,8 +37,12 @@ type Props = {|
   expandedNodes: string[],
   modifiedNamespaceTopics: string[],
   pinTopics: boolean,
-  transforms: Array<Transform>,
+  transforms: Transforms,
+  // Because transforms are mutable, we need a key that tells us when to update the component. We use the count of the
+  // transforms for this.
+  transformsCount: number,
   editedTopics: string[],
+  canEditDatatype: (string) => boolean,
   onToggleShowClick: () => void,
   onEditClick: (e: SyntheticMouseEvent<HTMLElement>, topic: string) => void,
 
@@ -90,7 +94,7 @@ function listToString(kind: string, data: Iterable<string>) {
   return `${kind}: ${items.sort().join(", ")}`;
 }
 
-export default class TopicSelector extends React.Component<Props, State> {
+export default class TopicSelector extends React.PureComponent<Props, State> {
   topicList: ?Element;
   filterTextField: ?HTMLInputElement;
 
@@ -109,7 +113,9 @@ export default class TopicSelector extends React.Component<Props, State> {
       expandedNodes,
       modifiedNamespaceTopics,
       transforms,
+      transformsCount,
       editedTopics,
+      canEditDatatype,
     } = nextProps;
 
     // building the tree is kind of expensive
@@ -121,7 +127,7 @@ export default class TopicSelector extends React.Component<Props, State> {
       prevState.cachedProps.expandedNodes !== expandedNodes ||
       prevState.cachedProps.checkedNodes !== checkedNodes ||
       prevState.cachedProps.editedTopics !== editedTopics ||
-      prevState.cachedProps.transforms.length !== transforms.length;
+      prevState.cachedProps.transformsCount !== transformsCount;
 
     if (needsNewTree) {
       const filterText = (prevState && prevState.filterText) || undefined;
@@ -131,8 +137,9 @@ export default class TopicSelector extends React.Component<Props, State> {
         checkedNodes,
         expandedNodes,
         modifiedNamespaceTopics,
-        transforms,
+        transforms: transforms.values(),
         editedTopics,
+        canEditDatatype,
         filterText,
       });
 
@@ -170,8 +177,9 @@ export default class TopicSelector extends React.Component<Props, State> {
       checkedNodes: this.props.checkedNodes,
       expandedNodes: this.props.expandedNodes,
       modifiedNamespaceTopics: this.props.modifiedNamespaceTopics,
-      transforms: this.props.transforms,
+      transforms: this.props.transforms.values(),
       editedTopics: this.props.editedTopics,
+      canEditDatatype: this.props.canEditDatatype,
     });
 
     this.setState({ tree });

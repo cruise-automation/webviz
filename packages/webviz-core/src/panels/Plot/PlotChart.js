@@ -127,30 +127,19 @@ function getAnnotations(paths: PlotPath[]) {
     .filter(Boolean);
 }
 
+type YAxesInterface = {| minY: number, maxY: number, scaleId: string |};
 // min/maxYValue is NaN when it's unset, and an actual number otherwise.
-const yAxes = createSelector(
-  (params): { minYValue: number, maxYValue: number, isYAxisLocked: boolean, scaleId: string } => params,
-  ({
-    minYValue,
-    maxYValue,
-    isYAxisLocked,
-    scaleId,
-  }: {
-    minYValue: number,
-    maxYValue: number,
-    isYAxisLocked: boolean,
-    scaleId: string,
-  }) => {
-    const min = isNaN(minYValue) ? undefined : minYValue;
-    const max = isNaN(maxYValue) ? undefined : maxYValue;
+const yAxes = createSelector<YAxesInterface, _, _, _>(
+  (params) => params,
+  ({ minY, maxY, scaleId }: YAxesInterface) => {
+    const min = isNaN(minY) ? undefined : minY;
+    const max = isNaN(maxY) ? undefined : maxY;
     return [
       {
         id: scaleId,
         ticks: {
-          min: isYAxisLocked ? min : undefined,
-          max: isYAxisLocked ? max : undefined,
-          suggestedMin: isYAxisLocked ? undefined : min,
-          suggestedMax: isYAxisLocked ? undefined : max,
+          min,
+          max,
           precision: 3,
           callback: (val, idx, vals) =>
             idx === 0 || idx === vals.length - 1 ? "" : `${Math.round(val * 1000) / 1000}`,
@@ -164,10 +153,15 @@ const yAxes = createSelector(
   }
 );
 
-type PlotChartProps = {| paths: PlotPath[], minYValue: number, maxYValue: number, isYAxisLocked: boolean |};
+type PlotChartProps = {|
+  paths: PlotPath[],
+  minYValue: number,
+  maxYValue: number,
+  saveCurrentYs: (minY: number, maxY: number) => void,
+|};
 export default class PlotChart extends PureComponent<PlotChartProps> {
   render() {
-    const { paths, minYValue, maxYValue, isYAxisLocked } = this.props;
+    const { paths, minYValue, maxYValue, saveCurrentYs } = this.props;
     return (
       // Don't filter out disabled paths when passing into <MessageHistory>, because we still want
       // easy access to the history when turning the disabled paths back on.
@@ -188,7 +182,8 @@ export default class PlotChart extends PureComponent<PlotChartProps> {
                     data={{ datasets }}
                     annotations={annotations}
                     type="scatter"
-                    yAxes={yAxes({ minYValue, maxYValue, isYAxisLocked, scaleId: Y_AXIS_ID })}
+                    yAxes={yAxes({ minY: minYValue, maxY: maxYValue, scaleId: Y_AXIS_ID })}
+                    saveCurrentYs={saveCurrentYs}
                   />
                 )}
               </Dimensions>

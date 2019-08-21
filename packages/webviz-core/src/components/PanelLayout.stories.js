@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
+import { createMemoryHistory } from "history";
 import * as React from "react";
 import { DragDropContextProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
@@ -15,13 +16,13 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 
 import PanelLayout from "./PanelLayout";
 import { changePanelLayout } from "webviz-core/src/actions/panels";
-import rootReducer from "webviz-core/src/reducers";
+import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 
 storiesOf("<PanelLayout>", module)
   .addDecorator(withScreenshot())
   .add("panel not found", () => {
-    const store = configureStore(rootReducer);
+    const store = configureStore(createRootReducer(createMemoryHistory));
     store.dispatch(changePanelLayout("DummyPanelType!4co6n9d"));
     return (
       <Provider store={store}>

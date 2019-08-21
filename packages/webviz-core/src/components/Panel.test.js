@@ -7,13 +7,14 @@
 //  You may not use this file except in compliance with the License.
 
 import { mount } from "enzyme";
+import { createMemoryHistory } from "history";
 import * as React from "react";
 
 import { savePanelConfig } from "webviz-core/src/actions/panels";
 import { getFilteredFormattedTopics } from "webviz-core/src/components/MessageHistory/topicPrefixUtils";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
-import rootReducer from "webviz-core/src/reducers";
+import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
 
@@ -39,7 +40,7 @@ function getDummyPanel(renderFn) {
 }
 
 function getStore() {
-  return configureStore(rootReducer);
+  return configureStore(createRootReducer(createMemoryHistory()));
 }
 
 function Context(props: { children: React.Node, store?: any }) {

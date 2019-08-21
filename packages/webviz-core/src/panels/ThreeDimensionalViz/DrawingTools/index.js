@@ -12,15 +12,15 @@ import { keyBy } from "lodash";
 import * as React from "react";
 import { PolygonBuilder, Polygon, type CameraState } from "regl-worldview";
 
-import type { ThreeDimensionalVizConfig } from "../index";
 import Polygons from "./Polygons";
 import ExpandingToolbar, { ToolGroup } from "webviz-core/src/components/ExpandingToolbar";
 import Icon from "webviz-core/src/components/Icon";
 import { EDIT_FORMAT, type EditFormat } from "webviz-core/src/components/ValidatedInput";
-import CameraInfo, { type CameraInfoProps } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/CameraInfo";
+import CameraInfo, {
+  type CameraInfoPropsWithoutCameraState,
+} from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/CameraInfo";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import type { SaveConfig, UpdatePanelConfig } from "webviz-core/src/types/panels";
 
 export type DrawingType = "Polygons" | "Camera";
 
@@ -52,15 +52,16 @@ type Props = {
   onCameraStateChange: (CameraState) => void,
   onSetPolygons: (polygons: Polygon[]) => void,
   polygonBuilder: PolygonBuilder,
-  saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
   selectedPolygonEditFormat: EditFormat,
   setType: (?DrawingType) => void,
   type: ?DrawingType,
-  updatePanelConfig: UpdatePanelConfig,
-} & CameraInfoProps;
+  // Camera state is optional here because we want to avoid passing it in unless necessary: otherwise it would lead to
+  // re-renders on every camera state change.
+  cameraState: ?$Shape<CameraState>,
+} & CameraInfoPropsWithoutCameraState;
 
 // add more drawing shapes later, e.g. Grid, Axes, Crosshairs
-export default function DrawingTools({
+function DrawingTools({
   cameraState,
   followOrientation,
   followTf,
@@ -68,12 +69,10 @@ export default function DrawingTools({
   onCameraStateChange,
   onSetPolygons,
   polygonBuilder,
-  saveConfig,
   selectedPolygonEditFormat,
   setType,
   showCrosshair,
   type,
-  updatePanelConfig,
 }: Props) {
   const config = (type && DRAWING_CONFIG[type]) || DRAWING_CONFIG.Polygons;
   const IconName = type ? config.icon : PencilIcon;
@@ -93,21 +92,20 @@ export default function DrawingTools({
         <Polygons
           onSetPolygons={onSetPolygons}
           polygonBuilder={polygonBuilder}
-          saveConfig={saveConfig}
           selectedPolygonEditFormat={selectedPolygonEditFormat}
         />
       </ToolGroup>
       <ToolGroup name={DRAWING_CONFIG.Camera.type}>
-        <CameraInfo
-          cameraState={cameraState}
-          followOrientation={followOrientation}
-          followTf={followTf}
-          onAlignXYAxis={onAlignXYAxis}
-          onCameraStateChange={onCameraStateChange}
-          saveConfig={saveConfig}
-          showCrosshair={showCrosshair}
-          updatePanelConfig={updatePanelConfig}
-        />
+        {cameraState != null && (
+          <CameraInfo
+            cameraState={cameraState}
+            followOrientation={followOrientation}
+            followTf={followTf}
+            onAlignXYAxis={onAlignXYAxis}
+            onCameraStateChange={onCameraStateChange}
+            showCrosshair={showCrosshair}
+          />
+        )}
       </ToolGroup>
     </ExpandingToolbar>
   );
@@ -116,3 +114,5 @@ export default function DrawingTools({
 DrawingTools.defaultProps = {
   selectedPolygonEditFormat: EDIT_FORMAT.YAML,
 };
+
+export default React.memo<Props>(DrawingTools);

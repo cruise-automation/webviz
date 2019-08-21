@@ -87,6 +87,9 @@ $option-font-size: $text-size;
     // TODO(jacob): doesn't override react-virtualized-select styles for some reason
     background-color: $menu-item-hover !important;
   }
+  .Select {
+    width: 100%;
+  }
   .Select-input > input {
     color: $select-text-color;
   }

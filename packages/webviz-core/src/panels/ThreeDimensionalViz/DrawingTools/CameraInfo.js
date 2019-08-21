@@ -12,15 +12,14 @@ import * as React from "react";
 import { type CameraState, cameraStateSelectors } from "regl-worldview";
 import styled from "styled-components";
 
-import type { ThreeDimensionalVizConfig } from "../index";
 import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
+import PanelContext from "webviz-core/src/components/PanelContext";
 import { UncontrolledValidatedInput, YamlInput } from "webviz-core/src/components/ValidatedInput";
 import { point2DValidator, cameraStateValidator } from "webviz-core/src/components/validators";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { Renderer } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import type { SaveConfig, UpdatePanelConfig } from "webviz-core/src/types/panels";
 import clipboard from "webviz-core/src/util/clipboard";
 
 const TEMP_VEC3 = [0, 0, 0];
@@ -45,17 +44,18 @@ type CameraStateInfoProps = {
   onAlignXYAxis: () => void,
 };
 
-export type CameraInfoProps = {
-  cameraState: $Shape<CameraState>,
+export type CameraInfoPropsWithoutCameraState = {
   followOrientation: boolean,
   followOrientation: boolean,
   followTf?: string | false,
   onAlignXYAxis: () => void,
   onCameraStateChange: (CameraState) => void,
-  saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
   showCrosshair?: boolean,
-  updatePanelConfig: UpdatePanelConfig,
 };
+
+type CameraInfoProps = {
+  cameraState: $Shape<CameraState>,
+} & CameraInfoPropsWithoutCameraState;
 
 function CameraStateInfo({ cameraState, onAlignXYAxis }: CameraStateInfoProps) {
   return (
@@ -93,13 +93,12 @@ export default function CameraInfo({
   cameraState,
   onAlignXYAxis,
   onCameraStateChange,
-  saveConfig,
   showPasteBox: showPasteBoxAlt,
   followTf,
   followOrientation,
   showCrosshair,
-  updatePanelConfig,
 }: CameraInfoProps) {
+  const { updatePanelConfig, saveConfig } = React.useContext(PanelContext);
   const [edit, setEdit] = React.useState<boolean>(false);
 
   const { target, targetOffset } = cameraState;

@@ -8,7 +8,21 @@
 
 import * as React from "react";
 
+import type { SaveConfig, PanelConfig, UpdatePanelConfig, OpenSiblingPanel } from "webviz-core/src/types/panels";
+
+export type PanelContextType<T> = {
+  type: string,
+  id: string,
+  title: string,
+  topicPrefix?: string,
+  config: PanelConfig,
+  saveConfig: SaveConfig<T>,
+  updatePanelConfig: UpdatePanelConfig<T>,
+  openSiblingPanel: OpenSiblingPanel,
+};
 // Context used for components to know which panel they are inside
-const PanelContext = React.createContext<?{| type: string, id: string, title: string, topicPrefix?: string |}>();
+// NOTE: using inexact type and default to empty object so we don't have to alway check for nullability before
+// using any of the PanelContext fields. We know it should be used within the PanelContext.
+const PanelContext = React.createContext<PanelContextType<PanelConfig>>({});
 
 export default PanelContext;

@@ -14,9 +14,12 @@ import DocumentDropListener from "webviz-core/src/components/DocumentDropListene
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import NodePlayer from "webviz-core/src/components/MessagePipeline/NodePlayer";
+import useUserWebvizNodes from "webviz-core/src/hooks/useUserWebvizNodes";
 import { getRemoteBagGuid } from "webviz-core/src/players/getRemoteBagGuid";
 import RandomAccessPlayer from "webviz-core/src/players/RandomAccessPlayer";
 import { getLocalBagDescriptor, getRemoteBagDescriptor } from "webviz-core/src/players/standardDataProviderDescriptors";
+import { getSeekToTime } from "webviz-core/src/players/util";
+import type { UserWebvizNodes } from "webviz-core/src/reducers/panels";
 import type { ImportPanelLayoutPayload } from "webviz-core/src/types/panels";
 import type { Player } from "webviz-core/src/types/players";
 import demoLayoutJson from "webviz-core/src/util/demoLayout.json";
@@ -31,17 +34,13 @@ function buildPlayer(files: File[]): ?Player {
   if (files.length === 0) {
     return undefined;
   } else if (files.length === 1) {
-    return new RandomAccessPlayer(getLocalBagDescriptor(files[0]), undefined, true);
+    return new RandomAccessPlayer(getLocalBagDescriptor(files[0]), undefined);
   } else if (files.length === 2) {
-    return new RandomAccessPlayer(
-      {
-        name: "CombinedDataProvider",
-        args: { providerInfos: [{}, { prefix: SECOND_BAG_PREFIX }] },
-        children: [getLocalBagDescriptor(files[0]), getLocalBagDescriptor(files[1])],
-      },
-      undefined,
-      true
-    );
+    return new RandomAccessPlayer({
+      name: "CombinedDataProvider",
+      args: { providerInfos: [{}, { prefix: SECOND_BAG_PREFIX }] },
+      children: [getLocalBagDescriptor(files[0]), getLocalBagDescriptor(files[1])],
+    });
   }
   throw new Error(`Unsupported number of files: ${files.length}`);
 }
@@ -50,9 +49,10 @@ type OwnProps = { children: React.Node };
 
 type Props = OwnProps & {
   importPanelLayout: (payload: ImportPanelLayoutPayload, isFromUrl: boolean, skipSettingLocalStorage: boolean) => void,
+  userWebvizNodes: UserWebvizNodes,
 };
 
-function PlayerManager({ importPanelLayout, children }: Props) {
+function PlayerManager({ importPanelLayout, children, userWebvizNodes }: Props) {
   const usedFiles = React.useRef<File[]>([]);
   const [player, setPlayer] = React.useState();
 
@@ -70,7 +70,7 @@ function PlayerManager({ importPanelLayout, children }: Props) {
               new RandomAccessPlayer(
                 getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
                 undefined,
-                true
+                { autoplay: true, seekToTime: getSeekToTime() }
               )
             )
           );
@@ -82,6 +82,8 @@ function PlayerManager({ importPanelLayout, children }: Props) {
     },
     [importPanelLayout]
   );
+
+  useUserWebvizNodes({ nodePlayer: player, userWebvizNodes });
 
   return (
     <>
@@ -112,6 +114,8 @@ function PlayerManager({ importPanelLayout, children }: Props) {
 }
 
 export default connect<Props, OwnProps, _, _, _, _>(
-  () => {},
+  (state) => ({
+    userWebvizNodes: state.panels.webvizNodes,
+  }),
   { importPanelLayout }
 )(PlayerManager);

@@ -9,8 +9,8 @@
 import type { ExtensionsActions } from "webviz-core/src/actions/extensions";
 
 export type Extensions = {
-  markerProviders: Object[],
-  auxiliaryData: Object,
+  markerProviders: any[],
+  auxiliaryData: any,
 };
 
 const initialState: Extensions = Object.freeze({

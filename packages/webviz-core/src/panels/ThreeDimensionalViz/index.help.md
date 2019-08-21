@@ -18,6 +18,18 @@ Holding down `shift` in while performing any interaction with the camera will ad
 
 _tip: If you get 'lost' in the scene and end up looking into infinite blank space and can't find your way back try clicking on 'follow' to snap the camera back to the default position._
 
+## Interacting with markers
+
+Markers can be selected to see details about them. Open the "Interactions" panel from the right-side controls and click a marker to see information such as the topic name and marker contents.
+
+Clicking on a point in a point cloud offers additional information, such as the color and coordinates of the point clicked. Selecting a point cloud also allows exporting all points from the point cloud message as a CSV.
+
+### Linking selected markers to global variables
+
+It's possible to link fields from a selected marker to global variables. In the "Clicked object" tab of the "Interactions" panel, hover over a key in the JSON view of the marker. A button should appear that, when clicked, opens a dialog box that allows linking the field to a global variable.
+
+When a global variable is linked, selecting another marker that contains the same key will update the global variable. For example, with the tracked object "id" field linked to the global variable "$trackedObjectId", clicking another tracked object will update the "$trackedObjectId" field. This makes it easy to use the information about selected markers in other panels.
+
 ## Drawing Polygons
 
 - To start a drawing, hold `ctrl` and click on the canvas. This will place the first point of the polygon. Continue holding ctrl and click as may times as you want to create a `string` of points connected by lines. To terminate your drawing release `ctrl` and click a final time. This will place one final point at the mouse location and 'close' the polygon. The polygon will still be selected until you click "off" of the polygon to anywhere else on the canvas.

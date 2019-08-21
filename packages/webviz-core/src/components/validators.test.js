@@ -81,6 +81,9 @@ describe("polygonPointsValidator", () => {
   it("returns error when missing input for x/y point", async () => {
     expect(polygonPointsValidator([[{ y: 1 }, { x: 2, y: 2 }, { x: 3, y: 3 }]])).toEqual("must contain x and y points");
   });
+  it("does not return error when the input points have 0 as coordinates", async () => {
+    expect(polygonPointsValidator([[{ x: 0.000001, y: 0.0 }, { x: 0, y: 0.0 }]])).toEqual(undefined);
+  });
 });
 
 describe("point2DValidator", () => {

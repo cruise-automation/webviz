@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { createMemoryHistory } from "history";
 import { flatten, groupBy } from "lodash";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useContext } from "react"; // eslint-disable-line import/no-duplicates
@@ -13,7 +14,7 @@ import { Provider } from "react-redux";
 import { type Time, TimeUtil } from "rosbag";
 
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
-import rootReducer from "webviz-core/src/reducers";
+import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore";
 import type {
   AdvertisePayload,
@@ -87,6 +88,7 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
   useEffect(() => (player ? player.setSubscriptions(subscriptions) : undefined), [player, subscriptions]);
   useEffect(() => (player ? player.setPublishers(publishers) : undefined), [player, publishers]);
 
+  // Delay the player listener promise until rendering has finished for the latest data.
   useLayoutEffect(
     () => {
       if (resolveFn.current) {
@@ -204,12 +206,12 @@ export function MockMessagePipelineProvider(props: {|
   store?: any,
   seekPlayback?: (Time) => void,
 |}) {
-  const storeRef = useRef(props.store || configureStore(rootReducer));
-
-  let startTime, currentTime;
+  const storeRef = useRef(props.store || configureStore(createRootReducer(createMemoryHistory())));
+  const startTime = useRef();
+  let currentTime;
   for (const message of props.messages || []) {
-    if (!startTime || TimeUtil.isLessThan(message.receiveTime, startTime)) {
-      startTime = message.receiveTime;
+    if (!startTime.current || TimeUtil.isLessThan(message.receiveTime, startTime.current)) {
+      startTime.current = message.receiveTime;
     }
     if (!currentTime || TimeUtil.isLessThan(currentTime, message.receiveTime)) {
       currentTime = message.receiveTime;
@@ -231,7 +233,7 @@ export function MockMessagePipelineProvider(props: {|
               messages: props.messages || [],
               topics: props.topics || [],
               datatypes: props.datatypes || {},
-              startTime: startTime || { sec: 100, nsec: 0 },
+              startTime: startTime.current || { sec: 100, nsec: 0 },
               currentTime: currentTime || { sec: 100, nsec: 0 },
               endTime: currentTime || { sec: 100, nsec: 0 },
               isPlaying: false,

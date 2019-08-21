@@ -9,6 +9,7 @@
 import CloseIcon from "@mdi/svg/svg/close.svg";
 import cx from "classnames";
 import { vec3, quat } from "gl-matrix";
+import { get } from "lodash";
 import * as React from "react";
 import Draggable from "react-draggable";
 import KeyListener from "react-key-listener";
@@ -18,12 +19,13 @@ import {
   DrawPolygons,
   type CameraState,
   type ReglClickInfo,
-  type MouseHandler,
+  type MouseEventObject,
 } from "regl-worldview";
 
 import type { ThreeDimensionalVizConfig } from ".";
 import Icon from "webviz-core/src/components/Icon";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import useGlobalData, { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import DebugStats from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
 import DrawingTools, {
@@ -32,62 +34,64 @@ import DrawingTools, {
 } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
 import FollowTFControl from "webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl";
+import Interactions, {
+  InteractionContextMenu,
+  type InteractionData,
+} from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
+import useLinkedGlobalVariables, {
+  type LinkedGlobalVariables,
+} from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import MainToolbar from "webviz-core/src/panels/ThreeDimensionalViz/MainToolbar";
-import SceneBuilder, {
-  type TopicSettingsCollection,
-  type TopicSettings,
-} from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
+import SceneBuilder, { type TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import TopicSelector from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector";
 import type { Selections } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/treeBuilder";
-import TopicSettingsEditor from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
+import TopicSettingsEditor, { canEditDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
+import { topicsByTopicName } from "webviz-core/src/selectors";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
-import type { SaveConfig, UpdatePanelConfig } from "webviz-core/src/types/panels";
+import type { SaveConfig } from "webviz-core/src/types/panels";
 import type { Frame, Topic } from "webviz-core/src/types/players";
 import type { MarkerCollector, MarkerProvider } from "webviz-core/src/types/Scene";
 import videoRecordingMode from "webviz-core/src/util/videoRecordingMode";
 
 type EventName = "onDoubleClick" | "onMouseMove" | "onMouseDown" | "onMouseUp";
+export type ClickedPosition = { clientX: number, clientY: number };
 
-type Props = {
+type WrapperProps = {
   autoTextBackgroundColor?: boolean,
-  selections: Selections,
-  frame?: Frame,
-  transforms: Transforms,
-  saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
-  updatePanelConfig: UpdatePanelConfig,
-  selectedPolygonEditFormat: "json" | "yaml",
-  followTf?: string | false,
-  followOrientation: boolean,
-  showCrosshair: ?boolean,
-  onFollowChange: (followTf?: string | false, followOrientation?: boolean) => void,
-  onAlignXYAxis: () => void,
-  topicSettings: TopicSettingsCollection,
-  topics: Topic[],
-  checkedNodes: string[],
-  expandedNodes: string[],
-  modifiedNamespaceTopics: string[],
-  extensions: Extensions,
-  pinTopics: boolean,
   cameraState: $Shape<CameraState>,
-  onCameraStateChange: (CameraState) => void,
-  helpContent: React.Node | string,
-
+  checkedNodes: string[],
   children?: React.Node,
-  mouseClick: ({}) => void,
-  onMouseUp?: MouseHandler,
-  onMouseDown?: MouseHandler,
-  onMouseMove?: MouseHandler,
-  onDoubleClick?: MouseHandler,
-
-  setSelections: (Selections) => void,
   cleared?: boolean,
-  // redux values
-  globalData: Object,
   currentTime: {| sec: number, nsec: number |},
+  expandedNodes: string[],
+  extensions: Extensions,
+  followOrientation: boolean,
+  followTf?: string | false,
+  frame?: Frame,
+  helpContent: React.Node | string,
+  modifiedNamespaceTopics: string[],
+  onAlignXYAxis: () => void,
+  onCameraStateChange: (CameraState) => void,
+  onFollowChange: (followTf?: string | false, followOrientation?: boolean) => void,
+  pinTopics: boolean,
+  saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
+  selectedPolygonEditFormat: "json" | "yaml",
+  selections: Selections,
+  setSelections: (Selections) => void,
+  showCrosshair: ?boolean,
+  topics: Topic[],
+  topicSettings: TopicSettingsCollection,
+  transforms: Transforms,
+};
+
+type Props = WrapperProps & {
+  globalData: GlobalData,
+  setGlobalData: (GlobalData) => void,
+  linkedGlobalVariables: LinkedGlobalVariables,
 };
 
 type State = {
@@ -95,19 +99,21 @@ type State = {
   transformsBuilder: TransformsBuilder,
   cachedTopicSettings: TopicSettingsCollection,
   editedTopics: string[],
-
   debug: boolean,
   showTopics: boolean,
-  metadata: Object,
+  metadata: any,
   editTipX: ?number,
   editTipY: ?number,
   editTopic: ?Topic,
   drawingType: ?DrawingType,
   polygonBuilder: PolygonBuilder,
   measureInfo: MeasureInfo,
+  selectedObject: ?MouseEventObject,
+  selectedObjects: ?(MouseEventObject[]),
+  clickedPosition: ?ClickedPosition,
 };
 
-export default class Layout extends React.Component<Props, State> implements MarkerProvider {
+class BaseComponent extends React.Component<Props, State> implements MarkerProvider {
   // overall element containing everything in this component
   el: ?HTMLDivElement;
   measuringTool: ?MeasuringTool;
@@ -138,10 +144,13 @@ export default class Layout extends React.Component<Props, State> implements Mar
       measureState: "idle",
       measurePoints: { start: null, end: null },
     },
+    selectedObjects: [],
+    clickedPosition: null,
+    selectedObject: null,
   };
 
   static getDerivedStateFromProps(nextProps: Props, prevState: State) {
-    const { frame, cleared, transforms, followTf, selections, topicSettings, currentTime } = nextProps;
+    const { frame, cleared, transforms, followTf, selections, topics, topicSettings, currentTime } = nextProps;
     const { sceneBuilder, transformsBuilder, cachedTopicSettings } = prevState;
     if (!frame) {
       return null;
@@ -169,7 +178,8 @@ export default class Layout extends React.Component<Props, State> implements Mar
     sceneBuilder.setTopicSettings(topicSettings);
 
     // toggle scene builder topics based on selected topic nodes in the tree
-    sceneBuilder.setTopics(selections.topics);
+    const topicsByName = topicsByTopicName(topics);
+    sceneBuilder.setTopics(selections.topics.map((name) => topicsByName[name]).filter(Boolean));
     sceneBuilder.setGlobalData(nextProps.globalData);
     sceneBuilder.setFrame(frame);
     sceneBuilder.setCurrentTime(currentTime);
@@ -200,6 +210,48 @@ export default class Layout extends React.Component<Props, State> implements Mar
   onMouseUp = (ev: MouseEvent, args: ?ReglClickInfo) => {
     this._handleEvent("onMouseUp", ev, args);
   };
+  _updateLinkedGlobalVariables = ({ object }: MouseEventObject) => {
+    const { linkedGlobalVariables, setGlobalData } = this.props;
+    const interactionData = this._getInteractionData();
+    const objectTopic = interactionData && interactionData.topic;
+    if (!linkedGlobalVariables.length || !objectTopic) {
+      return;
+    }
+    const newGlobalVariables = {};
+    linkedGlobalVariables.forEach(({ topic, markerKeyPath, name }) => {
+      if (objectTopic === topic) {
+        const objectForPath = get(object, [...markerKeyPath].reverse());
+        newGlobalVariables[name] = objectForPath;
+      }
+    });
+    setGlobalData(newGlobalVariables);
+  };
+
+  onClick = (event: MouseEvent, args: ?ReglClickInfo) => {
+    const selectedObjects = (args && args.objects) || [];
+    const clickedPosition = { clientX: event.clientX, clientY: event.clientY };
+    if (selectedObjects.length === 0) {
+      // unset all
+      this.setState({ selectedObjects, selectedObject: null, clickedPosition: null });
+    } else if (selectedObjects.length === 1) {
+      // select the object directly if there is only one
+      const selectedObject = selectedObjects[0];
+      this.setState({
+        selectedObjects: null,
+        selectedObject,
+        clickedPosition: null,
+      });
+      this._updateLinkedGlobalVariables(selectedObject);
+    } else {
+      // open up context menu to select one object to show details
+      this.setState({ selectedObjects, selectedObject: null, clickedPosition });
+    }
+  };
+
+  _onSelectObject = (selectedObject) => {
+    this.setState({ selectedObjects: null, selectedObject });
+    this._updateLinkedGlobalVariables(selectedObject);
+  };
 
   _handleDrawPolygons = (eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
     this.state.polygonBuilder[eventName](ev, args);
@@ -207,7 +259,6 @@ export default class Layout extends React.Component<Props, State> implements Mar
   };
 
   _handleEvent = (eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
-    const propsHandler = this.props[eventName];
     const { drawingType } = this.state;
     if (!args) {
       return;
@@ -220,9 +271,6 @@ export default class Layout extends React.Component<Props, State> implements Mar
       return measuringHandler(ev, args);
     } else if (drawingType === DRAWING_CONFIG.Polygons.type) {
       this._handleDrawPolygons(eventName, ev, args);
-    }
-    if (propsHandler) {
-      propsHandler(ev, args);
     }
   };
 
@@ -280,7 +328,6 @@ export default class Layout extends React.Component<Props, State> implements Mar
   toggleDebug = () => {
     this.setState({ debug: !this.state.debug });
   };
-
   // clicking on the body should hide any edit tip
   onEditClick = (e: SyntheticMouseEvent<HTMLElement>, topic: string) => {
     const { topics } = this.props;
@@ -313,7 +360,7 @@ export default class Layout extends React.Component<Props, State> implements Mar
     });
   };
 
-  onSettingsChange = (settings: TopicSettings) => {
+  onSettingsChange = (settings: {}) => {
     const { saveConfig, topicSettings } = this.props;
     const { editTopic } = this.state;
     if (!editTopic) {
@@ -348,6 +395,20 @@ export default class Layout extends React.Component<Props, State> implements Mar
     e.stopPropagation();
   };
 
+  onClearSelectedObject = () => {
+    this.setState({ selectedObject: null });
+  };
+
+  onSetPolygons = (polygons) => this.setState({ polygonBuilder: new PolygonBuilder(polygons) });
+
+  setType = (newDrawingType) => this.setState({ drawingType: newDrawingType });
+
+  _getInteractionData = (): ?InteractionData => {
+    if (this.state.selectedObject) {
+      return this.state.selectedObject.object.interactionData;
+    }
+  };
+
   renderToolbars() {
     const {
       cameraState,
@@ -361,9 +422,8 @@ export default class Layout extends React.Component<Props, State> implements Mar
       selectedPolygonEditFormat,
       showCrosshair,
       transforms,
-      updatePanelConfig,
     } = this.props;
-    const { measureInfo, debug, polygonBuilder, drawingType } = this.state;
+    const { measureInfo, debug, polygonBuilder, drawingType, selectedObject } = this.state;
 
     return (
       <div className={cx(styles.toolbar, styles.right)}>
@@ -384,50 +444,57 @@ export default class Layout extends React.Component<Props, State> implements Mar
           onToggleDebug={this.toggleDebug}
         />
         {this.measuringTool && this.measuringTool.measureDistance}
+        <Interactions
+          interactionData={this._getInteractionData()}
+          onClearSelectedObject={this.onClearSelectedObject}
+          selectedObject={selectedObject}
+        />
         <DrawingTools
-          cameraState={cameraState}
+          // Save some unnecessary re-renders by not passing in the constantly changing cameraState unless it's needed
+          cameraState={drawingType === DRAWING_CONFIG.Camera.type ? cameraState : null}
           followOrientation={followOrientation}
           followTf={followTf}
           onAlignXYAxis={onAlignXYAxis}
           onCameraStateChange={onCameraStateChange}
-          onSetPolygons={(polygons) => this.setState({ polygonBuilder: new PolygonBuilder(polygons) })}
+          onSetPolygons={this.onSetPolygons}
           polygonBuilder={polygonBuilder}
           saveConfig={saveConfig}
           selectedPolygonEditFormat={selectedPolygonEditFormat}
-          setType={(newDrawingType) => this.setState({ drawingType: newDrawingType })}
+          setType={this.setType}
           showCrosshair={!!showCrosshair}
           type={drawingType}
-          updatePanelConfig={updatePanelConfig}
         />
       </div>
     );
   }
 
   render3d() {
-    const { sceneBuilder, transformsBuilder, debug, metadata, polygonBuilder } = this.state;
-    const scene = sceneBuilder.getScene();
     const {
-      autoTextBackgroundColor,
-      extensions,
-      cameraState,
-      onCameraStateChange,
-      mouseClick,
-      children,
-      selections,
-    } = this.props;
+      sceneBuilder,
+      transformsBuilder,
+      debug,
+      metadata,
+      polygonBuilder,
+      selectedObject,
+      selectedObjects,
+      clickedPosition,
+    } = this.state;
+    const scene = sceneBuilder.getScene();
+    const { autoTextBackgroundColor, extensions, cameraState, onCameraStateChange, children, selections } = this.props;
 
     const WorldComponent = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.WorldComponent;
     // TODO(Audrey): update DrawPolygons to support custom key so the users don't have to press ctrl key all the time
 
     return (
       <WorldComponent
+        selectedObject={selectedObject}
         autoTextBackgroundColor={!!autoTextBackgroundColor}
         cameraState={cameraState}
         debug={debug}
         markerProviders={extensions.markerProviders.concat([sceneBuilder, this.measuringTool, transformsBuilder, this])}
-        mouseClick={mouseClick}
         onCameraStateChange={onCameraStateChange}
         onDoubleClick={this.onDoubleClick}
+        onClick={this.onClick}
         onMouseDown={this.onMouseDown}
         onMouseMove={this.onMouseMove}
         onMouseUp={this.onMouseUp}
@@ -436,6 +503,13 @@ export default class Layout extends React.Component<Props, State> implements Mar
         metadata={metadata}>
         {children}
         <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
+        {selectedObjects && clickedPosition && (
+          <InteractionContextMenu
+            selectedObjects={selectedObjects}
+            clickedPosition={clickedPosition}
+            onSelectObject={this._onSelectObject}
+          />
+        )}
         {process.env.NODE_ENV !== "production" && !inScreenshotTests() && <DebugStats />}
       </WorldComponent>
     );
@@ -560,12 +634,16 @@ export default class Layout extends React.Component<Props, State> implements Mar
         topics={topics}
         checkedNodes={checkedNodes}
         editedTopics={editedTopics}
+        canEditDatatype={canEditDatatype}
         expandedNodes={expandedNodes}
         modifiedNamespaceTopics={modifiedNamespaceTopics}
         pinTopics={pinTopics}
         setSelections={setSelections}
         saveConfig={saveConfig}
-        transforms={transforms.values()}
+        transforms={transforms}
+        // Because transforms are mutable, we need a key that tells us when to update the component. We use the count of
+        // the transforms for this.
+        transformsCount={transforms.values().length}
         onEditClick={this.onEditClick}
         onToggleShowClick={this.toggleShowTopics}
       />
@@ -603,4 +681,18 @@ export default class Layout extends React.Component<Props, State> implements Mar
       </div>
     );
   }
+}
+
+export default function Layout(props: WrapperProps) {
+  const { linkedGlobalVariables } = useLinkedGlobalVariables();
+  const { globalData, setGlobalData } = useGlobalData();
+
+  return (
+    <BaseComponent
+      {...props}
+      linkedGlobalVariables={linkedGlobalVariables}
+      globalData={globalData}
+      setGlobalData={setGlobalData}
+    />
+  );
 }

@@ -20,7 +20,6 @@ const polygons = pointsToPolygons([
 ]);
 
 const containerStyle = {
-  width: 272,
   margin: 8,
   display: "inline-block",
 };

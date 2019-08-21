@@ -127,7 +127,7 @@ describe("camera store", () => {
       targetOffset: [0, 0, 0],
       targetOrientation: [0, 0, 0, 1],
       perspective: false,
-      fov: Math.PI / 3,
+      fovy: Math.PI / 3,
       near: 0.2,
       far: 1000,
     };
@@ -150,7 +150,7 @@ describe("camera store", () => {
       targetOffset: [0, 0, 0],
       targetOrientation: [0, 0, 0, 1],
       perspective: false,
-      fov: Math.PI / 3,
+      fovy: Math.PI / 3,
       near: 0.2,
       far: 1000,
     };
@@ -189,7 +189,7 @@ describe("camera store", () => {
         targetOffset: [25, 0, 0],
         targetOrientation: [0, 0, 0, 1],
         perspective: true,
-        fov: Math.PI / 2,
+        fovy: Math.PI / 2,
         near: 0.01,
         far: 10000,
       });
@@ -213,7 +213,7 @@ describe("camera store", () => {
         targetOffset: [25, 0, 0],
         targetOrientation: quat.rotateZ([0, 0, 0, 1], [0, 0, 0, 1], Math.PI / 2),
         perspective: true,
-        fov: Math.PI / 2,
+        fovy: Math.PI / 2,
         near: 0.01,
         far: 10000,
       });
@@ -230,7 +230,7 @@ describe("camera store", () => {
         targetOffset: [25, 0, 0],
         targetOrientation: [0, 0, 0, 1],
         perspective: true,
-        fov: Math.PI / 2,
+        fovy: Math.PI / 2,
         near: 0.01,
         far: 10000,
       });
@@ -246,7 +246,7 @@ describe("camera store", () => {
         targetOffset: [25, 0, 0],
         targetOrientation: quat.rotateX([0, 0, 0, 1], [0, 0, 0, 1], Math.PI / 8),
         perspective: true,
-        fov: Math.PI / 2,
+        fovy: Math.PI / 2,
         near: 0.01,
         far: 10000,
       });

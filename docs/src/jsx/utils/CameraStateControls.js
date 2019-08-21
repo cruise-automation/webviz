@@ -144,17 +144,17 @@ export default function CameraStateControls({ cameraState, setCameraState }: Pro
           </td>
         </tr>
         <tr>
-          <td>fov</td>
+          <td>fovy</td>
           <td>
             <Slider
               showEndpoints
               minLabel
               maxLabel="π"
-              value={cameraState.fov}
+              value={cameraState.fovy}
               min={0}
               max={Math.PI}
               step={0.01}
-              onChange={(fov) => setCameraState({ ...cameraState, fov })}
+              onChange={(fovy) => setCameraState({ ...cameraState, fovy })}
             />
           </td>
         </tr>

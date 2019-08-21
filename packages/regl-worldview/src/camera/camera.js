@@ -38,7 +38,7 @@ export default (regl: any) => {
           far
         );
       }
-      const fov = this.cameraState.fov;
+      const fov = this.cameraState.fovy;
       const aspect = this.viewportWidth / this.viewportHeight;
       return mat4.perspective(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

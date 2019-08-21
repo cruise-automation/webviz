@@ -19,7 +19,7 @@ export type CameraState = {|
   targetOffset: Vec3,
   targetOrientation: Vec4,
   thetaOffset: number,
-  fov: number,
+  fovy: number,
   near: number,
   far: number,
 |};
@@ -37,7 +37,7 @@ export const DEFAULT_CAMERA_STATE: CameraState = {
   targetOffset: [0, 0, 0],
   targetOrientation: [0, 0, 0, 1],
   thetaOffset: 0,
-  fov: Math.PI / 4,
+  fovy: Math.PI / 4,
   near: 0.01,
   far: 5000,
 };

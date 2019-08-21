@@ -93,7 +93,7 @@ function applyNodeToMessage<State>(
       }
       if (message.datatype !== output.datatype) {
         console.warn(
-          `message.datatype "${message.topic}" does not match topic.datatype "${output.datatype}"; message discarded`
+          `message.datatype "${message.datatype}" does not match topic.datatype "${output.datatype}"; message discarded`
         );
         return false;
       }

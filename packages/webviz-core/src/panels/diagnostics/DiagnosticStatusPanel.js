@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { Component } from "react";
+import { hot } from "react-hot-loader/root";
 
 import DiagnosticsHistory, { type DiagnosticAutocompleteEntry } from "./DiagnosticsHistory";
 import DiagnosticStatus from "./DiagnosticStatus";
@@ -93,4 +94,4 @@ class DiagnosticStatusPanel extends Component<Props> {
   }
 }
 
-export default Panel<Config>(DiagnosticStatusPanel);
+export default hot(Panel<Config>(DiagnosticStatusPanel));

@@ -92,7 +92,7 @@ export type BufferedFrame = {
 export type SubscribePayload = {
   topic: string,
   encoding?: string, // TODO(JP): Remove and derive from `scale` (= "image/compressed").
-  scale?: number,
+  scale?: ?number,
   requester?: {| type: "panel" | "node" | "other", name: string |},
 };
 
@@ -106,7 +106,7 @@ export type AdvertisePayload = {|
 
 export type PublishPayload = {|
   topic: string,
-  msg: Object,
+  msg: any,
 |};
 
 export const PlayerCapabilities = {

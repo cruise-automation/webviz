@@ -34,6 +34,7 @@ type Props = {
   filterText?: ?string,
   transforms: Array<Transform>,
   editedTopics?: string[],
+  canEditDatatype?: ?(string) => boolean,
 };
 
 const icons = {
@@ -57,14 +58,6 @@ export class Selections {
 // they're meant to be opaque and the data within them not parsed or read back out
 export function getId(namespace: Namespace) {
   return `ns:${namespace.topic}:${namespace.name}`;
-}
-
-function canEdit(topic: Topic) {
-  return [
-    POINT_CLOUD_DATATYPE,
-    POSE_STAMPED_DATATYPE,
-    ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.editableTopics,
-  ].includes(topic.datatype);
 }
 
 const TooltipRow = styled.div`
@@ -237,7 +230,7 @@ export class TopicTreeNode {
       const matchingTopic = find(props.topics, { name: topicName });
       this.missing = !matchingTopic;
       this.disabled = disabled || this.missing;
-      this.canEdit = !!matchingTopic && canEdit(matchingTopic);
+      this.canEdit = !!matchingTopic && !!props.canEditDatatype && props.canEditDatatype(matchingTopic.datatype);
       this.hasEdit = !!props.editedTopics && props.editedTopics.indexOf(topicName) > -1;
 
       if (matchingTopic) {

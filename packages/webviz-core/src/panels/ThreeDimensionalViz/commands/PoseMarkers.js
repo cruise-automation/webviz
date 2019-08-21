@@ -10,6 +10,7 @@ import React, { type Node } from "react";
 import { Arrows, pointToVec3, vec3ToPoint, orientationToVec4, type Arrow } from "regl-worldview";
 
 import CarModel from "./CarModel";
+import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 
 type Props = {
   children: Arrow[],
@@ -21,17 +22,12 @@ export default React.memo(function PoseMarkers({ children }: Props): Node[] {
   const markers = [];
   children.forEach((marker, i) => {
     if (marker.settings && marker.settings.useCarModel) {
-      models.push(<CarModel key={i}>{{ pose: marker.pose, alpha: marker.settings.alpha || 1 }}</CarModel>);
+      const { pose, settings } = marker;
+      models.push(<CarModel key={i}>{{ pose, alpha: settings.alpha || 1 }}</CarModel>);
     } else {
       const { settings } = marker;
       if (settings && settings.color && typeof settings.color === "string") {
-        const rgbaVals = settings.color.split(",");
-        const formattedColors = rgbaVals.reduce((allColors, color) => {
-          const currentIdx = rgbaVals.indexOf(color);
-          const currentColor = { "0": "r", "1": "g", "2": "b", "3": "a" }[currentIdx];
-          return { ...allColors, [currentColor]: currentIdx === 3 ? parseFloat(color) : parseInt(color) / 255 };
-        }, marker.color);
-        marker = { ...marker, color: formattedColors };
+        marker = { ...marker, color: parseColorSetting(settings.color) };
       }
 
       if (settings && settings.size) {

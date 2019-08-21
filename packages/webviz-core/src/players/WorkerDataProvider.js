@@ -19,7 +19,7 @@ export default class WorkerDataProvider implements RandomAccessDataProvider {
   _provider: RpcDataProvider;
   _child: DataProviderDescriptor;
 
-  constructor(args: Object, children: DataProviderDescriptor[]) {
+  constructor(args: any, children: DataProviderDescriptor[]) {
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to WorkerDataProvider: ${children.length}`);
     }

@@ -6,13 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from "react";
+import * as React from "react";
 import {
   Command,
-  createInstancedGetChildrenForHitmap,
   withPose,
-  type CommonCommandProps,
   type Regl,
+  type CommonCommandProps,
+  type AssignNextColorsFn,
+  type MouseEventObject,
 } from "regl-worldview";
 
 import { mapMarker } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
@@ -49,12 +50,10 @@ const pointCloud = (regl: Regl) => {
           vec3 normal;
           normal.xy = gl_PointCoord * 2.0 - 1.0;
           float r2 = dot(normal.xy, normal.xy);
-  
           if (r2 > 1.0) {
             discard;
           }
         }
-        
         gl_FragColor = vec4(fragColor.x / 255.0, fragColor.y / 255.0, fragColor.z / 255.0, 1);
       }
   `,
@@ -80,21 +79,59 @@ const pointCloud = (regl: Regl) => {
   const command = regl(pointCloudCommand);
 
   return (props: any) => {
-    const arr = Array.isArray(props) ? props : [props];
-
-    const mapped = arr.map((props) => {
-      return props.settings
-        ? mapMarker({
-            ...props,
-            ...props.settings,
-          })
-        : mapMarker(props);
-    });
-
-    command(mapped);
+    command(props);
   };
 };
 
-export default function PointClouds(props: { ...CommonCommandProps, children: Array<PointCloud> }) {
-  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={pointCloud} />;
+function instancedGetChildrenForHitmap<T: any[]>(
+  props: T,
+  assignNextColors: AssignNextColorsFn,
+  excludedObjects: MouseEventObject[]
+): T {
+  return props
+    .map((prop) => {
+      // exclude all points if one has been interacted with because iterating through all points in
+      // in pointcloud object is expensive
+      const isInExcludedObjects = excludedObjects.find(({ object }) => object === prop);
+      if (isInExcludedObjects) {
+        return null;
+      }
+      const hitmapProp = { ...prop };
+      const instanceCount = Math.ceil(prop.points.length / 3);
+      if (instanceCount < 1) {
+        return null;
+      }
+      const idColors = assignNextColors(prop, instanceCount);
+      const allColors = [];
+      idColors.forEach((color) => {
+        allColors.push(color[0] * 255);
+        allColors.push(color[1] * 255);
+        allColors.push(color[2] * 255);
+      });
+      hitmapProp.colors = allColors;
+      // expand the interaction area
+      hitmapProp.pointSize = (hitmapProp.pointSize || 2) * 5;
+      return hitmapProp;
+    })
+    .filter(Boolean);
+}
+
+type Props = { ...CommonCommandProps, children: PointCloud[] };
+
+export default function PointClouds({ children, ...rest }: Props) {
+  const arr = (Array.isArray(children) ? children : [children]).filter(Boolean);
+  const markers = arr.map((prop) => {
+    return prop.settings
+      ? mapMarker({
+          ...prop,
+          ...prop.settings,
+        })
+      : mapMarker(prop);
+  });
+
+  return (
+    <Command getChildrenForHitmap={instancedGetChildrenForHitmap} {...rest} reglCommand={pointCloud}>
+      {markers}
+    </Command>
+  );
 }

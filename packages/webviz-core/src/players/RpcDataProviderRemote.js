@@ -11,11 +11,21 @@ import type {
   DataProviderDescriptor,
   DataProviderMetadata,
 } from "webviz-core/src/players/types";
+import { type DetailsType, type ErrorType, setErrorHandler } from "webviz-core/src/util/reportError";
 import Rpc from "webviz-core/src/util/Rpc";
 
 export default class RpcDataProviderRemote {
   constructor(rpc: Rpc, getDataProvider: (DataProviderDescriptor) => RandomAccessDataProvider) {
     let provider: RandomAccessDataProvider;
+    if (process.env.NODE_ENV !== "test") {
+      setErrorHandler((message: string, details: DetailsType, type: ErrorType) => {
+        rpc.send("reportError", {
+          message,
+          details: details instanceof Error ? details.toString() : JSON.stringify(details),
+          type,
+        });
+      });
+    }
     rpc.receive("initialize", async ({ childDescriptor, hasExtensionPoint }) => {
       provider = getDataProvider(childDescriptor);
       return provider.initialize({

@@ -9,11 +9,12 @@
 import { vec3 } from "gl-matrix";
 import { omit, mergeWith } from "lodash";
 import * as React from "react";
+import { hot } from "react-hot-loader/root";
 import { connect } from "react-redux";
 import { DEFAULT_CAMERA_STATE, cameraStateSelectors, type Vec3, type Vec4, type CameraState } from "regl-worldview";
 
+import getDebugStorybook from "./getDebugStorybook";
 import { registerMarkerProvider, unregisterMarkerProvider } from "webviz-core/src/actions/extensions";
-import GlobalVariablesAccessor from "webviz-core/src/components/GlobalVariablesAccessor";
 import { FrameCompatibility } from "webviz-core/src/components/MessageHistory/FrameCompatibility";
 import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
@@ -24,7 +25,7 @@ import type { TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimens
 import treeBuilder, { Selections } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/treeBuilder";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTransforms";
-import type { SaveConfig, UpdatePanelConfig } from "webviz-core/src/types/panels";
+import type { SaveConfig } from "webviz-core/src/types/panels";
 import type { Frame, Topic } from "webviz-core/src/types/players";
 import type { MarkerProvider } from "webviz-core/src/types/Scene";
 import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
@@ -59,13 +60,10 @@ export type Props = {
 
   // For other panels that wrap this one.
   helpContent: React.Node | string,
-
   saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
-  updatePanelConfig: UpdatePanelConfig,
   setSubscriptions: (string[]) => void,
   registerMarkerProvider: (MarkerProvider) => void,
   unregisterMarkerProvider: (MarkerProvider) => void,
-  mouseClick: ({}) => void,
   cleared?: boolean,
 };
 
@@ -278,31 +276,62 @@ export class Renderer extends React.Component<Props, State> {
 
   render() {
     const { selections, topics, checkedNodes, cameraState } = this.state;
-
+    const {
+      config,
+      config: {
+        autoTextBackgroundColor,
+        expandedNodes,
+        flattenMarkers,
+        follow,
+        followOrientation,
+        followTf,
+        hideMap,
+        modifiedNamespaceTopics,
+        pinTopics,
+        savedPropsVersion,
+        selectedPolygonEditFormat,
+        showCrosshair,
+        topicSettings,
+        useHeightMap,
+      },
+    } = this.props;
     return (
       <MessagePipelineConsumer>
         {({ playerState }: MessagePipelineContext) => {
           const currentTime = playerState.activeData ? playerState.activeData.currentTime : { sec: 0, nsec: 0 };
+          getDebugStorybook(playerState, selections.topics, topics, config);
           return (
-            <GlobalVariablesAccessor>
-              {(globalData) => (
-                <Layout
-                  helpContent={helpContent} // Can be overridden.
-                  {...this.props}
-                  {...this.props.config} // TODO(JP): Pass this in separately.
-                  globalData={globalData}
-                  currentTime={currentTime}
-                  selections={selections}
-                  topics={topics}
-                  checkedNodes={checkedNodes}
-                  setSelections={this.onSelectionsChanged}
-                  cameraState={cameraState}
-                  onCameraStateChange={this.onCameraStateChange}
-                  onFollowChange={this.onFollowChange}
-                  onAlignXYAxis={this.onAlignXYAxis}
-                />
-              )}
-            </GlobalVariablesAccessor>
+            // $FlowFixMe flow doesn't know about extensions prop
+            <Layout
+              helpContent={helpContent} // Can be overridden.
+              {...this.props}
+              // config
+              autoTextBackgroundColor={autoTextBackgroundColor}
+              expandedNodes={expandedNodes}
+              flattenMarkers={flattenMarkers}
+              follow={follow}
+              followOrientation={followOrientation}
+              followTf={followTf}
+              hideMap={hideMap}
+              modifiedNamespaceTopics={modifiedNamespaceTopics}
+              pinTopics={pinTopics}
+              savedPropsVersion={savedPropsVersion}
+              selectedPolygonEditFormat={selectedPolygonEditFormat}
+              showCrosshair={showCrosshair}
+              topicSettings={topicSettings}
+              useHeightMap={useHeightMap}
+              // other props
+              cameraState={cameraState}
+              checkedNodes={checkedNodes}
+              selections={selections}
+              topics={topics}
+              // other
+              currentTime={currentTime}
+              onAlignXYAxis={this.onAlignXYAxis}
+              onCameraStateChange={this.onCameraStateChange}
+              onFollowChange={this.onFollowChange}
+              setSelections={this.onSelectionsChanged}
+            />
           );
         }}
       </MessagePipelineConsumer>
@@ -320,16 +349,18 @@ export const frameCompatibilityOptionsThreeDimensionalViz = {
   dontRemountOnSeek: true, // SceneBuilder is doing its own state management.
 };
 
-export default Panel<ThreeDimensionalVizConfig>(
-  FrameCompatibility(
-    withTransforms(
-      connect(
-        (state) => ({
-          extensions: state.extensions,
-        }),
-        { registerMarkerProvider, unregisterMarkerProvider }
-      )(Renderer)
-    ),
-    frameCompatibilityOptionsThreeDimensionalViz
+export default hot(
+  Panel<ThreeDimensionalVizConfig>(
+    FrameCompatibility(
+      withTransforms(
+        connect(
+          (state) => ({
+            extensions: state.extensions,
+          }),
+          { registerMarkerProvider, unregisterMarkerProvider }
+        )(Renderer)
+      ),
+      frameCompatibilityOptionsThreeDimensionalViz
+    )
   )
 );

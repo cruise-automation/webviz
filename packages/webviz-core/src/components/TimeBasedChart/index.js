@@ -18,6 +18,7 @@ import Button from "webviz-core/src/components/Button";
 import createSyncingComponent from "webviz-core/src/components/createSyncingComponent";
 import type { MessageHistoryItem } from "webviz-core/src/components/MessageHistory";
 import TimeBasedChartLegend from "webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend";
+import Y_AXIS_ID from "webviz-core/src/panels/Plot/PlotChart";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
 
 type Bounds = {| minX: ?number, maxX: ?number |};
@@ -86,7 +87,8 @@ type Props = {|
   toggleLine?: (datasetId: string | typeof undefined, lineToHide: string) => void,
   linesToHide?: { [string]: boolean },
   datasetId?: string,
-  onClick?: (e: (Object) => Object) => void,
+  onClick?: ((Event) => void) => void,
+  saveCurrentYs?: (minY: number, maxY: number) => void,
 |};
 type State = {|
   showResetZoom: boolean,
@@ -171,6 +173,10 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
         axis.options.ticks.max !== axis.options.ticks.timeBasedChartMax);
     if (showResetZoom && !this.state.showResetZoom) {
       this.setState({ showResetZoom: true });
+    }
+    if (this.props.saveCurrentYs) {
+      const scaleId = this.props.yAxes ? this.props.yAxes[0].id : Y_AXIS_ID;
+      this.props.saveCurrentYs(axis.chart.scales[scaleId].min, axis.chart.scales[scaleId].max);
     }
   };
 
@@ -291,8 +297,8 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
     this._updateTooltip();
   };
 
-  _chartjsOptions = (minX: number, maxX: number, minY: any, maxY: any) => {
-    const { plugins, xAxes, yAxes } = this.props;
+  _chartjsOptions = (minX: number, maxX: number, userMinY: ?number, userMaxY: ?number) => {
+    const { plugins, xAxes, yAxes, saveCurrentYs } = this.props;
     const { annotations } = this.state;
     const defaultXTicksSettings = {
       fontFamily: mixins.monospaceFont,
@@ -313,7 +319,6 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
       gridLines: { color: "rgba(255, 255, 255, 0.2)", zeroLineColor: "rgba(255, 255, 255, 0.2)" },
       afterUpdate: this._onPlotChartUpdate,
     };
-
     // We create a new `options` object every time, but caching this wouldn't help anyway, since
     // react-chartjs-2 creates a new object on every render anyway. :'(
     // See https://github.com/jerairrest/react-chartjs-2/blob/b4047724002bca37486f1b13e618d2bb57162430/src/index.js#L176
@@ -354,12 +359,12 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
           ...yAxis,
           afterUpdate: this._onPlotChartUpdate,
           ticks:
-            minY && maxY
+            userMinY !== null && userMaxY !== null && (yAxis.ticks.min == null && yAxis.ticks.max == null)
               ? {
                   ...defaultYTicksSettings,
                   ...yAxis.ticks,
-                  min: minY, // user specified min
-                  max: maxY, // user specified max
+                  min: userMinY,
+                  max: userMaxY,
                   callback: (...args) =>
                     yAxis.ticks.callback ? yAxis.ticks.callback(...args) : this._onGetTick(...args),
                 }
@@ -375,10 +380,16 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
       pan: {
         enabled: true,
         onPan: (chartInstance: ChartComponent) => {
-          const minX = chartInstance.chart.scales[X_AXIS_ID].min;
-          const maxX = chartInstance.chart.scales[X_AXIS_ID].max;
-          const minY = chartInstance.chart.scales.Y_AXIS_ID.min;
-          const maxY = chartInstance.chart.scales.Y_AXIS_ID.max;
+          const Y_scaleId = this.props.yAxes[0].id;
+          const X_scaleId = xAxes ? xAxes[0].id : X_AXIS_ID;
+          const minX = chartInstance.chart.scales[X_scaleId].min;
+          const maxX = chartInstance.chart.scales[X_scaleId].max;
+          const minY = chartInstance.chart.scales[Y_scaleId].min;
+          const maxY = chartInstance.chart.scales[Y_scaleId].max;
+
+          if (saveCurrentYs) {
+            saveCurrentYs(minY, maxY);
+          }
 
           this._onPanUpdate({ minX, maxX, maxY, minY });
         },
@@ -441,7 +452,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
             {this.state.showResetZoom && (
               <SResetZoom>
                 <Button tooltip="(shortcut: double-click)" onClick={this._onResetZoom}>
-                  reset zoom
+                  reset view
                 </Button>
               </SResetZoom>
             )}

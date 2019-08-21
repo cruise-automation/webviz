@@ -9,16 +9,34 @@
 import ArrowCollapseIcon from "@mdi/svg/svg/arrow-collapse.svg";
 import cx from "classnames";
 import * as React from "react";
+import styled from "styled-components";
 
 import styles from "./ExpandingToolbar.module.scss";
 import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 
+const PANE_WIDTH = 268;
+const PANE_HEIGHT = 240;
+
+export const SToolGroupFixedSizePane = styled.div`
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 8px 0;
+`;
+
 export class ToolGroup<T: string> extends React.Component<{ name: T, children: React.Node }> {
   render() {
     return this.props.children;
   }
+}
+
+export function ToolGroupFixedSizePane({ children }: { children: React.Node }) {
+  return (
+    <SToolGroupFixedSizePane style={{ width: PANE_WIDTH - 28, height: PANE_HEIGHT }}>
+      {children}
+    </SToolGroupFixedSizePane>
+  );
 }
 
 type Props<T: string> = {|

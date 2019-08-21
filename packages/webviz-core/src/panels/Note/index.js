@@ -9,6 +9,7 @@
 import LeadPencilIcon from "@mdi/svg/svg/lead-pencil.svg";
 import _ from "lodash";
 import React, { PureComponent } from "react";
+import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
 
 import helpContent from "./index.help.md";
@@ -116,4 +117,4 @@ class Note extends PureComponent<Props, State> {
   }
 }
 
-export default Panel<Config>(Note);
+export default hot(Panel<Config>(Note));

@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
+import { createMemoryHistory } from "history";
 import * as React from "react";
 import { Mosaic, MosaicWindow } from "react-mosaic-component";
 import { Provider } from "react-redux";
@@ -15,7 +16,7 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 import PanelToolbar from "./index";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
-import rootReducer from "webviz-core/src/reducers";
+import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 
 class MosaicWrapper extends React.Component<{| layout?: any, children: React.Node, width?: number |}> {
@@ -74,7 +75,7 @@ storiesOf("<PanelToolbar>", module)
   .addDecorator((childrenRenderFcn) => {
     // Provide all stories with PanelContext and redux state
     return (
-      <Provider store={configureStore(rootReducer)}>
+      <Provider store={configureStore(createRootReducer(createMemoryHistory()))}>
         <MockPanelContextProvider>{childrenRenderFcn()}</MockPanelContextProvider>
       </Provider>
     );

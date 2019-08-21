@@ -6,16 +6,23 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { routerMiddleware } from "connected-react-router";
 import React from "react";
 import ReactDOM from "react-dom";
-import { routerMiddleware } from "react-router-redux";
 
 // We put all the internal requires inside functions, so that when they load the hooks have been properly set.
 
 const defaultHooks = {
   nodes: () => [],
   migratePanels: (panels) => panels,
-  panelList() {
+  panelCategories() {
+    return [{ label: "General", key: "general" }, { label: "Utilities", key: "utilities" }];
+  },
+  panelsByCategory() {
+    const { ENABLE_NODE_PLAYGROUND_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
+    const params = new URLSearchParams(window.location.search);
+    const nodePlaygroundEnabled = params.has(ENABLE_NODE_PLAYGROUND_QUERY_KEY);
+
     const DiagnosticStatusPanel = require("webviz-core/src/panels/diagnostics/DiagnosticStatusPanel").default;
     const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
     const ImageViewPanel = require("webviz-core/src/panels/ImageView").default;
@@ -26,22 +33,29 @@ const defaultHooks = {
     const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
     const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
     const RawMessages = require("webviz-core/src/panels/RawMessages").default;
+    const NodePlayground = require("webviz-core/src/panels/NodePlayground").default;
     const { ndash } = require("webviz-core/src/util/entities");
     const Note = require("webviz-core/src/panels/Note").default;
 
-    return [
-      { title: "rosout", component: Rosout },
-      { title: "Image", component: ImageViewPanel },
-      { title: "Raw Messages", component: RawMessages },
-      { title: "Plot", component: Plot },
-      { title: "State Transitions", component: StateTransitions },
+    const general = [
       { title: "3D", component: ThreeDimensionalViz },
       { title: `Diagnostics ${ndash} Summary`, component: DiagnosticSummary },
       { title: `Diagnostics ${ndash} Detail`, component: DiagnosticStatusPanel },
-      { title: "Webviz Internals", component: Internals },
+      { title: "Image", component: ImageViewPanel },
+      { title: "Plot", component: Plot },
+      { title: "Raw Messages", component: RawMessages },
+      { title: "rosout", component: Rosout },
+      { title: "State Transitions", component: StateTransitions },
       { title: "Number of Renders", component: NumberOfRenders, hideFromList: true },
-      { title: "Notes", component: Note },
     ];
+
+    const utilities = [
+      nodePlaygroundEnabled ? { title: "Node Playground", component: NodePlayground } : null,
+      { title: "Notes", component: Note },
+      { title: "Webviz Internals", component: Internals },
+    ];
+
+    return { general, utilities };
   },
   helpPageFootnote: () => null,
   perPanelHooks: () => {
@@ -96,7 +110,6 @@ const defaultHooks = {
           topicSettings: {},
         },
         topics: [],
-        editableTopics: [],
         icons: {},
         WorldComponent: World,
         LaserScanVert,
@@ -121,7 +134,6 @@ const defaultHooks = {
         getMarkerColor: (topic, markerColor) => markerColor,
         getDefaultTopicTree: () => ({ name: "root" }),
         hasBlacklistTopics: () => false,
-        renderTopicSettings: () => {},
         ungroupedNodesCategory: "Topics",
         rootTransformFrame: "map",
         defaultFollowTransformFrame: null,
@@ -184,11 +196,11 @@ export function loadWebviz(hooksToSet) {
 
   const waitForFonts = require("webviz-core/src/styles/waitForFonts").default;
   const Confirm = require("webviz-core/src/components/Confirm").default;
-  const rootReducer = require("webviz-core/src/reducers").default;
+  const createRootReducer = require("webviz-core/src/reducers").default;
   const configureStore = require("webviz-core/src/store").default;
   const history = require("webviz-core/src/util/history").default;
 
-  const store = configureStore(rootReducer, [routerMiddleware(history)]);
+  const store = configureStore(createRootReducer(history), [routerMiddleware(history)]);
 
   function render() {
     const rootEl = document.getElementById("root");

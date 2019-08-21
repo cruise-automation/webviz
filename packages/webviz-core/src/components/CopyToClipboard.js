@@ -33,7 +33,7 @@ const Wrapper = styled.div`
 
 type Props = {
   children: React.Node,
-  styles: Object,
+  styles: any,
   copyValue?: any,
 };
 

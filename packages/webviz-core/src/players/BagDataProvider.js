@@ -23,6 +23,7 @@ import { bagConnectionsToDatatypes, bagConnectionsToTopics } from "webviz-core/s
 import CachedFilelike from "webviz-core/src/util/CachedFilelike";
 import Logger from "webviz-core/src/util/Logger";
 import type { Range } from "webviz-core/src/util/ranges";
+import reportError from "webviz-core/src/util/reportError";
 
 type BagPath = { type: "file", file: File | string } | { type: "remoteBagUrl", url: string };
 
@@ -87,12 +88,7 @@ export default class BagDataProvider implements RandomAccessDataProvider {
     const connections = ((Object.values(this._bag.connections): any): Connection[]);
     if (!startTime || !endTime || !connections.length) {
       // This will abort video generation:
-      extensionPoint.reportMetadataCallback({
-        type: "error",
-        source: "BagDataProvider",
-        errorType: "user",
-        message: "Invalid bag: bag is missing basic data.",
-      });
+      reportError("Invalid bag", "Bag is empty or corrupt.", "user");
       return new Promise(() => {}); // Just never finish initializing.
     }
 

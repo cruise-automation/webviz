@@ -58,13 +58,13 @@ describe("RpcDataProvider", () => {
     const provider = new RpcDataProvider(new Rpc(mainChannel), dummyChildren);
     const memoryDataProvider = new MemoryDataProvider(data);
     new RpcDataProviderRemote(new Rpc(workerChannel), () => memoryDataProvider);
-    const error = { type: "error", source: "test", errorType: "user", message: "test error" };
+    const metadata = { type: "updateReconnecting", reconnecting: true };
 
     await provider.initialize(extensionPoint);
     if (!memoryDataProvider.extensionPoint) {
       throw new Error("memoryDataProvider.extensionPoint should be set");
     }
-    memoryDataProvider.extensionPoint.reportMetadataCallback(error);
-    expect(extensionPoint.reportMetadataCallback.mock.calls[0][0]).toEqual(error);
+    memoryDataProvider.extensionPoint.reportMetadataCallback(metadata);
+    expect(extensionPoint.reportMetadataCallback.mock.calls[0][0]).toEqual(metadata);
   });
 });

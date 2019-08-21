@@ -17,6 +17,7 @@ import Icon from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
 import Modal, { Title } from "webviz-core/src/components/Modal";
 import renderToBody from "webviz-core/src/components/renderToBody";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import { setErrorHandler, unsetErrorHandler, type DetailsType } from "webviz-core/src/util/reportError";
 
@@ -139,16 +140,22 @@ const ModalBody = styled.div`
 `;
 
 // Exporting for tests.
-export function showErrorModal({ details, message }: ErrorMessage): void {
-  const detailsNode = React.isValidElement(details) ? details : null;
-  const detailsStr =
-    details instanceof Error ? details.stack : typeof details === "string" ? details : "No details provided";
+export function showErrorModal(error: ErrorMessage): void {
+  const { renderErrorDetails } = getGlobalHooks();
+  let details = renderErrorDetails ? renderErrorDetails(error.details) : error.details;
+  if (details instanceof Error) {
+    details = details.stack;
+  }
 
   const modal = renderToBody(
     <Modal onRequestClose={() => modal.remove()}>
       <ModalBody>
-        <Title style={{ color: colors.red }}>{message}</Title>
-        {detailsNode ? detailsNode : <pre style={{ whiteSpace: "pre-wrap", lineHeight: 1.3 }}>{detailsStr}</pre>}
+        <Title style={{ color: colors.red }}>{error.message}</Title>
+        {typeof details === "string" ? (
+          <pre style={{ whiteSpace: "pre-wrap", lineHeight: 1.3 }}>{details}</pre>
+        ) : (
+          details || "No details provided"
+        )}
       </ModalBody>
     </Modal>
   );

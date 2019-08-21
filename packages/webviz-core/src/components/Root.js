@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import { hot } from "react-hot-loader";
+import { hot } from "react-hot-loader/root";
 import { connect, Provider } from "react-redux";
 
 import styles from "./Root.module.scss";
@@ -30,6 +30,10 @@ import type { Auth } from "webviz-core/src/types/Auth";
 import type { ImportPanelLayoutPayload, PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
 import type { Store } from "webviz-core/src/types/Store";
 import { getPanelIdForType } from "webviz-core/src/util";
+import { setReactHotLoaderConfig } from "webviz-core/src/util/dev";
+
+// Only used in dev.
+setReactHotLoaderConfig();
 
 const LOGO_SIZE = 24;
 
@@ -148,5 +152,4 @@ const Root = ({ store }: { store: Store }) => {
   );
 };
 
-// $FlowFixMe
-export default hot(module)(Root);
+export default hot(Root);

@@ -8,6 +8,7 @@
 
 import cx from "classnames";
 import React, { PureComponent } from "react";
+import { hot } from "react-hot-loader/root";
 import { Creatable as ReactSelectCreatable } from "react-select";
 import VirtualizedSelect from "react-virtualized-select";
 import { createSelector } from "reselect";
@@ -207,4 +208,4 @@ class RosoutPanel extends PureComponent<Props, State> {
   }
 }
 
-export default Panel<Config>(RosoutPanel);
+export default hot(Panel<Config>(RosoutPanel));

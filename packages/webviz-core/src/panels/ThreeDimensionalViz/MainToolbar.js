@@ -26,7 +26,7 @@ type Props = {
   onToggleDebug: () => void,
 };
 
-export default function MainToolbar({
+function MainToolbar({
   measuringTool,
   measureInfo: { measureState },
   debug,
@@ -70,3 +70,5 @@ export default function MainToolbar({
     </div>
   );
 }
+
+export default React.memo<Props>(MainToolbar);

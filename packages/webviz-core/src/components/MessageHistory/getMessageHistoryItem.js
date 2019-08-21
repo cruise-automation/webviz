@@ -13,32 +13,10 @@ import {
   type MessagePathStructureItemMessage,
 } from ".";
 import { type RosPath, type MessagePathFilter } from "./internalCommon";
-import { messagePathStructures } from "webviz-core/src/components/MessageHistory/messagePathsForDatatype";
-import { enumValuesByDatatypeAndField, topicsByTopicName } from "webviz-core/src/selectors";
+import type { GlobalData } from "webviz-core/src/hooks/useGlobalData";
+import { enumValuesByDatatypeAndField } from "webviz-core/src/selectors";
 import type { Message, Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-
-// Get a new set of `items` that has `queriedData` set to the values and paths as
-// query by `rosPath`.
-export default function addValuesWithPathsToItems(
-  messages: Message[],
-  rosPath: RosPath,
-  topics: Topic[],
-  datatypes: RosDatatypes,
-  globalData: Object = {}
-): MessageHistoryItem[] {
-  const structures = messagePathStructures(datatypes);
-
-  const results = [];
-  for (const message of messages) {
-    const item = getItem(message, rosPath, topics, datatypes, globalData, structures);
-    if (item) {
-      results.push(item);
-    }
-  }
-
-  return results;
-}
 
 function filterMatches(filter: MessagePathFilter, value: any, globalData: any) {
   let filterValue = filter.value;
@@ -60,15 +38,15 @@ function filterMatches(filter: MessagePathFilter, value: any, globalData: any) {
   return currentValue == filterValue;
 }
 
-function getItem(
+// Get a new item that has `queriedData` set to the values and paths as queried by `rosPath`.
+export default function getMessageHistoryItem(
   message: Message,
   rosPath: RosPath,
-  topics: Topic[],
+  topic: Topic,
   datatypes: RosDatatypes,
-  globalData: Object = {},
+  globalData: GlobalData = {},
   structures: { [string]: MessagePathStructureItemMessage }
 ): ?MessageHistoryItem {
-  const topic = topicsByTopicName(topics)[rosPath.topicName];
   // We don't care about messages that don't match the topic we're looking for.
   if (!topic || message.topic !== rosPath.topicName) {
     return undefined;

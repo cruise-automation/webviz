@@ -18,7 +18,7 @@ const INPUT_OBJ = { id: 1, name: "foo" };
 const json = EDIT_FORMAT.JSON;
 const yaml = EDIT_FORMAT.YAML;
 
-function myValidator(data: Object = {}): ?ValidationResult {
+function myValidator(data: any = {}): ?ValidationResult {
   const rules = { id: [isNumber] };
   const validator = createValidator(rules);
   const result = validator(data);
@@ -30,7 +30,7 @@ function Box({ children }) {
 }
 
 function ControlExample({ format = EDIT_FORMAT.JSON }: { format?: EditFormat }) {
-  const [value, setValue] = React.useState<Object>(INPUT_OBJ);
+  const [value, setValue] = React.useState(INPUT_OBJ);
   React.useEffect(() => {
     setTimeout(() => {
       setValue({ id: 2, name: "bar" });

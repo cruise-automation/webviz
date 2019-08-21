@@ -23,8 +23,9 @@ type Props = {
   clickable?: boolean,
   className?: string,
   style?: { [string]: any },
-  tooltip?: string,
+  tooltip?: React.Node,
   tooltipProps?: $Shape<{ ...React.ElementConfig<typeof Tooltip> }>,
+  dataTest?: string,
 };
 
 const Icon = (props: Props) => {
@@ -41,6 +42,7 @@ const Icon = (props: Props) => {
     style,
     tooltip,
     tooltipProps,
+    dataTest,
   } = props;
   const classNames = cx("icon", styles.icon, className, {
     [styles.fade]: fade,
@@ -64,7 +66,7 @@ const Icon = (props: Props) => {
 
   return (
     <Tooltip contents={tooltip || null} {...tooltipProps}>
-      <span className={classNames} onClick={clickHandler} style={style}>
+      <span className={classNames} onClick={clickHandler} style={style} data-test={dataTest}>
         {children}
       </span>
     </Tooltip>

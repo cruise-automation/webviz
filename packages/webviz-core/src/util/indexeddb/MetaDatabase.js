@@ -75,11 +75,44 @@ function tryDelete(databaseName: string): Promise<boolean> {
   });
 }
 
+async function validateStorageQuota(): Promise<void> {
+  if (process.env.NODE_ENV === "test") {
+    // navigator.storage is not available in tests.
+    return;
+  }
+
+  // $FlowFixMe - doesn't understand navigator.storage
+  if (!navigator || !navigator.storage || !navigator.storage.estimate) {
+    throw new Error("navigator.storage.estimate not supported; we only support the latest version of Google Chrome");
+  }
+  const { quota } = await navigator.storage.estimate();
+  if (!quota) {
+    throw new Error(
+      "navigator.storage.estimate().quota not supported; we only support the latest version of Google Chrome"
+    );
+  }
+  const mbAvailable = Math.round(quota / 1000 / 1000);
+  if (mbAvailable < 200) {
+    // Incognito mode limits to ~100MB.
+    throw new Error(
+      `Less than 200MB available in IndexedDB: ${mbAvailable}MB. Are you using Incognito Mode? Unfortunately, we do not support streaming Webviz in Incognito Mode.`
+    );
+  }
+  if (mbAvailable < 2000) {
+    // 2GB should be enough in most cases. Good to have a bit of a buffer.
+    throw new Error(
+      `Less than 2GB available in IndexedDB: ${mbAvailable}MB. Make sure you have plenty of free space on your disk.`
+    );
+  }
+}
+
 export async function updateMetaDatabases(
   newDatabaseName: string,
   maxDatabases: number,
   metadataDatabaseName: string
 ): Promise<void> {
+  await validateStorageQuota();
+
   const metadataDatabase = await Database.get(getConfig(metadataDatabaseName));
   try {
     // see if we're opening a database we've already opened recently

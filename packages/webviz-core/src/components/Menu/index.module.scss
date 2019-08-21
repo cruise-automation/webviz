@@ -39,6 +39,20 @@
       color: $text-disabled;
     }
   }
+
+  &.header {
+    text-transform: uppercase;
+    background-color: $tooltip-background;
+    opacity: 0.5;
+    font-size: 10px;
+    letter-spacing: 1px;
+
+    &:hover {
+      cursor: default;
+      background-color: $tooltip-background;
+      opacity: 0.5;
+    }
+  }
 }
 
 .submenuIconLeft,

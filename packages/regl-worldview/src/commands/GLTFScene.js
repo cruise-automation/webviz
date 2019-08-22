@@ -116,13 +116,12 @@ const drawModel = (regl) => {
   // build the draw calls needed to draw the model. This will happen whenever the model changes.
   const getDrawCalls = memoizeWeak((model: GLBModel) => {
     // upload textures to the GPU
-    const { images, accessors } = model;
+    const { accessors } = model;
     const textures =
       model.json.textures &&
-      images &&
       model.json.textures.map((textureInfo) => {
         const sampler = model.json.samplers[textureInfo.sampler];
-        const bitmap: ImageBitmap = images[textureInfo.source];
+        const bitmap = model.images && model.images[textureInfo.source];
         const texture = regl.texture({
           data: bitmap,
           min: glConstantToRegl(sampler.minFilter),
@@ -142,7 +141,7 @@ const drawModel = (regl) => {
       for (const primitive of mesh.primitives) {
         const material = model.json.materials[primitive.material];
         const texInfo = material.pbrMetallicRoughness.baseColorTexture;
-        if (!accessors || !textures) {
+        if (!accessors) {
           throw new Error("Error decoding GLB file");
         }
         drawCalls.push({

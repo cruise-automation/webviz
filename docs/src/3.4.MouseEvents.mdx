@@ -57,11 +57,12 @@ Example:
 
 How do we detect which object was interacted with? We use a process called picking, in which we generate an off-screen canvas, or "hitmap", to paint our objects into, assign each object a unique color, and then paint each object into this hitmap. We then detect which object was clicked on by testing which color was underneath the cursor.
 
-The Worldview library allows a lot of control over this interaction, but most Commands can use one of two default `getChildrenForHitmap` functions.
+The Worldview library allows a lot of control over this interaction, but most Commands can use one of three default `getChildrenForHitmap` functions.
 
 | Name                       | Description                                                                                                                                                                  | Usage                                                                                |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `nonInstancedGetChildrenForHitmap`    | A default `getChildrenForHitmap` function for non-instanced commands.                                                                                                                   | `<Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} ... />`                                  |
+| `getChildrenForHitmapWithOriginalMarker`  | Almost identical to nonInstancedGetChildrenForHitmap, but instead the object passed to event callbacks is the object at `prop.originalMarker`, not just `prop`. This is useful for composing commands: see the code for `Arrows` for an example. | `<Command getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker} ... />` |
 | `createInstancedGetChildrenForHitmap` | A factory function for instanced commands. It takes the number of points per instance: for example, a triangle has 3 points, whereas a sphere has 1 point (just the center). | `<Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} ... />` |
 
 ##### Turning off interactivity for a layer

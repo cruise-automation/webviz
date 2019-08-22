@@ -12,6 +12,6 @@ export default function inScreenshotTests() {
   return (
     navigator.userAgent.includes("HeadlessChrome") ||
     window.location.search.includes("integration-test") ||
-    navigator.userAgent.includes("ChromePuppeteerTesting")
+    navigator.userAgent.includes("PuppeteerTestingChrome")
   );
 }

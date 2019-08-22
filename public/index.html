@@ -1,0 +1,702 @@
+<!--
+  Copyright (c) 2018-present, GM Cruise LLC
+
+  This source code is licensed under the Apache License, Version 2.0,
+  found in the LICENSE file in the root directory of this source tree.
+  You may not use this file except in compliance with the License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0,
+maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="Visualizing robotics data in the browser">
+    <title>Webviz</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono&display=swap" rel="stylesheet">
+    <meta property="og:title" content="Webviz" />
+    <meta property="og:description" content="Visualizing robotics data in the browser" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://webviz.io" />
+    <meta property="og:image" content="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/og-image.png" />
+    <style>
+      @import url('https://rsms.me/inter/inter.css');
+      html {
+          font-family: 'Inter', sans-serif;
+      }
+
+      @supports (font-variation-settings: normal) {
+          html {
+              font-family: 'Inter var', sans-serif;
+          }
+      }
+
+      @font-face {
+          font-family: "GT Cinetype";
+          src: url(./assets/font/cinetype-reg.ttf);
+      }
+
+      html {
+          -webkit-appearance: none;
+          padding: 0;
+          height: 100%;
+      }
+
+      body {
+          font-family: 'GT Cinetype', 'Inter var', monospace;
+          color: #f7f7f3;
+          background-color: #141419;
+          text-align: center;
+          position: relative;
+          padding-bottom: 6rem;
+          margin: 0px;
+      }
+
+      .container-overflow {
+        overflow-x: hidden;
+        overflow-y: hidden;
+      }
+
+      .attribution,
+      .gallery-item-caption,
+      button,
+      #text-webviz {
+          font-family: 'Roboto Mono', monospace;
+      }
+
+      header,
+      footer {
+          padding: 12px;
+          margin: auto;
+          position: absolute;
+          z-index: 9;
+          width: 100%;
+
+      }
+
+      header {
+          padding: 20px;
+          text-align: right;
+          background-color: #14141a70;
+          right: 0;
+      }
+
+      footer {
+          padding: 0;
+          text-align: center;
+          padding-bottom: 32px;
+      }
+
+      a {
+          text-decoration: none;
+      }
+
+      header a,
+      footer a {
+          color: #c6b9ff;
+          padding: 8px;
+          opacity: 0.7;
+          letter-spacing: 0.2px;
+          text-transform: lowercase;
+      }
+
+      header a:hover,
+      footer a:hover {
+          opacity: 1.0;
+      }
+
+      a.in-copy {
+          text-decoration: underline;
+      }
+
+
+      a.in-copy:hover {
+          text-decoration: none;
+          background-color: #c6b9ff;
+          color: black;
+      }
+
+      .attribution {
+      font-size: 12px;
+      color: grey;
+      letter-spacing: 0.5px
+      }
+
+      .attribution a {
+        color: orange;
+        opacity: 0.8;
+      }
+      .attribution a:hover {
+
+        opacity: 1.0;
+      }
+
+
+
+      h1,
+      h2,
+      h3,
+      p,
+      button,
+      a,
+      .gallery-caption {
+          color: #fafafa;
+          font-weight: 400;
+          text-align: left;
+          max-width: 420px;
+      }
+
+      h1 {
+          font-size: 54px;
+          line-height: 64px;
+          margin: 0px;
+      }
+
+      h2 {
+          font-size: 28px;
+          line-height: 40px;
+          max-width: 720px;
+          margin-bottom: 4px;
+      }
+
+      h3 {
+          line-height: 20px;
+          margin: 16px 0px 4px;
+          font-size: 16px;
+          opacity: 1.0;
+      }
+
+      button {
+          border: none;
+          background-color: rgba(20,20,25,0.0);
+          border: 1px solid #c6b9ff;
+          color: #c6b9ff;
+          color: lightgreen;
+          border-color: lightgreen;
+          border-radius: 20px;
+          padding: 6px 16px 8px 16px;
+          margin: 24px 16px 16px 0;
+          font-size: 14px;
+          letter-spacing: 0.5px;
+          display: block;
+          text-align: center;
+          margin-top: 52px;
+          text-transform: lowercase;
+          cursor: pointer;
+      }
+
+      button:hover {
+          background-color: lightgreen;
+          color: #141419;
+          border-color: transparent;
+      }
+
+      button:focus {
+          outline: none;
+      }
+
+      section {
+          display: flex;
+          min-height: 540px;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          margin: auto;
+          flex-direction: column;
+          padding: 30px;
+          padding-top: 16px;
+          padding-bottom: 64px;
+          /*padding-top: 64px;*/
+      }
+
+      section#intro {
+          height: 84vh;
+          flex-direction: row;
+          justify-content: center;
+      }
+
+      .bg {
+          position: absolute;
+          top: 0;
+          opacity: 1.0;
+          width: 1200px;
+          z-index: -1;
+      }
+
+      .gallery {
+          position: relative;
+          align-items: center;
+          justify-content: space-evenly;
+          flex-direction: column;
+          flex-wrap: wrap;
+          padding-top: 48px;
+          height: auto;
+      }
+
+      .gallery-row {
+          display: flex;
+          justify-content: space-around;
+          align-items: flex-end;
+      }
+
+      .gallery-item {
+          flex: 1;
+          padding: 0px 36px 56px 36px;
+      }
+
+      .gallery-caption {
+          text-align: left;
+          padding: 16px;
+          padding-left: 0;
+          padding-top: 0;
+          padding-bottom: 32px;
+          font-size: 16px;
+          /*color: #c6b9ff;*/
+          z-index: 10000;
+          max-width: 316px;
+          /*font-family: 'Roboto Mono', monospace;*/
+      }
+
+      #text-webviz {
+          font-size: 12px;
+          letter-spacing: 3.4px;
+          font-weight: 100;
+
+
+          width: fit-content;
+          /*padding: 0px 4px 0px 4px;*/
+          margin-bottom: 12px;
+          /*border: 1px solid #fc6d83;*/
+          color: white;
+
+      }
+
+      #img-hero {
+        width:500px;
+        border: 1px solid #ab91e6;
+        padding: 1px;
+      }
+
+      #img-demo {
+          width: 100%;
+          margin-bottom: 16px;
+      }
+
+
+      #img-props {
+          bottom: -840px;
+          left: -600px;
+          width: 1270px;
+          transform: rotate(340deg);
+      }
+
+      #img-props-2 {
+          top:  200px;
+          left: 570px;
+          width: 1500px;
+          transform: rotate(71deg);
+          opacity: 0.8;
+      }
+
+      #img-props-3 {
+          left: -1250px;
+          top: -1060px;
+          transform: rotate(-18deg);
+          width: 1564px;
+      }
+
+      .panel-img-border {
+          border: 1px solid #ab91e685;
+          padding: 1px;
+          background-color: #141119;
+      }
+
+
+
+
+      .panel-img {
+          opacity: 1.0;
+          background-color: #141419;
+          height: auto;
+      }
+
+      /* xlarge monitor */
+      /*@media only screen
+      and (min-width : 1654px) {
+        h1,
+        h2,
+        h3,
+        p,
+        button,
+        a,
+        .gallery-caption {
+            max-width: 900px;
+        }
+
+        h1 {
+          font-size: 100px;
+          line-height: 104px;
+          width: 740px;
+
+        }
+
+        h2 {
+
+        }
+
+        h3 {
+
+        }
+
+        button {
+
+        }
+
+        #img-hero {
+          width: 800px;
+        }
+
+        #img-demo {
+        }
+      }*/
+
+
+
+
+      /* laptop */
+      @media only screen
+      /*and (max-width: 1654px)*/
+      and (min-width: 730px) {
+
+        section {
+          margin: auto;
+        }
+        #img-hero {
+          width: 50vw;
+          margin-left: 2vw;
+          max-width: 540px;
+        }
+
+        #img-demo {
+          max-width: 1200px;
+        }
+
+        h1 {
+          margin-right: 2vw;
+          min-width: 276px;
+        }
+
+
+        .gallery-caption {
+          max-width: 28vw;
+        }
+
+        #panel-threed {
+          width: 28vw;
+          max-width: 700px;
+
+        }
+        #panel-image {
+          width: 28vw;
+          max-width: 560px;
+        }
+        #panel-plot {
+          width: 40vw;
+          max-width: 560px;
+        }
+        #panel-rosout  {
+          width: 50vw;
+
+        }
+
+        #rosout {
+          margin-top: -132px;
+        }
+
+        #plot {
+          margin-top: 40px;
+
+        }
+
+        #threed {
+          margin-top: 0px;
+        }
+      }
+
+      /* tablet */
+      @media only screen
+      and (max-width: 730px)
+       {
+        h1 {
+
+          font-size: 52px;
+          line-height: 50px;
+          max-width: 470px;
+
+        }
+
+        h2 {
+          font-size: 24px;
+          line-height: 36px;
+          margin-bottom: 8px;
+          margin-top: 8px;
+        }
+
+        h3 {
+          margin-top: 8px;
+          width: 84vw;
+        }
+
+        section#intro {
+            flex-direction: column-reverse;
+            justify-content: center;
+            min-height: 0;
+            margin: 0;
+            margin-right: auto;
+            margin-left: auto;
+            width: 84vw;
+            height: 90vh;
+          }
+
+
+        #text-webviz {
+          font-size: 12px;
+          margin-bottom: 8px;
+        }
+        #img-hero {
+          width: 54vw;
+          margin-left: 0;
+          max-width: 500px;
+          margin-bottom: 1.4vh;
+          /*position: absolute;*/
+        }
+
+        button {
+          display: none;
+        }
+
+        #img-demo {
+
+        }
+
+        #container-headline {
+
+        }
+
+        .gallery-item {
+          padding: 0px;
+          padding-bottom: 28px;
+        }
+
+        .gallery-row {
+          flex-direction: column;
+        }
+
+        .gallery-caption {
+          max-width: 80vw;
+          padding-bottom: 20px;
+        }
+
+        .panel-img {
+          height: auto;
+          width: 84vw;
+        }
+
+      }
+
+      /* phone */
+      @media only screen
+      and (max-width : 480px)
+       {
+
+
+
+         h1 {
+
+         }
+
+         h2 {
+           font-size: 20px;
+           line-height: 26px;
+         }
+
+         #img-hero {
+           width: 83vw;
+         }
+
+
+         .gallery-row {
+           flex-direction: column;
+         }
+
+         .panel-img {
+           height: auto;
+           width: 84vw;
+         }
+      }
+
+      @media only screen
+      and (max-width: 340px) {
+
+        section#intro {
+            height: 100vh;
+          }
+      }
+
+      @media only screen
+      and (max-height: 620px)
+      and (min-width: 400px) {
+
+        #img-hero {
+          width: 40vh;
+        }
+
+      }
+
+    </style>
+
+</head>
+
+<body>
+    <div class="container-overflow">
+        <header>
+            <a target="_blank" href="https://webviz.io/try/">Use Webviz</a>
+            <a target="_blank" href="https://github.com/cruise-automation/webviz">Github</a>
+            <a target="_blank" href="https://getcruise.com/">Cruise</a>
+        </header>
+        <section id="intro">
+            <img class="bg" id="img-props" src="./assets/illustrations/header.png" />
+            <div id="container-headline">
+                <p id="text-webviz">WEBVIZ</p>
+                <h1>Visualizing robotics data in the browser</h1>
+                <div style="width: 100%; display: flex">
+                    <a target="_blank" href="https://webviz.io/try/?demo">
+                        <button>
+                            View demo
+                        </button>
+                    </a>
+                </div>
+            </div>
+            <div>
+                <video id="img-hero" width="500" autoplay loop muted
+                    poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/wobble2.gif">
+                    <source src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/hero.webm"
+                        type="video/webm">
+                </video>
+            </div>
+        </section>
+
+        <section>
+            <img class="bg" id="img-props-2" src="./assets/illustrations/header.png" />
+            <h2>
+                Cruise uses Webviz to visualize thousands of complex decisions our vehicles make–both on the road and in
+                simulation.
+                Drag and drop your own <a target="_blank" class="in-copy" href="http://wiki.ros.org/Bags">ROS bag
+                    files</a> into Webviz to get immediate visual insight into your robotics data.
+            </h2>
+
+            <h2>
+
+            </h2>
+            <video id="img-demo" height="" autoplay loop muted
+                poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/fullsmall.gif">
+                <source src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/rawvelodyne.webm"
+                    type="video/webm">
+            </video>
+        </section>
+
+        <section class="gallery">
+            <div style="padding-bottom: 40px">
+                <h2>
+                    Webviz is powerful because it is modular.
+                    Using Webviz, you can compose your own data visualization layouts from a collection of configurable
+                    panels.
+                </h2>
+                <h2 class="attribution">
+                     // rosbags used in these examples:
+                        <a target="_blank" href="https://github.com/udacity/didi-competition"> 1, </a>
+                        <a target="_blank" href="https://projects.csail.mit.edu/stata/downloads.php"> 2 </a>
+                </h2>
+            </div>
+            <div class="gallery-row">
+                <div class="gallery-item" id="threed">
+                    <div class="panel-img-border">
+                        <video class="panel-img" id="panel-threed" autoplay loop muted
+                            poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/tframe.gif">
+                        </video>
+                    </div>
+                    <h3>
+                        3D panel visualizes ROS marker messages
+                    </h3>
+                </div>
+
+                <div class="gallery-item" id="plot">
+                    <div class="panel-img-border">
+                        <video class="panel-img" id="panel-plot" autoplay loop muted
+                            poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/plot1.mov.gif">
+                            <source
+                                src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/plot1.mov.webm"
+                                type="video/webm">
+                        </video>
+                    </div>
+                    <h3>
+                        Plot panel charts topic values for easy comparison
+                    </h3>
+                </div>
+            </div>
+
+            <div class="gallery-row">
+                <div class="gallery-item">
+                  <div class="panel-img-border">
+                      <video class="panel-img" id="panel-image" height="" autoplay loop muted
+                          poster="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/image1.mov.gif">
+                          <source
+                              src="https://open-source-webviz-ui.s3-us-west-2.amazonaws.com/landing/image1.mov.webm"
+                              type="video/webm">
+                      </video>
+                  </div>
+                    <h3>
+                        Image panel displays ROS image messages
+                    </h3>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <img class="bg" id="img-props-3" src="./assets/illustrations/footer.png"> </img>
+            <h2>
+                Cruise's work could not have been possible without the help of countless open-source resources. We hope
+                our own contributions (like Webviz, <a target="_blank" class="in-copy"
+                    href="https://cruise-automation.github.io/webviz/worldview/">Worldview</a>, and <a target="_blank"
+                    class="in-copy" href="https://github.com/cruise-automation/rosbag.js">rosbag.js</a>) will help others in the robotics community build the next
+                generation of visionary technology.
+
+            </h2>
+            <h2>
+                If you are interested in working on the most challenging problems in the self-driving industry, <a
+                    target="_blank" class="in-copy" href="https://getcruise.com/careers">join us</a> on Cruise's
+                Engineering Productivity team.
+            </h2>
+            <div style="width: 100%; justify-content: start; display: flex  ; max-width: 720px;">
+                <a target="_blank" href="https://webviz.io/try/?demo">
+                    <button>
+                        View demo
+                    </button>
+                </a>
+            </div>
+        </section>
+
+        <footer>
+            <a target="_blank" href="https://webviz.io/try/">Use Webviz</a>
+            <a target="_blank" href="https://github.com/cruise-automation/webviz">Github</a>
+            <a target="_blank" href="https://getcruise.com/">Cruise</a>
+        </footer>
+    </div>
+</body>
+
+
+</html>
+

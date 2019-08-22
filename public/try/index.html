@@ -1,0 +1,58 @@
+<!--
+  Copyright (c) 2018-present, GM Cruise LLC
+
+  This source code is licensed under the Apache License, Version 2.0,
+  found in the LICENSE file in the root directory of this source tree.
+  You may not use this file except in compliance with the License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- THIS COMMENT IS A HOOK FOR ANALYTICS - please do not change -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="theme-color" content="#000000" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,400i,700,700i" rel="stylesheet" />
+    <title>webviz</title>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  </head>
+  <body>
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <div id="root"></div>
+    <div id="topLevelError" style="display: none; margin: 20px; font-size: 16px; position: absolute;">
+      An error occurred:<br />
+      <div id="topLevelErrorMessage"></div>
+      <br />
+      Troubleshooting steps:
+      <ul style="list-style: disc inside;">
+        <li>
+          Make sure you&rsquo;re using the latest version of
+          <a href="https://www.google.com/chrome" style="display: inline">Google Chrome</a>.
+        </li>
+        <li>
+          Look in the Chrome
+          <a href="https://developers.google.com/web/tools/chrome-devtools/console/">developer console</a> for more
+          error details.
+        </li>
+        <!-- THIS COMMENT IS A HOOK FOR TROUBLESHOOTING STEPS - please do not change -->
+      </ul>
+    </div>
+    <script type="text/javascript">
+      /* THIS COMMENT IS A HOOK FOR INITIAL STATE - please do not change */
+      // catch and display script errors from bundle.js
+      window.webviz_handleTopLevelError = (event) => {
+        window.webviz_caughtTopLevelError = true;
+        document.getElementById("topLevelErrorMessage").innerText = event.message;
+        document.getElementById("topLevelError").style.display = "block";
+      };
+      window.addEventListener("error", window.webviz_handleTopLevelError);
+    </script>
+    <script src="/dist/webvizCoreBundle.js"></script>
+    <script type="text/javascript">
+      window.removeEventListener("error", window.webviz_handleTopLevelError);
+      if (!window.webviz_caughtTopLevelError) {
+        document.getElementById("topLevelError").remove();
+      }
+    </script>
+  </body>
+</html>

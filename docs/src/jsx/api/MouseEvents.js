@@ -14,7 +14,8 @@ import seedrandom from "seedrandom";
 
 // #BEGIN EDITABLE
 function Example() {
-  const rng = seedrandom();
+  const SEED = 555;
+  const rng = seedrandom(SEED);
   const randomCubeFacts = [
     "A cube is a three dimensional shape",
     "A cube has 6 square faces.",

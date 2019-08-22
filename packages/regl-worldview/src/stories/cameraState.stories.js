@@ -148,7 +148,7 @@ class CameraStateStory extends React.Component<Props, State> {
   }
 }
 
-const stories = storiesOf("Worldview", module);
+const stories = storiesOf("Worldview/cameraState", module);
 stories
   .addDecorator(withKnobs)
   .addDecorator(withScreenshot())

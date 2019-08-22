@@ -5,5 +5,6 @@
 //  You may not use this file except in compliance with the License.
 
 export default function inScreenshotTests() {
-  return navigator.userAgent.includes("HeadlessChrome");
+  // screenshot tests are not always in a headless Chrome, so we set a custom user agent for screenshot testing.
+  return navigator.userAgent.includes("HeadlessChrome") || navigator.userAgent.includes("ChromePuppeteerTesting");
 }

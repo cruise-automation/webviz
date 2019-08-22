@@ -69,3 +69,5 @@ __screenshots__/
 dist/
 lib/
 
+# reg-suit generated files
+.reg/

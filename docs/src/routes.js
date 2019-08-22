@@ -35,6 +35,7 @@ import Lines from "./4.6.Lines.mdx";
 import Overlay from "./4.7.Overlay.mdx";
 import Points from "./4.8.Points.mdx";
 import Spheres from "./4.9.Spheres.mdx";
+import MigratingToVersion02x from "./5.1.MigratingToVersion0.2.x.mdx";
 
 export const componentList = {
   BasicExample,
@@ -68,6 +69,7 @@ export const componentList = {
   Grid,
   BrowserSupport,
   Glossary,
+  ["MigratingToVersion0.2.X"]: MigratingToVersion02x,
 };
 
 const ROUTE_CONFIG = [
@@ -103,6 +105,10 @@ const ROUTE_CONFIG = [
       "Grid",
     ],
   },
+  {
+    name: "Migration Notes",
+    subRouteNames: ["Migrating To Version 0.2.x"],
+  },
 ];
 
 let nameToUrlMap;
@@ -115,8 +121,8 @@ export function getHashUrlByComponentName(name) {
     ROUTE_CONFIG.forEach(({ name, subRouteNames }) => {
       subRouteNames.forEach((subRouteName) => {
         const componentName = getComponentName(subRouteName);
-        const subRoutePath = getSubRoutePath(subRouteName);
-        nameToUrlMap[componentName] = `/docs/${name.toLowerCase()}/${subRoutePath}`;
+        const subRoutePath = getRoutePath(subRouteName);
+        nameToUrlMap[componentName] = `/docs/${getRoutePath(name)}/${subRoutePath}`;
       });
     });
   }
@@ -125,23 +131,22 @@ export function getHashUrlByComponentName(name) {
 
 // convert route names to component names, e.g. `Managing the Camera` => `ManagingTheCamera`
 function getComponentName(routeName) {
-  return routeName.replace(/(\b[a-z](?!\s))/g, (firstWordLetter) => firstWordLetter.toUpperCase()).replace(/\s/g, "");
+  return routeName.replace(/(\b[a-z.](?!\s))/g, (firstWordLetter) => firstWordLetter.toUpperCase()).replace(/\s/g, "");
 }
 
-function getSubRoutePath(subRouteName) {
+function getRoutePath(subRouteName) {
   return `${subRouteName.toLowerCase().replace(/\s/g, "-")}`;
 }
 
 export default ROUTE_CONFIG.map(({ name, subRouteNames }) => {
-  const componentName = getComponentName(name);
   return {
-    path: `/docs/${componentName.toLowerCase()}`,
-    name: componentName,
+    path: `/docs/${getRoutePath(name)}`,
+    name,
     exact: true,
     subRoutes: subRouteNames.map((subRouteName, idx) => {
       const subComponentName = getComponentName(subRouteName);
       return {
-        path: `/${getSubRoutePath(subRouteName)}`,
+        path: `/${getRoutePath(subRouteName)}`,
         name: subRouteName,
         main: subComponentName,
       };

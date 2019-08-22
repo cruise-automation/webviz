@@ -142,7 +142,7 @@ const drawModel = (regl) => {
         const material = model.json.materials[primitive.material];
         const texInfo = material.pbrMetallicRoughness.baseColorTexture;
         if (!accessors) {
-          throw new Error("Error decoding GLB file");
+          throw new Error("Error decoding GLB model: Missing `accessors` in JSON data");
         }
         drawCalls.push({
           indices: accessors[primitive.indices],

@@ -8,5 +8,5 @@
 
 export function inScreenshotTests() {
   // screenshot tests are not always in a headless Chrome, so we set a custom user agent for screenshot testing.
-  return navigator.userAgent.includes("HeadlessChrome") || navigator.userAgent.includes("ChromePuppeteerTesting");
+  return navigator.userAgent.includes("HeadlessChrome") || navigator.userAgent.includes("PuppeteerTestingChrome");
 }

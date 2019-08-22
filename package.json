@@ -128,8 +128,8 @@
     "docs-deploy": "cp -r docs/public __temp_deploy__ && cp --remove-destination packages/webviz-core/public/index.html __temp_deploy__/try/index.html && echo 'webviz.io' > __temp_deploy__/CNAME && gh-pages -d __temp_deploy__ && rm -rf __temp_deploy__",
     "publish": "lerna run clean && lerna run build && lerna publish",
     "screenshot": "NODE_ENV=development storybook-chrome-screenshot -c stories --parallel 8 --inject-files stories/injected.js --browser-timeout 1200000",
-    "screenshot-ci": "npm run screenshot -- --puppeteer-launch-config '{\"executablePath\": \"/usr/bin/google-chrome\", \"headless\": false, \"args\":[\"--use-gl=swiftshader\", \"--no-sandbox\",\"--disable-setuid-sandbox\", \"--disable-dev-shm-usage\", \"--headless\", \"--mute-audio\", \"--user-agent=ChromePuppeteerTesting\"]}'",
-    "screenshot-debug": "npm run screenshot -- --parallel 1 --debug --puppeteer-launch-config '{\"headless\": false, \"--args\":[\"--user-agent=ChromePuppeteerTesting\"]}'",
+    "screenshot-ci": "npm run screenshot -- --puppeteer-launch-config '{\"executablePath\": \"/usr/bin/google-chrome\", \"headless\": false, \"args\":[\"--use-gl=swiftshader\", \"--no-sandbox\",\"--disable-setuid-sandbox\", \"--disable-dev-shm-usage\", \"--headless\", \"--mute-audio\", \"--user-agent=PuppeteerTestingChrome/72.\"]}'",
+    "screenshot-debug": "npm run screenshot -- --parallel 1 --debug --puppeteer-launch-config '{\"headless\": false, \"--args\":[\"--user-agent=PuppeteerTestingChrome/72.\"]}'",
     "ci-commands-for-cruise-proprietary-repo": "npm run install-ci && NODE_ENV=production npm run build && npm run lint && npm run flow && npm test && NODE_ENV=production npm run screenshot-ci",
     "ci": "npm run ci-commands-for-cruise-proprietary-repo && reg-suit run --verbose"
   },

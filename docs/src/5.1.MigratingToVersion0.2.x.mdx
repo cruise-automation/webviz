@@ -1,0 +1,89 @@
+# Migrating from 0.1.x to 0.2.x
+
+The 0.2.1 Worldview release brought a new API for managing interactions and a variety of changes to how interactions are done. This is a breaking change - code that worked under 0.1.x may silently fail under 0.2.x. Below is a summary of what changed and how to update your own code.
+
+## Mouse event changes
+
+Previously, the Worldview-level event handler was only passed an `objectId`, not the full object being clicked. Now both the Worldview-level event handlers and Command-level event handlers pass the same information about the click: the ray, and an array of objects that contain the object being clicked and the `instanceIndex`, if the clicked object is part of an instanced command. The objects that are returned should be the exact objects passed into the Command as children to be rendered.
+
+We now pass an array of objects because stacked object events can now optionally be enabled: passing `enableStackedObjectEvents={true}` to the `Worldview` component allows seeing all objects at the point the user clicked on, instead of just the top-level object. Enabling this feature may reduce performance, as the scene is rendered repeatedly while objects are removed until nothing is left under the clicked point.
+```js
+// New type
+type ClickedObject = {
+  object: Object,
+  instanceIndex?: ?number,
+};
+
+export type ReglClickInfo = {
+  ray: Ray,
+  objects: Array<ClickedObject>,
+};
+
+export type MouseHandler = (MouseEvent, ReglClickInfo) => void;
+```
+
+Usage:
+
+```js
+// Old
+<Worldview
+  onClick={(event, { ray, objectId }) => {
+    setSelectedObjectId(objectId);
+  }}>
+  ...
+</Worldview>
+// New
+<Worldview
+  onClick={(event, { ray, objects }) => {
+    setSelectedObjects(objects.map(({ object, instanceIndex }) => object));
+  }}
+  enableStackedObjectEvents>
+  ...
+</Worldview>
+```
+
+## Hitmap changes
+
+See [MouseEvents](#/docs/api/mouse-events) for basic info on the new `getChildrenForHitmap` API and an introduction to how hitmap picking works.
+
+For stacked objects, we run this hitmap rendering multiple times. We note which object was picked, then exclude it from the next rendering cycle, until we stop hitting objects.
+
+Previously, each Command was responsible for assigning a unique identifier to each object (also referred to as a `hitmapId`) and converting this to a color. Now there is a more batteries-included API for assigning these colors.
+
+This means that we no longer support passing the `getObjectFromHitmapId`, `getHitmapId`, `getHitmapProps`, or `hitmapProps` props into a Command instance.
+
+Instead we have a single function, `getChildrenForHitmap`. This function takes as arguments the children passed into the Command, another function that helps assign colors for the hitmap, and a list of objects that we want to exclude from rendering (used for stacked object hitmaps). It returns new children that we use for rendering to the hitmap.
+
+Similarly to the previous API, there are a few default `getChildrenForHitmap` functions available to you to use.
+
+```js
+// Old
+<Cubes getHitmapId={getHitmapId} getObjectFromHitmapId={getObjectFromHitmapId}>{cubes}</Cubes>
+
+// New
+<Cubes getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)}>{cubes}</Cubes>
+```
+
+## Command syntax changes and removal of `makeCommand()`
+
+Because the Command has been simplified, there wasn't any need for a `makeCommand` wrapper any longer. The `makeCommand` function has been removed. Simply wrap the `Command` in another React component that passes its props through, while specifying the `getChildrenForHitmap` function and the `reglCommand`. It's recommended that the `getChildrenForHitmap` function be overrideable and the `reglCommand` not be overrideable through props — see [MouseEvents](#/docs/api/mouse-events) for more on this.
+
+To help with flow typing props that all Commands can have such as `layerIndex` or mouse event handlers, we provide the `CommonCommandProps` export.
+
+One minor change: Commands no longer takes a `drawProps` prop. Pass the objects that you want to render as `children`.
+
+```js
+// Old
+const Cubes = makeCommand("Cubes", rawReglCommand, {
+  getHitmapProps: () => {...},
+  getObjectFromHitmapId:  () => {...},
+});
+
+// New
+export default function Cubes(props: { ...CommonCommandProps, children: Cube[] }) {
+  // Commands no longer takes a `drawProps` prop. Pass the objects that you want to render as `children`.
+  // reglCommand is not overrideable, but getChildrenForHitmap is.
+  return <Command getChildrenForHitmap={...} {...props} reglCommand={cubes} />;
+}
+```
+

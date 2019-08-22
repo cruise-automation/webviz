@@ -17,7 +17,7 @@ You can move the camera around using the mouse/trackpad, or by using the keyboar
 
 | Name                | Type      | Default        | Description                                                                                     |
 | ------------------- | --------- | -------------- | ----------------------------------------------------------------------------------------------- |
-| `perspective`       | `boolean` | `true`         | type of the camera, default to orthographic (2D), pass in `true` to enable perspective (3D)     |
+| `perspective`       | `boolean` | `true`         | type of the camera, default to perspective (3D), pass in `false` to use orthographic (2D)       |
 | `target`            | `vec3`    | `[0, 0, 0]`    | position of the target                                                                          |
 | `targetOrientation` | `quat`    | `[0, 0, 0, 1]` | orientation of the target (only yaw angle is used to determine camera placement)                |
 | `targetOffset`      | `vec3`    | `[0, 0, 0]`    | additional offset for the camera, specified in the `target`/`targetOrientation` reference frame |

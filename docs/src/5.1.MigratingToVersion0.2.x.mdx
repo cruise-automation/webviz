@@ -4,9 +4,9 @@ The 0.2.1 Worldview release brought a new API for managing interactions and a va
 
 ## Mouse event changes
 
-Previously, the Worldview-level event handler only passed an `objectId`, not the full object being clicked. Now both the Worldview-level event handlers and Command-level event handlers pass the same information about the click: the ray, and an array of objects that contain the object being clicked and the `instanceIndex`, if the clicked object is part of an instanced command.
+Previously, the Worldview-level event handler was only passed an `objectId`, not the full object being clicked. Now both the Worldview-level event handlers and Command-level event handlers pass the same information about the click: the ray, and an array of objects that contain the object being clicked and the `instanceIndex`, if the clicked object is part of an instanced command. The objects that are returned should be the exact objects passed into the Command as children to be rendered.
 
-We now pass an array of objects because stacked object events can now optionally be enabled: passing `enableStackedObjectEvents={true}` to the `Worldview` component allows seeing all objects at the point the user clicked on, instead of just the top-level object.
+We now pass an array of objects because stacked object events can now optionally be enabled: passing `enableStackedObjectEvents={true}` to the `Worldview` component allows seeing all objects at the point the user clicked on, instead of just the top-level object. Enabling this feature may reduce performance, as the scene is rendered repeatedly while objects are removed until nothing is left under the clicked point.
 ```js
 // New type
 type ClickedObject = {
@@ -44,11 +44,11 @@ Usage:
 
 ## Hitmap changes
 
-How do we detect which object was interacted with? We use a process called picking, in which we generate an off-screen canvas, or "hitmap", to paint our objects into, assign each object a unique color, and then paint each object into this hitmap. We then detect which object was clicked on by testing which color was underneath the cursor.
+See [MouseEvents](#/docs/api/mouse-events) for basic info on the new `getChildrenForHitmap` API and an introduction to how hitmap picking works.
 
 For stacked objects, we run this hitmap rendering multiple times. We note which object was picked, then exclude it from the next rendering cycle, until we stop hitting objects.
 
-Previously, the assignment of these colors (also referred to as `hitmapIds`) was passed into each Command. Now there is an API for drawing these colors in a more scalable way.
+Previously, each Command was responsible for assigning a unique identifier to each object (also referred to as a `hitmapId`) and converting this to a color. Now there is a more batteries-included API for assigning these colors.
 
 This means that we no longer support passing the `getObjectFromHitmapId`, `getHitmapId`, `getHitmapProps`, or `hitmapProps` props into a Command instance.
 
@@ -64,11 +64,9 @@ Similarly to the previous API, there are a few default `getChildrenForHitmap` fu
 <Cubes getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)}>{cubes}</Cubes>
 ```
 
-See [MouseEvents](#/docs/api/mouse-events) for further info on the new hitmapId API.
+## Command syntax changes and removal of `makeCommand()`
 
-## Command syntax changes
-
-Because the Command has been simplified, there wasn't any need for a `makeCommand` wrapper any longer. The `makeCommand` function has been removed. Simply wrap the `Command` in another React component that passes it's props through, while specifying the `getChildrenForHitmap` function and the `reglCommand`. It's recommended that the `getChildrenForHitmap` function be overrideable and the `reglCommand` not be overrideable through props - see [MouseEvents](#/docs/api/mouse-events) for more on this.
+Because the Command has been simplified, there wasn't any need for a `makeCommand` wrapper any longer. The `makeCommand` function has been removed. Simply wrap the `Command` in another React component that passes its props through, while specifying the `getChildrenForHitmap` function and the `reglCommand`. It's recommended that the `getChildrenForHitmap` function be overrideable and the `reglCommand` not be overrideable through props — see [MouseEvents](#/docs/api/mouse-events) for more on this.
 
 To help with flow typing props that all Commands can have such as `layerIndex` or mouse event handlers, we provide the `CommonCommandProps` export.
 

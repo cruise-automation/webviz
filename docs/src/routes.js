@@ -121,8 +121,8 @@ export function getHashUrlByComponentName(name) {
     ROUTE_CONFIG.forEach(({ name, subRouteNames }) => {
       subRouteNames.forEach((subRouteName) => {
         const componentName = getComponentName(subRouteName);
-        const subRoutePath = getSubRoutePath(subRouteName);
-        nameToUrlMap[componentName] = `/docs/${name.toLowerCase()}/${subRoutePath}`;
+        const subRoutePath = getRoutePath(subRouteName);
+        nameToUrlMap[componentName] = `/docs/${getRoutePath(name)}/${subRoutePath}`;
       });
     });
   }
@@ -134,20 +134,19 @@ function getComponentName(routeName) {
   return routeName.replace(/(\b[a-z.](?!\s))/g, (firstWordLetter) => firstWordLetter.toUpperCase()).replace(/\s/g, "");
 }
 
-function getSubRoutePath(subRouteName) {
+function getRoutePath(subRouteName) {
   return `${subRouteName.toLowerCase().replace(/\s/g, "-")}`;
 }
 
 export default ROUTE_CONFIG.map(({ name, subRouteNames }) => {
-  const componentName = getComponentName(name);
   return {
-    path: `/docs/${componentName.toLowerCase()}`,
-    name: componentName,
+    path: `/docs/${getRoutePath(name)}`,
+    name,
     exact: true,
     subRoutes: subRouteNames.map((subRouteName, idx) => {
       const subComponentName = getComponentName(subRouteName);
       return {
-        path: `/${getSubRoutePath(subRouteName)}`,
+        path: `/${getRoutePath(subRouteName)}`,
         name: subRouteName,
         main: subComponentName,
       };

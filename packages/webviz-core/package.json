@@ -62,7 +62,7 @@
     "text-width": "1.2.0",
     "tinycolor2": "1.4.1",
     "uuid": "3.3.2",
-    "wasm-lz4": "0.0.2"
+    "wasm-lz4": "1.0.0"
   },
   "devDependencies": {
     "@testing-library/react-hooks": "1.1.0",

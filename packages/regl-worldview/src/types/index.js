@@ -164,6 +164,7 @@ export type Arrow = BaseShape & {
 
 export type Cube = BaseShape & {
   colors?: Color[],
+  points?: Point[] | Vec3[],
 };
 
 export type Cylinder = BaseShape;

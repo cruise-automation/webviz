@@ -7,9 +7,12 @@
 //  You may not use this file except in compliance with the License.
 
 import type { IntegrationTestModule } from "./types";
-import ArrowsIntegration from "./worldview/Arrows";
-import CubesIntegration from "./worldview/Cubes";
+import ArrowsTests from "./worldview/Arrows";
+import ConesTests from "./worldview/Cones";
+import CubesTests from "./worldview/Cubes";
+import CylinderTests from "./worldview/Cylinders";
+import SpheresTests from "./worldview/Spheres";
 
-const allTestModules: Array<IntegrationTestModule> = [CubesIntegration, ArrowsIntegration];
+const allTestModules: Array<IntegrationTestModule> = [ArrowsTests, ConesTests, CubesTests, CylinderTests, SpheresTests];
 
 export default allTestModules;

@@ -32,8 +32,9 @@ export function grid() {
     `,
     frag: `
       precision mediump float;
+      varying vec4 fragColor;
       void main () {
-        gl_FragColor = vec4(.3, .3, .3, 1.);
+        gl_FragColor = fragColor;
       }
     `,
     primitive: "lines",

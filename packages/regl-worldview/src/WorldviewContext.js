@@ -284,6 +284,14 @@ export class WorldviewContext {
 
               currentObjectId = getIdFromPixel(pixel);
               const mouseEventObject = this._hitmapObjectIdManager.getObjectByObjectHitmapId(currentObjectId);
+
+              // Check an error case: if we see an ID/color that we don't know about, it means that some command is
+              // drawing a color into the hitmap that it shouldn't be.
+              if (currentObjectId > 0 && !mouseEventObject) {
+                console.error(
+                  "Clicked on an unknown object. This likely means that a command is painting an incorrect color into the hitmap."
+                );
+              }
               // Check an error case: if we've already seen this object, then the getHitmapFromChildren function
               // is not respecting the excludedObjects correctly and we should notify the user of a bug.
               if (

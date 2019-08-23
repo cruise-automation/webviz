@@ -53,8 +53,13 @@ export function WorldviewWrapper(props: BaseProps) {
 export function generateNonInstancedClickTests<Type>(
   commandName: string,
   CommandInstance: React.ComponentType<{ children: Array<Type> }>,
-  renderedObjects: Array<Type>
+  renderedObjects: Array<Type>,
+  overrideOptions?: {
+    overrideExpectedSingleObjects?: any,
+    overrideExpectedMultipleObjects?: any,
+  } = {}
 ): Array<IntegrationTest> {
+  const options = overrideOptions || {};
   return [
     {
       name: `Clicks on a single ${commandName} - worldview event handler`,
@@ -66,7 +71,11 @@ export function generateNonInstancedClickTests<Type>(
       test: async (readFromTestData) => {
         await clickAtOrigin();
         const result = await readFromTestData();
-        expect(result).toEqual([{ object: renderedObjects[0] }]);
+        expect(result).toEqual(
+          options.overrideExpectedSingleObjects
+            ? options.overrideExpectedSingleObjects
+            : [{ object: renderedObjects[0] }]
+        );
       },
     },
     {
@@ -79,7 +88,11 @@ export function generateNonInstancedClickTests<Type>(
       test: async (readFromTestData) => {
         await clickAtOrigin();
         const result = await readFromTestData();
-        expect(result).toEqual([{ object: renderedObjects[0] }]);
+        expect(result).toEqual(
+          options.overrideExpectedSingleObjects
+            ? options.overrideExpectedSingleObjects
+            : [{ object: renderedObjects[0] }]
+        );
       },
     },
     {
@@ -92,7 +105,11 @@ export function generateNonInstancedClickTests<Type>(
       test: async (readFromTestData) => {
         await clickAtOrigin();
         const result = await readFromTestData();
-        expect(result).toEqual([{ object: renderedObjects[0] }, { object: renderedObjects[1] }]);
+        expect(result).toEqual(
+          options.overrideExpectedMultipleObjects
+            ? options.overrideExpectedMultipleObjects
+            : [{ object: renderedObjects[0] }, { object: renderedObjects[1] }]
+        );
       },
     },
     {
@@ -105,7 +122,11 @@ export function generateNonInstancedClickTests<Type>(
       test: async (readFromTestData) => {
         await clickAtOrigin();
         const result = await readFromTestData();
-        expect(result).toEqual([{ object: renderedObjects[0] }, { object: renderedObjects[1] }]);
+        expect(result).toEqual(
+          options.overrideExpectedMultipleObjects
+            ? options.overrideExpectedMultipleObjects
+            : [{ object: renderedObjects[0] }, { object: renderedObjects[1] }]
+        );
       },
     },
   ];

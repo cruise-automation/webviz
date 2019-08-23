@@ -12,6 +12,7 @@ import AxesTests from "./worldview/Axes";
 import ConesTests from "./worldview/Cones";
 import CubesTests from "./worldview/Cubes";
 import CylinderTests from "./worldview/Cylinders";
+import FilledPolygons from "./worldview/FilledPolygons";
 import SpheresTests from "./worldview/Spheres";
 
 const allTestModules: Array<IntegrationTestModule> = [
@@ -20,6 +21,7 @@ const allTestModules: Array<IntegrationTestModule> = [
   ConesTests,
   CubesTests,
   CylinderTests,
+  FilledPolygons,
   SpheresTests,
 ];
 

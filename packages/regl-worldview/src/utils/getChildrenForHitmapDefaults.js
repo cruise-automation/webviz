@@ -14,11 +14,13 @@ function nonInstancedGetChildrenForHitmapFromSingleProp<T: any>(
   excludedObjects: MouseEventObject[],
   useOriginalMarkerProp: boolean = false
 ): ?T {
-  if (excludedObjects.some(({ object }) => object === prop)) {
+  // The marker that we send to event callbacks.
+  const eventCallbackMarker = useOriginalMarkerProp ? prop.originalMarker : prop;
+  if (excludedObjects.some(({ object }) => object === eventCallbackMarker)) {
     return null;
   }
   const hitmapProp = { ...prop };
-  const [hitmapColor] = assignNextColors(useOriginalMarkerProp ? prop.originalMarker : prop, 1);
+  const [hitmapColor] = assignNextColors(eventCallbackMarker, 1);
   hitmapProp.color = hitmapColor;
   if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
     hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);

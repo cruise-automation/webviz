@@ -43,8 +43,8 @@ const instancedCube = {
 const CubesTests: IntegrationTestModule = {
   name: "Cubes",
   tests: [
-    ...generateNonInstancedClickTests<Cube>("cube", Cubes, twoCubesInARow),
-    ...generateInstancedClickTests<Cube>("cube", Cubes, instancedCube),
+    ...generateNonInstancedClickTests<Cube>("Cube", Cubes, twoCubesInARow),
+    ...generateInstancedClickTests<Cube>("Cube", Cubes, instancedCube),
   ],
 };
 

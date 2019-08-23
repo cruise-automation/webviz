@@ -7,8 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import type { IntegrationTestModule } from "./types";
+import ArrowsIntegration from "./worldview/Arrows";
 import CubesIntegration from "./worldview/Cubes";
 
-const allTestModules: Array<IntegrationTestModule> = [CubesIntegration];
+const allTestModules: Array<IntegrationTestModule> = [CubesIntegration, ArrowsIntegration];
 
 export default allTestModules;

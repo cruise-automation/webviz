@@ -246,7 +246,6 @@ export class WorldviewContext {
         let currentObjectId = 0;
         const excludedObjects = [];
         const mouseEventsWithCommands = [];
-        const seenObjectIds = new Set();
         let counter = 0;
 
         camera.draw(this.cameraStore.state, () => {
@@ -285,9 +284,14 @@ export class WorldviewContext {
 
               currentObjectId = getIdFromPixel(pixel);
               const mouseEventObject = this._hitmapObjectIdManager.getObjectByObjectHitmapId(currentObjectId);
-              // Check an error case: if we've already seen this hitmapObjectId, then the getHitmapFromChildren function
+              // Check an error case: if we've already seen this object, then the getHitmapFromChildren function
               // is not respecting the excludedObjects correctly and we should notify the user of a bug.
-              if (seenObjectIds.has(currentObjectId)) {
+              if (
+                excludedObjects.some(
+                  ({ object, instanceIndex }) =>
+                    object === mouseEventObject.object && instanceIndex === mouseEventObject.instanceIndex
+                )
+              ) {
                 const command =
                   mouseEventObject.object != null
                     ? this._hitmapObjectIdManager.getCommandForObject(mouseEventObject.object)
@@ -300,7 +304,6 @@ export class WorldviewContext {
                 );
                 break;
               }
-              seenObjectIds.add(currentObjectId);
 
               if (currentObjectId > 0 && mouseEventObject.object) {
                 const command = this._hitmapObjectIdManager.getCommandForObject(mouseEventObject.object);

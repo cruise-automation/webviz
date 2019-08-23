@@ -35,12 +35,18 @@ for (const testModule of allTestModules) {
 
     for (const integrationTest of testModule.tests) {
       it(integrationTest.name, async () => {
-        // Ensure that there are no errors thrown on the page.
-        let error = null;
-        const errorCallback = (e) => {
-          error = e;
+        // Ensure that there are no errors thrown or logged on the page.
+        const errors = [];
+        const consoleErrorCallback = (e) => {
+          if (e.type() === "error") {
+            errors.push(e.text());
+          }
         };
-        page.on("error", errorCallback);
+        const pageErrorCallback = (e) => {
+          errors.push(e.message);
+        };
+        page.on("console", consoleErrorCallback);
+        page.on("pageerror", pageErrorCallback);
 
         const pageName = getPageName(testModule.name, integrationTest.name);
         await page.goto(pageName);
@@ -48,8 +54,9 @@ for (const testModule of allTestModules) {
         const testScopedReadFromTestData = readFromTestData(integrationTest.name);
         await integrationTest.test(testScopedReadFromTestData);
 
-        expect(error).toEqual(null);
-        page.removeListener("pageError", errorCallback);
+        expect(errors).toEqual([]);
+        page.removeListener("console", consoleErrorCallback);
+        page.removeListener("pageerror", pageErrorCallback);
       });
     }
   });

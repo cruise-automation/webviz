@@ -12,9 +12,10 @@ import AxesTests from "./worldview/Axes";
 import ConesTests from "./worldview/Cones";
 import CubesTests from "./worldview/Cubes";
 import CylinderTests from "./worldview/Cylinders";
-import FilledPolygons from "./worldview/FilledPolygons";
-import GLTFScene from "./worldview/GLTFScene";
-import Grid from "./worldview/Grid";
+import FilledPolygonsTests from "./worldview/FilledPolygons";
+import GLTFSceneTests from "./worldview/GLTFScene";
+import GridTests from "./worldview/Grid";
+import LinesTests from "./worldview/Lines";
 import SpheresTests from "./worldview/Spheres";
 
 const allTestModules: Array<IntegrationTestModule> = [
@@ -23,9 +24,10 @@ const allTestModules: Array<IntegrationTestModule> = [
   ConesTests,
   CubesTests,
   CylinderTests,
-  FilledPolygons,
-  GLTFScene,
-  Grid,
+  FilledPolygonsTests,
+  GLTFSceneTests,
+  GridTests,
+  LinesTests,
   SpheresTests,
 ];
 

@@ -58,16 +58,20 @@ const allDemos = {
   GLTFScene,
 };
 
+// Some of these demos have movement, which we do want to allow, but which doesn't play well with screenshot tests.
+const demosWithoutScreenshotTests = [DynamicCommands, FilledPolygons, Overlay, Points, SpheresInstanced];
+
 const stories = storiesOf("Worldview docs", module);
-stories.addDecorator(withScreenshot());
 
 Object.keys(allDemos).map((demoName) => {
   const Component = allDemos[demoName];
-  return stories.add(demoName, () => {
+  const story = () => {
     return (
       <div style={{ height: 500 }}>
         <Component />
       </div>
     );
-  });
+  };
+  const hasScreenshotTest = !demosWithoutScreenshotTests.includes(Component);
+  return stories.add(demoName, hasScreenshotTest ? withScreenshot()(story) : story);
 });

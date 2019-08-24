@@ -2,6 +2,7 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
+import { withScreenshot } from "storybook-chrome-screenshot";
 
 import type { MouseHandler } from "../types";
 import Container from "./Container";
@@ -82,7 +83,8 @@ class DynamicCubes extends React.Component<any, any> {
   }
 }
 
-storiesOf("Worldview", module)
+storiesOf("Worldview/Cubes", module)
+  .addDecorator(withScreenshot())
   .add(
     "<Cubes> - single",
     withRange((range) => {

@@ -16,6 +16,7 @@ import FilledPolygonsTests from "./worldview/FilledPolygons";
 import GLTFSceneTests from "./worldview/GLTFScene";
 import GridTests from "./worldview/Grid";
 import LinesTests from "./worldview/Lines";
+import PointsTests from "./worldview/Points";
 import SpheresTests from "./worldview/Spheres";
 
 const allTestModules: Array<IntegrationTestModule> = [
@@ -28,6 +29,7 @@ const allTestModules: Array<IntegrationTestModule> = [
   GLTFSceneTests,
   GridTests,
   LinesTests,
+  PointsTests,
   SpheresTests,
 ];
 

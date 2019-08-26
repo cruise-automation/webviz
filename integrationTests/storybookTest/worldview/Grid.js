@@ -9,7 +9,7 @@
 /* eslint-disable react/display-name */
 
 import React from "react";
-import { Grid } from "regl-worldview";
+import { Grid, Cubes } from "regl-worldview";
 
 import { WorldviewWrapper, clickAtOrigin } from "../testUtils";
 import type { IntegrationTestModule } from "../types";
@@ -25,6 +25,15 @@ const defaultCameraState = {
   targetOffset: [0, 0, 0],
   targetOrientation: [0, 0, 0, 1],
   thetaOffset: 3.1015926535897935,
+};
+
+const cube = {
+  pose: {
+    orientation: { x: 0, y: 0, z: 0, w: 1 },
+    position: { x: 0, y: -20, z: 0 },
+  },
+  scale: { x: 10, y: 10, z: 10 },
+  color: { r: 1, g: 0, b: 1, a: 0.5 },
 };
 
 const GridTests: IntegrationTestModule = {
@@ -43,6 +52,26 @@ const GridTests: IntegrationTestModule = {
         const result = await readFromTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual({ count: COUNT });
+      },
+    },
+    {
+      // Make sure that the axis removes itself from the `excludedObjects`.
+      name: `Clicks on a Grid with an object behind it - worldview event handler`,
+      story: (setTestData) => (
+        <WorldviewWrapper
+          onClick={(_, { objects }) => setTestData(objects)}
+          defaultCameraState={defaultCameraState}
+          enableStackedObjectEvents>
+          <Grid count={COUNT} />
+          <Cubes>{[cube]}</Cubes>
+        </WorldviewWrapper>
+      ),
+      test: async (readFromTestData) => {
+        await clickAtOrigin();
+        const result = await readFromTestData();
+        expect(result.length).toEqual(2);
+        expect(result[0].object).toEqual({ count: COUNT });
+        expect(result[1].object).toEqual(cube);
       },
     },
   ],

@@ -68,9 +68,9 @@ export function generateNonInstancedClickTests<Type>(
           <CommandInstance>{renderedObjects}</CommandInstance>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual(
           options.overrideExpectedSingleObjects
             ? options.overrideExpectedSingleObjects
@@ -85,9 +85,9 @@ export function generateNonInstancedClickTests<Type>(
           <CommandInstance onClick={(_, { objects }) => setTestData(objects)}>{renderedObjects}</CommandInstance>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual(
           options.overrideExpectedSingleObjects
             ? options.overrideExpectedSingleObjects
@@ -102,9 +102,9 @@ export function generateNonInstancedClickTests<Type>(
           <CommandInstance>{renderedObjects}</CommandInstance>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual(
           options.overrideExpectedMultipleObjects
             ? options.overrideExpectedMultipleObjects
@@ -119,9 +119,9 @@ export function generateNonInstancedClickTests<Type>(
           <CommandInstance onClick={(_, { objects }) => setTestData(objects)}>{renderedObjects}</CommandInstance>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual(
           options.overrideExpectedMultipleObjects
             ? options.overrideExpectedMultipleObjects
@@ -151,9 +151,9 @@ export function generateInstancedClickTests<Type>(
           <CommandInstance>{[renderedObject]}</CommandInstance>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual([{ object: renderedObject, instanceIndex: 0 }]);
       },
     },
@@ -164,9 +164,9 @@ export function generateInstancedClickTests<Type>(
           <CommandInstance onClick={(_, { objects }) => setTestData(objects)}>{[renderedObject]}</CommandInstance>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual([{ object: renderedObject, instanceIndex: 0 }]);
       },
     },
@@ -177,9 +177,9 @@ export function generateInstancedClickTests<Type>(
           <CommandInstance>{[renderedObject]}</CommandInstance>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual([
           { object: renderedObject, instanceIndex: 0 },
           { object: renderedObject, instanceIndex: 1 },
@@ -193,9 +193,9 @@ export function generateInstancedClickTests<Type>(
           <CommandInstance onClick={(_, { objects }) => setTestData(objects)}>{[renderedObject]}</CommandInstance>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual([
           { object: renderedObject, instanceIndex: 0 },
           { object: renderedObject, instanceIndex: 1 },

@@ -11,7 +11,7 @@ export type IntegrationTest = {|
   // Run in storybook context.
   story: (setTestData: (any) => void) => React$Element<any>,
   // Run in jest context, with access to puppeteer.
-  test: (readFromTestData: () => Promise<any>) => Promise<void>,
+  test: (getTestData: () => Promise<any>) => Promise<void>,
 |};
 
 export type IntegrationTestModule = {|

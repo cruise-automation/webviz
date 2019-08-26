@@ -10,7 +10,7 @@ import { quat, vec3 } from "gl-matrix";
 import React, { useState } from "react";
 import Worldview, { Spheres, Axes, GLTFScene } from "regl-worldview";
 
-import duckModel from "../utils/Duck.glb";
+import duckModel from "../../../../common/fixtures/Duck.glb";
 
 // #BEGIN EDITABLE
 function Example() {

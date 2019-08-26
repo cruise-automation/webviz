@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import uniq from "lodash/uniq";
 import type { Page } from "puppeteer";
 
 import allTestModules from "./allTestModules";
@@ -23,7 +22,7 @@ function getPageName(moduleName: string, testName: string) {
   return `http://localhost:6006/?selectedKind=Integration/${moduleName}&selectedStory=${testName}&full=1`;
 }
 
-const readFromTestData = (testName: string) => async () => {
+const getTestData = (testName: string) => async () => {
   // Add some time to ensure that the hitmap has time to render/read.
   await page.waitFor(50);
   const executionContext = await page.mainFrame().executionContext();
@@ -35,7 +34,7 @@ for (const testModule of allTestModules) {
   describe(testModule.name, () => {
     // Check to ensure that there are no test name overlaps - if there are, the stories will overwrite each other.
     const allTestNames = testModule.tests.map(({ name }) => name);
-    if (uniq(allTestNames).length !== allTestNames.length) {
+    if (new Set(allTestNames).size !== allTestNames.length) {
       throw new Error(`Some tests in ${testModule.name} have overlapping names`);
     }
 
@@ -57,8 +56,8 @@ for (const testModule of allTestModules) {
         const pageName = getPageName(testModule.name, integrationTest.name);
         await page.goto(pageName);
         // Give each test a namespace to store data so that it can't pollute from one test to another.
-        const testScopedReadFromTestData = readFromTestData(integrationTest.name);
-        await integrationTest.test(testScopedReadFromTestData);
+        const testScopedgetTestData = getTestData(integrationTest.name);
+        await integrationTest.test(testScopedgetTestData);
 
         expect(errors).toEqual([]);
         page.removeListener("console", consoleErrorCallback);

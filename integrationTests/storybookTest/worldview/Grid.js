@@ -47,9 +47,9 @@ const GridTests: IntegrationTestModule = {
           <Grid count={COUNT} />
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual({ count: COUNT });
       },
@@ -66,9 +66,9 @@ const GridTests: IntegrationTestModule = {
           <Cubes>{[cube]}</Cubes>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result.length).toEqual(2);
         expect(result[0].object).toEqual({ count: COUNT });
         expect(result[1].object).toEqual(cube);

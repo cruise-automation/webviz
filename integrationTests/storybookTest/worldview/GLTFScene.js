@@ -42,7 +42,7 @@ const ArrowsTests: IntegrationTestModule = {
     {
       name: `Clicks on a single GLTFScene model - worldview event handler`,
       story: (setTestData) => {
-        const duckModel = require("./fixtures/Duck.glb");
+        const duckModel = require("../../../common/fixtures/Duck.glb");
         return (
           <WorldviewWrapper onClick={(_, { objects }) => setTestData(objects)}>
             <GLTFScene model={duckModel}>{firstModelPosition}</GLTFScene>
@@ -50,17 +50,17 @@ const ArrowsTests: IntegrationTestModule = {
           </WorldviewWrapper>
         );
       },
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await page.waitFor(WAIT_FOR_MODEL_LOAD_TIMEOUT);
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual([{ object: firstModelPosition }]);
       },
     },
     {
       name: `Clicks on a single GLTFScene model - object event handler`,
       story: (setTestData) => {
-        const duckModel = require("./fixtures/Duck.glb");
+        const duckModel = require("../../../common/fixtures/Duck.glb");
         let testData = [];
         return (
           <WorldviewWrapper>
@@ -83,17 +83,17 @@ const ArrowsTests: IntegrationTestModule = {
           </WorldviewWrapper>
         );
       },
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await page.waitFor(WAIT_FOR_MODEL_LOAD_TIMEOUT);
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual([{ object: firstModelPosition }]);
       },
     },
     {
       name: `Clicks on multiple GLTFScene models - worldview event handler`,
       story: (setTestData) => {
-        const duckModel = require("./fixtures/Duck.glb");
+        const duckModel = require("../../../common/fixtures/Duck.glb");
         return (
           <WorldviewWrapper onClick={(_, { objects }) => setTestData(objects)} enableStackedObjectEvents>
             <GLTFScene model={duckModel}>{firstModelPosition}</GLTFScene>
@@ -101,17 +101,17 @@ const ArrowsTests: IntegrationTestModule = {
           </WorldviewWrapper>
         );
       },
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await page.waitFor(WAIT_FOR_MODEL_LOAD_TIMEOUT);
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual([{ object: firstModelPosition }, { object: secondModelPosition }]);
       },
     },
     {
       name: `Clicks on multiple GLTFScene models - object event handler`,
       story: (setTestData) => {
-        const duckModel = require("./fixtures/Duck.glb");
+        const duckModel = require("../../../common/fixtures/Duck.glb");
         let testData = [];
         return (
           <WorldviewWrapper enableStackedObjectEvents>
@@ -134,10 +134,10 @@ const ArrowsTests: IntegrationTestModule = {
           </WorldviewWrapper>
         );
       },
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await page.waitFor(WAIT_FOR_MODEL_LOAD_TIMEOUT);
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result).toEqual([{ object: firstModelPosition }, { object: secondModelPosition }]);
       },
     },

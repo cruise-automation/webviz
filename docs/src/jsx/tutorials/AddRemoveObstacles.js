@@ -9,7 +9,7 @@ import { useAnimationFrame } from "@cruise-automation/hooks";
 import React, { useState } from "react";
 import Worldview, { Cubes, Spheres, Axes, GLTFScene } from "regl-worldview";
 
-import duckModel from "../utils/Duck.glb";
+import duckModel from "../../../../common/fixtures/Duck.glb";
 
 // #BEGIN EDITABLE
 function Example() {

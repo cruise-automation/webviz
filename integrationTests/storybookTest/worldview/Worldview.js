@@ -32,9 +32,9 @@ const WorldviewTests: IntegrationTestModule = {
     {
       name: `Default worldview handler has ray and no objects`,
       story: (setTestData) => <WorldviewWrapper onClick={(_, clickInfo) => setTestData(clickInfo)} />,
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result.objects.length).toEqual(0);
 
         // Dir
@@ -60,10 +60,10 @@ const WorldviewTests: IntegrationTestModule = {
           <Cubes>{[cube]}</Cubes>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await page.mouse.move(WORLDVIEW_SIZE / 3, WORLDVIEW_SIZE / 3);
         await page.mouse.move(WORLDVIEW_SIZE / 2, WORLDVIEW_SIZE / 2);
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result.length).toEqual(0);
       },
     },
@@ -74,10 +74,10 @@ const WorldviewTests: IntegrationTestModule = {
           <Cubes>{[cube]}</Cubes>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await page.mouse.move(WORLDVIEW_SIZE / 3, WORLDVIEW_SIZE / 3);
         await page.mouse.move(WORLDVIEW_SIZE / 2, WORLDVIEW_SIZE / 2);
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);
       },
@@ -89,10 +89,10 @@ const WorldviewTests: IntegrationTestModule = {
           <Cubes>{[cube]}</Cubes>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await page.mouse.move(WORLDVIEW_SIZE / 2, WORLDVIEW_SIZE / 2);
         await page.mouse.up();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);
       },
@@ -104,10 +104,10 @@ const WorldviewTests: IntegrationTestModule = {
           <Cubes>{[cube]}</Cubes>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await page.mouse.move(WORLDVIEW_SIZE / 2, WORLDVIEW_SIZE / 2);
         await page.mouse.down();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);
       },
@@ -119,9 +119,9 @@ const WorldviewTests: IntegrationTestModule = {
           <Cubes>{[cube]}</Cubes>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await page.mouse.click(WORLDVIEW_SIZE / 2, WORLDVIEW_SIZE / 2, { clickCount: 2 });
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);
       },

@@ -48,9 +48,9 @@ const AxesTests: IntegrationTestModule = {
           <Axes />
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(defaultXAxis);
       },
@@ -64,9 +64,9 @@ const AxesTests: IntegrationTestModule = {
           <Cubes>{[cube]}</Cubes>
         </WorldviewWrapper>
       ),
-      test: async (readFromTestData) => {
+      test: async (getTestData) => {
         await clickAtOrigin();
-        const result = await readFromTestData();
+        const result = await getTestData();
         expect(result.length).toEqual(3);
         expect(result[0].object).toEqual(defaultXAxis);
         expect(result[1].object).toEqual(defaultZAxis);

@@ -46,7 +46,7 @@ export type BaseProps = {|
   children?: React.Node,
   style: { [styleAttribute: string]: number | string },
 
-  cameraState?: CameraState,
+  cameraState?: $Shape<CameraState>,
   onCameraStateChange?: (CameraState) => void,
   defaultCameraState?: CameraState,
   // interactions

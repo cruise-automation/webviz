@@ -18,6 +18,7 @@ import GridTests from "./worldview/Grid";
 import LinesTests from "./worldview/Lines";
 import PointsTests from "./worldview/Points";
 import SpheresTests from "./worldview/Spheres";
+import TrianglesTests from "./worldview/Triangles";
 
 const allTestModules: Array<IntegrationTestModule> = [
   AxesTests,
@@ -31,6 +32,7 @@ const allTestModules: Array<IntegrationTestModule> = [
   LinesTests,
   PointsTests,
   SpheresTests,
+  TrianglesTests,
 ];
 
 export default allTestModules;

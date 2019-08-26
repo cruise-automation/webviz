@@ -13,6 +13,12 @@ import allTestModules from "./allTestModules";
 
 declare var page: Page;
 
+/*
+ * This module reads from all integration test modules and automatically generate jest/puppeteer tests from them.
+ * DO NOT ADD TESTS DIRECTLY TO THIS MODULE.
+ * Instead add integration test modules to the `allTestModules` package.
+ */
+
 function getPageName(moduleName: string, testName: string) {
   return `http://localhost:6006/?selectedKind=Integration/${moduleName}&selectedStory=${testName}&full=1`;
 }

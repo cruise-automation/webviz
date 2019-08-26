@@ -10,6 +10,12 @@ import { storiesOf } from "@storybook/react";
 
 import allTestModules from "./allTestModules";
 
+/*
+ * This module reads from all integration test modules and automatically generate storybook stories from them.
+ * DO NOT ADD STORIES DIRECTLY TO THIS MODULE.
+ * Instead add integration test modules to the `allTestModules` package.
+ */
+
 // Use window.parent, because tests are wrapped in iframes.
 const globalObject = window.parent ? window.parent : window;
 
@@ -20,7 +26,6 @@ const setTestData = (testName) => (testData) => {
   globalObject.testData[testName] = testData;
 };
 
-// Read from all integration test modules and automatically generate storybook stories from them.
 for (const testModule of allTestModules) {
   // Prefix all stories with "Integration/" so that we don't run into name conflicts.
   const stories = storiesOf(`Integration/${testModule.name}`, module);

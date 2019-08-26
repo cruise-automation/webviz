@@ -37,7 +37,7 @@ const cube = {
   color: { r: 1, g: 0, b: 1, a: 0.5 },
 };
 
-const ArrowsTests: IntegrationTestModule = {
+const AxesTests: IntegrationTestModule = {
   name: "Axes",
   // Axes do not have individual event handlers, but they could still be clicked on by worldview event handlers.
   tests: [
@@ -76,4 +76,4 @@ const ArrowsTests: IntegrationTestModule = {
   ],
 };
 
-export default ArrowsTests;
+export default AxesTests;

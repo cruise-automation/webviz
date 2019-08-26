@@ -8,7 +8,7 @@
 
 import { vec3, quat } from "gl-matrix";
 
-import CameraStore, { selectors } from "./CameraStore";
+import CameraStore, { selectors, DEFAULT_CAMERA_STATE } from "./CameraStore";
 
 class NearlyEqual {
   value: number;
@@ -138,6 +138,17 @@ describe("camera store", () => {
         store = new CameraStore(undefined, cameraState);
         expect(store.state).toEqual(cameraState);
       });
+
+      it("has missing properties filled in from DEFAULT_CAMERA_STATE", () => {
+        store = new CameraStore(undefined, { near: 10 });
+        expect(store.state).toEqual({ ...DEFAULT_CAMERA_STATE, near: 10 });
+      });
+    });
+
+    it("has missing properties filled in from DEFAULT_CAMERA_STATE on update", () => {
+      store = new CameraStore(undefined, cameraState);
+      store.setCameraState({ near: 10 });
+      expect(store.state).toEqual({ ...DEFAULT_CAMERA_STATE, near: 10 });
     });
   });
 

@@ -54,11 +54,11 @@ export default class CameraStore {
 
   constructor(handler: (CameraState) => void = () => {}, initialCameraState: CameraState = DEFAULT_CAMERA_STATE) {
     this._onChange = handler;
-    this.state = initialCameraState;
+    this.setCameraState(initialCameraState);
   }
 
   setCameraState = (state: CameraState) => {
-    this.state = state;
+    this.state = { ...DEFAULT_CAMERA_STATE, ...state };
   };
 
   cameraRotate = ([x, y]: Vec2) => {

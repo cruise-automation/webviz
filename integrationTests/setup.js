@@ -16,6 +16,7 @@ setDefaultOptions({ timeout: 60 * 1000 });
 declare var page: Page;
 page.on("console", (msg) => {
   if (process.env.SHOW_TEST_OUTPUT) {
+    // eslint-disable-next-line no-console
     console.log(`[page ${msg.type()}]`, msg.text());
   }
 });

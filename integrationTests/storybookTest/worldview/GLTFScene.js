@@ -32,6 +32,8 @@ const secondModelPosition = {
   scale: { x: 10, y: 10, z: 10 },
 };
 
+// For the GLTFScene, requiring the duck GLB model, parsing it, and loading it takes a bit of time. Wait some time to
+// ensure that the module has been loaded.
 const WAIT_FOR_MODEL_LOAD_TIMEOUT = 2000;
 
 const ArrowsTests: IntegrationTestModule = {
@@ -40,7 +42,7 @@ const ArrowsTests: IntegrationTestModule = {
     {
       name: `Clicks on a single GLTFScene model - worldview event handler`,
       story: (setTestData) => {
-        const duckModel = require("./Duck.glb");
+        const duckModel = require("./fixtures/Duck.glb");
         return (
           <WorldviewWrapper onClick={(_, { objects }) => setTestData(objects)}>
             <GLTFScene model={duckModel}>{firstModelPosition}</GLTFScene>
@@ -58,7 +60,7 @@ const ArrowsTests: IntegrationTestModule = {
     {
       name: `Clicks on a single GLTFScene model - object event handler`,
       story: (setTestData) => {
-        const duckModel = require("./Duck.glb");
+        const duckModel = require("./fixtures/Duck.glb");
         let testData = [];
         return (
           <WorldviewWrapper>
@@ -91,7 +93,7 @@ const ArrowsTests: IntegrationTestModule = {
     {
       name: `Clicks on multiple GLTFScene models - worldview event handler`,
       story: (setTestData) => {
-        const duckModel = require("./Duck.glb");
+        const duckModel = require("./fixtures/Duck.glb");
         return (
           <WorldviewWrapper onClick={(_, { objects }) => setTestData(objects)} enableStackedObjectEvents>
             <GLTFScene model={duckModel}>{firstModelPosition}</GLTFScene>
@@ -109,7 +111,7 @@ const ArrowsTests: IntegrationTestModule = {
     {
       name: `Clicks on multiple GLTFScene models - object event handler`,
       story: (setTestData) => {
-        const duckModel = require("./Duck.glb");
+        const duckModel = require("./fixtures/Duck.glb");
         let testData = [];
         return (
           <WorldviewWrapper enableStackedObjectEvents>

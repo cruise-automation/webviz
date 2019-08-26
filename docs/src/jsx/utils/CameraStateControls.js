@@ -11,7 +11,7 @@ import type { CameraState, Quat } from "regl-worldview";
 import styled from "styled-components";
 
 import Scrubber from "./Scrubber";
-import Slider from "./Slider";
+import Slider, { SWrapper, SEndpoint } from "./Slider";
 import Switch from "./Switch";
 import { color } from "./theme";
 
@@ -25,6 +25,16 @@ const ControlsTable = styled.table`
   }
   tr {
     background-color: transparent !important;
+  }
+  /* Right-align the min label */
+  ${SWrapper} ${SEndpoint} {
+    text-align: right;
+    min-width: 2.5em; /* approximate width of the widest min label */
+  }
+  /* Don't right-align any other SEndpoint labels */
+  ${SWrapper} ${SEndpoint} ~ ${SEndpoint} {
+    text-align: initial;
+    min-width: initial;
   }
 `;
 

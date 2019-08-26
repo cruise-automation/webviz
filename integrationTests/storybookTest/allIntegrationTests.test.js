@@ -19,10 +19,10 @@ declare var page: Page;
  */
 
 function getPageName(moduleName: string, testName: string) {
-  return `http://localhost:6006/?selectedKind=Integration/${moduleName}&selectedStory=${testName}&full=1`;
+  return `http://localhost:6006/iframe.html?selectedKind=Integration/${moduleName}&selectedStory=${testName}`;
 }
 
-const getTestData = (testName: string) => async () => {
+const getTestData = async (testName) => {
   // Add some time to ensure that the hitmap has time to render/read.
   await page.waitFor(50);
   const executionContext = await page.mainFrame().executionContext();
@@ -56,8 +56,7 @@ for (const testModule of allTestModules) {
         const pageName = getPageName(testModule.name, integrationTest.name);
         await page.goto(pageName);
         // Give each test a namespace to store data so that it can't pollute from one test to another.
-        const testScopedgetTestData = getTestData(integrationTest.name);
-        await integrationTest.test(testScopedgetTestData);
+        await integrationTest.test(async () => getTestData(integrationTest.name));
 
         expect(errors).toEqual([]);
         page.removeListener("console", consoleErrorCallback);

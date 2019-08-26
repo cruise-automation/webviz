@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
+import { withScreenshot } from "storybook-chrome-screenshot";
 
 import allTestModules from "./allTestModules";
 
@@ -22,16 +23,17 @@ const globalObject = window.parent ? window.parent : window;
 globalObject.testData = {};
 
 // Sets test data on the global object so that it can be read later from puppeteer tests.
-const setTestData = (testName) => (testData) => {
+const setTestData = (testName, testData) => {
   globalObject.testData[testName] = testData;
 };
 
 for (const testModule of allTestModules) {
   // Prefix all stories with "Integration/" so that we don't run into name conflicts.
-  const stories = storiesOf(`Integration/${testModule.name}`, module);
+  const stories = storiesOf(`Integration/${testModule.name}`, module).addDecorator(withScreenshot());
   for (const integrationTest of testModule.tests) {
     // Give each test a namespace to store data so that it can't pollute from one test to another.
-    const testScopedSetTestData = setTestData(integrationTest.name);
-    stories.add(integrationTest.name, () => integrationTest.story(testScopedSetTestData));
+    stories.add(integrationTest.name, () =>
+      integrationTest.story((testData) => setTestData(integrationTest.name, testData))
+    );
   }
 }

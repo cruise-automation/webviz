@@ -27,7 +27,6 @@ const defaultCameraState: CameraState = {
 };
 
 export const WORLDVIEW_SIZE = 300;
-const wrapperStyle = { width: WORLDVIEW_SIZE, height: WORLDVIEW_SIZE };
 
 // This clicks as the origin (middle) point of the worldview canvas, assuming that you're using the WorldviewWrapper.
 export async function clickAtOrigin() {
@@ -37,7 +36,7 @@ export async function clickAtOrigin() {
 // Provides a convenient wrapper for Worldview with a default camera state and size limitation.
 export function WorldviewWrapper(props: BaseProps) {
   return (
-    <div style={wrapperStyle}>
+    <div style={{ width: WORLDVIEW_SIZE, height: WORLDVIEW_SIZE }}>
       <Worldview defaultCameraState={defaultCameraState} {...props} />
     </div>
   );

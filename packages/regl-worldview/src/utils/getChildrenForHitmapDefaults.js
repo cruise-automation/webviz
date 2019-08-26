@@ -90,8 +90,8 @@ function instancedGetChildrenForHitmapFromSingleProp<T: any>(
       hitmapProp.colors = hitmapProp.colors.filter(
         (_, index) => !filteredIndices.includes(Math.floor(index / pointCountPerInstance))
       );
-    } else if (hitmapProp.points.length <= pointCountPerInstance && matchedExcludedObjects.length) {
-      // Special case we have to check for: if we only have one instance, we don't have an instance index.
+    } else if (matchedExcludedObjects.length) {
+      // if we don't have instance indices, just filter out the whole object.
       return null;
     }
   } else {

@@ -75,11 +75,11 @@ export default class CameraStore {
       return;
     }
     const { thetaOffset, phi } = this.state;
-    this.state = {
+    this.setCameraState({
       ...this.state,
       thetaOffset: thetaOffset - x,
       phi: Math.max(0, Math.min(phi + y, Math.PI)),
-    };
+    });
     this._onChange(this.state);
   };
 
@@ -96,10 +96,10 @@ export default class CameraStore {
     const result = [x, y, 0];
     const offset = vec3.transformQuat(result, result, quat.setAxisAngle(TEMP_QUAT, UNIT_Z_VECTOR, -thetaOffset));
 
-    this.state = {
+    this.setCameraState({
       ...this.state,
       targetOffset: vec3.add(offset, targetOffset, offset),
-    };
+    });
     this._onChange(this.state);
   };
 
@@ -110,10 +110,10 @@ export default class CameraStore {
       return;
     }
 
-    this.state = {
+    this.setCameraState({
       ...this.state,
       distance: newDistance,
-    };
+    });
     this._onChange(this.state);
   };
 }

@@ -150,6 +150,15 @@ describe("camera store", () => {
       store.setCameraState({ near: 10 });
       expect(store.state).toEqual({ ...DEFAULT_CAMERA_STATE, near: 10 });
     });
+
+    it("has null properties filled in from DEFAULT_CAMERA_STATE", () => {
+      // Null properties are not allowed according to the Flow types,
+      // but CameraStore should handle them anyway.
+      store = new CameraStore(undefined, ({ near: null }: any));
+      expect(store.state).toEqual(DEFAULT_CAMERA_STATE);
+      store.setCameraState(({ far: null }: any));
+      expect(store.state).toEqual(DEFAULT_CAMERA_STATE);
+    });
   });
 
   describe("selectors", () => {

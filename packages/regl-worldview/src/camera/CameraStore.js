@@ -61,7 +61,12 @@ export default class CameraStore {
   }
 
   setCameraState = (state: $Shape<CameraState>) => {
-    this.state = { ...DEFAULT_CAMERA_STATE, ...state };
+    this.state = { ...DEFAULT_CAMERA_STATE };
+    for (const [key, value] of Object.entries(state)) {
+      if (value != null) {
+        this.state[key] = value;
+      }
+    }
   };
 
   cameraRotate = ([x, y]: Vec2) => {
@@ -112,4 +117,5 @@ export default class CameraStore {
     this._onChange(this.state);
   };
 }
+
 export { selectors };

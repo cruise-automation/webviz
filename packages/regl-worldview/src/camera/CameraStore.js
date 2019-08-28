@@ -61,12 +61,18 @@ export default class CameraStore {
   }
 
   setCameraState = (state: $Shape<CameraState>) => {
-    this.state = { ...DEFAULT_CAMERA_STATE };
-    for (const [key, value] of Object.entries(state)) {
-      if (value != null) {
-        this.state[key] = value;
+    // Fill in missing properties from DEFAULT_CAMERA_STATE.
+    // Mutate the `state` parameter instead of copying -- this
+    // matches the previous behavior of this method, which didn't
+    // fill in missing properties but also didn't copy `state`.
+    for (const [key, value] of Object.entries(DEFAULT_CAMERA_STATE)) {
+      if (state[key] == null) {
+        state[key] = value;
       }
     }
+    // `state` must be a valid CameraState now, because we filled in
+    // missing properties from DEFAULT_CAMERA_STATE.
+    this.state = (state: any);
   };
 
   cameraRotate = ([x, y]: Vec2) => {

@@ -48,7 +48,7 @@ export type BaseProps = {|
 
   cameraState?: $Shape<CameraState>,
   onCameraStateChange?: (CameraState) => void,
-  defaultCameraState?: CameraState,
+  defaultCameraState?: $Shape<CameraState>,
   // interactions
   onDoubleClick?: MouseHandler,
   onMouseDown?: MouseHandler,

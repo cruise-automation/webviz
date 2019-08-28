@@ -6,7 +6,7 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
-import Worldview, { Axes, Points, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Axes, Points } from "regl-worldview";
 
 import useRange from "../utils/useRange";
 
@@ -38,7 +38,6 @@ function Example() {
   return (
     <Worldview
       defaultCameraState={{
-        ...DEFAULT_CAMERA_STATE,
         distance: 124,
         phi: 1,
         targetOffset: [3, 6, 0],

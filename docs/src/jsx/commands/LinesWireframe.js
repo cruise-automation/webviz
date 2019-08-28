@@ -6,7 +6,7 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
-import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Lines } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
@@ -55,7 +55,7 @@ function Example() {
     },
   ];
   return (
-    <Worldview defaultCameraState={{ ...DEFAULT_CAMERA_STATE, distance: 10 }}>
+    <Worldview defaultCameraState={{ distance: 10 }}>
       <Lines>{lines}</Lines>
     </Worldview>
   );

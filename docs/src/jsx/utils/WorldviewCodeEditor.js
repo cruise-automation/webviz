@@ -39,11 +39,11 @@ import Worldview, {
 import seedrandom from "seedrandom";
 import styled from "styled-components";
 
+import duckModel from "../../../../common/fixtures/Duck.glb";
 import { getHashUrlByComponentName } from "../../routes";
 import CameraStateInfo from "./CameraStateInfo";
 import cesiumManModel from "./CesiumMan.glb";
 import CodeEditor from "./CodeEditor";
-import duckModel from "./Duck.glb";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
 import LinesWithClickableInterior from "./LinesWithClickableInterior";
@@ -67,12 +67,12 @@ const CODE_SANDBOX_CONFIG = {
     "utils/CameraStateInfo.js": {
       content: require("!!raw-loader!./CameraStateInfo.js"),
     },
-    "utils/Duck.glb": {
-      content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/Zb-T-Duck.glb",
-      isBinary: true,
-    },
     "utils/CesiumMan.glb": {
       content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/04aB-CesiumMan.glb",
+      isBinary: true,
+    },
+    "utils/Duck.glb": {
+      content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/Zb-T-Duck.glb",
       isBinary: true,
     },
     "utils/LinesWithClickableInterior.js": {

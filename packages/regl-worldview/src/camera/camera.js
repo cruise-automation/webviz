@@ -24,15 +24,14 @@ export default (regl: any) => {
     cameraState: CameraState = DEFAULT_CAMERA_STATE;
 
     getProjection(): Mat4 {
-      const { near, far } = this.cameraState;
+      const { near, far, distance, fovy } = this.cameraState;
       if (!this.cameraState.perspective) {
-        const bounds = getOrthographicBounds(this.cameraState.distance, this.viewportWidth, this.viewportHeight);
+        const bounds = getOrthographicBounds(distance, this.viewportWidth, this.viewportHeight);
         const { left, right, bottom, top } = bounds;
         return mat4.ortho([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], left, right, bottom, top, near, far);
       }
-      const fov = this.cameraState.fovy;
       const aspect = this.viewportWidth / this.viewportHeight;
-      return mat4.perspective([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], fov, aspect, near, far);
+      return mat4.perspective([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], fovy, aspect, near, far);
     }
 
     getView(): Mat4 {

@@ -57,7 +57,6 @@ storiesOf("Worldview", module)
     return (
       <Container
         cameraState={{
-          ...DEFAULT_CAMERA_STATE,
           perspective: false,
           target: [-812, 2959.64, 0],
           distance: 5,

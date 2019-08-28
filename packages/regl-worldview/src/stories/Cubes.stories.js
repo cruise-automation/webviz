@@ -38,7 +38,6 @@ class Wrapper extends React.Component<any> {
 }
 
 const instancedCameraState = {
-  ...DEFAULT_CAMERA_STATE,
   phi: 1.625,
   thetaOffset: 0.88,
   target: [20, 20, 100],
@@ -90,7 +89,7 @@ storiesOf("Worldview/Cubes", module)
     withRange((range) => {
       const marker = cube(range);
       return (
-        <Container cameraState={{ ...DEFAULT_CAMERA_STATE, perspective: true }}>
+        <Container cameraState={{ perspective: true }}>
           <Wrapper cubes={[marker]} />
         </Container>
       );

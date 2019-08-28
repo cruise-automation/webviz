@@ -12,7 +12,6 @@ import { quat, vec3 } from "gl-matrix";
 import * as React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
-import { DEFAULT_CAMERA_STATE } from "../camera";
 import Container from "./Container";
 
 import { Arrows, Spheres, Axes, Grid, cameraStateSelectors, type CameraState } from "..";
@@ -130,7 +129,6 @@ class CameraStateStory extends React.Component<Props, State> {
           <Container
             hideState
             defaultCameraState={{
-              ...DEFAULT_CAMERA_STATE,
               perspective: true,
               distance: 150,
               thetaOffset: 0.5,

@@ -7,13 +7,17 @@
 //  You may not use this file except in compliance with the License.
 
 import { mount } from "enzyme";
+import { createMemoryHistory } from "history";
 import { last } from "lodash";
 import React from "react";
 
 import MessageHistory from ".";
 import { datatypes, messages, dualInputMessages } from "./fixture";
+import { setGlobalData } from "webviz-core/src/actions/panels";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
+import createRootReducer from "webviz-core/src/reducers";
+import configureStore from "webviz-core/src/store/configureStore.testing";
 import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
 
 const singleTopic = [{ name: "/some/topic", datatype: "some/datatype" }];
@@ -97,6 +101,14 @@ describe("<MessageHistory />", () => {
     provider.setProps({ messages: [messages[0], messages[1], messages[2]] });
 
     expect(childFn.mock.calls).toEqual([
+      [
+        {
+          cleared: false,
+          itemsByPath: { "/some/topic": [] },
+          metadataByPath: {},
+          startTime: { sec: 100, nsec: 0 },
+        },
+      ],
       [
         {
           cleared: false,
@@ -361,6 +373,78 @@ describe("<MessageHistory />", () => {
     ]);
   });
 
+  describe("global variables in paths", () => {
+    const datatypes = {
+      "dtype/Foo": [{ name: "bars", type: "dtype/Bar", isArray: true, isComplex: true }],
+      "dtype/Bar": [{ name: "index", type: "int32" }, { name: "baz", type: "int32" }],
+    };
+
+    const message = {
+      op: "message",
+      datatype: "dtype/Foo",
+      topic: "/some/topic",
+      receiveTime: { sec: 100, nsec: 0 },
+      message: { bars: [{ index: 0, baz: 10 }, { index: 1, baz: 11 }, { index: 2, baz: 12 }] },
+    };
+    it("updates queriedData when a global variable changes", () => {
+      const childFn = jest.fn().mockReturnValue(null);
+
+      const store = configureStore(createRootReducer(createMemoryHistory()));
+
+      store.dispatch(setGlobalData({ foo: 0 }));
+
+      const provider = mount(
+        <MockMessagePipelineProvider
+          store={store}
+          topics={[{ name: "/some/topic", datatype: "dtype/Foo" }]}
+          datatypes={datatypes}
+          messages={[message]}>
+          <MessageHistory paths={["/some/topic.bars[:]{index==$foo}.baz"]}>{childFn}</MessageHistory>
+        </MockMessagePipelineProvider>
+      );
+      expect(childFn.mock.calls).toEqual([
+        [
+          {
+            itemsByPath: {
+              "/some/topic.bars[:]{index==$foo}.baz": [
+                {
+                  message,
+                  queriedData: [{ path: "/some/topic.bars[:]{index==$foo}.baz", value: 10 }],
+                },
+              ],
+            },
+            cleared: false,
+            metadataByPath: { "/some/topic.bars[:]{index==$foo}.baz": expect.any(Object) },
+            startTime: expect.any(Object),
+          },
+        ],
+      ]);
+      childFn.mockClear();
+
+      // when $foo changes to 1, queriedData.value should change to 11
+      store.dispatch(setGlobalData({ foo: 1 }));
+      expect(childFn.mock.calls).toEqual([
+        [
+          {
+            itemsByPath: {
+              "/some/topic.bars[:]{index==$foo}.baz": [
+                {
+                  message,
+                  queriedData: [{ path: "/some/topic.bars[:]{index==$foo}.baz", value: 11 }],
+                },
+              ],
+            },
+            cleared: false,
+            metadataByPath: { "/some/topic.bars[:]{index==$foo}.baz": expect.any(Object) },
+            startTime: expect.any(Object),
+          },
+        ],
+      ]);
+
+      provider.unmount();
+    });
+  });
+
   it("supports changing a path for a previously-existing topic that no longer exists", () => {
     const childFn = jest.fn().mockReturnValue(null);
     const provider = mount(
@@ -518,8 +602,8 @@ describe("<MessageHistory />", () => {
       );
       provider.setProps({ messages: messages.concat(dualInputMessages) });
 
-      const noPrefixResults = noPrefixRenderer.mock.calls[1][0].itemsByPath;
-      const secondBagPrefixResults = secondBagPrefixRenderer.mock.calls[1][0].itemsByPath;
+      const noPrefixResults = last(noPrefixRenderer.mock.calls)[0].itemsByPath;
+      const secondBagPrefixResults = last(secondBagPrefixRenderer.mock.calls)[0].itemsByPath;
       expect(noPrefixResults["/some/topic"].map((item) => item.message)).toEqual(messages);
       expect(secondBagPrefixResults["/some/topic"].map((item) => item.message)).toEqual(
         dualInputMessages.map((msg) => {

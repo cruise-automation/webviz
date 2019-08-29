@@ -10,6 +10,7 @@ import React from "react";
 import { GLTFScene, parseGLB, type Pose, type Scale } from "regl-worldview";
 
 import carModelURL from "webviz-core/src/panels/ThreeDimensionalViz/commands/CarModel/carModel.glb";
+import { type InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 
 async function loadCarModel() {
   const response = await fetch(carModelURL);
@@ -47,10 +48,13 @@ type Props = {|
     pose: Pose,
     scale?: Scale,
     alpha?: number,
+    interactionData?: InteractionData,
   |},
 |};
 
 // default scale is 0.01 because the model's units are centimeters
-export default function CarModel({ children: { pose, alpha = 1, scale = { x: 0.01, y: 0.01, z: 0.01 } } }: Props) {
-  return <GLTFScene model={loadCarModel}>{{ pose, alpha, scale }}</GLTFScene>;
+export default function CarModel({
+  children: { pose, alpha = 1, scale = { x: 0.01, y: 0.01, z: 0.01 }, interactionData },
+}: Props) {
+  return <GLTFScene model={loadCarModel}>{{ pose, alpha, scale, interactionData }}</GLTFScene>;
 }

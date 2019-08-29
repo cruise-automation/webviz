@@ -11,17 +11,20 @@ import * as React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import GlobalVariables from "./index";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import { type LinkedGlobalVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { GLOBAL_DATA_KEY, LAYOUT_KEY } from "webviz-core/src/reducers/panels";
-import PanelSetup from "webviz-core/src/stories/PanelSetup";
-import { defaultLayout } from "webviz-core/src/util/defaultLayoutConfig";
+import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 import Storage from "webviz-core/src/util/Storage";
+
+const defaultLayout = getGlobalHooks().getDefaultGlobalStates().layout;
 
 const exampleVariables = {
   someNum: 5,
   someText: "active",
   someObj: { age: 50 },
   someArrOfNums: [1, 2, 3],
-  someArrofText: ["a", "b", "c"],
+  someArrOfText: ["a", "b", "c"],
 };
 const exampleDataWithLinkedVariables = {
   ...exampleVariables,
@@ -59,85 +62,138 @@ function setStorage(globalData) {
   storage.set(LAYOUT_KEY, defaultLayout);
 }
 
+function PanelWithData({ linkedGlobalVariables = [], ...rest }: { linkedGlobalVariables?: LinkedGlobalVariable[] }) {
+  if (linkedGlobalVariables.length) {
+    setStorage(exampleDataWithLinkedVariables);
+  } else {
+    setStorage(exampleVariables);
+  }
+  const fixture = {
+    topics: [],
+    frame: {},
+    linkedGlobalVariables,
+  };
+
+  return (
+    <PanelSetup fixture={fixture} {...rest}>
+      <GlobalVariables />
+    </PanelSetup>
+  );
+}
+
 storiesOf("<GlobalVariables>", module)
   .addDecorator(withScreenshot())
   .add("default", () => {
-    setStorage(exampleVariables);
-    const fixture = {
-      topics: [],
-      frame: {},
-    };
-
+    return <PanelWithData />;
+  })
+  .add("click 'Add variable' button", () => {
     return (
-      <PanelSetup fixture={fixture}>
-        <GlobalVariables />
-      </PanelSetup>
+      <PanelWithData
+        onMount={(el) => {
+          const addBtn = el.querySelector("[data-test='add-variable-btn']");
+          if (addBtn) {
+            addBtn.click();
+          }
+        }}
+      />
+    );
+  })
+  .add("error state: empty variable name", () => {
+    return (
+      <PanelWithData
+        onMount={(el) => {
+          const addBtn = el.querySelector("[data-test='add-variable-btn']");
+          if (addBtn) {
+            addBtn.click();
+            setImmediate(() => {
+              const firstKeyInput = document.querySelector("[data-test='global-variable-key-input']");
+              if (firstKeyInput) {
+                triggerInputChange(firstKeyInput, "");
+              }
+            });
+          }
+        }}
+      />
+    );
+  })
+  .add("error state: variable name collision", () => {
+    return (
+      <PanelWithData
+        onMount={(el) => {
+          const addBtn = el.querySelector("[data-test='add-variable-btn']");
+          if (addBtn) {
+            addBtn.click();
+            setImmediate(() => {
+              const firstKeyInput = document.querySelector("[data-test='global-variable-key-input']");
+              if (firstKeyInput) {
+                triggerInputChange(firstKeyInput, "$someText");
+              }
+            });
+          }
+        }}
+      />
+    );
+  })
+  .add("still show linked variables after clicking 'Clear all' button", () => {
+    return (
+      <PanelWithData
+        linkedGlobalVariables={linkedGlobalVariables}
+        onMount={(el) => {
+          const clearAllBtn = el.querySelector("[data-test='clear-all-btn']");
+          if (clearAllBtn) {
+            clearAllBtn.click();
+          }
+        }}
+      />
+    );
+  })
+  .add("edit linked variable value", () => {
+    return (
+      <PanelWithData
+        linkedGlobalVariables={linkedGlobalVariables}
+        onMount={(el) => {
+          const allJsonInput = document.querySelectorAll("[data-test='json-input']");
+          const lastJsonInput = allJsonInput[allJsonInput.length - 1];
+          if (lastJsonInput) {
+            triggerInputChange(lastJsonInput, "value is not 100 any more");
+          }
+        }}
+      />
     );
   })
   .add("with linked variables", () => {
-    setStorage(exampleDataWithLinkedVariables);
-    const fixture = {
-      topics: [],
-      frame: {},
-      linkedGlobalVariables,
-    };
-
-    return (
-      <PanelSetup fixture={fixture}>
-        <GlobalVariables />
-      </PanelSetup>
-    );
+    return <PanelWithData linkedGlobalVariables={linkedGlobalVariables} />;
   })
   .add("unlink a variable with a single link", () => {
-    setStorage(exampleDataWithLinkedVariables);
-    const fixture = {
-      topics: [],
-      frame: {},
-      linkedGlobalVariables,
-    };
     return (
-      <PanelSetup
-        fixture={fixture}
+      <PanelWithData
+        linkedGlobalVariables={linkedGlobalVariables}
         onMount={(el) => {
           const btn = el.querySelector("[data-test='unlink-linkedName']");
           if (btn) {
             btn.click();
           }
-        }}>
-        <GlobalVariables />
-      </PanelSetup>
+        }}
+      />
     );
   })
   .add("unlink a variable with multiple links", () => {
-    setStorage(exampleDataWithLinkedVariables);
-    const fixture = {
-      topics: [],
-      frame: {},
-      linkedGlobalVariables,
-    };
     return (
-      <PanelSetup
-        fixture={fixture}
+      <PanelWithData
+        linkedGlobalVariables={linkedGlobalVariables}
         onMount={(el) => {
           const btn = el.querySelector("[data-test='unlink-linkedId']");
           if (btn) {
             btn.click();
           }
-        }}>
-        <GlobalVariables />
-      </PanelSetup>
+        }}
+      />
     );
   })
   .add(`after unlinking a variable called "linkedName"`, () => {
-    setStorage(exampleDataWithLinkedVariables);
-    const fixture = {
-      topics: [],
-      frame: {},
-      linkedGlobalVariables,
-    };
     return (
-      <PanelSetup
-        fixture={fixture}
+      <PanelWithData
+        linkedGlobalVariables={linkedGlobalVariables}
         onMount={(el) => {
           const btn = el.querySelector("[data-test='unlink-linkedName']");
           if (btn) {
@@ -149,28 +205,21 @@ storiesOf("<GlobalVariables>", module)
               }
             });
           }
-        }}>
-        <GlobalVariables />
-      </PanelSetup>
+        }}
+      />
     );
   })
   .add(`after clicking "Clear all"`, () => {
-    setStorage(exampleDataWithLinkedVariables);
-    const fixture = {
-      topics: [],
-      frame: {},
-      linkedGlobalVariables,
-    };
     return (
-      <PanelSetup
-        fixture={fixture}
+      <PanelWithData
+        linkedGlobalVariables={linkedGlobalVariables}
         onMount={(el) => {
-          const btn = el.querySelector("[data-test='clear-all-button']");
+          const btn = el.querySelector("[data-test='clear-all-btn']");
+          console.log("btn: ", btn);
           if (btn) {
             btn.click();
           }
-        }}>
-        <GlobalVariables />
-      </PanelSetup>
+        }}
+      />
     );
   });

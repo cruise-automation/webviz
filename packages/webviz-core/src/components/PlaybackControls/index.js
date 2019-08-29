@@ -25,8 +25,8 @@ import Icon from "webviz-core/src/components/Icon";
 import { MessagePipelineConsumer } from "webviz-core/src/components/MessagePipeline";
 import Slider from "webviz-core/src/components/Slider";
 import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
+import { type PlayerState, PlayerCapabilities } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import { type PlayerState, PlayerCapabilities } from "webviz-core/src/types/players";
 import { times } from "webviz-core/src/util/entities";
 import { formatTime, formatTimeRaw, subtractTimes, toSec, fromSec } from "webviz-core/src/util/time";
 

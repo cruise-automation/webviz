@@ -9,7 +9,8 @@ import { complement } from "intervals-fn";
 import React, { Component } from "react";
 
 import AutoSizingCanvas from "webviz-core/src/components/AutoSizingCanvas";
-import type { Progress } from "webviz-core/src/types/players";
+import filterMap from "webviz-core/src/filterMap";
+import type { Progress } from "webviz-core/src/players/types";
 
 const BAR_HEIGHT = 40;
 const LINE_START = 5;
@@ -51,23 +52,20 @@ export class ProgressPlot extends Component<ProgressProps, ProgressState> {
 
     context.clearRect(0, 0, width, height);
     let pendingCount = 0;
-    let text = Object.keys(percentageByTopic)
-      .map((key) => {
-        const percent = percentageByTopic[key];
-        // null or undefined means download is queued but not started
-        if (percent == null) {
-          pendingCount++;
-          return undefined;
-        }
-        // because files can span a longer distance than the drive range percent can go over 100%
-        if (percent >= 100) {
-          return undefined;
-        }
-        // if download is 0 percent we're ingesting data before the drive range
-        return percent ? `${key} ${percent}%` : key;
-      })
-      .filter(Boolean)
-      .join(" ");
+    let text = filterMap(Object.keys(percentageByTopic), (key) => {
+      const percent = percentageByTopic[key];
+      // null or undefined means download is queued but not started
+      if (percent == null) {
+        pendingCount++;
+        return undefined;
+      }
+      // because files can span a longer distance than the drive range percent can go over 100%
+      if (percent >= 100) {
+        return undefined;
+      }
+      // if download is 0 percent we're ingesting data before the drive range
+      return percent ? `${key} ${percent}%` : key;
+    }).join(" ");
 
     if (pendingCount > 0) {
       text += ` — ${pendingCount} topic${pendingCount > 1 ? "s" : ""} queued...`;

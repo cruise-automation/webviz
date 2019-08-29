@@ -7,13 +7,12 @@
 //  You may not use this file except in compliance with the License.
 
 import { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
+import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 
 export type PanelConfig = { [key: string]: any };
 export type PerPanelFunc<Config> = (Config) => Config;
 
-export type NodePayload = {
-  [outputName: string]: ?string,
-};
+export type UserNodes = { [nodeName: string]: string };
 
 export type SaveConfigPayload = {
   id: string,
@@ -32,9 +31,11 @@ export type SaveFullConfigPayload = {
 
 export type ImportPanelLayoutPayload = {
   // layout is the object passed to react-mosaic
-  layout?: any,
+  layout: any,
   savedProps?: { [panelId: string]: PanelConfig },
   globalData?: GlobalData,
+  userNodes?: UserNodes,
+  linkedGlobalVariables?: LinkedGlobalVariables,
   skipSettingLocalStorage?: boolean,
 };
 

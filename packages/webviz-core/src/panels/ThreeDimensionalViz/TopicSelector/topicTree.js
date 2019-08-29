@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import * as React from "react";
 
-import { type Topic } from "webviz-core/src/types/players";
+import { type Topic } from "webviz-core/src/players/types";
 
 export type TopicTreeConfig = (
   | {

@@ -46,7 +46,7 @@ describe("debouncePromise", () => {
   });
 
   it("provides currentPromise to wait on the current call", async () => {
-    expect.assertions(6);
+    expect.assertions(5);
 
     const sig = signal();
     let calls = 0;
@@ -68,7 +68,9 @@ describe("debouncePromise", () => {
 
     // once the first promise is resolved, the second call should start
     let promise = debouncedFn.currentPromise;
-    expect(promise).toBeDefined();
+    if (!promise) {
+      throw new Error("currentPromise should be defined");
+    }
     promise = promise.then(() => {
       expect(calls).toBe(2);
     });

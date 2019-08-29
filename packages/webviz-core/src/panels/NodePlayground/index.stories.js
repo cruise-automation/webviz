@@ -13,10 +13,11 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 import NodePlayground from "webviz-core/src/panels/NodePlayground";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
-const webvizNodes = {
+const userNodes = {
   "/some/custom/node": "const someVariableName = 1;",
   "/another/custom/node": "const anotherVariableName = 2;",
 };
+
 const fixture = {
   topics: [],
   frame: {},
@@ -34,7 +35,7 @@ storiesOf("<NodePlayground>", module)
   .add("sidebar open - Webviz nodes & user-added nodes", () => {
     return (
       <PanelSetup
-        fixture={{ ...fixture, webvizNodes }}
+        fixture={{ ...fixture, userNodes }}
         onMount={(el) => {
           setImmediate(() => {
             const toggleElements = el.querySelectorAll("[data-test-node-playground-sidebar]");
@@ -53,7 +54,7 @@ storiesOf("<NodePlayground>", module)
   .add("sidebar open - selected node", () => {
     return (
       <PanelSetup
-        fixture={{ ...fixture, webvizNodes }}
+        fixture={{ ...fixture, userNodes }}
         onMount={(el) => {
           setImmediate(() => {
             const toggleElements = el.querySelectorAll("[data-test-node-playground-sidebar]");
@@ -65,7 +66,7 @@ storiesOf("<NodePlayground>", module)
             }
           });
         }}>
-        <NodePlayground config={{ selectedNode: "/some/custom/node" }} />
+        <NodePlayground config={{ selectedNodeName: "/some/custom/node" }} />
       </PanelSetup>
     );
   });

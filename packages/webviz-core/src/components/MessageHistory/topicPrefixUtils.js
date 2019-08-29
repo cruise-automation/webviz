@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import microMemoize from "micro-memoize";
 
-import type { Topic } from "webviz-core/src/types/players";
+import type { Topic } from "webviz-core/src/players/types";
 
 export const getFilteredFormattedTopics: (topics: Topic[], currentTopicPrefix: string) => Topic[] = microMemoize(
   (topics: Topic[], currentTopicPrefix: string): Topic[] => {

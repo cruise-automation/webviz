@@ -11,7 +11,7 @@ import * as React from "react";
 
 import { getGlobalHooks } from "../../loadWebviz";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
-import type { Frame } from "webviz-core/src/types/players";
+import type { Frame } from "webviz-core/src/players/types";
 import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 
 type State = {| transforms: Transforms |};

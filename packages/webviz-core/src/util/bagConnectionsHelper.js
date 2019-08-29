@@ -8,16 +8,14 @@
 
 import { parseMessageDefinition } from "rosbag";
 
-import type { Topic } from "webviz-core/src/types/players";
+import type { Connection } from "webviz-core/src/dataProviders/types";
+import type { Topic } from "webviz-core/src/players/types";
+
 // TODO(JP): Move all this stuff into rosbag.
 
 type DatatypeDescription = {
   messageDefinition: string,
   type: string,
-};
-
-export type Connection = DatatypeDescription & {
-  topic: string,
 };
 
 // Extract one big list of datatypes from the individual connections.

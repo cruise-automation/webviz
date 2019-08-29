@@ -9,7 +9,7 @@
 import { stringify } from "json-with-typed-arrays";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { Topic, PlayerState } from "webviz-core/src/types/players";
+import type { Topic, PlayerState } from "webviz-core/src/players/types";
 
 const DEFAULT_DATATYPE_DEPTH = Infinity;
 // these datatypes are so big they quickly blow the json file size out

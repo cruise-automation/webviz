@@ -17,10 +17,12 @@ import * as React from "react";
 import styled from "styled-components";
 
 import { type TopicTreeConfig } from "./topicTree";
+import filterMap from "webviz-core/src/filterMap";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { Transform } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import type { Topic } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import type { Topic, Namespace } from "webviz-core/src/types/players";
+import type { Namespace } from "webviz-core/src/types/Messages";
 import { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 
@@ -352,15 +354,13 @@ function createUngroupedNode(ungroupedNodes: TopicTreeNode[]): TopicTreeNode {
     prefixes[prefix] += 1;
   });
 
-  const prefixNodes = Object.keys(prefixes)
-    .map((prefix) => {
-      const count = prefixes[prefix];
-      if (count < 3) {
-        return undefined;
-      }
-      return new TopicTreeNode({ name: prefix, isSyntheticGroup: true, children: [] });
-    })
-    .filter(Boolean);
+  const prefixNodes = filterMap(Object.keys(prefixes), (prefix) => {
+    const count = prefixes[prefix];
+    if (count < 3) {
+      return undefined;
+    }
+    return new TopicTreeNode({ name: prefix, isSyntheticGroup: true, children: [] });
+  });
 
   let unprefixedNodes = ungroupedNodes.filter((node) => {
     const prefix = `/${getPrefix(node)}`;

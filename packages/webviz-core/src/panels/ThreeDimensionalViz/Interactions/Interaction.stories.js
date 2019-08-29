@@ -16,7 +16,7 @@ import useLinkedGlobalVariables from "./useLinkedGlobalVariables";
 import Flex from "webviz-core/src/components/Flex";
 import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
 import useGlobalData from "webviz-core/src/hooks/useGlobalData";
-import PanelSetup from "webviz-core/src/stories/PanelSetup";
+import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 import colors from "webviz-core/src/styles/colors.module.scss";
 
 const SWrapper = styled.div`
@@ -68,17 +68,6 @@ const sharedProps = {
   onClearSelectedObject: () => {},
   defaultSelectedTab: OBJECT_TAB_TYPE,
 };
-
-function triggerInputChange(node: window.HTMLInputElement, value: string = "") {
-  // trigger input change: https://stackoverflow.com/questions/23892547/what-is-the-best-way-to-trigger-onchange-event-in-react-js
-  // $FlowFixMe
-  const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-  // $FlowFixMe
-  nativeInputValueSetter.call(node, value);
-
-  const ev2 = new Event("input", { bubbles: true });
-  node.dispatchEvent(ev2);
-}
 
 function GlobalVariablesDisplay() {
   const { globalData } = useGlobalData();

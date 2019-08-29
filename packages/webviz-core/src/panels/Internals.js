@@ -6,16 +6,24 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { groupBy, keyBy, sortBy } from "lodash";
-import React from "react";
+import { groupBy, keyBy, sortBy, mapValues } from "lodash";
+import * as React from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
 
+import Button from "webviz-core/src/components/Button";
+import Dropdown from "webviz-core/src/components/Dropdown";
 import Flex from "webviz-core/src/components/Flex";
-import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
+import { Item } from "webviz-core/src/components/Menu";
+import MessageHistory from "webviz-core/src/components/MessageHistory";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import type { SubscribePayload, AdvertisePayload, Topic } from "webviz-core/src/types/players";
+import filterMap from "webviz-core/src/filterMap";
+import type { Topic, Message, SubscribePayload, AdvertisePayload } from "webviz-core/src/players/types";
+import { downloadTextFile } from "webviz-core/src/util";
+
+const RECORD_ALL = "RECORD_ALL";
 
 const Container = styled.div`
   padding: 8px;
@@ -68,84 +76,161 @@ function getPublisherGroup({ advertiser }: AdvertisePayload): string {
 }
 
 // Display webviz internal state for debugging and for QA to view topic dependencies.
-class Internals extends React.PureComponent<{}> {
-  static panelType = "Internals";
-  static defaultConfig = {};
+function Internals(): React.Node {
+  const { subscriptions, publishers, sortedTopics: topics } = useMessagePipeline();
 
-  _renderSubscriptions(subscriptions: SubscribePayload[], topics: Topic[]) {
-    if (subscriptions.length === 0) {
-      return "(none)";
+  const [groupedSubscriptions, subscriptionGroups] = React.useMemo(
+    () => {
+      const grouped = groupBy(subscriptions, getSubscriptionGroup);
+      return [grouped, Object.keys(grouped)];
+    },
+    [subscriptions]
+  );
+
+  const renderedSubscriptions = React.useMemo(
+    () => {
+      if (subscriptions.length === 0) {
+        return "(none)";
+      }
+      const topicsByName = keyBy(topics, (topic) => topic.name);
+
+      return Object.keys(groupedSubscriptions)
+        .sort()
+        .map((key) => {
+          return (
+            <React.Fragment key={key}>
+              <p>{key}:</p>
+              <ul>
+                {sortBy(groupedSubscriptions[key], (sub) => sub.topic).map((sub, i) => (
+                  <li key={i}>
+                    <tt>
+                      {sub.topic}
+                      {topicsByName[sub.topic] &&
+                        topicsByName[sub.topic].originalTopic &&
+                        ` (original topic: ${topicsByName[sub.topic].originalTopic})`}
+                    </tt>
+                  </li>
+                ))}
+              </ul>
+            </React.Fragment>
+          );
+        });
+    },
+    [groupedSubscriptions, subscriptions, topics]
+  );
+
+  const renderedPublishers = React.useMemo(
+    () => {
+      if (publishers.length === 0) {
+        return "(none)";
+      }
+      const groupedPublishers = groupBy(publishers, getPublisherGroup);
+      return Object.keys(groupedPublishers)
+        .sort()
+        .map((key) => {
+          return (
+            <React.Fragment key={key}>
+              <p>{key}:</p>
+              <ul>
+                {sortBy(groupedPublishers[key], (sub) => sub.topic).map((sub, i) => (
+                  <li key={i}>
+                    <tt>{sub.topic}</tt>
+                  </li>
+                ))}
+              </ul>
+            </React.Fragment>
+          );
+        });
+    },
+    [publishers]
+  );
+
+  const [recordGroup, setRecordGroup] = React.useState<string>(RECORD_ALL);
+  const [recordingTopics, setRecordingTopics] = React.useState<?(string[])>();
+  const recordedData = React.useRef<?{ topics: Topic[], frame: { [string]: Message[] } }>();
+
+  function onRecordClick() {
+    if (recordingTopics) {
+      recordedData.current = undefined;
+      setRecordingTopics(undefined);
+      return;
     }
-    const groupedSubscriptions = groupBy(subscriptions, getSubscriptionGroup);
-    const topicsByName = keyBy(topics, (topic) => topic.name);
-
-    return Object.keys(groupedSubscriptions)
-      .sort()
-      .map((key) => {
-        return (
-          <React.Fragment key={key}>
-            <p>{key}:</p>
-            <ul>
-              {sortBy(groupedSubscriptions[key], (sub) => sub.topic).map((sub, i) => (
-                <li key={i}>
-                  <tt>
-                    {sub.topic}
-                    {topicsByName[sub.topic] &&
-                      topicsByName[sub.topic].originalTopic &&
-                      ` (original topic: ${topicsByName[sub.topic].originalTopic})`}
-                  </tt>
-                </li>
-              ))}
-            </ul>
-          </React.Fragment>
-        );
-      });
+    const recordSubs = recordGroup === RECORD_ALL ? subscriptions : groupedSubscriptions[recordGroup];
+    setRecordingTopics(recordSubs.map((sub) => sub.topic));
   }
 
-  _renderPublishers(publishers: AdvertisePayload[]) {
-    if (publishers.length === 0) {
-      return "(none)";
-    }
-    const groupedSubscriptions = groupBy(publishers, getPublisherGroup);
-    return Object.keys(groupedSubscriptions)
-      .sort()
-      .map((key) => {
-        return (
-          <React.Fragment key={key}>
-            <p>{key}:</p>
-            <ul>
-              {sortBy(groupedSubscriptions[key], (sub) => sub.topic).map((sub, i) => (
-                <li key={i}>
-                  <tt>{sub.topic}</tt>
-                </li>
-              ))}
-            </ul>
-          </React.Fragment>
-        );
-      });
+  function downloadJSON() {
+    downloadTextFile(JSON.stringify(recordedData.current) || "{}", "fixture.json");
   }
 
-  render() {
-    return (
-      <MessagePipelineConsumer>
-        {(context: MessagePipelineContext) => (
-          <Container>
-            <PanelToolbar floating />
-            <Flex row scroll>
-              <section>
-                <h1>Subscriptions</h1>
-                {this._renderSubscriptions(context.subscriptions, context.sortedTopics)}
-              </section>
-              <section>
-                <h1>Publishers</h1>
-                {this._renderPublishers(context.publishers)}
-              </section>
-            </Flex>
-          </Container>
+  const historyRecorder = React.useMemo(
+    () => {
+      if (!recordingTopics) {
+        return false;
+      }
+      return (
+        <MessageHistory paths={recordingTopics} historySize={1}>
+          {({ itemsByPath }) => {
+            const frame = mapValues(itemsByPath, (items) => items.map(({ message }) => message));
+            const topics = filterMap(Object.keys(itemsByPath), (topic) =>
+              itemsByPath[topic] && itemsByPath[topic].length
+                ? { name: topic, datatype: itemsByPath[topic][0].message.datatype }
+                : null
+            );
+            recordedData.current = { topics, frame };
+            return null;
+          }}
+        </MessageHistory>
+      );
+    },
+    [recordingTopics]
+  );
+
+  return (
+    <Container>
+      <PanelToolbar floating />
+      <h1>Recording</h1>
+      <Flex row wrap>
+        <Button danger onClick={onRecordClick} data-test="internals-record-button">
+          {recordingTopics ? `Recording ${recordingTopics.length} topics…` : "Record raw data"}
+        </Button>
+        <Dropdown
+          disabled={!!recordingTopics}
+          text={`Record from: ${recordGroup === RECORD_ALL ? "All panels" : recordGroup}`}
+          value={recordGroup}
+          onChange={(value) => setRecordGroup(value)}>
+          <Item value={RECORD_ALL}>All panels</Item>
+          {subscriptionGroups.map((group) => (
+            <Item key={group} value={group}>
+              {group}
+            </Item>
+          ))}
+        </Dropdown>
+        {recordingTopics && (
+          <Button onClick={downloadJSON} data-test="internals-download-button">
+            Download JSON
+          </Button>
         )}
-      </MessagePipelineConsumer>
-    );
-  }
+        {historyRecorder}
+      </Flex>
+      <p>
+        Press to start recording topic data for debug purposes. The latest messages on each topic will be kept and
+        formatted into a fixture that can be used to create a test.
+      </p>
+      <Flex row scroll>
+        <section data-test="internals-subscriptions">
+          <h1>Subscriptions</h1>
+          {renderedSubscriptions}
+        </section>
+        <section data-test="internals-publishers">
+          <h1>Publishers</h1>
+          {renderedPublishers}
+        </section>
+      </Flex>
+    </Container>
+  );
 }
+Internals.panelType = "Internals";
+Internals.defaultConfig = {};
 
 export default hot(Panel<{}>(Internals));

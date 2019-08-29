@@ -21,6 +21,8 @@ import useGlobalData from "webviz-core/src/hooks/useGlobalData";
 import { UnlinkGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
 import { memoizedGetLinkedGlobalVariablesKeyByName } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/interactionUtils";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import colors from "webviz-core/src/styles/colors.module.scss";
 import clipboard from "webviz-core/src/util/clipboard";
 
 type Props = {};
@@ -41,6 +43,11 @@ const SInput = styled.input`
   color: white;
 `;
 
+const SError = styled.div`
+  color: ${colors.red};
+  margin: 16px;
+`;
+
 const SSection = styled.section`
   margin: 15px;
 `;
@@ -48,11 +55,6 @@ const SSection = styled.section`
 const SBorderlessCell = styled.td`
   border: 0;
   background: none;
-`;
-
-const Placeholder = styled.span`
-  display: inline-block;
-  height: 32px;
 `;
 
 const canParseJSON = (val) => {
@@ -96,6 +98,7 @@ class EditableJSONInput extends React.Component<InputProps, State> {
       <SInput
         style={{ color: isValid ? "" : "#f97d96" }}
         ref={innerRef}
+        data-test="json-input"
         type="text"
         value={inputVal}
         onChange={(e) => {
@@ -123,24 +126,63 @@ const changeGlobalVal = (newVal, name, setGlobalData) => {
 const getUpdatedURL = (globalData) => {
   const queryParams = new URLSearchParams(window.location.search);
   queryParams.set("global-data", JSON.stringify(globalData));
+  if (inScreenshotTests()) {
+    return `http://localhost:3000/?${queryParams.toString()}`;
+  }
   return `${window.location.host}/?${queryParams.toString()}`;
 };
 
 function GlobalVariables(props: Props): Node {
   const input = React.createRef<HTMLInputElement>();
-  const [btnMessage, setBtnMessage] = useState("Copy");
-
-  const copyURL = (text) => () => {
-    clipboard.copy(text);
-    setBtnMessage("Copied!");
-  };
+  const [btnMessage, setBtnMessage] = useState<string>("Copy");
+  const [error, setError] = useState<Node>(null);
+  const [inputStr, setInputStr] = useState<string>("");
+  const [editingField, setEditingField] = useState<?string>(null);
 
   const { globalData, setGlobalData, overwriteGlobalData } = useGlobalData();
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
 
   const globalVariableNames = Object.keys(globalData);
+  const globalVariableNamesWithIdx = globalVariableNames.map((name, idx) => ({ name, idx }));
   const linkedGlobalVariablesKeyByName = memoizedGetLinkedGlobalVariablesKeyByName(linkedGlobalVariables);
-  const [linked, unlinked] = partition(globalVariableNames, (key) => !!linkedGlobalVariablesKeyByName[key]);
+  const [linked, unlinked] = partition(
+    globalVariableNamesWithIdx,
+    ({ name }) => !!linkedGlobalVariablesKeyByName[name]
+  );
+
+  function copyURL(text) {
+    return () => {
+      clipboard.copy(text);
+      setBtnMessage("Copied!");
+    };
+  }
+  function validateGlobalVariableNewKey(newKey, oldKey) {
+    if (newKey === oldKey) {
+      return;
+    }
+    if (newKey === "") {
+      return "variable name must not be empty";
+    }
+    if (newKey in globalData && newKey !== editingField) {
+      return `variable $${newKey} already exists`;
+    }
+  }
+
+  function getJsonInputHTML(name: string) {
+    return (
+      <EditableJSONInput
+        innerRef={input}
+        inputVal={JSON.stringify(globalData[name] || "")}
+        onChange={(e) => {
+          const newVal = e.target.value;
+          if (canParseJSON(newVal)) {
+            changeGlobalVal(newVal, name, setGlobalData);
+            setBtnMessage("Copy");
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <SGlobalVariables>
@@ -151,32 +193,62 @@ function GlobalVariables(props: Props): Node {
             <th>key</th>
             <th>value</th>
           </tr>
-          {unlinked.map((name, idx) => (
+          {linked.map(({ name, idx }) => {
+            return (
+              <tr key={idx}>
+                <td style={{ paddingRight: "0.6em", verticalAlign: "middle" }}>
+                  <UnlinkGlobalVariables name={name} />
+                </td>
+                <td>{getJsonInputHTML(name)}</td>
+                <SBorderlessCell />
+              </tr>
+            );
+          })}
+          {unlinked.map(({ name, idx }) => (
             <tr key={idx}>
               <td style={{ paddingLeft: 12 }}>
                 <SInput
                   type="text"
-                  value={`$${name}`}
+                  data-test="global-variable-key-input"
+                  value={`$${editingField === name ? inputStr : name}`}
+                  onBlur={() => {
+                    setError(null);
+                    // important to set to null not empty string because empty string is valid name to start with
+                    setEditingField(null);
+                    // reset to the original valid name as the current input name could be invalid
+                    setInputStr(name);
+                  }}
+                  onKeyDown={() => {
+                    // set editingField when start editing
+                    if (editingField !== name) {
+                      setEditingField(name);
+                      setInputStr(name);
+                    }
+                  }}
                   onChange={(e) => {
                     const newKey = e.target.value.slice(1);
-                    changeGlobalKey(newKey.trim(), name, globalData, idx, overwriteGlobalData);
-                    setBtnMessage("Copy");
-                  }}
-                />
-              </td>
-              <td>
-                <EditableJSONInput
-                  innerRef={input}
-                  inputVal={JSON.stringify(globalData[name])}
-                  onChange={(e) => {
-                    const newVal = e.target.value;
-                    if (canParseJSON(newVal)) {
-                      changeGlobalVal(newVal, name, setGlobalData);
+                    setInputStr(newKey);
+                    const validationResult = validateGlobalVariableNewKey(newKey.trim(), name);
+                    if (validationResult) {
+                      setError(
+                        <>
+                          <p>
+                            ${newKey} is not a valid name, using old variable name ${name} instead. Changes will not be
+                            saved.
+                          </p>
+                          <p>Details: {validationResult}</p>
+                        </>
+                      );
+                    } else {
+                      setError(null);
+                      // update globalData right away if the field is valid
+                      changeGlobalKey(newKey.trim(), name, globalData, idx, overwriteGlobalData);
                       setBtnMessage("Copy");
                     }
                   }}
                 />
               </td>
+              <td>{getJsonInputHTML(name)}</td>
               <SBorderlessCell>
                 <Icon
                   onClick={() => {
@@ -188,46 +260,25 @@ function GlobalVariables(props: Props): Node {
               </SBorderlessCell>
             </tr>
           ))}
-          {linked.map((name, idx) => {
-            return (
-              <tr key={name}>
-                <td style={{ paddingRight: "0.6em", verticalAlign: "middle" }}>
-                  <UnlinkGlobalVariables name={name} />
-                </td>
-                <td>
-                  {globalData[name] == null ? (
-                    <Placeholder />
-                  ) : (
-                    <EditableJSONInput
-                      innerRef={input}
-                      inputVal={JSON.stringify(globalData[name])}
-                      onChange={(e) => {
-                        const newVal = e.target.value;
-                        if (canParseJSON(newVal)) {
-                          changeGlobalVal(newVal, name, setGlobalData);
-                          setBtnMessage("Copy");
-                        }
-                      }}
-                    />
-                  )}
-                </td>
-                <SBorderlessCell />
-              </tr>
-            );
-          })}
         </tbody>
       </table>
+      {error && <SError>{error}</SError>}
+
       <SButtonContainer>
         <button
+          data-test="add-variable-btn"
           onClick={(e) => {
+            setInputStr("");
+            setError("");
+            setEditingField("");
             setGlobalData({ "": "" });
           }}>
           + Add variable
         </button>
         <button
-          data-test="clear-all-button"
+          data-test="clear-all-btn"
           onClick={(e) => {
-            const newGlobalVariables = linked.reduce((memo, name) => {
+            const newGlobalVariables = linked.reduce((memo, { name }) => {
               memo[name] = undefined;
               return memo;
             }, {});

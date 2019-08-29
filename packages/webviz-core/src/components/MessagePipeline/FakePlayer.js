@@ -11,7 +11,7 @@ import type {
   Player,
   SubscribePayload,
   AdvertisePayload,
-} from "webviz-core/src/types/players";
+} from "webviz-core/src/players/types";
 
 export default class FakePlayer implements Player {
   listener: (PlayerState) => Promise<void>;

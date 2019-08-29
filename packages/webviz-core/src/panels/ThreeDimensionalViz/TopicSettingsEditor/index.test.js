@@ -8,7 +8,7 @@
 
 import { getTopicSettings } from ".";
 import { setHooks, resetHooksToDefault } from "webviz-core/src/loadWebviz";
-import type { Topic } from "webviz-core/src/types/players";
+import type { Topic } from "webviz-core/src/players/types";
 
 describe("getTopicSettings", () => {
   afterEach(() => {

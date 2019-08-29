@@ -233,3 +233,9 @@ export function parseTimeStr(str: string): ?Time {
   }
   return result;
 }
+
+export function getSeekToTime(): ?Time {
+  const params = new URLSearchParams(window.location.search);
+  const seekToParam = params.get("seek-to");
+  return seekToParam ? fromMillis(parseInt(seekToParam)) : null;
+}

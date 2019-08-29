@@ -9,26 +9,31 @@
 import * as React from "react";
 import { connect } from "react-redux";
 
+import { setNodeDiagnostics, type SetNodeDiagnostics } from "webviz-core/src/actions/nodeDiagnostics";
 import { importPanelLayout } from "webviz-core/src/actions/panels";
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
-import NodePlayer from "webviz-core/src/components/MessagePipeline/NodePlayer";
-import useUserWebvizNodes from "webviz-core/src/hooks/useUserWebvizNodes";
-import { getRemoteBagGuid } from "webviz-core/src/players/getRemoteBagGuid";
+import { getRemoteBagGuid } from "webviz-core/src/dataProviders/getRemoteBagGuid";
+import {
+  getLocalBagDescriptor,
+  getRemoteBagDescriptor,
+} from "webviz-core/src/dataProviders/standardDataProviderDescriptors";
+import useUserNodes from "webviz-core/src/hooks/useUserNodes";
+import NodePlayer from "webviz-core/src/players/NodePlayer";
 import RandomAccessPlayer from "webviz-core/src/players/RandomAccessPlayer";
-import { getLocalBagDescriptor, getRemoteBagDescriptor } from "webviz-core/src/players/standardDataProviderDescriptors";
-import { getSeekToTime } from "webviz-core/src/players/util";
-import type { UserWebvizNodes } from "webviz-core/src/reducers/panels";
-import type { ImportPanelLayoutPayload } from "webviz-core/src/types/panels";
-import type { Player } from "webviz-core/src/types/players";
+import type { Player } from "webviz-core/src/players/types";
+import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
+import type { ImportPanelLayoutPayload, UserNodes } from "webviz-core/src/types/panels";
 import demoLayoutJson from "webviz-core/src/util/demoLayout.json";
 import {
+  DEMO_QUERY_KEY,
+  ENABLE_NODE_PLAYGROUND_QUERY_KEY,
   LOAD_ENTIRE_BAG_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
-  DEMO_QUERY_KEY,
   SECOND_BAG_PREFIX,
 } from "webviz-core/src/util/globalConstants";
+import { getSeekToTime } from "webviz-core/src/util/time";
 
 function buildPlayer(files: File[]): ?Player {
   if (files.length === 0) {
@@ -49,10 +54,11 @@ type OwnProps = { children: React.Node };
 
 type Props = OwnProps & {
   importPanelLayout: (payload: ImportPanelLayoutPayload, isFromUrl: boolean, skipSettingLocalStorage: boolean) => void,
-  userWebvizNodes: UserWebvizNodes,
+  userNodes: UserNodes,
+  setNodeDiagnostics: SetNodeDiagnostics,
 };
 
-function PlayerManager({ importPanelLayout, children, userWebvizNodes }: Props) {
+function PlayerManager({ importPanelLayout, children, userNodes, setNodeDiagnostics }: Props) {
   const usedFiles = React.useRef<File[]>([]);
   const [player, setPlayer] = React.useState();
 
@@ -65,25 +71,27 @@ function PlayerManager({ importPanelLayout, children, userWebvizNodes }: Props) 
           ? params.get(REMOTE_BAG_URL_QUERY_KEY) || ""
           : remoteDemoBagUrl;
         getRemoteBagGuid(url).then((guid: ?string) => {
-          setPlayer(
-            new NodePlayer(
-              new RandomAccessPlayer(
-                getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
-                undefined,
-                { autoplay: true, seekToTime: getSeekToTime() }
-              )
-            )
+          const newPlayer = new RandomAccessPlayer(
+            getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
+            undefined,
+            { autoplay: true, seekToTime: getSeekToTime() }
           );
+
+          if (new URLSearchParams(window.location.search).has(ENABLE_NODE_PLAYGROUND_QUERY_KEY)) {
+            setPlayer(new UserNodePlayer(newPlayer, setNodeDiagnostics));
+          } else {
+            setPlayer(new NodePlayer(newPlayer));
+          }
         });
         if (params.has(DEMO_QUERY_KEY)) {
           importPanelLayout(demoLayoutJson, false, true);
         }
       }
     },
-    [importPanelLayout]
+    [importPanelLayout, setNodeDiagnostics]
   );
 
-  useUserWebvizNodes({ nodePlayer: player, userWebvizNodes });
+  useUserNodes({ nodePlayer: player, userNodes });
 
   return (
     <>
@@ -115,7 +123,7 @@ function PlayerManager({ importPanelLayout, children, userWebvizNodes }: Props) 
 
 export default connect<Props, OwnProps, _, _, _, _>(
   (state) => ({
-    userWebvizNodes: state.panels.webvizNodes,
+    userNodes: state.panels.userNodes,
   }),
-  { importPanelLayout }
+  { importPanelLayout, setNodeDiagnostics }
 )(PlayerManager);

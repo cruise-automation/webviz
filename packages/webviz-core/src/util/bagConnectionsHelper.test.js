@@ -53,16 +53,19 @@ describe("bagConnectionsToTopics", () => {
           topic: "/some/topic/with/points",
           type: "something/points",
           messageDefinition: "",
+          md5sum: "",
         },
         {
           topic: "/some/topic/with/points",
           type: "something/points",
           messageDefinition: "",
+          md5sum: "",
         },
         {
           topic: "/some/topic/with/two_points",
           type: "something/two_points",
           messageDefinition: "",
+          md5sum: "",
         },
       ])
     ).toEqual([

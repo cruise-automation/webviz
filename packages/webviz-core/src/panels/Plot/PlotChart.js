@@ -18,6 +18,7 @@ import MessageHistory, {
   type MessageHistoryItemsByPath,
 } from "webviz-core/src/components/MessageHistory";
 import TimeBasedChart, { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
+import filterMap from "webviz-core/src/filterMap";
 import derivative from "webviz-core/src/panels/Plot/derivative";
 import { type PlotPath, isReferenceLinePlotPathType } from "webviz-core/src/panels/Plot/internalTypes";
 import { lightColor, lineColors } from "webviz-core/src/util/plotColors";
@@ -102,29 +103,25 @@ function getAnnotationFromReferenceLine(path: PlotPath, index: number) {
 }
 
 function getDatasets(paths: PlotPath[], itemsByPath: MessageHistoryItemsByPath, startTime: Time) {
-  return paths
-    .map((path: PlotPath, index: number) => {
-      if (!path.enabled) {
-        return null;
-      } else if (!isReferenceLinePlotPathType(path)) {
-        return getDatasetFromMessagePlotPath(path, itemsByPath, index, startTime);
-      }
+  return filterMap(paths, (path: PlotPath, index: number) => {
+    if (!path.enabled) {
       return null;
-    })
-    .filter(Boolean);
+    } else if (!isReferenceLinePlotPathType(path)) {
+      return getDatasetFromMessagePlotPath(path, itemsByPath, index, startTime);
+    }
+    return null;
+  });
 }
 
 function getAnnotations(paths: PlotPath[]) {
-  return paths
-    .map((path: PlotPath, index: number) => {
-      if (!path.enabled) {
-        return null;
-      } else if (isReferenceLinePlotPathType(path)) {
-        return getAnnotationFromReferenceLine(path, index);
-      }
+  return filterMap(paths, (path: PlotPath, index: number) => {
+    if (!path.enabled) {
       return null;
-    })
-    .filter(Boolean);
+    } else if (isReferenceLinePlotPathType(path)) {
+      return getAnnotationFromReferenceLine(path, index);
+    }
+    return null;
+  });
 }
 
 type YAxesInterface = {| minY: number, maxY: number, scaleId: string |};

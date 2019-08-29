@@ -25,8 +25,8 @@ import type { TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimens
 import treeBuilder, { Selections } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/treeBuilder";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTransforms";
+import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { SaveConfig } from "webviz-core/src/types/panels";
-import type { Frame, Topic } from "webviz-core/src/types/players";
 import type { MarkerProvider } from "webviz-core/src/types/Scene";
 import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { emptyPose } from "webviz-core/src/util/Pose";

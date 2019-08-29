@@ -53,7 +53,11 @@ class PanelLayout extends PureComponent<Props> {
     return id;
   };
 
-  renderTile = (id: string, path: any) => {
+  renderTile = (id: string | {}, path: any) => {
+    // `id` is usually a string. But when `layout` is empty, `id` will be an empty object, in which case we don't need to render Tile
+    if (!id || typeof id !== "string") {
+      return;
+    }
     const type = getPanelTypeFromId(id);
     const PanelComponent = PanelList.getComponentForType(type);
     // if we haven't found a panel of the given type, render the panel selector

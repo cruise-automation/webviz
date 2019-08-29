@@ -15,7 +15,7 @@ import { createSelector } from "reselect";
 import MessageHistory from ".";
 import type { MessageHistoryData } from "webviz-core/src/components/MessageHistory";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { Frame, Message, Topic } from "webviz-core/src/types/players";
+import type { Frame, Message, Topic } from "webviz-core/src/players/types";
 
 type Options = $Shape<{|
   topics: string[],

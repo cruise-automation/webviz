@@ -37,11 +37,11 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import Plot, { type PlotConfig, plotableRosTypes } from "webviz-core/src/panels/Plot";
-import { enumValuesByDatatypeAndField } from "webviz-core/src/selectors";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import clipboard from "webviz-core/src/util/clipboard";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
+import { enumValuesByDatatypeAndField } from "webviz-core/src/util/selectors";
 import { format, formatDuration } from "webviz-core/src/util/time";
 
 const DURATION_20_YEARS_SEC = 20 * 365 * 24 * 60 * 60;

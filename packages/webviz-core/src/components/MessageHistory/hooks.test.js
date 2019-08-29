@@ -69,12 +69,11 @@ describe("useShallowMemo", () => {
 
 describe("useMustNotChange", () => {
   it("throws when value changes", () => {
-    const obj = {};
-    const { result, rerender } = renderHook((val) => useMustNotChange(val, "hi"), { initialProps: obj });
-    rerender(obj);
-    expect(result.current).toBe(obj);
-    rerender({});
-    expect(result.error).toEqual(new Error("hi"));
+    const { result, rerender } = renderHook((val) => useMustNotChange(val, "hi"), { initialProps: 1 });
+    rerender(1);
+    expect(result.current).toBe(1);
+    rerender("1");
+    expect(result.error).toEqual(new Error('hi\nOld: 1\nNew: "1"'));
   });
 });
 

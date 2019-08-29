@@ -11,7 +11,7 @@ import type { CameraState, Quat } from "regl-worldview";
 import styled from "styled-components";
 
 import Scrubber from "./Scrubber";
-import Slider from "./Slider";
+import Slider, { SWrapper, SEndpoint } from "./Slider";
 import Switch from "./Switch";
 import { color } from "./theme";
 
@@ -25,6 +25,16 @@ const ControlsTable = styled.table`
   }
   tr {
     background-color: transparent !important;
+  }
+  /* Right-align the min label */
+  ${SWrapper} ${SEndpoint} {
+    text-align: right;
+    min-width: 2.5em; /* approximate width of the widest min label */
+  }
+  /* Don't right-align any other SEndpoint labels */
+  ${SWrapper} ${SEndpoint} ~ ${SEndpoint} {
+    text-align: initial;
+    min-width: initial;
   }
 `;
 
@@ -140,6 +150,51 @@ export default function CameraStateControls({ cameraState, setCameraState }: Pro
               max={Math.PI * 2}
               step={0.01}
               onChange={(thetaOffset) => setCameraState({ ...cameraState, thetaOffset })}
+            />
+          </td>
+        </tr>
+        <tr>
+          <td>fovy</td>
+          <td>
+            <Slider
+              showEndpoints
+              minLabel
+              maxLabel="π"
+              value={cameraState.fovy}
+              min={0}
+              max={Math.PI}
+              step={0.01}
+              onChange={(fovy) => setCameraState({ ...cameraState, fovy })}
+            />
+          </td>
+        </tr>
+        <tr>
+          <td>near</td>
+          <td>
+            <Slider
+              showEndpoints
+              minLabel
+              maxLabel
+              value={cameraState.near}
+              min={0.01}
+              max={200}
+              step={0.01}
+              onChange={(near) => setCameraState({ ...cameraState, near })}
+            />
+          </td>
+        </tr>
+        <tr>
+          <td>far</td>
+          <td>
+            <Slider
+              showEndpoints
+              minLabel
+              maxLabel
+              value={cameraState.far}
+              min={10}
+              max={1000}
+              step={0.001}
+              onChange={(far) => setCameraState({ ...cameraState, far })}
             />
           </td>
         </tr>

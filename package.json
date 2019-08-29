@@ -64,6 +64,7 @@
     "postcss-flexbugs-fixes": "^4.1.0",
     "postcss-loader": "^3.0.0",
     "prettier": "1.15.2",
+    "quickhull3d": "2.0.4",
     "raw-loader": "^0.5.1",
     "react": "16.8.6",
     "react-container-dimensions": "^1.4.1",

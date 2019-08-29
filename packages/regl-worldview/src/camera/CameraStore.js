@@ -19,6 +19,9 @@ export type CameraState = {|
   targetOffset: Vec3,
   targetOrientation: Vec4,
   thetaOffset: number,
+  fovy: number,
+  near: number,
+  far: number,
 |};
 
 //  we use up on the +z axis
@@ -34,6 +37,9 @@ export const DEFAULT_CAMERA_STATE: CameraState = {
   targetOffset: [0, 0, 0],
   targetOrientation: [0, 0, 0, 1],
   thetaOffset: 0,
+  fovy: Math.PI / 4,
+  near: 0.01,
+  far: 5000,
 };
 
 function distanceAfterZoom(startingDistance: number, zoomPercent: number): number {
@@ -46,13 +52,27 @@ export default class CameraStore {
 
   _onChange: (CameraState) => void;
 
-  constructor(handler: (CameraState) => void = () => {}, initialCameraState: CameraState = DEFAULT_CAMERA_STATE) {
+  constructor(
+    handler: (CameraState) => void = () => {},
+    initialCameraState: $Shape<CameraState> = DEFAULT_CAMERA_STATE
+  ) {
     this._onChange = handler;
-    this.state = initialCameraState;
+    this.setCameraState(initialCameraState);
   }
 
-  setCameraState = (state: CameraState) => {
-    this.state = state;
+  setCameraState = (state: $Shape<CameraState>) => {
+    // Fill in missing properties from DEFAULT_CAMERA_STATE.
+    // Mutate the `state` parameter instead of copying -- this
+    // matches the previous behavior of this method, which didn't
+    // fill in missing properties but also didn't copy `state`.
+    for (const [key, value] of Object.entries(DEFAULT_CAMERA_STATE)) {
+      if (state[key] == null) {
+        state[key] = value;
+      }
+    }
+    // `state` must be a valid CameraState now, because we filled in
+    // missing properties from DEFAULT_CAMERA_STATE.
+    this.state = (state: any);
   };
 
   cameraRotate = ([x, y]: Vec2) => {
@@ -61,11 +81,11 @@ export default class CameraStore {
       return;
     }
     const { thetaOffset, phi } = this.state;
-    this.state = {
+    this.setCameraState({
       ...this.state,
       thetaOffset: thetaOffset - x,
       phi: Math.max(0, Math.min(phi + y, Math.PI)),
-    };
+    });
     this._onChange(this.state);
   };
 
@@ -82,10 +102,10 @@ export default class CameraStore {
     const result = [x, y, 0];
     const offset = vec3.transformQuat(result, result, quat.setAxisAngle(TEMP_QUAT, UNIT_Z_VECTOR, -thetaOffset));
 
-    this.state = {
+    this.setCameraState({
       ...this.state,
       targetOffset: vec3.add(offset, targetOffset, offset),
-    };
+    });
     this._onChange(this.state);
   };
 
@@ -96,11 +116,12 @@ export default class CameraStore {
       return;
     }
 
-    this.state = {
+    this.setCameraState({
       ...this.state,
       distance: newDistance,
-    };
+    });
     this._onChange(this.state);
   };
 }
+
 export { selectors };

@@ -6,7 +6,7 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
-import Worldview, { Lines, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Lines } from "regl-worldview";
 
 import LinesWithClickableInterior from "../utils/LinesWithClickableInterior";
 
@@ -38,7 +38,7 @@ function Example() {
           setMsg(defaultMsg);
         }
       }}
-      defaultCameraState={{ ...DEFAULT_CAMERA_STATE, distance: 10 }}>
+      defaultCameraState={{ distance: 10 }}>
       <Lines
         onClick={(ev, { objects }) => {
           setMsg(`Clicked on the lines. objectId: ${objects[0].object.id}`);

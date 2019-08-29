@@ -7,7 +7,7 @@
 // #BEGIN EXAMPLE
 import { useAnimationFrame } from "@cruise-automation/hooks";
 import React, { useState } from "react";
-import Worldview, { Spheres, Axes, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Spheres, Axes, GLTFScene } from "regl-worldview";
 
 import duckModel from "../utils/Duck.glb";
 
@@ -64,9 +64,6 @@ function Example() {
   return (
     <Worldview
       cameraState={{
-        // Default setting for cameraState.
-        // Learn more at https://cruise-automation.github.io/webviz/worldview/#/docs/api/camera
-        ...DEFAULT_CAMERA_STATE,
         // This is the magic! Simply supply the target position and the camera will follow
         target: [duckPosition.x, duckPosition.y, duckPosition.z],
         thetaOffset: -Math.PI / 2, // rotate the camera so the duck is facing right

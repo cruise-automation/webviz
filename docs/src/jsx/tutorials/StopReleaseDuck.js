@@ -7,7 +7,7 @@
 // #BEGIN EXAMPLE
 import { useAnimationFrame } from "@cruise-automation/hooks";
 import React, { useState, useEffect } from "react";
-import Worldview, { Cubes, Spheres, Axes, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Cubes, Spheres, Axes, GLTFScene } from "regl-worldview";
 
 import duckModel from "../utils/Duck.glb";
 
@@ -94,7 +94,6 @@ function Example() {
   return (
     <Worldview
       defaultCameraState={{
-        ...DEFAULT_CAMERA_STATE,
         distance: 160,
         thetaOffset: -Math.PI / 2, // rotate the camera so the duck is facing right
       }}>

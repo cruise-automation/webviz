@@ -6,7 +6,7 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
-import Worldview, { Axes, Grid, GLTFScene, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Axes, Grid, GLTFScene } from "regl-worldview";
 
 import cesiumManModel from "../utils/CesiumMan.glb";
 import duckModel from "../utils/Duck.glb"; // URL pointing to a .glb file
@@ -17,7 +17,6 @@ function Example() {
   return (
     <Worldview
       defaultCameraState={{
-        ...DEFAULT_CAMERA_STATE,
         distance: 25,
         thetaOffset: (-3 * Math.PI) / 4,
       }}>

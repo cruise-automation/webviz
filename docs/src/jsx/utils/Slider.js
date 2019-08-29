@@ -60,6 +60,8 @@ type Props = {
   maxLabel: boolean | string,
 };
 
+export { SWrapper, SEndpoint };
+
 export default function Slider({ onChange, minLabel, maxLabel, ...props }: Props) {
   return (
     <SWrapper>

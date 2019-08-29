@@ -300,14 +300,8 @@ export class WorldviewContext {
                     object === mouseEventObject.object && instanceIndex === mouseEventObject.instanceIndex
                 )
               ) {
-                const command =
-                  mouseEventObject.object != null
-                    ? this._hitmapObjectIdManager.getCommandForObject(mouseEventObject.object)
-                    : null;
-                const displayName =
-                  command != null && command.displayName != null ? command.displayName : "UNKNOWN_COMMAND";
                 console.error(
-                  `Saw object twice when reading from hitmap. There is likely an error in getHitmapFromChildren for ${displayName}.`,
+                  `Saw object twice when reading from hitmap. There is likely an error in getHitmapFromChildren`,
                   mouseEventObject
                 );
                 break;

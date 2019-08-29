@@ -56,7 +56,7 @@ export function generateNonInstancedClickTests<Type>(
   overrideOptions?: {
     overrideExpectedSingleObjects?: any,
     overrideExpectedMultipleObjects?: any,
-  } = {}
+  }
 ): Array<IntegrationTest> {
   const options = overrideOptions || {};
   return [

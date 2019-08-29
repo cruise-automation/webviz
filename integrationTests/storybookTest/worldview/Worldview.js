@@ -47,7 +47,7 @@ const WorldviewTests: IntegrationTestModule = {
         expect(result.ray.origin[1]).toBeCloseTo(75, 1);
         expect(result.ray.origin[2]).toBeCloseTo(0);
 
-        // point
+        // Point
         expect(result.ray.point[0]).toBeCloseTo(0);
         expect(result.ray.point[1]).toBeCloseTo(75, 1);
         expect(result.ray.point[2]).toBeCloseTo(0);

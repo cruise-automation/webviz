@@ -6,7 +6,7 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
-import Worldview, { Axes, Cubes, DEFAULT_CAMERA_STATE, Overlay, Spheres, getCSSColor } from "regl-worldview";
+import Worldview, { Axes, Cubes, Overlay, Spheres, getCSSColor } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
@@ -20,7 +20,6 @@ function Example() {
 
   const [clickedId, setClickedId] = useState(7);
   const [cameraState, setCameraState] = useState({
-    ...DEFAULT_CAMERA_STATE,
     distance: 145,
     phi: 1.22,
     thetaOffset: 0,

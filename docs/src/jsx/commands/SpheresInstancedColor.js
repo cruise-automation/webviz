@@ -6,7 +6,7 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
-import Worldview, { Spheres, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Spheres } from "regl-worldview";
 import seedrandom from "seedrandom";
 
 // #BEGIN EDITABLE
@@ -46,7 +46,6 @@ function Example() {
   return (
     <Worldview
       defaultCameraState={{
-        ...DEFAULT_CAMERA_STATE,
         target: [20, 20, 100],
       }}>
       <Spheres>{[marker]}</Spheres>

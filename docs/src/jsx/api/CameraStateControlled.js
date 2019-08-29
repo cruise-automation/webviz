@@ -6,14 +6,14 @@
 
 // #BEGIN EXAMPLE
 import React, { useState } from "react";
-import Worldview, { Axes, Grid, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import Worldview, { Axes, Grid } from "regl-worldview";
 
 import InputNumber from "../utils/InputNumber";
 
 // #BEGIN EDITABLE
 function Example() {
   const [distance, setDistance] = useState(100);
-  const [cameraState, setCameraState] = useState({ ...DEFAULT_CAMERA_STATE, distance });
+  const [cameraState, setCameraState] = useState({ distance });
 
   return (
     <Worldview

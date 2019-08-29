@@ -231,6 +231,25 @@ stories
       step: 0.1,
     });
 
+    const fovy = number("fovy", Math.PI / 4, {
+      range: true,
+      min: 0,
+      max: Math.PI,
+      step: 0.01,
+    });
+    const near = number("near", 0.01, {
+      range: true,
+      min: 0.001,
+      max: 1000,
+      step: 0.01,
+    });
+    const far = number("far", 5000, {
+      range: true,
+      min: 10,
+      max: 10000,
+      step: 0.01,
+    });
+
     let length = Math.hypot(orientationX, orientationY, orientationZ);
     if (length > 1) {
       length /= 2;
@@ -248,6 +267,9 @@ stories
       target,
       targetOffset,
       targetOrientation,
+      fovy,
+      near,
+      far,
     };
     return <CameraStateStory controlled={controlled} cameraStateFromKnobs={cameraState} />;
   });

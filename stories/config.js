@@ -19,6 +19,7 @@ installChartjs();
 
 addDecorator(initScreenshot());
 setScreenshotOptions({
+  waitFor: "waitFor",
   delay: 100, // Small delay for rerenders that some components do.
   viewport: {
     width: 1001,
@@ -29,16 +30,17 @@ prepareForScreenshots();
 
 // automatically import all files ending in *.stories.js
 // $FlowFixMe - require.context seems not correctly typed.
-const req = require.context("../packages", true, /\.stories\.js$/);
+const req = require.context("../packages/regl-worldview/src/stories", true, /\.stories\.js$/);
 // $FlowFixMe - require.context seems not correctly typed.
-const reqDocs = require.context("../docs", true, /\.stories\.js$/);
+// UNCOMMENT/ CHANGE BACK LATER
+// const reqDocs = require.context("../docs", true, /\.stories\.js$/);
 // $FlowFixMe - require.context seems not correctly typed.
-const integrationTests = require.context("../integrationTests", true, /\.stories\.js$/);
+// const integrationTests = require.context("../integrationTests", true, /\.stories\.js$/);
 
 function loadStories() {
   req.keys().forEach((filename) => req(filename));
-  reqDocs.keys().forEach((filename) => reqDocs(filename));
-  integrationTests.keys().forEach((filename) => integrationTests(filename));
+  // reqDocs.keys().forEach((filename) => reqDocs(filename));
+  // integrationTests.keys().forEach((filename) => integrationTests(filename));
 }
 
 waitForFonts(() => {

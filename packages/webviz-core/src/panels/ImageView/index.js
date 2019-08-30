@@ -38,11 +38,12 @@ import MessageHistory, {
 import synchronizeMessages from "webviz-core/src/components/MessageHistory/synchronizeMessages";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import filterMap from "webviz-core/src/filterMap";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import type { Topic, Message } from "webviz-core/src/players/types";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { CameraInfo } from "webviz-core/src/types/Messages";
-import type { Topic, Message } from "webviz-core/src/types/players";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import reportError from "webviz-core/src/util/reportError";
 import { formatTimeRaw } from "webviz-core/src/util/time";
@@ -425,7 +426,7 @@ class ImageView extends React.Component<Props> {
                 }
 
                 const markerData = buildMarkerData(
-                  markerTopics.map((topic) => get(allItemsByPath[topic], [0, "message"])).filter(Boolean),
+                  filterMap(markerTopics, (topic) => get(allItemsByPath[topic], [0, "message"])),
                   scale,
                   transformMarkers,
                   cameraInfoTopic ? get(markerItemsByPath, [cameraInfoTopic, 0, "message", "message"]) : null

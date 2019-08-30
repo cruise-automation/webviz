@@ -12,7 +12,7 @@ import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { UnconnectedPlaybackControls } from ".";
-import { PlayerCapabilities, type PlayerState } from "webviz-core/src/types/players";
+import { PlayerCapabilities, type PlayerState } from "webviz-core/src/players/types";
 
 const START_TIME = 1531761690;
 

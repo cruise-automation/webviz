@@ -27,11 +27,19 @@ export function useShallowMemo<T>(value: T): T {
   return value;
 }
 
+function format(value: any): string {
+  try {
+    return JSON.stringify(value);
+  } catch (err) {
+    return "<unknown object>";
+  }
+}
+
 // Throw an error if the given value changes between renders.
 export function useMustNotChange<T>(value: T, message: string): T {
   const ref = useRef(value);
   if (value !== ref.current) {
-    throw new Error(message);
+    throw new Error(`${message}\nOld: ${format(ref.current)}\nNew: ${format(value)}`);
   }
   return value;
 }

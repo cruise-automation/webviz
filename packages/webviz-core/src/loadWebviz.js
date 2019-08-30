@@ -14,6 +14,25 @@ import ReactDOM from "react-dom";
 
 const defaultHooks = {
   nodes: () => [],
+  getDefaultGlobalStates() {
+    return {
+      layout: {
+        direction: "row",
+        first: "DiagnosticSummary!3edblo1",
+        second: {
+          direction: "row",
+          first: "RosOut!1f38b3d",
+          second: "3D Panel!1my2ydk",
+          splitPercentage: 50,
+        },
+        splitPercentage: 33.3333333333,
+      },
+      savedProps: {},
+      globalData: {},
+      userNodes: {},
+      linkedGlobalVariables: [],
+    };
+  },
   migratePanels: (panels) => panels,
   panelCategories() {
     return [{ label: "General", key: "general" }, { label: "Utilities", key: "utilities" }];
@@ -159,7 +178,7 @@ const defaultHooks = {
   onPanelSplit: () => {},
   onPanelDrag: () => {},
   getWorkerDataProviderWorker: () => {
-    return require("webviz-core/src/players/WorkerDataProvider.worker");
+    return require("webviz-core/src/dataProviders/WorkerDataProvider.worker");
   },
   getAdditionalDataProviders: () => {},
 };

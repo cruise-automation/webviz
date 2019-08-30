@@ -22,8 +22,8 @@ export default React.memo(function PoseMarkers({ children }: Props): Node[] {
   const markers = [];
   children.forEach((marker, i) => {
     if (marker.settings && marker.settings.useCarModel) {
-      const { pose, settings } = marker;
-      models.push(<CarModel key={i}>{{ pose, alpha: settings.alpha || 1 }}</CarModel>);
+      const { pose, settings, interactionData } = marker;
+      models.push(<CarModel key={i}>{{ pose, alpha: settings.alpha || 1, interactionData }}</CarModel>);
     } else {
       const { settings } = marker;
       if (settings && settings.color && typeof settings.color === "string") {
@@ -50,5 +50,6 @@ export default React.memo(function PoseMarkers({ children }: Props): Node[] {
       markers.push({ ...marker, points: [vec3ToPoint(tailPoint), vec3ToPoint(tipPoint)] });
     }
   });
+
   return models.concat(<Arrows key="arrows">{markers}</Arrows>);
 });

@@ -8,7 +8,7 @@
 
 import { type Time, TimeUtil } from "rosbag";
 
-import type { Message, PlayerState } from "webviz-core/src/types/players";
+import type { Message, PlayerState } from "webviz-core/src/players/types";
 import Logger from "webviz-core/src/util/Logger";
 import { subtractTimes, toSec } from "webviz-core/src/util/time";
 

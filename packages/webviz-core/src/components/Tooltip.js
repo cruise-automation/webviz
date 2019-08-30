@@ -35,7 +35,7 @@ export default class Tooltip extends React.Component<React.ElementConfig<typeof 
         fixed={fixed}
         delay={delay}
         offset={offset}
-        contents={<div className={styles.tooltip}>{contents}</div>}
+        contents={<div className={styles.tooltip}>{typeof contents === "function" ? contents() : contents}</div>}
         arrow={<div className={styles.arrow} />}>
         {children}
       </BaseTooltip>

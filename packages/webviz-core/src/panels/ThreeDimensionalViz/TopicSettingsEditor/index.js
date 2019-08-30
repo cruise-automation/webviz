@@ -19,7 +19,7 @@ import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
 import { Select, Option } from "webviz-core/src/components/Select";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { Topic } from "webviz-core/src/types/players";
+import type { Topic } from "webviz-core/src/players/types";
 import { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE, LASER_SCAN_DATATYPE } from "webviz-core/src/util/globalConstants";
 
 export const SLabel = styled.label`

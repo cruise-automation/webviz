@@ -8,6 +8,7 @@
 
 import type { ExtensionsActions } from "./extensions";
 import type { SET_MOSAIC_ID } from "./mosaic";
+import type { NodeDiagnosticsActions } from "./nodeDiagnostics";
 import type { PanelsActions } from "./panels";
 
-export type ActionTypes = PanelsActions | SET_MOSAIC_ID | ExtensionsActions;
+export type ActionTypes = PanelsActions | SET_MOSAIC_ID | ExtensionsActions | NodeDiagnosticsActions;

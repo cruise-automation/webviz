@@ -28,9 +28,9 @@ import { TOPICS_WITH_INCORRECT_HEADERS } from "webviz-core/src/components/Messag
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import useGlobalData, { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
-import { getTopicNames } from "webviz-core/src/selectors";
-import type { Topic } from "webviz-core/src/types/players";
+import type { Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { getTopicNames } from "webviz-core/src/util/selectors";
 
 function topicHasNoHeaderStamp(topic: Topic, datatypes: RosDatatypes): boolean {
   const structureTraversalResult = traverseStructure(messagePathStructures(datatypes)[topic.datatype], [

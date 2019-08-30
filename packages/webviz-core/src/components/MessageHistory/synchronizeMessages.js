@@ -10,7 +10,7 @@ import get from "lodash/get";
 import { TimeUtil, type Time } from "rosbag";
 
 import type { MessageHistoryItemsByPath } from ".";
-import type { Message } from "webviz-core/src/types/players";
+import type { Message } from "webviz-core/src/players/types";
 
 // Get all timestamps of all messages, newest first
 function allStampsNewestFirst(

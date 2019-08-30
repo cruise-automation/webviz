@@ -33,6 +33,7 @@ import PanelContext, { type PanelContextType } from "webviz-core/src/components/
 import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDragHandle";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList, { getPanelsByType } from "webviz-core/src/panels/PanelList";
+import type { Topic } from "webviz-core/src/players/types";
 import type {
   SaveConfigPayload,
   SaveFullConfigPayload,
@@ -40,7 +41,6 @@ import type {
   SaveConfig,
   PerPanelFunc,
 } from "webviz-core/src/types/panels";
-import type { Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { getPanelTypeFromId } from "webviz-core/src/util";
 
@@ -132,8 +132,8 @@ const TopicPrefixDropdown = (props: {|
   );
 };
 
-type MockProps = $Shape<PanelContextType<any>>;
-const DEFAULT_MOCK_PANEL_CONTEXT = {
+type MockProps = $Rest<PanelContextType<any>, {}>;
+const DEFAULT_MOCK_PANEL_CONTEXT: PanelContextType<any> = {
   type: "foo",
   id: "bar",
   title: "Foo Panel",

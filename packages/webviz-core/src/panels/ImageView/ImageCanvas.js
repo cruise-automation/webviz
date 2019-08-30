@@ -28,9 +28,9 @@ import { type ImageViewPanelHooks } from "./index";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import type { Message } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { ImageMarker, Color, Point } from "webviz-core/src/types/Messages";
-import type { Message } from "webviz-core/src/types/players";
 import { downloadFiles } from "webviz-core/src/util";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 

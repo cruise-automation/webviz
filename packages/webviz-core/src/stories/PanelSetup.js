@@ -13,13 +13,14 @@ import { DragDropContextProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 
 import { setAuxiliaryData } from "webviz-core/src/actions/extensions";
-import { overwriteGlobalData, overwriteWebvizNodes, setLinkedGlobalVariables } from "webviz-core/src/actions/panels";
+import { overwriteGlobalData, setUserNodes, setLinkedGlobalVariables } from "webviz-core/src/actions/panels";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import type { Frame, Topic, PlayerStateActiveData } from "webviz-core/src/players/types";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
-import type { Frame, Topic, PlayerStateActiveData } from "webviz-core/src/types/players";
+import type { UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 export type Fixture = {|
@@ -31,7 +32,7 @@ export type Fixture = {|
   auxiliaryData?: any,
   globalData?: GlobalData,
   linkedGlobalVariables?: LinkedGlobalVariables,
-  webvizNodes?: any,
+  userNodes?: UserNodes,
 |};
 
 type Props = {|
@@ -46,18 +47,29 @@ type State = {|
   store: *,
 |};
 
+export function triggerInputChange(node: window.HTMLInputElement, value: string = "") {
+  // trigger input change: https://stackoverflow.com/questions/23892547/what-is-the-best-way-to-trigger-onchange-event-in-react-js
+  // $FlowFixMe
+  const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+  // $FlowFixMe
+  nativeInputValueSetter.call(node, value);
+
+  const ev2 = new Event("input", { bubbles: true });
+  node.dispatchEvent(ev2);
+}
+
 export default class PanelSetup extends React.PureComponent<Props, State> {
   static getDerivedStateFromProps(props: Props, prevState: State) {
     const { store } = prevState;
-    const { auxiliaryData, globalData, webvizNodes, linkedGlobalVariables } = props.fixture;
+    const { auxiliaryData, globalData, userNodes, linkedGlobalVariables } = props.fixture;
     if (auxiliaryData) {
       store.dispatch(setAuxiliaryData(() => auxiliaryData));
     }
     if (globalData) {
       store.dispatch(overwriteGlobalData(globalData));
     }
-    if (webvizNodes) {
-      store.dispatch(overwriteWebvizNodes(webvizNodes));
+    if (userNodes) {
+      store.dispatch(setUserNodes(userNodes));
     }
     if (linkedGlobalVariables) {
       store.dispatch(setLinkedGlobalVariables(linkedGlobalVariables));

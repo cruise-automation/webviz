@@ -6,68 +6,237 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { type Time } from "rosbag";
+import type { Time } from "rosbag";
 
-import type { Progress, Topic } from "webviz-core/src/types/players";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import type { Range } from "webviz-core/src/util/ranges";
 
-export type Connection = {
-  messageDefinition: string,
-  md5sum: string,
-  topic: string,
-  type: string,
-};
+// A `Player` is a class that manages playback state. It manages subscriptions,
+// current time, which topics and datatypes are available, and so on.
+// For more details, see the types below.
 
-export type MessageLike = {
-  topic: string,
-  receiveTime: Time,
-  message: any,
-};
+// We disable no-use-before-define so we can have the most important types at the top.
+/* eslint-disable no-use-before-define */
+export interface Player {
+  // The main way to get information out the player is to set a listener. This listener will be
+  // called whenever the PlayerState changes, so that we can render the new state to the UI. Users
+  // should return a promise from the listener that resolves when the UI has finished updating, so
+  // that we don't get overwhelmed with new state that we can't keep up with. The Player is
+  // responsible for appropriately throttling based on when we resolve this promise.
+  setListener(listener: (PlayerState) => Promise<void>): void;
 
-// DataProviders can be instantiated using a DataProviderDescriptor and a GetDataProvider function.
-// Because the descriptor is a plain JavaScript object, it can be sent over an Rpc Channel, which
-// means that you can describe a chain of data providers that includes a Worker or a WebSocket.
-export type DataProviderDescriptor = {|
-  name: string,
-  args: any,
-  children: DataProviderDescriptor[],
+  // Close the player; i.e. terminate any connections it might have open.
+  close(): void;
+
+  // Set a new set of subscriptions/advertisers. This might trigger fetching
+  // new data, which might in turn trigger a backfill of messages.
+  setSubscriptions(subscriptions: SubscribePayload[]): void;
+  setPublishers(publishers: AdvertisePayload[]): void;
+
+  // If the Player supports publishing (i.e. PlayerState#capabilities contains
+  // PlayerCapabilities.advertise), publish a message.
+  publish(request: PublishPayload): void;
+
+  // Basic playback controls.
+  startPlayback(): void;
+  pausePlayback(): void;
+  seekPlayback(time: Time): void; // Seek to a particular time. Might trigger backfilling.
+  // If the Player supports non-real-time speeds (i.e. PlayerState#capabilities contains
+  // PlayerCapabilities.setSpeed), set that speed. E.g. 1.0 is real time, 0.2 is 20% of real time.
+  setPlaybackSpeed(speedFraction: number): void;
+}
+
+export type PlayerState = {|
+  // Is there a real Player set at all. Should be set to `false` when initializing a PlayerState outside of an actual player.
+  isPresent: boolean,
+
+  // Show a spinner in the UI (indicating making some sort of connection).
+  showSpinner: boolean,
+
+  // Show "initializing" instead of a playback bar at the bottom of the screen.
+  showInitializing: boolean,
+
+  // Show some sort of progress indication in the playback bar; see `type Progress` for more details.
+  // TODO(JP): Maybe we should unify some progress and the other initialization fields above into
+  // one "status" object?
+  progress: Progress,
+
+  // Capabilities of this particular `Player`, which are not shared across all players.
+  // See `const PlayerCapabilities` for more details.
+  capabilities: $Values<typeof PlayerCapabilities>[],
+
+  // A unique id for this player (typically a UUID generated on construction). This is used to clear
+  // out any data when switching to a new player.
+  playerId: string,
+
+  // The actual data to render panels with. Can be empty during initialization, until all this data
+  // is known. See `type PlayerStateActiveData` for more details.
+  activeData: ?PlayerStateActiveData,
 |};
 
-export type InitializationResult = {
-  start: Time,
-  end: Time,
-  topics: Topic[],
-  datatypes: RosDatatypes,
+export type PlayerStateActiveData = {|
+  // An array of (ROS-like) messages that should be rendered. Should be ordered by `receiveTime`,
+  // and should be immediately following the previous array of messages that was emitted as part of
+  // this state. If there is a discontinuity in messages, `lastSeekTime` should be different than
+  // the previous state. Panels collect these messages using `<MessageHistory>`.
+  messages: Message[],
 
-  // If returning raw messages to be parsed by `ParseMessagesDataProvider`, the DataProvider should
-  // also return `connectionsByTopic`, so the right rosbag `Reader` can be instantiated.
-  connectionsByTopic?: { [topic: string]: Connection },
+  // The current playback position, which will be shown in the playback bar. This time should be
+  // equal to or later than the latest `receiveTime` in `messages`. Why not just use
+  // `last(messages).receiveTime`? The reason is that the data source (e.g. ROS bag) might have
+  // empty sections, i.e. `messages` can be empty, but we still want to be able to show a playback
+  // cursor moving forward during these regions.
+  currentTime: Time,
+
+  // The start time to show in the playback bar. Every `message.receiveTime` (and therefore
+  // `currentTime`) has to later than or equal to `startTime`.
+  startTime: Time,
+
+  // The end time to show in the playback bar. Every `message.receiveTime` (and therefore
+  // `currentTime`) has to before than or equal to `endTime`.
+  endTime: Time,
+
+  // Whether or not we're currently playing back. Controls the play/pause icon in the playback bar.
+  // It's still allowed to emit `messages` even when not playing (e.g. when doing a backfill after
+  // a seek).
+  isPlaying: boolean,
+
+  // If the Player supports non-real-time speeds (i.e. PlayerState#capabilities contains
+  // PlayerCapabilities.setSpeed), this represents that speed as a fraction of real time.
+  // E.g. 1.0 is real time, 0.2 is 20% of real time.
+  speed: number,
+
+  // The last time a seek / discontinuity in messages happened. This will clear out data within
+  // `<MessageHistory>` so we're not looking at stale data.
+  // TODO(JP): This currently is a time per `Date.now()`, but we don't need that anywhere, so we
+  // should change this to a `resetMessagesId` where you just have to set it to a unique id (better
+  // to have an id than a boolean, in case the listener skips parsing a state for some reason).
+  lastSeekTime: number,
+
+  // A list of topics that panels can subscribe to. This list may change across states,
+  // but when a topic is removed from the list we should treat it as a seek (i.e. lastSeekTime
+  // should be bumped). Also, no messages are allowed to be emitted which have a `topic` field that
+  // isn't represented in this list. Finally, every topic must have a `datatype` which is actually
+  // present in the `datatypes` field (see below).
+  topics: Topic[],
+
+  // A complete list of ROS datatypes. Allowed to change. But it must always be "complete" (every
+  // topic must refer to a datatype that is present in this list, every datatypes that refers to
+  // another datatype must refer to a datatype that is present in this list).
+  datatypes: RosDatatypes,
+|};
+
+// Represents a ROS topic, though the actual data does not need to come from a ROS system.
+export type Topic = {|
+  // Of ROS topic format, i.e. "/some/topic". We currently depend on this slashes format a bit in
+  // `<MessageHistroy>`, though we could relax this and support arbitrary strings. It's nice to have
+  // a consistent representation for topics that people recognize though.
+  name: string,
+  // Name of the datatype (see `type PlayerStateActiveData` for details).
+  datatype: string,
+  // The original topic name, if the topic name was at some point renamed, e.g. in
+  // CombinedDataProvider.
+  originalTopic?: string,
+|};
+
+// A ROS-like message.
+// TODO(JP): `op` bit is unnecessary, and the `datatype` bit is redundant
+// with the `topics` array in `PlayerStateActiveData`. We should remove both
+// and unify type with `DataProviderMessage`.
+export type TypedMessage<T> = {|
+  topic: string,
+  datatype: string,
+  op: "message",
+  receiveTime: Time,
+
+  // The actual message format. This is currently not very tightly defined, but it's typically
+  // JSON-serializable, with the exception of typed arrays
+  // (see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays).
+  message: T,
+|};
+export type Message = TypedMessage<any>;
+
+// Contains different kinds of progress indications, mostly used in the playback bar.
+export type Progress = {
+  // Percentages by topic. Currently only used by the old Airavata code path,
+  // should be considered deprecated.
+  percentageByTopic?: { [string]: ?number },
+
+  // Used to show progress bar. Ranges are fractions, e.g. `{ start: 0, end: 0.5 }`.
+  fullyLoadedFractionRanges?: Range[],
+
+  // Time ranges in nanoseconds since bag start per topic. Used by
+  // `IdbCacheReaderDataProvider` to determine if a range is already available
+  // in IndexedDB. Is not directly shown in the UI.
+  nsTimeRangesSinceBagStart?: { [string]: Range[] },
 };
 
-export type PlayerOptions = {
+// TODO(JP): Deprecated; just inline this type wherever needed.
+export type Frame = {
+  [topic: string]: Message[],
+};
+
+// Represents a subscription to a single topic, for use in `setSubscriptions`.
+// TODO(JP): Pull this into two types, one for the Player (which does not care about the
+// `requester`) and one for the Internals panel (which does).
+export type SubscribePayload = {|
+  // The topic name to subscribe to.
+  topic: string,
+
+  // A particular requested encoding.
+  // TODO(JP): Remove and derive from `scale` (= "image/compressed").
+  encoding?: string,
+
+  // Currently only used for images. Used for compressing the image.
+  scale?: ?number,
+
+  // Optionally, where the request came from. Used in the "Internals" panel to improve debugging.
+  requester?: {| type: "panel" | "node" | "other", name: string |},
+|};
+
+// Represents a single topic publisher, for use in `setPublishers`.
+// TODO(JP): Rename to `PublisherPayload`.
+// TODO(JP): Pull this into two types, one for the Player (which does not care about the
+// `advertiser`) and one for the Internals panel (which does).
+export type AdvertisePayload = {|
+  // The topic name. Currently there is no hard requirement on whether or not this topic already
+  // exists.
+  topic: string,
+
+  // The datatype name. Must already exist in `datatypes`.
+  datatype: string,
+
+  // Optionally, where the request came from. Used in the "Internals" panel to improve debugging.
+  advertiser?: {| type: "panel", name: string |},
+|};
+
+// The actual message to publish.
+export type PublishPayload = {| topic: string, msg: any |};
+
+// Capabilities that are not shared by all players.
+export const PlayerCapabilities = {
+  // Publishing messages. Need to be connected to some sort of live robotics system (e.g. ROS).
+  advertise: "advertise",
+
+  // Setting speed to something that is not real time.
+  setSpeed: "setSpeed",
+};
+
+// A metrics collector is an interface passed into a `Player`, which will get called when certain
+// events happen, so we can track those events in some metrics system.
+export interface PlayerMetricsCollectorInterface {
+  initialized(): void;
+  play(speed: number): void;
+  seek(time: Time): void;
+  setSpeed(speed: number): void;
+  pause(): void;
+  close(): void;
+  recordBytesReceived(bytes: number): void;
+  recordPlaybackTime(time: Time): void;
+}
+
+// Common (but not required) options to initialize a `Player` with.
+export type PlayerOptions = {|
   autoplay: ?boolean,
   seekToTime: ?Time,
-};
-
-export type DataProviderMetadata = {| type: "updateReconnecting", reconnecting: boolean |};
-export type ExtensionPoint = {|
-  progressCallback: (Progress) => void,
-  reportMetadataCallback: (DataProviderMetadata) => void,
 |};
-
-// eslint-disable-next-line no-use-before-define
-export type GetDataProvider = (DataProviderDescriptor) => RandomAccessDataProvider;
-
-export interface RandomAccessDataProvider {
-  constructor(args: any, children: DataProviderDescriptor[], getDataProvider: GetDataProvider): void;
-
-  // Do any up-front initializing of the provider, and takes an optional extension point for
-  // callbacks that only some implementations care about.
-  initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult>;
-
-  // Get messages for a time range inclusive of start and end matching any of the provided topics.
-  getMessages(start: Time, end: Time, topics: string[]): Promise<MessageLike[]>;
-
-  // Close the provider.
-  close(): Promise<void>;
-}

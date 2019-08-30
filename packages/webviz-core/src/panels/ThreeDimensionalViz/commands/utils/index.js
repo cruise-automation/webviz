@@ -66,7 +66,7 @@ class TextureCacheEntry {
   // regl context
   regl: any;
 
-  constructor(regl, marker) {
+  constructor(regl: any, marker: OccupancyGridMessage) {
     this.marker = marker;
     this.regl = regl;
     const { info, data } = marker;
@@ -85,7 +85,7 @@ class TextureCacheEntry {
   // generate a new texture, otherwise keep the old one
   // uploading new texture data to the gpu is something
   // you only want to do when required - it takes several milliseconds
-  getTexture(marker) {
+  getTexture(marker: OccupancyGridMessage) {
     if (this.marker === marker) {
       return this.texture;
     }

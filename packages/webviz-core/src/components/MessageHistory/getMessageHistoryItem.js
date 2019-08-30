@@ -14,9 +14,9 @@ import {
 } from ".";
 import { type RosPath, type MessagePathFilter } from "./internalCommon";
 import type { GlobalData } from "webviz-core/src/hooks/useGlobalData";
-import { enumValuesByDatatypeAndField } from "webviz-core/src/selectors";
-import type { Message, Topic } from "webviz-core/src/types/players";
+import type { Message, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { enumValuesByDatatypeAndField } from "webviz-core/src/util/selectors";
 
 function filterMatches(filter: MessagePathFilter, value: any, globalData: any) {
   let filterValue = filter.value;

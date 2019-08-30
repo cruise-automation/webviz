@@ -20,8 +20,9 @@ import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import Tree, { type Node } from "webviz-core/src/components/Tree";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import type { Topic } from "webviz-core/src/players/types";
+import type { Namespace } from "webviz-core/src/types/Messages";
 import type { SaveConfig } from "webviz-core/src/types/panels";
-import type { Namespace, Topic } from "webviz-core/src/types/players";
 import toggle from "webviz-core/src/util/toggle";
 
 import type { ThreeDimensionalVizConfig } from "..";

@@ -25,3 +25,7 @@ module.file_ext=.jsx
 module.file_ext=.json
 module.file_ext=.glb
 module.file_ext=.bag
+
+[lints]
+# Suppress warnings about $Subtype / $Supertype in flow-typed libdefs
+deprecated-utility=off

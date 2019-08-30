@@ -15,7 +15,7 @@
 
 export default function waitForFonts(callback: () => void) {
   // $FlowFixMe - doesn't understand document.fonts.
-  Promise.all([document.fonts.load("10pt 'Inter UI'"), document.fonts.load("10pt 'Roboto Mono'")]).then(() => {
+  Promise.all([...document.fonts].map((font) => font.load())).then(() => {
     callback();
   });
 }

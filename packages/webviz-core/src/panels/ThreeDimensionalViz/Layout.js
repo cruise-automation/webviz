@@ -20,11 +20,13 @@ import {
   type CameraState,
   type ReglClickInfo,
   type MouseEventObject,
+  type Polygon,
 } from "regl-worldview";
 
 import type { ThreeDimensionalVizConfig } from ".";
 import Icon from "webviz-core/src/components/Icon";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import filterMap from "webviz-core/src/filterMap";
 import useGlobalData, { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import DebugStats from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
@@ -49,12 +51,12 @@ import type { Selections } from "webviz-core/src/panels/ThreeDimensionalViz/Topi
 import TopicSettingsEditor, { canEditDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
+import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
-import { topicsByTopicName } from "webviz-core/src/selectors";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { SaveConfig } from "webviz-core/src/types/panels";
-import type { Frame, Topic } from "webviz-core/src/types/players";
 import type { MarkerCollector, MarkerProvider } from "webviz-core/src/types/Scene";
+import { topicsByTopicName } from "webviz-core/src/util/selectors";
 import videoRecordingMode from "webviz-core/src/util/videoRecordingMode";
 
 type EventName = "onDoubleClick" | "onMouseMove" | "onMouseDown" | "onMouseUp";
@@ -179,7 +181,7 @@ class BaseComponent extends React.Component<Props, State> implements MarkerProvi
 
     // toggle scene builder topics based on selected topic nodes in the tree
     const topicsByName = topicsByTopicName(topics);
-    sceneBuilder.setTopics(selections.topics.map((name) => topicsByName[name]).filter(Boolean));
+    sceneBuilder.setTopics(filterMap(selections.topics, (name) => topicsByName[name]));
     sceneBuilder.setGlobalData(nextProps.globalData);
     sceneBuilder.setFrame(frame);
     sceneBuilder.setCurrentTime(currentTime);
@@ -248,7 +250,7 @@ class BaseComponent extends React.Component<Props, State> implements MarkerProvi
     }
   };
 
-  _onSelectObject = (selectedObject) => {
+  _onSelectObject = (selectedObject: MouseEventObject) => {
     this.setState({ selectedObjects: null, selectedObject });
     this._updateLinkedGlobalVariables(selectedObject);
   };
@@ -399,9 +401,9 @@ class BaseComponent extends React.Component<Props, State> implements MarkerProvi
     this.setState({ selectedObject: null });
   };
 
-  onSetPolygons = (polygons) => this.setState({ polygonBuilder: new PolygonBuilder(polygons) });
+  onSetPolygons = (polygons: Polygon[]) => this.setState({ polygonBuilder: new PolygonBuilder(polygons) });
 
-  setType = (newDrawingType) => this.setState({ drawingType: newDrawingType });
+  setType = (newDrawingType: ?DrawingType) => this.setState({ drawingType: newDrawingType });
 
   _getInteractionData = (): ?InteractionData => {
     if (this.state.selectedObject) {

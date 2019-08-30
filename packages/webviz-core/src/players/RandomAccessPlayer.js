@@ -5,31 +5,36 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { intersection, isEqual } from "lodash";
-import microMemoize from "micro-memoize";
+import { isEqual } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
 
-import NoopMetricsCollector from "./NoopMetricsCollector";
-import { type RandomAccessDataProvider } from "./types";
-import { rootGetDataProvider } from "webviz-core/src/players/rootGetDataProvider";
-import type { DataProviderDescriptor, DataProviderMetadata, PlayerOptions } from "webviz-core/src/players/types";
-import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import { rootGetDataProvider } from "webviz-core/src/dataProviders/rootGetDataProvider";
+import {
+  type DataProvider,
+  type DataProviderDescriptor,
+  type DataProviderMetadata,
+} from "webviz-core/src/dataProviders/types";
+import filterMap from "webviz-core/src/filterMap";
+import NoopMetricsCollector from "webviz-core/src/players/NoopMetricsCollector";
 import {
   type AdvertisePayload,
   type Message,
   type Player,
   PlayerCapabilities,
   type PlayerMetricsCollectorInterface,
+  type PlayerOptions,
   type PlayerState,
   type Progress,
   type PublishPayload,
   type SubscribePayload,
   type Topic,
-} from "webviz-core/src/types/players";
+} from "webviz-core/src/players/types";
+import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import reportError, { type ErrorType } from "webviz-core/src/util/reportError";
+import { getSanitizedTopics } from "webviz-core/src/util/selectors";
 import { clampTime, toSec, fromMillis, subtractTimes } from "webviz-core/src/util/time";
 
 const LOOP_MIN_BAG_TIME_IN_SEC = 1;
@@ -45,14 +50,9 @@ export const SEEK_BACK_NANOSECONDS = 99 /* ms */ * 1000 * 1000;
 
 const capabilities = [PlayerCapabilities.setSpeed];
 
-const getSanitizedTopics = microMemoize(
-  (subscribedTopics: Set<string>, providerTopics: Topic[]): string[] => {
-    return intersection(Array.from(subscribedTopics), providerTopics.map(({ name }) => name));
-  }
-);
-
+// A `Player` that wraps around a tree of `DataProviders`.
 export default class RandomAccessPlayer implements Player {
-  _provider: RandomAccessDataProvider;
+  _provider: DataProvider;
   _isPlaying: boolean = false;
   _listener: (PlayerState) => Promise<void>;
   _speed: number = 0.2;
@@ -287,44 +287,45 @@ export default class RandomAccessPlayer implements Player {
 
   async _getMessages(start: Time, end: Time): Promise<Message[]> {
     const topics = getSanitizedTopics(this._subscribedTopics, this._providerTopics);
+    if (topics.length === 0) {
+      return [];
+    }
     const messages = await this._provider.getMessages(start, end, topics);
-    return messages
-      .map((message) => {
-        if (!topics.includes(message.topic)) {
-          reportError(
-            `Unexpected topic encountered: ${message.topic}; skipped message`,
-            `Full message details: ${JSON.stringify(message)}`,
-            "app"
-          );
-          return undefined;
-        }
-        const topic: ?Topic = this._providerTopics.find((t) => t.name === message.topic);
-        if (!topic) {
-          reportError(
-            `Could not find topic for message ${message.topic}; skipped message`,
-            `Full message details: ${JSON.stringify(message)}`,
-            "app"
-          );
-          return undefined;
-        }
-        if (!topic.datatype) {
-          reportError(
-            `Missing datatype for topic: ${message.topic}; skipped message`,
-            `Full message details: ${JSON.stringify(message)}`,
-            "app"
-          );
-          return undefined;
-        }
+    return filterMap(messages, (message) => {
+      if (!topics.includes(message.topic)) {
+        reportError(
+          `Unexpected topic encountered: ${message.topic}; skipped message`,
+          `Full message details: ${JSON.stringify(message)}`,
+          "app"
+        );
+        return undefined;
+      }
+      const topic: ?Topic = this._providerTopics.find((t) => t.name === message.topic);
+      if (!topic) {
+        reportError(
+          `Could not find topic for message ${message.topic}; skipped message`,
+          `Full message details: ${JSON.stringify(message)}`,
+          "app"
+        );
+        return undefined;
+      }
+      if (!topic.datatype) {
+        reportError(
+          `Missing datatype for topic: ${message.topic}; skipped message`,
+          `Full message details: ${JSON.stringify(message)}`,
+          "app"
+        );
+        return undefined;
+      }
 
-        return {
-          op: "message",
-          topic: message.topic,
-          datatype: topic.datatype,
-          receiveTime: message.receiveTime,
-          message: message.message,
-        };
-      })
-      .filter(Boolean);
+      return {
+        op: "message",
+        topic: message.topic,
+        datatype: topic.datatype,
+        receiveTime: message.receiveTime,
+        message: message.message,
+      };
+    });
   }
 
   startPlayback(): void {

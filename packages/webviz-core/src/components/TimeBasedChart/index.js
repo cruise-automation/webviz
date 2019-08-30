@@ -87,7 +87,7 @@ type Props = {|
   toggleLine?: (datasetId: string | typeof undefined, lineToHide: string) => void,
   linesToHide?: { [string]: boolean },
   datasetId?: string,
-  onClick?: ((Event) => void) => void,
+  onClick?: (MouseEvent) => void,
   saveCurrentYs?: (minY: number, maxY: number) => void,
 |};
 type State = {|

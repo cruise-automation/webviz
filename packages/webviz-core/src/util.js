@@ -68,6 +68,11 @@ export function encodeURLQueryParamValue(value: string): string {
   });
 }
 
+// extra boundary added for jest testing, since jsdom's Blob doesn't support .text()
+export function downloadTextFile(text: string, filePrefixOrName: string) {
+  return downloadFiles([new Blob([text])], filePrefixOrName);
+}
+
 export function downloadFiles(blobs: Blob[], filePrefixOrName: string) {
   const { body } = document;
   if (!body) {

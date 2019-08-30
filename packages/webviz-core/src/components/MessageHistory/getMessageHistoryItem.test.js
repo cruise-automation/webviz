@@ -8,16 +8,17 @@
 
 import getMessageHistoryItem from "./getMessageHistoryItem";
 import { messagePathStructures } from "webviz-core/src/components/MessageHistory/messagePathsForDatatype";
-import { topicsByTopicName } from "webviz-core/src/selectors";
-import type { Message, Topic } from "webviz-core/src/types/players";
+import filterMap from "webviz-core/src/filterMap";
+import type { Message, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { topicsByTopicName } from "webviz-core/src/util/selectors";
 
 function addValuesWithPathsToItems(messages, rosPath, topics, datatypes, globalData) {
   const structures = messagePathStructures(datatypes);
   const topic = topicsByTopicName(topics)[rosPath.topicName];
-  return messages
-    .map((message) => getMessageHistoryItem(message, rosPath, topic, datatypes, globalData, structures))
-    .filter(Boolean);
+  return filterMap(messages, (message) =>
+    getMessageHistoryItem(message, rosPath, topic, datatypes, globalData, structures)
+  );
 }
 
 describe("getMessageHistoryItem", () => {

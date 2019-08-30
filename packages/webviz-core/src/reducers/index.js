@@ -12,6 +12,7 @@ import { combineReducers } from "redux";
 import auth from "./auth";
 import extensions from "./extensions";
 import mosaic from "./mosaic";
+import nodeDiagnostics from "./nodeDiagnostics";
 import panels from "./panels";
 
 const reducers = {
@@ -19,6 +20,7 @@ const reducers = {
   mosaic,
   auth,
   extensions,
+  nodeDiagnostics,
 };
 
 export default function createRootReducer(history: any) {

@@ -16,6 +16,7 @@ import {
   type MouseEventObject,
 } from "regl-worldview";
 
+import filterMap from "webviz-core/src/filterMap";
 import { mapMarker } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import { type PointCloud } from "webviz-core/src/types/Messages";
 
@@ -83,37 +84,35 @@ const pointCloud = (regl: Regl) => {
   };
 };
 
-function instancedGetChildrenForHitmap<T: any[]>(
-  props: T,
+function instancedGetChildrenForHitmap<T: { points: Float32Array, pointSize?: number, colors: Uint8Array | number[] }>(
+  props: T[],
   assignNextColors: AssignNextColorsFn,
   excludedObjects: MouseEventObject[]
-): T {
-  return props
-    .map((prop) => {
-      // exclude all points if one has been interacted with because iterating through all points in
-      // in pointcloud object is expensive
-      const isInExcludedObjects = excludedObjects.find(({ object }) => object === prop);
-      if (isInExcludedObjects) {
-        return null;
-      }
-      const hitmapProp = { ...prop };
-      const instanceCount = Math.ceil(prop.points.length / 3);
-      if (instanceCount < 1) {
-        return null;
-      }
-      const idColors = assignNextColors(prop, instanceCount);
-      const allColors = [];
-      idColors.forEach((color) => {
-        allColors.push(color[0] * 255);
-        allColors.push(color[1] * 255);
-        allColors.push(color[2] * 255);
-      });
-      hitmapProp.colors = allColors;
-      // expand the interaction area
-      hitmapProp.pointSize = (hitmapProp.pointSize || 2) * 5;
-      return hitmapProp;
-    })
-    .filter(Boolean);
+): T[] {
+  return filterMap(props, (prop) => {
+    // exclude all points if one has been interacted with because iterating through all points in
+    // in pointcloud object is expensive
+    const isInExcludedObjects = excludedObjects.find(({ object }) => object === prop);
+    if (isInExcludedObjects) {
+      return null;
+    }
+    const hitmapProp = { ...prop };
+    const instanceCount = Math.ceil(prop.points.length / 3);
+    if (instanceCount < 1) {
+      return null;
+    }
+    const idColors = assignNextColors(prop, instanceCount);
+    const allColors = [];
+    idColors.forEach((color) => {
+      allColors.push(color[0] * 255);
+      allColors.push(color[1] * 255);
+      allColors.push(color[2] * 255);
+    });
+    hitmapProp.colors = allColors;
+    // expand the interaction area
+    hitmapProp.pointSize = (hitmapProp.pointSize || 2) * 5;
+    return hitmapProp;
+  });
 }
 
 type Props = { ...CommonCommandProps, children: PointCloud[] };

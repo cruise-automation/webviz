@@ -9,17 +9,17 @@
 import { createMemoryHistory } from "history";
 import { getLeaves } from "react-mosaic-component";
 
-import {
-  changePanelLayout,
-  savePanelConfig,
-  importPanelLayout,
-  setWebvizNodes,
-  overwriteWebvizNodes,
-} from "webviz-core/src/actions/panels";
+import { changePanelLayout, savePanelConfig, importPanelLayout, setUserNodes } from "webviz-core/src/actions/panels";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import createRootReducer from "webviz-core/src/reducers";
-import { LAYOUT_KEY, PANEL_PROPS_KEY, GLOBAL_DATA_KEY } from "webviz-core/src/reducers/panels";
+import {
+  LAYOUT_KEY,
+  PANEL_PROPS_KEY,
+  GLOBAL_DATA_KEY,
+  USER_NODES_KEY,
+  LINKED_GLOBAL_VARIABLES_KEY,
+} from "webviz-core/src/reducers/panels";
 import configureStore from "webviz-core/src/store";
-import { defaultLayout } from "webviz-core/src/util/defaultLayoutConfig";
 import Storage from "webviz-core/src/util/Storage";
 
 const getStore = () => {
@@ -30,6 +30,14 @@ const getStore = () => {
   store.push = (path) => history.push(path);
   return store;
 };
+
+const {
+  layout: defaultLayout,
+  savedProps: defaultSavedProps,
+  globalData: defaultGlobalDataa,
+  userNodes: defaultUserNodes,
+  linkedGlobalVariables: defaultLinkedGlobalVariables,
+} = getGlobalHooks().getDefaultGlobalStates();
 
 describe("state.panels", () => {
   beforeEach(() => {
@@ -44,17 +52,17 @@ describe("state.panels", () => {
     });
   });
 
-  it("stores default settings in local storage when layout payload is empty", () => {
+  it("stores default settings in local storage", () => {
     const store = getStore();
-    const emptyPayload = {};
-
-    store.dispatch(importPanelLayout(emptyPayload, false));
     store.checkState((panels) => {
       expect(panels.layout).toEqual(defaultLayout);
       expect(panels.savedProps).toEqual({});
       const storage = new Storage();
-      expect(storage.get(LAYOUT_KEY) || "").toEqual(defaultLayout);
-      expect(storage.get(PANEL_PROPS_KEY)).toEqual({});
+      expect(storage.get(LAYOUT_KEY)).toEqual(defaultLayout);
+      expect(storage.get(PANEL_PROPS_KEY)).toEqual(defaultSavedProps);
+      expect(storage.get(GLOBAL_DATA_KEY)).toEqual(defaultGlobalDataa);
+      expect(storage.get(USER_NODES_KEY)).toEqual(defaultUserNodes);
+      expect(storage.get(LINKED_GLOBAL_VARIABLES_KEY)).toEqual(defaultLinkedGlobalVariables);
     });
   });
 
@@ -222,21 +230,15 @@ describe("state.panels", () => {
     const store = getStore();
     const firstPayload = { foo: "bar" };
     const secondPayload = { bar: "baz" };
-    const lastPayload = { foo: "moo", abc: "def" };
 
-    store.dispatch(setWebvizNodes(firstPayload));
+    store.dispatch(setUserNodes(firstPayload));
     store.checkState((panelState) => {
-      expect(panelState.webvizNodes).toEqual(firstPayload);
+      expect(panelState.userNodes).toEqual(firstPayload);
     });
 
-    store.dispatch(setWebvizNodes(secondPayload));
+    store.dispatch(setUserNodes(secondPayload));
     store.checkState((panelState) => {
-      expect(panelState.webvizNodes).toEqual({ ...firstPayload, ...secondPayload });
-    });
-
-    store.dispatch(overwriteWebvizNodes(lastPayload));
-    store.checkState((panelState) => {
-      expect(panelState.webvizNodes).toEqual(lastPayload);
+      expect(panelState.userNodes).toEqual({ ...firstPayload, ...secondPayload });
     });
   });
 

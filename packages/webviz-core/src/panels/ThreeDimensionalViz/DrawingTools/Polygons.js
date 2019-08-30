@@ -43,7 +43,7 @@ type Props = {
 };
 
 export default function Polygons({ onSetPolygons, polygonBuilder, selectedPolygonEditFormat }: Props) {
-  const { saveConfig } = React.useContext(PanelContext);
+  const { saveConfig } = React.useContext(PanelContext) || {};
   const polygons: Polygon[] = polygonBuilder.polygons;
   const [polygonPoints, setPolygonPoints] = React.useState<Point2D[][]>(() => polygonsToPoints(polygons));
   function polygonBuilderOnChange() {

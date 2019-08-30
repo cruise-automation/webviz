@@ -9,7 +9,7 @@
 import * as React from "react";
 import styled from "styled-components";
 
-import PanelContext from "webviz-core/src/components/PanelContext";
+import { usePanelContext } from "webviz-core/src/components/PanelContext";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import RawMessages, { type RawMessagesConfig } from "webviz-core/src/panels/RawMessages/index";
 import colors from "webviz-core/src/styles/colors.module.scss";
@@ -24,7 +24,7 @@ type Props = {
 };
 
 export default function TopicLink({ topic }: Props) {
-  const { openSiblingPanel } = React.useContext(PanelContext);
+  const { openSiblingPanel } = usePanelContext();
   const openRawMessages = React.useCallback(
     () => {
       if (!openSiblingPanel) {

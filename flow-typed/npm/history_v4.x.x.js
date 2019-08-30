@@ -1,5 +1,5 @@
-// flow-typed signature: 540e42745f797051f3bf17a6af1ccf06
-// flow-typed version: 6a3fe49a8b/history_v4.x.x/flow_>=v0.25.x
+// flow-typed signature: 1d7ad95f7c1eb2ed918644f4fd8ddf00
+// flow-typed version: c6154227d1/history_v4.x.x/flow_>=v0.104.x
 
 declare module "history/createBrowserHistory" {
   declare function Unblock(): void;
@@ -11,17 +11,18 @@ declare module "history/createBrowserHistory" {
     search: string,
     hash: string,
     // Browser and Memory specific
-    state: {},
+    state: {...},
     key: string,
+    ...
   };
 
   declare interface IBrowserHistory {
     length: number,
     location: BrowserLocation,
     action: Action,
-    push(path: string, state?: {}): void,
+    push(path: string, state?: {...}): void,
     push(location: $Shape<BrowserLocation>): void,
-    replace(path: string, state?: {}): void,
+    replace(path: string, state?: {...}): void,
     replace(location: $Shape<BrowserLocation>): void,
     go(n: number): void,
     goBack(): void,
@@ -40,6 +41,7 @@ declare module "history/createBrowserHistory" {
       message: string,
       callback: (willContinue: boolean) => void,
     ) => void,
+    ...
   };
 
   declare export default (opts?: HistoryOpts) => BrowserHistory;
@@ -55,8 +57,9 @@ declare module "history/createMemoryHistory" {
     search: string,
     hash: string,
     // Browser and Memory specific
-    state: {},
+    state: {...},
     key: string,
+    ...
   };
 
   declare interface IMemoryHistory {
@@ -65,9 +68,9 @@ declare module "history/createMemoryHistory" {
     action: Action,
     index: number,
     entries: Array<string>,
-    push(path: string, state?: {}): void,
+    push(path: string, state?: {...}): void,
     push(location: $Shape<MemoryLocation>): void,
-    replace(path: string, state?: {}): void,
+    replace(path: string, state?: {...}): void,
     replace(location: $Shape<MemoryLocation>): void,
     go(n: number): void,
     goBack(): void,
@@ -89,6 +92,7 @@ declare module "history/createMemoryHistory" {
       message: string,
       callback: (willContinue: boolean) => void,
     ) => void,
+    ...
   };
 
   declare export default (opts?: HistoryOpts) => MemoryHistory;
@@ -103,15 +107,16 @@ declare module "history/createHashHistory" {
     pathname: string,
     search: string,
     hash: string,
+    ...
   };
 
   declare interface IHashHistory {
     length: number,
     location: HashLocation,
     action: Action,
-    push(path: string, state?: {}): void,
+    push(path: string, state?: {...}): void,
     push(location: $Shape<HashLocation>): void,
-    replace(path: string, state?: {}): void,
+    replace(path: string, state?: {...}): void,
     replace(location: $Shape<HashLocation>): void,
     go(n: number): void,
     goBack(): void,
@@ -131,6 +136,7 @@ declare module "history/createHashHistory" {
       message: string,
       callback: (willContinue: boolean) => void,
     ) => void,
+    ...
   };
 
   declare export default (opts?: HistoryOpts) => HashHistory;

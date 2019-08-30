@@ -16,24 +16,24 @@ import { omit } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS } from "./RandomAccessPlayer";
+import delay from "webviz-core/shared/delay";
 import {
   type ExtensionPoint,
   type InitializationResult,
-  type MessageLike,
-  type RandomAccessDataProvider,
-} from "./types";
-import delay from "webviz-core/shared/delay";
+  type DataProviderMessage,
+  type DataProvider,
+} from "webviz-core/src/dataProviders/types";
 import {
   type PlayerMetricsCollectorInterface,
   type Topic,
   type PlayerState,
   PlayerCapabilities,
-} from "webviz-core/src/types/players";
+} from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 jest.mock("webviz-core/src/util/reportError");
 
-type GetMessages = (start: Time, end: Time, topics: string[]) => Promise<MessageLike[]>;
+type GetMessages = (start: Time, end: Time, topics: string[]) => Promise<DataProviderMessage[]>;
 
 const start = { sec: 0, nsec: 0 };
 const end = { sec: 100, nsec: 0 };
@@ -61,7 +61,7 @@ const topics: Topic[] = [
     datatype: "baz",
   },
 ];
-class TestProvider implements RandomAccessDataProvider {
+class TestProvider implements DataProvider {
   _start: Time;
   _end: Time;
   _topics: Topic[];
@@ -86,7 +86,7 @@ class TestProvider implements RandomAccessDataProvider {
     });
   }
 
-  getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+  getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
     throw new Error("not implemented");
   };
 
@@ -220,7 +220,7 @@ describe("RandomAccessPlayer", () => {
     expect.assertions(6);
     const provider = new TestProvider();
     let callCount = 0;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       callCount++;
       switch (callCount) {
         case 1:
@@ -233,7 +233,7 @@ describe("RandomAccessPlayer", () => {
           expect(start).toEqual({ sec: 0, nsec: 1 });
           expect(end).toEqual({ sec: 0, nsec: 4000000 });
           expect(topics).toEqual(["/foo/bar"]);
-          const result: MessageLike[] = [
+          const result: DataProviderMessage[] = [
             {
               topic: "/foo/bar",
               receiveTime: { sec: 0, nsec: 2 },
@@ -282,7 +282,7 @@ describe("RandomAccessPlayer", () => {
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
 
     let callCount = 0;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       callCount++;
       switch (callCount) {
         case 1:
@@ -320,7 +320,7 @@ describe("RandomAccessPlayer", () => {
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
 
     let callCount = 0;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       callCount++;
       switch (callCount) {
         case 1:
@@ -334,7 +334,7 @@ describe("RandomAccessPlayer", () => {
           expect(start).toEqual({ sec: 0, nsec: 1 });
           expect(end).toEqual({ sec: 0, nsec: 4000000 });
           expect(topics).toContainOnly(["/foo/bar"]);
-          const result: MessageLike[] = [
+          const result: DataProviderMessage[] = [
             {
               topic: "/foo/bar",
               receiveTime: { sec: 0, nsec: 0 },
@@ -388,7 +388,7 @@ describe("RandomAccessPlayer", () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     let callCount = 0;
-    provider.getMessages = async (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = async (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       expect(topics).toContainOnly(["/foo/bar"]);
       callCount++;
       switch (callCount) {
@@ -402,7 +402,7 @@ describe("RandomAccessPlayer", () => {
           expect(start).toEqual({ sec: 0, nsec: 1 });
           expect(end).toEqual({ sec: 0, nsec: 4000000 });
           expect(topics).toContainOnly(["/foo/bar"]);
-          const result: MessageLike[] = [
+          const result: DataProviderMessage[] = [
             {
               topic: "/foo/bar",
               receiveTime: { sec: 0, nsec: 0 },
@@ -453,7 +453,7 @@ describe("RandomAccessPlayer", () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     let callCount = 0;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       callCount++;
       switch (callCount) {
         case 1:
@@ -467,7 +467,7 @@ describe("RandomAccessPlayer", () => {
           expect(start).toEqual({ sec: 19, nsec: 1e9 + 50 - SEEK_BACK_NANOSECONDS });
           expect(end).toEqual({ sec: 20, nsec: 50 });
           expect(topics).toContainOnly(["/foo/bar"]);
-          const result: MessageLike[] = [
+          const result: DataProviderMessage[] = [
             {
               topic: "/foo/bar",
               receiveTime: { sec: 0, nsec: 5 },
@@ -541,7 +541,7 @@ describe("RandomAccessPlayer", () => {
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     let callCount = 0;
     let backfillPromiseCallback;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       callCount++;
       switch (callCount) {
         case 1:
@@ -610,7 +610,7 @@ describe("RandomAccessPlayer", () => {
     ]);
 
     store.reset(0); // We expect 0 more messages; this will throw an error later if we received more.
-    const result: MessageLike = {
+    const result: DataProviderMessage = {
       topic: "/foo/bar",
       receiveTime: { sec: 0, nsec: 5 },
       message: { payload: "foo bar" },
@@ -624,7 +624,7 @@ describe("RandomAccessPlayer", () => {
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     source.setSubscriptions([{ topic: "/foo/bar" }]);
     let lastGetMessagesCall;
-    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       return new Promise((resolve) => {
         lastGetMessagesCall = { start, end, topics, resolve };
       });
@@ -661,12 +661,12 @@ describe("RandomAccessPlayer", () => {
   });
 
   it("gets messages when valid topics subscriptions changed", async () => {
-    expect.assertions(6);
+    expect.assertions(4);
     const provider = new TestProvider();
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
 
     let callCount = 0;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       callCount++;
       switch (callCount) {
         case 1:
@@ -682,13 +682,7 @@ describe("RandomAccessPlayer", () => {
           expect(topics).toEqual(["/baz"]);
           return Promise.resolve([]);
 
-        case 4:
-          expect(topics).toEqual([]);
-          return Promise.resolve([]);
-
-        case 5:
-          expect(topics).toEqual([]);
-          return Promise.resolve([]);
+        // Never called with empty topics!
 
         default:
           throw new Error("getMessages called too many times");
@@ -711,7 +705,7 @@ describe("RandomAccessPlayer", () => {
 
   it("reads a bunch of messages", async () => {
     const provider = new TestProvider();
-    const items: MessageLike[] = [
+    const items: DataProviderMessage[] = [
       {
         topic: "/foo/bar",
         receiveTime: { sec: 0, nsec: 0 },
@@ -735,7 +729,7 @@ describe("RandomAccessPlayer", () => {
     ];
     let resolve;
     const done = new Promise((_resolve) => (resolve = _resolve));
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<MessageLike[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       expect(topics).toContainOnly(["/foo/bar", "/baz"]);
       const next = items.shift();
       if (!next) {

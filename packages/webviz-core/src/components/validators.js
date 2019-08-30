@@ -109,7 +109,6 @@ export const validationErrorToString = (validationResult: ValidationResult): str
   typeof validationResult === "string"
     ? validationResult
     : Object.keys(validationResult)
-        // $FlowFixMe
         .map((key) => `${key}: ${validationResult[key]}`)
         .join(", ");
 

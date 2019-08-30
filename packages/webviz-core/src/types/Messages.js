@@ -11,6 +11,11 @@
 
 import type { Time } from "rosbag";
 
+export type Namespace = {|
+  topic: string,
+  name: string,
+|};
+
 export type Point = {
   x: number,
   y: number,

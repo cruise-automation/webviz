@@ -122,7 +122,7 @@ describe("useAbortable", () => {
       return "done1";
     };
     const cleanup1 = jest.fn();
-    const App = ({ action, cleanup }) => <Test ref={ref} action={action} cleanup={cleanup1} />;
+    const App = ({ action }) => <Test ref={ref} action={action} cleanup={cleanup1} />;
     const el = mount(<App action={action1} />);
     expect(el.text()).toEqual("pending");
     wait1.resolve();

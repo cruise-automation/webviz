@@ -16,7 +16,8 @@ export const DEMO_QUERY_KEY = "demo";
 export const AUTOPLAY_QUERY_KEY = "autoplay";
 export const ENABLE_NODE_PLAYGROUND_QUERY_KEY = "enable-node-playground";
 
-export const DEFAULT_WEBVIZ_NODE_NAME = "/webviz/tmp/node";
+export const DEFAULT_WEBVIZ_NODE_PREFIX = "/custom_node/";
+export const DEFAULT_WEBVIZ_NODE_NAME = "my_webviz_node";
 
 export const TRANSFORM_TOPIC = "/tf";
 export const DIAGNOSTIC_TOPIC = "/diagnostics";

@@ -14,7 +14,7 @@ import uuid from "uuid";
 import { useChangeDetector, useShallowMemo, useMustNotChange, useShouldNotChangeOften } from "./hooks";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PerfMonitor from "webviz-core/src/components/PerfMonitor";
-import type { Message, SubscribePayload } from "webviz-core/src/types/players";
+import type { Message, SubscribePayload } from "webviz-core/src/players/types";
 
 // This is an internal component which only supports topics,
 // not full paths. Since full paths are a superset of topics, we figured we'd not expose this

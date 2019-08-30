@@ -93,12 +93,11 @@ export default function CameraInfo({
   cameraState,
   onAlignXYAxis,
   onCameraStateChange,
-  showPasteBox: showPasteBoxAlt,
   followTf,
   followOrientation,
   showCrosshair,
 }: CameraInfoProps) {
-  const { updatePanelConfig, saveConfig } = React.useContext(PanelContext);
+  const { updatePanelConfig, saveConfig } = React.useContext(PanelContext) || {};
   const [edit, setEdit] = React.useState<boolean>(false);
 
   const { target, targetOffset } = cameraState;

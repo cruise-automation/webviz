@@ -18,8 +18,9 @@ import { messagePathStructures, traverseStructure } from "./messagePathsForDatat
 import parseRosPath from "./parseRosPath";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PanelContext from "webviz-core/src/components/PanelContext";
+import filterMap from "webviz-core/src/filterMap";
 import useGlobalData from "webviz-core/src/hooks/useGlobalData";
-import type { Message } from "webviz-core/src/types/players";
+import type { Message } from "webviz-core/src/players/types";
 
 // Use `<MessageHistory>` to get data from the player, typically a bag or ROS websocket bridge.
 // Typical usage looks like this:
@@ -260,11 +261,6 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
           itemsByPath[path] = [];
           continue;
         }
-        // If this path already existed, restore the items directly.
-        if (prevItemsByPath[path]) {
-          itemsByPath[path] = prevItemsByPath[path];
-          continue;
-        }
 
         const rosPath = rosPaths[path];
         const { topicName } = rosPath || {};
@@ -279,10 +275,20 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
           continue;
         }
 
+        // If this path already existed, try to restore the previous items.
+        // (Note that the paths may refer to global variables, so we can't just directly
+        // copy the items over; we must run them through getMessageHistoryItem again.)
+        if (prevItemsByPath[path]) {
+          itemsByPath[path] = filterMap(prevItemsByPath[path], ({ message }) =>
+            getMessageHistoryItem(message, rosPath, originalTopic, datatypes, globalData, structures)
+          );
+          continue;
+        }
+
         // Extract items for this new path from the original messages.
-        itemsByPath[path] = messagesByTopic[topicName]
-          .map((message) => getMessageHistoryItem(message, rosPath, originalTopic, datatypes, globalData, structures))
-          .filter(Boolean);
+        itemsByPath[path] = filterMap(messagesByTopic[topicName], (message) =>
+          getMessageHistoryItem(message, rosPath, originalTopic, datatypes, globalData, structures)
+        );
       }
 
       return itemsByPath;

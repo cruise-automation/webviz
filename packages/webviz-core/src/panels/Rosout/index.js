@@ -26,7 +26,7 @@ import MessageHistory, {
 } from "webviz-core/src/components/MessageHistory";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import type { Message } from "webviz-core/src/types/players";
+import type { Message } from "webviz-core/src/players/types";
 
 // Remove creatable warning https://github.com/JedWatson/react-select/issues/2181
 class Creatable extends React.Component<{}, {}> {

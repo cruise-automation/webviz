@@ -14,8 +14,6 @@ import { Provider } from "react-redux";
 import { type Time, TimeUtil } from "rosbag";
 
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
-import createRootReducer from "webviz-core/src/reducers";
-import configureStore from "webviz-core/src/store/configureStore";
 import type {
   AdvertisePayload,
   Frame,
@@ -26,7 +24,9 @@ import type {
   PublishPayload,
   SubscribePayload,
   Topic,
-} from "webviz-core/src/types/players";
+} from "webviz-core/src/players/types";
+import createRootReducer from "webviz-core/src/reducers";
+import configureStore from "webviz-core/src/store/configureStore";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import naturalSort from "webviz-core/src/util/naturalSort";
 
@@ -218,6 +218,15 @@ export function MockMessagePipelineProvider(props: {|
     }
   }
 
+  const [allSubscriptions, setAllSubscriptions] = useState<{ [string]: SubscribePayload[] }>({});
+  const flattenedSubscriptions: SubscribePayload[] = useMemo(
+    () => flatten(Object.keys(allSubscriptions).map((k) => allSubscriptions[k])),
+    [allSubscriptions]
+  );
+  const setSubscriptions = useCallback((id, subs) => setAllSubscriptions((s) => ({ ...s, [id]: subs })), [
+    setAllSubscriptions,
+  ]);
+
   return (
     <Provider store={storeRef.current}>
       <Context.Provider
@@ -245,9 +254,9 @@ export function MockMessagePipelineProvider(props: {|
           frame: groupBy(props.messages || [], "topic"),
           sortedTopics: (props.topics || []).sort(naturalSort("name")),
           datatypes: props.datatypes || {},
-          subscriptions: [],
+          subscriptions: flattenedSubscriptions,
           publishers: [],
-          setSubscriptions: props.setSubscriptions || ((_, __) => {}),
+          setSubscriptions: props.setSubscriptions || setSubscriptions,
           setPublishers: (_, __) => {},
           publish: (_) => {},
           startPlayback: () => {},

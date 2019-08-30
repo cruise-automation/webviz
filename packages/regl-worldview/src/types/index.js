@@ -154,7 +154,7 @@ export type Pose = {
 export type BaseShape = {
   pose: Pose,
   scale: Scale,
-  color: Color | Vec4,
+  color?: Color | Vec4,
 };
 
 export type Arrow = BaseShape & {
@@ -167,7 +167,15 @@ export type Cube = BaseShape & {
   points?: Point[] | Vec3[],
 };
 
-export type Cylinder = BaseShape;
+export type Cone = BaseShape & {
+  colors?: Color[],
+  points?: Point[] | Vec3[],
+};
+
+export type Cylinder = BaseShape & {
+  colors?: Color[],
+  points?: Point[] | Vec3[],
+};
 
 export type Line = BaseShape & {
   points: Point[] | Vec3[],

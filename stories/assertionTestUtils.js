@@ -43,6 +43,7 @@ type AssertionTest = {|
 export function assertionTest({ story, assertions }: AssertionTest): () => React$Element<any> {
   let testData: any = null;
   function setTestData(data: any) {
+    console.log("Set test data", data);
     testData = data;
   }
   function getTestData(): any {
@@ -54,12 +55,21 @@ export function assertionTest({ story, assertions }: AssertionTest): () => React
     useLayoutEffect(() => {
       const assertionPromise = async () => {
         await timeout(100);
-        await assertions(getTestData);
+        try {
+          await assertions(getTestData);
+        } catch (error) {
+          console.warn(error);
+          throw error;
+        }
       };
+
       let errorCallback;
       let consoleErrorCallback;
       const errorPromise = new Promise((resolve, reject) => {
-        errorCallback = (event) => reject(event);
+        errorCallback = (event) => {
+          console.warn(error);
+          reject(event);
+        };
         window.addEventListener("error", errorCallback);
       });
       const consoleErrorPromise = new Promise((resolve, reject) => {
@@ -75,14 +85,14 @@ export function assertionTest({ story, assertions }: AssertionTest): () => React
       window.waitFor = () => resultPromise;
     }, []);
 
-    if (error) {
-      console.error(error);
-    }
     return error ? (
       <div>
-        {error.message}
-        <br />
-        {error.stack}
+        <pre>
+          {error.message}
+          <br />
+          <br />
+          {error.stack}
+        </pre>
       </div>
     ) : (
       story(setTestData)

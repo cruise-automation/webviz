@@ -8,7 +8,7 @@
 
 /* eslint-disable react/display-name */
 
-import isEqual from "lodash/isEqual";
+import diffLinesUnified from "jest-diff";
 import React, { useLayoutEffect, useState } from "react";
 
 import { addConsoleErrorListener, removeConsoleErrorListener } from "./wrapConsoleError";
@@ -43,7 +43,11 @@ type AssertionTest = {|
 export function assertionTest({ story, assertions }: AssertionTest): () => React$Element<any> {
   let testData: any = null;
   function setTestData(data: any) {
-    console.log("Set test data", data);
+    // Set the testData on window for debugging purposes.
+    const windowObject = window.parent ? window.parent : window;
+    // eslint-disable-next-line no-console
+    console.log("Set the following test data. See window.testData to access it.", data);
+    windowObject.testData = data;
     testData = data;
   }
   function getTestData(): any {
@@ -73,7 +77,7 @@ export function assertionTest({ story, assertions }: AssertionTest): () => React
         window.addEventListener("error", errorCallback);
       });
       const consoleErrorPromise = new Promise((resolve, reject) => {
-        consoleErrorCallback = (...data) => reject(data);
+        consoleErrorCallback = (...data) => reject(new Error(data));
         addConsoleErrorListener(consoleErrorCallback);
       });
       const resultPromise = Promise.race([assertionPromise(), errorPromise, consoleErrorPromise])
@@ -81,18 +85,15 @@ export function assertionTest({ story, assertions }: AssertionTest): () => React
         .then(() => {
           window.removeEventListener("error", errorCallback);
           removeConsoleErrorListener(consoleErrorCallback);
+          // eslint-disable-next-line no-console
+          console.log("TEST FINISHED");
         });
       window.waitFor = () => resultPromise;
     }, []);
 
     return error ? (
       <div>
-        <pre>
-          {error.message}
-          <br />
-          <br />
-          {error.stack}
-        </pre>
+        <pre>{error.stack}</pre>
       </div>
     ) : (
       story(setTestData)
@@ -105,13 +106,13 @@ type Expectations = {|
   toEqual: (any) => void,
 |};
 
+// A custom expect tool, used to replace jest matchers that we don't have access to in the browser.
 export function expect(obj: any): Expectations {
   return {
     toEqual: (compareObj) => {
-      if (obj !== compareObj && !isEqual(obj, compareObj)) {
-        throw new Error(
-          `isEqual failed: \noriginal: ${JSON.stringify(obj)}\ncomparison: ${JSON.stringify(compareObj)}`
-        );
+      const diff = diffLinesUnified(obj, compareObj);
+      if (diff !== "Compared values have no visual difference.") {
+        throw new Error(diff);
       }
     },
   };

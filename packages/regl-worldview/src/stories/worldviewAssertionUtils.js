@@ -22,6 +22,7 @@ const defaultCameraState: $Shape<CameraState> = {
   target: [0, 0, 0],
   targetOffset: [0, 0, 0],
   targetOrientation: [0, 0, 0, 1],
+  thetaOffset: Math.PI,
 };
 
 export const WORLDVIEW_SIZE = 300;
@@ -87,7 +88,7 @@ export function generateNonInstancedClickAssertions<Type>(
           expect(result).toEqual(
             options.overrideExpectedSingleObjects
               ? options.overrideExpectedSingleObjects
-              : [{ object: renderedObjects[0] }]
+              : [{ object: renderedObjects[0], instanceIndex: undefined }]
           );
         },
       }),
@@ -103,11 +104,11 @@ export function generateNonInstancedClickAssertions<Type>(
         assertions: async (getTestData) => {
           await clickAtOrigin();
           const result = getTestData();
-          // expect(result).toEqual(
-          //   options.overrideExpectedSingleObjects
-          //     ? options.overrideExpectedSingleObjects
-          //     : [{ object: renderedObjects[0] }]
-          // );
+          expect(result).toEqual(
+            options.overrideExpectedSingleObjects
+              ? options.overrideExpectedSingleObjects
+              : [{ object: renderedObjects[0], instanceIndex: undefined }]
+          );
         },
       }),
     },
@@ -125,7 +126,10 @@ export function generateNonInstancedClickAssertions<Type>(
           expect(result).toEqual(
             options.overrideExpectedMultipleObjects
               ? options.overrideExpectedMultipleObjects
-              : [{ object: renderedObjects[0] }, { object: renderedObjects[1] }]
+              : [
+                  { object: renderedObjects[0], instanceIndex: undefined },
+                  { object: renderedObjects[1], instanceIndex: undefined },
+                ]
           );
         },
       }),
@@ -144,7 +148,10 @@ export function generateNonInstancedClickAssertions<Type>(
           expect(result).toEqual(
             options.overrideExpectedMultipleObjects
               ? options.overrideExpectedMultipleObjects
-              : [{ object: renderedObjects[0] }, { object: renderedObjects[1] }]
+              : [
+                  { object: renderedObjects[0], instanceIndex: undefined },
+                  { object: renderedObjects[1], instanceIndex: undefined },
+                ]
           );
         },
       }),

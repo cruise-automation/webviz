@@ -54,6 +54,7 @@
     "history": "^4.7.2",
     "jest": "^23.6.0",
     "jest-canvas-mock": "^2.0.0-beta.1",
+    "jest-diff": "24.9.0",
     "jest-puppeteer": "^4.3.0",
     "lerna": "^3.4.3",
     "lodash": "^4.17.11",

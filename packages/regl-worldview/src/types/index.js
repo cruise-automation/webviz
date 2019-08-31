@@ -163,34 +163,35 @@ export type Arrow = BaseShape & {
 };
 
 export type Cube = BaseShape & {
-  colors?: Color[],
-  points?: Point[] | Vec3[],
+  colors?: (Color | Vec4)[],
+  points?: (Point | Vec3)[],
 };
 
 export type Cone = BaseShape & {
-  colors?: Color[],
-  points?: Point[] | Vec3[],
+  colors?: (Color | Vec4)[],
+  points?: (Point | Vec3)[],
 };
 
 export type Cylinder = BaseShape & {
-  colors?: Color[],
-  points?: Point[] | Vec3[],
+  colors?: (Color | Vec4)[],
+  points?: (Point | Vec3)[],
 };
 
 export type Line = BaseShape & {
-  points: Point[] | Vec3[],
+  points: (Point | Vec3)[],
 };
 
 export type PointType = BaseShape & {
+  colors?: (Color | Vec4)[],
   points: (Point | Vec3)[],
 };
 
 export type SphereList = BaseShape & {
-  points?: Point[],
+  points?: (Point | Vec3)[],
 };
 
 export type TriangleList = BaseShape & {
-  points: Point[],
+  points: (Point | Vec3)[],
   colors?: (Color | Vec4)[],
 };
 

@@ -9,43 +9,45 @@
 import { storiesOf } from "@storybook/react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
-import Cones from "../../commands/Cones";
-import type { Cone } from "../../types";
+import Points from "../../commands/Points";
+import type { PointType } from "../../types";
 import { generateNonInstancedClickAssertions, generateInstancedClickAssertions } from "../worldviewAssertionUtils";
 
-const twoConesInARow = [
+const twoPointsInARow = [
   {
     pose: {
       orientation: { x: 0, y: 0, z: 0, w: 1 },
       position: { x: 0, y: 0, z: 0 },
     },
-    scale: { x: 10, y: 10, z: 10 },
-    color: { r: 1, g: 0, b: 1, a: 0.5 },
+    scale: { x: 20, y: 20, z: 20 },
+    colors: [{ r: 1, g: 1, b: 0, a: 0.5 }],
+    points: [[0, 0, 0]],
   },
   {
     pose: {
       orientation: { x: 0, y: 0, z: 0, w: 1 },
-      position: { x: 0, y: -20, z: 0 },
+      position: { x: 0, y: 0, z: 0 },
     },
-    scale: { x: 10, y: 10, z: 10 },
-    color: { r: 1, g: 0, b: 1, a: 0.5 },
+    scale: { x: 20, y: 20, z: 20 },
+    colors: [{ r: 1, g: 0, b: 1, a: 0.5 }],
+    points: [[0, -20, 0]],
   },
 ];
 
-const instancedCone = {
+const instancedPoints = {
   pose: {
     orientation: { x: 0, y: 0, z: 0, w: 1 },
     position: { x: 0, y: 0, z: 0 },
   },
-  scale: { x: 10, y: 10, z: 10 },
-  colors: [{ r: 1, g: 0, b: 1, a: 0.5 }, { r: 1, g: 0, b: 1, a: 0.5 }],
+  scale: { x: 20, y: 20, z: 20 },
+  colors: [{ r: 1, g: 0, b: 1, a: 0.5 }, { r: 1, g: 1, b: 0, a: 0.5 }],
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration-new/Cones", module).addDecorator(withScreenshot());
-generateNonInstancedClickAssertions<Cone>("Cone", Cones, twoConesInARow).forEach(({ name, story }) =>
+const stories = storiesOf("Integration-new/Points", module).addDecorator(withScreenshot());
+generateNonInstancedClickAssertions<PointType>("Point", Points, twoPointsInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );
-generateInstancedClickAssertions<Cone>("Cone", Cones, instancedCone).forEach(({ name, story }) =>
+generateInstancedClickAssertions<PointType>("Point", Points, instancedPoints).forEach(({ name, story }) =>
   stories.add(name, story)
 );

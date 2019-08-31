@@ -9,11 +9,11 @@
 import { storiesOf } from "@storybook/react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
-import Cones from "../../commands/Cones";
-import type { Cone } from "../../types";
+import Cubes from "../../commands/Cubes";
+import type { Cube } from "../../types";
 import { generateNonInstancedClickAssertions, generateInstancedClickAssertions } from "../worldviewAssertionUtils";
 
-const twoConesInARow = [
+const twoCubesInARow = [
   {
     pose: {
       orientation: { x: 0, y: 0, z: 0, w: 1 },
@@ -32,7 +32,7 @@ const twoConesInARow = [
   },
 ];
 
-const instancedCone = {
+const instancedCube = {
   pose: {
     orientation: { x: 0, y: 0, z: 0, w: 1 },
     position: { x: 0, y: 0, z: 0 },
@@ -42,10 +42,10 @@ const instancedCone = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration-new/Cones", module).addDecorator(withScreenshot());
-generateNonInstancedClickAssertions<Cone>("Cone", Cones, twoConesInARow).forEach(({ name, story }) =>
+const stories = storiesOf("Integration-new/Cubes", module).addDecorator(withScreenshot());
+generateNonInstancedClickAssertions<Cube>("Cube", Cubes, twoCubesInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );
-generateInstancedClickAssertions<Cone>("Cone", Cones, instancedCone).forEach(({ name, story }) =>
+generateInstancedClickAssertions<Cube>("Cube", Cubes, instancedCube).forEach(({ name, story }) =>
   stories.add(name, story)
 );

@@ -104,6 +104,7 @@ export function assertionTest({ story, assertions }: AssertionTest): () => React
 
 type Expectations = {|
   toEqual: (any) => void,
+  toBeCloseTo: (number, ?number) => void,
 |};
 
 // A custom expect tool, used to replace jest matchers that we don't have access to in the browser.
@@ -113,6 +114,19 @@ export function expect(obj: any): Expectations {
       const diff = diffLinesUnified(obj, compareObj);
       if (diff !== "Compared values have no visual difference.") {
         throw new Error(diff);
+      }
+    },
+    toBeCloseTo: (compareNumber, digits) => {
+      if (isNaN(compareNumber) || typeof compareNumber !== "number") {
+        throw new Error("toBeCloseTo takes a number as an argument.");
+      }
+      if (isNaN(obj) || typeof obj !== "number") {
+        throw new Error("Expect should be passed a number.");
+      }
+      const numDigits = digits || 2;
+      const allowedDifference = 10 ** -numDigits / numDigits;
+      if (compareNumber - allowedDifference > obj || compareNumber + allowedDifference < obj) {
+        throw new Error(`toBeCloseTo: expected ${obj}, got ${compareNumber}`);
       }
     },
   };

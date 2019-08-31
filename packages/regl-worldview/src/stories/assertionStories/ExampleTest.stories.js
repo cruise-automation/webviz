@@ -17,6 +17,7 @@ import { assertionTest, expect } from "stories/assertionTestUtils";
 storiesOf("Integration-new/ExampleTest", module)
   .addDecorator(withScreenshot())
   .add(
+    // Store this as a failed test to ensure that our tests will actually fail.
     "Should fail",
     assertionTest({
       story: (setTestData) => <div />,

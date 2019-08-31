@@ -221,10 +221,9 @@ type Props = {|
   onMouseMove?: MouseHandler,
   onMouseUp?: MouseHandler,
   children: {
-    id?: number,
     pose: Pose,
     scale: Scale,
-    alpha: ?number,
+    alpha?: ?number,
   },
 |};
 

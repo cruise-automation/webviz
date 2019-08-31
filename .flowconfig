@@ -20,6 +20,7 @@ module.name_mapper.extension='md' -> '<PROJECT_ROOT>/packages/webviz-core/src/ty
 module.name_mapper.extension='ne' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/Nearley.js.flow'
 module.name_mapper.extension='worker.js' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/WorkerLoader.js.flow'
 module.name_mapper='stories/\(.*\)' -> '<PROJECT_ROOT>/stories/\1'
+module.name_mapper='common/\(.*\)' -> '<PROJECT_ROOT>/common/\1'
 
 module.file_ext=.js
 module.file_ext=.jsx

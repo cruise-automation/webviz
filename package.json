@@ -124,7 +124,6 @@
     "link": "lerna link --force-local",
     "update-version": "lerna publish --skip-git --skip-npm --force-publish '*'",
     "storybook": "start-storybook -p 6006 -c stories",
-    "storybook-ci": "start-storybook -p 6006 -c stories --ci",
     "build-storybook": "build-storybook -c stories",
     "flow": "flow",
     "flow-typed-rebuild": "rm -rf flow-typed/ && flow-typed install && flow-typed install --rootDir packages/@cruise-automation/hooks && flow-typed install --rootDir packages/@cruise-automation/button && flow-typed install --rootDir packages/@cruise-automation/tooltip && flow-typed install --rootDir packages/react-key-listener && flow-typed install --rootDir packages/regl-worldview",

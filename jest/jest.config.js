@@ -8,7 +8,7 @@
 
 module.exports = {
   rootDir: "..",
-  testMatch: ["<rootDir>/(docs|packages|stories)/**/*.test.js"],
+  testMatch: ["**/*.test.js"],
   testURL: "http://localhost",
   transform: {
     "^.+\\.(js|jsx)$": "<rootDir>/jest/jsTransform.js",

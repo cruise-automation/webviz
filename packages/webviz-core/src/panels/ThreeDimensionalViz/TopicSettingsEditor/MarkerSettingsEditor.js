@@ -7,13 +7,20 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
+import styled from "styled-components";
 
-import { SLabel, SDescription, SInput, type TopicSettingsEditorProps } from ".";
+import { LINED_CONVEX_HULL_RENDERING_SETTING, SLabel, SDescription, SInput, type TopicSettingsEditorProps } from ".";
+import Dropdown from "webviz-core/src/components/Dropdown";
 import Flex from "webviz-core/src/components/Flex";
 import type { Marker, MarkerArray } from "webviz-core/src/types/Messages";
 
+const SDropdown = styled.label`
+  margin-bottom: 12px;
+`;
+
 type MarkerSettings = {|
   overrideColor?: ?string,
+  overrideCommand?: ?string,
 |};
 
 export default function MarkerSettingsEditor(props: TopicSettingsEditorProps<Marker | MarkerArray, MarkerSettings>) {
@@ -30,6 +37,17 @@ export default function MarkerSettingsEditor(props: TopicSettingsEditorProps<Mar
         placeholder="e.g. 255, 0, 100, 0.5"
         onChange={(e) => onFieldChange("overrideColor", e.target.value)}
       />
+      <SLabel>Command rendering</SLabel>
+      <SDescription>Overrides the Command used to render markers this topic.</SDescription>
+      <SDropdown>
+        <Dropdown
+          position="below"
+          onChange={(value) => onFieldChange("overrideCommand", value && value !== "default" ? value : null)}
+          value={settings.overrideCommand || "default"}>
+          <option value="default">Default</option>
+          <option value={LINED_CONVEX_HULL_RENDERING_SETTING}>Lined convex hull (line markers only)</option>
+        </Dropdown>
+      </SDropdown>
     </Flex>
   );
 }

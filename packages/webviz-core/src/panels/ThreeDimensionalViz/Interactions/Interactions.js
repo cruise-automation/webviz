@@ -72,15 +72,19 @@ const InteractionsBaseComponent = React.memo<PropsWithConfig>(function Interacti
 }: PropsWithConfig) {
   const [selectedTab, setSelectedTab] = React.useState<?TabType>(defaultSelectedTab);
   const shouldOpenTab = useChangeDetector([selectedObject], !!selectedObject);
-
   React.useEffect(
     () => {
-      if (!disableAutoOpenClickedObject && shouldOpenTab && selectedTab !== OBJECT_TAB_TYPE) {
-        // auto open Object tab
-        setSelectedTab(OBJECT_TAB_TYPE);
+      if (!disableAutoOpenClickedObject) {
+        if (shouldOpenTab && selectedTab !== OBJECT_TAB_TYPE) {
+          // auto open Object tab if it's not already open
+          setSelectedTab(OBJECT_TAB_TYPE);
+        } else if (!selectedObject && selectedTab === OBJECT_TAB_TYPE) {
+          // auto collapse the Object pane when there is no object and auto open is enabled
+          setSelectedTab(null);
+        }
       }
     },
-    [disableAutoOpenClickedObject, shouldOpenTab, selectedTab]
+    [disableAutoOpenClickedObject, shouldOpenTab, selectedTab, selectedObject]
   );
 
   const { object } = selectedObject || {};

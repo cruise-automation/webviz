@@ -6,10 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from "react";
-import Dimensions from "react-container-dimensions";
+import * as React from "react";
 import { hot } from "react-hot-loader/root";
-import MonacoEditor from "react-monaco-editor";
 import { useSelector, useDispatch } from "react-redux";
 
 import helpContent from "./index.help.md";
@@ -18,8 +16,8 @@ import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import Editor from "webviz-core/src/panels/NodePlayground/Editor";
 import Sidebar from "webviz-core/src/panels/NodePlayground/Sidebar";
-import vsWebvizTheme from "webviz-core/src/panels/NodePlayground/theme/vs-webviz.json";
 import { type UserNodes } from "webviz-core/src/types/panels";
 import { colors } from "webviz-core/src/util/colors";
 import { DEFAULT_WEBVIZ_NODE_NAME } from "webviz-core/src/util/globalConstants";
@@ -32,8 +30,6 @@ type Props = {
   config: Config,
   saveConfig: ($Shape<Config>) => void,
 };
-
-const VS_WEBVIZ_THEME = "vs-webviz";
 
 /*
 TODO:
@@ -105,27 +101,7 @@ function NodePlayground(props: Props) {
               {isNodeSaved ? "Saved" : "Not Saved"}
             </Button>
           </Flex>
-          <Dimensions>
-            {({ width, height }) => (
-              <MonacoEditor
-                key={`${width}-${height}`}
-                language="typescript"
-                theme={VS_WEBVIZ_THEME}
-                editorWillMount={(monaco) => {
-                  monaco.editor.defineTheme(VS_WEBVIZ_THEME, vsWebvizTheme);
-                }}
-                options={{
-                  minimap: {
-                    enabled: false,
-                  },
-                }}
-                value={stagedScript}
-                onChange={(script: string) => {
-                  setStagedScript(script);
-                }}
-              />
-            )}
-          </Dimensions>
+          <Editor script={stagedScript} setScript={setStagedScript} />
           <Flex style={{ position: "absolute", bottom: 0, padding: 5, backgroundColor: colors.RED }}>
             <ul>
               {diagnostics.map(({ message }) => (

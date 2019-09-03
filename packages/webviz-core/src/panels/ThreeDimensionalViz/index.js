@@ -42,6 +42,8 @@ export type ThreeDimensionalVizConfig = {
   modifiedNamespaceTopics: string[],
   pinTopics: boolean,
   savedPropsVersion?: ?number, // eslint-disable-line react/no-unused-prop-types
+  convexHullOpacity?: number,
+
   // legacy props
   hideMap?: ?boolean, // eslint-disable-line react/no-unused-prop-types
   useHeightMap?: ?boolean, // eslint-disable-line react/no-unused-prop-types
@@ -196,18 +198,8 @@ export class Renderer extends React.Component<Props, State> {
   };
 
   static getDerivedStateFromProps(nextProps: Props, prevState: State): ?$Shape<State> {
-    // don't set state if we're migrating props
-    if (
-      getGlobalHooks()
-        .perPanelHooks()
-        .ThreeDimensionalViz.migrateConfig(nextProps)
-    ) {
-      return null;
-    }
-
     const { config, topics, setSubscriptions, transforms } = nextProps;
     const { checkedNodes, followTf, followOrientation } = config;
-
     const newState: $Shape<State> = {};
 
     const newCameraState: $Shape<CameraState> = {};
@@ -293,6 +285,7 @@ export class Renderer extends React.Component<Props, State> {
         showCrosshair,
         topicSettings,
         useHeightMap,
+        convexHullOpacity,
       },
     } = this.props;
     return (
@@ -307,6 +300,7 @@ export class Renderer extends React.Component<Props, State> {
               {...this.props}
               // config
               autoTextBackgroundColor={autoTextBackgroundColor}
+              convexHullOpacity={convexHullOpacity}
               expandedNodes={expandedNodes}
               flattenMarkers={flattenMarkers}
               follow={follow}

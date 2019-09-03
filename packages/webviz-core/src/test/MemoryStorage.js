@@ -21,4 +21,8 @@ export default class MemoryStorage {
   setItem(key: string, value: string) {
     this._items[key] = value;
   }
+
+  removeItem(key: string) {
+    delete this._items.key;
+  }
 }

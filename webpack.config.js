@@ -63,9 +63,6 @@ module.exports = {
     devtoolModuleFilenameTemplate: (info) => path.resolve(info.absoluteResourcePath),
   },
   resolve: {
-    alias: {
-      common: path.resolve(__dirname, "common"),
-    },
     modules: [path.resolve("."), path.resolve(`${__dirname}/packages`), "node_modules"],
     extensions: [".js"],
     // Doesn't work properly with linked packages, see

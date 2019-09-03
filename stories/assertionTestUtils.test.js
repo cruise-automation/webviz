@@ -21,36 +21,18 @@ describe("assertionTestUtils", () => {
       });
 
       it("fails correctly", () => {
-        let error;
-        try {
-          assertionTestExpect({ some: "otherthing" }).toEqual({ some: "thing" });
-        } catch (e) {
-          error = e;
-        }
-        expect(error).not.toEqual(undefined);
+        expect(() => assertionTestExpect({ some: "otherthing" }).toEqual({ some: "thing" })).toThrow();
       });
     });
 
     describe("toBeCloseTo", () => {
       it("throws an error with incorrect expected type", () => {
-        let error;
-        try {
-          assertionTestExpect({}).toBeCloseTo(1);
-        } catch (e) {
-          error = e;
-        }
-        expect(error).not.toEqual(undefined);
+        expect(() => assertionTestExpect({}).toBeCloseTo(1)).toThrow();
       });
 
       it("throws an error with incorrect comparison type", () => {
-        let error;
-        try {
-          // $FlowFixMe
-          assertionTestExpect(1).toBeCloseTo({});
-        } catch (e) {
-          error = e;
-        }
-        expect(error).not.toEqual(undefined);
+        // $FlowFixMe
+        expect(() => assertionTestExpect(1).toBeCloseTo({})).toThrow();
       });
 
       it("handles exact numbers", () => {
@@ -66,23 +48,11 @@ describe("assertionTestUtils", () => {
       });
 
       it("errors on numbers that are too large", () => {
-        let error;
-        try {
-          assertionTestExpect(1000.1).toBeCloseTo(1000);
-        } catch (e) {
-          error = e;
-        }
-        expect(error).not.toEqual(undefined);
+        expect(() => assertionTestExpect(1000.1).toBeCloseTo(1000)).toThrow();
       });
 
       it("errors on numbers that are too small", () => {
-        let error;
-        try {
-          assertionTestExpect(1000).toBeCloseTo(1000.1);
-        } catch (e) {
-          error = e;
-        }
-        expect(error).not.toEqual(undefined);
+        expect(() => assertionTestExpect(1000).toBeCloseTo(1000.1)).toThrow();
       });
     });
   });

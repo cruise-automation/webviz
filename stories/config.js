@@ -19,6 +19,7 @@ installChartjs();
 
 addDecorator(initScreenshot());
 setScreenshotOptions({
+  // if this function is present on the page, we wait for the promise it returns to resolve before taking a screenshot.
   waitFor: "waitFor",
   delay: 100, // Small delay for rerenders that some components do.
   viewport: {

@@ -25,26 +25,19 @@ const cube = {
   color: { r: 1, g: 0, b: 1, a: 0.5 },
 };
 
-function createClickFunction(eventName): () => Promise<void> {
-  return async () => {
-    const [element] = document.getElementsByTagName("canvas");
-    if (!element) {
-      throw new Error("Could not find canvas element");
-    }
-    const mouseEvent = new MouseEvent(eventName, {
-      bubbles: true,
-      clientX: WORLDVIEW_SIZE / 2,
-      clientY: WORLDVIEW_SIZE / 2,
-    });
-    element.dispatchEvent(mouseEvent);
-    await timeout(100);
-  };
+async function emitMouseEvent(eventName: "mousemove" | "mousedown" | "mouseup" | "dblclick"): Promise<void> {
+  const [element] = document.getElementsByTagName("canvas");
+  if (!element) {
+    throw new Error("Could not find canvas element");
+  }
+  const mouseEvent = new MouseEvent(eventName, {
+    bubbles: true,
+    clientX: WORLDVIEW_SIZE / 2,
+    clientY: WORLDVIEW_SIZE / 2,
+  });
+  element.dispatchEvent(mouseEvent);
+  await timeout(100);
 }
-
-const mouseMove = createClickFunction("mousemove");
-const mouseUp = createClickFunction("mouseup");
-const mouseDown = createClickFunction("mousedown");
-const doubleClick = createClickFunction("dblclick");
 
 const stories = storiesOf("Integration/Worldview", module).addDecorator(withScreenshot());
 stories
@@ -83,7 +76,7 @@ stories
         </WorldviewWrapper>
       ),
       assertions: async (getTestData) => {
-        mouseMove();
+        await emitMouseEvent("mousemove");
         const result = await getTestData();
         expect(result.length).toEqual(0);
       },
@@ -98,7 +91,7 @@ stories
         </WorldviewWrapper>
       ),
       assertions: async (getTestData) => {
-        mouseMove();
+        await emitMouseEvent("mousemove");
         const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);
@@ -114,7 +107,7 @@ stories
         </WorldviewWrapper>
       ),
       assertions: async (getTestData) => {
-        await mouseUp();
+        await emitMouseEvent("mouseup");
         const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);
@@ -130,7 +123,7 @@ stories
         </WorldviewWrapper>
       ),
       assertions: async (getTestData) => {
-        await mouseDown();
+        await emitMouseEvent("mousedown");
         const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);
@@ -146,7 +139,7 @@ stories
         </WorldviewWrapper>
       ),
       assertions: async (getTestData) => {
-        await doubleClick();
+        await emitMouseEvent("dblclick");
         const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);

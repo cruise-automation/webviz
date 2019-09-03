@@ -47,7 +47,7 @@ export function assertionTest({ story, assertions }: AssertionTest): () => React
     // Set the testData on window for debugging purposes.
     const windowObject = window.parent ? window.parent : window;
     // eslint-disable-next-line no-console
-    console.log("Set the following test data. See window.testData to access it.", data);
+    console.log("Set the following test data. See window.testData to access it for debugging purposes.", data);
     windowObject.testData = data;
     testData = data;
   }

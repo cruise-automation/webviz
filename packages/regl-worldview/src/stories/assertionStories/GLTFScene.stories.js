@@ -36,7 +36,7 @@ const secondModelPosition = {
 const WAIT_FOR_MODEL_LOAD_TIMEOUT = 2000;
 
 // Axes do not have individual event handlers, but they could still be clicked on by worldview event handlers.
-const stories = storiesOf("Integration-new/Axes", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Axes", module).addDecorator(withScreenshot());
 stories
   .add(
     `Clicks on a single Axis - worldview event handler`,

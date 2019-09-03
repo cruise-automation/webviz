@@ -32,7 +32,7 @@ const twoArrowsInARow = [
   },
 ];
 
-const stories = storiesOf("Integration-new/Arrows", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Arrows", module).addDecorator(withScreenshot());
 generateNonInstancedClickAssertions<Arrow>("Arrow", Arrows, twoArrowsInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

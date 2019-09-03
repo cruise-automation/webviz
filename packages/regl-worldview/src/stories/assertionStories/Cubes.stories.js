@@ -42,7 +42,7 @@ const instancedCube = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration-new/Cubes", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Cubes", module).addDecorator(withScreenshot());
 generateNonInstancedClickAssertions<Cube>("Cube", Cubes, twoCubesInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

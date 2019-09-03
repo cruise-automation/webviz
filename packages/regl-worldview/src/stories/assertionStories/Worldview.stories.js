@@ -46,7 +46,7 @@ const mouseUp = createClickFunction("mouseup");
 const mouseDown = createClickFunction("mousedown");
 const doubleClick = createClickFunction("dblclick");
 
-const stories = storiesOf("Integration-new/Worldview", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Worldview", module).addDecorator(withScreenshot());
 stories
   .add(
     `Default worldview handler has ray and no objects`,

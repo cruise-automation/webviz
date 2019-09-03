@@ -39,7 +39,7 @@ const cube = {
   color: { r: 1, g: 0, b: 1, a: 0.5 },
 };
 
-storiesOf("Integration-new/Grid", module)
+storiesOf("Integration/Grid", module)
   .addDecorator(withScreenshot())
   .add(
     "Clicks on a Grid - worldview event handler",

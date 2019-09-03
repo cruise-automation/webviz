@@ -42,7 +42,7 @@ const instancedCylinder = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration-new/Cylinders", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Cylinders", module).addDecorator(withScreenshot());
 generateNonInstancedClickAssertions<Cylinder>("Cylinder", Cylinders, twoCylindersInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

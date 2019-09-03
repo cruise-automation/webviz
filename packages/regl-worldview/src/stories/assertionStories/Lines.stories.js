@@ -34,7 +34,7 @@ const twoLinesInARow = [
   },
 ];
 
-const stories = storiesOf("Integration-new/Lines", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Lines", module).addDecorator(withScreenshot());
 generateNonInstancedClickAssertions<Line>("Line", Lines, twoLinesInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

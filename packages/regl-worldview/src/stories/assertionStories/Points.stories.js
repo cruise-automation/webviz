@@ -44,7 +44,7 @@ const instancedPoints = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration-new/Points", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Points", module).addDecorator(withScreenshot());
 generateNonInstancedClickAssertions<PointType>("Point", Points, twoPointsInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

@@ -53,7 +53,7 @@ const instancedTriangles = {
   points: [[-10, 0, 0], [0, 0, 10], [10, 0, -10], [-10, -20, 0], [0, -20, 10], [10, -20, -10]],
 };
 
-const stories = storiesOf("Integration-new/Triangles", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Triangles", module).addDecorator(withScreenshot());
 generateNonInstancedClickAssertions<TriangleList>("Triangle", Triangles, twoTrianglesInARow).forEach(
   ({ name, story }) => stories.add(name, story)
 );

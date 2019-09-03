@@ -14,7 +14,7 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { assertionTest, expect } from "stories/assertionTestUtils";
 
-storiesOf("Integration-new/ExampleTest", module)
+storiesOf("Integration/ExampleTest", module)
   .addDecorator(withScreenshot())
   .add(
     // Store this as a failed test to ensure that our tests will actually fail.

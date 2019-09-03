@@ -42,7 +42,7 @@ const instancedSphere = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration-new/Spheres", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Spheres", module).addDecorator(withScreenshot());
 generateNonInstancedClickAssertions<SphereList>("Sphere", Spheres, twoSpheresInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

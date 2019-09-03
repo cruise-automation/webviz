@@ -42,7 +42,7 @@ const instancedCone = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration-new/Cones", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Cones", module).addDecorator(withScreenshot());
 generateNonInstancedClickAssertions<Cone>("Cone", Cones, twoConesInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

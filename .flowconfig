@@ -15,6 +15,7 @@ esproposal.class_instance_fields=enable
 # Cheap workaround to make flow typechecking work across packages in the monorepo
 module.system.node.resolve_dirname=node_modules
 module.system.node.resolve_dirname=./packages
+module.system.node.resolve_dirname=.
 module.name_mapper.extension='scss' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/CSSModule.js.flow'
 module.name_mapper.extension='md' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/Markdown.js.flow'
 module.name_mapper.extension='ne' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/Nearley.js.flow'

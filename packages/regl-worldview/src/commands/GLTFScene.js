@@ -12,7 +12,7 @@ import React, { useContext, useState, useEffect, useCallback, useDebugValue } fr
 
 import type { Pose, Scale, MouseHandler, GetChildrenForHitmap } from "../types";
 import { defaultBlend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
-import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
+import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
 import parseGLB, { type GLBModel } from "../utils/parseGLB";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command from "./Command";
@@ -221,10 +221,9 @@ type Props = {|
   onMouseMove?: MouseHandler,
   onMouseUp?: MouseHandler,
   children: {
-    id?: number,
     pose: Pose,
     scale: Scale,
-    alpha: ?number,
+    alpha?: ?number,
   },
 |};
 
@@ -272,7 +271,7 @@ function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
 
 // Override the default getChildrenForHitmap with our own implementation.
 const getChildrenForHitmap: GetChildrenForHitmap = <T: any>(prop: T, assignNextColors, excludedObjects) => {
-  const hitmapProp = nonInstancedGetChildrenForHitmap(prop, assignNextColors, excludedObjects);
+  const hitmapProp = getChildrenForHitmapWithOriginalMarker(prop, assignNextColors, excludedObjects);
   if (hitmapProp) {
     return { ...hitmapProp, isHitmap: true };
   }
@@ -299,7 +298,7 @@ export default function GLTFScene(props: Props) {
 
   return (
     <Command {...rest} reglCommand={drawModel} getChildrenForHitmap={getChildrenForHitmap}>
-      {{ ...children, model: loadedModel }}
+      {{ ...children, model: loadedModel, originalMarker: children }}
     </Command>
   );
 }

@@ -17,7 +17,7 @@ In this step, we'll add a duck model to the center of the scene, and move the ca
 First, let's add a duck to the scene using [GLTFScene](#/docs/commands/gltfscene), and add the `Duck.glb` model file to the `src/utils` folder.
 
 ```js
-import duckModel from "../utils/Duck.glb";
+import duckModel from "common/fixtures/Duck.glb"; // Webpack magic: we actually import a URL pointing to a .glb file
 
 // ... other existing code
 <GLTFScene model={duckModel}>

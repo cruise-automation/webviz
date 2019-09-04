@@ -246,7 +246,6 @@ export class WorldviewContext {
         let currentObjectId = 0;
         const excludedObjects = [];
         const mouseEventsWithCommands = [];
-        const seenObjectIds = new Set();
         let counter = 0;
 
         camera.draw(this.cameraStore.state, () => {
@@ -285,21 +284,28 @@ export class WorldviewContext {
 
               currentObjectId = getIdFromPixel(pixel);
               const mouseEventObject = this._hitmapObjectIdManager.getObjectByObjectHitmapId(currentObjectId);
-              // Check an error case: if we've already seen this hitmapObjectId, then the getHitmapFromChildren function
-              // is not respecting the excludedObjects correctly and we should notify the user of a bug.
-              if (seenObjectIds.has(currentObjectId)) {
-                const command =
-                  mouseEventObject.object != null
-                    ? this._hitmapObjectIdManager.getCommandForObject(mouseEventObject.object)
-                    : null;
-                const displayName = command != null ? command.displayName : "UNKNOWN_COMMAND";
+
+              // Check an error case: if we see an ID/color that we don't know about, it means that some command is
+              // drawing a color into the hitmap that it shouldn't be.
+              if (currentObjectId > 0 && !mouseEventObject) {
                 console.error(
-                  `Saw object twice when reading from hitmap. There is likely an error in getHitmapFromChildren for ${displayName}.`,
+                  `Clicked on an unknown object with id ${currentObjectId}. This likely means that a command is painting an incorrect color into the hitmap.`
+                );
+              }
+              // Check an error case: if we've already seen this object, then the getHitmapFromChildren function
+              // is not respecting the excludedObjects correctly and we should notify the user of a bug.
+              if (
+                excludedObjects.some(
+                  ({ object, instanceIndex }) =>
+                    object === mouseEventObject.object && instanceIndex === mouseEventObject.instanceIndex
+                )
+              ) {
+                console.error(
+                  `Saw object twice when reading from hitmap. There is likely an error in getHitmapFromChildren`,
                   mouseEventObject
                 );
                 break;
               }
-              seenObjectIds.add(currentObjectId);
 
               if (currentObjectId > 0 && mouseEventObject.object) {
                 const command = this._hitmapObjectIdManager.getCommandForObject(mouseEventObject.object);

@@ -43,11 +43,11 @@ import { getHashUrlByComponentName } from "../../routes";
 import CameraStateInfo from "./CameraStateInfo";
 import cesiumManModel from "./CesiumMan.glb";
 import CodeEditor from "./CodeEditor";
-import duckModel from "./Duck.glb";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
 import LinesWithClickableInterior from "./LinesWithClickableInterior";
 import useRange from "./useRange";
+import duckModel from "common/fixtures/Duck.glb"; // Webpack magic: we actually import a URL pointing to a .glb file
 
 // Add required packages and files for all examples to run
 const CODE_SANDBOX_CONFIG = {
@@ -61,15 +61,15 @@ const CODE_SANDBOX_CONFIG = {
     "styled-components": "latest",
   },
   files: {
+    "common/fixtures/Duck.glb": {
+      content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/Zb-T-Duck.glb",
+      isBinary: true,
+    },
     "utils/codeSandboxStyleFix.css": {
       content: require("!!raw-loader!./codeSandboxStyleFix.css"),
     },
     "utils/CameraStateInfo.js": {
       content: require("!!raw-loader!./CameraStateInfo.js"),
-    },
-    "utils/Duck.glb": {
-      content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/Zb-T-Duck.glb",
-      isBinary: true,
     },
     "utils/CesiumMan.glb": {
       content: "https://uploads.codesandbox.io/uploads/user/dfcf1de7-30d4-4c5b-9675-546a91ea8afb/04aB-CesiumMan.glb",

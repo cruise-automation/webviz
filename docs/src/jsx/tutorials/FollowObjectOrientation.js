@@ -10,7 +10,7 @@ import { quat, vec3 } from "gl-matrix";
 import React, { useState } from "react";
 import Worldview, { Spheres, Axes, GLTFScene } from "regl-worldview";
 
-import duckModel from "../utils/Duck.glb";
+import duckModel from "common/fixtures/Duck.glb"; // Webpack magic: we actually import a URL pointing to a .glb file
 
 // #BEGIN EDITABLE
 function Example() {
@@ -91,7 +91,7 @@ function Example() {
       }}>
       <Spheres>{[sphereMarker]}</Spheres>
       <Axes />
-      {/* Download model: https://github.com/cruise-automation/webviz/blob/master/docs/src/jsx/utils/Duck.glb  */}
+      {/* Download model: https://github.com/cruise-automation/webviz/blob/master/common/fixtures/Duck.glb  */}
       <GLTFScene model={duckModel}>
         {{
           pose: {

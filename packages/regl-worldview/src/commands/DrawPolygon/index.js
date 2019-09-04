@@ -105,7 +105,7 @@ class PolygonLines extends React.Component<Props> {
     const lines: Line[] = [];
     for (const poly of polygons) {
       const color = poly.active ? ACTIVE_POLYGON_COLOR : DEFAULT_COLOR;
-      const points: Point[] = poly.points.map(({ point }) => vec3ToPoint(point));
+      const points: (Point | Vec3)[] = poly.points.map(({ point }) => vec3ToPoint(point));
 
       lines.push({
         primitive: LINE_STRIP,

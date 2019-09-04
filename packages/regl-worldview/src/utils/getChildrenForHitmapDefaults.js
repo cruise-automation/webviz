@@ -14,11 +14,13 @@ function nonInstancedGetChildrenForHitmapFromSingleProp<T: any>(
   excludedObjects: MouseEventObject[],
   useOriginalMarkerProp: boolean = false
 ): ?T {
-  if (excludedObjects.some(({ object }) => object === prop)) {
+  // The marker that we send to event callbacks.
+  const eventCallbackMarker = useOriginalMarkerProp ? prop.originalMarker : prop;
+  if (excludedObjects.some(({ object }) => object === eventCallbackMarker)) {
     return null;
   }
   const hitmapProp = { ...prop };
-  const [hitmapColor] = assignNextColors(useOriginalMarkerProp ? prop.originalMarker : prop, 1);
+  const [hitmapColor] = assignNextColors(eventCallbackMarker, 1);
   hitmapProp.color = hitmapColor;
   if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
     hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);
@@ -60,8 +62,9 @@ function instancedGetChildrenForHitmapFromSingleProp<T: any>(
   excludedObjects: MouseEventObject[],
   pointCountPerInstance
 ): ?T {
-  const filteredIndices = excludedObjects
-    .map(({ object, instanceIndex }) => (object === prop ? instanceIndex : null))
+  const matchedExcludedObjects = excludedObjects.filter(({ object, instanceIndex }) => object === prop);
+  const filteredIndices = matchedExcludedObjects
+    .map(({ object, instanceIndex }) => instanceIndex)
     .filter((instanceIndex) => typeof instanceIndex === "number");
   const hitmapProp = { ...prop };
   const instanceCount = (hitmapProp.points && Math.ceil(hitmapProp.points.length / pointCountPerInstance)) || 1;
@@ -87,10 +90,13 @@ function instancedGetChildrenForHitmapFromSingleProp<T: any>(
       hitmapProp.colors = hitmapProp.colors.filter(
         (_, index) => !filteredIndices.includes(Math.floor(index / pointCountPerInstance))
       );
+    } else if (matchedExcludedObjects.length) {
+      // if we don't have instance indices, just filter out the whole object.
+      return null;
     }
   } else {
     hitmapProp.color = startColor;
-    if (filteredIndices.length) {
+    if (matchedExcludedObjects.length) {
       return null;
     }
   }

@@ -9,7 +9,7 @@ import React, { useState } from "react";
 import Worldview, { Axes, Grid, GLTFScene } from "regl-worldview";
 
 import cesiumManModel from "../utils/CesiumMan.glb";
-import duckModel from "../utils/Duck.glb"; // URL pointing to a .glb file
+import duckModel from "common/fixtures/Duck.glb"; // Webpack magic: we actually import a URL pointing to a .glb file
 
 // #BEGIN EDITABLE
 function Example() {

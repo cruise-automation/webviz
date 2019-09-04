@@ -173,6 +173,8 @@ module.exports = {
   ],
   node: {
     fs: "empty",
+    // Originally put in due to the 'source-map-support' dependency pulled in from TypeScript.
+    module: "empty",
     __filename: true,
   },
   performance: { hints: false },

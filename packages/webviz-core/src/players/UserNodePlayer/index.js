@@ -9,7 +9,9 @@ import microMemoize from "micro-memoize";
 import { TimeUtil, type Time } from "rosbag";
 
 // $FlowFixMe - flow does not like workers.
-import UserNodePlayerWorker from "worker-loader!webviz-core/src/players/UserNodePlayer/worker"; // eslint-disable-line
+import UserNodePlayerWorker from "worker-loader!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
+// $FlowFixMe - flow does not like workers.
+import NodeDataWorker from "worker-loader!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
 
 import { type SetNodeDiagnostics } from "webviz-core/src/actions/nodeDiagnostics";
 import type {
@@ -22,17 +24,10 @@ import type {
   PlayerStateActiveData,
   Topic,
 } from "webviz-core/src/players/types";
-import transform, { DiagnosticSeverity, type NodeData } from "webviz-core/src/players/UserNodePlayer/transformer";
+import { DiagnosticSeverity, type NodeData, type NodeRegistration } from "webviz-core/src/players/UserNodePlayer/types";
 import type { UserNodes } from "webviz-core/src/types/panels";
 import Rpc from "webviz-core/src/util/Rpc";
 import signal from "webviz-core/src/util/signal";
-
-export type NodeRegistration = {|
-  inputs: $ReadOnlyArray<string>,
-  output: Topic,
-  processMessage: (Message) => Promise<?Message>,
-  terminate: () => void,
-|};
 
 // TODO: FUTURE - Performance tests
 // TODO: FUTURE - Consider how to incorporate with existing hardcoded nodes (esp re: stories/testing)
@@ -46,9 +41,10 @@ export default class UserNodePlayer implements Player {
   _userNodes: UserNodes = {};
   // TODO: FUTURE - Terminate unused workers (some sort of timeout, for whole array or per rpc)
   // Not sure if there is perf issue with unused workers (may just go idle) - requires more research
-  _unusedWorkerRpcs: Rpc[] = [];
+  _unusedNodeRuntimeWorkers: Rpc[] = [];
   _lastPlayerStateActiveData: ?PlayerStateActiveData;
   _setUserNodeState: SetNodeDiagnostics;
+  _nodeTransformWorker: Rpc = new Rpc(new NodeDataWorker());
 
   constructor(player: Player, setNodeDiagnostics: SetNodeDiagnostics) {
     this._player = player;
@@ -73,7 +69,7 @@ export default class UserNodePlayer implements Player {
 
   // Defines the inputs/outputs and worker interface of a user node.
   _getNodeRegistration(nodeData: NodeData): NodeRegistration {
-    const { inputTopics, outputTopic, sourceCode } = nodeData;
+    const { inputTopics, outputTopic, transpiledCode: nodeCode } = nodeData;
     let rpc;
     const terminateSignal = signal<void>();
     return {
@@ -81,8 +77,8 @@ export default class UserNodePlayer implements Player {
       output: { name: outputTopic, datatype: "std_msgs/Header" }, // TODO: TYPESCRIPT - extract datatype from Typescript
       processMessage: async (message: Message) => {
         if (!rpc) {
-          rpc = this._unusedWorkerRpcs.pop() || new Rpc(new UserNodePlayerWorker());
-          await rpc.send("registerNode", { nodeUserCode: sourceCode });
+          rpc = this._unusedNodeRuntimeWorkers.pop() || new Rpc(new UserNodePlayerWorker());
+          await rpc.send("registerNode", { nodeCode });
         }
 
         // TODO: FUTURE - surface runtime errors / infinite loop errors
@@ -101,7 +97,7 @@ export default class UserNodePlayer implements Player {
       terminate: () => {
         terminateSignal.resolve();
         if (rpc) {
-          this._unusedWorkerRpcs.push(rpc);
+          this._unusedNodeRuntimeWorkers.push(rpc);
           rpc = undefined;
         }
       },
@@ -124,14 +120,18 @@ export default class UserNodePlayer implements Player {
     for (const [nodeName, code] of Object.entries(this._userNodes)) {
       const sourceCode = ((code: any): string);
       const { topics = [], datatypes = {} } = this._lastPlayerStateActiveData || {};
-      const nodeData = transform(nodeName, sourceCode, { topics, datatypes }, nodeRegistrations);
+      const nodeData = await this._nodeTransformWorker.send("transform", {
+        name: nodeName,
+        sourceCode,
+        playerInfo: { topics, datatypes },
+        priorRegistrations: nodeRegistrations,
+      });
       const { diagnostics } = nodeData;
 
       this._setUserNodeState({ [nodeName]: { diagnostics } });
       if (diagnostics.some(({ severity }) => severity === DiagnosticSeverity.Error)) {
         continue;
       }
-      // TODO: Will change to 'transpiledCode' once typescript is integrated.
       nodeRegistrations.push(this._getNodeRegistration(nodeData));
     }
 

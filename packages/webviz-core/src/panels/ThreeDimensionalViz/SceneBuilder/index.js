@@ -10,7 +10,11 @@ import type { Time } from "rosbag";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import MessageCollector from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector";
-import { parseColorSetting, getTopicSettings } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
+import {
+  parseColorSetting,
+  getTopicSettings,
+  LINED_CONVEX_HULL_RENDERING_SETTING,
+} from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { Topic, Frame, Message } from "webviz-core/src/players/types";
 import type { Marker, Namespace, OccupancyGridMessage, Pose } from "webviz-core/src/types/Messages";
@@ -482,12 +486,12 @@ export default class SceneBuilder implements MarkerProvider {
         if (settings) {
           marker.settings = settings;
         }
-        this._addMarkerToCollector(add, topic.name, marker);
+        this._addMarkerToCollector(add, topic, marker);
       }
     }
   }
 
-  _addMarkerToCollector(add: MarkerCollector, topic: string, originalMarker: any) {
+  _addMarkerToCollector(add: MarkerCollector, topic: Topic, originalMarker: any) {
     let marker = originalMarker;
     switch (marker.type) {
       case 1:
@@ -502,15 +506,27 @@ export default class SceneBuilder implements MarkerProvider {
         marker = { ...marker, primitive: "lines" };
         break;
     }
-    marker = { ...marker, interactionData: { topic } };
+    marker = { ...marker, interactionData: { topic: topic.name } };
+
+    // allow topic settings to override renderable marker command (see MarkerSettingsEditor.js)
+    const { overrideCommand } = getTopicSettings(topic, this._topicSettings[topic.name]);
+
     // prettier-ignore
     switch (marker.type) {
       case 0: return add.arrow(marker);
       case 1: return add.cube(marker);
       case 2: return add.sphere(marker);
       case 3: return add.cylinder(marker);
-      case 4: return add.lineStrip(marker);
-      case 5: return add.lineList(marker);
+      case 4:
+        if (overrideCommand === LINED_CONVEX_HULL_RENDERING_SETTING) {
+          return add.linedConvexHull(marker);
+        }
+        return add.lineStrip(marker);
+      case 5:
+        if (overrideCommand === LINED_CONVEX_HULL_RENDERING_SETTING) {
+          return add.linedConvexHull(marker);
+        }
+        return add.lineList(marker);
       case 6: return add.cubeList(marker);
       case 7: return add.sphereList(marker);
       case 8: return add.points(marker);
@@ -525,7 +541,7 @@ export default class SceneBuilder implements MarkerProvider {
       default: {
         getGlobalHooks()
           .perPanelHooks()
-          .ThreeDimensionalViz.addMarkerToCollector(add, topic, marker, this.errors);
+          .ThreeDimensionalViz.addMarkerToCollector(add, topic.name, marker, this.errors);
       }
     }
   }

@@ -5,19 +5,21 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import UserNodePlayer from ".";
-import { registerNode, processMessage } from "./worker/userNodeRegistry";
+
 import { setNodeDiagnostics } from "webviz-core/src/actions/nodeDiagnostics";
 import FakePlayer from "webviz-core/src/components/MessagePipeline/FakePlayer";
+import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
+import { registerNode, processMessage } from "webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker/registry";
+import transform from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
 import signal from "webviz-core/src/util/signal";
 
 const nodeUserCode = `
-  const inputs = ["/np_input"];
-  const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
+  export const inputs = ["/np_input"];
+  export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
   let lastStamp, lastReceiveTime;
-  return (message) => {
+  export default (message) => {
     return { custom_np_field: "abc", value: message.message.payload };
   };
 `;
@@ -40,6 +42,9 @@ describe("UserNodePlayer", () => {
         }
         if (rpc === "processMessage") {
           return processMessage(args);
+        }
+        if (rpc === "transform") {
+          return transform(args);
         }
       },
     }));
@@ -310,9 +315,9 @@ describe("UserNodePlayer", () => {
     it("resets user node state on seek", async () => {
       const code = `
         let innerState = 0;
-        const inputs = ["/np_input"];
-        const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
-        return (message) => {
+        export const inputs = ["/np_input"];
+        export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
+        export default (message) => {
           innerState += 1;
           return { innerState };
         };

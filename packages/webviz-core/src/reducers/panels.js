@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEmpty, pick } from "lodash";
+import { isEmpty, pick, cloneDeep } from "lodash";
 import { getLeaves } from "react-mosaic-component";
 
 import type { ActionTypes } from "webviz-core/src/actions";
@@ -24,12 +24,21 @@ import { getPanelTypeFromId } from "webviz-core/src/util";
 import Storage from "webviz-core/src/util/Storage";
 
 const storage = new Storage();
-export const LAYOUT_KEY = "panels.layout";
-export const PANEL_PROPS_KEY = "panels.savedProps";
-export const GLOBAL_DATA_KEY = "panels.globalData";
-export const USER_NODES_KEY = "panels.userNodes";
-export const LINKED_GLOBAL_VARIABLES_KEY = "panels.linkedGlobalVariables";
 
+export const GLOBAL_STATE_STORAGE_KEY = "webvizGlobalState";
+
+// TODO(Audrey): remove the storage migration logic and fallback to empty in late 2019
+const OLD_KEYS = {
+  layout: "panels.layout",
+  savedProps: "panels.savedProps",
+  globalData: "panels.globalData",
+  userNodes: "panels.userNodes",
+  linkedGlobalVariables: "panels.linkedGlobalVariables",
+};
+
+export function getGlobalStateFromStorage(): any {
+  return storage.get(GLOBAL_STATE_STORAGE_KEY);
+}
 export type PanelsState = {
   layout: any,
   // We store config for each panel in a hash keyed by the panel id.
@@ -41,44 +50,58 @@ export type PanelsState = {
   linkedGlobalVariables: LinkedGlobalVariables,
 };
 
-function setStorageAndOptionallyFallbackToDefault(data: any, storageKey: string, skipFallback?: boolean) {
-  let validData = data;
-  if (!skipFallback && isEmpty(validData)) {
-    const defaultGlobalStates = getGlobalHooks().getDefaultGlobalStates();
-    const fieldName = storageKey.split(".").pop();
-    validData = defaultGlobalStates[fieldName];
-  }
-  storage.set(storageKey, validData);
-  return validData;
+export function setStorageStateAndFallbackToDefault(globalState: any = {}) {
+  const newGlobalState = { ...globalState };
+  const defaultGlobalStates = getGlobalHooks().getDefaultGlobalStates();
+  // extra checks to make sure all the common fields are present
+  Object.keys(defaultGlobalStates).forEach((fieldName) => {
+    const newFieldValue = globalState[fieldName];
+    if (isEmpty(newFieldValue)) {
+      newGlobalState[fieldName] = defaultGlobalStates[fieldName];
+    }
+  });
+
+  storage.set(GLOBAL_STATE_STORAGE_KEY, newGlobalState);
+  return newGlobalState;
 }
 
+function getOldStorageAndRemoveKey() {
+  // retrieve state from the old storages and delete those afterwards
+  const defaultGlobalStates = getGlobalHooks().getDefaultGlobalStates();
+  const newGlobalState = cloneDeep(defaultGlobalStates);
+  Object.keys(OLD_KEYS).forEach((fieldName) => {
+    const storageKey = OLD_KEYS[fieldName];
+    const oldStorage = storage.get(storageKey);
+    if (oldStorage) {
+      newGlobalState[fieldName] = oldStorage;
+      storage.remove(storageKey);
+    }
+  });
+
+  return newGlobalState;
+}
 // getDefaultState will be called once when the store initializes this reducer.
 // It is a function instead of a const so we can manipulate localStorage in test setup
 // and when we create new stores they will use the new values in localStorage
 function getDefaultState(): PanelsState {
-  // TODO(Audrey): merge all storage into one single object
-  const layout = setStorageAndOptionallyFallbackToDefault(storage.get(LAYOUT_KEY), LAYOUT_KEY);
-  const savedProps = setStorageAndOptionallyFallbackToDefault(storage.get(PANEL_PROPS_KEY), PANEL_PROPS_KEY);
-  const globalData = setStorageAndOptionallyFallbackToDefault(storage.get(GLOBAL_DATA_KEY), GLOBAL_DATA_KEY);
-  const userNodes = setStorageAndOptionallyFallbackToDefault(storage.get(USER_NODES_KEY), USER_NODES_KEY);
-  const linkedGlobalVariables = setStorageAndOptionallyFallbackToDefault(
-    storage.get(LINKED_GLOBAL_VARIABLES_KEY),
-    LINKED_GLOBAL_VARIABLES_KEY
-  );
-  return getGlobalHooks().migratePanels({ layout, savedProps, globalData, userNodes, linkedGlobalVariables });
+  let newGlobalState = storage.get(GLOBAL_STATE_STORAGE_KEY);
+  if (newGlobalState) {
+    // use the new global state storage directly if it's present
+    setStorageStateAndFallbackToDefault(newGlobalState);
+    // don't use the old storage but simply remove the keys in case both new key and old keys are present
+    getOldStorageAndRemoveKey();
+  } else {
+    newGlobalState = getOldStorageAndRemoveKey();
+  }
+
+  return getGlobalHooks().migratePanels(newGlobalState);
 }
 
 function changePanelLayout(state: PanelsState, layout: any): PanelsState {
   // filter saved props in case a panel was removed from the layout
   // we don't want it saved props hanging around forever
   const savedProps = pick(state.savedProps, getLeaves(layout));
-  const { globalData, userNodes, linkedGlobalVariables } = state;
-  storage.set(LAYOUT_KEY, layout);
-  storage.set(PANEL_PROPS_KEY, savedProps);
-  storage.set(GLOBAL_DATA_KEY, globalData);
-  storage.set(USER_NODES_KEY, userNodes);
-  storage.set(LINKED_GLOBAL_VARIABLES_KEY, linkedGlobalVariables);
-  return { ...state, layout, savedProps, globalData, userNodes, linkedGlobalVariables };
+  return { ...state, savedProps, layout };
 }
 
 function savePanelConfig(state: PanelsState, payload: SaveConfigPayload): PanelsState {
@@ -96,16 +119,9 @@ function savePanelConfig(state: PanelsState, payload: SaveConfigPayload): Panels
         },
       };
 
-  // save the new saved panel props in storage
-  storage.set(PANEL_PROPS_KEY, newProps);
-
-  return {
-    ...state,
-    savedProps: newProps,
-  };
+  return { ...state, savedProps: newProps };
 }
 
-// eslint-disable-next-line no-unused-vars
 function saveFullPanelConfig(state: PanelsState, payload: SaveFullConfigPayload): PanelsState {
   const { panelType, perPanelFunc } = payload;
   const newProps = { ...state.savedProps };
@@ -121,18 +137,11 @@ function saveFullPanelConfig(state: PanelsState, payload: SaveFullConfigPayload)
     });
   }
 
-  // save the new saved panel props in storage
-  storage.set(PANEL_PROPS_KEY, newProps);
-
-  return {
-    ...state,
-    savedProps: newProps,
-  };
+  return { ...state, savedProps: newProps };
 }
 
 function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload): PanelsState {
   let migratedPayload = {};
-
   try {
     migratedPayload = getGlobalHooks().migratePanels(payload);
   } catch (err) {
@@ -140,86 +149,75 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
     return state;
   }
 
-  let layout = migratedPayload.layout || {};
-  let savedProps = migratedPayload.savedProps || {};
-  let globalData = migratedPayload.globalData || {};
-  let userNodes = migratedPayload.userNodes || {};
-  let linkedGlobalVariables = migratedPayload.linkedGlobalVariables || [];
-
-  if (!payload.skipSettingLocalStorage) {
-    // skip empty checks since we allow people to dynamically set it to empty
-    layout = setStorageAndOptionallyFallbackToDefault(layout, LAYOUT_KEY, true);
-    savedProps = setStorageAndOptionallyFallbackToDefault(savedProps, PANEL_PROPS_KEY, true);
-    globalData = setStorageAndOptionallyFallbackToDefault(globalData, GLOBAL_DATA_KEY, true);
-    userNodes = setStorageAndOptionallyFallbackToDefault(userNodes, USER_NODES_KEY, true);
-    linkedGlobalVariables = setStorageAndOptionallyFallbackToDefault(
-      linkedGlobalVariables,
-      LINKED_GLOBAL_VARIABLES_KEY,
-      true
-    );
-  }
-
-  return {
-    ...state,
-    layout,
-    savedProps,
-    globalData,
-    userNodes,
-    linkedGlobalVariables,
+  const newGlobalState = {
+    layout: migratedPayload.layout || {},
+    savedProps: migratedPayload.savedProps || {},
+    globalData: migratedPayload.globalData || {},
+    userNodes: migratedPayload.userNodes || {},
+    linkedGlobalVariables: migratedPayload.linkedGlobalVariables || [],
   };
+
+  return newGlobalState;
 }
 
 export default function panelsReducer(state: PanelsState = getDefaultState(), action: ActionTypes) {
+  let newGlobalState = { ...state };
   switch (action.type) {
     case "CHANGE_PANEL_LAYOUT":
       // don't allow the last panel to be removed
-      return changePanelLayout(state, action.layout || state.layout);
+      newGlobalState = changePanelLayout(state, action.layout || state.layout);
+      break;
 
     case "SAVE_PANEL_CONFIG":
-      return savePanelConfig(state, action.payload);
+      newGlobalState = savePanelConfig(state, action.payload);
+      break;
 
     case "SAVE_FULL_PANEL_CONFIG":
-      return saveFullPanelConfig(state, action.payload);
+      newGlobalState = saveFullPanelConfig(state, action.payload);
+      break;
 
     case "IMPORT_PANEL_LAYOUT":
-      return importPanelLayout(state, action.payload);
+      newGlobalState = importPanelLayout(state, action.payload);
+      if (action.payload.skipSettingLocalStorage) {
+        return newGlobalState;
+      }
+      break;
 
     case "OVERWRITE_GLOBAL_DATA":
-      storage.set(GLOBAL_DATA_KEY, action.payload);
-      return { ...state, globalData: action.payload };
+      newGlobalState.globalData = action.payload;
+      break;
 
     case "SET_GLOBAL_DATA": {
       const globalData = { ...state.globalData, ...action.payload };
-
       Object.keys(globalData).forEach((key) => {
         if (globalData[key] === undefined) {
           delete globalData[key];
         }
       });
-
-      storage.set(GLOBAL_DATA_KEY, globalData);
-      return { ...state, globalData };
+      newGlobalState.globalData = globalData;
+      break;
     }
 
     case "SET_USER_NODES": {
       const userNodes = { ...state.userNodes, ...action.payload };
-
       Object.keys(action.payload).forEach((key) => {
         if (userNodes[key] === undefined) {
           delete userNodes[key];
         }
       });
-
-      storage.set(USER_NODES_KEY, userNodes);
-      return { ...state, userNodes };
+      newGlobalState.userNodes = userNodes;
+      break;
     }
 
     case "SET_LINKED_GLOBAL_VARIABLES": {
-      storage.set(LINKED_GLOBAL_VARIABLES_KEY, action.payload);
-      return { ...state, linkedGlobalVariables: action.payload };
+      newGlobalState.linkedGlobalVariables = action.payload;
+      break;
     }
 
     default:
-      return state;
+      break;
   }
+
+  storage.set(GLOBAL_STATE_STORAGE_KEY, newGlobalState);
+  return newGlobalState;
 }

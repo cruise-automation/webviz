@@ -68,6 +68,7 @@ type WrapperProps = {
   checkedNodes: string[],
   children?: React.Node,
   cleared?: boolean,
+  convexHullOpacity: ?number,
   currentTime: {| sec: number, nsec: number |},
   expandedNodes: string[],
   extensions: Extensions,
@@ -81,6 +82,7 @@ type WrapperProps = {
   onFollowChange: (followTf?: string | false, followOrientation?: boolean) => void,
   pinTopics: boolean,
   saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
+  config: ThreeDimensionalVizConfig,
   selectedPolygonEditFormat: "json" | "yaml",
   selections: Selections,
   setSelections: (Selections) => void,
@@ -482,7 +484,15 @@ class BaseComponent extends React.Component<Props, State> implements MarkerProvi
       clickedPosition,
     } = this.state;
     const scene = sceneBuilder.getScene();
-    const { autoTextBackgroundColor, extensions, cameraState, onCameraStateChange, children, selections } = this.props;
+    const {
+      autoTextBackgroundColor,
+      extensions,
+      cameraState,
+      onCameraStateChange,
+      children,
+      selections,
+      convexHullOpacity,
+    } = this.props;
 
     const WorldComponent = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.WorldComponent;
     // TODO(Audrey): update DrawPolygons to support custom key so the users don't have to press ctrl key all the time
@@ -492,6 +502,7 @@ class BaseComponent extends React.Component<Props, State> implements MarkerProvi
         selectedObject={selectedObject}
         autoTextBackgroundColor={!!autoTextBackgroundColor}
         cameraState={cameraState}
+        convexHullOpacity={convexHullOpacity}
         debug={debug}
         markerProviders={extensions.markerProviders.concat([sceneBuilder, this.measuringTool, transformsBuilder, this])}
         onCameraStateChange={onCameraStateChange}

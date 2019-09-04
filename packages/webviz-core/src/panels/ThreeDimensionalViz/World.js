@@ -29,6 +29,7 @@ import {
   LaserScans,
   PointClouds,
   PoseMarkers,
+  LinedConvexHulls,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { Scene, MarkerProvider } from "webviz-core/src/types/Scene";
@@ -37,6 +38,7 @@ type Props = {|
   autoTextBackgroundColor: boolean,
   cameraState: CameraState,
   children?: React.Node,
+  convexHullOpacity: ?number,
   debug: boolean,
   extensions: string[],
   markerProviders: (?MarkerProvider)[],
@@ -75,6 +77,7 @@ function getMarkers(markerProviders: (?MarkerProvider)[]) {
     laserScans: [],
     cylinders: [],
     filledPolygons: [],
+    linedConvexHulls: [],
   };
 
   const collector = {
@@ -94,6 +97,7 @@ function getMarkers(markerProviders: (?MarkerProvider)[]) {
     pointcloud: (o) => markers.pointclouds.push(o),
     laserScan: (o) => markers.laserScans.push(o),
     filledPolygon: (o) => markers.filledPolygons.push(o),
+    linedConvexHull: (o) => markers.linedConvexHulls.push(o),
   };
 
   markerProviders.forEach((provider) => {
@@ -159,6 +163,7 @@ export default class World extends React.Component<Props, State> {
       onMouseUp,
       cameraState,
       onDoubleClick,
+      convexHullOpacity,
     } = this.props;
 
     const {
@@ -175,6 +180,7 @@ export default class World extends React.Component<Props, State> {
       pointclouds,
       laserScans,
       filledPolygons,
+      linedConvexHulls,
     } = getMarkers(markerProviders);
     return (
       <Worldview
@@ -205,6 +211,10 @@ export default class World extends React.Component<Props, State> {
           {texts}
         </Text>
         <FilledPolygons key="FilledPolygons">{filledPolygons}</FilledPolygons>
+        {/* By default, make the convex hull fill completely transparent - they just provide a click layer. */}
+        <LinedConvexHulls opacity={convexHullOpacity || 0} key="LinedConvexHulls">
+          {linedConvexHulls}
+        </LinedConvexHulls>
         {children}
       </Worldview>
     );

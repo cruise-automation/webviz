@@ -11,6 +11,7 @@ import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import NodePlayground from "webviz-core/src/panels/NodePlayground";
+import Editor from "webviz-core/src/panels/NodePlayground/Editor";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 const userNodes = {
@@ -65,6 +66,29 @@ storiesOf("<NodePlayground>", module)
               }
             }
           });
+        }}>
+        <NodePlayground config={{ selectedNodeName: "/some/custom/node" }} />
+      </PanelSetup>
+    );
+  })
+  .add("editor loading state", () => {
+    const NeverLoad = () => {
+      throw new Promise(() => {});
+    };
+    return (
+      <PanelSetup fixture={fixture}>
+        <Editor script={""} setScript={() => {}} editorForStorybook={<NeverLoad />} />
+      </PanelSetup>
+    );
+  })
+  .add("typescript error", () => {
+    return (
+      <PanelSetup
+        fixture={{
+          ...fixture,
+          userNodes: {
+            "/some/custom/node": "const num: number[] = 'bad number';",
+          },
         }}>
         <NodePlayground config={{ selectedNodeName: "/some/custom/node" }} />
       </PanelSetup>

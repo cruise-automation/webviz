@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { registerNode, processMessage } from "./userNodeRegistry";
+import transform from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
 import Rpc from "webviz-core/src/util/Rpc";
 
 // eslint-disable-next-line no-undef
@@ -14,5 +14,4 @@ if (!global.postMessage || typeof WorkerGlobalScope === "undefined" || !(self in
 }
 
 const rpc = new Rpc(global);
-rpc.receive("registerNode", registerNode);
-rpc.receive("processMessage", processMessage);
+rpc.receive("transform", transform);

@@ -35,11 +35,10 @@ const secondModelPosition = {
 // ensure that the module has been loaded.
 const WAIT_FOR_MODEL_LOAD_TIMEOUT = 2000;
 
-// Axes do not have individual event handlers, but they could still be clicked on by worldview event handlers.
-const stories = storiesOf("Integration/Axes", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/GLTFScene", module).addDecorator(withScreenshot());
 stories
   .add(
-    `Clicks on a single Axis - worldview event handler`,
+    `Clicks on a single GLTFScene object - worldview event handler`,
     assertionTest({
       story: (setTestData) => {
         const duckModel = require("common/fixtures/Duck.glb");
@@ -54,12 +53,12 @@ stories
         await timeout(WAIT_FOR_MODEL_LOAD_TIMEOUT);
         await clickAtOrigin();
         const result = getTestData();
-        expect(result).toEqual([{ object: firstModelPosition }]);
+        expect(result).toEqual([{ object: firstModelPosition, instanceIndex: undefined }]);
       },
     })
   )
   .add(
-    `Clicks on Axes with an object behind it - worldview event handler`,
+    `Clicks on a GLTFSCene object with an object behind it - worldview event handler`,
     assertionTest({
       story: (setTestData) => {
         const duckModel = require("common/fixtures/Duck.glb");
@@ -89,7 +88,10 @@ stories
         await timeout(WAIT_FOR_MODEL_LOAD_TIMEOUT);
         await clickAtOrigin();
         const result = await getTestData();
-        expect(result).toEqual([{ object: firstModelPosition }, { object: secondModelPosition }]);
+        expect(result).toEqual([
+          { object: firstModelPosition, instanceIndex: undefined },
+          { object: secondModelPosition, instanceIndex: undefined },
+        ]);
       },
     })
   );

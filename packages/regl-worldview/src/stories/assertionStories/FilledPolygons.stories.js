@@ -41,6 +41,9 @@ const stories = storiesOf("Integration/FilledPolygons", module).addDecorator(wit
 generateNonInstancedClickAssertions<PolygonType>("FilledPolygon", FilledPolygons, twoFilledPolygonsInARow, {
   // Because filled polygons have some weird rendering, the second always shows up on top. They can't really be
   // stacked correctly anyways so this rendering artifact isn't important, just that we test the hitmap code.
-  overrideExpectedSingleObjects: [{ object: twoFilledPolygonsInARow[1] }],
-  overrideExpectedMultipleObjects: [{ object: twoFilledPolygonsInARow[1] }, { object: twoFilledPolygonsInARow[0] }],
+  overrideExpectedSingleObjects: [{ object: twoFilledPolygonsInARow[1], instanceIndex: undefined }],
+  overrideExpectedMultipleObjects: [
+    { object: twoFilledPolygonsInARow[1], instanceIndex: undefined },
+    { object: twoFilledPolygonsInARow[0], instanceIndex: undefined },
+  ],
 }).forEach(({ name, story }) => stories.add(name, story));

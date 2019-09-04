@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import type { ActionTypes } from "webviz-core/src/actions";
-import type { Diagnostic } from "webviz-core/src/players/UserNodePlayer/transformer";
+import type { Diagnostic } from "webviz-core/src/players/UserNodePlayer/types";
 
 export type NodeDiagnostics = {
   [nodeName: string]: { diagnostics: Diagnostic[] },

@@ -94,12 +94,14 @@ function PanelSetupWithData({
   showLinkedGlobalVariables,
   title,
   onMount,
+  disableAutoOpenClickedObject = true,
 }: {
   children: React.Node,
   showGlobalVariables?: boolean,
   showLinkedGlobalVariables?: boolean,
   title: React.Node,
   onMount?: (el: HTMLDivElement) => void,
+  disableAutoOpenClickedObject?: boolean,
 }) {
   return (
     <PanelSetup
@@ -146,7 +148,7 @@ function PanelSetupWithData({
           fooScaleX: 3,
         },
       }}>
-      <MockPanelContextProvider config={{ disableAutoOpenClickedObject: true }}>
+      <MockPanelContextProvider config={{ disableAutoOpenClickedObject }}>
         <div
           style={{ margin: 16 }}
           ref={(el) => {
@@ -168,6 +170,30 @@ function PanelSetupWithData({
   );
 }
 
+function AutoOpenCloseExample({ setObjectNullFirst }: { setObjectNullFirst?: boolean }) {
+  const [object, setObject] = React.useState(setObjectNullFirst ? null : selectedObject);
+
+  React.useEffect(
+    () => {
+      setTimeout(() => {
+        setObject(setObjectNullFirst ? selectedObject : null);
+      }, 10);
+    },
+    [setObjectNullFirst]
+  );
+
+  return (
+    <SWrapper>
+      <PanelSetupWithData
+        disableAutoOpenClickedObject={false}
+        title={<>auto closed the Clicked Object pane</>}
+        style={{ margin: 8, display: "flex", overflow: "hidden" }}>
+        <Interactions {...sharedProps} selectedObject={object} />
+      </PanelSetupWithData>
+    </SWrapper>
+  );
+}
+
 storiesOf("<Interaction>", module)
   .addDecorator(withScreenshot({ width: 1001, height: 1101 }))
   .add("default", () => {
@@ -177,7 +203,7 @@ storiesOf("<Interaction>", module)
           <Interactions {...sharedProps} selectedObject={null} defaultSelectedTab={LINKED_VARIABLES_TAB_TYPE} />
         </PanelSetupWithData>
         <PanelSetupWithData title="Default without clicked object">
-          <Interactions {...sharedProps} selectedObject={undefined} />
+          <Interactions {...sharedProps} selectedObject={undefined} defaultSelectedTab={OBJECT_TAB_TYPE} />
         </PanelSetupWithData>
         <PanelSetupWithData title="With interactionData">
           <Interactions {...sharedProps} />
@@ -346,4 +372,10 @@ storiesOf("<Interaction>", module)
         </PanelSetupWithData>
       </SWrapper>
     );
+  })
+  .add("auto opens the object details after selectedObject is set", () => {
+    return <AutoOpenCloseExample setObjectNullFirst />;
+  })
+  .add("auto closes the object details when selectedObject becomes null", () => {
+    return <AutoOpenCloseExample />;
   });

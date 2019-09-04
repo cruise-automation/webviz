@@ -22,6 +22,8 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { Topic } from "webviz-core/src/players/types";
 import { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE, LASER_SCAN_DATATYPE } from "webviz-core/src/util/globalConstants";
 
+export const LINED_CONVEX_HULL_RENDERING_SETTING = "LinedConvexHull";
+
 export const SLabel = styled.label`
   display: block;
   font-size: 14px;

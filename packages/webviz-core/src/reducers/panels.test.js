@@ -12,13 +12,7 @@ import { getLeaves } from "react-mosaic-component";
 import { changePanelLayout, savePanelConfig, importPanelLayout, setUserNodes } from "webviz-core/src/actions/panels";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import createRootReducer from "webviz-core/src/reducers";
-import {
-  LAYOUT_KEY,
-  PANEL_PROPS_KEY,
-  GLOBAL_DATA_KEY,
-  USER_NODES_KEY,
-  LINKED_GLOBAL_VARIABLES_KEY,
-} from "webviz-core/src/reducers/panels";
+import { GLOBAL_STATE_STORAGE_KEY } from "webviz-core/src/reducers/panels";
 import configureStore from "webviz-core/src/store";
 import Storage from "webviz-core/src/util/Storage";
 
@@ -31,13 +25,7 @@ const getStore = () => {
   return store;
 };
 
-const {
-  layout: defaultLayout,
-  savedProps: defaultSavedProps,
-  globalData: defaultGlobalDataa,
-  userNodes: defaultUserNodes,
-  linkedGlobalVariables: defaultLinkedGlobalVariables,
-} = getGlobalHooks().getDefaultGlobalStates();
+const defaultGlobalState = getGlobalHooks().getDefaultGlobalStates();
 
 describe("state.panels", () => {
   beforeEach(() => {
@@ -48,21 +36,18 @@ describe("state.panels", () => {
     const store = getStore();
     store.checkState((panels) => {
       const storage = new Storage();
-      expect(storage.get(LAYOUT_KEY)).toEqual(panels.layout);
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.layout).toEqual(panels.layout);
     });
   });
 
   it("stores default settings in local storage", () => {
     const store = getStore();
     store.checkState((panels) => {
-      expect(panels.layout).toEqual(defaultLayout);
+      expect(panels.layout).toEqual(defaultGlobalState.layout);
       expect(panels.savedProps).toEqual({});
       const storage = new Storage();
-      expect(storage.get(LAYOUT_KEY)).toEqual(defaultLayout);
-      expect(storage.get(PANEL_PROPS_KEY)).toEqual(defaultSavedProps);
-      expect(storage.get(GLOBAL_DATA_KEY)).toEqual(defaultGlobalDataa);
-      expect(storage.get(USER_NODES_KEY)).toEqual(defaultUserNodes);
-      expect(storage.get(LINKED_GLOBAL_VARIABLES_KEY)).toEqual(defaultLinkedGlobalVariables);
+      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(defaultGlobalState);
     });
   });
 
@@ -84,8 +69,9 @@ describe("state.panels", () => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ foo: { test: true } });
       const storage = new Storage();
-      expect(storage.get(LAYOUT_KEY)).toEqual(panels.layout);
-      expect(storage.get(PANEL_PROPS_KEY)).toEqual(panels.savedProps);
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.layout).toEqual(panels.layout);
+      expect(globalState.savedProps).toEqual(panels.savedProps);
     });
 
     store.dispatch(changePanelLayout("foo"));
@@ -93,8 +79,9 @@ describe("state.panels", () => {
       expect(panels.layout).toEqual("foo");
       expect(panels.savedProps).toEqual({ foo: { test: true } });
       const storage = new Storage();
-      expect(storage.get(LAYOUT_KEY)).toEqual(panels.layout);
-      expect(storage.get(PANEL_PROPS_KEY)).toEqual(panels.savedProps);
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.layout).toEqual(panels.layout);
+      expect(globalState.savedProps).toEqual(panels.savedProps);
     });
 
     store.dispatch(savePanelConfig({ id: "foo", config: { testing: true } }));
@@ -102,12 +89,13 @@ describe("state.panels", () => {
       expect(panels.layout).toEqual("foo");
       expect(panels.savedProps).toEqual({ foo: { test: true, testing: true } });
       const storage = new Storage();
-      expect(storage.get(LAYOUT_KEY)).toEqual(panels.layout);
-      expect(storage.get(PANEL_PROPS_KEY)).toEqual(panels.savedProps);
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.layout).toEqual(panels.layout);
+      expect(globalState.savedProps).toEqual(panels.savedProps);
     });
   });
 
-  it("sets default globalData value in local storage if globalData is not in migrated payload", () => {
+  it("sets default globalData, linkedGlobalVariables, userNodes in local storage if values are not in migrated payload", () => {
     const store = getStore();
     const payload = {
       layout: "foo!baz",
@@ -117,23 +105,33 @@ describe("state.panels", () => {
     store.dispatch(importPanelLayout(payload, false));
     store.checkState((panels) => {
       const storage = new Storage();
-      expect(storage.get(GLOBAL_DATA_KEY)).toEqual({});
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.globalData).toEqual({});
+      expect(globalState.userNodes).toEqual({});
+      expect(globalState.linkedGlobalVariables).toEqual([]);
     });
   });
 
-  it("sets globalData value in local storage", () => {
+  it("sets globalData, userNodes, linkedGlobalVariables in local storage", () => {
     const store = getStore();
     const globalData = { some_global_data_var: 1 };
+    const linkedGlobalVariables = [{ topic: "/foo", markerKeyPath: ["bar", "1"], name: "someVariableName" }];
+    const userNodes = { foo: "foo node" };
     const payload = {
       layout: "foo!baz",
       savedProps: { foo: { test: true } },
       globalData,
+      userNodes,
+      linkedGlobalVariables,
     };
 
     store.dispatch(importPanelLayout(payload, false));
     store.checkState((panels) => {
       const storage = new Storage();
-      expect(storage.get(GLOBAL_DATA_KEY)).toEqual(globalData);
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.globalData).toEqual(globalData);
+      expect(globalState.userNodes).toEqual(userNodes);
+      expect(globalState.linkedGlobalVariables).toEqual(linkedGlobalVariables);
     });
   });
 
@@ -193,7 +191,8 @@ describe("state.panels", () => {
 
     store.dispatch(importPanelLayout({ layout: "myNewLayout", savedProps: {} }, true));
     store.checkState((panels) => {
-      expect(storage.get(LAYOUT_KEY)).toEqual("myNewLayout");
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.layout).toEqual("myNewLayout");
     });
   });
 
@@ -203,7 +202,8 @@ describe("state.panels", () => {
 
     store.dispatch(importPanelLayout({ layout: null, savedProps: {} }, true, true));
     store.checkState((panels) => {
-      expect(storage.get(LAYOUT_KEY)).not.toEqual(panels.layout);
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.layout).not.toEqual(panels.layout);
     });
   });
 

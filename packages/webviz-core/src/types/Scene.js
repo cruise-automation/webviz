@@ -47,6 +47,7 @@ export interface MarkerCollector {
   grid(OccupancyGridMessage): any;
   pointcloud(PointCloud): any;
   laserScan(LaserScan): any;
+  linedConvexHull(LineListMarker | LineStripMarker): any;
   filledPolygon(FilledPolygonMarker): any;
 }
 

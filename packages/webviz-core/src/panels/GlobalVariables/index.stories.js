@@ -13,11 +13,11 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 import GlobalVariables from "./index";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
-import { GLOBAL_DATA_KEY, LAYOUT_KEY } from "webviz-core/src/reducers/panels";
+import { GLOBAL_STATE_STORAGE_KEY } from "webviz-core/src/reducers/panels";
 import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 import Storage from "webviz-core/src/util/Storage";
 
-const defaultLayout = getGlobalHooks().getDefaultGlobalStates().layout;
+const defaultGlobalState = getGlobalHooks().getDefaultGlobalStates();
 
 const exampleVariables = {
   someNum: 5,
@@ -58,8 +58,7 @@ const linkedGlobalVariables = [
 
 function setStorage(globalData) {
   const storage = new Storage();
-  storage.set(GLOBAL_DATA_KEY, globalData);
-  storage.set(LAYOUT_KEY, defaultLayout);
+  storage.set(GLOBAL_STATE_STORAGE_KEY, { ...defaultGlobalState, globalData });
 }
 
 function PanelWithData({ linkedGlobalVariables = [], ...rest }: { linkedGlobalVariables?: LinkedGlobalVariable[] }) {

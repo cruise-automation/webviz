@@ -133,7 +133,6 @@ const defaultHooks = {
         WorldComponent: World,
         LaserScanVert,
         getMetadata,
-        migrateConfig: () => false,
         setGlobalDataInSceneBuilder: (globalData, selectionState, topicsToRender) => ({
           selectionState,
           topicsToRender,

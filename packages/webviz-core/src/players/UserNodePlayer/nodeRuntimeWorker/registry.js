@@ -15,13 +15,13 @@ if (process.env.NODE_ENV === "test") {
   });
 }
 
-export const registerNode = ({ nodeUserCode }: { nodeUserCode: string }) => {
+export const registerNode = ({ nodeCode }: { nodeCode: string }) => {
   // TODO: TYPESCRIPT - allow for importing helper functions
   // TODO: Blacklist global methods.
 
   // Using new Function in order to execute user-input text in Node Playground as code
   // $FlowFixMe
-  nodeCallback = new Function(nodeUserCode)(); // eslint-disable-line no-new-func
+  nodeCallback = new Function(`const exports = {};\n${nodeCode}\nreturn exports.default`)(); // eslint-disable-line no-new-func
 };
 
 export const processMessage = ({ message }: { message: {} }) => {

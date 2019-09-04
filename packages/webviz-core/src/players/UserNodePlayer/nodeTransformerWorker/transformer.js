@@ -6,75 +6,32 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { NodeRegistration } from ".";
-import type { Topic } from "webviz-core/src/players/types";
-import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import {
+  baseCompilerOptions,
+  transformDiagnosticToMarkerData,
+} from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/utils";
+import {
+  DiagnosticSeverity,
+  Sources,
+  ErrorCodes,
+  type NodeData,
+  type Diagnostic,
+  type NodeRegistration,
+  type PlayerInfo,
+  type NodeDataTransformer,
+} from "webviz-core/src/players/UserNodePlayer/types";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 
-// These severity codes come directory from the monaco-editor, which when added
-// to the editor object, will highlight information inline (given that we also
-// provide line and column numbers).
-export const DiagnosticSeverity = {
-  Hint: 1,
-  Info: 2,
-  Warning: 4,
-  Error: 8,
-};
-
-export const Sources = {
-  Typescript: "Typescript",
-  InputTopicsChecker: "InputTopicsChecker",
-  OutputTopicChecker: "OutputTopicChecker",
-};
-
-export const ErrorCategories = {
-  InputTopicsChecker: {
-    NO_INPUTS: "NO_INPUTS",
-    TOPIC_UNAVAILABLE: "TOPIC_UNAVAILABLE",
-    CIRCULAR_IMPORT: "CIRCULAR_IMPORT",
-  },
-  OutputTopicChecker: {
-    NO_OUTPUTS: "NO_OUTPUTS",
-    BAD_PREFIX: "BAD_PREFIX",
-    NOT_UNIQUE: "NOT_UNIQUE",
-  },
-};
-
-export type Diagnostic = {|
-  severity: $Values<typeof DiagnosticSeverity>,
-  message: string,
-  source: $Values<typeof Sources>,
-  startLineNumber?: number,
-  startColumn?: number,
-  endLineNumber?: number,
-  endColumn?: number,
-  category: $Values<typeof ErrorCategories.InputTopicsChecker> | $Values<typeof ErrorCategories.OutputTopicChecker>,
-|};
-
-export type NodeData = {|
-  name: string,
-  sourceCode: string,
-  transpiledCode: string,
-  diagnostics: $ReadOnlyArray<Diagnostic>,
-  inputTopics: $ReadOnlyArray<string>,
-  outputTopic: string,
-|};
-
-type PlayerInfo = $ReadOnly<{|
-  topics: Topic[],
-  datatypes: RosDatatypes,
-|}>;
-
-type NodeDataTransformer = (
-  nodeData: NodeData,
-  playerStateActiveData: ?PlayerInfo,
-  priorRegistrations: $ReadOnlyArray<NodeRegistration>
-) => NodeData;
+// Typescript is required since the `import` syntax breaks VSCode, presumably
+// because VSCode has Typescript built in and our import is conflicting with
+// some model of theirs. We could just manually insert the entire TS
+// source code.
+const ts = require("typescript/lib/typescript");
 
 export const getInputTopics = (nodeData: NodeData): NodeData => {
   const inputTopics: $ReadOnlyArray<string> = Array.from(
     // $FlowFixMe - does not like matchAll
-    nodeData.sourceCode.matchAll(/^\s*const\s+inputs\s*=\s*\[\s*("([^"]+)"|'([^']+)')\s*\]/gm),
+    nodeData.sourceCode.matchAll(/^\s*export\s+const\s+inputs\s*=\s*\[\s*("([^"]+)"|'([^']+)')\s*\]/gm),
     (match) => {
       // Pick either the first matching group or the second, which corresponds
       // to single quotes or double quotes respectively.
@@ -87,7 +44,7 @@ export const getInputTopics = (nodeData: NodeData): NodeData => {
       severity: DiagnosticSeverity.Error,
       message: 'Must include non-empty inputs array, e.g. "const inputs = ["/some_input_topic"];',
       source: Sources.InputTopicsChecker,
-      category: ErrorCategories.InputTopicsChecker.NO_INPUTS,
+      code: ErrorCodes.InputTopicsChecker.NO_INPUTS,
     };
 
     return {
@@ -103,7 +60,7 @@ export const getInputTopics = (nodeData: NodeData): NodeData => {
 };
 
 export const getOutputTopic = (nodeData: NodeData): NodeData => {
-  const matches = /^\s*const\s+output\s*=\s*("([^"]+)"|'([^']+)')/gm.exec(nodeData.sourceCode);
+  const matches = /^\s*export\s+const\s+output\s*=\s*("([^"]+)"|'([^']+)')/gm.exec(nodeData.sourceCode);
   // Pick either the first matching group or the second, which corresponds
   // to single quotes or double quotes respectively.
   const outputTopic = matches && (matches[2] || matches[3]);
@@ -113,7 +70,7 @@ export const getOutputTopic = (nodeData: NodeData): NodeData => {
       severity: DiagnosticSeverity.Error,
       message: `Must include an output, e.g. const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}your_output_topic";`,
       source: Sources.OutputTopicChecker,
-      category: ErrorCategories.OutputTopicChecker.NO_OUTPUTS,
+      code: ErrorCodes.OutputTopicChecker.NO_OUTPUTS,
     };
 
     return {
@@ -135,7 +92,7 @@ export const validateInputTopics = (nodeData: NodeData, playerStateActiveData: ?
       severity: DiagnosticSeverity.Error,
       message: `Input "${badInputTopic}" cannot equal another node's output.`,
       source: "InputTopicsChecker",
-      category: ErrorCategories.InputTopicsChecker.CIRCULAR_IMPORT,
+      code: ErrorCodes.InputTopicsChecker.CIRCULAR_IMPORT,
     };
 
     return {
@@ -153,7 +110,7 @@ export const validateInputTopics = (nodeData: NodeData, playerStateActiveData: ?
         severity: DiagnosticSeverity.Error,
         message: `Input "${inputTopic}" is not yet available`,
         source: Sources.InputTopicsChecker,
-        category: ErrorCategories.InputTopicsChecker.TOPIC_UNAVAILABLE,
+        code: ErrorCodes.InputTopicsChecker.TOPIC_UNAVAILABLE,
       });
     }
   }
@@ -180,7 +137,7 @@ export const validateOutputTopic = (
           severity: DiagnosticSeverity.Error,
           message: `Output "${outputTopic}" must start with "${DEFAULT_WEBVIZ_NODE_PREFIX}"`,
           source: Sources.OutputTopicChecker,
-          category: ErrorCategories.OutputTopicChecker.BAD_PREFIX,
+          code: ErrorCodes.OutputTopicChecker.BAD_PREFIX,
         },
       ],
     };
@@ -195,13 +152,87 @@ export const validateOutputTopic = (
           severity: DiagnosticSeverity.Error,
           message: `Output "${outputTopic}" must be unique`,
           source: Sources.OutputTopicChecker,
-          category: ErrorCategories.OutputTopicChecker.NOT_UNIQUE,
+          code: ErrorCodes.OutputTopicChecker.NOT_UNIQUE,
         },
       ],
     };
   }
 
   return nodeData;
+};
+
+// The transpile step is concerned purely with generating javascript we will
+// actually run in the browser.
+export const transpile = (nodeData: NodeData): NodeData => {
+  // TODO: Better pipeline for a SourceFile input to transpileModule:
+  // https://github.com/Microsoft/TypeScript/issues/28365
+  const { outputText, diagnostics } = ts.transpileModule(nodeData.sourceCode, {
+    reportDiagnostics: true,
+    compilerOptions: baseCompilerOptions,
+  });
+
+  return {
+    ...nodeData,
+    transpiledCode: outputText,
+    diagnostics: [...nodeData.diagnostics, ...diagnostics.map(transformDiagnosticToMarkerData)],
+  };
+};
+
+// The compile step is currently used for generating syntactic/semantic errors. In the future, it
+// will be leveraged to:
+// - Generate the AST
+// - Handle external libraries
+// - (Hopefully) emit transpiled code
+export const compile = (nodeData: NodeData): NodeData => {
+  const { sourceCode } = nodeData;
+
+  const options: ts.CompilerOptions = baseCompilerOptions;
+  const nodeFileName = `${nodeData.name}.ts`;
+
+  // The compiler host is basically the file system API Typescript is funneled
+  // through. All we do is tell Typescript where it can locate files and how to
+  // create source files for the time being.
+
+  // Reference:
+  // Using the compiler api: https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API
+  // CompilerHost: https://github.com/microsoft/TypeScript/blob/v3.5.3/lib/typescript.d.ts#L2752
+  const host: ts.CompilerHost = {
+    getDefaultLibFileName: () => "lib.d.ts",
+    getCurrentDirectory: () => "",
+    getCanonicalFileName: (fileName) => fileName,
+    useCaseSensitiveFileNames: () => false,
+    fileExists: (fileName) => fileName === nodeFileName,
+    writeFile: () => {
+      throw new Error(
+        "The compiler host `writeFile` was called, which does not have any handlers written for it. Please write one now that you have hit it!"
+      );
+    },
+    getNewLine: () => {
+      throw new Error(
+        "The compiler host `getNewLine` was called, which does not have any handlers written for it. Please write one now that you have hit it!"
+      );
+    },
+    getSourceFile: (fileName) => {
+      // Typescript makes requests to `lib.d.ts`.
+      return ts.createSourceFile(
+        fileName,
+        fileName === nodeFileName ? sourceCode : "",
+        baseCompilerOptions.target,
+        true
+      );
+    },
+  };
+
+  const program = ts.createProgram([nodeFileName], options, host);
+  const diagnostics = [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()];
+
+  // For getting the source file node later on for traversing ASTs.
+  // const sourceFile = program.getSourceFile(mainFileName);
+  const newDiagnostics = diagnostics.map(transformDiagnosticToMarkerData);
+  return {
+    ...nodeData,
+    diagnostics: [...nodeData.diagnostics, ...newDiagnostics],
+  };
 };
 
 /*
@@ -231,17 +262,24 @@ export const compose = (...transformers: NodeDataTransformer[]): NodeDataTransfo
   when errors are not fatal.
 
 */
-const transform = (
+const transform = ({
+  name,
+  sourceCode,
+  playerInfo,
+  priorRegistrations,
+}: {
   name: string,
   sourceCode: string,
   playerInfo: ?PlayerInfo,
-  priorRegistrations: $ReadOnlyArray<NodeRegistration>
-): NodeData => {
+  priorRegistrations: $ReadOnlyArray<NodeRegistration>,
+}): NodeData => {
   const transformer = compose(
     getInputTopics,
     getOutputTopic,
     validateInputTopics,
-    validateOutputTopic
+    validateOutputTopic,
+    transpile,
+    compile
   );
 
   return transformer(

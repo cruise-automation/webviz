@@ -5919,7 +5919,7 @@ Object.defineProperty(exports,"__esModule",{value:!0});var d=null,e=!1,g=3,k=-1,
   \************************************************/
 /*! no static exports found */
 /*! all exports used */
-/*! ModuleConcatenation bailout: Module is not an ECMAScript module */function(module,exports,__webpack_require__){"use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.inScreenshotTests=function(){return navigator.userAgent.includes("HeadlessChrome")||navigator.userAgent.includes("PuppeteerTestingChrome")}},
+/*! ModuleConcatenation bailout: Module is not an ECMAScript module */function(module,exports,__webpack_require__){"use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.inScreenshotTests=function(){return navigator.userAgent.includes("PuppeteerTestingChrome")}},
 /*!**********************************!*\
   !*** ./common/fixtures/Duck.glb ***!
   \**********************************/
@@ -5967,7 +5967,7 @@ Object.defineProperty(exports,"__esModule",{value:!0});var d=null,e=!1,g=3,k=-1,
   \**************************************************************************/
 /*! no static exports found */
 /*! all exports used */
-/*! ModuleConcatenation bailout: Module is not an ECMAScript module */function(module,exports){module.exports='// @flow\n\n//  Copyright (c) 2018-present, GM Cruise LLC\n//\n//  This source code is licensed under the Apache License, Version 2.0,\n//  found in the LICENSE file in the root directory of this source tree.\n//  You may not use this file except in compliance with the License.\n\nexport function inScreenshotTests() {\n  // screenshot tests are not always in a headless Chrome, so we set a custom user agent for screenshot testing.\n  return navigator.userAgent.includes("HeadlessChrome") || navigator.userAgent.includes("PuppeteerTestingChrome");\n}\n'},
+/*! ModuleConcatenation bailout: Module is not an ECMAScript module */function(module,exports){module.exports='// @flow\n\n//  Copyright (c) 2018-present, GM Cruise LLC\n//\n//  This source code is licensed under the Apache License, Version 2.0,\n//  found in the LICENSE file in the root directory of this source tree.\n//  You may not use this file except in compliance with the License.\n\nexport function inScreenshotTests() {\n  // Integration tests and screenshot tests are not always in a headless Chrome, so need to check for a custom user\n  // agent.\n  return navigator.userAgent.includes("PuppeteerTestingChrome");\n}\n'},
 /*!***************************************************************!*\
   !*** ./node_modules/raw-loader!./docs/src/jsx/utils/theme.js ***!
   \***************************************************************/

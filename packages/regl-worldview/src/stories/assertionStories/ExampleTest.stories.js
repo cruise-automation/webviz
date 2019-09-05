@@ -9,10 +9,11 @@
 /* eslint-disable react/display-name */
 
 import { storiesOf } from "@storybook/react";
+import expect from "expect";
 import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
-import { assertionTest, expect } from "stories/assertionTestUtils";
+import { assertionTest } from "stories/assertionTestUtils";
 
 storiesOf("Integration/ExampleTest", module)
   .addDecorator(withScreenshot())

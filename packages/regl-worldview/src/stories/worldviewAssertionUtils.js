@@ -8,12 +8,13 @@
 
 /* eslint-disable react/display-name */
 
+import expect from "expect";
 import React, { type ComponentType } from "react";
 
 import type { CommonCommandProps } from "../commands/Command";
 import type { CameraState } from "../types";
 import Worldview, { type Props } from "../Worldview";
-import { assertionTest, timeout, expect } from "stories/assertionTestUtils";
+import { assertionTest, timeout } from "stories/assertionTestUtils";
 
 const defaultCameraState: $Shape<CameraState> = {
   distance: 75,

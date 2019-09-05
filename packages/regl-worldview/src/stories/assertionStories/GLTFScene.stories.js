@@ -9,12 +9,13 @@
 /* eslint-disable react/display-name */
 
 import { storiesOf } from "@storybook/react";
+import expect from "expect";
 import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import GLTFScene from "../../commands/GLTFScene";
 import { clickAtOrigin, WorldviewWrapper } from "../worldviewAssertionUtils";
-import { assertionTest, expect, timeout } from "stories/assertionTestUtils";
+import { assertionTest, timeout } from "stories/assertionTestUtils";
 
 const firstModelPosition = {
   pose: {

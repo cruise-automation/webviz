@@ -27,6 +27,11 @@ const StyledActionButton = styled.button`
   }
 `;
 
+function convertAbsoluteImportsToRelativeImports(code) {
+  // These imports need to be converted because there is no good way to alias an aboslute import in code sandbox.
+  return code.replace(/from "common/g, `from "./common`);
+}
+
 function CodeSandboxButton({ codeSandboxCode, codeSandboxConfig = {} }) {
   const dependencies = codeSandboxConfig.dependencies || {};
   const files = codeSandboxConfig.files || {};
@@ -39,7 +44,7 @@ function CodeSandboxButton({ codeSandboxCode, codeSandboxConfig = {} }) {
         },
       },
       "index.js": {
-        content: codeSandboxCode,
+        content: convertAbsoluteImportsToRelativeImports(codeSandboxCode),
       },
       "index.html": {
         content: '<div id="root"></div>',

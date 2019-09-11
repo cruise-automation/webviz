@@ -69,6 +69,35 @@ stories
     })
   )
   .add(
+    `Default object handler has a ray`,
+    assertionTest({
+      story: (setTestData) => (
+        <WorldviewWrapper>
+          <Cubes onClick={(_, clickInfo) => setTestData(clickInfo)}>{[cube]}</Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData) => {
+        await clickAtOrigin();
+        const result = await getTestData();
+
+        // Dir
+        expect(result.ray.dir[0]).toBeCloseTo(0);
+        expect(result.ray.dir[1]).toBeCloseTo(-1);
+        expect(result.ray.dir[2]).toBeCloseTo(0);
+
+        // Origin
+        expect(result.ray.origin[0]).toBeCloseTo(0);
+        expect(result.ray.origin[1]).toBeCloseTo(75, 1);
+        expect(result.ray.origin[2]).toBeCloseTo(0);
+
+        // Point
+        expect(result.ray.point[0]).toBeCloseTo(0);
+        expect(result.ray.point[1]).toBeCloseTo(75, 1);
+        expect(result.ray.point[2]).toBeCloseTo(0);
+      },
+    })
+  )
+  .add(
     `onMouseMove does not pick up objects with hitmapOnMouseMove=false`,
     assertionTest({
       story: (setTestData) => (

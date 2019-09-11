@@ -9,13 +9,14 @@
 /* eslint-disable react/display-name */
 
 import { storiesOf } from "@storybook/react";
+import expect from "expect";
 import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Axes from "../../commands/Axes";
 import Cubes from "../../commands/Cubes";
 import { clickAtOrigin, WorldviewWrapper } from "../worldviewAssertionUtils";
-import { assertionTest, expect } from "stories/assertionTestUtils";
+import { assertionTest } from "stories/assertionTestUtils";
 
 const defaultXAxis = {
   color: { a: 1, b: 0.4, g: 0.26, r: 0.95 },

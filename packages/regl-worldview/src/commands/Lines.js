@@ -6,10 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from "react";
 import flatten from "lodash/flatten";
+import * as React from "react";
 
-import type { Line, Vec4, Vec3, Color, Pose } from "../types";
+import type { Line, Vec4, Color, Pose } from "../types";
 import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
 import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
@@ -250,6 +250,19 @@ const lines = (regl: any) => {
       [1, 0, 1, 1], // magenta
     ],
   });
+  // The pose position and rotation buffers contain the identity position/rotation, for use when we don't have instanced
+  // poses.
+  const defaultPosePositionBuffer = regl.buffer({
+    type: "float",
+    usage: "static",
+    data: flatten(new Array(VERTICES_PER_INSTANCE).fill([0, 0, 0])),
+  });
+  const defaultPoseRotationBuffer = regl.buffer({
+    type: "float",
+    usage: "static",
+    // Rotation array identity is [x: 0, y: 0, z: 0, w: 1]
+    data: flatten(new Array(VERTICES_PER_INSTANCE).fill([0, 0, 0, 1])),
+  });
 
   // The buffers used for input position & color data
   const colorBuffer = regl.buffer({ type: "float" });
@@ -316,11 +329,11 @@ const lines = (regl: any) => {
           divisor: 1,
         }),
         posePosition: (context, { hasInstancedPoses }) => ({
-          buffer: posePositionBuffer,
+          buffer: hasInstancedPoses ? posePositionBuffer : defaultPosePositionBuffer,
           divisor: hasInstancedPoses ? 1 : 0,
         }),
         poseRotation: (context, { hasInstancedPoses }) => ({
-          buffer: poseRotationBuffer,
+          buffer: hasInstancedPoses ? poseRotationBuffer : defaultPoseRotationBuffer,
           divisor: hasInstancedPoses ? 1 : 0,
         }),
       },
@@ -333,8 +346,8 @@ const lines = (regl: any) => {
   let colorArray = new Float32Array(VERTICES_PER_INSTANCE * 4);
   let pointArray = new Float32Array(0);
   let allocatedPoints = 0;
-  let positionArray = new Float32Array(VERTICES_PER_INSTANCE * 3);
-  let rotationArray = new Float32Array(VERTICES_PER_INSTANCE * 4);
+  let positionArray = new Float32Array(0);
+  let rotationArray = new Float32Array(0);
 
   function fillPointArray(points: any[], alreadyClosed: boolean, shouldClose: boolean) {
     const numTotalPoints = points.length + (shouldClose ? 3 : 2);
@@ -370,42 +383,25 @@ const lines = (regl: any) => {
     }
   }
 
-  function fillPoseArrays(instances: number, poses: ?(Pose[]), hasInstancedPoses: boolean): ?Error {
-    if (hasInstancedPoses && poses && instances !== poses.length) {
-      return new Error(`Expected ${instances} poses but given ${poses.length} poses: will result in webgl error.`);
+  function fillPoseArrays(instances: number, poses: Pose[]): ?Error {
+    if (positionArray.length < instances * 3) {
+      positionArray = new Float32Array(instances * 3);
+      rotationArray = new Float32Array(instances * 4);
     }
-    if (hasInstancedPoses && poses) {
-      if (positionArray.length < instances * 3) {
-        positionArray = new Float32Array(instances * 3);
-        rotationArray = new Float32Array(instances * 4);
-      }
-      for (let index = 0; index < poses.length; index++) {
-        const positionOffset = index * 3;
-        const rotationOffset = index * 4;
-        const { position, orientation: r } = poses[index];
-        const convertedPosition = Array.isArray(position) ? position : pointToVec3(position);
-        positionArray[positionOffset + 0] = convertedPosition[0];
-        positionArray[positionOffset + 1] = convertedPosition[1];
-        positionArray[positionOffset + 2] = convertedPosition[2];
+    for (let index = 0; index < poses.length; index++) {
+      const positionOffset = index * 3;
+      const rotationOffset = index * 4;
+      const { position, orientation: r } = poses[index];
+      const convertedPosition = Array.isArray(position) ? position : pointToVec3(position);
+      positionArray[positionOffset + 0] = convertedPosition[0];
+      positionArray[positionOffset + 1] = convertedPosition[1];
+      positionArray[positionOffset + 2] = convertedPosition[2];
 
-        const convertedRotation = Array.isArray(r) ? r : [r.x, r.y, r.z, r.w];
-        rotationArray[rotationOffset + 0] = convertedRotation[0];
-        rotationArray[rotationOffset + 1] = convertedRotation[1];
-        rotationArray[rotationOffset + 2] = convertedRotation[2];
-        rotationArray[rotationOffset + 3] = convertedRotation[3];
-      }
-    } else {
-      // If we don't have instanced poses, just load in the identity position / rotation vectors.
-      if (positionArray.length < VERTICES_PER_INSTANCE * 3) {
-        positionArray = new Float32Array(VERTICES_PER_INSTANCE * 3);
-        rotationArray = new Float32Array(VERTICES_PER_INSTANCE * 4);
-      }
-      positionArray.fill(0);
-      rotationArray.fill(0);
-      // Rotation array identity is [x: 0, y: 0, z: 0, w: 1]
-      for (let index = 0; index < VERTICES_PER_INSTANCE; index++) {
-        rotationArray[index * 4 + 3] = 1;
-      }
+      const convertedRotation = Array.isArray(r) ? r : [r.x, r.y, r.z, r.w];
+      rotationArray[rotationOffset + 0] = convertedRotation[0];
+      rotationArray[rotationOffset + 1] = convertedRotation[1];
+      rotationArray[rotationOffset + 2] = convertedRotation[2];
+      rotationArray[rotationOffset + 3] = convertedRotation[3];
     }
   }
 
@@ -433,7 +429,7 @@ const lines = (regl: any) => {
         colorArray[offset + 2] = b;
         colorArray[offset + 3] = a;
       }
-    } else {
+    } else if (colors) {
       const length = shouldClose ? colors.length + 1 : colors.length;
       if (colorArray.length < length * 4) {
         colorArray = new Float32Array(length * 4);
@@ -496,13 +492,15 @@ const lines = (regl: any) => {
     // fill instanced pose buffers
     const { poses } = props;
     const hasInstancedPoses = !!poses && poses.length > 0;
-    const error = fillPoseArrays(instances, poses, hasInstancedPoses);
-    if (error) {
-      console.error(error);
-      return;
+    if (hasInstancedPoses && poses) {
+      if (instances !== poses.length) {
+        console.error(`Expected ${instances} poses but given ${poses.length} poses: will result in webgl error.`);
+        return;
+      }
+      fillPoseArrays(instances, poses);
+      posePositionBuffer({ data: positionArray, usage: "dynamic" });
+      poseRotationBuffer({ data: rotationArray, usage: "dynamic" });
     }
-    posePositionBuffer({ data: positionArray, usage: "dynamic" });
-    poseRotationBuffer({ data: rotationArray, usage: "dynamic" });
 
     render(debug, () => {
       // Use Object.assign because it's actually faster than babel's object spread polyfill.

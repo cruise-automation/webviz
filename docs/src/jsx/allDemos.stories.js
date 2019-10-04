@@ -19,6 +19,7 @@ import Cylinders from "./commands/Cylinders";
 import FilledPolygons from "./commands/FilledPolygons";
 import GLTFScene from "./commands/GLTFScene";
 import LinesDemo from "./commands/LinesDemo";
+import LinesPoses from "./commands/LinesPoses";
 import LinesWireframe from "./commands/LinesWireframe";
 import Overlay from "./commands/Overlay";
 import Points from "./commands/Points";
@@ -46,6 +47,7 @@ const allDemos = {
   FilledPolygons,
   Hitmap,
   LinesDemo,
+  LinesPoses,
   LinesWireframe,
   MouseEvents,
   Overlay,

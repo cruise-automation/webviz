@@ -179,6 +179,7 @@ export type Cylinder = BaseShape & {
 
 export type Line = BaseShape & {
   points: (Point | Vec3)[],
+  poses?: Pose[],
 };
 
 export type PointType = BaseShape & {

@@ -83,6 +83,8 @@ export const LinesDemo = makeCodeComponent(require("!!raw-loader!./commands/Line
 
 export const LinesHitmap = makeCodeComponent(require("!!raw-loader!./commands/LinesHitmap"), "LinesHitmap");
 
+export const LinesPoses = makeCodeComponent(require("!!raw-loader!./commands/LinesPoses"), "LinesPoses");
+
 export const LinesWireframe = makeCodeComponent(require("!!raw-loader!./commands/LinesWireframe"), "LinesWireframe");
 
 export const Overlay = makeCodeComponent(require("!!raw-loader!./commands/Overlay"), "Overlay");

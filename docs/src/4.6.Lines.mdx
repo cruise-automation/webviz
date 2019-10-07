@@ -1,4 +1,4 @@
-import { LinesDemo, LinesWireframe, LinesHitmap } from "./jsx/allLiveEditors";
+import { LinesDemo, LinesWireframe, LinesHitmap, LinesPoses } from "./jsx/allLiveEditors";
 
 # Lines
 
@@ -22,6 +22,13 @@ type Line = {
     position: { x: number, y: number, z: number },
     orientation: { x: number, y: number, z: number, w: number }
   }
+  // Lines can optionally include multiple poses.
+  poses: [
+    {
+      position: { x: number, y: number, z: number },
+      orientation: { x: number, y: number, z: number, w: number }
+    }
+  ],
   scale: {
     x: number,
     y: number,
@@ -44,6 +51,10 @@ type Line = {
 ## Wireframe Example
 
 <LinesWireframe />
+
+## Multi-Pose Example
+
+<LinesPoses />
 
 ## Mouse Interaction
 

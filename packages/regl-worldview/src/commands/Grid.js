@@ -70,7 +70,7 @@ type Props = {
 
 // useful for rendering a grid for debugging in stories
 
-function Grid({ count, ...rest }: Props) {
+export default function Grid({ count, ...rest }: Props) {
   const children = { count };
   return (
     <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...rest} reglCommand={grid}>
@@ -80,5 +80,3 @@ function Grid({ count, ...rest }: Props) {
 }
 
 Grid.defaultProps = { count: 6 };
-
-export default React.memo<Props>(Grid);

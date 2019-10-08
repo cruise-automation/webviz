@@ -72,7 +72,7 @@ function instancedGetChildrenForHitmapFromSingleProp<T: any>(
   const idColors = assignNextColors(prop, instanceCount);
   const startColor = idColors[0];
   // We have to map these instance colors to `pointCountPerInstance` number of points
-  if (hitmapProp.colors && hitmapProp.points && hitmapProp.points.length) {
+  if (hitmapProp.points && hitmapProp.points.length) {
     const allColors = new Array(hitmapProp.points.length).fill().map(() => startColor);
     for (let i = 0; i < instanceCount; i++) {
       for (let j = 0; j < pointCountPerInstance; j++) {

@@ -65,7 +65,7 @@ describe("<ShareJsonModal />", () => {
       JSON.stringify({
         layout: "RosOut!cuuf9u",
         savedProps: {},
-        globalData: {},
+        globalVariables: {},
       })
     );
     wrapper.find(".textarea").simulate("change", { target: { value: newValue } });

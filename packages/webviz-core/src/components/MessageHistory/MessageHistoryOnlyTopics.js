@@ -7,13 +7,19 @@
 //  You may not use this file except in compliance with the License.
 
 import { useCleanup } from "@cruise-automation/hooks";
-import React, { type Node, useRef, useCallback, useMemo, useState, useEffect } from "react";
+import { type Node, useRef, useCallback, useMemo, useState, useEffect, useContext } from "react";
 import type { Time } from "rosbag";
 import uuid from "uuid";
 
-import { useChangeDetector, useShallowMemo, useMustNotChange, useShouldNotChangeOften } from "./hooks";
+import {
+  useChangeDetector,
+  useShallowMemo,
+  useMustNotChange,
+  useShouldNotChangeOften,
+  useContextSelector,
+} from "./hooks";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
-import PerfMonitor from "webviz-core/src/components/PerfMonitor";
+import PanelContext from "webviz-core/src/components/PanelContext";
 import type { Message, SubscribePayload } from "webviz-core/src/players/types";
 
 // This is an internal component which only supports topics,
@@ -30,9 +36,6 @@ type MessageHistoryOnlyTopicsData<T> = {|
 type MessageReducer<T> = (T, message: Message) => T;
 
 type Props<T> = {|
-  children: (MessageHistoryOnlyTopicsData<T>) => Node,
-  panelType: ?string,
-  topicPrefix: string,
   topics: string[],
   imageScale?: number,
 
@@ -127,16 +130,12 @@ function useSubscriptions(requestedTopics: string[], imageScale?: ?number, panel
   );
 }
 
-// Be sure to pass in a new render function when you want to force a rerender.
-// So you probably don't want to do
-// `<MessageHistoryOnlyTopics>{this._renderSomething}</MessageHistoryOnlyTopics>`.
-// This might be a bit counterintuitive but we do this since performance matters here.
-export default function MessageHistoryOnlyTopics<T>(props: Props<T>) {
+const NO_MESSAGES = Object.freeze([]);
+
+// TODO: remove clearedRef and just return T
+export function useMessages<T>(props: Props<T>): {| reducedValue: T, _clearedRef: {| current: boolean |} |} {
   const [id] = useState(() => uuid.v4());
-  const {
-    playerState: { activeData },
-    setSubscriptions,
-  } = useMessagePipeline();
+  const { topicPrefix = "", type: panelType = undefined } = useContext(PanelContext) || {};
 
   useShouldNotChangeOften(
     props.restore,
@@ -151,27 +150,63 @@ export default function MessageHistoryOnlyTopics<T>(props: Props<T>) {
       "shouldn't be created on each render. (If you're using Hooks, try useCallback.)"
   );
 
-  const [requestedTopics, addMessage] = useTopicPrefix<T>(props.topicPrefix, props.topics, props.addMessage);
+  // TODO(jacob): is it safe to call restore() when topicPrefix changes?
+  const [requestedTopics, addMessage] = useTopicPrefix<T>(topicPrefix, props.topics, props.addMessage);
+  const requestedTopicsSet = useMemo(() => new Set(requestedTopics), [requestedTopics]);
 
-  const subscriptions = useSubscriptions(requestedTopics, props.imageScale, props.panelType);
+  const subscriptions = useSubscriptions(requestedTopics, props.imageScale, panelType);
+  const setSubscriptions = useMessagePipeline(useCallback(({ setSubscriptions }) => setSubscriptions, []));
   useEffect(() => setSubscriptions(id, subscriptions), [id, setSubscriptions, subscriptions]);
   useCleanup(() => setSubscriptions(id, []));
 
-  const { children } = props;
+  // Keep a reference to the last messages we processed to ensure we never process them more than once.
+  // If the topics we care about change, the player should send us new messages soon anyway (via backfill if paused).
+  const lastProcessedMessagesRef = useRef<?(Message[])>();
+  // Keep a ref to the latest requested topics we were rendered with, because the useMessagePipeline
+  // selector's dependencies aren't allowed to change.
+  const latestRequestedTopicsRef = useRef(requestedTopicsSet);
+  latestRequestedTopicsRef.current = requestedTopicsSet;
+  const messages = useMessagePipeline<Message[]>(
+    useCallback(({ playerState: { activeData } }) => {
+      if (!activeData) {
+        return NO_MESSAGES; // identity must not change to avoid unnecessary re-renders
+      }
+      if (lastProcessedMessagesRef.current === activeData.messages) {
+        return useContextSelector.BAILOUT;
+      }
+      const filteredMessages = activeData.messages.filter(({ topic }) => latestRequestedTopicsRef.current.has(topic));
+      // Bail out if we didn't want any of these messages, but not if this is our first render
+      const shouldBail = lastProcessedMessagesRef.current && filteredMessages.length === 0;
+      lastProcessedMessagesRef.current = activeData.messages;
+      return shouldBail ? useContextSelector.BAILOUT : filteredMessages;
+    }, [])
+  );
 
-  const messages = activeData ? activeData.messages : [];
-  const lastSeekTime = activeData ? activeData.lastSeekTime : 0;
-  const startTime = activeData ? activeData.startTime : { sec: 0, nsec: 0 };
+  const lastSeekTime = useMessagePipeline(
+    useCallback(({ playerState: { activeData } }) => (activeData ? activeData.lastSeekTime : 0), [])
+  );
 
   const clearedRef = useRef(false);
   const reducedValue = useReducedValue<T>(props.restore, addMessage, lastSeekTime, messages, clearedRef);
+  return { reducedValue, _clearedRef: clearedRef };
+}
+
+export default function MessageHistoryOnlyTopics<T>(props: {|
+  ...Props<T>,
+  children: (MessageHistoryOnlyTopicsData<T>) => Node,
+|}) {
+  const { children, ...useMessagesProps } = props;
+  const { reducedValue, _clearedRef: clearedRef } = useMessages(useMessagesProps);
+  const startTime = useMessagePipeline(
+    useCallback(({ playerState: { activeData } }) => activeData && activeData.startTime, [])
+  );
 
   return useMemo(
     () => {
       const cleared = clearedRef.current;
       clearedRef.current = false;
-      return <PerfMonitor id={id}>{children({ reducedValue, cleared, startTime })}</PerfMonitor>;
+      return children({ reducedValue, cleared, startTime: startTime || { sec: 0, nsec: 0 } });
     },
-    [children, id, reducedValue, startTime]
+    [children, clearedRef, reducedValue, startTime]
   );
 }

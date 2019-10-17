@@ -85,7 +85,7 @@ const buildTfTree = (transforms: Transform[]): TfTree => {
 type Props = {
   transforms: any,
   tfToFollow?: string,
-  followingOrientation?: boolean,
+  followOrientation?: boolean,
   onFollowChange: (tfId?: string | false, followOrientation?: boolean) => void,
 };
 
@@ -124,7 +124,7 @@ const arePropsEqual = (prevProps, nextProps) => {
 };
 
 const FollowTFControl = memo<Props>((props: Props) => {
-  const { transforms, tfToFollow, followingOrientation, onFollowChange } = props;
+  const { transforms, tfToFollow, followOrientation, onFollowChange } = props;
   const [forceShowFrameList, setForceShowFrameList] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [lastSelectedFrame, setLastSelectedFrame] = useState(undefined);
@@ -156,12 +156,12 @@ const FollowTFControl = memo<Props>((props: Props) => {
           return `Follow ${lastSelectedFrame}`;
         }
         return `Follow ${getDefaultFollowTransformFrame()}`;
-      } else if (!followingOrientation) {
+      } else if (!followOrientation) {
         return "Follow Orientation";
       }
       return "Unfollow";
     },
-    [tfToFollow, followingOrientation, lastSelectedFrame, getDefaultFollowTransformFrame]
+    [tfToFollow, followOrientation, lastSelectedFrame, getDefaultFollowTransformFrame]
   );
 
   const onClickFollowButton = useCallback(
@@ -171,21 +171,21 @@ const FollowTFControl = memo<Props>((props: Props) => {
           return onFollowChange(lastSelectedFrame);
         }
         return onFollowChange(getDefaultFollowTransformFrame());
-      } else if (!followingOrientation) {
+      } else if (!followOrientation) {
         return onFollowChange(tfToFollow, true);
       }
       return onFollowChange(false);
     },
-    [tfToFollow, lastSelectedFrame, onFollowChange, getDefaultFollowTransformFrame, followingOrientation]
+    [tfToFollow, lastSelectedFrame, onFollowChange, getDefaultFollowTransformFrame, followOrientation]
   );
 
   const onSelectFrame = useCallback(
     (id: string, item: mixed, autocomplete: Autocomplete) => {
       setLastSelectedFrame(id === getDefaultFollowTransformFrame() ? undefined : id);
-      onFollowChange(id, followingOrientation);
+      onFollowChange(id, followOrientation);
       autocomplete.blur();
     },
-    [setLastSelectedFrame, getDefaultFollowTransformFrame, onFollowChange, followingOrientation]
+    [setLastSelectedFrame, getDefaultFollowTransformFrame, onFollowChange, followOrientation]
   );
 
   const openFrameList = useCallback(
@@ -265,7 +265,7 @@ const FollowTFControl = memo<Props>((props: Props) => {
       ) : null}
       <Button tooltipProps={{ placement: "top" }} onClick={onClickFollowButton} tooltip={getFollowButtonTooltip()}>
         <Icon style={{ color: tfToFollow ? colors.accent : "white" }}>
-          {followingOrientation ? <CompassOutlineIcon /> : <CrosshairsGpsIcon />}
+          {followOrientation ? <CompassOutlineIcon /> : <CrosshairsGpsIcon />}
         </Icon>
       </Button>
     </Container>

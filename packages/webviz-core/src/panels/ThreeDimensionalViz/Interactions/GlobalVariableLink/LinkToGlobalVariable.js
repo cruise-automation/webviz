@@ -16,7 +16,7 @@ import UnlinkGlobalVariables from "./UnlinkGlobalVariables";
 import Button from "webviz-core/src/components/Button";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
-import useGlobalData from "webviz-core/src/hooks/useGlobalData";
+import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import colors from "webviz-core/src/styles/colors.module.scss";
 
 type AddToLinkedGlobalVariable = {
@@ -58,12 +58,12 @@ export default function LinkToGlobalVariable({
     [markerKeyPath]
   );
 
-  const { setGlobalData } = useGlobalData();
+  const { setGlobalVariables } = useGlobalVariables();
   const { linkedGlobalVariables, setLinkedGlobalVariables } = useLinkedGlobalVariables();
 
   const addLink = (ev) => {
     ev.preventDefault();
-    setGlobalData({ [name]: variableValue });
+    setGlobalVariables({ [name]: variableValue });
     const newLinkedGlobalVariables = [...linkedGlobalVariables, { topic, markerKeyPath, name }];
     setLinkedGlobalVariables(newLinkedGlobalVariables);
     setIsOpen(false);

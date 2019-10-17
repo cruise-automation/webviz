@@ -112,7 +112,12 @@ export default class Dropdown extends React.Component<Props, State> {
       borderBottomRightRadius: flatEdges && position === "above" ? "0" : undefined,
     };
     return (
-      <ChildToggle style={{ maxWidth: "100%" }} position={position} isOpen={isOpen} onToggle={this.toggle}>
+      <ChildToggle
+        style={{ maxWidth: "100%" }}
+        position={position}
+        isOpen={isOpen}
+        onToggle={this.toggle}
+        dataTest={this.props.dataTest}>
         {this.renderButton()}
         <Menu style={style}>{this.renderChildren()}</Menu>
       </ChildToggle>

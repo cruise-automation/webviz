@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { routerMiddleware } from "connected-react-router";
+import memoize from "lodash/memoize";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -15,6 +15,7 @@ import ReactDOM from "react-dom";
 const defaultHooks = {
   nodes: () => [],
   getDefaultGlobalStates() {
+    const { defaultPlaybackConfig } = require("webviz-core/src/reducers/panels");
     return {
       layout: {
         direction: "row",
@@ -28,14 +29,22 @@ const defaultHooks = {
         splitPercentage: 33.3333333333,
       },
       savedProps: {},
-      globalData: {},
+      globalVariables: {},
       userNodes: {},
       linkedGlobalVariables: [],
+      playbackConfig: defaultPlaybackConfig,
     };
   },
-  migratePanels: (panels) => panels,
+  migratePanels(panels) {
+    const migratePanels = require("webviz-core/src/util/migratePanels").default;
+    return migratePanels(panels);
+  },
   panelCategories() {
-    return [{ label: "General", key: "general" }, { label: "Utilities", key: "utilities" }];
+    return [
+      { label: "ROS", key: "ros" },
+      { label: "Utilities", key: "utilities" },
+      { label: "Debugging", key: "debugging" },
+    ];
   },
   panelsByCategory() {
     const { ENABLE_NODE_PLAYGROUND_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
@@ -46,17 +55,18 @@ const defaultHooks = {
     const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
     const ImageViewPanel = require("webviz-core/src/panels/ImageView").default;
     const Internals = require("webviz-core/src/panels/Internals").default;
+    const NodePlayground = require("webviz-core/src/panels/NodePlayground").default;
+    const Note = require("webviz-core/src/panels/Note").default;
     const NumberOfRenders = require("webviz-core/src/panels/NumberOfRenders").default;
     const Plot = require("webviz-core/src/panels/Plot").default;
+    const RawMessages = require("webviz-core/src/panels/RawMessages").default;
     const Rosout = require("webviz-core/src/panels/Rosout").default;
     const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
+    const SubscribeToList = require("webviz-core/src/panels/SubscribeToList").default;
     const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
-    const RawMessages = require("webviz-core/src/panels/RawMessages").default;
-    const NodePlayground = require("webviz-core/src/panels/NodePlayground").default;
     const { ndash } = require("webviz-core/src/util/entities");
-    const Note = require("webviz-core/src/panels/Note").default;
 
-    const general = [
+    const ros = [
       { title: "3D", component: ThreeDimensionalViz },
       { title: `Diagnostics ${ndash} Summary`, component: DiagnosticSummary },
       { title: `Diagnostics ${ndash} Detail`, component: DiagnosticStatusPanel },
@@ -65,7 +75,6 @@ const defaultHooks = {
       { title: "Raw Messages", component: RawMessages },
       { title: "rosout", component: Rosout },
       { title: "State Transitions", component: StateTransitions },
-      { title: "Number of Renders", component: NumberOfRenders, hideFromList: true },
     ];
 
     const utilities = [
@@ -74,10 +83,15 @@ const defaultHooks = {
       { title: "Webviz Internals", component: Internals },
     ];
 
-    return { general, utilities };
+    const debugging = [
+      { title: "Number of Renders", component: NumberOfRenders },
+      { title: "Subscribe to List", component: SubscribeToList },
+    ];
+
+    return { ros, utilities, debugging };
   },
   helpPageFootnote: () => null,
-  perPanelHooks: () => {
+  perPanelHooks: memoize(() => {
     const World = require("webviz-core/src/panels/ThreeDimensionalViz/World").default;
     const LaserScanVert = require("webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert").default;
     const FileMultipleIcon = require("@mdi/svg/svg/file-multiple.svg").default;
@@ -86,8 +100,6 @@ const defaultHooks = {
 
     const { SECOND_BAG_PREFIX } = require("webviz-core/src/util/globalConstants");
 
-    const getMetadata = () => {};
-    getMetadata.topics = [];
     return {
       Panel: {
         topicPrefixes: {
@@ -104,7 +116,7 @@ const defaultHooks = {
           },
         },
       },
-      DiagnosticSummary: { defaultConfig: { pinnedIds: [] } },
+      DiagnosticSummary: { defaultConfig: { pinnedIds: [], hardwareIdFilter: "" } },
       ImageView: {
         defaultConfig: {
           cameraTopic: "",
@@ -132,8 +144,7 @@ const defaultHooks = {
         icons: {},
         WorldComponent: World,
         LaserScanVert,
-        getMetadata,
-        setGlobalDataInSceneBuilder: (globalData, selectionState, topicsToRender) => ({
+        setGlobalVariablesInSceneBuilder: (globalVariables, selectionState, topicsToRender) => ({
           selectionState,
           topicsToRender,
         }),
@@ -159,17 +170,12 @@ const defaultHooks = {
       },
       RawMessages: { docLinkFunction: () => undefined },
     };
-  },
+  }),
   Root({ store }) {
     const Root = require("webviz-core/src/components/Root").default;
     return <Root store={store} />;
   },
   topicsWithIncorrectHeaders: () => [],
-  heavyDatatypesWithNoTimeDependency: () => [
-    "sensor_msgs/PointCloud2",
-    "sensor_msgs/LaserScan",
-    "nav_msgs/OccupancyGrid",
-  ],
   useRaven: () => true,
   load: () => {},
   onPanelClose: () => {},
@@ -214,11 +220,6 @@ export function loadWebviz(hooksToSet) {
 
   const waitForFonts = require("webviz-core/src/styles/waitForFonts").default;
   const Confirm = require("webviz-core/src/components/Confirm").default;
-  const createRootReducer = require("webviz-core/src/reducers").default;
-  const configureStore = require("webviz-core/src/store").default;
-  const history = require("webviz-core/src/util/history").default;
-
-  const store = configureStore(createRootReducer(history), [routerMiddleware(history)]);
 
   function render() {
     const rootEl = document.getElementById("root");
@@ -228,7 +229,7 @@ export function loadWebviz(hooksToSet) {
     }
 
     waitForFonts(() => {
-      ReactDOM.render(<hooks.Root store={store} history={history} />, rootEl);
+      ReactDOM.render(<hooks.Root history={history} />, rootEl);
     });
   }
 

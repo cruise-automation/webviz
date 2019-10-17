@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { intersection } from "lodash";
+import { intersection, keyBy } from "lodash";
 import microMemoize from "micro-memoize";
 import { createSelectorCreator, defaultMemoize, createSelector } from "reselect";
 import shallowequal from "shallowequal";
@@ -28,11 +28,7 @@ export const getSanitizedTopics = microMemoize(
 export const topicsByTopicName = createSelector<*, *, *, _>(
   (topics: Topic[]) => topics,
   (topics: Topic[]): { [string]: Topic } => {
-    const results = {};
-    for (const topic of topics) {
-      results[topic.name] = topic;
-    }
-    return results;
+    return keyBy(topics, ({ name }) => name);
   }
 );
 

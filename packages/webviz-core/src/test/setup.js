@@ -38,6 +38,25 @@ if (typeof window !== "undefined") {
   window.URLSearchParams = UrlSearchParams;
 }
 
+// Disallow console.error and console.warn in tests. This should only be called
+// from libraries anyway, since for user-code we should be using `Logger`, which
+// automatically gets silenced on tests.
+// $FlowFixMe - Flow doens't like that we're overwriting this.
+console.error = function(message) {
+  // $FlowFixMe
+  fail(message); // eslint-disable-line
+};
+// $FlowFixMe - Flow doens't like that we're overwriting this.
+console.warn = function(message) {
+  // We'll have to update these methods, but for now we just ignore their
+  // warning messages.
+  if (message.includes("https://fb.me/react-unsafe-component-lifecycles")) {
+    return;
+  }
+  // $FlowFixMe
+  fail(message); // eslint-disable-line
+};
+
 // you can import fakes from fake-indexeddb and attach them to the jsdom global
 // https://github.com/dumbmatter/fakeIndexedDB#use
 global.indexedDB = require("fake-indexeddb");

@@ -54,8 +54,6 @@ export type Color = {
   a: number,
 };
 
-type Colors = Color[];
-
 export type Pose = {
   position: Point,
   orientation: Orientation,
@@ -94,7 +92,7 @@ export type BaseMarker = StampedMessage & {
   pose: Pose,
   name?: string,
   scale: Scale,
-  color: Color,
+  color?: Color,
   colors?: Color[],
   lifetime?: Time,
   frameLocked?: boolean, // TODO: Do we need this?
@@ -106,7 +104,7 @@ export type BaseMarker = StampedMessage & {
 
 type MultiPointMarker = {
   points: Points,
-  colors?: Colors,
+  colors?: Color[],
 };
 
 type ArrowSize = {
@@ -138,6 +136,7 @@ export type CylinderMarker = BaseMarker & {
 
 export type LineStripMarker = BaseMarker &
   MultiPointMarker & {
+    closed?: boolean,
     type: 4,
   };
 
@@ -199,6 +198,12 @@ export type FilledPolygonMarker = BaseMarker &
     type: 107,
   };
 
+export type InstancedLineListMarker = BaseMarker &
+  MultiPointMarker & {
+    type: 108,
+    metadataByIndex?: Array<any>,
+  };
+
 export type Marker =
   | ArrowMarker
   | CubeMarker
@@ -213,7 +218,8 @@ export type Marker =
   | TextMarker
   | TriangleListMarker
   | MeshMarker
-  | FilledPolygonMarker;
+  | FilledPolygonMarker
+  | InstancedLineListMarker;
 
 export type MarkerArray = {
   markers: Array<Marker>,

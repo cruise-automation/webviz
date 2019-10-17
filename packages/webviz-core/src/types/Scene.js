@@ -23,6 +23,7 @@ import type {
   OccupancyGridMessage,
   PointCloud,
   LaserScan,
+  InstancedLineListMarker,
 } from "webviz-core/src/types/Messages";
 import Bounds from "webviz-core/src/util/Bounds";
 
@@ -49,6 +50,7 @@ export interface MarkerCollector {
   laserScan(LaserScan): any;
   linedConvexHull(LineListMarker | LineStripMarker): any;
   filledPolygon(FilledPolygonMarker): any;
+  instancedLineList(InstancedLineListMarker): any;
 }
 
 export interface MarkerProvider {

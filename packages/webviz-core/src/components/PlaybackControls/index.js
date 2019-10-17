@@ -11,13 +11,15 @@ import CancelIcon from "@mdi/svg/svg/cancel.svg";
 import PauseIcon from "@mdi/svg/svg/pause.svg";
 import PlayIcon from "@mdi/svg/svg/play.svg";
 import classnames from "classnames";
-import * as React from "react";
+import React, { useCallback } from "react";
 import KeyListener from "react-key-listener";
+import { useSelector, useDispatch } from "react-redux";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 
 import styles from "./index.module.scss";
 import { ProgressPlot } from "./ProgressPlot";
+import { setPlaybackConfig as setPlaybackConfigAction } from "webviz-core/src/actions/panels";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
@@ -51,6 +53,7 @@ const StyledMarker = styled.div.attrs({
 `;
 
 type Props = {|
+  playbackSpeed: number,
   player: PlayerState,
   pause: () => void,
   play: () => void,
@@ -199,18 +202,28 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
   }
 }
 
-export default function PlaybackControls() {
-  return (
-    <MessagePipelineConsumer>
-      {(context) => (
-        <UnconnectedPlaybackControls
-          player={context.playerState}
-          play={context.startPlayback}
-          pause={context.pausePlayback}
-          seek={context.seekPlayback}
-          setSpeed={context.setPlaybackSpeed}
-        />
-      )}
-    </MessagePipelineConsumer>
+function PlaybackControls() {
+  const playbackSpeed = useSelector((state) => state.panels.playbackConfig.speed);
+  const dispatch = useDispatch();
+  const setPlaybackConfig = useCallback((config) => dispatch(setPlaybackConfigAction(config)), [dispatch]);
+
+  const renderUnconnectedPlaybackControls = useCallback(
+    (context) => (
+      <UnconnectedPlaybackControls
+        player={context.playerState}
+        play={context.startPlayback}
+        pause={context.pausePlayback}
+        seek={context.seekPlayback}
+        setSpeed={(speed) => {
+          context.setPlaybackSpeed(speed);
+          setPlaybackConfig({ speed });
+        }}
+        playbackSpeed={playbackSpeed}
+      />
+    ),
+    [setPlaybackConfig, playbackSpeed]
   );
+  return <MessagePipelineConsumer>{renderUnconnectedPlaybackControls}</MessagePipelineConsumer>;
 }
+
+export default PlaybackControls;

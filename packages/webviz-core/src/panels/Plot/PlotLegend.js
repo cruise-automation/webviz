@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import cx from "classnames";
+import { last } from "lodash";
 import React, { PureComponent } from "react";
 
 import { plotableRosTypes } from "./index";
@@ -40,6 +41,8 @@ export default class PlotLegend extends PureComponent<PlotLegendProps> {
 
   render() {
     const { paths, onChange } = this.props;
+
+    const lastPath = last(paths);
 
     return (
       <div className={styles.root}>
@@ -98,7 +101,19 @@ export default class PlotLegend extends PureComponent<PlotLegendProps> {
         })}
         <div
           className={styles.addLine}
-          onClick={() => onChange({ paths: [...paths, { value: "", enabled: true, timestampMethod: "receiveTime" }] })}>
+          onClick={() =>
+            onChange({
+              paths: [
+                ...paths,
+                {
+                  value: "",
+                  enabled: true,
+                  // For convenience, default to the `timestampMethod` of the last path.
+                  timestampMethod: lastPath ? lastPath.timestampMethod : "receiveTime",
+                },
+              ],
+            })
+          }>
           + add line
         </div>
       </div>

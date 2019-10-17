@@ -12,6 +12,7 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Flex from "webviz-core/src/components/Flex";
 import { MessageHistoryInput } from "webviz-core/src/components/MessageHistory";
+import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 const fixture = {
@@ -55,7 +56,7 @@ const fixture = {
     { name: "/some_topic/state", datatype: "msgs/State" },
   ],
   frame: {},
-  globalData: { global_var_1: 42, global_var_2: 10 },
+  globalVariables: { global_var_1: 42, global_var_2: 10 },
 };
 
 const clickInput = (el) => {
@@ -65,30 +66,28 @@ const clickInput = (el) => {
   }
 };
 
-type MessageHistoryInputStoryProps = { path: string };
+function MessageHistoryInputStory(props: {| path: string, topicPrefix?: string |}) {
+  const [path, setPath] = React.useState(props.path);
 
-class MessageHistoryInputStory extends React.Component<MessageHistoryInputStoryProps, any> {
-  state = { path: this.props.path };
-
-  render() {
-    return (
+  return (
+    <MockPanelContextProvider topicPrefix={props.topicPrefix}>
       <PanelSetup fixture={fixture} onMount={clickInput}>
         <Flex style={{ margin: "10px" }}>
-          <MessageHistoryInput
-            path={this.state.path}
-            onChange={(newPath) => {
-              this.setState({ path: newPath });
-            }}
-            timestampMethod="receiveTime"
-          />
+          <MessageHistoryInput path={path} onChange={(newPath) => setPath(newPath)} timestampMethod="receiveTime" />
         </Flex>
       </PanelSetup>
-    );
-  }
+    </MockPanelContextProvider>
+  );
 }
 
 storiesOf("<MessageHistoryInput>", module)
   .addDecorator(withScreenshot())
+  .add("autocomplete topics", () => {
+    return <MessageHistoryInputStory path="/" />;
+  })
+  .add("autocomplete topics with topicPrefix", () => {
+    return <MessageHistoryInputStory path="/" topicPrefix="/some_topic" />;
+  })
   .add("autocomplete messagePath", () => {
     return <MessageHistoryInputStory path="/some_topic/location.po" />;
   })
@@ -98,15 +97,15 @@ storiesOf("<MessageHistoryInput>", module)
   .add("autocomplete top level filter", () => {
     return <MessageHistoryInputStory path="/some_topic/state{}" />;
   })
-  .add("autocomplete for globalData variables", () => {
+  .add("autocomplete for globalVariables variables", () => {
     return <MessageHistoryInputStory path="/some_topic/state{foo_id==0}.items[:]{id==$}" />;
   })
-  .add("path with valid globalData variable", () => {
+  .add("path with valid globalVariables variable", () => {
     return <MessageHistoryInputStory path="/some_topic/state.items[:]{id==$global_var_2}" />;
   })
-  .add("path with invalid globalData variable", () => {
+  .add("path with invalid globalVariables variable", () => {
     return <MessageHistoryInputStory path="/some_topic/state.items[:]{id==$global_var_3}" />;
   })
-  .add("path with incorrectly prefixed globalData variable", () => {
+  .add("path with incorrectly prefixed globalVariables variable", () => {
     return <MessageHistoryInputStory path="/some_topic/state.items[:]{id==global_var_2}" />;
   });

@@ -11,7 +11,6 @@ import * as React from "react";
 import { type ReglClickInfo } from "regl-worldview";
 
 import type { Point } from "webviz-core/src/types/Messages";
-import type { MarkerProvider, MarkerCollector } from "webviz-core/src/types/Scene";
 import { arrayToPoint } from "webviz-core/src/util";
 
 export type MeasureState = "idle" | "place-start" | "place-finish" | "done";
@@ -26,18 +25,9 @@ type Props = {|
   ...MeasureInfo,
 |};
 
-const sphereSize: number = 0.3;
-const lineSize: number = 0.1;
+/* eslint-disable no-restricted-syntax */
 
-const defaultSphere: any = Object.freeze({
-  type: 2,
-  action: 0,
-  scale: { x: sphereSize, y: sphereSize, z: 0.1 },
-  color: { r: 1, g: 0.2, b: 0, a: 1 },
-});
-const defaultPose: any = Object.freeze({ orientation: { x: 0, y: 0, z: 0, w: 1 } });
-
-export default class MeasuringTool extends React.Component<Props> implements MarkerProvider {
+export default class MeasuringTool extends React.Component<Props> {
   mouseDownCoords: number[] = [-1, -1];
 
   toggleMeasureState = () => {
@@ -144,39 +134,6 @@ export default class MeasuringTool extends React.Component<Props> implements Mar
     }
 
     return dist_string;
-  }
-
-  renderMarkers(add: MarkerCollector) {
-    const { start, end } = this.props.measurePoints;
-
-    if (start) {
-      const startPoint = { ...start };
-
-      add.sphere({
-        ...defaultSphere,
-        id: "_measure_start",
-        pose: { position: startPoint, ...defaultPose },
-      });
-
-      if (end) {
-        const endPoint = { ...end };
-
-        add.lineStrip({
-          ...defaultSphere,
-          id: "_measure_line",
-          points: [start, end],
-          pose: { ...defaultPose, position: { x: 0, y: 0, z: 0 } },
-          scale: { x: lineSize, y: 1, z: 1 },
-          type: 4,
-        });
-
-        add.sphere({
-          ...defaultSphere,
-          id: "_measure_end",
-          pose: { position: endPoint, ...defaultPose },
-        });
-      }
-    }
   }
 
   render() {

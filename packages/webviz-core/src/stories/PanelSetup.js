@@ -13,11 +13,13 @@ import { DragDropContextProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 
 import { setAuxiliaryData } from "webviz-core/src/actions/extensions";
-import { overwriteGlobalData, setUserNodes, setLinkedGlobalVariables } from "webviz-core/src/actions/panels";
+import { overwriteGlobalVariables, setUserNodes, setLinkedGlobalVariables } from "webviz-core/src/actions/panels";
+import { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust } from "webviz-core/src/actions/userNodes";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
-import { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
+import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type { Frame, Topic, PlayerStateActiveData } from "webviz-core/src/players/types";
+import type { UserNodeDiagnostics, UserNodeLogs } from "webviz-core/src/players/UserNodePlayer/types";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import type { UserNodes } from "webviz-core/src/types/panels";
@@ -30,9 +32,12 @@ export type Fixture = {|
   activeData?: $Shape<PlayerStateActiveData>,
   datatypes?: RosDatatypes,
   auxiliaryData?: any,
-  globalData?: GlobalData,
+  globalVariables?: GlobalVariables,
   linkedGlobalVariables?: LinkedGlobalVariables,
   userNodes?: UserNodes,
+  userNodeDiagnostics?: UserNodeDiagnostics,
+  userNodeFlags?: { id: string, trusted: boolean },
+  userNodeLogs?: UserNodeLogs,
 |};
 
 type Props = {|
@@ -47,32 +52,76 @@ type State = {|
   store: *,
 |};
 
-export function triggerInputChange(node: window.HTMLInputElement, value: string = "") {
-  // trigger input change: https://stackoverflow.com/questions/23892547/what-is-the-best-way-to-trigger-onchange-event-in-react-js
+function setNativeValue(element, value) {
   // $FlowFixMe
-  const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+  const valueSetter = Object.getOwnPropertyDescriptor(element, "value").set;
+  const prototype = Object.getPrototypeOf(element);
   // $FlowFixMe
-  nativeInputValueSetter.call(node, value);
+  const prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, "value").set;
+  if (valueSetter && valueSetter !== prototypeValueSetter) {
+    // $FlowFixMe
+    prototypeValueSetter.call(element, value);
+  } else {
+    // $FlowFixMe
+    valueSetter.call(element, value);
+  }
+}
 
-  const ev2 = new Event("input", { bubbles: true });
-  node.dispatchEvent(ev2);
+export function triggerInputChange(node: window.HTMLInputElement | window.HTMLTextAreaElement, value: string = "") {
+  // force trigger textarea to change
+  node.value = `${value} `;
+  // trigger input change: https://stackoverflow.com/questions/23892547/what-is-the-best-way-to-trigger-onchange-event-in-react-js
+  setNativeValue(node, value);
+
+  const ev = new Event("input", { bubbles: true });
+  node.dispatchEvent(ev);
+}
+
+export function triggerInputBlur(node: window.HTMLInputElement | window.HTMLTextAreaElement) {
+  const ev = new Event("blur", { bubbles: true });
+  node.dispatchEvent(ev);
+}
+
+export function triggerWheel(target: HTMLElement, deltaX: number) {
+  const event = document.createEvent("MouseEvents");
+  event.initEvent("wheel", true, true);
+  // $FlowFixMe
+  event.deltaX = deltaX;
+  target.dispatchEvent(event);
 }
 
 export default class PanelSetup extends React.PureComponent<Props, State> {
   static getDerivedStateFromProps(props: Props, prevState: State) {
     const { store } = prevState;
-    const { auxiliaryData, globalData, userNodes, linkedGlobalVariables } = props.fixture;
+    const {
+      auxiliaryData,
+      globalVariables,
+      userNodes,
+      linkedGlobalVariables,
+      userNodeDiagnostics,
+      userNodeFlags,
+      userNodeLogs,
+    } = props.fixture;
     if (auxiliaryData) {
       store.dispatch(setAuxiliaryData(() => auxiliaryData));
     }
-    if (globalData) {
-      store.dispatch(overwriteGlobalData(globalData));
+    if (globalVariables) {
+      store.dispatch(overwriteGlobalVariables(globalVariables));
     }
     if (userNodes) {
       store.dispatch(setUserNodes(userNodes));
     }
     if (linkedGlobalVariables) {
       store.dispatch(setLinkedGlobalVariables(linkedGlobalVariables));
+    }
+    if (userNodeDiagnostics) {
+      store.dispatch(setUserNodeDiagnostics(userNodeDiagnostics));
+    }
+    if (userNodeFlags) {
+      store.dispatch(setUserNodeTrust(userNodeFlags));
+    }
+    if (userNodeLogs) {
+      store.dispatch(addUserNodeLogs(userNodeLogs));
     }
     return { store };
   }

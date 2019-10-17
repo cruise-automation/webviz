@@ -13,7 +13,7 @@ import UserNodePlayerWorker from "worker-loader!webviz-core/src/players/UserNode
 // $FlowFixMe - flow does not like workers.
 import NodeDataWorker from "worker-loader!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
 
-import { type SetNodeDiagnostics } from "webviz-core/src/actions/nodeDiagnostics";
+import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeTrust } from "webviz-core/src/actions/userNodes";
 import type {
   AdvertisePayload,
   Message,
@@ -24,10 +24,28 @@ import type {
   PlayerStateActiveData,
   Topic,
 } from "webviz-core/src/players/types";
-import { DiagnosticSeverity, type NodeData, type NodeRegistration } from "webviz-core/src/players/UserNodePlayer/types";
+import { isUserNodeTrusted } from "webviz-core/src/players/UserNodePlayer/nodeSecurity";
+import {
+  DiagnosticSeverity,
+  type NodeData,
+  type NodeRegistration,
+  type Diagnostic,
+  type ProcessMessageOutput,
+  type RegistrationOutput,
+  Sources,
+  ErrorCodes,
+} from "webviz-core/src/players/UserNodePlayer/types";
+import type { UserNodeLog } from "webviz-core/src/players/UserNodePlayer/types";
 import type { UserNodes } from "webviz-core/src/types/panels";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import Rpc from "webviz-core/src/util/Rpc";
 import signal from "webviz-core/src/util/signal";
+
+type UserNodeActions = {
+  setUserNodeDiagnostics: SetUserNodeDiagnostics,
+  addUserNodeLogs: AddUserNodeLogs,
+  setUserNodeTrust: SetUserNodeTrust,
+};
 
 // TODO: FUTURE - Performance tests
 // TODO: FUTURE - Consider how to incorporate with existing hardcoded nodes (esp re: stories/testing)
@@ -43,21 +61,38 @@ export default class UserNodePlayer implements Player {
   // Not sure if there is perf issue with unused workers (may just go idle) - requires more research
   _unusedNodeRuntimeWorkers: Rpc[] = [];
   _lastPlayerStateActiveData: ?PlayerStateActiveData;
-  _setUserNodeState: SetNodeDiagnostics;
+  _setUserNodeDiagnostics: (nodeId: string, diagnostics: Diagnostic[]) => void;
+  _addUserNodeLogs: (nodeId: string, logs: UserNodeLog[]) => void;
+  _setNodeTrust: (nodeId: string, trusted: boolean) => void;
   _nodeTransformWorker: Rpc = new Rpc(new NodeDataWorker());
+  _userDatatypes: RosDatatypes = {};
 
-  constructor(player: Player, setNodeDiagnostics: SetNodeDiagnostics) {
+  constructor(player: Player, userNodeActions: UserNodeActions) {
     this._player = player;
-    this._setUserNodeState = setNodeDiagnostics;
+    const { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust } = userNodeActions;
+
+    // TODO(troy): can we make the below action flow better? Might be better to
+    // just add an id, and the thing you want to update? Instead of passing in
+    // objects?
+    this._setUserNodeDiagnostics = (nodeId: string, diagnostics: Diagnostic[]) => {
+      setUserNodeDiagnostics({ [nodeId]: { diagnostics } });
+    };
+    this._addUserNodeLogs = (nodeId: string, logs: UserNodeLog[]) => {
+      addUserNodeLogs({ [nodeId]: { logs } });
+    };
+
+    this._setNodeTrust = (id: string, trusted: boolean) => {
+      setUserNodeTrust({ id, trusted });
+    };
   }
 
   // Called when userNode state is updated.
-  setUserNodes(userNodes: UserNodes) {
+  async setUserNodes(userNodes: UserNodes): Promise<void> {
     this._userNodes = userNodes;
 
     // TOOD: Currently the below causes us to reset workers twice, since we are
     // forcing a 'seek' here.
-    this._resetWorkers().then(() => {
+    return this._resetWorkers().then(() => {
       const currentTime = this._lastPlayerStateActiveData && this._lastPlayerStateActiveData.currentTime;
       const isPlaying = this._lastPlayerStateActiveData && this._lastPlayerStateActiveData.isPlaying;
       if (!currentTime || isPlaying) {
@@ -68,29 +103,67 @@ export default class UserNodePlayer implements Player {
   }
 
   // Defines the inputs/outputs and worker interface of a user node.
-  _getNodeRegistration(nodeData: NodeData): NodeRegistration {
-    const { inputTopics, outputTopic, transpiledCode: nodeCode } = nodeData;
+  _getNodeRegistration(nodeId: string, nodeData: NodeData): NodeRegistration {
+    const { inputTopics, outputTopic, transpiledCode: nodeCode, outputDatatype, datatypes } = nodeData;
+    // Update datatypes for the player state to consume.
+    this._userDatatypes = { ...this._userDatatypes, ...datatypes };
     let rpc;
     const terminateSignal = signal<void>();
     return {
       inputs: inputTopics,
-      output: { name: outputTopic, datatype: "std_msgs/Header" }, // TODO: TYPESCRIPT - extract datatype from Typescript
+      output: { name: outputTopic, datatype: outputDatatype },
       processMessage: async (message: Message) => {
+        // Register the node within a web worker to be executed.
         if (!rpc) {
           rpc = this._unusedNodeRuntimeWorkers.pop() || new Rpc(new UserNodePlayerWorker());
-          await rpc.send("registerNode", { nodeCode });
+          const { error, userNodeDiagnostics, userNodeLogs } = await rpc.send<RegistrationOutput>("registerNode", {
+            nodeCode,
+          });
+          if (error) {
+            this._setUserNodeDiagnostics(nodeId, [
+              ...userNodeDiagnostics,
+              {
+                source: Sources.Runtime,
+                severity: DiagnosticSeverity.Error,
+                message: error,
+                code: ErrorCodes.RUNTIME,
+              },
+            ]);
+            return;
+          }
+          this._addUserNodeLogs(nodeId, userNodeLogs);
+        }
+
+        const result = await Promise.race([
+          rpc.send<ProcessMessageOutput>("processMessage", { message }),
+          terminateSignal,
+        ]);
+
+        if (result && result.error) {
+          this._setUserNodeDiagnostics(nodeId, [
+            {
+              source: Sources.Runtime,
+              severity: DiagnosticSeverity.Error,
+              message: result.error,
+              code: ErrorCodes.RUNTIME,
+            },
+          ]);
+          return;
+        }
+
+        if (result) {
+          this._addUserNodeLogs(nodeId, result.userNodeLogs);
         }
 
         // TODO: FUTURE - surface runtime errors / infinite loop errors
-        const newMessage: ?Message = await Promise.race([rpc.send("processMessage", { message }), terminateSignal]);
-        if (!newMessage) {
+        if (!result || !result.message) {
           return;
         }
         return {
           topic: outputTopic,
-          datatype: "std_msgs/Header", // TODO: TYPESCRIPT - extract datatype from Typescript
+          datatype: nodeData.outputDatatype,
           op: "message",
-          message: newMessage,
+          message: result.message,
           receiveTime: message.receiveTime,
         };
       },
@@ -98,7 +171,6 @@ export default class UserNodePlayer implements Player {
         terminateSignal.resolve();
         if (rpc) {
           this._unusedNodeRuntimeWorkers.push(rpc);
-          rpc = undefined;
         }
       },
     };
@@ -117,22 +189,29 @@ export default class UserNodePlayer implements Player {
     }
 
     const nodeRegistrations: NodeRegistration[] = [];
-    for (const [nodeName, code] of Object.entries(this._userNodes)) {
-      const sourceCode = ((code: any): string);
-      const { topics = [], datatypes = {} } = this._lastPlayerStateActiveData || {};
+    for (const [nodeId, nodeObj] of Object.entries(this._userNodes)) {
+      const node = ((nodeObj: any): { name: string, sourceCode: string });
+      if (!isUserNodeTrusted({ id: nodeId, sourceCode: node.sourceCode })) {
+        this._setNodeTrust(nodeId, false);
+        continue;
+      } else {
+        this._setNodeTrust(nodeId, true);
+      }
+
+      const { topics = [], datatypes: playerDatatypes = {} } = this._lastPlayerStateActiveData || {};
       const nodeData = await this._nodeTransformWorker.send("transform", {
-        name: nodeName,
-        sourceCode,
-        playerInfo: { topics, datatypes },
-        priorRegistrations: nodeRegistrations,
+        name: node.name,
+        sourceCode: node.sourceCode,
+        playerInfo: { topics, playerDatatypes },
+        priorRegisteredTopics: nodeRegistrations.map(({ output }) => output),
       });
       const { diagnostics } = nodeData;
 
-      this._setUserNodeState({ [nodeName]: { diagnostics } });
+      this._setUserNodeDiagnostics(nodeId, diagnostics);
       if (diagnostics.some(({ severity }) => severity === DiagnosticSeverity.Error)) {
         continue;
       }
-      nodeRegistrations.push(this._getNodeRegistration(nodeData));
+      nodeRegistrations.push(this._getNodeRegistration(nodeId, nodeData));
     }
 
     this._nodeRegistrations = nodeRegistrations;
@@ -182,6 +261,10 @@ export default class UserNodePlayer implements Player {
             ...playerState.activeData,
             messages: [...messages, ...nodeMessages].sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime)),
             topics: this._getTopics(topics, this._nodeRegistrations),
+            datatypes: {
+              ...this._userDatatypes,
+              ...(playerState.activeData ? playerState.activeData.datatypes : {}),
+            },
           },
         };
 

@@ -42,8 +42,9 @@ export const isOrientation = (value: any): ?string => {
     return isNumberArrayErr;
   }
   if (value) {
-    const isValidQuaternion = value.reduce((memo, item) => memo + item * item, 0) === 1;
-    if (!isValidQuaternion) {
+    const quaternionSum = value.reduce((memo, item) => memo + item * item, 0);
+    // Very rough validation to make sure the quaternion numbers are not too far off
+    if (Math.abs(quaternionSum - 1) > 0.1) {
       return "must be valid quaternion";
     }
   }
@@ -64,6 +65,16 @@ export const maxLen = (maxLength: number = 0) => (value: any): ?string => {
     return value.length > maxLength ? `must contain at most ${maxLength} array items` : undefined;
   } else if (typeof value === "string") {
     return value.length > maxLength ? `must contain at most ${maxLength} characters` : undefined;
+  }
+};
+
+export const hasLen = (len: number = 0) => (value: string | any[]): ?string => {
+  if (Array.isArray(value)) {
+    return value.length !== len
+      ? `must contain exact ${len} array items (current item count: ${value.length})`
+      : undefined;
+  } else if (typeof value === "string") {
+    return value.length !== len ? `must contain ${len} characters (current count: ${value.length})` : undefined;
   }
 };
 

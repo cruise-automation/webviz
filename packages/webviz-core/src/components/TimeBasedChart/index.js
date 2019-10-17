@@ -155,33 +155,27 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
     document.removeEventListener("visibilitychange", this._onVisibilityChange);
   }
 
-  // Detect if the min/max is different than what we explicitly set,
-  // which means that the user has panned or zoomed.
-  // Note that for the y-axis timeBasedChartMin/Max is not set at all,
-  // so there we'll check that min/max is not undefined, which is the
-  // intended behavior.
-  // Also note that it's possible that only one of the axis is panned or
-  // zoomed, so in this function we only set `showResetZoom` to `true`,
-  // otherwise one axis might set it to true and the other to false,
-  // causing an infinite loop. We set `showResetZoom` to false in
-  // `_onResetZoom`.
   _onPlotChartUpdate = (axis: any) => {
-    const showResetZoom =
-      typeof axis.options.ticks.timeBasedChartMin === "number" &&
-      typeof axis.options.ticks.timeBasedChartMax === "number" &&
-      (axis.options.ticks.min !== axis.options.ticks.timeBasedChartMin ||
-        axis.options.ticks.max !== axis.options.ticks.timeBasedChartMax);
-    if (showResetZoom && !this.state.showResetZoom) {
-      this.setState({ showResetZoom: true });
-    }
     if (this.props.saveCurrentYs) {
       const scaleId = this.props.yAxes ? this.props.yAxes[0].id : Y_AXIS_ID;
       this.props.saveCurrentYs(axis.chart.scales[scaleId].min, axis.chart.scales[scaleId].max);
     }
   };
 
-  _onPanUpdate = ({ minX, maxX, maxY, minY }: { minX: number, maxX: number, minY: number, maxY: number }) => {
+  _onPanZoomUpdate = (chartInstance: ChartComponent) => {
+    const { xAxes, saveCurrentYs } = this.props;
+    const Y_scaleId = this.props.yAxes[0].id;
+    const X_scaleId = xAxes ? xAxes[0].id : X_AXIS_ID;
+    const minX = chartInstance.chart.scales[X_scaleId].min;
+    const maxX = chartInstance.chart.scales[X_scaleId].max;
+    const minY = chartInstance.chart.scales[Y_scaleId].min;
+    const maxY = chartInstance.chart.scales[Y_scaleId].max;
+
+    if (saveCurrentYs) {
+      saveCurrentYs(minY, maxY);
+    }
     this.setState({
+      showResetZoom: true,
       userSetMinX: minX,
       userSetMaxX: maxX,
       userSetMinY: minY,
@@ -298,7 +292,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
   };
 
   _chartjsOptions = (minX: number, maxX: number, userMinY: ?number, userMaxY: ?number) => {
-    const { plugins, xAxes, yAxes, saveCurrentYs } = this.props;
+    const { plugins, xAxes, yAxes } = this.props;
     const { annotations } = this.state;
     const defaultXTicksSettings = {
       fontFamily: mixins.monospaceFont,
@@ -380,21 +374,15 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
       pan: {
         enabled: true,
         onPan: (chartInstance: ChartComponent) => {
-          const Y_scaleId = this.props.yAxes[0].id;
-          const X_scaleId = xAxes ? xAxes[0].id : X_AXIS_ID;
-          const minX = chartInstance.chart.scales[X_scaleId].min;
-          const maxX = chartInstance.chart.scales[X_scaleId].max;
-          const minY = chartInstance.chart.scales[Y_scaleId].min;
-          const maxY = chartInstance.chart.scales[Y_scaleId].max;
-
-          if (saveCurrentYs) {
-            saveCurrentYs(minY, maxY);
-          }
-
-          this._onPanUpdate({ minX, maxX, maxY, minY });
+          this._onPanZoomUpdate(chartInstance);
         },
       },
-      zoom: { enabled: this.props.zoom },
+      zoom: {
+        enabled: this.props.zoom,
+        onZoom: (chartInstance: ChartComponent) => {
+          this._onPanZoomUpdate(chartInstance);
+        },
+      },
       plugins: plugins || {},
       annotation: { annotations },
     };

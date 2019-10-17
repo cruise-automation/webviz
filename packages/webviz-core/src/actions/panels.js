@@ -14,11 +14,10 @@ import type {
   SaveConfigPayload,
   SaveFullConfigPayload,
   UserNodes,
+  PlaybackConfig,
 } from "webviz-core/src/types/panels";
 import type { Dispatch, GetState } from "webviz-core/src/types/Store";
-// DANGER: if you change this you break existing layout urls
-export const URL_KEY = "layout";
-export const LAYOUT_URL = "layout-url";
+import { LAYOUT_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
 export type SAVE_PANEL_CONFIG = {
   type: "SAVE_PANEL_CONFIG",
@@ -37,8 +36,8 @@ function maybeStripLayoutId(dispatch: Dispatch, getState: GetState): void {
 
   if (location) {
     const params = new URLSearchParams(location.search);
-    if (params.get(URL_KEY)) {
-      params.delete(URL_KEY);
+    if (params.get(LAYOUT_QUERY_KEY)) {
+      params.delete(LAYOUT_QUERY_KEY);
       const newSearch = params.toString();
       const searchString = newSearch ? `?${newSearch}` : newSearch;
       const newPath = `${location.pathname}${searchString}`;
@@ -104,7 +103,7 @@ type OVERWRITE_GLOBAL_DATA = {
   payload: any,
 };
 
-export const overwriteGlobalData = (payload: any): OVERWRITE_GLOBAL_DATA => ({
+export const overwriteGlobalVariables = (payload: any): OVERWRITE_GLOBAL_DATA => ({
   type: "OVERWRITE_GLOBAL_DATA",
   payload,
 });
@@ -114,7 +113,7 @@ type SET_GLOBAL_DATA = {
   payload: any,
 };
 
-export const setGlobalData = (payload: any): SET_GLOBAL_DATA => ({
+export const setGlobalVariables = (payload: any): SET_GLOBAL_DATA => ({
   type: "SET_GLOBAL_DATA",
   payload,
 });
@@ -139,6 +138,16 @@ export const setLinkedGlobalVariables = (payload: LinkedGlobalVariables): SET_LI
   payload,
 });
 
+type SET_PLAYBACK_CONFIG = {
+  type: "SET_PLAYBACK_CONFIG",
+  payload: PlaybackConfig,
+};
+
+export const setPlaybackConfig = (payload: PlaybackConfig): SET_PLAYBACK_CONFIG => ({
+  type: "SET_PLAYBACK_CONFIG",
+  payload,
+});
+
 export type PanelsActions =
   | CHANGE_PANEL_LAYOUT
   | IMPORT_PANEL_LAYOUT
@@ -147,4 +156,5 @@ export type PanelsActions =
   | OVERWRITE_GLOBAL_DATA
   | SET_GLOBAL_DATA
   | SET_WEBVIZ_NODES
-  | SET_LINKED_GLOBAL_VARIABLES;
+  | SET_LINKED_GLOBAL_VARIABLES
+  | SET_PLAYBACK_CONFIG;

@@ -140,11 +140,11 @@ export default class SceneBuilder implements MarkerProvider {
     this.enabledNamespaces = namespaces;
   }
 
-  setGlobalData = (globalData: any = {}) => {
+  setGlobalVariables = (globalVariables: any = {}) => {
     const { selectionState, topicsToRender } = getGlobalHooks()
       .perPanelHooks()
-      .ThreeDimensionalViz.setGlobalDataInSceneBuilder(
-        globalData,
+      .ThreeDimensionalViz.setGlobalVariablesInSceneBuilder(
+        globalVariables,
         this.selectionState,
         this.topicsToRender,
         this.topics
@@ -538,6 +538,7 @@ export default class SceneBuilder implements MarkerProvider {
       case 103: return add.poseMarker(marker);
       case 104: return add.laserScan(marker);
       case 107: return add.filledPolygon(marker);
+      case 108: return add.instancedLineList(marker);
       default: {
         getGlobalHooks()
           .perPanelHooks()

@@ -21,6 +21,17 @@ module.exports = {
         patterns: ["client/*", "shared/*", "server/*"],
       },
     ],
+    "no-restricted-syntax": [
+      "error",
+      {
+        selector: "MethodDefinition[kind='get'], Property[kind='get']",
+        message: "Property getters are not allowed; prefer function syntax instead.",
+      },
+      {
+        selector: "MethodDefinition[kind='set'], Property[kind='set']",
+        message: "Property setters are not allowed; prefer function syntax instead.",
+      },
+    ],
     "header/header": [
       2,
       "line",

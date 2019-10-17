@@ -56,9 +56,9 @@ const linkedGlobalVariables = [
   },
 ];
 
-function setStorage(globalData) {
+function setStorage(globalVariables) {
   const storage = new Storage();
-  storage.set(GLOBAL_STATE_STORAGE_KEY, { ...defaultGlobalState, globalData });
+  storage.set(GLOBAL_STATE_STORAGE_KEY, { ...defaultGlobalState, globalVariables });
 }
 
 function PanelWithData({ linkedGlobalVariables = [], ...rest }: { linkedGlobalVariables?: LinkedGlobalVariable[] }) {

@@ -9,8 +9,15 @@
 import * as React from "react";
 import { connect } from "react-redux";
 
-import { setNodeDiagnostics, type SetNodeDiagnostics } from "webviz-core/src/actions/nodeDiagnostics";
 import { importPanelLayout } from "webviz-core/src/actions/panels";
+import {
+  setUserNodeDiagnostics,
+  addUserNodeLogs,
+  setUserNodeTrust,
+  type SetUserNodeDiagnostics,
+  type AddUserNodeLogs,
+  type SetUserNodeTrust,
+} from "webviz-core/src/actions/userNodes";
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
@@ -55,10 +62,19 @@ type OwnProps = { children: React.Node };
 type Props = OwnProps & {
   importPanelLayout: (payload: ImportPanelLayoutPayload, isFromUrl: boolean, skipSettingLocalStorage: boolean) => void,
   userNodes: UserNodes,
-  setNodeDiagnostics: SetNodeDiagnostics,
+  setUserNodeDiagnostics: SetUserNodeDiagnostics,
+  addUserNodeLogs: AddUserNodeLogs,
+  setUserNodeTrust: SetUserNodeTrust,
 };
 
-function PlayerManager({ importPanelLayout, children, userNodes, setNodeDiagnostics }: Props) {
+function PlayerManager({
+  importPanelLayout,
+  children,
+  userNodes,
+  setUserNodeDiagnostics,
+  addUserNodeLogs,
+  setUserNodeTrust,
+}: Props) {
   const usedFiles = React.useRef<File[]>([]);
   const [player, setPlayer] = React.useState();
 
@@ -78,7 +94,7 @@ function PlayerManager({ importPanelLayout, children, userNodes, setNodeDiagnost
           );
 
           if (new URLSearchParams(window.location.search).has(ENABLE_NODE_PLAYGROUND_QUERY_KEY)) {
-            setPlayer(new UserNodePlayer(newPlayer, setNodeDiagnostics));
+            setPlayer(new UserNodePlayer(newPlayer, { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust }));
           } else {
             setPlayer(new NodePlayer(newPlayer));
           }
@@ -88,7 +104,7 @@ function PlayerManager({ importPanelLayout, children, userNodes, setNodeDiagnost
         }
       }
     },
-    [importPanelLayout, setNodeDiagnostics]
+    [importPanelLayout, setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust]
   );
 
   useUserNodes({ nodePlayer: player, userNodes });
@@ -125,5 +141,5 @@ export default connect<Props, OwnProps, _, _, _, _>(
   (state) => ({
     userNodes: state.panels.userNodes,
   }),
-  { importPanelLayout, setNodeDiagnostics }
+  { importPanelLayout, setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust }
 )(PlayerManager);

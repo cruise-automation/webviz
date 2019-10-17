@@ -24,6 +24,7 @@ import clipboard from "webviz-core/src/util/clipboard";
 
 const TEMP_VEC3 = [0, 0, 0];
 const ZERO_VEC3 = Object.freeze([0, 0, 0]);
+const DEFAULT_CAMERA_INFO_WIDTH = 260;
 
 const LABEL_WIDTH = 112;
 const SRow = styled.div`
@@ -48,6 +49,7 @@ export type CameraInfoPropsWithoutCameraState = {
   followOrientation: boolean,
   followOrientation: boolean,
   followTf?: string | false,
+  isPlaying?: boolean,
   onAlignXYAxis: () => void,
   onCameraStateChange: (CameraState) => void,
   showCrosshair?: boolean,
@@ -91,10 +93,11 @@ function CameraStateInfo({ cameraState, onAlignXYAxis }: CameraStateInfoProps) {
 
 export default function CameraInfo({
   cameraState,
+  followOrientation,
+  followTf,
+  isPlaying,
   onAlignXYAxis,
   onCameraStateChange,
-  followTf,
-  followOrientation,
   showCrosshair,
 }: CameraInfoProps) {
   const { updatePanelConfig, saveConfig } = React.useContext(PanelContext) || {};
@@ -106,12 +109,15 @@ export default function CameraInfo({
   const camPos2DTrimmed = camPos2D.map((num) => +num.toFixed(2));
 
   return (
-    <Flex col>
+    <Flex col style={{ minWidth: DEFAULT_CAMERA_INFO_WIDTH }}>
       <Flex row reverse>
         <Button tooltip="Copy cameraState" small onClick={() => clipboard.copy(JSON.stringify(cameraState, null, 2))}>
           Copy
         </Button>
-        <Button tooltip="Edit raw camera state object" onClick={() => setEdit(!edit)}>
+        <Button
+          disabled={!!isPlaying}
+          tooltip={isPlaying ? "Pause player to edit raw camera state object" : "Edit raw camera state object"}
+          onClick={() => setEdit(!edit)}>
           {edit ? "Done" : "Edit"}
         </Button>
         <Button
@@ -120,7 +126,7 @@ export default function CameraInfo({
           Sync
         </Button>
       </Flex>
-      {edit ? (
+      {edit && !isPlaying ? (
         <UncontrolledValidatedInput
           format="yaml"
           value={cameraState}

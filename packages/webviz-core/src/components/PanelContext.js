@@ -11,12 +11,17 @@ import * as React from "react";
 import type { SaveConfig, PanelConfig, UpdatePanelConfig, OpenSiblingPanel } from "webviz-core/src/types/panels";
 
 export type PanelContextType<T> = {|
+  // TODO(PanelAPI): private API, should not be used in panels
   type: string,
   id: string,
   title: string,
   topicPrefix?: string,
+
+  // TODO(PanelAPI): move to usePanelConfig()
   config: PanelConfig,
   saveConfig: SaveConfig<T>,
+
+  // TODO(PanelAPI): move to usePanelActions()
   updatePanelConfig: UpdatePanelConfig<T>,
   openSiblingPanel: OpenSiblingPanel,
 |};

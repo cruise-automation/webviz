@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { sortedIndexBy } from "lodash";
-import * as React from "react";
+import { useCallback, type Node } from "react";
 
 import {
   type DiagnosticStatusArray,
@@ -18,8 +18,7 @@ import {
   type Level,
   computeDiagnosticInfo,
 } from "./util";
-import { FrameCompatibility } from "webviz-core/src/components/MessageHistory/FrameCompatibility";
-import type { Frame } from "webviz-core/src/players/types";
+import * as PanelAPI from "webviz-core/src/PanelAPI";
 import { DIAGNOSTIC_TOPIC } from "webviz-core/src/util/globalConstants";
 
 export type DiagnosticAutocompleteEntry = {|
@@ -37,45 +36,52 @@ export type DiagnosticsBuffer = {|
 |};
 
 type Props = {|
-  children: (DiagnosticsBuffer) => React.Node,
-  frame: Frame,
+  children: (DiagnosticsBuffer) => Node,
 |};
 
-class DiagnosticsHistory extends React.Component<Props> {
-  _buffer: DiagnosticsBuffer = {
-    diagnosticsById: new Map(),
-    sortedAutocompleteEntries: [],
-    diagnosticsByLevel: {
-      [LEVELS.OK]: new Map(),
-      [LEVELS.WARN]: new Map(),
-      [LEVELS.ERROR]: new Map(),
-      [LEVELS.STALE]: new Map(),
-    },
-  };
+export function useDiagnostics(): DiagnosticsBuffer {
+  const { reducedValue: diagnostics } = PanelAPI.useMessages<DiagnosticsBuffer>({
+    topics: [DIAGNOSTIC_TOPIC],
 
-  render() {
-    for (const message of this.props.frame[DIAGNOSTIC_TOPIC] || []) {
+    restore: useCallback(
+      () => ({
+        diagnosticsById: new Map(),
+        sortedAutocompleteEntries: [],
+        diagnosticsByLevel: {
+          [LEVELS.OK]: new Map(),
+          [LEVELS.WARN]: new Map(),
+          [LEVELS.ERROR]: new Map(),
+          [LEVELS.STALE]: new Map(),
+        },
+      }),
+      []
+    ),
+
+    addMessage: useCallback((buffer, message) => {
       const statusArray: DiagnosticStatusArray = message.message;
+      if (statusArray.status.length === 0) {
+        return buffer;
+      }
       for (const status of statusArray.status) {
         const info = computeDiagnosticInfo(status, statusArray.header.stamp);
 
         // update diagnosticsByLevel
-        const keys: Level[] = (Object.keys(this._buffer.diagnosticsByLevel): any);
+        const keys: Level[] = (Object.keys(buffer.diagnosticsByLevel): any);
         for (const key of keys) {
-          const diags = this._buffer.diagnosticsByLevel[key];
+          const diags = buffer.diagnosticsByLevel[key];
 
           if (status.level !== key && diags.has(info.id)) {
             diags.delete(info.id);
           }
         }
-        if (status.level in this._buffer.diagnosticsByLevel) {
-          this._buffer.diagnosticsByLevel[status.level].set(info.id, info);
+        if (status.level in buffer.diagnosticsByLevel) {
+          buffer.diagnosticsByLevel[status.level].set(info.id, info);
         } else {
           console.warn("unrecognized status level", status);
         }
 
         // add to sortedAutocompleteEntries if we haven't seen this id before
-        if (!this._buffer.diagnosticsById.has(info.id)) {
+        if (!buffer.diagnosticsById.has(info.id)) {
           const newEntry = {
             hardware_id: info.status.hardware_id,
             name: info.status.name,
@@ -83,20 +89,21 @@ class DiagnosticsHistory extends React.Component<Props> {
             displayName: info.displayName,
             sortKey: info.displayName.replace(/^\//, "").toLowerCase(),
           };
-          const index = sortedIndexBy(this._buffer.sortedAutocompleteEntries, newEntry, "displayName");
-          this._buffer.sortedAutocompleteEntries.splice(index, 0, newEntry);
+          const index = sortedIndexBy(buffer.sortedAutocompleteEntries, newEntry, "displayName");
+          buffer.sortedAutocompleteEntries.splice(index, 0, newEntry);
         }
 
         // update diagnosticsById
-        this._buffer.diagnosticsById.set(info.id, info);
+        buffer.diagnosticsById.set(info.id, info);
       }
-    }
+      return { ...buffer };
+    }, []),
+  });
 
-    return this.props.children(this._buffer);
-  }
+  return diagnostics;
 }
 
-export default FrameCompatibility(DiagnosticsHistory, {
-  topics: [DIAGNOSTIC_TOPIC],
-  historySize: 2000,
-});
+export default function DiagnosticsHistory({ children }: Props) {
+  const diagnostics = useDiagnostics();
+  return children(diagnostics);
+}

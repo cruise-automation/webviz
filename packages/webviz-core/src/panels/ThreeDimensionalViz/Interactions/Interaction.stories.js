@@ -11,11 +11,11 @@ import * as React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 import styled from "styled-components";
 
-import Interactions, { OBJECT_TAB_TYPE, LINKED_VARIABLES_TAB_TYPE } from "./index";
+import Interactions, { OBJECT_TAB_TYPE, LINKED_VARIABLES_TAB_TYPE, type TabType } from "./index";
 import useLinkedGlobalVariables from "./useLinkedGlobalVariables";
 import Flex from "webviz-core/src/components/Flex";
 import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
-import useGlobalData from "webviz-core/src/hooks/useGlobalData";
+import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 import colors from "webviz-core/src/styles/colors.module.scss";
 
@@ -65,16 +65,17 @@ const selectedObject = { object: markerObject, instanceIndex: null };
 const sharedProps = {
   selectedObject,
   interactionData: { topic: "/foo/bar" },
+  isDrawing: false,
   onClearSelectedObject: () => {},
   defaultSelectedTab: OBJECT_TAB_TYPE,
 };
 
 function GlobalVariablesDisplay() {
-  const { globalData } = useGlobalData();
+  const { globalVariables } = useGlobalVariables();
   return (
     <SP>
       <strong>Global variables: </strong>
-      {JSON.stringify(globalData)}
+      {JSON.stringify(globalVariables)}
     </SP>
   );
 }
@@ -142,7 +143,7 @@ function PanelSetupWithData({
             name: "scaleY",
           },
         ],
-        globalData: {
+        globalVariables: {
           id: 100,
           scaleY: 2.4,
           fooScaleX: 3,
@@ -170,7 +171,15 @@ function PanelSetupWithData({
   );
 }
 
-function AutoOpenCloseExample({ setObjectNullFirst }: { setObjectNullFirst?: boolean }) {
+function AutoOpenCloseExample({
+  setObjectNullFirst,
+  isDrawing,
+  ...rest
+}: {
+  setObjectNullFirst?: boolean,
+  isDrawing?: boolean,
+  defaultSelectedTab?: ?TabType,
+}) {
   const [object, setObject] = React.useState(setObjectNullFirst ? null : selectedObject);
 
   React.useEffect(
@@ -188,14 +197,14 @@ function AutoOpenCloseExample({ setObjectNullFirst }: { setObjectNullFirst?: boo
         disableAutoOpenClickedObject={false}
         title={<>auto closed the Clicked Object pane</>}
         style={{ margin: 8, display: "flex", overflow: "hidden" }}>
-        <Interactions {...sharedProps} selectedObject={object} />
+        <Interactions {...sharedProps} {...rest} selectedObject={object} isDrawing={!!isDrawing} />
       </PanelSetupWithData>
     </SWrapper>
   );
 }
 
 storiesOf("<Interaction>", module)
-  .addDecorator(withScreenshot({ width: 1001, height: 1101 }))
+  .addDecorator(withScreenshot({ viewport: { width: 1001, height: 1101 } }))
   .add("default", () => {
     return (
       <SWrapper>
@@ -375,6 +384,12 @@ storiesOf("<Interaction>", module)
   })
   .add("auto opens the object details after selectedObject is set", () => {
     return <AutoOpenCloseExample setObjectNullFirst />;
+  })
+  .add("does not auto open the object details during drawing when it's closed", () => {
+    return <AutoOpenCloseExample setObjectNullFirst isDrawing defaultSelectedTab={null} />;
+  })
+  .add("does not auto close the object details during drawing when it's opened", () => {
+    return <AutoOpenCloseExample setObjectNullFirst isDrawing />;
   })
   .add("auto closes the object details when selectedObject becomes null", () => {
     return <AutoOpenCloseExample />;

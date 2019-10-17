@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { last } from "lodash";
-import React, { type Node, useContext, useCallback, useMemo } from "react";
+import { last, keyBy } from "lodash";
+import React, { type Node, useCallback, useMemo } from "react";
 import type { Time } from "rosbag";
 
 import getMessageHistoryItem from "./getMessageHistoryItem";
@@ -16,10 +16,9 @@ import { TOPICS_WITH_INCORRECT_HEADERS, type RosPrimitive, type RosPath } from "
 import MessageHistoryOnlyTopics from "./MessageHistoryOnlyTopics";
 import { messagePathStructures, traverseStructure } from "./messagePathsForDatatype";
 import parseRosPath from "./parseRosPath";
-import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
-import PanelContext from "webviz-core/src/components/PanelContext";
 import filterMap from "webviz-core/src/filterMap";
-import useGlobalData from "webviz-core/src/hooks/useGlobalData";
+import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
+import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Message } from "webviz-core/src/players/types";
 
 // Use `<MessageHistory>` to get data from the player, typically a bag or ROS websocket bridge.
@@ -158,10 +157,10 @@ export function getTimestampForMessage(message: Message, timestampMethod?: Messa
 // So you probably don't want to do `<MessageHistory>{this._renderSomething}</MessageHistory>`.
 // This might be a bit counterintuitive but we do this since performance matters here.
 export default React.memo<Props>(function MessageHistory({ children, paths, historySize, imageScale }: Props) {
-  const { globalData } = useGlobalData();
-  const { datatypes, sortedTopics } = useMessagePipeline();
-  const panelContext = useContext(PanelContext);
-  const topicPrefix = (panelContext || {}).topicPrefix || "";
+  const { globalVariables } = useGlobalVariables();
+  const { datatypes, topics: sortedTopics } = PanelAPI.useDataSourceInfo();
+
+  const memoizedTopicsByName = useMemo(() => keyBy(sortedTopics, ({ name }) => name), [sortedTopics]);
 
   const structures = messagePathStructures(datatypes);
 
@@ -179,9 +178,9 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
           pathsByTopic[rosPath.topicName] = pathsByTopic[rosPath.topicName] || [];
           pathsByTopic[rosPath.topicName].push({ path, rosPath });
 
-          const originalTopic = sortedTopics.find((topic) => topic.name === topicPrefix + rosPath.topicName);
-          if (originalTopic) {
-            const { structureItem } = traverseStructure(structures[originalTopic.datatype], rosPath.messagePath);
+          const topic = memoizedTopicsByName[rosPath.topicName];
+          if (topic) {
+            const { structureItem } = traverseStructure(structures[topic.datatype], rosPath.messagePath);
             if (structureItem) {
               metadataByPath[path] = { structureItem };
             }
@@ -190,7 +189,7 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
       }
       return [rosPaths, metadataByPath, pathsByTopic, Object.keys(pathsByTopic)];
     },
-    [topicPrefix, memoizedPaths, sortedTopics, structures]
+    [memoizedPaths, memoizedTopicsByName, structures]
   );
 
   const memoizedHistorySize = useShallowMemo(historySize);
@@ -210,13 +209,11 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
 
       let newItemsByPath;
       for (const { path, rosPath } of pathsMatchingMessage) {
-        const originalTopic = sortedTopics.find((topic) => topic.name === topicPrefix + rosPath.topicName);
-        if (!originalTopic) {
-          throw new Error(
-            `Missing topic (${topicPrefix}${rosPath.topicName}) for received message; this should never happen`
-          );
+        const topic = memoizedTopicsByName[rosPath.topicName];
+        if (!topic) {
+          throw new Error(`Missing topic (${rosPath.topicName}) for received message; this should never happen`);
         }
-        const item = getMessageHistoryItem(message, rosPath, originalTopic, datatypes, globalData, structures);
+        const item = getMessageHistoryItem(message, rosPath, topic, datatypes, globalVariables, structures);
         if (!item) {
           continue;
         }
@@ -232,7 +229,7 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
       }
       return newItemsByPath || itemsByPath;
     },
-    [datatypes, sortedTopics, globalData, memoizedHistorySize, pathsByTopic, structures, topicPrefix]
+    [datatypes, memoizedTopicsByName, globalVariables, memoizedHistorySize, pathsByTopic, structures]
   );
 
   // Create itemsByPath, using prevItemsByPath if items were present for the same topics.
@@ -269,8 +266,8 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
           itemsByPath[path] = [];
           continue;
         }
-        const originalTopic = sortedTopics.find((topic) => topic.name === topicPrefix + topicName);
-        if (!originalTopic) {
+        const topic = memoizedTopicsByName[topicName];
+        if (!topic) {
           itemsByPath[path] = [];
           continue;
         }
@@ -280,20 +277,20 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
         // copy the items over; we must run them through getMessageHistoryItem again.)
         if (prevItemsByPath[path]) {
           itemsByPath[path] = filterMap(prevItemsByPath[path], ({ message }) =>
-            getMessageHistoryItem(message, rosPath, originalTopic, datatypes, globalData, structures)
+            getMessageHistoryItem(message, rosPath, topic, datatypes, globalVariables, structures)
           );
           continue;
         }
 
         // Extract items for this new path from the original messages.
         itemsByPath[path] = filterMap(messagesByTopic[topicName], (message) =>
-          getMessageHistoryItem(message, rosPath, originalTopic, datatypes, globalData, structures)
+          getMessageHistoryItem(message, rosPath, topic, datatypes, globalVariables, structures)
         );
       }
 
       return itemsByPath;
     },
-    [datatypes, sortedTopics, globalData, memoizedPaths, rosPaths, structures, topicPrefix]
+    [datatypes, memoizedTopicsByName, globalVariables, memoizedPaths, rosPaths, structures]
   );
 
   const renderChildren = useCallback(
@@ -305,8 +302,6 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
 
   return (
     <MessageHistoryOnlyTopics
-      topicPrefix={topicPrefix}
-      panelType={(panelContext || {}).type}
       imageScale={imageScale}
       topics={topics}
       restore={restore}

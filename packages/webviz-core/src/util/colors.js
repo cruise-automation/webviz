@@ -22,6 +22,7 @@ export const colors = {
   LIGHT2: "#cacacc",
 
   GRAY: "#9f9fa2",
+  GRAY2: "#2d2c33",
 
   MAGENTAL1: "#e05ffa",
   MAGENTA: "#c83deb",
@@ -58,4 +59,5 @@ export const colors = {
   REDL1: "#ff6b82",
   RED: "#f54966",
   RED1: "#db3553",
+  RED2: "#ff7c96",
 };

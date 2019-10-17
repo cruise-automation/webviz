@@ -69,11 +69,11 @@ export function encodeURLQueryParamValue(value: string): string {
 }
 
 // extra boundary added for jest testing, since jsdom's Blob doesn't support .text()
-export function downloadTextFile(text: string, filePrefixOrName: string) {
-  return downloadFiles([new Blob([text])], filePrefixOrName);
+export function downloadTextFile(text: string, fileName: string) {
+  return downloadFiles([{ blob: new Blob([text]), fileName }]);
 }
 
-export function downloadFiles(blobs: Blob[], filePrefixOrName: string) {
+export function downloadFiles(files: { blob: Blob, fileName: string }[]) {
   const { body } = document;
   if (!body) {
     return;
@@ -83,12 +83,12 @@ export function downloadFiles(blobs: Blob[], filePrefixOrName: string) {
   link.style.display = "none";
   body.appendChild(link);
 
-  const urls = blobs.map((blob) => window.URL.createObjectURL(blob));
-  urls.forEach((url, idx) => {
-    const fileName = blobs.length === 1 ? filePrefixOrName : `${filePrefixOrName}_${idx}`;
-    link.setAttribute("download", fileName);
+  const urls = files.map((file) => {
+    const url = window.URL.createObjectURL(file.blob);
+    link.setAttribute("download", file.fileName);
     link.setAttribute("href", url);
     link.click();
+    return url;
   });
 
   // remove the link after triggering download

@@ -10,7 +10,7 @@ import { isEmpty, pick, cloneDeep } from "lodash";
 import { getLeaves } from "react-mosaic-component";
 
 import type { ActionTypes } from "webviz-core/src/actions";
-import { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
+import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type {
@@ -19,6 +19,7 @@ import type {
   ImportPanelLayoutPayload,
   PanelConfig,
   UserNodes,
+  PlaybackConfig,
 } from "webviz-core/src/types/panels";
 import { getPanelTypeFromId } from "webviz-core/src/util";
 import Storage from "webviz-core/src/util/Storage";
@@ -26,12 +27,14 @@ import Storage from "webviz-core/src/util/Storage";
 const storage = new Storage();
 
 export const GLOBAL_STATE_STORAGE_KEY = "webvizGlobalState";
+export const defaultPlaybackConfig = { speed: 0.2 };
 
 // TODO(Audrey): remove the storage migration logic and fallback to empty in late 2019
 const OLD_KEYS = {
   layout: "panels.layout",
   savedProps: "panels.savedProps",
   globalData: "panels.globalData",
+  globalVariables: "panels.globalVariables",
   userNodes: "panels.userNodes",
   linkedGlobalVariables: "panels.linkedGlobalVariables",
 };
@@ -45,9 +48,12 @@ export type PanelsState = {
   // This should at some point be renamed to `config` or `configById` or so,
   // but it's inconvenient to have this diverge from `PANEL_PROPS_KEY`.
   savedProps: { [panelId: string]: PanelConfig },
-  globalData: GlobalData,
+  globalVariables: GlobalVariables,
+  // old state which is migrated to globalVariables. Keeping it here to satisfy flow
+  globalData?: GlobalVariables,
   userNodes: UserNodes,
   linkedGlobalVariables: LinkedGlobalVariables,
+  playbackConfig: PlaybackConfig,
 };
 
 export function setStorageStateAndFallbackToDefault(globalState: any = {}) {
@@ -152,9 +158,10 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
   const newGlobalState = {
     layout: migratedPayload.layout || {},
     savedProps: migratedPayload.savedProps || {},
-    globalData: migratedPayload.globalData || {},
+    globalVariables: migratedPayload.globalVariables || {},
     userNodes: migratedPayload.userNodes || {},
     linkedGlobalVariables: migratedPayload.linkedGlobalVariables || [],
+    playbackConfig: migratedPayload.playbackConfig || defaultPlaybackConfig,
   };
 
   return newGlobalState;
@@ -184,17 +191,17 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
       break;
 
     case "OVERWRITE_GLOBAL_DATA":
-      newGlobalState.globalData = action.payload;
+      newGlobalState.globalVariables = action.payload;
       break;
 
     case "SET_GLOBAL_DATA": {
-      const globalData = { ...state.globalData, ...action.payload };
-      Object.keys(globalData).forEach((key) => {
-        if (globalData[key] === undefined) {
-          delete globalData[key];
+      const globalVariables = { ...state.globalVariables, ...action.payload };
+      Object.keys(globalVariables).forEach((key) => {
+        if (globalVariables[key] === undefined) {
+          delete globalVariables[key];
         }
       });
-      newGlobalState.globalData = globalData;
+      newGlobalState.globalVariables = globalVariables;
       break;
     }
 
@@ -211,6 +218,11 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
 
     case "SET_LINKED_GLOBAL_VARIABLES": {
       newGlobalState.linkedGlobalVariables = action.payload;
+      break;
+    }
+
+    case "SET_PLAYBACK_CONFIG": {
+      newGlobalState.playbackConfig = action.payload;
       break;
     }
 

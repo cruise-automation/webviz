@@ -90,7 +90,7 @@ export default function PointCloudDetails({ selectedObject: { object, instanceIn
                 const copyPoints = getCopyPoints();
                 const dataStr = `x,y,z\n${copyPoints.join("\n")}`;
                 const blob = new Blob([dataStr], { type: "text/csv;charset=utf-8;" });
-                downloadFiles([blob], "points.csv");
+                downloadFiles([{ blob, fileName: "points.csv" }]);
                 setIsOpen(false);
               }}>
               Download all points as CSV

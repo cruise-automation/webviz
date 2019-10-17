@@ -39,7 +39,7 @@ export const SGlobalVariableLink = styled.span`
     color: ${colors.highlight};
   }
   .link-icon {
-    opacity: 0;
+    opacity: 0.2;
     display: none;
   }
   .highlight {

@@ -13,15 +13,15 @@ import {
   type MessagePathStructureItemMessage,
 } from ".";
 import { type RosPath, type MessagePathFilter } from "./internalCommon";
-import type { GlobalData } from "webviz-core/src/hooks/useGlobalData";
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type { Message, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { enumValuesByDatatypeAndField } from "webviz-core/src/util/selectors";
 
-function filterMatches(filter: MessagePathFilter, value: any, globalData: any) {
+function filterMatches(filter: MessagePathFilter, value: any, globalVariables: any) {
   let filterValue = filter.value;
   if (typeof filterValue === "object") {
-    filterValue = globalData[filterValue.variableName];
+    filterValue = globalVariables[filterValue.variableName];
   }
 
   let currentValue = value;
@@ -44,7 +44,7 @@ export default function getMessageHistoryItem(
   rosPath: RosPath,
   topic: Topic,
   datatypes: RosDatatypes,
-  globalData: GlobalData = {},
+  globalVariables: GlobalVariables = {},
   structures: { [string]: MessagePathStructureItemMessage }
 ): ?MessageHistoryItem {
   // We don't care about messages that don't match the topic we're looking for.
@@ -56,7 +56,7 @@ export default function getMessageHistoryItem(
   // will *always* return a history item, so this is our only chance to return nothing.
   for (const item of rosPath.messagePath) {
     if (item.type === "filter") {
-      if (!filterMatches(item, message.message, globalData)) {
+      if (!filterMatches(item, message.message, globalVariables)) {
         return undefined;
       }
     } else {
@@ -122,7 +122,7 @@ export default function getMessageHistoryItem(
         traverse(value[i], pathIndex + 1, newPath, structureItem.next);
       }
     } else if (pathItem.type === "filter") {
-      if (filterMatches(pathItem, value, globalData)) {
+      if (filterMatches(pathItem, value, globalVariables)) {
         traverse(value, pathIndex + 1, `${path}{${pathItem.repr}}`, structureItem);
       }
     } else {

@@ -12,11 +12,10 @@ import { sortBy, compact } from "lodash";
 import React from "react";
 import { hot } from "react-hot-loader/root";
 
-import DiagnosticsHistory from "./DiagnosticsHistory";
 import type { Config as DiagnosticStatusConfig } from "./DiagnosticStatusPanel";
 import helpContent from "./DiagnosticSummary.help.md";
 import styles from "./DiagnosticSummary.module.scss";
-import { LEVELS, type DiagnosticId, type DiagnosticInfo } from "./util";
+import { LEVELS, type DiagnosticId, type DiagnosticInfo, getNodesByLevel } from "./util";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
@@ -24,6 +23,7 @@ import LargeList from "webviz-core/src/components/LargeList";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import DiagnosticsHistory from "webviz-core/src/panels/diagnostics/DiagnosticsHistory";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import toggle from "webviz-core/src/util/toggle";
 
@@ -67,7 +67,7 @@ class NodeRow extends React.PureComponent<NodeRowProps> {
   }
 }
 
-type Config = {| pinnedIds: DiagnosticId[] |};
+type Config = {| pinnedIds: DiagnosticId[], hardwareIdFilter: string |};
 type Props = {
   config: Config,
   saveConfig: ($Shape<Config>) => void,
@@ -112,10 +112,27 @@ class DiagnosticSummary extends React.Component<Props> {
     );
   };
 
+  renderMenuContent() {
+    const {
+      config: { hardwareIdFilter },
+      saveConfig,
+    } = this.props;
+    return (
+      <input
+        style={{ width: "100%", padding: "0", background: "transparent", opacity: "0.5" }}
+        value={hardwareIdFilter}
+        placeholder={"Filter hardware id"}
+        onChange={(e) => saveConfig({ hardwareIdFilter: e.target.value })}
+      />
+    );
+  }
+
   render() {
     return (
       <Flex col className={styles.panel}>
-        <PanelToolbar floating helpContent={helpContent} />
+        <PanelToolbar floating helpContent={helpContent}>
+          {this.renderMenuContent()}
+        </PanelToolbar>
         <Flex col scroll scrollX>
           <DiagnosticsHistory>
             {(buffer) => {
@@ -127,15 +144,15 @@ class DiagnosticSummary extends React.Component<Props> {
                 );
               }
 
-              const { pinnedIds } = this.props.config;
+              const { pinnedIds, hardwareIdFilter } = this.props.config;
               const pinnedNodes = pinnedIds.map((id) => buffer.diagnosticsById.get(id));
 
               const nodes: DiagnosticInfo[] = [
                 ...compact(pinnedNodes),
-                ...getSortedNodes(Array.from(buffer.diagnosticsByLevel[LEVELS.STALE].values()), pinnedIds),
-                ...getSortedNodes(Array.from(buffer.diagnosticsByLevel[LEVELS.ERROR].values()), pinnedIds),
-                ...getSortedNodes(Array.from(buffer.diagnosticsByLevel[LEVELS.WARN].values()), pinnedIds),
-                ...getSortedNodes(Array.from(buffer.diagnosticsByLevel[LEVELS.OK].values()), pinnedIds),
+                ...getSortedNodes(getNodesByLevel(buffer, hardwareIdFilter, LEVELS.STALE), pinnedIds),
+                ...getSortedNodes(getNodesByLevel(buffer, hardwareIdFilter, LEVELS.ERROR), pinnedIds),
+                ...getSortedNodes(getNodesByLevel(buffer, hardwareIdFilter, LEVELS.WARN), pinnedIds),
+                ...getSortedNodes(getNodesByLevel(buffer, hardwareIdFilter, LEVELS.OK), pinnedIds),
               ];
 
               return nodes.length === 0 ? null : (

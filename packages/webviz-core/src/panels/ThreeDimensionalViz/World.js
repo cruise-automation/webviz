@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEqual } from "lodash";
 import * as React from "react";
 import {
   Worldview,
@@ -21,7 +20,6 @@ import {
   FilledPolygons,
   type CameraState,
   type MouseHandler,
-  type Vec4,
 } from "regl-worldview";
 
 import {
@@ -41,7 +39,7 @@ type Props = {|
   convexHullOpacity: ?number,
   debug: boolean,
   extensions: string[],
-  markerProviders: (?MarkerProvider)[],
+  markerProviders: MarkerProvider[],
   onCameraStateChange: (CameraState) => void,
   onClick: MouseHandler,
   onDoubleClick: MouseHandler,
@@ -51,18 +49,7 @@ type Props = {|
   scene: Scene,
 |};
 
-type PerceptionAreaConfig = {
-  enabled: boolean,
-  colors: Vec4[],
-};
-
-type State = {|
-  zMin: number,
-  perceptionAreaConfig: PerceptionAreaConfig,
-  extensions: string[],
-|};
-
-function getMarkers(markerProviders: (?MarkerProvider)[]) {
+function getMarkers(markerProviders: MarkerProvider[]) {
   const markers = {
     lines: [],
     grids: [],
@@ -77,6 +64,7 @@ function getMarkers(markerProviders: (?MarkerProvider)[]) {
     laserScans: [],
     cylinders: [],
     filledPolygons: [],
+    instancedLineLists: [],
     linedConvexHulls: [],
   };
 
@@ -97,6 +85,7 @@ function getMarkers(markerProviders: (?MarkerProvider)[]) {
     pointcloud: (o) => markers.pointclouds.push(o),
     laserScan: (o) => markers.laserScans.push(o),
     filledPolygon: (o) => markers.filledPolygons.push(o),
+    instancedLineList: (o) => markers.instancedLineLists.push(o),
     linedConvexHull: (o) => markers.linedConvexHulls.push(o),
   };
 
@@ -109,114 +98,63 @@ function getMarkers(markerProviders: (?MarkerProvider)[]) {
   return markers;
 }
 
-const defaultPerceptionAreaConfig: PerceptionAreaConfig = {
-  enabled: false,
-  colors: [],
-};
+export default function World({
+  markerProviders,
+  autoTextBackgroundColor,
+  children,
+  onCameraStateChange,
+  onClick,
+  onMouseDown,
+  onMouseMove,
+  onMouseUp,
+  cameraState,
+  onDoubleClick,
+  convexHullOpacity,
+}: Props) {
+  const {
+    lines,
+    arrows,
+    texts,
+    cubes,
+    spheres,
+    points,
+    triangles,
+    poseMarkers,
+    cylinders,
+    grids,
+    pointclouds,
+    laserScans,
+    filledPolygons,
+    linedConvexHulls,
+  } = getMarkers(markerProviders);
 
-function getConfigFromExtensions(extensions: string[]): PerceptionAreaConfig {
-  return defaultPerceptionAreaConfig;
-}
-
-export default class World extends React.Component<Props, State> {
-  state = {
-    zMin: 0,
-    extensions: [],
-    perceptionAreaConfig: {
-      enabled: false,
-      colors: [],
-    },
-  };
-
-  static getDerivedStateFromProps(nextProps: Props, prevState: State) {
-    const { extensions } = nextProps;
-    const zMin = nextProps.scene.bounds.z.min - 1;
-
-    // Check if the extension array is the same reference.
-    // If it is not the same reference do a compare of each item (there are only a handful) and only
-    // update state if the extensions actually change - the topic selector emits a new list of extensions
-    // every time someone expands/collapses a node or types in the selection box...so if we don't check for
-    // item equality here we end up re-rendering more than we need to.
-    if (zMin >= prevState.zMin && isEqual(extensions, prevState.extensions)) {
-      return null;
-    }
-
-    return {
-      // save the extensions to compare next time we update
-      extensions: nextProps.extensions,
-      perceptionAreaConfig: getConfigFromExtensions(extensions),
-      // set the zMin to 1 lower than the actual new zMin so it updates less frequently
-      // otherwise the min going very slightly down every frame causes lots of renders
-      zMin: zMin > prevState.zMin ? prevState.zMin : zMin - 1,
-    };
-  }
-
-  render() {
-    const {
-      markerProviders,
-      autoTextBackgroundColor,
-      children,
-      onCameraStateChange,
-      onClick,
-      onMouseDown,
-      onMouseMove,
-      onMouseUp,
-      cameraState,
-      onDoubleClick,
-      convexHullOpacity,
-    } = this.props;
-
-    const {
-      lines,
-      arrows,
-      texts,
-      cubes,
-      spheres,
-      points,
-      triangles,
-      poseMarkers,
-      cylinders,
-      grids,
-      pointclouds,
-      laserScans,
-      filledPolygons,
-      linedConvexHulls,
-    } = getMarkers(markerProviders);
-    return (
-      <Worldview
-        cameraState={cameraState}
-        onCameraStateChange={onCameraStateChange}
-        onClick={onClick}
-        onDoubleClick={onDoubleClick}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        hitmapOnMouseMove={false}
-        backgroundColor={[0, 0, 0, 0]}
-        hideDebug={inScreenshotTests()}>
-        <OccupancyGrids layerIndex={-1} key="OccupancyGrids">
-          {grids}
-        </OccupancyGrids>
-        <Lines key="Lines">{lines}</Lines>
-        <Arrows key="Arrows">{arrows}</Arrows>
-        <Points key="Points">{points}</Points>
-        <PointClouds key="PointClouds">{pointclouds}</PointClouds>
-        <Triangles key="TriangleLists">{triangles}</Triangles>
-        <Spheres key="Spheres">{spheres}</Spheres>
-        <Cylinders key="Cylinders">{cylinders}</Cylinders>
-        <Cubes key="Cubes">{cubes}</Cubes>
-        <PoseMarkers key="PoseMarkers">{poseMarkers}</PoseMarkers>
-        <LaserScans key="LaserScans">{laserScans}</LaserScans>
-        <Text key="Text" autoBackgroundColor={autoTextBackgroundColor}>
-          {texts}
-        </Text>
-        <FilledPolygons key="FilledPolygons">{filledPolygons}</FilledPolygons>
-        {/* By default, make the convex hull fill completely transparent - they just provide a click layer. */}
-        <LinedConvexHulls opacity={convexHullOpacity || 0} key="LinedConvexHulls">
-          {linedConvexHulls}
-        </LinedConvexHulls>
-        {children}
-      </Worldview>
-    );
-  }
+  return (
+    <Worldview
+      cameraState={cameraState}
+      hideDebug={inScreenshotTests()}
+      onCameraStateChange={onCameraStateChange}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      backgroundColor={[0, 0, 0, 0]}>
+      <OccupancyGrids layerIndex={-1}>{grids}</OccupancyGrids>
+      <Lines>{lines}</Lines>
+      <Arrows>{arrows}</Arrows>
+      <Points>{points}</Points>
+      <PointClouds>{pointclouds}</PointClouds>
+      <Triangles>{triangles}</Triangles>
+      <Spheres>{spheres}</Spheres>
+      <Cylinders>{cylinders}</Cylinders>
+      <Cubes>{cubes}</Cubes>
+      <PoseMarkers>{poseMarkers}</PoseMarkers>
+      <LaserScans>{laserScans}</LaserScans>
+      <Text autoBackgroundColor={autoTextBackgroundColor}>{texts}</Text>
+      <FilledPolygons>{filledPolygons}</FilledPolygons>
+      {/* By default, make the convex hull fill completely transparent - they just provide a click layer. */}
+      <LinedConvexHulls opacity={convexHullOpacity || 0}>{linedConvexHulls}</LinedConvexHulls>
+      {children}
+    </Worldview>
+  );
 }

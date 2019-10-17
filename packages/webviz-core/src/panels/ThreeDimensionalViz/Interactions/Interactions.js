@@ -51,10 +51,11 @@ export const LINKED_VARIABLES_TAB_TYPE = "Linked variables";
 export type TabType = typeof OBJECT_TAB_TYPE | typeof LINKED_VARIABLES_TAB_TYPE;
 
 type Props = {
-  selectedObject: ?MouseEventObject,
-  onClearSelectedObject: () => void,
-  defaultSelectedTab?: TabType, // for UI testing
+  defaultSelectedTab?: ?TabType, // for UI testing
   interactionData: ?InteractionData,
+  isDrawing: boolean,
+  onClearSelectedObject: () => void,
+  selectedObject: ?MouseEventObject,
 };
 
 type PropsWithConfig = Props & {
@@ -65,18 +66,19 @@ type PropsWithConfig = Props & {
 const InteractionsBaseComponent = React.memo<PropsWithConfig>(function InteractionsBaseComponent({
   selectedObject,
   interactionData,
+  isDrawing,
   onClearSelectedObject,
   defaultSelectedTab,
   disableAutoOpenClickedObject,
   saveConfig,
 }: PropsWithConfig) {
   const [selectedTab, setSelectedTab] = React.useState<?TabType>(defaultSelectedTab);
-  const shouldOpenTab = useChangeDetector([selectedObject], !!selectedObject);
+  const selectedObjectChanged = useChangeDetector([selectedObject], !!selectedObject);
   React.useEffect(
     () => {
-      if (!disableAutoOpenClickedObject) {
-        if (shouldOpenTab && selectedTab !== OBJECT_TAB_TYPE) {
-          // auto open Object tab if it's not already open
+      if (!disableAutoOpenClickedObject && !isDrawing) {
+        // auto open Object tab if the object changed, the tab is not already open, and the user is not drawing
+        if (selectedObjectChanged && selectedTab !== OBJECT_TAB_TYPE) {
           setSelectedTab(OBJECT_TAB_TYPE);
         } else if (!selectedObject && selectedTab === OBJECT_TAB_TYPE) {
           // auto collapse the Object pane when there is no object and auto open is enabled
@@ -84,7 +86,7 @@ const InteractionsBaseComponent = React.memo<PropsWithConfig>(function Interacti
         }
       }
     },
-    [disableAutoOpenClickedObject, shouldOpenTab, selectedTab, selectedObject]
+    [disableAutoOpenClickedObject, selectedObjectChanged, selectedTab, selectedObject, isDrawing]
   );
 
   const { object } = selectedObject || {};

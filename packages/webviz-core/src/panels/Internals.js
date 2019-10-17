@@ -20,8 +20,11 @@ import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import filterMap from "webviz-core/src/filterMap";
+import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Topic, Message, SubscribePayload, AdvertisePayload } from "webviz-core/src/players/types";
 import { downloadTextFile } from "webviz-core/src/util";
+
+const { useCallback } = React;
 
 const RECORD_ALL = "RECORD_ALL";
 
@@ -75,9 +78,11 @@ function getPublisherGroup({ advertiser }: AdvertisePayload): string {
   return `<unknown: ${advertiser.type} ${advertiser.name}>`;
 }
 
-// Display webviz internal state for debugging and for QA to view topic dependencies.
+// Display webviz internal state for debugging and viewing topic dependencies.
 function Internals(): React.Node {
-  const { subscriptions, publishers, sortedTopics: topics } = useMessagePipeline();
+  const { topics } = PanelAPI.useDataSourceInfo();
+  const subscriptions = useMessagePipeline(useCallback(({ subscriptions }) => subscriptions, []));
+  const publishers = useMessagePipeline(useCallback(({ publishers }) => publishers, []));
 
   const [groupedSubscriptions, subscriptionGroups] = React.useMemo(
     () => {

@@ -373,8 +373,8 @@ export default class ImageCanvas extends React.Component<Props, State> {
       // remove the leading / so the image name doesn't start with _
       const topicName = topic.slice(1);
       const stamp = image.message.header ? image.message.header.stamp : { sec: 0, nsec: 0 };
-      const filename = `${topicName}-${stamp.sec}-${stamp.nsec}`;
-      downloadFiles([blob], filename);
+      const fileName = `${topicName}-${stamp.sec}-${stamp.nsec}`;
+      downloadFiles([{ blob, fileName }]);
     });
   };
 

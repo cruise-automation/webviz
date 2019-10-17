@@ -13,11 +13,11 @@ import type { Message, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
 
-function addValuesWithPathsToItems(messages, rosPath, topics, datatypes, globalData) {
+function addValuesWithPathsToItems(messages, rosPath, topics, datatypes, globalVariables) {
   const structures = messagePathStructures(datatypes);
   const topic = topicsByTopicName(topics)[rosPath.topicName];
   return filterMap(messages, (message) =>
-    getMessageHistoryItem(message, rosPath, topic, datatypes, globalData, structures)
+    getMessageHistoryItem(message, rosPath, topic, datatypes, globalVariables, structures)
   );
 }
 
@@ -229,7 +229,7 @@ describe("getMessageHistoryItem", () => {
     ]);
   });
 
-  it("filters properly for globalData, and uses the filter object in the path", () => {
+  it("filters properly for globalVariables, and uses the filter object in the path", () => {
     const messages: Message[] = [
       {
         op: "message",

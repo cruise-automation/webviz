@@ -13,7 +13,7 @@ import React from "react";
 
 import MessageHistory from ".";
 import { datatypes, messages, dualInputMessages } from "./fixture";
-import { setGlobalData } from "webviz-core/src/actions/panels";
+import { setGlobalVariables } from "webviz-core/src/actions/panels";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
 import createRootReducer from "webviz-core/src/reducers";
@@ -101,14 +101,6 @@ describe("<MessageHistory />", () => {
     provider.setProps({ messages: [messages[0], messages[1], messages[2]] });
 
     expect(childFn.mock.calls).toEqual([
-      [
-        {
-          cleared: false,
-          itemsByPath: { "/some/topic": [] },
-          metadataByPath: {},
-          startTime: { sec: 100, nsec: 0 },
-        },
-      ],
       [
         {
           cleared: false,
@@ -391,7 +383,7 @@ describe("<MessageHistory />", () => {
 
       const store = configureStore(createRootReducer(createMemoryHistory()));
 
-      store.dispatch(setGlobalData({ foo: 0 }));
+      store.dispatch(setGlobalVariables({ foo: 0 }));
 
       const provider = mount(
         <MockMessagePipelineProvider
@@ -422,7 +414,7 @@ describe("<MessageHistory />", () => {
       childFn.mockClear();
 
       // when $foo changes to 1, queriedData.value should change to 11
-      store.dispatch(setGlobalData({ foo: 1 }));
+      store.dispatch(setGlobalVariables({ foo: 1 }));
       expect(childFn.mock.calls).toEqual([
         [
           {

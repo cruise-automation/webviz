@@ -95,7 +95,7 @@ describe("state.panels", () => {
     });
   });
 
-  it("sets default globalData, linkedGlobalVariables, userNodes in local storage if values are not in migrated payload", () => {
+  it("sets default globalVariables, linkedGlobalVariables, userNodes in local storage if values are not in migrated payload", () => {
     const store = getStore();
     const payload = {
       layout: "foo!baz",
@@ -106,21 +106,36 @@ describe("state.panels", () => {
     store.checkState((panels) => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.globalData).toEqual({});
+      expect(globalState.globalVariables).toEqual({});
       expect(globalState.userNodes).toEqual({});
       expect(globalState.linkedGlobalVariables).toEqual([]);
     });
   });
 
-  it("sets globalData, userNodes, linkedGlobalVariables in local storage", () => {
+  it("sets default speed in local storage if playbackConfig object is not in migrated payload", () => {
     const store = getStore();
-    const globalData = { some_global_data_var: 1 };
-    const linkedGlobalVariables = [{ topic: "/foo", markerKeyPath: ["bar", "1"], name: "someVariableName" }];
-    const userNodes = { foo: "foo node" };
     const payload = {
       layout: "foo!baz",
       savedProps: { foo: { test: true } },
-      globalData,
+    };
+
+    store.dispatch(importPanelLayout(payload, false));
+    store.checkState((panels) => {
+      const storage = new Storage();
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.playbackConfig).toEqual({ speed: 0.2 });
+    });
+  });
+
+  it("sets globalVariables, userNodes, linkedGlobalVariables in local storage", () => {
+    const store = getStore();
+    const globalVariables = { some_global_data_var: 1 };
+    const linkedGlobalVariables = [{ topic: "/foo", markerKeyPath: ["bar", "1"], name: "someVariableName" }];
+    const userNodes = { foo: { name: "foo", sourceCode: "foo node" } };
+    const payload = {
+      layout: "foo!baz",
+      savedProps: { foo: { test: true } },
+      globalVariables,
       userNodes,
       linkedGlobalVariables,
     };
@@ -129,9 +144,33 @@ describe("state.panels", () => {
     store.checkState((panels) => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.globalData).toEqual(globalData);
+      expect(globalState.globalVariables).toEqual(globalVariables);
       expect(globalState.userNodes).toEqual(userNodes);
       expect(globalState.linkedGlobalVariables).toEqual(linkedGlobalVariables);
+    });
+  });
+
+  it("change globalData key to globalVariables if only globalData key is present", () => {
+    const store = getStore();
+    const globalVariables = { some_global_data_var: 1 };
+    const payload = { globalData: globalVariables, layout: "foo!baz" };
+    store.dispatch(importPanelLayout(payload, true));
+    store.checkState((panels) => {
+      const storage = new Storage();
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.globalVariables).toEqual(globalVariables);
+    });
+  });
+
+  it("delete globalData key if both globalVariables and globalData are present", () => {
+    const store = getStore();
+    const globalVariables = { some_global_data_var: 1 };
+    const payload = { globalData: { some_var: 2 }, globalVariables, layout: "foo!baz" };
+    store.dispatch(importPanelLayout(payload, true));
+    store.checkState((panels) => {
+      const storage = new Storage();
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.globalData).toBe(undefined);
     });
   });
 
@@ -228,8 +267,8 @@ describe("state.panels", () => {
 
   it("saves and overwrites Webviz nodes", () => {
     const store = getStore();
-    const firstPayload = { foo: "bar" };
-    const secondPayload = { bar: "baz" };
+    const firstPayload = { foo: { name: "foo", sourceCode: "bar" } };
+    const secondPayload = { bar: { name: "bar", sourceCode: "baz" } };
 
     store.dispatch(setUserNodes(firstPayload));
     store.checkState((panelState) => {

@@ -5,7 +5,6 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
 import { first, omit } from "lodash";
 import * as React from "react";
 import Tree from "react-json-tree";
@@ -15,30 +14,77 @@ import styled from "styled-components";
 import GlobalVariableLink from "./GlobalVariableLink/index";
 import type { InteractionData } from "./types";
 import { type LinkedGlobalVariables } from "./useLinkedGlobalVariables";
+import Dropdown from "webviz-core/src/components/Dropdown";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
 
 const SObjectDetails = styled.div`
   padding: 12px 0 16px 0;
 `;
 
-type Props = {
+type CommonProps = {
   interactionData: ?InteractionData,
   linkedGlobalVariables: LinkedGlobalVariables,
+};
+
+type WrapperProps = CommonProps & {
   selectedObject: MouseEventObject,
 };
 
-export default function ObjectDetails({
+type Props = CommonProps & {
+  objectToDisplay: any,
+};
+
+export const getInstanceObj = (marker: any, idx: number) => {
+  return marker.metadataByIndex && marker.metadataByIndex[idx];
+};
+
+export default function ObjectDetailsWrapper({
   interactionData,
   linkedGlobalVariables,
   selectedObject: { object, instanceIndex },
-}: Props) {
+}: WrapperProps) {
+  const [showInstance, setShowInstance] = React.useState(true);
+  const instanceObject = getInstanceObj(object, instanceIndex);
+  const dropdownText = {
+    instance: "Show instance object",
+    full: "Show full object",
+  };
+
+  return instanceObject ? (
+    <div>
+      <Dropdown
+        position="below"
+        value={showInstance}
+        text={showInstance ? dropdownText.instance : dropdownText.full}
+        onChange={setShowInstance}>
+        <span value={true}>{dropdownText.instance}</span>
+        <span value={false}>{dropdownText.full}</span>
+      </Dropdown>
+      <ObjectDetails
+        interactionData={interactionData}
+        linkedGlobalVariables={linkedGlobalVariables}
+        objectToDisplay={showInstance ? instanceObject : object}
+      />
+    </div>
+  ) : (
+    <ObjectDetails
+      interactionData={interactionData}
+      linkedGlobalVariables={linkedGlobalVariables}
+      objectToDisplay={object}
+    />
+  );
+}
+
+function ObjectDetails({ interactionData, linkedGlobalVariables, objectToDisplay }: Props) {
   const topic = (interactionData && interactionData.topic) || "";
+  const originalObject = omit(objectToDisplay, "interactionData");
+
   if (!topic) {
     // show the original object directly if there is no interaction data. e.g. DrawPolygons
     return (
       <SObjectDetails>
         <Tree
-          data={object}
+          data={objectToDisplay}
           shouldExpandNode={(markerKeyPath, data, level) => level < 2}
           invertTheme={false}
           theme={{ ...jsonTreeTheme, tree: { margin: 0 } }}
@@ -47,8 +93,6 @@ export default function ObjectDetails({
       </SObjectDetails>
     );
   }
-
-  const originalObject = omit(object, "interactionData");
 
   return (
     <SObjectDetails>

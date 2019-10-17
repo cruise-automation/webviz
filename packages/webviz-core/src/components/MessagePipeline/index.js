@@ -9,11 +9,17 @@
 import { createMemoryHistory } from "history";
 import { flatten, groupBy } from "lodash";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useContext } from "react"; // eslint-disable-line import/no-duplicates
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"; // eslint-disable-line import/no-duplicates
 import { Provider } from "react-redux";
 import { type Time, TimeUtil } from "rosbag";
 
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
+import {
+  useShallowMemo,
+  createSelectableContext,
+  useContextSelector,
+  type BailoutToken,
+} from "webviz-core/src/components/MessageHistory/hooks";
 import type {
   AdvertisePayload,
   Frame,
@@ -46,14 +52,10 @@ export type MessagePipelineContext = {|
   seekPlayback(time: Time): void,
 |};
 
-const Context: React.Context<?MessagePipelineContext> = React.createContext();
+const Context = createSelectableContext<MessagePipelineContext>();
 
-export function useMessagePipeline(): MessagePipelineContext {
-  const context = useContext(Context);
-  if (!context) {
-    throw new Error("Component must be nested within a <MessagePipelineProvider> to access the message pipeline.");
-  }
-  return context;
+export function useMessagePipeline<T>(selector: (MessagePipelineContext) => T | BailoutToken): T {
+  return useContextSelector(Context, selector);
 }
 
 function defaultPlayerState(): PlayerState {
@@ -150,40 +152,50 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
 
   const messages: ?(Message[]) = playerState.activeData ? playerState.activeData.messages : undefined;
   const topics: ?(Topic[]) = playerState.activeData ? playerState.activeData.topics : undefined;
+  const frame = useMemo(() => groupBy(messages || [], "topic"), [messages]);
+  const sortedTopics = useMemo(() => (topics || []).sort(naturalSort("name")), [topics]);
+  const datatypes = useMemo(
+    () => {
+      return playerState.activeData ? playerState.activeData.datatypes : {};
+    },
+    [playerState.activeData && playerState.activeData.datatypes] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const setSubscriptions = useCallback(
+    (id: string, subscriptionsForId: SubscribePayload[]) => {
+      setAllSubscriptions((s) => ({ ...s, [id]: subscriptionsForId }));
+    },
+    [setAllSubscriptions]
+  );
+  const setPublishers = useCallback(
+    (id: string, publishersForId: AdvertisePayload[]) => {
+      setAllPublishers((p) => ({ ...p, [id]: publishersForId }));
+    },
+    [setAllPublishers]
+  );
+  const publish = useCallback((request: PublishPayload) => (player ? player.publish(request) : undefined), [player]);
+  const startPlayback = useCallback(() => (player ? player.startPlayback() : undefined), [player]);
+  const pausePlayback = useCallback(() => (player ? player.pausePlayback() : undefined), [player]);
+  const setPlaybackSpeed = useCallback((speed: number) => (player ? player.setPlaybackSpeed(speed) : undefined), [
+    player,
+  ]);
+  const seekPlayback = useCallback((time: Time) => (player ? player.seekPlayback(time) : undefined), [player]);
   return (
     <Context.Provider
-      value={{
+      value={useShallowMemo({
         playerState,
         subscriptions,
         publishers,
-        frame: useMemo(() => groupBy(messages || [], "topic"), [messages]),
-        sortedTopics: useMemo(() => (topics || []).sort(naturalSort("name")), [topics]),
-        datatypes: useMemo(
-          () => {
-            return playerState.activeData ? playerState.activeData.datatypes : {};
-          },
-          [playerState.activeData && playerState.activeData.datatypes] // eslint-disable-line react-hooks/exhaustive-deps
-        ),
-        setSubscriptions: useCallback(
-          (id: string, subscriptionsForId: SubscribePayload[]) => {
-            setAllSubscriptions((s) => ({ ...s, [id]: subscriptionsForId }));
-          },
-          [setAllSubscriptions]
-        ),
-        setPublishers: useCallback(
-          (id: string, publishersForId: AdvertisePayload[]) => {
-            setAllPublishers((p) => ({ ...p, [id]: publishersForId }));
-          },
-          [setAllPublishers]
-        ),
-        publish: useCallback((request: PublishPayload) => (player ? player.publish(request) : undefined), [player]),
-        startPlayback: useCallback(() => (player ? player.startPlayback() : undefined), [player]),
-        pausePlayback: useCallback(() => (player ? player.pausePlayback() : undefined), [player]),
-        setPlaybackSpeed: useCallback((speed: number) => (player ? player.setPlaybackSpeed(speed) : undefined), [
-          player,
-        ]),
-        seekPlayback: useCallback((time: Time) => (player ? player.seekPlayback(time) : undefined), [player]),
-      }}>
+        frame,
+        sortedTopics,
+        datatypes,
+        setSubscriptions,
+        setPublishers,
+        publish,
+        startPlayback,
+        pausePlayback,
+        setPlaybackSpeed,
+        seekPlayback,
+      })}>
       {children}
     </Context.Provider>
   );
@@ -191,20 +203,24 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
 
 type ConsumerProps = { children: (MessagePipelineContext) => React.Node };
 export function MessagePipelineConsumer({ children }: ConsumerProps) {
-  const value = useMessagePipeline();
+  const value = useMessagePipeline(useCallback((ctx) => ctx, []));
   return children(value);
 }
 
+// TODO(Audrey): put messages under activeData, add ability to mock seeking
 export function MockMessagePipelineProvider(props: {|
   children: React.Node,
   topics?: Topic[],
   datatypes?: RosDatatypes,
   messages?: Message[],
   setSubscriptions?: (string, SubscribePayload[]) => void,
+  noActiveData?: boolean,
   activeData?: $Shape<PlayerStateActiveData>,
   capabilities?: string[],
   store?: any,
   seekPlayback?: (Time) => void,
+  startTime?: Time,
+  endTime?: Time,
 |}) {
   const storeRef = useRef(props.store || configureStore(createRootReducer(createMemoryHistory())));
   const startTime = useRef();
@@ -227,30 +243,49 @@ export function MockMessagePipelineProvider(props: {|
     setAllSubscriptions,
   ]);
 
+  const capabilities = useShallowMemo(props.capabilities || []);
+
+  const playerState = useMemo(
+    () => ({
+      isPresent: true,
+      playerId: "1",
+      progress: {},
+      showInitializing: false,
+      showSpinner: false,
+      capabilities,
+      activeData: props.noActiveData
+        ? undefined
+        : {
+            messages: props.messages || [],
+            topics: props.topics || [],
+            datatypes: props.datatypes || {},
+            startTime: props.startTime || startTime.current || { sec: 100, nsec: 0 },
+            currentTime: currentTime || { sec: 100, nsec: 0 },
+            endTime: props.endTime || currentTime || { sec: 100, nsec: 0 },
+            isPlaying: false,
+            speed: 0.2,
+            lastSeekTime: 0,
+            ...props.activeData,
+          },
+    }),
+    [
+      capabilities,
+      currentTime,
+      props.messages,
+      props.topics,
+      props.datatypes,
+      props.startTime,
+      props.endTime,
+      props.activeData,
+      props.noActiveData,
+    ]
+  );
+
   return (
     <Provider store={storeRef.current}>
       <Context.Provider
         value={{
-          playerState: {
-            isPresent: true,
-            playerId: "1",
-            progress: {},
-            showInitializing: false,
-            showSpinner: false,
-            capabilities: props.capabilities || [],
-            activeData: {
-              messages: props.messages || [],
-              topics: props.topics || [],
-              datatypes: props.datatypes || {},
-              startTime: startTime.current || { sec: 100, nsec: 0 },
-              currentTime: currentTime || { sec: 100, nsec: 0 },
-              endTime: currentTime || { sec: 100, nsec: 0 },
-              isPlaying: false,
-              speed: 0.2,
-              lastSeekTime: 0,
-              ...props.activeData,
-            },
-          },
+          playerState,
           frame: groupBy(props.messages || [], "topic"),
           sortedTopics: (props.topics || []).sort(naturalSort("name")),
           datatypes: props.datatypes || {},

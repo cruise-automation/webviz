@@ -7,6 +7,6 @@
 //  You may not use this file except in compliance with the License.
 import { createBrowserHistory } from "history";
 
-const history = createBrowserHistory();
+const history: any = createBrowserHistory();
 
 export default history;

@@ -6,13 +6,18 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { type GlobalData } from "webviz-core/src/hooks/useGlobalData";
+import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 
 export type PanelConfig = { [key: string]: any };
 export type PerPanelFunc<Config> = (Config) => Config;
 
-export type UserNodes = { [nodeName: string]: string };
+export type PlaybackConfig = {
+  speed: number,
+};
+
+export type UserNode = { name: string, sourceCode: string };
+export type UserNodes = { [nodeId: string]: UserNode };
 
 export type SaveConfigPayload = {
   id: string,
@@ -33,7 +38,7 @@ export type ImportPanelLayoutPayload = {
   // layout is the object passed to react-mosaic
   layout: any,
   savedProps?: { [panelId: string]: PanelConfig },
-  globalData?: GlobalData,
+  globalVariables?: GlobalVariables,
   userNodes?: UserNodes,
   linkedGlobalVariables?: LinkedGlobalVariables,
   skipSettingLocalStorage?: boolean,

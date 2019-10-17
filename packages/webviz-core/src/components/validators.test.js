@@ -25,6 +25,21 @@ describe("cameraStateValidator", () => {
       targetOrientation: "must contain 4 array items",
     });
   });
+  it("returns error if the quaternion number sum for targetOrientation is not between 0.9 and 1.1", () => {
+    let cameraState = { targetOrientation: [0, 0, 0, 0.94] };
+    expect(cameraStateValidator(cameraState)).toEqual({
+      targetOrientation: "must be valid quaternion",
+    });
+    cameraState = { targetOrientation: [0.32, 1, 0, 0] };
+    expect(cameraStateValidator(cameraState)).toEqual({
+      targetOrientation: "must be valid quaternion",
+    });
+    cameraState = { targetOrientation: [1.04, 0, 0, 0] };
+    expect(cameraStateValidator(cameraState)).toEqual(undefined);
+    cameraState = { targetOrientation: [0.95, 0, 0, 0] };
+    expect(cameraStateValidator(cameraState)).toEqual(undefined);
+  });
+
   it("returns error if the vec3/vec4 values are set but are invalid", () => {
     const cameraState = { targetOffset: ["invalid"] };
     expect(cameraStateValidator(cameraState)).toEqual({
@@ -41,6 +56,7 @@ describe("cameraStateValidator", () => {
       targetOrientation: "must contain 4 array items",
     });
   });
+
   it("combines errors from different fields", () => {
     const cameraState = { distance: "abc", targetOffset: [1, 12, "121"], targetOrientation: [1, 1, 1] };
     expect(cameraStateValidator(cameraState)).toEqual({

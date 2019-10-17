@@ -10,6 +10,7 @@ import * as React from "react";
 import { DragSource } from "react-dnd";
 import { MosaicDragType, getNodeAtPath, updateTree } from "react-mosaic-component";
 import { connect } from "react-redux";
+import styled from "styled-components";
 
 import { changePanelLayout, savePanelConfig } from "webviz-core/src/actions/panels";
 import { Item } from "webviz-core/src/components/Menu";
@@ -18,13 +19,25 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { State } from "webviz-core/src/reducers";
 import type { PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
 import { getPanelIdForType } from "webviz-core/src/util";
+import { colors } from "webviz-core/src/util/colors";
 import naturalSort from "webviz-core/src/util/naturalSort";
+
+const SearchInput = styled.input`
+  width: 100%;
+  min-width: 200px;
+  background-color: ${colors.DARK2} !important;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  margin: 0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+`;
 
 type PanelListItem = {|
   title: string,
   component: React.ComponentType<any>,
   presets?: {| title: string, panelConfig?: PanelConfig |}[],
-  hideFromList?: boolean,
 |};
 
 // getPanelsByCategory() and getPanelsByType() are functions rather than top-level constants
@@ -71,6 +84,7 @@ type PanelItemProps = {
     title: string,
     panelConfig?: PanelConfig,
   |},
+  searchQuery: string,
   checked?: boolean,
   // this comes from react-dnd
   connectDragSource: (any) => React.Node,
@@ -84,11 +98,20 @@ type PanelItemProps = {
 
 class PanelItem extends React.Component<PanelItemProps> {
   render() {
-    const { connectDragSource, panel, onClick, checked } = this.props;
+    const { connectDragSource, searchQuery, panel, onClick, checked } = this.props;
+    const searchQueryIndex = !!searchQuery && panel.title.toLowerCase().indexOf(searchQuery);
     return connectDragSource(
       <div>
         <Item onClick={onClick} checked={checked}>
-          {panel.title}
+          {searchQueryIndex !== false ? (
+            <React.Fragment>
+              {panel.title.substring(0, searchQueryIndex)}
+              <u>{panel.title.substring(searchQueryIndex, searchQueryIndex + searchQuery.length)}</u>
+              {panel.title.substring(searchQueryIndex + searchQuery.length)}
+            </React.Fragment>
+          ) : (
+            panel.title
+          )}
         </Item>
       </div>
     );
@@ -135,7 +158,8 @@ type Props = {
   changePanelLayout: (panelLayout: any) => void,
   savePanelConfig: (SaveConfigPayload) => void,
 };
-class PanelList extends React.Component<Props> {
+class PanelList extends React.Component<Props, { searchQuery: string }> {
+  state = { searchQuery: "" };
   static getComponentForType(type: string): any | void {
     const panelsByCategory = getPanelsByCategory();
     const allPanels = flatten(Object.keys(panelsByCategory).map((category) => panelsByCategory[category]));
@@ -197,17 +221,31 @@ class PanelList extends React.Component<Props> {
     }
   }
 
+  _handleSearchChange = (e: SyntheticInputEvent<HTMLInputElement>) => {
+    // TODO(Audrey): press enter to select the first item, allow using arrow key to go up and down
+    this.setState({ searchQuery: e.target.value });
+  };
+
   render() {
     this._verifyPanels();
     const { mosaicId, onPanelSelect, selectedPanelType } = this.props;
+    const { searchQuery } = this.state;
     const panelCategories = getGlobalHooks().panelCategories();
     const panelsByCategory = getPanelsByCategory();
+    const lowerCaseSearchQuery = searchQuery.toLowerCase();
 
     return (
       <div data-test-panel-category>
+        <SearchInput
+          type="search"
+          placeholder="Filter panels"
+          value={searchQuery}
+          onChange={this._handleSearchChange}
+          autoFocus
+        />
         {panelCategories.map(({ label, key }, categoryIdx) =>
           panelsByCategory[key]
-            .filter(({ hideFromList }) => !hideFromList)
+            .filter(({ title }) => !title || title.toLowerCase().includes(lowerCaseSearchQuery))
             .sort(naturalSort("title"))
             .map(
               // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
@@ -225,6 +263,7 @@ class PanelList extends React.Component<Props> {
                         }}
                         onDrop={this.onPanelMenuItemDrop}
                         onClick={() => onPanelSelect(panelType, subPanelListItem.panelConfig)}
+                        searchQuery=""
                       />
                     ))}
                   </SubMenu>
@@ -237,6 +276,7 @@ class PanelList extends React.Component<Props> {
                       onDrop={this.onPanelMenuItemDrop}
                       onClick={() => onPanelSelect(panelType)}
                       checked={panelType === selectedPanelType}
+                      searchQuery={lowerCaseSearchQuery}
                     />
                   </div>
                 )

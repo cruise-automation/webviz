@@ -51,7 +51,7 @@ const getConfig = (metadataDatabaseName: string) => ({
 // the next creation of a database will clean up all the old ones.
 function tryDelete(databaseName: string): Promise<boolean> {
   return new Promise((resolve, reject) => {
-    log.info("Deleting old database", databaseName);
+    log.info("Trying to delete old database", databaseName);
     let resolved = false;
     const done = (success: boolean) => {
       if (resolved) {
@@ -63,7 +63,10 @@ function tryDelete(databaseName: string): Promise<boolean> {
     const deleteRequest = global.indexedDB.deleteDatabase(databaseName);
     // if we don't hear anything after 500 milliseconds assume the request is blocked
     setTimeout(() => done(false), 500);
-    deleteRequest.onsuccess = () => done(true);
+    deleteRequest.onsuccess = () => {
+      log.info(`Successfully deleted indexeddb database ${databaseName}.`);
+      done(true);
+    };
     deleteRequest.onerror = (err) => {
       log.error(`Unable to delete indexeddb database ${databaseName}`, err);
       done(false);
@@ -111,6 +114,9 @@ export async function updateMetaDatabases(
   maxDatabases: number,
   metadataDatabaseName: string
 ): Promise<void> {
+  log.info("Updating MetaDatabase", {
+    newDatabaseName,
+  });
   await validateStorageQuota();
 
   const metadataDatabase = await Database.get(getConfig(metadataDatabaseName));
@@ -149,5 +155,6 @@ export async function doesDatabaseExist(databaseName: string, metadataDatabaseNa
   const metadataDatabase = await Database.get(getConfig(metadataDatabaseName));
   const entry = await metadataDatabase.get(metadataObjectStoreName, databaseName);
   await metadataDatabase.close();
+  log.info(`Checking if database exists returned ${!!entry} with...`, { databaseName });
   return !!entry;
 }

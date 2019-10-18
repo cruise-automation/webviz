@@ -24,3 +24,11 @@ ENV WEBVIZ_IN_DOCKER=true
 
 # Bumped up from the default old_space size (512mb) as it was being exceeded during builds.
 ENV NODE_OPTIONS="--max_old_space_size=4096"
+
+Copy . .
+
+RUN npm run bootstrap
+
+RUN npm run build
+
+RUN npm run docs

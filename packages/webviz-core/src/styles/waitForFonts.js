@@ -13,9 +13,17 @@
 // Without waiting, initial measureText calls have the wrong result, and the font sometimes doesn't
 // appear in screenshot tests.
 
+// Waiting for fonts based on document is not a reliable way.
+// If not handelled this will cause app to not load at all.
+// The usecase of screenshot which is enforced here is not a hot requirement right now, hence added a catch and continue.
+
 export default function waitForFonts(callback: () => void) {
   // $FlowFixMe - doesn't understand document.fonts.
-  Promise.all([...document.fonts].map((font) => font.load())).then(() => {
-    callback();
-  });
+  Promise.all([...document.fonts].map((font) => font.load()))
+    .then(() => {
+      callback();
+    })
+    .catch(() => {
+      callback();
+    });
 }

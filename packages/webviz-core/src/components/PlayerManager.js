@@ -11,6 +11,7 @@ import { connect } from "react-redux";
 
 import { setNodeDiagnostics, type SetNodeDiagnostics } from "webviz-core/src/actions/nodeDiagnostics";
 import { importPanelLayout } from "webviz-core/src/actions/panels";
+import { remoteBagConnectionURL } from "webviz-core/src/assets/enway_configs";
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
@@ -65,10 +66,12 @@ function PlayerManager({ importPanelLayout, children, userNodes, setNodeDiagnost
   React.useEffect(
     () => {
       const params = new URLSearchParams(window.location.search);
+      console.log(remoteBagConnectionURL);
+      const remoteBagBaseURL = remoteBagConnectionURL;
       const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
       if (params.has(REMOTE_BAG_URL_QUERY_KEY) || params.has(DEMO_QUERY_KEY)) {
         const url = params.has(REMOTE_BAG_URL_QUERY_KEY)
-          ? params.get(REMOTE_BAG_URL_QUERY_KEY) || ""
+          ? remoteBagBaseURL + params.get(REMOTE_BAG_URL_QUERY_KEY) || ""
           : remoteDemoBagUrl;
         getRemoteBagGuid(url).then((guid: ?string) => {
           const newPlayer = new RandomAccessPlayer(

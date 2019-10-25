@@ -55,6 +55,10 @@ export type BaseProps = {|
   onMouseUp?: MouseHandler,
   onMouseMove?: MouseHandler,
   onClick?: MouseHandler,
+
+  // Hooks for our paint loop
+  onPaintStart?: () => void,
+  onPaintEnd?: () => void,
   ...Dimensions,
 |};
 
@@ -153,7 +157,13 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     if (!this._tick) {
       this._tick = requestAnimationFrame(() => {
         this._tick = undefined;
+        if (this.props.onPaintStart) {
+          this.props.onPaintStart();
+        }
         worldviewContext.paint();
+        if (this.props.onPaintEnd) {
+          this.props.onPaintEnd();
+        }
       });
     }
   }

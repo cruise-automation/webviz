@@ -35,10 +35,10 @@ import type { ImportPanelLayoutPayload, UserNodes } from "webviz-core/src/types/
 import demoLayoutJson from "webviz-core/src/util/demoLayout.json";
 import {
   DEMO_QUERY_KEY,
-  ENABLE_NODE_PLAYGROUND_QUERY_KEY,
   LOAD_ENTIRE_BAG_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
   SECOND_BAG_PREFIX,
+  FRAME_SIZE_MS_QUERY_KEY,
 } from "webviz-core/src/util/globalConstants";
 import { getSeekToTime } from "webviz-core/src/util/time";
 
@@ -67,6 +67,10 @@ type Props = OwnProps & {
   setUserNodeTrust: SetUserNodeTrust,
 };
 
+export function getFrameSizeMs(params: URLSearchParams) {
+  return params.get(FRAME_SIZE_MS_QUERY_KEY) ? Number(params.get(FRAME_SIZE_MS_QUERY_KEY)) : null;
+}
+
 function PlayerManager({
   importPanelLayout,
   children,
@@ -90,14 +94,9 @@ function PlayerManager({
           const newPlayer = new RandomAccessPlayer(
             getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
             undefined,
-            { autoplay: true, seekToTime: getSeekToTime() }
+            { autoplay: true, seekToTime: getSeekToTime(), frameSizeMs: getFrameSizeMs(params) }
           );
-
-          if (new URLSearchParams(window.location.search).has(ENABLE_NODE_PLAYGROUND_QUERY_KEY)) {
-            setPlayer(new UserNodePlayer(newPlayer, { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust }));
-          } else {
-            setPlayer(new NodePlayer(newPlayer));
-          }
+          setPlayer(new UserNodePlayer(newPlayer, { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust }));
         });
         if (params.has(DEMO_QUERY_KEY)) {
           importPanelLayout(demoLayoutJson, false, true);

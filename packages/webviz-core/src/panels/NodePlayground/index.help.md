@@ -19,7 +19,7 @@ Post in #stay-typesafe for TypeScript questions.
 
 ### Writing Your First Webviz Node
 
-Every webviz node must declare three exports that indicate how we should execute your node:
+Every Webviz node must declare 3 exports that determine how it should execute:
 
 - An inputs array of topic names.
 - An output topic with an enforced prefix: `/webviz_node/`.
@@ -52,7 +52,7 @@ export default publisher;
 
 If you drag in a bag, you should now be able to subscribe to the “/webviz_node/echo” topic in the Raw Messages panel.
 
-But let’s say you wanted to render some markers in the 3D panel. When you create a new node, you’ll be presented with some boilerplate:
+But let’s say you want to render some markers in the 3D panel. When you create a new node, you’ll be presented with some boilerplate:
 
 ```typescript
 import { Message } from "ros";
@@ -82,7 +82,9 @@ You'll need to define your own types here from your input topics.
 
 You will need to fill in this type's definition to include the output properties you care about. For markers, you _must_ return a type of the form `{ markers: MarkerType[] }`. Reference the Markers section below for example types.
 
-Strictly typing your nodes will help you debug issues at compile time rather than at runtime. It's not always obvious in Webviz how message properties are affecting the visualized output. The more you strictly type your nodes, the less likely you will make mistakes.
+Strictly typing your nodes will help you debug issues at compile time rather than at runtime. It's not always obvious in Webviz how message properties are affecting the visualized output, and so the more you strictly type your nodes, the less likely you will make mistakes.
+
+With that said, you can disable Typescript checks while getting a rough draft of your node working by adding `// @ts-ignore` on the line above the one you want to ignore.
 
 #### Using Multiple Input Topics
 
@@ -226,6 +228,13 @@ type Pose = {
 
 // Markers
 // All marker types build on this base marker type.
+/**
+ * For publishing markers, every other marker is built up on this base type.
+ * The 'id' property has to be unique, as duplicate ids will cause markers to
+ * be overwritten. The 'ns' property corresponds to namespace under which your
+ * marker is published. In most cases, you will just want to set the 'action'
+ * property to '0'.
+  */
 type BaseMarker = {
   header: Header,
   ns: string, // namespace that your marker is published under.
@@ -233,21 +242,32 @@ type BaseMarker = {
   action: 0 | 1 | 2 | 3, // In most cases, you will want to use '0' here.
   pose: Pose,
   scale: Scale,
-  color: RGBA
+  color?: RGBA,
+  customMetadata?: { [key: string]: any }
 };
 
 // MultiPointMarker
+/**
+ * When publishing markers with a 'points' array, the 'color' field takes 1 RGBA object to apply to all points,
+ * while the 'colors' field takes in an array of RGBA objects to apply to each point. When both are present,
+ * the 'colors' field overrides the 'color' field.
+  */
 type MultiPointMarker = BaseMarker & {
   points: Point[],
+  color?: RGBA,
   colors?: RGBA[]
 };
 
 // ArrowMarker
-type ArrowMarker = BaseMarker & {
+/**
+ * When publishing markers with a 'points' array, the 'color' field takes 1 RGBA object to apply to all points,
+ * while the 'colors' field takes in an array of RGBA objects to apply to each point. When both are present,
+ * the 'colors' field overrides the 'color' field.
+  */
+export declare type ArrowMarker = MultiPointMarker & {
   type: 0,
-  points?: Point[],
   size?: ArrowSize,
-};
+}
 
 type ArrowSize = {
   shaftWidth: number,
@@ -308,7 +328,7 @@ type TriangleListMarker = MultiPointMarker & {
 
 // MeshMarker
 type MeshMarker = MultiPointMarker & {
-  type: 11
+  type: 10
 };
 
 // FilledPolygonMarker

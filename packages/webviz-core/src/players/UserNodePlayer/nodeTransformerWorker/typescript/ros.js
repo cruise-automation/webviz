@@ -57,6 +57,13 @@ export declare type Pose = {
   orientation: Orientation
 };
 
+/**
+ * For publishing markers, every other marker is built up on this base type.
+ * The 'id' property has to be unique, as duplicate ids will cause markers to
+ * be overwritten. The 'ns' property corresponds to namespace under which your
+ * marker is published. In most cases, you will just want to set the 'action'
+ * property to '0'.
+  */
 export declare type BaseMarker = {
   header: Header,
   ns: string, // namespace that your marker is published under.
@@ -64,17 +71,27 @@ export declare type BaseMarker = {
   action: 0 | 1 | 2 | 3, // In most cases, you will want to use '0' here.
   pose: Pose,
   scale: Scale,
-  color: RGBA
+  color?: RGBA,
+  customMetadata?: { [key: string]: any }
 };
 
+/**
+ * When publishing markers with a 'points' array, the 'color' field takes 1 RGBA object to apply to all points,
+ * while the 'colors' field takes in an array of RGBA objects to apply to each point. When both are present,
+ * the 'colors' field overrides the 'color' field.
+  */
 export declare type MultiPointMarker = BaseMarker & {
-  points: Point[],
+  points: Point[]
   colors?: RGBA[]
 };
 
-export declare type ArrowMarker = BaseMarker & {
+/**
+ * When publishing markers with a 'points' array, the 'color' field takes 1 RGBA object to apply to all points,
+ * while the 'colors' field takes in an array of RGBA objects to apply to each point. When both are present,
+ * the 'colors' field overrides the 'color' field.
+  */
+export declare type ArrowMarker = MultiPointMarker & {
   type: 0,
-  points?: Point[],
   size?: ArrowSize,
 }
 
@@ -126,7 +143,7 @@ export declare type TriangleListMarker = MultiPointMarker & {
 };
 
 export declare type MeshMarker = MultiPointMarker & {
-  type: 11
+  type: 10
 };
 
 export declare type FilledPolygonMarker = MultiPointMarker & {

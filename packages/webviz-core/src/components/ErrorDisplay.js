@@ -19,6 +19,7 @@ import Modal, { Title } from "webviz-core/src/components/Modal";
 import renderToBody from "webviz-core/src/components/renderToBody";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import colors from "webviz-core/src/styles/colors.module.scss";
+import { colors as RobotStylesColors } from "webviz-core/src/util/colors";
 import { setErrorHandler, unsetErrorHandler, type DetailsType } from "webviz-core/src/util/reportError";
 
 type ErrorMessage = {
@@ -32,8 +33,10 @@ type ErrorMessage = {
 const Container = styled.div`
   height: 100%;
   display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
   align-items: center;
-  padding: 0px 7px;
+  padding: 0px 8px;
   transition: background-color 200ms linear;
   background-color: ${(props) => (props.flash ? colors.red : "")};
   color: ${(props) => (props.flash ? "white" : props.unread ? colors.red : "rgba(255, 255, 255, 0.5)")};
@@ -221,23 +224,26 @@ export default class ErrorDisplay extends React.PureComponent<{}, State> {
     const { errors, showMostRecent, showErrorList } = this.state;
     const unreadCount = errors.reduce((acc, err) => acc + (err.read ? 0 : 1), 0);
     const hasUnread = unreadCount > 0;
-    const iconStyle = showMostRecent ? { color: "#991B30" } : {};
     return (
       <Container flash={showMostRecent} unread={hasUnread}>
-        {/* push everything to the right */}
-        <div style={{ flex: "1 1 auto" }} />
         {!!errors.length && (
           <ChildToggle position="below" isOpen={showErrorList} onToggle={this.toggleErrorList}>
-            <div>
-              <Fader visible={showMostRecent} style={{ paddingRight: 10 }}>
-                {errors[0].message}
-              </Fader>
-              <span style={iconStyle}>
+            <div style={{ display: "flex", flex: "1 1 auto", alignItems: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flex: "none",
+                  alignItems: "center",
+                  color: showMostRecent && RobotStylesColors.RED1,
+                }}>
                 <Fader visible={hasUnread}>{unreadCount || ""}</Fader>
                 <Icon small tooltip="Errors">
                   <BellIcon />
                 </Icon>
-              </span>
+              </div>
+              <Fader visible={showMostRecent} style={{ paddingLeft: 5, cursor: "pointer" }}>
+                {errors[0].message}
+              </Fader>
             </div>
             <ErrorList errors={errors} onClick={showErrorModal} />
           </ChildToggle>

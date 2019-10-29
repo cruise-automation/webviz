@@ -30,7 +30,7 @@ function ErrorExample() {
   const [error, setError] = React.useState<?string>();
   return (
     <>
-      <TextField value="foo" validator={validator} onError={setError} />
+      <TextField value="foo" validator={validator} onError={setError} hideInlineError />
       <strong>This is a custom error UI: {error}</strong>
     </>
   );
@@ -108,7 +108,7 @@ storiesOf("<TextField>", module)
         <Box title="focusOnMount">
           <TextField defaultValue="foo" focusOnMount />
         </Box>
-        <Box title="use onError to show custom error UI">
+        <Box title="use hideInlineError to show custom error UI">
           <ErrorExample />
         </Box>
         <Box title="by default, validate on mount">

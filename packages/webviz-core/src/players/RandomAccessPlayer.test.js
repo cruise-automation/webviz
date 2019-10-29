@@ -1167,7 +1167,7 @@ describe("RandomAccessPlayer", () => {
     const player = new RandomAccessPlayer(
       { name: "TestProvider", args: { provider }, children: [] },
       new NoopMetricsCollector(),
-      { autoplay: true, seekToTime: null }
+      { autoplay: true, seekToTime: null, frameSizeMs: null }
     );
     const store = new MessageStore(2);
     player.setSubscriptions([{ topic: "/foo/bar" }]);

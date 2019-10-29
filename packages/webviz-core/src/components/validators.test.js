@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { cameraStateValidator, polygonPointsValidator, point2DValidator } from "./validators";
+import { cameraStateValidator, polygonPointsValidator, point2DValidator, isWebsocketUrl } from "./validators";
 
 describe("cameraStateValidator", () => {
   it("returns undefined for empty object input", () => {
@@ -76,37 +76,37 @@ describe("cameraStateValidator", () => {
 });
 
 describe("polygonPointsValidator", () => {
-  it("returns undefined for valid input", async () => {
+  it("returns undefined for valid input", () => {
     expect(polygonPointsValidator([[{ x: 1, y: 2 }]])).toEqual(undefined);
   });
-  it("returns undefined for null or empty input", async () => {
+  it("returns undefined for null or empty input", () => {
     expect(polygonPointsValidator([])).toEqual(undefined);
     expect(polygonPointsValidator()).toEqual(undefined);
     expect(polygonPointsValidator("")).toEqual(undefined);
     expect(polygonPointsValidator({})).toEqual(undefined);
   });
-  it("returns error for non-array input", async () => {
+  it("returns error for non-array input", () => {
     expect(polygonPointsValidator(123)).toEqual("must be an array of nested x and y points");
     expect(polygonPointsValidator([{}])).toEqual("must be an array of x and y points");
   });
-  it("returns error for non-number input", async () => {
+  it("returns error for non-number input", () => {
     expect(polygonPointsValidator([[{ x: "1", y: 1 }, { x: 2, y: 2 }, { x: 3, y: 3 }]])).toEqual(
       "x and y points must be numbers"
     );
   });
-  it("returns error when missing input for x/y point", async () => {
+  it("returns error when missing input for x/y point", () => {
     expect(polygonPointsValidator([[{ y: 1 }, { x: 2, y: 2 }, { x: 3, y: 3 }]])).toEqual("must contain x and y points");
   });
-  it("does not return error when the input points have 0 as coordinates", async () => {
+  it("does not return error when the input points have 0 as coordinates", () => {
     expect(polygonPointsValidator([[{ x: 0.000001, y: 0.0 }, { x: 0, y: 0.0 }]])).toEqual(undefined);
   });
 });
 
 describe("point2DValidator", () => {
-  it("returns undefined for valid input", async () => {
+  it("returns undefined for valid input", () => {
     expect(point2DValidator({ x: 1, y: 2 })).toEqual(undefined);
   });
-  it("returns error for non-array input", async () => {
+  it("returns error for non-array input", () => {
     expect(point2DValidator({})).toEqual({ x: "is required", y: "is required" });
     expect(point2DValidator()).toEqual({ x: "is required", y: "is required" });
     expect(point2DValidator("")).toEqual({ x: "is required", y: "is required" });
@@ -114,9 +114,24 @@ describe("point2DValidator", () => {
     expect(point2DValidator(123)).toEqual({ x: "is required", y: "is required" });
   });
 
-  it("returns error when x/y field validation fails", async () => {
+  it("returns error when x/y field validation fails", () => {
     expect(point2DValidator({ x: 1 })).toEqual({ y: "is required" });
     expect(point2DValidator({ x: "1" })).toEqual({ x: "must be a number", y: "is required" });
     expect(point2DValidator({ x: 1, y: "2" })).toEqual({ y: "must be a number" });
+  });
+});
+
+describe("isWebsocketUrl", () => {
+  it("validates if the input string is websocket url", () => {
+    let val = " ";
+    expect(isWebsocketUrl(val)).toEqual(`${val} is not a valid WebSocket URL`);
+    val = "ws:";
+    expect(isWebsocketUrl(val)).toEqual(`${val} is not a valid WebSocket URL`);
+    expect(isWebsocketUrl("ws://example.com")).toEqual(undefined);
+    expect(isWebsocketUrl("wss://example.me")).toEqual(undefined);
+    expect(isWebsocketUrl("ws://localhost:3000")).toEqual(undefined);
+    expect(isWebsocketUrl("ws://some-desktop:3000")).toEqual(undefined);
+    expect(isWebsocketUrl("ws://some_desktop:80")).toEqual(undefined);
+    expect(isWebsocketUrl("wss://localhost:3000")).toEqual(undefined);
   });
 });

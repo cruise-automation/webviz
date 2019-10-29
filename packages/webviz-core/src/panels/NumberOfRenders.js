@@ -18,14 +18,14 @@ import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 
 // Little dummy panel that just shows the number of renders that happen when not subscribing
 // to anything. Useful for debugging performance issues.
-let panelRenderRenderCount = 0;
+let panelRenderCount = 0;
 let messageHistoryRenderCount = 0;
 let useMessagesRenderCount = 0;
 let messagePipelineRenderCount = 0;
 
 window.getNumberOfRendersCountsForTests = function() {
   return {
-    panelRenderRenderCount,
+    panelRenderCount,
     messageHistoryRenderCount,
     useMessagesRenderCount,
     messagePipelineRenderCount,
@@ -49,7 +49,7 @@ function MessagePipelineRendersComponent() {
 }
 
 function NumberOfRenders(): React.Node {
-  panelRenderRenderCount++;
+  panelRenderCount++;
   return (
     <Flex col>
       <PanelToolbar />
@@ -57,7 +57,7 @@ function NumberOfRenders(): React.Node {
         <MessageHistory paths={[]}>
           {() => (
             <>
-              panelRenderRenderCount: {panelRenderRenderCount} <br />
+              panelRenderCount: {panelRenderCount} <br />
               messageHistoryRenderCount: {++messageHistoryRenderCount}
             </>
           )}

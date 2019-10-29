@@ -9,7 +9,8 @@
 import FetchReader from "webviz-core/src/dataProviders/FetchReader";
 import type { FileReader, FileStream } from "webviz-core/src/util/CachedFilelike";
 
-const corsError = `Often this is due to missing CORS headers on the requested URL.
+function corsError(url: string): string {
+  return `Often this is due to missing CORS headers on the requested URL: ${url}
 
 First of all, be aware that redirects don't work with CORS. So you'll have to point to the resource directly. So https://webviz.io/try/?remote-bag-url=https%3A%2F%2Fopen-source-webviz-ui.s3.amazonaws.com%2Fdemo.bag will work (note the URL encoded using "encodeURIComponent"), but pointing to a server that then redirects to a URL like that will NOT work.
 
@@ -35,6 +36,7 @@ cors {
 You can also have your own server to host files, but be aware that it has to support both range requests and CORS, which can be quite complicated to set up. So we recommend hosting your bag files in a cloud provider like S3 or GCS.
 
 `;
+}
 
 // A file reader that reads from a remote HTTP URL, for usage in the browser (not for node.js).
 export default class BrowserHttpReader implements FileReader {
@@ -57,17 +59,17 @@ export default class BrowserHttpReader implements FileReader {
       response = await fetch(this._url, { signal: controller.signal });
       controller.abort();
     } catch (error) {
-      throw new Error(`Fetching remote file failed. ${corsError} ${error}`);
+      throw new Error(`Fetching remote file failed. ${corsError(this._url)} ${error}`);
     }
     if (!response || !response.ok) {
-      throw new Error(`Fetching remote file failed. ${corsError} Status code: ${response.status}.`);
+      throw new Error(`Fetching remote file failed. ${corsError(this._url)} Status code: ${response.status}.`);
     }
     if (response.headers.get("accept-ranges") !== "bytes") {
-      throw new Error(`Remote file does not support HTTP Range Requests. ${corsError}`);
+      throw new Error(`Remote file does not support HTTP Range Requests. ${corsError(this._url)}`);
     }
     const size = response.headers.get("content-length");
     if (!size) {
-      throw new Error(`Remote file is missing file size. ${corsError}`);
+      throw new Error(`Remote file is missing file size. ${corsError(this._url)}`);
     }
     return { size: parseInt(size), identifier: response.headers.get("etag") || response.headers.get("last-modified") };
   }

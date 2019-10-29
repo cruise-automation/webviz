@@ -94,7 +94,7 @@ export default class RandomAccessPlayer implements Player {
     }
     this._metricsCollector = metricsCollector;
 
-    this._playerOptions = playerOptions || { autoplay: false, seekToTime: null };
+    this._playerOptions = playerOptions || { autoplay: false, seekToTime: null, frameSizeMs: null };
 
     document.addEventListener("visibilitychange", this._handleDocumentVisibilityChange, false);
   }
@@ -261,7 +261,7 @@ export default class RandomAccessPlayer implements Player {
     // if the UI lags substantially due to GC and the delay between reads is high
     // it can result in reading a very large chunk of messages which introduces
     // even _more_ delay before the next read loop triggers, causing serious cascading UI jank.
-    const rangeMillis = Math.min(durationMillis, 80) * this._speed;
+    const rangeMillis = this._playerOptions.frameSizeMs || Math.min(durationMillis, 80) * this._speed;
 
     // loop to the beginning if we pass the end of the playback range
     if (isEqual(this._currentTime, this._end)) {
@@ -429,6 +429,8 @@ export default class RandomAccessPlayer implements Player {
     const seekTime = Date.now();
     this._lastSeekTime = seekTime;
     this._cancelSeekBackfill = false;
+    // cancel any queued _emitState that might later emit messages from before we seeked
+    this._messages = [];
 
     // do not _emitState if subscriptions have changed, but time has not
     if (isEqual(this._currentTime, time)) {
@@ -479,7 +481,7 @@ export default class RandomAccessPlayer implements Player {
   close() {
     this._isPlaying = false;
     this._closed = true;
-    if (!this._initializing) {
+    if (!this._initializing && !this._hasError) {
       this._provider.close();
     }
     this._metricsCollector.close();

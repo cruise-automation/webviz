@@ -10,6 +10,8 @@ import memoize from "lodash/memoize";
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { DIAGNOSTIC_TOPIC } from "./util/globalConstants";
+
 // We put all the internal requires inside functions, so that when they load the hooks have been properly set.
 
 const defaultHooks = {
@@ -47,10 +49,6 @@ const defaultHooks = {
     ];
   },
   panelsByCategory() {
-    const { ENABLE_NODE_PLAYGROUND_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
-    const params = new URLSearchParams(window.location.search);
-    const nodePlaygroundEnabled = params.has(ENABLE_NODE_PLAYGROUND_QUERY_KEY);
-
     const DiagnosticStatusPanel = require("webviz-core/src/panels/diagnostics/DiagnosticStatusPanel").default;
     const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
     const ImageViewPanel = require("webviz-core/src/panels/ImageView").default;
@@ -78,7 +76,7 @@ const defaultHooks = {
     ];
 
     const utilities = [
-      nodePlaygroundEnabled ? { title: "Node Playground", component: NodePlayground } : null,
+      { title: "Node Playground", component: NodePlayground },
       { title: "Notes", component: Note },
       { title: "Webviz Internals", component: Internals },
     ];
@@ -116,7 +114,13 @@ const defaultHooks = {
           },
         },
       },
-      DiagnosticSummary: { defaultConfig: { pinnedIds: [], hardwareIdFilter: "" } },
+      DiagnosticSummary: {
+        defaultConfig: {
+          pinnedIds: [],
+          hardwareIdFilter: "",
+          topicToRender: DIAGNOSTIC_TOPIC,
+        },
+      },
       ImageView: {
         defaultConfig: {
           cameraTopic: "",

@@ -32,10 +32,11 @@ type Props = {
   defaultValue?: string,
   focusOnMount?: boolean,
   inputStyle: { [string]: string | number },
+  hideInlineError?: boolean,
   label?: string,
   onBlur: () => void,
   onChange: (value: string) => void,
-  onError?: (error: string) => void,
+  onError?: (error: ?string) => void,
   placeholder?: string,
   style: { [string]: string | number },
   validateOnBlur?: boolean,
@@ -47,6 +48,7 @@ export default function TextField({
   defaultValue,
   focusOnMount,
   inputStyle,
+  hideInlineError,
   label,
   onBlur,
   onChange,
@@ -88,7 +90,7 @@ export default function TextField({
 
   useLayoutEffect(
     () => {
-      if (onError && error) {
+      if (onError) {
         onError(error);
       }
     },
@@ -147,7 +149,7 @@ export default function TextField({
         onChange={handleChange}
         {...rest}
       />
-      {error && !onError && <SError>{error}</SError>}
+      {error && !hideInlineError && <SError>{error}</SError>}
     </STextField>
   );
 }

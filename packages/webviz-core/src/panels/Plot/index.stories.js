@@ -249,7 +249,7 @@ storiesOf("<Plot>", module)
   .add("line graph", () => {
     return (
       <PanelSetup fixture={fixture}>
-        <Plot config={{ paths, minYValue: "", maxYValue: "5.5" }} />
+        <Plot config={{ paths, minYValue: "", maxYValue: "" }} />
       </PanelSetup>
     );
   })
@@ -262,13 +262,13 @@ storiesOf("<Plot>", module)
             const canvasEl = el.querySelector("canvas");
             // Zoom is a continuous event, so we need to simulate wheel multiple times
             if (canvasEl) {
-              for (let i = 0; i < 10; i++) {
+              for (let i = 0; i < 5; i++) {
                 triggerWheel(canvasEl, 1);
               }
             }
           }, 100);
         }}>
-        <Plot config={{ paths, minYValue: "", maxYValue: "5.5" }} />
+        <Plot config={{ paths, minYValue: "", maxYValue: "" }} />
       </PanelSetup>
     );
   })
@@ -387,13 +387,13 @@ storiesOf("<Plot>", module)
               },
             ],
             minYValue: "1",
-            maxYValue: "1.8",
+            maxYValue: "2.8",
           }}
         />
       </PanelSetup>
     );
   })
-  .add("with just min Y value", () => {
+  .add("with just min Y value less than minimum value", () => {
     return (
       <PanelSetup fixture={fixture}>
         <Plot
@@ -412,7 +412,26 @@ storiesOf("<Plot>", module)
       </PanelSetup>
     );
   })
-  .add("with just max Y value", () => {
+  .add("with just min Y value more than minimum value", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            paths: [
+              {
+                value: "/some_topic/location.pose.velocity",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
+            minYValue: "1.4",
+            maxYValue: "",
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("with just max Y value less than maximum value", () => {
     return (
       <PanelSetup fixture={fixture}>
         <Plot
@@ -426,6 +445,25 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "",
             maxYValue: "1.8",
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("with just max Y value more than maximum value", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            paths: [
+              {
+                value: "/some_topic/location.pose.velocity",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
+            minYValue: "",
+            maxYValue: "2.8",
           }}
         />
       </PanelSetup>
@@ -454,7 +492,7 @@ storiesOf("<Plot>", module)
               },
             ],
             minYValue: "",
-            maxYValue: "5.5",
+            maxYValue: "",
           }}
         />
       </PanelSetup>

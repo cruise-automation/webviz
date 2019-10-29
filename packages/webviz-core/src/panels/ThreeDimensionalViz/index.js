@@ -12,7 +12,7 @@ import { omit } from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
 import { useSelector } from "react-redux";
-import { cameraStateSelectors, type CameraState } from "regl-worldview";
+import { cameraStateSelectors, type CameraState, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 import { FrameCompatibility } from "webviz-core/src/components/MessageHistory/FrameCompatibility";
 import { useShallowMemo } from "webviz-core/src/components/MessageHistory/hooks";
@@ -82,18 +82,13 @@ const BaseRenderer = (props: Props, ref) => {
       checkedNodes,
       convexHullOpacity,
       expandedNodes,
-      flattenMarkers,
-      follow,
       followOrientation,
       followTf,
-      hideMap,
       modifiedNamespaceTopics,
       pinTopics,
-      savedPropsVersion,
       selectedPolygonEditFormat,
       showCrosshair,
       topicSettings,
-      useHeightMap,
     },
   } = props;
   const extensions = useSelector((state) => state.extensions);
@@ -118,6 +113,7 @@ const BaseRenderer = (props: Props, ref) => {
     });
     return root.getSelections();
   });
+
   const { cameraState, targetPose } = useComputedCameraState({
     currentCameraState: config.cameraState,
     followTf,
@@ -164,7 +160,12 @@ const BaseRenderer = (props: Props, ref) => {
         // When switching to follow orientation, adjust thetaOffset to preserve camera rotation.
         if (newFollowOrientation && !configFollowOrientation && targetPose) {
           const heading = cameraStateSelectors.targetHeading({ targetOrientation: targetPose.targetOrientation });
-          newCameraState.targetOffset = vec3.rotateZ([0, 0, 0], newCameraState.targetOffset, [0, 0, 0], heading);
+          newCameraState.targetOffset = vec3.rotateZ(
+            [0, 0, 0],
+            newCameraState.targetOffset || DEFAULT_CAMERA_STATE.targetOffset,
+            [0, 0, 0],
+            heading
+          );
           newCameraState.thetaOffset -= heading;
         }
         // When following a frame for the first time, snap to the origin.
@@ -177,8 +178,8 @@ const BaseRenderer = (props: Props, ref) => {
           newCameraState,
           getEquivalentOffsetsWithoutTarget(
             {
-              targetOffset: configCameraState.targetOffset || [0, 0, 0],
-              thetaOffset: configCameraState.thetaOffset,
+              targetOffset: configCameraState.targetOffset || DEFAULT_CAMERA_STATE.targetOffset,
+              thetaOffset: configCameraState.thetaOffset || DEFAULT_CAMERA_STATE.thetaOffset,
             },
             targetPose,
             configFollowOrientation
@@ -221,13 +222,10 @@ const BaseRenderer = (props: Props, ref) => {
       currentTime={currentTime}
       expandedNodes={expandedNodes}
       extensions={extensions}
-      flattenMarkers={flattenMarkers}
-      follow={follow}
       followOrientation={!!followOrientation}
       followTf={followTf}
       frame={frame}
       helpContent={helpContent}
-      hideMap={hideMap}
       isPlaying={isPlaying}
       modifiedNamespaceTopics={modifiedNamespaceTopics}
       onAlignXYAxis={onAlignXYAxis}
@@ -235,7 +233,6 @@ const BaseRenderer = (props: Props, ref) => {
       onFollowChange={onFollowChange}
       pinTopics={pinTopics}
       saveConfig={saveConfig}
-      savedPropsVersion={savedPropsVersion}
       selectedPolygonEditFormat={selectedPolygonEditFormat || "yaml"}
       selections={selections}
       setSelections={setSelections}
@@ -243,7 +240,6 @@ const BaseRenderer = (props: Props, ref) => {
       topics={topics}
       topicSettings={topicSettings}
       transforms={transforms}
-      useHeightMap={useHeightMap}
     />
   );
 };

@@ -22,6 +22,7 @@ export const Title = styled.h3`
   padding-bottom: 16px;
   color: ${colors.textBright};
   font-size: 22px;
+  line-height: 1.4;
 `;
 
 const Container = styled.div`

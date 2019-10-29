@@ -76,7 +76,7 @@ const Editor = ({ script, setScript, vimMode }: Props) => {
             model:
               monacoApi.editor.getModel("file:///main.ts") ||
               monacoApi.editor.createModel(script, "typescript", monacoApi.Uri.parse("file:///main.ts")),
-
+            wordWrap: "on",
             minimap: {
               enabled: false,
             },

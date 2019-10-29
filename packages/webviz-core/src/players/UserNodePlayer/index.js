@@ -55,7 +55,6 @@ export default class UserNodePlayer implements Player {
   _player: Player;
   _nodeRegistrations: NodeRegistration[] = [];
   _subscriptions: SubscribePayload[] = [];
-  _lastSeekTime: ?number;
   _userNodes: UserNodes = {};
   // TODO: FUTURE - Terminate unused workers (some sort of timeout, for whole array or per rpc)
   // Not sure if there is perf issue with unused workers (may just go idle) - requires more research
@@ -86,11 +85,37 @@ export default class UserNodePlayer implements Player {
     };
   }
 
+  _getTopics = microMemoize((topics: Topic[], nodeRegistrations: NodeRegistration[]) => {
+    return [...topics, ...nodeRegistrations.map((nodeRegistration) => nodeRegistration.output)];
+  });
+
+  // When updating Webviz nodes while paused, we seek to the current time
+  // (i.e. invoke _getMessages with an empty array) to refresh messages
+  _getMessages = microMemoize(
+    async (messages: Message[]): Promise<Message[]> => {
+      const promises = [];
+      for (const message of messages) {
+        for (const nodeRegistration of this._nodeRegistrations) {
+          if (
+            this._subscriptions.find(({ topic }) => topic === nodeRegistration.output.name) &&
+            nodeRegistration.inputs.includes(message.topic)
+          ) {
+            promises.push(nodeRegistration.processMessage(message));
+          }
+        }
+      }
+      const nodeMessages: Message[] = (await Promise.all(promises)).filter(Boolean);
+      return [...messages, ...nodeMessages].sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime));
+    }
+  );
+
+  _getDatatypes = microMemoize((datatypes, userDatatypes) => ({ ...userDatatypes, ...datatypes }));
+
   // Called when userNode state is updated.
   async setUserNodes(userNodes: UserNodes): Promise<void> {
     this._userNodes = userNodes;
 
-    // TOOD: Currently the below causes us to reset workers twice, since we are
+    // TODO: Currently the below causes us to reset workers twice, since we are
     // forcing a 'seek' here.
     return this._resetWorkers().then(() => {
       const currentTime = this._lastPlayerStateActiveData && this._lastPlayerStateActiveData.currentTime;
@@ -184,6 +209,13 @@ export default class UserNodePlayer implements Player {
   // For the time being, resetWorkers is a catchall for these circumstances. As
   // performance bottlenecks are identified, it will be subject to change.
   async _resetWorkers() {
+    // This early return is an optimization measure so that the
+    // `nodeRegistrations` array is not re-defined, which will invalidate
+    // downstream caches. (i.e. `this._getTopics`)
+    if (!this._nodeRegistrations.length && !Object.entries(this._userNodes).length) {
+      return;
+    }
+
     for (const nodeRegistration of this._nodeRegistrations) {
       nodeRegistration.terminate();
     }
@@ -219,16 +251,16 @@ export default class UserNodePlayer implements Player {
 
   setListener(listener: (PlayerState) => Promise<void>) {
     this._player.setListener(async (playerState: PlayerState) => {
-      if (playerState.activeData) {
-        const { lastSeekTime, messages, topics } = playerState.activeData;
-        this._lastSeekTime = lastSeekTime;
+      const { activeData } = playerState;
+      if (activeData) {
+        const { messages, topics, datatypes } = activeData;
 
         // For resetting node state after seeking.
         // TODO: Make resetWorkers more efficient in this case since we don't
         // need to recompile/validate anything.
         if (
           this._lastPlayerStateActiveData &&
-          playerState.activeData.lastSeekTime !== this._lastPlayerStateActiveData.lastSeekTime
+          activeData.lastSeekTime !== this._lastPlayerStateActiveData.lastSeekTime
         ) {
           await this._resetWorkers();
         }
@@ -236,35 +268,19 @@ export default class UserNodePlayer implements Player {
         // player just spun up, meaning we should re-run our user nodes in case
         // they have inputs that now exist in the current player context.
         if (!this._lastPlayerStateActiveData) {
-          this._lastPlayerStateActiveData = playerState.activeData;
+          this._lastPlayerStateActiveData = activeData;
           await this._resetWorkers().then(() => {
             this.setSubscriptions(this._subscriptions);
           });
         }
 
-        const promises = [];
-        for (const message of messages) {
-          for (const nodeRegistration of this._nodeRegistrations) {
-            if (
-              this._subscriptions.find(({ topic }) => topic === nodeRegistration.output.name) &&
-              nodeRegistration.inputs.includes(message.topic)
-            ) {
-              promises.push(nodeRegistration.processMessage(message));
-            }
-          }
-        }
-
-        const nodeMessages: Message[] = (await Promise.all(promises)).filter(Boolean);
         const newPlayerState = {
           ...playerState,
           activeData: {
-            ...playerState.activeData,
-            messages: [...messages, ...nodeMessages].sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime)),
+            ...activeData,
+            messages: await this._getMessages(messages),
             topics: this._getTopics(topics, this._nodeRegistrations),
-            datatypes: {
-              ...this._userDatatypes,
-              ...(playerState.activeData ? playerState.activeData.datatypes : {}),
-            },
+            datatypes: this._getDatatypes(datatypes, this._userDatatypes),
           },
         };
 
@@ -311,9 +327,4 @@ export default class UserNodePlayer implements Player {
   pausePlayback = () => this._player.pausePlayback();
   setPlaybackSpeed = (speed: number) => this._player.setPlaybackSpeed(speed);
   seekPlayback = (time: Time) => this._player.seekPlayback(time);
-
-  _getTopics = microMemoize((topics: Topic[], nodeRegistrations: NodeRegistration[]) => [
-    ...topics,
-    ...nodeRegistrations.map((nodeRegistration) => nodeRegistration.output),
-  ]);
 }

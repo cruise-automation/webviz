@@ -71,9 +71,11 @@ class UnconnectedAppMenu extends Component<Props, State> {
     const { isOpen } = this.state;
     return (
       <ChildToggle position="below" onToggle={this._onToggle} isOpen={isOpen}>
-        <Icon small fade active={isOpen} tooltip="Add Panel">
-          <PlusBoxIcon />
-        </Icon>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <Icon small fade active={isOpen} tooltip="Add Panel">
+            <PlusBoxIcon />
+          </Icon>
+        </div>
         <Menu>
           {/* $FlowFixMe - not sure why it thinks onPanelSelect is a Redux action */}
           <PanelList onPanelSelect={this._onPanelSelect} />

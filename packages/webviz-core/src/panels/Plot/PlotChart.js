@@ -10,6 +10,7 @@ import React, { PureComponent } from "react";
 import Dimensions from "react-container-dimensions";
 import { createSelector } from "reselect";
 import { Time } from "rosbag";
+import uuid from "uuid";
 
 import styles from "./PlotChart.module.scss";
 import { getTimestampForMessage, type MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistory";
@@ -93,7 +94,7 @@ function getDatasetFromMessagePlotPath(
 
   return {
     borderColor: lineColors[index % lineColors.length],
-    label: path.value,
+    label: path.value || uuid.v4(),
     key: index.toString(),
     showLine,
     fill: false,

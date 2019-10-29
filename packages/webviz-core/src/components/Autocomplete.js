@@ -331,6 +331,7 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
           // The longest string might not be the widest (e.g. "|||" vs "www"), but this is
           // quite a bit faster, so we throw in a nice padding and call it good enough! :-)
           const width = measureText(getItemText(maxBy(autocompleteItems, (item) => getItemText(item).length))) + 50;
+          const maxHeight = `calc(100vh - 10px - ${style.top}px)`;
 
           return (
             <div
@@ -339,8 +340,8 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
               style={
                 // If the autocomplete would fall off the screen, pin it to the right.
                 style.left + width <= window.innerWidth
-                  ? { ...menuStyle, ...style, width }
-                  : { ...menuStyle, ...style, width, left: "auto", right: 0 }
+                  ? { ...menuStyle, ...style, width, maxHeight }
+                  : { ...menuStyle, ...style, width, maxHeight, left: "auto", right: 0 }
               }
               onScroll={this._onScroll}>
               {/* Have to wrap onMouseEnter and onMouseLeave in a separate <div>, as react-autocomplete

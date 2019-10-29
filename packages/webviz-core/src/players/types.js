@@ -239,4 +239,5 @@ export interface PlayerMetricsCollectorInterface {
 export type PlayerOptions = {|
   autoplay: ?boolean,
   seekToTime: ?Time,
+  frameSizeMs: ?number,
 |};

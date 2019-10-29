@@ -45,6 +45,7 @@ type Props = {|
   helpContent?: React.Node,
   menuContent?: React.Node,
   showPanelName?: boolean,
+  additionalIcons?: React.Node,
 |};
 
 // separated into a sub-component so it can always skip re-rendering
@@ -162,10 +163,12 @@ const ConnectedStandardMenuItems = connect(
 // whole PanelToolbar when only children change.
 const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Props) {
   const panelData = useContext(PanelContext);
-  const { floating, helpContent, menuContent, showPanelName } = props;
+  const { floating, helpContent, menuContent, showPanelName, additionalIcons } = props;
+
   return (
     <div className={styles.iconContainer}>
       {showPanelName && panelData && <div className={styles.panelName}>{panelData.title}</div>}
+      {additionalIcons}
       {helpContent && <HelpButton>{helpContent}</HelpButton>}
       <Dropdown
         flatEdges={!floating}
@@ -195,7 +198,7 @@ const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Pro
 // and has a place to add custom controls via it's children property
 export default class PanelToolbar extends React.PureComponent<Props> {
   render() {
-    const { children, floating, helpContent, menuContent } = this.props;
+    const { children, floating, helpContent, menuContent, additionalIcons } = this.props;
     return (
       <Dimensions>
         {({ width }) => (
@@ -213,6 +216,7 @@ export default class PanelToolbar extends React.PureComponent<Props> {
                   helpContent={helpContent}
                   menuContent={menuContent}
                   showPanelName={width > 360}
+                  additionalIcons={additionalIcons}
                 />
               </div>
             )}

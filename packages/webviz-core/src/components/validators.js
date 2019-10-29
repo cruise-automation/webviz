@@ -84,6 +84,13 @@ export const isNotPrivate = (value: any): ?string =>
 // return the first error
 const join = (rules) => (value) => rules.map((rule) => rule(value)).filter((error) => !!error)[0];
 
+export const isWebsocketUrl = (value: string): ?string => {
+  const pattern = new RegExp(`wss?://[a-z.-_\\d]+(:(d+))?`, "gi");
+  if (!pattern.test(value)) {
+    return `${value} is not a valid WebSocket URL`;
+  }
+};
+
 export const createValidator = (rules: Rules) => {
   return (data: any = {}): { [field: string]: string } => {
     const errors = {};

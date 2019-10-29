@@ -17,6 +17,9 @@ $spacing: 4px;
   flex-direction: row;
   min-height: 22px;
   padding: 2px 2px 2px 6px;
+  svg {
+    font-size: 14px;
+  }
 }
 
 .panelName {

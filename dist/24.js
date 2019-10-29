@@ -1,4 +1,4 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([[24],{3101:
+(window.webpackJsonp=window.webpackJsonp||[]).push([[24],{3108:
 /*!*********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/basic-languages/java/java.js ***!
   \*********************************************************************************************/

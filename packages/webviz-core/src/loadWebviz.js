@@ -165,7 +165,10 @@ const defaultHooks = {
         },
         consumePose: () => {},
         getMarkerColor: (topic, markerColor) => markerColor,
-        getDefaultTopicTree: () => ({ name: "root" }),
+        getDefaultTopicTree: () => ({
+          name: "root",
+          children: [{ name: "TF", children: [], description: "Visualize relationships between /tf frames." }],
+        }),
         hasBlacklistTopics: () => false,
         ungroupedNodesCategory: "Topics",
         rootTransformFrame: "map",

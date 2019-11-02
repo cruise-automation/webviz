@@ -6,6 +6,18 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import type { Topic } from "webviz-core/src/players/types";
+import {
+  constructDatatypes,
+  findReturnType,
+  findDefaultExportFunction,
+  DatatypeExtractionError,
+} from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ast";
+import { lib_es6_dts, lib_filename } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/lib";
+import {
+  ros_lib_dts,
+  ros_lib_filename,
+} from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
 import {
   baseCompilerOptions,
   transformDiagnosticToMarkerData,
@@ -16,11 +28,11 @@ import {
   ErrorCodes,
   type NodeData,
   type Diagnostic,
-  type NodeRegistration,
   type PlayerInfo,
   type NodeDataTransformer,
 } from "webviz-core/src/players/UserNodePlayer/types";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
+import reportError from "webviz-core/src/util/reportError";
 
 // Typescript is required since the `import` syntax breaks VSCode, presumably
 // because VSCode has Typescript built in and our import is conflicting with
@@ -29,9 +41,10 @@ import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants
 const ts = require("typescript/lib/typescript");
 
 export const getInputTopics = (nodeData: NodeData): NodeData => {
+  const inputTopicDeclaration = nodeData.sourceCode.match(/^\s*export\s+const\s+inputs\s*=\s*\[[^\]]*\]/gm);
   const inputTopics: $ReadOnlyArray<string> = Array.from(
     // $FlowFixMe - does not like matchAll
-    nodeData.sourceCode.matchAll(/^\s*export\s+const\s+inputs\s*=\s*\[\s*("([^"]+)"|'([^']+)')\s*\]/gm),
+    (inputTopicDeclaration ? inputTopicDeclaration[0] : "").matchAll(/("([^"]+)"|'([^']+)')/g),
     (match) => {
       // Pick either the first matching group or the second, which corresponds
       // to single quotes or double quotes respectively.
@@ -42,7 +55,7 @@ export const getInputTopics = (nodeData: NodeData): NodeData => {
   if (!inputTopics.length) {
     const error: Diagnostic = {
       severity: DiagnosticSeverity.Error,
-      message: 'Must include non-empty inputs array, e.g. "const inputs = ["/some_input_topic"];',
+      message: 'Must include non-empty inputs array, e.g. export const inputs = ["/some_input_topic"];',
       source: Sources.InputTopicsChecker,
       code: ErrorCodes.InputTopicsChecker.NO_INPUTS,
     };
@@ -68,7 +81,7 @@ export const getOutputTopic = (nodeData: NodeData): NodeData => {
   if (!outputTopic) {
     const error = {
       severity: DiagnosticSeverity.Error,
-      message: `Must include an output, e.g. const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}your_output_topic";`,
+      message: `Must include an output, e.g. export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}your_output_topic";`,
       source: Sources.OutputTopicChecker,
       code: ErrorCodes.OutputTopicChecker.NO_OUTPUTS,
     };
@@ -85,7 +98,7 @@ export const getOutputTopic = (nodeData: NodeData): NodeData => {
   };
 };
 
-export const validateInputTopics = (nodeData: NodeData, playerStateActiveData: ?PlayerInfo): NodeData => {
+export const validateInputTopics = (nodeData: NodeData, playerStateActiveData: ?$ReadOnly<PlayerInfo>): NodeData => {
   const badInputTopic = nodeData.inputTopics.find((topic) => topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX));
   if (badInputTopic) {
     const error = {
@@ -123,8 +136,8 @@ export const validateInputTopics = (nodeData: NodeData, playerStateActiveData: ?
 
 export const validateOutputTopic = (
   nodeData: NodeData,
-  playerStateActiveData: ?PlayerInfo,
-  priorRegistrations: $ReadOnlyArray<NodeRegistration>
+  playerStateActiveData: ?$ReadOnly<PlayerInfo>,
+  priorRegisteredTopics: $ReadOnlyArray<Topic>
 ): NodeData => {
   const { outputTopic } = nodeData;
 
@@ -143,7 +156,7 @@ export const validateOutputTopic = (
     };
   }
 
-  if (priorRegistrations.some(({ output }) => output.name === outputTopic)) {
+  if (priorRegisteredTopics.some((topic) => topic.name === outputTopic)) {
     return {
       ...nodeData,
       diagnostics: [
@@ -196,12 +209,15 @@ export const compile = (nodeData: NodeData): NodeData => {
   // Reference:
   // Using the compiler api: https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API
   // CompilerHost: https://github.com/microsoft/TypeScript/blob/v3.5.3/lib/typescript.d.ts#L2752
+  // Architectual Overview: https://github.com/Microsoft/TypeScript/wiki/Architectural-Overview#overview-of-the-compilation-process
+
   const host: ts.CompilerHost = {
-    getDefaultLibFileName: () => "lib.d.ts",
+    getDefaultLibFileName: () => lib_filename,
     getCurrentDirectory: () => "",
     getCanonicalFileName: (fileName) => fileName,
     useCaseSensitiveFileNames: () => false,
-    fileExists: (fileName) => fileName === nodeFileName,
+    // TODO: path to ros lib differs for client vs. jest test
+    fileExists: (fileName) => fileName === nodeFileName || fileName.endsWith(`node_modules/${ros_lib_filename}`),
     writeFile: () => {
       throw new Error(
         "The compiler host `writeFile` was called, which does not have any handlers written for it. Please write one now that you have hit it!"
@@ -213,26 +229,73 @@ export const compile = (nodeData: NodeData): NodeData => {
       );
     },
     getSourceFile: (fileName) => {
-      // Typescript makes requests to `lib.d.ts`.
-      return ts.createSourceFile(
-        fileName,
-        fileName === nodeFileName ? sourceCode : "",
-        baseCompilerOptions.target,
-        true
-      );
+      let code = "";
+
+      if (fileName === nodeFileName) {
+        code = sourceCode;
+      } else if (fileName === lib_filename) {
+        code = lib_es6_dts;
+        // TODO: path to ros lib differs for client vs. jest test
+      } else if (fileName.endsWith(`node_modules/${ros_lib_filename}`)) {
+        code = ros_lib_dts;
+      }
+
+      return ts.createSourceFile(fileName, code, baseCompilerOptions.target, true);
     },
   };
 
   const program = ts.createProgram([nodeFileName], options, host);
   const diagnostics = [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()];
 
-  // For getting the source file node later on for traversing ASTs.
-  // const sourceFile = program.getSourceFile(mainFileName);
   const newDiagnostics = diagnostics.map(transformDiagnosticToMarkerData);
+
   return {
     ...nodeData,
+    program,
     diagnostics: [...nodeData.diagnostics, ...newDiagnostics],
   };
+};
+
+export const extractDatatypes = (nodeData: NodeData): NodeData => {
+  const { program, name } = nodeData;
+  if (!program) {
+    throw new Error("No TypeScript 'program'. There is a problem with the `compile` step.");
+  }
+
+  // Do not attempt to run if there were any compile time errors.
+  if (nodeData.diagnostics.find(({ source }) => source === Sources.Typescript)) {
+    return nodeData;
+  }
+
+  const nodeFileName = `${name}.ts`;
+
+  const source: ts.SourceFile = program.getSourceFile(nodeFileName);
+  const checker = program.getTypeChecker();
+
+  try {
+    const exportNode = findDefaultExportFunction(source, checker);
+    const typeNode = findReturnType(checker, 0, exportNode);
+    const { outputDatatype, datatypes } = constructDatatypes(checker, typeNode, name);
+    return { ...nodeData, datatypes, outputDatatype };
+  } catch (error) {
+    if (error instanceof DatatypeExtractionError) {
+      return { ...nodeData, diagnostics: [...nodeData.diagnostics, error.diagnostic] };
+    }
+    // If we've hit this case, then we should fix it.
+    reportError("Unknown error encountered in Node Playground. Please report to the webviz team.", error, "app");
+    return {
+      ...nodeData,
+      diagnostics: [
+        ...nodeData.diagnostics,
+        {
+          severity: DiagnosticSeverity.Error,
+          message: "Unkown error encountered. This is likely a problem with Node Playground itself.",
+          source: Sources.DatatypeExtraction,
+          code: ErrorCodes.DatatypeExtraction.UNKNOWN_ERROR,
+        },
+      ],
+    };
+  }
 };
 
 /*
@@ -240,11 +303,11 @@ TODO:
   - what happens when the `register` portion of the node pipeline fails to instantiate the code? can we get the stack trace?
 */
 export const compose = (...transformers: NodeDataTransformer[]): NodeDataTransformer => {
-  return (nodeData: NodeData, playerState: ?PlayerInfo, priorRegistrations: $ReadOnlyArray<NodeRegistration>) => {
+  return (nodeData: NodeData, playerState: ?$ReadOnly<PlayerInfo>, priorRegisteredTopics: $ReadOnlyArray<Topic>) => {
     let newNodeData = nodeData;
     // TODO: try/catch here?
     for (const transformer of transformers) {
-      newNodeData = transformer(newNodeData, playerState, priorRegistrations);
+      newNodeData = transformer(newNodeData, playerState, priorRegisteredTopics);
     }
     return newNodeData;
   };
@@ -266,34 +329,39 @@ const transform = ({
   name,
   sourceCode,
   playerInfo,
-  priorRegistrations,
+  priorRegisteredTopics,
 }: {
   name: string,
   sourceCode: string,
-  playerInfo: ?PlayerInfo,
-  priorRegistrations: $ReadOnlyArray<NodeRegistration>,
-}): NodeData => {
+  playerInfo: ?$ReadOnly<PlayerInfo>,
+  priorRegisteredTopics: $ReadOnlyArray<Topic>,
+}): NodeData & { program: ?void } => {
   const transformer = compose(
     getInputTopics,
     getOutputTopic,
     validateInputTopics,
     validateOutputTopic,
     transpile,
-    compile
+    compile,
+    extractDatatypes
   );
 
-  return transformer(
+  const result = transformer(
     {
       name,
       sourceCode,
       transpiledCode: "",
       inputTopics: [],
       outputTopic: "",
+      outputDatatype: "",
       diagnostics: [],
+      datatypes: {},
+      program: undefined,
     },
     playerInfo,
-    priorRegistrations
+    priorRegisteredTopics
   );
+  return { ...result, program: null };
 };
 
 export default transform;

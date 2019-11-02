@@ -10,24 +10,35 @@ import React, { PureComponent } from "react";
 import Dimensions from "react-container-dimensions";
 import { createSelector } from "reselect";
 import { Time } from "rosbag";
+import uuid from "uuid";
 
 import styles from "./PlotChart.module.scss";
-import MessageHistory, {
-  getTimestampForMessage,
-  type MessageHistoryData,
-  type MessageHistoryItemsByPath,
-} from "webviz-core/src/components/MessageHistory";
+import { getTimestampForMessage, type MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistory";
 import TimeBasedChart, { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
 import filterMap from "webviz-core/src/filterMap";
 import derivative from "webviz-core/src/panels/Plot/derivative";
 import { type PlotPath, isReferenceLinePlotPathType } from "webviz-core/src/panels/Plot/internalTypes";
 import { lightColor, lineColors } from "webviz-core/src/util/plotColors";
-import { subtractTimes, toSec } from "webviz-core/src/util/time";
+import { subtractTimes, format, formatTimeRaw, toSec } from "webviz-core/src/util/time";
 
 export type PlotChartPoint = {|
   x: number,
   y: number,
   tooltip: TimeBasedChartTooltipData,
+|};
+
+export type DataSet = {|
+  borderColor: string,
+  borderWidth: number,
+  data: Array<PlotChartPoint>,
+  fill: boolean,
+  key: string,
+  label: string,
+  pointBackgroundColor: string,
+  pointBorderColor: string,
+  pointHoverRadius: number,
+  pointRadius: number,
+  showLine: boolean,
 |};
 
 const Y_AXIS_ID = "Y_AXIS_ID";
@@ -48,11 +59,20 @@ function getDatasetFromMessagePlotPath(
     }
 
     for (const { value, path, constantName } of item.queriedData) {
+      const isTimeObj = value && typeof value === "object" && !isNaN(value.sec) && !isNaN(value.nsec);
       if (typeof value === "number" || typeof value === "boolean") {
         points.push({
           x: toSec(subtractTimes(timestamp, startTime)),
           y: Number(value),
           tooltip: { item, path, value, constantName, startTime },
+        });
+      } else if (isTimeObj) {
+        const timeObj = { ...value };
+        const valueStr = `${format(timeObj)} (${formatTimeRaw(timeObj)})`;
+        points.push({
+          x: toSec(subtractTimes(timestamp, startTime)),
+          y: timeObj.sec + timeObj.nsec / 1e9,
+          tooltip: { item, path, value: valueStr, constantName, startTime },
         });
       }
     }
@@ -74,7 +94,7 @@ function getDatasetFromMessagePlotPath(
 
   return {
     borderColor: lineColors[index % lineColors.length],
-    label: path.value,
+    label: path.value || uuid.v4(),
     key: index.toString(),
     showLine,
     fill: false,
@@ -102,7 +122,7 @@ function getAnnotationFromReferenceLine(path: PlotPath, index: number) {
   };
 }
 
-function getDatasets(paths: PlotPath[], itemsByPath: MessageHistoryItemsByPath, startTime: Time) {
+export function getDatasets(paths: PlotPath[], itemsByPath: MessageHistoryItemsByPath, startTime: Time): DataSet[] {
   return filterMap(paths, (path: PlotPath, index: number) => {
     if (!path.enabled) {
       return null;
@@ -155,39 +175,30 @@ type PlotChartProps = {|
   minYValue: number,
   maxYValue: number,
   saveCurrentYs: (minY: number, maxY: number) => void,
+  datasets: DataSet[],
 |};
 export default class PlotChart extends PureComponent<PlotChartProps> {
   render() {
-    const { paths, minYValue, maxYValue, saveCurrentYs } = this.props;
+    const { paths, minYValue, maxYValue, saveCurrentYs, datasets } = this.props;
+    const annotations = getAnnotations(paths);
     return (
-      // Don't filter out disabled paths when passing into <MessageHistory>, because we still want
-      // easy access to the history when turning the disabled paths back on.
-      <MessageHistory paths={paths.map((path) => path.value)}>
-        {({ itemsByPath, startTime }: MessageHistoryData) => {
-          const datasets = getDatasets(paths, itemsByPath, startTime);
-          const annotations = getAnnotations(paths);
-
-          return (
-            <div className={styles.root}>
-              <Dimensions>
-                {({ width, height }) => (
-                  <TimeBasedChart
-                    isSynced
-                    zoom
-                    width={width}
-                    height={height}
-                    data={{ datasets }}
-                    annotations={annotations}
-                    type="scatter"
-                    yAxes={yAxes({ minY: minYValue, maxY: maxYValue, scaleId: Y_AXIS_ID })}
-                    saveCurrentYs={saveCurrentYs}
-                  />
-                )}
-              </Dimensions>
-            </div>
-          );
-        }}
-      </MessageHistory>
+      <div className={styles.root}>
+        <Dimensions>
+          {({ width, height }) => (
+            <TimeBasedChart
+              isSynced
+              zoom
+              width={width}
+              height={height}
+              data={{ datasets }}
+              annotations={annotations}
+              type="scatter"
+              yAxes={yAxes({ minY: minYValue, maxY: maxYValue, scaleId: Y_AXIS_ID })}
+              saveCurrentYs={saveCurrentYs}
+            />
+          )}
+        </Dimensions>
+      </div>
     );
   }
 }

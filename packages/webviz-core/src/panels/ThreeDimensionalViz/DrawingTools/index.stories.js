@@ -11,7 +11,7 @@ import React from "react";
 import { PolygonBuilder, DEFAULT_CAMERA_STATE } from "regl-worldview";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
-import DrawingTools, { DRAWING_CONFIG } from "./index";
+import DrawingTools, { CAMERA_TAB_TYPE, POLYGON_TAB_TYPE } from "./index";
 import { pointsToPolygons } from "webviz-core/src/panels/ThreeDimensionalViz/utils/drawToolUtils";
 
 const polygons = pointsToPolygons([
@@ -24,9 +24,6 @@ const containerStyle = {
   display: "inline-block",
 };
 
-const POLYGON_TYPE = DRAWING_CONFIG.Polygons.type;
-const CAMERA_TYPE = DRAWING_CONFIG.Camera.type;
-
 const DEFAULT_PROPS = {
   cameraState: DEFAULT_CAMERA_STATE,
   expanded: true,
@@ -35,14 +32,13 @@ const DEFAULT_PROPS = {
   onAlignXYAxis: () => {},
   onCameraStateChange: () => {},
   onExpand: () => {},
+  onSetDrawingTabType: () => {},
   onSetPolygons: () => {},
-  onSetType: () => {},
   polygonBuilder: new PolygonBuilder(polygons),
   saveConfig: () => {},
   selectedPolygonEditFormat: "yaml",
-  setType: () => {},
   showCrosshair: false,
-  type: POLYGON_TYPE,
+  type: POLYGON_TAB_TYPE,
   updatePanelConfig: () => {},
 };
 
@@ -52,10 +48,10 @@ storiesOf("<DrawingTools>", module)
     return (
       <div style={containerStyle}>
         <div style={{ margin: 8 }}>
-          <DrawingTools {...DEFAULT_PROPS} type={POLYGON_TYPE} selectedPolygonEditFormat="yaml" />
+          <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="yaml" />
         </div>
         <div style={{ margin: 8 }}>
-          <DrawingTools {...DEFAULT_PROPS} type={POLYGON_TYPE} selectedPolygonEditFormat="json" />
+          <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="json" />
         </div>
       </div>
     );
@@ -65,22 +61,22 @@ storiesOf("<DrawingTools>", module)
       <div>
         <div style={containerStyle}>
           <h2>Default</h2>
-          <DrawingTools {...DEFAULT_PROPS} type={CAMERA_TYPE} />
+          <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={CAMERA_TAB_TYPE} />
         </div>
         <div style={containerStyle}>
           <h2>Follow orientation</h2>
-          <DrawingTools {...DEFAULT_PROPS} followOrientation type={CAMERA_TYPE} />
+          <DrawingTools {...DEFAULT_PROPS} followOrientation defaultSelectedTab={CAMERA_TAB_TYPE} />
         </div>
         <div style={containerStyle}>
           <h2>3D and showCrosshair</h2>
-          <DrawingTools {...DEFAULT_PROPS} type={CAMERA_TYPE} showCrosshair />
+          <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={CAMERA_TAB_TYPE} showCrosshair />
         </div>
         <div style={containerStyle}>
           <h2>2D and showCrosshair</h2>
           <DrawingTools
             {...DEFAULT_PROPS}
             cameraState={{ ...DEFAULT_CAMERA_STATE, perspective: false }}
-            type={CAMERA_TYPE}
+            defaultSelectedTab={CAMERA_TAB_TYPE}
             showCrosshair
           />
         </div>

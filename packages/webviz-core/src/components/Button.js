@@ -11,11 +11,14 @@ import cx from "classnames";
 import * as React from "react";
 
 import Tooltip from "webviz-core/src/components/Tooltip";
+import { colors } from "webviz-core/src/util/colors";
 
-type Props = {
+export type Props = {
   ...React.ElementConfig<typeof BaseButton>,
   innerRef: ?React.Ref<typeof BaseButton>,
   tooltipProps?: $Shape<{ ...React.ElementConfig<typeof Tooltip> }>,
+  style: { [string]: string | number },
+  isPrimary?: boolean,
 };
 
 export type { BaseButton };
@@ -24,6 +27,7 @@ export type { BaseButton };
 export default class Button extends React.Component<Props> {
   static defaultProps = {
     innerRef: undefined,
+    style: {},
   };
 
   render() {
@@ -36,8 +40,13 @@ export default class Button extends React.Component<Props> {
       onClick,
       onMouseUp,
       onMouseLeave,
+      isPrimary,
+      style,
       ...otherProps
     } = this.props;
+    // overwrite the primary color for Webviz
+    // using `isPrimary` instead of `primary` now to prevent global UI changes until we are ready to migrate all styles
+    const styleAlt = isPrimary ? { ...style, backgroundColor: colors.BLUE1 } : style;
 
     const eventHandlers = disabled ? {} : { onClick, onMouseUp, onMouseLeave };
 
@@ -49,11 +58,11 @@ export default class Button extends React.Component<Props> {
         <Tooltip contents={tooltip} {...tooltipProps}>
           {/* Extra div allows Tooltip to insert the necessary event listeners */}
           <div style={{ display: "inline-flex" }}>
-            <BaseButton {...otherProps} {...eventHandlers} className={newClassName} ref={innerRef} />
+            <BaseButton style={styleAlt} {...otherProps} {...eventHandlers} className={newClassName} ref={innerRef} />
           </div>
         </Tooltip>
       );
     }
-    return <BaseButton {...otherProps} {...eventHandlers} className={newClassName} ref={innerRef} />;
+    return <BaseButton style={styleAlt} {...otherProps} {...eventHandlers} className={newClassName} ref={innerRef} />;
   }
 }

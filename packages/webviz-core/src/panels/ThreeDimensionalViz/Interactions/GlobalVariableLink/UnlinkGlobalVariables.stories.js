@@ -46,7 +46,7 @@ storiesOf("<UnlinkGlobalVariables>", module)
           datatypes: {},
           frame: {},
           linkedGlobalVariables,
-          globalData: {
+          globalVariables: {
             scaleY: 2.4,
             fooScaleX: 3,
           },

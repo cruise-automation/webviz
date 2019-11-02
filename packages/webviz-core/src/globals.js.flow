@@ -12,10 +12,9 @@ declare type GitInfo = {
 };
 
 declare var GIT_INFO: ?GitInfo;
-
 declare var CURRENT_VERSION: string;
-
 declare var MINIMUM_CHROME_VERSION: number;
+declare var SHOW_TEST_OUTPUT: boolean;
 
 // flow lacks definitions for abort controller
 declare type AbortSignal = any;

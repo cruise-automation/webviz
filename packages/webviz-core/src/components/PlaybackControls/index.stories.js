@@ -49,7 +49,14 @@ storiesOf("<PlaybackControls>", module)
     const player = getPlayerState();
     return (
       <div style={{ padding: 20, margin: 100 }}>
-        <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />
+        <UnconnectedPlaybackControls
+          player={player}
+          pause={pause}
+          play={play}
+          setSpeed={setSpeed}
+          seek={seek}
+          playbackSpeed={0.2}
+        />
       </div>
     );
   })
@@ -62,7 +69,14 @@ storiesOf("<PlaybackControls>", module)
     player.capabilities = [];
     return (
       <div style={{ padding: 20, margin: 100 }}>
-        <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />
+        <UnconnectedPlaybackControls
+          player={player}
+          pause={pause}
+          play={play}
+          setSpeed={setSpeed}
+          seek={seek}
+          playbackSpeed={0.2}
+        />
       </div>
     );
   })
@@ -81,7 +95,14 @@ storiesOf("<PlaybackControls>", module)
     }
     return (
       <div style={{ padding: 20, margin: 100 }}>
-        <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />
+        <UnconnectedPlaybackControls
+          player={player}
+          pause={pause}
+          play={play}
+          setSpeed={setSpeed}
+          seek={seek}
+          playbackSpeed={0.2}
+        />
       </div>
     );
   })
@@ -127,6 +148,7 @@ storiesOf("<PlaybackControls>", module)
             play={play}
             setSpeed={setSpeed}
             seek={seek}
+            playbackSpeed={0.2}
           />
         );
       }
@@ -146,7 +168,14 @@ storiesOf("<PlaybackControls>", module)
     player.progress.fullyLoadedFractionRanges = [{ start: 0.23, end: 0.6 }, { start: 0.7, end: 1 }];
     return (
       <div style={{ padding: 20, margin: 100 }}>
-        <UnconnectedPlaybackControls player={player} pause={pause} play={play} setSpeed={setSpeed} seek={seek} />
+        <UnconnectedPlaybackControls
+          player={player}
+          pause={pause}
+          play={play}
+          setSpeed={setSpeed}
+          seek={seek}
+          playbackSpeed={0.2}
+        />
       </div>
     );
   });

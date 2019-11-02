@@ -5,10 +5,11 @@
 //  You may not use this file except in compliance with the License.
 
 @import "~webviz-core/src/styles/colors.module.scss";
+@import "~webviz-core/src/styles/variables.scss";
 
 .toolbar {
   padding: 0 0 0 8px;
-  height: 3rem;
+  height: $topBarHeight;
   font-size: 1.2em;
   display: flex;
   flex: 0 0 auto;

@@ -15,7 +15,7 @@
 import { omit } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
-import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS } from "./RandomAccessPlayer";
+import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS, AUTOPLAY_START_DELAY_MS } from "./RandomAccessPlayer";
 import delay from "webviz-core/shared/delay";
 import {
   type ExtensionPoint,
@@ -23,6 +23,7 @@ import {
   type DataProviderMessage,
   type DataProvider,
 } from "webviz-core/src/dataProviders/types";
+import NoopMetricsCollector from "webviz-core/src/players/NoopMetricsCollector";
 import {
   type PlayerMetricsCollectorInterface,
   type Topic,
@@ -30,6 +31,7 @@ import {
   PlayerCapabilities,
 } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import signal from "webviz-core/src/util/signal";
 
 jest.mock("webviz-core/src/util/reportError");
 
@@ -135,8 +137,10 @@ describe("RandomAccessPlayer", () => {
   beforeEach(() => {
     mockDateNow = jest.spyOn(Date, "now").mockReturnValue(0);
   });
-  afterEach(() => {
+  afterEach(async () => {
     mockDateNow.mockRestore();
+    // Always wait to start autoplay to ensure that errors are contained to their own tests.
+    await delay(AUTOPLAY_START_DELAY_MS + 10);
   });
 
   it("calls listener with player initial player state and data types", async () => {
@@ -175,6 +179,8 @@ describe("RandomAccessPlayer", () => {
     ]);
     // make sure capabilities don't change from one message to another
     expect(messages[0].capabilities).toBe(messages[1].capabilities);
+
+    source.close();
   });
 
   it("calls listener with player state changes on play/pause", async () => {
@@ -195,6 +201,8 @@ describe("RandomAccessPlayer", () => {
     source.pausePlayback();
     const messages3 = await store.done;
     expect(messages3.map((msg) => (msg.activeData || {}).isPlaying)).toEqual([false]);
+
+    source.close();
   });
 
   it("calls listener with speed changes", async () => {
@@ -214,6 +222,8 @@ describe("RandomAccessPlayer", () => {
     store.reset(1);
     source.setPlaybackSpeed(0.2);
     expect((await store.done).map((msg) => (msg.activeData || {}).speed)).toEqual([0.2]);
+
+    source.close();
   });
 
   it("reads messages when playing back", async () => {
@@ -382,6 +392,8 @@ describe("RandomAccessPlayer", () => {
       ],
       [], // this is the 'pause' messages payload - should be empty
     ]);
+
+    source.close();
   });
 
   it("seek during reading discards messages before seek", async () => {
@@ -447,6 +459,8 @@ describe("RandomAccessPlayer", () => {
       { sec: 0, nsec: 0 },
     ]);
     expect(activeDatas.map((d) => d.messages)).toEqual([undefined, [], [], [], [], []]);
+
+    source.close();
   });
 
   it("backfills previous messages on seek", async () => {
@@ -490,10 +504,13 @@ describe("RandomAccessPlayer", () => {
       }
     };
 
-    const store = new MessageStore(2);
+    const store = new MessageStore(4);
     source.setListener(store.add);
-    expect(await store.done).toEqual([
+    const done = await store.done;
+    expect(done).toEqual([
       expect.objectContaining({ activeData: undefined }),
+      expect.objectContaining({ activeData: expect.any(Object) }),
+      expect.objectContaining({ activeData: expect.any(Object) }),
       expect.objectContaining({ activeData: expect.any(Object) }),
     ]);
 
@@ -534,6 +551,8 @@ describe("RandomAccessPlayer", () => {
       ],
       [],
     ]);
+
+    source.close();
   });
 
   it("discards backfilled messages if we started playing after the seek", async () => {
@@ -617,6 +636,8 @@ describe("RandomAccessPlayer", () => {
     };
     backfillPromiseCallback([result]);
     await delay(10);
+
+    source.close();
   });
 
   it("clamps times passed to the DataProvider", async () => {
@@ -658,6 +679,8 @@ describe("RandomAccessPlayer", () => {
       topics: ["/foo/bar"],
       resolve: expect.any(Function),
     });
+
+    source.close();
   });
 
   it("gets messages when valid topics subscriptions changed", async () => {
@@ -700,6 +723,7 @@ describe("RandomAccessPlayer", () => {
     source.startPlayback();
     const messages = await store.done;
     expect(messages.length).toEqual(7);
+
     source.close();
   });
 
@@ -779,13 +803,39 @@ describe("RandomAccessPlayer", () => {
         message: { payload: "foo bar 2" },
       },
     ]);
+
+    source.close();
   });
 
   it("closes provider when closed", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
+    await source.setListener(async () => {});
     await source.close();
     expect(provider.closed).toBe(true);
+  });
+
+  it("doesn't try to close provider after initialization error", async () => {
+    class FailTestProvider extends TestProvider {
+      initialize() {
+        return Promise.reject(new Error("fake initialization failure"));
+      }
+    }
+    const provider = new FailTestProvider();
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
+
+    const store = new MessageStore(2);
+    await source.setListener(store.add);
+    expect(provider.closed).toBe(false);
+
+    source.close();
+    const messages = await store.done;
+    expect(provider.closed).toBe(false);
+
+    expect(messages).toEqual([
+      expect.objectContaining({ showInitializing: true, activeData: undefined }),
+      expect.objectContaining({ showInitializing: false, activeData: undefined }),
+    ]);
   });
 
   it("shows a spinner when a provider is reconnecting", (done) => {
@@ -803,6 +853,98 @@ describe("RandomAccessPlayer", () => {
       }
       return Promise.resolve();
     });
+  });
+
+  it("waits for previous read to finish when pausing and playing again", async () => {
+    const provider = new TestProvider();
+    const getMessages = jest.fn();
+    provider.getMessages = getMessages;
+
+    const message1 = {
+      topic: "/foo/bar",
+      receiveTime: { sec: 0, nsec: 1 },
+      message: { payload: "foo bar 1" },
+    };
+    const message2 = {
+      topic: "/foo/bar",
+      receiveTime: { sec: 0, nsec: 2 },
+      message: { payload: "foo bar 2" },
+    };
+
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
+    player.setSubscriptions([{ topic: "/foo/bar" }]);
+
+    const firstGetMessagesCall = signal();
+    const firstGetMessagesReturn = signal();
+    const secondGetMessagesCall = signal();
+    const secondGetMessagesReturn = signal();
+
+    const messages1 = [message1];
+    getMessages.mockImplementation(async () => {
+      firstGetMessagesCall.resolve();
+      await firstGetMessagesReturn;
+      return Promise.resolve(messages1.splice(0, 1));
+    });
+
+    const store = new MessageStore(3);
+    await player.setListener(store.add);
+    player.startPlayback();
+
+    await firstGetMessagesCall;
+    expect(getMessages.mock.calls).toEqual([[{ sec: 0, nsec: 1 }, { sec: 0, nsec: 4000000 }, ["/foo/bar"]]]);
+
+    expect(await store.done).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: true, messages: [] }) }),
+    ]);
+
+    const messages2 = [message2];
+    getMessages.mockImplementation(async () => {
+      secondGetMessagesCall.resolve();
+      await secondGetMessagesReturn;
+      return Promise.resolve(messages2.splice(0, 1));
+    });
+    store.reset(2);
+
+    player.pausePlayback();
+    player.startPlayback();
+
+    expect(await store.done).toEqual([
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: true, messages: [] }) }),
+    ]);
+
+    store.reset(1);
+
+    // The second getMessages call should only happen once the first getMessages has returned
+    await Promise.resolve();
+    expect(getMessages).toHaveBeenCalledTimes(1);
+    firstGetMessagesReturn.resolve();
+    await secondGetMessagesCall;
+    expect(getMessages).toHaveBeenCalledTimes(2);
+
+    expect(await store.done).toEqual([
+      expect.objectContaining({
+        activeData: expect.objectContaining({ isPlaying: true, messages: [expect.objectContaining(message1)] }),
+      }),
+    ]);
+
+    store.reset(1);
+    secondGetMessagesReturn.resolve();
+    expect(await store.done).toEqual([
+      expect.objectContaining({
+        activeData: expect.objectContaining({ isPlaying: true, messages: [expect.objectContaining(message2)] }),
+      }),
+    ]);
+
+    store.reset(1);
+    player.pausePlayback();
+    expect(await store.done).toEqual([
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+    ]);
+
+    player.close();
   });
 
   describe("metrics collecting", () => {
@@ -925,6 +1067,132 @@ describe("RandomAccessPlayer", () => {
         seeked: 2,
         speed: [0.5, 1],
       });
+    });
+  });
+
+  it("pauses when document visibility changes", async () => {
+    const provider = new TestProvider();
+    const getMessages = jest.fn();
+    provider.getMessages = getMessages;
+
+    const message1 = {
+      topic: "/foo/bar",
+      receiveTime: { sec: 0, nsec: 1 },
+      message: { payload: "foo bar 1" },
+    };
+
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
+    player.setSubscriptions([{ topic: "/foo/bar" }]);
+
+    const firstGetMessagesCall = signal();
+    const firstGetMessagesReturn = signal();
+
+    const messages1 = [message1];
+    getMessages.mockImplementation(async () => {
+      firstGetMessagesCall.resolve();
+      await firstGetMessagesReturn;
+      return Promise.resolve(messages1.splice(0, 1));
+    });
+
+    const store = new MessageStore(4);
+    await player.setListener(store.add);
+    player.startPlayback();
+
+    await firstGetMessagesCall;
+    expect(getMessages.mock.calls).toEqual([[{ sec: 0, nsec: 1 }, { sec: 0, nsec: 4000000 }, ["/foo/bar"]]]);
+
+    // $FlowFixMe
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "hidden",
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(await store.done).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: true, messages: [] }) }),
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+    ]);
+
+    store.reset(1);
+
+    // $FlowFixMe
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "visible",
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    expect(await store.done).toEqual([
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: true, messages: [] }) }),
+    ]);
+
+    player.close();
+  });
+
+  it("When autoplay is off, seeks the player after starting", async () => {
+    const provider = new TestProvider();
+    provider.getMessages = jest.fn().mockImplementation(async () => Promise.resolve([]));
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
+    const store = new MessageStore(2);
+    player.setSubscriptions([{ topic: "/foo/bar" }]);
+    await player.setListener(store.add);
+    const firstMessages = await store.done;
+    expect(firstMessages).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      // isPlaying is set to false to begin
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+    ]);
+    store.reset(2);
+    // Even after enough time to start callback
+    await delay(AUTOPLAY_START_DELAY_MS + 10);
+    const secondMessages = await store.done;
+    expect(secondMessages).toEqual([
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+    ]);
+    expect(provider.getMessages).toHaveBeenCalled();
+
+    player.close();
+  });
+
+  it("When the tab starts hidden with autoplay, seeks the player", async () => {
+    // $FlowFixMe
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "hidden",
+    });
+    const provider = new TestProvider();
+    provider.getMessages = jest.fn().mockImplementation(async () => Promise.resolve([]));
+    const player = new RandomAccessPlayer(
+      { name: "TestProvider", args: { provider }, children: [] },
+      new NoopMetricsCollector(),
+      { autoplay: true, seekToTime: null, frameSizeMs: null }
+    );
+    const store = new MessageStore(2);
+    player.setSubscriptions([{ topic: "/foo/bar" }]);
+    await player.setListener(store.add);
+    const firstMessages = await store.done;
+    expect(firstMessages).toEqual([
+      expect.objectContaining({ activeData: undefined }),
+      // isPlaying is set to false to begin
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+    ]);
+    store.reset(2);
+    // Even after enough time to start callback
+    await delay(AUTOPLAY_START_DELAY_MS + 10);
+    const secondMessages = await store.done;
+    expect(secondMessages).toEqual([
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+      expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
+    ]);
+    expect(provider.getMessages).toHaveBeenCalled();
+
+    player.close();
+    // $FlowFixMe
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "visible",
     });
   });
 });

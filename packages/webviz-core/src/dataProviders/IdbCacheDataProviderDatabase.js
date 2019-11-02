@@ -9,7 +9,7 @@
 import Database from "webviz-core/src/util/indexeddb/Database";
 import { updateMetaDatabases } from "webviz-core/src/util/indexeddb/MetaDatabase";
 
-const MAX_DATABASES = 3;
+const MAX_DATABASES = 6;
 const DATABASE_NAME_PREFIX = "IdbCacheDataProviderDb-";
 const META_DATABASE_NAME = "IdbCacheDataProviderMetaDb";
 const DATABASE_VERSION = 1;

@@ -14,10 +14,8 @@ $row-height: 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   position: fixed;
   overflow: auto;
-  max-height: min-content;
   background: $toolbar;
   z-index: 1;
-  bottom: 40px;
   margin-left: -6px;
 }
 

@@ -48,12 +48,15 @@ const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
 // exceeds that frequency.
 export const SEEK_BACK_NANOSECONDS = 99 /* ms */ * 1000 * 1000;
 
+export const AUTOPLAY_START_DELAY_MS = 100;
+
 const capabilities = [PlayerCapabilities.setSpeed];
 
 // A `Player` that wraps around a tree of `DataProviders`.
 export default class RandomAccessPlayer implements Player {
   _provider: DataProvider;
   _isPlaying: boolean = false;
+  _wasPlayingBeforeTabSwitch = false;
   _listener: (PlayerState) => Promise<void>;
   _speed: number = 0.2;
   _start: Time;
@@ -77,6 +80,7 @@ export default class RandomAccessPlayer implements Player {
   _id: string = uuid.v4();
   _messages: Message[] = [];
   _hasError = false;
+  _closed = false;
 
   constructor(
     providerDescriptor: DataProviderDescriptor,
@@ -90,14 +94,32 @@ export default class RandomAccessPlayer implements Player {
     }
     this._metricsCollector = metricsCollector;
 
-    this._playerOptions = playerOptions || { autoplay: false, seekToTime: null };
+    this._playerOptions = playerOptions || { autoplay: false, seekToTime: null, frameSizeMs: null };
+
+    document.addEventListener("visibilitychange", this._handleDocumentVisibilityChange, false);
   }
+
+  // If the user switches tabs, we won't actually play because no requestAnimationFrames will be called.
+  // Make sure this is reflected in application state and in metrics as a pause and resume.
+  _handleDocumentVisibilityChange = () => {
+    if (document.visibilityState === "hidden") {
+      if (this._isPlaying) {
+        this.pausePlayback();
+        this._wasPlayingBeforeTabSwitch = true;
+      }
+    } else if (document.visibilityState === "visible" && this._wasPlayingBeforeTabSwitch) {
+      this._wasPlayingBeforeTabSwitch = false;
+      this.startPlayback();
+    }
+  };
 
   _setError(message: string, details: string | Error, errorType: ErrorType) {
     reportError(message, details, errorType);
     this._hasError = true;
     this._isPlaying = false;
-    this._provider.close();
+    if (!this._initializing) {
+      this._provider.close();
+    }
     this._emitState();
   }
 
@@ -140,14 +162,29 @@ export default class RandomAccessPlayer implements Player {
           this._emitState();
         }
 
-        if (this._playerOptions.autoplay) {
-          // Wait a bit until panels have had the chance to subscribe to topics before we start
-          // playback.
-          // TODO(JP).
-          setTimeout(() => {
-            this.startPlayback();
-          }, 100);
-        }
+        // Wait a bit until panels have had the chance to subscribe to topics before we start
+        // playback.
+        // TODO(JP).
+        setTimeout(() => {
+          if (this._closed) {
+            return;
+          }
+
+          // If the autoplay is enabled, either start playback or, if this tab is not currently selected, start data
+          // loading.
+          if (this._playerOptions.autoplay) {
+            if (document.visibilityState === "visible") {
+              this.startPlayback();
+            } else {
+              this._wasPlayingBeforeTabSwitch = true;
+              // call seekPlayback so that we start data loading.
+              this.seekPlayback(this._currentTime);
+            }
+          } else {
+            // If autoplay is not enabled, still call seekPlayback so that we start data loading.
+            this.seekPlayback(this._currentTime);
+          }
+        }, AUTOPLAY_START_DELAY_MS);
       })
       .catch((error: Error) => {
         this._setError("Error initializing player", error, "app");
@@ -224,7 +261,7 @@ export default class RandomAccessPlayer implements Player {
     // if the UI lags substantially due to GC and the delay between reads is high
     // it can result in reading a very large chunk of messages which introduces
     // even _more_ delay before the next read loop triggers, causing serious cascading UI jank.
-    const rangeMillis = Math.min(durationMillis, 80) * this._speed;
+    const rangeMillis = this._playerOptions.frameSizeMs || Math.min(durationMillis, 80) * this._speed;
 
     // loop to the beginning if we pass the end of the playback range
     if (isEqual(this._currentTime, this._end)) {
@@ -272,18 +309,22 @@ export default class RandomAccessPlayer implements Player {
     this._emitState();
   }
 
-  async _read(): Promise<void> {
-    while (this._isPlaying && !this._hasError) {
-      const start = Date.now();
-      await this._tick();
-      const time = Date.now() - start;
-      // make sure we've slept at least 16 millis or so (aprox 1 frame)
-      // to give the UI some time to breathe and not burn in a tight loop
-      if (time < 16) {
-        await delay(16 - time);
+  _read = debouncePromise(async () => {
+    try {
+      while (this._isPlaying && !this._hasError) {
+        const start = Date.now();
+        await this._tick();
+        const time = Date.now() - start;
+        // make sure we've slept at least 16 millis or so (aprox 1 frame)
+        // to give the UI some time to breathe and not burn in a tight loop
+        if (time < 16) {
+          await delay(16 - time);
+        }
       }
+    } catch (e) {
+      this._setError(e.message, e, "app");
     }
-  }
+  });
 
   async _getMessages(start: Time, end: Time): Promise<Message[]> {
     const topics = getSanitizedTopics(this._subscribedTopics, this._providerTopics);
@@ -342,9 +383,7 @@ export default class RandomAccessPlayer implements Player {
       this._emitState();
     }
 
-    this._read().catch((e: Error) => {
-      this._setError(e.message, e, "app");
-    });
+    this._read();
   }
 
   pausePlayback(): void {
@@ -390,6 +429,8 @@ export default class RandomAccessPlayer implements Player {
     const seekTime = Date.now();
     this._lastSeekTime = seekTime;
     this._cancelSeekBackfill = false;
+    // cancel any queued _emitState that might later emit messages from before we seeked
+    this._messages = [];
 
     // do not _emitState if subscriptions have changed, but time has not
     if (isEqual(this._currentTime, time)) {
@@ -439,7 +480,11 @@ export default class RandomAccessPlayer implements Player {
 
   close() {
     this._isPlaying = false;
-    this._provider.close();
+    this._closed = true;
+    if (!this._initializing && !this._hasError) {
+      this._provider.close();
+    }
     this._metricsCollector.close();
+    document.removeEventListener("visibilitychange", this._handleDocumentVisibilityChange);
   }
 }

@@ -93,7 +93,9 @@ describe("time.formatTimeRaw", () => {
   });
 
   it("does not format negative times", () => {
+    jest.spyOn(console, "error").mockReturnValue();
     expect(time.formatTimeRaw({ sec: -1, nsec: 0 })).toEqual("(invalid negative time)");
+    expect(console.error).toHaveBeenCalled();
   });
 });
 

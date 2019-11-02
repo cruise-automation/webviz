@@ -11,7 +11,7 @@ import { hot } from "react-hot-loader/root";
 import { connect, Provider } from "react-redux";
 
 import styles from "./Root.module.scss";
-import { changePanelLayout, importPanelLayout, savePanelConfig } from "webviz-core/src/actions/panels";
+import { importPanelLayout } from "webviz-core/src/actions/panels";
 import Logo from "webviz-core/src/assets/logo.svg";
 import AppMenu from "webviz-core/src/components/AppMenu";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
@@ -20,16 +20,10 @@ import LayoutMenu from "webviz-core/src/components/LayoutMenu";
 import PanelLayout from "webviz-core/src/components/PanelLayout";
 import PlaybackControls from "webviz-core/src/components/PlaybackControls";
 import PlayerManager from "webviz-core/src/components/PlayerManager";
-import renderToBody from "webviz-core/src/components/renderToBody";
-import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import Toolbar from "webviz-core/src/components/Toolbar";
 import withDragDropContext from "webviz-core/src/components/withDragDropContext";
-import type { State } from "webviz-core/src/reducers";
-import type { PanelsState } from "webviz-core/src/reducers/panels";
-import type { Auth } from "webviz-core/src/types/Auth";
-import type { ImportPanelLayoutPayload, PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
-import type { Store } from "webviz-core/src/types/Store";
-import { getPanelIdForType } from "webviz-core/src/util";
+import getGlobalStore from "webviz-core/src/store/getGlobalStore";
+import type { ImportPanelLayoutPayload } from "webviz-core/src/types/panels";
 import { setReactHotLoaderConfig } from "webviz-core/src/util/dev";
 
 // Only used in dev.
@@ -37,16 +31,8 @@ setReactHotLoaderConfig();
 
 const LOGO_SIZE = 24;
 
-type AppProps = {|
-  panels: PanelsState,
-  auth: Auth,
-|};
-
 type Props = {|
-  ...AppProps,
   // panelLayout is an opaque structure defined by react-mosaic
-  changePanelLayout: (panelLayout: any) => void,
-  savePanelConfig: (SaveConfigPayload) => void,
   importPanelLayout: (ImportPanelLayoutPayload, boolean) => void,
 |};
 class App extends React.PureComponent<Props> {
@@ -61,35 +47,6 @@ class App extends React.PureComponent<Props> {
     // Add a hook for integration tests.
     window.setPanelLayout = (payload) => this.props.importPanelLayout(payload, false);
   }
-
-  onPanelSelect = (panelType: string, panelConfig?: PanelConfig) => {
-    const { panels, changePanelLayout, savePanelConfig } = this.props;
-    const id = getPanelIdForType(panelType);
-    const newPanels = {
-      direction: "row",
-      first: id,
-      second: panels.layout,
-    };
-    if (panelConfig) {
-      savePanelConfig({ id, config: panelConfig });
-    }
-    changePanelLayout(newPanels);
-  };
-
-  showLayoutModal = () => {
-    const modal = renderToBody(
-      <ShareJsonModal
-        onRequestClose={() => modal.remove()}
-        value={this.props.panels}
-        onChange={this.onLayoutChange}
-        noun="layout"
-      />
-    );
-  };
-
-  onLayoutChange = (layout: any) => {
-    this.props.importPanelLayout(layout, false);
-  };
 
   render() {
     return (
@@ -106,10 +63,10 @@ class App extends React.PureComponent<Props> {
               <ErrorDisplay />
             </div>
             <div className={styles.block}>
-              <AppMenu onPanelSelect={this.onPanelSelect} />
+              <AppMenu />
             </div>
             <div className={styles.block}>
-              <LayoutMenu onImportSelect={this.showLayoutModal} />
+              <LayoutMenu />
             </div>
           </Toolbar>
           <div className={styles.layout}>
@@ -124,25 +81,16 @@ class App extends React.PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: State, ownProps): AppProps => {
-  return {
-    panels: state.panels,
-    auth: state.auth,
-  };
-};
-
-const ConnectedApp = connect(
-  mapStateToProps,
+const ConnectedApp = connect<Props, {}, _, _, _, _>(
+  null,
   {
-    changePanelLayout,
-    savePanelConfig,
     importPanelLayout,
   }
 )(withDragDropContext(App));
 
-const Root = ({ store }: { store: Store }) => {
+const Root = () => {
   return (
-    <Provider store={store}>
+    <Provider store={getGlobalStore()}>
       <div className="app-container">
         <ErrorBoundary>
           <ConnectedApp />

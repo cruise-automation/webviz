@@ -9,8 +9,15 @@
 import * as React from "react";
 import { connect } from "react-redux";
 
-import { setNodeDiagnostics, type SetNodeDiagnostics } from "webviz-core/src/actions/nodeDiagnostics";
 import { importPanelLayout } from "webviz-core/src/actions/panels";
+import {
+  setUserNodeDiagnostics,
+  addUserNodeLogs,
+  setUserNodeTrust,
+  type SetUserNodeDiagnostics,
+  type AddUserNodeLogs,
+  type SetUserNodeTrust,
+} from "webviz-core/src/actions/userNodes";
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
@@ -28,10 +35,10 @@ import type { ImportPanelLayoutPayload, UserNodes } from "webviz-core/src/types/
 import demoLayoutJson from "webviz-core/src/util/demoLayout.json";
 import {
   DEMO_QUERY_KEY,
-  ENABLE_NODE_PLAYGROUND_QUERY_KEY,
   LOAD_ENTIRE_BAG_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
   SECOND_BAG_PREFIX,
+  FRAME_SIZE_MS_QUERY_KEY,
 } from "webviz-core/src/util/globalConstants";
 import { getSeekToTime } from "webviz-core/src/util/time";
 
@@ -55,10 +62,23 @@ type OwnProps = { children: React.Node };
 type Props = OwnProps & {
   importPanelLayout: (payload: ImportPanelLayoutPayload, isFromUrl: boolean, skipSettingLocalStorage: boolean) => void,
   userNodes: UserNodes,
-  setNodeDiagnostics: SetNodeDiagnostics,
+  setUserNodeDiagnostics: SetUserNodeDiagnostics,
+  addUserNodeLogs: AddUserNodeLogs,
+  setUserNodeTrust: SetUserNodeTrust,
 };
 
-function PlayerManager({ importPanelLayout, children, userNodes, setNodeDiagnostics }: Props) {
+export function getFrameSizeMs(params: URLSearchParams) {
+  return params.get(FRAME_SIZE_MS_QUERY_KEY) ? Number(params.get(FRAME_SIZE_MS_QUERY_KEY)) : null;
+}
+
+function PlayerManager({
+  importPanelLayout,
+  children,
+  userNodes,
+  setUserNodeDiagnostics,
+  addUserNodeLogs,
+  setUserNodeTrust,
+}: Props) {
   const usedFiles = React.useRef<File[]>([]);
   const [player, setPlayer] = React.useState();
 
@@ -74,21 +94,16 @@ function PlayerManager({ importPanelLayout, children, userNodes, setNodeDiagnost
           const newPlayer = new RandomAccessPlayer(
             getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
             undefined,
-            { autoplay: true, seekToTime: getSeekToTime() }
+            { autoplay: true, seekToTime: getSeekToTime(), frameSizeMs: getFrameSizeMs(params) }
           );
-
-          if (new URLSearchParams(window.location.search).has(ENABLE_NODE_PLAYGROUND_QUERY_KEY)) {
-            setPlayer(new UserNodePlayer(newPlayer, setNodeDiagnostics));
-          } else {
-            setPlayer(new NodePlayer(newPlayer));
-          }
+          setPlayer(new UserNodePlayer(newPlayer, { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust }));
         });
         if (params.has(DEMO_QUERY_KEY)) {
           importPanelLayout(demoLayoutJson, false, true);
         }
       }
     },
-    [importPanelLayout, setNodeDiagnostics]
+    [importPanelLayout, setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust]
   );
 
   useUserNodes({ nodePlayer: player, userNodes });
@@ -125,5 +140,5 @@ export default connect<Props, OwnProps, _, _, _, _>(
   (state) => ({
     userNodes: state.panels.userNodes,
   }),
-  { importPanelLayout, setNodeDiagnostics }
+  { importPanelLayout, setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust }
 )(PlayerManager);

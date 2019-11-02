@@ -9,6 +9,7 @@
 import { mount } from "enzyme";
 import { last } from "lodash";
 import * as React from "react";
+import { act } from "react-dom/test-utils";
 
 import { MessagePipelineProvider, MessagePipelineConsumer } from ".";
 import FakePlayer from "./FakePlayer";
@@ -51,7 +52,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     ]);
   });
 
-  it("updates when the player emits a new state", () => {
+  it("updates when the player emits a new state", async () => {
     const player = new FakePlayer();
     const callback = jest.fn().mockReturnValue(null);
     mount(
@@ -59,7 +60,9 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
         <MessagePipelineConsumer>{callback}</MessagePipelineConsumer>
       </MessagePipelineProvider>
     );
-    player.emit();
+    act(() => {
+      player.emit();
+    });
     expect(callback.mock.calls).toEqual([
       [
         expect.objectContaining({
@@ -98,8 +101,10 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
         <MessagePipelineConsumer>{callback}</MessagePipelineConsumer>
       </MessagePipelineProvider>
     );
-    player.emit();
-    expect(() => player.emit()).toThrow();
+    act(() => {
+      player.emit();
+    });
+    expect(() => player.emit()).toThrow("New playerState was emitted before last playerState was rendered.");
   });
 
   it("sets subscriptions", (done) => {
@@ -116,8 +121,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
               // update the subscriptions immediately after render, not during
               // calling this on the same tick as render causes an error because we're setting state during render loop
               setImmediate(() => {
-                context.setSubscriptions("test", [{ topic: "/webviz/test" }]);
-                context.setSubscriptions("bar", [{ topic: "/webviz/test2" }]);
+                act(() => context.setSubscriptions("test", [{ topic: "/webviz/test" }]));
+                act(() => context.setSubscriptions("bar", [{ topic: "/webviz/test2" }]));
               });
             }
             if (callCount === 2) {
@@ -127,7 +132,9 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
               expect(context.subscriptions).toEqual([{ topic: "/webviz/test" }, { topic: "/webviz/test2" }]);
               // cause the player to emit a frame outside the render loop to trigger another render
               setImmediate(() => {
-                player.emit();
+                act(() => {
+                  player.emit();
+                });
               });
             }
             if (callCount === 4) {
@@ -156,8 +163,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
               // update the publishers immediately after render, not during
               // calling this on the same tick as render causes an error because we're setting state during render loop
               setImmediate(() => {
-                context.setPublishers("test", [{ topic: "/webviz/test", datatype: "test" }]);
-                context.setPublishers("bar", [{ topic: "/webviz/test2", datatype: "test2" }]);
+                act(() => context.setPublishers("test", [{ topic: "/webviz/test", datatype: "test" }]));
+                act(() => context.setPublishers("bar", [{ topic: "/webviz/test2", datatype: "test2" }]));
               });
             }
             if (callCount === 2) {
@@ -170,7 +177,9 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
               ]);
               // cause the player to emit a frame outside the render loop to trigger another render
               setImmediate(() => {
-                player.emit();
+                act(() => {
+                  player.emit();
+                });
               });
             }
             if (callCount === 4) {
@@ -202,7 +211,9 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
             // cause the player to emit a frame outside the render loop to trigger another render
             setImmediate(() => {
               lastPromise.then(() => {
-                lastPromise = player.emit();
+                act(() => {
+                  lastPromise = player.emit();
+                });
               });
             });
             // we don't have a last context yet
@@ -235,9 +246,9 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     expect(callback).toHaveBeenCalledTimes(1);
     // Now wait for the player state emit cycle to complete.
     // This promise should resolve when the render loop finishes.
-    await player.emit();
+    await act(() => player.emit());
     expect(callback).toHaveBeenCalledTimes(2);
-    await player.emit();
+    await act(() => player.emit());
     expect(callback).toHaveBeenCalledTimes(3);
   });
 
@@ -299,20 +310,20 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
           <MessagePipelineConsumer>{fn}</MessagePipelineConsumer>
         </MessagePipelineProvider>
       );
-      await player.emit();
+      await act(() => player.emit());
       expect(fn).toHaveBeenCalledTimes(2);
 
       player2 = new FakePlayer();
       player2.playerId = "fake player 2";
-      el.setProps({ player: player2 });
+      act(() => el.setProps({ player: player2 }) && undefined);
       expect(player.close).toHaveBeenCalledTimes(1);
       expect(fn).toHaveBeenCalledTimes(4);
     });
 
     it("closes old player when new player is supplied and stops old player message flow", async () => {
-      await player2.emit();
+      await act(() => player2.emit());
       expect(fn).toHaveBeenCalledTimes(5);
-      await player.emit();
+      await act(() => player.emit());
       expect(fn).toHaveBeenCalledTimes(5);
       expect(fn.mock.calls.map((args) => args[0].playerState.playerId)).toEqual([
         "",
@@ -324,9 +335,9 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     });
 
     it("does not think the old player is the new player if it emits first", async () => {
-      await player.emit();
+      await act(() => player.emit());
       expect(fn).toHaveBeenCalledTimes(4);
-      await player2.emit();
+      await act(() => player2.emit());
       expect(fn).toHaveBeenCalledTimes(5);
       expect(fn.mock.calls.map((args) => args[0].playerState.playerId)).toEqual([
         "",
@@ -368,9 +379,9 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
               // update the subscriptions immediately after render, not during
               // calling this on the same tick as render causes an error because we're setting state during render loop
               setImmediate(() => {
-                context.setSubscriptions("test", [{ topic: "/webviz/test" }]);
-                context.setSubscriptions("bar", [{ topic: "/webviz/test2" }]);
-                context.setPublishers("test", [{ topic: "/webviz/test", datatype: "test" }]);
+                act(() => context.setSubscriptions("test", [{ topic: "/webviz/test" }]));
+                act(() => context.setSubscriptions("bar", [{ topic: "/webviz/test2" }]));
+                act(() => context.setPublishers("test", [{ topic: "/webviz/test", datatype: "test" }]));
                 wait.resolve();
               });
             }
@@ -381,7 +392,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     );
     await wait;
     const player2 = new FakePlayer();
-    el.setProps({ player: player2 });
+    act(() => el.setProps({ player: player2 }) && undefined);
     expect(player2.subscriptions).toEqual([{ topic: "/webviz/test" }, { topic: "/webviz/test2" }]);
     expect(player2.publishers).toEqual([{ topic: "/webviz/test", datatype: "test" }]);
   });
@@ -405,7 +416,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: [] },
     };
-    await player.emit(activeData);
+    await act(() => player.emit(activeData));
     expect(fn).toHaveBeenCalledTimes(2);
 
     el.setProps({ player: undefined });

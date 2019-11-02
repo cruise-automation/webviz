@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import CloseIcon from "@mdi/svg/svg/close.svg";
 import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
 import GridLargeIcon from "@mdi/svg/svg/grid-large.svg";
 import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
@@ -28,10 +29,10 @@ import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
 import { Item } from "webviz-core/src/components/Menu";
 import { getFilteredFormattedTopics } from "webviz-core/src/components/MessageHistory/topicPrefixUtils";
-import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PanelContext, { type PanelContextType } from "webviz-core/src/components/PanelContext";
 import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDragHandle";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import * as PanelAPI from "webviz-core/src/PanelAPI";
 import PanelList, { getPanelsByType } from "webviz-core/src/panels/PanelList";
 import type { Topic } from "webviz-core/src/players/types";
 import type {
@@ -60,6 +61,7 @@ export const TOPIC_PREFIX_CONFIG_KEY = "webviz___topicPrefix";
 type Props<Config> = {| childId?: string, config?: Config |};
 type State = {
   quickActionsKeyPressed: boolean,
+  shiftKeyPressed: boolean,
   fullScreen: boolean,
   removePanelKeyPressed: boolean,
 };
@@ -211,7 +213,14 @@ export default function Panel<Config: PanelConfig>(
       mosaicWindowActions: PropTypes.any,
     };
 
-    state = { quickActionsKeyPressed: false, fullScreen: false, removePanelKeyPressed: false };
+    state = {
+      quickActionsKeyPressed: false,
+      shiftKeyPressed: false,
+      fullScreen: false,
+      removePanelKeyPressed: false,
+    };
+
+    _tildePressing: boolean = false;
 
     // Save the config, by mixing in the partial config with the current config, or if that does
     // not exist, with the `defaultConfig`. That way we always save complete configs.
@@ -298,27 +307,70 @@ export default function Panel<Config: PanelConfig>(
       // When using Synergy, holding down a key leads to repeated keydown/up events, so give the
       // keydown events a chance to cancel a pending keyup.
       this._keyUpTimeout = setTimeout(() => {
-        this.setState({ quickActionsKeyPressed: false, fullScreen: false });
+        this.setState({ quickActionsKeyPressed: false, shiftKeyPressed: false, fullScreen: false });
         this._keyUpTimeout = null;
       }, 0);
     };
 
     _keyUpHandlers = {
-      "`": this._exitFullScreen,
+      "`": (e) => {
+        this._tildePressing = false;
+        const { fullScreen, shiftKeyPressed } = this.state;
+        if (!fullScreen || !shiftKeyPressed) {
+          this._exitFullScreen();
+        }
+      },
+      Shift: (e) => {
+        const { fullScreen, shiftKeyPressed, quickActionsKeyPressed } = this.state;
+        if (shiftKeyPressed && quickActionsKeyPressed && !fullScreen) {
+          this.setState({ shiftKeyPressed: false });
+        }
+      },
+      "~": (e) => {
+        if (!this.state.fullScreen) {
+          this.setState({ quickActionsKeyPressed: false });
+        }
+      },
     };
 
     _keyDownHandlers = {
       "`": (e) => {
-        if (!e.repeat || !this.state.quickActionsKeyPressed) {
+        const { quickActionsKeyPressed, fullScreen } = this.state;
+        if (this._tildePressing) {
+          return;
+        }
+        if (!e.repeat && !quickActionsKeyPressed) {
           clearTimeout(this._keyUpTimeout);
+          this._tildePressing = true;
           this.setState({ quickActionsKeyPressed: true });
+        }
+        if (!e.repeat && fullScreen) {
+          clearTimeout(this._keyUpTimeout);
+          this._tildePressing = true;
+          this._exitFullScreen();
+        }
+      },
+      "~": (e) => {
+        clearTimeout(this._keyUpTimeout);
+        this.setState({ quickActionsKeyPressed: true, shiftKeyPressed: true });
+      },
+      Shift: (e) => {
+        if (!this.state.shiftKeyPressed) {
+          clearTimeout(this._keyUpTimeout);
+          this.setState({ shiftKeyPressed: true });
+        }
+      },
+      Escape: (e) => {
+        if (this.state.fullScreen || this.state.quickActionsKeyPressed || this.state.shiftKeyPressed) {
+          clearTimeout(this._keyUpTimeout);
+          this._exitFullScreen();
         }
       },
     };
 
     render() {
       const { topics, datatypes, capabilities, childId, isOnlyPanel, config = {} } = this.props;
-      const { quickActionsKeyPressed, fullScreen } = this.state;
+      const { quickActionsKeyPressed, shiftKeyPressed, fullScreen } = this.state;
       const panelsByType = getPanelsByType();
       const type = PanelComponent.panelType;
       const title = panelsByType[type] && panelsByType[type].title;
@@ -349,12 +401,13 @@ export default function Panel<Config: PanelConfig>(
             })}
             col
             clip>
+            {fullScreen ? <div className={styles.notClickable} /> : null}
             {quickActionsKeyPressed && !fullScreen && (
               <MosaicDragHandle>
                 <div className={styles.quickActionsOverlay} data-panel-overlay>
                   <div>
                     <FullscreenIcon />
-                    Fullscreen
+                    {shiftKeyPressed ? "Lock fullscreen" : "Fullscreen (Shift+click to lock)"}
                   </div>
                   <div>
                     <Button onClick={this._closePanel} disabled={isOnlyPanel}>
@@ -370,6 +423,11 @@ export default function Panel<Config: PanelConfig>(
                 </div>
               </MosaicDragHandle>
             )}
+            {fullScreen && shiftKeyPressed ? (
+              <button className={styles.exitFullScreen} onClick={this._exitFullScreen} data-panel-overlay-exit>
+                <CloseIcon /> <span>Exit fullscreen</span>
+              </button>
+            ) : null}
             <ErrorBoundary>
               {/* $FlowFixMe - https://github.com/facebook/flow/issues/6479 */}
               <PanelComponent
@@ -396,8 +454,9 @@ export default function Panel<Config: PanelConfig>(
 
   function ConnectedPanel(props: Props<Config>) {
     const store = React.useContext(ReactReduxContext).store;
-    const panelState = useSelector((state) => state.panels);
-    const context = useMessagePipeline();
+    const savedProps = useSelector((state) => state.panels.savedProps[props.childId]);
+    const isOnlyPanel = useSelector((state) => !isParent(state.panels.layout));
+    const { topics, datatypes, capabilities } = PanelAPI.useDataSourceInfo();
     const dispatch = useDispatch();
     const actions = React.useMemo(() => bindActionCreators({ savePanelConfig, saveFullPanelConfig }, dispatch), [
       dispatch,
@@ -407,11 +466,11 @@ export default function Panel<Config: PanelConfig>(
         {...props}
         store={store}
         childId={props.childId}
-        config={panelState.savedProps[props.childId] || props.config}
-        isOnlyPanel={!isParent(panelState.layout)}
-        topics={context.sortedTopics}
-        datatypes={context.datatypes}
-        capabilities={context.playerState.capabilities}
+        config={savedProps || props.config}
+        isOnlyPanel={isOnlyPanel}
+        topics={topics}
+        datatypes={datatypes}
+        capabilities={capabilities}
         {...actions}
       />
     );

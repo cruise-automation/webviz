@@ -123,12 +123,12 @@ export default class TopicSelector extends React.PureComponent<Props, State> {
     // so only do it at initialization or when the data changes
     const needsNewTree =
       !prevState ||
-      prevState.cachedProps.namespaces !== namespaces ||
       prevState.cachedProps.topics !== topics ||
-      prevState.cachedProps.expandedNodes !== expandedNodes ||
+      prevState.cachedProps.namespaces !== namespaces ||
       prevState.cachedProps.checkedNodes !== checkedNodes ||
-      prevState.cachedProps.editedTopics !== editedTopics ||
-      prevState.cachedProps.transformsCount !== transformsCount;
+      prevState.cachedProps.expandedNodes !== expandedNodes ||
+      prevState.cachedProps.transformsCount !== transformsCount ||
+      prevState.cachedProps.editedTopics !== editedTopics;
 
     if (needsNewTree) {
       const filterText = (prevState && prevState.filterText) || undefined;
@@ -210,11 +210,6 @@ export default class TopicSelector extends React.PureComponent<Props, State> {
     this.props.onEditClick(e, topicNode.topic);
   };
 
-  togglePinTopics = () => {
-    const { pinTopics, saveConfig } = this.props;
-    saveConfig({ pinTopics: !pinTopics });
-  };
-
   toggleChecked = (node: Node) => {
     const { checkedNodes, saveConfig, modifiedNamespaceTopics, namespaces } = this.props;
     const { namespace, topic } = ((node: any): TopicTreeNode);
@@ -289,54 +284,58 @@ export default class TopicSelector extends React.PureComponent<Props, State> {
       color: "white",
       paddingLeft: 5,
     };
-    const hide = !pinTopics && !showTopics;
+    const hideTopicSelector = !pinTopics && !showTopics;
 
     return (
       <>
-        <div className={cx(styles.toolbar, styles.left)} style={{ display: hide ? "block" : "none" }}>
-          <div className={styles.buttons}>
-            <Button onClick={onToggleShowClick} tooltip="Show Topic Picker">
-              <Icon style={{ color: "white" }}>
-                <LayersIcon />
-              </Icon>
-            </Button>
-            {this.hasErrors() && <div className={styles.errorsBadge} />}
-          </div>
-        </div>
-        <div onClick={this.cancelClick} style={{ display: hide ? "none" : "block" }} className={styles.topicsContainer}>
-          <div className={styles.topics}>
-            <Flex col clip>
-              <Flex row className={styles.filterRow}>
-                <Icon style={{ color: "rgba(255,255,255, 0.3", padding: "10px 0 10px 10px" }}>
-                  <MagnifyIcon style={{ width: 16, height: 16 }} />
+        {hideTopicSelector && (
+          <div className={cx(styles.toolbar, styles.left)}>
+            <div className={styles.buttons}>
+              <Button onClick={onToggleShowClick} tooltip="Show Topic Picker">
+                <Icon style={{ color: "white" }}>
+                  <LayersIcon />
                 </Icon>
-                <input
-                  ref={(el) => (this.filterTextField = el)}
-                  type="text"
-                  style={inputStyle}
-                  placeholder="Type to filter"
-                  value={this.state.filterText || ""}
-                  onChange={this.onFilterTextChange}
-                />
-                <TopicSelectorMenu
-                  saveConfig={saveConfig}
-                  pinTopics={pinTopics}
-                  autoTextBackgroundColor={autoTextBackgroundColor}
-                />
-              </Flex>
-              <Flex col scroll>
-                <Tree
-                  hideRoot
-                  onToggleCheck={this.toggleChecked}
-                  onToggleExpand={this.toggleExpanded}
-                  onEditClick={this.onEditClick}
-                  root={tree}
-                />
-              </Flex>
-            </Flex>
-            {this.renderErrors()}
+              </Button>
+              {this.hasErrors() && <div className={styles.errorsBadge} />}
+            </div>
           </div>
-        </div>
+        )}
+        {!hideTopicSelector && (
+          <div onClick={this.cancelClick} className={styles.topicsContainer}>
+            <div className={styles.topics}>
+              <Flex col clip>
+                <Flex row className={styles.filterRow}>
+                  <Icon style={{ color: "rgba(255,255,255, 0.3)", padding: "10px 0 10px 10px" }}>
+                    <MagnifyIcon style={{ width: 16, height: 16 }} />
+                  </Icon>
+                  <input
+                    ref={(el) => (this.filterTextField = el)}
+                    type="text"
+                    style={inputStyle}
+                    placeholder="Type to filter"
+                    value={this.state.filterText || ""}
+                    onChange={this.onFilterTextChange}
+                  />
+                  <TopicSelectorMenu
+                    saveConfig={saveConfig}
+                    pinTopics={pinTopics}
+                    autoTextBackgroundColor={autoTextBackgroundColor}
+                  />
+                </Flex>
+                <Flex col scroll>
+                  <Tree
+                    hideRoot
+                    onToggleCheck={this.toggleChecked}
+                    onToggleExpand={this.toggleExpanded}
+                    onEditClick={this.onEditClick}
+                    root={tree}
+                  />
+                </Flex>
+              </Flex>
+              {this.renderErrors()}
+            </div>
+          </div>
+        )}
       </>
     );
   }

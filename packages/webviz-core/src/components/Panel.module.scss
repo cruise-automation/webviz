@@ -1,4 +1,5 @@
 @import "~webviz-core/src/styles/colors.module.scss";
+@import "~webviz-core/src/styles/variables.scss";
 
 .root {
   z-index: 1;
@@ -8,12 +9,23 @@
 
 .rootFullScreen {
   position: fixed;
+  z-index: 100;
+  border: 4px solid rgba(110, 81, 238, 0.3);
+  top: $topBarHeight;
+  left: 0;
+  right: 0;
+  bottom: $playbackControlHeight;
+}
+
+.notClickable {
+  position: fixed;
+  z-index: 100;
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  z-index: 100;
-  border: 4px solid rgba(110, 81, 238, 0.3);
+  height: $topBarHeight;
+  opacity: 0;
+  cursor: not-allowed;
 }
 
 .quickActionsOverlay {
@@ -103,5 +115,31 @@
     :global(.mosaic-window):hover & {
       display: flex;
     }
+  }
+}
+
+.exitFullScreen {
+  position: fixed;
+  top: 75px;
+  right: 8px;
+  z-index: 102;
+  opacity: 1;
+  background-color: $toolbar;
+  display: none;
+  .root:hover & {
+    display: block;
+  }
+  &:global(.hoverForScreenshot) {
+    display: block;
+  }
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: white;
+    float: left;
+  }
+  span {
+    float: right;
+    padding-left: 3px;
   }
 }

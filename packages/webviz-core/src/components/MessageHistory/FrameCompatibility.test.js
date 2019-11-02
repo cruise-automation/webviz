@@ -9,6 +9,7 @@
 import { mount } from "enzyme";
 import { last } from "lodash";
 import * as React from "react";
+import { act } from "react-dom/test-utils";
 
 import { datatypes, messages } from "./fixture";
 import { FrameCompatibility } from "webviz-core/src/components/MessageHistory/FrameCompatibility";
@@ -42,7 +43,7 @@ describe("FrameCompatibility", () => {
         this.props.setSubscriptions(topics);
       }
     }
-    const MyComponentWithFrame = FrameCompatibility(MyComponent, { topics: ["/some/topic"] });
+    const MyComponentWithFrame = FrameCompatibility(MyComponent, ["/some/topic"]);
     const ref = React.createRef();
     const provider = mount(
       <MockMessagePipelineProvider
@@ -64,7 +65,7 @@ describe("FrameCompatibility", () => {
     if (!ref.current) {
       throw new Error("missing ref");
     }
-    ref.current.setSubscriptions(["/foo"]);
+    act(() => ref.current.setSubscriptions(["/foo"]));
     provider.setProps({ messages: [messages[2], fooMsg2] });
     expect(last(childFn.mock.calls)[0].frame).toEqual({ "/some/topic": [messages[2]], "/foo": [fooMsg2] });
   });

@@ -10,7 +10,8 @@ import { type Time, TimeUtil } from "rosbag";
 
 import type { Message, PlayerState } from "webviz-core/src/players/types";
 import Logger from "webviz-core/src/util/Logger";
-import { subtractTimes, toSec } from "webviz-core/src/util/time";
+import reportError from "webviz-core/src/util/reportError";
+import { subtractTimes, toSec, formatFrame } from "webviz-core/src/util/time";
 
 const DRIFT_THRESHOLD_SEC = 1; // Maximum amount of drift allowed.
 const WAIT_FOR_SEEK_SEC = 1; // How long we wait for a change in `lastSeekTime` before warning.
@@ -26,6 +27,7 @@ const log = new Logger(__filename);
 let lastMessages: ?(Message[]);
 let lastCurrentTime: ?Time;
 let lastReceiveTime: ?Time;
+let lastReceiveTopic: ?string;
 let lastLastSeekTime: ?number;
 let warningTimeout: ?TimeoutID;
 let incorrectMessages: Message[] = [];
@@ -65,17 +67,16 @@ export default function warnOnOutOfSyncMessages(playerState: PlayerState) {
         }
       }
 
-      if (lastReceiveTime && TimeUtil.isLessThan(message.receiveTime, lastReceiveTime)) {
-        incorrectMessages.push(message);
-        log.error("Went back in time; without updating lastSeekTime", {
-          lastReceiveTime,
-          lastSeekTime,
-          incorrectMessages: incorrectMessages.map((msg) => ({
-            receiveTime: msg.receiveTime,
-            topic: msg.topic,
-          })),
-        });
+      if (lastReceiveTime && lastReceiveTopic && TimeUtil.isLessThan(message.receiveTime, lastReceiveTime)) {
+        reportError(
+          "Bag went back in time",
+          `Received a message on ${message.topic} at ${formatFrame(message.receiveTime)} which is earlier than ` +
+            `last received message on ${lastReceiveTopic} at ${formatFrame(lastReceiveTime)}. ` +
+            `Data source may be corrupted on these or other topics.`,
+          "user"
+        );
       }
+      lastReceiveTopic = message.topic;
       lastReceiveTime = message.receiveTime;
     }
   }

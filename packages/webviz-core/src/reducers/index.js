@@ -12,15 +12,15 @@ import { combineReducers } from "redux";
 import auth from "./auth";
 import extensions from "./extensions";
 import mosaic from "./mosaic";
-import nodeDiagnostics from "./nodeDiagnostics";
 import panels from "./panels";
+import userNodes from "./userNodes";
 
 const reducers = {
   panels,
   mosaic,
   auth,
   extensions,
-  nodeDiagnostics,
+  userNodes,
 };
 
 export default function createRootReducer(history: any) {

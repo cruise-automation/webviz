@@ -24,9 +24,9 @@ jobs:
       env:
         CI: true
     - uses: mr-smithers-excellent/docker-build-push@v1.0
-    with:
-      image: webwiz
-      tag: latest
-      registry: docker.pkg.github.com/enwaytech/webviz/
-      dockerfile: Dockerfile.ci
-      username: stefan-enway
+      with:
+        image: webwiz
+        tag: latest
+        registry: docker.pkg.github.com/enwaytech/webviz/
+        dockerfile: Dockerfile.ci
+        username: stefan-enway

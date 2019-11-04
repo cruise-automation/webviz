@@ -1,1 +1,3 @@
 FROM 10-alpine
+
+COPY . .

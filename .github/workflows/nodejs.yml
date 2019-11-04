@@ -21,12 +21,13 @@ jobs:
       run: |
         npm run bootstrap
         npm run build --if-present
+        npm run docs
       env:
         CI: true
     - uses: mr-smithers-excellent/docker-build-push@v1.0
       with:
         image: webwiz
         tag: latest
-        registry: docker.pkg.github.com/enwaytech/webviz/
+        registry: docker.pkg.github.com
         dockerfile: Dockerfile.ci
         username: stefan-enway

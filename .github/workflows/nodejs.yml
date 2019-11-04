@@ -22,9 +22,9 @@ jobs:
 #        npm ci
 #        npm run build --if-present
 #        npm test
-    - name: npm boostrap & build
+    - name: npm bootstrap & build
       run: |
-        npm run boostrap
+        npm run bootstrap
         npm run build --if-present
       env:
         CI: true

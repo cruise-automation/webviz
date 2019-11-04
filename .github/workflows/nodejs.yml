@@ -24,7 +24,7 @@ jobs:
 #        npm test
     - name: npm boostrap & build
       run: |
-        npm boostrap
+        npm run boostrap
         npm run build --if-present
       env:
         CI: true

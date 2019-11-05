@@ -158,7 +158,11 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     if (!this._tick) {
       this._tick = requestAnimationFrame(() => {
         this._tick = undefined;
-        worldviewContext.paint();
+        try {
+          worldviewContext.paint();
+        } catch (e) {
+          console.debug(e);
+        }
       });
     }
   }

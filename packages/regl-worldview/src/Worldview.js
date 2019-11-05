@@ -161,7 +161,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         try {
           worldviewContext.paint();
         } catch (e) {
-          console.debug(e);
+          console.error(e);
         }
       });
     }

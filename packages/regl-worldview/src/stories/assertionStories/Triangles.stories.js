@@ -57,6 +57,11 @@ const stories = storiesOf("Integration/Triangles", module).addDecorator(withScre
 generateNonInstancedClickAssertions<TriangleList>("Triangle", Triangles, twoTrianglesInARow).forEach(
   ({ name, story }) => stories.add(name, story)
 );
+generateNonInstancedClickAssertions<TriangleList>(
+  "Triangle with onlyRenderInHitmap=true",
+  Triangles,
+  twoTrianglesInARow.map((triangle) => ({ ...triangle, onlyRenderInHitmap: true }))
+).forEach(({ name, story }) => stories.add(name, story));
 generateInstancedClickAssertions<TriangleList>("Triangle", Triangles, instancedTriangles).forEach(({ name, story }) =>
   stories.add(name, story)
 );

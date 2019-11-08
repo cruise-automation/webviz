@@ -10,7 +10,7 @@ import { mat4 } from "gl-matrix";
 import memoizeWeak from "memoize-weak";
 import React, { useContext, useState, useEffect, useCallback, useDebugValue } from "react";
 
-import type { Pose, Scale, MouseHandler, GetChildrenForHitmap } from "../types";
+import type { Pose, Scale, MouseHandler } from "../types";
 import { defaultBlend, pointToVec3, orientationToVec4 } from "../utils/commandUtils";
 import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
 import parseGLB, { type GLBModel } from "../utils/parseGLB";

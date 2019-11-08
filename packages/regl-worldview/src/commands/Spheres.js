@@ -56,6 +56,7 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
 
 const spheres = fromGeometry(points, faces);
 
+const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 export default function Spheres(props: { ...CommonCommandProps, children: SphereList[] }) {
-  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={spheres} />;
+  return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={spheres} />;
 }

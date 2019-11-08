@@ -205,9 +205,9 @@ const drawModel = (regl) => {
     },
   });
 
-  return (props) => {
+  return (props, isHitmap) => {
     const drawCalls = getDrawCalls(props.model);
-    withContext(props, () => {
+    withContext({ ...props, isHitmap }, () => {
       command(drawCalls);
     });
   };
@@ -269,15 +269,6 @@ function useModel(model: string | (() => Promise<GLBModel>)): ?GLBModel {
   );
 }
 
-// Override the default getChildrenForHitmap with our own implementation.
-const getChildrenForHitmap: GetChildrenForHitmap = <T: any>(prop: T, assignNextColors, excludedObjects) => {
-  const hitmapProp = getChildrenForHitmapWithOriginalMarker(prop, assignNextColors, excludedObjects);
-  if (hitmapProp) {
-    return { ...hitmapProp, isHitmap: true };
-  }
-  return hitmapProp;
-};
-
 export default function GLTFScene(props: Props) {
   const { children, model, ...rest } = props;
 
@@ -297,7 +288,7 @@ export default function GLTFScene(props: Props) {
   }
 
   return (
-    <Command {...rest} reglCommand={drawModel} getChildrenForHitmap={getChildrenForHitmap}>
+    <Command {...rest} reglCommand={drawModel} getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker}>
       {{ ...children, model: loadedModel, originalMarker: children }}
     </Command>
   );

@@ -34,6 +34,8 @@ type Triangle = {
   color: Color,
   colors?: Color[],
   points: [{ x: number, y: number, z: number }]
+  // Pass true to not render the triangles to the screen - just the hitmap.
+  onlyRenderInHitmap?: boolean,
 }
 ```
 

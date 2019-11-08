@@ -347,10 +347,10 @@ export class WorldviewContext {
         };
         const hitmapProps = getChildrenForHitmap(children, assignNextColorsFn, excludedObjects || []);
         if (hitmapProps) {
-          cmd(hitmapProps);
+          cmd(hitmapProps, true);
         }
       } else if (!isHitmap) {
-        cmd(children);
+        cmd(children, false);
       }
     });
   };

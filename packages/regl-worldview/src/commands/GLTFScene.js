@@ -207,7 +207,7 @@ const drawModel = (regl) => {
 
   return (props, isHitmap) => {
     const drawCalls = getDrawCalls(props.model);
-    withContext({ ...props, isHitmap }, () => {
+    withContext(isHitmap ? { ...props, isHitmap } : props, () => {
       command(drawCalls);
     });
   };

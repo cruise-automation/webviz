@@ -48,6 +48,7 @@ const cubes = fromGeometry(
   ]
 );
 
+const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 export default function Cubes(props: { ...CommonCommandProps, children: Cube[] }) {
-  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={cubes} />;
+  return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={cubes} />;
 }

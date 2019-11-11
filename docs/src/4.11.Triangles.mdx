@@ -34,6 +34,10 @@ type Triangle = {
   color: Color,
   colors?: Color[],
   points: [{ x: number, y: number, z: number }]
+  // Pass true to not render the triangles to the screen - just the hitmap.
+  // This can be used to render the interior of a group of lines as transparent during normal rendering, but as 
+  // clickable for hitmap purposes.
+  onlyRenderInHitmap?: boolean,
 }
 ```
 

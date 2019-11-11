@@ -149,15 +149,18 @@ const vertexColors = (regl) =>
 const triangles = (regl: Regl) => {
   const single = regl(singleColor(regl));
   const vertex = regl(vertexColors(regl));
-  return (props: any) => {
-    const items = Array.isArray(props) ? props : [props];
+  return (props: any, isHitmap: boolean) => {
+    const items: TriangleList[] = Array.isArray(props) ? props : [props];
     const singleColorItems = [];
     const vertexColorItems = [];
     items.forEach((item) => {
-      if (item.colors && item.colors.length) {
-        vertexColorItems.push(item);
-      } else {
-        singleColorItems.push(item);
+      // If the item has onlyRenderInHitmap set, only render it in the hitmap.
+      if (isHitmap || !item.onlyRenderInHitmap) {
+        if (item.colors && item.colors.length) {
+          vertexColorItems.push(item);
+        } else {
+          singleColorItems.push(item);
+        }
       }
     });
 
@@ -166,6 +169,7 @@ const triangles = (regl: Regl) => {
   };
 };
 
+const getChildrenForHitmap = createInstancedGetChildrenForHitmap(3);
 export default function Triangles(props: { ...CommonCommandProps, children: TriangleList[] }) {
-  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(3)} {...props} reglCommand={triangles} />;
+  return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={triangles} />;
 }

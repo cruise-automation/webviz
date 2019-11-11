@@ -49,6 +49,7 @@ const { points, sideFaces, endCapFaces } = createCylinderGeometry(30, false);
 
 const cylinders = fromGeometry(points, sideFaces.concat(endCapFaces));
 
+const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 export default function Cylinders(props: { ...CommonCommandProps, children: Cylinder[] }) {
-  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={cylinders} />;
+  return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={cylinders} />;
 }

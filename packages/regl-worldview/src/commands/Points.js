@@ -63,6 +63,7 @@ const points = (regl: Regl) => {
   });
 };
 
+const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 export default function Points(props: { ...CommonCommandProps, children: PointType[] }) {
-  return <Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} {...props} reglCommand={points} />;
+  return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={points} />;
 }

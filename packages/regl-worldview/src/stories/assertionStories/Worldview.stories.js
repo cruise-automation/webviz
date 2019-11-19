@@ -211,19 +211,19 @@ stories
     `when there are overlapping objects from different commands, the command on top of the drawing layer can stop event propagation to other commands`,
     assertionTest({
       story: (setTestData) => (
-        <WorldviewWrapper onMouseDown={(_, { objects }) => setTestData([])}>
-          <Cubes
-            onMouseDown={() => {
-              setTestData([]);
-            }}>
-            {[underCube]}
-          </Cubes>
+        <WorldviewWrapper enableStackedObjectEvents>
           <Cubes
             onMouseDown={(e, { objects }) => {
               e.stopPropagation();
               setTestData(objects);
             }}>
             {[cube]}
+          </Cubes>
+          <Cubes
+            onMouseDown={() => {
+              setTestData([]);
+            }}>
+            {[underCube]}
           </Cubes>
         </WorldviewWrapper>
       ),

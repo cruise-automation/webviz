@@ -62,7 +62,12 @@ type State = {|
   worldviewContext: WorldviewContext,
 |};
 
-function handleWorldviewMouseInteraction(objects: MouseEventObject[], ray: Ray, e: MouseEvent, handler: MouseHandler) {
+function handleWorldviewMouseInteraction(
+  objects: MouseEventObject[],
+  ray: Ray,
+  e: SyntheticMouseEvent<HTMLCanvasElement>,
+  handler: MouseHandler
+) {
   const args = { ray, objects };
 
   try {
@@ -158,20 +163,20 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
   }
 
-  _onDoubleClick = (e: MouseEvent) => {
+  _onDoubleClick = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
     this._onMouseInteraction(e, "onDoubleClick");
   };
 
-  _onMouseDown = (e: MouseEvent) => {
+  _onMouseDown = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
     this._dragStartPos = { x: e.clientX, y: e.clientY };
     this._onMouseInteraction(e, "onMouseDown");
   };
 
-  _onMouseMove = (e: MouseEvent) => {
+  _onMouseMove = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
     this._onMouseInteraction(e, "onMouseMove");
   };
 
-  _onMouseUp = (e: MouseEvent) => {
+  _onMouseUp = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
     this._onMouseInteraction(e, "onMouseUp");
     const { _dragStartPos } = this;
     if (_dragStartPos) {
@@ -185,7 +190,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
   };
 
-  _onMouseInteraction = (e: MouseEvent, mouseEventName: MouseEventEnum) => {
+  _onMouseInteraction = (e: SyntheticMouseEvent<HTMLCanvasElement>, mouseEventName: MouseEventEnum) => {
     const { worldviewContext } = this.state;
     const worldviewHandler = this.props[mouseEventName];
 

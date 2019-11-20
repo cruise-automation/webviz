@@ -1,17 +1,17 @@
-import { MouseEvents, MouseEventsInstanced } from './jsx/allLiveEditors';
+import { MouseEvents, MouseEventsInstanced } from "./jsx/allLiveEditors";
 
 # MouseEvents
 
 Currently Worldview supports the following mouse event handlers: `onDoubleClick`, `onMouseDown`, `onMouseUp`, `onMouseMove`, and `onClick`. When a supported DOM event is fired, the event handler will be triggered with the original event object and additional event information which can help build interactive views.
 
-| Name            | type              | Default | Description                                                                                                                                                              |
-| --------------- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `onDoubleClick` | `MouseHandler`    |         |                                                                                                                                                                          |
-| `onMouseDown`   | `MouseHandler`    |         |                                                                                                                                                                          |
-| `onMouseUp`     | `MouseHandler`    |         |                                                                                                                                                                          |
-| `onMouseMove`   | `MouseHandler`    |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the Worldview component                                                                               |
-| `onClick`       | `MouseHandler`    |         |                                                                                                                                                                          |
-| `getChildrenForHitmap`     | `GetChildrenForHitmap` |         | Maps the `children` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
+| Name                   | type                   | Default | Description                                                                                                                                                              |
+| ---------------------- | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `onDoubleClick`        | `MouseHandler`         |         |                                                                                                                                                                          |
+| `onMouseDown`          | `MouseHandler`         |         |                                                                                                                                                                          |
+| `onMouseUp`            | `MouseHandler`         |         |                                                                                                                                                                          |
+| `onMouseMove`          | `MouseHandler`         |         | only available if the `hitmapOnMouseMove` prop is set to `true` on the Worldview component                                                                               |
+| `onClick`              | `MouseHandler`         |         |                                                                                                                                                                          |
+| `getChildrenForHitmap` | `GetChildrenForHitmap` |         | Maps the `children` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
 
 ## Event Handler
 
@@ -26,7 +26,6 @@ There are two kinds of event handlers:
 
 - `ray`: the raw raycasting information including `dir` (direction), `origin`, and `point` (all in `Vec3` format).
 - `objects`: an array of objects (`{ object, instanceIndex }`) from this command that you interacted with. There will always be at least one object. The `enableStackedObjectEvents` option must be set to `true` on `<Worldview>` for this handler to return more than one object.
-
 
 ```js
 <Worldview onClick={(evt, { objects }) => console.log("You clicked on", objects.length && objects[0].object.id)}>
@@ -46,8 +45,9 @@ Example:
 ```js
 <Worldview>
   <Cubes
-    onClick={(evt, { objects }) => console.log(`You clicked on ${objects[0].object.id} at index ${objects[0].instanceIndex}`)}
-  >
+    onClick={(evt, { objects }) =>
+      console.log(`You clicked on ${objects[0].object.id} at index ${objects[0].instanceIndex}`)
+    }>
     {cubes}
   </Cubes>
 </Worldview>
@@ -59,23 +59,60 @@ How do we detect which object was interacted with? We use a process called picki
 
 The Worldview library allows a lot of control over this interaction, but most Commands can use one of three default `getChildrenForHitmap` functions.
 
-| Name                       | Description                                                                                                                                                                  | Usage                                                                                |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `nonInstancedGetChildrenForHitmap`    | A default `getChildrenForHitmap` function for non-instanced commands.                                                                                                                   | `<Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} ... />`                                  |
-| `getChildrenForHitmapWithOriginalMarker`  | Almost identical to nonInstancedGetChildrenForHitmap, but instead the object passed to event callbacks is the object at `prop.originalMarker`, not just `prop`. This is useful for composing commands: see the code for `Arrows` for an example. | `<Command getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker} ... />` |
-| `createInstancedGetChildrenForHitmap` | A factory function for instanced commands. It takes the number of points per instance: for example, a triangle has 3 points, whereas a sphere has 1 point (just the center). | `<Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} ... />` |
+| Name                                     | Description                                                                                                                                                                                                                                      | Usage                                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `nonInstancedGetChildrenForHitmap`       | A default `getChildrenForHitmap` function for non-instanced commands.                                                                                                                                                                            | `<Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} ... />`       |
+| `getChildrenForHitmapWithOriginalMarker` | Almost identical to nonInstancedGetChildrenForHitmap, but instead the object passed to event callbacks is the object at `prop.originalMarker`, not just `prop`. This is useful for composing commands: see the code for `Arrows` for an example. | `<Command getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker} ... />` |
+| `createInstancedGetChildrenForHitmap`    | A factory function for instanced commands. It takes the number of points per instance: for example, a triangle has 3 points, whereas a sphere has 1 point (just the center).                                                                     | `<Command getChildrenForHitmap={createInstancedGetChildrenForHitmap(1)} ... />` |
 
 ##### Turning off interactivity for a layer
 
 All built in commands allow overriding the `getChildrenForHitmap` function, and we recommend that you also allow users to override it. If a user passes in `null` or `undefined` for `getChildrenForHitmap` in a command, any objects drawn by that command instance will not be visible for interaction purposes. Disabling interaction in this way may help improve performance.
+
+##### event.stopPropagation()
+
+`event.stopPropagation()` on Command Component Level Handlers will prevent other handlers from firing.
+
+```js
+/*
+  Command Component handler stopping the Worldview level one 
+*/
+<Worldview onClick={(evt, { objects }) => console.log("This wont fire")}>
+  <Cubes
+    onClick={(evt, { objects }) => {
+      evt.stopPropagation();
+      console.log("This will fire");
+    }}>
+    {cubes}
+  </Cubes>
+</Worldview>
+```
+
+```js
+/*
+  Command Component handler stopping another one (only happens when enableStackedObjectEvents={true})
+*/
+<Worldview enableStackedObjectEvents>
+  <Cubes
+    onClick={(evt, { objects }) => {
+      evt.stopPropagation();
+      console.log("This will fire");
+    }}>
+    {cubesInFront}
+  </Cubes>
+  <Cubes onClick={(evt, { objects }) => console.log("This wont fire")}>{cubesBehind}</Cubes>
+</Worldview>
+```
 
 ##### Customizing the getChildrenForHitmap function
 
 Each Command is passed the `reglCommand` function and `children`. Worldview compiles the `reglCommand` once by calling it with the `regl` object as an argument, and calls the resulting command each frame with `children`. `getChildrenForHitmap` takes in those `children` and returns new version of them that will be rendered into the hitmap.
 
 Some important things to remember:
- * The first argument of `getChildrenForHitmap` is the `children`.
- * The second argument is a function that helps us assign colors to each object. Each object or instance that you want to differentiate should receive a unique color, since these colors function as unique IDs.
+
+- The first argument of `getChildrenForHitmap` is the `children`.
+- The second argument is a function that helps us assign colors to each object. Each object or instance that you want to differentiate should receive a unique color, since these colors function as unique IDs.
+
 ```js
 /*
  * object: the object to pass to event callbacks when this object is interacted with.
@@ -84,8 +121,9 @@ Some important things to remember:
  */
 type AssignNextColorsFn = (object: Object, count: number) => Vec4[];
 ```
- *  * Each object that you want to support mouse events on requires a unique ID. If your command actually renders multiple items per input object (such as when using [instanced drawing](https://github.com/regl-project/regl/blob/gh-pages/example/instance-triangle.js)), you may want a separate ID for each item — in this case, call `assignNextColors` with a count gretaer than 1.
- * Once you have this ID, pass it to `intToRGB()` to get the color to paint your object. Don't apply any transparency or shading to your object or this will mess up the hitmap.
+
+- - Each object that you want to support mouse events on requires a unique ID. If your command actually renders multiple items per input object (such as when using [instanced drawing](https://github.com/regl-project/regl/blob/gh-pages/example/instance-triangle.js)), you may want a separate ID for each item — in this case, call `assignNextColors` with a count gretaer than 1.
+- Once you have this ID, pass it to `intToRGB()` to get the color to paint your object. Don't apply any transparency or shading to your object or this will mess up the hitmap.
 
 Example using composition of the default `getChildrenForHitmap` functions:
 
@@ -100,8 +138,7 @@ Example using composition of the default `getChildrenForHitmap` functions:
         hitmapProp.scale = { x: hitmapProps.scale.x * 1.1, y: hitmapProps.scale.y * 1.1, z: hitmapProps.scale.z * 1.1 };
       }
       return hitmapProps;
-    }}
-  >
+    }}>
     {points}
   </Points>
 </Worldview>

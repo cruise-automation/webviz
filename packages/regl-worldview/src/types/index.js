@@ -110,7 +110,7 @@ export type ComponentReglClickInfo = {
   objects: Array<ClickedObject>,
 };
 
-export type MouseHandler = (MouseEvent, ReglClickInfo) => void;
+export type MouseHandler = (SyntheticMouseEvent<HTMLCanvasElement>, ReglClickInfo) => void;
 
 export type ComponentMouseHandler = (MouseEvent, ComponentReglClickInfo) => void;
 

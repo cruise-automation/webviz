@@ -36,7 +36,7 @@ const getArgs: (number[], ?Object) => ReglClickInfo = (point, object) => {
   };
 };
 
-const event: (?boolean) => MouseEvent = (ctrlKey): any => ({
+const event: (?boolean) => SyntheticMouseEvent<HTMLCanvasElement> = (ctrlKey): any => ({
   ctrlKey,
   stopPropagation: () => {},
   preventDefault: () => {},

@@ -26,6 +26,15 @@ const cube = {
   color: { r: 1, g: 0, b: 1, a: 0.5 },
 };
 
+const underCube = {
+  pose: {
+    orientation: { x: 0, y: 0, z: 0, w: 1 },
+    position: { x: 0, y: -30, z: 0 },
+  },
+  scale: { x: 10, y: 10, z: 10 },
+  color: { r: 0, g: 1, b: 1, a: 0.5 },
+};
+
 async function emitMouseEvent(eventName: "mousemove" | "mousedown" | "mouseup" | "dblclick"): Promise<void> {
   const [element] = document.getElementsByTagName("canvas");
   if (!element) {
@@ -170,6 +179,56 @@ stories
       ),
       assertions: async (getTestData) => {
         await emitMouseEvent("dblclick");
+        const result = await getTestData();
+        expect(result.length).toEqual(1);
+        expect(result[0].object).toEqual(cube);
+      },
+    })
+  )
+  .add(
+    `a component's mouse handlers can stop event propagation to worldview's global mouse handlers`,
+    assertionTest({
+      story: (setTestData) => (
+        <WorldviewWrapper onMouseDown={(_, { objects }) => setTestData([])}>
+          <Cubes
+            onMouseDown={(e, { objects }) => {
+              e.stopPropagation();
+              setTestData(objects);
+            }}>
+            {[cube]}
+          </Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData) => {
+        await emitMouseEvent("mousedown");
+        const result = await getTestData();
+        expect(result.length).toEqual(1);
+        expect(result[0].object).toEqual(cube);
+      },
+    })
+  )
+  .add(
+    `when there are overlapping objects from different commands, the command on top of the drawing layer can stop event propagation to other commands`,
+    assertionTest({
+      story: (setTestData) => (
+        <WorldviewWrapper enableStackedObjectEvents>
+          <Cubes
+            onMouseDown={(e, { objects }) => {
+              e.stopPropagation();
+              setTestData(objects);
+            }}>
+            {[cube]}
+          </Cubes>
+          <Cubes
+            onMouseDown={() => {
+              setTestData([]);
+            }}>
+            {[underCube]}
+          </Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData) => {
+        await emitMouseEvent("mousedown");
         const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);

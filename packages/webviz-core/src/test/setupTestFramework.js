@@ -1,8 +1,13 @@
 // @flow
+//
+//  Copyright (c) 2019-present, GM Cruise LLC
+//
+//  This source code is licensed under the Apache License, Version 2.0,
+//  found in the LICENSE file in the root directory of this source tree.
+//  You may not use this file except in compliance with the License.
 
 import diff from "jest-diff";
 import { isEqual } from "lodash";
-import "react-hooks-testing-library/cleanup-after-each";
 
 // this file runs once jest has injected globals so you can modify the expect matchers
 global.expect.extend({

@@ -25,7 +25,7 @@ function getZoomDistanceFromURLParam(): number | void {
 }
 
 // Get the camera target position and orientation
-function getTargetPose(followTf?: string | false, transforms: Transforms) {
+export function getTargetPose(followTf?: string | false, transforms: Transforms) {
   if (followTf) {
     let pose = emptyPose();
     pose = transforms.apply(pose, pose, followTf, transforms.rootOfTransform(followTf).id);

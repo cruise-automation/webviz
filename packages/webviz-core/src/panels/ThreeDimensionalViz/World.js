@@ -1,12 +1,12 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2019-present, GM Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as React from "react";
+import React, { useMemo, type Node } from "react";
 import {
   Worldview,
   Arrows,
@@ -20,8 +20,10 @@ import {
   FilledPolygons,
   type CameraState,
   type MouseHandler,
+  createInstancedGetChildrenForHitmap,
 } from "regl-worldview";
 
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import {
   OccupancyGrids,
   LaserScans,
@@ -30,15 +32,13 @@ import {
   LinedConvexHulls,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
-import type { Scene, MarkerProvider } from "webviz-core/src/types/Scene";
+import type { MarkerCollector, MarkerProvider } from "webviz-core/src/types/Scene";
 
 type Props = {|
   autoTextBackgroundColor: boolean,
   cameraState: CameraState,
-  children?: React.Node,
-  convexHullOpacity: ?number,
-  debug: boolean,
-  extensions: string[],
+  children?: Node,
+  isPlaying: boolean,
   markerProviders: MarkerProvider[],
   onCameraStateChange: (CameraState) => void,
   onClick: MouseHandler,
@@ -46,52 +46,23 @@ type Props = {|
   onMouseDown?: MouseHandler,
   onMouseMove?: MouseHandler,
   onMouseUp?: MouseHandler,
-  scene: Scene,
 |};
 
 function getMarkers(markerProviders: MarkerProvider[]) {
-  const markers = {
-    lines: [],
-    grids: [],
-    arrows: [],
-    texts: [],
-    cubes: [],
-    spheres: [],
-    points: [],
-    pointclouds: [],
-    poseMarkers: [],
-    triangles: [],
-    laserScans: [],
-    cylinders: [],
-    filledPolygons: [],
-    instancedLineLists: [],
-    linedConvexHulls: [],
-  };
-
-  const collector = {
-    arrow: (o) => markers.arrows.push(o),
-    cube: (o) => markers.cubes.push(o),
-    cubeList: (o) => markers.cubes.push(o),
-    sphere: (o) => markers.spheres.push(o),
-    sphereList: (o) => markers.spheres.push(o),
-    cylinder: (o) => markers.cylinders.push(o),
-    lineStrip: (o) => markers.lines.push(o),
-    lineList: (o) => markers.lines.push(o),
-    points: (o) => markers.points.push(o),
-    text: (o) => markers.texts.push(o),
-    triangleList: (o) => markers.triangles.push(o),
-    poseMarker: (o) => markers.poseMarkers.push(o),
-    grid: (o) => markers.grids.push(o),
-    pointcloud: (o) => markers.pointclouds.push(o),
-    laserScan: (o) => markers.laserScans.push(o),
-    filledPolygon: (o) => markers.filledPolygons.push(o),
-    instancedLineList: (o) => markers.instancedLineLists.push(o),
-    linedConvexHull: (o) => markers.linedConvexHulls.push(o),
-  };
+  const markers = {};
+  const collector = {};
+  getGlobalHooks()
+    .perPanelHooks()
+    .ThreeDimensionalViz.allSupportedMarkers.forEach((field) => {
+      if (!markers[field]) {
+        markers[field] = [];
+      }
+      collector[field] = (o) => markers[field].push(o);
+    });
 
   markerProviders.forEach((provider) => {
     if (provider) {
-      provider.renderMarkers(collector);
+      provider.renderMarkers(((collector: any): MarkerCollector));
     }
   });
 
@@ -99,62 +70,73 @@ function getMarkers(markerProviders: MarkerProvider[]) {
 }
 
 export default function World({
-  markerProviders,
+  onClick,
   autoTextBackgroundColor,
   children,
   onCameraStateChange,
-  onClick,
+  cameraState,
+  cameraState: { perspective },
+  isPlaying,
+  markerProviders,
+  onDoubleClick,
   onMouseDown,
   onMouseMove,
   onMouseUp,
-  cameraState,
-  onDoubleClick,
-  convexHullOpacity,
 }: Props) {
+  const getChildrenForHitmap = useMemo(() => createInstancedGetChildrenForHitmap(2), []);
   const {
-    lines,
-    arrows,
-    texts,
-    cubes,
-    spheres,
+    arrow,
+    cube,
+    cubeList,
+    cylinder,
+    filledPolygon,
+    grid,
+    instancedLineList,
+    laserScan,
+    linedConvexHull,
+    lineList,
+    lineStrip,
+    pointcloud,
     points,
-    triangles,
-    poseMarkers,
-    cylinders,
-    grids,
-    pointclouds,
-    laserScans,
-    filledPolygons,
-    linedConvexHulls,
+    poseMarker,
+    sphere,
+    sphereList,
+    text,
+    triangleList,
+    ...rest
   } = getMarkers(markerProviders);
+  const additionalMarkers = getGlobalHooks()
+    .perPanelHooks()
+    .ThreeDimensionalViz.renderAdditionalMarkers(rest);
 
   return (
     <Worldview
       cameraState={cameraState}
+      enableStackedObjectEvents={!isPlaying}
       hideDebug={inScreenshotTests()}
       onCameraStateChange={onCameraStateChange}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      backgroundColor={[0, 0, 0, 0]}>
-      <OccupancyGrids layerIndex={-1}>{grids}</OccupancyGrids>
-      <Lines>{lines}</Lines>
-      <Arrows>{arrows}</Arrows>
-      <Points>{points}</Points>
-      <PointClouds>{pointclouds}</PointClouds>
-      <Triangles>{triangles}</Triangles>
-      <Spheres>{spheres}</Spheres>
-      <Cylinders>{cylinders}</Cylinders>
-      <Cubes>{cubes}</Cubes>
-      <PoseMarkers>{poseMarkers}</PoseMarkers>
-      <LaserScans>{laserScans}</LaserScans>
-      <Text autoBackgroundColor={autoTextBackgroundColor}>{texts}</Text>
-      <FilledPolygons>{filledPolygons}</FilledPolygons>
-      {/* By default, make the convex hull fill completely transparent - they just provide a click layer. */}
-      <LinedConvexHulls opacity={convexHullOpacity || 0}>{linedConvexHulls}</LinedConvexHulls>
+      onMouseUp={onMouseUp}>
       {children}
+      <OccupancyGrids layerIndex={-1}>{grid}</OccupancyGrids>
+      {additionalMarkers}
+      <Lines>{[...lineList, ...lineStrip]}</Lines>
+      <Arrows>{arrow}</Arrows>
+      <Points>{points}</Points>
+      <PointClouds>{pointcloud}</PointClouds>
+      <Triangles>{triangleList}</Triangles>
+      <Spheres>{[...sphere, ...sphereList]}</Spheres>
+      <Cylinders>{cylinder}</Cylinders>
+      <Cubes>{[...cube, ...cubeList]}</Cubes>
+      <PoseMarkers>{poseMarker}</PoseMarkers>
+      <LaserScans>{laserScan}</LaserScans>
+      <Text autoBackgroundColor={autoTextBackgroundColor}>{text}</Text>
+      <FilledPolygons>{filledPolygon}</FilledPolygons>
+      <Lines getChildrenForHitmap={getChildrenForHitmap}>{instancedLineList}</Lines>
+      <LinedConvexHulls>{linedConvexHull}</LinedConvexHulls>
     </Worldview>
   );
 }

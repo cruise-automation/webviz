@@ -11,13 +11,13 @@ import { type MouseEventObject } from "regl-worldview";
 import styled from "styled-components";
 
 import { type ClickedPosition } from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import { colors } from "webviz-core/src/util/colors";
 
 const SInteractionContextMenu = styled.div`
   position: fixed;
   width: 240px;
-  background: ${colors.toolbar};
-  z-index: 100; /* above the Text marker */
+  background: ${colors.DARK4};
+  z-index: 1000; /* above the Text marker */
 `;
 
 const SMenu = styled.ul`
@@ -27,7 +27,7 @@ const SMenu = styled.ul`
 
 const STooltip = styled.div`
   cursor: pointer;
-  background: #3b2e76;
+  background: ${colors.PURPLE1};
   position: absolute;
   top: 0;
   left: 0;
@@ -40,7 +40,7 @@ const SMenuItem = styled.li`
   padding: 8px;
   position: relative;
   &:hover {
-    background: #3b2e76;
+    background: ${colors.PURPLE1};
     ${STooltip} {
       display: block;
     }
@@ -52,6 +52,10 @@ const STopic = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+`;
+
+const SId = styled.span`
+  color: ${colors.YELLOW1};
 `;
 
 type Props = {
@@ -68,16 +72,24 @@ export default function InteractionContextMenu({ selectedObjects = [], clickedPo
         left: clickedPosition.clientX,
       }}>
       <SMenu>
-        {selectedObjects.map(({ object, instanceIndex }, index) => (
-          <SMenuItem key={index}>
-            <STopic
-              key={object.id || (object.interactionData && object.interactionData.topic)}
-              onClick={() => onSelectObject({ object, instanceIndex })}>
+        {selectedObjects.map(({ object, instanceIndex }, index) => {
+          const menuText = (
+            <>
+              {object.id && <SId>{object.id}</SId>}
               {object.interactionData && object.interactionData.topic}
-              <STooltip>{object.interactionData && object.interactionData.topic}</STooltip>
-            </STopic>
-          </SMenuItem>
-        ))}
+            </>
+          );
+          return (
+            <SMenuItem key={index}>
+              <STopic
+                key={object.id || (object.interactionData && object.interactionData.topic)}
+                onClick={() => onSelectObject({ object, instanceIndex })}>
+                {menuText}
+                <STooltip>{menuText}</STooltip>
+              </STopic>
+            </SMenuItem>
+          );
+        })}
       </SMenu>
     </SInteractionContextMenu>
   );

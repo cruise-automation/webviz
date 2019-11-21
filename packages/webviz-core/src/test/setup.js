@@ -14,7 +14,6 @@ import ws from "ws";
 import MemoryStorage from "./MemoryStorage";
 
 global.CURRENT_VERSION = "testing";
-global.RAVEN_URL = "testing";
 
 process.env.WASM_LZ4_ENVIRONMENT = "NODE";
 
@@ -32,7 +31,6 @@ if (typeof window !== "undefined") {
     global.requestAnimationFrame || ((cb) => setTimeout(cb, 0));
 
   global.cancelAnimationFrame = window.cancelAnimationFrame = global.cancelAnimationFrame || ((id) => clearTimeout(id));
-  global.GIT_INFO = {};
   global.TextDecoder = TextDecoder;
   // polyfill URLSearchParams in jsdom
   window.URLSearchParams = UrlSearchParams;

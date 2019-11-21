@@ -6,14 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import get from "lodash/get";
+import { get, mapValues } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import type { MessageHistoryItemsByPath } from ".";
 import type { Message } from "webviz-core/src/players/types";
 
 // Get all timestamps of all messages, newest first
-function allStampsNewestFirst(
+function allItemStampsNewestFirst(
   itemsByPath: MessageHistoryItemsByPath,
   getHeaderStamp?: (itemMessage: Message) => ?Time
 ): Time[] {
@@ -29,9 +29,21 @@ function allStampsNewestFirst(
   }
   return stamps.sort((a, b) => -TimeUtil.compare(a, b));
 }
+function allMessageStampsNewestFirst(messagesByTopic: { [topic: string]: Message[] }) {
+  const stamps = [];
+  for (const topic in messagesByTopic) {
+    for (const { message } of messagesByTopic[topic]) {
+      const stamp = get(message, ["header", "stamp"]);
+      if (stamp) {
+        stamps.push(stamp);
+      }
+    }
+  }
+  return stamps.sort((a, b) => -TimeUtil.compare(a, b));
+}
 
 // Get a subset of items matching a particular timestamp
-function messagesMatchingStamp(
+function itemsMatchingStamp(
   stamp: Time,
   itemsByPath: MessageHistoryItemsByPath,
   getHeaderStamp?: (itemMessage: Message) => ?Time
@@ -62,11 +74,83 @@ export default function synchronizeMessages(
   itemsByPath: MessageHistoryItemsByPath,
   getHeaderStamp?: (itemMessage: Message) => ?Time
 ): ?MessageHistoryItemsByPath {
-  for (const stamp of allStampsNewestFirst(itemsByPath, getHeaderStamp)) {
-    const synchronizedItemsByPath = messagesMatchingStamp(stamp, itemsByPath, getHeaderStamp);
+  for (const stamp of allItemStampsNewestFirst(itemsByPath, getHeaderStamp)) {
+    const synchronizedItemsByPath = itemsMatchingStamp(stamp, itemsByPath, getHeaderStamp);
     if (synchronizedItemsByPath) {
       return synchronizedItemsByPath;
     }
   }
   return null;
+}
+
+function getSynchronizedMessages(
+  stamp: Time,
+  topics: $ReadOnlyArray<string>,
+  messages: { [topic: string]: Message[] }
+): ?{ [topic: string]: Message } {
+  const synchronizedMessages = {};
+  for (const topic of topics) {
+    const matchingMessage = messages[topic].find(({ message }) => {
+      const thisStamp = get(message, ["header", "stamp"]);
+      return thisStamp && TimeUtil.areSame(stamp, thisStamp);
+    });
+    if (!matchingMessage) {
+      return null;
+    }
+    synchronizedMessages[topic] = matchingMessage;
+  }
+  return synchronizedMessages;
+}
+
+type ReducedValue = {|
+  messagesByTopic: { [topic: string]: Message[] },
+  synchronizedMessages: ?{ [topic: string]: Message },
+|};
+
+function getSynchronizedState(
+  topics: $ReadOnlyArray<string>,
+  { messagesByTopic, synchronizedMessages }: ReducedValue
+): ReducedValue {
+  let newMessagesByTopic = messagesByTopic;
+  let newSynchronizedMessages = synchronizedMessages;
+
+  for (const stamp of allMessageStampsNewestFirst(messagesByTopic)) {
+    const synchronizedMessages = getSynchronizedMessages(stamp, topics, messagesByTopic);
+    if (synchronizedMessages) {
+      // We've found a new synchronized set; remove messages older than these.
+      newSynchronizedMessages = synchronizedMessages;
+      newMessagesByTopic = mapValues(newMessagesByTopic, (messagesByTopic) =>
+        messagesByTopic.filter(({ message }) => {
+          const thisStamp = get(message, ["header", "stamp"]);
+          return !TimeUtil.isLessThan(thisStamp, stamp);
+        })
+      );
+      break;
+    }
+  }
+  return { messagesByTopic: newMessagesByTopic, synchronizedMessages: newSynchronizedMessages };
+}
+
+// Returns reducers for use with PanelAPI.useMessages
+export function getSynchronizingReducers(topics: $ReadOnlyArray<string>) {
+  return {
+    restore(previousValue: ?ReducedValue) {
+      const messagesByTopic = {};
+      for (const topic of topics) {
+        messagesByTopic[topic] = (previousValue && previousValue.messagesByTopic[topic]) || [];
+      }
+      return getSynchronizedState(topics, { messagesByTopic, synchronizedMessages: null });
+    },
+    addMessage({ messagesByTopic, synchronizedMessages }: ReducedValue, newMessage: Message) {
+      return getSynchronizedState(topics, {
+        messagesByTopic: {
+          ...messagesByTopic,
+          [newMessage.topic]: messagesByTopic[newMessage.topic]
+            ? messagesByTopic[newMessage.topic].concat(newMessage)
+            : [newMessage],
+        },
+        synchronizedMessages,
+      });
+    },
+  };
 }

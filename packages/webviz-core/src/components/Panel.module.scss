@@ -96,28 +96,6 @@
   }
 }
 
-.topicPrefixLabel {
-  display: flex;
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  fill: gray;
-  color: gray;
-  border-radius: 10px;
-  opacity: 1;
-  font-size: 12px;
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 3px;
-
-  &.hasEmptyTopicPrefix {
-    display: none;
-
-    :global(.mosaic-window):hover & {
-      display: flex;
-    }
-  }
-}
-
 .exitFullScreen {
   position: fixed;
   top: 75px;

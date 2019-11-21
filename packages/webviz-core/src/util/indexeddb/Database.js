@@ -10,6 +10,7 @@ import idb, { type DB, type UpgradeDB, type Transaction } from "idb";
 
 import DbWriter from "./DbWriter";
 import type { WritableStreamOptions } from "./types";
+import performanceMeasuringClient from "webviz-core/src/players/automatedRun/performanceMeasuringClient";
 
 type IDBValidKey = number | string | Date | Array<IDBValidKey>;
 
@@ -202,12 +203,16 @@ export default class Database {
     }
     const range = IDBKeyRange.bound(start, end);
     const items = [];
+    performanceMeasuringClient.clearIdbReadStart();
+    performanceMeasuringClient.markIdbReadStart();
     store.iterateCursor(range, (cursor) => {
       if (!cursor) {
         return;
       }
       const { key, value } = cursor;
       items.push({ key, value });
+      performanceMeasuringClient.markIdbReadEnd(value);
+      performanceMeasuringClient.markIdbReadStart();
       cursor.continue();
     });
     await tx.complete;

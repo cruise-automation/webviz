@@ -45,7 +45,7 @@ export function getValueActionForValue(
       value = value[pathItem];
       if (multiSlicePath.endsWith("[:]")) {
         // We're just inside a message that is inside an array, so we might want to pivot on this new value.
-        pivotPath = `${multiSlicePath}{${pathItem}==${(value: any)}}`;
+        pivotPath = `${multiSlicePath}{${pathItem}==${JSON.stringify(value) || ""}}`;
       } else {
         pivotPath = "";
       }
@@ -65,7 +65,7 @@ export function getValueActionForValue(
         typicalFilterName = Object.keys(structureItem.nextByName).find((key) => isTypicalFilterName(key));
       }
       if (typeof value === "object" && value != null && typeof typicalFilterName === "string") {
-        singleSlicePath += `[:]{${typicalFilterName}==${(value[typicalFilterName]: any)}}`;
+        singleSlicePath += `[:]{${typicalFilterName}==${JSON.stringify(value[typicalFilterName]) || ""}}`;
       } else {
         singleSlicePath += `[${pathItem}]`;
       }
@@ -74,7 +74,7 @@ export function getValueActionForValue(
       // support looking inside them.
       return;
     } else {
-      throw new Error(`Invalid strutureType: ${structureItem.structureType} for value/pathItem.`);
+      throw new Error(`Invalid structureType: ${structureItem.structureType} for value/pathItem.`);
     }
   }
   // At this point we should be looking at a primitive. If not, just return nothing.
@@ -122,7 +122,7 @@ export const getStructureItemForPath = memoizeWeak(
         // support looking inside them.
         return structureItem;
       } else {
-        throw new Error(`Invalid strutureType: ${structureItem.structureType} for value/pathItem.`);
+        throw new Error(`Invalid structureType: ${structureItem.structureType} for value/pathItem.`);
       }
     }
     return structureItem;

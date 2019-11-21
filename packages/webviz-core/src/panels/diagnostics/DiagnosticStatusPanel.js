@@ -19,6 +19,8 @@ import Flex from "webviz-core/src/components/Flex";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
+import type { Topic } from "webviz-core/src/players/types";
+import type { PanelConfig } from "webviz-core/src/types/panels";
 import { DIAGNOSTIC_TOPIC } from "webviz-core/src/util/globalConstants";
 
 export type Config = {
@@ -31,6 +33,8 @@ export type Config = {
 type Props = {
   config: Config,
   saveConfig: ($Shape<Config>) => void,
+  topics: Topic[],
+  openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
 };
 // component to display a single diagnostic status from list
 class DiagnosticStatusPanel extends React.Component<Props> {
@@ -62,7 +66,8 @@ class DiagnosticStatusPanel extends React.Component<Props> {
   };
 
   render() {
-    const { selectedHardwareId, selectedName, splitFraction, topicToRender } = this.props.config;
+    const { openSiblingPanel, config } = this.props;
+    const { selectedHardwareId, selectedName, splitFraction, topicToRender } = config;
 
     let hasSelection = false;
     let selectedId, selectedDisplayName;
@@ -75,12 +80,14 @@ class DiagnosticStatusPanel extends React.Component<Props> {
     return (
       <Flex scroll scrollX col>
         <DiagnosticsHistory topic={topicToRender}>
-          {({ buffer, allTopics }) => {
+          {(buffer) => {
             const selectedItem = selectedId ? buffer.diagnosticsById.get(selectedId) : null;
 
             return (
               <>
-                <PanelToolbar helpContent={helpContent} additionalIcons={this.renderTopicToRenderMenu(allTopics)}>
+                <PanelToolbar
+                  helpContent={helpContent}
+                  additionalIcons={this.renderTopicToRenderMenu(this.props.topics)}>
                   <Autocomplete
                     placeholder={hasSelection ? selectedDisplayName : "Select a diagnostic"}
                     items={buffer.sortedAutocompleteEntries}
@@ -96,6 +103,8 @@ class DiagnosticStatusPanel extends React.Component<Props> {
                     info={selectedItem}
                     splitFraction={splitFraction}
                     onChangeSplitFraction={(splitFraction) => this.props.saveConfig({ splitFraction })}
+                    topicToRender={topicToRender}
+                    openSiblingPanel={openSiblingPanel}
                   />
                 ) : selectedId ? (
                   <EmptyState>

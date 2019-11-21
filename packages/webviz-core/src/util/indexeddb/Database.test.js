@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import Database from "./Database";
+import performanceMeasuringClient from "webviz-core/src/players/automatedRun/performanceMeasuringClient";
 
 async function put(db: Database, objectStore: string, values: any[]) {
   const tx = db.transaction(objectStore, "readwrite");
@@ -82,6 +83,24 @@ describe("Database", () => {
       { key: 2, value: { two: 2 } },
       { key: 3, value: { three: 3 } },
     ]);
+    return db.close();
+  });
+
+  it("can read a range of ROS messages with the performance measuring client measuring idb times", async () => {
+    performanceMeasuringClient.start({ bagLengthMs: 1 });
+    performanceMeasuringClient.shouldMeasureIdbTimes = true;
+    const db = await Database.open("range_ros", 1, (db) => {
+      db.createObjectStore("bar", { autoIncrement: true });
+    });
+    await put(db, "bar", [{ message: { topic: "one" } }, { message: { topic: "two" } }, { three: 3 }]);
+    const range = await db.getRange("bar", undefined, 1, 100);
+    expect(range).toEqual([
+      { key: 1, value: { message: { topic: "one" } } },
+      { key: 2, value: { message: { topic: "two" } } },
+      { key: 3, value: { three: 3 } },
+    ]);
+    expect(Object.keys(performanceMeasuringClient.idbTimesByTopic)).toEqual(["one", "two"]);
+    performanceMeasuringClient.resetInTests();
     return db.close();
   });
 

@@ -9,15 +9,11 @@
 // Custom formatters for Chrome dev tools. See documentation: http://bit.ly/object-formatters
 // Note that the "Enable custom formatters" setting must be turned on in order to use these formatters.
 
-import { isEqual } from "lodash";
 import seedrandom from "seedrandom";
 
-const timeFormatter = (() => {
-  const timeFields = new Set(["sec", "nsec"]);
-  function isTime(obj) {
-    return isEqual(new Set(Object.getOwnPropertyNames(obj)), timeFields);
-  }
+import { isTime } from "./time";
 
+const timeFormatter = (() => {
   function groupDigits(str) {
     const result = ["span", {}];
     let start = 0;

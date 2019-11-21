@@ -19,7 +19,7 @@ import filterMap from "webviz-core/src/filterMap";
 import derivative from "webviz-core/src/panels/Plot/derivative";
 import { type PlotPath, isReferenceLinePlotPathType } from "webviz-core/src/panels/Plot/internalTypes";
 import { lightColor, lineColors } from "webviz-core/src/util/plotColors";
-import { subtractTimes, format, formatTimeRaw, toSec } from "webviz-core/src/util/time";
+import { isTime, subtractTimes, format, formatTimeRaw, toSec } from "webviz-core/src/util/time";
 
 export type PlotChartPoint = {|
   x: number,
@@ -59,20 +59,28 @@ function getDatasetFromMessagePlotPath(
     }
 
     for (const { value, path, constantName } of item.queriedData) {
-      const isTimeObj = value && typeof value === "object" && !isNaN(value.sec) && !isNaN(value.nsec);
-      if (typeof value === "number" || typeof value === "boolean") {
+      if (typeof value === "number" || typeof value === "boolean" || typeof value === "string") {
+        const valueNum = Number(value);
+        if (!isNaN(valueNum)) {
+          points.push({
+            x: toSec(subtractTimes(timestamp, startTime)),
+            y: valueNum,
+            tooltip: { item, path, value, constantName, startTime },
+          });
+        }
+      } else if (isTime(value)) {
+        // $FlowFixMe - %checks on isTime can't convince Flow that the object is actually a Time. Related: https://github.com/facebook/flow/issues/3614
+        const timeValue = (value: Time);
         points.push({
           x: toSec(subtractTimes(timestamp, startTime)),
-          y: Number(value),
-          tooltip: { item, path, value, constantName, startTime },
-        });
-      } else if (isTimeObj) {
-        const timeObj = { ...value };
-        const valueStr = `${format(timeObj)} (${formatTimeRaw(timeObj)})`;
-        points.push({
-          x: toSec(subtractTimes(timestamp, startTime)),
-          y: timeObj.sec + timeObj.nsec / 1e9,
-          tooltip: { item, path, value: valueStr, constantName, startTime },
+          y: toSec(timeValue),
+          tooltip: {
+            item,
+            path,
+            value: `${format(timeValue)} (${formatTimeRaw(timeValue)})`,
+            constantName,
+            startTime,
+          },
         });
       }
     }

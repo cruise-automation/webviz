@@ -8,7 +8,7 @@
 
 import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import { pick, partition } from "lodash";
-import React, { type Node, useState } from "react";
+import React, { type Node, useState, useCallback } from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
 
@@ -137,15 +137,6 @@ const changeGlobalVal = (newVal, name, setGlobalVariables) => {
   setGlobalVariables({ [name]: newVal === undefined ? undefined : JSON.parse(String(newVal)) });
 };
 
-const getUpdatedURL = (globalVariables) => {
-  const queryParams = new URLSearchParams(window.location.search);
-  queryParams.set(GLOBAL_VARIABLES_QUERY_KEY, JSON.stringify(globalVariables));
-  if (inScreenshotTests()) {
-    return `http://localhost:3000/?${queryParams.toString()}`;
-  }
-  return `${window.location.host}/?${queryParams.toString()}`;
-};
-
 function GlobalVariables(props: Props): Node {
   const input = React.createRef<HTMLInputElement>();
   const [btnMessage, setBtnMessage] = useState<string>("Copy");
@@ -196,6 +187,18 @@ function GlobalVariables(props: Props): Node {
       />
     );
   }
+
+  const getUpdatedURL = useCallback(
+    () => {
+      const queryParams = new URLSearchParams(window.location.search);
+      queryParams.set(GLOBAL_VARIABLES_QUERY_KEY, JSON.stringify(globalVariables));
+      if (inScreenshotTests()) {
+        return `http://localhost:3000/?${queryParams.toString()}`;
+      }
+      return `${window.location.host}/?${queryParams.toString()}`;
+    },
+    [globalVariables]
+  );
 
   return (
     <SGlobalVariables>
@@ -302,10 +305,8 @@ function GlobalVariables(props: Props): Node {
       </SButtonContainer>
       <SSection>
         <Flex>
-          <input readOnly style={{ width: "100%" }} type="text" value={getUpdatedURL(globalVariables)} />
-          {document.queryCommandSupported("copy") && (
-            <button onClick={copyURL(getUpdatedURL(globalVariables))}>{btnMessage}</button>
-          )}
+          <input readOnly style={{ width: "100%" }} type="text" value={getUpdatedURL()} />
+          {document.queryCommandSupported("copy") && <button onClick={copyURL(getUpdatedURL())}>{btnMessage}</button>}
         </Flex>
       </SSection>
     </SGlobalVariables>

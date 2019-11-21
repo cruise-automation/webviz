@@ -6,17 +6,21 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import synchronizeMessages from "./synchronizeMessages";
+import synchronizeMessages, { getSynchronizingReducers } from "./synchronizeMessages";
+
+function message(topic, stamp) {
+  return {
+    topic,
+    datatype: "Foo",
+    op: "message",
+    receiveTime: { sec: 0, nsec: 0 },
+    message: { header: { stamp } },
+  };
+}
 
 function item(topic, stamp) {
   return {
-    message: {
-      topic,
-      datatype: "Foo",
-      op: "message",
-      receiveTime: { sec: 0, nsec: 0 },
-      message: { header: { stamp } },
-    },
+    message: message(topic, stamp),
     queriedData: [],
   };
 }
@@ -90,6 +94,106 @@ describe("synchronizeMessages", () => {
     ).toEqual({
       "/foo": [item("/foo", { sec: 2, nsec: 0 })],
       "/bar": [item("/bar", { sec: 2, nsec: 0 })],
+    });
+  });
+});
+
+describe("getSynchronizingReducers", () => {
+  it("restores all existing messages on the requested topics", () => {
+    const { restore } = getSynchronizingReducers(["/a", "/b"]);
+
+    expect(restore(undefined)).toEqual({
+      messagesByTopic: {
+        "/a": [],
+        "/b": [],
+      },
+      synchronizedMessages: null,
+    });
+
+    expect(
+      restore({
+        messagesByTopic: {
+          "/a": [message("/a", { sec: 1, nsec: 0 }), message("/a", { sec: 2, nsec: 0 })],
+          "/c": [message("/c", { sec: 1, nsec: 0 })],
+        },
+        synchronizedMessages: null,
+      })
+    ).toEqual({
+      messagesByTopic: {
+        "/a": [message("/a", { sec: 1, nsec: 0 }), message("/a", { sec: 2, nsec: 0 })],
+        "/b": [],
+      },
+      synchronizedMessages: null,
+    });
+  });
+
+  it("restores synchronized messages, removing old unneeded messages", () => {
+    const { restore } = getSynchronizingReducers(["/a", "/b"]);
+    expect(
+      restore({
+        messagesByTopic: {
+          "/a": [message("/a", { sec: 1, nsec: 0 }), message("/a", { sec: 2, nsec: 0 })],
+          "/b": [message("/b", { sec: 2, nsec: 0 })],
+          "/c": [message("/c", { sec: 1, nsec: 0 })],
+        },
+        synchronizedMessages: null,
+      })
+    ).toEqual({
+      messagesByTopic: {
+        "/a": [message("/a", { sec: 2, nsec: 0 })],
+        "/b": [message("/b", { sec: 2, nsec: 0 })],
+      },
+      synchronizedMessages: {
+        "/a": message("/a", { sec: 2, nsec: 0 }),
+        "/b": message("/b", { sec: 2, nsec: 0 }),
+      },
+    });
+  });
+
+  it("keeps old messages when adding a new ones if stamps don't match", () => {
+    const { addMessage } = getSynchronizingReducers(["/a", "/b"]);
+    expect(
+      addMessage(
+        {
+          messagesByTopic: {
+            "/a": [message("/a", { sec: 1, nsec: 0 })],
+            "/b": [message("/b", { sec: 2, nsec: 0 })],
+          },
+          synchronizedMessages: null,
+        },
+        message("/a", { sec: 3, nsec: 0 })
+      )
+    ).toEqual({
+      messagesByTopic: {
+        "/a": [message("/a", { sec: 1, nsec: 0 }), message("/a", { sec: 3, nsec: 0 })],
+        "/b": [message("/b", { sec: 2, nsec: 0 })],
+      },
+      synchronizedMessages: null,
+    });
+  });
+
+  it("synchronizes when adding a new message, removing old unneeded messages", () => {
+    const { addMessage } = getSynchronizingReducers(["/a", "/b"]);
+    expect(
+      addMessage(
+        {
+          messagesByTopic: {
+            "/a": [message("/a", { sec: 1, nsec: 0 })],
+            "/b": [message("/b", { sec: 2, nsec: 0 })],
+          },
+          synchronizedMessages: null,
+        },
+        message("/a", { sec: 2, nsec: 0 })
+      )
+    ).toEqual({
+      messagesByTopic: {
+        "/a": [message("/a", { sec: 2, nsec: 0 })],
+        "/b": [message("/b", { sec: 2, nsec: 0 })],
+      },
+      synchronizedMessages: {
+        "/a": message("/a", { sec: 2, nsec: 0 }),
+        "/b": message("/b", { sec: 2, nsec: 0 }),
+      },
     });
   });
 });

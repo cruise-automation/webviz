@@ -7,6 +7,15 @@
 //  You may not use this file except in compliance with the License.
 import Confirm from "webviz-core/src/components/Confirm";
 
+// For browser-based integration tests
+window.clearIndexedDb = () => {
+  return window.indexedDB.databases().then((databases) => {
+    for (const database of databases) {
+      window.indexedDB.deleteDatabase(database.name);
+    }
+  });
+};
+
 export default function clearIndexedDb() {
   const config = {
     prompt:
@@ -18,15 +27,8 @@ export default function clearIndexedDb() {
       return;
     }
     // From https://stackoverflow.com/a/54764150
-    window.indexedDB
-      .databases()
-      .then((databases) => {
-        for (const database of databases) {
-          window.indexedDB.deleteDatabase(database.name);
-        }
-      })
-      .then(() => {
-        window.location.reload();
-      });
+    window.clearIndexedDb().then(() => {
+      window.location.reload();
+    });
   });
 }

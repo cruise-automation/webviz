@@ -11,7 +11,6 @@ import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
 import GridLargeIcon from "@mdi/svg/svg/grid-large.svg";
 import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
-import { omit } from "lodash";
 import PropTypes from "prop-types";
 import * as React from "react";
 import DocumentEvents from "react-document-events";
@@ -23,15 +22,10 @@ import { bindActionCreators } from "redux";
 
 import styles from "./Panel.module.scss";
 import Button from "webviz-core/src/components/Button";
-import ChildToggle from "webviz-core/src/components/ChildToggle";
-import Dropdown from "webviz-core/src/components/Dropdown";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
-import { Item } from "webviz-core/src/components/Menu";
-import { getFilteredFormattedTopics } from "webviz-core/src/components/MessageHistory/topicPrefixUtils";
 import PanelContext, { type PanelContextType } from "webviz-core/src/components/PanelContext";
 import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDragHandle";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import PanelList, { getPanelsByType } from "webviz-core/src/panels/PanelList";
 import type { Topic } from "webviz-core/src/players/types";
@@ -56,9 +50,7 @@ import { getPanelTypeFromId } from "webviz-core/src/util";
 //
 // The panel also gets wrapped in an error boundary and flex box.
 
-export const TOPIC_PREFIX_CONFIG_KEY = "webviz___topicPrefix";
-
-type Props<Config> = {| childId?: string, config?: Config |};
+type Props<Config> = {| childId?: string, config?: Config, saveConfig?: () => void |};
 type State = {
   quickActionsKeyPressed: boolean,
   shiftKeyPressed: boolean,
@@ -69,77 +61,13 @@ type State = {
 interface PanelStatics<Config> {
   panelType: string;
   defaultConfig: Config;
-  canSetTopicPrefix?: boolean;
 }
-
-const getTopicPrefixIconPrefix = (topicPrefix?: string) => {
-  return (
-    <span style={{ marginLeft: 3, marginTop: 3 }}>
-      {getGlobalHooks().perPanelHooks().Panel.topicPrefixes[topicPrefix].iconPrefix}
-    </span>
-  );
-};
-
-const getTopicPrefixTooltip = (topicPrefix?: string) => {
-  return getGlobalHooks().perPanelHooks().Panel.topicPrefixes[topicPrefix].tooltipText;
-};
-
-const getTopicPrefixOptionText = (topicPrefix?: string) => {
-  return getGlobalHooks().perPanelHooks().Panel.topicPrefixes[topicPrefix].labelText;
-};
-
-const getTopicPrefixIcon = (topicPrefix?: string) => {
-  const IconComponent = getGlobalHooks().perPanelHooks().Panel.topicPrefixes[topicPrefix].icon;
-  return <IconComponent style={{ height: 14, marginLeft: -5, marginTop: 2 }} />;
-};
-
-const TopicPrefixDropdown = (props: {|
-  topicPrefix: string,
-  saveTopicPrefix: (newTopicPrefix: string) => () => void,
-|}) => {
-  const { topicPrefix, saveTopicPrefix } = props;
-  return (
-    <ChildToggle.ContainsOpen>
-      {(containsOpen) => (
-        <Dropdown
-          position="above"
-          toggleComponent={
-            <div
-              data-test-topic-prefix-toggle
-              className={cx(styles.topicPrefixLabel, {
-                [styles.hasEmptyTopicPrefix]: !topicPrefix && !containsOpen,
-              })}>
-              {getTopicPrefixIconPrefix(topicPrefix)}
-              {getTopicPrefixIcon(topicPrefix)}
-            </div>
-          }>
-          <Item key="title" disabled>
-            Show topics from:
-          </Item>
-          {Object.keys(getGlobalHooks().perPanelHooks().Panel.topicPrefixes).map((prefix) => {
-            return (
-              <Item
-                key={prefix || "none"}
-                checked={topicPrefix === prefix}
-                icon={getTopicPrefixIcon(prefix)}
-                tooltip={prefix && getTopicPrefixTooltip(prefix)}
-                onClick={saveTopicPrefix(prefix)}>
-                {getTopicPrefixOptionText(prefix)}
-              </Item>
-            );
-          })}
-        </Dropdown>
-      )}
-    </ChildToggle.ContainsOpen>
-  );
-};
 
 type MockProps = $Rest<PanelContextType<any>, {}>;
 const DEFAULT_MOCK_PANEL_CONTEXT: PanelContextType<any> = {
   type: "foo",
   id: "bar",
   title: "Foo Panel",
-  topicPrefix: "",
   config: {},
   saveConfig: () => {},
   updatePanelConfig: () => {},
@@ -182,6 +110,7 @@ export default function Panel<Config: PanelConfig>(
   type ReduxMappedProps = {|
     childId?: string,
     config: Config,
+    saveConfig?: (any) => void,
     isOnlyPanel: boolean,
 
     // keep the whole store to avoid unnecessary re-renders when panel state changes
@@ -196,7 +125,6 @@ export default function Panel<Config: PanelConfig>(
   |};
 
   const defaultConfig: Config = PanelComponent.defaultConfig;
-  const canSetTopicPrefix: boolean = PanelComponent.canSetTopicPrefix || false;
 
   class UnconnectedPanel extends React.PureComponent<
     ReduxMappedProps &
@@ -225,33 +153,22 @@ export default function Panel<Config: PanelConfig>(
     // Save the config, by mixing in the partial config with the current config, or if that does
     // not exist, with the `defaultConfig`. That way we always save complete configs.
     _saveConfig = (config: $Shape<Config>, options: { keepLayoutInUrl?: boolean } = {}) => {
-      if (config[TOPIC_PREFIX_CONFIG_KEY]) {
-        throw new Error("Panel is not allowed to set TOPIC_PREFIX_CONFIG_KEY");
+      const { childId, savePanelConfig, saveConfig } = this.props;
+      if (saveConfig) {
+        saveConfig(config);
       }
-      if (this.props.childId) {
-        this.props.savePanelConfig({
-          id: this.props.childId,
+      if (childId) {
+        savePanelConfig({
+          id: childId,
           silent: !!options.keepLayoutInUrl,
-          config: { ...defaultConfig, ...this.props.config, ...config },
+          config,
+          defaultConfig,
         });
       }
     };
 
     _updatePanelConfig = (panelType: string, perPanelFunc: (PanelConfig) => PanelConfig) => {
       this.props.saveFullPanelConfig({ panelType, perPanelFunc });
-    };
-
-    // this is same as above _saveConfig, but is internal to this file / allows you to save the TOPIC_PREFIX_CONFIG_KEY
-    _saveTopicPrefix = (newTopicPrefix: string) => {
-      return () => {
-        if (this.props.childId) {
-          this.props.savePanelConfig({
-            id: this.props.childId,
-            silent: false,
-            config: { ...this.props.config, ...{ [TOPIC_PREFIX_CONFIG_KEY]: newTopicPrefix } },
-          });
-        }
-      };
     };
 
     // Open a panel next to the current panel, of the specified `panelType`. If such a panel already
@@ -273,7 +190,11 @@ export default function Panel<Config: PanelConfig>(
       const siblingId = getNodeAtPath(mosaicActions.getRoot(), siblingPath);
       if (typeof siblingId === "string" && getPanelTypeFromId(siblingId) === panelType) {
         const siblingConfig: PanelConfig = { ...defaultSiblingConfig, ...(panelConfigById[siblingId]: any) };
-        this.props.savePanelConfig({ id: siblingId, config: siblingConfigCreator(siblingConfig) });
+        this.props.savePanelConfig({
+          id: siblingId,
+          config: siblingConfigCreator(siblingConfig),
+          defaultConfig: defaultSiblingConfig,
+        });
         return;
       }
 
@@ -281,7 +202,11 @@ export default function Panel<Config: PanelConfig>(
       const newPanelPath = ownPath.concat("second");
       mosaicWindowActions.split({ type: panelType }).then(() => {
         const newPanelId = getNodeAtPath(mosaicActions.getRoot(), newPanelPath);
-        this.props.savePanelConfig({ id: newPanelId, config: siblingConfigCreator(defaultSiblingConfig) });
+        this.props.savePanelConfig({
+          id: newPanelId,
+          config: siblingConfigCreator(defaultSiblingConfig),
+          defaultConfig: defaultSiblingConfig,
+        });
       });
     };
 
@@ -375,8 +300,6 @@ export default function Panel<Config: PanelConfig>(
       const type = PanelComponent.panelType;
       const title = panelsByType[type] && panelsByType[type].title;
 
-      const currentTopicPrefix = config[TOPIC_PREFIX_CONFIG_KEY] || "";
-
       return (
         // $FlowFixMe - bug prevents requiring panelType on PanelComponent: https://stackoverflow.com/q/52508434/23649
         <PanelContext.Provider
@@ -384,7 +307,6 @@ export default function Panel<Config: PanelConfig>(
             type,
             id: childId,
             title,
-            topicPrefix: currentTopicPrefix,
             config,
             saveConfig: this._saveConfig,
             updatePanelConfig: this._updatePanelConfig,
@@ -431,17 +353,14 @@ export default function Panel<Config: PanelConfig>(
             <ErrorBoundary>
               {/* $FlowFixMe - https://github.com/facebook/flow/issues/6479 */}
               <PanelComponent
-                config={{ ...defaultConfig, ...omit(config, TOPIC_PREFIX_CONFIG_KEY) }}
+                config={{ ...defaultConfig, ...config }}
                 saveConfig={this._saveConfig}
                 updatePanelConfig={this._updatePanelConfig}
                 openSiblingPanel={this._openSiblingPanel}
-                topics={getFilteredFormattedTopics(topics, currentTopicPrefix)}
+                topics={topics}
                 datatypes={datatypes}
                 capabilities={capabilities}
               />
-              {canSetTopicPrefix ? (
-                <TopicPrefixDropdown topicPrefix={currentTopicPrefix} saveTopicPrefix={this._saveTopicPrefix} />
-              ) : null}
             </ErrorBoundary>
           </Flex>
         </PanelContext.Provider>
@@ -478,7 +397,6 @@ export default function Panel<Config: PanelConfig>(
 
   ConnectedPanel.defaultConfig = defaultConfig;
   ConnectedPanel.panelType = PanelComponent.panelType;
-  ConnectedPanel.canSetTopicPrefix = PanelComponent.canSetTopicPrefix;
 
   return ConnectedPanel;
 }

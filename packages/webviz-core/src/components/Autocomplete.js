@@ -290,6 +290,7 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
             <div
               key={itemValue}
               data-highlighted={isHighlighted}
+              data-test-auto-item
               className={cx(styles.autocompleteItem, {
                 [styles.highlighted]: isHighlighted,
                 [styles.selected]: selectedItemValue != null && itemValue === selectedItemValue,

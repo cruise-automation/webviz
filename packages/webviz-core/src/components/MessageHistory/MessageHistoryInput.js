@@ -292,7 +292,7 @@ class MessageHistoryInputUnconnected extends React.PureComponent<MessageHistoryI
     const noHeaderStamp = topic && topicHasNoHeaderStamp(topic, datatypes);
 
     return (
-      <div style={{ display: "flex", flex: "1 1 auto", minWidth: 0 }}>
+      <div style={{ display: "flex", flex: "1 1 auto", minWidth: 0, justifyContent: "space-between" }}>
         <Autocomplete
           items={autocompleteItems}
           filterText={autocompleteFilterText}
@@ -314,7 +314,7 @@ class MessageHistoryInputUnconnected extends React.PureComponent<MessageHistoryI
               onChange={this._onTimestampMethodChange}
               value={timestampMethod}
               toggleComponent={
-                <Tooltip contents="Timestamp used for x-axis" placement="right">
+                <Tooltip contents="Timestamp used for x-axis" placement="top">
                   <div
                     className={cx({
                       [styles.timestampMethodDropdown]: true,

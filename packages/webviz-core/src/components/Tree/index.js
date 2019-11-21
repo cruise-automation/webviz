@@ -15,11 +15,13 @@ import TreeNode from "./TreeNode";
 export type { Node } from "./Node";
 
 type Props = {
-  root: Node,
+  enableVisibilityToggle?: boolean,
   hideRoot?: boolean,
-  onToggleExpand: (node: Node) => void,
-  onToggleCheck: (node: Node) => void,
   onEditClick: (e: SyntheticMouseEvent<HTMLElement>, node: Node) => void,
+  onToggleCheck: (node: Node) => void,
+  onToggleExpand: (node: Node) => void,
+  onToggleVisibility?: (node: Node) => void,
+  root: Node,
 };
 
 export default class Tree extends PureComponent<Props> {
@@ -29,15 +31,17 @@ export default class Tree extends PureComponent<Props> {
   };
 
   renderNode = (node: Node) => {
-    const { onToggleExpand, onToggleCheck, onEditClick } = this.props;
+    const { onToggleExpand, onToggleCheck, onEditClick, onToggleVisibility, enableVisibilityToggle } = this.props;
     return (
       <TreeNode
-        key={node.id}
         depth={0}
-        onToggleExpand={onToggleExpand}
-        onToggleCheck={onToggleCheck}
-        onEditClick={onEditClick}
+        enableVisibilityToggle={enableVisibilityToggle}
+        key={node.id}
         node={node}
+        onEditClick={onEditClick}
+        onToggleCheck={onToggleCheck}
+        onToggleExpand={onToggleExpand}
+        onToggleVisibility={onToggleVisibility}
       />
     );
   };

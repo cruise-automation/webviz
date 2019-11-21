@@ -6,6 +6,7 @@ The topic path syntax can be used in several panels to find the exact messages i
 - Then you point to the value within that topic, using dots: `/some/topic.some.deep.value`
 - You can also index into an array, like this: `/some/topic.many.values[0].x`
 - Slices are also allowed, and will return an array of values: `/some/topic.many.values[1:3].x` or even `/some/topic.many.values[:].x` to get all values.
+- Negative slices are allowed, and work backwards from the end of the array, e.g. `[-1]` to get the last element, or `[-2:-1]` to get the last two elements.
 - Filter on particular values, usually in combination with slices: `/some/topic.many.values[:]{some_id==123}.x` — for now only equality is supported.
 - You can also filter on a global variable, which you can set in the Global Variables Panel: `/some/topic.many.values[:]{some_id==$my_custom_id}`
 - Filters can be applied to fields in the top-level message, in which case entire messages that don't match the filter will be skipped: `/some/topic{foo.bar==123}`

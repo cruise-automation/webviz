@@ -42,11 +42,19 @@ const LOOP_MIN_BAG_TIME_IN_SEC = 1;
 const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
 // The number of nanoseconds to seek backwards to build context during a seek
-// operation larger values mean more oportunity to capture context before the
-// seek event, but are slower operations. We've chosen 99ms since our internal tool (Tableflow)
-// publishes at 10hz, and we do NOT want to pull in a range of messages that
-// exceeds that frequency.
-export const SEEK_BACK_NANOSECONDS = 99 /* ms */ * 1000 * 1000;
+// operation larger values mean more opportunity to capture context before the
+// seek event, but are slower operations. We shouldn't make this number too big,
+// otherwise we pull in too many unnecessary messages, making seeking slow. But
+// we also don't want it to be too low, otherwise you don't see enough data when
+// seeking.
+// Unfortunately right now we need a pretty high number here, especially when
+// using "synchronized topics" (e.g. in the Image panel) when one of the topics
+// is publishing at a fairly low rate.
+// TODO(JP): Add support for subscribers to express that we're only interested
+// in the last message on a topic, and then support that in `getMessages` as
+// well, so we can fetch pretty old messages without incurring the cost of
+// fetching too many.
+export const SEEK_BACK_NANOSECONDS = 299 /* ms */ * 1000 * 1000;
 
 export const AUTOPLAY_START_DELAY_MS = 100;
 

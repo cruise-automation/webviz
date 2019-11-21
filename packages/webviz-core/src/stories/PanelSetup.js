@@ -45,6 +45,7 @@ type Props = {|
   fixture: Fixture,
   omitDragAndDrop?: boolean,
   onMount?: (HTMLDivElement) => void,
+  onFirstMount?: (HTMLDivElement) => void,
   style?: { [string]: any },
 |};
 
@@ -126,6 +127,8 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
     return { store };
   }
 
+  _hasMounted: boolean = false;
+
   state = {
     store: configureStore(createRootReducer(createMemoryHistory())),
   };
@@ -144,8 +147,13 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
       <div
         style={{ width: "100%", height: "100%", display: "flex", ...this.props.style }}
         ref={(el: ?HTMLDivElement) => {
-          if (el && this.props.onMount) {
-            this.props.onMount(el);
+          const { onFirstMount, onMount } = this.props;
+          if (el && onFirstMount && !this._hasMounted) {
+            this._hasMounted = true;
+            onFirstMount(el);
+          }
+          if (el && onMount) {
+            onMount(el);
           }
         }}>
         {/* $FlowFixMe - for some reason Flow doesn't like this :( */}

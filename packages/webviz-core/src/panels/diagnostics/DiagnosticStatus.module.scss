@@ -57,3 +57,11 @@ td.collapsedSection {
   text-align: center;
   color: $red;
 }
+
+.plotIcon {
+  color: white;
+
+  > svg {
+    vertical-align: top;
+  }
+}

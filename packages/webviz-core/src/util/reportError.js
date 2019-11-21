@@ -70,3 +70,4 @@ export function detailsToString(details: DetailsType): string {
 export default function reportError(message: string, details: DetailsType, type: ErrorType): void {
   addError(message, details, type);
 }
+reportError.expectCalledDuringTest = () => {}; // Overridden in tests; added here so Flow doesn't complain.

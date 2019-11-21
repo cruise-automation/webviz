@@ -11,7 +11,6 @@ import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
 import createGetDataProvider from "webviz-core/src/dataProviders/createGetDataProvider";
 import IdbCacheWriterDataProvider from "webviz-core/src/dataProviders/IdbCacheWriterDataProvider";
 import MeasureDataProvider from "webviz-core/src/dataProviders/MeasureDataProvider";
-import ReadAheadDataProvider from "webviz-core/src/dataProviders/ReadAheadDataProvider";
 import RpcDataProviderRemote from "webviz-core/src/dataProviders/RpcDataProviderRemote";
 import Rpc from "webviz-core/src/util/Rpc";
 
@@ -21,7 +20,6 @@ const getDataProvider = createGetDataProvider({
   ApiCheckerDataProvider,
   BagDataProvider,
   MeasureDataProvider,
-  ReadAheadDataProvider,
   IdbCacheWriterDataProvider,
 });
 

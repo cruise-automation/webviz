@@ -6,13 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import * as Sentry from "@sentry/browser";
 import * as React from "react";
 import styled from "styled-components";
 
 import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import sentry from "webviz-core/src/util/sentry";
 
 const Heading = styled.div`
   font-size: 1.2em;
@@ -42,7 +42,7 @@ export default class ErrorBoundary extends React.Component<{ children: React.Nod
   };
 
   componentDidCatch(error: Error, errorInfo: any) {
-    sentry.captureException(error, {
+    Sentry.captureException(error, {
       extra: errorInfo,
     });
     this.setState({ error, errorInfo });

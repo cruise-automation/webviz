@@ -37,6 +37,16 @@ export function useShallowMemo<T>(value: T): T {
   return value;
 }
 
+// Continues to return the same instance as long as deep equality is maintained.
+export function useDeepMemo<T>(value: T): T {
+  const ref = useRef(value);
+  if (isEqual(value, ref.current)) {
+    return ref.current;
+  }
+  ref.current = value;
+  return value;
+}
+
 function format(value: any): string {
   try {
     return JSON.stringify(value);

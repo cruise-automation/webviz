@@ -66,11 +66,11 @@ const clickInput = (el) => {
   }
 };
 
-function MessageHistoryInputStory(props: {| path: string, topicPrefix?: string |}) {
+function MessageHistoryInputStory(props: {| path: string |}) {
   const [path, setPath] = React.useState(props.path);
 
   return (
-    <MockPanelContextProvider topicPrefix={props.topicPrefix}>
+    <MockPanelContextProvider>
       <PanelSetup fixture={fixture} onMount={clickInput}>
         <Flex style={{ margin: "10px" }}>
           <MessageHistoryInput path={path} onChange={(newPath) => setPath(newPath)} timestampMethod="receiveTime" />
@@ -84,9 +84,6 @@ storiesOf("<MessageHistoryInput>", module)
   .addDecorator(withScreenshot())
   .add("autocomplete topics", () => {
     return <MessageHistoryInputStory path="/" />;
-  })
-  .add("autocomplete topics with topicPrefix", () => {
-    return <MessageHistoryInputStory path="/" topicPrefix="/some_topic" />;
   })
   .add("autocomplete messagePath", () => {
     return <MessageHistoryInputStory path="/some_topic/location.po" />;

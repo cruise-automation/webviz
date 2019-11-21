@@ -6,8 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import ChartLineVariantIcon from "@mdi/svg/svg/chart-line-variant.svg";
 import cx from "classnames";
-import { clamp } from "lodash";
+import { clamp, uniq } from "lodash";
 import * as React from "react";
 import { createSelector } from "reselect";
 import sanitizeHtml from "sanitize-html";
@@ -16,8 +17,11 @@ import styled from "styled-components";
 import style from "./DiagnosticStatus.module.scss";
 import { LEVEL_NAMES, type DiagnosticInfo, type KeyValue, type DiagnosticStatusMessage } from "./util";
 import Flex from "webviz-core/src/components/Flex";
+import Icon from "webviz-core/src/components/Icon";
 import Tooltip from "webviz-core/src/components/Tooltip";
+import Plot, { type PlotConfig } from "webviz-core/src/panels/Plot";
 import colors from "webviz-core/src/styles/colors.module.scss";
+import type { PanelConfig } from "webviz-core/src/types/panels";
 
 const MIN_SPLIT_FRACTION = 0.1;
 
@@ -25,6 +29,8 @@ type Props = {|
   info: DiagnosticInfo,
   splitFraction: number,
   onChangeSplitFraction: ?(number) => void,
+  topicToRender: string,
+  openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
 |};
 
 const ResizeHandle = styled.div.attrs({
@@ -181,14 +187,28 @@ class DiagnosticStatus extends React.Component<Props, *> {
     window.removeEventListener("mouseup", this._resizeMouseUp);
   }
 
-  _renderKeyValueCell(cls: string, html: ?{ __html: string }, str: string) {
+  _renderKeyValueCell(cls: string, html: ?{ __html: string }, str: string, openPlotPanelIconElem?: React.Node) {
     if (html) {
-      return <td className={style.valueCell} dangerouslySetInnerHTML={html} />;
+      return (
+        <td className={style.valueCell} dangerouslySetInnerHTML={html}>
+          {openPlotPanelIconElem}
+        </td>
+      );
     }
-    return <td className={style.valueCell}>{str || "\xa0"}</td>;
+    return (
+      <td className={style.valueCell}>
+        {str || "\xa0"}
+        {openPlotPanelIconElem}
+      </td>
+    );
   }
 
   _renderKeyValueSections = (values: FormattedKeyValue[]): React.Node => {
+    // get topicToRender, hardware_id and idx
+    // Add a icon and open plot panel with this path:
+    // /${topicToRender}.status[:]{hardware_id==${hardware_id}}.values[idx].value
+    const { info, topicToRender, openSiblingPanel } = this.props;
+    const hardware_id = info.status.hardware_id;
     let inCollapsedSection = false;
     let ellipsisShown = false;
     return values.map((kv, idx) => {
@@ -216,10 +236,40 @@ class DiagnosticStatus extends React.Component<Props, *> {
           </tr>
         );
       }
+      const openPlotPanelIconElem =
+        kv.value && kv.value.length > 0 && !isNaN(Number(kv.value)) ? (
+          <Icon
+            fade
+            dataTest="open-plot-icon"
+            className={style.plotIcon}
+            onClick={() =>
+              openSiblingPanel(
+                // $FlowFixMe: https://stackoverflow.com/questions/52508434/adding-static-variable-to-union-of-class-types
+                Plot.panelType,
+                (config: PlotConfig) =>
+                  ({
+                    ...config,
+                    paths: uniq([
+                      ...config.paths,
+                      {
+                        value: `${topicToRender}.status[:]{hardware_id=="${hardware_id}"}.values[:]{key=="${
+                          kv.key
+                        }"}.value`,
+                        enabled: true,
+                        timestampMethod: "receiveTime",
+                      },
+                    ]),
+                  }: PlotConfig)
+              )
+            }
+            tooltip="Line chart">
+            <ChartLineVariantIcon />
+          </Icon>
+        ) : null;
       return (
         <tr key={idx}>
           {this._renderKeyValueCell(style.keyCell, kv.keyHtml, kv.key)}
-          {this._renderKeyValueCell(style.valueCell, kv.valueHtml, kv.value)}
+          {this._renderKeyValueCell(style.valueCell, kv.valueHtml, kv.value, openPlotPanelIconElem)}
         </tr>
       );
     });

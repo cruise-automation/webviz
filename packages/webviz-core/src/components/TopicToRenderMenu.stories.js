@@ -14,15 +14,15 @@ import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 const topics = [
   {
-    name: "/default/foo",
+    name: "/foo",
     datatype: "abc_msgs/foo",
   },
   {
-    name: "/webviz_bag_2/default/foo",
+    name: "/webviz_bag_2/foo",
     datatype: "abc_msgs/foo",
   },
   {
-    name: "/webviz_bag_2/default/foo",
+    name: "/webviz_bag_2/foo",
     datatype: "bad_datatype/abc_msgs/foo",
   },
 ];
@@ -54,10 +54,10 @@ storiesOf("<TopicToRenderMenu>", module)
         }}>
         <TopicToRenderMenu
           onChange={() => {}}
-          topicToRender={"/default"}
+          topicToRender=""
           topics={topics}
           topicsGroups={topicsGroups}
-          defaultTopicToRender={"/default"}
+          defaultTopicToRender=""
         />
       </PanelSetup>
     );
@@ -74,10 +74,10 @@ storiesOf("<TopicToRenderMenu>", module)
         }}>
         <TopicToRenderMenu
           onChange={() => {}}
-          topicToRender={"/default/foo"}
+          topicToRender="/foo"
           topics={topics}
           singleTopicDatatype={"abc_msgs/foo"}
-          defaultTopicToRender={"/default/foo"}
+          defaultTopicToRender="/foo"
         />
       </PanelSetup>
     );
@@ -94,10 +94,10 @@ storiesOf("<TopicToRenderMenu>", module)
         }}>
         <TopicToRenderMenu
           onChange={() => {}}
-          topicToRender={"/webviz_bag_2/default/foo"}
+          topicToRender="/webviz_bag_2/foo"
           topics={topics}
           singleTopicDatatype={"abc_msgs/foo"}
-          defaultTopicToRender={"/default/foo"}
+          defaultTopicToRender="/foo"
         />
       </PanelSetup>
     );
@@ -114,10 +114,10 @@ storiesOf("<TopicToRenderMenu>", module)
         }}>
         <TopicToRenderMenu
           onChange={() => {}}
-          topicToRender={"/default"}
+          topicToRender=""
           topics={[]}
           topicsGroups={topicsGroups}
-          defaultTopicToRender={"/default"}
+          defaultTopicToRender=""
         />
       </PanelSetup>
     );
@@ -134,10 +134,10 @@ storiesOf("<TopicToRenderMenu>", module)
         }}>
         <TopicToRenderMenu
           onChange={() => {}}
-          topicToRender={"/webviz_bag_2/default"}
+          topicToRender="/webviz_bag_2"
           topics={[]}
           topicsGroups={topicsGroups}
-          defaultTopicToRender={"/default"}
+          defaultTopicToRender=""
         />
       </PanelSetup>
     );
@@ -154,10 +154,10 @@ storiesOf("<TopicToRenderMenu>", module)
         }}>
         <TopicToRenderMenu
           onChange={() => {}}
-          topicToRender={"/abc"}
+          topicToRender="/abc"
           topics={topics}
           singleTopicDatatype={"abc_msgs/foo"}
-          defaultTopicToRender={"/default/foo"}
+          defaultTopicToRender="/foo"
         />
       </PanelSetup>
     );
@@ -174,10 +174,10 @@ storiesOf("<TopicToRenderMenu>", module)
         }}>
         <TopicToRenderMenu
           onChange={() => {}}
-          topicToRender={"/default/bar"}
+          topicToRender="/bar"
           topics={topics}
           singleTopicDatatype={"abc_msgs/foo"}
-          defaultTopicToRender={"/default/bar"}
+          defaultTopicToRender="/bar"
         />
       </PanelSetup>
     );

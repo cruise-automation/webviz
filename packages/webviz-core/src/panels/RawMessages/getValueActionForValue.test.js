@@ -181,4 +181,47 @@ describe("getStructureItemForPath", () => {
       datatype: "",
     });
   });
+
+  it(`wraps string path filters with ""`, () => {
+    const rootValue = {
+      status: [
+        {
+          level: 0,
+          node_id: "/my_node",
+        },
+      ],
+    };
+    const rootStructureItem = {
+      structureType: "message",
+      nextByName: {
+        status: {
+          structureType: "array",
+          next: {
+            structureType: "message",
+            nextByName: {
+              level: {
+                structureType: "primitive",
+                primitiveType: "int8",
+                datatype: "msgs/node",
+              },
+              node_id: {
+                structureType: "primitive",
+                primitiveType: "string",
+                datatype: "msgs/node",
+              },
+            },
+            datatype: "msgs/node",
+          },
+          datatype: "msgs/nodeArray",
+        },
+      },
+      datatype: "msgs/nodeArray",
+    };
+    expect(getValueActionForValue(rootValue, rootStructureItem, ["status", 0, "level"])).toEqual({
+      type: "primitive",
+      singleSlicePath: '.status[:]{node_id=="/my_node"}.level',
+      multiSlicePath: ".status[:].level",
+      primitiveType: "int8",
+    });
+  });
 });

@@ -15,3 +15,4 @@ export { default as useDataSourceInfo } from "./useDataSourceInfo";
 export type { DataSourceInfo } from "./useDataSourceInfo";
 
 export { useMessages } from "webviz-core/src/components/MessageHistory/MessageHistoryOnlyTopics";
+export type { RequestedTopic } from "webviz-core/src/components/MessageHistory/MessageHistoryOnlyTopics";

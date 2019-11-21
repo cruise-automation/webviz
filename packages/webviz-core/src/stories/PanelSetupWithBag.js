@@ -27,6 +27,7 @@ type Props = {
   mapTopicToDatatype?: (topic: string) => string,
   hasNestedMessageHistory?: ?boolean,
   onMount?: (HTMLDivElement) => void,
+  onFirstMount?: (HTMLDivElement) => void,
 };
 
 const defaultGetMergedFixture = (bagFixture) => bagFixture;
@@ -132,6 +133,7 @@ export default function PanelSetupWithBag({
   mapTopicToDatatype = defaultMapTopicToDatatype,
   topics = [],
   onMount,
+  onFirstMount,
 }: Props) {
   const [fixture, setFixture] = useState();
   // load the bag when component is mounted or updated
@@ -151,7 +153,7 @@ export default function PanelSetupWithBag({
   );
 
   return fixture ? (
-    <PanelSetup fixture={fixture} onMount={onMount}>
+    <PanelSetup fixture={fixture} onMount={onMount} onFirstMount={onFirstMount}>
       {children}
     </PanelSetup>
   ) : null;

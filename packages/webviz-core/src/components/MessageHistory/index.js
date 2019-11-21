@@ -302,8 +302,7 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
 
   return (
     <MessageHistoryOnlyTopics
-      imageScale={imageScale}
-      topics={topics}
+      topics={imageScale == null ? topics : topics.map((topic) => ({ topic, imageScale }))}
       restore={restore}
       addMessage={addMessage}
       key={imageScale /* need to remount when imageScale changes */}>

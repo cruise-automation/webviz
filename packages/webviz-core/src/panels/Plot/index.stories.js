@@ -179,8 +179,8 @@ const fixture = {
     { name: "/boolean_topic", datatype: "std_msgs/Bool" },
   ],
   activeData: {
-    startTime: { sec: 1527, nsec: 202050 },
-    endTime: { sec: 1551, nsec: 999997069 },
+    startTime: { sec: 0, nsec: 202050 },
+    endTime: { sec: 24, nsec: 999997069 },
     isPlaying: false,
     speed: 0.2,
   },
@@ -244,12 +244,20 @@ const paths = [
   },
 ];
 
+const exampleConfig = { paths, minYValue: "", maxYValue: "", showLegend: true };
 storiesOf("<Plot>", module)
   .addDecorator(withScreenshot({ delay: 1000 }))
   .add("line graph", () => {
     return (
       <PanelSetup fixture={fixture}>
-        <Plot config={{ paths, minYValue: "", maxYValue: "" }} />
+        <Plot config={exampleConfig} />
+      </PanelSetup>
+    );
+  })
+  .add("line graph with legends hidden", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot config={{ ...exampleConfig, showLegend: false }} />
       </PanelSetup>
     );
   })
@@ -268,7 +276,7 @@ storiesOf("<Plot>", module)
             }
           }, 100);
         }}>
-        <Plot config={{ paths, minYValue: "", maxYValue: "" }} />
+        <Plot config={exampleConfig} />
       </PanelSetup>
     );
   })
@@ -277,6 +285,7 @@ storiesOf("<Plot>", module)
       <PanelSetup fixture={fixture}>
         <Plot
           config={{
+            ...exampleConfig,
             paths: [
               {
                 value: "/some_topic/location.pose.velocity",
@@ -289,8 +298,6 @@ storiesOf("<Plot>", module)
                 timestampMethod: "headerStamp",
               },
             ],
-            minYValue: "",
-            maxYValue: "",
           }}
         />
       </PanelSetup>
@@ -301,6 +308,7 @@ storiesOf("<Plot>", module)
       <PanelSetup fixture={fixture} style={{ maxWidth: 250 }}>
         <Plot
           config={{
+            ...exampleConfig,
             paths: [
               {
                 value: "/some_topic/location.pose.velocity",
@@ -308,8 +316,6 @@ storiesOf("<Plot>", module)
                 timestampMethod: "receiveTime",
               },
             ],
-            minYValue: "",
-            maxYValue: "",
           }}
         />
       </PanelSetup>
@@ -320,6 +326,7 @@ storiesOf("<Plot>", module)
       <PanelSetup fixture={fixture}>
         <Plot
           config={{
+            ...exampleConfig,
             paths: [
               {
                 value: "/some_topic/location.pose.velocity",
@@ -332,8 +339,6 @@ storiesOf("<Plot>", module)
                 timestampMethod: "receiveTime",
               },
             ],
-            minYValue: "",
-            maxYValue: "",
           }}
         />
       </PanelSetup>
@@ -369,6 +374,7 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "-1",
             maxYValue: "2",
+            showLegend: true,
           }}
         />
       </PanelSetup>
@@ -388,6 +394,7 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "1",
             maxYValue: "2.8",
+            showLegend: true,
           }}
         />
       </PanelSetup>
@@ -407,6 +414,7 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "1",
             maxYValue: "",
+            showLegend: true,
           }}
         />
       </PanelSetup>
@@ -426,6 +434,7 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "1.4",
             maxYValue: "",
+            showLegend: true,
           }}
         />
       </PanelSetup>
@@ -445,6 +454,7 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "",
             maxYValue: "1.8",
+            showLegend: true,
           }}
         />
       </PanelSetup>
@@ -464,6 +474,7 @@ storiesOf("<Plot>", module)
             ],
             minYValue: "",
             maxYValue: "2.8",
+            showLegend: true,
           }}
         />
       </PanelSetup>
@@ -474,6 +485,7 @@ storiesOf("<Plot>", module)
       <PanelSetup fixture={fixture}>
         <Plot
           config={{
+            ...exampleConfig,
             paths: [
               {
                 value: "/some_topic/state.items[:].speed",
@@ -491,8 +503,6 @@ storiesOf("<Plot>", module)
                 timestampMethod: "receiveTime",
               },
             ],
-            minYValue: "",
-            maxYValue: "",
           }}
         />
       </PanelSetup>
@@ -526,6 +536,7 @@ storiesOf("<Plot>", module)
         }}>
         <Plot
           config={{
+            ...exampleConfig,
             paths: [
               {
                 value: "/some_number.data",
@@ -533,8 +544,6 @@ storiesOf("<Plot>", module)
                 timestampMethod: "receiveTime",
               },
             ],
-            minYValue: "",
-            maxYValue: "",
           }}
         />
       </PanelSetup>

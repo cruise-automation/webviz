@@ -100,7 +100,8 @@ export default function getMessageHistoryItem(
     } else if (pathItem.type === "slice" && structureItem.structureType === "array") {
       // If the `pathItem` is a slice, iterate over all the relevant elements in the array.
       for (let i = pathItem.start; i <= Math.min(pathItem.end, value.length - 1); i++) {
-        if (value[i] === undefined) {
+        const index = i >= 0 ? i : value.length + i;
+        if (value[index] === undefined) {
           continue;
         }
         // Ideally show something like `/topic.object[:]{some_id=123}` for the path, but fall
@@ -111,15 +112,19 @@ export default function getMessageHistoryItem(
           // If we have a filter set after this, it will update the path appropriately.
           newPath = `${path}[:]`;
         } else {
-          // See if `value[i]` has a property that we typically filter on. If so, show that.
-          const name = Object.keys(value[i]).find((key) => isTypicalFilterName(key));
+          // See if `value[index]` has a property that we typically filter on. If so, show that.
+          const name = Object.keys(value[index]).find((key) => isTypicalFilterName(key));
           if (name) {
-            newPath = `${path}[:]{${name}==${value[i][name]}}`;
+            newPath = `${path}[:]{${name}==${value[index][name]}}`;
           } else {
+            // Use `i` here instead of `index`, since it's only different when `i` is negative,
+            // and in that case it's probably more useful to show to the user how many elements
+            // from the end of the array this data is, since they clearly are thinking in that way
+            // (otherwise they wouldn't have chosen a negative slice).
             newPath = `${path}[${i}]`;
           }
         }
-        traverse(value[i], pathIndex + 1, newPath, structureItem.next);
+        traverse(value[index], pathIndex + 1, newPath, structureItem.next);
       }
     } else if (pathItem.type === "filter") {
       if (filterMatches(pathItem, value, globalVariables)) {

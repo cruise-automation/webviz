@@ -15,8 +15,8 @@ import IdbCacheReaderDataProvider from "webviz-core/src/dataProviders/IdbCacheRe
 import MeasureDataProvider, {
   instrumentTreeWithMeasureDataProvider,
 } from "webviz-core/src/dataProviders/MeasureDataProvider";
+import MemoryCacheDataProvider from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import ParseMessagesDataProvider from "webviz-core/src/dataProviders/ParseMessagesDataProvider";
-import ReadAheadDataProvider from "webviz-core/src/dataProviders/ReadAheadDataProvider";
 import type { DataProviderDescriptor, DataProvider } from "webviz-core/src/dataProviders/types";
 import WorkerDataProvider from "webviz-core/src/dataProviders/WorkerDataProvider";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -27,9 +27,9 @@ const getDataProviderBase = createGetDataProvider({
   BagDataProvider,
   MeasureDataProvider,
   ParseMessagesDataProvider,
-  ReadAheadDataProvider,
   WorkerDataProvider,
   IdbCacheReaderDataProvider,
+  MemoryCacheDataProvider,
   CombinedDataProvider,
   ...getGlobalHooks().getAdditionalDataProviders(),
 });

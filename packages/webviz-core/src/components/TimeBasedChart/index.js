@@ -72,6 +72,19 @@ const SLegend = styled.div`
   padding: 30px 0px 10px 0px;
 `;
 
+const MemoizedTooltips = React.memo<{}>(function Tooltips() {
+  return (
+    <React.Fragment>
+      <Tooltip contents={<div>Hold v to only scroll vertically</div>} delay={0}>
+        <div style={{ position: "absolute", left: 0, top: 0, width: 30, bottom: 0 }} />
+      </Tooltip>
+      <Tooltip placement="top" contents={<div>Hold h to only scroll horizontally</div>} delay={0}>
+        <div style={{ position: "absolute", left: 0, right: 0, height: 30, bottom: 0 }} />
+      </Tooltip>
+    </React.Fragment>
+  );
+});
+
 type Props = {|
   type: "scatter" | "multicolorLine",
   width: number,
@@ -459,12 +472,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
             />
           </SRoot>
         </div>
-        <Tooltip contents={<div>Hold v to only scroll on vertically</div>} delay={0}>
-          <div style={{ position: "absolute", left: 0, top: 0, width: 30, bottom: 0 }} />
-        </Tooltip>
-        <Tooltip placement="top" contents={<div>Hold h to only scroll on horizontally</div>} delay={0}>
-          <div style={{ position: "absolute", left: 0, right: 0, height: 30, bottom: 0 }} />
-        </Tooltip>
+        <MemoizedTooltips />
         {drawLegend && (
           <SLegend>
             <TimeBasedChartLegend

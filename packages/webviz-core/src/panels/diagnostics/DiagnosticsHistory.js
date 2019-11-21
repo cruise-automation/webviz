@@ -19,7 +19,6 @@ import {
   computeDiagnosticInfo,
 } from "./util";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
-import type { Topic } from "webviz-core/src/players/types";
 
 export type DiagnosticAutocompleteEntry = {|
   name: string,
@@ -36,11 +35,11 @@ export type DiagnosticsBuffer = {|
 |};
 
 type Props = {|
-  children: ({ buffer: DiagnosticsBuffer, allTopics: $ReadOnlyArray<Topic> }) => Node,
+  children: (DiagnosticsBuffer) => Node,
   topic: string,
 |};
 
-export function useDiagnostics(topic: string): { diagnostics: DiagnosticsBuffer, allTopics: $ReadOnlyArray<Topic> } {
+export function useDiagnostics(topic: string): DiagnosticsBuffer {
   const { reducedValue: diagnostics } = PanelAPI.useMessages<DiagnosticsBuffer>({
     topics: [topic],
 
@@ -101,12 +100,10 @@ export function useDiagnostics(topic: string): { diagnostics: DiagnosticsBuffer,
     }, []),
   });
 
-  const allTopics = PanelAPI.useDataSourceInfo().topics;
-
-  return { diagnostics, allTopics };
+  return diagnostics;
 }
 
 export default function DiagnosticsHistory({ children, topic }: Props) {
-  const { diagnostics, allTopics } = useDiagnostics(topic);
-  return children({ buffer: diagnostics, allTopics });
+  const diagnostics = useDiagnostics(topic);
+  return children(diagnostics);
 }

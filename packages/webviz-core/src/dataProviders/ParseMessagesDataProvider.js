@@ -10,7 +10,9 @@ import { type Time } from "rosbag";
 
 import { type DataProvider, type DataProviderMessage, type InitializationResult, type ExtensionPoint } from "./types";
 import type { DataProviderDescriptor, Connection, GetDataProvider } from "webviz-core/src/dataProviders/types";
+import filterMap from "webviz-core/src/filterMap";
 import MessageReaderStore from "webviz-core/src/util/MessageReaderStore";
+import reportError from "webviz-core/src/util/reportError";
 
 const readers = new MessageReaderStore();
 
@@ -36,17 +38,23 @@ export default class ParseMessagesDataProvider implements DataProvider {
   }
 
   async getMessages(start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> {
-    return (await this._provider.getMessages(start, end, topics)).map((message) => {
+    const allMessages = await this._provider.getMessages(start, end, topics);
+    return filterMap(allMessages, (message) => {
       const connection = this._connectionsByTopic[message.topic];
       if (!connection) {
         throw new Error("Could not find connection in bag for message");
       }
       const { type, md5sum, messageDefinition } = connection;
       const reader = readers.get(type, md5sum, messageDefinition);
-      return {
-        ...message,
-        message: reader.readMessage(Buffer.from(message.message)),
-      };
+      try {
+        return {
+          ...message,
+          message: reader.readMessage(Buffer.from(message.message)),
+        };
+      } catch (error) {
+        reportError(`Error reading messages from ${message.topic}: ${error.message}`, error, "user");
+        return undefined;
+      }
     });
   }
 

@@ -6,7 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import MagnifyIcon from "@mdi/svg/svg/magnify.svg";
+import cx from "classnames";
+import panzoom from "panzoom";
 import React from "react";
+import KeyListener from "react-key-listener";
+import OutsideClickHandler from "react-outside-click-handler";
+import ReactResizeDetector from "react-resize-detector";
 import shallowequal from "shallowequal";
 import styled from "styled-components";
 
@@ -24,7 +30,8 @@ import {
   decodeMono16,
 } from "./decodings";
 import styles from "./ImageCanvas.module.scss";
-import { type ImageViewPanelHooks } from "./index";
+import type { ImageViewPanelHooks, Config, SaveConfig } from "./index";
+import { checkOutOfBounds } from "./util";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -33,6 +40,7 @@ import colors from "webviz-core/src/styles/colors.module.scss";
 import type { ImageMarker, Color, Point } from "webviz-core/src/types/Messages";
 import { downloadFiles } from "webviz-core/src/util";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
+import reportError from "webviz-core/src/util/reportError";
 
 type Props = {|
   topic: string,
@@ -44,10 +52,13 @@ type Props = {|
     cameraModel: ?CameraModel, // null means no transformation is needed
   |},
   panelHooks?: ImageViewPanelHooks,
+  config: Config,
+  saveConfig: SaveConfig,
 |};
 
 type State = {|
   error: ?Error,
+  openZoomChart: boolean,
 |};
 
 function toRGBA(color: Color) {
@@ -74,12 +85,19 @@ const SErrorMessage = styled.div`
   color: ${colors.red};
 `;
 
+const MAX_ZOOM_PERCENTAGE = 150;
+const ZOOM_STEP = 5;
 export default class ImageCanvas extends React.Component<Props, State> {
   _canvasRef = React.createRef<HTMLCanvasElement>();
+  _divRef = React.createRef<HTMLElement>();
 
   state = {
     error: undefined,
+    openZoomChart: false,
   };
+
+  panZoomCanvas: any = null;
+  bitmapDimensions: { width: number, height: number } = { width: 0, height: 0 };
 
   decodeMessageToBitmap = async (msg: any): Promise<?ImageBitmap> => {
     let image: ImageData | Image | Blob | void;
@@ -142,21 +160,116 @@ export default class ImageCanvas extends React.Component<Props, State> {
     }
   };
 
+  keepInBounds = (div: HTMLElement) => {
+    const { x, y, scale } = this.panZoomCanvas.getTransform();
+    // When zoom is 1, the percentage is fitPercentage
+    // (fitPercent * scale) / 100) is the zoomScale for now
+    const updatedPercentage = scale * 100;
+    const rect = div.getBoundingClientRect();
+    const { width, height } = rect;
+    const offset = checkOutOfBounds(
+      x,
+      y,
+      width,
+      height,
+      // calculate the true width and height of image right now
+      (this.bitmapDimensions.width * updatedPercentage) / 100,
+      (this.bitmapDimensions.height * updatedPercentage) / 100
+    );
+    this.props.saveConfig({ mode: "other", offset, zoomPercentage: updatedPercentage });
+    if (offset[0] !== x || offset[1] !== y) {
+      this.panZoomCanvas.moveTo(offset[0], offset[1]);
+    }
+  };
+
+  createPanZoom = () => {
+    const canvas = this._canvasRef.current;
+    const div = this._divRef.current;
+    if (canvas && div) {
+      this.panZoomCanvas = panzoom(canvas, {
+        maxZoom: 1.5,
+        minZoom: 0,
+        zoomSpeed: 0.05,
+        smoothScroll: false,
+        filterKey(e, dx, dy, dz) {
+          // don't let panzoom handle keyboard event
+          // because zoom in and out has the wrong offset change
+          // left right up and down is different what we use in our daily life
+          return true;
+        },
+      });
+      this.panZoomCanvas.on("zoom", (e) => {
+        const { scale } = this.panZoomCanvas.getTransform();
+        const minPercent = this.fitPercent() * 0.8;
+        if (scale < minPercent / 100) {
+          this.goToTargetPercentage(minPercent);
+        }
+        this.keepInBounds(div);
+      });
+      this.panZoomCanvas.on("pan", (e) => this.keepInBounds(div));
+    }
+  };
+
+  getImageViewport = () => {
+    const div = this._divRef.current;
+
+    if (!div) {
+      throw new Error("Don't have div to get width and height");
+    }
+    return { imageViewportWidth: div.offsetWidth, imageViewportHeight: div.offsetHeight };
+  };
+
+  moveToCenter = () => {
+    if (!this.panZoomCanvas) {
+      console.warn("Tried to center when there is no panZoomCanvas");
+      return;
+    }
+    const { width, height } = this.bitmapDimensions;
+    const { imageViewportWidth, imageViewportHeight } = this.getImageViewport();
+    this.panZoomCanvas.moveTo(
+      (imageViewportWidth - (width * imageViewportHeight) / height) / 2,
+      (imageViewportHeight - (height * imageViewportWidth) / width) / 2
+    );
+  };
+
+  fitPercent = () => {
+    const { width, height } = this.bitmapDimensions;
+    const { imageViewportWidth, imageViewportHeight } = this.getImageViewport();
+    return Math.min(imageViewportWidth / width, imageViewportHeight / height) * 100;
+  };
+
+  fillPercent = () => {
+    const { width, height } = this.bitmapDimensions;
+    const { imageViewportWidth, imageViewportHeight } = this.getImageViewport();
+    return Math.max(imageViewportWidth / width, imageViewportHeight / height) * 100;
+  };
+
+  loadZoomFromConfig = () => {
+    if (this.panZoomCanvas) {
+      return;
+    }
+    this.createPanZoom();
+    this.applyPanZoom();
+  };
+
   paintBitmap = (bitmap: ?ImageBitmap) => {
     const { markerData } = this.props;
     const canvas = this._canvasRef.current;
+    const div = this._divRef.current;
 
-    if (!canvas) {
+    if (!div || !canvas) {
       return;
     }
     if (!bitmap) {
       this.clearCanvas();
       return;
     }
+    this.bitmapDimensions = { width: bitmap.width, height: bitmap.height };
     const ctx = canvas.getContext("2d");
-
     if (!markerData) {
       this.resizeCanvas(bitmap.width, bitmap.height);
+      this.loadZoomFromConfig();
+      ctx.transform(1, 0, 0, 1, 0, 0);
       ctx.drawImage(bitmap, 0, 0);
       return;
     }
@@ -170,7 +283,9 @@ export default class ImageCanvas extends React.Component<Props, State> {
       originalHeight = bitmap.height;
     }
 
+    this.bitmapDimensions = { width: originalWidth, height: originalHeight };
     this.resizeCanvas(originalWidth, originalHeight);
+    this.loadZoomFromConfig();
     ctx.save();
     ctx.scale(originalWidth / bitmap.width, originalHeight / bitmap.height);
     ctx.drawImage(bitmap, 0, 0);
@@ -390,6 +505,41 @@ export default class ImageCanvas extends React.Component<Props, State> {
     );
   };
 
+  clickMagnify = () => {
+    this.setState((state) => ({ openZoomChart: !state.openZoomChart }));
+  };
+
+  onZoomFit = () => {
+    const fitPercent = this.fitPercent();
+    this.panZoomCanvas.zoomAbs(0, 0, fitPercent / 100);
+    this.moveToCenter();
+    this.props.saveConfig({ mode: "fit", zoomPercentage: fitPercent });
+  };
+
+  onZoomFill = () => {
+    const fillPercent = this.fillPercent();
+    this.panZoomCanvas.zoomAbs(0, 0, fillPercent / 100);
+    this.moveToCenter();
+    this.props.saveConfig({ mode: "fill", zoomPercentage: fillPercent });
+  };
+
+  goToTargetPercentage = (targetPercentage: number) => {
+    const { imageViewportWidth, imageViewportHeight } = this.getImageViewport();
+    this.panZoomCanvas.zoomAbs(imageViewportWidth / 2, imageViewportHeight / 2, targetPercentage / 100);
+  };
+
+  onZoomMinus = () => {
+    const { zoomPercentage } = this.props.config;
+    const targetPercentage = Math.max((zoomPercentage || 100) - ZOOM_STEP, this.fitPercent() * 0.8);
+    this.goToTargetPercentage(targetPercentage);
+  };
+
+  onZoomPlus = () => {
+    const { zoomPercentage } = this.props.config;
+    const targetPercentage = Math.min((zoomPercentage || 100) + ZOOM_STEP, MAX_ZOOM_PERCENTAGE);
+    this.goToTargetPercentage(targetPercentage);
+  };
+
   renderCurrentImage = debouncePromise(async () => {
     const { image } = this.props;
     if (!image) {
@@ -413,12 +563,146 @@ export default class ImageCanvas extends React.Component<Props, State> {
     }
   });
 
-  render() {
-    return (
-      <div style={{ height: "100%", position: "relative", display: "flex" }}>
-        {this.state.error && <SErrorMessage>Error: {this.state.error.message}</SErrorMessage>}
-        <canvas onContextMenu={this.onCanvasRightClick} ref={this._canvasRef} className={styles.canvas} />
+  renderZoomChart = () => {
+    return this.state.openZoomChart ? (
+      <div className={styles.zoomChart} data-zoom-menu>
+        <div className={cx(styles.menuItem, styles.notInteractive)}>Use mousewheel or buttons to zoom</div>
+        <div className={cx(styles.menuItem, styles.borderBottom)}>
+          <button className={styles.round} onClick={this.onZoomMinus} data-panel-minus-zoom>
+            -
+          </button>
+          <span>{`${(this.props.config.zoomPercentage || 100).toFixed(1)}%`}</span>
+          <button className={styles.round} onClick={this.onZoomPlus} data-panel-add-zoom>
+            +
+          </button>
+        </div>
+        <Item className={styles.borderBottom} onClick={() => this.goToTargetPercentage(100)} dataTest={"hundred-zoom"}>
+          Zoom to 100%
+        </Item>
+        <Item className={styles.borderBottom} onClick={this.onZoomFit} dataTest={"fit-zoom"}>
+          Zoom to fit
+        </Item>
+        <Item onClick={this.onZoomFill} dataTest={"fill-zoom"}>
+          Zoom to fill
+        </Item>
       </div>
+    ) : null;
+  };
+
+  applyPanZoom = () => {
+    if (this.panZoomCanvas) {
+      const { mode, zoomPercentage, offset } = this.props.config;
+      if (!mode || mode === "fit") {
+        this.onZoomFit();
+      } else if (mode === "fill") {
+        this.onZoomFill();
+      } else if (mode === "other") {
+        // Go to prevPercentage
+        this.goToTargetPercentage(zoomPercentage || 100);
+        this.panZoomCanvas.moveTo(offset ? offset[0] : 0, offset ? offset[1] : 0);
+      }
+    }
+  };
+
+  keyDownHandlers = {
+    "=": () => {
+      this.onZoomPlus();
+    },
+    "-": () => {
+      this.onZoomMinus();
+    },
+    "1": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(10);
+      }
+    },
+    "2": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(20);
+      }
+    },
+    "3": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(30);
+      }
+    },
+    "4": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(40);
+      }
+    },
+    "5": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(50);
+      }
+    },
+    "6": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(60);
+      }
+    },
+    "7": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(70);
+      }
+    },
+    "8": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(80);
+      }
+    },
+    "9": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(90);
+      }
+    },
+    "0": (e: KeyboardEvent) => {
+      if (e.metaKey) {
+        this.goToTargetPercentage(100);
+      }
+    },
+  };
+
+  render() {
+    const { mode, zoomPercentage, offset } = this.props.config;
+    if (zoomPercentage && (zoomPercentage > 150 || zoomPercentage < 0)) {
+      reportError(
+        `zoomPercentage for the image panel was ${zoomPercentage}, but must be between 0 and 150. It has been reset to 100.`,
+        "",
+        "user"
+      );
+      this.props.saveConfig({ zoomPercentage: 100 });
+    }
+    if (offset && offset.length !== 2) {
+      reportError(
+        `offset for the image panel was ${JSON.stringify(
+          offset
+        )}, but should be an array of length 2. It has been reset to [0, 0].`,
+        "",
+        "user"
+      );
+      this.props.saveConfig({ offset: [0, 0] });
+    }
+    return (
+      <ReactResizeDetector handleWidth handleHeight onResize={this.applyPanZoom}>
+        <div className={styles.root} ref={this._divRef}>
+          <KeyListener keyDownHandlers={this.keyDownHandlers} />
+          <div>
+            {this.state.error && <SErrorMessage>Error: {this.state.error.message}</SErrorMessage>}
+            <canvas onContextMenu={this.onCanvasRightClick} ref={this._canvasRef} className={styles.canvas} />
+          </div>
+          <OutsideClickHandler
+            onOutsideClick={() => {
+              this.setState({ openZoomChart: false });
+            }}>
+            {this.renderZoomChart()}
+            <button className={styles.magnify} onClick={this.clickMagnify} data-magnify-icon>
+              <MagnifyIcon />{" "}
+              {mode === "other" ? <span>{zoomPercentage ? `${zoomPercentage.toFixed(1)}%` : "null"}</span> : null}
+            </button>
+          </OutsideClickHandler>
+        </div>
+      </ReactResizeDetector>
     );
   }
 }

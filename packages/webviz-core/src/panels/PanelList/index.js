@@ -189,7 +189,7 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
       },
     ];
     if (config.panelConfig) {
-      savePanelConfig({ id: newNode, config: config.panelConfig });
+      savePanelConfig({ id: newNode, config: config.panelConfig, defaultConfig: {} });
     }
     const newLayout = updateTree(mosaicLayout, updates);
     changePanelLayout(newLayout);

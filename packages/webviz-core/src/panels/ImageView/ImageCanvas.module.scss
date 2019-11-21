@@ -5,13 +5,14 @@
 //  You may not use this file except in compliance with the License.
 @import "~webviz-core/src/styles/colors.module.scss";
 
-.canvas {
-  flex: 1 1 100%;
+.root {
+  height: 100%;
+  position: relative;
+}
 
-  // size to fit while preserving aspect ratio
+.canvas {
   min-width: 0;
   min-height: 0;
-  object-fit: contain;
   object-position: top left;
 }
 
@@ -38,4 +39,70 @@
   :global(.mosaic-window):hover & {
     opacity: 1;
   }
+}
+
+.magnify {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  z-index: 102;
+  opacity: 1;
+  background-color: $toolbar;
+  display: none;
+  .root:hover & {
+    display: block;
+  }
+  &:global(.hoverScreenshot) {
+    display: block;
+  }
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: white;
+    float: left;
+  }
+  span {
+    color: orange;
+    float: right;
+    padding-left: 3px;
+  }
+}
+
+.zoomChart {
+  position: absolute;
+  bottom: 45px;
+  left: 0;
+  z-index: 102;
+  opacity: 1;
+  background-color: $toolbar;
+  width: 145px;
+  border-radius: 4%;
+  display: none;
+  .root:hover & {
+    display: block;
+  }
+  &:global(.hoverScreenshot) {
+    display: block;
+  }
+}
+
+.round {
+  margin: 0;
+  padding: 1px 5px 1px 5px;
+  border-radius: 100%;
+}
+
+.borderBottom {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 8px 12px;
+}
+
+.notInteractive {
+  opacity: 0.5;
 }

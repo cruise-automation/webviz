@@ -14,6 +14,7 @@ import {
   Triangles,
   Lines,
   type Line,
+  type TriangleList,
   type CommonCommandProps,
   getChildrenForHitmapWithOriginalMarker,
   nonInstancedGetChildrenForHitmap,
@@ -23,13 +24,13 @@ import {
 } from "regl-worldview";
 
 type Props = {
-  children: Array<Line>,
-  opacity: number,
+  children: Line[],
   ...CommonCommandProps,
 };
 
-export default function LinedConvexHulls({ children, opacity, ...rest }: Props) {
-  const triangles = children
+function getTriangleChildrenForHitmap(props: Line[], assignNextColors, excludedObjects): TriangleList[] {
+  // This getChildrenForHitmap function takes lines and returns triangles.
+  const triangles = props
     .map((line) => {
       // Make sure all points are in vec3 format and unique.
       const points = uniqBy(
@@ -54,25 +55,32 @@ export default function LinedConvexHulls({ children, opacity, ...rest }: Props) 
         return [points[index1], points[index2], points[index3]];
       });
       const convertedColor = typeof line.color.r === "number" ? line.color : vec4ToRGBA(line.color);
-      const colorWithAlpha = { ...convertedColor, a: opacity };
       return {
         pose: line.pose,
         scale: line.scale,
-        color: colorWithAlpha,
+        color: convertedColor,
         points: trianglePoints,
-        originalMarker: line,
+        originalMarker: line.originalMarker,
       };
     })
     .filter(Boolean);
 
+  return getChildrenForHitmapWithOriginalMarker(triangles, assignNextColors, excludedObjects);
+}
+
+export default function LinedConvexHulls({ children, ...rest }: Props) {
   return (
     <React.Fragment>
       {/* Render all the lines, even if we can't generate a convex hull from them. */}
       <Lines getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...rest}>
         {children}
       </Lines>
-      <Triangles getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker} {...rest}>
-        {triangles}
+      <Triangles getChildrenForHitmap={getTriangleChildrenForHitmap} {...rest}>
+        {/*
+         * These Line objects are not renderable by the Triangle shader. But since we're only rendering them inside the
+         * hitmap, we convert them from lines to triangle objects in the `getTriangleChildrenForHitmap` function above.
+         */}
+        {children.map((line) => ({ ...line, originalMarker: line, onlyRenderInHitmap: true }))}
       </Triangles>
     </React.Fragment>
   );

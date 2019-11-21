@@ -10,11 +10,11 @@ import type { DataProviderDescriptor } from "webviz-core/src/dataProviders/types
 
 export function getLocalBagDescriptor(file: File): DataProviderDescriptor {
   return {
-    name: "ReadAheadDataProvider",
+    name: "ParseMessagesDataProvider",
     args: {},
     children: [
       {
-        name: "ParseMessagesDataProvider",
+        name: "MemoryCacheDataProvider",
         args: {},
         children: [
           {
@@ -65,11 +65,11 @@ export function getRemoteBagDescriptor(url: string, guid: ?string, loadEntireBag
         ],
       }
     : {
-        name: "ReadAheadDataProvider",
+        name: "ParseMessagesDataProvider",
         args: {},
         children: [
           {
-            name: "ParseMessagesDataProvider",
+            name: "MemoryCacheDataProvider",
             args: {},
             children: [
               {

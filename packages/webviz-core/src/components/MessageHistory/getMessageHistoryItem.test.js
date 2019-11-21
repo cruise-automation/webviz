@@ -141,6 +141,41 @@ describe("getMessageHistoryItem", () => {
     ]);
   });
 
+  it("works with negative slices", () => {
+    const messages: Message[] = [
+      {
+        op: "message",
+        topic: "/some/topic",
+        datatype: "some_datatype",
+        receiveTime: { sec: 0, nsec: 0 },
+        message: { some_array: [1, 2, 3, 4, 5] },
+      },
+    ];
+    const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+    const datatypes: RosDatatypes = { some_datatype: [{ name: "some_array", type: "int32", isArray: true }] };
+
+    expect(
+      addValuesWithPathsToItems(
+        messages,
+        {
+          topicName: "/some/topic",
+          messagePath: [{ type: "name", name: "some_array" }, { type: "slice", start: -2, end: -1 }],
+          modifier: undefined,
+        },
+        topics,
+        datatypes
+      )
+    ).toEqual([
+      {
+        message: messages[0],
+        queriedData: [
+          { constantName: undefined, path: "/some/topic.some_array[-2]", value: 4 },
+          { constantName: undefined, path: "/some/topic.some_array[-1]", value: 5 },
+        ],
+      },
+    ]);
+  });
+
   it("returns nothing for invalid topics", () => {
     const messages: Message[] = [
       {

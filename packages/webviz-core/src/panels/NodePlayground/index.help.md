@@ -103,14 +103,19 @@ type RosOutMsg = {
 };
 type RosOut = BaseMessage<"/rosout", RosOutMsg>;
 
-type TfMsg = {
-  transforms: {
-    header: Header,
-    child_frame_id: string,
-    /* ... */
-  }
+type Transform = {
+  translation: number[],
+  rotation: number[]
+}
+type TransformMsg = {
+  header: Header,  
+  child_frame_id: string,
+  transform: Transform
+}
+type TransformMsgArray = {
+  transforms: TransformMsg[]
 };
-type Tf = BaseMessage<"/tf", TfMsg>;
+type Tf = BaseMessage<"/tf", TransformMsgArray>;
 
 type Marker = LineStripMarker;
 type MarkerArray = {

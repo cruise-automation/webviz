@@ -139,23 +139,27 @@ export default class CombinedDataProvider implements DataProvider {
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
-    const results: InitializationResult[] = await Promise.all(
-      this._providers.map(({ provider, prefix, deleteTopics }: InternalProviderInfo, idx) => {
-        const childExtensionPoint = {
-          progressCallback: (progress: Progress) => {
-            this._progressPerProvider[idx] = progress;
-            // Assume empty for unreported progress
-            const cleanProgresses = this._progressPerProvider.map((p) => p || emptyProgress());
-            const intersected = intersectProgress(cleanProgresses);
-            extensionPoint.progressCallback(intersected);
-          },
-          reportMetadataCallback: (data: DataProviderMetadata) => {
-            extensionPoint.reportMetadataCallback(data);
-          },
-        };
-        return provider.initialize(childExtensionPoint);
-      })
-    );
+    const results: InitializationResult[] = [];
+    // NOTE: Initialization is done serially instead of concurrently here as a
+    // temporary workaround for a major IndexedDB bug that results in runaway
+    // disk usage. TODO: Reference chromium ticket.
+    for (let idx = 0; idx < this._providers.length; idx++) {
+      const { provider } = this._providers[idx];
+      const childExtensionPoint = {
+        progressCallback: (progress: Progress) => {
+          this._progressPerProvider[idx] = progress;
+          // Assume empty for unreported progress
+          const cleanProgresses = this._progressPerProvider.map((p) => p || emptyProgress());
+          const intersected = intersectProgress(cleanProgresses);
+          extensionPoint.progressCallback(intersected);
+        },
+        reportMetadataCallback: (data: DataProviderMetadata) => {
+          extensionPoint.reportMetadataCallback(data);
+        },
+      };
+      const result = await provider.initialize(childExtensionPoint);
+      results.push(result);
+    }
 
     // Any providers that didn't report progress in `initialize` are assumed fully loaded
     this._progressPerProvider.forEach((p, i) => {

@@ -33,7 +33,7 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 // DataProviders. For example, you can have a BagDataProvider which reads from a ROS bag, but which
 // takes a bit of time to decompress the ROS bag. So you might wrap it in a WorkerDataProvider,
 // which puts its children in a Web Worker, therefore allowing the decompression to happen in
-// parallel to the main thread. And you might wrap that in turn in a ReadAheadDataProvider, which
+// parallel to the main thread. And you might wrap that in turn in a MemoryCacheDataProvider, which
 // does some in-memory read-ahead caching based on the most recent time range that was requested.
 // These trees of DataProviders are described by `DataProviderDescriptor`.
 //

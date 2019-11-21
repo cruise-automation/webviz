@@ -11,13 +11,7 @@ import { type Node, useRef, useCallback, useMemo, useState, useEffect, useContex
 import type { Time } from "rosbag";
 import uuid from "uuid";
 
-import {
-  useChangeDetector,
-  useShallowMemo,
-  useMustNotChange,
-  useShouldNotChangeOften,
-  useContextSelector,
-} from "./hooks";
+import { useChangeDetector, useShouldNotChangeOften, useContextSelector, useDeepMemo } from "./hooks";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import type { Message, SubscribePayload } from "webviz-core/src/players/types";
@@ -34,10 +28,10 @@ type MessageHistoryOnlyTopicsData<T> = {|
 |};
 
 type MessageReducer<T> = (T, message: Message) => T;
+export type RequestedTopic = string | {| topic: string, imageScale: number |};
 
 type Props<T> = {|
-  topics: string[],
-  imageScale?: number,
+  topics: $ReadOnlyArray<RequestedTopic>,
 
   // Functions called when the reducers change and for each newly received message.
   // The object is assumed to be immutable, so in order to trigger a re-render, the reducers must
@@ -74,59 +68,35 @@ function useReducedValue<T>(
 
   // Use the addMessage reducer to process new messages.
   if (messagesChanged) {
-    reducedValueRef.current = messages.reduce(addMessage, reducedValueRef.current);
+    reducedValueRef.current = messages.reduce(
+      // .reduce() passes 4 args to callback function,
+      // but we want to call addMessage with only first 2 args
+      (value: T, message: Message) => addMessage(value, message),
+      reducedValueRef.current
+    );
   }
 
   return reducedValueRef.current;
 }
 
-// Create modified versions of topics and addMessage to support topic prefixes.
-function useTopicPrefix<T>(
-  topicPrefix: string,
-  unprefixedRequestedTopics: string[],
-  unprefixedAddMessage: MessageReducer<T>
-): [string[], MessageReducer<T>] {
-  const memoizedUnprefixedRequestedTopics = useShallowMemo(unprefixedRequestedTopics);
-  const requestedTopics = useMemo(
-    () => {
-      return memoizedUnprefixedRequestedTopics.map((topic) => topicPrefix + topic);
-    },
-    [topicPrefix, memoizedUnprefixedRequestedTopics]
-  );
-
-  const addMessage = useCallback(
-    (value: T, message) =>
-      message.topic.startsWith(topicPrefix)
-        ? unprefixedAddMessage(value, {
-            ...message,
-            topic: message.topic.slice(topicPrefix.length),
-          })
-        : value,
-    [unprefixedAddMessage, topicPrefix]
-  );
-
-  return [requestedTopics, addMessage];
-}
-
 // Compute the subscriptions to be requested from the player.
-function useSubscriptions(requestedTopics: string[], imageScale?: ?number, panelType?: ?string): SubscribePayload[] {
-  useMustNotChange(imageScale, "Changing imageScale is not supported; please remount instead.");
+function useSubscriptions(requestedTopics: $ReadOnlyArray<RequestedTopic>, panelType?: ?string): SubscribePayload[] {
   return useMemo(
     () => {
-      let encodingAndScalePayload = {};
-      if (imageScale !== undefined) {
-        // We might be able to remove the `encoding` field from the protocol entirely, and only
-        // use scale. Or we can deal with scaling down in a different way altogether, such as having
-        // special topics or syntax for scaled down versions of images or so. In any case, we should
-        // be cautious about having metadata on subscriptions, as that leads to the problem of how to
-        // deal with multiple subscriptions to the same topic but with different metadata.
-        encodingAndScalePayload = { encoding: "image/compressed", scale: imageScale };
-      }
-
       const requester = panelType ? { type: "panel", name: panelType } : undefined;
-      return requestedTopics.map((topic) => ({ topic, requester, ...encodingAndScalePayload }));
+      return requestedTopics.map((request) => {
+        if (typeof request === "object") {
+          // We might be able to remove the `encoding` field from the protocol entirely, and only
+          // use scale. Or we can deal with scaling down in a different way altogether, such as having
+          // special topics or syntax for scaled down versions of images or so. In any case, we should
+          // be cautious about having metadata on subscriptions, as that leads to the problem of how to
+          // deal with multiple subscriptions to the same topic but with different metadata.
+          return { topic: request.topic, requester, encoding: "image/compressed", scale: request.imageScale };
+        }
+        return { topic: request, requester };
+      });
     },
-    [requestedTopics, imageScale, panelType]
+    [requestedTopics, panelType]
   );
 }
 
@@ -135,7 +105,7 @@ const NO_MESSAGES = Object.freeze([]);
 // TODO: remove clearedRef and just return T
 export function useMessages<T>(props: Props<T>): {| reducedValue: T, _clearedRef: {| current: boolean |} |} {
   const [id] = useState(() => uuid.v4());
-  const { topicPrefix = "", type: panelType = undefined } = useContext(PanelContext) || {};
+  const { type: panelType = undefined } = useContext(PanelContext) || {};
 
   useShouldNotChangeOften(
     props.restore,
@@ -150,11 +120,12 @@ export function useMessages<T>(props: Props<T>): {| reducedValue: T, _clearedRef
       "shouldn't be created on each render. (If you're using Hooks, try useCallback.)"
   );
 
-  // TODO(jacob): is it safe to call restore() when topicPrefix changes?
-  const [requestedTopics, addMessage] = useTopicPrefix<T>(topicPrefix, props.topics, props.addMessage);
-  const requestedTopicsSet = useMemo(() => new Set(requestedTopics), [requestedTopics]);
-
-  const subscriptions = useSubscriptions(requestedTopics, props.imageScale, panelType);
+  const requestedTopics = useDeepMemo(props.topics);
+  const requestedTopicsSet = useMemo(
+    () => new Set(requestedTopics.map((req) => (typeof req === "object" ? req.topic : req))),
+    [requestedTopics]
+  );
+  const subscriptions = useSubscriptions(requestedTopics, panelType);
   const setSubscriptions = useMessagePipeline(useCallback(({ setSubscriptions }) => setSubscriptions, []));
   useEffect(() => setSubscriptions(id, subscriptions), [id, setSubscriptions, subscriptions]);
   useCleanup(() => setSubscriptions(id, []));
@@ -187,7 +158,7 @@ export function useMessages<T>(props: Props<T>): {| reducedValue: T, _clearedRef
   );
 
   const clearedRef = useRef(false);
-  const reducedValue = useReducedValue<T>(props.restore, addMessage, lastSeekTime, messages, clearedRef);
+  const reducedValue = useReducedValue<T>(props.restore, props.addMessage, lastSeekTime, messages, clearedRef);
   return { reducedValue, _clearedRef: clearedRef };
 }
 

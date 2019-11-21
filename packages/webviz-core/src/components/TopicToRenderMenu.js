@@ -13,10 +13,11 @@ import styled from "styled-components";
 
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
+import styles from "webviz-core/src/components/PanelToolbar/index.module.scss";
 import type { Topic } from "webviz-core/src/players/types";
 import { colors } from "webviz-core/src/util/colors";
 
-type TopicGroup = {
+export type TopicGroup = {
   suffix: string,
   datatype: string,
 };
@@ -86,16 +87,30 @@ export default function TopicToRenderMenu({
   }
   // Keeps only the first occurrence of each topic.
   const renderTopics: string[] = uniq([defaultTopicToRender, ...availableTopics, topicToRender]);
+  const parentTopicSpan = (topic: string, available: boolean) => {
+    const topicDiv = topic ? topic : <span style={{ fontStyle: "italic" }}>Default</span>;
+    return (
+      <span>
+        {topicDiv}
+        {available ? "" : " (not available)"}
+      </span>
+    );
+  };
 
   return (
     <Dropdown
       toggleComponent={
         <Icon
           fade
-          tooltip={"Topic"}
+          tooltip={
+            topicsGroups
+              ? `Parent topics selected by topic suffixes:\n ${topicsGroups.map((group) => group.suffix).join("\n")}`
+              : `Topics selected by datatype: ${singleTopicDatatype || ""}` // add || "" is to fix flow here
+          }
+          tooltipProps={{ placement: "top" }}
           style={{ color: topicToRender === defaultTopicToRender ? colors.LIGHT1 : colors.ORANGE }}
           dataTest={"topic-set"}>
-          <DatabaseIcon />
+          <DatabaseIcon className={styles.icon} />
         </Icon>
       }>
       {renderTopics.map((topic, idx) => (
@@ -105,7 +120,7 @@ export default function TopicToRenderMenu({
           onClick={() => {
             onChange(topic);
           }}>
-          <SSpan>{availableTopics.includes(topic) ? topic : `${topic} (not available)`}</SSpan>
+          <SSpan>{parentTopicSpan(topic, availableTopics.includes(topic))}</SSpan>
           {topicToRender === topic ? (
             <SIconSpan>
               <CheckIcon />

@@ -164,7 +164,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
           // Regl automatically tries to reconnect when losing the canvas 3d context.
           // We should log this error, but it's not important to throw it.
           if (error.message === "(regl) context lost") {
-            console.error(error);
+            console.warn(error);
           } else {
             throw error;
           }

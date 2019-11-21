@@ -24,7 +24,7 @@ module.exports = {
     "<rootDir>/jest/configureEnzyme.js",
     "jest-canvas-mock",
   ],
-  setupTestFrameworkScriptFile: "<rootDir>/jest/setupTestFramework.js",
+  setupTestFrameworkScriptFile: "<rootDir>/packages/webviz-core/src/test/setupTestFramework.js",
   moduleNameMapper: {
     "worker-loader!./PngWorker.js": "<rootDir>/packages/webviz-core/src/test/MockWorker.js",
     "worker-loader!.*/UserNodePlayer/.+Worker":

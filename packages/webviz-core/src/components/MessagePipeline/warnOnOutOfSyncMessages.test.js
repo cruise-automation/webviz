@@ -9,8 +9,6 @@
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
 import reportError from "webviz-core/src/util/reportError";
 
-jest.mock("webviz-core/src/util/reportError");
-
 describe("MessagePipeline/warnOnOutOfSyncMessages", () => {
   it("calls report error when messages are out of order", () => {
     warnOnOutOfSyncMessages({
@@ -53,6 +51,6 @@ describe("MessagePipeline/warnOnOutOfSyncMessages", () => {
         ],
       },
     });
-    expect(reportError).toHaveBeenCalled();
+    reportError.expectCalledDuringTest();
   });
 });

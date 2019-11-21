@@ -13,6 +13,7 @@ import shallowequal from "shallowequal";
 
 import type { Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
 
 export const getTopicNames = createSelector<*, *, *, _>(
   (topics: Topic[]) => topics,
@@ -24,6 +25,11 @@ export const getSanitizedTopics = microMemoize(
     return intersection(Array.from(subscribedTopics), providerTopics.map(({ name }) => name));
   }
 );
+
+export function getTopicPrefixes(topics: string[]): string[] {
+  // only support one prefix now, can add more such as `/webviz_bag_3` later
+  return topics.some((topic) => topic.startsWith(SECOND_BAG_PREFIX)) ? [SECOND_BAG_PREFIX] : [];
+}
 
 export const topicsByTopicName = createSelector<*, *, *, _>(
   (topics: Topic[]) => topics,

@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import * as Sentry from "@sentry/browser";
 import cx from "classnames";
 import React, { Component } from "react";
 
@@ -14,7 +15,6 @@ import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
 import Modal from "webviz-core/src/components/Modal";
 import clipboard from "webviz-core/src/util/clipboard";
-import sentry from "webviz-core/src/util/sentry";
 
 type Props = {
   onRequestClose: () => void,
@@ -35,7 +35,7 @@ function encode(value: any): string {
   try {
     return JSON.stringify(value, null, 2);
   } catch (e) {
-    sentry.captureException(e, { extra: value });
+    Sentry.captureException(e, { extra: value });
     console.error("Error encoding value", e);
     return "";
   }

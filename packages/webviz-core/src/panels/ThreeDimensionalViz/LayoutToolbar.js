@@ -7,9 +7,10 @@
 //  You may not use this file except in compliance with the License.
 
 import cx from "classnames";
-import * as React from "react";
+import React, { useMemo } from "react";
 import { PolygonBuilder, type MouseEventObject, type Polygon } from "regl-worldview";
 
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import Crosshair from "webviz-core/src/panels/ThreeDimensionalViz/Crosshair";
 import DrawingTools, {
   CAMERA_TAB_TYPE,
@@ -68,6 +69,17 @@ function LayoutToolbar({
   showCrosshair,
   transforms,
 }: Props) {
+  const additionalToolbarItemsElem = useMemo(
+    () => {
+      const AdditionalToolbarItems = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.AdditionalToolbarItems;
+      return (
+        <div className={cx(styles.buttons, styles.cartographer)}>
+          <AdditionalToolbarItems transforms={transforms} />
+        </div>
+      );
+    },
+    [transforms]
+  );
   return (
     <>
       <MeasuringTool
@@ -115,6 +127,7 @@ function LayoutToolbar({
           onSetDrawingTabType={onSetDrawingTabType}
           showCrosshair={!!showCrosshair}
         />
+        {additionalToolbarItemsElem}
       </div>
       {!cameraState.perspective && showCrosshair && <Crosshair cameraState={cameraState} />}
       <MeasureMarker measurePoints={measureInfo.measurePoints} />

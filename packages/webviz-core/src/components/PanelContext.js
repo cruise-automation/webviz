@@ -15,7 +15,6 @@ export type PanelContextType<T> = {|
   type: string,
   id: string,
   title: string,
-  topicPrefix?: string,
 
   // TODO(PanelAPI): move to usePanelConfig()
   config: PanelConfig,

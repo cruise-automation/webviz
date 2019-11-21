@@ -20,6 +20,7 @@ import {
   useContextSelector,
   type SelectableContext,
   useReducedValue,
+  useDeepMemo,
 } from "./hooks";
 
 describe("useChangeDetector", () => {
@@ -109,6 +110,30 @@ describe("useShallowMemo", () => {
     rerender(obj);
     expect(result.current).toBe(obj);
     rerender(["abc", { x: 1 }]);
+    expect(result.current).not.toBe(obj);
+  });
+});
+
+describe("useDeepMemo", () => {
+  it("returns original object when deep equal", () => {
+    let obj = { x: 1 };
+    const { result, rerender } = renderHook((val) => useDeepMemo(val), { initialProps: obj });
+    expect(result.current).toBe(obj);
+    rerender({ x: 1 });
+    expect(result.current).toBe(obj);
+
+    obj = ["abc", 123];
+    rerender(obj);
+    expect(result.current).toBe(obj);
+    rerender(["abc", 123]);
+    expect(result.current).toBe(obj);
+
+    obj = ["abc", { x: 1 }];
+    rerender(obj);
+    expect(result.current).toBe(obj);
+    rerender(["abc", { x: 1 }]);
+    expect(result.current).toBe(obj);
+    rerender(["abc", { x: 2 }]);
     expect(result.current).not.toBe(obj);
   });
 });

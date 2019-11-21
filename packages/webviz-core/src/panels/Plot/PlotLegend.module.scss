@@ -15,7 +15,7 @@ $legend-item-height: 20px;
   $legend-root-left: 65px;
   position: absolute;
   left: $legend-root-left;
-  top: 10px;
+  top: 25px;
   background: $legend-highlight-color;
   color: #eee;
   max-width: calc(100% - #{$legend-root-left});
@@ -83,20 +83,40 @@ $legend-item-height: 20px;
   top: calc(50% - 1px);
 }
 
+.legendToggle {
+  visibility: hidden;
+  padding: 6px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: -30px;
+  height: 25px;
+  border-radius: 5px;
+  user-select: none;
+  background: $legend-highlight-color-bright;
+
+  &:hover {
+    background: $legend-highlight-color-bright;
+  }
+
+  :global(.mosaic-window):hover & {
+    visibility: initial;
+  }
+}
+
 .itemRemove {
   visibility: hidden;
   padding: 0 6px;
   cursor: pointer;
   position: absolute;
-  top: 0px;
-  left: -21px;
+  right: -21px;
+  background: transparent;
   height: $legend-item-height;
   line-height: $legend-item-height;
   user-select: none;
-  background: $legend-highlight-color-bright;
 
   &:hover {
-    background: $legend-highlight-color-brighter;
+    background: $legend-highlight-color-bright;
   }
 
   .item:hover & {
@@ -106,6 +126,7 @@ $legend-item-height: 20px;
 
 .itemInput {
   overflow: hidden;
+  width: 100%;
 }
 
 // <input> is several levels deeper, and there's not too much chance

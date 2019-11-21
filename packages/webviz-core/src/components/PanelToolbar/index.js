@@ -80,7 +80,7 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
 
     const config = store.getState().panels.savedProps[id];
     const newId = getPanelIdForType(type);
-    this.props.savePanelConfig({ id: newId, config });
+    this.props.savePanelConfig({ id: newId, config, defaultConfig: {} });
 
     const path = mosaicWindowActions.getPath();
     const root = mosaicActions.getRoot();
@@ -101,7 +101,7 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
       <ShareJsonModal
         onRequestClose={() => modal.remove()}
         value={panelConfigById[id] || {}}
-        onChange={(config) => this.props.savePanelConfig({ id, config, override: true })}
+        onChange={(config) => this.props.savePanelConfig({ id, config, override: true, defaultConfig: {} })}
         noun="panel configuration"
       />
     );

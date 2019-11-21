@@ -25,6 +25,7 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import DiagnosticsHistory from "webviz-core/src/panels/diagnostics/DiagnosticsHistory";
+import type { Topic } from "webviz-core/src/players/types";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import { DIAGNOSTIC_TOPIC } from "webviz-core/src/util/globalConstants";
 import toggle from "webviz-core/src/util/toggle";
@@ -74,6 +75,7 @@ type Props = {
   config: Config,
   saveConfig: ($Shape<Config>) => void,
   openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
+  topics: Topic[],
 };
 
 const getSortedNodes = (nodes: DiagnosticInfo[], pinnedIds: DiagnosticId[]): DiagnosticInfo[] => {
@@ -147,10 +149,13 @@ class DiagnosticSummary extends React.Component<Props> {
   };
 
   render() {
-    const { topicToRender } = this.props.config;
+    const {
+      config: { topicToRender },
+      topics,
+    } = this.props;
     return (
       <DiagnosticsHistory topic={topicToRender}>
-        {({ buffer, allTopics }) => {
+        {(buffer) => {
           let dataComponent;
           if (buffer.diagnosticsById.size === 0) {
             dataComponent = (
@@ -177,7 +182,7 @@ class DiagnosticSummary extends React.Component<Props> {
 
           return (
             <Flex col className={styles.panel}>
-              <PanelToolbar helpContent={helpContent} additionalIcons={this.renderTopicToRenderMenu(allTopics)}>
+              <PanelToolbar helpContent={helpContent} additionalIcons={this.renderTopicToRenderMenu(topics)}>
                 {this.renderHardwareFilter()}
               </PanelToolbar>
               <Flex col scroll scrollX>

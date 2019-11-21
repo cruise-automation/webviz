@@ -9,6 +9,23 @@ import tinycolor from "tinycolor2";
 
 import type { OccupancyGridMessage } from "webviz-core/src/types/Messages";
 
+export const COLORS = {
+  BLACK: tinycolor("black"),
+  RED: tinycolor("red"),
+  PINK: tinycolor("pink"),
+  LIME: tinycolor("lime"),
+  CYAN: tinycolor("cyan"),
+  WHITE: tinycolor("white"),
+  AQUA: tinycolor("aqua"),
+  BLUE: tinycolor("blue"),
+  ORANGE: tinycolor("orange"),
+  MAGENTA: tinycolor("magenta"),
+  YELLOW: tinycolor("yellow"),
+  GRAY: tinycolor("darkgray"), // gray and darkgray are named reversed for some reason
+  DARKGRAY: tinycolor("gray"), // gray and darkgray are named reversed for some reason
+  PURPLE: tinycolor("purple"),
+};
+
 export function setRgba(buffer: Uint8Array, index: number, color: tinycolor) {
   const rgba255 = color.toRgb();
   rgba255.a *= 255;
@@ -35,14 +52,22 @@ export const defaultMapPalette = (() => {
   }
 
   // illegal negative (char) values
-  for (let i = 128; i <= 254; i++) {
+  for (let i = 128; i <= 248; i++) {
     const idx = i * 4;
     const t = (i - 128) / (254 - 128);
     setRgba(buff, idx, tinycolor.fromRatio({ r: t, g: 0.2, b: 0.6, a: Math.max(1 - t, 0.2) }));
   }
 
-  // legal -1 value
-  setRgba(buff, 255 * 4, tinycolor("#99d6b1").setAlpha(0.25));
+  // legal negative values
+  setRgba(buff, 255 * 4, COLORS.GRAY.setAlpha(0.5)); // -1 UNKNOWN
+  setRgba(buff, 254 * 4, COLORS.ORANGE.setAlpha(0.5)); // -2 UNDRIVEABLE
+  setRgba(buff, 253 * 4, COLORS.CYAN.setAlpha(0.5)); // -3 SIDEWALK
+  setRgba(buff, 252 * 4, COLORS.YELLOW.setAlpha(0.5)); // -4 UNOBSERVED
+  setRgba(buff, 101 * 4, COLORS.PURPLE.setAlpha(0.5)); // 101 UNOCCUPIED_NULL
+  setRgba(buff, 110 * 4, COLORS.PINK.setAlpha(0.5)); // 110 TRACKED_UNKNOWN_TO_UNOCCUPIED
+  setRgba(buff, 111 * 4, COLORS.LIME.setAlpha(0.5)); // 111 TRACKED_OCCUPIED_TO_UNOCCUPIED
+  setRgba(buff, 112 * 4, COLORS.AQUA.setAlpha(0.5)); // 112 TRACKED_OCCUPIED_TO_UNKNOWN
+
   return buff;
 })();
 

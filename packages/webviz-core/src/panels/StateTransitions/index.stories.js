@@ -33,21 +33,22 @@ const systemStateMessages = [
   { header: { stamp: { sec: 1526191541, nsec: 182717960 } }, state: 3 },
   { header: { stamp: { sec: 1526191541, nsec: 286998440 } }, state: 3 },
   { header: { stamp: { sec: 1526191541, nsec: 370689856 } }, state: 3 },
-  { header: { stamp: { sec: 1526191541, nsec: 483672422 } }, state: 3 },
-  { header: { stamp: { sec: 1526191541, nsec: 578787057 } }, state: 3 },
-  { header: { stamp: { sec: 1526191541, nsec: 677515597 } }, state: 3 },
-  { header: { stamp: { sec: 1526191541, nsec: 789110904 } }, state: 3 },
+  { header: { stamp: { sec: 1526191541, nsec: 483672422 } }, state: -1 },
+  { header: { stamp: { sec: 1526191541, nsec: 578787057 } }, state: -1 },
+  { header: { stamp: { sec: 1526191541, nsec: 677515597 } }, state: -1 },
+  { header: { stamp: { sec: 1526191541, nsec: 789110904 } }, state: -1 },
 ];
 
 const fixture = {
   datatypes: {
     "msgs/SystemState": [
       { type: "std_msgs/Header", name: "header", isArray: false },
-      { type: "uint8", name: "ERROR", isConstant: true, value: 0 },
-      { type: "uint8", name: "OFF", isConstant: true, value: 1 },
-      { type: "uint8", name: "BOOTING", isConstant: true, value: 2 },
-      { type: "uint8", name: "ACTIVE", isConstant: true, value: 3 },
-      { type: "uint8", name: "state", isArray: false },
+      { type: "int8", name: "UNKNOWN", isConstant: true, value: -1 },
+      { type: "int8", name: "ERROR", isConstant: true, value: 0 },
+      { type: "int8", name: "OFF", isConstant: true, value: 1 },
+      { type: "int8", name: "BOOTING", isConstant: true, value: 2 },
+      { type: "int8", name: "ACTIVE", isConstant: true, value: 3 },
+      { type: "int8", name: "state", isArray: false },
     ],
     "std_msgs/Header": [
       { name: "seq", type: "uint32", isArray: false },

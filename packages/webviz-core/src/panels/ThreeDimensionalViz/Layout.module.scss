@@ -19,15 +19,6 @@ $spacing: 15px;
   right: 0;
 }
 
-.topicsContainer {
-  position: absolute;
-  top: $spacing;
-  left: $spacing;
-  bottom: $spacing;
-  z-index: 102;
-  max-width: 60%;
-}
-
 .topicSettingsEditor {
   @extend %floating-box;
   background-color: $panel-background;
@@ -37,14 +28,6 @@ $spacing: 15px;
   .closeIcon {
     @extend %floating-box-close-icon;
   }
-}
-
-.topics {
-  @extend %floating-box;
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 
 .toolbar {
@@ -97,34 +80,6 @@ $spacing: 15px;
   }
 }
 
-.filterRow {
-  height: 36px;
-  flex-shrink: 0;
-  border-bottom: 1px solid $divider;
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.errorsBadge {
-  $size: 10px;
-  position: absolute;
-  z-index: 9999;
-  top: -$size/3;
-  right: -$size/3;
-  width: $size;
-  height: $size;
-  border-radius: $size;
-  background-color: $red;
-}
-
-.errors {
-  color: $red;
-  padding: 8px;
-  line-height: 1.2;
-  li {
-    margin-left: 1em;
-  }
-}
-
 .cameraWarning {
   margin-top: 0.5em;
   font-size: 0.9em;
@@ -135,4 +90,13 @@ $spacing: 15px;
   // https://stackoverflow.com/a/25045641/23649
   width: 0;
   min-width: 100%;
+}
+
+.cartographer {
+  padding: 0px;
+  button {
+    width: 31px !important;
+    height: 36px !important;
+    margin: 0px;
+  }
 }

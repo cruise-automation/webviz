@@ -17,29 +17,40 @@ import { colors } from "webviz-core/src/util/colors";
 export const SCheckbox = styled.div`
   display: flex;
   align-items: center;
-  flex-direction: ${(props) => (props.isVertical ? "column" : "row")};
-  align-items: ${(props) => (props.isVertical ? "flex-start" : "center")};
+  flex-direction: ${(props) => (props.labelDirection === "top" ? "column" : "row")};
+  align-items: ${(props) => (props.labelDirection === "top" ? "flex-start" : "center")};
   color: ${(props) => (props.disabled ? colors.GRAY : colors.LIGHT1)};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 `;
 
 export const SLabel = styled.label`
-  margin: 6px;
-  margin: ${(props) => (props.isVertical ? "6px 6px 6px 0" : "6px")};
-  color: ${(props) => (props.disabled || props.isVertical ? colors.GRAY : colors.LIGHT1)};
+  margin: ${(props) => (props.labelDirection === "top" ? "6px 6px 6px 0" : "6px")};
+  color: ${(props) => (props.disabled || props.labelDirection === "top" ? colors.GRAY : colors.LIGHT1)};
 `;
 
 export type Props = {
   checked: boolean,
   disabled?: boolean,
   label: string,
+  labelStyle?: { [string]: string | number },
+  labelDirection?: "top" | "left" | "right",
   tooltip?: string,
   onChange: (newChecked: boolean) => void,
-  isVertical?: boolean,
   style?: { [string]: string | number },
+  dataTest?: string,
 };
 
-export default function Checkbox({ label, checked, tooltip, onChange, disabled, isVertical, style = {} }: Props) {
+export default function Checkbox({
+  label,
+  labelStyle,
+  labelDirection = "right",
+  checked,
+  tooltip,
+  onChange,
+  disabled,
+  style = {},
+  dataTest,
+}: Props) {
   const Component = checked ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
   const onClick = React.useCallback(
     () => {
@@ -50,17 +61,27 @@ export default function Checkbox({ label, checked, tooltip, onChange, disabled, 
     [checked, disabled, onChange]
   );
 
+  const styledLabel = (
+    <SLabel labelDirection={labelDirection} disabled={disabled} style={labelStyle}>
+      {label}
+    </SLabel>
+  );
+
+  if (labelDirection === "top") {
+    return (
+      <SCheckbox disabled={disabled} labelDirection={labelDirection} style={style}>
+        {styledLabel}
+      </SCheckbox>
+    );
+  }
+
   return (
-    <SCheckbox disabled={disabled} isVertical={isVertical} style={style}>
-      {isVertical && (
-        <SLabel isVertical={isVertical} disabled={disabled}>
-          {label}
-        </SLabel>
-      )}
-      <Icon small tooltip={tooltip} onClick={onClick}>
+    <SCheckbox disabled={disabled} labelDirection={labelDirection} style={style}>
+      {labelDirection === "left" && styledLabel}
+      <Icon small tooltip={tooltip} onClick={onClick} dataTest={dataTest}>
         <Component />
       </Icon>
-      {!isVertical && <SLabel disabled={disabled}>{label}</SLabel>}
+      {labelDirection === "right" && styledLabel}
     </SCheckbox>
   );
 }

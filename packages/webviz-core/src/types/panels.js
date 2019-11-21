@@ -27,6 +27,7 @@ export type SaveConfigPayload = {
   // if you set override to true, existing config will be completely overriden by new passed in config
   override?: boolean,
   config: PanelConfig,
+  defaultConfig: PanelConfig,
 };
 
 export type SaveFullConfigPayload = {

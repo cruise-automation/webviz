@@ -6,97 +6,21 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-//  Copyright (c) 2018-present, GM Cruise LLC
-//
-//  This source code is licensed under the Apache License, Version 2.0,
-//  found in the LICENSE file in the root directory of this source tree.
-//  You may not use this file except in compliance with the License.
-
 import { omit } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS, AUTOPLAY_START_DELAY_MS } from "./RandomAccessPlayer";
+import TestProvider from "./TestProvider";
 import delay from "webviz-core/shared/delay";
-import {
-  type ExtensionPoint,
-  type InitializationResult,
-  type DataProviderMessage,
-  type DataProvider,
-} from "webviz-core/src/dataProviders/types";
+import { type DataProviderMessage } from "webviz-core/src/dataProviders/types";
 import NoopMetricsCollector from "webviz-core/src/players/NoopMetricsCollector";
 import {
   type PlayerMetricsCollectorInterface,
-  type Topic,
   type PlayerState,
   PlayerCapabilities,
 } from "webviz-core/src/players/types";
-import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import reportError from "webviz-core/src/util/reportError";
 import signal from "webviz-core/src/util/signal";
-
-jest.mock("webviz-core/src/util/reportError");
-
-type GetMessages = (start: Time, end: Time, topics: string[]) => Promise<DataProviderMessage[]>;
-
-const start = { sec: 0, nsec: 0 };
-const end = { sec: 100, nsec: 0 };
-const datatypes: RosDatatypes = {
-  fooBar: [
-    {
-      name: "val",
-      type: "number",
-    },
-  ],
-  baz: [
-    {
-      name: "val",
-      type: "number",
-    },
-  ],
-};
-const topics: Topic[] = [
-  {
-    name: "/foo/bar",
-    datatype: "fooBar",
-  },
-  {
-    name: "/baz",
-    datatype: "baz",
-  },
-];
-class TestProvider implements DataProvider {
-  _start: Time;
-  _end: Time;
-  _topics: Topic[];
-  _datatypes: RosDatatypes;
-  extensionPoint: ExtensionPoint;
-  closed: boolean = false;
-
-  constructor() {
-    this._start = start;
-    this._end = end;
-    this._topics = topics;
-    this._datatypes = datatypes;
-  }
-
-  initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
-    this.extensionPoint = extensionPoint;
-    return Promise.resolve({
-      start: this._start,
-      end: this._end,
-      topics: this._topics,
-      datatypes: this._datatypes,
-    });
-  }
-
-  getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
-    throw new Error("not implemented");
-  };
-
-  close(): Promise<void> {
-    this.closed = true;
-    return Promise.resolve();
-  }
-}
 
 class MessageStore {
   _messages: PlayerState[] = [];
@@ -259,7 +183,7 @@ describe("RandomAccessPlayer", () => {
     };
 
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
-    const store = new MessageStore(6);
+    const store = new MessageStore(5);
     await source.setListener(store.add);
 
     source.setSubscriptions([{ topic: "/foo/bar" }]);
@@ -283,7 +207,6 @@ describe("RandomAccessPlayer", () => {
           message: { payload: "foo bar" },
         },
       ],
-      [],
     ]);
   });
 
@@ -303,8 +226,8 @@ describe("RandomAccessPlayer", () => {
           return Promise.resolve([]);
 
         case 2:
-          expect(start).toEqual({ sec: 0, nsec: 2 });
-          expect(end).toEqual({ sec: 0, nsec: 4000001 });
+          expect(start).toEqual({ sec: 0, nsec: 1 });
+          expect(end).toEqual({ sec: 0, nsec: 4000000 });
           expect(topics).toEqual(["/foo/bar"]);
           source.pausePlayback();
           return Promise.resolve([]);
@@ -314,7 +237,7 @@ describe("RandomAccessPlayer", () => {
       }
     };
 
-    const store = new MessageStore(5);
+    const store = new MessageStore(4);
     await source.setListener(store.add);
     source.setSubscriptions([{ topic: "/foo/bar" }]);
     source.startPlayback();
@@ -322,7 +245,7 @@ describe("RandomAccessPlayer", () => {
     // close the player to stop more reads
     source.close();
     const messagePayloads = messages.map((msg) => (msg.activeData || {}).messages || []);
-    expect(messagePayloads).toEqual([[], [], [], [], []]);
+    expect(messagePayloads).toEqual([[], [], [], []]);
   });
 
   it("pauses and does not emit messages after pause", async () => {
@@ -645,7 +568,7 @@ describe("RandomAccessPlayer", () => {
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] });
     source.setSubscriptions([{ topic: "/foo/bar" }]);
     let lastGetMessagesCall;
-    const getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+    const getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       return new Promise((resolve) => {
         lastGetMessagesCall = { start, end, topics, resolve };
       });
@@ -836,6 +759,9 @@ describe("RandomAccessPlayer", () => {
       expect.objectContaining({ showInitializing: true, activeData: undefined }),
       expect.objectContaining({ showInitializing: false, activeData: undefined }),
     ]);
+    expect(reportError).toHaveBeenCalledWith("Error initializing player", expect.any(Error), "app");
+    // $FlowFixMe
+    reportError.mockClear();
   });
 
   it("shows a spinner when a provider is reconnecting", (done) => {

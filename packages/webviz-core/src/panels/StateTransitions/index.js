@@ -31,6 +31,7 @@ import TimeBasedChart, { type TimeBasedChartTooltipData } from "webviz-core/src/
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
+import { positiveModulo } from "webviz-core/src/util";
 import { darkColor, lineColors } from "webviz-core/src/util/plotColors";
 import { subtractTimes, toSec } from "webviz-core/src/util/time";
 import { grey } from "webviz-core/src/util/toolsColorScheme";
@@ -276,7 +277,7 @@ class StateTransitions extends React.PureComponent<Props> {
                   }
 
                   const valueForColor = typeof value === "string" ? stringHash(value) : Math.round(Number(value));
-                  const color = baseColors[valueForColor % Object.values(baseColors).length];
+                  const color = baseColors[positiveModulo(valueForColor, Object.values(baseColors).length)];
                   dataItem.pointBackgroundColor.push(darkColor(color));
                   dataItem.colors.push(color);
                   dataItem.datalabels.display.push(previousValue === undefined || previousValue !== value);

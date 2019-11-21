@@ -16,9 +16,13 @@ import { find } from "lodash";
 import * as React from "react";
 import styled from "styled-components";
 
-import { type TopicTreeConfig } from "./topicTree";
+import { type TopicConfig } from "./topicTree";
 import filterMap from "webviz-core/src/filterMap";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import {
+  type TopicDisplayMode,
+  TOPIC_DISPLAY_MODES,
+} from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
 import type { Transform } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { Topic } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
@@ -30,11 +34,23 @@ type Props = {
   // list of all topics available in the current bag
   topics: Topic[],
   namespaces: Namespace[],
+  transforms: Array<Transform>,
   checkedNodes: string[],
   expandedNodes: string[],
   modifiedNamespaceTopics: string[],
   filterText?: ?string,
-  transforms: Array<Transform>,
+  editedTopics?: string[],
+  canEditDatatype?: ?(string) => boolean,
+  topicConfig: TopicConfig,
+  topicDisplayMode: TopicDisplayMode,
+};
+
+type UpdateTreeProps = {
+  topics: Topic[],
+  checkedNodes: string[],
+  expandedNodes: string[],
+  modifiedNamespaceTopics: string[],
+  filterText?: ?string,
   editedTopics?: string[],
   canEditDatatype?: ?(string) => boolean,
 };
@@ -49,11 +65,11 @@ const icons = {
   [POSE_STAMPED_DATATYPE]: <CarIcon />,
 };
 
-export class Selections {
-  topics: string[] = [];
-  namespaces: Namespace[] = [];
-  extensions: string[] = [];
-}
+type Selections = {|
+  topics: string[],
+  namespaces: Namespace[],
+  extensions: string[],
+|};
 
 // ids for namespace nodes are the topic name, namespace name
 // and an 'ns' string to make sure they don't collide in any way with topic names
@@ -93,6 +109,7 @@ const TooltipTable = styled.table`
 export class TopicTreeNode {
   id: string;
   text: string;
+  name: ?string;
   icon: ?React.Node;
   expanded: boolean;
   missing: boolean;
@@ -102,28 +119,26 @@ export class TopicTreeNode {
   hasCheckbox: boolean;
   disabled: boolean = false;
   children: TopicTreeNode[] = [];
-  filterMatch: boolean = false;
   canEdit: boolean = false;
   hasEdit: boolean = false;
-
   // whether this node or any descendants match the filter
   descendantFilterMatch: boolean = false;
-
+  // whether the node has been filtered out during search
+  filtered: boolean = false;
+  // all nodes are visible by default
+  // only in flat list mode, visible can be false if hiddenTopics contain the topic node
   visible: boolean = true;
-
   // true if this node or all descendent nodes are missing from
   // the available topics in a bag
   missing: boolean = false;
-
   topic: ?string;
   namespace: ?string;
   extension: ?string;
-
   // outdated ids under which the node might have been checked/expanded
   legacyIds: string[];
 
   // create a topic node from a json config file node
-  static fromJson(config: TopicTreeConfig, topics: Topic[]) {
+  static fromJson(config: TopicConfig, topics: Topic[]) {
     const result = new TopicTreeNode(config);
     // extension nodes start as enabled-by-default for now
     if (!config.extension) {
@@ -138,13 +153,20 @@ export class TopicTreeNode {
     return result;
   }
 
-  constructor(config: TopicTreeConfig, namespace: ?string) {
-    this.text = config.name || "";
-    this.icon = config.icon;
-    this.legacyIds = config.legacyIds || [];
-    this.hasCheckbox = !config.isSyntheticGroup;
-    this.description = config.description;
-    const { topic } = config;
+  constructor(
+    { isSyntheticGroup, name, icon, legacyIds, description, checked, topic, extension }: TopicConfig,
+    namespace: ?string
+  ) {
+    this.text = name || "";
+    this.icon = icon;
+    this.legacyIds = legacyIds || [];
+    this.description = description;
+    if (checked) {
+      this.checked = true;
+      this.hasCheckbox = true;
+    }
+    this.hasCheckbox = !isSyntheticGroup;
+
     if (topic) {
       if (namespace) {
         this.namespace = namespace;
@@ -153,13 +175,13 @@ export class TopicTreeNode {
         this.legacyIds.push(topic);
         this.id = `t:${topic}`;
       }
-      this.text = config.name || topic;
+      this.text = name || topic;
       this.topic = topic;
-    } else if (config.extension) {
-      this.id = `x:${config.extension}`;
-      this.extension = config.extension;
-    } else if (config.name) {
-      this.id = `name:${config.name}`;
+    } else if (extension) {
+      this.id = `x:${extension}`;
+      this.extension = extension;
+    } else if (name) {
+      this.id = `name:${name}`;
     } else {
       throw new Error("encountered TopicTree node with no topic, extension, or name");
     }
@@ -206,17 +228,26 @@ export class TopicTreeNode {
 
   // recursively update this node & its children based on the selected/expanded state
   // collects all node ids along the way to check for duplicates
-  _updateState(props: Props, disabled: boolean, ids: string[], ancestorFilterMatch: boolean): void {
+  updateState(props: UpdateTreeProps, disabled: boolean, ids: string[], ancestorFilterMatch: boolean): void {
+    const {
+      expandedNodes,
+      checkedNodes,
+      modifiedNamespaceTopics,
+      canEditDatatype,
+      editedTopics,
+      filterText,
+      topics,
+    } = props;
     // Wrapper to help handle nodes that were checked under an old-style id.
     const containsThisNode = (ids: string[]) => {
       return ids.includes(this.id) || this.legacyIds.some((id) => ids.includes(id));
     };
 
-    this.expanded = containsThisNode(props.expandedNodes);
-    this.checked = !this.hasCheckbox || containsThisNode(props.checkedNodes);
+    this.expanded = containsThisNode(expandedNodes);
+    this.checked = !this.hasCheckbox || containsThisNode(checkedNodes);
 
     // if a topic hasn't had its namespaces modified, check its namespaces by default
-    if (this.namespace && !props.modifiedNamespaceTopics.includes(this.topic)) {
+    if (this.namespace && !modifiedNamespaceTopics.includes(this.topic)) {
       this.checked = true;
     }
 
@@ -229,11 +260,11 @@ export class TopicTreeNode {
     const topicName = this.topic;
     if (topicName) {
       // topic nodes are disabled if they are not in the list of active topics
-      const matchingTopic = find(props.topics, { name: topicName });
+      const matchingTopic = find(topics, { name: topicName });
       this.missing = !matchingTopic;
       this.disabled = disabled || this.missing;
-      this.canEdit = !!matchingTopic && !!props.canEditDatatype && props.canEditDatatype(matchingTopic.datatype);
-      this.hasEdit = !!props.editedTopics && props.editedTopics.indexOf(topicName) > -1;
+      this.canEdit = !!matchingTopic && !!canEditDatatype && canEditDatatype(matchingTopic.datatype);
+      this.hasEdit = !!editedTopics && editedTopics.indexOf(topicName) > -1;
 
       if (matchingTopic) {
         this.tooltip.push(
@@ -271,17 +302,15 @@ export class TopicTreeNode {
       this.tooltip.push(<TooltipDescription>{this.description}</TooltipDescription>);
     }
 
-    const { filterText } = props;
-    this.filterMatch = filterText ? this.text.toLocaleLowerCase().includes(filterText.toLowerCase()) : false;
-    if (!this.filterMatch && this.topic) {
-      this.filterMatch = filterText ? this.topic.toLocaleLowerCase().includes(filterText.toLowerCase()) : false;
+    let filterMatch = filterText ? this.text.toLocaleLowerCase().includes(filterText.toLowerCase()) : false;
+    if (!filterMatch && this.topic) {
+      filterMatch = filterText ? this.topic.toLocaleLowerCase().includes(filterText.toLowerCase()) : false;
     }
 
     let missingChildrenCount = 0;
     const childDisabled = this.disabled || !this.checked;
     this.children.forEach((child) => {
-      // eslint-disable-next-line no-underscore-dangle
-      child._updateState(props, childDisabled, ids, ancestorFilterMatch || this.filterMatch);
+      child.updateState(props, childDisabled, ids, ancestorFilterMatch || filterMatch);
       if (child.missing) {
         missingChildrenCount++;
       }
@@ -295,15 +324,15 @@ export class TopicTreeNode {
     }
 
     if (filterText) {
-      this.descendantFilterMatch = this.filterMatch || this.children.some((child) => child.descendantFilterMatch);
+      this.descendantFilterMatch = filterMatch || this.children.some((child) => child.descendantFilterMatch);
       if (this.descendantFilterMatch || ancestorFilterMatch) {
-        this.visible = true;
+        this.filtered = false;
         this.expanded = true;
       } else {
-        this.visible = false;
+        this.filtered = true;
       }
     } else {
-      this.visible = true;
+      this.filtered = false;
     }
   }
 
@@ -331,7 +360,7 @@ export class TopicTreeNode {
   // walks the tree and gets the selected topics and namespaces
   // based on cascading checked/unchecked state of parents
   getSelections(): Selections {
-    const selections: Selections = new Selections();
+    const selections: Selections = { topics: [], namespaces: [], extensions: [] };
     this._collectSelections(selections);
     return selections;
   }
@@ -391,32 +420,31 @@ function createUngroupedNode(ungroupedNodes: TopicTreeNode[]): TopicTreeNode {
 
 // build tree - use either the json config supplied
 // or optionally a custom config used in testing
-export default function buildTree(
-  props: Props,
-  jsonConfig: any = getGlobalHooks()
-    .perPanelHooks()
-    .ThreeDimensionalViz.getDefaultTopicTree()
-): TopicTreeNode {
-  const { topics, transforms } = props;
-
-  const rootNode = TopicTreeNode.fromJson(jsonConfig, props.topics);
-
+export default function buildTree({
+  topics,
+  transforms,
+  namespaces,
+  topicDisplayMode,
+  topicConfig,
+  ...rest
+}: Props): TopicTreeNode {
+  const rootNode = TopicTreeNode.fromJson(topicConfig, topics);
   rootNode.disabled = false;
   rootNode.checked = true;
   const ungroupedNodes = [];
+  const showSelectedTopicsOnly = topicDisplayMode === TOPIC_DISPLAY_MODES.SHOW_SELECTED.value;
+  const showFlattenedTopics = topicDisplayMode !== TOPIC_DISPLAY_MODES.SHOW_TREE.value;
+
+  const { hasBlacklistTopics, icons: configIcons } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
 
   // apply the topics from the bag to the tree
   topics.forEach((topic: Topic) => {
-    if (
-      getGlobalHooks()
-        .perPanelHooks()
-        .ThreeDimensionalViz.hasBlacklistTopics(topic.name)
-    ) {
+    if (hasBlacklistTopics(topic.name)) {
       return;
     }
 
     const icon = {
-      ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.icons,
+      ...configIcons,
       ...icons,
     }[topic.datatype];
     if (!icon) {
@@ -432,18 +460,23 @@ export default function buildTree(
       node.icon = icon;
       ungroupedNodes.push(node);
     }
-    node.consumeNamespaces(props.namespaces);
+    node.consumeNamespaces(namespaces);
   });
 
   const tfRootNode = rootNode.find((node) => node.id === "name:TF");
   if (transforms.length > 0) {
     if (tfRootNode) {
+      const checkedNodesSet = new Set(rest.checkedNodes);
       transforms.forEach((transform) => {
-        let node = rootNode.find((node) => node.id === `x:TF.${transform.id}`);
-        if (node) {
-          node.disabled = false;
-        } else {
-          node = new TopicTreeNode({ name: transform.id, extension: `TF.${transform.id}`, disabled: false });
+        const nodeId = `x:TF.${transform.id}`;
+        const addChildTfNode =
+          !showFlattenedTopics || (showFlattenedTopics && (checkedNodesSet.has(nodeId) || !showSelectedTopicsOnly));
+        if (addChildTfNode) {
+          const node = new TopicTreeNode({
+            name: `TF / ${transform.id}`,
+            extension: `TF.${transform.id}`,
+            disabled: false,
+          });
           tfRootNode.add(node);
         }
       });
@@ -452,20 +485,21 @@ export default function buildTree(
     }
   }
 
-  const ids: string[] = [];
-
-  const ungroupedNode = createUngroupedNode(ungroupedNodes);
-
-  // sort the uncategorized nodes by topic name
-  ungroupedNode.children = ungroupedNode.children.sort(naturalSort("text"));
-
-  rootNode.add(ungroupedNode);
-
-  // now that we have built the tree, update the state
-  rootNode.children.forEach((child) => {
-    // eslint-disable-next-line no-underscore-dangle
-    child._updateState(props, false, ids, false);
-  });
-
+  // skip creating ungroupedNode when showing flattened topics since it's handled in getTopicConfig
+  if (!showFlattenedTopics) {
+    const ungroupedNode = createUngroupedNode(ungroupedNodes);
+    // sort the uncategorized nodes by topic name
+    ungroupedNode.children = ungroupedNode.children.sort(naturalSort("text"));
+    rootNode.add(ungroupedNode);
+  }
+  updateTree(rootNode, { topics, ...rest });
   return rootNode;
+}
+
+export function updateTree(tree: TopicTreeNode, props: UpdateTreeProps): TopicTreeNode {
+  const ids: string[] = [];
+  tree.children.forEach((child) => {
+    child.updateState(props, false, ids, false);
+  });
+  return tree;
 }

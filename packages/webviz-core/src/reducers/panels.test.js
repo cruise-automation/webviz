@@ -84,7 +84,7 @@ describe("state.panels", () => {
       expect(globalState.savedProps).toEqual(panels.savedProps);
     });
 
-    store.dispatch(savePanelConfig({ id: "foo", config: { testing: true } }));
+    store.dispatch(savePanelConfig({ id: "foo", config: { testing: true }, defaultConfig: { testing: false } }));
     store.checkState((panels) => {
       expect(panels.layout).toEqual("foo");
       expect(panels.savedProps).toEqual({ foo: { test: true, testing: true } });
@@ -201,7 +201,7 @@ describe("state.panels", () => {
   };
 
   testUrlCleanup("removes layout when config changes", () => {
-    return savePanelConfig({ id: "bar", config: { baz: true } });
+    return savePanelConfig({ id: "bar", config: { baz: true }, defaultConfig: {} });
   });
 
   testUrlCleanup("removes layout when layout changes", () => {
@@ -258,6 +258,7 @@ describe("state.panels", () => {
         id: "foo",
         silent: true,
         config: { bar: true },
+        defaultConfig: { bar: false },
       })
     );
     store.checkState((panels, routing) => {
@@ -309,9 +310,11 @@ describe("state.panels", () => {
         expect(panels.savedProps).toEqual({});
       });
 
-      const panelConfig = { id: "SecondPanel!2wydzut", config: { foo: "bar" } };
+      const panelConfig = { id: "SecondPanel!2wydzut", config: { foo: "bar" }, defaultConfig: { foo: "" } };
       store.dispatch(savePanelConfig(panelConfig));
-      store.dispatch(savePanelConfig({ id: "FirstPanel!34otwwt", config: { baz: true } }));
+      store.dispatch(
+        savePanelConfig({ id: "FirstPanel!34otwwt", config: { baz: true }, defaultConfig: { baz: false } })
+      );
       store.checkState((panels) => {
         expect(panels.savedProps).toEqual({
           "SecondPanel!2wydzut": { foo: "bar" },
@@ -337,7 +340,7 @@ describe("state.panels", () => {
       store.checkState((panels) => {
         expect(panels.savedProps).toEqual({});
       });
-      store.dispatch(savePanelConfig({ id: "foo!1234", config: { okay: true } }));
+      store.dispatch(savePanelConfig({ id: "foo!1234", config: { okay: true }, defaultConfig: { okay: false } }));
       store.checkState((panels) => {
         expect(panels.savedProps).toEqual({
           "foo!1234": { okay: true },

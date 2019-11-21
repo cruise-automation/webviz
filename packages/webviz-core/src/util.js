@@ -99,3 +99,10 @@ export function downloadFiles(files: { blob: Blob, fileName: string }[]) {
     });
   });
 }
+
+// Equivalent to `number % modulus`, but always returns a positive number (given that modulus is
+// a positive number). This is the same as the `%` in e.g. Python.
+// See https://stackoverflow.com/a/4467559 and https://en.wikipedia.org/wiki/Modulo_operation
+export function positiveModulo(number: number, modulus: number): number {
+  return ((number % modulus) + modulus) % modulus;
+}

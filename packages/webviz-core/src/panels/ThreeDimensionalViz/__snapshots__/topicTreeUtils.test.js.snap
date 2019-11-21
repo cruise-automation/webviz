@@ -1,0 +1,159 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getTopicConfig topicConfig show flat list topicDisplayMode.SHOW_AVAILABLE 1`] = `
+Object {
+  "newCheckedNodes": Array [
+    "name:Ext A",
+    "name:Deeply Nested Group",
+    "t:/topic_b",
+    "x:ExtA.a",
+    "x:ExtC.c",
+    "ns:/topic_c:some_namespace",
+    "ns:/webviz_bag_2/topic_c:some_namespace",
+    "ns:/ns_to_ignore_due_to_lacking_of_topic_checked:some_name",
+    "t:/topic_c",
+    "t:/webviz_bag_2/topic_c",
+    "name:Bag",
+    "name:Bag 2 /webviz_bag_2",
+  ],
+  "topicConfig": Object {
+    "children": Array [
+      Object {
+        "children": Array [
+          Object {
+            "extension": "ExtA.a",
+            "name": "Ext A",
+          },
+          Object {
+            "extension": "ExtB.b",
+            "name": "Ext A / Ext B",
+          },
+          Object {
+            "extension": "ExtC.c",
+            "name": "Ext A / Ext C",
+          },
+          Object {
+            "name": "Nested Group / Topic A",
+            "topic": "/topic_a",
+          },
+          Object {
+            "name": "Nested Group / Topic B",
+            "topic": "/topic_b",
+          },
+          Object {
+            "name": "Nested Group / Deeply Nested Group /topic_c",
+            "topic": "/topic_c",
+          },
+          Object {
+            "name": "/topic_not_in_json_tree",
+            "topic": "/topic_not_in_json_tree",
+          },
+          Object {
+            "children": Array [],
+            "description": "Visualize relationships between /tf frames.",
+            "name": "TF",
+          },
+        ],
+        "name": "Bag",
+      },
+      Object {
+        "children": Array [
+          Object {
+            "name": "Nested Group / Topic A",
+            "topic": "/webviz_bag_2/topic_a",
+          },
+          Object {
+            "name": "Nested Group / Topic B",
+            "topic": "/webviz_bag_2/topic_b",
+          },
+          Object {
+            "name": "Nested Group / Deeply Nested Group /topic_c",
+            "topic": "/webviz_bag_2/topic_c",
+          },
+          Object {
+            "name": "/topic_not_in_json_tree",
+            "topic": "/webviz_bag_2/topic_not_in_json_tree",
+          },
+        ],
+        "name": "Bag 2 /webviz_bag_2",
+      },
+    ],
+    "name": "root",
+  },
+}
+`;
+
+exports[`getTopicConfig topicConfig show flat list topicDisplayMode.showAll 1`] = `
+Object {
+  "children": Array [
+    Object {
+      "children": Array [
+        Object {
+          "extension": "ExtA.a",
+          "name": "Ext A",
+        },
+        Object {
+          "extension": "ExtB.b",
+          "name": "Ext A / Ext B",
+        },
+        Object {
+          "extension": "ExtC.c",
+          "name": "Ext A / Ext C",
+        },
+        Object {
+          "name": "Some Topic in JSON Tree",
+          "topic": "/topic_in_json_tree",
+        },
+        Object {
+          "name": "Nested Group / Topic A",
+          "topic": "/topic_a",
+        },
+        Object {
+          "name": "Nested Group / Topic B",
+          "topic": "/topic_b",
+        },
+        Object {
+          "name": "Nested Group / Deeply Nested Group /topic_c",
+          "topic": "/topic_c",
+        },
+        Object {
+          "name": "/topic_not_in_json_tree",
+          "topic": "/topic_not_in_json_tree",
+        },
+        Object {
+          "children": Array [],
+          "description": "Visualize relationships between /tf frames.",
+          "name": "TF",
+        },
+      ],
+      "name": "Bag",
+    },
+    Object {
+      "children": Array [
+        Object {
+          "name": "Some Topic in JSON Tree",
+          "topic": "/webviz_bag_2/topic_in_json_tree",
+        },
+        Object {
+          "name": "Nested Group / Topic A",
+          "topic": "/webviz_bag_2/topic_a",
+        },
+        Object {
+          "name": "Nested Group / Topic B",
+          "topic": "/webviz_bag_2/topic_b",
+        },
+        Object {
+          "name": "Nested Group / Deeply Nested Group /topic_c",
+          "topic": "/webviz_bag_2/topic_c",
+        },
+        Object {
+          "name": "/topic_not_in_json_tree",
+          "topic": "/webviz_bag_2/topic_not_in_json_tree",
+        },
+      ],
+      "name": "Bag 2 /webviz_bag_2",
+    },
+  ],
+  "name": "root",
+}
+`;

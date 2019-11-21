@@ -7,10 +7,11 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import { range } from "lodash";
+import { range, noop } from "lodash";
 import * as React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import CameraModel from "webviz-core/src/panels/ImageView/CameraModel";
 import ImageCanvas from "webviz-core/src/panels/ImageView/ImageCanvas";
 
@@ -190,10 +191,11 @@ const markers = [
 ];
 
 const topics = ["/camera_front_medium/image_rect_color_compressed", "/storybook_image"];
+const config = getGlobalHooks().perPanelHooks().ImageView.defaultConfig;
 
 function RGBStory({ encoding }: { encoding: string }) {
-  const width = 256;
-  const height = 200;
+  const width = 2560;
+  const height = 2000;
   const data = new Uint8Array(3 * height * width);
   let idx = 0;
   for (let row = 0; row < height; row++) {
@@ -217,13 +219,15 @@ function RGBStory({ encoding }: { encoding: string }) {
         message: { data, width, height, encoding },
       }}
       markerData={null}
+      config={config}
+      saveConfig={noop}
     />
   );
 }
 
 function BayerStory({ encoding }: { encoding: string }) {
-  const width = 256;
-  const height = 200;
+  const width = 2560;
+  const height = 2000;
   const data = new Uint8Array(height * width);
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
@@ -257,13 +261,15 @@ function BayerStory({ encoding }: { encoding: string }) {
         message: { data, width, height, encoding },
       }}
       markerData={null}
+      config={config}
+      saveConfig={noop}
     />
   );
 }
 
 function Mono16Story({ bigEndian }: { bigEndian: boolean }) {
-  const width = 200;
-  const height = 100;
+  const width = 2000;
+  const height = 1000;
   const data = new Uint8Array(width * height * 2);
   const view = new DataView(data.buffer);
   for (let r = 0; r < height; r++) {
@@ -283,6 +289,8 @@ function Mono16Story({ bigEndian }: { bigEndian: boolean }) {
         message: { data, width, height, encoding: "16UC1", is_bigendian: 0 },
       }}
       markerData={null}
+      config={config}
+      saveConfig={noop}
     />
   );
 }
@@ -301,6 +309,8 @@ storiesOf("<ImageCanvas>", module)
           originalWidth: null,
           originalHeight: null,
         }}
+        config={config}
+        saveConfig={noop}
       />
       <br />
       <h2>transformed markers</h2>
@@ -313,6 +323,8 @@ storiesOf("<ImageCanvas>", module)
           originalWidth: null,
           originalHeight: null,
         }}
+        config={config}
+        saveConfig={noop}
       />
       <h2>markers with different original image size</h2>
       <ImageCanvas
@@ -324,6 +336,8 @@ storiesOf("<ImageCanvas>", module)
           originalWidth: 200,
           originalHeight: 150,
         }}
+        config={config}
+        saveConfig={noop}
       />
     </div>
   ))
@@ -339,6 +353,8 @@ storiesOf("<ImageCanvas>", module)
           message: { data: new Uint8Array([]), width: 100, height: 50, encoding: "Foo" },
         }}
         markerData={null}
+        config={config}
+        saveConfig={noop}
       />
     );
   })

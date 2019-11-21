@@ -289,7 +289,7 @@ export const extractDatatypes = (nodeData: NodeData): NodeData => {
         ...nodeData.diagnostics,
         {
           severity: DiagnosticSeverity.Error,
-          message: "Unkown error encountered. This is likely a problem with Node Playground itself.",
+          message: "Unknown error encountered. This is likely a problem with Node Playground itself.",
           source: Sources.DatatypeExtraction,
           code: ErrorCodes.DatatypeExtraction.UNKNOWN_ERROR,
         },

@@ -48,7 +48,7 @@ class PanelLayout extends PureComponent<Props> {
     const type = config ? config.type || defaultPanelType : defaultPanelType;
     const id = getPanelIdForType(type);
     if (config.panelConfig) {
-      this.props.savePanelConfig({ id, config: config.panelConfig });
+      this.props.savePanelConfig({ id, config: config.panelConfig, defaultConfig: {} });
     }
     return id;
   };

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { PureComponent } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { hot } from "react-hot-loader/root";
 
 import helpContent from "./index.help.md";
@@ -33,12 +33,14 @@ export const plotableRosTypes = [
   "float64",
   "time",
   "duration",
+  "string",
 ];
 
 export type PlotConfig = {
   paths: PlotPath[],
   minYValue: string,
   maxYValue: string,
+  showLegend: boolean,
 };
 
 type Props = {
@@ -46,79 +48,70 @@ type Props = {
   saveConfig: ($Shape<PlotConfig>) => void,
 };
 
-type State = {
-  currentMinY: ?number,
-  currentMaxY: ?number,
-};
+function Plot(props: Props) {
+  const { saveConfig, config } = props;
+  const { paths, minYValue, maxYValue, showLegend } = config;
+  const [currentMinY, setCurrentMinY] = useState(null);
+  const [currentMaxY, setCurrentMaxY] = useState(null);
 
-class Plot extends PureComponent<Props, State> {
-  static panelType = "Plot";
-  static defaultConfig = { paths: [], minYValue: "", maxYValue: "" };
+  const saveCurrentYs = useCallback((minY: number, maxY: number) => {
+    setCurrentMinY(maxY);
+    setCurrentMaxY(maxY);
+  }, []);
 
-  state = {
-    currentMinY: null,
-    currentMaxY: null,
-  };
+  const setMinMax = useCallback(
+    () =>
+      saveConfig({
+        minYValue: currentMinY ? currentMinY.toString() : "",
+        maxYValue: currentMaxY ? currentMaxY.toString() : "",
+      }),
+    [currentMaxY, currentMinY, saveConfig]
+  );
 
-  saveCurrentYs = (minY: number, maxY: number) => {
-    this.setState({
-      currentMinY: minY,
-      currentMaxY: maxY,
-    });
-  };
-
-  setMinMax = () => {
-    const { currentMinY, currentMaxY } = this.state;
-    this.props.saveConfig({
-      minYValue: currentMinY ? currentMinY.toString() : "",
-      maxYValue: currentMaxY ? currentMaxY.toString() : "",
-    });
-  };
-
-  render() {
-    const { minYValue, maxYValue } = this.props.config;
-    let { paths } = this.props.config;
+  useEffect(() => {
     if (!paths.length) {
-      paths = [{ value: "", enabled: true, timestampMethod: "receiveTime" }];
+      saveConfig({ paths: [{ value: "", enabled: true, timestampMethod: "receiveTime" }] });
     }
+  });
 
-    return (
-      <Flex col clip center style={{ position: "relative" }}>
-        {/* Don't filter out disabled paths when passing into <MessageHistory>, because we still want
+  return (
+    <Flex col clip center style={{ position: "relative" }}>
+      {/* Don't filter out disabled paths when passing into <MessageHistory>, because we still want
           easy access to the history when turning the disabled paths back on. */}
-        <MessageHistory paths={paths.map((path) => path.value)}>
-          {({ itemsByPath, startTime }: MessageHistoryData) => {
-            const datasets = getDatasets(paths, itemsByPath, startTime);
-            return (
-              <>
-                <PanelToolbar
-                  helpContent={helpContent}
-                  floating
-                  menuContent={
-                    <PlotMenu
-                      minYValue={minYValue}
-                      maxYValue={maxYValue}
-                      saveConfig={this.props.saveConfig}
-                      setMinMax={this.setMinMax}
-                      datasets={datasets}
-                    />
-                  }
-                />
-                <PlotChart
-                  paths={paths}
-                  minYValue={parseFloat(minYValue)}
-                  maxYValue={parseFloat(maxYValue)}
-                  saveCurrentYs={this.saveCurrentYs}
-                  datasets={datasets}
-                />
-              </>
-            );
-          }}
-        </MessageHistory>
-        <PlotLegend paths={paths} onChange={this.props.saveConfig} />
-      </Flex>
-    );
-  }
+      <MessageHistory paths={paths.map((path) => path.value)}>
+        {({ itemsByPath, startTime }: MessageHistoryData) => {
+          const datasets = getDatasets(paths, itemsByPath, startTime);
+          return (
+            <>
+              <PanelToolbar
+                helpContent={helpContent}
+                floating
+                menuContent={
+                  <PlotMenu
+                    minYValue={minYValue}
+                    maxYValue={maxYValue}
+                    saveConfig={saveConfig}
+                    setMinMax={setMinMax}
+                    datasets={datasets}
+                  />
+                }
+              />
+              <PlotChart
+                paths={paths}
+                minYValue={parseFloat(minYValue)}
+                maxYValue={parseFloat(maxYValue)}
+                saveCurrentYs={saveCurrentYs}
+                datasets={datasets}
+              />
+            </>
+          );
+        }}
+      </MessageHistory>
+      <PlotLegend paths={paths} saveConfig={saveConfig} showLegend={showLegend} />
+    </Flex>
+  );
 }
+Plot.panelType = "Plot";
+Plot.defaultConfig = { paths: [], minYValue: "", maxYValue: "", showLegend: true };
 
 export default hot(Panel<PlotConfig>(Plot));

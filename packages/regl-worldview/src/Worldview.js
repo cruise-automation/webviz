@@ -158,7 +158,17 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     if (!this._tick) {
       this._tick = requestAnimationFrame(() => {
         this._tick = undefined;
-        worldviewContext.paint();
+        try {
+          worldviewContext.paint();
+        } catch (error) {
+          // Regl automatically tries to reconnect when losing the canvas 3d context.
+          // We should log this error, but it's not important to throw it.
+          if (error.message === "(regl) context lost") {
+            console.warn(error);
+          } else {
+            throw error;
+          }
+        }
       });
     }
   }

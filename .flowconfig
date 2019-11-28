@@ -12,6 +12,7 @@ dist
 emoji=true
 esproposal.class_static_fields=enable
 esproposal.class_instance_fields=enable
+esproposal.optional_chaining=enable
 # Cheap workaround to make flow typechecking work across packages in the monorepo
 module.system.node.resolve_dirname=node_modules
 module.system.node.resolve_dirname=./packages

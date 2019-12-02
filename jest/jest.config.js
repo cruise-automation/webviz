@@ -11,8 +11,7 @@ module.exports = {
   testMatch: ["**/*.test.js"],
   testURL: "http://localhost",
   transform: {
-    "^.+\\.(js|jsx)$": "<rootDir>/jest/jsTransform.js",
-    "^.+\\.css$": "<rootDir>/jest/cssTransform.js",
+    "^.+\\.(js|jsx)$": "babel-jest",
     "^.+\\.ne$": "<rootDir>/jest/neTransform.js",
     "^(?!.*\\.(js|jsx|css|json)$)": "<rootDir>/jest/fileTransform.js",
   },
@@ -31,5 +30,6 @@ module.exports = {
       "<rootDir>/packages/webviz-core/src/players/UserNodePlayer/worker.mock.js",
     "\\.svg$": "<rootDir>/packages/webviz-core/src/test/MockSvg.js",
     "react-monaco-editor": "<rootDir>/packages/webviz-core/src/test/stubs/MonacoEditor.js",
+    "\\.css$": "<rootDir>/jest/styleMock.js",
   },
 };

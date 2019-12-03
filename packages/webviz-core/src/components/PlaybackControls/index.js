@@ -13,23 +13,20 @@ import PlayIcon from "@mdi/svg/svg/play.svg";
 import classnames from "classnames";
 import React, { useCallback } from "react";
 import KeyListener from "react-key-listener";
-import { useSelector, useDispatch } from "react-redux";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 
 import styles from "./index.module.scss";
 import { ProgressPlot } from "./ProgressPlot";
-import { setPlaybackConfig as setPlaybackConfigAction } from "webviz-core/src/actions/panels";
-import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import { MessagePipelineConsumer } from "webviz-core/src/components/MessagePipeline";
+import PlaybackSpeedControls from "webviz-core/src/components/PlaybackSpeedControls";
 import Slider from "webviz-core/src/components/Slider";
 import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
-import { type PlayerState, PlayerCapabilities } from "webviz-core/src/players/types";
+import { type PlayerState } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import { times } from "webviz-core/src/util/entities";
 import { formatTime, formatTimeRaw, subtractTimes, toSec, fromSec } from "webviz-core/src/util/time";
 
 const StyledFullWidthBar = styled.div`
@@ -53,11 +50,9 @@ const StyledMarker = styled.div.attrs({
 `;
 
 type Props = {|
-  playbackSpeed: number,
   player: PlayerState,
   pause: () => void,
   play: () => void,
-  setSpeed: (number) => void,
   seek: (Time) => void,
 |};
 
@@ -128,8 +123,8 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
   };
 
   render() {
-    const { pause, play, setSpeed, player } = this.props;
-    const { activeData, showInitializing, progress, capabilities } = player;
+    const { pause, play, player } = this.props;
+    const { activeData, showInitializing, progress } = player;
 
     if (!activeData) {
       const message = showInitializing ? (
@@ -151,7 +146,7 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
       );
     }
 
-    const { isPlaying, startTime, endTime, currentTime, speed } = activeData;
+    const { isPlaying, startTime, endTime, currentTime } = activeData;
 
     const min = toSec(startTime);
     const max = toSec(endTime);
@@ -165,14 +160,7 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
           <Icon large>{isPlaying ? <PauseIcon /> : <PlayIcon />}</Icon>
         </div>
         <div>
-          {capabilities.includes(PlayerCapabilities.setSpeed) && speed != null && speed !== 0 && (
-            <Dropdown position="above" value={speed} text={`${speed.toFixed(1)}${times}`} onChange={setSpeed}>
-              <span value={0.1}>0.1&times;</span>
-              <span value={0.2}>0.2&times;</span>
-              <span value={0.5}>0.5&times;</span>
-              <span value={1}>1.0&times;</span>
-            </Dropdown>
-          )}
+          <PlaybackSpeedControls />
         </div>
 
         <div className={styles.bar}>
@@ -203,10 +191,6 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
 }
 
 function PlaybackControls() {
-  const playbackSpeed = useSelector((state) => state.panels.playbackConfig.speed);
-  const dispatch = useDispatch();
-  const setPlaybackConfig = useCallback((config) => dispatch(setPlaybackConfigAction(config)), [dispatch]);
-
   const renderUnconnectedPlaybackControls = useCallback(
     (context) => (
       <UnconnectedPlaybackControls
@@ -214,14 +198,9 @@ function PlaybackControls() {
         play={context.startPlayback}
         pause={context.pausePlayback}
         seek={context.seekPlayback}
-        setSpeed={(speed) => {
-          context.setPlaybackSpeed(speed);
-          setPlaybackConfig({ speed });
-        }}
-        playbackSpeed={playbackSpeed}
       />
     ),
-    [setPlaybackConfig, playbackSpeed]
+    []
   );
   return <MessagePipelineConsumer>{renderUnconnectedPlaybackControls}</MessagePipelineConsumer>;
 }

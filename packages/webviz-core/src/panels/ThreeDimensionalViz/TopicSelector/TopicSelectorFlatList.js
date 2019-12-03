@@ -25,6 +25,7 @@ const SMutedText = styled.div`
 `;
 export type TopicSelectorFlatListProps = {|
   checkedNodes: string[],
+  disableCheckbox?: boolean,
   expandedNodes: string[],
   modifiedNamespaceTopics: string[],
   namespaces: Namespace[],
@@ -37,6 +38,7 @@ export type TopicSelectorFlatListProps = {|
 
 export default function TopicSelectorFlatList({
   checkedNodes,
+  disableCheckbox,
   expandedNodes,
   modifiedNamespaceTopics,
   namespaces,
@@ -95,6 +97,18 @@ export default function TopicSelectorFlatList({
     [checkedNodes, modifiedNamespaceTopics, namespaces, saveConfig]
   );
 
+  const onRemoveNode = useCallback(
+    (node: Node) => {
+      const { namespace, topic, legacyIds, id } = ((node: Node): TopicTreeNode);
+      if (topic && namespace) {
+        console.error("Removing namespace nodes is not yet supported");
+        return;
+      }
+      saveConfig({ checkedNodes: toggle(checkedNodes, id, (item) => legacyIds.includes(item) || item === id) });
+    },
+    [checkedNodes, saveConfig]
+  );
+
   const toggleVisibility = useCallback(
     (node: Node) => {
       const { topic, visible } = ((node: Node): TopicTreeNode);
@@ -114,9 +128,11 @@ export default function TopicSelectorFlatList({
     <>
       <SMutedText>This flat topic tree is an experimental feature under active development.</SMutedText>
       <Tree
+        disableCheckbox={disableCheckbox}
         enableVisibilityToggle
         hideRoot
         onEditClick={onEditClickLocal}
+        onRemoveNode={onRemoveNode}
         onToggleCheck={toggleChecked}
         onToggleExpand={toggleExpanded}
         onToggleVisibility={toggleVisibility}

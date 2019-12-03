@@ -160,6 +160,7 @@ export function getTopicConfig({
       : [];
 
   // return flattened nodes directly for a single bag
+
   if (!hasMultiBag) {
     return {
       topicConfig: {
@@ -170,22 +171,31 @@ export function getTopicConfig({
     };
   }
 
+  let bag1Children = [...flattenedTopicNodes, ...tfNode];
+  let bag2Children = filterMap(flattenedTopicNodes, (item) => {
+    if (!item.topic) {
+      return null;
+    }
+    return ({ ...item, topic: `${SECOND_BAG_PREFIX}${item.topic}` }: TopicConfig);
+  });
+
+  // show only the selected topics at each bag
+  if (showSelected) {
+    bag1Children = bag1Children.filter((node) => (node.topic ? selectedTopicsSet.has(node.topic) : true));
+    bag2Children = bag2Children.filter((node) => (node.topic ? selectedTopicsSet.has(node.topic) : true));
+  }
+
   // construct two topic groups for two bags
   const topicConfig = {
     name: "root",
     children: [
       {
         name: BAG1_TOPIC_GROUP_NAME,
-        children: [...flattenedTopicNodes, ...tfNode],
+        children: bag1Children,
       },
       {
         name: BAG2_TOPIC_GROUP_NAME,
-        children: filterMap(flattenedTopicNodes, (item) => {
-          if (!item.topic) {
-            return null;
-          }
-          return ({ ...item, topic: `${SECOND_BAG_PREFIX}${item.topic}` }: TopicConfig);
-        }),
+        children: bag2Children,
       },
     ],
   };

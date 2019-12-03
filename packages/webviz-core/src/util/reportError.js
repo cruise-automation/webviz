@@ -11,10 +11,10 @@
 // etc). We should generally prevent users from making mistakes in the first place, but sometimes
 // its unavoidable to bail out with a generic error message (e.g. when dragging in a malformed
 // ROS bag).
-import * as React from "react";
+import type { Node } from "react";
 
 export type ErrorType = "app" | "user";
-export type DetailsType = string | Error | React.Node;
+export type DetailsType = string | Error | Node;
 
 type ErrorHandler = (message: string, details: DetailsType, type: ErrorType) => void;
 

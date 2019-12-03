@@ -158,10 +158,6 @@ export type Message = TypedMessage<any>;
 
 // Contains different kinds of progress indications, mostly used in the playback bar.
 export type Progress = {
-  // Percentages by topic. Currently only used by the old Airavata code path,
-  // should be considered deprecated.
-  percentageByTopic?: { [string]: ?number },
-
   // Used to show progress bar. Ranges are fractions, e.g. `{ start: 0, end: 0.5 }`.
   fullyLoadedFractionRanges?: Range[],
 
@@ -234,10 +230,3 @@ export interface PlayerMetricsCollectorInterface {
   recordBytesReceived(bytes: number): void;
   recordPlaybackTime(time: Time): void;
 }
-
-// Common (but not required) options to initialize a `Player` with.
-export type PlayerOptions = {|
-  autoplay: ?boolean,
-  seekToTime: ?Time,
-  frameSizeMs: ?number,
-|};

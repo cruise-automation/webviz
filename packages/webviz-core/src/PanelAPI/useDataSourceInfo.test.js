@@ -64,6 +64,7 @@ describe("useDataSourceInfo", () => {
           capabilities: ["hello"],
           startTime: { sec: 0, nsec: 1 },
           endTime: { sec: 10, nsec: 0 },
+          playerId: "1",
         },
       ],
     ]);
@@ -91,6 +92,7 @@ describe("useDataSourceInfo", () => {
           capabilities: ["hello"],
           startTime: { sec: 0, nsec: 1 },
           endTime: { sec: 10, nsec: 0 },
+          playerId: "1",
         },
       ],
     ]);
@@ -108,6 +110,7 @@ describe("useDataSourceInfo", () => {
           capabilities: ["hello"],
           startTime: { sec: 0, nsec: 1 },
           endTime: { sec: 10, nsec: 0 },
+          playerId: "1",
         },
       ],
     ]);

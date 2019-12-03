@@ -21,6 +21,7 @@ export type DataSourceInfo = {|
   capabilities: string[],
   startTime: ?Time,
   endTime: ?Time,
+  playerId: string,
 |};
 
 export default function useDataSourceInfo(): DataSourceInfo {
@@ -33,6 +34,7 @@ export default function useDataSourceInfo(): DataSourceInfo {
     useCallback(({ playerState: { activeData } }) => activeData && activeData.endTime, [])
   );
   const capabilities = useMessagePipeline(useCallback(({ playerState: { capabilities } }) => capabilities, []));
+  const playerId = useMessagePipeline(useCallback(({ playerState: { playerId } }) => playerId, []));
 
   return {
     topics,
@@ -40,5 +42,6 @@ export default function useDataSourceInfo(): DataSourceInfo {
     capabilities,
     startTime,
     endTime,
+    playerId,
   };
 }

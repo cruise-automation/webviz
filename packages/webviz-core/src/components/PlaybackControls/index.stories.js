@@ -8,10 +8,11 @@
 
 import { action } from "@storybook/addon-actions";
 import { storiesOf } from "@storybook/react";
-import React from "react";
+import * as React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { UnconnectedPlaybackControls } from ".";
+import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { PlayerCapabilities, type PlayerState } from "webviz-core/src/players/types";
 
 const START_TIME = 1531761690;
@@ -39,51 +40,30 @@ function getPlayerState(): PlayerState {
   return player;
 }
 
+function Wrapper({ children }: { children: React.Node }) {
+  return (
+    <MockMessagePipelineProvider capabilities={["setSpeed"]}>
+      <div style={{ padding: 20, margin: 100 }}>{children}</div>
+    </MockMessagePipelineProvider>
+  );
+}
+
 storiesOf("<PlaybackControls>", module)
   .addDecorator(withScreenshot())
   .add("playing", () => {
     const pause = action("pause");
     const play = action("play");
-    const setSpeed = action("setSpeed");
     const seek = action("seek");
     const player = getPlayerState();
     return (
-      <div style={{ padding: 20, margin: 100 }}>
-        <UnconnectedPlaybackControls
-          player={player}
-          pause={pause}
-          play={play}
-          setSpeed={setSpeed}
-          seek={seek}
-          playbackSpeed={0.2}
-        />
-      </div>
-    );
-  })
-  .add("without speed control", () => {
-    const pause = action("pause");
-    const play = action("play");
-    const setSpeed = action("setSpeed");
-    const seek = action("seek");
-    const player = getPlayerState();
-    player.capabilities = [];
-    return (
-      <div style={{ padding: 20, margin: 100 }}>
-        <UnconnectedPlaybackControls
-          player={player}
-          pause={pause}
-          play={play}
-          setSpeed={setSpeed}
-          seek={seek}
-          playbackSpeed={0.2}
-        />
-      </div>
+      <Wrapper>
+        <UnconnectedPlaybackControls player={player} pause={pause} play={play} seek={seek} />
+      </Wrapper>
     );
   })
   .add("paused", () => {
     const pause = action("pause");
     const play = action("play");
-    const setSpeed = action("setSpeed");
     const seek = action("seek");
     const player = getPlayerState();
 
@@ -94,22 +74,14 @@ storiesOf("<PlaybackControls>", module)
       player.activeData.endTime.sec += 1;
     }
     return (
-      <div style={{ padding: 20, margin: 100 }}>
-        <UnconnectedPlaybackControls
-          player={player}
-          pause={pause}
-          play={play}
-          setSpeed={setSpeed}
-          seek={seek}
-          playbackSpeed={0.2}
-        />
-      </div>
+      <Wrapper>
+        <UnconnectedPlaybackControls player={player} pause={pause} play={play} seek={seek} />
+      </Wrapper>
     );
   })
   .add("tooltip", () => {
     const pause = action("pause");
     const play = action("play");
-    const setSpeed = action("setSpeed");
     const seek = action("seek");
     const player = getPlayerState();
 
@@ -146,36 +118,26 @@ storiesOf("<PlaybackControls>", module)
             player={player}
             pause={pause}
             play={play}
-            setSpeed={setSpeed}
             seek={seek}
-            playbackSpeed={0.2}
           />
         );
       }
     }
     return (
-      <div style={{ padding: 20, margin: 100 }}>
+      <Wrapper>
         <ControlsWithTooltip />
-      </div>
+      </Wrapper>
     );
   })
   .add("download progress by ranges", () => {
     const player = getPlayerState();
     const pause = action("pause");
     const play = action("play");
-    const setSpeed = action("setSpeed");
     const seek = action("seek");
     player.progress.fullyLoadedFractionRanges = [{ start: 0.23, end: 0.6 }, { start: 0.7, end: 1 }];
     return (
-      <div style={{ padding: 20, margin: 100 }}>
-        <UnconnectedPlaybackControls
-          player={player}
-          pause={pause}
-          play={play}
-          setSpeed={setSpeed}
-          seek={seek}
-          playbackSpeed={0.2}
-        />
-      </div>
+      <Wrapper>
+        <UnconnectedPlaybackControls player={player} pause={pause} play={play} seek={seek} />
+      </Wrapper>
     );
   });

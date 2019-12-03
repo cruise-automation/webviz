@@ -9,8 +9,8 @@
 import TestProvider from "../TestProvider";
 import AutomatedRunPlayer, { type AutomatedRunClient, AUTOMATED_RUN_START_DELAY } from "./AutomatedRunPlayer";
 import delay from "webviz-core/shared/delay";
+import signal from "webviz-core/shared/signal";
 import { type Progress } from "webviz-core/src/players/types";
-import signal from "webviz-core/src/util/signal";
 
 class TestRunClient implements AutomatedRunClient {
   speed = 1;

@@ -7,13 +7,37 @@
 //  You may not use this file except in compliance with the License.
 
 import clamp from "lodash/clamp";
+import memoize from "lodash/memoize";
 
-import type { Topic } from "webviz-core/src/players/types";
+import CameraModel from "./CameraModel";
+import type { Topic, Message } from "webviz-core/src/players/types";
+import type { CameraInfo } from "webviz-core/src/types/Messages";
+import reportError from "webviz-core/src/util/reportError";
+
+// The OffscreenCanvas type is not yet in Flow. It's similar to, but more restrictive than HTMLCanvasElement.
+// TODO: change this to the Flow definition once it's been added.
+export type OffscreenCanvas = HTMLCanvasElement;
+
+export type Dimensions = {| width: number, height: number |};
 
 export type MarkerOption = {
   topic: string,
   name: string,
 };
+
+export type RawMarkerData = {|
+  markers: Message[],
+  scale: number,
+  transformMarkers: boolean,
+  cameraInfo: ?CameraInfo,
+|};
+
+export type MarkerData = ?{|
+  markers: Message[],
+  originalWidth: ?number, // null means no scaling is needed (use the image's size)
+  originalHeight: ?number, // null means no scaling is needed (use the image's size)
+  cameraModel: ?CameraModel, // null means no transformation is needed
+|};
 
 // given all available marker topics, filter out the names that are available for this image topic
 export function getMarkerOptions(
@@ -98,3 +122,61 @@ export function checkOutOfBounds(
     clamp(y, Math.min(topY, bottomY), Math.max(topY, bottomY)),
   ];
 }
+
+export function buildMarkerData(rawMarkerData: RawMarkerData): ?MarkerData {
+  const { markers, scale, transformMarkers, cameraInfo } = rawMarkerData;
+  if (markers.length === 0) {
+    return {
+      markers,
+      cameraModel: null,
+      originalHeight: undefined,
+      originalWidth: undefined,
+    };
+  }
+  let cameraModel;
+  if (transformMarkers) {
+    if (!cameraInfo) {
+      return null;
+    }
+    cameraModel = new CameraModel(cameraInfo);
+  }
+
+  // Markers can only be rendered if we know the original size of the image.
+  let originalWidth;
+  let originalHeight;
+  if (cameraInfo && cameraInfo.width && cameraInfo.height) {
+    // Prefer using CameraInfo can be used to determine the image size.
+    originalWidth = cameraInfo.width;
+    originalHeight = cameraInfo.height;
+  } else if (scale === 1) {
+    // Otherwise, if scale === 1, the image was not downsampled, so the size of the bitmap is accurate.
+    originalWidth = undefined;
+    originalHeight = undefined;
+  } else {
+    return null;
+  }
+
+  return {
+    markers,
+    cameraModel,
+    originalWidth,
+    originalHeight,
+  };
+}
+
+export const supportsOffscreenCanvas: () => boolean = memoize(
+  (): boolean => {
+    try {
+      // $FlowFixMe This is a function that is not yet in Flow.
+      document.createElement("canvas").transferControlToOffscreen();
+    } catch (error) {
+      reportError(
+        "Rendering the image view in a worker is unsupported in this browser, falling back to rendering using the main thread",
+        "",
+        "app"
+      );
+      return false;
+    }
+    return true;
+  }
+);

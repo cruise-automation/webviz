@@ -5,162 +5,17 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { mapMarker } from "./PointCloudBuilder";
 
-const fields = [
-  {
-    name: "x",
-    offset: 0,
-    datatype: 7,
-    count: 1,
-  },
-  {
-    name: "y",
-    offset: 4,
-    datatype: 7,
-    count: 1,
-  },
-  {
-    name: "z",
-    offset: 8,
-    datatype: 7,
-    count: 1,
-  },
-  {
-    name: "rgb",
-    offset: 16,
-    datatype: 7,
-    count: 1,
-  },
-];
-
-const msg = {
-  fields,
-  type: 102,
-  name: "foo",
-  pose: {
-    position: { x: 0, y: 0, z: 0 },
-    orientation: { x: 0, y: 0, z: 0, w: 0 },
-  },
-  header: {
-    frame_id: "root_frame_id",
-    stamp: {
-      sec: 10,
-      nsec: 10,
-    },
-  },
-  height: 1,
-  is_bigendian: 0,
-  is_dense: 1,
-  point_step: 32,
-  row_step: 32,
-  width: 2,
-  data: [
-    // point 1
-    125,
-    236,
-    11,
-    197,
-    118,
-    102,
-    48,
-    196,
-    50,
-    194,
-    23,
-    192,
-    0,
-    0,
-    128,
-    63,
-    255,
-    225,
-    127,
-    0,
-    254,
-    127,
-    0,
-    0,
-    16,
-    142,
-    140,
-    0,
-    161,
-    254,
-    127,
-    0,
-    // point 2
-    125,
-    236,
-    11,
-    197,
-    118,
-    102,
-    48,
-    196,
-    50,
-    194,
-    23,
-    192,
-    0,
-    0,
-    128,
-    63,
-    255,
-    255,
-    127,
-    0,
-    254,
-    127,
-    0,
-    0,
-    16,
-    142,
-    140,
-    0,
-    161,
-    254,
-    127,
-    0,
-    // point 3
-    118,
-    102,
-    48,
-    196,
-    125,
-    236,
-    11,
-    197,
-    50,
-    194,
-    23,
-    192,
-    0,
-    0,
-    128,
-    63,
-    127,
-    255,
-    127,
-    0,
-    254,
-    127,
-    0,
-    0,
-    16,
-    142,
-    140,
-    0,
-    161,
-    254,
-    127,
-    8,
-  ],
-};
+import { mapMarker, memoizedMapMarker, decodeAdditionalFields, getClickedInfo } from "./PointCloudBuilder";
+import {
+  POINT_CLOUD_MESSAGE,
+  POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
+} from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/fixture/pointCloudData";
+import type { PointCloud2 } from "webviz-core/src/types/Messages";
 
 describe("PointCloudBuilder", () => {
   it("builds point cloud out of simple PointCloud2", () => {
-    const result = mapMarker(msg);
+    const result = mapMarker(POINT_CLOUD_MESSAGE);
     const pos = result.points;
     const colorCodes = result.colors;
     expect(pos).toHaveLength(6);
@@ -179,7 +34,7 @@ describe("PointCloudBuilder", () => {
   });
 
   it("uses rgb values when rendering by rgb colorfield", () => {
-    const result = mapMarker({ ...msg, colorField: "rgb" });
+    const result = mapMarker({ ...POINT_CLOUD_MESSAGE, colorField: "rgb" });
     const pos = result.points;
     const colorCodes = result.colors;
     expect(pos).toHaveLength(6);
@@ -199,7 +54,7 @@ describe("PointCloudBuilder", () => {
 
   it("builds point cloud with custom colors", () => {
     const input = {
-      ...msg,
+      ...POINT_CLOUD_MESSAGE,
       colorField: "x",
     };
     const result = mapMarker(input);
@@ -222,7 +77,7 @@ describe("PointCloudBuilder", () => {
 
   it("builds a point cloud with height 3", () => {
     const result = mapMarker({
-      ...msg,
+      ...POINT_CLOUD_MESSAGE,
       height: 3,
       width: 1,
       row_step: 32,
@@ -444,6 +299,82 @@ describe("PointCloudBuilder", () => {
       const result = mapMarker({ ...marker, colorField: "baz" });
       // because we only have 2 values, the colors should be min/max of rainbow spectrum
       expect(result.colors).toEqual(new Uint8Array([255, 0, 0, 255, 0, 255]));
+    });
+  });
+
+  describe("decodeAdditionalFields", () => {
+    it("decodes additional fields", () => {
+      const fullyDecodedMarker = decodeAdditionalFields(POINT_CLOUD_WITH_ADDITIONAL_FIELDS);
+      expect(fullyDecodedMarker.bar).toEqual([6, 8]);
+      expect(fullyDecodedMarker.baz).toEqual([5, 7]);
+      expect(fullyDecodedMarker.foo).toEqual([7, 9]);
+      expect(fullyDecodedMarker.foo16).toEqual([265, 2]);
+    });
+  });
+
+  describe("getClickedInfo", () => {
+    it("returns undefined when points field is empty", () => {
+      const partiallyDecodedMarker = ((mapMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): PointCloud2);
+      const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
+      fullyDecodedMarker.points = [];
+      expect(getClickedInfo(fullyDecodedMarker, 1000)).toEqual(undefined);
+    });
+
+    it("returns undefined when instanceIndex does not match any point", () => {
+      const partiallyDecodedMarker = ((mapMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): PointCloud2);
+      const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
+      expect(getClickedInfo(fullyDecodedMarker, null)).toEqual(undefined);
+      expect(getClickedInfo(fullyDecodedMarker, 1000)).toEqual(undefined);
+    });
+
+    it("returns the clicked point and color", () => {
+      const partiallyDecodedMarker = ((mapMarker(POINT_CLOUD_MESSAGE): any): PointCloud2);
+      const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
+      expect(getClickedInfo(fullyDecodedMarker, 0)).toEqual({
+        clickedPoint: [-2238.780517578125, -705.6009521484375, -2.371227741241455],
+        clickedPointColor: [255, 225, 127, 1],
+      });
+    });
+
+    it("returns the clicked point, color and additional field values", () => {
+      const partiallyDecodedMarker = ((mapMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): PointCloud2);
+      const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
+      expect(getClickedInfo(fullyDecodedMarker, 0)).toEqual({
+        additionalFieldValues: { bar: 6, baz: 5, foo: 7, foo16: 265 },
+        clickedPoint: [0, 1, 2],
+        clickedPointColor: [255, 255, 255, 1],
+      });
+      expect(getClickedInfo(fullyDecodedMarker, 1)).toEqual({
+        additionalFieldValues: { bar: 8, baz: 7, foo: 9, foo16: 2 },
+        clickedPoint: [0, 1, 2],
+        clickedPointColor: [255, 255, 255, 1],
+      });
+    });
+  });
+
+  describe("memoizedMapMarker", () => {
+    it("returns the cached result for the same marker message without settings", () => {
+      const result1 = mapMarker({ ...POINT_CLOUD_MESSAGE });
+      const result2 = mapMarker({ ...POINT_CLOUD_MESSAGE });
+      const result3 = memoizedMapMarker({ ...POINT_CLOUD_MESSAGE });
+      const result4 = memoizedMapMarker({ ...POINT_CLOUD_MESSAGE });
+      expect(result1).not.toBe(result2);
+      expect(result3).toBe(result4);
+    });
+
+    it("caches results based on equality check on 'data' field", () => {
+      const result1 = memoizedMapMarker({ ...POINT_CLOUD_MESSAGE, data: [1] });
+      const result2 = memoizedMapMarker({ ...POINT_CLOUD_MESSAGE, data: [1] });
+      expect(result1).not.toBe(result2);
+      const data = [1];
+      const result3 = memoizedMapMarker({ ...POINT_CLOUD_MESSAGE, data });
+      const result4 = memoizedMapMarker({ ...POINT_CLOUD_MESSAGE, data });
+      expect(result3).toBe(result4);
+    });
+    it("caches results based on deep-equality check on 'settings' field", () => {
+      const result1 = memoizedMapMarker({ ...POINT_CLOUD_MESSAGE, settings: { colorField: "foo" } });
+      const result2 = memoizedMapMarker({ ...POINT_CLOUD_MESSAGE, settings: { colorField: "foo" } });
+      expect(result1).toBe(result2);
     });
   });
 });

@@ -100,6 +100,7 @@ describe("Rpc", () => {
           workerChannel.onmessage(ev); // eslint-disable-line no-use-before-define
         }
       },
+      terminate: () => {},
     };
 
     const workerChannel: Channel = {
@@ -113,6 +114,7 @@ describe("Rpc", () => {
           mainChannel.onmessage(ev);
         }
       },
+      terminate: () => {},
     };
 
     const local = new Rpc(mainChannel);

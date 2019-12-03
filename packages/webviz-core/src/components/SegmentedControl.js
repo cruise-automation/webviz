@@ -12,13 +12,13 @@ import tinyColor from "tinycolor2";
 
 import { colors } from "webviz-core/src/util/colors";
 
-const colorToAlpha = (hex, alpha) => {
+export const colorToAlpha = (hex: string, alpha: number) => {
   const color = tinyColor(hex);
   color.setAlpha(alpha);
   return color.toRgbString();
 };
 
-const SSegmentControl = styled.div`
+const SSegmentedControl = styled.div`
   display: inline-flex;
   padding: 4px;
   border-radius: 6px;
@@ -36,7 +36,7 @@ const SOption = styled.div`
   cursor: pointer;
   transition: all 80ms ease-in-out;
   border-radius: 4px;
-  background-color: ${(props) => (props.isSelected ? colors.DARK2 : "transparent")};
+  background-color: ${(props) => (props.isSelected ? colors.BLUE1 : "transparent")};
   color: ${(props) => (props.isSelected ? colors.LIGHT : colors.LIGHT)};
   padding: 8px 16px;
   &:hover {
@@ -55,18 +55,18 @@ type Props = {|
   onChange: (id: string) => void,
 |};
 
-export default function SegmentControl({ options, selectedId, onChange }: Props) {
+export default function SegmentedControl({ options, selectedId, onChange }: Props) {
   if (options.length === 0) {
-    throw new Error("<SegmentControl> requires at least one option");
+    throw new Error("<SegmentedControl> requires at least one option");
   }
 
   return (
-    <SSegmentControl tabIndex={0}>
+    <SSegmentedControl tabIndex={0}>
       {options.map(({ id, label }) => (
         <SOption key={id} data-test={id} onClick={() => onChange(id)} isSelected={selectedId === id}>
           {label}
         </SOption>
       ))}
-    </SSegmentControl>
+    </SSegmentedControl>
   );
 }

@@ -169,17 +169,6 @@ const defaultExpectedBag1Nodes = [
   },
 ];
 
-const defaultExpectedBag2Nodes = [
-  {
-    name: "Nested Group / Topic B",
-    topic: "/webviz_bag_2/topic_b",
-  },
-  {
-    name: "Nested Group / Deeply Nested Group /topic_c",
-    topic: "/webviz_bag_2/topic_c",
-  },
-];
-
 describe("getTopicConfig", () => {
   describe("topicConfig", () => {
     describe("show tree structure", () => {
@@ -208,7 +197,12 @@ describe("getTopicConfig", () => {
             },
             {
               name: BAG2_TOPIC_GROUP_NAME,
-              children: defaultExpectedBag2Nodes,
+              children: [
+                {
+                  name: "Nested Group / Deeply Nested Group /topic_c",
+                  topic: "/webviz_bag_2/topic_c",
+                },
+              ],
             },
           ],
           name: "root",
@@ -249,10 +243,7 @@ describe("getTopicConfig", () => {
         ).toEqual([
           {
             name: BAG1_TOPIC_GROUP_NAME,
-            children: [
-              { name: "Nested Group / Topic B", topic: "/topic_b" },
-              { name: "/topic_not_in_json_tree", topic: "/topic_not_in_json_tree" },
-            ],
+            children: [],
           },
           {
             name: BAG2_TOPIC_GROUP_NAME,
@@ -265,33 +256,28 @@ describe("getTopicConfig", () => {
       });
 
       it("adds uncategorized topics to bag1 and bag2", () => {
-        const expected = [
-          {
-            children: [
-              ...defaultExpectedBag1Nodes,
-              { name: "/topic_not_in_json_tree", topic: "/topic_not_in_json_tree" },
-            ],
-            name: BAG1_TOPIC_GROUP_NAME,
-          },
-          {
-            children: [
-              ...defaultExpectedBag2Nodes,
-              {
-                name: "/topic_not_in_json_tree",
-                topic: "/webviz_bag_2/topic_not_in_json_tree",
-              },
-            ],
-            name: BAG2_TOPIC_GROUP_NAME,
-          },
-        ];
-
         expect(
           getTopicConfig({
             ...defaultGetTopicConfigInput,
             checkedNodes: [...checkedNodes, "t:/topic_not_in_json_tree"],
             topics: makeTopic([...bag1Topics, ...bag2Topics]),
           }).topicConfig.children
-        ).toEqual(expected);
+        ).toEqual([
+          {
+            children: [
+              { extension: "ExtA.a", name: "Ext A" },
+              { extension: "ExtC.c", name: "Ext A / Ext C" },
+              { name: "Nested Group / Topic B", topic: "/topic_b" },
+              { name: "Nested Group / Deeply Nested Group /topic_c", topic: "/topic_c" },
+              { name: "/topic_not_in_json_tree", topic: "/topic_not_in_json_tree" },
+            ],
+            name: BAG1_TOPIC_GROUP_NAME,
+          },
+          {
+            children: [{ name: "Nested Group / Deeply Nested Group /topic_c", topic: "/webviz_bag_2/topic_c" }],
+            name: BAG2_TOPIC_GROUP_NAME,
+          },
+        ]);
 
         expect(
           getTopicConfig({
@@ -299,7 +285,24 @@ describe("getTopicConfig", () => {
             checkedNodes: [...checkedNodes, "t:/webviz_bag_2/topic_not_in_json_tree"],
             topics: makeTopic([...bag1Topics, ...bag2Topics]),
           }).topicConfig.children
-        ).toEqual(expected);
+        ).toEqual([
+          {
+            children: [
+              { extension: "ExtA.a", name: "Ext A" },
+              { extension: "ExtC.c", name: "Ext A / Ext C" },
+              { name: "Nested Group / Topic B", topic: "/topic_b" },
+              { name: "Nested Group / Deeply Nested Group /topic_c", topic: "/topic_c" },
+            ],
+            name: BAG1_TOPIC_GROUP_NAME,
+          },
+          {
+            children: [
+              { name: "Nested Group / Deeply Nested Group /topic_c", topic: "/webviz_bag_2/topic_c" },
+              { name: "/topic_not_in_json_tree", topic: "/webviz_bag_2/topic_not_in_json_tree" },
+            ],
+            name: BAG2_TOPIC_GROUP_NAME,
+          },
+        ]);
 
         expect(
           getTopicConfig({
@@ -307,7 +310,25 @@ describe("getTopicConfig", () => {
             checkedNodes: [...checkedNodes, "t:/webviz_bag_2/topic_b", "t:/webviz_bag_2/topic_not_in_json_tree"],
             topics: makeTopic(bag2Topics),
           }).topicConfig.children
-        ).toEqual(expected);
+        ).toEqual([
+          {
+            children: [
+              { extension: "ExtA.a", name: "Ext A" },
+              { extension: "ExtC.c", name: "Ext A / Ext C" },
+              { name: "Nested Group / Topic B", topic: "/topic_b" },
+              { name: "Nested Group / Deeply Nested Group /topic_c", topic: "/topic_c" },
+            ],
+            name: BAG1_TOPIC_GROUP_NAME,
+          },
+          {
+            children: [
+              { name: "Nested Group / Topic B", topic: "/webviz_bag_2/topic_b" },
+              { name: "Nested Group / Deeply Nested Group /topic_c", topic: "/webviz_bag_2/topic_c" },
+              { name: "/topic_not_in_json_tree", topic: "/webviz_bag_2/topic_not_in_json_tree" },
+            ],
+            name: BAG2_TOPIC_GROUP_NAME,
+          },
+        ]);
       });
     });
 
@@ -330,11 +351,11 @@ describe("getTopicConfig", () => {
             { name: "Some Topic in JSON Tree", topic: "/topic_in_json_tree" },
             { children: [], description: "Visualize relationships between /tf frames.", name: "TF" },
           ],
-          name: "Bag",
+          name: BAG1_TOPIC_GROUP_NAME,
         },
         {
           children: [{ name: "Some Topic in JSON Tree", topic: "/webviz_bag_2/topic_in_json_tree" }],
-          name: "Bag 2 /webviz_bag_2",
+          name: BAG2_TOPIC_GROUP_NAME,
         },
       ]);
     });
@@ -438,7 +459,12 @@ describe("getTopicConfig", () => {
           name: BAG1_TOPIC_GROUP_NAME,
         },
         {
-          children: defaultExpectedBag2Nodes,
+          children: [
+            {
+              name: "Nested Group / Deeply Nested Group /topic_c",
+              topic: "/webviz_bag_2/topic_c",
+            },
+          ],
           name: BAG2_TOPIC_GROUP_NAME,
         },
       ]);
@@ -457,7 +483,12 @@ describe("getTopicConfig", () => {
           name: BAG1_TOPIC_GROUP_NAME,
         },
         {
-          children: defaultExpectedBag2Nodes,
+          children: [
+            {
+              name: "Nested Group / Deeply Nested Group /topic_c",
+              topic: "/webviz_bag_2/topic_c",
+            },
+          ],
           name: BAG2_TOPIC_GROUP_NAME,
         },
       ]);

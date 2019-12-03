@@ -14,7 +14,7 @@ import Button from "webviz-core/src/components/Button";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import ValidatedInput, { type EditFormat } from "webviz-core/src/components/ValidatedInput";
 import { polygonPointsValidator } from "webviz-core/src/components/validators";
-import { SValue } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/CameraInfo";
+import { SValue, SLabel } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions";
 import {
   polygonsToPoints,
   getFormattedString,
@@ -29,11 +29,6 @@ export const SRow = styled.div`
   display: flex;
   align-items: center;
   padding: 8px 0;
-`;
-
-export const SLabel = styled.label`
-  width: 80px;
-  margin: 4px 0;
 `;
 
 type Props = {

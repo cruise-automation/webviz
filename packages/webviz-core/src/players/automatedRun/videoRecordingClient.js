@@ -84,7 +84,6 @@ class VideoRecordingClient {
     }
 
     await delay(60); // Give PlayerDispatcher time to dispatch a frame, and then render everything.
-    console.log("videoRecordingClient.takeScreenshot()");
     if (screenshotResolve) {
       throw new Error("Already have a screenshot queued!");
     }

@@ -13,14 +13,12 @@ export const REMOTE_BAG_URL_QUERY_KEY = "remote-bag-url";
 export const LOAD_ENTIRE_BAG_QUERY_KEY = "load-entire-bag";
 export const MEASURE_DATA_PROVIDERS_QUERY_KEY = "_measureDataProviders";
 export const DEMO_QUERY_KEY = "demo";
-export const AUTOPLAY_QUERY_KEY = "autoplay";
 export const SEEK_TO_QUERY_KEY = "seek-to";
 export const LAYOUT_QUERY_KEY = "layout";
 export const LAYOUT_URL_QUERY_KEY = "layout-url";
 export const PATCH_LAYOUT_QUERY_KEY = "layout-patch";
 export const OLD_GLOBAL_VARIABLES_QUERY_KEY = "global-variables";
 export const GLOBAL_VARIABLES_QUERY_KEY = "global-data";
-export const FRAME_SIZE_MS_QUERY_KEY = "frame-size-ms";
 
 export const DEFAULT_WEBVIZ_NODE_PREFIX = "/webviz_node/";
 

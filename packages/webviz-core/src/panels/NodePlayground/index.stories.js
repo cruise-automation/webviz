@@ -54,7 +54,7 @@ const logs = [
 ];
 
 storiesOf("<NodePlayground>", module)
-  .addDecorator(withScreenshot({ delay: 2000 }))
+  .addDecorator(withScreenshot({ delay: 10000 }))
   .add("welcome screen", () => {
     return (
       <PanelSetup fixture={fixture}>
@@ -134,7 +134,7 @@ storiesOf("<NodePlayground>", module)
   });
 
 storiesOf("NodePlayground - <BottomBar>", module)
-  .addDecorator(withScreenshot({ delay: 1000 }))
+  .addDecorator(withScreenshot({ delay: 10000 }))
 
   .add("no errors or logs - closed", () => (
     <PanelSetup
@@ -350,7 +350,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
   ));
 
 storiesOf("<NodePlaygroundSettings>", module)
-  .addDecorator(withScreenshot({ delay: 1000 }))
+  .addDecorator(withScreenshot({ delay: 10000 }))
   .add("enabled vim mode", () => (
     <NodePlaygroundSettings config={{ selectedNodeId: undefined, vimMode: true }} saveConfig={() => {}} />
   ))

@@ -11,12 +11,16 @@ import { type MouseEventObject } from "regl-worldview";
 
 import { type FieldReader, Float32Reader, Int32Reader, Uint16Reader, Int16Reader, Uint8Reader } from "./Readers";
 import log from "webviz-core/src/panels/ThreeDimensionalViz/logger";
-import type { PointCloud2, PointCloud2Field } from "webviz-core/src/types/Messages";
+import {
+  DEFAULT_FLAT_COLOR,
+  type PointCloudSettings,
+  type ColorMode,
+} from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
+import type { PointCloud2, PointField } from "webviz-core/src/types/Messages";
+import { lerp } from "webviz-core/src/util";
 
 const EMPTY_ARRAY = [];
-const POINT_STEP = 12;
-const COLOR_STEP = 3;
-const FLOAT32_FIELDS = ["x", "y", "z"];
+const REQUIRED_FLOAT32_FIELDS = ["x", "y", "z"];
 const DATATYPE = {
   uint8: 2,
   uint16: 4,
@@ -26,15 +30,10 @@ const DATATYPE = {
 };
 
 type FieldOffsetsAndReaders = {
-  x: { offset: number },
-  y: { offset: number },
-  z: { offset: number },
-  rgb?: { offset: number },
-  rgbOverride?: { offset: number, reader: ?FieldReader },
-  [additionalFieldName: string]: { offset: number, reader: FieldReader },
+  [name: string]: { datatype: string, offset: number, reader: ?FieldReader },
 };
 
-function getReader(datatype, offset: number, isColorField?: boolean) {
+function getReader(datatype, offset: number) {
   switch (datatype) {
     case DATATYPE.float32:
       return new Float32Reader(offset);
@@ -47,99 +46,96 @@ function getReader(datatype, offset: number, isColorField?: boolean) {
     case DATATYPE.int32:
       return new Int32Reader(offset);
     default:
-      if (isColorField) {
-        log.error("colorField of value other than float32, uint16, int32, or uint8 not supported", datatype);
-      } else {
-        log.error("Unsupported datatype", datatype);
-      }
+      log.error("Unsupported datatype", datatype);
   }
 }
 
-function getFieldOffsetsAndReaders(
-  fields: PointCloud2Field[],
-  colorField: ?string,
-  decodeAllFields?: boolean
-): ?FieldOffsetsAndReaders {
+function getFieldOffsetsAndReaders(fields: PointField[]): FieldOffsetsAndReaders {
   const result = {};
-  fields.forEach((field) => {
-    const { name, datatype, offset = 0 } = field;
-    if (name === colorField) {
-      result.rgbOverride = { offset, reader: getReader(datatype, offset, true) };
-    }
-    if (FLOAT32_FIELDS.includes(name)) {
-      if (datatype !== DATATYPE.float32) {
-        log.error(`${name} value not represented as float32`);
-      } else {
-        result[name] = { offset };
-      }
-    } else if (name === "rgb") {
-      result.rgb = field;
-    } else if (decodeAllFields) {
-      // additional field to be decoded after interacting with the point cloud
-      result[name] = { offset, reader: getReader(datatype, offset) };
-    }
-  });
-
-  if (result.x == null) {
-    log.error("Unable to find x field for point cloud");
-    return;
+  for (const { name, datatype, offset = 0 } of fields) {
+    result[name] = { datatype, offset, reader: getReader(datatype, offset) };
   }
-  if (result.y == null) {
-    log.error("Unable to find y field for point cloud");
-    return;
-  }
-  if (result.z == null) {
-    log.error("Unable to find z field for point cloud");
-    return;
-  }
-  if (result.rgb == null) {
-    result.rgb = { offset: -1 };
-  }
-
   return result;
 }
 
-export function mapMarker(marker: PointCloud2, decodeAllFields?: boolean) {
-  // http://docs.ros.org/api/sensor_msgs/html/msg/PointCloud2.html
-  const { fields, data, width, row_step: rowStep, height, point_step: dataStep, colorField, color } = marker;
-  const offsetAndReaders = getFieldOffsetsAndReaders(fields, colorField);
+function parseHexColor(color: string) {
+  console.assert(color.length === 7);
+  return parseInt(color.slice(1), 16);
+}
 
-  if (!offsetAndReaders) {
-    console.warn("missing field offsets for marker");
-    return { points: [], colors: [] };
+export function mapMarker(marker: PointCloud2 & { settings?: PointCloudSettings }, decodeAllFields?: boolean) {
+  // http://docs.ros.org/api/sensor_msgs/html/msg/PointCloud2.html
+  const { fields, data, width, row_step, height, point_step, settings = {} } = marker;
+  const offsetsAndReaders = getFieldOffsetsAndReaders(fields);
+
+  for (const float32Field of REQUIRED_FLOAT32_FIELDS) {
+    if (!offsetsAndReaders[float32Field]) {
+      log.error(`point cloud is missing field '${float32Field}'`);
+      return { points: [], colors: [] };
+    } else if (offsetsAndReaders[float32Field].datatype !== DATATYPE.float32) {
+      log.error(`expected '${float32Field}' to be a float32 field (found ${offsetsAndReaders[float32Field].datatype})`);
+      return { points: [], colors: [] };
+    }
   }
   const {
     x: { offset: xOffset },
     y: { offset: yOffset },
     z: { offset: zOffset },
     rgb: { offset: rgbOffset } = {},
-    rgbOverride: { reader: rgbOverrideReader } = {},
-  } = offsetAndReaders;
+  } = offsetsAndReaders;
+
+  const colorMode: ColorMode = settings.colorMode
+    ? settings.colorMode
+    : rgbOffset != null
+    ? { mode: "rgb" }
+    : { mode: "flat", flatColor: DEFAULT_FLAT_COLOR };
+
   const points = new Uint8Array(width * height * 12);
   const colors = new Uint8Array(width * height * 3);
-  let pointCount = 0;
-  let minColorFieldValue = Number.MAX_VALUE;
-  let maxColorFieldValue = Number.MIN_VALUE;
+
+  let autoMinValue = true;
+  let autoMaxValue = true;
+  let minColorFieldValue = Infinity;
+  let maxColorFieldValue = -Infinity;
+  if (colorMode.mode === "gradient" || colorMode.mode === "rainbow") {
+    if (colorMode.minValue != null) {
+      autoMinValue = false;
+      minColorFieldValue = colorMode.minValue;
+    }
+    if (colorMode.maxValue != null) {
+      autoMaxValue = false;
+      maxColorFieldValue = colorMode.maxValue;
+    }
+  }
+
   // the field "rgb" has a special parsing code path - it's packed into the first three bytes of a float32
   // so if the colorField is rgb don't use a reader - its faster to just read the value directly
   // it also is the default rendering option if no custom colorField is specified
-  const useRGB = rgbOffset !== -1 && (!colorField || colorField === "rgb");
-  const useColorField = !useRGB && offsetAndReaders.rgbOverride;
-  // use empty array if not coloring with colorField to avoid unneeded allocation
-  const colorFieldValues = useColorField ? new Array(width * height) : EMPTY_ARRAY;
+  const useRGB = colorMode.mode === "rgb" && rgbOffset != null;
 
-  // in practice we use height:1 pointCloud2 messages
-  // but for completeness sake, we support any height of array
+  const useFlatColor = colorMode.mode === "flat";
+  const parsedFlatColor = colorMode.mode === "flat" ? parseHexColor(colorMode.flatColor) : 0;
+  const flatColorR = (parsedFlatColor >> 16) & 0xff;
+  const flatColorG = (parsedFlatColor >> 8) & 0xff;
+  const flatColorB = parsedFlatColor & 0xff;
+
+  const colorFieldReader =
+    colorMode.mode === "rainbow" || colorMode.mode === "gradient"
+      ? offsetsAndReaders[colorMode.colorField]?.reader
+      : null;
+  if (colorMode.colorField && !colorFieldReader) {
+    log.warn(`color field ${colorMode.colorField} not found in point cloud`);
+  }
+  const colorFieldValues = colorFieldReader ? new Float64Array(width * height) : EMPTY_ARRAY;
+
+  let pointCount = 0;
   for (let row = 0; row < height; row++) {
-    const dataOffset = row * rowStep;
     for (let col = 0; col < width; col++) {
-      const dataStart = col * dataStep + dataOffset;
-      const x1 = data[dataStart + xOffset];
-      const x2 = data[dataStart + xOffset + 1];
-      const x3 = data[dataStart + xOffset + 2];
-      const x4 = data[dataStart + xOffset + 3];
-
-      const pointStart = pointCount * POINT_STEP;
+      const pointDataStart = row * row_step + col * point_step;
+      const x1 = data[pointDataStart + xOffset];
+      const x2 = data[pointDataStart + xOffset + 1];
+      const x3 = data[pointDataStart + xOffset + 2];
+      const x4 = data[pointDataStart + xOffset + 3];
 
       // if the value is NaN then don't count this point
       // this is to support non-dense point clouds
@@ -148,6 +144,8 @@ export function mapMarker(marker: PointCloud2, decodeAllFields?: boolean) {
         continue;
       }
 
+      const pointStart = pointCount * 12;
+
       // add x point
       points[pointStart] = x1;
       points[pointStart + 1] = x2;
@@ -155,62 +153,87 @@ export function mapMarker(marker: PointCloud2, decodeAllFields?: boolean) {
       points[pointStart + 3] = x4;
 
       // add y point
-      points[pointStart + 4] = data[dataStart + yOffset];
-      points[pointStart + 5] = data[dataStart + yOffset + 1];
-      points[pointStart + 6] = data[dataStart + yOffset + 2];
-      points[pointStart + 7] = data[dataStart + yOffset + 3];
+      points[pointStart + 4] = data[pointDataStart + yOffset];
+      points[pointStart + 5] = data[pointDataStart + yOffset + 1];
+      points[pointStart + 6] = data[pointDataStart + yOffset + 2];
+      points[pointStart + 7] = data[pointDataStart + yOffset + 3];
 
       // add z point
-      points[pointStart + 8] = data[dataStart + zOffset];
-      points[pointStart + 9] = data[dataStart + zOffset + 1];
-      points[pointStart + 10] = data[dataStart + zOffset + 2];
-      points[pointStart + 11] = data[dataStart + zOffset + 3];
+      points[pointStart + 8] = data[pointDataStart + zOffset];
+      points[pointStart + 9] = data[pointDataStart + zOffset + 1];
+      points[pointStart + 10] = data[pointDataStart + zOffset + 2];
+      points[pointStart + 11] = data[pointDataStart + zOffset + 3];
 
       // add color
-      const colorStart = pointCount * COLOR_STEP;
-      if (useRGB) {
-        colors[colorStart] = data[dataStart + rgbOffset];
-        colors[colorStart + 1] = data[dataStart + rgbOffset + 1];
-        colors[colorStart + 2] = data[dataStart + rgbOffset + 2];
-      } else if (useColorField && rgbOverrideReader) {
-        const colorValue = rgbOverrideReader.read(data, dataStart);
-        colorFieldValues[pointCount] = colorValue;
-        if (!Number.isNaN(colorValue)) {
-          minColorFieldValue = Math.min(minColorFieldValue, colorValue);
-          maxColorFieldValue = Math.max(maxColorFieldValue, colorValue);
+      const colorStart = pointCount * 3;
+      if (useFlatColor) {
+        colors[colorStart] = flatColorR;
+        colors[colorStart + 1] = flatColorG;
+        colors[colorStart + 2] = flatColorB;
+      } else if (useRGB) {
+        colors[colorStart] = data[pointDataStart + rgbOffset];
+        colors[colorStart + 1] = data[pointDataStart + rgbOffset + 1];
+        colors[colorStart + 2] = data[pointDataStart + rgbOffset + 2];
+      } else if (colorFieldReader) {
+        const colorFieldValue = colorFieldReader.read(data, pointDataStart);
+        colorFieldValues[pointCount] = colorFieldValue;
+        if (!Number.isNaN(colorFieldValue)) {
+          if (autoMinValue) {
+            minColorFieldValue = Math.min(minColorFieldValue, colorFieldValue);
+          }
+          if (autoMaxValue) {
+            maxColorFieldValue = Math.max(maxColorFieldValue, colorFieldValue);
+          }
         }
       } else {
-        // rgb isn't mandatory - color white if not found in fields
-        colors[colorStart] = 255;
-        colors[colorStart + 1] = 255;
-        colors[colorStart + 2] = 255;
+        throw new Error(`unexpected color mode ${colorMode.mode}`);
       }
-      // increase point count by 1
       pointCount++;
     }
   }
 
-  // we need to loop through colorField values again now that we know min/max
-  // and assign a color to the pointCloud for each colorField value
-  if (useColorField || color) {
+  if (colorFieldReader) {
     // if min and max are equal set the diff to something huge
     // so when we divide by it we effectively get zero.
     // taken from http://docs.ros.org/jade/api/rviz/html/c++/point__cloud__transformers_8cpp_source.html
     // line 132
-    const colorFieldRange = maxColorFieldValue - minColorFieldValue || 1e20;
-    const parsedColor = getParsedColor(color);
-    for (let i = 0; i < pointCount; i++) {
-      const idx = i * 3;
-      const val = colorFieldValues[i];
-      const pct = (val - minColorFieldValue) / colorFieldRange;
+    const colorFieldRange = maxColorFieldValue - minColorFieldValue || Infinity;
 
-      if (parsedColor) {
-        colors[idx] = parsedColor[0];
-        colors[idx + 1] = parsedColor[1];
-        colors[idx + 2] = parsedColor[2];
-      } else {
-        setColorFieldColor(colors, idx, pct, color);
+    // we need to loop through colorField values again now that we know min/max
+    // and assign a color to the pointCloud for each colorField value
+
+    // use custom gradient
+    if (colorMode.mode === "gradient") {
+      const parsedMinColor = parseHexColor(colorMode.minColor);
+      const parsedMaxColor = parseHexColor(colorMode.maxColor);
+      for (let i = 0; i < pointCount; i++) {
+        const offset = i * 3;
+        const val = colorFieldValues[i];
+        const pct = Math.max(0, Math.min((val - minColorFieldValue) / colorFieldRange, 1));
+
+        const minR = (parsedMinColor >> 16) & 0xff;
+        const minG = (parsedMinColor >> 8) & 0xff;
+        const minB = parsedMinColor & 0xff;
+
+        const maxR = (parsedMaxColor >> 16) & 0xff;
+        const maxG = (parsedMaxColor >> 8) & 0xff;
+        const maxB = parsedMaxColor & 0xff;
+
+        colors[offset] = lerp(pct, minR, maxR);
+        colors[offset + 1] = lerp(pct, minG, maxG);
+        colors[offset + 2] = lerp(pct, minB, maxB);
       }
+    }
+    // use rainbow
+    else if (colorMode.mode === "rainbow") {
+      for (let i = 0; i < pointCount; i++) {
+        const offset = i * 3;
+        const val = colorFieldValues[i];
+        const pct = Math.max(0, Math.min((val - minColorFieldValue) / colorFieldRange, 1));
+        setRainbowColor(colors, offset, pct);
+      }
+    } else {
+      throw new Error(`unexpected color mode ${colorMode.mode}`);
     }
   }
 
@@ -258,14 +281,14 @@ export function getClickedInfo(maybeFullyDecodedMarker: MouseEventObject, instan
   return result;
 }
 
-function getAdditionalFieldNames(fields: PointCloud2Field[]): string[] {
+function getAdditionalFieldNames(fields: PointField[]): string[] {
   const allFields = fields.map((field) => field.name);
-  return difference(allFields, ["rgb", "rgbOverride", "x", "y", "z"]);
+  return difference(allFields, ["rgb", "x", "y", "z"]);
 }
 
 export function decodeAdditionalFields(marker: PointCloud2): { [fieldName: string]: number[] } {
-  const { fields, data, width, row_step: rowStep, height, point_step: dataStep, colorField } = marker;
-  const offsets = getFieldOffsetsAndReaders(fields, colorField, true);
+  const { fields, data, width, row_step, height, point_step } = marker;
+  const offsets = getFieldOffsetsAndReaders(fields);
   if (!offsets) {
     return {};
   }
@@ -277,9 +300,9 @@ export function decodeAdditionalFields(marker: PointCloud2): { [fieldName: strin
     return memo;
   }, {});
   for (let row = 0; row < height; row++) {
-    const dataOffset = row * rowStep;
+    const dataOffset = row * row_step;
     for (let col = 0; col < width; col++) {
-      const dataStart = col * dataStep + dataOffset;
+      const dataStart = col * point_step + dataOffset;
       for (const fieldName of additionalField) {
         const reader = offsets[fieldName].reader;
         if (reader) {
@@ -298,22 +321,10 @@ export function decodeAdditionalFields(marker: PointCloud2): { [fieldName: strin
   };
 }
 
-function getParsedColor(color) {
-  if (color) {
-    const rgbVals = color.split(",").map((char) => parseInt(char));
-    const r = rgbVals[0] || 0;
-    const g = rgbVals[1] || 0;
-    const b = rgbVals[2] || 0;
-    return [r, g, b];
-  }
-  return null;
-}
-
 // taken from http://docs.ros.org/jade/api/rviz/html/c++/point__cloud__transformers_8cpp_source.html
 // line 47
-// TODO - implement 1 solid color, hue change (e.g. spread from (55, 0, 0, 1) => (30, 0, 0, 1));
-function setColorFieldColor(colors: Uint8Array, idx: number, val: number, color?: string) {
-  const h = (1 - val) * 5.0 + 1.0;
+function setRainbowColor(colors: Uint8Array, offset: number, pct: number) {
+  const h = (1 - pct) * 5.0 + 1.0;
   const i = Math.floor(h);
   let f = h % 1.0;
   // if i is even
@@ -345,9 +356,9 @@ function setColorFieldColor(colors: Uint8Array, idx: number, val: number, color?
     g = n;
     b = 0;
   }
-  colors[idx] = r * 255;
-  colors[idx + 1] = g * 255;
-  colors[idx + 2] = b * 255;
+  colors[offset] = r * 255;
+  colors[offset + 1] = g * 255;
+  colors[offset + 2] = b * 255;
 }
 
 // Compare `data` field by reference because the same marker msg contains the same binary data,
@@ -356,9 +367,4 @@ const isPointCloudEqual = (a, b) => {
   return a.data === b.data && isEqual(a.settings, b.settings);
 };
 
-export const memoizedMapMarker = microMemoize(
-  ({ data, settings = {}, ...rest }) => {
-    return mapMarker({ data, ...rest, ...settings });
-  },
-  { isEqual: isPointCloudEqual, maxSize: 30 }
-);
+export const memoizedMapMarker = microMemoize(mapMarker, { isEqual: isPointCloudEqual, maxSize: 30 });

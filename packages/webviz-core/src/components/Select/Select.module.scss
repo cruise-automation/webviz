@@ -2,8 +2,8 @@
 .container {
   position: relative;
   margin: $control-margin;
-  margin-bottom: 8px;
   flex: 1 1 auto;
+  display: flex;
 
   &.open {
     @extend %floating-box;
@@ -11,6 +11,9 @@
 }
 
 .select {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
   background-color: rgba(255, 255, 255, 0.5);
   background-color: transparentize($text-normal, 0.2);
   border-radius: 4px;
@@ -19,12 +22,11 @@
   border: none;
   padding: $control-padding;
   cursor: pointer;
-  // make sure content does not overlap icon
-  padding-right: 20px;
   color: $text-input;
 
   .value {
     @include sans-serif;
+    flex: 1 1 auto;
   }
 
   &.open {
@@ -37,9 +39,7 @@
   }
 
   .icon {
-    position: absolute;
     font-size: 14px;
-    right: 4px;
   }
 }
 

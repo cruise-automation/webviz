@@ -34,7 +34,10 @@ describe("PointCloudBuilder", () => {
   });
 
   it("uses rgb values when rendering by rgb colorfield", () => {
-    const result = mapMarker({ ...POINT_CLOUD_MESSAGE, colorField: "rgb" });
+    const result = mapMarker({
+      ...POINT_CLOUD_MESSAGE,
+      settings: { colorMode: { mode: "rgb" } },
+    });
     const pos = result.points;
     const colorCodes = result.colors;
     expect(pos).toHaveLength(6);
@@ -55,7 +58,7 @@ describe("PointCloudBuilder", () => {
   it("builds point cloud with custom colors", () => {
     const input = {
       ...POINT_CLOUD_MESSAGE,
-      colorField: "x",
+      settings: { colorMode: { mode: "rainbow", colorField: "x" } },
     };
     const result = mapMarker(input);
     const pos = result.points;
@@ -73,6 +76,29 @@ describe("PointCloudBuilder", () => {
     expect(colorCodes[3]).toBe(255);
     expect(colorCodes[4]).toBe(0);
     expect(colorCodes[5]).toBe(0);
+  });
+
+  it("builds point cloud with custom flat color", () => {
+    const input = {
+      ...POINT_CLOUD_MESSAGE,
+      settings: { colorMode: { mode: "flat", flatColor: "#123456" } },
+    };
+    const result = mapMarker(input);
+    const pos = result.points;
+    const colorCodes = result.colors;
+    expect(pos).toHaveLength(6);
+    expect(Math.floor(pos[0])).toBe(-2239);
+    expect(Math.floor(pos[1])).toBe(-706);
+    expect(Math.floor(pos[2])).toBe(-3);
+    expect(Math.floor(pos[3])).toBe(-2239);
+    expect(Math.floor(pos[4])).toBe(-706);
+    expect(Math.floor(pos[5])).toBe(-3);
+    expect(colorCodes[0]).toBe(0x12);
+    expect(colorCodes[1]).toBe(0x34);
+    expect(colorCodes[2]).toBe(0x56);
+    expect(colorCodes[3]).toBe(0x12);
+    expect(colorCodes[4]).toBe(0x34);
+    expect(colorCodes[5]).toBe(0x56);
   });
 
   it("builds a point cloud with height 3", () => {
@@ -283,20 +309,106 @@ describe("PointCloudBuilder", () => {
       ],
     };
 
-    it("reads uint8", () => {
-      const result = mapMarker({ ...marker, colorField: "foo" });
-      // because we only have 2 values, the colors should be min/max of rainbow spectrum
-      expect(result.colors).toEqual(new Uint8Array([255, 0, 0, 255, 0, 255]));
+    it("reads uint8 rainbow with min/max value", () => {
+      // because we only have 2 values, the colors should be min/max
+      expect(
+        mapMarker({
+          ...marker,
+          settings: {
+            colorMode: {
+              mode: "rainbow",
+              colorField: "foo",
+            },
+          },
+        }).colors
+      ).toEqual(new Uint8Array([255, 0, 0, 255, 0, 255]));
+
+      // point 1 is halfway between minValue=5 and point 2, so color should be halfway in between
+      expect(
+        mapMarker({
+          ...marker,
+          settings: {
+            colorMode: {
+              mode: "rainbow",
+              colorField: "foo",
+              minValue: 5,
+            },
+          },
+        }).colors
+      ).toEqual(new Uint8Array([0, 255, 127, 255, 0, 255]));
+
+      // point 2 is halfway between point 1 and maxValue=11, so color should be halfway in between
+      expect(
+        mapMarker({
+          ...marker,
+          settings: {
+            colorMode: {
+              mode: "rainbow",
+              colorField: "foo",
+              maxValue: 11,
+            },
+          },
+        }).colors
+      ).toEqual(new Uint8Array([255, 0, 0, 0, 255, 127]));
+    });
+
+    it("reads uint8 custom gradient with min/max value", () => {
+      // because we only have 2 values, the colors should be min/max
+      expect(
+        mapMarker({
+          ...marker,
+          settings: {
+            colorMode: {
+              mode: "gradient",
+              colorField: "foo",
+              minColor: "#ff7700",
+              maxColor: "#0000ff",
+            },
+          },
+        }).colors
+      ).toEqual(new Uint8Array([0xff, 0x77, 0, 0, 0, 0xff]));
+
+      // point 1 is halfway between minValue=5 and point 2, so color should be halfway in between
+      expect(
+        mapMarker({
+          ...marker,
+          settings: {
+            colorMode: {
+              mode: "gradient",
+              colorField: "foo",
+              minValue: 5,
+              minColor: "#ff7700",
+              maxColor: "#0000ff",
+            },
+          },
+        }).colors
+      ).toEqual(new Uint8Array([0x7f, 0x3b, 0x7f, 0, 0, 0xff]));
+
+      // point 2 is halfway between point 1 and maxValue=11, so color should be halfway in between
+      expect(
+        mapMarker({
+          ...marker,
+          settings: {
+            colorMode: {
+              mode: "gradient",
+              colorField: "foo",
+              maxValue: 11,
+              minColor: "#ff7700",
+              maxColor: "#0000ff",
+            },
+          },
+        }).colors
+      ).toEqual(new Uint8Array([0xff, 0x77, 0, 0x7f, 0x3b, 0x7f]));
     });
 
     it("reads uint16", () => {
-      const result = mapMarker({ ...marker, colorField: "bar" });
+      const result = mapMarker({ ...marker, settings: { colorMode: { mode: "rainbow", colorField: "bar" } } });
       // because we only have 2 values, the colors should be min/max of rainbow spectrum
       expect(result.colors).toEqual(new Uint8Array([255, 0, 0, 255, 0, 255]));
     });
 
     it("reads int32", () => {
-      const result = mapMarker({ ...marker, colorField: "baz" });
+      const result = mapMarker({ ...marker, settings: { colorMode: { mode: "rainbow", colorField: "baz" } } });
       // because we only have 2 values, the colors should be min/max of rainbow spectrum
       expect(result.colors).toEqual(new Uint8Array([255, 0, 0, 255, 0, 255]));
     });

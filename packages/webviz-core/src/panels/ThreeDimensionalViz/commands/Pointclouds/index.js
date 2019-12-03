@@ -65,10 +65,10 @@ const pointCloud = (regl: Regl) => {
 
     uniforms: {
       pointSize: (context, props) => {
-        return props.pointSize || 2;
+        return props.settings?.pointSize || 2;
       },
       isCircle: (context, props) => {
-        return props.pointShape ? props.pointShape === "circle" : true;
+        return props.settings?.pointShape ? props.settings?.pointShape === "circle" : true;
       },
     },
 
@@ -84,11 +84,15 @@ const pointCloud = (regl: Regl) => {
   };
 };
 
-function instancedGetChildrenForHitmap<T: { points: Float32Array, pointSize?: number, colors: Uint8Array | number[] }>(
-  props: T[],
-  assignNextColors: AssignNextColorsFn,
-  excludedObjects: MouseEventObject[]
-): T[] {
+function instancedGetChildrenForHitmap<
+  T: {
+    points: Float32Array,
+    colors: Uint8Array | number[],
+    settings: {
+      pointSize?: number,
+    },
+  }
+>(props: T[], assignNextColors: AssignNextColorsFn, excludedObjects: MouseEventObject[]): T[] {
   return filterMap(props, (prop) => {
     // exclude all points if one has been interacted with because iterating through all points in
     // in pointcloud object is expensive
@@ -110,7 +114,8 @@ function instancedGetChildrenForHitmap<T: { points: Float32Array, pointSize?: nu
     });
     hitmapProp.colors = allColors;
     // expand the interaction area
-    hitmapProp.pointSize = (hitmapProp.pointSize || 2) * 5;
+    hitmapProp.settings = hitmapProp.settings ? { ...hitmapProp.settings } : {};
+    hitmapProp.settings.pointSize = (hitmapProp.settings.pointSize || 2) * 5;
     return hitmapProp;
   });
 }

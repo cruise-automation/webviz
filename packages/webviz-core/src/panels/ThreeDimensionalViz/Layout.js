@@ -203,9 +203,14 @@ export default function Layout({
   const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(null);
   const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(null);
   const selectedObject = selectedObjectState && selectedObjectState.selectedObject;
-  const editedTopics = useMemo(
-    () => Object.keys(topicSettings).filter((settingKey) => Object.keys(topicSettings[settingKey]).length),
-    [topicSettings]
+
+  // If topic settings are changing rapidly, such as when dragging a slider or color picker,
+  // the topicSettings will change, but we don't want to rebuild the tree each time so we
+  // check for shallow equality on the list of edited topics.
+  const editedTopics = useShallowMemo(
+    useMemo(() => Object.keys(topicSettings).filter((settingKey) => Object.keys(topicSettings[settingKey]).length), [
+      topicSettings,
+    ])
   );
 
   useLayoutEffect(
@@ -460,7 +465,7 @@ export default function Layout({
             return;
           }
           setEditTopicState({
-            tooltipPosX: editBtnRect.right - panelRect.left + 5,
+            tooltipPosX: Math.ceil(editBtnRect.right - panelRect.left + 5),
             topic: newEditTopic,
           });
         },

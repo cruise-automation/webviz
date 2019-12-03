@@ -10,7 +10,8 @@ import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import React from "react";
 
-import { SLabel, SInput, type TopicSettingsEditorProps } from ".";
+import { type TopicSettingsEditorProps } from ".";
+import { SLabel, SInput } from "./common";
 import Flex from "webviz-core/src/components/Flex";
 import type { PoseStamped } from "webviz-core/src/types/Messages";
 

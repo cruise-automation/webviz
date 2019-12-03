@@ -15,9 +15,11 @@ import TreeNode from "./TreeNode";
 export type { Node } from "./Node";
 
 type Props = {
+  disableCheckbox?: boolean,
   enableVisibilityToggle?: boolean,
   hideRoot?: boolean,
   onEditClick: (e: SyntheticMouseEvent<HTMLElement>, node: Node) => void,
+  onRemoveNode?: (node: Node) => void,
   onToggleCheck: (node: Node) => void,
   onToggleExpand: (node: Node) => void,
   onToggleVisibility?: (node: Node) => void,
@@ -31,14 +33,24 @@ export default class Tree extends PureComponent<Props> {
   };
 
   renderNode = (node: Node) => {
-    const { onToggleExpand, onToggleCheck, onEditClick, onToggleVisibility, enableVisibilityToggle } = this.props;
+    const {
+      disableCheckbox,
+      enableVisibilityToggle,
+      onEditClick,
+      onRemoveNode,
+      onToggleCheck,
+      onToggleExpand,
+      onToggleVisibility,
+    } = this.props;
     return (
       <TreeNode
         depth={0}
+        disableCheckbox={disableCheckbox}
         enableVisibilityToggle={enableVisibilityToggle}
         key={node.id}
         node={node}
         onEditClick={onEditClick}
+        onRemoveNode={onRemoveNode}
         onToggleCheck={onToggleCheck}
         onToggleExpand={onToggleExpand}
         onToggleVisibility={onToggleVisibility}

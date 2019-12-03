@@ -8,12 +8,13 @@
 import microMemoize from "micro-memoize";
 import { TimeUtil, type Time } from "rosbag";
 
+import signal from "webviz-core/shared/signal";
+import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeTrust } from "webviz-core/src/actions/userNodes";
 // $FlowFixMe - flow does not like workers.
 import UserNodePlayerWorker from "worker-loader!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
 // $FlowFixMe - flow does not like workers.
 import NodeDataWorker from "worker-loader!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
 
-import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeTrust } from "webviz-core/src/actions/userNodes";
 import type {
   AdvertisePayload,
   Message,
@@ -39,7 +40,6 @@ import type { UserNodeLog } from "webviz-core/src/players/UserNodePlayer/types";
 import type { UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import Rpc from "webviz-core/src/util/Rpc";
-import signal from "webviz-core/src/util/signal";
 
 type UserNodeActions = {
   setUserNodeDiagnostics: SetUserNodeDiagnostics,

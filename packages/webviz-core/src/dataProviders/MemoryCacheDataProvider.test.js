@@ -138,6 +138,17 @@ describe("MemoryCacheDataProvider", () => {
       ).toEqual({ blockIndexesToKeep: new Set([1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
     });
 
+    it("keeps all blocks if we haven't reached the maximum cache size yet, even when having some empty blocks", () => {
+      expect(
+        getBlocksToKeep({
+          recentBlockRanges: [{ start: 0, end: 5 }],
+          blockSizesInBytes: [1, 0, 2, undefined, undefined],
+          minimumBlocksToKeep: 0,
+          maxCacheSizeInBytes: 5,
+        })
+      ).toEqual({ blockIndexesToKeep: new Set([2, 1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
+    });
+
     it("keeps blocks when we *just* exceed the maximum", () => {
       expect(
         getBlocksToKeep({

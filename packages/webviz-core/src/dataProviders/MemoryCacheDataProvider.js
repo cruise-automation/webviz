@@ -30,7 +30,7 @@ const log = new Logger(__filename);
 
 // I (JP) mostly just made these numbers up. It might be worth experimenting with different values
 // for these, but it seems to work reasonably well in my tests.
-const BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
+export const MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
 const MINIMUM_CACHE_SIZE_NS = 35e9; // Number of nanoseconds that we'll always keep in the cache.
 const READ_AHEAD_NS = 3e9; // Number of nanoseconds to read ahead from the last `getMessages` call.
 const CACHE_SIZE_BYTES = 2.5e9; // Number of bytes that we aim to keep in the cache.
@@ -82,7 +82,7 @@ export function getBlocksToKeep({
     for (let blockIndex = blockRange.end - 1; blockIndex >= blockRange.start; blockIndex--) {
       // If we don't have size, there are no blocks to keep!
       const sizeInBytes = blockSizesInBytes[blockIndex];
-      if (!sizeInBytes) {
+      if (sizeInBytes === undefined) {
         continue;
       }
 
@@ -165,7 +165,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     if (this._totalNs > Number.MAX_SAFE_INTEGER * 0.9) {
       throw new Error("Time range is too long to be supported");
     }
-    this._blocks = new Array(Math.ceil(this._totalNs / BLOCK_SIZE_NS));
+    this._blocks = new Array(Math.ceil(this._totalNs / MEM_CACHE_BLOCK_SIZE_NS));
     this._updateProgress();
 
     return result;
@@ -182,8 +182,8 @@ export default class MemoryCacheDataProvider implements DataProvider {
       end: toNanoSec(subtractTimes(endTime, this._startTime)) + 1, // `Range` defines `end` as exclusive.
     };
     const blockRange = {
-      start: Math.floor(timeRange.start / BLOCK_SIZE_NS),
-      end: Math.floor((timeRange.end - 1) / BLOCK_SIZE_NS) + 1, // `Range` defines `end` as exclusive.
+      start: Math.floor(timeRange.start / MEM_CACHE_BLOCK_SIZE_NS),
+      end: Math.floor((timeRange.end - 1) / MEM_CACHE_BLOCK_SIZE_NS) + 1, // `Range` defines `end` as exclusive.
     };
     return new Promise((resolve) => {
       this._readRequests.push({ timeRange, blockRange, topics, resolve });
@@ -265,7 +265,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
       readRequestRange: this._readRequests[0] ? this._readRequests[0].blockRange : undefined,
       downloadedRanges: this._getDownloadedBlockRanges(),
       lastResolvedCallbackEnd: this._lastResolvedCallbackEnd,
-      cacheSize: this._totalNs <= MINIMUM_CACHE_SIZE_NS ? Infinity : Math.ceil(READ_AHEAD_NS / BLOCK_SIZE_NS),
+      cacheSize: this._totalNs <= MINIMUM_CACHE_SIZE_NS ? Infinity : Math.ceil(READ_AHEAD_NS / MEM_CACHE_BLOCK_SIZE_NS),
       fileSize: this._blocks.length,
       continueDownloadingThreshold: 3, // Somewhat arbitrary number to not create new connections all the time.
     });
@@ -314,10 +314,10 @@ export default class MemoryCacheDataProvider implements DataProvider {
         : currentConnection.topics;
 
       // Get messages from the underlying provider.
-      const startTime = TimeUtil.add(this._startTime, fromNanoSec(currentBlockIndex * BLOCK_SIZE_NS));
+      const startTime = TimeUtil.add(this._startTime, fromNanoSec(currentBlockIndex * MEM_CACHE_BLOCK_SIZE_NS));
       const endTime = TimeUtil.add(
         this._startTime,
-        fromNanoSec(Math.min(this._totalNs, (currentBlockIndex + 1) * BLOCK_SIZE_NS) - 1) // endTime is inclusive.
+        fromNanoSec(Math.min(this._totalNs, (currentBlockIndex + 1) * MEM_CACHE_BLOCK_SIZE_NS) - 1) // endTime is inclusive.
       );
       const messages = topics.length ? await this._provider.getMessages(startTime, endTime, topics) : [];
 
@@ -403,7 +403,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     const { blockIndexesToKeep, newRecentRanges } = getBlocksToKeep({
       recentBlockRanges: this._recentBlockRanges,
       blockSizesInBytes: this._blocks.map((block) => (block ? block.sizeInBytes : undefined)),
-      minimumBlocksToKeep: Math.ceil(MINIMUM_CACHE_SIZE_NS / BLOCK_SIZE_NS),
+      minimumBlocksToKeep: Math.ceil(MINIMUM_CACHE_SIZE_NS / MEM_CACHE_BLOCK_SIZE_NS),
       maxCacheSizeInBytes: CACHE_SIZE_BYTES,
     });
 

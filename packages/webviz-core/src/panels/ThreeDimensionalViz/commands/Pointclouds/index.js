@@ -17,7 +17,7 @@ import {
 } from "regl-worldview";
 
 import filterMap from "webviz-core/src/filterMap";
-import { mapMarker } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
+import { memoizedMapMarker } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import { type PointCloud } from "webviz-core/src/types/Messages";
 
 const pointCloud = (regl: Regl) => {
@@ -118,19 +118,10 @@ function instancedGetChildrenForHitmap<T: { points: Float32Array, pointSize?: nu
 type Props = { ...CommonCommandProps, children: PointCloud[] };
 
 export default function PointClouds({ children, ...rest }: Props) {
-  const arr = (Array.isArray(children) ? children : [children]).filter(Boolean);
-  const markers = arr.map((prop) => {
-    return prop.settings
-      ? mapMarker({
-          ...prop,
-          ...prop.settings,
-        })
-      : mapMarker(prop);
-  });
-
+  const decodedMarkers = children.map(memoizedMapMarker);
   return (
     <Command getChildrenForHitmap={instancedGetChildrenForHitmap} {...rest} reglCommand={pointCloud}>
-      {markers}
+      {decodedMarkers}
     </Command>
   );
 }

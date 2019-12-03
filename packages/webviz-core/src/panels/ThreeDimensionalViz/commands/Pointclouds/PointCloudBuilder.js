@@ -5,169 +5,116 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { find, omit } from "lodash";
+import { omit, isEqual, difference } from "lodash";
+import microMemoize from "micro-memoize";
+import { type MouseEventObject } from "regl-worldview";
 
+import { type FieldReader, Float32Reader, Int32Reader, Uint16Reader, Int16Reader, Uint8Reader } from "./Readers";
 import log from "webviz-core/src/panels/ThreeDimensionalViz/logger";
 import type { PointCloud2, PointCloud2Field } from "webviz-core/src/types/Messages";
 
-const datatype = {
+const EMPTY_ARRAY = [];
+const POINT_STEP = 12;
+const COLOR_STEP = 3;
+const FLOAT32_FIELDS = ["x", "y", "z"];
+const DATATYPE = {
   uint8: 2,
   uint16: 4,
+  int16: 3,
   int32: 5,
   float32: 7,
 };
 
-interface FieldReader {
-  read(data: number[], index: number): number;
-}
+type FieldOffsetsAndReaders = {
+  x: { offset: number },
+  y: { offset: number },
+  z: { offset: number },
+  rgb?: { offset: number },
+  rgbOverride?: { offset: number, reader: ?FieldReader },
+  [additionalFieldName: string]: { offset: number, reader: FieldReader },
+};
 
-class Float32Reader implements FieldReader {
-  offset: number;
-  view: DataView;
-  constructor(offset: number) {
-    this.offset = offset;
-    const buffer = new ArrayBuffer(4);
-    this.view = new DataView(buffer);
-  }
-
-  read(data: number[], index: number): number {
-    this.view.setUint8(0, data[index + this.offset]);
-    this.view.setUint8(1, data[index + this.offset + 1]);
-    this.view.setUint8(2, data[index + this.offset + 2]);
-    this.view.setUint8(3, data[index + this.offset + 3]);
-    return this.view.getFloat32(0, true);
-  }
-}
-
-class Int32Reader implements FieldReader {
-  offset: number;
-  view: DataView;
-  constructor(offset: number) {
-    this.offset = offset;
-    const buffer = new ArrayBuffer(4);
-    this.view = new DataView(buffer);
-  }
-
-  read(data: number[], index: number): number {
-    this.view.setUint8(0, data[index + this.offset]);
-    this.view.setUint8(1, data[index + this.offset + 1]);
-    this.view.setUint8(2, data[index + this.offset + 2]);
-    this.view.setUint8(3, data[index + this.offset + 3]);
-    return this.view.getInt32(0, true);
+function getReader(datatype, offset: number, isColorField?: boolean) {
+  switch (datatype) {
+    case DATATYPE.float32:
+      return new Float32Reader(offset);
+    case DATATYPE.uint8:
+      return new Uint8Reader(offset);
+    case DATATYPE.uint16:
+      return new Uint16Reader(offset);
+    case DATATYPE.int16:
+      return new Int16Reader(offset);
+    case DATATYPE.int32:
+      return new Int32Reader(offset);
+    default:
+      if (isColorField) {
+        log.error("colorField of value other than float32, uint16, int32, or uint8 not supported", datatype);
+      } else {
+        log.error("Unsupported datatype", datatype);
+      }
   }
 }
 
-class Uint16Reader implements FieldReader {
-  offset: number;
-  view: DataView;
-  constructor(offset: number) {
-    this.offset = offset;
-    const buffer = new ArrayBuffer(2);
-    this.view = new DataView(buffer);
-  }
-
-  read(data: number[], index: number): number {
-    this.view.setUint8(0, data[index + this.offset]);
-    this.view.setUint8(1, data[index + this.offset + 1]);
-    return this.view.getUint16(0, true);
-  }
-}
-
-class Uint8Reader implements FieldReader {
-  offset: number;
-  constructor(offset: number) {
-    this.offset = offset;
-  }
-
-  read(data: number[], index: number): number {
-    return data[index + this.offset];
-  }
-}
-
-class FieldOffsets {
-  x: number = 0;
-  y: number = 0;
-  z: number = 0;
-  rgb: number = 0;
-  reader: ?FieldReader;
-}
-
-function getFieldOffsets(fields: PointCloud2Field[], colorField: ?string): ?FieldOffsets {
-  const result = new FieldOffsets();
-  const xField = find(fields, { name: "x" });
-  if (!xField) {
-    log.error("Unable to find x field for point cloud");
-    return null;
-  }
-  if (xField.datatype !== datatype.float32) {
-    log.error("x value not represented as float32");
-    return null;
-  }
-  result.x = xField.offset;
-
-  const yField = find(fields, { name: "y" });
-  if (!yField) {
-    log.error("Unable to find y field for point cloud");
-    return null;
-  }
-  if (yField.datatype !== datatype.float32) {
-    log.error("y value not represented as float32");
-    return null;
-  }
-  result.y = yField.offset;
-
-  const zField = find(fields, { name: "z" });
-  if (!zField) {
-    log.error("Unable to find z field for point cloud");
-    return null;
-  }
-  if (zField.datatype !== datatype.float32) {
-    log.error("z value not represented ast float32");
-    return null;
-  }
-  result.z = zField.offset;
-
-  const rgbField = find(fields, { name: "rgb" });
-  result.rgb = rgbField ? rgbField.offset : -1;
-
-  const field = colorField ? find(fields, { name: colorField }) : false;
-  if (field) {
-    switch (field.datatype) {
-      case datatype.float32:
-        result.reader = new Float32Reader(field.offset);
-        break;
-      case datatype.uint8:
-        result.reader = new Uint8Reader(field.offset);
-        break;
-      case datatype.uint16:
-        result.reader = new Uint16Reader(field.offset);
-        break;
-      case datatype.int32:
-        result.reader = new Int32Reader(field.offset);
-        break;
-      default:
-        log.error("colorField of value other than float32, uint16, int32, or uint8 not supported", field.datatype);
+function getFieldOffsetsAndReaders(
+  fields: PointCloud2Field[],
+  colorField: ?string,
+  decodeAllFields?: boolean
+): ?FieldOffsetsAndReaders {
+  const result = {};
+  fields.forEach((field) => {
+    const { name, datatype, offset = 0 } = field;
+    if (name === colorField) {
+      result.rgbOverride = { offset, reader: getReader(datatype, offset, true) };
     }
+    if (FLOAT32_FIELDS.includes(name)) {
+      if (datatype !== DATATYPE.float32) {
+        log.error(`${name} value not represented as float32`);
+      } else {
+        result[name] = { offset };
+      }
+    } else if (name === "rgb") {
+      result.rgb = field;
+    } else if (decodeAllFields) {
+      // additional field to be decoded after interacting with the point cloud
+      result[name] = { offset, reader: getReader(datatype, offset) };
+    }
+  });
+
+  if (result.x == null) {
+    log.error("Unable to find x field for point cloud");
+    return;
+  }
+  if (result.y == null) {
+    log.error("Unable to find y field for point cloud");
+    return;
+  }
+  if (result.z == null) {
+    log.error("Unable to find z field for point cloud");
+    return;
+  }
+  if (result.rgb == null) {
+    result.rgb = { offset: -1 };
   }
 
   return result;
 }
 
-const emptyArray = [];
-
-export function mapMarker(marker: PointCloud2) {
+export function mapMarker(marker: PointCloud2, decodeAllFields?: boolean) {
   // http://docs.ros.org/api/sensor_msgs/html/msg/PointCloud2.html
   const { fields, data, width, row_step: rowStep, height, point_step: dataStep, colorField, color } = marker;
+  const offsetAndReaders = getFieldOffsetsAndReaders(fields, colorField);
 
-  const offsets = getFieldOffsets(fields, colorField);
-
-  if (!offsets) {
+  if (!offsetAndReaders) {
     console.warn("missing field offsets for marker");
     return { points: [], colors: [] };
   }
-
-  const pointStep = 12;
-  const colorStep = 3;
+  const {
+    x: { offset: xOffset },
+    y: { offset: yOffset },
+    z: { offset: zOffset },
+    rgb: { offset: rgbOffset } = {},
+    rgbOverride: { reader: rgbOverrideReader } = {},
+  } = offsetAndReaders;
   const points = new Uint8Array(width * height * 12);
   const colors = new Uint8Array(width * height * 3);
   let pointCount = 0;
@@ -176,24 +123,23 @@ export function mapMarker(marker: PointCloud2) {
   // the field "rgb" has a special parsing code path - it's packed into the first three bytes of a float32
   // so if the colorField is rgb don't use a reader - its faster to just read the value directly
   // it also is the default rendering option if no custom colorField is specified
-  const useRGB = offsets.rgb !== -1 && (!colorField || colorField === "rgb");
-  const useColorField = !useRGB && offsets.reader;
-
+  const useRGB = rgbOffset !== -1 && (!colorField || colorField === "rgb");
+  const useColorField = !useRGB && offsetAndReaders.rgbOverride;
   // use empty array if not coloring with colorField to avoid unneeded allocation
-  const colorFieldValues = useColorField ? new Array(width * height) : emptyArray;
+  const colorFieldValues = useColorField ? new Array(width * height) : EMPTY_ARRAY;
 
   // in practice we use height:1 pointCloud2 messages
   // but for completeness sake, we support any height of array
-  for (let j = 0; j < height; j++) {
-    const dataOffset = j * rowStep;
-    for (let i = 0; i < width; i++) {
-      const dataStart = i * dataStep + dataOffset;
-      const x1 = data[dataStart + offsets.x];
-      const x2 = data[dataStart + offsets.x + 1];
-      const x3 = data[dataStart + offsets.x + 2];
-      const x4 = data[dataStart + offsets.x + 3];
+  for (let row = 0; row < height; row++) {
+    const dataOffset = row * rowStep;
+    for (let col = 0; col < width; col++) {
+      const dataStart = col * dataStep + dataOffset;
+      const x1 = data[dataStart + xOffset];
+      const x2 = data[dataStart + xOffset + 1];
+      const x3 = data[dataStart + xOffset + 2];
+      const x4 = data[dataStart + xOffset + 3];
 
-      const pointStart = pointCount * pointStep;
+      const pointStart = pointCount * POINT_STEP;
 
       // if the value is NaN then don't count this point
       // this is to support non-dense point clouds
@@ -209,26 +155,25 @@ export function mapMarker(marker: PointCloud2) {
       points[pointStart + 3] = x4;
 
       // add y point
-      points[pointStart + 4] = data[dataStart + offsets.y];
-      points[pointStart + 5] = data[dataStart + offsets.y + 1];
-      points[pointStart + 6] = data[dataStart + offsets.y + 2];
-      points[pointStart + 7] = data[dataStart + offsets.y + 3];
+      points[pointStart + 4] = data[dataStart + yOffset];
+      points[pointStart + 5] = data[dataStart + yOffset + 1];
+      points[pointStart + 6] = data[dataStart + yOffset + 2];
+      points[pointStart + 7] = data[dataStart + yOffset + 3];
 
       // add z point
-      points[pointStart + 8] = data[dataStart + offsets.z];
-      points[pointStart + 9] = data[dataStart + offsets.z + 1];
-      points[pointStart + 10] = data[dataStart + offsets.z + 2];
-      points[pointStart + 11] = data[dataStart + offsets.z + 3];
+      points[pointStart + 8] = data[dataStart + zOffset];
+      points[pointStart + 9] = data[dataStart + zOffset + 1];
+      points[pointStart + 10] = data[dataStart + zOffset + 2];
+      points[pointStart + 11] = data[dataStart + zOffset + 3];
 
       // add color
-      const colorStart = pointCount * colorStep;
-
+      const colorStart = pointCount * COLOR_STEP;
       if (useRGB) {
-        colors[colorStart] = data[dataStart + offsets.rgb];
-        colors[colorStart + 1] = data[dataStart + offsets.rgb + 1];
-        colors[colorStart + 2] = data[dataStart + offsets.rgb + 2];
-      } else if (useColorField && offsets.reader) {
-        const colorValue = offsets.reader.read(data, dataStart);
+        colors[colorStart] = data[dataStart + rgbOffset];
+        colors[colorStart + 1] = data[dataStart + rgbOffset + 1];
+        colors[colorStart + 2] = data[dataStart + rgbOffset + 2];
+      } else if (useColorField && rgbOverrideReader) {
+        const colorValue = rgbOverrideReader.read(data, dataStart);
         colorFieldValues[pointCount] = colorValue;
         if (!Number.isNaN(colorValue)) {
           minColorFieldValue = Math.min(minColorFieldValue, colorValue);
@@ -240,7 +185,6 @@ export function mapMarker(marker: PointCloud2) {
         colors[colorStart + 1] = 255;
         colors[colorStart + 2] = 255;
       }
-
       // increase point count by 1
       pointCount++;
     }
@@ -271,9 +215,86 @@ export function mapMarker(marker: PointCloud2) {
   }
 
   return {
-    ...omit(marker, "data"), // no need to show data in the Object details since we already translated to markers
+    ...marker,
     points: new Float32Array(points.buffer, 0, pointCount * 3),
     colors,
+  };
+}
+
+type ClickedInfo = {
+  clickedPoint: number[],
+  clickedPointColor?: number[],
+  additionalFieldValues?: { [name: string]: ?number },
+};
+
+// extract clicked point's position, color and additional field values to display in the UI
+export function getClickedInfo(maybeFullyDecodedMarker: MouseEventObject, instanceIndex: ?number): ?ClickedInfo {
+  const { points, colors, fields, ...rest } = maybeFullyDecodedMarker;
+  const allPoints: number[] = points || [];
+  let result: ?ClickedInfo;
+  if (allPoints.length && instanceIndex != null && instanceIndex >= 0 && instanceIndex * 3 < allPoints.length) {
+    result = { clickedPoint: [] };
+    const baseIdx = instanceIndex * 3;
+    result.clickedPoint.push(allPoints[baseIdx]);
+    result.clickedPoint.push(allPoints[baseIdx + 1]);
+    result.clickedPoint.push(allPoints[baseIdx + 2]);
+    const allColors: number[] = colors || [];
+    const baseColorR = allColors[baseIdx];
+    const baseColorG = allColors[baseIdx + 1];
+    const baseColorB = allColors[baseIdx + 2];
+    if (baseColorR && baseColorG && baseColorB) {
+      result.clickedPointColor = [baseColorR, baseColorG, baseColorB, 1];
+    }
+    const additionalField = getAdditionalFieldNames(fields);
+    if (additionalField.length) {
+      result.additionalFieldValues = additionalField.reduce((memo, fieldName) => {
+        if (rest[fieldName]) {
+          memo[fieldName] = rest[fieldName][instanceIndex];
+        }
+        return memo;
+      }, {});
+    }
+  }
+  return result;
+}
+
+function getAdditionalFieldNames(fields: PointCloud2Field[]): string[] {
+  const allFields = fields.map((field) => field.name);
+  return difference(allFields, ["rgb", "rgbOverride", "x", "y", "z"]);
+}
+
+export function decodeAdditionalFields(marker: PointCloud2): { [fieldName: string]: number[] } {
+  const { fields, data, width, row_step: rowStep, height, point_step: dataStep, colorField } = marker;
+  const offsets = getFieldOffsetsAndReaders(fields, colorField, true);
+  if (!offsets) {
+    return {};
+  }
+
+  let pointCount = 0;
+  const additionalField = getAdditionalFieldNames(fields);
+  const otherFieldsValues = additionalField.reduce((memo, name) => {
+    memo[name] = new Array(width * height);
+    return memo;
+  }, {});
+  for (let row = 0; row < height; row++) {
+    const dataOffset = row * rowStep;
+    for (let col = 0; col < width; col++) {
+      const dataStart = col * dataStep + dataOffset;
+      for (const fieldName of additionalField) {
+        const reader = offsets[fieldName].reader;
+        if (reader) {
+          const fieldValue = reader.read(data, dataStart);
+          otherFieldsValues[fieldName][pointCount] = fieldValue;
+        }
+      }
+      // increase point count by 1
+      pointCount++;
+    }
+  }
+
+  return {
+    ...omit(marker, "data"), // no need to include data since all fields have been decoded
+    ...otherFieldsValues,
   };
 }
 
@@ -328,3 +349,16 @@ function setColorFieldColor(colors: Uint8Array, idx: number, val: number, color?
   colors[idx + 1] = g * 255;
   colors[idx + 2] = b * 255;
 }
+
+// Compare `data` field by reference because the same marker msg contains the same binary data,
+// and `settings` field by deep-equality check since it's recreated whenever Layout re-renders.
+const isPointCloudEqual = (a, b) => {
+  return a.data === b.data && isEqual(a.settings, b.settings);
+};
+
+export const memoizedMapMarker = microMemoize(
+  ({ data, settings = {}, ...rest }) => {
+    return mapMarker({ data, ...rest, ...settings });
+  },
+  { isEqual: isPointCloudEqual, maxSize: 30 }
+);

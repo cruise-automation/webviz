@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { get, difference } from "lodash";
+import { get, difference, isEqual } from "lodash";
 import React, {
   type Node,
   useMemo,
@@ -174,7 +174,14 @@ export default function Layout({
       }),
     [checkedNodes, topicDisplayMode, topics]
   );
-  useLayoutEffect(() => saveConfig({ checkedNodes: newCheckedNodes }), [newCheckedNodes, saveConfig]);
+  useLayoutEffect(
+    () => {
+      if (!isEqual(checkedNodes.sort(), newCheckedNodes.sort())) {
+        saveConfig({ checkedNodes: newCheckedNodes });
+      }
+    },
+    [checkedNodes, newCheckedNodes, saveConfig]
+  );
 
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
   const { globalVariables, setGlobalVariables } = useGlobalVariables();

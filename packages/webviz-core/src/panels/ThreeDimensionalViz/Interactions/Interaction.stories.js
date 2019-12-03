@@ -16,6 +16,11 @@ import useLinkedGlobalVariables from "./useLinkedGlobalVariables";
 import Flex from "webviz-core/src/components/Flex";
 import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
+import {
+  POINT_CLOUD_MESSAGE,
+  POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
+} from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/fixture/pointCloudData";
+import { mapMarker } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 import colors from "webviz-core/src/styles/colors.module.scss";
 
@@ -217,21 +222,6 @@ storiesOf("<Interaction>", module)
         <PanelSetupWithData title="With interactionData">
           <Interactions {...sharedProps} />
         </PanelSetupWithData>
-        <PanelSetupWithData title="PointCloud">
-          <Interactions
-            {...sharedProps}
-            selectedObject={{
-              instanceIndex: 0,
-              object: {
-                ...selectedObject.object,
-                type: 102,
-                points: [1, 2, 3, 4, 5, 6],
-                colors: [124, 212, 214, 14, 45, 116],
-              },
-            }}
-            interactionData={{ topic: "/foo/bar", associatedTopics: ["/track/foo", "/track/bar"] }}
-          />
-        </PanelSetupWithData>
         <PanelSetupWithData
           title="Clicked link button"
           onMount={(el) => {
@@ -256,6 +246,43 @@ storiesOf("<Interaction>", module)
           <Interactions
             {...sharedProps}
             selectedObject={{ ...selectedObject, interactionData: { topic: "/foo/bar" } }}
+          />
+        </PanelSetupWithData>
+      </SWrapper>
+    );
+  })
+  .add("PointCloud", () => {
+    const result = mapMarker(POINT_CLOUD_MESSAGE);
+    const resultWithAdditionalFields = mapMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS);
+
+    return (
+      <SWrapper>
+        <PanelSetupWithData title="default with point color">
+          <Interactions
+            {...sharedProps}
+            selectedObject={{
+              instanceIndex: 0,
+              object: {
+                ...selectedObject.object,
+                type: 102,
+                ...result,
+              },
+            }}
+            interactionData={{ topic: "/foo/bar", associatedTopics: ["/track/foo", "/track/bar"] }}
+          />
+        </PanelSetupWithData>
+        <PanelSetupWithData title="with additional fields">
+          <Interactions
+            {...sharedProps}
+            selectedObject={{
+              instanceIndex: 0,
+              object: {
+                ...selectedObject.object,
+                type: 102,
+                ...resultWithAdditionalFields,
+              },
+            }}
+            interactionData={{ topic: "/foo/bar", associatedTopics: ["/track/foo", "/track/bar"] }}
           />
         </PanelSetupWithData>
       </SWrapper>

@@ -22,9 +22,10 @@ import ExpandingToolbar, { ToolGroup, ToolGroupFixedSizePane } from "webviz-core
 import Icon from "webviz-core/src/components/Icon";
 import { useChangeDetector } from "webviz-core/src/components/MessageHistory/hooks";
 import PanelContext from "webviz-core/src/components/PanelContext";
+import { decodeAdditionalFields } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
-import colors from "webviz-core/src/styles/colors.module.scss";
 import type { SaveConfig, PanelConfig } from "webviz-core/src/types/panels";
+import { colors } from "webviz-core/src/util/colors";
 
 export const SRow = styled.div`
   display: flex;
@@ -33,15 +34,15 @@ export const SRow = styled.div`
   margin: 4px 0;
 `;
 export const SLabel = styled.label`
-  width: 96px;
+  width: ${(props) => (props.width ? `${props.width}px` : "80px")};
   margin: 4px 0;
 `;
 export const SValue = styled.div`
-  color: ${colors.lightPurple};
+  color: ${colors.HIGHLIGHT};
   word-break: break-word;
 `;
 export const SEmptyState = styled.div`
-  color: ${colors.textMuted};
+  color: ${colors.TEXT_MUTED};
   line-height: 1.4;
   margin-bottom: 8px;
 `;
@@ -91,6 +92,11 @@ const InteractionsBaseComponent = React.memo<PropsWithConfig>(function Interacti
 
   const { object } = selectedObject || {};
   const isPointCloud = object && object.type === 102;
+  const maybeFullyDecodedObject = React.useMemo(
+    () => (isPointCloud ? { ...selectedObject, object: decodeAdditionalFields(object) } : selectedObject),
+    [isPointCloud, object, selectedObject]
+  );
+
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
 
   return (
@@ -115,10 +121,12 @@ const InteractionsBaseComponent = React.memo<PropsWithConfig>(function Interacti
           {selectedObject ? (
             <>
               {interactionData && <GeneralInfo selectedObject={selectedObject} interactionData={interactionData} />}
-              {isPointCloud && <PointCloudDetails selectedObject={selectedObject} interactionData={interactionData} />}
+              {isPointCloud && (
+                <PointCloudDetails selectedObject={maybeFullyDecodedObject} interactionData={interactionData} />
+              )}
               <ObjectDetails
                 linkedGlobalVariables={linkedGlobalVariables}
-                selectedObject={selectedObject}
+                selectedObject={maybeFullyDecodedObject}
                 interactionData={interactionData}
               />
             </>

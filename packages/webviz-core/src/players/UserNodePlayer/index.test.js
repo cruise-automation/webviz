@@ -8,6 +8,7 @@
 
 import { isPlainObject } from "lodash";
 
+import signal from "webviz-core/shared/signal";
 import { type SetUserNodeTrust } from "webviz-core/src/actions/userNodes";
 import FakePlayer from "webviz-core/src/components/MessagePipeline/FakePlayer";
 import NodePlayer from "webviz-core/src/players/NodePlayer";
@@ -18,7 +19,6 @@ import transform from "webviz-core/src/players/UserNodePlayer/nodeTransformerWor
 import { Sources, DiagnosticSeverity, ErrorCodes } from "webviz-core/src/players/UserNodePlayer/types";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
-import signal from "webviz-core/src/util/signal";
 
 const nodeId = "nodeId";
 

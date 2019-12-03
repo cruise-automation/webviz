@@ -7,8 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import NodePlayer from "./NodePlayer";
+import signal from "webviz-core/shared/signal";
 import FakePlayer from "webviz-core/src/components/MessagePipeline/FakePlayer";
-import signal from "webviz-core/src/util/signal";
 
 const node = {
   inputs: ["/input/foo", "/input/bar"],

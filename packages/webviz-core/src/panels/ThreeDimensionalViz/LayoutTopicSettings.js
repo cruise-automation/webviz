@@ -43,12 +43,16 @@ function LayoutTopicSettings({
         // stop the event from bubbling up to onControlsOverlayClick but don't preventDefault because checkboxes, buttons, etc. should continue to work
         cancelClick: (e: SyntheticMouseEvent<HTMLDivElement>) => e.stopPropagation(),
         onCloseTopicSettings: () => setEditTopicState(null),
-        onSettingsChange: (settings: {}) => {
+        onSettingsChange: (settings: {} | ((prevSettings: {}) => {})) => {
           if (!editTopicState) {
             return;
           }
           saveConfig({
-            topicSettings: { ...topicSettings, [editTopicState.topic.name]: settings },
+            topicSettings: {
+              ...topicSettings,
+              [editTopicState.topic.name]:
+                typeof settings === "function" ? settings(topicSettings[editTopicState.topic.name] || {}) : settings,
+            },
           });
         },
       };

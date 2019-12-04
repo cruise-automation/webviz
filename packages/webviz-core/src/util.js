@@ -52,6 +52,16 @@ export function arrayToPoint(v: ?[number, number, number]) {
   return { x: v[0], y: v[1], z: v[2] };
 }
 
+// returns the linear interpolation between a and b based on unit-range variable t
+export function lerp(t: number, a: number, b: number): number {
+  // Clamp t to (0, 1)
+  t = Math.min(Math.max(t, 0.0), 1.0);
+  if (a === b) {
+    return a;
+  }
+  return a + t * (b - a);
+}
+
 // the following regex captures characters allowed in the value of a kv-pair in the query component
 // of a URI, minus "&" and "+" because they are handled specially by browsers.
 //   https://tools.ietf.org/html/rfc3986

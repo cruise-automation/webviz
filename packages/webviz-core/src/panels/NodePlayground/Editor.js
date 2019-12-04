@@ -21,7 +21,7 @@ import {
 
 const VS_WEBVIZ_THEME = "vs-webviz";
 
-type Props = { script: string, setScript: (script: string) => void, vimMode: boolean };
+export type Props = { script: string, setScript: (script: string) => void, vimMode: boolean };
 const Editor = ({ script, setScript, vimMode }: Props) => {
   const editorRef = React.useRef(null);
   const vimModeRef = React.useRef(null);

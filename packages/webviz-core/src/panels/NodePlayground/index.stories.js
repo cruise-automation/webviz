@@ -12,6 +12,7 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 
 import NodePlayground, { NodePlaygroundSettings } from "webviz-core/src/panels/NodePlayground";
 import type { Explorer } from "webviz-core/src/panels/NodePlayground";
+import Editor, { type Props } from "webviz-core/src/panels/NodePlayground/Editor";
 import testDocs from "webviz-core/src/panels/NodePlayground/index.test.md";
 import Sidebar from "webviz-core/src/panels/NodePlayground/Sidebar";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
@@ -54,11 +55,19 @@ const logs = [
 ];
 
 storiesOf("<NodePlayground>", module)
-  .addDecorator(withScreenshot({ delay: 10000 }))
+  .addDecorator(withScreenshot({ delay: 1000 }))
   .add("welcome screen", () => {
     return (
       <PanelSetup fixture={fixture}>
-        <NodePlayground />
+        <NodePlayground
+          config={{
+            selectedNodeId: "nodeId1",
+            vimMode: false,
+
+            // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+          }}
+        />
       </PanelSetup>
     );
   })
@@ -71,7 +80,15 @@ storiesOf("<NodePlayground>", module)
             el.querySelectorAll("[data-test=node-explorer]")[0].click();
           });
         }}>
-        <NodePlayground />
+        <NodePlayground
+          config={{
+            selectedNodeId: "nodeId1",
+            vimMode: false,
+
+            // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+          }}
+        />
       </PanelSetup>
     );
   })
@@ -84,7 +101,15 @@ storiesOf("<NodePlayground>", module)
             el.querySelectorAll("[data-test=node-explorer]")[0].click();
           });
         }}>
-        <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+        <NodePlayground
+          config={{
+            selectedNodeId: "nodeId1",
+            vimMode: false,
+
+            // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+          }}
+        />
       </PanelSetup>
     );
   })
@@ -97,7 +122,14 @@ storiesOf("<NodePlayground>", module)
             el.querySelectorAll("[data-test=docs-explorer]")[0].click();
           });
         }}>
-        <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+        <NodePlayground
+          config={{
+            selectedNodeId: "nodeId1",
+            vimMode: false,
+            // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+          }}
+        />
       </PanelSetup>
     );
   })
@@ -128,13 +160,20 @@ storiesOf("<NodePlayground>", module)
     };
     return (
       <PanelSetup fixture={{ ...fixture, userNodes }}>
-        <NodePlayground config={{ selectedNodeId: "nodeId1", editorForStorybook: <NeverLoad />, vimMode: false }} />
+        <NodePlayground
+          config={{
+            selectedNodeId: "nodeId1",
+            // eslint-disable-next-line
+            EditorForStorybook: () => <NeverLoad />,
+            vimMode: false,
+          }}
+        />
       </PanelSetup>
     );
   });
 
 storiesOf("NodePlayground - <BottomBar>", module)
-  .addDecorator(withScreenshot({ delay: 10000 }))
+  .addDecorator(withScreenshot({ delay: 1000 }))
 
   .add("no errors or logs - closed", () => (
     <PanelSetup
@@ -143,7 +182,14 @@ storiesOf("NodePlayground - <BottomBar>", module)
         userNodes: { nodeId1: { name: "/some/custom/node", sourceCode: "" } },
         userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
       }}>
-      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+          // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+        }}
+      />
     </PanelSetup>
   ))
   .add("no errors - open", () => (
@@ -161,7 +207,15 @@ storiesOf("NodePlayground - <BottomBar>", module)
           }
         });
       }}>
-      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+
+          // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+        }}
+      />
     </PanelSetup>
   ))
   .add("no logs - open", () => (
@@ -179,7 +233,14 @@ storiesOf("NodePlayground - <BottomBar>", module)
           }
         });
       }}>
-      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+          // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+        }}
+      />
     </PanelSetup>
   ))
   .add("errors - closed", () => (
@@ -224,7 +285,14 @@ storiesOf("NodePlayground - <BottomBar>", module)
           },
         },
       }}>
-      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+          // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+        }}
+      />
     </PanelSetup>
   ))
   .add("errors - open", () => (
@@ -277,7 +345,14 @@ storiesOf("NodePlayground - <BottomBar>", module)
           }
         });
       }}>
-      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+          // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+        }}
+      />
     </PanelSetup>
   ))
   .add("logs - closed", () => (
@@ -293,7 +368,14 @@ storiesOf("NodePlayground - <BottomBar>", module)
         userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
         userNodeLogs: { nodeId1: { logs } },
       }}>
-      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+          // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+        }}
+      />
     </PanelSetup>
   ))
   .add("logs - open", () => (
@@ -317,7 +399,14 @@ storiesOf("NodePlayground - <BottomBar>", module)
           }
         });
       }}>
-      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+          // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+        }}
+      />
     </PanelSetup>
   ))
   .add("cleared logs", () => (
@@ -340,17 +429,31 @@ storiesOf("NodePlayground - <BottomBar>", module)
           }
         });
       }}>
-      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+          // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+        }}
+      />
     </PanelSetup>
   ))
   .add("security pop up", () => (
     <PanelSetup fixture={{ ...fixture, userNodes, userNodeFlags: { id: "nodeId1", trusted: false } }}>
-      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+          // eslint-disable-next-line
+          EditorForStorybook: (props: Props) => <Editor {...props} />,
+        }}
+      />
     </PanelSetup>
   ));
 
 storiesOf("<NodePlaygroundSettings>", module)
-  .addDecorator(withScreenshot({ delay: 10000 }))
+  .addDecorator(withScreenshot({ delay: 1000 }))
   .add("enabled vim mode", () => (
     <NodePlaygroundSettings config={{ selectedNodeId: undefined, vimMode: true }} saveConfig={() => {}} />
   ))

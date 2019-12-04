@@ -54,7 +54,7 @@ export default publisher;`;
 type Config = {|
   selectedNodeId: ?string,
   // Used only for storybook screenshot testing.
-  editorForStorybook?: React.Node,
+  EditorForStorybook?: (props: any) => React.Node,
   vimMode: boolean,
 |};
 
@@ -124,7 +124,7 @@ export type Explorer = null | "docs" | "nodes";
 
 function NodePlayground(props: Props) {
   const { config, saveConfig } = props;
-  const { selectedNodeId, editorForStorybook, vimMode } = config;
+  const { selectedNodeId, EditorForStorybook, vimMode } = config;
 
   const [explorer, updateExplorer] = React.useState<Explorer>(null);
 
@@ -270,6 +270,7 @@ function NodePlayground(props: Props) {
                     display: selectedNodeId
                       ? "initial"
                       : "none" /* Ensures the monaco-editor starts loading before the user opens it */,
+                    /* EditorForStorybook({ script: stagedScript, setScript: setStagedScript, vimMode }) */
                   }}>
                   <React.Suspense
                     fallback={
@@ -279,9 +280,9 @@ function NodePlayground(props: Props) {
                         </Icon>
                       </Flex>
                     }>
-                    {editorForStorybook || (
-                      <Editor script={stagedScript} setScript={setStagedScript} vimMode={vimMode} />
-                    )}
+                    {/* $FlowFixMe */ (
+                      <EditorForStorybook script={stagedScript} setScript={setStagedScript} vimMode={vimMode} />
+                    ) || <Editor script={stagedScript} setScript={setStagedScript} vimMode={vimMode} />}
                   </React.Suspense>
                 </div>
                 <BottomBar

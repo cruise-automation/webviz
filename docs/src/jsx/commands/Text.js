@@ -6,17 +6,17 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
-import Worldview, { Text, Axes } from "regl-worldview";
+import Worldview, { Text2, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
   const labelMarker = {
     name: "randomName",
-    text: "HELLO",
+    text: "Hello there!",
     color: { r: 1, g: 1, b: 1, a: 1 },
     pose: {
       orientation: { x: 0, y: 0, z: 0, w: 1 },
-      position: { x: 10, y: 10, z: 1 },
+      position: { x: 1, y: 1, z: 1 },
     },
     scale: { x: 1, y: 1, z: 1 },
     // uncomment colors and remove autoBackgroundColor prop to set text and background colors
@@ -25,7 +25,7 @@ function Example() {
 
   return (
     <Worldview>
-      <Text autoBackgroundColor>{[labelMarker]}</Text>
+      <Text2 autoBackgroundColor>{[labelMarker]}</Text2>
       <Axes />
     </Worldview>
   );

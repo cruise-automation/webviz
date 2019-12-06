@@ -10,6 +10,7 @@ module.exports = {
     "plugin:prettier/recommended",
     "prettier/flowtype",
     "prettier/react",
+    // "./packages/webviz-core/.eslintrc.js",
   ],
   plugins: ["jest", "import-order-alphabetical", "react-hooks"],
   parser: "babel-eslint",

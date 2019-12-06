@@ -19,7 +19,7 @@ const BRIGHTNESS_THRESHOLD = 128;
 const DEFAULT_TEXT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
 const DEFAULT_BG_COLOR = { r: 0, g: 0, b: 0, a: 0.8 };
 
-type TextMarker = {
+export type TextMarker = {
   name?: string,
   pose: Pose,
   scale: Scale,

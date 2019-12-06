@@ -22,4 +22,5 @@ export { default as Overlay } from "./Overlay";
 export { default as Points } from "./Points";
 export { default as Spheres } from "./Spheres";
 export { default as Text } from "./Text";
+export { default as Text2 } from "./Text2";
 export { default as Triangles } from "./Triangles";

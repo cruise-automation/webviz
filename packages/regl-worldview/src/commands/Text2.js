@@ -1,9 +1,10 @@
 // @flow
 
 import TinySDF from "@mapbox/tiny-sdf";
-import React from "react";
+import React, { useState, useContext } from "react";
 
-import { withPose } from "../utils/commandUtils";
+import { withPose, toRGBA, defaultBlend, defaultDepth } from "../utils/commandUtils";
+import WorldviewReactContext from "../WorldviewReactContext";
 import Command, { type CommonCommandProps } from "./Command";
 import type { TextMarker } from "./Text";
 
@@ -24,90 +25,154 @@ type FontAtlas = {|
   },
 |};
 
-const FONT_SIZE = 30;
+const FONT_SIZE = 40;
+const BUFFER = 2;
+const RADIUS = 8;
+const CUTOFF = 0.25;
+const DEFAULT_COLOR = Object.freeze({ r: 0.5, g: 0.5, b: 0.5, a: 1 });
+const DEFAULT_OUTLINE_COLOR = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
+let IMG_EL = null;
 
 function buildAtlas(charSet: Set<string>): FontAtlas {
+  const glyphSDFs = {};
+  const tinySDF = new TinySDF(FONT_SIZE, BUFFER, RADIUS, CUTOFF, "sans-serif", "normal");
+
+  const fontStyle = `${FONT_SIZE}px sans-serif`;
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
+  ctx.font = fontStyle;
 
   let canvasWidth = 0;
-  const height = FONT_SIZE;
+  const height = FONT_SIZE + 2 * BUFFER;
   const charInfo = {};
 
   let x = 0;
   let y = 0;
   for (const char of charSet) {
     const width = ctx.measureText(char).width;
+    charInfo[char] = { x, y, width };
     if (x + width > 1024) {
       x = 0;
-      y += height;
+      y += height + 2 * BUFFER;
       canvasWidth = Math.max(canvasWidth, 1024);
     } else {
-      x += width;
+      x += width + 2 * BUFFER;
+      // x += FONT_SIZE + 2 * BUFFER;
       canvasWidth = Math.max(canvasWidth, x);
     }
-    charInfo[char] = { x, y, width };
   }
 
   canvas.width = canvasWidth;
   canvas.height = y + height;
-  console.log("canvas size", canvas.width, canvas.height);
 
-  ctx.font = `${FONT_SIZE}px sans-serif`;
   ctx.fillStyle = "white";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "black";
-  // ctx.fillText(`Hi ${Date.now()}`, 0, FONT_SIZE);
   ctx.textBaseline = "top";
-  console.log(canvas);
+  ctx.font = fontStyle;
 
   for (const char of charSet) {
-    const { x, y } = charInfo[char];
-    ctx.fillText(char, x, y);
+    const { x, y, width } = charInfo[char];
+    const data = tinySDF.draw(char);
+    const imageData = ctx.createImageData(tinySDF.size, FONT_SIZE);
+    for (let i = 0; i < data.length; i++) {
+      imageData.data[4 * i + 0] = 255;
+      imageData.data[4 * i + 1] = 127;
+      imageData.data[4 * i + 2] = 255;
+      imageData.data[4 * i + 3] = data[i];
+    }
+    // ctx.fillText(char, x, y);
+    ctx.putImageData(imageData, x, y);
   }
+  if (!IMG_EL) {
+    document.querySelectorAll("#foobar_img").forEach((el) => el.remove());
+    IMG_EL = document.createElement("img");
+    IMG_EL.id = "foobar_img";
+    IMG_EL.style.position = "absolute";
+    IMG_EL.style.top = 0;
+    IMG_EL.style.left = 0;
+    document.body.appendChild(IMG_EL);
+  }
+  canvas.toBlob((blob) => (IMG_EL.src = URL.createObjectURL(blob)));
 
   return { canvas, charInfo };
 }
 
 function text(regl: any) {
-  const glyphSDFs = {};
-  const tinySDF = new TinySDF(12, 2, 8, 0.25, "sans-serif", "normal");
-
   const drawText = regl(
     withPose({
+      // depth: { enable: true, mask: true },
+      // depth: { enable: false, mask: true },
+      depth: defaultDepth,
+      blend: defaultBlend,
       primitive: "triangle strip",
+      // primitive: "line strip",
       vert: `
-      precision mediump float;
+      precision highp float;
 
       #WITH_POSE
 
       uniform mat4 projection, view;
       uniform float pointSize;
+      uniform float fontSize;
+      uniform vec2 atlasSize;
 
       attribute vec2 texCoord;
       attribute vec3 position;
 
       attribute vec2 srcOffset;
       attribute vec2 srcSize;
-      attribute float charOffset;
+      attribute float destOffset;
 
       // attribute vec4 color;
       // varying vec4 fragColor;
       varying vec2 vTexCoord;
       void main () {
-        vec3 pos = applyPose(position + vec3(charOffset, 0, 0));
+        vec3 pos = applyPose(position * vec3(srcSize.x/fontSize,1,1) + vec3(destOffset, 0, 0));
         gl_Position = projection * view * vec4(pos, 1);
-        vTexCoord = srcOffset + texCoord * srcSize;
+        vTexCoord = (srcOffset + texCoord * srcSize)/atlasSize;
         // vTexCoordMax = texCoord + srcOffset + vec2(charWidth, 10/*charHeight*/);
         // fragColor = color;
       }
       `,
       frag: `
-      precision mediump float;
+      precision highp float;
       uniform sampler2D atlas;
+      uniform float outlineThreshold;
+      uniform float edgeThreshold;
+      uniform float softness;
+      uniform vec4 foregroundColor;
+      uniform vec4 outlineColor;
       varying vec2 vTexCoord;
       void main() {
-        gl_FragColor = texture2D(atlas, vTexCoord);
+        float dist = texture2D(atlas, vTexCoord).a;
+        // gl_FragColor = vec4(1, 1, 1, smoothstep(buffer - gamma, buffer + gamma,dist));
+        // float a = smoothstep(buffer - gamma, buffer + gamma,dist);
+        // float a = smoothstep(buffer - gamma, buffer + gamma,dist);
+
+        float colorFactor = 1.0;
+        // if (dist >= outlineThreshold && dist < edgeThreshold) {
+        //   colorFactor = smoothstep(outlineThreshold - softness, outlineThreshold + softness, dist);
+        // } else if (dist >= edgeThreshold) {
+        //   colorFactor = smoothstep(edgeThreshold - softness, edgeThreshold + softness, dist);
+        // }
+        colorFactor = smoothstep(edgeThreshold - softness, edgeThreshold + softness, dist);
+        // float a = step(1.0 - cutoff, dist);
+        // float a2 = step(1.0 - cutoff2, dist);
+        gl_FragColor.rgb = mix(outlineColor, foregroundColor, colorFactor).rgb;
+        gl_FragColor.a = smoothstep(outlineThreshold - softness, outlineThreshold + softness, dist);
+        gl_FragColor = dist < outlineThreshold ? vec4(1,1,0,0) : dist < edgeThreshold ? vec4(1,0,0,1) : vec4(0,1,1,1);
+
+        float outlineStep = smoothstep(outlineThreshold - softness, outlineThreshold + softness, dist);
+        float edgeStep = smoothstep(edgeThreshold - softness, edgeThreshold + softness, dist);
+        // float colorFactor2 = smoothstep(2.0 - softness, 2.0, outlineStep + edgeStep);
+        gl_FragColor.rgb = mix(outlineColor, foregroundColor, edgeStep).rgb;
+        gl_FragColor.a = smoothstep(outlineThreshold - softness, outlineThreshold + softness, dist);
+        // gl_FragColor = vec4(1, 1, 1, a);
+        // if (a == 0.) {
+        //   discard;
+        // }
+        // gl_FragColor = texture2D(atlas, vTexCoord);
         // gl_FragColor = vec4(1, 0, 0, 1);
       }
     `,
@@ -116,12 +181,21 @@ function text(regl: any) {
         position: [[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]],
         texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]],
         srcOffset: (ctx, props) => ({ buffer: regl.buffer(props.srcOffsets), divisor: 1 }), //regl.prop("srcOffsets"),
-        charOffset: (ctx, props) => ({ buffer: regl.buffer(props.charOffsets), divisor: 1 }), //regl.prop("charOffsets"),
+        destOffset: (ctx, props) => ({ buffer: regl.buffer(props.destOffsets), divisor: 1 }), //regl.prop("destOffsets"),
         srcSize: (ctx, props) => ({ buffer: regl.buffer(props.srcSizes), divisor: 1 }), //regl.prop("charWidths"),
       },
       instances: regl.prop("instances"),
       uniforms: {
         atlas: regl.context("atlas"),
+        atlasSize: regl.context("atlasSize"),
+        fontSize: regl.context("fontSize"),
+
+        outlineThreshold: regl.prop("outlineThreshold"),
+        edgeThreshold: regl.prop("edgeThreshold"),
+        softness: 0.1,
+
+        foregroundColor: (ctx, props) => toRGBA(props.color || props.colors?.[0] || DEFAULT_COLOR),
+        outlineColor: (ctx, props) => toRGBA(props.colors?.[1] || DEFAULT_OUTLINE_COLOR),
       },
     })
   );
@@ -136,21 +210,34 @@ function text(regl: any) {
       }
     }
     const { canvas, charInfo } = buildAtlas(charSet);
-    regl({ context: { atlas: atlasTex(canvas) } })(() => {
+    regl({
+      context: {
+        atlas: atlasTex({
+          data: canvas,
+          flipY: true,
+          wrap: "clamp",
+          mag: "linear",
+          min: "linear",
+        }),
+        atlasSize: [canvas.width, canvas.height],
+        fontSize: FONT_SIZE,
+        cutoff: CUTOFF,
+      },
+    })(() => {
       drawText(
         props.map((marker) => {
-          const charOffsets = new Float32Array(marker.text.length);
+          const destOffsets = new Float32Array(marker.text.length);
           const srcSizes = new Float32Array(marker.text.length * 2);
           const srcOffsets = new Float32Array(marker.text.length * 2);
           let x = 0;
           let i = 0;
           for (const char of marker.text) {
             const info = charInfo[char];
-            charOffsets[i] = x / FONT_SIZE;
-            srcOffsets[2 * i + 0] = info.x / canvas.width;
-            srcOffsets[2 * i + 1] = info.y / canvas.height;
-            srcSizes[2 * i + 0] = info.width / canvas.width;
-            srcSizes[2 * i + 1] = FONT_SIZE / canvas.height;
+            destOffsets[i] = x / FONT_SIZE;
+            srcOffsets[2 * i + 0] = info.x;
+            srcOffsets[2 * i + 1] = info.y;
+            srcSizes[2 * i + 0] = info.width;
+            srcSizes[2 * i + 1] = FONT_SIZE;
             x += info.width;
             ++i;
           }
@@ -158,7 +245,7 @@ function text(regl: any) {
             ...marker,
             instances: marker.text.length,
             srcOffsets,
-            charOffsets,
+            destOffsets,
             srcSizes,
           };
         })
@@ -175,5 +262,38 @@ function text(regl: any) {
 }
 
 export default function Text(props: Props) {
-  return <Command reglCommand={text} {...props} />;
+  const [outlineThreshold, setOutlineThreshold] = useState(0.4);
+  const [edgeThreshold, setEdgeThreshold] = useState(0.75);
+  const ctx = useContext(WorldviewReactContext);
+  return (
+    <>
+      <Command reglCommand={text} {...props}>
+        {props.children.map((child) => ({ ...child, outlineThreshold, edgeThreshold }))}
+      </Command>
+      <input
+        style={{ position: "absolute", top: 50, left: 0 }}
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value={outlineThreshold}
+        onChange={(e) => {
+          setOutlineThreshold(+e.target.value);
+          ctx.onDirty();
+        }}
+      />
+      <input
+        style={{ position: "absolute", top: 100, left: 0 }}
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value={edgeThreshold}
+        onChange={(e) => {
+          setEdgeThreshold(+e.target.value);
+          ctx.onDirty();
+        }}
+      />
+    </>
+  );
 }

@@ -19,25 +19,18 @@ import { UncontrolledValidatedInput, YamlInput } from "webviz-core/src/component
 import { point2DValidator, cameraStateValidator } from "webviz-core/src/components/validators";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { Renderer } from "webviz-core/src/panels/ThreeDimensionalViz/index";
+import { SValue, SLabel } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import clipboard from "webviz-core/src/util/clipboard";
 
+const LABEL_WIDTH = 112;
 const TEMP_VEC3 = [0, 0, 0];
 const ZERO_VEC3 = Object.freeze([0, 0, 0]);
 const DEFAULT_CAMERA_INFO_WIDTH = 260;
 
-const LABEL_WIDTH = 112;
 const SRow = styled.div`
   display: flex;
   align-items: center;
-`;
-
-const SLabel = styled.label`
-  width: ${LABEL_WIDTH}px;
-  margin: 4px 0;
-`;
-export const SValue = styled.span`
-  color: ${colors.highlight};
 `;
 
 type CameraStateInfoProps = {
@@ -77,7 +70,7 @@ function CameraStateInfo({ cameraState, onAlignXYAxis }: CameraStateInfoProps) {
         })
         .map(([key, val]) => (
           <SRow key={key}>
-            <SLabel>{key}:</SLabel> <SValue>{val}</SValue>
+            <SLabel width={LABEL_WIDTH}>{key}:</SLabel> <SValue>{val}</SValue>
             {key === "thetaOffset" && (
               <Button
                 onClick={onAlignXYAxis}

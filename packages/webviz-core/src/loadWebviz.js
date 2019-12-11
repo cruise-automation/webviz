@@ -56,6 +56,7 @@ const defaultHooks = {
     const NodePlayground = require("webviz-core/src/panels/NodePlayground").default;
     const Note = require("webviz-core/src/panels/Note").default;
     const NumberOfRenders = require("webviz-core/src/panels/NumberOfRenders").default;
+    const PlaybackPerformance = require("webviz-core/src/panels/PlaybackPerformance").default;
     const Plot = require("webviz-core/src/panels/Plot").default;
     const RawMessages = require("webviz-core/src/panels/RawMessages").default;
     const Rosout = require("webviz-core/src/panels/Rosout").default;
@@ -83,6 +84,7 @@ const defaultHooks = {
 
     const debugging = [
       { title: "Number of Renders", component: NumberOfRenders },
+      { title: "Playback Performance", component: PlaybackPerformance },
       { title: "Subscribe to List", component: SubscribeToList },
     ];
 

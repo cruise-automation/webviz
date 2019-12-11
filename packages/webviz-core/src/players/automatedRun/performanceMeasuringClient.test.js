@@ -6,52 +6,66 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import performanceMeasuringClient, { PerformanceMeasuringClient } from "./performanceMeasuringClient";
+import PerformanceMeasuringClient from "./performanceMeasuringClient";
+import Database from "webviz-core/src/util/indexeddb/Database";
 
 describe("performanceMeasuringClient", () => {
-  it("resetInTests correctly resets all state", () => {
-    const clientWithDefaults = new PerformanceMeasuringClient();
-    // Set all the keys in the performance measuring client to some weird value.
-    for (const key of Object.keys(performanceMeasuringClient)) {
-      // $FlowFixMe
-      performanceMeasuringClient[key] = "fake";
-    }
-    performanceMeasuringClient.resetInTests();
-
-    const toObject = (client) => {
-      const result = {};
-      Object.keys(client).forEach((key) => {
-        // $FlowFixMe
-        result[key] = client[key];
-      });
-      return result;
+  let onPlaybackFinished, onPlaybackError;
+  beforeEach(() => {
+    window.indexedDB.databases = () => {
+      const dbs = [];
+      // until indexedDB.databases() lands in the spec, get the databases on the fake by reaching into it
+      // eslint-disable-next-line no-underscore-dangle
+      for (const [_, db] of global.indexedDB._databases) {
+        dbs.push(db);
+      }
+      return dbs;
     };
-    expect(toObject(performanceMeasuringClient)).toEqual(toObject(clientWithDefaults));
-  });
-
-  it("Generates stats", () => {
-    performanceMeasuringClient.shouldMeasureIdbTimes = true;
-
-    performanceMeasuringClient.start({ bagLengthMs: 1000 });
-    performanceMeasuringClient.markFrameRenderStart();
-    performanceMeasuringClient.markFrameRenderEnd();
-    performanceMeasuringClient.markTotalFrameStart();
-    performanceMeasuringClient.markTotalFrameEnd();
-    performanceMeasuringClient.markIdbReadStart();
-    performanceMeasuringClient.markIdbReadEnd({ message: { topic: "foo" } });
-
-    const stats = performanceMeasuringClient.finish();
-    expect(stats).toMatchObject({
-      bagLengthMs: expect.any(Number),
-      speed: expect.any(Number),
-      msPerFrame: expect.any(Number),
-      frameRenderCount: expect.any(Number),
-
-      playbackTimeMs: expect.any(Number),
-      averageRenderMs: expect.any(Number),
-      averageFrameTimeMs: expect.any(Number),
+    onPlaybackFinished = jest.fn();
+    onPlaybackError = jest.fn();
+    window.addEventListener("playbackFinished", (e) => {
+      onPlaybackFinished(e.detail);
     });
-
-    performanceMeasuringClient.resetInTests();
+    window.addEventListener("playbackError", (e) => {
+      onPlaybackError(e.detail);
+    });
+  });
+  it("emits a 'finishedPlayback' event when finished", async () => {
+    const perfClient = new PerformanceMeasuringClient();
+    perfClient.start({ bagLengthMs: 1 });
+    await perfClient.finish();
+    expect(onPlaybackFinished).toHaveBeenCalled();
+    expect(onPlaybackError).not.toHaveBeenCalled();
+  });
+  it("emits an error event when encountered", () => {
+    const perfClient = new PerformanceMeasuringClient();
+    perfClient.start({ bagLengthMs: 1 });
+    const error = new Error("playback_error");
+    perfClient.onError(error);
+    expect(onPlaybackFinished).not.toHaveBeenCalled();
+    expect(onPlaybackError).toHaveBeenCalledWith(error.toString());
+  });
+  it("collects IndexedDB stats", async () => {
+    const db = await Database.open("dummy-db", 1, (db) => {
+      db.createObjectStore("bar", { keyPath: "key" });
+    });
+    for (let i = 0; i < 10; i++) {
+      await db.put("bar", { key: i, data: new Uint8Array(10) });
+    }
+    const perfClient = new PerformanceMeasuringClient();
+    perfClient.start({ bagLengthMs: 1 });
+    await perfClient.finish();
+    const stats = onPlaybackFinished.mock.calls[0][0];
+    expect(stats.idb).toEqual(
+      expect.objectContaining({
+        dbs: [
+          {
+            name: "dummy-db",
+            version: 1,
+            objectStoreRowCounts: [{ name: "bar", rowCount: 10 }],
+          },
+        ],
+      })
+    );
   });
 });

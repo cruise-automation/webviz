@@ -94,9 +94,7 @@ export function useComputedCameraState({
     newCameraState.distance = getZoomDistanceFromURLParam();
   }
 
-  newCameraState = mergeWith(newCameraState, DEFAULT_CAMERA_STATE, (objVal, srcVal) =>
-    objVal == null ? srcVal : objVal
-  );
+  newCameraState = mergeWith(newCameraState, DEFAULT_CAMERA_STATE, (objVal, srcVal) => objVal ?? srcVal);
 
   return { cameraState: newCameraState, targetPose: targetPose || lastTargetPose };
 }

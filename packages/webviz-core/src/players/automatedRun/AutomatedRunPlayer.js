@@ -252,7 +252,7 @@ export default class AutomatedRunPlayer implements Player {
       frameCount++;
     }
 
-    this._client.finish();
+    await this._client.finish();
     logger.info("AutomatedRunPlayer._run() finished");
   }
 

@@ -24,7 +24,7 @@ const SEmpty = styled.div`
 type Props = {
   children: React.Node,
   // specify text specifically if the value is not a string
-  text?: string,
+  text?: ?string,
   value: any,
   icon: React.Node,
   onChange: (value: any) => void,
@@ -51,6 +51,7 @@ export default class Select extends React.Component<Props, State> {
   };
 
   open = (e: SyntheticEvent<HTMLDivElement>) => {
+    e.stopPropagation();
     this.setState({ isOpen: true });
     // let this event hit the window before adding close listener
     setImmediate(() => {

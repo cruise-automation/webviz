@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { setupSendReportErrorHandler } from "webviz-core/src//util/RpcUtils";
 import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
-import { type DetailsType, type ErrorType, setErrorHandler } from "webviz-core/src/util/reportError";
 import Rpc from "webviz-core/src/util/Rpc";
 
 // The "other side" of `RpcDataProvider`. Instantiates a `DataProviderDescriptor` tree underneath,
@@ -17,13 +17,7 @@ export default class RpcDataProviderRemote {
   constructor(rpc: Rpc, getDataProvider: (DataProviderDescriptor) => DataProvider) {
     let provider: DataProvider;
     if (process.env.NODE_ENV !== "test") {
-      setErrorHandler((message: string, details: DetailsType, type: ErrorType) => {
-        rpc.send("reportError", {
-          message,
-          details: details instanceof Error ? details.toString() : JSON.stringify(details),
-          type,
-        });
-      });
+      setupSendReportErrorHandler(rpc);
     }
     rpc.receive("initialize", async ({ childDescriptor, hasExtensionPoint }) => {
       provider = getDataProvider(childDescriptor);

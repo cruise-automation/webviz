@@ -12,6 +12,7 @@ import CheckboxBlankIcon from "@mdi/svg/svg/checkbox-blank.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import ChevronDownIcon from "@mdi/svg/svg/chevron-down.svg";
 import ChevronRightIcon from "@mdi/svg/svg/chevron-right.svg";
+import CloseIcon from "@mdi/svg/svg/close.svg";
 import EyeOffOutlineIcon from "@mdi/svg/svg/eye-off-outline.svg";
 import EyeOutlineIcon from "@mdi/svg/svg/eye-outline.svg";
 import FolderIcon from "@mdi/svg/svg/folder.svg";
@@ -28,7 +29,9 @@ import colors from "webviz-core/src/styles/colors.module.scss";
 type Props = {
   node: Node,
   depth: number,
+  disableCheckbox: ?boolean,
   enableVisibilityToggle?: boolean,
+  onRemoveNode: ?(node: Node) => void,
   onToggleExpand: (node: Node) => void,
   onToggleVisibility?: (node: Node) => void,
   onToggleCheck: (node: Node) => void,
@@ -40,6 +43,12 @@ export default class TreeNode extends Component<Props> {
     const { onToggleCheck, node } = this.props;
     if (!node.disabled && node.hasCheckbox) {
       onToggleCheck(node);
+    }
+  };
+
+  onRemoveNode = () => {
+    if (this.props.onRemoveNode) {
+      this.props.onRemoveNode(this.props.node);
     }
   };
 
@@ -65,8 +74,10 @@ export default class TreeNode extends Component<Props> {
   renderChildren() {
     const {
       depth,
+      disableCheckbox,
       enableVisibilityToggle,
       node,
+      onRemoveNode,
       onEditClick,
       onToggleCheck,
       onToggleExpand,
@@ -79,10 +90,12 @@ export default class TreeNode extends Component<Props> {
       return (
         <TreeNode
           depth={depth + 1}
+          disableCheckbox={disableCheckbox}
           enableVisibilityToggle={enableVisibilityToggle}
           key={child.id}
           node={child}
           onEditClick={onEditClick}
+          onRemoveNode={onRemoveNode}
           onToggleCheck={onToggleCheck}
           onToggleExpand={onToggleExpand}
           onToggleVisibility={onToggleVisibility}
@@ -115,8 +128,8 @@ export default class TreeNode extends Component<Props> {
   };
 
   render() {
-    const { node, depth, enableVisibilityToggle } = this.props;
-    const { expanded, children, icon, disabled, tooltip, canEdit, hasEdit, filtered, visible } = node;
+    const { node, depth, enableVisibilityToggle, disableCheckbox } = this.props;
+    const { expanded, children, icon, disabled, tooltip, canEdit, hasEdit, filtered, visible, namespace } = node;
     const headerClasses = cx(styles.header, {
       [styles.hasChildren]: children && children.length,
       [styles.disabled]: disabled,
@@ -141,25 +154,36 @@ export default class TreeNode extends Component<Props> {
     );
 
     const editIcon = icon && canEdit && (
-      <Icon style={{ padding: 4 }} fade tooltip="Edit topic settings" onClick={this.onEditClick}>
+      <Icon style={{ padding: "0 4px" }} fade tooltip="Edit topic settings" onClick={this.onEditClick}>
         <LeadPencilIcon />
       </Icon>
     );
 
-    let visibilityIcon = null;
     // only enable visibility toggle for topics
-    if (enableVisibilityToggle && node.topic && !node.namespace) {
-      visibilityIcon = (
-        <Icon
-          style={{ padding: 4 }}
-          fade
-          tooltip={visible ? "Hide topic temporarily" : "Show topic"}
-          onClick={this.onToggleVisibility}
-          dataTest={`node-${node.topic || node.name}`}>
-          {visible ? <EyeOutlineIcon /> : <EyeOffOutlineIcon />}
-        </Icon>
-      );
-    }
+    const visibilityIcon = enableVisibilityToggle && node.topic && !node.namespace && (
+      <Icon
+        style={{ padding: "0 4px" }}
+        fade
+        tooltip={visible ? "Hide topic temporarily" : "Show topic"}
+        onClick={this.onToggleVisibility}
+        dataTest={`node-${node.topic || node.name}`}>
+        {visible ? <EyeOutlineIcon /> : <EyeOffOutlineIcon />}
+      </Icon>
+    );
+
+    // for simplicity, don't render remove UI for namespaces
+    const renderRemoveIcon = disableCheckbox && !namespace;
+    const removeIcon = renderRemoveIcon && (
+      <Icon
+        style={{ padding: "0 4px" }}
+        fade
+        tooltip="Remove the item from the list"
+        onClick={this.onRemoveNode}
+        dataTest={`node-remove-${node.topic || node.name}`}>
+        <CloseIcon />
+      </Icon>
+    );
+
     // Wrap in a fragment to avoid missing key warnings
     const tooltipContents =
       !tooltip || tooltip.length === 0 ? null : React.createElement(React.Fragment, {}, ...tooltip);
@@ -167,17 +191,20 @@ export default class TreeNode extends Component<Props> {
     return (
       <div style={filtered ? { display: "none" } : {}}>
         <div style={style} className={headerClasses} onClick={this.onExpandClick}>
-          <Icon className={checkboxClasses} onClick={this.onCheckboxClick}>
-            {this.getCheckboxIcon()}
-          </Icon>
+          {!renderRemoveIcon && (
+            <Icon className={checkboxClasses} onClick={this.onCheckboxClick}>
+              {this.getCheckboxIcon()}
+            </Icon>
+          )}
           {extraIcon}
           <span className={cx("node-text", styles.text)}>
             <Tooltip contents={tooltipContents} offset={{ x: 0, y: 8 }}>
               <span>{node.text}</span>
             </Tooltip>
           </span>
-          {visibilityIcon}
           {editIcon}
+          {visibilityIcon}
+          {removeIcon}
           <Icon
             className={cx(styles["expand-icon"], {
               [styles.invisible]: !children || !children.length,

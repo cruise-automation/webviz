@@ -281,6 +281,7 @@ export default function TopicSelectorWrapper({
               tree={tree}
               setHiddenTopics={setHiddenTopics}
               hiddenTopics={hiddenTopics}
+              disableCheckbox={topicDisplayMode === TOPIC_DISPLAY_MODES.SHOW_SELECTED.value}
             />
           )}
         </STreeWrapper>

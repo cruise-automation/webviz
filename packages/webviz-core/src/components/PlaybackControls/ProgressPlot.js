@@ -9,7 +9,6 @@ import { complement } from "intervals-fn";
 import React, { Component } from "react";
 
 import AutoSizingCanvas from "webviz-core/src/components/AutoSizingCanvas";
-import filterMap from "webviz-core/src/filterMap";
 import type { Progress } from "webviz-core/src/players/types";
 
 const BAR_HEIGHT = 40;
@@ -20,64 +19,15 @@ type ProgressProps = {|
   progress: Progress,
 |};
 
-type ProgressState = {|
-  showComplete: boolean,
-|};
-
-function areDownloadsComplete(progress: Progress) {
-  // satisfy flow
-  const values: [?number] = (Object.values(progress.percentageByTopic || {}): any);
-  // we are completed if all progresses are numbers and are greater than 99
-  return values.length === 0 || !values.some((val: ?number) => val == null || val < 100);
-}
-
-export class ProgressPlot extends Component<ProgressProps, ProgressState> {
-  state = { showComplete: false };
-  _timeoutId: ?TimeoutID;
-
-  shouldComponentUpdate(nextProps: ProgressProps, nextState: ProgressState) {
-    return nextProps.progress !== this.props.progress || nextState.showComplete !== this.state.showComplete;
-  }
-
-  componentWillUnmount() {
-    if (this._timeoutId) {
-      clearTimeout(this._timeoutId);
-    }
+export class ProgressPlot extends Component<ProgressProps> {
+  shouldComponentUpdate(nextProps: ProgressProps) {
+    return nextProps.progress !== this.props.progress;
   }
 
   _draw = (context: CanvasRenderingContext2D, width: number, height: number) => {
     const { progress } = this.props;
-    const { showComplete } = this.state;
-    const { percentageByTopic = {} } = progress;
 
     context.clearRect(0, 0, width, height);
-    let pendingCount = 0;
-    let text = filterMap(Object.keys(percentageByTopic), (key) => {
-      const percent = percentageByTopic[key];
-      // null or undefined means download is queued but not started
-      if (percent == null) {
-        pendingCount++;
-        return undefined;
-      }
-      // because files can span a longer distance than the drive range percent can go over 100%
-      if (percent >= 100) {
-        return undefined;
-      }
-      // if download is 0 percent we're ingesting data before the drive range
-      return percent ? `${key} ${percent}%` : key;
-    }).join(" ");
-
-    if (pendingCount > 0) {
-      text += ` — ${pendingCount} topic${pendingCount > 1 ? "s" : ""} queued...`;
-    }
-
-    context.fillStyle = "white";
-
-    if (text) {
-      context.fillText(`Downloading ${text}`, 0, 11);
-    } else if (showComplete) {
-      context.fillText("All topics downloaded.", 0, 11);
-    }
 
     if (progress.fullyLoadedFractionRanges) {
       context.fillStyle = "rgba(0, 0, 0, 0.5)";
@@ -89,19 +39,6 @@ export class ProgressPlot extends Component<ProgressProps, ProgressState> {
       }
     }
   };
-
-  componentDidUpdate(prevProps: ProgressProps) {
-    const wasComplete = areDownloadsComplete(prevProps.progress);
-    const isComplete = areDownloadsComplete(this.props.progress);
-    if (!wasComplete && isComplete) {
-      this.setState({ showComplete: true });
-      clearTimeout(this._timeoutId);
-      this._timeoutId = setTimeout(() => {
-        delete this._timeoutId;
-        this.setState({ showComplete: false });
-      }, 5000);
-    }
-  }
 
   render() {
     return (

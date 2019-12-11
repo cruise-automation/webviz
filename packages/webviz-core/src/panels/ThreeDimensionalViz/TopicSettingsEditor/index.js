@@ -8,8 +8,9 @@
 
 import { upperFirst } from "lodash";
 import React, { useCallback, type ComponentType } from "react";
-import styled from "styled-components";
+import { hot } from "react-hot-loader/root";
 
+import { SLabel, SDescription, SInput } from "./common";
 import LaserScanSettingsEditor from "./LaserScanSettingsEditor";
 import MarkerSettingsEditor from "./MarkerSettingsEditor";
 import PointCloudSettingsEditor from "./PointCloudSettingsEditor";
@@ -23,23 +24,6 @@ import type { Topic } from "webviz-core/src/players/types";
 import { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE, LASER_SCAN_DATATYPE } from "webviz-core/src/util/globalConstants";
 
 export const LINED_CONVEX_HULL_RENDERING_SETTING = "LinedConvexHull";
-
-export const SLabel = styled.label`
-  display: block;
-  font-size: 14px;
-  margin: 6px 2px;
-  text-decoration: ${(props) => (props.strikethrough ? "line-through" : null)};
-`;
-export const SDescription = styled.label`
-  display: block;
-  margin: 6px 2px;
-  opacity: 0.8;
-`;
-
-export const SInput = styled.input`
-  flex: 1 1 auto;
-  margin-bottom: 8px;
-`;
 
 // Parse color saved into topic settings into {r, g, b, a} form.
 export function parseColorSetting(rgba: ?string) {
@@ -134,7 +118,7 @@ export type TopicSettingsEditorProps<Msg, Settings: {}> = {|
   message: ?Msg,
   settings: Settings,
   onFieldChange: (name: string, value: any) => void,
-  onSettingsChange: ({}) => void,
+  onSettingsChange: ({} | (({}) => {})) => void,
 |};
 
 function topicSettingsEditorForDatatype(datatype: string): ?ComponentType<TopicSettingsEditorProps<any, any>> {
@@ -167,12 +151,17 @@ type Props = {|
   onSettingsChange: ({}) => void,
 |};
 
-export default React.memo<Props>(function TopicSettingsEditor({ topic, message, settings, onSettingsChange }: Props) {
+const TopicSettingsEditor = React.memo<Props>(function TopicSettingsEditor({
+  topic,
+  message,
+  settings,
+  onSettingsChange,
+}: Props) {
   const onFieldChange = useCallback(
     (fieldName: string, value: any) => {
-      onSettingsChange({ ...settings, [fieldName]: value });
+      onSettingsChange((settings) => ({ ...settings, [fieldName]: value }));
     },
-    [settings, onSettingsChange]
+    [onSettingsChange]
   );
 
   const Editor = topicSettingsEditorForDatatype(topic.datatype);
@@ -198,3 +187,5 @@ export default React.memo<Props>(function TopicSettingsEditor({ topic, message, 
     </div>
   );
 });
+
+export default hot(TopicSettingsEditor);

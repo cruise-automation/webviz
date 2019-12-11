@@ -11,15 +11,13 @@ import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
 import WavesIcon from "@mdi/svg/svg/waves.svg";
 import cx from "classnames";
-import { sortBy, last, get, isEqual, omit } from "lodash";
-import memoizeOne from "memoize-one";
+import { sortBy, last, get } from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
 import { createSelector } from "reselect";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 
-import CameraModel from "./CameraModel";
 import ImageCanvas from "./ImageCanvas";
 import imageCanvasStyles from "./ImageCanvas.module.scss";
 import helpContent from "./index.help.md";
@@ -44,7 +42,6 @@ import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { CameraInfo } from "webviz-core/src/types/Messages";
 import naturalSort from "webviz-core/src/util/naturalSort";
-import reportError from "webviz-core/src/util/reportError";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 import toggle from "webviz-core/src/util/toggle";
 
@@ -57,8 +54,8 @@ export type ImageViewPanelHooks = {
     scale: number,
     synchronize: boolean,
   },
-  imageMarkerArrayDatatypes: string[],
   imageMarkerDatatypes: string[],
+  imageMarkerArrayDatatypes: string[],
 };
 
 export type Config = {|
@@ -179,63 +176,6 @@ function renderEmptyState(
       )}
     </EmptyState>
   );
-}
-
-const getCameraModel = memoizeOne(
-  function getCameraModel(cameraInfo: ?CameraInfo): ?CameraModel {
-    if (!cameraInfo) {
-      return null;
-    }
-    try {
-      return new CameraModel(cameraInfo);
-    } catch (err) {
-      reportError(`Failed to initialize camera model from CameraInfo`, err, "user");
-      return null;
-    }
-  },
-  ([cameraInfo]: mixed[], [prevCameraInfo]: mixed[]) => {
-    return isEqual(omit(cameraInfo, "header"), omit(prevCameraInfo, "header"));
-  }
-);
-
-export function buildMarkerData(markers: Message[], scale: number, transformMarkers: boolean, cameraInfo: ?CameraInfo) {
-  if (markers.length === 0) {
-    return {
-      markers,
-      cameraModel: null,
-      originalHeight: undefined,
-      originalWidth: undefined,
-    };
-  }
-  let cameraModel;
-  if (transformMarkers) {
-    cameraModel = getCameraModel(cameraInfo);
-    if (!cameraModel) {
-      return null;
-    }
-  }
-
-  // Markers can only be rendered if we know the original size of the image.
-  let originalWidth;
-  let originalHeight;
-  if (cameraInfo && cameraInfo.width && cameraInfo.height) {
-    // Prefer using CameraInfo can be used to determine the image size.
-    originalWidth = cameraInfo.width;
-    originalHeight = cameraInfo.height;
-  } else if (scale === 1) {
-    // Otherwise, if scale === 1, the image was not downsampled, so the size of the bitmap is accurate.
-    originalWidth = undefined;
-    originalHeight = undefined;
-  } else {
-    return null;
-  }
-
-  return {
-    markers,
-    cameraModel,
-    originalWidth,
-    originalHeight,
-  };
 }
 
 function useOptionallySynchronizedMessages(
@@ -453,7 +393,13 @@ function ImageView(props: Props) {
     },
     [markersToRender]
   );
-  const markerData = buildMarkerData(markersToRender, scale, transformMarkers, cameraInfo);
+
+  const rawMarkerData = {
+    markers: markersToRender,
+    scale,
+    transformMarkers,
+    cameraInfo: markersToRender.length > 0 ? cameraInfo : null,
+  };
 
   const renderToolbar = () => {
     return (
@@ -482,7 +428,7 @@ function ImageView(props: Props) {
         panelHooks={panelHooks}
         topic={cameraTopic}
         image={imageMessage}
-        markerData={markerData}
+        rawMarkerData={rawMarkerData}
         config={config}
         saveConfig={saveConfig}
       />

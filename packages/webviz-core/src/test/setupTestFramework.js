@@ -12,9 +12,17 @@ import { isEqual } from "lodash";
 // Always mock reportError and fail if it was called during the test without resetting it. Note that
 // we have to do this here instead of in setup.js since here we have access to jest methods.
 jest.mock("webviz-core/src/util/reportError", () => {
-  const fn = jest.fn();
-  // $FlowFixMe
-  fn.setErrorHandler = () => {};
+  // Duplicate the report error functionality here with passing errors to handlers, if they exist.
+  const fn: any = jest.fn((...args) => {
+    if (fn.handler) {
+      fn.handler(...args);
+    }
+  });
+  fn.setErrorHandler = (handler) => {
+    fn.handler = handler;
+  };
+  // Ensure that there is no handler by default.
+  fn.setErrorHandler(null);
   return fn;
 });
 beforeEach(() => {
@@ -24,14 +32,18 @@ beforeEach(() => {
       // $FlowFixMe
       fail("Expected reportError to have been called during the test, but it was never called!"); // eslint-disable-line
     }
-    reportError.mockReset();
+    reportError.mockClear();
+    // Reset the error handler to the default (no error handler).
+    reportError.setErrorHandler(null);
   };
 });
 afterEach(() => {
   const reportError: any = require("webviz-core/src/util/reportError");
   if (reportError.mock.calls.length > 0) {
     const calls = reportError.mock.calls;
-    reportError.mockReset();
+    reportError.mockClear();
+    // Reset the error handler to the default (no error handler).
+    reportError.setErrorHandler(null);
     // $FlowFixMe
     fail(`reportError has been called during this test (call reportError.expectCalledDuringTest(); at the end of your test if you expect this): ${JSON.stringify(calls)}`); // eslint-disable-line
   }

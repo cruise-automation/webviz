@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { get, difference } from "lodash";
+import { get, difference, isEqual } from "lodash";
 import React, {
   type Node,
   useMemo,
@@ -174,7 +174,14 @@ export default function Layout({
       }),
     [checkedNodes, topicDisplayMode, topics]
   );
-  useLayoutEffect(() => saveConfig({ checkedNodes: newCheckedNodes }), [newCheckedNodes, saveConfig]);
+  useLayoutEffect(
+    () => {
+      if (!isEqual(checkedNodes.sort(), newCheckedNodes.sort())) {
+        saveConfig({ checkedNodes: newCheckedNodes });
+      }
+    },
+    [checkedNodes, newCheckedNodes, saveConfig]
+  );
 
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
   const { globalVariables, setGlobalVariables } = useGlobalVariables();
@@ -196,9 +203,14 @@ export default function Layout({
   const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(null);
   const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(null);
   const selectedObject = selectedObjectState && selectedObjectState.selectedObject;
-  const editedTopics = useMemo(
-    () => Object.keys(topicSettings).filter((settingKey) => Object.keys(topicSettings[settingKey]).length),
-    [topicSettings]
+
+  // If topic settings are changing rapidly, such as when dragging a slider or color picker,
+  // the topicSettings will change, but we don't want to rebuild the tree each time so we
+  // check for shallow equality on the list of edited topics.
+  const editedTopics = useShallowMemo(
+    useMemo(() => Object.keys(topicSettings).filter((settingKey) => Object.keys(topicSettings[settingKey]).length), [
+      topicSettings,
+    ])
   );
 
   useLayoutEffect(
@@ -453,7 +465,7 @@ export default function Layout({
             return;
           }
           setEditTopicState({
-            tooltipPosX: editBtnRect.right - panelRect.left + 5,
+            tooltipPosX: Math.ceil(editBtnRect.right - panelRect.left + 5),
             topic: newEditTopic,
           });
         },

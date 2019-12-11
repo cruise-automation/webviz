@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-export const colors = {
+const baseColors = {
   DARK: "#08080a",
   DARK1: "#111114",
   DARK2: "#1a1a1f",
@@ -60,4 +60,10 @@ export const colors = {
   RED: "#f54966",
   RED1: "#db3553",
   RED2: "#ff7c96",
+};
+
+export const colors = {
+  ...baseColors,
+  TEXT_MUTED: baseColors.GRAY,
+  HIGHLIGHT: baseColors.PURPLEL1,
 };

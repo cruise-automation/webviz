@@ -13,7 +13,7 @@ import { act } from "react-dom/test-utils";
 
 import { MessagePipelineProvider, MessagePipelineConsumer } from ".";
 import FakePlayer from "./FakePlayer";
-import signal from "webviz-core/src/util/signal";
+import signal from "webviz-core/shared/signal";
 
 describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
   it("returns empty data when no player is given", () => {

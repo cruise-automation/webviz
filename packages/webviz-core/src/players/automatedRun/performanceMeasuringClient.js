@@ -9,6 +9,20 @@
 import round from "lodash/round";
 import sum from "lodash/sum";
 
+import Database from "webviz-core/src/util/indexeddb/Database";
+
+type DbInfo = { name: string, version: number, objectStoreRowCounts: { name: string, rowCount: number }[] };
+type IdbInfo = {
+  dbs: DbInfo[],
+  /*
+   * NOTE: The value below is added server-side by directly reading the
+   * IndexedDB usage on disk. The reason we don't use
+   * navigator.storage.estimate() here is because it does not return info on
+   * IndexedDB usage in Puppeteer for some reason.
+   */
+  diskUsageMb?: number,
+};
+
 export type PerformanceStats = {|
   bagLengthMs: number,
   speed: number,
@@ -24,33 +38,13 @@ export type PerformanceStats = {|
   playbackTimeMs: number,
   averageRenderMs: number,
   averageFrameTimeMs: number,
-  idbReadDataByTopic: {
-    [string]: { count: number, totalTimeMs: number, averageTimeMs: number },
-  },
+  idb: IdbInfo,
 |};
-
-type Status = {| status: "errored", error: Error |} | {| status: "finished", stats: PerformanceStats |};
-
-let error: ?Error = null;
-let finishedPerformanceStats: ?PerformanceStats = null;
-
-global.performanceMeasurement = {
-  pollStatus(): Status | false {
-    if (error) {
-      return { status: "errored", error };
-    } else if (finishedPerformanceStats) {
-      return { status: "finished", stats: finishedPerformanceStats };
-    }
-    return false;
-  },
-};
 
 const PERFORMANCE_MEASURING_MS_FRAMERATE_PARAM = "performance-measuring-framerate";
 const PERFORMANCE_MEASURING_SPEED_PARAM = "performance-measuring-speed";
-const PERFORMANCE_MEASURING_SHOULD_MEASURE_IDB_PERF = "performance-measuring-enable-idb-measurement";
 
 const params = new URLSearchParams(location.search);
-const shouldMeasureIdbTimes = params.has(PERFORMANCE_MEASURING_SHOULD_MEASURE_IDB_PERF);
 const msPerFrame = params.has(PERFORMANCE_MEASURING_MS_FRAMERATE_PARAM)
   ? 1000 / parseFloat(params.get(PERFORMANCE_MEASURING_MS_FRAMERATE_PARAM))
   : 1000 / 30;
@@ -68,9 +62,8 @@ if (isNaN(msPerFrame)) {
 // development builds when we aren't doing benchmarking.
 const enablePerformanceMarks = process.env.NODE_ENV === "development";
 
-export class PerformanceMeasuringClient {
+class PerformanceMeasuringClient {
   shouldLoadDataBeforePlaying = true;
-  shouldMeasureIdbTimes = shouldMeasureIdbTimes;
   enablePerformanceMarks = enablePerformanceMarks;
 
   speed = speed;
@@ -83,37 +76,11 @@ export class PerformanceMeasuringClient {
   frameRenderTimes: number[] = [];
   totalFrameMs: ?number;
   totalFrameTimes: number[] = [];
-  idbStart: ?number;
-  idbTimesByTopic = {};
 
   start({ bagLengthMs }: { bagLengthMs: number }) {
     this.bagLengthMs = bagLengthMs;
     this.startTime = performance.now();
     this.startedMeasuringPerformance = true;
-  }
-
-  // This client a singleton, so it should only be reset in tests.
-  resetInTests() {
-    if (process.env.NODE_ENV !== "test") {
-      throw new Error("resetInTests can only be called in a test environment.");
-    }
-
-    this.shouldLoadDataBeforePlaying = true;
-    this.shouldMeasureIdbTimes = shouldMeasureIdbTimes;
-    this.enablePerformanceMarks = enablePerformanceMarks;
-
-    this.bagLengthMs = undefined;
-    this.speed = speed;
-    this.msPerFrame = msPerFrame;
-
-    this.startTime = undefined;
-    this.startedMeasuringPerformance = false;
-    this.frameRenderStart = undefined;
-    this.frameRenderTimes = [];
-    this.totalFrameMs = undefined;
-    this.totalFrameTimes = [];
-    this.idbStart = undefined;
-    this.idbTimesByTopic = {};
   }
 
   markFrameRenderStart() {
@@ -149,49 +116,38 @@ export class PerformanceMeasuringClient {
     this.totalFrameMs = null;
   }
 
-  markIdbReadStart() {
-    if (!this.startedMeasuringPerformance || !this.shouldMeasureIdbTimes) {
-      return;
-    }
-    if (this.idbStart != null) {
-      throw new Error("Cannot start measuring idb reads twice in a row");
-    }
-    this.idbStart = performance.now();
-  }
-
-  markIdbReadEnd(value: any) {
-    if (!this.startedMeasuringPerformance || !this.shouldMeasureIdbTimes) {
-      return;
-    }
-    const idbStart = this.idbStart;
-    if (idbStart == null) {
-      throw new Error("Cannot cannot call markIdbReadEnd if markIdbReadStart is not called first");
-    }
-    if (value && value.message && value.message.topic) {
-      // Only measure IDB performance for ROS messages right now - other types of messages might not work.
-      const topic = value.message.topic;
-      this.idbTimesByTopic[topic] = this.idbTimesByTopic[topic] || [];
-      this.idbTimesByTopic[topic].push(performance.now() - idbStart);
-    }
-    this.idbStart = null;
-  }
-
-  clearIdbReadStart() {
-    if (!this.startedMeasuringPerformance || !this.shouldMeasureIdbTimes) {
-      return;
-    }
-    this.idbStart = null;
-  }
-
   onError(e: Error) {
-    error = e;
+    const event = new CustomEvent("playbackError", { detail: e.toString() });
+    window.dispatchEvent(event);
   }
 
   async onFrameFinished() {}
 
-  finish() {
+  async _collectIdbStats(): Promise<IdbInfo> {
+    const databases = await window.indexedDB.databases();
+    const databasesWithInfo = [];
+
+    for (const { name, version } of databases) {
+      const dbWrapper = await Database.open(name, version, () => {});
+      const objectStoreNames = dbWrapper.db.objectStoreNames;
+      const objectStoreRowCounts = [];
+      for (const objectStoreName of objectStoreNames) {
+        const rowCount = await dbWrapper.count(objectStoreName);
+        objectStoreRowCounts.push({ name: objectStoreName, rowCount });
+      }
+
+      databasesWithInfo.push({ name, version, objectStoreRowCounts });
+    }
+
+    return {
+      dbs: databasesWithInfo,
+    };
+  }
+
+  async finish() {
     const startTime = this.startTime;
     const bagLengthMs = this.bagLengthMs;
+
     if (startTime == null || bagLengthMs == null) {
       throw new Error("Cannot call finish() without calling start()");
     }
@@ -208,31 +164,22 @@ export class PerformanceMeasuringClient {
       2
     );
     const frameRenderCount = this.frameRenderTimes.length;
-    const idbReadDataByTopic = {};
-    for (const key of Object.keys(this.idbTimesByTopic)) {
-      const values = this.idbTimesByTopic[key];
-      idbReadDataByTopic[key] = {
-        count: values.length,
-        totalTimeMs: round(sum(values), 2),
-        averageTimeMs: round(sum(values) / values.length, 2),
-      };
-    }
-    const stats = {
+    const idb = await this._collectIdbStats();
+    const detail: PerformanceStats = {
       bagLengthMs,
       speed,
       msPerFrame: this.msPerFrame,
       frameRenderCount,
-
       benchmarkPlaybackScore,
       playbackTimeMs,
       averageRenderMs,
       averageFrameTimeMs,
-      idbReadDataByTopic,
+      idb,
     };
 
-    finishedPerformanceStats = stats;
-    return stats;
+    const event = new CustomEvent("playbackFinished", { detail });
+    window.dispatchEvent(event);
   }
 }
 
-export default new PerformanceMeasuringClient();
+export default PerformanceMeasuringClient;

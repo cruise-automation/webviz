@@ -7,14 +7,16 @@
 //  You may not use this file except in compliance with the License.
 
 import ExportVariantIcon from "@mdi/svg/svg/export-variant.svg";
-import * as React from "react";
+import { get } from "lodash";
+import React, { useMemo, useState, useCallback } from "react";
 import { type MouseEventObject } from "regl-worldview";
 
-import { SRow, SValue } from "./index";
+import { SRow, SValue, SLabel } from "./index";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
 import Item from "webviz-core/src/components/Menu/Item";
+import { getClickedInfo } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import { downloadFiles } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
 
@@ -23,58 +25,52 @@ type Props = {
 };
 
 export default function PointCloudDetails({ selectedObject: { object, instanceIndex } }: Props) {
-  const [isOpen, setIsOpen] = React.useState<boolean>(false);
-
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const allPoints: number[] = object.points || [];
 
-  const [clickedPoint, clickedPointColor] = React.useMemo(
+  const { clickedPoint, clickedPointColor, additionalFieldValues } =
+    useMemo(() => getClickedInfo(object, instanceIndex), [instanceIndex, object]) || {};
+
+  const additionalFieldNames = useMemo(() => (additionalFieldValues && Object.keys(additionalFieldValues)) || [], [
+    additionalFieldValues,
+  ]);
+
+  const hasAdditionalFieldNames = !!additionalFieldNames.length;
+  const onCopy = useCallback(
     () => {
-      let clickedPoint = null;
-      let clickedPointColor = null;
-      if (allPoints.length && instanceIndex != null && instanceIndex >= 0 && instanceIndex * 3 < allPoints.length) {
-        clickedPoint = [];
-        const baseIdx = instanceIndex * 3;
-        clickedPoint.push(allPoints[baseIdx]);
-        clickedPoint.push(allPoints[baseIdx + 1]);
-        clickedPoint.push(allPoints[baseIdx + 2]);
-        const allColors: number[] = object.colors || [];
-        const baseColorR = allColors[baseIdx];
-        const baseColorG = allColors[baseIdx + 1];
-        const baseColorB = allColors[baseIdx + 2];
-        if (baseColorR && baseColorG && baseColorB) {
-          clickedPointColor = [baseColorR, baseColorG, baseColorB, 1];
-        }
+      const dataRows = [];
+      const len = allPoints.length / 3;
+      // get copy data
+      for (let i = 0; i < len; i++) {
+        const rowData = [allPoints[i * 3], allPoints[i * 3 + 1], allPoints[i * 3 + 2]];
+        rowData.push(...additionalFieldNames.map((fieldName) => get(object, [fieldName, i])));
+        dataRows.push(rowData.join(","));
       }
-      return [clickedPoint, clickedPointColor];
+
+      const additionalColumns = hasAdditionalFieldNames ? `,${additionalFieldNames.join(",")}` : "";
+      const dataStr = `x,y,z${additionalColumns}\n${dataRows.join("\n")}`;
+      const blob = new Blob([dataStr], { type: "text/csv;charset=utf-8;" });
+      downloadFiles([{ blob, fileName: "PointCloud.csv" }]);
+      setIsOpen(false);
     },
-    [allPoints, instanceIndex, object.colors]
+    [additionalFieldNames, hasAdditionalFieldNames, allPoints, object]
   );
 
   if (!clickedPoint || allPoints.length === 0) {
     return null;
   }
 
-  function getCopyPoints() {
-    const copyPoints = [];
-    const len = allPoints.length / 3;
-    for (let i = 0; i < len; i++) {
-      const point = [allPoints[i * 3], allPoints[i * 3 + 1], allPoints[i * 3 + 2]];
-      copyPoints.push(point.join(","));
-    }
-    return copyPoints;
-  }
   const colorStyle = clickedPointColor ? { color: `rgba(${clickedPointColor.join(",")})` } : {};
 
   return (
-    <SRow>
-      <SValue style={{ display: "flex", alignItems: "center", flex: 1 }}>
-        <span style={{ flex: 1, lineHeight: 1.4, ...colorStyle }}>
-          {clickedPoint.map((x) => (typeof x === "number" && x.toFixed(1)) || JSON.stringify(x)).join(", ")}
-          <br /> (point {instanceIndex} of {allPoints.length})
-        </span>
-
+    <>
+      <SRow style={{ display: "flex", justifyContent: "flex-end" }}>
         <ChildToggle position="below" onToggle={() => setIsOpen(!isOpen)} isOpen={isOpen}>
-          <Icon small fade active={isOpen} tooltip="Export points">
+          <Icon
+            small
+            fade
+            active={isOpen}
+            tooltip={hasAdditionalFieldNames ? "Export points and fields" : "Export points"}>
             <ExportVariantIcon />
           </Icon>
           <Menu>
@@ -85,19 +81,28 @@ export default function PointCloudDetails({ selectedObject: { object, instanceIn
               }}>
               Copy clicked point to clipboard
             </Item>
-            <Item
-              onClick={() => {
-                const copyPoints = getCopyPoints();
-                const dataStr = `x,y,z\n${copyPoints.join("\n")}`;
-                const blob = new Blob([dataStr], { type: "text/csv;charset=utf-8;" });
-                downloadFiles([{ blob, fileName: "points.csv" }]);
-                setIsOpen(false);
-              }}>
-              Download all points as CSV
+            <Item onClick={onCopy}>
+              {hasAdditionalFieldNames ? "Download all points and fields as CSV" : "Download all points as CSV"}
             </Item>
           </Menu>
         </ChildToggle>
-      </SValue>
-    </SRow>
+      </SRow>
+      <SRow>
+        <SLabel width={hasAdditionalFieldNames ? 72 : 44}>Point:</SLabel>
+        <SValue style={{ flex: 1, lineHeight: 1.4, ...colorStyle }}>
+          {clickedPoint.map((x) => (typeof x === "number" ? x : JSON.stringify(x))).join(", ")}
+        </SValue>
+      </SRow>
+      {additionalFieldValues && (
+        <>
+          {Object.keys(additionalFieldValues).map((fieldName) => (
+            <SRow key={fieldName}>
+              <SLabel width={72}>{fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}:</SLabel>
+              <SValue>{additionalFieldValues[fieldName]}</SValue>
+            </SRow>
+          ))}
+        </>
+      )}
+    </>
   );
 }

@@ -130,6 +130,8 @@ class TextElement {
 type Props = {
   children: TextMarker[],
   autoBackgroundColor?: boolean,
+  onMatches: (markers: TextMarker[]) => void,
+  searchText: string,
 };
 
 // Render text on a scene using DOM nodes, similar to the Overlay command.
@@ -152,6 +154,21 @@ export default class Text extends React.Component<Props> {
   componentWillUnmount = () => {
     if (this._context) {
       this._context.unregisterPaintCallback(this.paint);
+    }
+  };
+
+  componentDidUpdate = (prevProps) => {
+    const { children, searchText, onMatches } = this.props;
+    if (prevProps.searchText !== searchText && searchText) {
+      const matches = [];
+      for (const marker of children) {
+        if (new RegExp(searchText).test(marker.text)) {
+          matches.push(marker);
+        }
+      }
+      if (matches.length) {
+        onMatches(matches);
+      }
     }
   };
 

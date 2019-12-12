@@ -14,7 +14,7 @@ import Container from "./Container";
 import { p } from "./util";
 import withRange from "./withRange";
 
-import { FilledPolygons, Lines, DEFAULT_CAMERA_STATE } from "..";
+import { FilledPolygons, Lines, Text, DEFAULT_CAMERA_STATE } from "..";
 
 storiesOf("Worldview", module)
   .addDecorator(withKnobs)
@@ -64,6 +64,51 @@ storiesOf("Worldview", module)
         <Lines>{markers}</Lines>
       </Container>
     );
+  })
+  .add("<Text> - search", () => {
+    const markers = [
+      {
+        text: "lorem hipsterum",
+        pose: {
+          position: p(0),
+          orientation: { x: 0, y: 0, z: 0, w: 1 },
+        },
+        scale: p(1),
+        color: { r: 1, g: 1, b: 1, a: 1 },
+      },
+      {
+        text: "lorem ipsum",
+        pose: {
+          position: p(0.5),
+          orientation: { x: 0, y: 0, z: 0, w: 1 },
+        },
+        scale: p(1),
+        color: { r: 1, g: 1, b: 1, a: 1 },
+      },
+    ];
+    const TextExample = () => {
+      const [searchText, onSearch] = React.useState("");
+      const [matches, onMatches] = React.useState([]);
+      return (
+        <div>
+          <input type="text" value={searchText} onChange={(e) => onSearch(e.target.value)} />
+          <p>Number of matches: {matches.length}</p>
+          <div style={{ width: "500px", height: "500px" }}>
+            <Container
+              cameraState={{
+                perspective: false,
+                target: [0, 0, 0],
+                distance: 5,
+              }}>
+              <Text searchText={searchText} onMatches={onMatches}>
+                {markers}
+              </Text>
+            </Container>
+          </div>
+        </div>
+      );
+    };
+    return <TextExample />;
   })
   .add(
     "backgroundColor",

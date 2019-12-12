@@ -1,7 +1,7 @@
 // @flow
 
 import TinySDF from "@mapbox/tiny-sdf";
-import { isEqual } from "lodash";
+import isEqual from "lodash/isEqual";
 import memoizeOne from "memoize-one";
 import React, { useState } from "react";
 
@@ -16,7 +16,10 @@ type Props = {
 };
 
 type FontAtlas = {|
-  canvas: HTMLCanvasElement,
+  // canvas: HTMLCanvasElement,
+  buffer: Uint8ClampedArray,
+  width: number,
+  height: number,
   charInfo: {
     [char: string]: {|
       x: number,
@@ -38,70 +41,86 @@ const DEFAULT_COLOR = Object.freeze({ r: 0.5, g: 0.5, b: 0.5, a: 1 });
 const DEFAULT_OUTLINE_COLOR = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 let IMG_EL = null;
 
-const memoizedBuildAtlas = memoizeOne((charSet: Set<string>): FontAtlas => {
-  const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
+const createMemoizedBuildAtlas = () =>
+  memoizeOne((charSet: Set<string>): FontAtlas => {
+    const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
 
-  const fontStyle = `${FONT_SIZE}px sans-serif`;
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  ctx.font = fontStyle;
+    const fontStyle = `${FONT_SIZE}px sans-serif`;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    ctx.font = fontStyle;
 
-  let canvasWidth = 0;
-  const rowHeight = FONT_SIZE + 2 * BUFFER;
-  const charInfo = {};
+    let canvasWidth = 0;
+    const rowHeight = FONT_SIZE + 2 * BUFFER;
+    const charInfo = {};
 
-  let x = 0;
-  let y = 0;
-  for (const char of charSet) {
-    const width = ctx.measureText(char).width;
-    if (x + width + 2 * BUFFER > MAX_ATLAS_WIDTH) {
-      x = 0;
-      y += rowHeight;
+    let x = 0;
+    let y = 0;
+    for (const char of charSet) {
+      const width = ctx.measureText(char).width;
+      const dx = Math.ceil(width) + 2 * BUFFER;
+      if (x + dx > MAX_ATLAS_WIDTH) {
+        x = 0;
+        y += rowHeight;
+      }
+      charInfo[char] = { x, y, width };
+      x += dx;
+      // x += FONT_SIZE + 2 * BUFFER;
+      canvasWidth = Math.max(canvasWidth, x);
     }
-    charInfo[char] = { x, y, width };
-    x += width + 2 * BUFFER;
-    // x += FONT_SIZE + 2 * BUFFER;
-    canvasWidth = Math.max(canvasWidth, x);
-  }
+    console.log(charInfo);
 
-  canvas.width = canvasWidth;
-  canvas.height = y + rowHeight;
+    const canvasHeight = y + rowHeight;
 
-  ctx.fillStyle = "white";
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "black";
-  ctx.textBaseline = "top";
-  ctx.font = fontStyle;
+    const buffer = new Uint8Array(canvasWidth * canvasHeight);
 
-  for (const char of charSet) {
-    const { x, y } = charInfo[char];
-    const data = tinySDF.draw(char);
-    const imageData = ctx.createImageData(tinySDF.size, tinySDF.size);
-    for (let i = 0; i < data.length; i++) {
-      imageData.data[4 * i + 0] = 255;
-      imageData.data[4 * i + 1] = 255;
-      imageData.data[4 * i + 2] = 255;
-      imageData.data[4 * i + 3] = data[i];
+    canvas.width = canvasWidth;
+    canvas.height = y + rowHeight;
+
+    ctx.fillStyle = "white";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "black";
+    ctx.textBaseline = "top";
+    ctx.font = fontStyle;
+
+    for (const char of charSet) {
+      const { x, y } = charInfo[char];
+      const data = tinySDF.draw(char);
+      for (let i = 0; i < tinySDF.size; i++) {
+        for (let j = 0; j < tinySDF.size; j++) {
+          const alpha = data[i * tinySDF.size + j];
+          if (x + j < canvasWidth) {
+            buffer[canvasWidth * (y + i) + x + j] = alpha;
+          }
+        }
+      }
+      const imageData = ctx.createImageData(tinySDF.size, tinySDF.size);
+      for (let i = 0; i < data.length; i++) {
+        imageData.data[4 * i + 0] = 255;
+        imageData.data[4 * i + 1] = 255;
+        imageData.data[4 * i + 2] = 255;
+        imageData.data[4 * i + 3] = data[i];
+      }
+      ctx.putImageData(imageData, x, y);
     }
-    ctx.putImageData(imageData, x, y);
-  }
-  if (!IMG_EL) {
-    document.querySelectorAll("#foobar_img").forEach((el) => el.remove());
-    IMG_EL = document.createElement("img");
-    IMG_EL.id = "foobar_img";
-    IMG_EL.style.position = "absolute";
-    IMG_EL.style.top = 0;
-    IMG_EL.style.left = 0;
-    document.body.appendChild(IMG_EL);
-  }
-  canvas.toBlob((blob) => (IMG_EL.src = URL.createObjectURL(blob)));
+    if (!IMG_EL) {
+      document.querySelectorAll("#foobar_img").forEach((el) => el.remove());
+      IMG_EL = document.createElement("img");
+      IMG_EL.id = "foobar_img";
+      IMG_EL.style.position = "absolute";
+      IMG_EL.style.top = 0;
+      IMG_EL.style.left = 0;
+      document.body.appendChild(IMG_EL);
+    }
+    canvas.toBlob((blob) => (IMG_EL.src = URL.createObjectURL(blob)));
 
-  return { canvas, charInfo };
-}, isEqual);
+    return { canvas, buffer, width: canvasWidth, height: canvasHeight, charInfo };
+  }, isEqual);
 
 function makeTextCommand() {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
   const charSet = new Set();
+  const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
   return (regl: any) => {
     const atlasTexture = regl.texture();
@@ -132,12 +151,14 @@ function makeTextCommand() {
       attribute float srcWidth;
       attribute vec2 destOffset;
 
+      uniform vec2 alignmentOffset;
+
       // attribute vec4 color;
       // varying vec4 fragColor;
       varying vec2 vTexCoord;
       void main () {
         vec2 srcSize = vec2(srcWidth, srcHeight);
-        vec3 pos = applyPose(vec3((destOffset + position * srcSize) / fontSize, 0));
+        vec3 pos = applyPose(vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0));
         gl_Position = projection * view * vec4(pos, 1);
         vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
       }
@@ -174,8 +195,8 @@ function makeTextCommand() {
     `,
         count: 4,
         attributes: {
-          position: [[0, 0], [0, 1], [1, 0], [1, 1]],
-          texCoord: [[0, 1], [0, 0], [1, 1], [1, 0]], // flipped
+          position: [[0, 0], [0, -1], [1, 0], [1, -1]],
+          texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
           srcOffset: (ctx, props) => ({ buffer: regl.buffer(props.srcOffsets), divisor: 1 }),
           destOffset: (ctx, props) => ({ buffer: regl.buffer(props.destOffsets), divisor: 1 }),
           srcWidth: (ctx, props) => ({ buffer: regl.buffer(props.srcWidths), divisor: 1 }),
@@ -188,6 +209,7 @@ function makeTextCommand() {
           cutoff: CUTOFF,
           outlineCutoff: OUTLINE_CUTOFF,
           srcHeight: FONT_SIZE + 2 * BUFFER,
+          alignmentOffset: regl.prop("alignmentOffset"),
 
           foregroundColor: (ctx, props) => toRGBA(props.color || props.colors?.[0] || DEFAULT_COLOR),
           outlineColor: (ctx, props) => toRGBA(props.colors?.[1] || DEFAULT_OUTLINE_COLOR),
@@ -203,10 +225,14 @@ function makeTextCommand() {
           charSet.add(char);
         }
       }
-      const { canvas, charInfo } = memoizedBuildAtlas(charSet);
+      const { canvas, buffer, width, height, charInfo } = memoizedBuildAtlas(new Set(charSet));
       if (charSet.size !== prevNumChars) {
         atlasTexture({
-          data: canvas,
+          data: buffer,
+          width,
+          height,
+          format: "alpha",
+          // data: canvas,
           // flipY: true,
           wrap: "clamp",
           mag: "linear",
@@ -218,28 +244,33 @@ function makeTextCommand() {
           const destOffsets = new Float32Array(marker.text.length * 2);
           const srcWidths = new Float32Array(marker.text.length);
           const srcOffsets = new Float32Array(marker.text.length * 2);
+          let totalWidth = 0;
           let x = 0;
           let y = 0;
           let instances = 0;
           for (const char of marker.text) {
             if (char === "\n") {
               x = 0;
-              y += FONT_SIZE;
+              y = FONT_SIZE;
               continue;
             }
             const info = charInfo[char];
             destOffsets[2 * instances + 0] = x - BUFFER;
-            destOffsets[2 * instances + 1] = y - BUFFER - BASELINE_ADJUST;
+            destOffsets[2 * instances + 1] = -(y - BUFFER);
             srcOffsets[2 * instances + 0] = info.x;
             srcOffsets[2 * instances + 1] = info.y;
             srcWidths[instances] = info.width + 2 * BUFFER;
             x += info.width;
+            totalWidth = Math.max(totalWidth, x);
             ++instances;
           }
+          const totalHeight = y + FONT_SIZE;
+
           return {
             pose: marker.pose,
             color: marker.color,
             colors: marker.colors,
+            alignmentOffset: [-totalWidth / 2, totalHeight / 2],
             instances,
             srcOffsets,
             destOffsets,

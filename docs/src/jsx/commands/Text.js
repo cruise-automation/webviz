@@ -12,7 +12,7 @@ import Worldview, { Text2, Axes, Cubes, DEFAULT_CAMERA_STATE } from "regl-worldv
 function Example() {
   const labelMarker = {
     name: "randomName",
-    text: "Hello there!",
+    text: "AaBbFfIiJjKkLlMm",
     // color: { r: 1, g: 1, b: 1, a: 1 },
     colors: [{ r: 0.5, g: 0.5, b: 0.5, a: 1 }, { r: 1, g: 1, b: 1, a: 1 }],
     pose: {
@@ -24,13 +24,19 @@ function Example() {
     // colors: [{ r: 1, g: 1, b: 1, a: 1 }, { r: 1, g: 0, b: 0, a: 0.8 }],
   };
 
-  const cubeMarker = {
+  const cubeMarker1 = {
     color: { r: 1, g: 0.5, b: 0, a: 0.5 },
     pose: {
       orientation: { x: 0, y: 0, z: 0, w: 1 },
       position: { x: 1, y: 1, z: 1 },
     },
     scale: { x: 1, y: 1, z: 1 },
+  };
+
+  const cubeMarker2 = {
+    color: { r: 0, g: 1, b: 0, a: 1 },
+    pose: labelMarker.pose,
+    scale: { x: 0.1, y: 0.1, z: 0.1 },
   };
 
   return (
@@ -42,7 +48,7 @@ function Example() {
         phi: 0,
       }}>
       <Text2 autoBackgroundColor>{[labelMarker]}</Text2>
-      <Cubes>{[cubeMarker]}</Cubes>
+      <Cubes>{[cubeMarker2]}</Cubes>
       <Axes />
     </Worldview>
   );

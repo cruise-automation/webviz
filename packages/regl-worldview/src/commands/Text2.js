@@ -26,7 +26,8 @@ type FontAtlas = {|
 |};
 
 const FONT_SIZE = 40;
-const BUFFER = 2;
+const BUFFER = 10;
+const MAX_ATLAS_WIDTH = 500;
 const RADIUS = 8;
 const CUTOFF = 0.25;
 const DEFAULT_COLOR = Object.freeze({ r: 0.5, g: 0.5, b: 0.5, a: 1 });
@@ -43,27 +44,25 @@ function buildAtlas(charSet: Set<string>): FontAtlas {
   ctx.font = fontStyle;
 
   let canvasWidth = 0;
-  const height = FONT_SIZE + 2 * BUFFER;
+  const rowHeight = FONT_SIZE + 2 * BUFFER;
   const charInfo = {};
 
   let x = 0;
   let y = 0;
   for (const char of charSet) {
     const width = ctx.measureText(char).width;
-    charInfo[char] = { x, y, width };
-    if (x + width > 1024) {
+    if (x + width + 2 * BUFFER > MAX_ATLAS_WIDTH) {
       x = 0;
-      y += height + 2 * BUFFER;
-      canvasWidth = Math.max(canvasWidth, 1024);
-    } else {
-      x += width + 2 * BUFFER;
-      // x += FONT_SIZE + 2 * BUFFER;
-      canvasWidth = Math.max(canvasWidth, x);
+      y += rowHeight;
     }
+    charInfo[char] = { x, y, width };
+    x += width + 2 * BUFFER;
+    // x += FONT_SIZE + 2 * BUFFER;
+    canvasWidth = Math.max(canvasWidth, x);
   }
 
   canvas.width = canvasWidth;
-  canvas.height = y + height;
+  canvas.height = y + rowHeight;
 
   ctx.fillStyle = "white";
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -74,15 +73,17 @@ function buildAtlas(charSet: Set<string>): FontAtlas {
   for (const char of charSet) {
     const { x, y, width } = charInfo[char];
     const data = tinySDF.draw(char);
-    const imageData = ctx.createImageData(tinySDF.size, FONT_SIZE);
+    const imageData = ctx.createImageData(tinySDF.size, tinySDF.size);
     for (let i = 0; i < data.length; i++) {
       imageData.data[4 * i + 0] = 255;
-      imageData.data[4 * i + 1] = 127;
+      imageData.data[4 * i + 1] = 255;
       imageData.data[4 * i + 2] = 255;
       imageData.data[4 * i + 3] = data[i];
     }
     // ctx.fillText(char, x, y);
     ctx.putImageData(imageData, x, y);
+    ctx.strokeStyle = "red";
+    ctx.strokeRect(x, y, imageData.width, imageData.height);
   }
   if (!IMG_EL) {
     document.querySelectorAll("#foobar_img").forEach((el) => el.remove());
@@ -115,6 +116,7 @@ function text(regl: any) {
       uniform mat4 projection, view;
       uniform float pointSize;
       uniform float fontSize;
+      uniform float buffer;
       uniform vec2 atlasSize;
 
       attribute vec2 texCoord;
@@ -122,13 +124,13 @@ function text(regl: any) {
 
       attribute vec2 srcOffset;
       attribute vec2 srcSize;
-      attribute float destOffset;
+      attribute vec2 destOffset;
 
       // attribute vec4 color;
       // varying vec4 fragColor;
       varying vec2 vTexCoord;
       void main () {
-        vec3 pos = applyPose(position * vec3(srcSize.x/fontSize,1,1) + vec3(destOffset, 0, 0));
+        vec3 pos = applyPose(position * vec3(srcSize.x/fontSize,1.0+2.0*buffer/fontSize,1) + vec3(destOffset/fontSize, 0));
         gl_Position = projection * view * vec4(pos, 1);
         vTexCoord = (srcOffset + texCoord * srcSize)/atlasSize;
         // vTexCoordMax = texCoord + srcOffset + vec2(charWidth, 10/*charHeight*/);
@@ -144,6 +146,7 @@ function text(regl: any) {
       uniform vec4 foregroundColor;
       uniform vec4 outlineColor;
       varying vec2 vTexCoord;
+      uniform bool debug;
       void main() {
         float dist = texture2D(atlas, vTexCoord).a;
         // gl_FragColor = vec4(1, 1, 1, smoothstep(buffer - gamma, buffer + gamma,dist));
@@ -168,10 +171,13 @@ function text(regl: any) {
         // float colorFactor2 = smoothstep(2.0 - softness, 2.0, outlineStep + edgeStep);
         gl_FragColor.rgb = mix(outlineColor, foregroundColor, edgeStep).rgb;
         gl_FragColor.a = smoothstep(outlineThreshold - softness, outlineThreshold + softness, dist);
+        if (debug) {
+          gl_FragColor = texture2D(atlas, vTexCoord);
+        }
         // gl_FragColor = vec4(1, 1, 1, a);
-        // if (a == 0.) {
-        //   discard;
-        // }
+        if (gl_FragColor.a == 0.) {
+          discard;
+        }
         // gl_FragColor = texture2D(atlas, vTexCoord);
         // gl_FragColor = vec4(1, 0, 0, 1);
       }
@@ -179,7 +185,7 @@ function text(regl: any) {
       count: 4,
       attributes: {
         position: [[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]],
-        texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]],
+        texCoord: [[0, 1], [0, 0], [1, 1], [1, 0]], // flipped
         srcOffset: (ctx, props) => ({ buffer: regl.buffer(props.srcOffsets), divisor: 1 }), //regl.prop("srcOffsets"),
         destOffset: (ctx, props) => ({ buffer: regl.buffer(props.destOffsets), divisor: 1 }), //regl.prop("destOffsets"),
         srcSize: (ctx, props) => ({ buffer: regl.buffer(props.srcSizes), divisor: 1 }), //regl.prop("charWidths"),
@@ -189,9 +195,11 @@ function text(regl: any) {
         atlas: regl.context("atlas"),
         atlasSize: regl.context("atlasSize"),
         fontSize: regl.context("fontSize"),
+        buffer: regl.context("buffer"),
 
         outlineThreshold: regl.prop("outlineThreshold"),
         edgeThreshold: regl.prop("edgeThreshold"),
+        debug: regl.prop("debug"),
         softness: 0.1,
 
         foregroundColor: (ctx, props) => toRGBA(props.color || props.colors?.[0] || DEFAULT_COLOR),
@@ -214,36 +222,44 @@ function text(regl: any) {
       context: {
         atlas: atlasTex({
           data: canvas,
-          flipY: true,
+          // flipY: true,
           wrap: "clamp",
           mag: "linear",
           min: "linear",
         }),
         atlasSize: [canvas.width, canvas.height],
         fontSize: FONT_SIZE,
+        buffer: BUFFER,
         cutoff: CUTOFF,
       },
     })(() => {
       drawText(
         props.map((marker) => {
-          const destOffsets = new Float32Array(marker.text.length);
+          const destOffsets = new Float32Array(marker.text.length * 2);
           const srcSizes = new Float32Array(marker.text.length * 2);
           const srcOffsets = new Float32Array(marker.text.length * 2);
           let x = 0;
+          let y = 0;
           let i = 0;
           for (const char of marker.text) {
+            if (char === "\n") {
+              x = 0;
+              y += FONT_SIZE;
+              continue;
+            }
             const info = charInfo[char];
-            destOffsets[i] = x / FONT_SIZE;
+            destOffsets[2 * i + 0] = x - BUFFER;
+            destOffsets[2 * i + 1] = y - BUFFER * 1.5 /*hack for baseline*/;
             srcOffsets[2 * i + 0] = info.x;
             srcOffsets[2 * i + 1] = info.y;
-            srcSizes[2 * i + 0] = info.width;
-            srcSizes[2 * i + 1] = FONT_SIZE;
+            srcSizes[2 * i + 0] = info.width + 2 * BUFFER;
+            srcSizes[2 * i + 1] = FONT_SIZE + 2 * BUFFER;
             x += info.width;
             ++i;
           }
           return {
             ...marker,
-            instances: marker.text.length,
+            instances: i,
             srcOffsets,
             destOffsets,
             srcSizes,
@@ -264,14 +280,15 @@ function text(regl: any) {
 export default function Text(props: Props) {
   const [outlineThreshold, setOutlineThreshold] = useState(0.4);
   const [edgeThreshold, setEdgeThreshold] = useState(0.75);
+  const [debug, setDebug] = useState(false);
   const ctx = useContext(WorldviewReactContext);
   return (
     <>
       <Command reglCommand={text} {...props}>
-        {props.children.map((child) => ({ ...child, outlineThreshold, edgeThreshold }))}
+        {props.children.map((child) => ({ ...child, outlineThreshold, edgeThreshold, debug }))}
       </Command>
       <input
-        style={{ position: "absolute", top: 50, left: 0 }}
+        style={{ position: "absolute", top: 140, left: 0 }}
         type="range"
         min="0"
         max="1"
@@ -283,7 +300,7 @@ export default function Text(props: Props) {
         }}
       />
       <input
-        style={{ position: "absolute", top: 100, left: 0 }}
+        style={{ position: "absolute", top: 160, left: 0 }}
         type="range"
         min="0"
         max="1"
@@ -291,6 +308,15 @@ export default function Text(props: Props) {
         value={edgeThreshold}
         onChange={(e) => {
           setEdgeThreshold(+e.target.value);
+          ctx.onDirty();
+        }}
+      />
+      <input
+        style={{ position: "absolute", top: 180, left: 0 }}
+        type="checkbox"
+        defaultChecked={debug}
+        onClick={(e) => {
+          setDebug(e.target.checked);
           ctx.onDirty();
         }}
       />

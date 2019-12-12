@@ -122,8 +122,8 @@ Some important things to remember:
 type AssignNextColorsFn = (object: Object, count: number) => Vec4[];
 ```
 
-- - Each object that you want to support mouse events on requires a unique ID. If your command actually renders multiple items per input object (such as when using [instanced drawing](https://github.com/regl-project/regl/blob/gh-pages/example/instance-triangle.js)), you may want a separate ID for each item — in this case, call `assignNextColors` with a count gretaer than 1.
-- Once you have this ID, pass it to `intToRGB()` to get the color to paint your object. Don't apply any transparency or shading to your object or this will mess up the hitmap.
+- - Each object that you want to support mouse events on requires a unique color. This color serves as the unique object ID. If your command actually renders multiple items per input object (such as when using [instanced drawing](https://github.com/regl-project/regl/blob/gh-pages/example/instance-triangle.js)), you may want a separate color for each item — in this case, call `assignNextColors` with a count greater than 1.
+- Once you have this color, make sure to use it as the color of your object. Don't apply any transparency or shading to your object or this will mess up the hitmap.
 
 Example using composition of the default `getChildrenForHitmap` functions:
 
@@ -161,10 +161,8 @@ Example using a custom `getChildrenForHitmap` function:
         }
         // We copy each point array.
         const hitmapProp = { ...prop };
-        // We get 1 new ID, and pass in the original prop so it will be the object passed to any event handlers.
-        const [id] = assignNextColors(object, 1);
-        // We turn the objectHitmapId into a color and use it for the points.
-        const hitmapColor = intToRGB(id);
+        // We get 1 new color, and pass in the original prop so it will be the object passed to any event handlers.
+        const [hitmapColor] = assignNextColors(object, 1);
         hitmapProp.color = hitmapColor;
         if (hitmapProp.points) {
           hitmapProp.colors = new Array(hitmapProp.points.length).fill(hitmapColor);

@@ -1,10 +1,11 @@
 // @flow
 
 import TinySDF from "@mapbox/tiny-sdf";
-import React, { useState, useContext } from "react";
+import { isEqual } from "lodash";
+import memoizeOne from "memoize-one";
+import React, { useState } from "react";
 
 import { withPose, toRGBA, defaultBlend, defaultDepth } from "../utils/commandUtils";
-import WorldviewReactContext from "../WorldviewReactContext";
 import Command, { type CommonCommandProps } from "./Command";
 import type { TextMarker } from "./Text";
 
@@ -25,18 +26,20 @@ type FontAtlas = {|
   },
 |};
 
+// Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
 const FONT_SIZE = 40;
 const BUFFER = 10;
-const MAX_ATLAS_WIDTH = 500;
-const RADIUS = 8;
+const BASELINE_ADJUST = FONT_SIZE * 0.2; // hack to make the baseline align near y=0
+const MAX_ATLAS_WIDTH = 512;
+const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
+const OUTLINE_CUTOFF = 0.5;
 const DEFAULT_COLOR = Object.freeze({ r: 0.5, g: 0.5, b: 0.5, a: 1 });
 const DEFAULT_OUTLINE_COLOR = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 let IMG_EL = null;
 
-function buildAtlas(charSet: Set<string>): FontAtlas {
-  const glyphSDFs = {};
-  const tinySDF = new TinySDF(FONT_SIZE, BUFFER, RADIUS, CUTOFF, "sans-serif", "normal");
+const memoizedBuildAtlas = memoizeOne((charSet: Set<string>): FontAtlas => {
+  const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
 
   const fontStyle = `${FONT_SIZE}px sans-serif`;
   const canvas = document.createElement("canvas");
@@ -71,7 +74,7 @@ function buildAtlas(charSet: Set<string>): FontAtlas {
   ctx.font = fontStyle;
 
   for (const char of charSet) {
-    const { x, y, width } = charInfo[char];
+    const { x, y } = charInfo[char];
     const data = tinySDF.draw(char);
     const imageData = ctx.createImageData(tinySDF.size, tinySDF.size);
     for (let i = 0; i < data.length; i++) {
@@ -80,10 +83,7 @@ function buildAtlas(charSet: Set<string>): FontAtlas {
       imageData.data[4 * i + 2] = 255;
       imageData.data[4 * i + 3] = data[i];
     }
-    // ctx.fillText(char, x, y);
     ctx.putImageData(imageData, x, y);
-    ctx.strokeStyle = "red";
-    ctx.strokeRect(x, y, imageData.width, imageData.height);
   }
   if (!IMG_EL) {
     document.querySelectorAll("#foobar_img").forEach((el) => el.remove());
@@ -97,150 +97,130 @@ function buildAtlas(charSet: Set<string>): FontAtlas {
   canvas.toBlob((blob) => (IMG_EL.src = URL.createObjectURL(blob)));
 
   return { canvas, charInfo };
-}
+}, isEqual);
 
-function text(regl: any) {
-  const drawText = regl(
-    withPose({
-      // depth: { enable: true, mask: true },
-      // depth: { enable: false, mask: true },
-      depth: defaultDepth,
-      blend: defaultBlend,
-      primitive: "triangle strip",
-      // primitive: "line strip",
-      vert: `
-      precision highp float;
+function makeTextCommand() {
+  // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
+  const charSet = new Set();
+
+  return (regl: any) => {
+    const atlasTexture = regl.texture();
+
+    const drawText = regl(
+      withPose({
+        // depth: { enable: true, mask: true },
+        // depth: { enable: false, mask: true },
+        depth: defaultDepth,
+        blend: defaultBlend,
+        primitive: "triangle strip",
+        // primitive: "line strip",
+        vert: `
+      precision mediump float;
 
       #WITH_POSE
 
       uniform mat4 projection, view;
       uniform float pointSize;
       uniform float fontSize;
-      uniform float buffer;
+      uniform float srcHeight;
       uniform vec2 atlasSize;
 
       attribute vec2 texCoord;
-      attribute vec3 position;
+      attribute vec2 position;
 
       attribute vec2 srcOffset;
-      attribute vec2 srcSize;
+      attribute float srcWidth;
       attribute vec2 destOffset;
 
       // attribute vec4 color;
       // varying vec4 fragColor;
       varying vec2 vTexCoord;
       void main () {
-        vec3 pos = applyPose(position * vec3(srcSize.x/fontSize,1.0+2.0*buffer/fontSize,1) + vec3(destOffset/fontSize, 0));
+        vec2 srcSize = vec2(srcWidth, srcHeight);
+        vec3 pos = applyPose(vec3((destOffset + position * srcSize) / fontSize, 0));
         gl_Position = projection * view * vec4(pos, 1);
-        vTexCoord = (srcOffset + texCoord * srcSize)/atlasSize;
-        // vTexCoordMax = texCoord + srcOffset + vec2(charWidth, 10/*charHeight*/);
-        // fragColor = color;
+        vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
       }
       `,
-      frag: `
-      precision highp float;
+        frag: `
+      #extension GL_OES_standard_derivatives : enable
+      precision mediump float;
       uniform sampler2D atlas;
-      uniform float outlineThreshold;
-      uniform float edgeThreshold;
-      uniform float softness;
+      uniform float outlineCutoff;
+      uniform float cutoff;
+      uniform bool enableOutline;
       uniform vec4 foregroundColor;
       uniform vec4 outlineColor;
       varying vec2 vTexCoord;
-      uniform bool debug;
       void main() {
         float dist = texture2D(atlas, vTexCoord).a;
-        // gl_FragColor = vec4(1, 1, 1, smoothstep(buffer - gamma, buffer + gamma,dist));
-        // float a = smoothstep(buffer - gamma, buffer + gamma,dist);
-        // float a = smoothstep(buffer - gamma, buffer + gamma,dist);
 
-        float colorFactor = 1.0;
-        // if (dist >= outlineThreshold && dist < edgeThreshold) {
-        //   colorFactor = smoothstep(outlineThreshold - softness, outlineThreshold + softness, dist);
-        // } else if (dist >= edgeThreshold) {
-        //   colorFactor = smoothstep(edgeThreshold - softness, edgeThreshold + softness, dist);
-        // }
-        colorFactor = smoothstep(edgeThreshold - softness, edgeThreshold + softness, dist);
-        // float a = step(1.0 - cutoff, dist);
-        // float a2 = step(1.0 - cutoff2, dist);
-        gl_FragColor.rgb = mix(outlineColor, foregroundColor, colorFactor).rgb;
-        gl_FragColor.a = smoothstep(outlineThreshold - softness, outlineThreshold + softness, dist);
-        gl_FragColor = dist < outlineThreshold ? vec4(1,1,0,0) : dist < edgeThreshold ? vec4(1,0,0,1) : vec4(0,1,1,1);
-
-        float outlineStep = smoothstep(outlineThreshold - softness, outlineThreshold + softness, dist);
-        float edgeStep = smoothstep(edgeThreshold - softness, edgeThreshold + softness, dist);
-        // float colorFactor2 = smoothstep(2.0 - softness, 2.0, outlineStep + edgeStep);
-        gl_FragColor.rgb = mix(outlineColor, foregroundColor, edgeStep).rgb;
-        gl_FragColor.a = smoothstep(outlineThreshold - softness, outlineThreshold + softness, dist);
-        if (debug) {
-          gl_FragColor = texture2D(atlas, vTexCoord);
+        // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
+        // between outline and text, not on the outer border, because the alpha blending and
+        // depth test don't look good for partially-transparent pixels.
+        if (enableOutline) {
+          float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
+          gl_FragColor = mix(outlineColor, foregroundColor, edgeStep);
+          gl_FragColor.a *= step(1.0 - outlineCutoff, dist);
+        } else {
+          gl_FragColor = foregroundColor;
+          gl_FragColor.a *= step(1.0 - cutoff, dist);
         }
-        // gl_FragColor = vec4(1, 1, 1, a);
+
         if (gl_FragColor.a == 0.) {
           discard;
         }
-        // gl_FragColor = texture2D(atlas, vTexCoord);
-        // gl_FragColor = vec4(1, 0, 0, 1);
       }
     `,
-      count: 4,
-      attributes: {
-        position: [[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0]],
-        texCoord: [[0, 1], [0, 0], [1, 1], [1, 0]], // flipped
-        srcOffset: (ctx, props) => ({ buffer: regl.buffer(props.srcOffsets), divisor: 1 }), //regl.prop("srcOffsets"),
-        destOffset: (ctx, props) => ({ buffer: regl.buffer(props.destOffsets), divisor: 1 }), //regl.prop("destOffsets"),
-        srcSize: (ctx, props) => ({ buffer: regl.buffer(props.srcSizes), divisor: 1 }), //regl.prop("charWidths"),
-      },
-      instances: regl.prop("instances"),
-      uniforms: {
-        atlas: regl.context("atlas"),
-        atlasSize: regl.context("atlasSize"),
-        fontSize: regl.context("fontSize"),
-        buffer: regl.context("buffer"),
+        count: 4,
+        attributes: {
+          position: [[0, 0], [0, 1], [1, 0], [1, 1]],
+          texCoord: [[0, 1], [0, 0], [1, 1], [1, 0]], // flipped
+          srcOffset: (ctx, props) => ({ buffer: regl.buffer(props.srcOffsets), divisor: 1 }),
+          destOffset: (ctx, props) => ({ buffer: regl.buffer(props.destOffsets), divisor: 1 }),
+          srcWidth: (ctx, props) => ({ buffer: regl.buffer(props.srcWidths), divisor: 1 }),
+        },
+        instances: regl.prop("instances"),
+        uniforms: {
+          atlas: atlasTexture,
+          atlasSize: () => [atlasTexture.width, atlasTexture.height],
+          fontSize: FONT_SIZE,
+          cutoff: CUTOFF,
+          outlineCutoff: OUTLINE_CUTOFF,
+          srcHeight: FONT_SIZE + 2 * BUFFER,
 
-        outlineThreshold: regl.prop("outlineThreshold"),
-        edgeThreshold: regl.prop("edgeThreshold"),
-        debug: regl.prop("debug"),
-        softness: 0.1,
+          foregroundColor: (ctx, props) => toRGBA(props.color || props.colors?.[0] || DEFAULT_COLOR),
+          outlineColor: (ctx, props) => toRGBA(props.colors?.[1] || DEFAULT_OUTLINE_COLOR),
+          enableOutline: (ctx, props) => props.colors?.[1] != null,
+        },
+      })
+    );
 
-        foregroundColor: (ctx, props) => toRGBA(props.color || props.colors?.[0] || DEFAULT_COLOR),
-        outlineColor: (ctx, props) => toRGBA(props.colors?.[1] || DEFAULT_OUTLINE_COLOR),
-      },
-    })
-  );
-
-  const atlasTex = regl.texture();
-
-  return (props) => {
-    const charSet = new Set();
-    for (const { text } of props) {
-      for (const char of text) {
-        charSet.add(char);
+    return (props: TextMarker[]) => {
+      const prevNumChars = charSet.size;
+      for (const { text } of props) {
+        for (const char of text) {
+          charSet.add(char);
+        }
       }
-    }
-    const { canvas, charInfo } = buildAtlas(charSet);
-    regl({
-      context: {
-        atlas: atlasTex({
+      const { canvas, charInfo } = memoizedBuildAtlas(charSet);
+      if (charSet.size !== prevNumChars) {
+        atlasTexture({
           data: canvas,
           // flipY: true,
           wrap: "clamp",
           mag: "linear",
           min: "linear",
-        }),
-        atlasSize: [canvas.width, canvas.height],
-        fontSize: FONT_SIZE,
-        buffer: BUFFER,
-        cutoff: CUTOFF,
-      },
-    })(() => {
+        });
+      }
       drawText(
         props.map((marker) => {
           const destOffsets = new Float32Array(marker.text.length * 2);
-          const srcSizes = new Float32Array(marker.text.length * 2);
+          const srcWidths = new Float32Array(marker.text.length);
           const srcOffsets = new Float32Array(marker.text.length * 2);
           let x = 0;
           let y = 0;
-          let i = 0;
+          let instances = 0;
           for (const char of marker.text) {
             if (char === "\n") {
               x = 0;
@@ -248,78 +228,30 @@ function text(regl: any) {
               continue;
             }
             const info = charInfo[char];
-            destOffsets[2 * i + 0] = x - BUFFER;
-            destOffsets[2 * i + 1] = y - BUFFER * 1.5 /*hack for baseline*/;
-            srcOffsets[2 * i + 0] = info.x;
-            srcOffsets[2 * i + 1] = info.y;
-            srcSizes[2 * i + 0] = info.width + 2 * BUFFER;
-            srcSizes[2 * i + 1] = FONT_SIZE + 2 * BUFFER;
+            destOffsets[2 * instances + 0] = x - BUFFER;
+            destOffsets[2 * instances + 1] = y - BUFFER - BASELINE_ADJUST;
+            srcOffsets[2 * instances + 0] = info.x;
+            srcOffsets[2 * instances + 1] = info.y;
+            srcWidths[instances] = info.width + 2 * BUFFER;
             x += info.width;
-            ++i;
+            ++instances;
           }
           return {
-            ...marker,
-            instances: i,
+            pose: marker.pose,
+            color: marker.color,
+            colors: marker.colors,
+            instances,
             srcOffsets,
             destOffsets,
-            srcSizes,
+            srcWidths,
           };
         })
       );
-      // props.map((marker: TextMarker) => {
-      //   // const buf = tinySDF.draw(marker.text);
-      //   //TODO: redo atlas generation accounting for font widths
-      //   const atlas = fontAtlas({
-      //     chars,
-      //   });
-      // })
-    });
+    };
   };
 }
 
 export default function Text(props: Props) {
-  const [outlineThreshold, setOutlineThreshold] = useState(0.4);
-  const [edgeThreshold, setEdgeThreshold] = useState(0.75);
-  const [debug, setDebug] = useState(false);
-  const ctx = useContext(WorldviewReactContext);
-  return (
-    <>
-      <Command reglCommand={text} {...props}>
-        {props.children.map((child) => ({ ...child, outlineThreshold, edgeThreshold, debug }))}
-      </Command>
-      <input
-        style={{ position: "absolute", top: 140, left: 0 }}
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        value={outlineThreshold}
-        onChange={(e) => {
-          setOutlineThreshold(+e.target.value);
-          ctx.onDirty();
-        }}
-      />
-      <input
-        style={{ position: "absolute", top: 160, left: 0 }}
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        value={edgeThreshold}
-        onChange={(e) => {
-          setEdgeThreshold(+e.target.value);
-          ctx.onDirty();
-        }}
-      />
-      <input
-        style={{ position: "absolute", top: 180, left: 0 }}
-        type="checkbox"
-        defaultChecked={debug}
-        onClick={(e) => {
-          setDebug(e.target.checked);
-          ctx.onDirty();
-        }}
-      />
-    </>
-  );
+  const [command] = useState(() => makeTextCommand());
+  return <Command reglCommand={command} {...props} />;
 }

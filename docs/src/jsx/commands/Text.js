@@ -5,14 +5,15 @@
 //  You may not use this file except in compliance with the License.
 
 // #BEGIN EXAMPLE
-import React from "react";
+import React, { useState, useCallback } from "react";
 import Worldview, { Text2, Axes, Cubes, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
+  const [text, setText] = useState("Hello\nWorldview!");
+
   const labelMarker = {
-    name: "randomName",
-    text: "AaBbFfIiJjKkLlMm",
+    text,
     // color: { r: 1, g: 1, b: 1, a: 1 },
     colors: [{ r: 0.5, g: 0.5, b: 0.5, a: 1 }, { r: 1, g: 1, b: 1, a: 1 }],
     pose: {
@@ -40,17 +41,32 @@ function Example() {
   };
 
   return (
-    <Worldview
-      defaultCameraState={{
-        ...DEFAULT_CAMERA_STATE,
-        targetOffset: [2, 1.5, 0],
-        distance: 10,
-        phi: 0,
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "relative",
+        overflow: "hidden",
       }}>
-      <Text2 autoBackgroundColor>{[labelMarker]}</Text2>
-      <Cubes>{[cubeMarker2]}</Cubes>
-      <Axes />
-    </Worldview>
+      <textarea
+        style={{ width: "100%", height: "30%" }}
+        value={text}
+        onChange={useCallback((e) => setText(e.target.value))}
+      />
+      <div style={{ height: "70%" }}>
+        <Worldview
+          defaultCameraState={{
+            ...DEFAULT_CAMERA_STATE,
+            targetOffset: [2, 1.5, 0],
+            distance: 10,
+            phi: 0,
+          }}>
+          <Text2 autoBackgroundColor>{[labelMarker]}</Text2>
+          <Cubes>{[cubeMarker2]}</Cubes>
+          <Axes />
+        </Worldview>
+      </div>
+    </div>
   );
 }
 // #END EXAMPLE

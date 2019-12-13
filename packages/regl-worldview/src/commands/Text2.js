@@ -5,14 +5,14 @@ import isEqual from "lodash/isEqual";
 import memoizeOne from "memoize-one";
 import React, { useState } from "react";
 
-import { withPose, toRGBA, defaultBlend, defaultDepth } from "../utils/commandUtils";
+import { withPose, toRGBA, defaultBlend, defaultDepth, shouldConvert, pointToVec3 } from "../utils/commandUtils";
 import Command, { type CommonCommandProps } from "./Command";
-import type { TextMarker } from "./Text";
+import { isColorDark, type TextMarker } from "./Text";
 
 type Props = {
   ...CommonCommandProps,
   children: $ReadOnlyArray<TextMarker & { billboard?: boolean }>,
-  // autoBackgroundColor?: boolean,
+  autoBackgroundColor?: boolean,
 };
 
 type FontAtlas = {|
@@ -35,7 +35,11 @@ const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
 const OUTLINE_CUTOFF = 0.5;
+const DEFAULT_COLOR = Object.freeze({ r: 1, g: 0, b: 1, a: 1 });
 const DEFAULT_OUTLINE_COLOR = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
+
+const BG_COLOR_LIGHT = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
+const BG_COLOR_DARK = Object.freeze({ r: 0, g: 0, b: 0, a: 1 });
 
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
@@ -96,6 +100,7 @@ const vert = `
   uniform float fontSize;
   uniform float srcHeight;
   uniform vec2 atlasSize;
+  uniform vec3 scale;
 
   attribute vec2 texCoord;
   attribute vec2 position;
@@ -109,7 +114,7 @@ const vert = `
   varying vec2 vTexCoord;
   void main () {
     vec2 srcSize = vec2(srcWidth, srcHeight);
-    vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
+    vec3 markerSpacePos = scale * vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
     vec3 pos;
     if (billboard) {
       pos = applyPosePosition((billboardRotation * vec4(markerSpacePos, 1)).xyz);
@@ -159,7 +164,7 @@ function makeTextCommand() {
   const charSet = new Set();
   const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
-  return (regl: any) => {
+  const fn = (regl: any) => {
     const atlasTexture = regl.texture();
 
     const drawText = regl(
@@ -178,8 +183,9 @@ function makeTextCommand() {
           srcHeight: FONT_SIZE + 2 * BUFFER,
           alignmentOffset: regl.prop("alignmentOffset"),
           billboard: regl.prop("billboard"),
+          scale: (ctx, props) => (shouldConvert(props.scale) ? pointToVec3(props.scale) : props.scale),
 
-          foregroundColor: (ctx, props) => toRGBA(props.color || props.colors?.[0]),
+          foregroundColor: (ctx, props) => toRGBA(props.colors?.[0] || props.color),
           outlineColor: (ctx, props) => toRGBA(props.colors?.[1] || DEFAULT_OUTLINE_COLOR),
           enableOutline: (ctx, props) => props.colors?.[1] != null,
         },
@@ -247,11 +253,18 @@ function makeTextCommand() {
           }
           const totalHeight = y + FONT_SIZE;
 
+          let colors = marker.colors;
+          if (fn.autoBackgroundColor && (!colors || colors.length !== 2)) {
+            const foregroundColor = colors?.[0] || marker.color || DEFAULT_COLOR;
+            colors = [foregroundColor, isColorDark(foregroundColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK];
+          }
+
           return {
             billboard: marker.billboard ?? true,
             pose: marker.pose,
-            color: marker.color,
-            colors: marker.colors,
+            color: marker.color || DEFAULT_COLOR,
+            colors,
+            scale: marker.scale,
             alignmentOffset: [-totalWidth / 2, totalHeight / 2],
             instances,
             srcOffsets,
@@ -262,9 +275,11 @@ function makeTextCommand() {
       );
     };
   };
+  return fn;
 }
 
 export default function Text(props: Props) {
   const [command] = useState(() => makeTextCommand());
+  command.autoBackgroundColor = props.autoBackgroundColor;
   return <Command reglCommand={command} {...props} />;
 }

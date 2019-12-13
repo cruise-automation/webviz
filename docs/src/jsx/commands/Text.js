@@ -12,7 +12,7 @@ import Worldview, { Text2, Axes, Cubes, DEFAULT_CAMERA_STATE } from "regl-worldv
 function Example() {
   const [text, setText] = useState("Hello\nWorldview!");
 
-  const labelMarker = {
+  const labelMarker1 = {
     text,
     // color: { r: 1, g: 1, b: 1, a: 1 },
     colors: [{ r: 0.5, g: 0.5, b: 0.5, a: 1 }, { r: 1, g: 1, b: 1, a: 1 }],
@@ -23,6 +23,10 @@ function Example() {
     scale: { x: 1, y: 1, z: 1 },
     // uncomment colors and remove autoBackgroundColor prop to set text and background colors
     // colors: [{ r: 1, g: 1, b: 1, a: 1 }, { r: 1, g: 0, b: 0, a: 0.8 }],
+  };
+  const labelMarker2 = {
+    ...labelMarker1,
+    scale: { x: 2, y: 3, z: 1 },
   };
 
   const cubeMarker1 = {
@@ -36,13 +40,14 @@ function Example() {
 
   const cubeMarker2 = {
     color: { r: 0, g: 1, b: 0, a: 1 },
-    pose: labelMarker.pose,
+    pose: labelMarker1.pose,
     scale: { x: 0.1, y: 0.1, z: 0.1 },
   };
 
   return (
     <div
       style={{
+        display: "block",
         width: "100%",
         height: "100%",
         position: "relative",
@@ -53,7 +58,7 @@ function Example() {
         value={text}
         onChange={useCallback((e) => setText(e.target.value))}
       />
-      <div style={{ height: "70%" }}>
+      <div style={{ width: "100%", height: "70%" }}>
         <Worldview
           defaultCameraState={{
             ...DEFAULT_CAMERA_STATE,
@@ -61,7 +66,7 @@ function Example() {
             distance: 10,
             phi: 0,
           }}>
-          <Text2 autoBackgroundColor>{[labelMarker]}</Text2>
+          <Text2 autoBackgroundColor>{[labelMarker1, labelMarker2]}</Text2>
           <Cubes>{[cubeMarker2]}</Cubes>
           <Axes />
         </Worldview>

@@ -57,7 +57,7 @@ function insertGlobalCss() {
   cssHasBeenInserted = true;
 }
 
-function isColorDark({ r, g, b }: Color): boolean {
+export function isColorDark({ r, g, b }: Color): boolean {
   // ITU-R BT.709 https://en.wikipedia.org/wiki/Rec._709
   // 0.2126 * 255 * r + 0.7152 * 255 * g + 0.0722 * 255 * b
   const luma = 54.213 * r + 182.376 * g + 18.411 * b;

@@ -11,15 +11,14 @@ import type { TextMarker } from "./Text";
 
 type Props = {
   ...CommonCommandProps,
-  children: TextMarker[],
+  children: $ReadOnlyArray<TextMarker & { billboard?: boolean }>,
   // autoBackgroundColor?: boolean,
 };
 
 type FontAtlas = {|
-  // canvas: HTMLCanvasElement,
-  buffer: Uint8ClampedArray,
-  width: number,
-  height: number,
+  textureData: Uint8Array,
+  textureWidth: number,
+  textureHeight: number,
   charInfo: {
     [char: string]: {|
       x: number,
@@ -32,15 +31,13 @@ type FontAtlas = {|
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
 const FONT_SIZE = 40;
 const BUFFER = 10;
-const BASELINE_ADJUST = FONT_SIZE * 0.2; // hack to make the baseline align near y=0
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
 const OUTLINE_CUTOFF = 0.5;
-const DEFAULT_COLOR = Object.freeze({ r: 0.5, g: 0.5, b: 0.5, a: 1 });
 const DEFAULT_OUTLINE_COLOR = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
-let IMG_EL = null;
 
+// Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
   memoizeOne((charSet: Set<string>): FontAtlas => {
     const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
@@ -50,10 +47,11 @@ const createMemoizedBuildAtlas = () =>
     const ctx = canvas.getContext("2d");
     ctx.font = fontStyle;
 
-    let canvasWidth = 0;
+    let textureWidth = 0;
     const rowHeight = FONT_SIZE + 2 * BUFFER;
     const charInfo = {};
 
+    // Measure and assign positions to all characters
     let x = 0;
     let y = 0;
     for (const char of charSet) {
@@ -65,57 +63,96 @@ const createMemoizedBuildAtlas = () =>
       }
       charInfo[char] = { x, y, width };
       x += dx;
-      // x += FONT_SIZE + 2 * BUFFER;
-      canvasWidth = Math.max(canvasWidth, x);
+      textureWidth = Math.max(textureWidth, x);
     }
-    console.log(charInfo);
 
-    const canvasHeight = y + rowHeight;
+    const textureHeight = y + rowHeight;
+    const textureData = new Uint8Array(textureWidth * textureHeight);
 
-    const buffer = new Uint8Array(canvasWidth * canvasHeight);
-
-    canvas.width = canvasWidth;
-    canvas.height = y + rowHeight;
-
-    ctx.fillStyle = "white";
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "black";
-    ctx.textBaseline = "top";
-    ctx.font = fontStyle;
-
+    // Use tiny-sdf to create SDF images for each character and copy them into a single texture
     for (const char of charSet) {
       const { x, y } = charInfo[char];
       const data = tinySDF.draw(char);
       for (let i = 0; i < tinySDF.size; i++) {
         for (let j = 0; j < tinySDF.size; j++) {
-          const alpha = data[i * tinySDF.size + j];
-          if (x + j < canvasWidth) {
-            buffer[canvasWidth * (y + i) + x + j] = alpha;
+          // if this character is near the right edge, we don't actually copy the whole square of data
+          if (x + j < textureWidth) {
+            textureData[textureWidth * (y + i) + x + j] = data[i * tinySDF.size + j];
           }
         }
       }
-      const imageData = ctx.createImageData(tinySDF.size, tinySDF.size);
-      for (let i = 0; i < data.length; i++) {
-        imageData.data[4 * i + 0] = 255;
-        imageData.data[4 * i + 1] = 255;
-        imageData.data[4 * i + 2] = 255;
-        imageData.data[4 * i + 3] = data[i];
-      }
-      ctx.putImageData(imageData, x, y);
     }
-    if (!IMG_EL) {
-      document.querySelectorAll("#foobar_img").forEach((el) => el.remove());
-      IMG_EL = document.createElement("img");
-      IMG_EL.id = "foobar_img";
-      IMG_EL.style.position = "absolute";
-      IMG_EL.style.top = 0;
-      IMG_EL.style.left = 0;
-      document.body.appendChild(IMG_EL);
-    }
-    canvas.toBlob((blob) => (IMG_EL.src = URL.createObjectURL(blob)));
 
-    return { canvas, buffer, width: canvasWidth, height: canvasHeight, charInfo };
+    return { textureData, textureWidth, textureHeight, charInfo };
   }, isEqual);
+
+const vert = `
+  precision mediump float;
+
+  #WITH_POSE
+
+  uniform mat4 projection, view, billboardRotation;
+  uniform bool billboard;
+  uniform float fontSize;
+  uniform float srcHeight;
+  uniform vec2 atlasSize;
+
+  attribute vec2 texCoord;
+  attribute vec2 position;
+
+  attribute vec2 srcOffset;
+  attribute float srcWidth;
+  attribute vec2 destOffset;
+
+  uniform vec2 alignmentOffset;
+
+  varying vec2 vTexCoord;
+  void main () {
+    vec2 srcSize = vec2(srcWidth, srcHeight);
+    vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
+    vec3 pos;
+    if (billboard) {
+      pos = applyPosePosition((billboardRotation * vec4(markerSpacePos, 1)).xyz);
+    } else {
+      pos = applyPose(markerSpacePos);
+    }
+    gl_Position = projection * view * vec4(pos, 1);
+    vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
+  }
+`;
+
+const frag = `
+  #extension GL_OES_standard_derivatives : enable
+  precision mediump float;
+  uniform mat4 projection;
+  uniform sampler2D atlas;
+  uniform float outlineCutoff;
+  uniform float cutoff;
+  uniform bool enableOutline;
+  uniform vec4 foregroundColor;
+  uniform vec4 outlineColor;
+  varying vec2 vTexCoord;
+  void main() {
+    float dist = texture2D(atlas, vTexCoord).a;
+
+    // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
+    // between outline and text, not on the outer border, because the alpha blending and
+    // depth test don't work together nicely for partially-transparent pixels.
+    if (enableOutline) {
+      float screenSize = fwidth(vTexCoord.x);
+      float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
+      gl_FragColor = mix(outlineColor, foregroundColor, edgeStep);
+      gl_FragColor.a *= step(1.0 - outlineCutoff, dist);
+    } else {
+      gl_FragColor = foregroundColor;
+      gl_FragColor.a *= step(1.0 - cutoff, dist);
+    }
+
+    if (gl_FragColor.a == 0.) {
+      discard;
+    }
+  }
+`;
 
 function makeTextCommand() {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
@@ -127,81 +164,11 @@ function makeTextCommand() {
 
     const drawText = regl(
       withPose({
-        // depth: { enable: true, mask: true },
-        // depth: { enable: false, mask: true },
         depth: defaultDepth,
         blend: defaultBlend,
         primitive: "triangle strip",
-        // primitive: "line strip",
-        vert: `
-      precision mediump float;
-
-      #WITH_POSE
-
-      uniform mat4 projection, view;
-      uniform float pointSize;
-      uniform float fontSize;
-      uniform float srcHeight;
-      uniform vec2 atlasSize;
-
-      attribute vec2 texCoord;
-      attribute vec2 position;
-
-      attribute vec2 srcOffset;
-      attribute float srcWidth;
-      attribute vec2 destOffset;
-
-      uniform vec2 alignmentOffset;
-
-      // attribute vec4 color;
-      // varying vec4 fragColor;
-      varying vec2 vTexCoord;
-      void main () {
-        vec2 srcSize = vec2(srcWidth, srcHeight);
-        vec3 pos = applyPose(vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0));
-        gl_Position = projection * view * vec4(pos, 1);
-        vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
-      }
-      `,
-        frag: `
-      #extension GL_OES_standard_derivatives : enable
-      precision mediump float;
-      uniform sampler2D atlas;
-      uniform float outlineCutoff;
-      uniform float cutoff;
-      uniform bool enableOutline;
-      uniform vec4 foregroundColor;
-      uniform vec4 outlineColor;
-      varying vec2 vTexCoord;
-      void main() {
-        float dist = texture2D(atlas, vTexCoord).a;
-
-        // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
-        // between outline and text, not on the outer border, because the alpha blending and
-        // depth test don't look good for partially-transparent pixels.
-        if (enableOutline) {
-          float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
-          gl_FragColor = mix(outlineColor, foregroundColor, edgeStep);
-          gl_FragColor.a *= step(1.0 - outlineCutoff, dist);
-        } else {
-          gl_FragColor = foregroundColor;
-          gl_FragColor.a *= step(1.0 - cutoff, dist);
-        }
-
-        if (gl_FragColor.a == 0.) {
-          discard;
-        }
-      }
-    `,
-        count: 4,
-        attributes: {
-          position: [[0, 0], [0, -1], [1, 0], [1, -1]],
-          texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
-          srcOffset: (ctx, props) => ({ buffer: regl.buffer(props.srcOffsets), divisor: 1 }),
-          destOffset: (ctx, props) => ({ buffer: regl.buffer(props.destOffsets), divisor: 1 }),
-          srcWidth: (ctx, props) => ({ buffer: regl.buffer(props.srcWidths), divisor: 1 }),
-        },
-        instances: regl.prop("instances"),
+        vert,
+        frag,
         uniforms: {
           atlas: atlasTexture,
           atlasSize: () => [atlasTexture.width, atlasTexture.height],
@@ -210,35 +177,49 @@ function makeTextCommand() {
           outlineCutoff: OUTLINE_CUTOFF,
           srcHeight: FONT_SIZE + 2 * BUFFER,
           alignmentOffset: regl.prop("alignmentOffset"),
+          billboard: regl.prop("billboard"),
 
-          foregroundColor: (ctx, props) => toRGBA(props.color || props.colors?.[0] || DEFAULT_COLOR),
+          foregroundColor: (ctx, props) => toRGBA(props.color || props.colors?.[0]),
           outlineColor: (ctx, props) => toRGBA(props.colors?.[1] || DEFAULT_OUTLINE_COLOR),
           enableOutline: (ctx, props) => props.colors?.[1] != null,
+        },
+        instances: regl.prop("instances"),
+        count: 4,
+        attributes: {
+          position: [[0, 0], [0, -1], [1, 0], [1, -1]],
+          texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
+          srcOffset: (ctx, props) => ({ buffer: regl.buffer(props.srcOffsets), divisor: 1 }),
+          destOffset: (ctx, props) => ({ buffer: regl.buffer(props.destOffsets), divisor: 1 }),
+          srcWidth: (ctx, props) => ({ buffer: regl.buffer(props.srcWidths), divisor: 1 }),
         },
       })
     );
 
-    return (props: TextMarker[]) => {
+    return (props: $ReadOnlyArray<TextMarker & { billboard?: boolean }>) => {
       const prevNumChars = charSet.size;
       for (const { text } of props) {
         for (const char of text) {
           charSet.add(char);
         }
       }
-      const { canvas, buffer, width, height, charInfo } = memoizedBuildAtlas(new Set(charSet));
+
+      const { textureData, textureWidth, textureHeight, charInfo } = memoizedBuildAtlas(
+        new Set(charSet) // copy charSet since a reference is kept for memoization
+      );
+
+      // re-upload texture only if characters were added
       if (charSet.size !== prevNumChars) {
         atlasTexture({
-          data: buffer,
-          width,
-          height,
+          data: textureData,
+          width: textureWidth,
+          height: textureHeight,
           format: "alpha",
-          // data: canvas,
-          // flipY: true,
           wrap: "clamp",
           mag: "linear",
           min: "linear",
         });
       }
+
       drawText(
         props.map((marker) => {
           const destOffsets = new Float32Array(marker.text.length * 2);
@@ -267,6 +248,7 @@ function makeTextCommand() {
           const totalHeight = y + FONT_SIZE;
 
           return {
+            billboard: marker.billboard ?? true,
             pose: marker.pose,
             color: marker.color,
             colors: marker.colors,

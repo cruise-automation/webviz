@@ -22,6 +22,11 @@ const rotateGLSL = `
     // rotate the point and then add the position of the pose
     return rotate(point, _rotation) + _position;
   }
+
+  // apply only the position part of pose; used with billboardRotation uniform
+  vec3 applyPosePosition(vec3 point) {
+    return point + _position;
+  }
 `;
 
 const DEFAULT_TEXT_COLOR = { r: 1, g: 1, b: 1, a: 1 };

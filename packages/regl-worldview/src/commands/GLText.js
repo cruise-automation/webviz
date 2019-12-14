@@ -248,15 +248,26 @@ function makeTextCommand() {
         });
       }
 
-      drawText(
-        props.map((marker) => {
-          const destOffsets = new Float32Array(marker.text.length * 2);
-          const srcWidths = new Float32Array(marker.text.length);
-          const srcOffsets = new Float32Array(marker.text.length * 2);
+      let totalInstances = 0;
+      const estimatedInstances = props.reduce((sum, marker) => sum + marker.text.length, 0);
+      const destOffsets = new Float32Array(estimatedInstances * 2);
+      const srcWidths = new Float32Array(estimatedInstances);
+      const srcOffsets = new Float32Array(estimatedInstances * 2);
+
+      // These don't vary across characters within a marker, but the divisor can't be dynamic so we have to duplicate the data for each character.
+      const alignmentOffset = new Float32Array(estimatedInstances * 2);
+      const scale = new Float32Array(estimatedInstances * 3);
+      const foregroundColor = new Float32Array(estimatedInstances * 4);
+      const outlineColor = new Float32Array(estimatedInstances * 4);
+      const enableOutline = new Uint8Array(estimatedInstances);
+      const billboard = new Uint8Array(estimatedInstances);
+
+      for (const marker of props) {
+        for (const char of marker.text) {
           let totalWidth = 0;
           let x = 0;
           let y = 0;
-          let instances = 0;
+          let markerInstances = 0;
           for (const char of marker.text) {
             if (char === "\n") {
               x = 0;
@@ -264,14 +275,14 @@ function makeTextCommand() {
               continue;
             }
             const info = charInfo[char];
-            destOffsets[2 * instances + 0] = x - BUFFER;
-            destOffsets[2 * instances + 1] = -(y - BUFFER);
-            srcOffsets[2 * instances + 0] = info.x;
-            srcOffsets[2 * instances + 1] = info.y;
-            srcWidths[instances] = info.width + 2 * BUFFER;
+            destOffsets[2 * (totalInstances + markerInstances) + 0] = x - BUFFER;
+            destOffsets[2 * (totalInstances + markerInstances) + 1] = -(y - BUFFER);
+            srcOffsets[2 * (totalInstances + markerInstances) + 0] = info.x;
+            srcOffsets[2 * (totalInstances + markerInstances) + 1] = info.y;
+            srcWidths[totalInstances + markerInstances] = info.width + 2 * BUFFER;
             x += info.width;
             totalWidth = Math.max(totalWidth, x);
-            ++instances;
+            ++markerInstances;
           }
           const totalHeight = y + FONT_SIZE;
 
@@ -281,6 +292,23 @@ function makeTextCommand() {
             colors = [foregroundColor, isColorDark(foregroundColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK];
           }
 
+          for (let i = 0; i < markerInstances; i++) {
+            billboard[totalInstances + i] = marker.billboard ?? true;
+
+            alignmentOffset[2 * (totalInstances + i) + 0] = -totalWidth / 2;
+            alignmentOffset[2 * (totalInstances + i) + 1] = totalHeight / 2;
+
+            scale[3 * (totalInstances + i) + 0] = marker.scale.x;
+            scale[3 * (totalInstances + i) + 1] = marker.scale.y;
+            scale[3 * (totalInstances + i) + 2] = marker.scale.z;
+
+            position[4 * (totalInstances + i) + 0] = marker.pose.position.x;
+            position[4 * (totalInstances + i) + 1] = marker.pose.position.y;
+            position[4 * (totalInstances + i) + 2] = marker.pose.position.z;
+            position[4 * (totalInstances + i) + 3] = marker.pose.position.w;
+          }
+          totalInstances += markerInstances;
+
           return {
             billboard: marker.billboard ?? true,
             pose: marker.pose,
@@ -288,13 +316,17 @@ function makeTextCommand() {
             colors,
             scale: marker.scale,
             alignmentOffset: [-totalWidth / 2, totalHeight / 2],
-            instances,
+            instances: totalInstances,
             srcOffsets,
             destOffsets,
             srcWidths,
           };
-        })
-      );
+        }
+      }
+
+      drawText({
+        instances: totalInstances,
+      });
     };
   };
   command.autoBackgroundColor = false;

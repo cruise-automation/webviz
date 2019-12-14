@@ -216,12 +216,16 @@ function makeTextCommand() {
         attributes: {
           position: [[0, 0], [0, -1], [1, 0], [1, -1]],
           texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
-          srcOffset: (ctx, props) => ({ buffer: regl.buffer(props.srcOffsets), divisor: 1 }),
-          destOffset: (ctx, props) => ({ buffer: regl.buffer(props.destOffsets), divisor: 1 }),
-          srcWidth: (ctx, props) => ({ buffer: regl.buffer(props.srcWidths), divisor: 1 }),
+          srcOffset: regl.prop("srcOffsets"), //(ctx, props) => ({ buffer: regl.buffer(props.srcOffsets), divisor: 1 }),
+          destOffset: regl.prop("destOffsets"), //(ctx, props) => ({ buffer: regl.buffer(props.destOffsets), divisor: 1 }),
+          srcWidth: regl.prop("srcWidths"), //(ctx, props) => ({ buffer: regl.buffer(props.srcWidths), divisor: 1 }),
         },
       })
     );
+
+    const srcOffsetsBuffer = regl.buffer();
+    const destOffsetsBuffer = regl.buffer();
+    const srcWidthsBuffer = regl.buffer();
 
     return (props: $ReadOnlyArray<TextMarker & { billboard?: boolean }>) => {
       const prevNumChars = charSet.size;
@@ -248,53 +252,76 @@ function makeTextCommand() {
         });
       }
 
-      drawText(
-        props.map((marker) => {
-          const destOffsets = new Float32Array(marker.text.length * 2);
-          const srcWidths = new Float32Array(marker.text.length);
-          const srcOffsets = new Float32Array(marker.text.length * 2);
-          let totalWidth = 0;
-          let x = 0;
-          let y = 0;
-          let instances = 0;
-          for (const char of marker.text) {
-            if (char === "\n") {
-              x = 0;
-              y = FONT_SIZE;
-              continue;
-            }
-            const info = charInfo[char];
-            destOffsets[2 * instances + 0] = x - BUFFER;
-            destOffsets[2 * instances + 1] = -(y - BUFFER);
-            srcOffsets[2 * instances + 0] = info.x;
-            srcOffsets[2 * instances + 1] = info.y;
-            srcWidths[instances] = info.width + 2 * BUFFER;
-            x += info.width;
-            totalWidth = Math.max(totalWidth, x);
-            ++instances;
-          }
-          const totalHeight = y + FONT_SIZE;
+      let totalInstances = 0;
+      const estimatedInstances = props.reduce((sum, marker) => sum + marker.text.length, 0);
+      const destOffsets = new Float32Array(estimatedInstances * 2);
+      const srcWidths = new Float32Array(estimatedInstances);
+      const srcOffsets = new Float32Array(estimatedInstances * 2);
 
-          let colors = marker.colors;
-          if (command.autoBackgroundColor && (!colors || colors.length !== 2)) {
-            const foregroundColor = colors?.[0] || marker.color || DEFAULT_COLOR;
-            colors = [foregroundColor, isColorDark(foregroundColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK];
+      const drawProps = props.map((marker) => {
+        // const destOffsets = new Float32Array(marker.text.length * 2);
+        // const srcWidths = new Float32Array(marker.text.length);
+        // const srcOffsets = new Float32Array(marker.text.length * 2);
+        let totalWidth = 0;
+        let x = 0;
+        let y = 0;
+        let instances = 0;
+        for (const char of marker.text) {
+          if (char === "\n") {
+            x = 0;
+            y = FONT_SIZE;
+            continue;
           }
+          const info = charInfo[char];
+          destOffsets[2 * (totalInstances + instances) + 0] = x - BUFFER;
+          destOffsets[2 * (totalInstances + instances) + 1] = -(y - BUFFER);
+          srcOffsets[2 * (totalInstances + instances) + 0] = info.x;
+          srcOffsets[2 * (totalInstances + instances) + 1] = info.y;
+          srcWidths[totalInstances + instances] = info.width + 2 * BUFFER;
+          x += info.width;
+          totalWidth = Math.max(totalWidth, x);
+          ++instances;
+        }
+        const totalHeight = y + FONT_SIZE;
 
-          return {
-            billboard: marker.billboard ?? true,
-            pose: marker.pose,
-            color: marker.color || DEFAULT_COLOR,
-            colors,
-            scale: marker.scale,
-            alignmentOffset: [-totalWidth / 2, totalHeight / 2],
-            instances,
-            srcOffsets,
-            destOffsets,
-            srcWidths,
-          };
-        })
-      );
+        let colors = marker.colors;
+        if (command.autoBackgroundColor && (!colors || colors.length !== 2)) {
+          const foregroundColor = colors?.[0] || marker.color || DEFAULT_COLOR;
+          colors = [foregroundColor, isColorDark(foregroundColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK];
+        }
+
+        const drawProp = {
+          billboard: marker.billboard ?? true,
+          pose: marker.pose,
+          color: marker.color || DEFAULT_COLOR,
+          colors,
+          scale: marker.scale,
+          alignmentOffset: [-totalWidth / 2, totalHeight / 2],
+          instances,
+          srcOffsets: {
+            buffer: srcOffsetsBuffer,
+            offset: 2 * totalInstances * Float32Array.BYTES_PER_ELEMENT,
+            divisor: 1,
+          },
+          destOffsets: {
+            buffer: destOffsetsBuffer,
+            offset: 2 * totalInstances * Float32Array.BYTES_PER_ELEMENT,
+            divisor: 1,
+          },
+          srcWidths: {
+            buffer: srcWidthsBuffer,
+            offset: totalInstances * Float32Array.BYTES_PER_ELEMENT,
+            divisor: 1,
+          },
+        };
+        totalInstances += instances;
+        return drawProp;
+      });
+
+      srcOffsetsBuffer({ data: srcOffsets, usage: "dynamic" });
+      destOffsetsBuffer({ data: destOffsets, usage: "dynamic" });
+      srcWidthsBuffer({ data: srcWidths, usage: "dynamic" });
+      drawText(drawProps);
     };
   };
   command.autoBackgroundColor = false;

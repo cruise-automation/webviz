@@ -1,0 +1,9 @@
+import { GLText } from "./jsx/allLiveEditors";
+
+# Text
+
+`<GLText />` renders text in the 3D scene (unlike `<Text />`, which renders additional DOM nodes).
+
+The prop types are identical to `<Text />`, except that additionally each Text object supports an optional `billboard?: boolean` property. If true (the default), text will always face the camera; if false, text may be rotated in 3D according to `pose.orientation`.
+
+<GLText />

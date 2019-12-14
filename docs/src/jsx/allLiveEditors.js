@@ -73,6 +73,8 @@ export const FilledPolygonsHitmap = makeCodeComponent(
   "FilledPolygonsHitmap"
 );
 
+export const GLText = makeCodeComponent(require("!!raw-loader!./commands/GLText"), "GLText");
+
 export const GLTFScene = makeCodeComponent(require("!!raw-loader!./commands/GLTFScene"), "GLTFScene");
 
 export const GLTFSceneHitmap = makeCodeComponent(require("!!raw-loader!./commands/GLTFSceneHitmap"), "GLTFSceneHitmap");
@@ -142,7 +144,7 @@ export const InstancedRendering = makeCodeComponent(
   "RenderingObjects"
 );
 
-export const MoveCamea = makeCodeComponent(require("!!raw-loader!./tutorials/MoveCamea"), "ManagingTheCamera");
+export const MoveCamera = makeCodeComponent(require("!!raw-loader!./tutorials/MoveCamera"), "ManagingTheCamera");
 
 export const StopReleaseDuck = makeCodeComponent(
   require("!!raw-loader!./tutorials/StopReleaseDuck"),

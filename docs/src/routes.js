@@ -27,6 +27,7 @@ import Triangles from "./4.11.Triangles.mdx";
 import GLTFScene from "./4.12.GLTFScene.mdx";
 import DrawPolygons from "./4.13.DrawPolygons.mdx";
 import Grid from "./4.14.Grid.mdx";
+import GLText from "./4.15.GLText.mdx";
 import Cones from "./4.2.Cones.mdx";
 import Cubes from "./4.3.Cubes.mdx";
 import Cylinders from "./4.4.Cylinders.mdx";
@@ -62,6 +63,7 @@ export const componentList = {
   Points,
   Spheres,
   Text,
+  GLText,
   Triangles,
   Flow,
   GLTFScene,
@@ -99,6 +101,7 @@ const ROUTE_CONFIG = [
       "Points",
       "Spheres",
       "Text",
+      "GLText",
       "Triangles",
       "GLTFScene",
       "DrawPolygons",

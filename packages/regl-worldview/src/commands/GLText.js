@@ -9,6 +9,28 @@ import { withPose, toRGBA, defaultBlend, defaultDepth, shouldConvert, pointToVec
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
 
+// The GLText command renders text from a Signed Distance Field texture.
+// There are many external resources about SDFs and text rendering in WebGL, including:
+// https://steamcdn-a.akamaihd.net/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf
+// https://blog.mapbox.com/drawing-text-with-signed-distance-fields-in-mapbox-gl-b0933af6f817
+// http://hack.chrons.me/opengl-text-rendering/
+// https://stackoverflow.com/questions/25956272/better-quality-text-in-webgl
+//
+// Approach
+// ========
+// Characters from the font are measured using a <canvas> and the SDFs are drawn into a texture up front
+// (and whenever new characters are being rendered). Then one instanced draw call is made with an instance
+// per character which reads from the corresponding place in the texture atlas.
+//
+// Possible future improvements
+// ============================
+// - Allow customization of font style, maybe highlight ranges.
+// - Add a scaleInvariant option.
+// - Consider a solid rectangular background instead of an outline. This is challenging because the
+//   instances currently overlap, so there will be z-fighting, but might be possible using the stencil buffer and multiple draw calls.
+// - Somehow support kerning and more advanced font metrics. However, the web font APIs may not
+//   provide support for this. Some font info could be generated/stored offline, possibly including the atlas.
+
 type Props = {
   ...CommonCommandProps,
   children: $ReadOnlyArray<TextMarker & { billboard?: boolean }>,
@@ -164,7 +186,7 @@ function makeTextCommand() {
   const charSet = new Set();
   const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
-  const fn = (regl: any) => {
+  const command = (regl: any) => {
     const atlasTexture = regl.texture();
 
     const drawText = regl(
@@ -254,7 +276,7 @@ function makeTextCommand() {
           const totalHeight = y + FONT_SIZE;
 
           let colors = marker.colors;
-          if (fn.autoBackgroundColor && (!colors || colors.length !== 2)) {
+          if (command.autoBackgroundColor && (!colors || colors.length !== 2)) {
             const foregroundColor = colors?.[0] || marker.color || DEFAULT_COLOR;
             colors = [foregroundColor, isColorDark(foregroundColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK];
           }
@@ -275,11 +297,14 @@ function makeTextCommand() {
       );
     };
   };
-  return fn;
+  command.autoBackgroundColor = false;
+  return command;
 }
 
-export default function Text(props: Props) {
+export default function GLText(props: Props) {
   const [command] = useState(() => makeTextCommand());
+  // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
+  // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
   return <Command reglCommand={command} {...props} />;
 }

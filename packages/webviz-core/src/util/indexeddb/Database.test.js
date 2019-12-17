@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -18,8 +18,8 @@ async function put(db: Database, objectStore: string, values: any[]) {
 // NOTE: Each Database name needs to be unique if you do not want to pollute other tests.
 describe("Database", () => {
   it("read/write", async () => {
-    const db = await Database.open("foo", 1, (db) => {
-      db.createObjectStore("bar", { autoIncrement: true });
+    const db = await Database.open("foo", 1, (openedDb) => {
+      openedDb.createObjectStore("bar", { autoIncrement: true });
     });
     const tx1 = db.transaction("bar", "readwrite");
     tx1.objectStore("bar").put("one");
@@ -35,8 +35,8 @@ describe("Database", () => {
   });
 
   it("can do crud operations", async () => {
-    const db = await Database.open("crud", 1, (db) => {
-      db.createObjectStore("bar", { autoIncrement: true });
+    const db = await Database.open("crud", 1, (openedDb) => {
+      openedDb.createObjectStore("bar", { autoIncrement: true });
     });
     const result = await db.put("bar", { val: "something" }, "key-1");
     expect(result).toEqual("key-1");
@@ -71,8 +71,8 @@ describe("Database", () => {
   });
 
   it("can read a range", async () => {
-    const db = await Database.open("range", 1, (db) => {
-      db.createObjectStore("bar", { autoIncrement: true });
+    const db = await Database.open("range", 1, (openedDb) => {
+      openedDb.createObjectStore("bar", { autoIncrement: true });
     });
     await put(db, "bar", [{ one: 1 }, { two: 2 }, { three: 3 }]);
     const range = await db.getRange("bar", undefined, 1, 2);
@@ -86,8 +86,8 @@ describe("Database", () => {
   });
 
   it("can read a range by index", async () => {
-    const db = await Database.open("range-with-index", 1, (db) => {
-      const store = db.createObjectStore("bar", { autoIncrement: true });
+    const db = await Database.open("range-with-index", 1, (openedDb) => {
+      const store = openedDb.createObjectStore("bar", { autoIncrement: true });
       store.createIndex("stamp", "stamp");
     });
     await put(db, "bar", [{ one: 1, stamp: 100 }, { two: 2, stamp: 50 }, { three: 3, stamp: 10 }]);
@@ -99,8 +99,8 @@ describe("Database", () => {
   });
 
   it("can create writable stream", async () => {
-    const db = await Database.open("stream", 1, (db) => {
-      db.createObjectStore("bar", { autoIncrement: true });
+    const db = await Database.open("stream", 1, (openedDb) => {
+      openedDb.createObjectStore("bar", { autoIncrement: true });
     });
 
     const writer = db.createWriteStream("bar");
@@ -123,8 +123,8 @@ describe("Database", () => {
   });
 
   it("can create writable stream with extra appended", async () => {
-    const db = await Database.open("stream-with-extra", 1, (db) => {
-      db.createObjectStore("bar", { autoIncrement: true });
+    const db = await Database.open("stream-with-extra", 1, (openedDb) => {
+      openedDb.createObjectStore("bar", { autoIncrement: true });
     });
 
     const writer = db.createWriteStream("bar", { extra: { topic: "/foo" } });
@@ -147,8 +147,8 @@ describe("Database", () => {
   });
 
   it("can get all the keys in a store", async () => {
-    const db = await Database.open("keys", 1, (db) => {
-      db.createObjectStore("bar", { keyPath: "key" });
+    const db = await Database.open("keys", 1, (openedDb) => {
+      openedDb.createObjectStore("bar", { keyPath: "key" });
     });
     await put(db, "bar", [
       { key: "a", one: 1, stamp: 100 },
@@ -160,8 +160,8 @@ describe("Database", () => {
   });
 
   it("can get all keys and values in a store", async () => {
-    const db = await Database.open("kvp", 1, (db) => {
-      db.createObjectStore("bar", { keyPath: "key" });
+    const db = await Database.open("kvp", 1, (openedDb) => {
+      openedDb.createObjectStore("bar", { keyPath: "key" });
     });
     const values = [
       { key: "a", one: 1, stamp: 100 },

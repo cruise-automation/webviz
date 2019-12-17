@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -41,20 +41,20 @@ function Example({
     <div style={{ width, height: 100, backgroundColor: "green" }}>
       <AutoSizingCanvas
         overrideDevicePixelRatioForTest={pixelRatio}
-        draw={(ctx, width, height) => {
+        draw={(ctx, drawWidth, drawHeight) => {
           ctx.fillStyle = "white";
-          ctx.fillRect(0, 0, width, height);
+          ctx.fillRect(0, 0, drawWidth, drawHeight);
           ctx.strokeStyle = "red";
           ctx.lineWidth = 2;
           ctx.font = "24px Arial";
-          ctx.strokeRect(0, 0, width, height);
+          ctx.strokeRect(0, 0, drawWidth, drawHeight);
 
           // $FlowFixMe
           const text = `hello ${ctx.getTransform().a}`;
           const size = ctx.measureText(text);
           ctx.fillStyle = "black";
           ctx.textBaseline = "middle";
-          ctx.fillText(text, width / 2 - size.width / 2, height / 2);
+          ctx.fillText(text, drawWidth / 2 - size.width / 2, drawHeight / 2);
         }}
       />
     </div>

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -87,7 +87,7 @@ export function ValidatedInputBase({
 
   // validate the input string, and setError or call onChange if needed
   const memorizedInputValidation = useCallback(
-    (newInputVal: string, onChange?: OnChange) => {
+    (newInputVal: string, onChangeFcn?: OnChange) => {
       let newVal;
       let newError;
       // parse the empty string directly as empty array or object for validation and onChange callback
@@ -111,8 +111,8 @@ export function ValidatedInputBase({
         setError(validationErrorToString(validationResult));
         return;
       }
-      if (onChange) {
-        onChange(newVal);
+      if (onChangeFcn) {
+        onChangeFcn(newVal);
       }
     },
     [dataValidator, parse, value]
@@ -184,7 +184,7 @@ export function ValidatedInputBase({
       <StyledTextarea
         data-test="validated-input"
         style={inputStyle}
-        innerRef={inputRef}
+        ref={inputRef}
         value={inputStr}
         onChange={handleChange}
       />

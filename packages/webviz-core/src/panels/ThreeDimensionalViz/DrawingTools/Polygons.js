@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -52,17 +52,19 @@ export default function Polygons({ onSetPolygons, polygonBuilder, selectedPolygo
         format={selectedPolygonEditFormat}
         value={polygonPoints}
         onSelectFormat={(selectedFormat) => saveConfig({ selectedPolygonEditFormat: selectedFormat })}
-        onChange={(polygonPoints) => {
-          if (polygonPoints) {
-            setPolygonPoints(polygonPoints);
-            onSetPolygons(pointsToPolygons(polygonPoints));
+        onChange={(newPolygonPoints) => {
+          if (newPolygonPoints) {
+            setPolygonPoints(newPolygonPoints);
+            onSetPolygons(pointsToPolygons(newPolygonPoints));
           }
         }}
         dataValidator={polygonPointsValidator}>
         <Button
           small
           tooltip="Copy Polygons"
-          onClick={() => clipboard.copy(getFormattedString(polygonPoints, selectedPolygonEditFormat))}>
+          onClick={() => {
+            clipboard.copy(getFormattedString(polygonPoints, selectedPolygonEditFormat));
+          }}>
           Copy
         </Button>
       </ValidatedInput>

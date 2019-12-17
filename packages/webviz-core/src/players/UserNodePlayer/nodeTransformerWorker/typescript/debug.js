@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -53,10 +53,13 @@ export const logFormattedDepth = (node: ts.Node, depth: number, logText?: boolea
 // Gives you a prettified view of all the children in the AST with depth
 // formatting. Useful for getting a quick snapshot of the AST you need to parse
 // through.
-export const logAllChildren = (node: ts.Node, depth: number = 0) => {
+export const logAllChildren = (node: ts.Node, depth: number = 0, maxDepth?: number) => {
+  if (maxDepth && depth > maxDepth) {
+    return;
+  }
   logFormattedDepth(node, depth);
   depth++;
-  node.getChildren().forEach((c) => logAllChildren(c, depth));
+  node.getChildren().forEach((c) => logAllChildren(c, depth, maxDepth));
 };
 
 // This is a laundry list of useful properties in a ts.Node. The reason you

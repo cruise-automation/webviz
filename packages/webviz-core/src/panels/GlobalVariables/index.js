@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -157,8 +157,12 @@ function GlobalVariables(props: Props): Node {
 
   function copyURL(text) {
     return () => {
-      clipboard.copy(text);
-      setBtnMessage("Copied!");
+      clipboard.copy(text).then(() => {
+        setBtnMessage("Copied!");
+        setTimeout(() => {
+          setBtnMessage("Copy");
+        }, 2000);
+      });
     };
   }
   function validateGlobalVariableNewKey(newKey, oldKey) {

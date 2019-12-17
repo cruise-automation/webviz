@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -239,8 +239,8 @@ export class TopicTreeNode {
       topics,
     } = props;
     // Wrapper to help handle nodes that were checked under an old-style id.
-    const containsThisNode = (ids: string[]) => {
-      return ids.includes(this.id) || this.legacyIds.some((id) => ids.includes(id));
+    const containsThisNode = (nodeIds: string[]) => {
+      return nodeIds.includes(this.id) || this.legacyIds.some((id) => nodeIds.includes(id));
     };
 
     this.expanded = containsThisNode(expandedNodes);
@@ -450,7 +450,7 @@ export default function buildTree({
     if (!icon) {
       return;
     }
-    let node = rootNode.find((node) => node.topic === topic.name);
+    let node = rootNode.find((foundNode) => foundNode.topic === topic.name);
     // enable the existing node if it exists
     if (node) {
       node.disabled = false;

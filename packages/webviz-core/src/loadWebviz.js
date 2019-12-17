@@ -1,6 +1,6 @@
 /* eslint-disable header/header */
 
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -62,10 +62,12 @@ const defaultHooks = {
     const Rosout = require("webviz-core/src/panels/Rosout").default;
     const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
     const SubscribeToList = require("webviz-core/src/panels/SubscribeToList").default;
+    const TwoDimensionalPlot = require("webviz-core/src/panels/TwoDimensionalPlot").default;
     const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
     const { ndash } = require("webviz-core/src/util/entities");
 
     const ros = [
+      { title: "2D Plot", component: TwoDimensionalPlot },
       { title: "3D", component: ThreeDimensionalViz },
       { title: `Diagnostics ${ndash} Summary`, component: DiagnosticSummary },
       { title: `Diagnostics ${ndash} Detail`, component: DiagnosticStatusPanel },
@@ -94,6 +96,18 @@ const defaultHooks = {
   perPanelHooks: memoize(() => {
     const LaserScanVert = require("webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert").default;
     const { defaultMapPalette } = require("webviz-core/src/panels/ThreeDimensionalViz/commands/utils");
+    const { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE } = require("webviz-core/src/util/globalConstants");
+
+    const SUPPORTED_MARKER_DATATYPES = {
+      // generally supported datatypes
+      VISUALIZATION_MSGS_MARKER_DATATYPE: "visualization_msgs/Marker",
+      VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE: "visualization_msgs/MarkerArray",
+      POSE_STAMPED_DATATYPE,
+      POINT_CLOUD_DATATYPE,
+      SENSOR_MSGS_LASER_SCAN_DATATYPE: "sensor_msgs/LaserScan",
+      NAV_MSGS_OCCUPANCY_GRID_DATATYPE: "nav_msgs/OccupancyGrid",
+      GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: "geometry_msgs/PolygonStamped",
+    };
 
     return {
       DiagnosticSummary: {
@@ -129,6 +143,7 @@ const defaultHooks = {
           pinTopics: false,
           topicSettings: {},
         },
+        SUPPORTED_MARKER_DATATYPES,
         allSupportedMarkers: [
           "arrow",
           "cube",
@@ -198,6 +213,17 @@ const defaultHooks = {
     return require("webviz-core/src/dataProviders/WorkerDataProvider.worker");
   },
   getAdditionalDataProviders: () => {},
+  experimentalFeaturesList() {
+    return {
+      topicGrouping: {
+        name: "Topic Group Management",
+        description:
+          "We're revamping the topic tree to be customizable directly from Webviz. You'll be able to create your own groups and toggle them easily.",
+        developmentDefault: true,
+        productionDefault: false,
+      },
+    };
+  },
 };
 
 let hooks = defaultHooks;

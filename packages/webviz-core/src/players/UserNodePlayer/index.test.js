@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -25,7 +25,7 @@ const nodeId = "nodeId";
 const hardcodedNode = {
   inputs: ["/input/foo", "/input/bar"],
   output: { name: "/webviz/test", datatype: "test" },
-  datatypes: { test: [{ type: "string", name: "foo" }] },
+  datatypes: { test: { fields: [{ type: "string", name: "foo" }] } },
   defaultState: {},
   callback: ({ message, state }) => ({
     messages: [
@@ -260,7 +260,7 @@ describe("UserNodePlayer", () => {
         setUserNodeDiagnostics: mockSetNodeDiagnostics,
       });
 
-      trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
+      await trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
       userNodePlayer.setUserNodes({ nodeId: { name: "someNodeName", sourceCode: nodeUserCode } });
 
       const [done] = setListenerHelper(userNodePlayer);
@@ -270,7 +270,7 @@ describe("UserNodePlayer", () => {
         messages: [],
         currentTime: { sec: 0, nsec: 0 },
         topics: [{ name: "/np_input", datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }],
-        datatypes: { foo: [] },
+        datatypes: { foo: { fields: [] } },
       });
 
       const { topics, messages } = await done;
@@ -289,7 +289,7 @@ describe("UserNodePlayer", () => {
         addUserNodeLogs: mockAddUserNodeLogs,
       });
 
-      trustUserNode({ id: nodeId, sourceCode: `${nodeUserCode}\nlog("LOG VALUE HERE");` });
+      await trustUserNode({ id: nodeId, sourceCode: `${nodeUserCode}\nlog("LOG VALUE HERE");` });
       userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
       userNodePlayer.setUserNodes({
         nodeId: { name: "someNodeName", sourceCode: `${nodeUserCode}\nlog("LOG VALUE HERE");` },
@@ -304,7 +304,7 @@ describe("UserNodePlayer", () => {
         messages: messagesArray,
         currentTime: { sec: 0, nsec: 0 },
         topics: [{ name: "/np_input", datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }],
-        datatypes: { foo: [] },
+        datatypes: { foo: { fields: [] } },
       });
 
       const { messages } = await done;
@@ -314,7 +314,7 @@ describe("UserNodePlayer", () => {
         messages: messagesArray,
         currentTime: { sec: 0, nsec: 0 },
         topics: [{ name: "/np_input", datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }],
-        datatypes: { foo: [] },
+        datatypes: { foo: { fields: [] } },
       });
 
       const { messages: newMessages } = await nextDone;
@@ -336,7 +336,7 @@ describe("UserNodePlayer", () => {
         messages: [],
         currentTime: { sec: 0, nsec: 0 },
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: [] },
+        datatypes: { foo: { fields: [] } },
       });
 
       const { topics } = await done;
@@ -351,16 +351,17 @@ describe("UserNodePlayer", () => {
 
       const [done] = setListenerHelper(userNodePlayer);
 
+      await trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
+      userNodePlayer.setUserNodes({
+        [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode },
+      });
+
       fakePlayer.emit({
         ...basicPlayerState,
         messages: [upstreamMessages[0]],
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: [] },
-      });
-      trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
-      userNodePlayer.setUserNodes({
-        [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode },
+        datatypes: { foo: { fields: [] } },
       });
 
       const { messages, topics } = await done;
@@ -374,19 +375,19 @@ describe("UserNodePlayer", () => {
 
       const [done] = setListenerHelper(userNodePlayer);
 
+      await trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
+      // TODO: test here to make sure the user node does not produce messages if not subscribed to.
+      userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
+      await userNodePlayer.setUserNodes({
+        [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode },
+      });
+
       fakePlayer.emit({
         ...basicPlayerState,
         messages: [upstreamMessages[0]],
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: [] },
-      });
-
-      // TODO: test here to make sure the user node does not produce messages if not subscribed to.
-      userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
-      trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
-      userNodePlayer.setUserNodes({
-        [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode },
+        datatypes: { foo: { fields: [] } },
       });
 
       const { messages } = await done;
@@ -403,6 +404,63 @@ describe("UserNodePlayer", () => {
       ]);
     });
 
+    it("skips publishing messages if a node does not produce a message", async () => {
+      const fakePlayer = new FakePlayer();
+      const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
+
+      const [done, nextDone] = setListenerHelper(userNodePlayer, 2);
+
+      const unionTypeReturn = `
+        export const inputs = ["/np_input"];
+        export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
+        let lastStamp, lastReceiveTime;
+        export default (message: { message: { payload: string } }): { custom_np_field: string, value: string } | undefined => {
+          if (message.message.payload === "bar") {
+            return;
+          }
+          return { custom_np_field: "abc", value: message.message.payload };
+        };
+      `;
+
+      await trustUserNode({ id: nodeId, sourceCode: unionTypeReturn });
+      // TODO: test here to make sure the user node does not produce messages if not subscribed to.
+      userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
+      await userNodePlayer.setUserNodes({
+        [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: unionTypeReturn },
+      });
+
+      fakePlayer.emit({
+        ...basicPlayerState,
+        messages: [upstreamMessages[0]],
+        currentTime: upstreamMessages[0].receiveTime,
+        topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
+        datatypes: { foo: { fields: [] } },
+      });
+
+      const result = await done;
+      expect(result.messages).toEqual([upstreamMessages[0]]);
+
+      fakePlayer.emit({
+        ...basicPlayerState,
+        messages: [upstreamMessages[1]],
+        currentTime: upstreamMessages[1].receiveTime,
+        topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
+        datatypes: { foo: { fields: [] } },
+      });
+
+      const nextResult = await nextDone;
+      expect(nextResult.messages).toEqual([
+        upstreamMessages[1],
+        {
+          datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+          op: "message",
+          receiveTime: upstreamMessages[1].receiveTime,
+          message: { custom_np_field: "abc", value: "baz" },
+          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+        },
+      ]);
+    });
+
     it("should handle multiple user nodes", async () => {
       const fakePlayer = new FakePlayer();
       const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
@@ -413,10 +471,10 @@ describe("UserNodePlayer", () => {
         [`${DEFAULT_WEBVIZ_NODE_PREFIX}1`]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode },
       });
 
-      trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
+      await trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
 
       const nodeUserCode2 = nodeUserCode.replace(`${DEFAULT_WEBVIZ_NODE_PREFIX}1`, `${DEFAULT_WEBVIZ_NODE_PREFIX}2`);
-      trustUserNode({ id: `${nodeId}2`, sourceCode: nodeUserCode2 });
+      await trustUserNode({ id: `${nodeId}2`, sourceCode: nodeUserCode2 });
       userNodePlayer.setUserNodes({
         [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode },
         [`${nodeId}2`]: {
@@ -435,7 +493,7 @@ describe("UserNodePlayer", () => {
         messages: [upstreamMessages[0]],
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: [] },
+        datatypes: { foo: { fields: [] } },
       });
 
       const { messages } = await done;
@@ -473,7 +531,7 @@ describe("UserNodePlayer", () => {
       const fakePlayer = new FakePlayer();
       const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
 
-      trustUserNode({ id: nodeId, sourceCode });
+      await trustUserNode({ id: nodeId, sourceCode });
       userNodePlayer.setUserNodes({
         [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode },
       });
@@ -487,7 +545,7 @@ describe("UserNodePlayer", () => {
         messages: [upstreamMessages[0]],
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: [] },
+        datatypes: { foo: { fields: [] } },
       });
 
       await firstDone;
@@ -498,7 +556,7 @@ describe("UserNodePlayer", () => {
         currentTime: upstreamMessages[1].receiveTime,
         lastSeekTime: 1,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: [] },
+        datatypes: { foo: { fields: [] } },
       });
 
       const { messages } = await secondDone;
@@ -596,6 +654,10 @@ describe("UserNodePlayer", () => {
         setUserNodeDiagnostics: mockSetNodeDiagnostics,
       });
 
+      await trustUserNode({ id: nodeId, sourceCode: code });
+      userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
+      userNodePlayer.setUserNodes({ nodeId: { name: "nodeName", sourceCode: code } });
+
       const [done] = setListenerHelper(userNodePlayer);
 
       fakePlayer.emit({
@@ -603,12 +665,8 @@ describe("UserNodePlayer", () => {
         messages: [upstreamMessages[0]],
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: [] },
+        datatypes: { foo: { fields: [] } },
       });
-
-      trustUserNode({ id: nodeId, sourceCode: code });
-      userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
-      userNodePlayer.setUserNodes({ nodeId: { name: "nodeName", sourceCode: code } });
 
       const { topics, messages } = await done;
       expect(mockSetNodeDiagnostics).toHaveBeenLastCalledWith({
@@ -632,7 +690,7 @@ describe("UserNodePlayer", () => {
       const fakePlayer = new FakePlayer();
       const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
 
-      trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
+      await trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
       userNodePlayer.setUserNodes({
         [nodeId]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode },
       });
@@ -644,7 +702,7 @@ describe("UserNodePlayer", () => {
         messages: [upstreamMessages[0]],
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: [] },
+        datatypes: { foo: { fields: [] } },
       });
 
       const { topics: firstTopics } = await firstDone;
@@ -656,7 +714,7 @@ describe("UserNodePlayer", () => {
         messages: [upstreamMessages[0]],
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: [] },
+        datatypes: { foo: { fields: [] } },
       });
       const { topics: secondTopics } = await secondDone;
       expect(secondTopics).toEqual(["/np_input"]);
@@ -709,17 +767,17 @@ describe("UserNodePlayer", () => {
         });
         const [done] = setListenerHelper(userNodePlayer);
 
+        await trustUserNode({ id: nodeId, sourceCode: code });
+        userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
+        userNodePlayer.setUserNodes({ [nodeId]: { name: "nodeName", sourceCode: code } });
+
         fakePlayer.emit({
           ...basicPlayerState,
           messages: [upstreamMessages[0]],
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: [] },
+          datatypes: { foo: { fields: [] } },
         });
-
-        trustUserNode({ id: nodeId, sourceCode: code });
-        userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
-        userNodePlayer.setUserNodes({ [nodeId]: { name: "nodeName", sourceCode: code } });
 
         const { topics } = await done;
         expect(mockAddNodeLogs).toHaveBeenCalled();
@@ -759,7 +817,7 @@ describe("UserNodePlayer", () => {
           messages: [upstreamMessages[0]],
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: [] },
+          datatypes: { foo: { fields: [] } },
         });
 
         userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
@@ -801,7 +859,7 @@ describe("UserNodePlayer", () => {
           messages: [upstreamMessages[0]],
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: [] },
+          datatypes: { foo: { fields: [] } },
         });
 
         await done;
@@ -834,7 +892,7 @@ describe("UserNodePlayer", () => {
           };
         `;
 
-        trustUserNode({ id, sourceCode });
+        await trustUserNode({ id, sourceCode });
         await attemptToExecute(id, sourceCode);
         expect(global.wasExecuted).toEqual(true);
       });
@@ -889,7 +947,7 @@ describe("UserNodePlayer", () => {
           messages: [upstreamMessages[0]],
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: [] },
+          datatypes: { foo: { fields: [] } },
         });
 
         await done;
@@ -898,7 +956,7 @@ describe("UserNodePlayer", () => {
         expect(mockSetUserNodeTrust).toHaveBeenLastCalledWith({ id, trusted: false });
 
         // Simulate user clicking 'trust'
-        trustUserNode({ id, sourceCode });
+        await trustUserNode({ id, sourceCode });
         // Trigger workers to reset.
         await userNodePlayer.setUserNodes({ [id]: { name: "nodeName", sourceCode } });
 
@@ -907,7 +965,7 @@ describe("UserNodePlayer", () => {
           messages: [upstreamMessages[0]],
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: [] },
+          datatypes: { foo: { fields: [] } },
         });
 
         await nextDone;
@@ -933,7 +991,7 @@ describe("UserNodePlayer", () => {
         const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
         const firstName = `${DEFAULT_WEBVIZ_NODE_PREFIX}innerState`;
 
-        trustUserNode({ id: nodeId, sourceCode });
+        await trustUserNode({ id: nodeId, sourceCode });
         userNodePlayer.setUserNodes({
           [nodeId]: { name: firstName, sourceCode },
         });
@@ -943,7 +1001,7 @@ describe("UserNodePlayer", () => {
         const secondName = `${DEFAULT_WEBVIZ_NODE_PREFIX}state`;
         const secondSourceCode = sourceCode.replace(/innerState/g, "state");
 
-        trustUserNode({ id: nodeId, sourceCode: secondSourceCode });
+        await trustUserNode({ id: nodeId, sourceCode: secondSourceCode });
         userNodePlayer.setUserNodes({
           [nodeId]: {
             name: secondName,
@@ -959,7 +1017,7 @@ describe("UserNodePlayer", () => {
           messages: [upstreamMessages[0]],
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: [] },
+          datatypes: { foo: { fields: [] } },
         });
 
         const { messages } = await done;

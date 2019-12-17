@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -56,6 +56,7 @@ class PanelToolbarWithOpenMenu extends React.PureComponent<{}> {
         }}>
         <PanelToolbar helpContent={<div />}>
           <div style={{ width: "100%", lineHeight: "22px", paddingLeft: 5 }}>Some controls here</div>
+          <KeepToolbarVisibleHack />
         </PanelToolbar>
       </div>
     );

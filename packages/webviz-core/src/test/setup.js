@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -9,11 +9,10 @@
 import "babel-polyfill";
 import { TextDecoder } from "text-encoding";
 import UrlSearchParams from "url-search-params";
+import util from "util";
 import ws from "ws";
 
 import MemoryStorage from "./MemoryStorage";
-
-global.CURRENT_VERSION = "testing";
 
 process.env.WASM_LZ4_ENVIRONMENT = "NODE";
 
@@ -67,3 +66,9 @@ global.IDBKeyRange = require("fake-indexeddb/lib/FDBKeyRange");
 
 // monkey-patch global websocket
 global.WebSocket = global.WebSocket || ws;
+
+// Patch in a node implementation of the crypto API.
+global.crypto = require("@trust/webcrypto");
+
+// $FlowFixMe - Flow does not recognize that `TextEncoder` has been in the util module since v8.3.0.
+global.TextEncoder = util.TextEncoder;

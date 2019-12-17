@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -23,6 +23,10 @@ import { buildMarkerData, type Dimensions, type RawMarkerData, type MarkerData, 
 import type { Message } from "webviz-core/src/players/types";
 import type { ImageMarker, Color, Point } from "webviz-core/src/types/Messages";
 import reportError from "webviz-core/src/util/reportError";
+
+// Just globally keep track of if we've shown an error in rendering, since typically when you get
+// one error, you'd then get a whole bunch more, which is spammy.
+let hasLoggedCameraModelError: boolean = false;
 
 // Given a canvas, an image message, and marker info, render the image to the canvas.
 // Nothing in this module should have state.
@@ -50,7 +54,10 @@ export async function renderImage({
   try {
     markerData = buildMarkerData(rawMarkerData);
   } catch (error) {
-    reportError(`Failed to initialize camera model from CameraInfo`, error, "user");
+    if (!hasLoggedCameraModelError) {
+      reportError(`Failed to initialize camera model from CameraInfo`, error, "user");
+      hasLoggedCameraModelError = true;
+    }
   }
 
   try {
@@ -231,8 +238,8 @@ function paintMarker(ctx: CanvasRenderingContext2D, marker: ImageMarker, cameraM
       const { x, y } = maybeUnrectifyPoint(cameraModel, marker.points[0]);
       ctx.moveTo(x, y);
       for (let i = 1; i < marker.points.length; i++) {
-        const { x, y } = maybeUnrectifyPoint(cameraModel, marker.points[i]);
-        ctx.lineTo(x, y);
+        const maybeUnrectifiedPoint = maybeUnrectifyPoint(cameraModel, marker.points[i]);
+        ctx.lineTo(maybeUnrectifiedPoint.x, maybeUnrectifiedPoint.y);
       }
       if (marker.type === 3) {
         ctx.closePath();

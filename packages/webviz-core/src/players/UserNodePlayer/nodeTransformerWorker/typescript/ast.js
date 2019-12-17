@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -22,6 +22,7 @@ import {
   noTypeOfError,
   noImportsInReturnType,
   noTuples,
+  limitedUnionsError,
 } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/errors";
 import { DiagnosticSeverity, Sources, ErrorCodes, type Diagnostic } from "webviz-core/src/players/UserNodePlayer/types";
 import type { RosDatatypes, RosMsgField } from "webviz-core/src/types/RosDatatypes";
@@ -152,6 +153,7 @@ export const findReturnType = (
         ts.SyntaxKind.TypeReference,
         ts.SyntaxKind.TypeLiteral,
         ts.SyntaxKind.IntersectionType, // Unhandled type--let next recursive call handle error.
+        ts.SyntaxKind.UnionType,
       ]);
       if (nextNode) {
         return visitNext(nextNode);
@@ -203,6 +205,13 @@ export const findReturnType = (
     case ts.SyntaxKind.ClassDeclaration: {
       throw new DatatypeExtractionError(classError);
     }
+    case ts.SyntaxKind.UnionType: {
+      const remainingTypes = node.types.filter(({ kind }) => kind !== ts.SyntaxKind.UndefinedKeyword);
+      if (remainingTypes.length !== 1) {
+        throw new DatatypeExtractionError(limitedUnionsError);
+      }
+      return visitNext(remainingTypes[0]);
+    }
     default:
       throw new Error("Unhandled node kind.");
   }
@@ -244,7 +253,7 @@ export const constructDatatypes = (
 
   const getRosMsgField = (
     name: string,
-    node: ts.Node,
+    tsNode: ts.Node,
     isArray: boolean = false,
     isComplex: boolean = false,
     typeMap: TypeMap = {},
@@ -254,16 +263,16 @@ export const constructDatatypes = (
       throw new Error(`Max AST traversal depth exceeded.`);
     }
 
-    switch (node.kind) {
+    switch (tsNode.kind) {
       case ts.SyntaxKind.InterfaceDeclaration:
       case ts.SyntaxKind.TypeLiteral: {
         const nestedType = `${currentDatatype}/${name}`;
         const { datatypes: nestedDatatypes } = constructDatatypes(
           checker,
-          node,
+          tsNode,
           nestedType,
           depth + 1,
-          node.typeParameters ? buildTypeMapFromParams(node.typeParameters, typeMap) : typeMap
+          tsNode.typeParameters ? buildTypeMapFromParams(tsNode.typeParameters, typeMap) : typeMap
         );
         datatypes = { ...datatypes, ...nestedDatatypes };
         return {
@@ -276,7 +285,7 @@ export const constructDatatypes = (
       }
 
       case ts.SyntaxKind.ArrayType: {
-        return getRosMsgField(name, node.elementType, true, true, typeMap, innerDepth + 1);
+        return getRosMsgField(name, tsNode.elementType, true, true, typeMap, innerDepth + 1);
       }
 
       case ts.SyntaxKind.NumberKeyword:
@@ -297,12 +306,12 @@ export const constructDatatypes = (
         };
 
       case ts.SyntaxKind.TypeAliasDeclaration: {
-        const newTypeParamMap = buildTypeMapFromParams(node.typeParameters, typeMap);
-        return getRosMsgField(name, node.type, isArray, isComplex, newTypeParamMap, innerDepth + 1);
+        const newTypeParamMap = buildTypeMapFromParams(tsNode.typeParameters, typeMap);
+        return getRosMsgField(name, tsNode.type, isArray, isComplex, newTypeParamMap, innerDepth + 1);
       }
 
       case ts.SyntaxKind.TypeReference: {
-        const nextSymbol = checker.getSymbolAtLocation(node.typeName);
+        const nextSymbol = checker.getSymbolAtLocation(tsNode.typeName);
 
         // There is a troubling discrepancy between how Typescript defines
         // array literals 'number[]' and arrays of the form 'Array<number>'.
@@ -340,7 +349,7 @@ export const constructDatatypes = (
           nextNode,
           isArray,
           isComplex,
-          buildTypeMapFromArgs(node.typeArguments, typeMap),
+          buildTypeMapFromArgs(tsNode.typeArguments, typeMap),
           innerDepth + 1
         );
       }
@@ -383,5 +392,5 @@ export const constructDatatypes = (
     getRosMsgField(name.getText(), type, false, false, currentTypeParamMap, depth + 1)
   );
 
-  return { outputDatatype: currentDatatype, datatypes: { ...datatypes, [currentDatatype]: rosMsgFields } };
+  return { outputDatatype: currentDatatype, datatypes: { ...datatypes, [currentDatatype]: { fields: rosMsgFields } } };
 };

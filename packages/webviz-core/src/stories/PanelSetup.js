@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -137,9 +137,9 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
     const { frame, topics, datatypes, capabilities, activeData } = this.props.fixture;
     let dTypes = datatypes;
     if (!dTypes) {
-      const dummyDatatypes = {};
+      const dummyDatatypes: RosDatatypes = {};
       for (const { datatype } of topics) {
-        dummyDatatypes[datatype] = [];
+        dummyDatatypes[datatype] = { fields: [] };
       }
       dTypes = dummyDatatypes;
     }

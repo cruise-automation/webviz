@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -141,9 +141,9 @@ const dragConfig = {
   },
 };
 // boilerplate required by react-dnd
-const DraggablePanelItem = DragSource(MosaicDragType.WINDOW, dragConfig, (connect, monitor) => {
+const DraggablePanelItem = DragSource(MosaicDragType.WINDOW, dragConfig, (connectArg, monitor) => {
   return {
-    connectDragSource: connect.dragSource(),
+    connectDragSource: connectArg.dragSource(),
   };
 })(PanelItem);
 
@@ -173,7 +173,7 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
   // the actual operations to change the layout
   // are supplied by react-mosaic-component
   onPanelMenuItemDrop = (config: DropDescription) => {
-    const { mosaicLayout, changePanelLayout, savePanelConfig } = this.props;
+    const { mosaicLayout } = this.props;
     const { panelType, position, path } = config;
     const newNode = getPanelIdForType(panelType);
     const node = getNodeAtPath(mosaicLayout, path);
@@ -189,10 +189,10 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
       },
     ];
     if (config.panelConfig) {
-      savePanelConfig({ id: newNode, config: config.panelConfig, defaultConfig: {} });
+      this.props.savePanelConfig({ id: newNode, config: config.panelConfig, defaultConfig: {} });
     }
     const newLayout = updateTree(mosaicLayout, updates);
-    changePanelLayout(newLayout);
+    this.props.changePanelLayout(newLayout);
   };
 
   // sanity checks to help panel authors debug issues

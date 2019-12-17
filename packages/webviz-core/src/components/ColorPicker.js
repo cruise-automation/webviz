@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -72,8 +72,8 @@ function ColorPicker({ color, onChange }: Props, ref) {
           pickr.current.setColor(colorRef.current);
         }
       })
-      .on("change", (color) => {
-        onChangeRef.current(color.toHEXA().toString());
+      .on("change", (newColor) => {
+        onChangeRef.current(newColor.toHEXA().toString());
       });
 
     return () => {
@@ -83,7 +83,7 @@ function ColorPicker({ color, onChange }: Props, ref) {
     };
   }, []);
 
-  return <SColorPicker innerRef={container} color={color} />;
+  return <SColorPicker ref={container} color={color} />;
 }
 
 export default forwardRef<Props, ?Pickr>(ColorPicker);

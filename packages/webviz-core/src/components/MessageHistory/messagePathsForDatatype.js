@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -44,11 +44,11 @@ export function messagePathStructures(datatypes: RosDatatypes): { [string]: Mess
     const structureFor = memoize(
       (datatype: string): MessagePathStructureItemMessage => {
         const nextByName: { [string]: MessagePathStructureItem } = {};
-        const rosMsgFields = datatypes[datatype];
-        if (!rosMsgFields) {
+        const rosDatatype = datatypes[datatype];
+        if (!rosDatatype) {
           throw new Error(`datatype not found: "${datatype}"`);
         }
-        rosMsgFields.forEach((msgField) => {
+        rosDatatype.fields.forEach((msgField) => {
           if (msgField.isConstant) {
             return;
           }

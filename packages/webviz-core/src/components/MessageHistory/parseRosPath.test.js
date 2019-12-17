@@ -1,12 +1,12 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import parseRosPath from "./parseRosPath";
+import parseRosPath, { splitTopicPathOnTopicName } from "./parseRosPath";
 
 describe("parseRosPath", () => {
   it("parses valid strings", () => {
@@ -62,6 +62,68 @@ describe("parseRosPath", () => {
       messagePath: [
         { type: "name", name: "foo" },
         { type: "slice", start: 0, end: Infinity },
+        { type: "name", name: "bar" },
+      ],
+      modifier: null,
+    });
+    expect(parseRosPath("/topic.foo[$a].bar")).toEqual({
+      topicName: "/topic",
+      messagePath: [
+        { type: "name", name: "foo" },
+        {
+          type: "slice",
+          start: { variableName: "a", startLoc: "/topic.foo[".length },
+          end: { variableName: "a", startLoc: "/topic.foo[".length },
+        },
+        { type: "name", name: "bar" },
+      ],
+      modifier: null,
+    });
+    expect(parseRosPath("/topic.foo[$a:$b].bar")).toEqual({
+      topicName: "/topic",
+      messagePath: [
+        { type: "name", name: "foo" },
+        {
+          type: "slice",
+          start: { variableName: "a", startLoc: "/topic.foo[".length },
+          end: { variableName: "b", startLoc: "/topic.foo[$a:".length },
+        },
+        { type: "name", name: "bar" },
+      ],
+      modifier: null,
+    });
+    expect(parseRosPath("/topic.foo[$a:].bar")).toEqual({
+      topicName: "/topic",
+      messagePath: [
+        { type: "name", name: "foo" },
+        { type: "slice", start: { variableName: "a", startLoc: "/topic.foo[".length }, end: Infinity },
+        { type: "name", name: "bar" },
+      ],
+      modifier: null,
+    });
+    expect(parseRosPath("/topic.foo[$a:5].bar")).toEqual({
+      topicName: "/topic",
+      messagePath: [
+        { type: "name", name: "foo" },
+        { type: "slice", start: { variableName: "a", startLoc: "/topic.foo[".length }, end: 5 },
+        { type: "name", name: "bar" },
+      ],
+      modifier: null,
+    });
+    expect(parseRosPath("/topic.foo[:$b].bar")).toEqual({
+      topicName: "/topic",
+      messagePath: [
+        { type: "name", name: "foo" },
+        { type: "slice", start: 0, end: { variableName: "b", startLoc: "/topic.foo[:".length } },
+        { type: "name", name: "bar" },
+      ],
+      modifier: null,
+    });
+    expect(parseRosPath("/topic.foo[2:$b].bar")).toEqual({
+      topicName: "/topic",
+      messagePath: [
+        { type: "name", name: "foo" },
+        { type: "slice", start: 2, end: { variableName: "b", startLoc: "/topic.foo[2:".length } },
         { type: "name", name: "bar" },
       ],
       modifier: null,
@@ -178,7 +240,7 @@ describe("parseRosPath", () => {
         {
           type: "filter",
           path: ["bar"],
-          value: { variableName: "" },
+          value: { variableName: "", startLoc: "/topic.foo{bar==".length },
           nameLoc: "/topic.foo{".length,
           valueLoc: "/topic.foo{bar==".length,
           repr: "bar==$",
@@ -187,9 +249,7 @@ describe("parseRosPath", () => {
         {
           type: "filter",
           path: ["bar"],
-          value: {
-            variableName: "my_var_1",
-          },
+          value: { variableName: "my_var_1", startLoc: "/topic.foo{bar==$}.a{bar==".length },
           nameLoc: "/topic.foo{bar==$}.a{".length,
           valueLoc: "/topic.foo{bar==$}.a{bar==".length,
           repr: "bar==$my_var_1",
@@ -290,5 +350,20 @@ describe("parseRosPath", () => {
     expect(parseRosPath("/topic.foo[bar]")).toBeUndefined();
     expect(parseRosPath("/topic.foo{bar==}")).toBeUndefined();
     expect(parseRosPath("/topic.foo{bar==baz}")).toBeUndefined();
+  });
+});
+
+describe("splitTopicPathOnTopicName", () => {
+  it("splits a topic path on the base topic name", () => {
+    expect(splitTopicPathOnTopicName("/some/long/topic/name")).toEqual({
+      topicName: "/some/long/topic/name",
+      trailingPath: "",
+    });
+    expect(splitTopicPathOnTopicName("/some_topic.some_field[0].some_inner_field")).toEqual({
+      topicName: "/some_topic",
+      trailingPath: ".some_field[0].some_inner_field",
+    });
+    expect(splitTopicPathOnTopicName("/some_topic")).toEqual({ topicName: "/some_topic", trailingPath: "" });
+    expect(splitTopicPathOnTopicName("")).toEqual(undefined);
   });
 });

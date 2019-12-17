@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -71,9 +71,9 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
 
   const onColorModeChange = useCallback(
     (newValue: ?ColorMode | ((?ColorMode) => ?ColorMode)) => {
-      onSettingsChange((settings) => ({
-        ...settings,
-        colorMode: typeof newValue === "function" ? newValue(settings.colorMode) : newValue,
+      onSettingsChange((newSettings) => ({
+        ...newSettings,
+        colorMode: typeof newValue === "function" ? newValue(newSettings.colorMode) : newValue,
       }));
     },
     [onSettingsChange]
@@ -97,11 +97,12 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
         <SegmentedControl
           selectedId={colorMode.mode === "flat" ? "flat" : "data"}
           onChange={(id) =>
-            onColorModeChange((colorMode) =>
+            onColorModeChange((newColorMode) =>
               id === "flat"
                 ? {
                     mode: "flat",
-                    flatColor: colorMode && colorMode.mode === "gradient" ? colorMode.minColor : DEFAULT_FLAT_COLOR,
+                    flatColor:
+                      newColorMode && newColorMode.mode === "gradient" ? newColorMode.minColor : DEFAULT_FLAT_COLOR,
                   }
                 : hasRGB
                 ? { mode: "rgb" }
@@ -127,15 +128,15 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
               value={colorMode.mode === "rgb" ? "rgb" : colorMode.colorField}
               onChange={(value) =>
                 onColorModeChange(
-                  (colorMode): ColorMode => {
+                  (newColorMode): ColorMode => {
                     if (value === "rgb") {
                       return { mode: "rgb" };
                     }
-                    if (colorMode && colorMode.mode === "gradient") {
-                      return { ...colorMode, colorField: value };
+                    if (newColorMode && newColorMode.mode === "gradient") {
+                      return { ...newColorMode, colorField: value };
                     }
-                    if (colorMode && colorMode.mode === "rainbow") {
-                      return { ...colorMode, colorField: value };
+                    if (newColorMode && newColorMode.mode === "rainbow") {
+                      return { ...newColorMode, colorField: value };
                     }
                     return { mode: "rainbow", colorField: value };
                   }
@@ -162,8 +163,8 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
               <SValueRangeInput
                 value={colorMode.minValue ?? ""}
                 onChange={({ target: { value } }) =>
-                  onColorModeChange((colorMode: any) => ({
-                    ...colorMode,
+                  onColorModeChange((newColorMode: any) => ({
+                    ...newColorMode,
                     minValue: value === "" ? null : value,
                   }))
                 }
@@ -174,8 +175,8 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
               <SValueRangeInput
                 value={colorMode.maxValue ?? ""}
                 onChange={({ target: { value } }) =>
-                  onColorModeChange((colorMode: any) => ({
-                    ...colorMode,
+                  onColorModeChange((newColorMode: any) => ({
+                    ...newColorMode,
                     maxValue: value === "" ? null : +value,
                   }))
                 }
@@ -207,7 +208,7 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
             minColor={colorMode.minColor}
             maxColor={colorMode.maxColor}
             onChange={({ minColor, maxColor }) =>
-              onColorModeChange((colorMode) => ({ mode: "gradient", ...colorMode, minColor, maxColor }))
+              onColorModeChange((newColorMode) => ({ mode: "gradient", ...newColorMode, minColor, maxColor }))
             }
           />
         </div>

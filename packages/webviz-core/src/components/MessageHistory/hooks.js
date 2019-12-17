@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -99,8 +99,8 @@ export function createSelectableContext<T>(): SelectableContext<T> {
       let currentValue = value;
       const subscribers = new Set();
       return {
-        publish(value) {
-          currentValue = value;
+        publish(val) {
+          currentValue = val;
           for (const sub of subscribers) {
             sub(currentValue);
           }

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -223,7 +223,8 @@ export default class UserNodePlayer implements Player {
     const nodeRegistrations: NodeRegistration[] = [];
     for (const [nodeId, nodeObj] of Object.entries(this._userNodes)) {
       const node = ((nodeObj: any): { name: string, sourceCode: string });
-      if (!isUserNodeTrusted({ id: nodeId, sourceCode: node.sourceCode })) {
+      const isTrusted = await isUserNodeTrusted({ id: nodeId, sourceCode: node.sourceCode });
+      if (!isTrusted) {
         this._setNodeTrust(nodeId, false);
         continue;
       } else {
@@ -238,7 +239,6 @@ export default class UserNodePlayer implements Player {
         priorRegisteredTopics: nodeRegistrations.map(({ output }) => output),
       });
       const { diagnostics } = nodeData;
-
       this._setUserNodeDiagnostics(nodeId, diagnostics);
       if (diagnostics.some(({ severity }) => severity === DiagnosticSeverity.Error)) {
         continue;

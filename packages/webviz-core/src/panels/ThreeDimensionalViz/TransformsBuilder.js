@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -172,9 +172,6 @@ const getArrowToParentMarkers = (id: string, transform: Transform, rootTransform
   ];
 };
 
-const isTfExtension = (extension: string) => extension.startsWith("TF");
-const removeTfPrefix = (extension: string) => extension.slice("TF.".length);
-
 export default class TransformsBuilder implements MarkerProvider {
   transforms: Transforms;
   rootTransformID: string;
@@ -208,8 +205,8 @@ export default class TransformsBuilder implements MarkerProvider {
     }
   }
 
-  setSelectedTransforms(extensions: string[]) {
-    this.selections = extensions.filter(isTfExtension).map(removeTfPrefix);
+  setSelectedTransforms(selections: string[]) {
+    this.selections = selections;
   }
 
   renderMarkers = (add: MarkerCollector) => {

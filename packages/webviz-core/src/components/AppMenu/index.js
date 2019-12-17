@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -50,20 +50,19 @@ class UnconnectedAppMenu extends Component<Props, State> {
   };
 
   _onPanelSelect = (panelType: string, panelConfig?: PanelConfig) => {
-    const { panels, changePanelLayout, savePanelConfig } = this.props;
     const id = getPanelIdForType(panelType);
     let newPanels = {
       direction: "row",
       first: id,
-      second: panels.layout,
+      second: this.props.panels.layout,
     };
-    if (isEmpty(panels.layout)) {
+    if (isEmpty(this.props.panels.layout)) {
       newPanels = id;
     }
     if (panelConfig) {
-      savePanelConfig({ id, config: panelConfig, defaultConfig: {} });
+      this.props.savePanelConfig({ id, config: panelConfig, defaultConfig: {} });
     }
-    changePanelLayout(newPanels);
+    this.props.changePanelLayout(newPanels);
     window.ga("send", "event", "Panel", "Select", panelType);
   };
 

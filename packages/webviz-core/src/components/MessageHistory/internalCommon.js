@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -37,7 +37,7 @@ export const TOPICS_WITH_INCORRECT_HEADERS = getGlobalHooks().topicsWithIncorrec
 export type MessagePathFilter = {|
   type: "filter",
   path: string[],
-  value: void | number | string | {| variableName: string |},
+  value: void | number | string | {| variableName: string, startLoc: number |},
   nameLoc: number,
   valueLoc: number,
   repr: string, // the original string representation of the filter
@@ -46,7 +46,11 @@ export type MessagePathFilter = {|
 // A parsed version of paths.
 export type MessagePathPart =
   | {| type: "name", name: string |}
-  | {| type: "slice", start: number, end: number |}
+  | {|
+      type: "slice",
+      start: number | {| variableName: string, startLoc: number |},
+      end: number | {| variableName: string, startLoc: number |},
+    |}
   | MessagePathFilter;
 
 export type RosPath = {|

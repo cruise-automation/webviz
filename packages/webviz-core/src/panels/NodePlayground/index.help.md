@@ -108,7 +108,7 @@ type Transform = {
   rotation: number[]
 }
 type TransformMsg = {
-  header: Header,  
+  header: Header,
   child_frame_id: string,
   transform: Transform
 }
@@ -381,3 +381,27 @@ log({ "add": add, "subtract": (a: number, b: number): number => a - b })
 ```
 
 Invoking `log()` outside your publisher function will invoke it once, when your node is registered. Invoking `log()` inside your publisher function will log that value every time your publisher function is called.
+
+## FAQ
+
+> What if I don't want to produce a message every time `publish` is called?
+
+All you need to do is do an early (or late) return in your function body that is hit when you don't want to publish. For instance, let's say you only wanted to publish messages when a constant in the input is _not_ `3`:
+
+```typescript
+import { Message } from "ros";
+
+export const inputs = ["/state"];
+export const output = "/webviz_node/manual_metrics";
+
+const publisher = (msg: Message<{ constant: number }>): { metrics: number } | undefined => {
+  if (msg.message.constant === 3) {
+    return;
+  }
+  return { /* YOUR DATA HERE */ };
+};
+
+export default publisher;
+```
+
+Note the union return type in the `publisher` definition. We've indicated to Typescript that this function can return `undefined`, and we do so within the conditional block (In Typescript, if you `return` without a value, it will implicitly return `undefined`). When this code path is hit, we don't publish any message.

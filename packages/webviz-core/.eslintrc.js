@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -21,6 +21,7 @@ module.exports = {
         patterns: ["client/*", "shared/*", "server/*"],
       },
     ],
+    "no-shadow": "error",
     "no-restricted-syntax": [
       "error",
       {
@@ -39,8 +40,8 @@ module.exports = {
         " @flow",
         "",
         {
-          pattern: "^  Copyright \\(c\\) \\d{4}-present, GM Cruise LLC$",
-          template: "  Copyright (c) 2019-present, GM Cruise LLC",
+          pattern: "^  Copyright \\(c\\) \\d{4}-present, Cruise LLC$",
+          template: "  Copyright (c) 2019-present, Cruise LLC",
         },
         "",
         "  This source code is licensed under the Apache License, Version 2.0,",

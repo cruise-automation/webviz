@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -98,8 +98,15 @@ export default function getMessageHistoryItem(
         structureItem.nextByName[pathItem.name]
       );
     } else if (pathItem.type === "slice" && structureItem.structureType === "array") {
+      const { start, end } = pathItem;
+      const startIdx = typeof start === "object" ? globalVariables[start.variableName] : start;
+      const endIdx = typeof end === "object" ? globalVariables[end.variableName] : end;
+      if (isNaN(startIdx) || isNaN(endIdx)) {
+        return;
+      }
+
       // If the `pathItem` is a slice, iterate over all the relevant elements in the array.
-      for (let i = pathItem.start; i <= Math.min(pathItem.end, value.length - 1); i++) {
+      for (let i = startIdx; i <= Math.min(endIdx, value.length - 1); i++) {
         const index = i >= 0 ? i : value.length + i;
         if (value[index] === undefined) {
           continue;

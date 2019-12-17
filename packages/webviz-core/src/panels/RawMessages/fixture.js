@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -104,13 +104,15 @@ export const fixture = {
 // separate fixture so that we only need to define datatypes for small subset of types
 export const enumFixture = {
   datatypes: {
-    "baz/enum": [
-      { type: "uint8", name: "ERROR", isConstant: true, value: 0 },
-      { type: "uint8", name: "OFF", isConstant: true, value: 1 },
-      { type: "uint8", name: "BOOTING", isConstant: true, value: 2 },
-      { type: "uint8", name: "ACTIVE", isConstant: true, value: 3 },
-      { type: "uint8", name: "value", isArray: false },
-    ],
+    "baz/enum": {
+      fields: [
+        { type: "uint8", name: "ERROR", isConstant: true, value: 0 },
+        { type: "uint8", name: "OFF", isConstant: true, value: 1 },
+        { type: "uint8", name: "BOOTING", isConstant: true, value: 2 },
+        { type: "uint8", name: "ACTIVE", isConstant: true, value: 3 },
+        { type: "uint8", name: "value", isArray: false },
+      ],
+    },
   },
   topics: [{ name: "/baz/enum", datatype: "baz/enum" }],
   frame: {
@@ -128,24 +130,37 @@ export const enumFixture = {
   },
 };
 
+const exampleMessage = {
+  state: 1,
+  justField: 0,
+  color: 2,
+  animal__webviz_enum: {},
+  animal: 10000,
+  sentence: 'String with "quotes" and /slashes/.',
+};
+
 export const enumAdvancedFixture = {
   datatypes: {
-    "baz/enum_advanced": [
-      { type: "uint32", name: "OFF", isConstant: true, value: 0 },
-      { type: "uint32", name: "ON", isConstant: true, value: 1 },
-      { type: "uint32", name: "state", isArray: false },
-      { type: "uint32", name: "justField", isArray: false },
-      { type: "uint8", name: "RED", isConstant: true, value: 0 },
-      { type: "uint8", name: "YELLOW", isConstant: true, value: 1 },
-      { type: "uint8", name: "GREEN", isConstant: true, value: 2 },
-      { type: "uint8", name: "color", isArray: false },
-      { type: "baz/animals", name: "animal__webviz_enum", isArray: false },
-      { type: "uint32", name: "animal", isArray: false },
-    ],
-    "baz/animals": [
-      { type: "uint32", name: "CAT", isConstant: true, value: 10000 },
-      { type: "uint32", name: "DOG", isConstant: true, value: 10001 },
-    ],
+    "baz/enum_advanced": {
+      fields: [
+        { type: "uint32", name: "OFF", isConstant: true, value: 0 },
+        { type: "uint32", name: "ON", isConstant: true, value: 1 },
+        { type: "uint32", name: "state", isArray: false },
+        { type: "uint32", name: "justField", isArray: false },
+        { type: "uint8", name: "RED", isConstant: true, value: 0 },
+        { type: "uint8", name: "YELLOW", isConstant: true, value: 1 },
+        { type: "uint8", name: "GREEN", isConstant: true, value: 2 },
+        { type: "uint8", name: "color", isArray: false },
+        { type: "baz/animals", name: "animal__webviz_enum", isArray: false },
+        { type: "uint32", name: "animal", isArray: false },
+      ],
+    },
+    "baz/animals": {
+      fields: [
+        { type: "uint32", name: "CAT", isConstant: true, value: 10000 },
+        { type: "uint32", name: "DOG", isConstant: true, value: 10001 },
+      ],
+    },
   },
   topics: [{ name: "/baz/enum_advanced", datatype: "baz/enum_advanced" }],
   frame: {
@@ -155,13 +170,68 @@ export const enumAdvancedFixture = {
         datatype: "baz/enum_advanced",
         topic: "/baz/enum_advanced",
         receiveTime: { sec: 123, nsec: 456789012 },
+        message: exampleMessage,
+      },
+    ],
+  },
+};
+
+export const topicsToDiffFixture = {
+  datatypes: enumAdvancedFixture.datatypes,
+  topics: [
+    { name: "/baz/enum_advanced", datatype: "baz/enum_advanced" },
+    { name: "/another/baz/enum_advanced", datatype: "baz/enum_advanced" },
+  ],
+  frame: {
+    "/baz/enum_advanced": [
+      {
+        op: "message",
+        datatype: "baz/enum_advanced",
+        topic: "/baz/enum_advanced",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: { ...exampleMessage, toBeDeletedVal: "Bye!", toBeDeletedObj: { a: 1, b: 2, c: 3 } },
+      },
+    ],
+    "/another/baz/enum_advanced": [
+      {
+        ...enumAdvancedFixture.frame["/baz/enum_advanced"][0],
+        topic: "/another/baz/enum_advanced",
         message: {
-          state: 1,
-          justField: 0,
-          color: 2,
-          animal__webviz_enum: {},
-          animal: 10000,
+          ...exampleMessage,
+          state: 2,
+          color: 3,
+          newField: "hello",
+          sentence: 'A different string with "quotes" and /slashes/.',
         },
+      },
+    ],
+  },
+};
+
+export const topicsWithIdsToDiffFixture = {
+  datatypes: enumAdvancedFixture.datatypes,
+  topics: [
+    { name: "/baz/enum_advanced", datatype: "baz/enum_advanced" },
+    { name: "/another/baz/enum_advanced", datatype: "baz/enum_advanced" },
+  ],
+  frame: {
+    "/baz/enum_advanced": [
+      {
+        ...enumAdvancedFixture.frame["/baz/enum_advanced"][0],
+        message: [
+          { ...exampleMessage, toBeDeletedVal: "Bye!", toBeDeletedObj: { a: 1, b: 2, c: 3 }, id: 1 },
+          { ...exampleMessage, id: 2 },
+        ],
+      },
+    ],
+    "/another/baz/enum_advanced": [
+      {
+        ...enumAdvancedFixture.frame["/baz/enum_advanced"][0],
+        topic: "/another/baz/enum_advanced",
+        message: [
+          { ...exampleMessage, state: 5, id: 2 },
+          { ...exampleMessage, state: 2, color: 3, newField: "hello", id: 1 },
+        ],
       },
     ],
   },

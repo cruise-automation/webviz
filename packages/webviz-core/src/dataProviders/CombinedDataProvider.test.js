@@ -1,12 +1,12 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -120,12 +120,14 @@ describe("CombinedDataProvider", () => {
         messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {
-          some_datatype: [
-            {
-              name: "some_string",
-              type: "string",
-            },
-          ],
+          some_datatype: {
+            fields: [
+              {
+                name: "some_string",
+                type: "string",
+              },
+            ],
+          },
         },
       });
 
@@ -133,12 +135,14 @@ describe("CombinedDataProvider", () => {
         messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {
-          some_datatype: [
-            {
-              name: "some_string",
-              type: "number",
-            },
-          ],
+          some_datatype: {
+            fields: [
+              {
+                name: "some_string",
+                type: "number",
+              },
+            ],
+          },
         },
       });
       const combinedProvider = getCombinedDataProvider([{ provider: p1, prefix: "/some_prefix" }, { provider: p2 }]);
@@ -355,6 +359,26 @@ describe("CombinedDataProvider", () => {
         const calls = mockProgressCallback.mock.calls;
         // Assume that p1 is fully loaded since it did not report during initialize, so intersected range is the one from p2
         expect(calls[calls.length - 1]).toEqual([{ fullyLoadedFractionRanges: [{ start: 0.1, end: 0.5 }] }]);
+      });
+
+      it("reflects progress for only the providers which are needed for topics passed to getMessages", async () => {
+        const p1 = provider1();
+        const p2 = provider2();
+        const combinedProvider = getCombinedDataProvider([
+          { provider: p1, prefix: "/generic_topic" },
+          { provider: p2 },
+        ]);
+        const extensionPoint = mockExtensionPoint().extensionPoint;
+        const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
+        await combinedProvider.initialize(extensionPoint);
+        p2.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 0.3 }] });
+        let calls = mockProgressCallback.mock.calls;
+        // Assume that p1 has no progress yet since it has not reported, so intersected range is empty
+        expect(calls[calls.length - 1]).toEqual([{ fullyLoadedFractionRanges: [] }]);
+        combinedProvider.getMessages({ sec: 0, nsec: 0 }, { sec: 0.1, nsec: 0 }, ["/some_topic2"]);
+        // Reflects progress of only p2, since no topics from p1 are being requested.
+        calls = mockProgressCallback.mock.calls;
+        expect(calls[calls.length - 1]).toEqual([{ fullyLoadedFractionRanges: [{ start: 0, end: 0.3 }] }]);
       });
     });
 

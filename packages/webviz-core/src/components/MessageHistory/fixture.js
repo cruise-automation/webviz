@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -8,7 +8,7 @@
 import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
 
 export const datatypes = {
-  "some/datatype": [{ name: "index", type: "int32" }],
+  "some/datatype": { fields: [{ name: "index", type: "int32" }] },
 };
 
 export const messages = [

@@ -1,10 +1,12 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import tinycolor from "tinycolor2";
+
 const baseColors = {
   DARK: "#08080a",
   DARK1: "#111114",
@@ -66,4 +68,12 @@ export const colors = {
   ...baseColors,
   TEXT_MUTED: baseColors.GRAY,
   HIGHLIGHT: baseColors.PURPLEL1,
+  // TODO:(Audrey): !!! need design review. Don't use these colors until TopicGrouping feature is finished.
+  HOVER_BACKGROUND_COLOR: tinycolor(baseColors.PURPLE)
+    .setAlpha(0.5)
+    .toHexString(),
+  TEXTL1: baseColors.LIGHT2,
+  ACTION: baseColors.BLUE,
+  TEXT: baseColors.LIGHT1,
+  TOOLBAR: baseColors.DARK4,
 };

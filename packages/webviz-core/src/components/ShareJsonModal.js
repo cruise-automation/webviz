@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -75,10 +75,10 @@ export default class ShareJsonModal extends Component<Props, State> {
 
   onCopy = () => {
     const { value } = this.state;
-    clipboard.copy(value);
-    this.setState({ copied: true });
-
-    setTimeout(() => this.setState({ copied: false }), 1500);
+    clipboard.copy(value).then(() => {
+      this.setState({ copied: true });
+      setTimeout(() => this.setState({ copied: false }), 1500);
+    });
   };
 
   renderError() {

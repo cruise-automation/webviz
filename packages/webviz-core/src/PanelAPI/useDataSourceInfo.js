@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -25,7 +25,7 @@ export type DataSourceInfo = {|
 |};
 
 export default function useDataSourceInfo(): DataSourceInfo {
-  const datatypes = useMessagePipeline(useCallback(({ datatypes }) => datatypes, []));
+  const datatypes = useMessagePipeline(useCallback(({ datatypes: pipelineDatatypes }) => pipelineDatatypes, []));
   const topics = useMessagePipeline(useCallback(({ sortedTopics }) => sortedTopics, []));
   const startTime = useMessagePipeline(
     useCallback(({ playerState: { activeData } }) => activeData && activeData.startTime, [])
@@ -33,8 +33,12 @@ export default function useDataSourceInfo(): DataSourceInfo {
   const endTime = useMessagePipeline(
     useCallback(({ playerState: { activeData } }) => activeData && activeData.endTime, [])
   );
-  const capabilities = useMessagePipeline(useCallback(({ playerState: { capabilities } }) => capabilities, []));
-  const playerId = useMessagePipeline(useCallback(({ playerState: { playerId } }) => playerId, []));
+  const capabilities = useMessagePipeline(
+    useCallback(({ playerState: { capabilities: playerStateCapabilities } }) => playerStateCapabilities, [])
+  );
+  const playerId = useMessagePipeline(
+    useCallback(({ playerState: { playerId: playerStatePlayerId } }) => playerStatePlayerId, [])
+  );
 
   return {
     topics,

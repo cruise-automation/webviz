@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -71,7 +71,7 @@ export default function UnlinkGlobalVariables({ name, showList }: Props) {
   // the list UI is shared between 3D panel and Global Variables panel
   const listHtml = (
     <SList style={listStyle}>
-      {links.map(({ topic, markerKeyPath, name }, idx) => {
+      {links.map(({ topic, markerKeyPath, name: linkedGlobalVariableName }, idx) => {
         return (
           <SListItem key={idx} style={listStyle}>
             <Button
@@ -84,7 +84,7 @@ export default function UnlinkGlobalVariables({ name, showList }: Props) {
                     !(
                       linkedGlobalVariable.topic === topic &&
                       isEqual(linkedGlobalVariable.markerKeyPath, markerKeyPath) &&
-                      linkedGlobalVariable.name === name
+                      linkedGlobalVariable.name === linkedGlobalVariableName
                     )
                 );
                 setLinkedGlobalVariables(newLinkedGlobalVariables);

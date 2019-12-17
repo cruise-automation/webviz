@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -19,7 +19,7 @@ const data = {
     { topic: "/some_topic", receiveTime: { sec: 102, nsec: 0 }, message: new ArrayBuffer(0) },
   ],
   topics: [{ name: "/some_topic", datatype: "some_datatype" }],
-  datatypes: { some_datatype: [{ name: "data", type: "string" }] },
+  datatypes: { some_datatype: { fields: [{ name: "data", type: "string" }] } },
 };
 const dummyChildren = [{ name: "MemoryDataProvider", args: {}, children: [] }];
 
@@ -34,7 +34,7 @@ describe("RpcDataProvider", () => {
       start: { nsec: 0, sec: 100 },
       end: { nsec: 0, sec: 102 },
       topics: [{ datatype: "some_datatype", name: "/some_topic" }],
-      datatypes: { some_datatype: [{ name: "data", type: "string" }] },
+      datatypes: { some_datatype: { fields: [{ name: "data", type: "string" }] } },
     });
   });
 

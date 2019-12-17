@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -141,40 +141,48 @@ const otherStateMessages = [
 
 const fixture = {
   datatypes: {
-    "msgs/PoseDebug": [
-      { name: "header", type: "std_msgs/Header", isArray: false },
-      { name: "pose", type: "msgs/Pose", isArray: false },
-    ],
-    "msgs/Pose": [
-      { name: "header", type: "std_msgs/Header", isArray: false },
-      { name: "x", type: "float64", isArray: false },
-      { name: "y", type: "float64", isArray: false },
-      { name: "travel", type: "float64", isArray: false },
-      { name: "velocity", type: "float64", isArray: false },
-      { name: "acceleration", type: "float64", isArray: false },
-      { name: "heading", type: "float64", isArray: false },
-    ],
-    "msgs/State": [
-      { name: "header", type: "std_msgs/Header", isArray: false },
-      { name: "items", type: "msgs/OtherState", isArray: true },
-    ],
-    "msgs/OtherState": [
-      { name: "id", type: "int32", isArray: false },
-      { name: "speed", type: "float32", isArray: false },
-    ],
-    "std_msgs/Header": [
-      { name: "seq", type: "uint32", isArray: false },
-      {
-        name: "stamp",
-        type: "time",
-        isArray: false,
-      },
-      { name: "frame_id", type: "string", isArray: false },
-    ],
-    "std_msgs/Bool": [{ name: "data", type: "bool", isArray: false }],
+    "msgs/PoseDebug": {
+      fields: [
+        { name: "header", type: "std_msgs/Header", isArray: false },
+        { name: "pose", type: "msgs/Pose", isArray: false },
+      ],
+    },
+    "msgs/Pose": {
+      fields: [
+        { name: "header", type: "std_msgs/Header", isArray: false },
+        { name: "x", type: "float64", isArray: false },
+        { name: "y", type: "float64", isArray: false },
+        { name: "travel", type: "float64", isArray: false },
+        { name: "velocity", type: "float64", isArray: false },
+        { name: "acceleration", type: "float64", isArray: false },
+        { name: "heading", type: "float64", isArray: false },
+      ],
+    },
+    "msgs/State": {
+      fields: [
+        { name: "header", type: "std_msgs/Header", isArray: false },
+        { name: "items", type: "msgs/OtherState", isArray: true },
+      ],
+    },
+    "msgs/OtherState": {
+      fields: [{ name: "id", type: "int32", isArray: false }, { name: "speed", type: "float32", isArray: false }],
+    },
+    "std_msgs/Header": {
+      fields: [
+        { name: "seq", type: "uint32", isArray: false },
+        {
+          name: "stamp",
+          type: "time",
+          isArray: false,
+        },
+        { name: "frame_id", type: "string", isArray: false },
+      ],
+    },
+    "std_msgs/Bool": { fields: [{ name: "data", type: "bool", isArray: false }] },
   },
   topics: [
     { name: "/some_topic/location", datatype: "msgs/PoseDebug" },
+    { name: "/some_topic/location_subset", datatype: "msgs/PoseDebug" },
     { name: "/some_topic/state", datatype: "msgs/State" },
     { name: "/boolean_topic", datatype: "std_msgs/Bool" },
   ],
@@ -192,6 +200,15 @@ const fixture = {
       receiveTime: message.header.stamp,
       message,
     })),
+    "/some_topic/location_subset": locationMessages
+      .slice(locationMessages.length / 3, (locationMessages.length * 2) / 3)
+      .map((message) => ({
+        op: "message",
+        datatype: "msgs/PoseDebug",
+        topic: "/some_topic/location_subset",
+        receiveTime: message.header.stamp,
+        message,
+      })),
     "/some_topic/state": otherStateMessages.map((message) => ({
       op: "message",
       datatype: "msgs/State",
@@ -258,6 +275,36 @@ storiesOf("<Plot>", module)
     return (
       <PanelSetup fixture={fixture}>
         <Plot config={{ ...exampleConfig, showLegend: false }} />
+      </PanelSetup>
+    );
+  })
+  .add("in a line graph with multiple plots, x-axes are synced", () => {
+    return (
+      <PanelSetup fixture={fixture} style={{ flexDirection: "column" }}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              {
+                value: "/some_topic/location.pose.acceleration",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
+          }}
+        />
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              {
+                value: "/some_topic/location_subset.pose.velocity",
+                enabled: true,
+                timestampMethod: "receiveTime",
+              },
+            ],
+          }}
+        />
       </PanelSetup>
     );
   })
@@ -512,7 +559,7 @@ storiesOf("<Plot>", module)
     return (
       <PanelSetup
         fixture={{
-          datatypes: { "std_msgs/Float32": [{ name: "data", type: "float32", isArray: false }] },
+          datatypes: { "std_msgs/Float32": { fields: [{ name: "data", type: "float32", isArray: false }] } },
           topics: [{ name: "/some_number", datatype: "std_msgs/Float32" }],
           activeData: { startTime: { sec: 0, nsec: 0 }, endTime: { sec: 10, nsec: 0 }, isPlaying: false, speed: 0.2 },
           frame: {

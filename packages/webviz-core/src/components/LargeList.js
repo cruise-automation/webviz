@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -84,7 +84,9 @@ function CopyIcon({ tooltip, getCopyText }: { tooltip: string, getCopyText: () =
   return (
     <Icon
       style={{ padding: "1px 0px 0px 6px", verticalAlign: "middle" }}
-      onClick={() => clipboard.copy(getCopyText())}
+      onClick={() => {
+        clipboard.copy(getCopyText());
+      }}
       tooltip={tooltip}>
       <ClipboardOutlineIcon />
     </Icon>

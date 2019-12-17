@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -41,6 +41,7 @@ export const ErrorCodes = {
     PREFER_ARRAY_LITERALS: 13,
     STRICT_MARKERS_RETURN_TYPE: 14,
     NO_IMPORTS_IN_RETURN_TYPE: 15,
+    LIMITED_UNIONS: 16,
   },
   InputTopicsChecker: {
     NO_INPUTS: 1,

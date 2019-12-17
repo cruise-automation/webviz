@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -14,8 +14,8 @@ import delay from "webviz-core/shared/delay";
 class InMemoryFileReader implements FileReader {
   _buffer: Buffer;
 
-  constructor(buffer: Buffer) {
-    this._buffer = buffer;
+  constructor(bufferObj: Buffer) {
+    this._buffer = bufferObj;
   }
 
   async open() {

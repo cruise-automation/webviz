@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -35,10 +35,9 @@ type Props = {
 // so components outside the mosiac component can participate
 class MosaicRoot extends MosaicWithoutDragDropContext {
   componentDidMount() {
-    const { setMosaicId } = this.props;
     // set the mosiac id in redux so elements outside the container
     // can use the id to register their drag intents with mosaic drop targets
-    setMosaicId(this.state.mosaicId);
+    this.props.setMosaicId(this.state.mosaicId);
   }
 }
 
@@ -79,16 +78,15 @@ class PanelLayout extends PureComponent<Props> {
   };
 
   render() {
-    const { changePanelLayout, setMosaicId, layout } = this.props;
     return (
       <ErrorBoundary>
         <MosaicRoot
           renderTile={this.renderTile}
           className="none"
           resize={{ minimumPaneSizePercentage: 10 }}
-          value={layout}
-          onChange={changePanelLayout}
-          setMosaicId={setMosaicId}
+          value={this.props.layout}
+          onChange={this.props.changePanelLayout}
+          setMosaicId={this.props.setMosaicId}
         />
       </ErrorBoundary>
     );

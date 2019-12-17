@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -23,7 +23,7 @@ import reportError from "webviz-core/src/util/reportError";
 import { fromNanoSec } from "webviz-core/src/util/time";
 
 // By default seek to the start of the bag, since that makes things a bit simpler to reason about.
-const playerOptions = { metricsCollector: undefined, seekToTime: { sec: 0, nsec: 0 } };
+const playerOptions = { metricsCollector: undefined, seekToTime: { sec: 10, nsec: 0 } };
 
 class MessageStore {
   _messages: PlayerState[] = [];
@@ -87,14 +87,17 @@ describe("RandomAccessPlayer", () => {
       },
       {
         activeData: {
-          currentTime: { sec: 0, nsec: 0 },
-          datatypes: { baz: [{ name: "val", type: "number" }], fooBar: [{ name: "val", type: "number" }] },
+          currentTime: { sec: 10, nsec: 0 },
+          datatypes: {
+            baz: { fields: [{ name: "val", type: "number" }] },
+            fooBar: { fields: [{ name: "val", type: "number" }] },
+          },
           endTime: { sec: 100, nsec: 0 },
           isPlaying: false,
           lastSeekTime: 0,
           messages: [],
           speed: 0.2,
-          startTime: { sec: 0, nsec: 0 },
+          startTime: { sec: 10, nsec: 0 },
           topics: [{ datatype: "fooBar", name: "/foo/bar" }, { datatype: "baz", name: "/baz" }],
         },
         capabilities: ["setSpeed"],
@@ -119,7 +122,9 @@ describe("RandomAccessPlayer", () => {
     const store = new MessageStore(2);
     await source.setListener(store.add);
     const messages: any = await store.done;
-    expect(messages[1].activeData.currentTime).toEqual(fromNanoSec(SEEK_ON_START_NS));
+    expect(messages[1].activeData.currentTime).toEqual(
+      TimeUtil.add({ sec: 10, nsec: 0 }, fromNanoSec(SEEK_ON_START_NS))
+    );
 
     source.close();
   });
@@ -176,18 +181,18 @@ describe("RandomAccessPlayer", () => {
       switch (callCount) {
         case 1:
           // initial getMessages from player initialization
-          expect(start).toEqual({ sec: 0, nsec: 0 });
-          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(start).toEqual({ sec: 10, nsec: 0 });
+          expect(end).toEqual({ sec: 10, nsec: 0 });
           return Promise.resolve([]);
 
         case 2: {
-          expect(start).toEqual({ sec: 0, nsec: 1 });
-          expect(end).toEqual({ sec: 0, nsec: 4000000 });
+          expect(start).toEqual({ sec: 10, nsec: 1 });
+          expect(end).toEqual({ sec: 10, nsec: 4000000 });
           expect(topics).toEqual(["/foo/bar"]);
           const result: DataProviderMessage[] = [
             {
               topic: "/foo/bar",
-              receiveTime: { sec: 0, nsec: 2 },
+              receiveTime: { sec: 10, nsec: 2 },
               message: { payload: "foo bar" },
             },
           ];
@@ -195,7 +200,7 @@ describe("RandomAccessPlayer", () => {
         }
 
         case 3: {
-          expect(start).toEqual({ sec: 0, nsec: 4000001 });
+          expect(start).toEqual({ sec: 10, nsec: 4000001 });
           return Promise.resolve([]);
         }
 
@@ -224,7 +229,7 @@ describe("RandomAccessPlayer", () => {
           op: "message",
           topic: "/foo/bar",
           datatype: "fooBar",
-          receiveTime: { sec: 0, nsec: 2 },
+          receiveTime: { sec: 10, nsec: 2 },
           message: { payload: "foo bar" },
         },
       ],
@@ -242,14 +247,14 @@ describe("RandomAccessPlayer", () => {
       switch (callCount) {
         case 1:
           // initial getMessages from player initialization
-          expect(start).toEqual({ sec: 0, nsec: 0 });
-          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(start).toEqual({ sec: 10, nsec: 0 });
+          expect(end).toEqual({ sec: 10, nsec: 0 });
           expect(topics).toContainOnly(["/foo/bar"]);
           return Promise.resolve([]);
 
         case 2:
-          expect(start).toEqual({ sec: 0, nsec: 1 });
-          expect(end).toEqual({ sec: 0, nsec: 4000000 });
+          expect(start).toEqual({ sec: 10, nsec: 1 });
+          expect(end).toEqual({ sec: 10, nsec: 4000000 });
           expect(topics).toEqual(["/foo/bar"]);
           source.pausePlayback();
           return Promise.resolve([]);
@@ -280,19 +285,19 @@ describe("RandomAccessPlayer", () => {
       switch (callCount) {
         case 1:
           // initial getMessages from player initialization
-          expect(start).toEqual({ sec: 0, nsec: 0 });
-          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(start).toEqual({ sec: 10, nsec: 0 });
+          expect(end).toEqual({ sec: 10, nsec: 0 });
           expect(topics).toContainOnly(["/foo/bar"]);
           return Promise.resolve([]);
 
         case 2: {
-          expect(start).toEqual({ sec: 0, nsec: 1 });
-          expect(end).toEqual({ sec: 0, nsec: 4000000 });
+          expect(start).toEqual({ sec: 10, nsec: 1 });
+          expect(end).toEqual({ sec: 10, nsec: 4000000 });
           expect(topics).toContainOnly(["/foo/bar"]);
           const result: DataProviderMessage[] = [
             {
               topic: "/foo/bar",
-              receiveTime: { sec: 0, nsec: 0 },
+              receiveTime: { sec: 10, nsec: 0 },
               message: { payload: "foo bar" },
             },
           ];
@@ -330,7 +335,7 @@ describe("RandomAccessPlayer", () => {
           op: "message",
           topic: "/foo/bar",
           datatype: "fooBar",
-          receiveTime: { sec: 0, nsec: 0 },
+          receiveTime: { sec: 10, nsec: 0 },
           message: { payload: "foo bar" },
         },
       ],
@@ -350,24 +355,24 @@ describe("RandomAccessPlayer", () => {
       switch (callCount) {
         case 1:
           // initial getMessages from player initialization
-          expect(start).toEqual({ sec: 0, nsec: 0 });
-          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(start).toEqual({ sec: 10, nsec: 0 });
+          expect(end).toEqual({ sec: 10, nsec: 0 });
           expect(topics).toContainOnly(["/foo/bar"]);
           return Promise.resolve([]);
         case 2: {
-          expect(start).toEqual({ sec: 0, nsec: 1 });
-          expect(end).toEqual({ sec: 0, nsec: 4000000 });
+          expect(start).toEqual({ sec: 10, nsec: 1 });
+          expect(end).toEqual({ sec: 10, nsec: 4000000 });
           expect(topics).toContainOnly(["/foo/bar"]);
           const result: DataProviderMessage[] = [
             {
               topic: "/foo/bar",
-              receiveTime: { sec: 0, nsec: 0 },
+              receiveTime: { sec: 10, nsec: 0 },
               message: { payload: "foo bar" },
             },
           ];
           await new Promise((resolve) => setTimeout(resolve, 10));
           mockDateNow.mockReturnValue(Date.now() + 1);
-          source.seekPlayback({ sec: 0, nsec: 0 });
+          source.seekPlayback({ sec: 10, nsec: 0 });
           return Promise.resolve(result);
         }
 
@@ -396,9 +401,9 @@ describe("RandomAccessPlayer", () => {
     const activeDatas = messages.map((msg) => msg.activeData || {});
     expect(activeDatas.map((d) => d.currentTime)).toEqual([
       undefined, // "start up" message
-      { sec: 0, nsec: 0 },
-      { sec: 0, nsec: 0 },
-      { sec: 0, nsec: 0 },
+      { sec: 10, nsec: 0 },
+      { sec: 10, nsec: 0 },
+      { sec: 10, nsec: 0 },
     ]);
     expect(activeDatas.map((d) => d.messages)).toEqual([undefined, [], [], []]);
 
@@ -414,8 +419,8 @@ describe("RandomAccessPlayer", () => {
       switch (callCount) {
         case 1:
           // initial getMessages from player initialization
-          expect(start).toEqual({ sec: 0, nsec: 0 });
-          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(start).toEqual({ sec: 10, nsec: 0 });
+          expect(end).toEqual({ sec: 10, nsec: 0 });
           expect(topics).toContainOnly(["/foo/bar"]);
           return Promise.resolve([]);
 
@@ -426,7 +431,7 @@ describe("RandomAccessPlayer", () => {
           const result: DataProviderMessage[] = [
             {
               topic: "/foo/bar",
-              receiveTime: { sec: 0, nsec: 5 },
+              receiveTime: { sec: 10, nsec: 5 },
               message: { payload: "foo bar" },
             },
           ];
@@ -436,7 +441,7 @@ describe("RandomAccessPlayer", () => {
           // make sure after we seek & read again we read exactly from the right nanosecond
           expect(start).toEqual({ sec: 20, nsec: 51 });
           return Promise.resolve([
-            { topic: "/foo/bar", receiveTime: { sec: 0, nsec: 101 }, message: { payload: "baz" } },
+            { topic: "/foo/bar", receiveTime: { sec: 10, nsec: 101 }, message: { payload: "baz" } },
           ]);
         case 4:
           source.pausePlayback();
@@ -468,7 +473,7 @@ describe("RandomAccessPlayer", () => {
           op: "message",
           datatype: "fooBar",
           topic: "/foo/bar",
-          receiveTime: { sec: 0, nsec: 5 },
+          receiveTime: { sec: 10, nsec: 5 },
           message: { payload: "foo bar" },
         },
       ],
@@ -483,7 +488,7 @@ describe("RandomAccessPlayer", () => {
           topic: "/foo/bar",
           datatype: "fooBar",
           op: "message",
-          receiveTime: { sec: 0, nsec: 101 },
+          receiveTime: { sec: 10, nsec: 101 },
           message: { payload: "baz" },
         },
       ],
@@ -503,8 +508,8 @@ describe("RandomAccessPlayer", () => {
       switch (callCount) {
         case 1:
           // initial getMessages from player initialization
-          expect(start).toEqual({ sec: 0, nsec: 0 });
-          expect(end).toEqual({ sec: 0, nsec: 0 });
+          expect(start).toEqual({ sec: 10, nsec: 0 });
+          expect(end).toEqual({ sec: 10, nsec: 0 });
           expect(topics).toContainOnly(["/foo/bar"]);
           return Promise.resolve([]);
 
@@ -567,7 +572,7 @@ describe("RandomAccessPlayer", () => {
     store.reset(0); // We expect 0 more messages; this will throw an error later if we received more.
     const result: DataProviderMessage = {
       topic: "/foo/bar",
-      receiveTime: { sec: 0, nsec: 5 },
+      receiveTime: { sec: 10, nsec: 5 },
       message: { payload: "foo bar" },
     };
     backfillPromiseCallback([result]);
@@ -592,14 +597,14 @@ describe("RandomAccessPlayer", () => {
     source.setSubscriptions([{ topic: "/foo/bar" }]);
 
     // Test clamping to start time.
-    source.seekPlayback({ sec: 0, nsec: 100 });
+    source.seekPlayback({ sec: 10, nsec: 100 });
     if (!lastGetMessagesCall) {
       throw new Error("lastGetMessagesCall not set");
     }
     lastGetMessagesCall.resolve([]);
     expect(lastGetMessagesCall).toEqual({
-      start: { sec: 0, nsec: 0 },
-      end: { sec: 0, nsec: 100 },
+      start: { sec: 10, nsec: 0 },
+      end: { sec: 10, nsec: 100 },
       topics: ["/foo/bar"],
       resolve: expect.any(Function),
     });
@@ -668,22 +673,22 @@ describe("RandomAccessPlayer", () => {
     const items: DataProviderMessage[] = [
       {
         topic: "/foo/bar",
-        receiveTime: { sec: 0, nsec: 0 },
+        receiveTime: { sec: 10, nsec: 0 },
         message: { payload: "foo bar 1" },
       },
       {
         topic: "/baz",
-        receiveTime: { sec: 0, nsec: 500 },
+        receiveTime: { sec: 10, nsec: 500 },
         message: { payload: "baz 1" },
       },
       {
         topic: "/baz",
-        receiveTime: { sec: 0, nsec: 5000 },
+        receiveTime: { sec: 10, nsec: 5000 },
         message: { payload: "baz 2" },
       },
       {
         topic: "/foo/bar",
-        receiveTime: { sec: 0, nsec: 9000000 },
+        receiveTime: { sec: 10, nsec: 9000000 },
         message: { payload: "foo bar 2" },
       },
     ];
@@ -714,28 +719,28 @@ describe("RandomAccessPlayer", () => {
         op: "message",
         datatype: "fooBar",
         topic: "/foo/bar",
-        receiveTime: { sec: 0, nsec: 0 },
+        receiveTime: { sec: 10, nsec: 0 },
         message: { payload: "foo bar 1" },
       },
       {
         topic: "/baz",
         op: "message",
         datatype: "baz",
-        receiveTime: { sec: 0, nsec: 500 },
+        receiveTime: { sec: 10, nsec: 500 },
         message: { payload: "baz 1" },
       },
       {
         topic: "/baz",
         op: "message",
         datatype: "baz",
-        receiveTime: { sec: 0, nsec: 5000 },
+        receiveTime: { sec: 10, nsec: 5000 },
         message: { payload: "baz 2" },
       },
       {
         topic: "/foo/bar",
         op: "message",
         datatype: "fooBar",
-        receiveTime: { sec: 0, nsec: 9000000 },
+        receiveTime: { sec: 10, nsec: 9000000 },
         message: { payload: "foo bar 2" },
       },
     ]);
@@ -801,12 +806,12 @@ describe("RandomAccessPlayer", () => {
 
     const message1 = {
       topic: "/foo/bar",
-      receiveTime: { sec: 0, nsec: 1 },
+      receiveTime: { sec: 10, nsec: 1 },
       message: { payload: "foo bar 1" },
     };
     const message2 = {
       topic: "/foo/bar",
-      receiveTime: { sec: 0, nsec: 2 },
+      receiveTime: { sec: 10, nsec: 2 },
       message: { payload: "foo bar 2" },
     };
 
@@ -830,7 +835,7 @@ describe("RandomAccessPlayer", () => {
     player.startPlayback();
 
     await firstGetMessagesCall;
-    expect(getMessages.mock.calls).toEqual([[{ sec: 0, nsec: 1 }, { sec: 0, nsec: 4000000 }, ["/foo/bar"]]]);
+    expect(getMessages.mock.calls).toEqual([[{ sec: 10, nsec: 1 }, { sec: 10, nsec: 4000000 }, ["/foo/bar"]]]);
 
     expect(await store.done).toEqual([
       expect.objectContaining({ activeData: undefined }),
@@ -981,8 +986,8 @@ describe("RandomAccessPlayer", () => {
         seeked: 0,
         speed: [],
       });
-      source.seekPlayback({ sec: 0, nsec: 500 });
-      source.seekPlayback({ sec: 1, nsec: 0 });
+      source.seekPlayback({ sec: 10, nsec: 500 });
+      source.seekPlayback({ sec: 11, nsec: 0 });
       expect(metricsCollector.stats()).toEqual({
         initialized: 1,
         played: 1,
@@ -1018,7 +1023,7 @@ describe("RandomAccessPlayer", () => {
 
     const message1 = {
       topic: "/foo/bar",
-      receiveTime: { sec: 0, nsec: 1 },
+      receiveTime: { sec: 10, nsec: 1 },
       message: { payload: "foo bar 1" },
     };
 
@@ -1040,7 +1045,7 @@ describe("RandomAccessPlayer", () => {
     player.startPlayback();
 
     await firstGetMessagesCall;
-    expect(getMessages.mock.calls).toEqual([[{ sec: 0, nsec: 1 }, { sec: 0, nsec: 4000000 }, ["/foo/bar"]]]);
+    expect(getMessages.mock.calls).toEqual([[{ sec: 10, nsec: 1 }, { sec: 10, nsec: 4000000 }, ["/foo/bar"]]]);
 
     // $FlowFixMe
     Object.defineProperty(document, "visibilityState", {
@@ -1072,7 +1077,7 @@ describe("RandomAccessPlayer", () => {
 
   it("seeks the player after starting", async () => {
     const provider = new TestProvider();
-    provider.getMessages = jest.fn().mockImplementation(async () => Promise.resolve([]));
+    provider.getMessages = jest.fn().mockImplementation(() => Promise.resolve([]));
     const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
     const store = new MessageStore(2);
     player.setSubscriptions([{ topic: "/foo/bar" }]);
@@ -1084,6 +1089,45 @@ describe("RandomAccessPlayer", () => {
       expect.objectContaining({ activeData: expect.objectContaining({ isPlaying: false, messages: [] }) }),
     ]);
     expect(provider.getMessages).toHaveBeenCalled();
+
+    player.close();
+  });
+
+  it("wraps playback when letting it play across the end boundary", async () => {
+    const provider = new TestProvider();
+    provider.getMessages = jest.fn().mockImplementation(() => Promise.resolve([]));
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+    const store = new MessageStore(2);
+    player.setSubscriptions([{ topic: "/foo/bar" }]);
+    await player.setListener(store.add);
+    await store.done;
+
+    // Seek to just before the end.
+    store.reset(1);
+    player.seekPlayback(TimeUtil.add({ sec: 100, nsec: 0 }, { sec: 0, nsec: -1 }));
+    await store.done;
+
+    // Pause right after wrapping around, which happens to be on the second call.
+    // Then play again, and see if we indeed wrap around properly.
+    let callCount = 0;
+    provider.getMessages = jest.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 2) {
+        player.pausePlayback();
+      }
+      return Promise.resolve([]);
+    });
+    store.reset(3);
+    player.startPlayback();
+    await store.done;
+
+    // $FlowFixMe - doesn't understand getMessages.mock
+    expect(provider.getMessages.mock.calls).toEqual([
+      [{ sec: 100, nsec: 0 }, { sec: 100, nsec: 0 }, ["/foo/bar"]],
+      // We don't care too much about the `nsec` part since it might depend on playback speed.
+      // As long as the start of the range is actually at the beginning of the source.
+      [{ sec: 10, nsec: 0 }, { sec: 10, nsec: expect.any(Number) }, ["/foo/bar"]],
+    ]);
 
     player.close();
   });

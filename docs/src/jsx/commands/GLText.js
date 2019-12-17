@@ -133,19 +133,30 @@ function Example() {
     [matrix]
   );
 
+  const markers = [
+    {
+      pose: {
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+        position: { x: 0, y: 0, z: 0 },
+      },
+      scale: { x: 10, y: 10, z: 10 },
+      color: { r: 1, g: 0, b: 1, a: 0.5 },
+    },
+  ];
+
   return (
     <Worldview
       cameraState={cameraState}
-      onCameraStateChange={(newState) =>
-        setCameraState((oldState) => ({
-          ...oldState,
-          ...newState,
-          targetOffset: oldState.targetOffset,
-          phi: oldState.phi,
-        }))
-      }>
+      onCameraStateChange={(newState) => {
+        // setCameraState((oldState) => ({
+        // ...oldState,
+        // ...newState,
+        // targetOffset: oldState.targetOffset,
+        // phi: oldState.phi,
+        // }))
+      }}>
       <div style={{ position: "absolute", top: 20, left: 20, fontSize: 20, color: "red" }} ref={fpsMeter} />
-      <GLText>{matrix.toMarkers()}</GLText>
+      <GLText>{markers}</GLText>
     </Worldview>
   );
 }

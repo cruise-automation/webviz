@@ -6,7 +6,7 @@
 
 // #BEGIN EXAMPLE
 import React from "react";
-import Worldview, { Text, Axes } from "regl-worldview";
+import Worldview, { GLText, Axes } from "regl-worldview";
 
 // #BEGIN EDITABLE
 function Example() {
@@ -25,7 +25,7 @@ function Example() {
 
   return (
     <Worldview>
-      <Text autoBackgroundColor>{[labelMarker]}</Text>
+      <GLText autoBackgroundColor>{[labelMarker]}</GLText>
       <Axes />
     </Worldview>
   );

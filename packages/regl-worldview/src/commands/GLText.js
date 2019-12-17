@@ -33,7 +33,7 @@ import { isColorDark, type TextMarker } from "./Text";
 
 type Props = {
   ...CommonCommandProps,
-  children: $ReadOnlyArray<TextMarker & { billboard?: boolean }>,
+  children: $ReadOnlyArray<TextMarker & { billboard?: boolean, highlightedIndices: [number, number] }>,
   autoBackgroundColor?: boolean,
 };
 
@@ -60,7 +60,7 @@ const OUTLINE_CUTOFF = 0.6;
 const DEFAULT_COLOR = Object.freeze({ r: 1, g: 0, b: 1, a: 1 });
 const DEFAULT_OUTLINE_COLOR = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 
-const BG_COLOR_LIGHT = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
+const BG_COLOR_LIGHT = Object.freeze({ r: 1, g: 1, b: 1, a: 1 }); // troy: why freeze an object?
 const BG_COLOR_DARK = Object.freeze({ r: 0, g: 0, b: 0, a: 1 });
 
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
@@ -115,7 +115,7 @@ const createMemoizedBuildAtlas = () =>
 const vert = `
   precision mediump float;
 
-  uniform mat4 projection, view, billboardRotation;
+  uniform mat4 projection, view, billboardRotation; // troy: where does projection come from?
   attribute/*was uniform*/ float billboard;
   uniform float fontSize;
   uniform float srcHeight;
@@ -201,7 +201,7 @@ function makeTextCommand() {
     const drawText = regl({
       depth: defaultDepth,
       blend: defaultBlend,
-      primitive: "triangle strip",
+      primitive: "triangle strip", // troy: Why triangle-strip here?
       vert,
       frag,
       uniforms: {
@@ -230,10 +230,12 @@ function makeTextCommand() {
         enableOutline: (ctx, props) => ({ buffer: props.enableOutline, divisor: 1 }),
 
         posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
+
+        highlightedPosition: (ctx, props) => ({ buffer: props.highlightedPosition, divisor: 1 }),
       },
     });
 
-    return (props: $ReadOnlyArray<TextMarker & { billboard?: boolean }>) => {
+    return (props: $ReadOnlyArray<TextMarker & { billboard?: boolean, highlightedIndices: [number, number] }>) => {
       const prevNumChars = charSet.size;
       for (const { text } of props) {
         for (const char of text) {
@@ -272,13 +274,15 @@ function makeTextCommand() {
       const enableOutline = new Float32Array(estimatedInstances);
       const billboard = new Float32Array(estimatedInstances);
       const posePosition = new Float32Array(estimatedInstances * 3);
+      const highlightedPosition = new Float32Array(estimatedInstances);
 
       for (const marker of props) {
         let totalWidth = 0;
         let x = 0;
         let y = 0;
         let markerInstances = 0;
-        for (const char of marker.text) {
+        for (let i = 0; i < marker.text.length; i++) {
+          const char = marker.text[i];
           if (char === "\n") {
             x = 0;
             y = FONT_SIZE;
@@ -325,7 +329,9 @@ function makeTextCommand() {
           outlineColor[4 * (totalInstances + markerInstances) + 3] = bgColor.a;
 
           enableOutline[totalInstances + markerInstances] = outline ? 1 : 0;
-
+          highlightedPosition[totalInstances + markerInstances] = marker.highlightedIndices.length
+            ? +(i > marker.highlightedIndices[0] && i < marker.highlightedIndices[1])
+            : 0;
           ++markerInstances;
         }
         totalInstances += markerInstances;

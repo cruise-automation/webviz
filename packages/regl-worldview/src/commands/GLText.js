@@ -56,7 +56,7 @@ const BUFFER = 10;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
-const OUTLINE_CUTOFF = 0.5;
+const OUTLINE_CUTOFF = 0.6;
 const DEFAULT_COLOR = Object.freeze({ r: 1, g: 0, b: 1, a: 1 });
 const DEFAULT_OUTLINE_COLOR = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 
@@ -115,14 +115,12 @@ const createMemoizedBuildAtlas = () =>
 const vert = `
   precision mediump float;
 
-  #WITH_POSE
-
   uniform mat4 projection, view, billboardRotation;
-  uniform bool billboard;
+  attribute/*was uniform*/ float billboard;
   uniform float fontSize;
   uniform float srcHeight;
   uniform vec2 atlasSize;
-  uniform vec3 scale;
+  attribute/*was uniform*/ vec3 scale;
 
   attribute vec2 texCoord;
   attribute vec2 position;
@@ -131,20 +129,31 @@ const vert = `
   attribute float srcWidth;
   attribute vec2 destOffset;
 
-  uniform vec2 alignmentOffset;
+  attribute/*was uniform*/ vec2 alignmentOffset;
+
+  attribute/*was uniform*/ float enableOutline;
+  attribute/*was uniform*/ vec4 foregroundColor;
+  attribute/*was uniform*/ vec4 outlineColor;
+  varying/*was uniform*/ float vEnableOutline;
+  varying/*was uniform*/ vec4 vForegroundColor;
+  varying/*was uniform*/ vec4 vOutlineColor;
+  attribute vec3 posePosition;
 
   varying vec2 vTexCoord;
   void main () {
     vec2 srcSize = vec2(srcWidth, srcHeight);
     vec3 markerSpacePos = scale * vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
     vec3 pos;
-    if (billboard) {
-      pos = applyPosePosition((billboardRotation * vec4(markerSpacePos, 1)).xyz);
+    if (billboard==1.0) {
+      pos = (billboardRotation * vec4(markerSpacePos, 1)).xyz + posePosition;
     } else {
-      pos = applyPose(markerSpacePos);
+      pos = markerSpacePos + posePosition;//applyPose(markerSpacePos);
     }
     gl_Position = projection * view * vec4(pos, 1);
     vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
+    vEnableOutline=enableOutline;
+    vForegroundColor=foregroundColor;
+    vOutlineColor=outlineColor;
   }
 `;
 
@@ -155,9 +164,9 @@ const frag = `
   uniform sampler2D atlas;
   uniform float outlineCutoff;
   uniform float cutoff;
-  uniform bool enableOutline;
-  uniform vec4 foregroundColor;
-  uniform vec4 outlineColor;
+  varying/*was uniform*/ float vEnableOutline;
+  varying/*was uniform*/ vec4 vForegroundColor;
+  varying/*was uniform*/ vec4 vOutlineColor;
   varying vec2 vTexCoord;
   void main() {
     float dist = texture2D(atlas, vTexCoord).a;
@@ -165,13 +174,13 @@ const frag = `
     // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
     // between outline and text, not on the outer border, because the alpha blending and
     // depth test don't work together nicely for partially-transparent pixels.
-    if (enableOutline) {
+    if (vEnableOutline>0.5) {
       float screenSize = fwidth(vTexCoord.x);
       float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
-      gl_FragColor = mix(outlineColor, foregroundColor, edgeStep);
+      gl_FragColor = mix(vOutlineColor, vForegroundColor, edgeStep);
       gl_FragColor.a *= step(1.0 - outlineCutoff, dist);
     } else {
-      gl_FragColor = foregroundColor;
+      gl_FragColor = vForegroundColor;
       gl_FragColor.a *= step(1.0 - cutoff, dist);
     }
 
@@ -189,39 +198,40 @@ function makeTextCommand() {
   const command = (regl: any) => {
     const atlasTexture = regl.texture();
 
-    const drawText = regl(
-      withPose({
-        depth: defaultDepth,
-        blend: defaultBlend,
-        primitive: "triangle strip",
-        vert,
-        frag,
-        uniforms: {
-          atlas: atlasTexture,
-          atlasSize: () => [atlasTexture.width, atlasTexture.height],
-          fontSize: FONT_SIZE,
-          cutoff: CUTOFF,
-          outlineCutoff: OUTLINE_CUTOFF,
-          srcHeight: FONT_SIZE + 2 * BUFFER,
-          alignmentOffset: regl.prop("alignmentOffset"),
-          billboard: regl.prop("billboard"),
-          scale: (ctx, props) => (shouldConvert(props.scale) ? pointToVec3(props.scale) : props.scale),
+    const drawText = regl({
+      depth: defaultDepth,
+      blend: defaultBlend,
+      primitive: "triangle strip",
+      vert,
+      frag,
+      uniforms: {
+        atlas: atlasTexture,
+        atlasSize: () => [atlasTexture.width, atlasTexture.height],
+        fontSize: FONT_SIZE,
+        cutoff: CUTOFF,
+        outlineCutoff: OUTLINE_CUTOFF,
+        srcHeight: FONT_SIZE + 2 * BUFFER,
+      },
+      instances: regl.prop("instances"),
+      count: 4,
+      attributes: {
+        position: [[0, 0], [0, -1], [1, 0], [1, -1]],
+        texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
+        srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
+        destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
+        srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
+        scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
 
-          foregroundColor: (ctx, props) => toRGBA(props.colors?.[0] || props.color),
-          outlineColor: (ctx, props) => toRGBA(props.colors?.[1] || DEFAULT_OUTLINE_COLOR),
-          enableOutline: (ctx, props) => props.colors?.[1] != null,
-        },
-        instances: regl.prop("instances"),
-        count: 4,
-        attributes: {
-          position: [[0, 0], [0, -1], [1, 0], [1, -1]],
-          texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
-          srcOffset: (ctx, props) => ({ buffer: regl.buffer(props.srcOffsets), divisor: 1 }),
-          destOffset: (ctx, props) => ({ buffer: regl.buffer(props.destOffsets), divisor: 1 }),
-          srcWidth: (ctx, props) => ({ buffer: regl.buffer(props.srcWidths), divisor: 1 }),
-        },
-      })
-    );
+        alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
+        billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
+
+        foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
+        outlineColor: (ctx, props) => ({ buffer: props.outlineColor, divisor: 1 }),
+        enableOutline: (ctx, props) => ({ buffer: props.enableOutline, divisor: 1 }),
+
+        posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
+      },
+    });
 
     return (props: $ReadOnlyArray<TextMarker & { billboard?: boolean }>) => {
       const prevNumChars = charSet.size;
@@ -259,73 +269,80 @@ function makeTextCommand() {
       const scale = new Float32Array(estimatedInstances * 3);
       const foregroundColor = new Float32Array(estimatedInstances * 4);
       const outlineColor = new Float32Array(estimatedInstances * 4);
-      const enableOutline = new Uint8Array(estimatedInstances);
-      const billboard = new Uint8Array(estimatedInstances);
+      const enableOutline = new Float32Array(estimatedInstances);
+      const billboard = new Float32Array(estimatedInstances);
+      const posePosition = new Float32Array(estimatedInstances * 3);
 
       for (const marker of props) {
+        let totalWidth = 0;
+        let x = 0;
+        let y = 0;
+        let markerInstances = 0;
         for (const char of marker.text) {
-          let totalWidth = 0;
-          let x = 0;
-          let y = 0;
-          let markerInstances = 0;
-          for (const char of marker.text) {
-            if (char === "\n") {
-              x = 0;
-              y = FONT_SIZE;
-              continue;
-            }
-            const info = charInfo[char];
-            destOffsets[2 * (totalInstances + markerInstances) + 0] = x - BUFFER;
-            destOffsets[2 * (totalInstances + markerInstances) + 1] = -(y - BUFFER);
-            srcOffsets[2 * (totalInstances + markerInstances) + 0] = info.x;
-            srcOffsets[2 * (totalInstances + markerInstances) + 1] = info.y;
-            srcWidths[totalInstances + markerInstances] = info.width + 2 * BUFFER;
-            x += info.width;
-            totalWidth = Math.max(totalWidth, x);
-            ++markerInstances;
+          if (char === "\n") {
+            x = 0;
+            y = FONT_SIZE;
+            continue;
           }
+          const info = charInfo[char];
+          destOffsets[2 * (totalInstances + markerInstances) + 0] = x - BUFFER;
+          destOffsets[2 * (totalInstances + markerInstances) + 1] = -(y - BUFFER);
+          srcOffsets[2 * (totalInstances + markerInstances) + 0] = info.x;
+          srcOffsets[2 * (totalInstances + markerInstances) + 1] = info.y;
+          srcWidths[totalInstances + markerInstances] = info.width + 2 * BUFFER;
+          x += info.width;
+          totalWidth = Math.max(totalWidth, x);
+
           const totalHeight = y + FONT_SIZE;
 
-          let colors = marker.colors;
-          if (command.autoBackgroundColor && (!colors || colors.length !== 2)) {
-            const foregroundColor = colors?.[0] || marker.color || DEFAULT_COLOR;
-            colors = [foregroundColor, isColorDark(foregroundColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK];
-          }
+          const fgColor = marker.colors?.[0] || marker.color || DEFAULT_COLOR;
+          const outline = marker.colors?.[1] != null || command.autoBackgroundColor;
+          const bgColor =
+            marker.colors?.[1] ||
+            (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_LIGHT);
 
-          for (let i = 0; i < markerInstances; i++) {
-            billboard[totalInstances + i] = marker.billboard ?? true;
+          billboard[totalInstances + markerInstances] = marker.billboard ?? true ? 1 : 0;
 
-            alignmentOffset[2 * (totalInstances + i) + 0] = -totalWidth / 2;
-            alignmentOffset[2 * (totalInstances + i) + 1] = totalHeight / 2;
+          alignmentOffset[2 * (totalInstances + markerInstances) + 0] = 0; //TODO -totalWidth / 2;
+          alignmentOffset[2 * (totalInstances + markerInstances) + 1] = 0; //TODO totalHeight / 2;
 
-            scale[3 * (totalInstances + i) + 0] = marker.scale.x;
-            scale[3 * (totalInstances + i) + 1] = marker.scale.y;
-            scale[3 * (totalInstances + i) + 2] = marker.scale.z;
+          scale[3 * (totalInstances + markerInstances) + 0] = marker.scale.x;
+          scale[3 * (totalInstances + markerInstances) + 1] = marker.scale.y;
+          scale[3 * (totalInstances + markerInstances) + 2] = marker.scale.z;
 
-            position[4 * (totalInstances + i) + 0] = marker.pose.position.x;
-            position[4 * (totalInstances + i) + 1] = marker.pose.position.y;
-            position[4 * (totalInstances + i) + 2] = marker.pose.position.z;
-            position[4 * (totalInstances + i) + 3] = marker.pose.position.w;
-          }
-          totalInstances += markerInstances;
+          posePosition[3 * (totalInstances + markerInstances) + 0] = marker.pose.position.x;
+          posePosition[3 * (totalInstances + markerInstances) + 1] = marker.pose.position.y;
+          posePosition[3 * (totalInstances + markerInstances) + 2] = marker.pose.position.z;
 
-          return {
-            billboard: marker.billboard ?? true,
-            pose: marker.pose,
-            color: marker.color || DEFAULT_COLOR,
-            colors,
-            scale: marker.scale,
-            alignmentOffset: [-totalWidth / 2, totalHeight / 2],
-            instances: totalInstances,
-            srcOffsets,
-            destOffsets,
-            srcWidths,
-          };
+          foregroundColor[4 * (totalInstances + markerInstances) + 0] = fgColor.r;
+          foregroundColor[4 * (totalInstances + markerInstances) + 1] = fgColor.g;
+          foregroundColor[4 * (totalInstances + markerInstances) + 2] = fgColor.b;
+          foregroundColor[4 * (totalInstances + markerInstances) + 3] = fgColor.a;
+
+          outlineColor[4 * (totalInstances + markerInstances) + 0] = bgColor.r;
+          outlineColor[4 * (totalInstances + markerInstances) + 1] = bgColor.g;
+          outlineColor[4 * (totalInstances + markerInstances) + 2] = bgColor.b;
+          outlineColor[4 * (totalInstances + markerInstances) + 3] = bgColor.a;
+
+          enableOutline[totalInstances + markerInstances] = outline ? 1 : 0;
+
+          ++markerInstances;
         }
+        totalInstances += markerInstances;
       }
 
       drawText({
         instances: totalInstances,
+        srcOffsets,
+        destOffsets,
+        srcWidths,
+        alignmentOffset,
+        scale,
+        foregroundColor,
+        outlineColor,
+        enableOutline,
+        billboard,
+        posePosition,
       });
     };
   };

@@ -44,6 +44,7 @@ import { getHashUrlByComponentName } from "../../routes";
 import CameraStateInfo from "./CameraStateInfo";
 import cesiumManModel from "./CesiumMan.glb";
 import CodeEditor from "./CodeEditor";
+import { inScreenshotTests } from "./codeSandboxUtils";
 import InputNumber from "./InputNumber";
 import LineControls from "./LineControls";
 import LinesWithClickableInterior from "./LinesWithClickableInterior";
@@ -117,6 +118,7 @@ export const scope = {
   last,
   remove,
   sample,
+  inScreenshotTests,
 
   polygonGenerator,
   styled,
@@ -156,6 +158,7 @@ export default function WorldviewCodeEditor({
   code,
   nonEditableCode = "",
   insertCodeSandboxStyle,
+  noInline,
   ...rest
 }) {
   const hashUrl = getHashUrlByComponentName(componentName);
@@ -166,29 +169,37 @@ export default function WorldviewCodeEditor({
 ${code}
     `;
 
+  const render = noInline
+    ? ""
+    : `
+render(
+  <div className="App" style={{ width: "100vw", height: "100vh" }}>
+    <Example />
+  </div>
+);
+`;
+
   const codeSandboxCode = `
 // regl-worldview example: ${componentName}
 // docs: ${docUrl}
 
 ${insertCodeSandboxStyle ? 'import "./utils/codeSandboxStyleFix.css"; // #CODE_SANDBOX_ONLY' : ""}
 import ReactDOM from "react-dom";
-${copyCode}
+${nonEditableCode}
 
-function App() {
-  return (
-    <div className="App" style={{ width: "100vw", height: "100vh" }}>
-      <Example />
-    </div>
-  );
+function render(content) {
+  ReactDOM.render(content, document.getElementById("root"));
 }
 
-ReactDOM.render(<App />, document.getElementById("root"));
-  `;
+${code}
+${render}
+`;
 
   return (
     <CodeEditor
       scope={{ ...customScope, ...scope }}
       {...rest}
+      noInline={noInline}
       codeSandboxConfig={CODE_SANDBOX_CONFIG}
       codeSandboxCode={codeSandboxCode}
       code={code}

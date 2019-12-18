@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -46,8 +46,8 @@ describe("performanceMeasuringClient", () => {
     expect(onPlaybackError).toHaveBeenCalledWith(error.toString());
   });
   it("collects IndexedDB stats", async () => {
-    const db = await Database.open("dummy-db", 1, (db) => {
-      db.createObjectStore("bar", { keyPath: "key" });
+    const db = await Database.open("dummy-db", 1, (openedDb) => {
+      openedDb.createObjectStore("bar", { keyPath: "key" });
     });
     for (let i = 0; i < 10; i++) {
       await db.put("bar", { key: i, data: new Uint8Array(10) });

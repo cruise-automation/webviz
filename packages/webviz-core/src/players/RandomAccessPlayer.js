@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -227,7 +227,7 @@ export default class RandomAccessPlayer implements Player {
       // we'd be "traveling back in time".
       this._cancelSeekBackfill = true;
     }
-    return this._listener({
+    const data = {
       isPresent: true,
       showSpinner: this._initializing || this._reconnecting,
       showInitializing: this._initializing,
@@ -247,7 +247,8 @@ export default class RandomAccessPlayer implements Player {
             topics: this._providerTopics,
             datatypes: this._providerDatatypes,
           },
-    });
+    };
+    return this._listener(data);
   });
 
   async _tick(): Promise<void> {
@@ -286,7 +287,7 @@ export default class RandomAccessPlayer implements Player {
       // it looks like it's stuck at the beginning of the bag.
       await delay(500);
       if (this._isPlaying) {
-        this.seekPlayback(this._start);
+        this._playFromStart();
       }
       return;
     }
@@ -382,14 +383,7 @@ export default class RandomAccessPlayer implements Player {
     }
     this._metricsCollector.play(this._speed);
     this._isPlaying = true;
-
-    // If we had paused at the end, pressing play should loop back to the beginning.
-    if (isEqual(this._currentTime, this._end)) {
-      this.seekPlayback(this._start);
-    } else {
-      this._emitState();
-    }
-
+    this._emitState();
     this._read();
   }
 
@@ -457,6 +451,20 @@ export default class RandomAccessPlayer implements Player {
         }
       });
     }
+  }
+
+  _playFromStart(): void {
+    if (!this._isPlaying) {
+      throw new Error("Can only play from the very start when we're already playing.");
+    }
+    // Have to start to a nanosecond before the start time, otherwise we don't get
+    // messages that are exactly at the start time.
+    this.seekPlayback(
+      TimeUtil.add(this._start, {
+        sec: 0,
+        nsec: -1,
+      })
+    );
   }
 
   setSubscriptions(newSubscriptions: SubscribePayload[]): void {

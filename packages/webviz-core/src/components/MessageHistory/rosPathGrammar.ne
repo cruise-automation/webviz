@@ -1,4 +1,4 @@
-#  Copyright (c) 2018-present, GM Cruise LLC
+#  Copyright (c) 2018-present, Cruise LLC
 #
 #  This source code is licensed under the Apache License, Version 2.0,
 #  found in the LICENSE file in the root directory of this source tree.
@@ -32,7 +32,7 @@ string
    -> "'" [^']:* "'"   {% (d) => ({ value: d[1].join(""), repr: `'${d[1].join("")}'` }) %}
     | "\"" [^"]:* "\"" {% (d) => ({ value: d[1].join(""), repr: `"${d[1].join("")}"` }) %}
 
-variable -> "$" id:? {% (d) => ({ value: {variableName: d[1] || ""}, repr: `$${d[1] || ""}` }) %}
+variable -> "$" id:? {% (d, loc) => ({ value: {variableName: d[1] || "", startLoc: loc }, repr: `$${d[1] || ""}` }) %}
 
 # An integer, string, or boolean.
 value -> integer  {% (d) => d[0] %}
@@ -68,10 +68,11 @@ name -> id
   {% (d) => ({ type: "name", name: d[0] }) %}
 
 # Slice part; can be a single array index `[0]` or multiple `[0:10]`, or even infinite `[:]`.
-slice -> "[" integer "]"
-            {% (d) => ({ type: "slice", start: d[1].value, end: d[1].value }) %}
-       | "[" integer:? ":" integer:? "]"
-            {% (d) => ({ type: "slice", start: d[1] === null ? 0 : d[1].value, end: d[3] === null ? Infinity : d[3].value }) %}
+sliceVal -> integer {% (d) => (d[0].value) %} | variable {% (d) => (d[0].value) %}
+slice -> "[" sliceVal "]"
+            {% (d) => ({ type: "slice", start: d[1], end: d[1] }) %}
+       | "[" sliceVal:? ":" sliceVal:? "]"
+            {% (d) => ({ type: "slice", start: d[1] === null ? 0 : d[1], end: d[3] === null ? Infinity : d[3] }) %}
 
 # For now, filters only support simple "foo.bar.baz" paths, so we need a separate rule for this.
 # TODO: it would be nice if filters supported arbitrary sub-paths, such as "/diagnostics{status[0].hardware_id=='bar'}".

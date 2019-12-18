@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -57,7 +57,7 @@ class DiagnosticStatusPanel extends React.Component<Props> {
     return (
       <TopicToRenderMenu
         topicToRender={topicToRender}
-        onChange={(topicToRender) => saveConfig({ topicToRender })}
+        onChange={(newTopicToRender) => saveConfig({ topicToRender: newTopicToRender })}
         topics={topics}
         singleTopicDatatype={"diagnostic_msgs/DiagnosticArray"}
         defaultTopicToRender={DIAGNOSTIC_TOPIC}
@@ -102,7 +102,9 @@ class DiagnosticStatusPanel extends React.Component<Props> {
                   <DiagnosticStatus
                     info={selectedItem}
                     splitFraction={splitFraction}
-                    onChangeSplitFraction={(splitFraction) => this.props.saveConfig({ splitFraction })}
+                    onChangeSplitFraction={(newSplitFraction) =>
+                      this.props.saveConfig({ splitFraction: newSplitFraction })
+                    }
                     topicToRender={topicToRender}
                     openSiblingPanel={openSiblingPanel}
                   />

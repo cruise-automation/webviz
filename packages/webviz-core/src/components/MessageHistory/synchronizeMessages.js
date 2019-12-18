@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -115,12 +115,12 @@ function getSynchronizedState(
   let newSynchronizedMessages = synchronizedMessages;
 
   for (const stamp of allMessageStampsNewestFirst(messagesByTopic)) {
-    const synchronizedMessages = getSynchronizedMessages(stamp, topics, messagesByTopic);
-    if (synchronizedMessages) {
+    const syncedMsgs = getSynchronizedMessages(stamp, topics, messagesByTopic);
+    if (syncedMsgs) {
       // We've found a new synchronized set; remove messages older than these.
-      newSynchronizedMessages = synchronizedMessages;
-      newMessagesByTopic = mapValues(newMessagesByTopic, (messagesByTopic) =>
-        messagesByTopic.filter(({ message }) => {
+      newSynchronizedMessages = syncedMsgs;
+      newMessagesByTopic = mapValues(newMessagesByTopic, (msgsByTopic) =>
+        msgsByTopic.filter(({ message }) => {
           const thisStamp = get(message, ["header", "stamp"]);
           return !TimeUtil.isLessThan(thisStamp, stamp);
         })

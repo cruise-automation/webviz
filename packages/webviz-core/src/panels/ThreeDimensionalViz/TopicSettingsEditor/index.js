@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -159,7 +159,7 @@ const TopicSettingsEditor = React.memo<Props>(function TopicSettingsEditor({
 }: Props) {
   const onFieldChange = useCallback(
     (fieldName: string, value: any) => {
-      onSettingsChange((settings) => ({ ...settings, [fieldName]: value }));
+      onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
     },
     [onSettingsChange]
   );

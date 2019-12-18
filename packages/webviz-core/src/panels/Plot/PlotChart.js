@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -58,14 +58,14 @@ function getDatasetFromMessagePlotPath(
       continue;
     }
 
-    for (const { value, path, constantName } of item.queriedData) {
+    for (const { value, path: queriedPath, constantName } of item.queriedData) {
       if (typeof value === "number" || typeof value === "boolean" || typeof value === "string") {
         const valueNum = Number(value);
         if (!isNaN(valueNum)) {
           points.push({
             x: toSec(subtractTimes(timestamp, startTime)),
             y: valueNum,
-            tooltip: { item, path, value, constantName, startTime },
+            tooltip: { item, path: queriedPath, value, constantName, startTime },
           });
         }
       } else if (isTime(value)) {
@@ -76,7 +76,7 @@ function getDatasetFromMessagePlotPath(
           y: toSec(timeValue),
           tooltip: {
             item,
-            path,
+            path: queriedPath,
             value: `${format(timeValue)} (${formatTimeRaw(timeValue)})`,
             constantName,
             startTime,
@@ -203,6 +203,7 @@ export default class PlotChart extends PureComponent<PlotChartProps> {
               type="scatter"
               yAxes={yAxes({ minY: minYValue, maxY: maxYValue, scaleId: Y_AXIS_ID })}
               saveCurrentYs={saveCurrentYs}
+              useFixedYAxisWidth
             />
           )}
         </Dimensions>

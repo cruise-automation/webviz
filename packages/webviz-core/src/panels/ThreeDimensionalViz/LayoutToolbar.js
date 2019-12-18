@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -26,6 +26,8 @@ import MeasureMarker from "webviz-core/src/panels/ThreeDimensionalViz/MeasureMar
 
 type Props = {|
   ...LayoutToolbarSharedProps,
+  selectedPolygonEditFormat: "json" | "yaml",
+  showCrosshair: ?boolean,
   debug: boolean,
   drawingTabType: ?DrawingTabType,
   interactionData: ?InteractionData,

@@ -1,11 +1,11 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { ceil, floor, last, max, min, minBy } from "lodash";
+import { last, max, min, minBy } from "lodash";
 import * as React from "react";
 import ChartComponent from "react-chartjs-2";
 import DocumentEvents from "react-document-events";
@@ -24,8 +24,8 @@ import mixins from "webviz-core/src/styles/mixins.module.scss";
 
 type Bounds = {| minX: ?number, maxX: ?number |};
 const SyncTimeAxis = createSyncingComponent<Bounds, Bounds>("SyncTimeAxis", (dataItems: Bounds[]) => ({
-  minX: min(dataItems.map(({ minX }) => (minX === undefined || minX === null ? undefined : floor(minX, 1)))),
-  maxX: max(dataItems.map(({ maxX }) => (maxX === undefined || maxX === null ? undefined : ceil(maxX, 1)))),
+  minX: min(dataItems.map(({ minX }) => (minX == null ? undefined : minX))),
+  maxX: max(dataItems.map(({ maxX }) => (maxX == null ? undefined : maxX))),
 }));
 
 const X_AXIS_ID = "x-axis-1";
@@ -103,6 +103,7 @@ type Props = {|
   datasetId?: string,
   onClick?: (MouseEvent) => void,
   saveCurrentYs?: (minY: number, maxY: number) => void,
+  useFixedYAxisWidth?: boolean,
 |};
 type State = {|
   showResetZoom: boolean,
@@ -304,16 +305,14 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
     this._updateTooltip();
   };
 
-  _chartjsOptions = (minX: number, maxX: number, userMinY: ?number, userMaxY: ?number) => {
-    const { plugins, xAxes, yAxes } = this.props;
+  _chartjsOptions = (minX: ?number, maxX: ?number, userMinY: ?number, userMaxY: ?number) => {
+    const { plugins, xAxes, yAxes, useFixedYAxisWidth } = this.props;
     const { annotations } = this.state;
     const defaultXTicksSettings = {
       fontFamily: mixins.monospaceFont,
       fontSize: 10,
       fontColor: "#eee",
       maxRotation: 0,
-      timeBasedChartMin: minX,
-      timeBasedChartMax: maxX,
     };
     const defaultYTicksSettings = {
       fontFamily: mixins.monospaceFont,
@@ -384,6 +383,13 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
           return {
             ...yAxis,
             afterUpdate: this._onPlotChartUpdate,
+            afterFit: (scaleInstance) => {
+              // Sets y-axis labels to a fixed width, so that vertically-aligned charts can be directly compared.
+              // This width is large enough to easily see legend values up to 6 characters wide (ex: 100000 or -12.638).
+              if (useFixedYAxisWidth) {
+                scaleInstance.width = 48;
+              }
+            },
             ticks,
           };
         }),
@@ -419,29 +425,39 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
     const userSetMinOrZero = isNaN(userSetMinX) ? data.minIsZero : userSetMinX;
     const minX = userSetMinOrZero
       ? 0
-      : min(data.datasets.map((dataset) => (dataset.data.length ? dataset.data[0].x : undefined)));
+      : min(data.datasets.map((dataset) => (dataset.data.length > 1 ? dataset.data[0].x : undefined)));
     const maxX =
       typeof userSetMaxX === "number"
         ? userSetMaxX
-        : max(data.datasets.map((dataset) => (dataset.data.length ? last(dataset.data).x : undefined)));
-    const CoreComponent = (
-      <ChartComponent
-        redraw={this.state.shouldRedraw}
-        type={type}
-        width={width}
-        height={height}
-        key={`${width}x${height}`} // https://github.com/jerairrest/react-chartjs-2/issues/60#issuecomment-406376731
-        ref={(ref) => {
-          this._chart = ref;
-        }}
-        options={this._chartjsOptions(minX, maxX, userSetMinY, userSetMaxY)}
-        data={{ ...data, datasets: data.datasets.filter((dataset) => !linesToHide[dataset.label]) }}
-      />
-    );
+        : max(data.datasets.map((dataset) => (dataset.data.length > 1 ? last(dataset.data).x : undefined)));
+
+    const chartProps = {
+      redraw: this.state.shouldRedraw,
+      type,
+      width,
+      height,
+      key: `${width}x${height}`, // https://github.com/jerairrest/react-chartjs-2/issues/60#issuecomment-406376731
+      ref: (ref) => {
+        this._chart = ref;
+      },
+      data: { ...data, datasets: data.datasets.filter((dataset) => !linesToHide[dataset.label]) },
+    };
+
     return isSynced ? (
-      <SyncTimeAxis data={{ minX, maxX }}>{({ minX, maxX }) => CoreComponent}</SyncTimeAxis>
+      <SyncTimeAxis data={{ minX, maxX }}>
+        {(syncedMinMax) => {
+          const syncedMinX = syncedMinMax.minX != null ? Math.min(minX, syncedMinMax.minX) : minX;
+          const syncedMaxX = syncedMinMax.maxX != null ? Math.max(maxX, syncedMinMax.maxX) : maxX;
+          return (
+            <ChartComponent
+              {...chartProps}
+              options={this._chartjsOptions(syncedMinX, syncedMaxX, userSetMinY, userSetMaxY)}
+            />
+          );
+        }}
+      </SyncTimeAxis>
     ) : (
-      CoreComponent
+      <ChartComponent {...chartProps} options={this._chartjsOptions(minX, maxX, userSetMinY, userSetMaxY)} />
     );
   }
 
@@ -452,7 +468,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
       <div style={{ display: "flex", width: "100%" }}>
         <div style={{ display: "flex", width }}>
           <SRoot onDoubleClick={this._onResetZoom}>
-            <SBar innerRef={(el) => (this._bar = el)} />
+            <SBar ref={(el) => (this._bar = el)} />
             {this.renderChart()}
 
             {this.state.showResetZoom && (

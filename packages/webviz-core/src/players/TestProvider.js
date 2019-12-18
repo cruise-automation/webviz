@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -17,33 +17,27 @@ import {
 import { type Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
-const start = { sec: 0, nsec: 0 };
-const end = { sec: 100, nsec: 0 };
+const defaultStart = { sec: 10, nsec: 0 };
+const defaultEnd = { sec: 100, nsec: 0 };
 const datatypes: RosDatatypes = {
-  fooBar: [
-    {
-      name: "val",
-      type: "number",
-    },
-  ],
-  baz: [
-    {
-      name: "val",
-      type: "number",
-    },
-  ],
+  fooBar: {
+    fields: [
+      {
+        name: "val",
+        type: "number",
+      },
+    ],
+  },
+  baz: {
+    fields: [
+      {
+        name: "val",
+        type: "number",
+      },
+    ],
+  },
 };
-const topics: Topic[] = [
-  {
-    name: "/foo/bar",
-    datatype: "fooBar",
-  },
-  {
-    name: "/baz",
-    datatype: "baz",
-  },
-];
-
+const defaultTopics: Topic[] = [{ name: "/foo/bar", datatype: "fooBar" }, { name: "/baz", datatype: "baz" }];
 type GetMessages = (start: Time, end: Time, topics: string[]) => Promise<DataProviderMessage[]>;
 
 export default class TestProvider implements DataProvider {
@@ -55,9 +49,9 @@ export default class TestProvider implements DataProvider {
   closed: boolean = false;
 
   constructor({ getMessages }: { getMessages: GetMessages } = {}) {
-    this._start = start;
-    this._end = end;
-    this._topics = topics;
+    this._start = defaultStart;
+    this._end = defaultEnd;
+    this._topics = defaultTopics;
     this._datatypes = datatypes;
     if (getMessages) {
       this.getMessages = getMessages;

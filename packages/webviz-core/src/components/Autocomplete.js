@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -176,7 +176,7 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
     if (this.state.focused) {
       return;
     }
-    const onMouseUp = (event: MouseEvent) => {
+    const onMouseUp = (e: MouseEvent) => {
       document.removeEventListener("mouseup", onMouseUp, true);
 
       if (
@@ -189,8 +189,8 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
           this._autocomplete.current.refs.input.selectionStart === this._autocomplete.current.refs.input.selectionEnd
         ) {
           this._autocomplete.current.refs.input.select();
-          event.stopPropagation();
-          event.preventDefault();
+          e.stopPropagation();
+          e.preventDefault();
         }
         // Also set `state.focused` for good measure, since we know here that we're focused.
         this.setState({ focused: true });
@@ -319,15 +319,15 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
           onMouseDown: this._onMouseDown,
           onKeyDown: this._onKeyDown,
         }}
-        renderMenu={(items, value, style) => {
-          // Hacky virtualization. Either don't show all items (typical when the user is still
+        renderMenu={(menuItems, val, style) => {
+          // Hacky virtualization. Either don't show all menuItems (typical when the user is still
           // typing in the autcomplete), or do show them all (once the user scrolls). Not the most
           // sophisticated, but good enough!
           const maxNumberOfItems = Math.ceil(window.innerHeight / rowHeight + 10);
-          const itemsToShow =
-            this.state.showAllItems || items.length <= maxNumberOfItems * 2
-              ? items
-              : items.slice(0, maxNumberOfItems).concat(items.slice(-maxNumberOfItems));
+          const menuItemsToShow =
+            this.state.showAllItems || menuItems.length <= maxNumberOfItems * 2
+              ? menuItems
+              : menuItems.slice(0, maxNumberOfItems).concat(menuItems.slice(-maxNumberOfItems));
 
           // The longest string might not be the widest (e.g. "|||" vs "www"), but this is
           // quite a bit faster, so we throw in a nice padding and call it good enough! :-)
@@ -351,10 +351,10 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
                 onMouseEnter={() => (this._ignoreBlur = true)}
                 onMouseLeave={() => (this._ignoreBlur = false)}
                 style={{
-                  height: items.length * rowHeight,
+                  height: menuItems.length * rowHeight,
                   overflow: "hidden",
                 }}>
-                {itemsToShow}
+                {menuItemsToShow}
               </div>
             </div>
           );

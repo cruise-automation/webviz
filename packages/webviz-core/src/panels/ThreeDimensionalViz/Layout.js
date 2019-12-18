@@ -1,12 +1,14 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { get, difference, isEqual } from "lodash";
+import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
+import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
+import { difference, isEqual } from "lodash";
 import React, {
   type Node,
   useMemo,
@@ -28,25 +30,26 @@ import {
 } from "regl-worldview";
 import { type Time } from "rosbag";
 
-import type { ThreeDimensionalVizConfig } from ".";
+import { Item } from "webviz-core/src/components/Menu";
 import { useShallowMemo } from "webviz-core/src/components/MessageHistory/hooks";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import filterMap from "webviz-core/src/filterMap";
-import useGlobalVariables, { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import useDataSourceInfo from "webviz-core/src/PanelAPI/useDataSourceInfo";
 import DebugStats from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
 import { POLYGON_TAB_TYPE, type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
+import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import { InteractionContextMenu } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
-import useLinkedGlobalVariables, {
-  type LinkedGlobalVariables,
-} from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutToolbar";
 import LayoutTopicSettings from "webviz-core/src/panels/ThreeDimensionalViz/LayoutTopicSettings";
-import SceneBuilder, { type TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
+import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
+import { getUpdatedGlobalVariablesBySelectedObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import TopicSelector from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector";
-import { type TopicDisplayMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
+import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
 import treeBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/treeBuilder";
 import { canEditDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import { getTopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/topicTreeUtils";
@@ -63,27 +66,7 @@ import { topicsByTopicName } from "webviz-core/src/util/selectors";
 type EventName = "onDoubleClick" | "onMouseMove" | "onMouseDown" | "onMouseUp";
 export type ClickedPosition = { clientX: number, clientY: number };
 
-function getUpdatedGlobalVariablesBySelectedObject(
-  selectedObject: MouseEventObject,
-  linkedGlobalVariables: LinkedGlobalVariables
-): ?GlobalVariables {
-  const interactionData = selectedObject && selectedObject.object.interactionData;
-  const objectTopic = interactionData && interactionData.topic;
-  if (!linkedGlobalVariables.length || !objectTopic) {
-    return;
-  }
-  const newGlobalVariables = {};
-  linkedGlobalVariables.forEach(({ topic, markerKeyPath, name }) => {
-    if (objectTopic === topic) {
-      const objectForPath = get(selectedObject.object, [...markerKeyPath].reverse());
-      newGlobalVariables[name] = objectForPath;
-    }
-  });
-  return newGlobalVariables;
-}
-
 export type LayoutToolbarSharedProps = {|
-  autoTextBackgroundColor?: boolean,
   cameraState: $Shape<CameraState>,
   followOrientation: boolean,
   followTf?: string | false,
@@ -91,8 +74,6 @@ export type LayoutToolbarSharedProps = {|
   onCameraStateChange: (CameraState) => void,
   onFollowChange: (followTf?: string | false, followOrientation?: boolean) => void,
   saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
-  selectedPolygonEditFormat: "json" | "yaml",
-  showCrosshair: ?boolean,
   transforms: Transforms,
   isPlaying?: boolean,
 |};
@@ -101,28 +82,22 @@ export type LayoutTopicSettingsSharedProps = {|
   transforms: Transforms,
   topics: Topic[],
   saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
-  topicSettings: TopicSettingsCollection,
 |};
 
 type Props = {|
   ...LayoutToolbarSharedProps,
   ...LayoutTopicSettingsSharedProps,
-  checkedNodes: string[],
   children?: Node,
   cleared?: boolean,
   currentTime: Time,
-  expandedNodes: string[],
   extensions: Extensions,
   frame?: Frame,
   helpContent: Node | string,
   isPlaying?: boolean,
-  modifiedNamespaceTopics: string[],
-  pinTopics: boolean,
+  config: ThreeDimensionalVizConfig,
   saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
   setSubscriptions: (subscriptions: string[]) => void,
-  topicDisplayMode: TopicDisplayMode,
   topics: Topic[],
-  topicSettings: TopicSettingsCollection,
   transforms: Transforms,
 |};
 
@@ -135,32 +110,35 @@ type SelectedObjectState = {
 export type EditTopicState = { tooltipPosX: number, topic: Topic };
 
 export default function Layout({
-  autoTextBackgroundColor,
   cameraState,
-  checkedNodes,
   children,
   cleared,
   currentTime,
-  expandedNodes,
   extensions,
   followOrientation,
   followTf,
   frame,
   helpContent,
   isPlaying,
-  modifiedNamespaceTopics,
   onAlignXYAxis,
   onCameraStateChange,
   onFollowChange,
-  pinTopics,
   saveConfig,
-  selectedPolygonEditFormat,
-  showCrosshair,
-  topicDisplayMode,
   topics,
-  topicSettings,
   transforms,
   setSubscriptions,
+  config: {
+    autoTextBackgroundColor,
+    expandedNodes,
+    checkedNodes,
+    flattenMarkers,
+    modifiedNamespaceTopics,
+    pinTopics,
+    selectedPolygonEditFormat = "yaml",
+    showCrosshair,
+    topicDisplayMode = TOPIC_DISPLAY_MODES.SHOW_TREE.value,
+    topicSettings,
+  },
 }: Props) {
   // toggle visibility on topics by temporarily storing a list of hidden topics on the state
   const [hiddenTopics, setHiddenTopics] = useState([]);
@@ -171,9 +149,28 @@ export default function Layout({
         checkedNodes,
         topicDisplayMode,
         topics,
+        // $FlowFixMe
+        supportedMarkerDatatypes: Object.values(
+          getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_MARKER_DATATYPES
+        ),
       }),
     [checkedNodes, topicDisplayMode, topics]
   );
+
+  // update open source checked nodes
+  useLayoutEffect(
+    () => {
+      const isOpenSource = checkedNodes.length === 1 && checkedNodes[0] === "name:Topics" && topics.length;
+      if (isOpenSource) {
+        saveConfig(
+          { checkedNodes: isOpenSource ? checkedNodes.concat(topics.map((t) => t.name)) : checkedNodes },
+          { keepLayoutInUrl: true }
+        );
+      }
+    },
+    [checkedNodes, saveConfig, topics]
+  );
+
   useLayoutEffect(
     () => {
       if (!isEqual(checkedNodes.sort(), newCheckedNodes.sort())) {
@@ -270,6 +267,8 @@ export default function Layout({
   // item equality here we end up re-rendering the map significantly more than we need to.
   const memoizedExtensions = useShallowMemo(selections.extensions);
 
+  const { playerId } = useDataSourceInfo();
+
   useMemo(
     () => {
       // TODO(Audrey): add tests for the clearing behavior
@@ -283,8 +282,9 @@ export default function Layout({
         followTf || getGlobalHooks().perPanelHooks().ThreeDimensionalViz.rootTransformFrame
       ).id;
 
+      sceneBuilder.setPlayerId(playerId);
       sceneBuilder.setTransforms(transforms, rootTfID);
-      sceneBuilder.setFlattenMarkers(memoizedExtensions.includes("Car.flattenMarkers"));
+      sceneBuilder.setFlattenMarkers(!!flattenMarkers);
       // toggle scene builder namespaces based on selected namespace nodes in the tree
       sceneBuilder.setEnabledNamespaces(selections.namespaces);
       sceneBuilder.setTopicSettings(topicSettings);
@@ -301,22 +301,25 @@ export default function Layout({
 
       // update the transforms and set the selected ones to render
       transformsBuilder.setTransforms(transforms, rootTfID);
-      transformsBuilder.setSelectedTransforms(memoizedExtensions);
+      const tfSelections = memoizedExtensions.filter((ex) => ex.startsWith("TF")).map((ex) => ex.substr("TF.".length));
+      transformsBuilder.setSelectedTransforms(tfSelections);
     },
     [
-      checkedVisibleTopicNames,
       cleared,
-      currentTime,
-      followTf,
       frame,
-      globalVariables,
+      transforms,
+      followTf,
       sceneBuilder,
-      memoizedExtensions,
+      playerId,
+      flattenMarkers,
       selections.namespaces,
       topicSettings,
       topics,
-      transforms,
+      checkedVisibleTopicNames,
+      globalVariables,
+      currentTime,
       transformsBuilder,
+      memoizedExtensions,
     ]
   );
 
@@ -390,14 +393,17 @@ export default function Layout({
     if (!args) {
       return;
     }
-    const { drawingTabType, handleDrawPolygons } = callbackInputsRef.current;
+    const {
+      drawingTabType: currentDrawingTabType,
+      handleDrawPolygons: currentHandleDrawPolygons,
+    } = callbackInputsRef.current;
     // $FlowFixMe get around index signature error
     const measuringHandler = measuringElRef.current && measuringElRef.current[eventName];
     const measureActive = measuringElRef.current && measuringElRef.current.measureActive;
     if (measuringHandler && measureActive) {
       return measuringHandler(ev, args);
-    } else if (drawingTabType === POLYGON_TAB_TYPE) {
-      handleDrawPolygons(eventName, ev, args);
+    } else if (currentDrawingTabType === POLYGON_TAB_TYPE) {
+      currentHandleDrawPolygons(eventName, ev, args);
     }
   }, []);
 
@@ -447,9 +453,9 @@ export default function Layout({
         onClearSelectedObject: () => setSelectedObjectState(null),
         // clicking on the body should hide any edit tip
         onEditClick: (ev: SyntheticMouseEvent<HTMLElement>, topic: string) => {
-          const { editTopicState, topics } = callbackInputsRef.current;
+          const { editTopicState: currentEditTopicState, topics: currentTopics } = callbackInputsRef.current;
           // if the same icon is clicked again, close the popup
-          const existingEditTopic = (editTopicState && editTopicState.topic.name) || undefined;
+          const existingEditTopic = (currentEditTopicState && currentEditTopicState.topic.name) || undefined;
           if (topic === existingEditTopic) {
             setEditTopicState(null);
             return;
@@ -460,7 +466,7 @@ export default function Layout({
           }
           const panelRect = wrapperRef.current.getBoundingClientRect();
           const editBtnRect = ev.currentTarget.getBoundingClientRect();
-          const newEditTopic = topics.find((t) => t.name === topic);
+          const newEditTopic = currentTopics.find((t) => t.name === topic);
           if (!newEditTopic) {
             return;
           }
@@ -469,14 +475,14 @@ export default function Layout({
             topic: newEditTopic,
           });
         },
-        onSelectObject: (selectedObject: MouseEventObject) =>
-          setSelectedObjectState({ ...callbackInputsRef.current.selectedObjectState, selectedObject }),
+        onSelectObject: (selectedObj: MouseEventObject) =>
+          setSelectedObjectState({ ...callbackInputsRef.current.selectedObjectState, selectedObj }),
         onSetPolygons: (polygons: Polygon[]) => setPolygonBuilder(new PolygonBuilder(polygons)),
         toggleDebug: () => setDebug(!callbackInputsRef.current.debug),
         toggleCameraMode: () => {
-          const { cameraState, saveConfig } = callbackInputsRef.current;
-          saveConfig({ cameraState: { ...cameraState, perspective: !cameraState.perspective } });
-          if (measuringElRef.current && cameraState.perspective) {
+          const { cameraState: currentCameraState, saveConfig: currentSaveConfig } = callbackInputsRef.current;
+          currentSaveConfig({ cameraState: { ...currentCameraState, perspective: !currentCameraState.perspective } });
+          if (measuringElRef.current && currentCameraState.perspective) {
             measuringElRef.current.reset();
           }
         },
@@ -484,6 +490,11 @@ export default function Layout({
     },
     [handleEvent]
   );
+
+  const onSetFlattenMarkers = useCallback(() => saveConfig({ flattenMarkers: !flattenMarkers }), [
+    flattenMarkers,
+    saveConfig,
+  ]);
 
   const keyDownHandlers = useMemo(
     () => ({
@@ -535,7 +546,18 @@ export default function Layout({
   return (
     <div className={styles.container} ref={wrapperRef} style={{ cursor: cursorType }} onClick={onControlsOverlayClick}>
       <KeyListener keyDownHandlers={keyDownHandlers} />
-      <PanelToolbar floating helpContent={helpContent} />
+      <PanelToolbar
+        floating
+        helpContent={helpContent}
+        menuContent={
+          <Item
+            tooltip="Markers with 0 as z-value in pose or points are updated to have the z-value of the flattened frame (default to the car)."
+            icon={flattenMarkers ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
+            onClick={onSetFlattenMarkers}>
+            Flatten markers
+          </Item>
+        }
+      />
       <div style={videoRecordingStyle}>
         <TopicSelector
           autoTextBackgroundColor={!!autoTextBackgroundColor}

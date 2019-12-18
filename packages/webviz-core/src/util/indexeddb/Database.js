@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -87,7 +87,7 @@ export default class Database {
   static async get(definition: DatabaseDefinition): Promise<Database> {
     const { name, version, objectStores } = definition;
     const db = await idb.open(name, version, (change) => {
-      [...change.objectStoreNames].forEach((name) => change.deleteObjectStore(name));
+      [...change.objectStoreNames].forEach((storeName) => change.deleteObjectStore(storeName));
       objectStores.forEach((storeDefinition) => {
         const { indexes = [] } = storeDefinition;
         const store = change.createObjectStore(storeDefinition.name, storeDefinition.options);

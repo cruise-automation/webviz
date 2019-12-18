@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -30,8 +30,8 @@ Chart.controllers.multicolorLine = Chart.controllers.scatter.extend({
       return !isNaN(data._view.y);
     });
 
-    function setColor(newColor, meta) {
-      meta.dataset._view.borderColor = newColor;
+    function setColor(newColor, { dataset }) {
+      dataset._view.borderColor = newColor;
     }
 
     if (!colors) {

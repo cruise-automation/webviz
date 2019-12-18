@@ -1,4 +1,4 @@
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -47,11 +47,11 @@ $spacing: 4px;
     z-index: 5000;
     background-color: transparent;
     transform: translateY(-10px);
-    opacity: 0;
     pointer-events: none;
+    opacity: 0;
 
     * {
-      pointer-events: all;
+      pointer-events: auto;
     }
 
     &.hasChildren {
@@ -68,19 +68,6 @@ $spacing: 4px;
 
   &:not(.floating) {
     min-height: 30px;
-
-    .iconContainer {
-      display: none;
-
-      :global(.mosaic-window):hover & {
-        display: flex;
-      }
-    }
-
-    &.containsOpen .iconContainer {
-      display: flex;
-      opacity: 1;
-    }
   }
 
   &.floating.containsOpen,

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -298,102 +298,128 @@ describe("pipeline", () => {
     };
 
     const numDataType = {
-      [`${baseNodeData.name}`]: [
-        {
-          name: "num",
-          isArray: false,
-          isComplex: false,
-          arrayLength: undefined,
-          type: "float64",
-        },
-      ],
+      [baseNodeData.name]: {
+        fields: [
+          {
+            name: "num",
+            isArray: false,
+            isComplex: false,
+            arrayLength: undefined,
+            type: "float64",
+          },
+        ],
+      },
     };
 
     const posDatatypes = {
-      [baseNodeData.name]: [
-        {
-          name: "pos",
-          isArray: false,
-          isComplex: true,
-          arrayLength: undefined,
-          type: `${baseNodeData.name}/pos`,
-        },
-      ],
-      [`${baseNodeData.name}/pos`]: [
-        {
-          name: "x",
-          isArray: false,
-          isComplex: false,
-          arrayLength: undefined,
-          type: "float64",
-        },
-        {
-          name: "y",
-          isArray: false,
-          isComplex: false,
-          arrayLength: undefined,
-          type: "float64",
-        },
-      ],
+      [baseNodeData.name]: {
+        fields: [
+          {
+            name: "pos",
+            isArray: false,
+            isComplex: true,
+            arrayLength: undefined,
+            type: `${baseNodeData.name}/pos`,
+          },
+        ],
+      },
+      [`${baseNodeData.name}/pos`]: {
+        fields: [
+          {
+            name: "x",
+            isArray: false,
+            isComplex: false,
+            arrayLength: undefined,
+            type: "float64",
+          },
+          {
+            name: "y",
+            isArray: false,
+            isComplex: false,
+            arrayLength: undefined,
+            type: "float64",
+          },
+        ],
+      },
     };
 
     const posArrayDatatypes = {
-      [baseNodeData.name]: [
-        {
-          name: "pos",
-          isArray: true,
-          isComplex: true,
-          arrayLength: undefined,
-          type: `${baseNodeData.name}/pos`,
-        },
-      ],
-      [`${baseNodeData.name}/pos`]: [
-        {
-          name: "x",
-          isArray: false,
-          isComplex: false,
-          arrayLength: undefined,
-          type: "float64",
-        },
-        {
-          name: "y",
-          isArray: false,
-          isComplex: false,
-          arrayLength: undefined,
-          type: "float64",
-        },
-      ],
+      [baseNodeData.name]: {
+        fields: [
+          {
+            name: "pos",
+            isArray: true,
+            isComplex: true,
+            arrayLength: undefined,
+            type: `${baseNodeData.name}/pos`,
+          },
+        ],
+      },
+      [`${baseNodeData.name}/pos`]: {
+        fields: [
+          {
+            name: "x",
+            isArray: false,
+            isComplex: false,
+            arrayLength: undefined,
+            type: "float64",
+          },
+          {
+            name: "y",
+            isArray: false,
+            isComplex: false,
+            arrayLength: undefined,
+            type: "float64",
+          },
+        ],
+      },
     };
 
     const mixedDatatypes = {
-      [baseNodeData.name]: [
-        {
-          name: "details",
-          isArray: false,
-          isComplex: true,
-          arrayLength: undefined,
-          type: `${baseNodeData.name}/details`,
-        },
-      ],
-      [`${baseNodeData.name}/details`]: [
-        {
-          name: "name",
-          isArray: false,
-          isComplex: false,
-          arrayLength: undefined,
-          type: "string",
-        },
-        {
-          name: "count",
-          isArray: false,
-          isComplex: false,
-          arrayLength: undefined,
-          type: "float64",
-        },
-      ],
+      [baseNodeData.name]: {
+        fields: [
+          {
+            name: "details",
+            isArray: false,
+            isComplex: true,
+            arrayLength: undefined,
+            type: `${baseNodeData.name}/details`,
+          },
+        ],
+      },
+      [`${baseNodeData.name}/details`]: {
+        fields: [
+          {
+            name: "name",
+            isArray: false,
+            isComplex: false,
+            arrayLength: undefined,
+            type: "string",
+          },
+          {
+            name: "count",
+            isArray: false,
+            isComplex: false,
+            arrayLength: undefined,
+            type: "float64",
+          },
+        ],
+      },
     };
 
     const testCases: TestCase[] = [
+      {
+        description: "Nullable return type",
+        sourceCode: `
+          const publisher = (msg: any): { num: number } | undefined => {
+            if (msg.num > 0) {
+              return;
+            }
+            return { num: 1 };
+          };
+          export default publisher;`,
+        datatypes: numDataType,
+      },
       {
         description: "Multiple aliases",
         sourceCode: `
@@ -509,22 +535,24 @@ describe("pipeline", () => {
             return { num: 1, str: 'hello' };
           };`,
         datatypes: {
-          [`${baseNodeData.name}`]: [
-            {
-              name: "num",
-              isArray: false,
-              isComplex: false,
-              arrayLength: undefined,
-              type: "float64",
-            },
-            {
-              name: "str",
-              isArray: false,
-              isComplex: false,
-              arrayLength: undefined,
-              type: "string",
-            },
-          ],
+          [baseNodeData.name]: {
+            fields: [
+              {
+                name: "num",
+                isArray: false,
+                isComplex: false,
+                arrayLength: undefined,
+                type: "float64",
+              },
+              {
+                name: "str",
+                isArray: false,
+                isComplex: false,
+                arrayLength: undefined,
+                type: "string",
+              },
+            ],
+          },
         },
       },
       {
@@ -553,47 +581,53 @@ describe("pipeline", () => {
             return { pos: { header: { time: 42 }, x: 1, y: 2 } };
           };`,
         datatypes: {
-          [baseNodeData.name]: [
-            {
-              name: "pos",
-              isArray: false,
-              isComplex: true,
-              arrayLength: undefined,
-              type: `${baseNodeData.name}/pos`,
-            },
-          ],
-          [`${baseNodeData.name}/pos`]: [
-            {
-              name: "header",
-              isArray: false,
-              isComplex: true,
-              arrayLength: undefined,
-              type: `${baseNodeData.name}/pos/header`,
-            },
-            {
-              name: "x",
-              isArray: false,
-              isComplex: false,
-              arrayLength: undefined,
-              type: "float64",
-            },
-            {
-              name: "y",
-              isArray: false,
-              isComplex: false,
-              arrayLength: undefined,
-              type: "float64",
-            },
-          ],
-          [`${baseNodeData.name}/pos/header`]: [
-            {
-              name: "time",
-              isArray: false,
-              isComplex: false,
-              arrayLength: undefined,
-              type: "float64",
-            },
-          ],
+          [baseNodeData.name]: {
+            fields: [
+              {
+                name: "pos",
+                isArray: false,
+                isComplex: true,
+                arrayLength: undefined,
+                type: `${baseNodeData.name}/pos`,
+              },
+            ],
+          },
+          [`${baseNodeData.name}/pos`]: {
+            fields: [
+              {
+                name: "header",
+                isArray: false,
+                isComplex: true,
+                arrayLength: undefined,
+                type: `${baseNodeData.name}/pos/header`,
+              },
+              {
+                name: "x",
+                isArray: false,
+                isComplex: false,
+                arrayLength: undefined,
+                type: "float64",
+              },
+              {
+                name: "y",
+                isArray: false,
+                isComplex: false,
+                arrayLength: undefined,
+                type: "float64",
+              },
+            ],
+          },
+          [`${baseNodeData.name}/pos/header`]: {
+            fields: [
+              {
+                name: "time",
+                isArray: false,
+                isComplex: false,
+                arrayLength: undefined,
+                type: "float64",
+              },
+            ],
+          },
         },
       },
       {
@@ -631,15 +665,17 @@ describe("pipeline", () => {
             return { pos: [ 1, 2, 3 ] };
           };`,
         datatypes: {
-          [baseNodeData.name]: [
-            {
-              name: "pos",
-              isArray: true,
-              isComplex: true,
-              arrayLength: undefined,
-              type: "float64",
-            },
-          ],
+          [baseNodeData.name]: {
+            fields: [
+              {
+                name: "pos",
+                isArray: true,
+                isComplex: true,
+                arrayLength: undefined,
+                type: "float64",
+              },
+            ],
+          },
         },
       },
       {
@@ -980,6 +1016,18 @@ describe("pipeline", () => {
             return { point: { x: 1, y: 2, z: 3 } };
           };`,
         error: ErrorCodes.DatatypeExtraction.NO_IMPORTS_IN_RETURN_TYPE,
+      },
+      {
+        description: "Bad union return type",
+        sourceCode: `
+          const publisher = (msg: any): { num: number } | undefined | { str: string } => {
+            if (msg.num > 0) {
+              return;
+            }
+            return { num: 1 };
+          };
+          export default publisher;`,
+        error: ErrorCodes.DatatypeExtraction.LIMITED_UNIONS,
       },
     ];
 

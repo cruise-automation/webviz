@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -46,17 +46,24 @@ export function getRemoteBagDescriptor(url: string, guid: ?string, loadEntireBag
         args: {},
         children: [
           {
-            name: "IdbCacheReaderDataProvider",
-            args: { id: guid },
+            name: "MemoryCacheDataProvider",
+            args: {},
             children: [
               {
-                name: "WorkerDataProvider",
-                args: {},
+                name: "IdbCacheReaderDataProvider",
+                args: { id: guid },
+
                 children: [
                   {
-                    name: "IdbCacheWriterDataProvider",
-                    args: { id: guid },
-                    children: [bagDataProvider],
+                    name: "WorkerDataProvider",
+                    args: {},
+                    children: [
+                      {
+                        name: "IdbCacheWriterDataProvider",
+                        args: { id: guid },
+                        children: [bagDataProvider],
+                      },
+                    ],
                   },
                 ],
               },

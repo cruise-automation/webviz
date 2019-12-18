@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -41,6 +41,7 @@ import type { Topic, Message, TypedMessage } from "webviz-core/src/players/types
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { CameraInfo } from "webviz-core/src/types/Messages";
+import type { SaveConfig } from "webviz-core/src/types/panels";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 import toggle from "webviz-core/src/util/toggle";
@@ -71,11 +72,11 @@ export type Config = {|
   saveStoryConfig?: () => void,
 |};
 
-export type SaveConfig = ($Shape<Config>) => void;
+export type SaveImagePanelConfig = SaveConfig<Config>;
 
 type Props = {
   config: Config,
-  saveConfig: SaveConfig,
+  saveConfig: SaveImagePanelConfig,
   topics: Topic[],
 };
 
@@ -85,8 +86,8 @@ const TopicTimestampSpan = styled.span`
   font-style: italic;
 `;
 
-const TopicTimestamp = ({ text, style }: { text: string, style?: { [string]: string } }) =>
-  text === "" ? null : <TopicTimestampSpan style={style}>{text}</TopicTimestampSpan>;
+const TopicTimestamp = ({ text, style: styleObj }: { text: string, style?: { [string]: string } }) =>
+  text === "" ? null : <TopicTimestampSpan style={styleObj}>{text}</TopicTimestampSpan>;
 
 const BottomBar = ({ children, containsOpen }: { children?: React.Node, containsOpen: boolean }) => (
   <div
@@ -220,20 +221,20 @@ function ImageView(props: Props) {
   );
 
   const onChangeTopic = useCallback(
-    (cameraTopic: string) => {
+    (newCameraTopic: string) => {
       saveConfig({
-        cameraTopic,
+        cameraTopic: newCameraTopic,
         transformMarkers: getGlobalHooks()
           .perPanelHooks()
-          .ImageView.canTransformMarkersByTopic(cameraTopic),
+          .ImageView.canTransformMarkersByTopic(newCameraTopic),
       });
     },
     [saveConfig]
   );
 
   const onChangeScale = useCallback(
-    (scale: number) => {
-      saveConfig({ scale });
+    (newScale: number) => {
+      saveConfig({ scale: newScale });
     },
     [saveConfig]
   );
@@ -260,13 +261,13 @@ function ImageView(props: Props) {
     }
 
     const items = [...imageTopicsByNamespace.keys()].sort().map((group) => {
-      const topics = imageTopicsByNamespace.get(group);
-      if (!topics) {
+      const imageTopics = imageTopicsByNamespace.get(group);
+      if (!imageTopics) {
         return null;
       } // satisfy flow
-      topics.sort(naturalSort("name"));
+      imageTopics.sort(naturalSort("name"));
 
-      // place rectified topic above other topics
+      // place rectified topic above other imageTopics
       return (
         <SubMenu
           direction="right"
@@ -274,7 +275,7 @@ function ImageView(props: Props) {
           text={group}
           checked={group === cameraNamespace}
           dataTest={group.substr(1)}>
-          {topics.map((topic) => {
+          {imageTopics.map((topic) => {
             return (
               <Item
                 key={topic.name}

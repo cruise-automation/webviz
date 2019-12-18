@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -51,13 +51,21 @@ function getFirstInvalidVariableFromRosPath(
 ): ?{| variableName: string, loc: number |} {
   const { messagePath } = rosPath;
   return messagePath
-    .map((path) =>
-      path.type === "filter" &&
-      typeof path.value === "object" &&
-      !Object.keys(globalVariables).includes(path.value.variableName)
-        ? { variableName: path.value.variableName, loc: path.valueLoc }
-        : undefined
-    )
+    .map((path) => {
+      const globalVars = Object.keys(globalVariables);
+      if (path.type === "filter" && typeof path.value === "object" && !globalVars.includes(path.value.variableName)) {
+        return { variableName: path.value.variableName, loc: path.valueLoc };
+      }
+
+      if (path.type === "slice" && typeof path.start === "object" && !globalVars.includes(path.start.variableName)) {
+        return { variableName: path.start.variableName, loc: path.start.startLoc };
+      }
+
+      if (path.type === "slice" && typeof path.end === "object" && !globalVars.includes(path.end.variableName)) {
+        return { variableName: path.end.variableName, loc: path.end.startLoc };
+      }
+      return undefined;
+    })
     .find(Boolean);
 }
 

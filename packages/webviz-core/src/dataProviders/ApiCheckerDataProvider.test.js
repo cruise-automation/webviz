@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -20,7 +20,7 @@ function getProvider() {
       { name: "/some_topic", datatype: "some_datatype" },
       { name: "/some_other_topic", datatype: "some_datatype" },
     ],
-    datatypes: { some_datatype: [] },
+    datatypes: { some_datatype: { fields: [] } },
     connectionsByTopic: {
       "/some_topic": { messageDefinition: "dummy", md5sum: "dummy", topic: "dummy", type: "dummy" },
       "/some_other_topic": { messageDefinition: "dummy", md5sum: "dummy", topic: "dummy", type: "dummy" },
@@ -47,7 +47,7 @@ describe("ApiCheckerDataProvider", () => {
           "/some_topic": { md5sum: "dummy", messageDefinition: "dummy", topic: "dummy", type: "dummy" },
           "/some_other_topic": { md5sum: "dummy", messageDefinition: "dummy", topic: "dummy", type: "dummy" },
         },
-        datatypes: { some_datatype: [] },
+        datatypes: { some_datatype: { fields: [] } },
         end: { nsec: 0, sec: 105 },
         start: { nsec: 0, sec: 100 },
         topics: [
@@ -76,7 +76,7 @@ describe("ApiCheckerDataProvider", () => {
 
       it("throws when topic datatype is missing", async () => {
         const { provider, memoryDataProvider } = getProvider();
-        memoryDataProvider.datatypes = { some_other_datatype: [] };
+        memoryDataProvider.datatypes = { some_other_datatype: { fields: [] } };
         await expect(provider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
       });
 

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -108,6 +108,7 @@ export default class CombinedDataProvider implements DataProvider {
   _providers: InternalProviderInfo[];
   _initializationResultsPerProvider: { start: Time, end: Time, topicSet: Set<string> }[] = [];
   _progressPerProvider: (Progress | null)[];
+  _extensionPoint: ExtensionPoint;
 
   constructor(
     { providerInfos }: {| providerInfos: ProviderInfo[] |},
@@ -139,6 +140,7 @@ export default class CombinedDataProvider implements DataProvider {
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
+    this._extensionPoint = extensionPoint;
     const results: InitializationResult[] = [];
     // NOTE: Initialization is done serially instead of concurrently here as a
     // temporary workaround for a major IndexedDB bug that results in runaway
@@ -147,11 +149,7 @@ export default class CombinedDataProvider implements DataProvider {
       const { provider } = this._providers[idx];
       const childExtensionPoint = {
         progressCallback: (progress: Progress) => {
-          this._progressPerProvider[idx] = progress;
-          // Assume empty for unreported progress
-          const cleanProgresses = this._progressPerProvider.map((p) => p || emptyProgress());
-          const intersected = intersectProgress(cleanProgresses);
-          extensionPoint.progressCallback(intersected);
+          this._updateProgressForChild(idx, progress);
         },
         reportMetadataCallback: (data: DataProviderMetadata) => {
           extensionPoint.reportMetadataCallback(data);
@@ -166,8 +164,8 @@ export default class CombinedDataProvider implements DataProvider {
       this._progressPerProvider[i] = p || fullyLoadedProgress();
     });
 
-    const start = sortTimes(results.map(({ start }) => start)).shift();
-    const end = sortTimes(results.map(({ end }) => end)).pop();
+    const start = sortTimes(results.map((result) => result.start)).shift();
+    const end = sortTimes(results.map((result) => result.end)).pop();
 
     this._initializationResultsPerProvider = [];
     let topics: Topic[] = [];
@@ -209,7 +207,10 @@ export default class CombinedDataProvider implements DataProvider {
           .map((topic) => topic.slice((prefix || "").length))
           .filter((topic) => availableTopics.has(topic));
         if (!filteredTopics.length) {
-          // If we don't need any topics from this provider, we shouldn't call getMessages at all.
+          // If we don't need any topics from this provider, we shouldn't call getMessages at all.  Therefore,
+          // the provider doesn't know that we currently don't care about any of its topics, so it won't report
+          // its progress as being fully loaded, so we'll have to do that here ourselves.
+          this._updateProgressForChild(index, fullyLoadedProgress());
           return Promise.resolve([]);
         }
         if (
@@ -236,5 +237,13 @@ export default class CombinedDataProvider implements DataProvider {
       mergedMessages = merge(mergedMessages, messages);
     }
     return mergedMessages;
+  }
+
+  _updateProgressForChild(providerIdx: number, progress: Progress) {
+    this._progressPerProvider[providerIdx] = progress;
+    // Assume empty for unreported progress
+    const cleanProgresses = this._progressPerProvider.map((p) => p || emptyProgress());
+    const intersected = intersectProgress(cleanProgresses);
+    this._extensionPoint.progressCallback(intersected);
   }
 }

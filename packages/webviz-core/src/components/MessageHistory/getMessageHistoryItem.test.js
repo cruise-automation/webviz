@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -68,33 +68,39 @@ describe("getMessageHistoryItem", () => {
     ];
     const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
     const datatypes: RosDatatypes = {
-      some_datatype: [
-        {
-          name: "some_array",
-          type: "some_other_datatype",
-          isArray: true,
-        },
-      ],
-      some_other_datatype: [
-        {
-          name: "some_id",
-          type: "uint32",
-        },
-        {
-          name: "some_message",
-          type: "yet_another_datatype",
-        },
-      ],
-      yet_another_datatype: [
-        {
-          name: "x",
-          type: "uint32",
-        },
-        {
-          name: "y",
-          type: "uint32",
-        },
-      ],
+      some_datatype: {
+        fields: [
+          {
+            name: "some_array",
+            type: "some_other_datatype",
+            isArray: true,
+          },
+        ],
+      },
+      some_other_datatype: {
+        fields: [
+          {
+            name: "some_id",
+            type: "uint32",
+          },
+          {
+            name: "some_message",
+            type: "yet_another_datatype",
+          },
+        ],
+      },
+      yet_another_datatype: {
+        fields: [
+          {
+            name: "x",
+            type: "uint32",
+          },
+          {
+            name: "y",
+            type: "uint32",
+          },
+        ],
+      },
     };
 
     expect(
@@ -152,7 +158,9 @@ describe("getMessageHistoryItem", () => {
       },
     ];
     const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
-    const datatypes: RosDatatypes = { some_datatype: [{ name: "some_array", type: "int32", isArray: true }] };
+    const datatypes: RosDatatypes = {
+      some_datatype: { fields: [{ name: "some_array", type: "int32", isArray: true }] },
+    };
 
     expect(
       addValuesWithPathsToItems(
@@ -172,6 +180,107 @@ describe("getMessageHistoryItem", () => {
           { constantName: undefined, path: "/some/topic.some_array[-2]", value: 4 },
           { constantName: undefined, path: "/some/topic.some_array[-1]", value: 5 },
         ],
+      },
+    ]);
+  });
+
+  it("slices properly with globalVariables", () => {
+    const messages: Message[] = [
+      {
+        op: "message",
+        topic: "/topic",
+        datatype: "datatype",
+        receiveTime: { sec: 0, nsec: 0 },
+        message: { an_array: [5, 10, 15, 20] },
+      },
+    ];
+    const topics: Topic[] = [{ name: "/topic", datatype: "datatype" }];
+    const datatypes: RosDatatypes = {
+      datatype: { fields: [{ name: "an_array", type: "uint32", isArray: true, isComplex: false }] },
+    };
+
+    // 1 global variable as single index - `/some/topic.an_array[$global_data_idx_a].some_id`
+    const argsObj = {
+      topicName: "/topic",
+      messagePath: [
+        { type: "name", name: "an_array" },
+        {
+          type: "slice",
+          start: { variableName: "global_data_idx_a", startLoc: "/topic.an_array[$".length },
+          end: { variableName: "global_data_idx_a", startLoc: "/topic.an_array[$".length },
+        },
+      ],
+      modifier: undefined,
+    };
+
+    expect(addValuesWithPathsToItems(messages, argsObj, topics, datatypes, { global_data_idx_a: 2 })).toEqual([
+      { message: messages[0], queriedData: [{ value: 15, path: "/topic.an_array[2]" }] },
+    ]);
+
+    // 2 global variables as indices - `/some/topic.an_array[$global_data_idx_a:$global_data_idx_b].some_id`
+    const argsCopy1 = { ...argsObj };
+    argsCopy1.messagePath[1] = {
+      ...argsCopy1.messagePath[1],
+      end: { variableName: "global_data_idx_b", startLoc: "/some/topic.an_array[$global_data_idx_a:$".length },
+    };
+    expect(
+      addValuesWithPathsToItems(messages, argsCopy1, topics, datatypes, { global_data_idx_a: 1, global_data_idx_b: 2 })
+    ).toEqual([
+      {
+        message: messages[0],
+        queriedData: [{ path: "/topic.an_array[1]", value: 10 }, { path: "/topic.an_array[2]", value: 15 }],
+      },
+    ]);
+
+    // 1 global variable for 1 of 2 indices (global variable first) - `/some/topic.an_array[$global_data_idx_a:1].some_id`
+    const argsCopy2 = {
+      ...argsObj,
+      messagePath: [argsObj.messagePath[0], { type: "slice", start: 0, end: 1 }],
+    };
+    expect(addValuesWithPathsToItems(messages, argsCopy2, topics, datatypes, { global_data_idx_a: 0 })).toEqual([
+      {
+        message: messages[0],
+        queriedData: [{ path: "/topic.an_array[0]", value: 5 }, { path: "/topic.an_array[1]", value: 10 }],
+      },
+    ]);
+
+    // 1 global variable for 1 of 2 indices (global variable second) - `/some/topic.an_array[0:$global_data_idx_b].some_id`
+    const argsCopy3 = {
+      ...argsObj,
+      messagePath: [
+        argsObj.messagePath[0],
+        {
+          type: "slice",
+          start: 0,
+          end: { variableName: "global_data_idx_b", startLoc: "/topic.an_array[0:$".length },
+        },
+      ],
+    };
+    expect(addValuesWithPathsToItems(messages, argsCopy3, topics, datatypes, { global_data_idx_b: 3 })).toEqual([
+      {
+        message: messages[0],
+        queriedData: [
+          { path: "/topic.an_array[0]", value: 5 },
+          { path: "/topic.an_array[1]", value: 10 },
+          { path: "/topic.an_array[2]", value: 15 },
+          { path: "/topic.an_array[3]", value: 20 },
+        ],
+      },
+    ]);
+
+    // without any global variable value
+    expect(addValuesWithPathsToItems(messages, argsCopy3, topics, datatypes, {})).toEqual([
+      {
+        message: messages[0],
+        queriedData: [],
+      },
+    ]);
+
+    // with non-number global variable value
+    expect(addValuesWithPathsToItems(messages, argsCopy3, topics, datatypes, { global_data_idx_b: "a" })).toEqual([
+      {
+        message: messages[0],
+        queriedData: [],
       },
     ]);
   });
@@ -214,23 +323,27 @@ describe("getMessageHistoryItem", () => {
     ];
     const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
     const datatypes: RosDatatypes = {
-      some_datatype: [
-        {
-          name: "some_array",
-          type: "some_other_datatype",
-          isArray: true,
-        },
-      ],
-      some_other_datatype: [
-        {
-          name: "some_filter_value",
-          type: "uint32",
-        },
-        {
-          name: "some_id",
-          type: "uint32",
-        },
-      ],
+      some_datatype: {
+        fields: [
+          {
+            name: "some_array",
+            type: "some_other_datatype",
+            isArray: true,
+          },
+        ],
+      },
+      some_other_datatype: {
+        fields: [
+          {
+            name: "some_filter_value",
+            type: "uint32",
+          },
+          {
+            name: "some_id",
+            type: "uint32",
+          },
+        ],
+      },
     };
 
     expect(
@@ -287,23 +400,27 @@ describe("getMessageHistoryItem", () => {
     ];
     const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
     const datatypes: RosDatatypes = {
-      some_datatype: [
-        {
-          name: "some_array",
-          type: "some_other_datatype",
-          isArray: true,
-        },
-      ],
-      some_other_datatype: [
-        {
-          name: "some_filter_value",
-          type: "uint32",
-        },
-        {
-          name: "some_id",
-          type: "uint32",
-        },
-      ],
+      some_datatype: {
+        fields: [
+          {
+            name: "some_array",
+            type: "some_other_datatype",
+            isArray: true,
+          },
+        ],
+      },
+      some_other_datatype: {
+        fields: [
+          {
+            name: "some_filter_value",
+            type: "uint32",
+          },
+          {
+            name: "some_id",
+            type: "uint32",
+          },
+        ],
+      },
     };
 
     expect(
@@ -317,7 +434,10 @@ describe("getMessageHistoryItem", () => {
             {
               type: "filter",
               path: ["some_filter_value"],
-              value: { variableName: "some_global_data_key" },
+              value: {
+                variableName: "some_global_data_key",
+                startLoc: "/some/topic.some_array[:]{some_filter_value==$".length,
+              },
               nameLoc: 0,
               valueLoc: "/some/topic.some_array[:]{some_filter_value==".length,
               repr: "some_filter_value==$some_global_data_key",
@@ -375,16 +495,18 @@ describe("getMessageHistoryItem", () => {
     ];
     const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
     const datatypes: RosDatatypes = {
-      some_datatype: [
-        {
-          name: "str_field",
-          type: "string",
-        },
-        {
-          name: "num_field",
-          type: "uint32",
-        },
-      ],
+      some_datatype: {
+        fields: [
+          {
+            name: "str_field",
+            type: "string",
+          },
+          {
+            name: "num_field",
+            type: "uint32",
+          },
+        ],
+      },
     };
 
     expect(
@@ -562,24 +684,26 @@ describe("getMessageHistoryItem", () => {
     ];
     const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
     const datatypes: RosDatatypes = {
-      some_datatype: [
-        {
-          name: "OFF",
-          type: "uint32",
-          isConstant: true,
-          value: 0,
-        },
-        {
-          name: "ON",
-          type: "uint32",
-          isConstant: true,
-          value: 1,
-        },
-        {
-          name: "state",
-          type: "uint32",
-        },
-      ],
+      some_datatype: {
+        fields: [
+          {
+            name: "OFF",
+            type: "uint32",
+            isConstant: true,
+            value: 0,
+          },
+          {
+            name: "ON",
+            type: "uint32",
+            isConstant: true,
+            value: 1,
+          },
+          {
+            name: "state",
+            type: "uint32",
+          },
+        ],
+      },
     };
 
     expect(

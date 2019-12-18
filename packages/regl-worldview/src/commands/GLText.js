@@ -62,16 +62,19 @@ const OUTLINE_CUTOFF = 0.6;
 const BG_COLOR_LIGHT = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 const BG_COLOR_DARK = Object.freeze({ r: 0, g: 0, b: 0, a: 1 });
 
+const memoizedCreateCanvas = memoizeOne((font) => {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  ctx.font = font;
+  return ctx;
+});
+
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
     (charSet: Set<string>): FontAtlas => {
       const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
-
-      const fontStyle = `${FONT_SIZE}px sans-serif`;
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      ctx.font = fontStyle;
+      const ctx = memoizedCreateCanvas(`${FONT_SIZE}px sans-serif`);
 
       let textureWidth = 0;
       const rowHeight = FONT_SIZE + 2 * BUFFER;
@@ -246,9 +249,11 @@ function makeTextCommand() {
     });
 
     return (props: $ReadOnlyArray<TextMarker & { billboard?: boolean }>) => {
+      let estimatedInstances = 0;
       const prevNumChars = charSet.size;
       for (const { text } of props) {
         for (const char of text) {
+          ++estimatedInstances;
           charSet.add(char);
         }
       }
@@ -272,8 +277,6 @@ function makeTextCommand() {
         });
       }
 
-      let totalInstances = 0;
-      const estimatedInstances = props.reduce((sum, marker) => sum + marker.text.length, 0);
       const destOffsets = new Float32Array(estimatedInstances * 2);
       const srcWidths = new Float32Array(estimatedInstances);
       const srcOffsets = new Float32Array(estimatedInstances * 2);
@@ -288,6 +291,7 @@ function makeTextCommand() {
       const posePosition = new Float32Array(estimatedInstances * 3);
       const poseOrientation = new Float32Array(estimatedInstances * 4);
 
+      let totalInstances = 0;
       for (const marker of props) {
         let totalWidth = 0;
         let x = 0;

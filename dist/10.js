@@ -1,4 +1,4 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([[10],{2936:
+(window.webpackJsonp=window.webpackJsonp||[]).push([[10],{2937:
 /*!****************************************************************************!*\
   !*** ./node_modules/monaco-editor/esm/vs/basic-languages/coffee/coffee.js ***!
   \****************************************************************************/

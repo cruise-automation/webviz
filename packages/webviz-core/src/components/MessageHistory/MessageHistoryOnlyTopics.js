@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -126,7 +126,9 @@ export function useMessages<T>(props: Props<T>): {| reducedValue: T, _clearedRef
     [requestedTopics]
   );
   const subscriptions = useSubscriptions(requestedTopics, panelType);
-  const setSubscriptions = useMessagePipeline(useCallback(({ setSubscriptions }) => setSubscriptions, []));
+  const setSubscriptions = useMessagePipeline(
+    useCallback(({ setSubscriptions: pipelineSetSubscriptions }) => pipelineSetSubscriptions, [])
+  );
   useEffect(() => setSubscriptions(id, subscriptions), [id, setSubscriptions, subscriptions]);
   useCleanup(() => setSubscriptions(id, []));
 

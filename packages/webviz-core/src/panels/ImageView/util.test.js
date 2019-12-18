@@ -1,12 +1,19 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { getCameraInfoTopic, getMarkerOptions, getMarkerTopics, groupTopics, buildMarkerData } from "./util";
+import {
+  getCameraInfoTopic,
+  getMarkerOptions,
+  getMarkerTopics,
+  groupTopics,
+  buildMarkerData,
+  getCameraNamespace,
+} from "./util";
 
 describe("ImageView", () => {
   describe("getCameraInfoTopic", () => {
@@ -45,6 +52,22 @@ describe("ImageView", () => {
     });
   });
 
+  describe("getCameraNamespace", () => {
+    it("works with a normal camera topic", () => {
+      expect(getCameraNamespace("/camera_back_left/compressed")).toEqual("/camera_back_left");
+    });
+    it("strips 'old' camera topics", () => {
+      expect(getCameraNamespace("/old/camera_back_left/compressed")).toEqual("/camera_back_left");
+      expect(getCameraNamespace("/camera_back_left/old/compressed")).toEqual("/camera_back_left");
+    });
+    it("includes webviz_bag_2 in camera topics", () => {
+      expect(getCameraNamespace("/webviz_bag_2/camera_back_left/compressed")).toEqual("/webviz_bag_2/camera_back_left");
+    });
+    it("Returns null when encountering a single level topic", () => {
+      expect(getCameraNamespace("/camera_back_left")).toEqual(null);
+    });
+  });
+
   describe("groupTopics", () => {
     const topic = (name) => ({ name, datatype: "dummy" });
 
@@ -72,6 +95,24 @@ describe("ImageView", () => {
         new Map([
           ["/camera_1", [topic("/camera_1/foo"), topic("/old/camera_1/bar")]],
           ["/camera_2", [topic("/old/camera_2/foo"), topic("/camera_2/old/foo")]],
+        ])
+      );
+    });
+
+    it("Separates /webviz_bag_2 topics", () => {
+      expect(
+        groupTopics([
+          topic("/camera_1/foo"),
+          topic("/camera_1/bar"),
+          topic("/webviz_bag_2/camera_1/foo"),
+          topic("/webviz_bag_2/camera_1/bar"),
+          topic("/webviz_bag_2/camera_2/foo"),
+        ])
+      ).toEqual(
+        new Map([
+          ["/camera_1", [topic("/camera_1/foo"), topic("/camera_1/bar")]],
+          ["/webviz_bag_2/camera_1", [topic("/webviz_bag_2/camera_1/foo"), topic("/webviz_bag_2/camera_1/bar")]],
+          ["/webviz_bag_2/camera_2", [topic("/webviz_bag_2/camera_2/foo")]],
         ])
       );
     });

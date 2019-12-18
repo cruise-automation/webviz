@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -45,7 +45,7 @@ function Context(props: { children: React.Node, store?: any }) {
   return (
     <MockMessagePipelineProvider
       topics={[{ name: "/some/topic", datatype: "some_datatype" }]}
-      datatypes={{ some_datatype: [] }}
+      datatypes={{ some_datatype: { fields: [] } }}
       store={props.store}>
       {props.children}
     </MockMessagePipelineProvider>
@@ -68,7 +68,7 @@ describe("Panel", () => {
       {
         capabilities: [],
         config: { someString: "hello world" },
-        datatypes: { some_datatype: [] },
+        datatypes: { some_datatype: { fields: [] } },
         openSiblingPanel: expect.any(Function),
         saveConfig: expect.any(Function),
         updatePanelConfig: expect.any(Function),
@@ -97,7 +97,7 @@ describe("Panel", () => {
       {
         capabilities: [],
         config: { someString },
-        datatypes: { some_datatype: [] },
+        datatypes: { some_datatype: { fields: [] } },
         openSiblingPanel: expect.any(Function),
         saveConfig: expect.any(Function),
         updatePanelConfig: expect.any(Function),

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -36,6 +36,8 @@ type Props = {|
   children?: React.Node,
 
   onClick?: (MouseEvent) => void,
+  onMouseEnter?: (MouseEvent) => void,
+  onMouseLeave?: (MouseEvent) => void,
   // for storybook screenshots tests
   dataTest?: string,
 |};
@@ -57,6 +59,8 @@ const Flex = (props: Props) => {
     scrollX,
     children,
     onClick,
+    onMouseEnter,
+    onMouseLeave,
     dataTest,
   } = props;
   if (col != null && col === row) {
@@ -83,7 +87,13 @@ const Flex = (props: Props) => {
   // only copy combine flex & custom style if we were passed custom style
   const fullStyle = style ? { ...flexStyle, ...style } : flexStyle;
   return (
-    <div data-test={dataTest} className={combinedClasses} style={fullStyle} onClick={onClick}>
+    <div
+      data-test={dataTest}
+      className={combinedClasses}
+      style={fullStyle}
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}>
       {children}
     </div>
   );

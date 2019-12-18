@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -51,12 +51,13 @@ import { getPanelTypeFromId } from "webviz-core/src/util";
 // The panel also gets wrapped in an error boundary and flex box.
 
 type Props<Config> = {| childId?: string, config?: Config, saveConfig?: () => void |};
-type State = {
+type State = {|
   quickActionsKeyPressed: boolean,
   shiftKeyPressed: boolean,
   fullScreen: boolean,
   removePanelKeyPressed: boolean,
-};
+  isHovered: boolean,
+|};
 
 interface PanelStatics<Config> {
   panelType: string;
@@ -72,6 +73,7 @@ const DEFAULT_MOCK_PANEL_CONTEXT: PanelContextType<any> = {
   saveConfig: () => {},
   updatePanelConfig: () => {},
   openSiblingPanel: () => {},
+  isHovered: false,
 };
 export class MockPanelContextProvider extends React.Component<{ ...MockProps, children: React.Node }> {
   render() {
@@ -146,6 +148,7 @@ export default function Panel<Config: PanelConfig>(
       shiftKeyPressed: false,
       fullScreen: false,
       removePanelKeyPressed: false,
+      isHovered: false,
     };
 
     _tildePressing: boolean = false;
@@ -214,6 +217,14 @@ export default function Panel<Config: PanelConfig>(
       if (this.state.quickActionsKeyPressed) {
         this.setState({ fullScreen: true });
       }
+    };
+
+    _onMouseEnter = () => {
+      this.setState({ isHovered: true });
+    };
+
+    _onMouseLeave = () => {
+      this.setState({ isHovered: false });
     };
 
     _closePanel = () => {
@@ -311,17 +322,21 @@ export default function Panel<Config: PanelConfig>(
             saveConfig: this._saveConfig,
             updatePanelConfig: this._updatePanelConfig,
             openSiblingPanel: this._openSiblingPanel,
+            isHovered: this.state.isHovered,
           }}>
           {/* ensures user exits full-screen mode when leaving the window, even if key is still pressed down */}
           <DocumentEvents target={window.top} enabled onBlur={this._exitFullScreen} />
           <KeyListener global keyUpHandlers={this._keyUpHandlers} keyDownHandlers={this._keyDownHandlers} />
           <Flex
             onClick={this._onOverlayClick}
+            onMouseEnter={this._onMouseEnter}
+            onMouseLeave={this._onMouseLeave}
             className={cx({
               [styles.root]: true,
               [styles.rootFullScreen]: fullScreen,
             })}
             col
+            dataTest="panel-mouseenter-container"
             clip>
             {fullScreen ? <div className={styles.notClickable} /> : null}
             {quickActionsKeyPressed && !fullScreen && (

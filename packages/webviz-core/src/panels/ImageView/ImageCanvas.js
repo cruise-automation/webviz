@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -21,7 +21,7 @@ import uuid from "uuid";
 
 import styles from "./ImageCanvas.module.scss";
 import { registerImageCanvasWorkerListener, unregisterImageCanvasWorkerListener } from "./ImageCanvasWorkerProvider";
-import type { ImageViewPanelHooks, Config, SaveConfig } from "./index";
+import type { ImageViewPanelHooks, Config, SaveImagePanelConfig } from "./index";
 import { renderImage } from "./renderImage";
 import { checkOutOfBounds, type Dimensions, supportsOffscreenCanvas } from "./util";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
@@ -46,7 +46,7 @@ type Props = {|
   |},
   panelHooks?: ImageViewPanelHooks,
   config: Config,
-  saveConfig: SaveConfig,
+  saveConfig: SaveImagePanelConfig,
   useMainThreadRenderingForTesting?: boolean,
 |};
 
@@ -151,7 +151,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
       (this.bitmapDimensions.width * updatedPercentage) / 100,
       (this.bitmapDimensions.height * updatedPercentage) / 100
     );
-    this.props.saveConfig({ mode: "other", offset, zoomPercentage: updatedPercentage });
+    this.props.saveConfig({ mode: "other", offset, zoomPercentage: updatedPercentage }, { keepLayoutInUrl: true });
     if (offset[0] !== x || offset[1] !== y) {
       this.panZoomCanvas.moveTo(offset[0], offset[1]);
     }
@@ -259,11 +259,11 @@ export default class ImageCanvas extends React.Component<Props, State> {
   componentDidUpdate(prevProps: Props) {
     const imageChanged = !shallowequal(prevProps, this.props, (a, b, key) => {
       if (key === "rawMarkerData") {
-        return shallowequal(a, b, (a, b, key) => {
-          if (key === "markers") {
-            return shallowequal(a, b);
-          } else if (key === "cameraInfo") {
-            return isEqual(omit(a, "header"), omit(b, "header"));
+        return shallowequal(a, b, (innerA, innerB, innerKey) => {
+          if (innerKey === "markers") {
+            return shallowequal(innerA, innerB);
+          } else if (innerKey === "cameraInfo") {
+            return isEqual(omit(innerA, "header"), omit(innerB, "header"));
           }
         });
       }
@@ -311,18 +311,18 @@ export default class ImageCanvas extends React.Component<Props, State> {
   clickMagnify = () => {
     this.setState((state) => ({ openZoomChart: !state.openZoomChart }));
   };
-  onZoomFit = () => {
+  onZoomFit = (keepLayoutInUrl?: boolean) => {
     const fitPercent = this.fitPercent();
     this.panZoomCanvas.zoomAbs(0, 0, fitPercent / 100);
     this.moveToCenter();
-    this.props.saveConfig({ mode: "fit", zoomPercentage: fitPercent });
+    this.props.saveConfig({ mode: "fit", zoomPercentage: fitPercent }, { keepLayoutInUrl });
   };
 
-  onZoomFill = () => {
+  onZoomFill = (keepLayoutInUrl?: boolean) => {
     const fillPercent = this.fillPercent();
     this.panZoomCanvas.zoomAbs(0, 0, fillPercent / 100);
     this.moveToCenter();
-    this.props.saveConfig({ mode: "fill", zoomPercentage: fillPercent });
+    this.props.saveConfig({ mode: "fill", zoomPercentage: fillPercent }, { keepLayoutInUrl });
   };
 
   goToTargetPercentage = (targetPercentage: number) => {
@@ -411,9 +411,9 @@ export default class ImageCanvas extends React.Component<Props, State> {
     if (this.panZoomCanvas) {
       const { mode, zoomPercentage, offset } = this.props.config;
       if (!mode || mode === "fit") {
-        this.onZoomFit();
+        this.onZoomFit(true);
       } else if (mode === "fill") {
-        this.onZoomFill();
+        this.onZoomFill(true);
       } else if (mode === "other") {
         // Go to prevPercentage
         this.goToTargetPercentage(zoomPercentage || 100);

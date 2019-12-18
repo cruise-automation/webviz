@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -16,7 +16,7 @@ import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
 import PropTypes from "prop-types";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
-import { useContext } from "react"; // eslint-disable-line import/no-duplicates
+import { useContext, useState, useCallback } from "react"; // eslint-disable-line import/no-duplicates
 import Dimensions from "react-container-dimensions";
 import { getNodeAtPath } from "react-mosaic-component";
 // $FlowFixMe
@@ -159,11 +159,17 @@ const ConnectedStandardMenuItems = connect(
   { savePanelConfig }
 )(StandardMenuItems);
 
+type PanelToolbarControlsProps = {|
+  ...Props,
+  onDragStart: () => void,
+  onDragEnd: () => void,
+|};
+
 // Keep controls, which don't change often, in a pure component in order to avoid re-rendering the
 // whole PanelToolbar when only children change.
-const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Props) {
+const PanelToolbarControls = React.memo(function PanelToolbarControls(props: PanelToolbarControlsProps) {
   const panelData = useContext(PanelContext);
-  const { floating, helpContent, menuContent, showPanelName, additionalIcons } = props;
+  const { floating, helpContent, menuContent, showPanelName, additionalIcons, onDragStart, onDragEnd } = props;
 
   return (
     <div className={styles.iconContainer}>
@@ -181,7 +187,7 @@ const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Pro
         {menuContent && <hr />}
         {menuContent}
       </Dropdown>
-      <MosaicDragHandle>
+      <MosaicDragHandle onDragStart={onDragStart} onDragEnd={onDragEnd}>
         {/* Can only nest native nodes into <MosaicDragHandle>, so wrapping in a <span> */}
         <span>
           <Icon fade tooltip="Move panel">
@@ -196,33 +202,40 @@ const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Pro
 // Panel toolbar should be added to any panel that's part of the
 // react-mosaic layout.  It adds a drag handle, remove/replace controls
 // and has a place to add custom controls via it's children property
-export default class PanelToolbar extends React.PureComponent<Props> {
-  render() {
-    const { children, floating, helpContent, menuContent, additionalIcons } = this.props;
-    return (
-      <Dimensions>
-        {({ width }) => (
-          <ChildToggle.ContainsOpen>
-            {(containsOpen) => (
-              <div
-                className={cx(styles.panelToolbarContainer, {
-                  [styles.floating]: floating,
-                  [styles.containsOpen]: containsOpen,
-                  [styles.hasChildren]: !!children,
-                })}>
-                {children}
+export default React.memo<Props>(function PanelToolbar(props: Props) {
+  const { children, floating, helpContent, menuContent, additionalIcons } = props;
+  const { isHovered } = useContext(PanelContext) || {};
+  const [isDragging, setIsDragging] = useState(false);
+  const onDragStart = useCallback(() => setIsDragging(true), []);
+  const onDragEnd = useCallback(() => setIsDragging(false), []);
+
+  return (
+    <Dimensions>
+      {({ width }) => (
+        <ChildToggle.ContainsOpen>
+          {(containsOpen) => (
+            <div
+              className={cx(styles.panelToolbarContainer, {
+                [styles.floating]: floating,
+                [styles.containsOpen]: containsOpen,
+                [styles.hasChildren]: !!children,
+              })}>
+              {(isHovered || containsOpen || isDragging || !floating) && children}
+              {(isHovered || containsOpen || isDragging) && (
                 <PanelToolbarControls
                   floating={floating}
                   helpContent={helpContent}
                   menuContent={menuContent}
                   showPanelName={width > 360}
                   additionalIcons={additionalIcons}
+                  onDragStart={onDragStart}
+                  onDragEnd={onDragEnd}
                 />
-              </div>
-            )}
-          </ChildToggle.ContainsOpen>
-        )}
-      </Dimensions>
-    );
-  }
-}
+              )}
+            </div>
+          )}
+        </ChildToggle.ContainsOpen>
+      )}
+    </Dimensions>
+  );
+});

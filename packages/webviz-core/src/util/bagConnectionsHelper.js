@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -10,6 +10,7 @@ import { parseMessageDefinition } from "rosbag";
 
 import type { Connection } from "webviz-core/src/dataProviders/types";
 import type { Topic } from "webviz-core/src/players/types";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 // TODO(JP): Move all this stuff into rosbag.
 
@@ -19,7 +20,7 @@ type DatatypeDescription = {
 };
 
 // Extract one big list of datatypes from the individual connections.
-export function bagConnectionsToDatatypes(connections: $ReadOnlyArray<DatatypeDescription>) {
+export function bagConnectionsToDatatypes(connections: $ReadOnlyArray<DatatypeDescription>): RosDatatypes {
   const datatypes = {};
   connections.forEach((connection) => {
     const connectionTypes = parseMessageDefinition(connection.messageDefinition);
@@ -27,9 +28,9 @@ export function bagConnectionsToDatatypes(connections: $ReadOnlyArray<DatatypeDe
       // The first definition usually doesn't have an explicit name,
       // so we get the name from the connection.
       if (index === 0) {
-        datatypes[connection.type] = definitions;
+        datatypes[connection.type] = { fields: definitions };
       } else if (name) {
-        datatypes[name] = definitions;
+        datatypes[name] = { fields: definitions };
       }
     });
   });

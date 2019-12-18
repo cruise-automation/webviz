@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -98,24 +98,23 @@ export default function TextField({
   );
 
   const validate = useCallback(
-    (value) => {
-      const validationResult = validator(value);
+    (val) => {
+      const validationResult = validator(val);
       if (validationResult) {
         setError(validationResult);
       } else {
         setError(null);
-        onChange(value);
+        onChange(val);
       }
     },
     [onChange, validator]
   );
 
   const handleChange = useCallback(
-    (ev) => {
-      const value = ev.target.value;
-      setInputStr(value);
+    ({ target }) => {
+      setInputStr(target.value);
       if (!validateOnBlur) {
-        validate(value);
+        validate(target.value);
       }
     },
     [validate, validateOnBlur]

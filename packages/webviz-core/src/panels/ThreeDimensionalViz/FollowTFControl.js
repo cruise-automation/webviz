@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -180,10 +180,10 @@ const FollowTFControl = memo<Props>((props: Props) => {
   );
 
   const onSelectFrame = useCallback(
-    (id: string, item: mixed, autocomplete: Autocomplete) => {
+    (id: string, item: mixed, autocompleteNode: Autocomplete) => {
       setLastSelectedFrame(id === getDefaultFollowTransformFrame() ? undefined : id);
       onFollowChange(id, followOrientation);
-      autocomplete.blur();
+      autocompleteNode.blur();
     },
     [setLastSelectedFrame, getDefaultFollowTransformFrame, onFollowChange, followOrientation]
   );

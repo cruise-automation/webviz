@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -152,9 +152,8 @@ class PerformanceMeasuringClient {
       throw new Error("Cannot call finish() without calling start()");
     }
 
-    const speed = this.speed;
     const playbackTimeMs = round(performance.now() - startTime);
-    const benchmarkPlaybackScore = round(bagLengthMs / (playbackTimeMs * speed), 3);
+    const benchmarkPlaybackScore = round(bagLengthMs / (playbackTimeMs * this.speed), 3);
     const averageRenderMs = round(
       this.frameRenderTimes.length ? sum(this.frameRenderTimes) / this.frameRenderTimes.length : 0,
       2
@@ -167,7 +166,7 @@ class PerformanceMeasuringClient {
     const idb = await this._collectIdbStats();
     const detail: PerformanceStats = {
       bagLengthMs,
-      speed,
+      speed: this.speed,
       msPerFrame: this.msPerFrame,
       frameRenderCount,
       benchmarkPlaybackScore,

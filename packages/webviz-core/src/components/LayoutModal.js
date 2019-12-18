@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -26,16 +26,16 @@ type Props = {|
   importPanelLayout: (ImportPanelLayoutPayload, boolean) => void,
 |};
 
-function UnconnectedLayoutModal({ onRequestClose, importPanelLayout, panels }: Props) {
+function UnconnectedLayoutModal({ onRequestClose, importPanelLayout: importLayout, panels }: Props) {
   return (
     <ShareJsonModal
       onRequestClose={onRequestClose}
       value={panels}
       onChange={useCallback(
         (layout: any) => {
-          importPanelLayout(layout, false);
+          importLayout(layout, false);
         },
-        [importPanelLayout]
+        [importLayout]
       )}
       noun="layout"
     />

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, GM Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -19,7 +19,7 @@ storiesOf("<Note>", module)
     const fixture = {
       topics: [],
       datatypes: {
-        "std_msgs/String": [{ name: "noteText", type: "string" }],
+        "std_msgs/String": { fields: [{ name: "noteText", type: "string" }] },
       },
       frame: {},
     };

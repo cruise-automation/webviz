@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -14,7 +14,7 @@ const node = {
   inputs: ["/input/foo", "/input/bar"],
   output: { name: "/webviz/test", datatype: "test" },
   datatypes: {
-    test: [{ type: "string", name: "foo" }],
+    test: { fields: [{ type: "string", name: "foo" }] },
   },
   defaultState: { callCount: 0 },
   callback: ({ message, state }) => {
@@ -54,7 +54,7 @@ describe("NodePlayer", () => {
       speed: 0.2,
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }],
-      datatypes: { foo: [] },
+      datatypes: { foo: { fields: [] } },
     });
     expect(messages).toHaveLength(1);
     const activeData = messages[0].activeData;
@@ -63,8 +63,8 @@ describe("NodePlayer", () => {
       throw new Error("satisfy flow");
     }
     expect(activeData.datatypes).toEqual({
-      test: [{ type: "string", name: "foo" }],
-      foo: [],
+      test: { fields: [{ type: "string", name: "foo" }] },
+      foo: { fields: [] },
     });
     expect(activeData.topics).toEqual([
       {
@@ -201,7 +201,7 @@ describe("NodePlayer", () => {
       speed: 0.2,
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }],
-      datatypes: { foo: [] },
+      datatypes: { foo: { fields: [] } },
     });
 
     await done;
@@ -253,7 +253,7 @@ describe("NodePlayer", () => {
       speed: 0.2,
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }],
-      datatypes: { foo: [] },
+      datatypes: { foo: { fields: [] } },
     });
 
     fakePlayer.emit({
@@ -266,7 +266,7 @@ describe("NodePlayer", () => {
       // set the last seek time to a new value
       lastSeekTime: 1,
       topics: [{ name: "/input/foo", datatype: "foo" }],
-      datatypes: { foo: [] },
+      datatypes: { foo: { fields: [] } },
     });
     await done;
     expect(messages).toHaveLength(4);

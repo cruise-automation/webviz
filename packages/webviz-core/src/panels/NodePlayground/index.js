@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -169,15 +169,16 @@ function NodePlayground(props: Props) {
   const addNewNode = React.useCallback(
     () => {
       const newNodeId = uuid.v4();
-      setUserNodes({
-        [newNodeId]: {
-          sourceCode: skeletonBody,
-          name: `${DEFAULT_WEBVIZ_NODE_PREFIX}${newNodeId.split("-")[0]}`,
-        },
-      });
-      saveConfig({ selectedNodeId: newNodeId });
       // TODO: Add integration test for this flow.
-      trustUserNode({ id: newNodeId, sourceCode: skeletonBody });
+      trustUserNode({ id: newNodeId, sourceCode: skeletonBody }).then(() => {
+        setUserNodes({
+          [newNodeId]: {
+            sourceCode: skeletonBody,
+            name: `${DEFAULT_WEBVIZ_NODE_PREFIX}${newNodeId.split("-")[0]}`,
+          },
+        });
+        saveConfig({ selectedNodeId: newNodeId });
+      });
     },
     [saveConfig, setUserNodes]
   );
@@ -187,11 +188,24 @@ function NodePlayground(props: Props) {
       if (!selectedNodeId || !selectedNode) {
         return;
       }
-      trustUserNode({ id: selectedNodeId, sourceCode: selectedNode.sourceCode });
-      // no-op in order to trigger the useUserNodes hook.
-      setUserNodes({});
+      trustUserNode({ id: selectedNodeId, sourceCode: selectedNode.sourceCode }).then(() => {
+        // no-op in order to trigger the useUserNodes hook.
+        setUserNodes({});
+      });
     },
     [selectedNode, selectedNodeId, setUserNodes]
+  );
+
+  const saveNode = React.useCallback(
+    () => {
+      if (!selectedNodeId) {
+        return;
+      }
+      trustUserNode({ id: selectedNodeId, sourceCode: stagedScript }).then(() => {
+        setUserNodes({ [selectedNodeId]: { ...selectedNode, sourceCode: stagedScript } });
+      });
+    },
+    [selectedNodeId, selectedNode, stagedScript, setUserNodes]
   );
 
   return (
@@ -287,13 +301,7 @@ function NodePlayground(props: Props) {
                 <BottomBar
                   nodeId={selectedNodeId}
                   isSaved={isNodeSaved}
-                  save={() => {
-                    if (!selectedNodeId) {
-                      return;
-                    }
-                    setUserNodes({ [selectedNodeId]: { ...selectedNode, sourceCode: stagedScript } });
-                    trustUserNode({ id: selectedNodeId, sourceCode: stagedScript });
-                  }}
+                  save={saveNode}
                   diagnostics={selectedNodeDiagnostics}
                   logs={selectedNodeLogs}
                 />

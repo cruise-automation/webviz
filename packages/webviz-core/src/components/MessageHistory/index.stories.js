@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -17,39 +17,49 @@ import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 const fixture = {
   datatypes: {
-    "msgs/PoseDebug": [
-      { name: "header", type: "std_msgs/Header", isArray: false },
-      { name: "pose", type: "msgs/Pose", isArray: false },
-    ],
-    "msgs/Pose": [
-      { name: "header", type: "std_msgs/Header", isArray: false },
-      { name: "x", type: "float64", isArray: false },
-      { name: "y", type: "float64", isArray: false },
-      { name: "travel", type: "float64", isArray: false },
-      { name: "velocity", type: "float64", isArray: false },
-      { name: "acceleration", type: "float64", isArray: false },
-      { name: "heading", type: "float64", isArray: false },
-    ],
-    "msgs/State": [
-      { name: "header", type: "std_msgs/Header", isArray: false },
-      { name: "items", type: "msgs/OtherState", isArray: true },
-      { name: "foo_id", type: "uint32", isArray: false },
-    ],
-    "msgs/OtherState": [
-      { name: "id", type: "int32", isArray: false },
-      { name: "speed", type: "float32", isArray: false },
-      { name: "name", type: "string", isArray: false },
-      { name: "valid", type: "bool", isArray: false },
-    ],
-    "std_msgs/Header": [
-      { name: "seq", type: "uint32", isArray: false },
-      {
-        name: "stamp",
-        type: "time",
-        isArray: false,
-      },
-      { name: "frame_id", type: "string", isArray: false },
-    ],
+    "msgs/PoseDebug": {
+      fields: [
+        { name: "header", type: "std_msgs/Header", isArray: false },
+        { name: "pose", type: "msgs/Pose", isArray: false },
+      ],
+    },
+    "msgs/Pose": {
+      fields: [
+        { name: "header", type: "std_msgs/Header", isArray: false },
+        { name: "x", type: "float64", isArray: false },
+        { name: "y", type: "float64", isArray: false },
+        { name: "travel", type: "float64", isArray: false },
+        { name: "velocity", type: "float64", isArray: false },
+        { name: "acceleration", type: "float64", isArray: false },
+        { name: "heading", type: "float64", isArray: false },
+      ],
+    },
+    "msgs/State": {
+      fields: [
+        { name: "header", type: "std_msgs/Header", isArray: false },
+        { name: "items", type: "msgs/OtherState", isArray: true },
+        { name: "foo_id", type: "uint32", isArray: false },
+      ],
+    },
+    "msgs/OtherState": {
+      fields: [
+        { name: "id", type: "int32", isArray: false },
+        { name: "speed", type: "float32", isArray: false },
+        { name: "name", type: "string", isArray: false },
+        { name: "valid", type: "bool", isArray: false },
+      ],
+    },
+    "std_msgs/Header": {
+      fields: [
+        { name: "seq", type: "uint32", isArray: false },
+        {
+          name: "stamp",
+          type: "time",
+          isArray: false,
+        },
+        { name: "frame_id", type: "string", isArray: false },
+      ],
+    },
   },
   topics: [
     { name: "/some_topic/location", datatype: "msgs/PoseDebug" },
@@ -105,4 +115,16 @@ storiesOf("<MessageHistoryInput>", module)
   })
   .add("path with incorrectly prefixed globalVariables variable", () => {
     return <MessageHistoryInputStory path="/some_topic/state.items[:]{id==global_var_2}" />;
+  })
+  .add("autocomplete for path with globalVariables variable in slice (single idx)", () => {
+    return <MessageHistoryInputStory path="/some_topic/state.items[$]" />;
+  })
+  .add("autocomplete for path with globalVariables variable in slice (start idx)", () => {
+    return <MessageHistoryInputStory path="/some_topic/state.items[$:]" />;
+  })
+  .add("autocomplete for path with globalVariables variable in slice (end idx)", () => {
+    return <MessageHistoryInputStory path="/some_topic/state.items[:$]" />;
+  })
+  .add("autocomplete for path with globalVariables variables in slice (start and end idx)", () => {
+    return <MessageHistoryInputStory path="/some_topic/state.items[$global_var_2:$]" />;
   });

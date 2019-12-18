@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -167,27 +167,27 @@ export default React.memo<Props>(function MessageHistory({ children, paths, hist
   const memoizedPaths = useShallowMemo(paths);
   const [rosPaths, metadataByPath, pathsByTopic, topics] = useMemo(
     () => {
-      const rosPaths: { [string]: ?RosPath } = {};
-      const metadataByPath: { [string]: MessageHistoryMetadata } = {};
-      const pathsByTopic: { [string]: { path: string, rosPath: RosPath }[] } = {};
+      const innerRosPaths: { [string]: ?RosPath } = {};
+      const innerMetadataByPath: { [string]: MessageHistoryMetadata } = {};
+      const innerPathsByTopic: { [string]: { path: string, rosPath: RosPath }[] } = {};
 
       for (const path of new Set(memoizedPaths)) {
         const rosPath = parseRosPath(path);
-        rosPaths[path] = rosPath;
+        innerRosPaths[path] = rosPath;
         if (rosPath) {
-          pathsByTopic[rosPath.topicName] = pathsByTopic[rosPath.topicName] || [];
-          pathsByTopic[rosPath.topicName].push({ path, rosPath });
+          innerPathsByTopic[rosPath.topicName] = innerPathsByTopic[rosPath.topicName] || [];
+          innerPathsByTopic[rosPath.topicName].push({ path, rosPath });
 
           const topic = memoizedTopicsByName[rosPath.topicName];
           if (topic) {
             const { structureItem } = traverseStructure(structures[topic.datatype], rosPath.messagePath);
             if (structureItem) {
-              metadataByPath[path] = { structureItem };
+              innerMetadataByPath[path] = { structureItem };
             }
           }
         }
       }
-      return [rosPaths, metadataByPath, pathsByTopic, Object.keys(pathsByTopic)];
+      return [innerRosPaths, innerMetadataByPath, innerPathsByTopic, Object.keys(innerPathsByTopic)];
     },
     [memoizedPaths, memoizedTopicsByName, structures]
   );

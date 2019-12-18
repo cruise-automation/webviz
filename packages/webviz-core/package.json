@@ -8,6 +8,7 @@
     "@mdi/svg": "3.2.89",
     "@sentry/browser": "5.7.1",
     "@simonwep/pickr": "1.4.7",
+    "@trust/webcrypto": "0.9.2",
     "chart.js": "2.7.3",
     "chartjs-plugin-annotation": "0.5.7",
     "chartjs-plugin-datalabels": "0.4.0",

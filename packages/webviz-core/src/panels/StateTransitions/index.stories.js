@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -41,24 +41,28 @@ const systemStateMessages = [
 
 const fixture = {
   datatypes: {
-    "msgs/SystemState": [
-      { type: "std_msgs/Header", name: "header", isArray: false },
-      { type: "int8", name: "UNKNOWN", isConstant: true, value: -1 },
-      { type: "int8", name: "ERROR", isConstant: true, value: 0 },
-      { type: "int8", name: "OFF", isConstant: true, value: 1 },
-      { type: "int8", name: "BOOTING", isConstant: true, value: 2 },
-      { type: "int8", name: "ACTIVE", isConstant: true, value: 3 },
-      { type: "int8", name: "state", isArray: false },
-    ],
-    "std_msgs/Header": [
-      { name: "seq", type: "uint32", isArray: false },
-      {
-        name: "stamp",
-        type: "time",
-        isArray: false,
-      },
-      { name: "frame_id", type: "string", isArray: false },
-    ],
+    "msgs/SystemState": {
+      fields: [
+        { type: "std_msgs/Header", name: "header", isArray: false },
+        { type: "int8", name: "UNKNOWN", isConstant: true, value: -1 },
+        { type: "int8", name: "ERROR", isConstant: true, value: 0 },
+        { type: "int8", name: "OFF", isConstant: true, value: 1 },
+        { type: "int8", name: "BOOTING", isConstant: true, value: 2 },
+        { type: "int8", name: "ACTIVE", isConstant: true, value: 3 },
+        { type: "int8", name: "state", isArray: false },
+      ],
+    },
+    "std_msgs/Header": {
+      fields: [
+        { name: "seq", type: "uint32", isArray: false },
+        {
+          name: "stamp",
+          type: "time",
+          isArray: false,
+        },
+        { name: "frame_id", type: "string", isArray: false },
+      ],
+    },
   },
   topics: [{ name: "/some/topic/with/state", datatype: "msgs/SystemState" }],
   activeData: {

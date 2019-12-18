@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -14,23 +14,30 @@ import {
   messagePathStructures,
   validTerminatingStructureItem,
 } from "./messagePathsForDatatype";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
-const datatypes = {
-  "pose_msgs/PoseDebug": [
-    { name: "header", type: "std_msgs/Header", isArray: false },
-    { name: "some_pose", type: "pose_msgs/SomePose", isArray: false },
-  ],
-  "pose_msgs/SomePose": [
-    { name: "header", type: "std_msgs/Header", isArray: false },
-    { name: "x", type: "float64", isArray: false },
-    { name: "SOME_CONSTANT", type: "float64", isArray: false, isConstant: true, value: 10 }, // Should be ignored.
-    { name: "dummy_array", type: "float64", isArray: true },
-  ],
-  "std_msgs/Header": [
-    { name: "seq", type: "uint32", isArray: false },
-    { name: "stamp", type: "time", isArray: false },
-    { name: "frame_id", type: "string", isArray: false },
-  ],
+const datatypes: RosDatatypes = {
+  "pose_msgs/PoseDebug": {
+    fields: [
+      { name: "header", type: "std_msgs/Header", isArray: false },
+      { name: "some_pose", type: "pose_msgs/SomePose", isArray: false },
+    ],
+  },
+  "pose_msgs/SomePose": {
+    fields: [
+      { name: "header", type: "std_msgs/Header", isArray: false },
+      { name: "x", type: "float64", isArray: false },
+      { name: "SOME_CONSTANT", type: "float64", isArray: false, isConstant: true, value: 10 }, // Should be ignored.
+      { name: "dummy_array", type: "float64", isArray: true },
+    ],
+  },
+  "std_msgs/Header": {
+    fields: [
+      { name: "seq", type: "uint32", isArray: false },
+      { name: "stamp", type: "time", isArray: false },
+      { name: "frame_id", type: "string", isArray: false },
+    ],
+  },
 };
 
 describe("messagePathStructures", () => {

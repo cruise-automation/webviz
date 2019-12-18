@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -87,12 +87,12 @@ describe("AutomatedRunPlayer", () => {
       await delay(1);
     }
     expect(frames).toEqual([
-      { startTime: { sec: 0, nsec: 0 }, endTime: { sec: 0, nsec: 0 } },
-      { startTime: { sec: 0, nsec: 0 }, endTime: { sec: 20, nsec: 0 } },
-      { startTime: { sec: 20, nsec: 1 }, endTime: { sec: 40, nsec: 1 } },
-      { startTime: { sec: 40, nsec: 2 }, endTime: { sec: 60, nsec: 2 } },
-      { startTime: { sec: 60, nsec: 3 }, endTime: { sec: 80, nsec: 3 } },
-      { startTime: { sec: 80, nsec: 4 }, endTime: { sec: 100, nsec: 0 } },
+      { startTime: { sec: 10, nsec: 0 }, endTime: { sec: 10, nsec: 0 } },
+      { startTime: { sec: 10, nsec: 0 }, endTime: { sec: 30, nsec: 0 } },
+      { startTime: { sec: 30, nsec: 1 }, endTime: { sec: 50, nsec: 1 } },
+      { startTime: { sec: 50, nsec: 2 }, endTime: { sec: 70, nsec: 2 } },
+      { startTime: { sec: 70, nsec: 3 }, endTime: { sec: 90, nsec: 3 } },
+      { startTime: { sec: 90, nsec: 4 }, endTime: { sec: 100, nsec: 0 } },
     ]);
   });
 

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -14,7 +14,7 @@ import VirtualizedSelect from "react-virtualized-select";
 import { createSelector } from "reselect";
 
 import helpContent from "./index.help.md";
-import style from "./index.module.scss";
+import styles from "./index.module.scss";
 import LevelToString, { KNOWN_LOG_LEVELS } from "./LevelToString";
 import LogMessage from "./LogMessage";
 import logStyle from "./LogMessage.module.scss";
@@ -119,14 +119,14 @@ class RosoutPanel extends PureComponent<Props, State> {
     const nodeNameOptions = Array.from(seenNodeNames).map((name) => ({ label: name, value: name }));
 
     return (
-      <div className={style.filtersBar}>
+      <div className={styles.filtersBar}>
         <VirtualizedSelect
-          className={cx(style.severityFilter)}
+          className={cx(styles.severityFilter)}
           clearable={false}
           searchable={false}
           value={minLogLevel}
-          optionHeight={parseInt(style.optionHeight)}
-          maxHeight={parseInt(style.optionHeight) * KNOWN_LOG_LEVELS.length}
+          optionHeight={parseInt(styles.optionHeight)}
+          maxHeight={parseInt(styles.optionHeight) * KNOWN_LOG_LEVELS.length}
           options={LOG_LEVEL_OPTIONS}
           optionRenderer={({ key, style: styleProp, option, selectValue, focusedOption }) => (
             <div
@@ -142,14 +142,14 @@ class RosoutPanel extends PureComponent<Props, State> {
           valueComponent={(option) => <span>{`Min Severity: ${LevelToString(option.value.value)}`}</span>}
         />
         <VirtualizedSelect
-          className={style.nodeFilter}
+          className={styles.nodeFilter}
           clearable
           multi
           closeOnSelect={false}
           value={stringsToOptions(searchTerms)}
           onChange={this._onNodeFilterChange}
           options={nodeNameOptions}
-          optionHeight={parseInt(style.optionHeight)}
+          optionHeight={parseInt(styles.optionHeight)}
           placeholder="Filter by node name or message text"
           searchable
           selectComponent={Creatable}
@@ -179,12 +179,12 @@ class RosoutPanel extends PureComponent<Props, State> {
           this._prevConfig = this.props.config;
 
           return (
-            <Flex className={style.message} col>
+            <Flex className={styles.message} col>
               <PanelToolbar floating helpContent={helpContent}>
                 {this._renderFiltersBar(seenNodeNames)}
               </PanelToolbar>
               <div
-                className={style.content}
+                className={styles.content}
                 onScroll={({ target }) => {
                   const newDisableAutoScroll = target.scrollHeight - target.scrollTop > target.clientHeight;
                   if (newDisableAutoScroll !== disableAutoScroll) {

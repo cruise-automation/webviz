@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -74,12 +74,12 @@ type Props = OwnProps & {
 };
 
 function PlayerManager({
-  importPanelLayout,
+  importPanelLayout: importLayout,
   children,
   userNodes,
-  setUserNodeDiagnostics,
-  addUserNodeLogs,
-  setUserNodeTrust,
+  setUserNodeDiagnostics: setDiagnostics,
+  addUserNodeLogs: setLogs,
+  setUserNodeTrust: setTrust,
 }: Props) {
   const usedFiles = React.useRef<File[]>([]);
   const [player, setPlayer] = React.useState();
@@ -97,22 +97,26 @@ function PlayerManager({
             getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
             getPlayerOptions()
           );
-          const player = new UserNodePlayer(newPlayer, { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust });
+          const userNodePlayer = new UserNodePlayer(newPlayer, {
+            setUserNodeDiagnostics: setDiagnostics,
+            addUserNodeLogs: setLogs,
+            setUserNodeTrust: setTrust,
+          });
           if (params.has(DEMO_QUERY_KEY)) {
             // When we're showing a demo, then automatically start playback (we don't normally
             // do that).
             setTimeout(() => {
-              player.startPlayback();
+              userNodePlayer.startPlayback();
             }, 1000);
           }
-          setPlayer(player);
+          setPlayer(userNodePlayer);
         });
         if (params.has(DEMO_QUERY_KEY)) {
-          importPanelLayout(demoLayoutJson, false, true);
+          importLayout(demoLayoutJson, false, true);
         }
       }
     },
-    [importPanelLayout, setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust]
+    [importLayout, setDiagnostics, setLogs, setTrust]
   );
 
   useUserNodes({ nodePlayer: player, userNodes });
@@ -128,8 +132,8 @@ function PlayerManager({
           } else {
             usedFiles.current = [files[0]];
           }
-          const player = buildPlayer(usedFiles.current);
-          setPlayer(player ? new NodePlayer(player) : undefined);
+          const builtPlayer = buildPlayer(usedFiles.current);
+          setPlayer(builtPlayer ? new NodePlayer(builtPlayer) : undefined);
         }}>
         <DropOverlay>
           <div style={{ fontSize: "4em", marginBottom: "1em" }}>Drop a bag file to load it!</div>

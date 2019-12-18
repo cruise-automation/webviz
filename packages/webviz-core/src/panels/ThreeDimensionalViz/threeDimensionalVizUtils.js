@@ -1,15 +1,24 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import { vec3 } from "gl-matrix";
-import { mergeWith } from "lodash";
+import { mergeWith, get } from "lodash";
 import { useRef } from "react";
-import { type CameraState, type Vec3, type Vec4, cameraStateSelectors, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import {
+  type CameraState,
+  type Vec3,
+  type Vec4,
+  type MouseEventObject,
+  cameraStateSelectors,
+  DEFAULT_CAMERA_STATE,
+} from "regl-worldview";
 
+import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import { emptyPose } from "webviz-core/src/util/Pose";
 
@@ -97,4 +106,23 @@ export function useComputedCameraState({
   newCameraState = mergeWith(newCameraState, DEFAULT_CAMERA_STATE, (objVal, srcVal) => objVal ?? srcVal);
 
   return { cameraState: newCameraState, targetPose: targetPose || lastTargetPose };
+}
+
+export function getUpdatedGlobalVariablesBySelectedObject(
+  selectedObject: MouseEventObject,
+  linkedGlobalVariables: LinkedGlobalVariables
+): ?GlobalVariables {
+  const interactionData = selectedObject && selectedObject.object.interactionData;
+  const objectTopic = interactionData && interactionData.topic;
+  if (!linkedGlobalVariables.length || !objectTopic) {
+    return;
+  }
+  const newGlobalVariables = {};
+  linkedGlobalVariables.forEach(({ topic, markerKeyPath, name }) => {
+    if (objectTopic === topic) {
+      const objectForPath = get(selectedObject.object, [...markerKeyPath].reverse());
+      newGlobalVariables[name] = objectForPath;
+    }
+  });
+  return newGlobalVariables;
 }

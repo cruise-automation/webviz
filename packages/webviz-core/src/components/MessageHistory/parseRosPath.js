@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -26,4 +26,8 @@ const parseRosPath: (path: string) => ?RosPath = memoize(
   }
 );
 
+export function splitTopicPathOnTopicName(path: string): ?{ topicName: string, trailingPath: string } {
+  const rosPath = parseRosPath(path);
+  return rosPath ? { topicName: rosPath.topicName, trailingPath: path.slice(rosPath.topicName.length) } : undefined;
+}
 export default parseRosPath;

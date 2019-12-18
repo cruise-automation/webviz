@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -358,9 +358,9 @@ describe("<MessageHistory />", () => {
   });
 
   describe("global variables in paths", () => {
-    const datatypes = {
-      "dtype/Foo": [{ name: "bars", type: "dtype/Bar", isArray: true, isComplex: true }],
-      "dtype/Bar": [{ name: "index", type: "int32" }, { name: "baz", type: "int32" }],
+    const exampleDatatypes = {
+      "dtype/Foo": { fields: [{ name: "bars", type: "dtype/Bar", isArray: true, isComplex: true }] },
+      "dtype/Bar": { fields: [{ name: "index", type: "int32" }, { name: "baz", type: "int32" }] },
     };
 
     const message = {
@@ -381,7 +381,7 @@ describe("<MessageHistory />", () => {
         <MockMessagePipelineProvider
           store={store}
           topics={[{ name: "/some/topic", datatype: "dtype/Foo" }]}
-          datatypes={datatypes}
+          datatypes={exampleDatatypes}
           messages={[message]}>
           <MessageHistory paths={["/some/topic.bars[:]{index==$foo}.baz"]}>{childFn}</MessageHistory>
         </MockMessagePipelineProvider>

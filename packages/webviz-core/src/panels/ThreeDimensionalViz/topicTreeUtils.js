@@ -1,16 +1,18 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { intersection, omit, flatten } from "lodash";
-import microMemoize from "micro-memoize";
+import { intersection } from "lodash";
 
 import filterMap from "webviz-core/src/filterMap";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import {
+  getFlattenedTreeNodes,
+  TOPIC_CONFIG,
+} from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils";
 import {
   type TopicDisplayMode,
   TOPIC_DISPLAY_MODES,
@@ -24,34 +26,6 @@ import { getTopicPrefixes } from "webviz-core/src/util/selectors";
 export const BAG1_TOPIC_GROUP_NAME = "Bag";
 export const BAG2_TOPIC_GROUP_NAME = `Bag 2 ${SECOND_BAG_PREFIX}`;
 
-const TOPIC_CONFIG = getGlobalHooks()
-  .perPanelHooks()
-  .ThreeDimensionalViz.getDefaultTopicTree();
-
-// traverse the tree and flatten the children items in the topicConfig
-function* flattenItem(item: TopicConfig, name: string) {
-  const childrenItems = item.children;
-  // extensions or leaf nodes
-  if (!childrenItems || item.extension) {
-    // remove children before adding a new node for extensions, otherwise add the node directly
-    yield { ...omit(item, "children"), name };
-  }
-  if (childrenItems) {
-    for (const subItem of childrenItems) {
-      let subItemName = `${name} / ${subItem.name || ""}`;
-      if (!subItem.name && subItem.topic) {
-        subItemName = `${name} ${subItem.topic}`;
-      }
-      yield* flattenItem(subItem, subItemName);
-    }
-  }
-}
-
-// memoize the flattened nodes since it only needs to be computed once
-const getFlattenedTreeNodes = microMemoize((topicConfig) => {
-  return flatten(topicConfig.children.map((item) => Array.from(flattenItem(item, item.name || ""))));
-});
-
 export function getCheckedTopicsAndExtensions(
   checkedNodes: string[]
 ): { selectedTopicsSet: Set<string>, selectedExtensionsSet: Set<string> } {
@@ -61,6 +35,8 @@ export function getCheckedTopicsAndExtensions(
   checkedNodes.forEach((item) => {
     if (item.startsWith("t:")) {
       selectedTopicsSet.add(item.substr("t:".length));
+    } else if (item.startsWith("/")) {
+      selectedTopicsSet.add(item);
     } else if (item.startsWith("x:")) {
       selectedExtensionsSet.add(item.substr("x:".length));
     }
@@ -94,22 +70,28 @@ export function getTopicConfig({
   checkedNodes,
   topicDisplayMode,
   topics,
+  supportedMarkerDatatypes,
 }: {
   checkedNodes: string[],
   topicDisplayMode: TopicDisplayMode,
   topics: Topic[],
+  supportedMarkerDatatypes: string[],
 }): { topicConfig: TopicConfig, newCheckedNodes: string[] } {
   const newCheckedNodes = checkedNodes;
   const showFlattened = topicDisplayMode !== TOPIC_DISPLAY_MODES.SHOW_TREE.value;
   const showSelected = topicDisplayMode === TOPIC_DISPLAY_MODES.SHOW_SELECTED.value;
   const showAvailable = topicDisplayMode === TOPIC_DISPLAY_MODES.SHOW_AVAILABLE.value;
   const showAll = topicDisplayMode === TOPIC_DISPLAY_MODES.SHOW_ALL.value;
-
+  const supportedMarkerDatatypesSet = new Set(supportedMarkerDatatypes);
   if (!showFlattened) {
     return { topicConfig: TOPIC_CONFIG, newCheckedNodes };
   }
 
-  const availableTopicsNames = topics.map((topic) => topic.name);
+  // filter out topic datatypes that are not supported in the 3D panel
+  const availableTopicsNames = topics
+    .filter((topic) => supportedMarkerDatatypesSet.has(topic.datatype))
+    .map((topic) => topic.name);
+
   const topicPrefixes = getTopicPrefixes(availableTopicsNames);
   const hasMultiBag = topicPrefixes.length > 0;
   const { selectedTopicsSet, selectedExtensionsSet } = getCheckedTopicsAndExtensions(checkedNodes);

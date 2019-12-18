@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, GM Cruise LLC
+//  Copyright (c) 2018-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -82,8 +82,14 @@ export function getCameraInfoTopic(imageTopic: string): ?string {
 }
 
 export function getCameraNamespace(topicName: string): ?string {
-  const match = topicName.match(/^(\/old)?(?!\/old)(\/[^/]+)\//);
-  return match ? match[2] : null;
+  let splitTopic = topicName.split("/");
+  // Remove the last part of the selected topic to get the camera namespace.
+  splitTopic.pop();
+  splitTopic = splitTopic.filter((topicPart) => topicPart !== "old");
+
+  // Since there is a leading slash in the topicName, splitTopic will always have at least one empty string to start.
+  // If we can't find the namespace, return null.
+  return splitTopic.length > 1 ? splitTopic.join("/") : null;
 }
 
 // group topics by the first component of their name

@@ -1,6 +1,5 @@
 {
   "editor.formatOnSave": true,
-  "eslint.autoFixOnSave": true,
   "flow.useNPMPackagedFlow": true,
   "javascript.validate.enable": false,
   "typescript.validate.enable": false,

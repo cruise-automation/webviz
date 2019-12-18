@@ -10,7 +10,7 @@ import React from "react";
 
 import WorldviewCodeEditor from "./utils/WorldviewCodeEditor";
 
-function makeCodeComponent(raw, componentName, { isRowView, insertCodeSandboxStyle } = {}) {
+function makeCodeComponent(raw, componentName, { isRowView, insertCodeSandboxStyle, noInline } = {}) {
   const code = raw
     .split("// #BEGIN EXAMPLE")[1]
     .split("// #END EXAMPLE")[0]
@@ -23,11 +23,12 @@ function makeCodeComponent(raw, componentName, { isRowView, insertCodeSandboxSty
   // eslint-disable-next-line react/display-name
   return () => (
     <WorldviewCodeEditor
-      code={code[1].trim()}
+      code={code[1].trim().replace(/\/\/ #DOCS ONLY: /g, "")}
       nonEditableCode={code[0].trim()}
       componentName={componentName}
       isRowView={isRowView}
       insertCodeSandboxStyle={insertCodeSandboxStyle}
+      noInline={noInline}
     />
   );
 }
@@ -72,6 +73,8 @@ export const FilledPolygonsHitmap = makeCodeComponent(
   require("!!raw-loader!./commands/FilledPolygonsHitmap"),
   "FilledPolygonsHitmap"
 );
+
+export const GLText = makeCodeComponent(require("!!raw-loader!./commands/GLText"), "GLText", { noInline: true });
 
 export const GLTFScene = makeCodeComponent(require("!!raw-loader!./commands/GLTFScene"), "GLTFScene");
 
@@ -142,7 +145,7 @@ export const InstancedRendering = makeCodeComponent(
   "RenderingObjects"
 );
 
-export const MoveCamea = makeCodeComponent(require("!!raw-loader!./tutorials/MoveCamea"), "ManagingTheCamera");
+export const MoveCamera = makeCodeComponent(require("!!raw-loader!./tutorials/MoveCamera"), "ManagingTheCamera");
 
 export const StopReleaseDuck = makeCodeComponent(
   require("!!raw-loader!./tutorials/StopReleaseDuck"),

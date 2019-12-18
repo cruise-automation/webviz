@@ -19,7 +19,7 @@ const BRIGHTNESS_THRESHOLD = 128;
 const DEFAULT_TEXT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
 const DEFAULT_BG_COLOR = { r: 0, g: 0, b: 0, a: 0.8 };
 
-type TextMarker = {
+export type TextMarker = {
   name?: string,
   pose: Pose,
   scale: Scale,
@@ -57,7 +57,7 @@ function insertGlobalCss() {
   cssHasBeenInserted = true;
 }
 
-function isColorDark({ r, g, b }: Color): boolean {
+export function isColorDark({ r, g, b }: Color): boolean {
   // ITU-R BT.709 https://en.wikipedia.org/wiki/Rec._709
   // 0.2126 * 255 * r + 0.7152 * 255 * g + 0.0722 * 255 * b
   const luma = 54.213 * r + 182.376 * g + 18.411 * b;

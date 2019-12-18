@@ -15,6 +15,7 @@ export { default as Cylinders } from "./Cylinders";
 export { default as DrawPolygons, Polygon, PolygonPoint } from "./DrawPolygon/index";
 export { default as PolygonBuilder } from "./DrawPolygon/PolygonBuilder";
 export { default as FilledPolygons } from "./FilledPolygons";
+export { default as GLText } from "./GLText";
 export { default as GLTFScene } from "./GLTFScene";
 export { default as Grid } from "./Grid";
 export { default as Lines } from "./Lines";

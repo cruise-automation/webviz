@@ -1,5 +1,5 @@
-import CodeSandboxEmbed from './jsx/utils/CodeSandboxEmbed.js';
-import { MoveCamea, FollowObject, FollowObjectOrientation } from './jsx/allLiveEditors'
+import CodeSandboxEmbed from "./jsx/utils/CodeSandboxEmbed.js";
+import { MoveCamera, FollowObject, FollowObjectOrientation } from "./jsx/allLiveEditors";
 
 # Managing the Camera
 
@@ -33,7 +33,7 @@ import duckModel from "common/fixtures/Duck.glb"; // Webpack magic: we actually 
 
 To move the camera, we'll use a handy [useAnimationFrame](https://github.com/cruise-automation/webviz/tree/master/packages/%40cruise-automation/hooks) hook that accepts a callback which will be called at each browser repaint. In our case, whenever the callback is called, we'll increase a `count` state by 1, and use the `count` state to adjust the camera's `phi` and `thetaOffset`.
 
-<MoveCamea />
+<MoveCamera />
 
 Now the camera is moving around the scene, giving us a 360° view of the duck model!
 

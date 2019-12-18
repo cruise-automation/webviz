@@ -10,7 +10,7 @@ import last from "lodash/last";
 import remove from "lodash/remove";
 import sample from "lodash/sample";
 import polygonGenerator from "polygon-generator";
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import Worldview, {
   Command,
   Arrows,
@@ -28,6 +28,7 @@ import Worldview, {
   PolygonBuilder,
   Overlay,
   Text,
+  GLText,
   GLTFScene,
   DEFAULT_CAMERA_STATE,
   withPose,
@@ -107,6 +108,8 @@ export const scope = {
   getCSSColor,
   useRange,
   useAnimationFrame,
+  useCallback,
+  useRef,
   useState,
   useEffect,
   Worldview,
@@ -139,6 +142,7 @@ export const scope = {
   PolygonBuilder,
   Overlay,
   Text,
+  GLText,
   GLTFScene,
   withPose,
   getRayFromClick,

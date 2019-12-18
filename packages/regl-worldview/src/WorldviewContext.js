@@ -116,7 +116,12 @@ export class WorldviewContext {
     const regl = this._instrumentCommands(
       createREGL({
         canvas,
-        extensions: ["angle_instanced_arrays", "oes_texture_float", "oes_element_index_uint"],
+        extensions: [
+          "angle_instanced_arrays",
+          "oes_texture_float",
+          "oes_element_index_uint",
+          "oes_standard_derivatives",
+        ],
         profile: getNodeEnv() !== "production",
       })
     );

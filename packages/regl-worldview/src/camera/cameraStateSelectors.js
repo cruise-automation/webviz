@@ -189,9 +189,21 @@ const viewSelector: (CameraState) => Mat4 = createSelector(
   }
 );
 
+const billboardRotation: (CameraState) => Mat4 = createSelector(
+  orientationSelector,
+  targetHeadingSelector,
+  (orientation, targetHeading) => {
+    const m = mat4.identity(mat4.create());
+    mat4.rotateZ(m, m, -targetHeading);
+    mat4.multiply(m, m, mat4.fromQuat(TEMP_MAT, orientation));
+    return m;
+  }
+);
+
 export default {
   orientation: orientationSelector,
   position: positionSelector,
   targetHeading: targetHeadingSelector,
   view: viewSelector,
+  billboardRotation,
 };

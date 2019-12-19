@@ -23,7 +23,11 @@ function makeCodeComponent(raw, componentName, { isRowView, insertCodeSandboxSty
   // eslint-disable-next-line react/display-name
   return () => (
     <WorldviewCodeEditor
-      code={code[1].trim().replace(/\/\/ #DOCS ONLY: /g, "")}
+      code={
+        // For editors with noInline=true, the render() call will only work in the live editor,
+        // not in the storybook
+        code[1].trim().replace(/\/\/ #DOCS ONLY: /g, "")
+      }
       nonEditableCode={code[0].trim()}
       componentName={componentName}
       isRowView={isRowView}

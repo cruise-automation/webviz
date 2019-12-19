@@ -14,18 +14,19 @@ import seedrandom from "seedrandom";
 import { inScreenshotTests } from "../utils/codeSandboxUtils";
 
 // #BEGIN EDITABLE
-const rng = seedrandom(1999);
-const NUM_COLS = 200;
-const RADIUS = 30;
+const rng = seedrandom(1999); // pseudo-random generator for deterministic testing!
+const NUM_COLS = 200; // number of text columns to draw - try bumping this up!
+const RADIUS = 30; // distance from the origin for placing columns
+const GLITCH_PROBABILITY = 0.3; // how likely a character is to change to something else
+const FADE = 3; // how quickly each character fades out
+const CHAR_HEIGHT = 1.1; // vertical space between characters
+const STEP_INTERVAL = 100; // how often the code rain "falls"
 const ALPHABET = [].concat(
+  // all characters to pick from
   ...[[0x30, 0x39], [0x41, 0x5a], [0x410, 0x42f], [0x3041, 0x3096]].map(([start, end]) =>
     new Array(end - start + 1).fill().map((_, i) => String.fromCodePoint(start + i))
   )
 );
-const GLITCH_PROBABILITY = 0.3;
-const FADE = 3;
-const CHAR_HEIGHT = 1.1;
-const STEP_INTERVAL = 100;
 
 function randomChar() {
   return ALPHABET[Math.floor(rng() * ALPHABET.length)];
@@ -34,12 +35,6 @@ function randomChar() {
 class MatrixText {
   constructor() {
     this._cols = new Array(NUM_COLS).fill().map(() => this.newColumn());
-    if (inScreenshotTests()) {
-      for (let i = 0; i < 10; i++) {
-        this.frame(STEP_INTERVAL / 1000);
-        this.step();
-      }
-    }
   }
 
   newChar() {
@@ -64,6 +59,7 @@ class MatrixText {
     };
   }
 
+  // Fade out the characters a little bit on each animation frame.
   frame(dt) {
     for (const { chars } of this._cols) {
       for (const char of chars) {
@@ -75,6 +71,8 @@ class MatrixText {
     }
   }
 
+  // Drop a new character at the bottom of each column.
+  // If the column is old, replace it with a new one.
   step() {
     this._cols = this._cols.map((col) => {
       if (rng() > GLITCH_PROBABILITY && col.z - col.chars.length * CHAR_HEIGHT > col.minZ) {
@@ -90,21 +88,22 @@ class MatrixText {
     });
   }
 
+  // Convert to markers that we can pass in to <GLText />.
   toMarkers() {
     const markers = [];
     for (const { x, y, z, chars } of this._cols) {
       chars.forEach(({ age, char, spinOffset, spinSpeed }, i) => {
         const newness = 1 / (1 + Math.exp(((age - 0.5) / FADE) * 20));
         const oldness = 1 / (1 + Math.exp(((age - 1.5) / FADE) * 20));
-        const q = quat.create();
-        quat.rotateZ(q, q, spinOffset + age * spinSpeed * 2 * Math.PI);
-        quat.rotateX(q, q, Math.PI / 2);
+        const spin = quat.create();
+        quat.rotateZ(spin, spin, spinOffset + age * spinSpeed * 2 * Math.PI);
+        quat.rotateX(spin, spin, Math.PI / 2);
         markers.push({
           text: char,
           colors: [{ r: newness, g: oldness, b: newness, a: oldness }, { r: 0, g: 0, b: 0, a: oldness }],
           pose: {
             position: { x, y, z: z - i * CHAR_HEIGHT },
-            orientation: { x: q[0], y: q[1], z: q[2], w: q[3] },
+            orientation: { x: spin[0], y: spin[1], z: spin[2], w: spin[3] },
           },
           scale: { x: 1, y: 1, z: 1 },
           billboard: false,
@@ -116,7 +115,17 @@ class MatrixText {
 }
 
 function Example() {
-  const [matrix] = useState(() => new MatrixText());
+  const [matrix] = useState(() => {
+    const matrix = new MatrixText();
+    // For screenshot tests we don't start the timer, so just run a few steps explicitly.
+    if (inScreenshotTests()) {
+      for (let i = 0; i < 10; i++) {
+        matrix.frame(STEP_INTERVAL / 1000);
+        matrix.step();
+      }
+    }
+    return matrix;
+  });
   const [cameraState, setCameraState] = useState({
     ...DEFAULT_CAMERA_STATE,
     distance: RADIUS * 2,

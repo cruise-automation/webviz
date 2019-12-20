@@ -47,9 +47,8 @@ storiesOf("Worldview/GLText", module)
   .addDecorator(withScreenshot({ delay: 200 }))
   .add("billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
-      <GLText>
-        {textMarkers({ text: "Hello\nWorldview", billboard: true, highlightedIndices: [0, 1, 2, 3, 4, 5, 6, 10] })}
-      </GLText>
+      <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: true })}</GLText>
+      <Axes />
     </Container>
   ))
   .add("non-billboard", () => (
@@ -72,7 +71,7 @@ storiesOf("Worldview/GLText", module)
   ))
   .add("changing text", () => {
     function Example() {
-      const [text, setText] = useState("HHHHH"); // "Hello\nWorldview");
+      const [text, setText] = useState("Hello\nWorldview");
       useLayoutEffect(() => {
         let i = 0;
         const id = setInterval(() => {
@@ -90,5 +89,52 @@ storiesOf("Worldview/GLText", module)
         </Container>
       );
     }
+    return <Example />;
+  })
+  .add("highlighted text", () => {
+    const Example = () => {
+      const [searchText, setSearchText] = useState("ello\nW");
+      const markers = textMarkers({ text: "Hello\nWorldview" }).map((marker) => {
+        if (!searchText) {
+          return marker;
+        }
+        const highlightedIndices = new Set();
+        let match;
+        let regex;
+        try {
+          regex = new RegExp(searchText, "ig");
+        } catch (e) {
+          return marker;
+        }
+        while ((match = regex.exec(marker.text)) !== null) {
+          Array.from(Array(searchText.length).keys()).forEach((i) => {
+            // $FlowFixMe - Flow doesn't understand the while loop syntax
+            // asserting against non-null match values.
+            highlightedIndices.add(match.index + i);
+          });
+        }
+        return { ...marker, highlightedIndices: Array.from(highlightedIndices) };
+      });
+
+      return (
+        <>
+          <div style={{ width: "100%", height: "95%" }}>
+            <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+              <GLText autoBackgroundColor>{markers}</GLText>
+              <Axes />
+            </Container>
+          </div>
+
+          <input
+            style={{ width: "100%" }}
+            type="text"
+            placeholder="search text"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        </>
+      );
+    };
+
     return <Example />;
   });

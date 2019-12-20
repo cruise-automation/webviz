@@ -54,11 +54,9 @@ type FontAtlas = {|
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
 const FONT_SIZE = 40;
-const BUFFER = 10;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
-const CUTOFF = 0.25;
-const OUTLINE_CUTOFF = 0.6;
+const CUTOFF = 0.75;
 
 const BG_COLOR_LIGHT = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 const BG_COLOR_DARK = Object.freeze({ r: 0, g: 0, b: 0, a: 1 });
@@ -122,7 +120,6 @@ const vert = `
 
   uniform mat4 projection, view, billboardRotation;
   uniform float fontSize;
-  uniform float srcHeight;
   uniform vec2 atlasSize;
 
   // per-vertex attributes
@@ -149,8 +146,6 @@ const vert = `
   varying float vEnableBackground;
   varying vec4 vForegroundColor;
   varying vec4 vBackgroundColor;
-  varying float vSrcWidth;
-  varying vec2 vSrcOffset;
   varying float vEnableHighlight;
 
   // rotate a 3d point v by a rotation quaternion q
@@ -161,7 +156,7 @@ const vert = `
   }
 
   void main () {
-    vec2 srcSize = vec2(srcWidth, srcHeight);
+    vec2 srcSize = vec2(srcWidth, fontSize);
     vec3 markerSpacePos = scale * vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
     vec3 pos;
     if (billboard == 1.0) {
@@ -174,17 +169,9 @@ const vert = `
     vEnableBackground = enableBackground;
     vForegroundColor = foregroundColor;
     vBackgroundColor = backgroundColor;
-    vSrcWidth = srcWidth;
-    vSrcOffset = srcOffset;
     vEnableHighlight = enableHighlight;
   }
 `;
-
-/*
-TODO:
-  - what to do if it is the selected item?
-  - how to invert colors/
-*/
 
 const frag = `
   #extension GL_OES_standard_derivatives : enable
@@ -192,17 +179,12 @@ const frag = `
   uniform mat4 projection;
   uniform sampler2D atlas;
   uniform vec2 atlasSize;
-  uniform float outlineCutoff;
   uniform float cutoff;
-  uniform float srcHeight;
-  uniform float buffer;
 
   varying vec2 vTexCoord;
   varying float vEnableBackground;
   varying vec4 vForegroundColor;
   varying vec4 vBackgroundColor;
-  varying float vSrcWidth;
-  varying vec2 vSrcOffset;
   varying float vEnableHighlight;
   void main() {
     float dist = texture2D(atlas, vTexCoord).a;
@@ -210,25 +192,12 @@ const frag = `
     // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
     // between outline and text, not on the outer border, because the alpha blending and
     // depth test don't work together nicely for partially-transparent pixels.
+    float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
     if (vEnableHighlight > 0.5) {
-      // TODO: make font black, and highlight
-      // float screenSize = fwidth(vTexCoord.x);
-      float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
       gl_FragColor = mix(vec4(1, 1, 0, 1), vec4(0, 0, 0, 1), edgeStep);
-      float char_width = vSrcWidth;
-      float char_width_min = 0.0;
-      float char_width_max = char_width;
-      float x_norm = vTexCoord.x * atlasSize.x - vSrcOffset.x;
-      // if (x_norm > char_width_min && x_norm < char_width_max) {
-        gl_FragColor.a = 1.0;
-      // } else {
-        // gl_FragColor.a = 0.0;
-      // }
     } else if (vEnableBackground > 0.5) {
       float screenSize = fwidth(vTexCoord.x);
-      float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
       gl_FragColor = mix(vBackgroundColor, vForegroundColor, edgeStep);
-      gl_FragColor.a = 1.0; // what if background color is already yellow?
     } else {
       gl_FragColor = vForegroundColor;
       gl_FragColor.a *= step(1.0 - cutoff, dist);
@@ -258,9 +227,6 @@ function makeTextCommand() {
         atlasSize: () => [atlasTexture.width, atlasTexture.height],
         fontSize: FONT_SIZE,
         cutoff: CUTOFF,
-        outlineCutoff: OUTLINE_CUTOFF,
-        srcHeight: FONT_SIZE, // todo: maybe take out?
-        buffer: BUFFER,
       },
       instances: regl.prop("instances"),
       count: 4,
@@ -271,16 +237,12 @@ function makeTextCommand() {
         destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
         srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
         scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
-
         alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
         billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
-
         foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
         backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
         enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
-
         enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
-
         posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
         poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
       },
@@ -390,7 +352,7 @@ function makeTextCommand() {
           backgroundColor[4 * index + 2] = bgColor.b;
           backgroundColor[4 * index + 3] = bgColor.a;
 
-          enableHighlight[index] = marker.highlightedIndices ? marker.highlightedIndices.includes(i) : 0;
+          enableHighlight[index] = marker.highlightedIndices ? +marker.highlightedIndices.includes(i) : 0;
 
           enableBackground[index] = outline ? 1 : 0;
 

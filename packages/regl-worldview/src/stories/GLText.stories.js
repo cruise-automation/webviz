@@ -16,12 +16,10 @@ function textMarkers({
   text,
   billboard,
   background = true,
-  highlightedIndices = [],
 }: {
   text: string,
   billboard?: ?boolean,
   background?: ?boolean,
-  highlightedIndices?: number[],
 }) {
   const radius = 10;
   const count = 10;
@@ -36,9 +34,8 @@ function textMarkers({
       },
       scale: { x: 1, y: 1, z: 1 },
       color,
-      colors: background && i % 4 === 0 ? [color, { r: 1, g: 0, b: 1, a: 1 }] : undefined,
+      colors: background && i % 4 === 0 ? [color, { r: 1, g: 1, b: 0, a: 1 }] : undefined,
       billboard,
-      highlightedIndices,
     };
   });
 }

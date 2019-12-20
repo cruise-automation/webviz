@@ -178,7 +178,6 @@ const frag = `
   precision mediump float;
   uniform mat4 projection;
   uniform sampler2D atlas;
-  uniform vec2 atlasSize;
   uniform float cutoff;
 
   varying vec2 vTexCoord;

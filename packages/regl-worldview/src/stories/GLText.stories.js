@@ -16,10 +16,12 @@ function textMarkers({
   text,
   billboard,
   background = true,
+  highlightedIndices = [],
 }: {
   text: string,
   billboard?: ?boolean,
   background?: ?boolean,
+  highlightedIndices?: number[],
 }) {
   const radius = 10;
   const count = 10;
@@ -34,8 +36,9 @@ function textMarkers({
       },
       scale: { x: 1, y: 1, z: 1 },
       color,
-      colors: background && i % 4 === 0 ? [color, { r: 1, g: 1, b: 0, a: 1 }] : undefined,
+      colors: background && i % 4 === 0 ? [color, { r: 1, g: 0, b: 1, a: 1 }] : undefined,
       billboard,
+      highlightedIndices,
     };
   });
 }
@@ -44,8 +47,9 @@ storiesOf("Worldview/GLText", module)
   .addDecorator(withScreenshot({ delay: 200 }))
   .add("billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
-      <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: true })}</GLText>
-      <Axes />
+      <GLText>
+        {textMarkers({ text: "Hello\nWorldview", billboard: true, highlightedIndices: [0, 1, 2, 3, 4, 5, 6, 10] })}
+      </GLText>
     </Container>
   ))
   .add("non-billboard", () => (
@@ -68,7 +72,7 @@ storiesOf("Worldview/GLText", module)
   ))
   .add("changing text", () => {
     function Example() {
-      const [text, setText] = useState("Hello\nWorldview");
+      const [text, setText] = useState("HHHHH"); // "Hello\nWorldview");
       useLayoutEffect(() => {
         let i = 0;
         const id = setInterval(() => {

@@ -32,9 +32,10 @@ import { isColorDark, type TextMarker } from "./Text";
 //   provide support for this. Some font info could be generated/stored offline, possibly including the atlas.
 // - Explore multi-channel SDFs.
 
+type AdditTextMarkerProps = { billboard?: boolean, highlightedIndices?: Array<number> };
 type Props = {
   ...CommonCommandProps,
-  children: $ReadOnlyArray<TextMarker & { billboard?: boolean }>,
+  children: $ReadOnlyArray<TextMarker & AdditTextMarkerProps>,
   autoBackgroundColor?: boolean,
 };
 
@@ -73,11 +74,11 @@ const memoizedCreateCanvas = memoizeOne((font) => {
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
     (charSet: Set<string>): FontAtlas => {
-      const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
+      const tinySDF = new TinySDF(FONT_SIZE, 0, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
       const ctx = memoizedCreateCanvas(`${FONT_SIZE}px sans-serif`);
 
       let textureWidth = 0;
-      const rowHeight = FONT_SIZE + 2 * BUFFER;
+      const rowHeight = FONT_SIZE;
       const charInfo = {};
 
       // Measure and assign positions to all characters
@@ -85,7 +86,7 @@ const createMemoizedBuildAtlas = () =>
       let y = 0;
       for (const char of charSet) {
         const width = ctx.measureText(char).width;
-        const dx = Math.ceil(width) + 2 * BUFFER;
+        const dx = Math.ceil(width);
         if (x + dx > MAX_ATLAS_WIDTH) {
           x = 0;
           y += rowHeight;
@@ -137,16 +138,20 @@ const vert = `
   attribute vec3 scale;
   attribute float billboard;
   attribute vec2 alignmentOffset;
-  attribute float enableOutline;
+  attribute float enableBackground;
+  attribute float enableHighlight;
   attribute vec4 foregroundColor;
-  attribute vec4 outlineColor;
+  attribute vec4 backgroundColor;
   attribute vec3 posePosition;
   attribute vec4 poseOrientation;
 
   varying vec2 vTexCoord;
-  varying float vEnableOutline;
+  varying float vEnableBackground;
   varying vec4 vForegroundColor;
-  varying vec4 vOutlineColor;
+  varying vec4 vBackgroundColor;
+  varying float vSrcWidth;
+  varying vec2 vSrcOffset;
+  varying float vEnableHighlight;
 
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
@@ -166,34 +171,64 @@ const vert = `
     }
     gl_Position = projection * view * vec4(pos, 1);
     vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
-    vEnableOutline = enableOutline;
+    vEnableBackground = enableBackground;
     vForegroundColor = foregroundColor;
-    vOutlineColor = outlineColor;
+    vBackgroundColor = backgroundColor;
+    vSrcWidth = srcWidth;
+    vSrcOffset = srcOffset;
+    vEnableHighlight = enableHighlight;
   }
 `;
+
+/*
+TODO:
+  - what to do if it is the selected item?
+  - how to invert colors/
+*/
 
 const frag = `
   #extension GL_OES_standard_derivatives : enable
   precision mediump float;
   uniform mat4 projection;
   uniform sampler2D atlas;
+  uniform vec2 atlasSize;
   uniform float outlineCutoff;
   uniform float cutoff;
+  uniform float srcHeight;
+  uniform float buffer;
+
   varying vec2 vTexCoord;
-  varying float vEnableOutline;
+  varying float vEnableBackground;
   varying vec4 vForegroundColor;
-  varying vec4 vOutlineColor;
+  varying vec4 vBackgroundColor;
+  varying float vSrcWidth;
+  varying vec2 vSrcOffset;
+  varying float vEnableHighlight;
   void main() {
     float dist = texture2D(atlas, vTexCoord).a;
 
     // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
     // between outline and text, not on the outer border, because the alpha blending and
     // depth test don't work together nicely for partially-transparent pixels.
-    if (vEnableOutline > 0.5) {
+    if (vEnableHighlight > 0.5) {
+      // TODO: make font black, and highlight
+      // float screenSize = fwidth(vTexCoord.x);
+      float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
+      gl_FragColor = mix(vec4(1, 1, 0, 1), vec4(0, 0, 0, 1), edgeStep);
+      float char_width = vSrcWidth;
+      float char_width_min = 0.0;
+      float char_width_max = char_width;
+      float x_norm = vTexCoord.x * atlasSize.x - vSrcOffset.x;
+      // if (x_norm > char_width_min && x_norm < char_width_max) {
+        gl_FragColor.a = 1.0;
+      // } else {
+        // gl_FragColor.a = 0.0;
+      // }
+    } else if (vEnableBackground > 0.5) {
       float screenSize = fwidth(vTexCoord.x);
       float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
-      gl_FragColor = mix(vOutlineColor, vForegroundColor, edgeStep);
-      gl_FragColor.a *= step(1.0 - outlineCutoff, dist);
+      gl_FragColor = mix(vBackgroundColor, vForegroundColor, edgeStep);
+      gl_FragColor.a = 1.0; // what if background color is already yellow?
     } else {
       gl_FragColor = vForegroundColor;
       gl_FragColor.a *= step(1.0 - cutoff, dist);
@@ -224,7 +259,8 @@ function makeTextCommand() {
         fontSize: FONT_SIZE,
         cutoff: CUTOFF,
         outlineCutoff: OUTLINE_CUTOFF,
-        srcHeight: FONT_SIZE + 2 * BUFFER,
+        srcHeight: FONT_SIZE, // todo: maybe take out?
+        buffer: BUFFER,
       },
       instances: regl.prop("instances"),
       count: 4,
@@ -240,15 +276,17 @@ function makeTextCommand() {
         billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
 
         foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
-        outlineColor: (ctx, props) => ({ buffer: props.outlineColor, divisor: 1 }),
-        enableOutline: (ctx, props) => ({ buffer: props.enableOutline, divisor: 1 }),
+        backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
+        enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
+
+        enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
 
         posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
         poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
       },
     });
 
-    return (props: $ReadOnlyArray<TextMarker & { billboard?: boolean }>) => {
+    return (props: $ReadOnlyArray<TextMarker & AdditTextMarkerProps>) => {
       let estimatedInstances = 0;
       const prevNumChars = charSet.size;
       for (const { text } of props) {
@@ -285,11 +323,12 @@ function makeTextCommand() {
       const alignmentOffset = new Float32Array(estimatedInstances * 2);
       const scale = new Float32Array(estimatedInstances * 3);
       const foregroundColor = new Float32Array(estimatedInstances * 4);
-      const outlineColor = new Float32Array(estimatedInstances * 4);
-      const enableOutline = new Float32Array(estimatedInstances);
+      const backgroundColor = new Float32Array(estimatedInstances * 4);
+      const enableBackground = new Float32Array(estimatedInstances);
       const billboard = new Float32Array(estimatedInstances);
       const posePosition = new Float32Array(estimatedInstances * 3);
       const poseOrientation = new Float32Array(estimatedInstances * 4);
+      const enableHighlight = new Float32Array(estimatedInstances);
 
       let totalInstances = 0;
       for (const marker of props) {
@@ -303,7 +342,8 @@ function makeTextCommand() {
         const bgColor =
           marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK);
 
-        for (const char of marker.text) {
+        for (let i = 0; i < marker.text.length; i++) {
+          const char = marker.text[i];
           if (char === "\n") {
             x = 0;
             y = FONT_SIZE;
@@ -313,11 +353,11 @@ function makeTextCommand() {
           const index = totalInstances + markerInstances;
 
           // Calculate per-character attributes
-          destOffsets[2 * index + 0] = x - BUFFER;
-          destOffsets[2 * index + 1] = -(y - BUFFER);
+          destOffsets[2 * index + 0] = x;
+          destOffsets[2 * index + 1] = -y;
           srcOffsets[2 * index + 0] = info.x;
           srcOffsets[2 * index + 1] = info.y;
-          srcWidths[index] = info.width + 2 * BUFFER;
+          srcWidths[index] = info.width;
 
           x += info.width;
           totalWidth = Math.max(totalWidth, x);
@@ -345,12 +385,14 @@ function makeTextCommand() {
           foregroundColor[4 * index + 2] = fgColor.b;
           foregroundColor[4 * index + 3] = fgColor.a;
 
-          outlineColor[4 * index + 0] = bgColor.r;
-          outlineColor[4 * index + 1] = bgColor.g;
-          outlineColor[4 * index + 2] = bgColor.b;
-          outlineColor[4 * index + 3] = bgColor.a;
+          backgroundColor[4 * index + 0] = bgColor.r;
+          backgroundColor[4 * index + 1] = bgColor.g;
+          backgroundColor[4 * index + 2] = bgColor.b;
+          backgroundColor[4 * index + 3] = bgColor.a;
 
-          enableOutline[index] = outline ? 1 : 0;
+          enableHighlight[index] = marker.highlightedIndices ? marker.highlightedIndices.includes(i) : 0;
+
+          enableBackground[index] = outline ? 1 : 0;
 
           ++markerInstances;
         }
@@ -375,9 +417,10 @@ function makeTextCommand() {
         // per-marker
         alignmentOffset,
         billboard,
-        enableOutline,
+        enableBackground,
+        enableHighlight,
         foregroundColor,
-        outlineColor,
+        backgroundColor,
         poseOrientation,
         posePosition,
         scale,

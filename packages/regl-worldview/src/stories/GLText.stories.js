@@ -105,8 +105,7 @@ storiesOf("Worldview/GLText", module)
         }
         while ((match = regex.exec(marker.text)) !== null) {
           Array.from(Array(searchText.length).keys()).forEach((i) => {
-            // $FlowFixMe - Flow doesn't understand the while loop syntax
-            // asserting against non-null match values.
+            // $FlowFixMe - Flow doesn't understand the while loop syntax.
             highlightedIndices.add(match.index + i);
           });
         }

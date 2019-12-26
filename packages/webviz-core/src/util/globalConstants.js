@@ -10,6 +10,7 @@ import { colors } from "webviz-core/src/util/colors";
 // URL params
 // DANGER: if you change this you break existing urls
 export const REMOTE_BAG_URL_QUERY_KEY = "remote-bag-url";
+export const ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY = "rosbridge-websocket-url";
 export const LOAD_ENTIRE_BAG_QUERY_KEY = "load-entire-bag";
 export const MEASURE_DATA_PROVIDERS_QUERY_KEY = "_measureDataProviders";
 export const DEMO_QUERY_KEY = "demo";

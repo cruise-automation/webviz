@@ -6,78 +6,59 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { ITEM_TYPES } from "./constants";
-
-export type ItemType = $Keys<typeof ITEM_TYPES>;
-export const VALID_ITEM_TYPES: Set<ItemType> = new Set(Object.keys(ITEM_TYPES));
-
-// ------- config related types -----------
 type SettingsBySource = {
   overrideColor?: string,
   overrideCommand?: string,
 };
-type VisibilityBySource = { [topicPrefix: string]: boolean };
-type HiddenNamespacesBySource = { [topicPrefix: string]: string[] };
-type NodeConfigCommon = {|
-  // add displayName later
-  visibilityBySource?: VisibilityBySource,
-|};
-export type TfItemConfig = {|
-  ...NodeConfigCommon,
-  type: "TF",
-  tfId: string,
-|};
-export type MapItemConfig = {|
-  ...NodeConfigCommon,
-  type: "MAP",
-  mapId: string,
-|};
+export type VisibilityBySource = { [dataSourcePrefix: string]: boolean };
+export type NamespacesBySource = { [dataSourcePrefix: string]: string[] };
+
+export type DisplayVisibilityBySource = {
+  [topicPrefix: string]: {
+    badgeText: string,
+    visible: boolean,
+    available: boolean,
+  },
+};
 export type TopicItemConfig = {|
-  ...NodeConfigCommon,
-  type: "TOPIC",
+  displayName?: string,
   topicName: string,
+  visibilitiesBySource?: VisibilityBySource,
   settingsBySource?: SettingsBySource,
-  hiddenNamespacesBySource?: HiddenNamespacesBySource,
-  defaultAvailableNamespaces?: string[],
-|};
-export type TopicRowItemConfig = TfItemConfig | MapItemConfig | TopicItemConfig;
-type TopicGroupConfigCommon = {|
-  displayName: string,
-  selected: boolean,
-  expanded: boolean,
-|};
-export type TopicGroupConfig = {|
-  ...TopicGroupConfigCommon,
-  items: TopicRowItemConfig[],
+  selectedNamespacesBySource?: NamespacesBySource,
 |};
 
-// ------- types derived from config -----------
-type TopicRowItemCommon = {|
-  visibilityBySource: VisibilityBySource,
-  // derived fields
+export type NamespaceItem = {
+  name: string,
+  displayVisibilityBySource: DisplayVisibilityBySource,
+};
+type DerivedTopicItemFields = {|
+  namespaceItems: NamespaceItem[],
+  displayVisibilityBySource: DisplayVisibilityBySource,
   displayName: string,
   id: string,
-  disableMultiSelection: boolean,
+  // TODO(Audrey): support 2nd bag for map and tf with `disableMultiSelection`
 |};
-export type TfItem = {|
-  ...TopicRowItemCommon,
-  ...TfItemConfig,
-|};
-export type MapItem = {|
-  ...TopicRowItemCommon,
-  ...MapItemConfig,
-|};
+
 export type TopicItem = {|
-  ...TopicRowItemCommon,
   ...TopicItemConfig,
+  derivedFields: DerivedTopicItemFields,
 |};
 
-export type TopicRowItem = TfItem | MapItem | TopicItem;
-export type TopicGroupType = {|
-  ...TopicGroupConfigCommon,
-  // derived fields
+export type TopicGroupConfig = {|
+  displayName: string,
+  items: TopicItemConfig[],
+  selected?: boolean,
+  expanded?: boolean,
+|};
+type TopicGroupDerivedFields = {|
   id: string,
-  items: TopicRowItem[],
+  items: TopicItem[],
+|};
+
+export type TopicGroupType = {|
+  ...TopicGroupConfig,
+  derivedFields: TopicGroupDerivedFields,
 |};
 
 export type TopicGroupsType = TopicGroupType[];

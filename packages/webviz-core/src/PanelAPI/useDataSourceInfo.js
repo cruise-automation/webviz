@@ -19,8 +19,7 @@ export type DataSourceInfo = {|
   topics: $ReadOnlyArray<Topic>,
   datatypes: RosDatatypes,
   capabilities: string[],
-  startTime: ?Time,
-  endTime: ?Time,
+  startTime: ?Time, // Only `startTime`, since `endTime` can change rapidly when connected to a live system.
   playerId: string,
 |};
 
@@ -29,9 +28,6 @@ export default function useDataSourceInfo(): DataSourceInfo {
   const topics = useMessagePipeline(useCallback(({ sortedTopics }) => sortedTopics, []));
   const startTime = useMessagePipeline(
     useCallback(({ playerState: { activeData } }) => activeData && activeData.startTime, [])
-  );
-  const endTime = useMessagePipeline(
-    useCallback(({ playerState: { activeData } }) => activeData && activeData.endTime, [])
   );
   const capabilities = useMessagePipeline(
     useCallback(({ playerState: { capabilities: playerStateCapabilities } }) => playerStateCapabilities, [])
@@ -45,7 +41,6 @@ export default function useDataSourceInfo(): DataSourceInfo {
     datatypes,
     capabilities,
     startTime,
-    endTime,
     playerId,
   };
 }

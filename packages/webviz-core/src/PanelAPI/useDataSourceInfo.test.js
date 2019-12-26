@@ -51,8 +51,7 @@ describe("useDataSourceInfo", () => {
         datatypes={datatypes}
         capabilities={["hello"]}
         messages={[messages[0]]}
-        startTime={{ sec: 0, nsec: 1 }}
-        endTime={{ sec: 10, nsec: 0 }}>
+        startTime={{ sec: 0, nsec: 1 }}>
         <Test />
       </MockMessagePipelineProvider>
     );
@@ -63,7 +62,6 @@ describe("useDataSourceInfo", () => {
           datatypes: { Foo: { fields: [] } },
           capabilities: ["hello"],
           startTime: { sec: 0, nsec: 1 },
-          endTime: { sec: 10, nsec: 0 },
           playerId: "1",
         },
       ],
@@ -79,8 +77,7 @@ describe("useDataSourceInfo", () => {
         datatypes={datatypes}
         capabilities={["hello"]}
         messages={[messages[0]]}
-        startTime={{ sec: 0, nsec: 1 }}
-        endTime={{ sec: 10, nsec: 0 }}>
+        startTime={{ sec: 0, nsec: 1 }}>
         <Test />
       </MockMessagePipelineProvider>
     );
@@ -91,7 +88,6 @@ describe("useDataSourceInfo", () => {
           datatypes: { Foo: { fields: [] } },
           capabilities: ["hello"],
           startTime: { sec: 0, nsec: 1 },
-          endTime: { sec: 10, nsec: 0 },
           playerId: "1",
         },
       ],
@@ -109,7 +105,6 @@ describe("useDataSourceInfo", () => {
           datatypes: { Foo: { fields: [] } },
           capabilities: ["hello"],
           startTime: { sec: 0, nsec: 1 },
-          endTime: { sec: 10, nsec: 0 },
           playerId: "1",
         },
       ],

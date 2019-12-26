@@ -10,8 +10,8 @@ import { storiesOf } from "@storybook/react";
 import React, { Component } from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
-import LargeList from "./LargeList";
-import type { RenderRow } from "./LargeList";
+import LogList from "./LogList";
+import type { RenderRow } from "./LogList";
 
 const MSG_BATCH_SIZE = 100;
 
@@ -35,7 +35,7 @@ const generateData = (size) => {
 };
 
 type Props = {
-  renderRow?: RenderRow<any>,
+  renderRow: RenderRow<any>,
 };
 
 type State = {
@@ -82,16 +82,15 @@ class Example extends Component<Props, State> {
     return (
       <div style={{ padding: 20, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
         <button onClick={this.togglePause}>{paused ? "Resume Stream" : "Pause Stream"}</button>
-        <LargeList items={items} disableScrollToBottom={paused} renderRow={renderRow} />
+        <LogList items={items} renderRow={renderRow} />
       </div>
     );
   }
 }
 
-storiesOf("<LargeList>", module)
+storiesOf("<LogList>", module)
   .addDecorator(withScreenshot())
-  .add("standard", () => <Example />)
-  .add("custom rowRenderer", () => {
+  .add("default", () => {
     return (
       <Example
         renderRow={({ item, style }) => (

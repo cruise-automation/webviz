@@ -12,6 +12,7 @@ import filterMap from "webviz-core/src/filterMap";
 import {
   getFlattenedTreeNodes,
   TOPIC_CONFIG,
+  removeTopicPrefixes,
 } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils";
 import {
   type TopicDisplayMode,
@@ -56,12 +57,6 @@ export function getNewCheckedNodes(selectedAndAvailableTopics: string[], checked
     newCheckedNodes = [...newCheckedNodes, `name:${BAG2_TOPIC_GROUP_NAME}`];
   }
   return newCheckedNodes;
-}
-
-// remove all the bag prefixes for now, can add support for other prefixes later
-export function removeTopicPrefixes(topicNames: string[]): string[] {
-  const uniqueName = new Set(topicNames.map((topic) => topic.replace(/^\/webviz_bag_\d+\//, "/")));
-  return [...uniqueName];
 }
 
 // get the treeConfig based on various inputs

@@ -23,7 +23,7 @@ type Props = {
 
 const checkboxStyle = { height: 12, marginBottom: -2 };
 
-export default class TimeBasedChart extends React.PureComponent<Props> {
+export default class TimeBasedChartLegend extends React.PureComponent<Props> {
   _toggleLine = (label: string) => () => {
     const { datasetId, toggleLine } = this.props;
     toggleLine(datasetId, label);

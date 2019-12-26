@@ -103,6 +103,7 @@ type Props = {|
   datasetId?: string,
   onClick?: (MouseEvent) => void,
   saveCurrentYs?: (minY: number, maxY: number) => void,
+  xAxisVal?: "timestamp" | "index",
   useFixedYAxisWidth?: boolean,
 |};
 type State = {|
@@ -113,6 +114,7 @@ type State = {|
   userSetMaxX: number | null,
   userSetMinY: number | null,
   userSetMaxY: number | null,
+  xAxisVal: "timestamp" | "index",
 |};
 
 // Create a chart with any y-axis but with an x-axis that shows time since the
@@ -133,6 +135,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
     userSetMaxX: null,
     userSetMinY: null,
     userSetMaxY: null,
+    xAxisVal: "timestamp",
   };
 
   componentDidMount() {
@@ -140,13 +143,15 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
   }
 
   static getDerivedStateFromProps(nextProps: Props, prevState: State): State {
-    const { annotations } = prevState;
+    const { annotations, xAxisVal } = prevState;
     const nextAnnotations = nextProps.annotations || [];
+    const nextXAxisVal = nextProps.xAxisVal || "timestamp";
     const currentFutureTime = annotations && annotations.length && annotations[0].value;
     const nextFutureTime = nextAnnotations && nextAnnotations.length && nextAnnotations[0].value;
     return {
       ...prevState,
-      shouldRedraw: currentFutureTime !== nextFutureTime,
+      shouldRedraw: currentFutureTime !== nextFutureTime || xAxisVal !== nextXAxisVal,
+      xAxisVal: nextXAxisVal,
       annotations: nextAnnotations,
     };
   }
@@ -274,7 +279,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
     if (!this._chart) {
       delete this._mousePosition;
       this._updateTooltip();
-      if (this._bar) {
+      if (this._bar && this._bar.style) {
         this._bar.style.display = "none";
       }
       return;
@@ -289,7 +294,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
     ) {
       delete this._mousePosition;
       this._updateTooltip();
-      if (this._bar) {
+      if (this._bar && this._bar.style) {
         this._bar.style.display = "none";
       }
       return;
@@ -298,7 +303,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
       x: event.pageX - canvasRect.left,
       y: event.pageY - canvasRect.top,
     };
-    if (this._bar) {
+    if (this._bar && this._bar.style) {
       this._bar.style.display = "block";
       this._bar.style.left = `${this._mousePosition.x}px`;
     }
@@ -421,7 +426,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
 
   renderChart() {
     const { type, width, height, data, isSynced, linesToHide = {} } = this.props;
-    const { userSetMinX, userSetMaxX, userSetMinY, userSetMaxY } = this.state;
+    const { userSetMinX, userSetMaxX, userSetMinY, userSetMaxY, xAxisVal } = this.state;
     const userSetMinOrZero = isNaN(userSetMinX) ? data.minIsZero : userSetMinX;
     const minX = userSetMinOrZero
       ? 0
@@ -443,7 +448,7 @@ export default class TimeBasedChart extends React.PureComponent<Props, State> {
       data: { ...data, datasets: data.datasets.filter((dataset) => !linesToHide[dataset.label]) },
     };
 
-    return isSynced ? (
+    return isSynced && xAxisVal === "timestamp" ? (
       <SyncTimeAxis data={{ minX, maxX }}>
         {(syncedMinMax) => {
           const syncedMinX = syncedMinMax.minX != null ? Math.min(minX, syncedMinMax.minX) : minX;

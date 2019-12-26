@@ -6,12 +6,16 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import FlagVariantIcon from "@mdi/svg/svg/flag-variant.svg";
 import React, { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { setPlaybackConfig } from "webviz-core/src/actions/panels";
 import Dropdown from "webviz-core/src/components/Dropdown";
+import { ExperimentalFeaturesModal } from "webviz-core/src/components/ExperimentalFeatures";
+import { Item } from "webviz-core/src/components/Menu";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
+import renderToBody from "webviz-core/src/components/renderToBody";
 import { useDataSourceInfo } from "webviz-core/src/PanelAPI";
 import { PlayerCapabilities } from "webviz-core/src/players/types";
 import { ndash, times } from "webviz-core/src/util/entities";
@@ -50,6 +54,13 @@ export default function PlaybackSpeedControls() {
     [playerId, setSpeed, configSpeed]
   );
 
+  const onExperimentalFeaturesClick = useCallback(() => {
+    const modal = renderToBody(<ExperimentalFeaturesModal onRequestClose={() => close(false)} />);
+    function close(value) {
+      modal.remove();
+    }
+  }, []);
+
   if (!canSetSpeed) {
     return null;
   }
@@ -66,6 +77,10 @@ export default function PlaybackSpeedControls() {
           {eachSpeed}&times;
         </span>
       ))}
+      <hr />
+      <Item icon={<FlagVariantIcon />} onClick={onExperimentalFeaturesClick}>
+        Configure &rdquo;Slower downloads, faster playback&rdquo;
+      </Item>
     </Dropdown>
   );
 }

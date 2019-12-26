@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { some } from "lodash";
+import { some, mapValues } from "lodash";
 import type { Time } from "rosbag";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -60,6 +60,7 @@ type SceneErrorTopics = {
   topicsWithBadFrameIds: Set<string>,
 };
 
+type SelectedNamespacesByTopic = { [topicName: string]: string[] };
 // constructs a scene containing all objects to be rendered
 // by consuming visualization topics from frames
 export default class SceneBuilder implements MarkerProvider {
@@ -88,7 +89,9 @@ export default class SceneBuilder implements MarkerProvider {
   _topicSettings: TopicSettingsCollection = {};
 
   allNamespaces: Namespace[] = [];
+  // TODO(Audrey): remove enabledNamespaces once we release topic groups
   enabledNamespaces: Namespace[] = [];
+  selectedNamespacesByTopic: ?{ [topicName: string]: Set<string> };
   flatten: boolean = false;
   bounds: Bounds = new Bounds();
 
@@ -158,6 +161,10 @@ export default class SceneBuilder implements MarkerProvider {
     this.enabledNamespaces = namespaces;
   }
 
+  setSelectedNamespacesByTopic(selectedNamespacesByTopic: SelectedNamespacesByTopic) {
+    this.selectedNamespacesByTopic = mapValues(selectedNamespacesByTopic, (namespaces) => new Set(namespaces));
+  }
+
   setGlobalVariables = (globalVariables: any = {}) => {
     const { selectionState, topicsToRender } = getGlobalHooks()
       .perPanelHooks()
@@ -200,6 +207,13 @@ export default class SceneBuilder implements MarkerProvider {
 
   // Only public for tests.
   namespaceIsEnabled(topic: string, name: string) {
+    if (this.selectedNamespacesByTopic) {
+      // enable all namespaces under a topic if it's not already set
+      return (
+        (this.selectedNamespacesByTopic[topic] && this.selectedNamespacesByTopic[topic].has(name)) ||
+        this.selectedNamespacesByTopic[topic] == null
+      );
+    }
     return some(this.enabledNamespaces, (ns) => ns.topic === topic && ns.name === name);
   }
 

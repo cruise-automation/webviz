@@ -61,6 +61,7 @@
     "redux-thunk": "2.3.0",
     "reselect": "4.0.0",
     "rosbag": "2.1.0",
+    "roslib": "RobotWebTools/roslibjs#c10d9eca43ad51cc89b335d00e81f647cbcb77d3",
     "sanitize-html": "1.20.0",
     "shallowequal": "1.1.0",
     "string-hash": "1.1.3",

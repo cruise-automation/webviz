@@ -9,7 +9,7 @@
 import React from "react";
 import styled from "styled-components";
 
-import ItemRow from "./ItemRow";
+import TopicItemRow from "./TopicItemRow";
 import type { TopicGroupType } from "./types";
 import { colors } from "webviz-core/src/util/colors";
 
@@ -30,11 +30,17 @@ const STopicGroupName = styled.div`
   flex: 1;
 `;
 
-type Props = {
+type Props = {|
   topicGroup: TopicGroupType,
-};
+|};
 
-export default function TopicGroup({ topicGroup: { displayName, expanded, items } }: Props) {
+export default function TopicGroup({
+  topicGroup: {
+    displayName,
+    expanded,
+    derivedFields: { items },
+  },
+}: Props) {
   return (
     <STopicGroup>
       <STopicGroupHeader>
@@ -44,7 +50,7 @@ export default function TopicGroup({ topicGroup: { displayName, expanded, items 
         <STopicGroupBody>
           {!items.length && <div>There are no items in this group. Add one</div>}
           {items.map((item) => (
-            <ItemRow item={item} key={item.id} />
+            <TopicItemRow item={item} key={item.derivedFields.id} />
           ))}
         </STopicGroupBody>
       )}

@@ -8,6 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
+import TestUtils from "react-dom/test-utils";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Rosout from "webviz-core/src/panels/Rosout";
@@ -88,6 +89,21 @@ storiesOf("<RosoutPanel>", module)
   .add("default", () => {
     return (
       <PanelSetup fixture={fixture}>
+        <Rosout />
+      </PanelSetup>
+    );
+  })
+  .add("with toolbar active", () => {
+    return (
+      <PanelSetup
+        fixture={fixture}
+        onMount={(el) => {
+          const mouseEnterContainer = document.querySelectorAll("[data-test=panel-mouseenter-container")[0];
+          TestUtils.Simulate.mouseEnter(mouseEnterContainer);
+          setTimeout(() => {
+            document.querySelectorAll("[data-test=panel-settings]")[0].click();
+          });
+        }}>
         <Rosout />
       </PanelSetup>
     );

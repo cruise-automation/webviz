@@ -10,6 +10,8 @@ import cx from "classnames";
 import React from "react";
 
 import styles from "./PlotMenu.module.scss";
+import { PanelToolbarLabel, PanelToolbarInput } from "webviz-core/shared/panelToolbarStyles";
+import Dropdown from "webviz-core/src/components/Dropdown";
 import Item from "webviz-core/src/components/Menu/Item";
 import type { PlotConfig } from "webviz-core/src/panels/Plot";
 import { type DataSet } from "webviz-core/src/panels/Plot/PlotChart";
@@ -63,18 +65,27 @@ export default function PlotMenu({
   saveConfig,
   setMinMax,
   datasets,
+  xAxisVal = "timestamp",
 }: {
   minYValue: string,
   maxYValue: string,
   saveConfig: ($Shape<PlotConfig>) => void,
-  setMinMax: () => void,
+  setMinMax: ($Shape<PlotConfig>) => void,
   datasets: DataSet[],
+  xAxisVal?: "timestamp" | "index",
 }) {
   return (
     <>
+      <Item>
+        <PanelToolbarLabel>X-axis</PanelToolbarLabel>
+        <Dropdown value={xAxisVal} onChange={(newXAxisVal) => saveConfig({ xAxisVal: newXAxisVal })}>
+          <span value="timestamp">timestamp</span>
+          <span value="index">index</span>
+        </Dropdown>
+      </Item>
       <Item onClick={() => saveConfig({ maxYValue: maxYValue === "" ? "10" : "" })}>
         <div className={styles.label}>Maximum</div>
-        <input
+        <PanelToolbarInput
           className={cx(styles.input, { [styles.inputError]: !isValidInput(maxYValue) })}
           value={maxYValue}
           onChange={(event) => {
@@ -86,7 +97,7 @@ export default function PlotMenu({
       </Item>
       <Item onClick={() => saveConfig({ minYValue: minYValue === "" ? "-10" : "" })}>
         <div className={styles.label}>Minimum</div>
-        <input
+        <PanelToolbarInput
           className={cx(styles.input, { [styles.inputError]: !isValidInput(minYValue) })}
           value={minYValue}
           onChange={(event) => {

@@ -41,6 +41,7 @@ export type PlotConfig = {
   minYValue: string,
   maxYValue: string,
   showLegend: boolean,
+  xAxisVal: "timestamp" | "index",
 };
 
 type Props = {
@@ -50,7 +51,7 @@ type Props = {
 
 function Plot(props: Props) {
   const { saveConfig, config } = props;
-  const { paths, minYValue, maxYValue, showLegend } = config;
+  const { paths, minYValue, maxYValue, showLegend, xAxisVal } = config;
   const [currentMinY, setCurrentMinY] = useState(null);
   const [currentMaxY, setCurrentMaxY] = useState(null);
 
@@ -78,9 +79,9 @@ function Plot(props: Props) {
     <Flex col clip center style={{ position: "relative" }}>
       {/* Don't filter out disabled paths when passing into <MessageHistory>, because we still want
           easy access to the history when turning the disabled paths back on. */}
-      <MessageHistory paths={paths.map((path) => path.value)}>
+      <MessageHistory paths={paths.map((path) => path.value)} {...(xAxisVal === "index" ? { historySize: 1 } : null)}>
         {({ itemsByPath, startTime }: MessageHistoryData) => {
-          const datasets = getDatasets(paths, itemsByPath, startTime);
+          const datasets = getDatasets(paths, itemsByPath, startTime, xAxisVal);
           return (
             <>
               <PanelToolbar
@@ -93,6 +94,7 @@ function Plot(props: Props) {
                     saveConfig={saveConfig}
                     setMinMax={setMinMax}
                     datasets={datasets}
+                    xAxisVal={xAxisVal}
                   />
                 }
               />
@@ -102,16 +104,17 @@ function Plot(props: Props) {
                 maxYValue={parseFloat(maxYValue)}
                 saveCurrentYs={saveCurrentYs}
                 datasets={datasets}
+                xAxisVal={xAxisVal}
               />
             </>
           );
         }}
       </MessageHistory>
-      <PlotLegend paths={paths} saveConfig={saveConfig} showLegend={showLegend} />
+      <PlotLegend paths={paths} saveConfig={saveConfig} showLegend={showLegend} xAxisVal={xAxisVal} />
     </Flex>
   );
 }
 Plot.panelType = "Plot";
-Plot.defaultConfig = { paths: [], minYValue: "", maxYValue: "", showLegend: true };
+Plot.defaultConfig = { paths: [], minYValue: "", maxYValue: "", showLegend: true, xAxisVal: "timestamp" };
 
 export default hot(Panel<PlotConfig>(Plot));

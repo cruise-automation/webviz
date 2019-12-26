@@ -219,7 +219,7 @@ const defaultHooks = {
         name: "Topic Group Management",
         description:
           "We're revamping the topic tree to be customizable directly from Webviz. You'll be able to create your own groups and toggle them easily.",
-        developmentDefault: true,
+        developmentDefault: false,
         productionDefault: false,
       },
     };

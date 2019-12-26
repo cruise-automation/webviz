@@ -28,6 +28,7 @@ import {
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import { EXPERIMENTAL_FEATURES_STORAGE_KEY } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/constants";
 import LayoutForTopicGroups from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/LayoutForTopicGroups";
+import type { TopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/types";
 import { type TopicDisplayMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTransforms";
@@ -37,19 +38,25 @@ import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 
 export type ThreeDimensionalVizConfig = {
   autoTextBackgroundColor?: boolean,
-  checkedNodes: string[],
-  expandedNodes: string[],
   cameraState: $Shape<CameraState>,
   followTf?: string | false,
   followOrientation?: boolean,
-  topicSettings: TopicSettingsCollection,
-  modifiedNamespaceTopics: string[],
+  modifiedNamespaceTopics?: string[],
   pinTopics: boolean,
   savedPropsVersion?: ?number, // eslint-disable-line react/no-unused-prop-types
   topicDisplayMode?: TopicDisplayMode,
   flattenMarkers?: boolean,
   selectedPolygonEditFormat?: "json" | "yaml",
   showCrosshair?: boolean,
+
+  topicGroups?: TopicGroupConfig[],
+  // TODO(Audrey): remove the 4 props below once topic groups is released
+  // props to be replaced by topicGroups
+  expandedNodes: string[],
+  checkedNodes: string[],
+  topicSettings: TopicSettingsCollection,
+  // override topic group feature flag for screenshot test
+  testShowTopicTree?: boolean,
 
   // legacy props
   hideMap?: ?boolean, // eslint-disable-line react/no-unused-prop-types
@@ -78,7 +85,7 @@ const BaseRenderer = (props: Props, ref) => {
     setSubscriptions,
     topics,
     transforms,
-    config: { followOrientation, followTf },
+    config: { followOrientation, followTf, testShowTopicTree },
   } = props;
   const extensions = useSelector((state) => state.extensions);
 
@@ -177,7 +184,8 @@ const BaseRenderer = (props: Props, ref) => {
 
   // useImperativeHandle so consumer component (e.g.Follow stories) can call onFollowChange directly.
   React.useImperativeHandle(ref, (): any => ({ onFollowChange }));
-  const enableTopicGrouping = useExperimentalFeature(EXPERIMENTAL_FEATURES_STORAGE_KEY);
+  const enableTopicGroupingFeature = useExperimentalFeature(EXPERIMENTAL_FEATURES_STORAGE_KEY);
+  const enableTopicGrouping = testShowTopicTree != null ? !testShowTopicTree : enableTopicGroupingFeature;
 
   return (
     <>

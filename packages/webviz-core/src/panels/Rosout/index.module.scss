@@ -14,15 +14,11 @@ $option-font-size: $text-size;
   optionHeight: $option-height;
 }
 
-.message {
-  line-height: 1.2;
-  padding-top: 32px;
-}
-
 .content {
   @include monospace;
   flex: 1 1 auto;
   display: flex;
+  position: relative;
 }
 
 .filtersBar {
@@ -38,11 +34,21 @@ $option-font-size: $text-size;
   flex: 0 1 auto;
   min-width: 120px;
   margin-left: 10px;
+  width: unset !important;
 }
 
 .nodeFilter {
   flex: 2 1 auto;
   min-width: 200px;
+  width: unset !important;
+}
+
+.itemsCountField {
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0px 8px;
 }
 
 :global {

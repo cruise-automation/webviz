@@ -27,8 +27,8 @@ import {
   getRemoteBagDescriptor,
 } from "webviz-core/src/dataProviders/standardDataProviderDescriptors";
 import useUserNodes from "webviz-core/src/hooks/useUserNodes";
-import NodePlayer from "webviz-core/src/players/NodePlayer";
 import RandomAccessPlayer from "webviz-core/src/players/RandomAccessPlayer";
+import RosbridgePlayer from "webviz-core/src/players/RosbridgePlayer";
 import type { Player } from "webviz-core/src/players/types";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
 import type { ImportPanelLayoutPayload, UserNodes } from "webviz-core/src/types/panels";
@@ -37,6 +37,7 @@ import {
   DEMO_QUERY_KEY,
   LOAD_ENTIRE_BAG_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
+  ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY,
   SECOND_BAG_PREFIX,
 } from "webviz-core/src/util/globalConstants";
 import { getSeekToTime } from "webviz-core/src/util/time";
@@ -82,7 +83,23 @@ function PlayerManager({
   setUserNodeTrust: setTrust,
 }: Props) {
   const usedFiles = React.useRef<File[]>([]);
-  const [player, setPlayer] = React.useState();
+  const [player, setPlayerInternal] = React.useState();
+
+  const setPlayer = React.useCallback(
+    (newPlayer: ?Player) => {
+      if (!newPlayer) {
+        setPlayerInternal(undefined);
+        return;
+      }
+      const userNodePlayer = new UserNodePlayer(newPlayer, {
+        setUserNodeDiagnostics: setDiagnostics,
+        addUserNodeLogs: setLogs,
+        setUserNodeTrust: setTrust,
+      });
+      setPlayerInternal(userNodePlayer);
+    },
+    [setDiagnostics, setLogs, setTrust]
+  );
 
   React.useEffect(
     () => {
@@ -97,26 +114,23 @@ function PlayerManager({
             getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
             getPlayerOptions()
           );
-          const userNodePlayer = new UserNodePlayer(newPlayer, {
-            setUserNodeDiagnostics: setDiagnostics,
-            addUserNodeLogs: setLogs,
-            setUserNodeTrust: setTrust,
-          });
           if (params.has(DEMO_QUERY_KEY)) {
             // When we're showing a demo, then automatically start playback (we don't normally
             // do that).
             setTimeout(() => {
-              userNodePlayer.startPlayback();
+              newPlayer.startPlayback();
             }, 1000);
           }
-          setPlayer(userNodePlayer);
+          setPlayer(newPlayer);
         });
         if (params.has(DEMO_QUERY_KEY)) {
           importLayout(demoLayoutJson, false, true);
         }
+      } else {
+        setPlayer(new RosbridgePlayer(params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090"));
       }
     },
-    [importLayout, setDiagnostics, setLogs, setTrust]
+    [importLayout, setDiagnostics, setLogs, setPlayer, setTrust]
   );
 
   useUserNodes({ nodePlayer: player, userNodes });
@@ -133,7 +147,7 @@ function PlayerManager({
             usedFiles.current = [files[0]];
           }
           const builtPlayer = buildPlayer(usedFiles.current);
-          setPlayer(builtPlayer ? new NodePlayer(builtPlayer) : undefined);
+          setPlayer(builtPlayer);
         }}>
         <DropOverlay>
           <div style={{ fontSize: "4em", marginBottom: "1em" }}>Drop a bag file to load it!</div>

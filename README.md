@@ -1,6 +1,6 @@
 # [Webviz](https://webviz.io/) [![CircleCI](https://circleci.com/gh/cruise-automation/webviz.svg?style=svg)](https://circleci.com/gh/cruise-automation/webviz)
 
-**Drag and drop your own bag files into [Webviz](https://webviz.io/try/) to explore your robotics data.**
+**Drag and drop your own bag files into [Webviz](https://webviz.io/try/) to explore your robotics data, or connect to a live robot or simulation using the [rosbridge_server](http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge).**
 
 **View a demo of Webviz in action [here](https://webviz.io/try/?demo).**
 

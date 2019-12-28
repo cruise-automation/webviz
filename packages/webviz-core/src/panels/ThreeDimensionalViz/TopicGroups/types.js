@@ -15,6 +15,7 @@ export type NamespacesBySource = { [dataSourcePrefix: string]: string[] };
 
 export type DisplayVisibilityBySource = {
   [topicPrefix: string]: {
+    isParentVisible: boolean,
     badgeText: string,
     visible: boolean,
     available: boolean,
@@ -23,6 +24,7 @@ export type DisplayVisibilityBySource = {
 export type TopicItemConfig = {|
   displayName?: string,
   topicName: string,
+  expanded?: boolean, // if true, namespaces will be expanded
   visibilitiesBySource?: VisibilityBySource,
   settingsBySource?: SettingsBySource,
   selectedNamespacesBySource?: NamespacesBySource,
@@ -36,6 +38,7 @@ type DerivedTopicItemFields = {|
   namespaceItems: NamespaceItem[],
   displayVisibilityBySource: DisplayVisibilityBySource,
   displayName: string,
+  available: boolean,
   id: string,
   // TODO(Audrey): support 2nd bag for map and tf with `disableMultiSelection`
 |};
@@ -48,7 +51,7 @@ export type TopicItem = {|
 export type TopicGroupConfig = {|
   displayName: string,
   items: TopicItemConfig[],
-  selected?: boolean,
+  visible?: boolean,
   expanded?: boolean,
 |};
 type TopicGroupDerivedFields = {|

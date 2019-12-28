@@ -34,7 +34,6 @@ import PanelContext from "webviz-core/src/components/PanelContext";
 import { getPanelTypeFromMosiac } from "webviz-core/src/components/PanelToolbar/utils";
 import renderToBody from "webviz-core/src/components/renderToBody";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList from "webviz-core/src/panels/PanelList";
 import type { PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
 import { getPanelIdForType } from "webviz-core/src/util";
@@ -65,7 +64,7 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
 
   close = () => {
     const { mosaicActions, mosaicWindowActions } = this.context;
-    getGlobalHooks().onPanelClose(this.getPanelType());
+    window.ga("send", "event", "Panel", "Close", this.getPanelType());
     mosaicActions.remove(mosaicWindowActions.getPath());
   };
 
@@ -76,7 +75,7 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
       throw new Error("Trying to split unknown panel!");
     }
 
-    getGlobalHooks().onPanelSplit(type);
+    window.ga("send", "event", "Panel", "Split", type);
 
     const config = store.getState().panels.savedProps[id];
     const newId = getPanelIdForType(type);
@@ -88,7 +87,7 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
   };
 
   swap = (type: string, panelConfig?: PanelConfig) => {
-    getGlobalHooks().onPanelSwap(type);
+    window.ga("send", "event", "Panel", "Swap", type);
     this.context.mosaicWindowActions.replaceWithNew({ type, panelConfig });
   };
 

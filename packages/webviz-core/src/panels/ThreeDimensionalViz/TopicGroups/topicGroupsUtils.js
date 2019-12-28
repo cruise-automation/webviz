@@ -9,7 +9,13 @@
 import { omit, flatten, uniq, isEmpty } from "lodash";
 import microMemoize from "micro-memoize";
 
-import type { TopicGroupConfig, TopicGroupType, NamespacesBySource, NamespaceItem } from "./types";
+import type {
+  TopicGroupConfig,
+  TopicGroupType,
+  NamespacesBySource,
+  NamespaceItem,
+  DisplayVisibilityBySource,
+} from "./types";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
 import { type Topic } from "webviz-core/src/players/types";
@@ -52,7 +58,8 @@ export function getTopicGroups(
   const availableTopicNamesSet = new Set(availableTopics.map(({ name }) => name));
 
   return groupsConfig.map((groupConfig, idx) => {
-    const id = `${groupConfig.displayName}_${idx}`;
+    const id = `${groupConfig.displayName.split(" ").join("-")}_${idx}`;
+    const isTopicGroupVisible = !!groupConfig.visible;
     return {
       ...groupConfig,
       derivedFields: {
@@ -67,16 +74,19 @@ export function getTopicGroups(
 
           const availableNamespacesBySource = {};
           const topicDisplayVisibilityBySource = {};
+          let available = false;
 
           ALL_DATA_SOURCE_PREFIXES.forEach((dataSourcePrefix) => {
             const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
             if (availableTopicNamesSet.has(prefixedTopicName)) {
+              available = true;
               // only show namespaces when the topic is available
               if (namespacesByTopic[prefixedTopicName]) {
                 availableNamespacesBySource[dataSourcePrefix] = namespacesByTopic[prefixedTopicName];
               }
 
               topicDisplayVisibilityBySource[dataSourcePrefix] = {
+                isParentVisible: isTopicGroupVisible,
                 badgeText: getBadgeTextByTopicName(prefixedTopicName),
                 // always visible by default
                 // $FlowFixMe the field is missing in object literal
@@ -90,7 +100,9 @@ export function getTopicGroups(
           const namespaceItems = getNamespacesItemsBySource(
             topicName,
             availableNamespacesBySource,
-            selectedNamespacesBySource
+            selectedNamespacesBySource,
+            topicDisplayVisibilityBySource,
+            isTopicGroupVisible
           );
 
           return {
@@ -101,6 +113,7 @@ export function getTopicGroups(
               displayName: displayName || displayNameByTopic[topicName] || topicName,
               displayVisibilityBySource: topicDisplayVisibilityBySource,
               namespaceItems,
+              available,
             },
           };
         }),
@@ -109,8 +122,9 @@ export function getTopicGroups(
   });
 }
 
+type TopicTreeItem = {| topic: string, name: string |};
 // Traverse the tree and flatten the children items in the topicConfig.
-function* flattenItem(item: TopicConfig, name: string) {
+function* flattenItem(item: TopicConfig, name: string): Generator<TopicTreeItem, void, void> {
   const childrenItems = item.children;
   // extensions or leaf nodes
   if (!childrenItems || item.extension) {
@@ -129,9 +143,11 @@ function* flattenItem(item: TopicConfig, name: string) {
 }
 
 // Memoize the flattened nodes since it only needs to be computed once.
-export const getFlattenedTreeNodes = microMemoize((topicConfig) => {
-  return flatten(topicConfig.children.map((item) => Array.from(flattenItem(item, item.name || ""))));
-});
+export const getFlattenedTreeNodes = microMemoize(
+  (topicConfig): TopicTreeItem[] => {
+    return flatten(topicConfig.children.map((item) => Array.from(flattenItem(item, item.name || ""))));
+  }
+);
 
 // Generate a map based on topicTree config, so we can map a topicName or extension to a preconfigured name.
 export const buildItemDisplayNameByTopicOrExtension = microMemoize(
@@ -191,7 +207,9 @@ function getBadgeTextByTopicName(topicName: string): string {
 export function getNamespacesItemsBySource(
   topicName: string,
   availableNamespacesBySource: NamespacesBySource,
-  selectedNamespacesBySource: NamespacesBySource = {}
+  selectedNamespacesBySource: NamespacesBySource = {},
+  topicDisplayVisibilityBySource: DisplayVisibilityBySource,
+  isTopicGroupVisible: boolean
 ): NamespaceItem[] {
   if (isEmpty(availableNamespacesBySource)) {
     return [];
@@ -205,6 +223,7 @@ export function getNamespacesItemsBySource(
       name: namespace,
       displayVisibilityBySource: availableDataSourcePrefixes.reduce((memo, dataSourcePrefix) => {
         memo[dataSourcePrefix] = {
+          isParentVisible: isTopicGroupVisible ? topicDisplayVisibilityBySource[dataSourcePrefix].visible : false,
           badgeText: getBadgeTextByTopicName(`${dataSourcePrefix}${topicName}`),
           visible:
             selectedNamespacesBySource[dataSourcePrefix] != null
@@ -228,7 +247,10 @@ export function getSelectionsFromTopicGroupConfig(
   const selectedTopicNames = [];
   const selectedNamespacesByTopic = {};
   const selectedTopicSettingsByTopic = {};
-  topicGroupsConfig.forEach(({ items }) => {
+  topicGroupsConfig.forEach(({ visible: topicGroupVisible, items }) => {
+    if (!topicGroupVisible) {
+      return;
+    }
     items.forEach(({ topicName, visibilitiesBySource, settingsBySource, selectedNamespacesBySource = {} }) => {
       // if the visibility is not set, default to make the non-prefixed topic visible and add the corresponding namespaces
       if (!visibilitiesBySource) {

@@ -6,10 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEqual, sortBy } from "lodash";
+import { isEqual, sortBy, flatten, keyBy, mapValues } from "lodash";
+import microMemoize from "micro-memoize";
 
-import { ALL_DATA_SOURCE_PREFIXES, removeTopicPrefixes } from "./topicGroupsUtils";
+import { ALL_DATA_SOURCE_PREFIXES, TOPIC_CONFIG, removeTopicPrefixes } from "./topicGroupsUtils";
 import type { TopicGroupConfig } from "./types";
+import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
 
 function getSelectionsFromCheckedNodes(
   checkedNodes: string[]
@@ -17,10 +19,12 @@ function getSelectionsFromCheckedNodes(
   selectedTopics: string[],
   selectedExtensions: string[],
   selectedNamespacesByTopic: { [topicName: string]: string[] },
+  selectedNamesSet: Set<string>,
 } {
   const selectedExtensions = [];
   const selectedTopics = [];
   const selectedNamespacesByTopic = {};
+  const selectedNamesSet = new Set();
   checkedNodes.forEach((item) => {
     if (item.startsWith("t:")) {
       selectedTopics.push(item.substr("t:".length));
@@ -34,12 +38,79 @@ function getSelectionsFromCheckedNodes(
         selectedNamespacesByTopic[topic] = selectedNamespacesByTopic[topic] || [];
         selectedNamespacesByTopic[topic].push(namespace);
       }
+    } else if (item.startsWith("name:")) {
+      selectedNamesSet.add(item.substr("name:".length));
     }
   });
-  return { selectedExtensions, selectedTopics, selectedNamespacesByTopic };
+  return { selectedExtensions, selectedTopics, selectedNamespacesByTopic, selectedNamesSet };
 }
 
-// Create a new topic group called 'My Topic Group' and related fields based the old config
+// Generate a list of parent names for each topic so that we know the topic is selected only if all parent names are selected
+function* generateParentNamesByTopic(
+  item: TopicConfig,
+  parentNames: string[]
+): Generator<{| topic: string, parentNames: string[] |}, void, void> {
+  const childrenItems = item.children;
+  if (!childrenItems && item.topic) {
+    yield { topic: item.topic, parentNames };
+  }
+  if (childrenItems) {
+    for (const subItem of childrenItems) {
+      yield* generateParentNamesByTopic(subItem, parentNames.concat(item.name ? [item.name] : []));
+    }
+  }
+}
+
+// Memoize the parentNamesByTopic since it only needs to be computed once.
+const getParentNamesByTopic = microMemoize(
+  (topicConfig): { [topicName: string]: string[] } => {
+    const items = flatten(topicConfig.children.map((item) => Array.from(generateParentNamesByTopic(item, []))));
+    return mapValues(keyBy(items, "topic"), ({ parentNames }) => parentNames);
+  }
+);
+
+type LegacyIdItem = {| legacyId: string, topic: string |} | {| legacyId: string, name: string |};
+function* generateLegacyIdItems(item: TopicConfig): Generator<LegacyIdItem, void, void> {
+  const { children, name, topic, legacyIds } = item;
+  if (legacyIds) {
+    if (topic) {
+      yield* legacyIds.map((legacyId) => ({ legacyId, topic }));
+    } else if (name) {
+      yield* legacyIds.map((legacyId) => ({ legacyId, name }));
+    }
+  }
+  if (children) {
+    for (const subItem of children) {
+      yield* generateLegacyIdItems(subItem);
+    }
+  }
+}
+
+const getLegacyIdItems = microMemoize(
+  (topicConfig): LegacyIdItem[] => {
+    return flatten(topicConfig.children.map((item) => Array.from(generateLegacyIdItems(item))));
+  }
+);
+
+// Migrate legacyIds related to topics and names to the actual names and topics.
+export function migrateLegacyIds(checkedNodes: string[]): string[] {
+  const legacyIdItems = getLegacyIdItems(TOPIC_CONFIG);
+  const newCheckedNameOrTopicByOldNames = {};
+  for (const { topic, name, legacyId } of legacyIdItems) {
+    if (name) {
+      newCheckedNameOrTopicByOldNames[`${legacyId}`] = `name:${name}`;
+      newCheckedNameOrTopicByOldNames[`name:${legacyId}`] = `name:${name}`;
+    }
+    if (topic) {
+      newCheckedNameOrTopicByOldNames[`t:${legacyId}`] = `t:${topic}`;
+      // If both name and topic are present, only use topic as the new checkedName
+      newCheckedNameOrTopicByOldNames[`${legacyId}`] = `t:${topic}`;
+    }
+  }
+  return checkedNodes.map((node) => newCheckedNameOrTopicByOldNames[node] || node);
+}
+
+// Create a new topic group called 'My Topics' and related fields based the old config
 export function migratePanelConfigToTopicGroupConfig({
   topicSettings,
   checkedNodes,
@@ -52,53 +123,76 @@ export function migratePanelConfigToTopicGroupConfig({
   if (!checkedNodes) {
     return {
       displayName: "My Topics",
-      selected: true,
+      visible: true,
       expanded: true,
       items: [],
     };
   }
 
-  const { selectedExtensions, selectedTopics, selectedNamespacesByTopic } = getSelectionsFromCheckedNodes(checkedNodes);
+  const migratedCheckedNodes = migrateLegacyIds(checkedNodes);
+  const {
+    selectedExtensions,
+    selectedTopics,
+    selectedNamespacesByTopic,
+    selectedNamesSet,
+  } = getSelectionsFromCheckedNodes(migratedCheckedNodes);
+  const parentNamesByTopic = getParentNamesByTopic(TOPIC_CONFIG);
   const nonPrefixedTopics = removeTopicPrefixes(selectedTopics);
 
-  let items = nonPrefixedTopics.map((topicName) => {
-    let visibilitiesBySource;
-    let settingsBySource;
-    let selectedNamespacesBySource;
-    for (const dataSourcePrefix of ALL_DATA_SOURCE_PREFIXES) {
-      const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
-      if (selectedTopics.includes(prefixedTopicName)) {
-        // migrate visibility
-        visibilitiesBySource = visibilitiesBySource || {};
-        visibilitiesBySource[dataSourcePrefix] = true;
+  let items = nonPrefixedTopics
+    .map((topicName) => {
+      let visibilitiesBySource;
+      let settingsBySource;
+      let selectedNamespacesBySource;
 
-        // migrate settings, no need to migrate topic settings for topics that are not selected
-        if (topicSettings && topicSettings[prefixedTopicName]) {
-          settingsBySource = settingsBySource || {};
-          settingsBySource[dataSourcePrefix] = topicSettings[prefixedTopicName];
-        }
+      for (const dataSourcePrefix of ALL_DATA_SOURCE_PREFIXES) {
+        const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
+        // a topic is selected if it's checked and all it's parent names are checked as well
+        const isTopicSelected =
+          selectedTopics.includes(prefixedTopicName) &&
+          (parentNamesByTopic[prefixedTopicName] || ["(Uncategorized)"]).every((parentName) =>
+            selectedNamesSet.has(parentName)
+          );
+        if (isTopicSelected) {
+          // migrate visibility
+          visibilitiesBySource = visibilitiesBySource || {};
+          visibilitiesBySource[dataSourcePrefix] = true;
 
-        // migrate topic namespaces, always set the selectedNamespacesBySource field when the namespaces are modified
-        if (
-          (modifiedNamespaceTopics && modifiedNamespaceTopics.includes(prefixedTopicName)) ||
-          selectedNamespacesByTopic[prefixedTopicName]
-        ) {
-          selectedNamespacesBySource = selectedNamespacesBySource || {};
-          if (selectedNamespacesByTopic[prefixedTopicName]) {
-            selectedNamespacesBySource[dataSourcePrefix] = selectedNamespacesByTopic[prefixedTopicName];
+          // migrate settings, no need to migrate topic settings for topics that are not selected
+          if (topicSettings && topicSettings[prefixedTopicName]) {
+            settingsBySource = settingsBySource || {};
+            settingsBySource[dataSourcePrefix] = topicSettings[prefixedTopicName];
+          }
+
+          // migrate topic namespaces, always set the selectedNamespacesBySource field when the namespaces are modified
+          if (
+            (modifiedNamespaceTopics && modifiedNamespaceTopics.includes(prefixedTopicName)) ||
+            selectedNamespacesByTopic[prefixedTopicName]
+          ) {
+            selectedNamespacesBySource = selectedNamespacesBySource || {};
+            if (selectedNamespacesByTopic[prefixedTopicName]) {
+              selectedNamespacesBySource[dataSourcePrefix] = selectedNamespacesByTopic[prefixedTopicName];
+            }
           }
         }
       }
-    }
 
-    return {
-      topicName,
-      ...(settingsBySource ? { settingsBySource } : undefined),
-      // no need to store the default visibilitiesBySource in panelConfig
-      ...(!visibilitiesBySource || isEqual(visibilitiesBySource, { "": true }) ? undefined : { visibilitiesBySource }),
-      ...(selectedNamespacesBySource ? { selectedNamespacesBySource } : undefined),
-    };
-  });
+      // only selected the visible topics
+      return visibilitiesBySource
+        ? {
+            topicName,
+            // auto expand the topic if it has any selected namespaces
+            ...(flatten(Object.values(selectedNamespacesBySource || {})).length > 0 ? { expanded: true } : undefined),
+            ...(settingsBySource ? { settingsBySource } : undefined),
+            // no need to store the default visibilitiesBySource in panelConfig
+            ...(!visibilitiesBySource || isEqual(visibilitiesBySource, { "": true })
+              ? undefined
+              : { visibilitiesBySource }),
+            ...(selectedNamespacesBySource ? { selectedNamespacesBySource } : undefined),
+          }
+        : null;
+    })
+    .filter(Boolean);
 
   const selectedMetadataNamespaces = [];
   const selectedTfNamespaces = [];
@@ -129,7 +223,7 @@ export function migratePanelConfigToTopicGroupConfig({
   return {
     // give default displayName, and select/expand state
     displayName: "My Topics",
-    selected: true,
+    visible: true,
     expanded: true,
     items,
   };

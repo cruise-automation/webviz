@@ -38,23 +38,64 @@ const SDataSourceBadge = styled.span`
   height: ${(props) => (props.isNamespace ? "18px" : "24px")};
   margin-left: 4px;
   color: ${colors.LIGHT};
+  cursor: pointer;
 `;
 
-type Props = {| isNamespace?: boolean, badgeText: string, visible: boolean, available: boolean |};
+type Props = {|
+  available: boolean,
+  badgeText: string,
+  dataTest: string,
+  isNamespace?: boolean,
+  onToggleVisibility: () => void,
+  visible: boolean,
+  isParentVisible: boolean,
+|};
 
 // Apply different UI for topic and namespace badges based on visibility and availability
 // TODO(Audrey): derive colors from settings and marker colors, apply hover UI
-function getBadgeStyle(visible: boolean, available: boolean): { [attr: string]: string | number } {
+function getBadgeStyle({
+  visible,
+  available,
+  isParentVisible,
+  isNamespace,
+}: {
+  visible: boolean,
+  available: boolean,
+  isParentVisible: boolean,
+  isNamespace?: boolean,
+}): { [attr: string]: string | number } {
+  if (!isParentVisible) {
+    return { opacity: available ? 0.1 : 0, cursor: available ? "not-allowed" : "unset" };
+  }
   if (available) {
     return visible ? BADGE_STYLES.AVAILABLE_VISIBLE : BADGE_STYLES.AVAILABLE_HIDDEN;
   }
   // hide any unavailable items
-  return { opacity: 0 };
+  return { opacity: 0, cursor: "unset" };
 }
 
-export default function DataSourceBadge({ isNamespace, badgeText, visible, available }: Props) {
+export default function DataSourceBadge({
+  available,
+  badgeText,
+  dataTest,
+  isNamespace,
+  isParentVisible,
+  onToggleVisibility,
+  visible,
+}: Props) {
   return (
-    <SDataSourceBadge isNamespace={isNamespace} style={getBadgeStyle(visible, available)}>
+    <SDataSourceBadge
+      visible={visible}
+      available={available}
+      data-test={dataTest}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (isParentVisible) {
+          onToggleVisibility();
+        }
+      }}
+      isNamespace={isNamespace}
+      style={getBadgeStyle({ visible, available, isParentVisible, isNamespace })}>
       {badgeText}
     </SDataSourceBadge>
   );

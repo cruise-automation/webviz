@@ -9,7 +9,7 @@
 import * as React from "react";
 import { connect } from "react-redux";
 
-import { importPanelLayout } from "webviz-core/src/actions/panels";
+import { importPanelLayout, setGlobalVariables } from "webviz-core/src/actions/panels";
 import {
   setUserNodeDiagnostics,
   addUserNodeLogs,
@@ -31,15 +31,19 @@ import RandomAccessPlayer from "webviz-core/src/players/RandomAccessPlayer";
 import RosbridgePlayer from "webviz-core/src/players/RosbridgePlayer";
 import type { Player } from "webviz-core/src/players/types";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
-import type { ImportPanelLayoutPayload, UserNodes } from "webviz-core/src/types/panels";
+import type { UserNodes } from "webviz-core/src/types/panels";
+import { corsError } from "webviz-core/src/util/corsError";
 import demoLayoutJson from "webviz-core/src/util/demoLayout.json";
+import { getGlobalVariablesFromUrl } from "webviz-core/src/util/getGlobalVariablesFromUrl";
 import {
   DEMO_QUERY_KEY,
+  LAYOUT_URL_QUERY_KEY,
   LOAD_ENTIRE_BAG_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
   ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY,
   SECOND_BAG_PREFIX,
 } from "webviz-core/src/util/globalConstants";
+import reportError from "webviz-core/src/util/reportError";
 import { getSeekToTime } from "webviz-core/src/util/time";
 
 function getPlayerOptions() {
@@ -64,14 +68,15 @@ function buildPlayer(files: File[]): ?Player {
   throw new Error(`Unsupported number of files: ${files.length}`);
 }
 
-type OwnProps = { children: React.Node };
+type OwnProps = { children: ({ inputDescription: React.Node }) => React.Node };
 
 type Props = OwnProps & {
-  importPanelLayout: (payload: ImportPanelLayoutPayload, isFromUrl: boolean, skipSettingLocalStorage: boolean) => void,
+  importPanelLayout: typeof importPanelLayout,
   userNodes: UserNodes,
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
   addUserNodeLogs: AddUserNodeLogs,
   setUserNodeTrust: SetUserNodeTrust,
+  setGlobalVariables: typeof setGlobalVariables,
 };
 
 function PlayerManager({
@@ -81,12 +86,15 @@ function PlayerManager({
   setUserNodeDiagnostics: setDiagnostics,
   addUserNodeLogs: setLogs,
   setUserNodeTrust: setTrust,
+  setGlobalVariables: setVariables,
 }: Props) {
   const usedFiles = React.useRef<File[]>([]);
-  const [player, setPlayerInternal] = React.useState();
+  const [player, setPlayerInternal] = React.useState<?UserNodePlayer>();
+  const [inputDescription, setInputDescription] = React.useState<React.Node>("No input selected.");
 
   const setPlayer = React.useCallback(
-    (newPlayer: ?Player) => {
+    (newPlayer: ?Player, newInputDescription: ?React.Node) => {
+      setInputDescription(newInputDescription || "No input selected.");
       if (!newPlayer) {
         setPlayerInternal(undefined);
         return;
@@ -104,14 +112,39 @@ function PlayerManager({
   React.useEffect(
     () => {
       const params = new URLSearchParams(window.location.search);
+
+      const globalVariables = getGlobalVariablesFromUrl(params);
+      if (globalVariables) {
+        setVariables(globalVariables);
+      }
+
+      // For testing, you can use ?layout-url=https://open-source-webviz-ui.s3.amazonaws.com/demoLayout.json
+      const layoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
+      if (layoutUrl) {
+        fetch(layoutUrl)
+          .then((response) => response.json())
+          .then((json) => {
+            importLayout(json, { isFromUrl: true, skipSettingLocalStorage: false });
+          })
+          .catch((error) => {
+            reportError(
+              "Layout failed to load",
+              `Fetching remote file failed. ${corsError(layoutUrl)} ${error}`,
+              "user"
+            );
+          });
+      } else if (params.has(DEMO_QUERY_KEY)) {
+        importLayout(demoLayoutJson, { isFromUrl: false, skipSettingLocalStorage: true });
+      }
+
       const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
       if (params.has(REMOTE_BAG_URL_QUERY_KEY) || params.has(DEMO_QUERY_KEY)) {
-        const url = params.has(REMOTE_BAG_URL_QUERY_KEY)
+        const bagUrl = params.has(REMOTE_BAG_URL_QUERY_KEY)
           ? params.get(REMOTE_BAG_URL_QUERY_KEY) || ""
           : remoteDemoBagUrl;
-        getRemoteBagGuid(url).then((guid: ?string) => {
+        getRemoteBagGuid(bagUrl).then((guid: ?string) => {
           const newPlayer = new RandomAccessPlayer(
-            getRemoteBagDescriptor(url, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
+            getRemoteBagDescriptor(bagUrl, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
             getPlayerOptions()
           );
           if (params.has(DEMO_QUERY_KEY)) {
@@ -121,16 +154,24 @@ function PlayerManager({
               newPlayer.startPlayback();
             }, 1000);
           }
-          setPlayer(newPlayer);
+          setPlayer(
+            newPlayer,
+            <>
+              Streaming bag from <code>{bagUrl}</code>.
+            </>
+          );
         });
-        if (params.has(DEMO_QUERY_KEY)) {
-          importLayout(demoLayoutJson, false, true);
-        }
       } else {
-        setPlayer(new RosbridgePlayer(params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090"));
+        const websocketUrl = params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090";
+        setPlayer(
+          new RosbridgePlayer(websocketUrl),
+          <>
+            Using WebSocket at <code>{websocketUrl}</code>.
+          </>
+        );
       }
     },
-    [importLayout, setDiagnostics, setLogs, setPlayer, setTrust]
+    [importLayout, setPlayer, setVariables]
   );
 
   useUserNodes({ nodePlayer: player, userNodes });
@@ -147,7 +188,19 @@ function PlayerManager({
             usedFiles.current = [files[0]];
           }
           const builtPlayer = buildPlayer(usedFiles.current);
-          setPlayer(builtPlayer);
+          setPlayer(
+            builtPlayer,
+            usedFiles.current.length === 2 ? (
+              <>
+                Using local bag files <code>{usedFiles.current[0].name}</code> and{" "}
+                <code>{usedFiles.current[1].name}</code>.
+              </>
+            ) : (
+              <>
+                Using local bag file <code>{usedFiles.current[0].name}</code>.
+              </>
+            )
+          );
         }}>
         <DropOverlay>
           <div style={{ fontSize: "4em", marginBottom: "1em" }}>Drop a bag file to load it!</div>
@@ -158,7 +211,7 @@ function PlayerManager({
           </div>
         </DropOverlay>
       </DocumentDropListener>
-      <MessagePipelineProvider player={player}>{children}</MessagePipelineProvider>
+      <MessagePipelineProvider player={player}>{children({ inputDescription })}</MessagePipelineProvider>
     </>
   );
 }
@@ -167,5 +220,5 @@ export default connect<Props, OwnProps, _, _, _, _>(
   (state) => ({
     userNodes: state.panels.userNodes,
   }),
-  { importPanelLayout, setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust }
+  { importPanelLayout, setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust, setGlobalVariables }
 )(PlayerManager);

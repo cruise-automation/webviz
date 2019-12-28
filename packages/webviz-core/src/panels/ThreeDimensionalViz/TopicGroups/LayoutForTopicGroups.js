@@ -149,6 +149,10 @@ export default function LayoutForTopicGroups({
 
   useEffect(
     () => {
+      // Save the topic group config until we do the final migration
+      if ((!process.env.NODE_ENV || process.env.NODE_ENV === "development") && topicGroups) {
+        return;
+      }
       // Always migrate the current config to topicGroup and save to panelConfig.
       // This is only temporary until we do the full migration before release.
       // TODO(Audrey): move the migration logic upstream

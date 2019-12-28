@@ -39,9 +39,6 @@ const OLD_KEYS = {
   linkedGlobalVariables: "panels.linkedGlobalVariables",
 };
 
-export function getGlobalStateFromStorage(): any {
-  return storage.get(GLOBAL_STATE_STORAGE_KEY);
-}
 export type PanelsState = {
   layout: any,
   // We store config for each panel in a hash keyed by the panel id.

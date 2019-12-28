@@ -15,7 +15,7 @@ import { importPanelLayout } from "webviz-core/src/actions/panels";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 
 const onLayoutChange = (layout: any, isFromUrl: boolean = false) => {
-  importPanelLayout(layout, isFromUrl);
+  importPanelLayout(layout, { isFromUrl });
 };
 
 storiesOf("<ShareJsonModal>", module)

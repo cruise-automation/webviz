@@ -196,7 +196,7 @@ describe("topicGroupUtils", () => {
         getSelectionsFromTopicGroupConfig([
           {
             displayName: "My Topic Group",
-            selected: true,
+            visible: true,
             expanded: true,
             items: [
               // when missing visibilitiesBySource, select the non-prefixed topic as visible
@@ -244,6 +244,17 @@ describe("topicGroupUtils", () => {
                     overrideCommand: "LinedConvexHull",
                   },
                 },
+              },
+            ],
+          },
+          {
+            displayName: "My Topic Group1",
+            // all topics under this group won't be processed since the group is not visible
+            visible: false,
+            expanded: true,
+            items: [
+              {
+                topicName: "/topic_h",
               },
             ],
           },

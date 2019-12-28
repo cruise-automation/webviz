@@ -63,9 +63,7 @@ class UnconnectedAppMenu extends Component<Props, State> {
       this.props.savePanelConfig({ id, config: panelConfig, defaultConfig: {} });
     }
     this.props.changePanelLayout(newPanels);
-    if (window.ga) {
-      window.ga("send", "event", "Panel", "Select", panelType);
-    }
+    window.ga("send", "event", "Panel", "Select", panelType);
   };
 
   render() {

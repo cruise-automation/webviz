@@ -18,8 +18,8 @@ export const SEEK_TO_QUERY_KEY = "seek-to";
 export const LAYOUT_QUERY_KEY = "layout";
 export const LAYOUT_URL_QUERY_KEY = "layout-url";
 export const PATCH_LAYOUT_QUERY_KEY = "layout-patch";
-export const OLD_GLOBAL_VARIABLES_QUERY_KEY = "global-variables";
-export const GLOBAL_VARIABLES_QUERY_KEY = "global-data";
+export const OLD_GLOBAL_VARIABLES_QUERY_KEY = "global-data";
+export const GLOBAL_VARIABLES_QUERY_KEY = "global-variables";
 
 export const DEFAULT_WEBVIZ_NODE_PREFIX = "/webviz_node/";
 

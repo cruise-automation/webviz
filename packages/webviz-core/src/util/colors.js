@@ -5,7 +5,6 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import tinycolor from "tinycolor2";
 
 const baseColors = {
   DARK: "#08080a",
@@ -69,11 +68,10 @@ export const colors = {
   TEXT_MUTED: baseColors.GRAY,
   HIGHLIGHT: baseColors.PURPLEL1,
   // TODO:(Audrey): !!! need design review. Don't use these colors until TopicGrouping feature is finished.
-  HOVER_BACKGROUND_COLOR: tinycolor(baseColors.PURPLE)
-    .setAlpha(0.5)
-    .toHexString(),
+  HOVER_BACKGROUND_COLOR: baseColors.PURPLE1,
   TEXTL1: baseColors.LIGHT2,
   ACTION: baseColors.BLUE,
   TEXT: baseColors.LIGHT1,
-  TOOLBAR: baseColors.DARK4,
+  TOOLBAR: baseColors.DARK2,
+  TOOLBARL1: baseColors.DARK4,
 };

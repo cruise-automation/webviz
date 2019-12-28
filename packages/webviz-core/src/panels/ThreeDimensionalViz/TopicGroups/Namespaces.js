@@ -11,36 +11,62 @@ import styled from "styled-components";
 
 import DataSourceBadge from "./DataSourceBadge";
 import type { NamespaceItem } from "./types";
+import { colors } from "webviz-core/src/util/colors";
 
 const SNamespacesBySource = styled.div`
-  padding-top: 8px;
+  margin-bottom: 8px;
 `;
 
 const SNamespaceItem = styled.div`
-  margin-bottom: 4px;
+  padding: 2px 8px 2px 50px;
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  transition: 0.3s;
+  &:hover {
+    background-color: ${colors.HOVER_BACKGROUND_COLOR};
+  }
 `;
 
 const SName = styled.div`
   font-size: 12px;
+  color: ${colors.LIGHT2};
 `;
 
 type Props = {|
-  topicName: string,
   namespaceItems: NamespaceItem[],
+  onToggleNamespace: ({| visible: boolean, dataSourcePrefix: string, namespace: string |}) => void,
+  topicName: string,
 |};
 
-export default function Namespaces({ topicName, namespaceItems }: Props) {
+export default function Namespaces({ onToggleNamespace, topicName, namespaceItems }: Props) {
   return (
     <SNamespacesBySource>
       {namespaceItems.map(({ name, displayVisibilityBySource }) => (
         <SNamespaceItem key={name}>
           <SName>{name}</SName>
           <span>
-            {Object.keys(displayVisibilityBySource).map((key) => (
-              <DataSourceBadge key={key} {...displayVisibilityBySource[key]} isNamespace />
-            ))}
+            {Object.keys(displayVisibilityBySource).map((dataSourcePrefix) => {
+              const { visible, available, badgeText, isParentVisible } = displayVisibilityBySource[dataSourcePrefix];
+              return (
+                <DataSourceBadge
+                  available={available}
+                  badgeText={badgeText}
+                  dataTest={`namespace-${dataSourcePrefix}${topicName}:${name}`}
+                  isNamespace
+                  isParentVisible={!!isParentVisible}
+                  key={dataSourcePrefix}
+                  visible={visible}
+                  onToggleVisibility={() => {
+                    onToggleNamespace({
+                      visible: !visible,
+                      dataSourcePrefix,
+                      namespace: name,
+                    });
+                  }}
+                />
+              );
+            })}
           </span>
         </SNamespaceItem>
       ))}

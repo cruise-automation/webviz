@@ -51,9 +51,11 @@ export default class LayoutMenu extends PureComponent<{}, State> {
 
     return (
       <ChildToggle position="below" onToggle={this._onToggle} isOpen={isOpen}>
-        <Icon small fade active={isOpen}>
-          <AppsIcon />
-        </Icon>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <Icon small fade active={isOpen} tooltip="Config">
+            <AppsIcon />
+          </Icon>
+        </div>
         <Menu>
           <Item icon={<JsonIcon />} onClick={this._onImportClick}>
             Import/export layout

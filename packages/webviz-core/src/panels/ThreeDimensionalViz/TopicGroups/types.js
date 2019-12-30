@@ -10,6 +10,13 @@ type SettingsBySource = {
   overrideColor?: string,
   overrideCommand?: string,
 };
+
+type OnTopicGroupsChangeOptions = {|
+  removeValue?: boolean,
+  // TODO(Audrey): add option `addTopicsToGroup`
+|};
+export type OnTopicGroupsChange = (objectPath: string, newValue: any, options?: OnTopicGroupsChangeOptions) => void;
+
 export type VisibilityBySource = { [dataSourcePrefix: string]: boolean };
 export type NamespacesBySource = { [dataSourcePrefix: string]: string[] };
 
@@ -48,19 +55,22 @@ export type TopicItem = {|
   derivedFields: DerivedTopicItemFields,
 |};
 
-export type TopicGroupConfig = {|
+type SharedTopicGroupConfig = {|
   displayName: string,
-  items: TopicItemConfig[],
   visible?: boolean,
   expanded?: boolean,
 |};
+export type TopicGroupConfig = {|
+  ...SharedTopicGroupConfig,
+  items: TopicItemConfig[],
+|};
 type TopicGroupDerivedFields = {|
   id: string,
-  items: TopicItem[],
 |};
 
 export type TopicGroupType = {|
-  ...TopicGroupConfig,
+  ...SharedTopicGroupConfig,
+  items: TopicItem[], // config item with derivedFields
   derivedFields: TopicGroupDerivedFields,
 |};
 

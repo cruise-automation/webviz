@@ -86,6 +86,7 @@ class DiagnosticStatusPanel extends React.Component<Props> {
             return (
               <>
                 <PanelToolbar
+                  floating
                   helpContent={helpContent}
                   additionalIcons={this.renderTopicToRenderMenu(this.props.topics)}>
                   <Autocomplete

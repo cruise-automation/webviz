@@ -57,67 +57,65 @@ export function getTopicGroups(
 ): TopicGroupType[] {
   const availableTopicNamesSet = new Set(availableTopics.map(({ name }) => name));
 
-  return groupsConfig.map((groupConfig, idx) => {
-    const id = `${groupConfig.displayName.split(" ").join("-")}_${idx}`;
-    const isTopicGroupVisible = !!groupConfig.visible;
+  return groupsConfig.map(({ items, ...rest }, idx) => {
+    const id = `${rest.displayName.split(" ").join("-")}_${idx}`;
+    const isTopicGroupVisible = !!rest.visible;
     return {
-      ...groupConfig,
-      derivedFields: {
-        id,
-        items: groupConfig.items.map((topicItemConfig, idx1) => {
-          const {
-            displayName,
-            topicName,
-            selectedNamespacesBySource,
-            visibilitiesBySource = { "": true }, // set the base topic to be visible by default
-          } = topicItemConfig;
+      ...rest,
+      derivedFields: { id },
+      items: items.map((topicItemConfig, idx1) => {
+        const {
+          displayName,
+          topicName,
+          selectedNamespacesBySource,
+          visibilitiesBySource = { "": true }, // set the base topic to be visible by default
+        } = topicItemConfig;
 
-          const availableNamespacesBySource = {};
-          const topicDisplayVisibilityBySource = {};
-          let available = false;
+        const availableNamespacesBySource = {};
+        const topicDisplayVisibilityBySource = {};
+        let available = false;
 
-          ALL_DATA_SOURCE_PREFIXES.forEach((dataSourcePrefix) => {
-            const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
-            if (availableTopicNamesSet.has(prefixedTopicName)) {
-              available = true;
-              // only show namespaces when the topic is available
-              if (namespacesByTopic[prefixedTopicName]) {
-                availableNamespacesBySource[dataSourcePrefix] = namespacesByTopic[prefixedTopicName];
-              }
-
-              topicDisplayVisibilityBySource[dataSourcePrefix] = {
-                isParentVisible: isTopicGroupVisible,
-                badgeText: getBadgeTextByTopicName(prefixedTopicName),
-                // always visible by default
-                // $FlowFixMe the field is missing in object literal
-                visible: visibilitiesBySource[dataSourcePrefix] != null ? visibilitiesBySource[dataSourcePrefix] : true,
-                available: true,
-              };
+        ALL_DATA_SOURCE_PREFIXES.forEach((dataSourcePrefix) => {
+          const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
+          if (availableTopicNamesSet.has(prefixedTopicName)) {
+            available = true;
+            // only show namespaces when the topic is available
+            if (namespacesByTopic[prefixedTopicName]) {
+              availableNamespacesBySource[dataSourcePrefix] = namespacesByTopic[prefixedTopicName];
             }
-          });
 
-          // build an array of namespace items with visibility and availability for easy render
-          const namespaceItems = getNamespacesItemsBySource(
-            topicName,
-            availableNamespacesBySource,
-            selectedNamespacesBySource,
-            topicDisplayVisibilityBySource,
-            isTopicGroupVisible
-          );
+            topicDisplayVisibilityBySource[dataSourcePrefix] = {
+              isParentVisible: isTopicGroupVisible,
+              badgeText: getBadgeTextByTopicName(prefixedTopicName),
+              // always visible by default
+              // $FlowFixMe the field is missing in object literal
+              visible: visibilitiesBySource[dataSourcePrefix] != null ? visibilitiesBySource[dataSourcePrefix] : true,
+              available: true,
+            };
+          }
+        });
 
-          return {
-            // save the original config in order to save back to panelConfig
-            ...topicItemConfig,
-            derivedFields: {
-              id: `${id}_${idx1}`,
-              displayName: displayName || displayNameByTopic[topicName] || topicName,
-              displayVisibilityBySource: topicDisplayVisibilityBySource,
-              namespaceItems,
-              available,
-            },
-          };
-        }),
-      },
+        // build an array of namespace items with visibility and availability for easy render
+        const namespaceItems = getNamespacesItemsBySource(
+          topicName,
+          availableNamespacesBySource,
+          selectedNamespacesBySource,
+          topicDisplayVisibilityBySource,
+          isTopicGroupVisible
+        );
+
+        return {
+          // save the original config in order to save back to panelConfig
+          ...topicItemConfig,
+          derivedFields: {
+            id: `${id}_${idx1}`,
+            displayName: displayName || displayNameByTopic[topicName] || topicName,
+            displayVisibilityBySource: topicDisplayVisibilityBySource,
+            namespaceItems,
+            available,
+          },
+        };
+      }),
     };
   });
 }

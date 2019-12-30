@@ -18,7 +18,7 @@ const SNamespacesBySource = styled.div`
 `;
 
 const SNamespaceItem = styled.div`
-  padding: 2px 8px 2px 50px;
+  padding: 2px 40px 2px 50px;
   display: flex;
   align-items: center;
   justify-content: space-between;

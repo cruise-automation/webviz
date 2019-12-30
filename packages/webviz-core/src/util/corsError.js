@@ -9,7 +9,7 @@
 export function corsError(url: string): string {
   return `Often this is due to missing CORS headers on the requested URL: ${url}
 
-First of all, be aware that redirects don't work with CORS. So you'll have to point to the resource directly. So https://webviz.io/try/?remote-bag-url=https%3A%2F%2Fopen-source-webviz-ui.s3.amazonaws.com%2Fdemo.bag will work (note the URL encoded using "encodeURIComponent"), but pointing to a server that then redirects to a URL like that will NOT work.
+First of all, be aware that redirects don't work with CORS. So you'll have to point to the resource directly. So ?remote-bag-url=https%3A%2F%2Fopen-source-webviz-ui.s3.amazonaws.com%2Fdemo.bag will work (note the URL encoded using "encodeURIComponent"), but pointing to a server that then redirects to a URL like that will NOT work.
 
 If your data is sensitive, you can generate a signed S3 url, and use that directly with ?remote-bag-url=. That URL will then only work for a limited time period, and you can have a server that only signs URLs for authenticated users.
 

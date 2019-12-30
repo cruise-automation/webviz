@@ -7,9 +7,12 @@
 //  You may not use this file except in compliance with the License.
 
 import { isEqual, sortBy, uniq } from "lodash";
+import * as React from "react";
 import type { Time } from "rosbag";
 import uuid from "uuid";
 
+import renderToBody from "webviz-core/src/components/renderToBody";
+import WssErrorModal from "webviz-core/src/components/WssErrorModal";
 import {
   type RoslibTypedef,
   messageDetailsToRosDatatypes,
@@ -64,6 +67,19 @@ export default class RosbridgePlayer implements Player {
       return;
     }
 
+    try {
+      // Create a dummy socket. This will throw if there's a SecurityError.
+      const tempSocket = new WebSocket(this._url);
+      tempSocket.binaryType = "arraybuffer";
+      tempSocket.close();
+    } catch (error) {
+      if (error && error.name === "SecurityError") {
+        const modal = renderToBody(<WssErrorModal onRequestClose={() => modal.remove()} />);
+        return;
+      }
+      console.error("Unknown WebSocket error", error);
+    }
+
     // `workersocket` will open the actual WebSocket connection in a WebWorker.
     const rosClient = new ROSLIB.Ros({ url: this._url, transportLibrary: "workersocket" });
 
@@ -77,8 +93,7 @@ export default class RosbridgePlayer implements Player {
 
     rosClient.on("error", (error) => {
       // TODO(JP): Figure out which kinds of errors we can get here, and which ones we should
-      // actually show to the user. E.g. does a SecurityError when connecting from https:// to ws://
-      // show up here?
+      // actually show to the user.
       console.warn("WebSocket error", error);
     });
 

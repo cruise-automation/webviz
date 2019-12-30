@@ -83,7 +83,7 @@ class PanelLayout extends PureComponent<Props> {
         <MosaicRoot
           renderTile={this.renderTile}
           className="none"
-          resize={{ minimumPaneSizePercentage: 10 }}
+          resize={{ minimumPaneSizePercentage: 2 }}
           value={this.props.layout}
           onChange={this.props.changePanelLayout}
           setMosaicId={this.props.setMosaicId}

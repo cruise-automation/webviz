@@ -130,7 +130,7 @@
     "flow": "flow",
     "flow-typed-rebuild": "rm -rf flow-typed/ && flow-typed install && flow-typed install --rootDir packages/@cruise-automation/hooks && flow-typed install --rootDir packages/@cruise-automation/button && flow-typed install --rootDir packages/@cruise-automation/tooltip && flow-typed install --rootDir packages/react-key-listener && flow-typed install --rootDir packages/regl-worldview",
     "docs": "DEV_SERVER=true webpack-dev-server",
-    "docs-deploy": "cp -r docs/public __temp_deploy__ && cp --remove-destination packages/webviz-core/public/index.html __temp_deploy__/try/index.html && echo 'webviz.io' > __temp_deploy__/CNAME && gh-pages -d __temp_deploy__ && rm -rf __temp_deploy__",
+    "docs-deploy": "cp -r docs/public __temp_deploy__ && cp --remove-destination packages/webviz-core/public/index.html __temp_deploy__/app/index.html && echo 'webviz.io' > __temp_deploy__/CNAME && gh-pages -d __temp_deploy__ && rm -rf __temp_deploy__",
     "publish": "lerna run clean && lerna run build && lerna publish",
     "screenshot": "NODE_ENV=development storybook-chrome-screenshot -c stories --parallel 8 --inject-files stories/injected.js --browser-timeout 1200000",
     "screenshot-ci": "npm run screenshot -- --puppeteer-launch-config '{\"executablePath\": \"/usr/bin/google-chrome\", \"headless\": false, \"args\":[\"--use-gl=swiftshader\", \"--no-sandbox\",\"--disable-setuid-sandbox\", \"--disable-dev-shm-usage\", \"--headless\", \"--mute-audio\", \"--user-agent=PuppeteerTestingChrome/72.\"]}'",

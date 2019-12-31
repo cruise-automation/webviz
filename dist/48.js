@@ -1,4 +1,4 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([[48],{3000:
+(window.webpackJsonp=window.webpackJsonp||[]).push([[48],{3005:
 /*!********************************************************************************!*\
   !*** ./node_modules/monaco-editor/esm/vs/basic-languages/solidity/solidity.js ***!
   \********************************************************************************/

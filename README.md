@@ -35,3 +35,5 @@ If you have the right permissions, you can publish:
 ## Contributing
 
 PRs, bug reports, and feature requests are welcome! Please observe [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) when making a contribution.
+
+Note that while it's possible to fork Webviz to make your own custom version, we'd encourage you to use webviz.io/app and propose generic solutions that everyone would benefit from. Cruise also still has its own fork of Webviz, but long term we'd like to move away from that. For examples of generic features, see the Node Playground panel, using generic RViz markers in the 3d panel, streaming in bags from any cloud service, loading layouts hosted on arbitrary URLs, and so on. We'd love your creative ideas for making Webviz widely useful!

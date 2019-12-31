@@ -164,7 +164,7 @@ class DiagnosticSummary extends React.Component<Props> {
               if (buffer.diagnosticsById.size === 0) {
                 return (
                   <EmptyState>
-                    Waiting for <code>/diagnostics</code> messages
+                    Waiting for <code>{topicToRender}</code> messages
                   </EmptyState>
                 );
               }

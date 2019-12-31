@@ -10,7 +10,7 @@ import ChevronDownIcon from "@mdi/svg/svg/chevron-down.svg";
 import ChevronUpIcon from "@mdi/svg/svg/chevron-up.svg";
 import LayersIcon from "@mdi/svg/svg/layers.svg";
 import PinIcon from "@mdi/svg/svg/pin.svg";
-import { omit } from "lodash";
+import { omit, set, cloneDeep, unset } from "lodash";
 import Collapse from "rc-collapse";
 import React, { useState, useCallback, useMemo } from "react";
 import styled from "styled-components";
@@ -18,13 +18,14 @@ import styled from "styled-components";
 import { type Save3DConfig } from "../index";
 import TopicGroupBody from "./TopicGroupBody";
 import TopicGroupHeader, { STopicGroupName, SEyeIcon } from "./TopicGroupHeader";
+import { SMenuWrapper } from "./TopicGroupMenu";
 import {
   getTopicGroups,
   buildItemDisplayNameByTopicOrExtension,
   buildAvailableNamespacesByTopic,
   TOPIC_CONFIG,
 } from "./topicGroupsUtils";
-import type { TopicGroupConfig } from "./types";
+import type { TopicGroupConfig, TopicGroupType } from "./types";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import { type Topic } from "webviz-core/src/players/types";
@@ -63,7 +64,7 @@ const STopicGroups = styled.div`
         margin: 0;
         border: none;
         transition: 0.3s;
-        padding: 4px 8px 8px 24px;
+        padding: 4px 0px 4px 24px;
         color: unset;
         &:hover {
           color: ${colors.LIGHT};
@@ -72,6 +73,10 @@ const STopicGroups = styled.div`
             color: ${colors.YELLOWL1};
           }
           ${SEyeIcon} {
+            color: white;
+            opacity: 1;
+          }
+          ${SMenuWrapper} {
             color: white;
             opacity: 1;
           }
@@ -125,14 +130,6 @@ type Props = {|
   allNamespaces: Namespace[],
 |};
 
-/**
- * TODO(Audrey):
- * - topic visibility toggle
- * - group visibility toggle
- * - config migration
- * - filter with debounce
- * - edit topic settings
- */
 export function TopicGroupsBase({
   topicGroupsConfig,
   displayNameByTopic = {},
@@ -152,15 +149,46 @@ export function TopicGroupsBase({
     availableTopics,
   });
 
-  const onCollapseChange = useCallback(
-    (activeKeys) => {
-      const newTopicGroups = topicGroups.map((group) => ({
+  const saveNewTopicGroupsToConfig = useCallback(
+    (newTopicGroups: TopicGroupType[]) => {
+      const newTopicGroupsConfig = newTopicGroups.map((group) => ({
         ...omit(group, "derivedFields"),
-        expanded: activeKeys.includes(group.derivedFields.id),
+        items: group.items.map((item) => omit(item, "derivedFields")),
       }));
-      saveConfig({ topicGroups: newTopicGroups });
+      saveConfig({ topicGroups: newTopicGroupsConfig });
     },
-    [saveConfig, topicGroups]
+    [saveConfig]
+  );
+
+  const onCollapseChange = useCallback(
+    (activeKeys: string[]) =>
+      saveNewTopicGroupsToConfig(
+        cloneDeep(topicGroups).map((group) => ({
+          ...group,
+          expanded: activeKeys.includes(group.derivedFields.id),
+        }))
+      ),
+    [saveNewTopicGroupsToConfig, topicGroups]
+  );
+
+  const onTopicGroupsChange = useCallback(
+    (objectPath: string, newValue: any, options?: {| removeValue?: boolean |}) => {
+      let newTopicGroups = cloneDeep(topicGroups);
+      if (options && options.removeValue) {
+        // unset the topic group or topic item
+        unset(newTopicGroups, objectPath);
+        // filter out the empty value
+        newTopicGroups = newTopicGroups
+          .filter(Boolean)
+          .map((group) => ({ ...group, items: group.items.filter(Boolean) }));
+        saveNewTopicGroupsToConfig(newTopicGroups);
+        return;
+      }
+      // Replace the field value with newValue and save to config.
+      // Make a deep copy of topicGroups to avoid mutation bugs.
+      saveNewTopicGroupsToConfig(set(newTopicGroups, objectPath, newValue));
+    },
+    [saveNewTopicGroupsToConfig, topicGroups]
   );
 
   return (
@@ -196,28 +224,27 @@ export function TopicGroupsBase({
               </Icon>
             )}
             onChange={onCollapseChange}>
-            {topicGroups.map((topicGroup, idx) => {
-              const onTopicGroupChange = (newTopicGroup) => {
-                const newTopicGroups = [...topicGroups.slice(0, idx), newTopicGroup, ...topicGroups.slice(idx + 1)].map(
-                  (group) => omit(group, "derivedFields")
-                );
-                saveConfig({ topicGroups: newTopicGroups });
-              };
-              return (
-                <Collapse.Panel
-                  className={`test-${topicGroup.derivedFields.id}`}
-                  key={topicGroup.derivedFields.id}
-                  header={<TopicGroupHeader onTopicGroupChange={onTopicGroupChange} topicGroup={topicGroup} />}>
-                  {topicGroup.expanded && (
-                    <TopicGroupBody
-                      key={topicGroup.derivedFields.id}
-                      topicGroup={topicGroup}
-                      onTopicGroupChange={onTopicGroupChange}
-                    />
-                  )}
-                </Collapse.Panel>
-              );
-            })}
+            {topicGroups.map((topicGroup, idx) => (
+              <Collapse.Panel
+                className={`test-${topicGroup.derivedFields.id}`}
+                key={topicGroup.derivedFields.id}
+                header={
+                  <TopicGroupHeader
+                    onTopicGroupsChange={onTopicGroupsChange}
+                    topicGroup={topicGroup}
+                    objectPath={`[${idx}]`}
+                  />
+                }>
+                {topicGroup.expanded && (
+                  <TopicGroupBody
+                    key={topicGroup.derivedFields.id}
+                    objectPath={`[${idx}]`}
+                    topicGroup={topicGroup}
+                    onTopicGroupsChange={onTopicGroupsChange}
+                  />
+                )}
+              </Collapse.Panel>
+            ))}
           </Collapse>
         </STopicGroups>
       </ChildToggle>

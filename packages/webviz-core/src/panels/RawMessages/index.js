@@ -187,14 +187,16 @@ function RawMessages(props: Props) {
                   </Icon>
                 </>
               )}
-              {valueAction && (
-                <RawMessagesIcons
-                  valueAction={valueAction}
-                  basePath={basePath}
-                  onTopicNameChange={onTopicNameChange}
-                  openSiblingPanel={openSiblingPanel}
-                />
-              )}
+              <span className={styles.iconBox}>
+                {valueAction && (
+                  <RawMessagesIcons
+                    valueAction={valueAction}
+                    basePath={basePath}
+                    onTopicNameChange={onTopicNameChange}
+                    openSiblingPanel={openSiblingPanel}
+                  />
+                )}
+              </span>
             </span>
           );
         }}

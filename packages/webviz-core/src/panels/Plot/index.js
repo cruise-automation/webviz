@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { uniq } from "lodash";
 import React, { useEffect, useState, useCallback } from "react";
 import { hot } from "react-hot-loader/root";
 
@@ -18,6 +19,7 @@ import type { PlotPath } from "webviz-core/src/panels/Plot/internalTypes";
 import PlotChart, { getDatasets } from "webviz-core/src/panels/Plot/PlotChart";
 import PlotLegend from "webviz-core/src/panels/Plot/PlotLegend";
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
+import type { PanelConfig } from "webviz-core/src/types/panels";
 
 export const plotableRosTypes = [
   "bool",
@@ -43,6 +45,20 @@ export type PlotConfig = {
   showLegend: boolean,
   xAxisVal: "timestamp" | "index",
 };
+
+export function openSiblingPlotPanel(
+  openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
+  topicName: string
+) {
+  openSiblingPanel(
+    "Plot",
+    (config: PlotConfig) =>
+      ({
+        ...config,
+        paths: uniq(config.paths.concat([{ value: topicName, enabled: true, timestampMethod: "receiveTime" }])),
+      }: PlotConfig)
+  );
+}
 
 type Props = {
   config: PlotConfig,

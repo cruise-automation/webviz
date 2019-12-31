@@ -12,7 +12,8 @@ import React from "react";
 import styled from "styled-components";
 import tinyColor from "tinycolor2";
 
-import type { TopicGroupType } from "./types";
+import TopicGroupMenu from "./TopicGroupMenu";
+import type { TopicGroupType, OnTopicGroupsChange } from "./types";
 import Icon from "webviz-core/src/components/Icon";
 import { colors } from "webviz-core/src/util/colors";
 
@@ -21,6 +22,7 @@ const STopicGroupHeader = styled.div`
   flex: 1;
   flex-direction: row;
   align-items: center;
+  margin: 8px 0;
 `;
 
 export const STopicGroupName = styled.div`
@@ -39,19 +41,16 @@ export const SEyeIcon = styled.span`
 `;
 
 type Props = {|
+  objectPath: string,
+  onTopicGroupsChange: OnTopicGroupsChange,
   topicGroup: TopicGroupType,
-  onTopicGroupChange: (newTopicGroupConfig: TopicGroupType) => void,
 |};
 
 export default function TopicGroupHeader({
+  objectPath,
   topicGroup,
-  topicGroup: {
-    displayName,
-    expanded,
-    visible,
-    derivedFields: { items },
-  },
-  onTopicGroupChange,
+  topicGroup: { displayName, expanded, visible },
+  onTopicGroupsChange,
 }: Props) {
   return (
     <STopicGroupHeader>
@@ -60,13 +59,12 @@ export default function TopicGroupHeader({
         <Icon
           style={{ width: 32, height: 32, padding: 8 }}
           dataTest={`topic-group-${displayName}`}
-          onClick={() => {
-            onTopicGroupChange({ ...topicGroup, visible: !visible });
-          }}
+          onClick={() => onTopicGroupsChange(`${objectPath}.visible`, !visible)}
           medium>
           {visible ? <EyeOutlineIcon /> : <EyeOffOutlineIcon />}
         </Icon>
       </SEyeIcon>
+      <TopicGroupMenu objectPath={objectPath} onTopicGroupsChange={onTopicGroupsChange} topicGroup={topicGroup} />
     </STopicGroupHeader>
   );
 }

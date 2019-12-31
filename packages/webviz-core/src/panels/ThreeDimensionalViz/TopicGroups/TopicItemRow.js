@@ -7,14 +7,15 @@
 //  You may not use this file except in compliance with the License.
 import ChevronDownIcon from "@mdi/svg/svg/chevron-down.svg";
 import ChevronUpIcon from "@mdi/svg/svg/chevron-up.svg";
-import { uniq } from "lodash";
 import Collapse from "rc-collapse";
 import React, { useCallback } from "react";
 import styled, { css } from "styled-components";
 
 import DataSourceBadge from "./DataSourceBadge";
 import Namespaces from "./Namespaces";
-import type { TopicItem } from "./types";
+import { SMenuWrapper } from "./TopicGroupMenu";
+import TopicItemMenu from "./TopicItemMenu";
+import type { TopicItem, OnTopicGroupsChange } from "./types";
 import Icon from "webviz-core/src/components/Icon";
 import { colors } from "webviz-core/src/util/colors";
 
@@ -22,7 +23,7 @@ const namespaceCss = css`
   .rc-collapse {
     .rc-collapse-item {
       .rc-collapse-header {
-        padding: 0px 0px 0px 32px;
+        padding: 0px 0px 0px 24px !important;
       }
     }
   }
@@ -31,8 +32,7 @@ const SItemRow = styled.div`
   padding: 0;
   display: flex;
   flex-direction: column;
-  color: ${colors.LIGHT};
-  color: ${(props) => (props.available ? colors.LIGHT : colors.TEXT_MUTED)};
+  color: ${(props) => (props.available ? colors.LIGHT1 : colors.TEXT_MUTED)};
   ${(props) => (props.hasNamespaces ? namespaceCss : "")};
   &:hover {
     color: ${colors.LIGHT};
@@ -43,10 +43,14 @@ const SItemMain = styled.div`
   display: flex;
   flex: 1;
   line-height: 1.2;
-  padding: ${(props) => (props.hasNamespaces ? "8px 0 8px 8px" : " 8px 8px 8px 48px")};
+  padding: ${(props) => (props.hasNamespaces ? "8px 0 8px 8px" : " 8px 0px 8px 48px")};
   transition: 0.3s;
   &:hover {
     background-color: ${colors.HOVER_BACKGROUND_COLOR};
+    ${SMenuWrapper} {
+      color: white;
+      opacity: 1;
+    }
   }
 `;
 
@@ -75,13 +79,15 @@ export const STopicName = styled.div`
 
 type Props = {|
   item: TopicItem,
-  onItemChange: (newItem: TopicItem) => void,
+  objectPath: string,
+  onTopicGroupsChange: OnTopicGroupsChange,
 |};
 
 function TopicItemRowHeader({
-  onItemChange,
   hasNamespaces,
   item,
+  objectPath,
+  onTopicGroupsChange,
   item: {
     topicName,
     derivedFields: { displayName, namespaceItems, displayVisibilityBySource },
@@ -108,19 +114,15 @@ function TopicItemRowHeader({
               key={dataSourcePrefix}
               visible={visible}
               onToggleVisibility={() => {
-                const newVisible = !displayVisibilityBySource[dataSourcePrefix].visible;
-                const newItem = {
-                  ...item,
-                  visibilitiesBySource: {
-                    ...item.visibilitiesBySource,
-                    [dataSourcePrefix]: newVisible,
-                  },
-                };
-                onItemChange(newItem);
+                onTopicGroupsChange(
+                  `${objectPath}.visibilitiesBySource.${dataSourcePrefix}`,
+                  !displayVisibilityBySource[dataSourcePrefix].visible
+                );
               }}
             />
           );
         })}
+        <TopicItemMenu item={item} objectPath={objectPath} onTopicGroupsChange={onTopicGroupsChange} />
       </SItemMainRight>
     </SItemMain>
   );
@@ -128,7 +130,8 @@ function TopicItemRowHeader({
 
 export default function TopicItemRow(props: Props) {
   const {
-    onItemChange,
+    objectPath,
+    onTopicGroupsChange,
     item,
     item: {
       expanded: topicExpanded,
@@ -141,10 +144,10 @@ export default function TopicItemRow(props: Props) {
   const onCollapseChange = useCallback(
     (activeKeys) => {
       if (hasNamespaces) {
-        onItemChange({ ...item, expanded: !topicExpanded });
+        onTopicGroupsChange(`${objectPath}.expanded`, !topicExpanded);
       }
     },
-    [hasNamespaces, item, onItemChange, topicExpanded]
+    [hasNamespaces, objectPath, onTopicGroupsChange, topicExpanded]
   );
 
   return (
@@ -166,13 +169,7 @@ export default function TopicItemRow(props: Props) {
                 newNamespaces = visible
                   ? [...newNamespaces, namespace]
                   : newNamespaces.filter((ns) => ns !== namespace);
-                onItemChange({
-                  ...item,
-                  selectedNamespacesBySource: {
-                    ...item.selectedNamespacesBySource,
-                    [dataSourcePrefix]: uniq(newNamespaces),
-                  },
-                });
+                onTopicGroupsChange(`${objectPath}.selectedNamespacesBySource.${dataSourcePrefix}`, newNamespaces);
               }}
               topicName={topicName}
               namespaceItems={namespaceItems}

@@ -223,7 +223,7 @@ class StateTransitions extends React.PureComponent<Props> {
     const onlyTopicsHeight = paths.length * 55;
     const heightPerTopic = onlyTopicsHeight / paths.length;
     const xAxisHeight = 30;
-    const height = onlyTopicsHeight + xAxisHeight;
+    const height = Math.max(80, onlyTopicsHeight + xAxisHeight);
 
     return (
       <SRoot>

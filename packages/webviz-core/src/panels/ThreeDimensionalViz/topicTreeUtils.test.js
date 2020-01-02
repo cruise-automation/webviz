@@ -14,7 +14,6 @@ import buildTree, { TopicTreeNode } from "webviz-core/src/panels/ThreeDimensiona
 import {
   getCheckedTopicsAndExtensions,
   getTopicConfig,
-  removeTopicPrefixes,
   getNewCheckedNodes,
   setVisibleByHiddenTopics,
   BAG1_TOPIC_GROUP_NAME,
@@ -531,16 +530,6 @@ describe("getCheckedTopicsAndExtensions", () => {
     const expected = getCheckedTopicsAndExtensions(checkedNodes);
     expect([...expected.selectedExtensionsSet]).toEqual(["ExtA.a", "ExtC.c"]);
     expect([...expected.selectedTopicsSet]).toEqual(["/topic_b", "/topic_c", "/webviz_bag_2/topic_c"]);
-  });
-});
-
-describe("removeTopicPrefixes", () => {
-  it("removes webviz bag prefixes", () => {
-    expect(removeTopicPrefixes(["/foo/bar", "/webviz_bag_2/foo", "/webviz_bag_121/bar"])).toEqual([
-      "/foo/bar",
-      "/foo",
-      "/bar",
-    ]);
   });
 });
 

@@ -84,11 +84,7 @@ export default function getMessageHistoryItem(
           constantName = enumMap[fieldName][value];
         }
       }
-      queriedData.push({
-        value,
-        path,
-        constantName,
-      });
+      queriedData.push({ value, path, constantName });
     } else if (pathItem.type === "name" && structureItem.structureType === "message") {
       // If the `pathItem` is a name, we're traversing down using that name.
       traverse(

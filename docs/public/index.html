@@ -9,15 +9,24 @@
 <html lang="en">
 
 <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-82819136-10"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-82819136-10');
+    </script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta name="theme-color" content="#000000" />
     <meta name="viewport" content="width=device-width, initial-scale = 1.0,
 maximum-scale=1.0, user-scalable=no" />
     <meta name="description" content="Visualizing robotics data in the browser">
-    <title>Webviz</title>
+    <title>webviz</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono&display=swap" rel="stylesheet">
-    <meta property="og:title" content="Webviz" />
+    <meta property="og:title" content="webviz" />
     <meta property="og:description" content="Visualizing robotics data in the browser" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://webviz.io" />
@@ -563,7 +572,7 @@ maximum-scale=1.0, user-scalable=no" />
 <body>
     <div class="container-overflow">
         <header>
-            <a target="_blank" href="https://webviz.io/try/">Use Webviz</a>
+            <a target="_blank" href="app/">Use Webviz</a>
             <a target="_blank" href="https://github.com/cruise-automation/webviz">Github</a>
             <a target="_blank" href="https://getcruise.com/">Cruise</a>
         </header>
@@ -573,7 +582,7 @@ maximum-scale=1.0, user-scalable=no" />
                 <p id="text-webviz">WEBVIZ</p>
                 <h1>Visualizing robotics data in the browser</h1>
                 <div style="width: 100%; display: flex">
-                    <a target="_blank" href="https://webviz.io/try/?demo">
+                    <a target="_blank" href="app/?demo">
                         <button>
                             View demo
                         </button>
@@ -595,7 +604,8 @@ maximum-scale=1.0, user-scalable=no" />
                 Cruise uses Webviz to visualize thousands of complex decisions our vehicles make–both on the road and in
                 simulation.
                 Drag and drop your own <a target="_blank" class="in-copy" href="http://wiki.ros.org/Bags">ROS bag
-                    files</a> into Webviz to get immediate visual insight into your robotics data.
+                files</a> into Webviz to get immediate visual insight into your robotics data. Or even connect to
+                a <a target="_blank" class="in-copy" href="http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge">live robot or simulation</a>.
             </h2>
 
             <h2>
@@ -681,7 +691,7 @@ maximum-scale=1.0, user-scalable=no" />
                 Engineering Productivity team.
             </h2>
             <div style="width: 100%; justify-content: start; display: flex  ; max-width: 720px;">
-                <a target="_blank" href="https://webviz.io/try/?demo">
+                <a target="_blank" href="app/?demo">
                     <button>
                         View demo
                     </button>
@@ -690,7 +700,7 @@ maximum-scale=1.0, user-scalable=no" />
         </section>
 
         <footer>
-            <a target="_blank" href="https://webviz.io/try/">Use Webviz</a>
+            <a target="_blank" href="app/">Use Webviz</a>
             <a target="_blank" href="https://github.com/cruise-automation/webviz">Github</a>
             <a target="_blank" href="https://getcruise.com/">Cruise</a>
         </footer>

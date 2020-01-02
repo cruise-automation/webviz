@@ -8,7 +8,6 @@
 
 import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
-import { difference, isEqual } from "lodash";
 import React, {
   type Node,
   useMemo,
@@ -40,26 +39,23 @@ import useDataSourceInfo from "webviz-core/src/PanelAPI/useDataSourceInfo";
 import DebugStats from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
 import { POLYGON_TAB_TYPE, type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
-import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz/index";
+import { type Save3DConfig, type ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import { InteractionContextMenu } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutToolbar";
-import LayoutTopicSettings from "webviz-core/src/panels/ThreeDimensionalViz/LayoutTopicSettings";
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import { getUpdatedGlobalVariablesBySelectedObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
-import TopicSelector from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector";
+import TopicGroups from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicGroups";
+import { migratePanelConfigToTopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations";
+import { getSelectionsFromTopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
-import treeBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/treeBuilder";
-import { canEditDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
-import { getTopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/topicTreeUtils";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
 import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
-import type { SaveConfig } from "webviz-core/src/types/panels";
 import { videoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
 
@@ -73,7 +69,7 @@ export type LayoutToolbarSharedProps = {|
   onAlignXYAxis: () => void,
   onCameraStateChange: (CameraState) => void,
   onFollowChange: (followTf?: string | false, followOrientation?: boolean) => void,
-  saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
+  saveConfig: Save3DConfig,
   transforms: Transforms,
   isPlaying?: boolean,
 |};
@@ -81,7 +77,7 @@ export type LayoutToolbarSharedProps = {|
 export type LayoutTopicSettingsSharedProps = {|
   transforms: Transforms,
   topics: Topic[],
-  saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
+  saveConfig: Save3DConfig,
 |};
 
 type Props = {|
@@ -95,7 +91,7 @@ type Props = {|
   helpContent: Node | string,
   isPlaying?: boolean,
   config: ThreeDimensionalVizConfig,
-  saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
+  saveConfig: Save3DConfig,
   setSubscriptions: (subscriptions: string[]) => void,
   topics: Topic[],
   transforms: Transforms,
@@ -127,6 +123,7 @@ export default function LayoutForTopicGroups({
   topics,
   transforms,
   setSubscriptions,
+  config,
   config: {
     autoTextBackgroundColor,
     expandedNodes,
@@ -138,77 +135,43 @@ export default function LayoutForTopicGroups({
     showCrosshair,
     topicDisplayMode = TOPIC_DISPLAY_MODES.SHOW_TREE.value,
     topicSettings,
+    topicGroups,
   },
 }: Props) {
-  // toggle visibility on topics by temporarily storing a list of hidden topics on the state
-  const [hiddenTopics, setHiddenTopics] = useState([]);
-
-  const { topicConfig, newCheckedNodes } = useMemo(
-    () =>
-      getTopicConfig({
-        checkedNodes,
-        topicDisplayMode,
-        topics,
-        // $FlowFixMe
-        supportedMarkerDatatypes: Object.values(
-          getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_MARKER_DATATYPES
-        ),
-      }),
-    [checkedNodes, topicDisplayMode, topics]
-  );
-
-  // update open source checked nodes
-  useLayoutEffect(
-    () => {
-      const isOpenSource = checkedNodes.length === 1 && checkedNodes[0] === "name:Topics" && topics.length;
-      if (isOpenSource) {
-        saveConfig(
-          { checkedNodes: isOpenSource ? checkedNodes.concat(topics.map((t) => t.name)) : checkedNodes },
-          { keepLayoutInUrl: true }
-        );
-      }
-    },
-    [checkedNodes, saveConfig, topics]
-  );
-
-  useLayoutEffect(
-    () => {
-      if (!isEqual(checkedNodes.sort(), newCheckedNodes.sort())) {
-        saveConfig({ checkedNodes: newCheckedNodes });
-      }
-    },
-    [checkedNodes, newCheckedNodes, saveConfig]
-  );
-
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
   const { globalVariables, setGlobalVariables } = useGlobalVariables();
   const [debug, setDebug] = useState(false);
-  const [editTopicState, setEditTopicState] = useState<?EditTopicState>(null);
   const [polygonBuilder, setPolygonBuilder] = useState(() => new PolygonBuilder());
-  // use hideTopicTreeCount to trigger auto hide topic tree when clicked outside of the topic tree
-  const [hideTopicTreeCount, setHideTopicTreeCount] = useState(0);
-  // debounced filterText which will trigger auto creation of a new topic tree
-  const [filterText, setFilterText] = useState("");
   const [measureInfo, setMeasureInfo] = useState<MeasureInfo>({
     measureState: "idle",
     measurePoints: { start: null, end: null },
   });
 
+  useEffect(
+    () => {
+      // Save the topic group config until we do the final migration
+      if ((!process.env.NODE_ENV || process.env.NODE_ENV === "development") && topicGroups) {
+        return;
+      }
+      // Always migrate the current config to topicGroup and save to panelConfig.
+      // This is only temporary until we do the full migration before release.
+      // TODO(Audrey): move the migration logic upstream
+      const migratedTopicGroupConfig = migratePanelConfigToTopicGroupConfig({
+        checkedNodes,
+        topicSettings,
+        modifiedNamespaceTopics,
+      });
+      saveConfig({ topicGroups: [migratedTopicGroupConfig] });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps, only need to migrate and save once
+    []
+  );
+
   const [_, forceUpdate] = useReducer((x) => x + 1, 0); // used for updating DrawPolygon during mouse move
-  const wrapperRef = useRef<?HTMLDivElement>(null);
   const measuringElRef = useRef<?MeasuringTool>(null);
   const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(null);
   const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(null);
   const selectedObject = selectedObjectState && selectedObjectState.selectedObject;
-
-  // If topic settings are changing rapidly, such as when dragging a slider or color picker,
-  // the topicSettings will change, but we don't want to rebuild the tree each time so we
-  // check for shallow equality on the list of edited topics.
-  const editedTopics = useShallowMemo(
-    useMemo(() => Object.keys(topicSettings).filter((settingKey) => Object.keys(topicSettings[settingKey]).length), [
-      topicSettings,
-    ])
-  );
 
   useLayoutEffect(
     () => {
@@ -232,41 +195,15 @@ export default function LayoutForTopicGroups({
     }),
     []
   );
-  const defaultTree = useMemo(
-    () =>
-      treeBuilder({
-        checkedNodes,
-        expandedNodes: [],
-        modifiedNamespaceTopics: [],
-        namespaces: [],
-        topics,
-        transforms: transforms.values(),
-        topicDisplayMode,
-        topicConfig,
-      }),
-    //eslint-disable-next-line react-hooks/exhaustive-deps, only need to build once
-    []
+
+  const { selectedTopicNames, selectedNamespacesByTopic, selectedTopicSettingsByTopic } = useMemo(
+    () => getSelectionsFromTopicGroupConfig(topicGroups || []),
+    [topicGroups]
   );
-  const topicTreeRef = useRef(defaultTree);
-  // sceneBuilder relies on topic tree selection; topic tree selection also relies on sceneBuilder namespaces.
-  // useLayoutEffect will update the topic tree and selections, which in turn re-triggers rendering of the topic tree.
-  const [selections, setSelections] = useState(() => topicTreeRef.current.getSelections());
 
   // update subscriptions whenever selected topics change, use deep compare to prevent updating when expanding/collapsing topics
-  const memoizedSelectedTopics = useShallowMemo(selections.topics);
+  const memoizedSelectedTopics = useShallowMemo(selectedTopicNames);
   useEffect(() => setSubscriptions(memoizedSelectedTopics), [memoizedSelectedTopics, setSubscriptions]);
-
-  // use the selection to decide which topics to render in SceneBuilder
-  const checkedVisibleTopicNames = useMemo(() => difference(memoizedSelectedTopics, hiddenTopics), [
-    hiddenTopics,
-    memoizedSelectedTopics,
-  ]);
-
-  // Use isEqual compare to update only when the extensions actually changed: the topic selector emits a new list of extensions
-  // every time someone expands/collapses a node or types in the selection box...so if we don't check for
-  // item equality here we end up re-rendering the map significantly more than we need to.
-  const memoizedExtensions = useShallowMemo(selections.extensions);
-
   const { playerId } = useDataSourceInfo();
 
   useMemo(
@@ -285,15 +222,14 @@ export default function LayoutForTopicGroups({
       sceneBuilder.setPlayerId(playerId);
       sceneBuilder.setTransforms(transforms, rootTfID);
       sceneBuilder.setFlattenMarkers(!!flattenMarkers);
-      // toggle scene builder namespaces based on selected namespace nodes in the tree
-      sceneBuilder.setEnabledNamespaces(selections.namespaces);
-      sceneBuilder.setTopicSettings(topicSettings);
+      sceneBuilder.setSelectedNamespacesByTopic(selectedNamespacesByTopic);
+      sceneBuilder.setTopicSettings(selectedTopicSettingsByTopic);
 
-      // toggle scene builder topics based on selected topic nodes in the tree
+      // toggle scene builder topics based on visible topic nodes in the tree
       const topicsByName = topicsByTopicName(topics);
-      const checkedVisibleTopics = filterMap(checkedVisibleTopicNames, (name) => topicsByName[name]);
+      const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByName[name]);
+      sceneBuilder.setTopics(selectedTopics);
 
-      sceneBuilder.setTopics(checkedVisibleTopics);
       sceneBuilder.setGlobalVariables(globalVariables);
       sceneBuilder.setFrame(frame);
       sceneBuilder.setCurrentTime(currentTime);
@@ -301,59 +237,23 @@ export default function LayoutForTopicGroups({
 
       // update the transforms and set the selected ones to render
       transformsBuilder.setTransforms(transforms, rootTfID);
-      const tfSelections = memoizedExtensions.filter((ex) => ex.startsWith("TF")).map((ex) => ex.substr("TF.".length));
-      transformsBuilder.setSelectedTransforms(tfSelections);
+      transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic["/tf"] || []);
     },
     [
       cleared,
-      frame,
-      transforms,
-      followTf,
-      sceneBuilder,
-      playerId,
-      flattenMarkers,
-      selections.namespaces,
-      topicSettings,
-      topics,
-      checkedVisibleTopicNames,
-      globalVariables,
       currentTime,
-      transformsBuilder,
-      memoizedExtensions,
-    ]
-  );
-
-  const transformCount = transforms.values().length;
-  useEffect(
-    () => {
-      topicTreeRef.current = treeBuilder({
-        topics,
-        namespaces: sceneBuilder.allNamespaces,
-        checkedNodes,
-        expandedNodes,
-        modifiedNamespaceTopics,
-        transforms: transforms.values(),
-        editedTopics,
-        canEditDatatype,
-        filterText,
-        topicDisplayMode,
-        topicConfig,
-      });
-      // trigger another render
-      setSelections(topicTreeRef.current.getSelections());
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps, instead of trigger change on transforms, we need to use transforms.values().length
-    [
-      checkedNodes,
-      editedTopics,
-      expandedNodes,
-      filterText,
-      modifiedNamespaceTopics,
-      sceneBuilder.allNamespaces,
+      flattenMarkers,
+      followTf,
+      frame,
+      globalVariables,
+      playerId,
+      sceneBuilder,
+      selectedNamespacesByTopic,
+      selectedTopicNames,
+      selectedTopicSettingsByTopic,
       topics,
-      transformCount,
-      topicConfig,
-      topicDisplayMode,
+      transforms,
+      transformsBuilder,
     ]
   );
 
@@ -370,22 +270,18 @@ export default function LayoutForTopicGroups({
     cameraState,
     debug,
     drawingTabType,
-    editTopicState,
     handleDrawPolygons,
     saveConfig,
     selectedObjectState,
-    hideTopicTreeCount,
     topics,
   });
   callbackInputsRef.current = {
     cameraState,
     debug,
     drawingTabType,
-    editTopicState,
     handleDrawPolygons,
     saveConfig,
     selectedObjectState,
-    hideTopicTreeCount,
     topics,
   };
 
@@ -414,8 +310,6 @@ export default function LayoutForTopicGroups({
     onMouseMove,
     onMouseUp,
     onClearSelectedObject,
-    onControlsOverlayClick,
-    onEditClick,
     onSelectObject,
     onSetPolygons,
     toggleCameraMode,
@@ -436,47 +330,13 @@ export default function LayoutForTopicGroups({
             setSelectedObjectState({ selectedObject: null, selectedObjects, clickedPosition });
           }
         },
-        onControlsOverlayClick: (ev: SyntheticMouseEvent<HTMLDivElement>) => {
-          if (!wrapperRef.current) {
-            return;
-          }
-          const target = ((ev.target: any): HTMLElement);
-          //only close if the click target is inside the panel, e.g. don't close when dropdown menus rendered in portals are clicked
-          if (wrapperRef.current.contains(target)) {
-            setHideTopicTreeCount((callbackInputsRef.current.hideTopicTreeCount + 1) % 100);
-          }
-        },
         onDoubleClick: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onDoubleClick", ev, args),
         onMouseDown: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseDown", ev, args),
         onMouseMove: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseMove", ev, args),
         onMouseUp: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseUp", ev, args),
         onClearSelectedObject: () => setSelectedObjectState(null),
-        // clicking on the body should hide any edit tip
-        onEditClick: (ev: SyntheticMouseEvent<HTMLElement>, topic: string) => {
-          const { editTopicState: currentEditTopicState, topics: currentTopics } = callbackInputsRef.current;
-          // if the same icon is clicked again, close the popup
-          const existingEditTopic = (currentEditTopicState && currentEditTopicState.topic.name) || undefined;
-          if (topic === existingEditTopic) {
-            setEditTopicState(null);
-            return;
-          }
-
-          if (!wrapperRef.current) {
-            return;
-          }
-          const panelRect = wrapperRef.current.getBoundingClientRect();
-          const editBtnRect = ev.currentTarget.getBoundingClientRect();
-          const newEditTopic = currentTopics.find((t) => t.name === topic);
-          if (!newEditTopic) {
-            return;
-          }
-          setEditTopicState({
-            tooltipPosX: Math.ceil(editBtnRect.right - panelRect.left + 5),
-            topic: newEditTopic,
-          });
-        },
         onSelectObject: (selectedObj: MouseEventObject) =>
-          setSelectedObjectState({ ...callbackInputsRef.current.selectedObjectState, selectedObj }),
+          setSelectedObjectState({ ...callbackInputsRef.current.selectedObjectState, selectedObject: selectedObj }),
         onSetPolygons: (polygons: Polygon[]) => setPolygonBuilder(new PolygonBuilder(polygons)),
         toggleDebug: () => setDebug(!callbackInputsRef.current.debug),
         toggleCameraMode: () => {
@@ -530,21 +390,24 @@ export default function LayoutForTopicGroups({
   );
 
   const memoizedScene = useShallowMemo(sceneBuilder.getScene());
+  const mapNamespaces = useShallowMemo(selectedNamespacesByTopic["/metadata"] || []);
   const mapElement = useMemo(
     () =>
       MapComponent && (
         <MapComponent
-          extensions={memoizedExtensions}
+          extensions={mapNamespaces}
           scene={memoizedScene}
           debug={debug}
           perspective={!!cameraState.perspective}
         />
       ),
-    [MapComponent, cameraState.perspective, debug, memoizedExtensions, memoizedScene]
+    [MapComponent, cameraState.perspective, debug, mapNamespaces, memoizedScene]
   );
 
+  const availableTfs = useShallowMemo(transforms.values().map(({ id }) => id));
+
   return (
-    <div className={styles.container} ref={wrapperRef} style={{ cursor: cursorType }} onClick={onControlsOverlayClick}>
+    <div className={styles.container} style={{ cursor: cursorType }}>
       <KeyListener keyDownHandlers={keyDownHandlers} />
       <PanelToolbar
         floating
@@ -559,32 +422,13 @@ export default function LayoutForTopicGroups({
         }
       />
       <div style={videoRecordingStyle}>
-        <TopicSelector
-          autoTextBackgroundColor={!!autoTextBackgroundColor}
-          checkedNodes={checkedNodes}
-          editedTopics={editedTopics}
-          expandedNodes={expandedNodes}
-          hideTopicTreeCount={hideTopicTreeCount}
-          modifiedNamespaceTopics={modifiedNamespaceTopics}
-          namespaces={sceneBuilder.allNamespaces}
-          onEditClick={onEditClick}
-          onTopicSearchChange={setFilterText}
+        <TopicGroups
+          allNamespaces={sceneBuilder.allNamespaces}
+          availableTfs={availableTfs}
+          availableTopics={topics}
           pinTopics={pinTopics}
           saveConfig={saveConfig}
-          sceneErrors={sceneBuilder.errors}
-          tree={topicTreeRef.current}
-          topicDisplayMode={topicDisplayMode}
-          hiddenTopics={hiddenTopics}
-          setHiddenTopics={setHiddenTopics}
-        />
-        <LayoutTopicSettings
-          saveConfig={saveConfig}
-          topics={topics}
-          transforms={transforms}
-          sceneBuilder={sceneBuilder}
-          topicSettings={topicSettings}
-          setEditTopicState={setEditTopicState}
-          editTopicState={editTopicState}
+          topicGroupsConfig={topicGroups || []}
         />
       </div>
       <div className={styles.world}>

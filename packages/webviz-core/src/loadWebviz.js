@@ -49,6 +49,7 @@ const defaultHooks = {
     ];
   },
   panelsByCategory() {
+    const GlobalVariables = require("webviz-core/src/panels/GlobalVariables").default;
     const DiagnosticStatusPanel = require("webviz-core/src/panels/diagnostics/DiagnosticStatusPanel").default;
     const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
     const ImageViewPanel = require("webviz-core/src/panels/ImageView").default;
@@ -79,6 +80,7 @@ const defaultHooks = {
     ];
 
     const utilities = [
+      { title: "Global Variables", component: GlobalVariables },
       { title: "Node Playground", component: NodePlayground },
       { title: "Notes", component: Note },
       { title: "Webviz Internals", component: Internals },
@@ -204,11 +206,16 @@ const defaultHooks = {
     return <Root store={store} />;
   },
   topicsWithIncorrectHeaders: () => [],
-  load: () => {},
-  onPanelClose: () => {},
-  onPanelSwap: () => {},
-  onPanelSplit: () => {},
-  onPanelDrag: () => {},
+  load: () => {
+    if (process.env.NODE_ENV === "production" && window.ga) {
+      window.ga("create", "UA-82819136-10", "auto");
+    } else {
+      window.ga = function(...args) {
+        console.log("[debug] ga:", ...args);
+      };
+    }
+    window.ga("send", "pageview");
+  },
   getWorkerDataProviderWorker: () => {
     return require("webviz-core/src/dataProviders/WorkerDataProvider.worker");
   },
@@ -219,11 +226,12 @@ const defaultHooks = {
         name: "Topic Group Management",
         description:
           "We're revamping the topic tree to be customizable directly from Webviz. You'll be able to create your own groups and toggle them easily.",
-        developmentDefault: true,
+        developmentDefault: false,
         productionDefault: false,
       },
     };
   },
+  linkTopicPathSyntaxToHelpPage: () => true,
 };
 
 let hooks = defaultHooks;

@@ -16,3 +16,8 @@
     flex-shrink: 1;
   }
 }
+
+option:disabled {
+  color: gray;
+  cursor: not-allowed;
+}

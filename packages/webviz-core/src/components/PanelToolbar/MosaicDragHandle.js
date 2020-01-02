@@ -13,7 +13,6 @@ import { DragSource } from "react-dnd";
 import { MosaicDragType, createDragToUpdates } from "react-mosaic-component";
 
 import { getPanelTypeFromMosiac } from "webviz-core/src/components/PanelToolbar/utils";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 
 const dragSource = {
   beginDrag: (props, monitor, component) => {
@@ -43,7 +42,7 @@ const dragSource = {
     const { mosaicWindowActions, mosaicActions } = component.context;
     const type = getPanelTypeFromMosiac(mosaicWindowActions, mosaicActions);
 
-    getGlobalHooks().onPanelDrag(type);
+    window.ga("send", "event", "Panel", "Drag", type);
     const ownPath = component.context.mosaicWindowActions.getPath();
     const dropResult = monitor.getDropResult() || {};
     const { position, path: destinationPath } = dropResult;

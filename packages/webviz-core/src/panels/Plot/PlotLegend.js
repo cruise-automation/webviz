@@ -22,6 +22,7 @@ type PlotLegendProps = {|
   paths: PlotPath[],
   saveConfig: ($Shape<PlotConfig>) => void,
   showLegend: boolean,
+  xAxisVal: "timestamp" | "index",
 |};
 
 function PlotLegendToggle(props: { onToggle: () => void }) {
@@ -35,7 +36,7 @@ function PlotLegendToggle(props: { onToggle: () => void }) {
 }
 
 export default function PlotLegend(props: PlotLegendProps) {
-  const { paths, saveConfig, showLegend } = props;
+  const { paths, saveConfig, showLegend, xAxisVal } = props;
   const lastPath = last(paths);
 
   const onInputChange = useCallback(
@@ -110,7 +111,7 @@ export default function PlotLegend(props: PlotLegendProps) {
                   index={index}
                   autoSize
                   disableAutocomplete={isReferenceLinePlotPath}
-                  timestampMethod={timestampMethod}
+                  {...(xAxisVal === "timestamp" ? { timestampMethod } : null)}
                 />
               </div>
               <div

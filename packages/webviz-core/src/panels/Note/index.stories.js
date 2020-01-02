@@ -15,16 +15,16 @@ import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 storiesOf("<Note>", module)
   .addDecorator(withScreenshot())
-  .add("default", () => {
-    const fixture = {
-      topics: [],
-      datatypes: {
-        "std_msgs/String": { fields: [{ name: "noteText", type: "string" }] },
-      },
-      frame: {},
-    };
+  .add("empty", () => {
     return (
-      <PanelSetup fixture={fixture}>
+      <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }}>
+        <Note />
+      </PanelSetup>
+    );
+  })
+  .add("with text", () => {
+    return (
+      <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }}>
         <Note config={{ noteText: "abc" }} />
       </PanelSetup>
     );

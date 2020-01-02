@@ -101,11 +101,11 @@ type Props = {|
   transforms: Transforms,
 |};
 
-type SelectedObjectState = {
+type SelectedObjectState = {|
   clickedPosition: ClickedPosition,
   selectedObject: ?MouseEventObject, // to be set when clicked a single object or selected one of the clicked topics from the context menu
   selectedObjects: MouseEventObject[],
-};
+|};
 
 export type EditTopicState = { tooltipPosX: number, topic: Topic };
 
@@ -132,7 +132,7 @@ export default function Layout({
     expandedNodes,
     checkedNodes,
     flattenMarkers,
-    modifiedNamespaceTopics,
+    modifiedNamespaceTopics = [],
     pinTopics,
     selectedPolygonEditFormat = "yaml",
     showCrosshair,
@@ -476,7 +476,7 @@ export default function Layout({
           });
         },
         onSelectObject: (selectedObj: MouseEventObject) =>
-          setSelectedObjectState({ ...callbackInputsRef.current.selectedObjectState, selectedObj }),
+          setSelectedObjectState({ ...callbackInputsRef.current.selectedObjectState, selectedObject: selectedObj }),
         onSetPolygons: (polygons: Polygon[]) => setPolygonBuilder(new PolygonBuilder(polygons)),
         toggleDebug: () => setDebug(!callbackInputsRef.current.debug),
         toggleCameraMode: () => {

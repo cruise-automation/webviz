@@ -47,7 +47,8 @@ function getDatasetFromMessagePlotPath(
   path: PlotPath,
   itemsByPath: MessageHistoryItemsByPath,
   index: number,
-  startTime: Time
+  startTime: Time,
+  xAxisVal: "timestamp" | "index"
 ) {
   let points: PlotChartPoint[] = [];
   let showLine = true;
@@ -58,12 +59,12 @@ function getDatasetFromMessagePlotPath(
       continue;
     }
 
-    for (const { value, path: queriedPath, constantName } of item.queriedData) {
+    for (const [idx, { value, path: queriedPath, constantName }] of item.queriedData.entries()) {
       if (typeof value === "number" || typeof value === "boolean" || typeof value === "string") {
         const valueNum = Number(value);
         if (!isNaN(valueNum)) {
           points.push({
-            x: toSec(subtractTimes(timestamp, startTime)),
+            x: xAxisVal === "timestamp" ? toSec(subtractTimes(timestamp, startTime)) : idx,
             y: valueNum,
             tooltip: { item, path: queriedPath, value, constantName, startTime },
           });
@@ -72,7 +73,7 @@ function getDatasetFromMessagePlotPath(
         // $FlowFixMe - %checks on isTime can't convince Flow that the object is actually a Time. Related: https://github.com/facebook/flow/issues/3614
         const timeValue = (value: Time);
         points.push({
-          x: toSec(subtractTimes(timestamp, startTime)),
+          x: xAxisVal === "timestamp" ? toSec(subtractTimes(timestamp, startTime)) : idx,
           y: toSec(timeValue),
           tooltip: {
             item,
@@ -85,7 +86,7 @@ function getDatasetFromMessagePlotPath(
       }
     }
     // If we have added more than one point for this message, make it a scatter plot.
-    if (item.queriedData.length > 1) {
+    if (item.queriedData.length > 1 && xAxisVal !== "index") {
       showLine = false;
     }
   }
@@ -130,12 +131,17 @@ function getAnnotationFromReferenceLine(path: PlotPath, index: number) {
   };
 }
 
-export function getDatasets(paths: PlotPath[], itemsByPath: MessageHistoryItemsByPath, startTime: Time): DataSet[] {
+export function getDatasets(
+  paths: PlotPath[],
+  itemsByPath: MessageHistoryItemsByPath,
+  startTime: Time,
+  xAxisVal: "timestamp" | "index"
+): DataSet[] {
   return filterMap(paths, (path: PlotPath, index: number) => {
     if (!path.enabled) {
       return null;
     } else if (!isReferenceLinePlotPathType(path)) {
-      return getDatasetFromMessagePlotPath(path, itemsByPath, index, startTime);
+      return getDatasetFromMessagePlotPath(path, itemsByPath, index, startTime, xAxisVal);
     }
     return null;
   });
@@ -184,10 +190,11 @@ type PlotChartProps = {|
   maxYValue: number,
   saveCurrentYs: (minY: number, maxY: number) => void,
   datasets: DataSet[],
+  xAxisVal: "timestamp" | "index",
 |};
 export default class PlotChart extends PureComponent<PlotChartProps> {
   render() {
-    const { paths, minYValue, maxYValue, saveCurrentYs, datasets } = this.props;
+    const { paths, minYValue, maxYValue, saveCurrentYs, datasets, xAxisVal } = this.props;
     const annotations = getAnnotations(paths);
     return (
       <div className={styles.root}>
@@ -203,6 +210,7 @@ export default class PlotChart extends PureComponent<PlotChartProps> {
               type="scatter"
               yAxes={yAxes({ minY: minYValue, maxY: maxYValue, scaleId: Y_AXIS_ID })}
               saveCurrentYs={saveCurrentYs}
+              xAxisVal={xAxisVal}
               useFixedYAxisWidth
             />
           )}

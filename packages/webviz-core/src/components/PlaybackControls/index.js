@@ -131,8 +131,9 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
         "Player is initializing..."
       ) : (
         <span>
-          Drop a <a href="http://wiki.ros.org/ROS/Tutorials/Recording%20and%20playing%20back%20data">ROS bag file</a> to
-          get started. Or check out <a href="/worldview">Worldview</a> and other packages on{" "}
+          Drop a <a href="http://wiki.ros.org/ROS/Tutorials/Recording%20and%20playing%20back%20data">ROS bag file</a> or
+          connect to a <a href="http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge">rosbridge</a> to get
+          started. Or check out <a href="/worldview">Worldview</a> and other packages on{" "}
           <a href="https://github.com/cruise-automation">GitHub</a>!
         </span>
       );

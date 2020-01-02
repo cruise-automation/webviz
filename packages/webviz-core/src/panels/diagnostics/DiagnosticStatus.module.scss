@@ -13,9 +13,10 @@
 tr.section th {
   color: $highlight;
   text-align: center;
-  font-size: 1.5em;
+  font-size: 1.2em;
   padding: 4px;
   cursor: pointer;
+  border: none;
 }
 
 tr.status-ok {
@@ -58,10 +59,21 @@ td.collapsedSection {
   color: $red;
 }
 
-.plotIcon {
+.plotIcon,
+.stateTransitionsIcon {
   color: white;
+  margin-left: 4px;
+  visibility: hidden;
 
-  > svg {
-    vertical-align: top;
+  tr.row:hover & {
+    visibility: visible;
   }
+}
+
+.plotIcon > svg {
+  vertical-align: -1px;
+}
+
+.stateTransitionsIcon > svg {
+  vertical-align: -2px;
 }

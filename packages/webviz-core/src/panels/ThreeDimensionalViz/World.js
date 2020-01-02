@@ -12,6 +12,7 @@ import {
   Arrows,
   Cubes,
   Cylinders,
+  GLText,
   Lines,
   Points,
   Spheres,
@@ -23,6 +24,7 @@ import {
   createInstancedGetChildrenForHitmap,
 } from "regl-worldview";
 
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import {
   OccupancyGrids,
@@ -109,6 +111,9 @@ export default function World({
     .perPanelHooks()
     .ThreeDimensionalViz.renderAdditionalMarkers(rest);
 
+  const useGLText = useExperimentalFeature("glText");
+  const TextComponent = useGLText ? GLText : Text;
+
   return (
     <Worldview
       cameraState={cameraState}
@@ -133,7 +138,19 @@ export default function World({
       <Cubes>{[...cube, ...cubeList]}</Cubes>
       <PoseMarkers>{poseMarker}</PoseMarkers>
       <LaserScans>{laserScan}</LaserScans>
-      <Text autoBackgroundColor={autoTextBackgroundColor}>{text}</Text>
+      <TextComponent autoBackgroundColor={autoTextBackgroundColor}>
+        {useGLText
+          ? text.map((marker) => ({
+              ...marker,
+              scale: {
+                // RViz ignores scale.x/y for text and only uses z
+                x: marker.scale.z,
+                y: marker.scale.z,
+                z: marker.scale.z,
+              },
+            }))
+          : text}
+      </TextComponent>
       <FilledPolygons>{filledPolygon}</FilledPolygons>
       <Lines getChildrenForHitmap={getChildrenForHitmap}>{instancedLineList}</Lines>
       <LinedConvexHulls>{linedConvexHull}</LinedConvexHulls>

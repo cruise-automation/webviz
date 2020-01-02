@@ -64,7 +64,7 @@ describe("state.panels", () => {
       expect(panels.savedProps).toEqual({});
     });
 
-    store.dispatch(importPanelLayout(payload, false));
+    store.dispatch(importPanelLayout(payload));
     store.checkState((panels) => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ foo: { test: true } });
@@ -102,7 +102,7 @@ describe("state.panels", () => {
       savedProps: { foo: { test: true } },
     };
 
-    store.dispatch(importPanelLayout(payload, false));
+    store.dispatch(importPanelLayout(payload));
     store.checkState((panels) => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
@@ -119,7 +119,7 @@ describe("state.panels", () => {
       savedProps: { foo: { test: true } },
     };
 
-    store.dispatch(importPanelLayout(payload, false));
+    store.dispatch(importPanelLayout(payload));
     store.checkState((panels) => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
@@ -140,7 +140,7 @@ describe("state.panels", () => {
       linkedGlobalVariables,
     };
 
-    store.dispatch(importPanelLayout(payload, false));
+    store.dispatch(importPanelLayout(payload));
     store.checkState((panels) => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
@@ -154,7 +154,7 @@ describe("state.panels", () => {
     const store = getStore();
     const globalVariables = { some_global_data_var: 1 };
     const payload = { globalData: globalVariables, layout: "foo!baz" };
-    store.dispatch(importPanelLayout(payload, true));
+    store.dispatch(importPanelLayout(payload, { isFromUrl: true }));
     store.checkState((panels) => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
@@ -166,7 +166,7 @@ describe("state.panels", () => {
     const store = getStore();
     const globalVariables = { some_global_data_var: 1 };
     const payload = { globalData: { some_var: 2 }, globalVariables, layout: "foo!baz" };
-    store.dispatch(importPanelLayout(payload, true));
+    store.dispatch(importPanelLayout(payload, { isFromUrl: true }));
     store.checkState((panels) => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
@@ -209,7 +209,7 @@ describe("state.panels", () => {
   });
 
   testUrlCleanup("removes layout when layout is imported", () => {
-    return importPanelLayout({ layout: "foo!bar", savedProps: {} }, false);
+    return importPanelLayout({ layout: "foo!bar", savedProps: {} });
   });
 
   it("does not remove layout if layout is imported from url", () => {
@@ -218,7 +218,7 @@ describe("state.panels", () => {
     store.checkState((panels, routing) => {
       expect(routing.location.search).toEqual("?layout=foo&name=bar");
     });
-    store.dispatch(importPanelLayout({ layout: null, savedProps: {} }, true));
+    store.dispatch(importPanelLayout({ layout: null, savedProps: {} }, { isFromUrl: true }));
     store.checkState((panels, routing) => {
       expect(routing.location.search).toEqual("?layout=foo&name=bar");
     });
@@ -228,7 +228,7 @@ describe("state.panels", () => {
     const store = getStore();
     const storage = new Storage();
 
-    store.dispatch(importPanelLayout({ layout: "myNewLayout", savedProps: {} }, true));
+    store.dispatch(importPanelLayout({ layout: "myNewLayout", savedProps: {} }, { isFromUrl: true }));
     store.checkState((panels) => {
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.layout).toEqual("myNewLayout");
@@ -239,7 +239,9 @@ describe("state.panels", () => {
     const store = getStore();
     const storage = new Storage();
 
-    store.dispatch(importPanelLayout({ layout: null, savedProps: {} }, true, true));
+    store.dispatch(
+      importPanelLayout({ layout: null, savedProps: {} }, { isFromUrl: true, skipSettingLocalStorage: true })
+    );
     store.checkState((panels) => {
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.layout).not.toEqual(panels.layout);

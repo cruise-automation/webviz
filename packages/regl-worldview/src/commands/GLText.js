@@ -32,10 +32,10 @@ import { isColorDark, type TextMarker } from "./Text";
 //   provide support for this. Some font info could be generated/stored offline, possibly including the atlas.
 // - Explore multi-channel SDFs.
 
-type AdditTextMarkerProps = { billboard?: boolean, highlightedIndices?: Array<number> };
+type TextMarkerProps = TextMarker & { billboard?: boolean, highlightedIndices?: Array<number> };
 type Props = {
   ...CommonCommandProps,
-  children: $ReadOnlyArray<TextMarker & AdditTextMarkerProps>,
+  children: $ReadOnlyArray<TextMarkerProps>,
   autoBackgroundColor?: boolean,
 };
 
@@ -247,7 +247,7 @@ function makeTextCommand() {
       },
     });
 
-    return (props: $ReadOnlyArray<TextMarker & AdditTextMarkerProps>) => {
+    return (props: $ReadOnlyArray<TextMarkerProps>) => {
       let estimatedInstances = 0;
       const prevNumChars = charSet.size;
       for (const { text } of props) {

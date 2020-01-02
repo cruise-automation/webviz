@@ -34,7 +34,7 @@ import { isColorDark, type TextMarker } from "./Text";
 
 type Props = {
   ...CommonCommandProps,
-  children: $ReadOnlyArray<TextMarker & { billboard?: boolean }>,
+  children: $ReadOnlyArray<TextMarker & { billboard?: ?boolean }>,
   autoBackgroundColor?: boolean,
 };
 

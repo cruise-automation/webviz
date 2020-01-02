@@ -9,7 +9,7 @@
 import earcut from "earcut";
 import React from "react";
 
-import type { Vec3, PolygonType } from "../types";
+import type { Vec3, Point, PolygonType } from "../types";
 import { shouldConvert, pointToVec3 } from "../utils/commandUtils";
 import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
 import Triangles from "./Triangles";
@@ -32,7 +32,7 @@ function flatten3D(points: Vec3[]): Float32Array {
   return array;
 }
 
-function getEarcutPoints(points: Vec3[]): Vec3[] {
+function getEarcutPoints(points: Vec3[]): (Vec3 | Point)[] {
   const flattenedPoints = flatten3D(points);
   const indices = earcut(flattenedPoints, null, 3);
   const newPoints = [];
@@ -53,7 +53,7 @@ function FilledPolygons({ children: polygons = [], ...rest }: Props) {
     // $FlowFixMe flow doesn't know how shouldConvert works
     const points: Vec3[] = shouldConvert(poly.points) ? poly.points.map(pointToVec3) : poly.points;
     const pose = poly.pose ? poly.pose : NO_POSE;
-    const earcutPoints: Vec3[] = getEarcutPoints(points);
+    const earcutPoints = getEarcutPoints(points);
     return {
       ...poly,
       points: earcutPoints,

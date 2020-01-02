@@ -8,7 +8,7 @@
 
 import React from "react";
 
-import type { Line, Point, Pose, Vec4, Vec3, Scale, GetChildrenForHitmap, SphereList } from "../../types";
+import type { Line, Point, Vec3, Scale, GetChildrenForHitmap, SphereList } from "../../types";
 import { vec4ToRGBA, vec3ToPoint } from "../../utils/commandUtils";
 import Lines from "../Lines";
 import Spheres from "../Spheres";

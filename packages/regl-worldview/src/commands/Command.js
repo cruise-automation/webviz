@@ -13,11 +13,11 @@ import type {
   MouseEventEnum,
   RawCommand,
   Color,
-  Ray,
   Point,
   MouseEventObject,
 } from "../types";
 import { getNodeEnv } from "../utils/common";
+import { Ray } from "../utils/Raycast";
 import { type WorldviewContextType } from "../WorldviewContext";
 import WorldviewReactContext from "../WorldviewReactContext";
 

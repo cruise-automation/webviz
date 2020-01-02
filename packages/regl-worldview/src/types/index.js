@@ -10,7 +10,7 @@ import type { CameraState } from "../camera/CameraStore";
 import { Ray } from "../utils/Raycast";
 import type { BaseProps, Props } from "../Worldview";
 
-export type { CameraState, BaseProps, Props, Ray };
+export type { CameraState, BaseProps, Props };
 
 export type Dimensions = {|
   width: number,

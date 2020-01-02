@@ -45,8 +45,10 @@ const zAxis = {
   color: { r: 0.11, g: 0.51, b: 0.92, a: 1 },
 };
 
+type Axis = Line;
+
 type Props = {
-  children: Line[],
+  children: Axis[],
 };
 
 // Renders lines along the x, y, and z axes; useful for debugging.

@@ -62,7 +62,7 @@ const laserScan = (regl: Regl) =>
     count: regl.prop("ranges.length"),
   });
 
-type Props = { ...CommonCommandProps, children: LaserScan[] };
+type Props = { children: LaserScan[], ...CommonCommandProps };
 
 export default function LaserScans(props: Props) {
   return <Command getChildrenForHitmap={nonInstancedGetChildrenForHitmap} {...props} reglCommand={laserScan} />;

@@ -189,7 +189,7 @@ const frag = `
     float dist = texture2D(atlas, vTexCoord).a;
 
     // fwidth(dist) is used to provide some anti-aliasing. However it's currently only used
-    // between outline and text, not on the outer border, because the alpha blending and
+    // when the solid background is enabled, because the alpha blending and
     // depth test don't work together nicely for partially-transparent pixels.
     float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
     if (vEnableHighlight > 0.5) {

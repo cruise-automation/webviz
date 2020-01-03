@@ -2,6 +2,7 @@
 
 import { storiesOf } from "@storybook/react";
 import { quat } from "gl-matrix";
+import { range } from 'lodash';
 import React, { useState, useLayoutEffect } from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
@@ -104,7 +105,7 @@ storiesOf("Worldview/GLText", module)
           return marker;
         }
         while ((match = regex.exec(marker.text)) !== null) {
-          Array.from(Array(searchText.length).keys()).forEach((i) => {
+          range(0, searchText.length).forEach((i) => {
             // $FlowFixMe - Flow doesn't understand the while terminating condition.
             highlightedIndices.add(match.index + i);
           });

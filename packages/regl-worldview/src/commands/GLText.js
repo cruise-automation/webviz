@@ -56,7 +56,8 @@ type FontAtlas = {|
 const FONT_SIZE = 40;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
-const CUTOFF = 0.75;
+const CUTOFF = 0.25;
+const BUFFER = 10;
 
 const BG_COLOR_LIGHT = Object.freeze({ r: 1, g: 1, b: 1, a: 1 });
 const BG_COLOR_DARK = Object.freeze({ r: 0, g: 0, b: 0, a: 1 });
@@ -72,11 +73,11 @@ const memoizedCreateCanvas = memoizeOne((font) => {
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
     (charSet: Set<string>): FontAtlas => {
-      const tinySDF = new TinySDF(FONT_SIZE, 0, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
+      const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
       const ctx = memoizedCreateCanvas(`${FONT_SIZE}px sans-serif`);
 
       let textureWidth = 0;
-      const rowHeight = FONT_SIZE;
+      const rowHeight = FONT_SIZE + 2 * BUFFER;
       const charInfo = {};
 
       // Measure and assign positions to all characters
@@ -84,7 +85,7 @@ const createMemoizedBuildAtlas = () =>
       let y = 0;
       for (const char of charSet) {
         const width = ctx.measureText(char).width;
-        const dx = Math.ceil(width);
+        const dx = Math.ceil(width) + 2 * BUFFER;
         if (x + dx > MAX_ATLAS_WIDTH) {
           x = 0;
           y += rowHeight;
@@ -316,8 +317,8 @@ function makeTextCommand() {
           // Calculate per-character attributes
           destOffsets[2 * index + 0] = x;
           destOffsets[2 * index + 1] = -y;
-          srcOffsets[2 * index + 0] = info.x;
-          srcOffsets[2 * index + 1] = info.y;
+          srcOffsets[2 * index + 0] = info.x + BUFFER;
+          srcOffsets[2 * index + 1] = info.y + BUFFER;
           srcWidths[index] = info.width;
 
           x += info.width;

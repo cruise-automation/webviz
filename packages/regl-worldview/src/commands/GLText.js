@@ -351,7 +351,7 @@ function makeTextCommand() {
           backgroundColor[4 * index + 2] = bgColor.b;
           backgroundColor[4 * index + 3] = bgColor.a;
 
-          enableHighlight[index] = marker.highlightedIndices ? +marker.highlightedIndices.includes(i) : 0;
+          enableHighlight[index] = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
 
           enableBackground[index] = outline ? 1 : 0;
 

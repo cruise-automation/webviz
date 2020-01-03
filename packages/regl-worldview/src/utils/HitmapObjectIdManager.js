@@ -16,17 +16,19 @@ function fillArray(start: number, length: number): number[] {
   return new Array(length).fill(0).map((_, index) => start + index);
 }
 
+type CommandType = Command<any>;
+
 /*
  * This object manages the mapping between objects that are rendered into the scene and their IDs.
  * It supplies an API for generating IDs for a rendered object and then accessing those objects based on their ID.
  */
 export default class HitmapObjectIdManager {
   _objectsByObjectHitmapIdMap: { [ObjectHitmapId]: Object } = {};
-  _commandsByObjectMap: Map<Object, Command> = new Map();
+  _commandsByObjectMap: Map<Object, CommandType> = new Map();
   _nextObjectHitmapId = 1;
   _instanceIndexByObjectHitmapIdMap: { [ObjectHitmapId]: number } = {};
 
-  assignNextColors = (command: Command, object: Object, count: number): Vec4[] => {
+  assignNextColors = (command: CommandType, object: Object, count: number): Vec4[] => {
     if (count < 1) {
       throw new Error("Must get at least 1 id");
     }
@@ -59,7 +61,7 @@ export default class HitmapObjectIdManager {
     };
   };
 
-  getCommandForObject = (object: Object): ?Command => {
+  getCommandForObject = (object: Object): ?CommandType => {
     return this._commandsByObjectMap.get(object);
   };
 }

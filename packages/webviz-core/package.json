@@ -46,6 +46,7 @@
     "react-draggable": "3.0.5",
     "react-hot-loader": "4.8.2",
     "react-hover-observer": "2.1.1",
+    "react-input-autosize": "2.2.2",
     "react-json-tree": "0.11.1",
     "react-markdown": "4.0.4",
     "react-monaco-editor": "0.28.0",

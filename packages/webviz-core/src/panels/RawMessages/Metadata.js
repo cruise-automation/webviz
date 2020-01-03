@@ -39,7 +39,7 @@ export default function Metadata({ data, link, item }: Props) {
   return (
     <SMetadata>
       <span onClick={onClick}>
-        <Icon>
+        <Icon tooltip="Copy entire message to clipboard">
           <ClipboardOutlineIcon style={{ verticalAlign: "middle" }} />{" "}
         </Icon>
       </span>

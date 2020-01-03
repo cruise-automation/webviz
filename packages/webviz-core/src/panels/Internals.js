@@ -19,6 +19,7 @@ import MessageHistory from "webviz-core/src/components/MessageHistory";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import TextContent from "webviz-core/src/components/TextContent";
 import filterMap from "webviz-core/src/filterMap";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Topic, Message, SubscribePayload, AdvertisePayload } from "webviz-core/src/players/types";
@@ -29,7 +30,7 @@ const { useCallback } = React;
 const RECORD_ALL = "RECORD_ALL";
 
 const Container = styled.div`
-  padding: 8px;
+  padding: 16px;
   overflow-y: auto;
   ul {
     font-size: 10px;
@@ -106,7 +107,7 @@ function Internals(): React.Node {
         .map((key) => {
           return (
             <React.Fragment key={key}>
-              <p>{key}:</p>
+              <div style={{ marginTop: 16 }}>{key}:</div>
               <ul>
                 {sortBy(groupedSubscriptions[key], (sub) => sub.topic).map((sub, i) => (
                   <li key={i}>
@@ -137,7 +138,7 @@ function Internals(): React.Node {
         .map((key) => {
           return (
             <React.Fragment key={key}>
-              <p>{key}:</p>
+              <div style={{ marginTop: 16 }}>{key}:</div>
               <ul>
                 {sortBy(groupedPublishers[key], (sub) => sub.topic).map((sub, i) => (
                   <li key={i}>
@@ -199,8 +200,12 @@ function Internals(): React.Node {
     <Container>
       <PanelToolbar floating />
       <h1>Recording</h1>
-      <Flex row wrap>
-        <Button danger onClick={onRecordClick} data-test="internals-record-button">
+      <TextContent>
+        Press to start recording topic data for debug purposes. The latest messages on each topic will be kept and
+        formatted into a fixture that can be used to create a test.
+      </TextContent>
+      <Flex row wrap style={{ padding: "8px 0 32px" }}>
+        <Button isPrimary small onClick={onRecordClick} data-test="internals-record-button">
           {recordingTopics ? `Recording ${recordingTopics.length} topics…` : "Record raw data"}
         </Button>
         <Dropdown
@@ -216,17 +221,13 @@ function Internals(): React.Node {
           ))}
         </Dropdown>
         {recordingTopics && (
-          <Button onClick={downloadJSON} data-test="internals-download-button">
+          <Button small onClick={downloadJSON} data-test="internals-download-button">
             Download JSON
           </Button>
         )}
         {historyRecorder}
       </Flex>
-      <p>
-        Press to start recording topic data for debug purposes. The latest messages on each topic will be kept and
-        formatted into a fixture that can be used to create a test.
-      </p>
-      <Flex row scroll>
+      <Flex row>
         <section data-test="internals-subscriptions">
           <h1>Subscriptions</h1>
           {renderedSubscriptions}

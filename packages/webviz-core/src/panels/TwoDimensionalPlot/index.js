@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { flatten, pick, round } from "lodash";
+import { cloneDeep, flatten, pick, round } from "lodash";
 import React, { useMemo, useCallback } from "react";
 import ChartComponent from "react-chartjs-2";
 import Dimensions from "react-container-dimensions";
@@ -246,7 +246,11 @@ function TwoDimensionalPlot(props: Props) {
                           },
                         },
                       }}
-                      data={{ datasets }}
+                      // Sadly, chartjs mutates its inputs. This can lead to weird bugs, so just do
+                      // a deep clone, even if that means it's slower.
+                      // See https://github.com/jerairrest/react-chartjs-2/issues/250
+                      // https://github.com/jerairrest/react-chartjs-2/issues/343 etc.
+                      data={{ datasets: cloneDeep(datasets) }}
                     />
                   )}
                 </Dimensions>

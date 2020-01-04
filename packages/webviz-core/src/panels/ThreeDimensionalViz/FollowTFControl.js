@@ -89,13 +89,15 @@ type Props = {
   onFollowChange: (tfId?: string | false, followOrientation?: boolean) => void,
 };
 
-function* getDescendants(nodes: TfTreeNode[]) {
-  for (const node of nodes) {
-    if (node.tf.id !== getGlobalHooks().perPanelHooks().ThreeDimensionalViz.rootTransformFrame) {
-      yield node;
-    }
-    yield* getDescendants(node.children);
+function getDescendants(roots: TfTreeNode[]) {
+  const toVisit = [...roots]
+  const visited = []
+  while (toVisit.length >0){
+    const node = toVisit.pop();
+    visited.push(node);
+    node.children.forEach(child=>toVisit.push(child));
   }
+  return visited;
 }
 
 function getItemText(node: TfTreeNode | { tf: { id: string }, depth: number }) {

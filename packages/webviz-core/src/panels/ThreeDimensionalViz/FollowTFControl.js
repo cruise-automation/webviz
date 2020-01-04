@@ -90,12 +90,12 @@ type Props = {
 };
 
 function getDescendants(roots: TfTreeNode[]) {
-  const toVisit = [...roots]
-  const visited = []
-  while (toVisit.length >0){
+  const toVisit = [...roots];
+  const visited = [];
+  while (toVisit.length > 0) {
     const node = toVisit.pop();
     visited.push(node);
-    node.children.forEach(child=>toVisit.push(child));
+    node.children.forEach((child) => toVisit.push(child));
   }
   return visited;
 }

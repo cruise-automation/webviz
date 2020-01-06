@@ -8,7 +8,7 @@
 
 import React from "react";
 
-import type { Line, Point, Pose, Vec4, Vec3, Scale, GetChildrenForHitmap } from "../../types";
+import type { Line, Point, Vec3, Scale, GetChildrenForHitmap, SphereList } from "../../types";
 import { vec4ToRGBA, vec3ToPoint } from "../../utils/commandUtils";
 import Lines from "../Lines";
 import Spheres from "../Spheres";
@@ -57,14 +57,6 @@ export class Polygon {
 }
 
 export type DrawPolygonType = Polygon;
-
-type DrawPolygonSphere = {
-  points: Point[],
-  pose: Pose,
-  scale: Scale,
-  colors: Vec4[],
-  originalMarkers: Object[],
-};
 
 type Props = {
   children: DrawPolygonType[],
@@ -152,23 +144,27 @@ const polygonPointsGetChildrenForHitmap: GetChildrenForHitmap = <T: any>(
 class PolygonPoints extends React.Component<Props> {
   render() {
     const polygons = this.props.children;
-    const sphereList: DrawPolygonSphere = {
-      points: [],
-      colors: [],
-      pose: POSE,
-      scale: DRAW_POINT_SCALE,
-      originalMarkers: [],
-    };
+    const points = [];
+    const colors = [];
+    const originalMarkers = [];
 
     for (const poly of polygons) {
       const color = poly.active ? ACTIVE_POLYGON_COLOR : DEFAULT_COLOR;
       for (const point of poly.points) {
         const convertedPoint = vec3ToPoint(point.point);
-        sphereList.points.push(convertedPoint);
-        sphereList.colors.push(point.active ? ACTIVE_POINT_COLOR : color);
-        sphereList.originalMarkers.push(point);
+        points.push(convertedPoint);
+        colors.push(point.active ? ACTIVE_POINT_COLOR : color);
+        originalMarkers.push(point);
       }
     }
+
+    const sphereList: SphereList = {
+      points,
+      colors,
+      pose: POSE,
+      scale: DRAW_POINT_SCALE,
+      originalMarkers,
+    };
 
     return <Spheres getChildrenForHitmap={polygonPointsGetChildrenForHitmap}>{[sphereList]}</Spheres>;
   }

@@ -66,7 +66,7 @@ export async function clickAtOrigin() {
  */
 export function generateNonInstancedClickAssertions<Type>(
   commandName: string,
-  CommandInstance: ComponentType<{ children: Array<Type>, ...CommonCommandProps }>,
+  CommandInstance: ComponentType<{ ...CommonCommandProps, children: Array<Type> }>,
   renderedObjects: Array<Type>,
   overrideOptions?: {
     overrideExpectedSingleObjects?: any,
@@ -168,7 +168,7 @@ export function generateNonInstancedClickAssertions<Type>(
  */
 export function generateInstancedClickAssertions<Type>(
   commandName: string,
-  CommandInstance: ComponentType<{ children: Array<Type>, ...CommonCommandProps }>,
+  CommandInstance: ComponentType<{ ...CommonCommandProps, children: Array<Type> }>,
   renderedObject: Type
 ): Array<{ name: string, story: () => React$Element<any> }> {
   return [

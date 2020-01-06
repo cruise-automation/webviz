@@ -20,8 +20,8 @@ import Cylinders from "./Cylinders";
 const UNIT_X_VECTOR = Object.freeze([0, 0, 1]);
 
 type Props = {
-  children: Arrow[],
   ...CommonCommandProps,
+  children: Arrow[],
 };
 
 function Arrows(props: Props) {

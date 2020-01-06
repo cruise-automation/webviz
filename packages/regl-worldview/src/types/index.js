@@ -112,7 +112,7 @@ export type ComponentReglClickInfo = {
 
 export type MouseHandler = (SyntheticMouseEvent<HTMLCanvasElement>, ReglClickInfo) => void;
 
-export type ComponentMouseHandler = (MouseEvent, ComponentReglClickInfo) => void;
+export type ComponentMouseHandler = (SyntheticMouseEvent<HTMLCanvasElement>, ComponentReglClickInfo) => void;
 
 export type Coordinate = [number, number];
 

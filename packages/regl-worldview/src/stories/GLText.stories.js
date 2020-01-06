@@ -105,8 +105,9 @@ storiesOf("Worldview/GLText", module)
           return marker;
         }
         while ((match = regex.exec(marker.text)) !== null) {
+          // $FlowFixMe - Flow doesn't understand the while loop terminating condition.
           range(0, match[0].length).forEach((i) => {
-            // $FlowFixMe - Flow doesn't understand the while terminating condition.
+            // $FlowFixMe - Flow doesn't understand the while loop terminating condition.
             highlightedIndices.add(match.index + i);
           });
         }

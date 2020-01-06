@@ -33,11 +33,15 @@ prepareForScreenshots();
 // $FlowFixMe - require.context seems not correctly typed.
 const req = require.context("../packages", true, /\.stories\.js$/);
 // $FlowFixMe - require.context seems not correctly typed.
-const reqDocs = require.context("../docs", true, /\.stories\.js$/);
+// const reqDocs = require.context("../docs", true, /\.stories\.js$/);
 
 function loadStories() {
-  req.keys().forEach((filename) => req(filename));
-  reqDocs.keys().forEach((filename) => reqDocs(filename));
+  req.keys().forEach((filename) => {
+    if (/NodePlayground/.test(filename)) {
+      req(filename);
+    }
+  });
+  // reqDocs.keys().forEach((filename) => reqDocs(filename));
 }
 
 waitForFonts(() => {

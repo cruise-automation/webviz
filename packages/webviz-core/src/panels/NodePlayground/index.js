@@ -33,7 +33,7 @@ import type { UserNodes } from "webviz-core/src/types/panels";
 import { colors } from "webviz-core/src/util/colors";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 
-const Editor = React.lazy(() =>
+export const Editor = React.lazy<any>(() =>
   import(/* webpackChunkName: "node-playground-editor" */ "webviz-core/src/panels/NodePlayground/Editor")
 );
 

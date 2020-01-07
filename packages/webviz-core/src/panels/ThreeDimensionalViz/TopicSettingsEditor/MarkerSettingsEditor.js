@@ -7,17 +7,12 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
-import styled from "styled-components";
 
 import { LINED_CONVEX_HULL_RENDERING_SETTING, type TopicSettingsEditorProps } from ".";
 import { SLabel, SDescription, SInput } from "./common";
-import Dropdown from "webviz-core/src/components/Dropdown";
+import Checkbox from "webviz-core/src/components/Checkbox";
 import Flex from "webviz-core/src/components/Flex";
 import type { Marker, MarkerArray } from "webviz-core/src/types/Messages";
-
-const SDropdown = styled.label`
-  margin-bottom: 12px;
-`;
 
 type MarkerSettings = {|
   overrideColor?: ?string,
@@ -38,17 +33,22 @@ export default function MarkerSettingsEditor(props: TopicSettingsEditorProps<Mar
         placeholder="e.g. 255, 0, 100, 0.5"
         onChange={(e) => onFieldChange("overrideColor", e.target.value)}
       />
-      <SLabel>Command rendering</SLabel>
-      <SDescription>Overrides the Command used to render markers this topic.</SDescription>
-      <SDropdown>
-        <Dropdown
-          position="below"
-          onChange={(value) => onFieldChange("overrideCommand", value && value !== "default" ? value : null)}
-          value={settings.overrideCommand || "default"}>
-          <option value="default">Default</option>
-          <option value={LINED_CONVEX_HULL_RENDERING_SETTING}>Lined convex hull (line markers only)</option>
-        </Dropdown>
-      </SDropdown>
+      <SLabel>Line marker click events override</SLabel>
+      <SDescription>
+        {`
+        Optionally allow treating line markers as polygons, so that clicking inside the lines in the line marker selects
+        the marker. The default behavior for line markers requires the user to click exactly on the line to select the
+        line marker. This option can reduce performance and will not work on instanced line markers (those with "type":
+        105).
+        `}
+      </SDescription>
+      <Checkbox
+        checked={settings.overrideCommand === LINED_CONVEX_HULL_RENDERING_SETTING}
+        label="Allow clicking inside line markers that form polygons"
+        onChange={(checked) => onFieldChange("overrideCommand", checked ? LINED_CONVEX_HULL_RENDERING_SETTING : null)}
+        style={{ marginBottom: 12 }}
+        labelStyle={{ lineHeight: 1.2 }}
+      />
     </Flex>
   );
 }

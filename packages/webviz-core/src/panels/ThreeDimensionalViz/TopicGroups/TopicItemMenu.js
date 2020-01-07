@@ -45,7 +45,7 @@ export default function TopicItemMenu({
         <Item
           dataTest={`delete-topic-menu-${displayName}`}
           onClick={() => {
-            onTopicGroupsChange(objectPath, null, { removeValue: true });
+            onTopicGroupsChange(objectPath, null);
             setIsOpen(false);
           }}>
           Remove topic

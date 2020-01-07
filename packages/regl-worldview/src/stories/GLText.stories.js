@@ -2,6 +2,7 @@
 
 import { storiesOf } from "@storybook/react";
 import { quat } from "gl-matrix";
+import { range } from "lodash";
 import React, { useState, useLayoutEffect } from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
@@ -86,5 +87,52 @@ storiesOf("Worldview/GLText", module)
         </Container>
       );
     }
+    return <Example />;
+  })
+  .add("highlighted text", () => {
+    const Example = () => {
+      const [searchText, setSearchText] = useState("ello\nW");
+      const markers = textMarkers({ text: "Hello\nWorldview" }).map((marker) => {
+        if (!searchText) {
+          return marker;
+        }
+        const highlightedIndices = new Set();
+        let match;
+        let regex;
+        try {
+          regex = new RegExp(searchText, "ig");
+        } catch (e) {
+          return marker;
+        }
+        while ((match = regex.exec(marker.text)) !== null) {
+          // $FlowFixMe - Flow doesn't understand the while loop terminating condition.
+          range(0, match[0].length).forEach((i) => {
+            // $FlowFixMe - Flow doesn't understand the while loop terminating condition.
+            highlightedIndices.add(match.index + i);
+          });
+        }
+        return { ...marker, highlightedIndices: Array.from(highlightedIndices) };
+      });
+
+      return (
+        <>
+          <div style={{ width: "100%", height: "95%" }}>
+            <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+              <GLText autoBackgroundColor>{markers}</GLText>
+              <Axes />
+            </Container>
+          </div>
+
+          <input
+            style={{ width: "100%" }}
+            type="text"
+            placeholder="search text"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        </>
+      );
+    };
+
     return <Example />;
   });

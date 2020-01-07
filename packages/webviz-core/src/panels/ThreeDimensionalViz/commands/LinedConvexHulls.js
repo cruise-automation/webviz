@@ -24,8 +24,8 @@ import {
 } from "regl-worldview";
 
 type Props = {
-  ...CommonCommandProps,
   children: Line[],
+  ...CommonCommandProps,
 };
 
 function getTriangleChildrenForHitmap(props: Line[], assignNextColors, excludedObjects): TriangleList[] {

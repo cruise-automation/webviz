@@ -75,9 +75,7 @@ const buildTfTree = (transforms: Transform[]): TfTree => {
     node.depth = depth;
     node.children.forEach((child) => setDepth(child, depth + 1));
   };
-  tree.roots.forEach((root) =>
-    setDepth(root, root.tf.id === getGlobalHooks().perPanelHooks().ThreeDimensionalViz.rootTransformFrame ? -1 : 0)
-  );
+  tree.roots.forEach((root) => setDepth(root, 0));
 
   return tree;
 };
@@ -91,9 +89,7 @@ type Props = {
 
 function* getDescendants(nodes: TfTreeNode[]) {
   for (const node of nodes) {
-    if (node.tf.id !== getGlobalHooks().perPanelHooks().ThreeDimensionalViz.rootTransformFrame) {
-      yield node;
-    }
+    yield node;
     yield* getDescendants(node.children);
   }
 }

@@ -18,7 +18,7 @@ type State = {
 
 type Props = {
   children: React.Node,
-  text: string,
+  text: React.Node,
   checked?: boolean,
   direction: "left" | "right",
   icon?: React.Node,

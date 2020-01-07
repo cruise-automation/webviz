@@ -17,6 +17,7 @@ export const SDescription = styled.label`
   display: block;
   margin: 6px 2px;
   opacity: 0.8;
+  line-height: 1.2;
 `;
 
 export const SInput = styled.input`

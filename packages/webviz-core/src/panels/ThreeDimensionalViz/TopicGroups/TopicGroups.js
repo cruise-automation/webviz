@@ -10,7 +10,7 @@ import ChevronDownIcon from "@mdi/svg/svg/chevron-down.svg";
 import ChevronUpIcon from "@mdi/svg/svg/chevron-up.svg";
 import LayersIcon from "@mdi/svg/svg/layers.svg";
 import PinIcon from "@mdi/svg/svg/pin.svg";
-import { omit, set, cloneDeep, unset } from "lodash";
+import { omit, set, cloneDeep, compact } from "lodash";
 import Collapse from "rc-collapse";
 import React, { useState, useCallback, useMemo } from "react";
 import styled from "styled-components";
@@ -151,9 +151,9 @@ export function TopicGroupsBase({
 
   const saveNewTopicGroupsToConfig = useCallback(
     (newTopicGroups: TopicGroupType[]) => {
-      const newTopicGroupsConfig = newTopicGroups.map((group) => ({
+      const newTopicGroupsConfig = compact(newTopicGroups).map((group) => ({
         ...omit(group, "derivedFields"),
-        items: group.items.map((item) => omit(item, "derivedFields")),
+        items: compact(group.items).map((item) => omit(item, "derivedFields")),
       }));
       saveConfig({ topicGroups: newTopicGroupsConfig });
     },
@@ -172,21 +172,11 @@ export function TopicGroupsBase({
   );
 
   const onTopicGroupsChange = useCallback(
-    (objectPath: string, newValue: any, options?: {| removeValue?: boolean |}) => {
-      let newTopicGroups = cloneDeep(topicGroups);
-      if (options && options.removeValue) {
-        // unset the topic group or topic item
-        unset(newTopicGroups, objectPath);
-        // filter out the empty value
-        newTopicGroups = newTopicGroups
-          .filter(Boolean)
-          .map((group) => ({ ...group, items: group.items.filter(Boolean) }));
-        saveNewTopicGroupsToConfig(newTopicGroups);
-        return;
-      }
-      // Replace the field value with newValue and save to config.
+    (objectPath: string, newValue: any) => {
       // Make a deep copy of topicGroups to avoid mutation bugs.
-      saveNewTopicGroupsToConfig(set(newTopicGroups, objectPath, newValue));
+      const newTopicGroups = cloneDeep(topicGroups);
+      set(newTopicGroups, objectPath, newValue);
+      saveNewTopicGroupsToConfig(newTopicGroups);
     },
     [saveNewTopicGroupsToConfig, topicGroups]
   );

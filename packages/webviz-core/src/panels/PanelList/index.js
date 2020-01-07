@@ -5,6 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import fuzzySort from "fuzzysort";
 import { flatten } from "lodash";
 import * as React from "react";
 import { DragSource } from "react-dnd";
@@ -16,11 +17,11 @@ import { changePanelLayout, savePanelConfig } from "webviz-core/src/actions/pane
 import { Item } from "webviz-core/src/components/Menu";
 import SubMenu from "webviz-core/src/components/Menu/SubMenu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import TextHighlight from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TextHighlight";
 import type { State } from "webviz-core/src/reducers";
 import type { PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
 import { getPanelIdForType } from "webviz-core/src/util";
 import { colors } from "webviz-core/src/util/colors";
-import naturalSort from "webviz-core/src/util/naturalSort";
 
 const SearchInput = styled.input`
   width: 100%;
@@ -99,19 +100,10 @@ type PanelItemProps = {
 class PanelItem extends React.Component<PanelItemProps> {
   render() {
     const { connectDragSource, searchQuery, panel, onClick, checked } = this.props;
-    const searchQueryIndex = !!searchQuery && panel.title.toLowerCase().indexOf(searchQuery);
     return connectDragSource(
       <div>
         <Item onClick={onClick} checked={checked}>
-          {searchQueryIndex !== false ? (
-            <React.Fragment>
-              {panel.title.substring(0, searchQueryIndex)}
-              <u>{panel.title.substring(searchQueryIndex, searchQueryIndex + searchQuery.length)}</u>
-              {panel.title.substring(searchQueryIndex + searchQuery.length)}
-            </React.Fragment>
-          ) : (
-            panel.title
-          )}
+          <TextHighlight targetStr={panel.title} searchText={searchQuery} />
         </Item>
       </div>
     );
@@ -232,7 +224,6 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
     const { searchQuery } = this.state;
     const panelCategories = getGlobalHooks().panelCategories();
     const panelsByCategory = getPanelsByCategory();
-    const lowerCaseSearchQuery = searchQuery.toLowerCase();
 
     return (
       <div data-test-panel-category>
@@ -243,45 +234,50 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
           onChange={this._handleSearchChange}
           autoFocus
         />
-        {panelCategories.map(({ label, key }, categoryIdx) =>
-          panelsByCategory[key]
-            .filter(({ title }) => !title || title.toLowerCase().includes(lowerCaseSearchQuery))
-            .sort(naturalSort("title"))
-            .map(
-              // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
-              ({ presets, title, component: { panelType } }, panelIdx) =>
-                presets ? (
-                  <SubMenu text={title} key={panelType} checked={panelType === selectedPanelType}>
-                    {presets.map((subPanelListItem) => (
-                      <DraggablePanelItem
-                        key={subPanelListItem.title}
-                        mosaicId={mosaicId}
-                        panel={{
-                          type: panelType,
-                          title: subPanelListItem.title,
-                          panelConfig: subPanelListItem.panelConfig,
-                        }}
-                        onDrop={this.onPanelMenuItemDrop}
-                        onClick={() => onPanelSelect(panelType, subPanelListItem.panelConfig)}
-                        searchQuery=""
-                      />
-                    ))}
-                  </SubMenu>
-                ) : (
-                  <div key={panelType}>
-                    {panelIdx === 0 && <Item isHeader>{label}</Item>}
+        {panelCategories.map(({ label, key }, categoryIdx) => {
+          let items = panelsByCategory[key];
+          if (searchQuery) {
+            items = fuzzySort.go(searchQuery, items, { key: "title" }).map((searchResult) => searchResult.obj);
+          }
+
+          return items.map(
+            // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
+            ({ presets, title, component: { panelType } }, panelIdx) =>
+              presets ? (
+                <SubMenu
+                  text={<TextHighlight targetStr={title} searchText={searchQuery} />}
+                  key={panelType}
+                  checked={panelType === selectedPanelType}>
+                  {presets.map((subPanelListItem) => (
                     <DraggablePanelItem
+                      key={subPanelListItem.title}
                       mosaicId={mosaicId}
-                      panel={{ type: panelType, title }}
+                      panel={{
+                        type: panelType,
+                        title: subPanelListItem.title,
+                        panelConfig: subPanelListItem.panelConfig,
+                      }}
                       onDrop={this.onPanelMenuItemDrop}
-                      onClick={() => onPanelSelect(panelType)}
-                      checked={panelType === selectedPanelType}
-                      searchQuery={lowerCaseSearchQuery}
+                      onClick={() => onPanelSelect(panelType, subPanelListItem.panelConfig)}
+                      searchQuery=""
                     />
-                  </div>
-                )
-            )
-        )}
+                  ))}
+                </SubMenu>
+              ) : (
+                <div key={panelType}>
+                  {panelIdx === 0 && <Item isHeader>{label}</Item>}
+                  <DraggablePanelItem
+                    mosaicId={mosaicId}
+                    panel={{ type: panelType, title }}
+                    onDrop={this.onPanelMenuItemDrop}
+                    onClick={() => onPanelSelect(panelType)}
+                    checked={panelType === selectedPanelType}
+                    searchQuery={searchQuery}
+                  />
+                </div>
+              )
+          );
+        })}
       </div>
     );
   }

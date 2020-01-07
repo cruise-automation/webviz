@@ -11,11 +11,7 @@ type SettingsBySource = {
   overrideCommand?: string,
 };
 
-type OnTopicGroupsChangeOptions = {|
-  removeValue?: boolean,
-  // TODO(Audrey): add option `addTopicsToGroup`
-|};
-export type OnTopicGroupsChange = (objectPath: string, newValue: any, options?: OnTopicGroupsChangeOptions) => void;
+export type OnTopicGroupsChange = (objectPath: string, newValue: any) => void;
 
 export type VisibilityBySource = { [dataSourcePrefix: string]: boolean };
 export type NamespacesBySource = { [dataSourcePrefix: string]: string[] };
@@ -75,3 +71,5 @@ export type TopicGroupType = {|
 |};
 
 export type TopicGroupsType = TopicGroupType[];
+
+export type QuickAddTopicItem = {| topicName: string, displayName: string |};

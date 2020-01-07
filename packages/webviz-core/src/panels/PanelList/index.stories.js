@@ -55,4 +55,25 @@ storiesOf("<PanelList>", module)
         savePanelConfig={() => {}}
       />
     </div>
+  ))
+  .add("case-insensitive filtering and highlight submenu", () => (
+    <div
+      ref={(el) => {
+        if (el) {
+          const input: ?HTMLInputElement = (el.querySelector("input"): any);
+          if (input) {
+            input.focus();
+            input.value = "dp";
+            TestUtils.Simulate.change(input);
+          }
+        }
+      }}>
+      <PanelList
+        onPanelSelect={() => {}}
+        mosaicId=""
+        mosaicLayout=""
+        changePanelLayout={() => {}}
+        savePanelConfig={() => {}}
+      />
+    </div>
   ));

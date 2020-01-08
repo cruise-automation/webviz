@@ -137,7 +137,6 @@ storiesOf("Worldview/GLText", module)
   .add("highlighted text", () => {
     const Example = () => {
       const [searchText, setSearchText] = useState("ello\nW");
-      const [highlightColor, setHighlightColor] = useState<Color>({ r: 1, b: 0, g: 1, a: 1 });
       const markers = textMarkers({ text: "Hello\nWorldview" }).map((marker) => {
         if (!searchText) {
           return marker;
@@ -157,7 +156,7 @@ storiesOf("Worldview/GLText", module)
             highlightedIndices.add(match.index + i);
           });
         }
-        return { ...marker, highlightedIndices: Array.from(highlightedIndices), highlightColor };
+        return { ...marker, highlightedIndices: Array.from(highlightedIndices) };
       });
 
       return (
@@ -177,6 +176,31 @@ storiesOf("Worldview/GLText", module)
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />
+          </div>
+        </div>
+      );
+    };
+
+    return <Example />;
+  })
+  .add("custom highlight color", () => {
+    const Example = () => {
+      const [highlightColor, setHighlightColor] = useState<Color>({ r: 1, b: 0, g: 1, a: 1 });
+      const markers = textMarkers({ text: "Hello\nWorldview" }).map((marker) => ({
+        ...marker,
+        highlightedIndices: [0, 1, 2, 3, 4],
+        highlightColor,
+      }));
+
+      return (
+        <div style={{ width: "100%", height: "100%" }}>
+          <div style={{ width: "100%", height: "100%" }}>
+            <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+              <GLText autoBackgroundColor>{markers}</GLText>
+              <Axes />
+            </Container>
+          </div>
+          <div style={{ position: "absolute", top: "10px", right: "10px" }}>
             <label htmlFor="highlight-color">Highlight Color: </label>
             <input
               type="color"

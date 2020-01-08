@@ -185,7 +185,7 @@ storiesOf("Worldview/GLText", module)
   })
   .add("custom highlight color", () => {
     const Example = () => {
-      const [highlightColor, setHighlightColor] = useState<Color>({ r: 1, b: 0, g: 1, a: 1 });
+      const [highlightColor, setHighlightColor] = useState<Color>({ r: 1, b: 0.5, g: 0.5, a: 1 });
       const markers = textMarkers({ text: "Hello\nWorldview" }).map((marker) => ({
         ...marker,
         highlightedIndices: [0, 1, 2, 3, 4],

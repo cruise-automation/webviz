@@ -42,6 +42,7 @@ function textMarkers({
   });
 }
 
+// Originally from: https://css-tricks.com/converting-color-spaces-in-javascript/
 function rgbToHex(color: Color) {
   let r = Math.floor(color.r * 255).toString(16),
     g = Math.floor(color.g * 255).toString(16),
@@ -60,6 +61,7 @@ function rgbToHex(color: Color) {
   return `#${r}${g}${b}`;
 }
 
+// Originally from: https://css-tricks.com/converting-color-spaces-in-javascript/
 function hexToRgb(hex: string): Color {
   let r = 0,
     g = 0,
@@ -78,8 +80,6 @@ function hexToRgb(hex: string): Color {
     b = `0x${hex[5]}${hex[6]}`;
   }
 
-  // TIL you can do hexadecimal math with JS strings. WTF. This has
-  // to have led to the craziest bug hunts ever conceived.
   r = +(r / 255).toFixed(2);
   g = +(g / 255).toFixed(2);
   b = +(b / 255).toFixed(2);
@@ -186,7 +186,7 @@ storiesOf("Worldview/GLText", module)
   .add("custom highlight color", () => {
     const Example = () => {
       const [highlightColor, setHighlightColor] = useState<Color>({ r: 1, b: 0.5, g: 0.5, a: 1 });
-      const markers = textMarkers({ text: "Hello\nWorldview" }).map((marker) => ({
+      const markers = textMarkers({ text: "Hello\nWorldview", background: false }).map((marker) => ({
         ...marker,
         highlightedIndices: [0, 1, 2, 3, 4],
         highlightColor,
@@ -196,7 +196,7 @@ storiesOf("Worldview/GLText", module)
         <div style={{ width: "100%", height: "100%" }}>
           <div style={{ width: "100%", height: "100%" }}>
             <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-              <GLText autoBackgroundColor>{markers}</GLText>
+              <GLText>{markers}</GLText>
               <Axes />
             </Container>
           </div>

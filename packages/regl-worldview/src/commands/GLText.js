@@ -252,6 +252,10 @@ function makeTextCommand() {
       let estimatedInstances = 0;
       const prevNumChars = charSet.size;
       for (const { text } of props) {
+        if (typeof text !== "string") {
+          throw new Error(`Expected typeof 'text' to be a string. But got type '${typeof text}' instead.`);
+        }
+
         for (const char of text) {
           ++estimatedInstances;
           charSet.add(char);

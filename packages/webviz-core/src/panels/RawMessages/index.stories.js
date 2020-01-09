@@ -10,7 +10,14 @@ import { storiesOf } from "@storybook/react";
 import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
-import { fixture, enumFixture, enumAdvancedFixture, topicsToDiffFixture, topicsWithIdsToDiffFixture } from "./fixture";
+import {
+  fixture,
+  enumFixture,
+  enumAdvancedFixture,
+  withMissingData,
+  topicsToDiffFixture,
+  topicsWithIdsToDiffFixture,
+} from "./fixture";
 import RawMessages from "webviz-core/src/panels/RawMessages";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
@@ -62,6 +69,13 @@ storiesOf("<RawMessages>", module)
     return (
       <PanelSetup fixture={enumAdvancedFixture} style={{ width: 350 }}>
         <RawMessages config={{ topicName: "/baz/enum_advanced", diffTopicName: "" }} />
+      </PanelSetup>
+    );
+  })
+  .add("with missing data", () => {
+    return (
+      <PanelSetup fixture={withMissingData} style={{ width: 350 }}>
+        <RawMessages config={{ topicName: "/baz/missing_data", diffTopicName: "" }} />
       </PanelSetup>
     );
   })

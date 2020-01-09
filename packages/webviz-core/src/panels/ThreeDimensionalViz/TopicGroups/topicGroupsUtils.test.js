@@ -12,7 +12,116 @@ import {
   removeTopicPrefixes,
   buildAvailableNamespacesByTopic,
   getSelectionsFromTopicGroupConfig,
+  getTopicGroups,
 } from "./topicGroupsUtils";
+import type { TopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/types";
+
+const TOPIC_GROUPS_CONFIG: TopicGroupConfig[] = [
+  {
+    displayName: "My Topic Group",
+    visible: true,
+    expanded: true,
+    items: [
+      {
+        topicName: "/tf",
+        expanded: true,
+        selectedNamespacesBySource: { "": ["some_tf_ns1"], "/webviz_bag_2": ["some_tf_ns1", "some_tf_ns2"] },
+        visibilitiesBySource: { "": true },
+      },
+      {
+        topicName: "/metadata",
+        displayName: "Map",
+        visibilitiesBySource: { "": true },
+      },
+      {
+        topicName: "/some_topic_1",
+        visibilitiesBySource: { "": true, "/webviz_bag_2": true },
+      },
+      {
+        topicName: "/webviz_labels/some_label_topic_1",
+      },
+      {
+        topicName: "/some_topic_2",
+        expanded: true,
+        visibilitiesBySource: { "": false, "/webviz_bag_2": true },
+        selectedNamespacesBySource: {
+          "": ["some_topic_2_ns1"],
+          "/webviz_bag_2": ["some_topic_2_ns1", "some_topic_2_ns2"],
+        },
+        settingsBySource: {
+          "": {
+            overrideColor: "128, 0, 0, 1",
+            overrideCommand: "LinedConvexHull",
+          },
+          "/webviz_bag_2": {
+            overrideColor: "0, 128, 0, 1",
+            overrideCommand: "LinedConvexHull",
+          },
+        },
+      },
+    ],
+  },
+  {
+    displayName: "Some Topic Group 1",
+    visible: false,
+    expanded: true,
+    items: [
+      {
+        topicName: "/tf",
+      },
+      {
+        topicName: "/some_topic_2",
+        expanded: true,
+      },
+      {
+        topicName: "/tables/some_topic",
+        visibilitiesBySource: { "": true, "/webviz_tables_2": true },
+        settingsBySource: {
+          "/webviz_tables_2": {
+            overrideColor: "0, 0, 255, 0.5",
+            overrideCommand: "LinedConvexHull",
+          },
+        },
+      },
+      {
+        topicName: "/tables/some_topic_with_ns",
+        expanded: true,
+        visibilitiesBySource: { "": true, "/webviz_tables_2": true },
+      },
+    ],
+  },
+];
+const AVAILABLE_TOPICS = [
+  { name: "/some_topic_2", datatype: "visualization_msgs/MarkerArray" },
+  { name: "/webviz_bag_2/some_topic_2", datatype: "visualization_msgs/MarkerArray" },
+  { name: "/webviz_bag_3/some_topic_2", datatype: "visualization_msgs/MarkerArray" },
+  {
+    name: "/tables/some_topic",
+    datatype: "visualization_msgs/MarkerArray",
+  },
+  {
+    name: "/webviz_tables_2/tables/some_topic",
+    datatype: "visualization_msgs/MarkerArray",
+  },
+  {
+    name: "/webviz_tables_2/tables/some_topic_with_ns",
+    datatype: "visualization_msgs/MarkerArray",
+  },
+  {
+    name: "/webviz_labels/some_label_topic",
+    datatype: "visualization_msgs/MarkerArray",
+  },
+  {
+    name: "/tf",
+    datatype: "tf2_msgs/TFMessage",
+  },
+];
+
+const AVAILABLE_NAMESPACES = {
+  "/some_topic_2": ["some_topic_2_ns1", "some_topic_2_ns2"],
+  "/webviz_bag_2/some_topic_2": ["some_topic_2_ns1", "some_topic_2_ns2"],
+  "/webviz_tables_2/tables/some_topic_with_ns": ["some_ns1", "some_ns2"],
+};
 
 const DEFAULT_TOPIC_CONFIG = {
   name: "root",
@@ -173,11 +282,173 @@ describe("topicGroupUtils", () => {
     });
   });
 
-  // TODO(Audrey): finish the tests
-  describe.skip("getTopicGroups", () => {
-    it("generates topic group config for single bag", () => {});
-    it("generates topic group config for two bags", () => {});
-    it("generates topic group config for multiple data sources (bags + tables + labels)", () => {});
+  describe("getTopicGroups", () => {
+    it("generates topic group config based on groupsConfig", () => {
+      expect(
+        getTopicGroups(
+          [
+            { displayName: "Some Group1", items: [{ topicName: "/tf" }] },
+            { displayName: "Some Group2", items: [{ topicName: "/some_topic1" }] },
+          ],
+          { availableTopics: [], namespacesByTopic: {}, displayNameByTopic: {} }
+        )
+      ).toEqual([
+        {
+          derivedFields: { id: "Some-Group1_0" },
+          displayName: "Some Group1",
+          expanded: true,
+          items: [
+            {
+              derivedFields: {
+                availablePrefixes: [],
+                displayName: "/tf",
+                displayVisibilityBySource: {},
+                id: "Some-Group1_0_0",
+                namespaceItems: [],
+              },
+              topicName: "/tf",
+            },
+          ],
+          visible: true,
+        },
+        {
+          derivedFields: { id: "Some-Group2_1" },
+          displayName: "Some Group2",
+          expanded: false,
+          items: [
+            {
+              derivedFields: {
+                availablePrefixes: [],
+                displayName: "/some_topic1",
+                displayVisibilityBySource: {},
+                id: "Some-Group2_1_0",
+                namespaceItems: [],
+              },
+              topicName: "/some_topic1",
+            },
+          ],
+          visible: false,
+        },
+      ]);
+    });
+
+    it("updates the groups based on available topics, namespaces and displayNames", () => {
+      expect(
+        getTopicGroups(
+          [
+            { displayName: "Some Group1", items: [{ topicName: "/tf" }] },
+            { displayName: "Some Group2", items: [{ topicName: "/some_topic1" }] },
+          ],
+          {
+            displayNameByTopic: { "/tf": "Transforms", "/some_topic1": "Some Topic 1" },
+            namespacesByTopic: { "/tf": ["tf_ns1", "tf_ns2"] },
+            availableTopics: [
+              { name: "/tf", datatype: "visualization_msgs/MarkerArray" },
+              { name: "/webviz_bag_2/some_topic_2", datatype: "visualization_msgs/MarkerArray" },
+            ],
+          }
+        )
+      ).toEqual([
+        {
+          derivedFields: { id: "Some-Group1_0" },
+          displayName: "Some Group1",
+          expanded: true,
+          items: [
+            {
+              derivedFields: {
+                availablePrefixes: [""],
+                datatype: "visualization_msgs/MarkerArray",
+                displayName: "Transforms",
+                displayVisibilityBySource: {
+                  "": { available: true, badgeText: "B1", isParentVisible: false, visible: true },
+                },
+                id: "Some-Group1_0_0",
+                namespaceItems: [
+                  {
+                    displayVisibilityBySource: {
+                      "": { available: true, badgeText: "B1", isParentVisible: false, visible: true },
+                    },
+                    name: "tf_ns1",
+                  },
+                  {
+                    displayVisibilityBySource: {
+                      "": { available: true, badgeText: "B1", isParentVisible: false, visible: true },
+                    },
+                    name: "tf_ns2",
+                  },
+                ],
+              },
+              topicName: "/tf",
+            },
+          ],
+          visible: true,
+        },
+        {
+          derivedFields: { id: "Some-Group2_1" },
+          displayName: "Some Group2",
+          expanded: false,
+          items: [
+            {
+              derivedFields: {
+                availablePrefixes: [],
+                displayName: "Some Topic 1",
+                displayVisibilityBySource: {},
+                id: "Some-Group2_1_0",
+                namespaceItems: [],
+              },
+              topicName: "/some_topic1",
+            },
+          ],
+          visible: false,
+        },
+      ]);
+    });
+
+    it("generates topic group config for two bags", () => {
+      expect(
+        getTopicGroups([{ displayName: "Some Group", items: [{ topicName: "/some_topic1" }] }], {
+          availableTopics: [
+            { name: "/some_topic1", datatype: "visualization_msgs/MarkerArray" },
+            { name: "/webviz_bag_2/some_topic1", datatype: "visualization_msgs/MarkerArray" },
+          ],
+          namespacesByTopic: {},
+          displayNameByTopic: {},
+        })
+      ).toEqual([
+        {
+          derivedFields: { id: "Some-Group_0" },
+          displayName: "Some Group",
+          expanded: true,
+          items: [
+            {
+              derivedFields: {
+                availablePrefixes: ["", "/webviz_bag_2"],
+                datatype: "visualization_msgs/MarkerArray",
+                displayName: "/some_topic1",
+                displayVisibilityBySource: {
+                  "": { available: true, badgeText: "B1", isParentVisible: false, visible: true },
+                  "/webviz_bag_2": { available: true, badgeText: "B2", isParentVisible: false, visible: true },
+                },
+                id: "Some-Group_0_0",
+                namespaceItems: [],
+              },
+              topicName: "/some_topic1",
+            },
+          ],
+          visible: true,
+        },
+      ]);
+    });
+
+    it("generates topic group config multiple data sources (bags + tables + labels)", () => {
+      expect(
+        getTopicGroups(TOPIC_GROUPS_CONFIG, {
+          availableTopics: AVAILABLE_TOPICS,
+          namespacesByTopic: AVAILABLE_NAMESPACES,
+          displayNameByTopic: {},
+        })
+      ).toMatchSnapshot();
+    });
   });
 
   describe.skip("getNamespacesItemsBySource", () => {

@@ -44,6 +44,7 @@ export type PlotConfig = {
   maxYValue: string,
   showLegend: boolean,
   xAxisVal: "timestamp" | "index",
+  maxMessages: string,
 };
 
 export function openSiblingPlotPanel(
@@ -67,7 +68,7 @@ type Props = {
 
 function Plot(props: Props) {
   const { saveConfig, config } = props;
-  const { paths, minYValue, maxYValue, showLegend, xAxisVal } = config;
+  const { paths, minYValue, maxYValue, showLegend, xAxisVal, maxMessages } = config;
   const [currentMinY, setCurrentMinY] = useState(null);
   const [currentMaxY, setCurrentMaxY] = useState(null);
 
@@ -91,11 +92,19 @@ function Plot(props: Props) {
     }
   });
 
+  let historySize: ?number;
+  if (parseInt(maxMessages) > 0) {
+    historySize = parseInt(maxMessages);
+  }
+  if (xAxisVal === "index") {
+    historySize = 1;
+  }
+
   return (
     <Flex col clip center style={{ position: "relative" }}>
       {/* Don't filter out disabled paths when passing into <MessageHistory>, because we still want
           easy access to the history when turning the disabled paths back on. */}
-      <MessageHistory paths={paths.map((path) => path.value)} {...(xAxisVal === "index" ? { historySize: 1 } : null)}>
+      <MessageHistory paths={paths.map((path) => path.value)} {...(historySize ? { historySize } : null)}>
         {({ itemsByPath, startTime }: MessageHistoryData) => {
           const datasets = getDatasets(paths, itemsByPath, startTime, xAxisVal);
           return (
@@ -111,6 +120,7 @@ function Plot(props: Props) {
                     setMinMax={setMinMax}
                     datasets={datasets}
                     xAxisVal={xAxisVal}
+                    maxMessages={maxMessages}
                   />
                 }
               />
@@ -131,6 +141,13 @@ function Plot(props: Props) {
   );
 }
 Plot.panelType = "Plot";
-Plot.defaultConfig = { paths: [], minYValue: "", maxYValue: "", showLegend: true, xAxisVal: "timestamp" };
+Plot.defaultConfig = {
+  paths: [],
+  minYValue: "",
+  maxYValue: "",
+  showLegend: true,
+  xAxisVal: "timestamp",
+  maxMessages: "",
+};
 
 export default hot(Panel<PlotConfig>(Plot));

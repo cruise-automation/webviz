@@ -21,6 +21,7 @@ import type {
   DataProviderMessage,
 } from "webviz-core/src/dataProviders/types";
 import { bagConnectionsToDatatypes, bagConnectionsToTopics } from "webviz-core/src/util/bagConnectionsHelper";
+import { getBagChunksOverlapCount } from "webviz-core/src/util/bags";
 import CachedFilelike from "webviz-core/src/util/CachedFilelike";
 import Logger from "webviz-core/src/util/Logger";
 import type { Range } from "webviz-core/src/util/ranges";
@@ -88,11 +89,20 @@ export default class BagDataProvider implements DataProvider {
       extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] });
     }
 
-    const { startTime, endTime } = this._bag;
+    const { startTime, endTime, chunkInfos } = this._bag;
     const connections = ((Object.values(this._bag.connections): any): Connection[]);
     if (!startTime || !endTime || !connections.length) {
       // This will abort video generation:
-      reportError("Invalid bag", "Bag is empty or corrupt.", "user");
+      reportError("Cannot play invalid bag", "Bag is empty or corrupt.", "user");
+      return new Promise(() => {}); // Just never finish initializing.
+    }
+    const chunksOverlapCount = getBagChunksOverlapCount(chunkInfos);
+    if (chunksOverlapCount > 0) {
+      reportError(
+        "Cannot play unsorted bag",
+        "Messages in the bag must be ordered by receive time. Do this e.g. by a script like this: https://gist.github.com/janpaul123/deaa92338d5e8309ef7aa7a55d625152",
+        "user"
+      );
       return new Promise(() => {}); // Just never finish initializing.
     }
 

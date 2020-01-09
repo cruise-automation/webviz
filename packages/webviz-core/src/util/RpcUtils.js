@@ -14,9 +14,13 @@ import reportError, { setErrorHandler, type DetailsType, type ErrorType } from "
 // reportError is called.
 export function setupSendReportErrorHandler(rpc: Rpc) {
   setErrorHandler((message: string, details: DetailsType, type: ErrorType) => {
+    if (!(details instanceof Error || typeof details === "string")) {
+      console.warn("Invalid Error type");
+      details = JSON.stringify(details) || "<<unknown error>>";
+    }
     rpc.send("reportError", {
       message,
-      details: details instanceof Error ? details.toString() : JSON.stringify(details),
+      details: details instanceof Error ? details.toString() : details,
       type,
     });
   });

@@ -43,7 +43,7 @@ export default function TopicGroupMenu({ objectPath, topicGroup: { displayName }
         <Item
           dataTest={`delete-topic-group-menu-${displayName}`}
           onClick={() => {
-            onTopicGroupsChange(objectPath, null);
+            onTopicGroupsChange(objectPath, undefined);
             setIsOpen(false);
           }}>
           Remove group

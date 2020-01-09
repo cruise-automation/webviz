@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { omit, flatten, uniq, isEmpty } from "lodash";
+import { omit, flatten, uniq, isEmpty, keyBy, mapValues } from "lodash";
 import microMemoize from "micro-memoize";
 
 import type {
@@ -46,9 +46,9 @@ export function removeTopicPrefixes(topicNames: string[]): string[] {
 export function getTopicGroups(
   groupsConfig: TopicGroupConfig[],
   {
-    displayNameByTopic = {},
-    namespacesByTopic = {},
-    availableTopics = [],
+    displayNameByTopic,
+    namespacesByTopic,
+    availableTopics,
   }: {|
     displayNameByTopic: DisplayNameByTopic,
     namespacesByTopic: NamespacesByTopic,
@@ -56,12 +56,15 @@ export function getTopicGroups(
   |}
 ): TopicGroupType[] {
   const availableTopicNamesSet = new Set(availableTopics.map(({ name }) => name));
+  const datatypeKeyByTopicName = mapValues(keyBy(availableTopics, "name"), "datatype");
 
   return groupsConfig.map(({ items, ...rest }, idx) => {
     const id = `${rest.displayName.split(" ").join("-")}_${idx}`;
     const isTopicGroupVisible = !!rest.visible;
     return {
       ...rest,
+      expanded: rest.expanded == null ? idx === 0 : rest.expanded,
+      visible: rest.visible == null ? idx === 0 : rest.visible,
       derivedFields: { id },
       items: items.map((topicItemConfig, idx1) => {
         const {
@@ -73,12 +76,14 @@ export function getTopicGroups(
 
         const availableNamespacesBySource = {};
         const topicDisplayVisibilityBySource = {};
-        let available = false;
+        const availablePrefixes = [];
+        let datatype;
 
         ALL_DATA_SOURCE_PREFIXES.forEach((dataSourcePrefix) => {
           const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
           if (availableTopicNamesSet.has(prefixedTopicName)) {
-            available = true;
+            availablePrefixes.push(dataSourcePrefix);
+            datatype = datatypeKeyByTopicName[prefixedTopicName];
             // only show namespaces when the topic is available
             if (namespacesByTopic[prefixedTopicName]) {
               availableNamespacesBySource[dataSourcePrefix] = namespacesByTopic[prefixedTopicName];
@@ -109,10 +114,11 @@ export function getTopicGroups(
           ...topicItemConfig,
           derivedFields: {
             id: `${id}_${idx1}`,
+            availablePrefixes,
             displayName: displayName || displayNameByTopic[topicName] || topicName,
             displayVisibilityBySource: topicDisplayVisibilityBySource,
             namespaceItems,
-            available,
+            ...(datatype ? { datatype } : undefined),
           },
         };
       }),

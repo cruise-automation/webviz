@@ -147,13 +147,20 @@ const paths = [
   { value: "/some_topic/location.header.stamp", enabled: true, timestampMethod: "receiveTime" },
 ];
 
-const exampleConfig = { paths, minYValue: "", maxYValue: "", showLegend: true, xAxisVal: "timestamp" };
+const exampleConfig = { paths, minYValue: "", maxYValue: "", showLegend: true, xAxisVal: "timestamp", maxMessages: "" };
 storiesOf("<Plot>", module)
   .addDecorator(withScreenshot({ delay: 1000 }))
   .add("line graph", () => {
     return (
       <PanelSetup fixture={fixture}>
         <Plot config={exampleConfig} />
+      </PanelSetup>
+    );
+  })
+  .add("line graph with maximum number of messages", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot config={{ ...exampleConfig, maxMessages: "3" }} />
       </PanelSetup>
     );
   })
@@ -271,6 +278,7 @@ storiesOf("<Plot>", module)
             minYValue: "-1",
             maxYValue: "2",
             showLegend: true,
+            maxMessages: "",
           }}
         />
       </PanelSetup>
@@ -286,6 +294,7 @@ storiesOf("<Plot>", module)
             minYValue: "1",
             maxYValue: "2.8",
             showLegend: true,
+            maxMessages: "",
           }}
         />
       </PanelSetup>
@@ -301,6 +310,7 @@ storiesOf("<Plot>", module)
             minYValue: "1",
             maxYValue: "",
             showLegend: true,
+            maxMessages: "",
           }}
         />
       </PanelSetup>
@@ -316,6 +326,7 @@ storiesOf("<Plot>", module)
             minYValue: "1.4",
             maxYValue: "",
             showLegend: true,
+            maxMessages: "",
           }}
         />
       </PanelSetup>
@@ -331,6 +342,7 @@ storiesOf("<Plot>", module)
             minYValue: "",
             maxYValue: "1.8",
             showLegend: true,
+            maxMessages: "",
           }}
         />
       </PanelSetup>
@@ -346,6 +358,7 @@ storiesOf("<Plot>", module)
             minYValue: "",
             maxYValue: "2.8",
             showLegend: true,
+            maxMessages: "",
           }}
         />
       </PanelSetup>

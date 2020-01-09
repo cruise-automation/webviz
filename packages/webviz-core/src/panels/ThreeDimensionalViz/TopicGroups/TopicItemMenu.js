@@ -14,19 +14,23 @@ import type { TopicItem, OnTopicGroupsChange } from "./types";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import Menu, { Item } from "webviz-core/src/components/Menu";
+import { canEditDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 
 type Props = {|
   item: TopicItem,
   objectPath: string,
+  onEditTopicSettingsClick: (objectPath: string) => void,
   onTopicGroupsChange: OnTopicGroupsChange,
 |};
 
 export default function TopicItemMenu({
   objectPath,
   item: {
-    derivedFields: { displayName },
+    topicName,
+    derivedFields: { displayName, availablePrefixes, datatype },
   },
   onTopicGroupsChange,
+  onEditTopicSettingsClick,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -42,10 +46,17 @@ export default function TopicItemMenu({
         </Icon>
       </SMenuWrapper>
       <Menu>
+        {availablePrefixes.length > 0 && datatype && canEditDatatype(datatype) && (
+          <Item
+            dataTest={`edit-topic-settings-menu-${displayName}`}
+            onClick={() => onEditTopicSettingsClick(objectPath)}>
+            Edit settings
+          </Item>
+        )}
         <Item
           dataTest={`delete-topic-menu-${displayName}`}
           onClick={() => {
-            onTopicGroupsChange(objectPath, null);
+            onTopicGroupsChange(objectPath, undefined);
             setIsOpen(false);
           }}>
           Remove topic

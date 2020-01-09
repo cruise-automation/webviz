@@ -279,8 +279,9 @@ function RawMessages(props: Props) {
                       }
                       return valueRenderer(metadata, data, item.queriedData, ...args);
                     }}
-                    postprocessValue={(val) => {
+                    postprocessValue={(val: mixed) => {
                       if (
+                        val != null &&
                         typeof val === "object" &&
                         Object.keys(val).length === 1 &&
                         diffLabelTexts.includes(Object.keys(val)[0])

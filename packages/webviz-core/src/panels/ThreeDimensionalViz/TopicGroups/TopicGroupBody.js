@@ -21,6 +21,7 @@ const STopicGroupBody = styled.div`
 type Props = {|
   topicGroup: TopicGroupType,
   objectPath: string,
+  onEditTopicSettingsClick: (objectPath: string) => void,
   onTopicGroupsChange: OnTopicGroupsChange,
 |};
 
@@ -28,6 +29,7 @@ export default function TopicGroupBody({
   objectPath,
   topicGroup,
   topicGroup: { displayName, expanded, items },
+  onEditTopicSettingsClick,
   onTopicGroupsChange,
 }: Props) {
   return (
@@ -36,6 +38,7 @@ export default function TopicGroupBody({
       {items.map((item, idx) => (
         <TopicItemRow
           objectPath={`${objectPath}.items.[${idx}]`}
+          onEditTopicSettingsClick={onEditTopicSettingsClick}
           onTopicGroupsChange={onTopicGroupsChange}
           item={item}
           key={item.derivedFields.id}

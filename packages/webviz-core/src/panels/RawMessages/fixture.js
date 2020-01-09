@@ -176,6 +176,28 @@ export const enumAdvancedFixture = {
   },
 };
 
+export const withMissingData = {
+  datatypes: {
+    "baz/missing_data": {
+      fields: [{ type: "uint8", name: "value", isArray: false }],
+    },
+  },
+  topics: [{ name: "/baz/missing_data", datatype: "baz/missing_data" }],
+  frame: {
+    "/baz/missing_data": [
+      {
+        op: "message",
+        datatype: "baz/missing_data",
+        topic: "/baz/missing_data",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: {
+          value: null,
+        },
+      },
+    ],
+  },
+};
+
 export const topicsToDiffFixture = {
   datatypes: enumAdvancedFixture.datatypes,
   topics: [

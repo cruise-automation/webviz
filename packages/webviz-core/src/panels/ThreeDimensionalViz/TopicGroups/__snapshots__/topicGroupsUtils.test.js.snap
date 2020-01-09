@@ -1,0 +1,351 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`topicGroupUtils getTopicGroups generates topic group config multiple data sources (bags + tables + labels) 1`] = `
+Array [
+  Object {
+    "derivedFields": Object {
+      "id": "My-Topic-Group_0",
+    },
+    "displayName": "My Topic Group",
+    "expanded": true,
+    "items": Array [
+      Object {
+        "derivedFields": Object {
+          "availablePrefixes": Array [
+            "",
+          ],
+          "datatype": "tf2_msgs/TFMessage",
+          "displayName": "/tf",
+          "displayVisibilityBySource": Object {
+            "": Object {
+              "available": true,
+              "badgeText": "B1",
+              "isParentVisible": true,
+              "visible": true,
+            },
+          },
+          "id": "My-Topic-Group_0_0",
+          "namespaceItems": Array [],
+        },
+        "expanded": true,
+        "selectedNamespacesBySource": Object {
+          "": Array [
+            "some_tf_ns1",
+          ],
+          "/webviz_bag_2": Array [
+            "some_tf_ns1",
+            "some_tf_ns2",
+          ],
+        },
+        "topicName": "/tf",
+        "visibilitiesBySource": Object {
+          "": true,
+        },
+      },
+      Object {
+        "derivedFields": Object {
+          "availablePrefixes": Array [],
+          "displayName": "Map",
+          "displayVisibilityBySource": Object {},
+          "id": "My-Topic-Group_0_1",
+          "namespaceItems": Array [],
+        },
+        "displayName": "Map",
+        "topicName": "/metadata",
+        "visibilitiesBySource": Object {
+          "": true,
+        },
+      },
+      Object {
+        "derivedFields": Object {
+          "availablePrefixes": Array [],
+          "displayName": "/some_topic_1",
+          "displayVisibilityBySource": Object {},
+          "id": "My-Topic-Group_0_2",
+          "namespaceItems": Array [],
+        },
+        "topicName": "/some_topic_1",
+        "visibilitiesBySource": Object {
+          "": true,
+          "/webviz_bag_2": true,
+        },
+      },
+      Object {
+        "derivedFields": Object {
+          "availablePrefixes": Array [],
+          "displayName": "/webviz_labels/some_label_topic_1",
+          "displayVisibilityBySource": Object {},
+          "id": "My-Topic-Group_0_3",
+          "namespaceItems": Array [],
+        },
+        "topicName": "/webviz_labels/some_label_topic_1",
+      },
+      Object {
+        "derivedFields": Object {
+          "availablePrefixes": Array [
+            "",
+            "/webviz_bag_2",
+          ],
+          "datatype": "visualization_msgs/MarkerArray",
+          "displayName": "/some_topic_2",
+          "displayVisibilityBySource": Object {
+            "": Object {
+              "available": true,
+              "badgeText": "B1",
+              "isParentVisible": true,
+              "visible": false,
+            },
+            "/webviz_bag_2": Object {
+              "available": true,
+              "badgeText": "B2",
+              "isParentVisible": true,
+              "visible": true,
+            },
+          },
+          "id": "My-Topic-Group_0_4",
+          "namespaceItems": Array [
+            Object {
+              "displayVisibilityBySource": Object {
+                "": Object {
+                  "available": true,
+                  "badgeText": "B1",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+                "/webviz_bag_2": Object {
+                  "available": true,
+                  "badgeText": "B2",
+                  "isParentVisible": true,
+                  "visible": true,
+                },
+              },
+              "name": "some_topic_2_ns1",
+            },
+            Object {
+              "displayVisibilityBySource": Object {
+                "": Object {
+                  "available": true,
+                  "badgeText": "B1",
+                  "isParentVisible": false,
+                  "visible": false,
+                },
+                "/webviz_bag_2": Object {
+                  "available": true,
+                  "badgeText": "B2",
+                  "isParentVisible": true,
+                  "visible": true,
+                },
+              },
+              "name": "some_topic_2_ns2",
+            },
+          ],
+        },
+        "expanded": true,
+        "selectedNamespacesBySource": Object {
+          "": Array [
+            "some_topic_2_ns1",
+          ],
+          "/webviz_bag_2": Array [
+            "some_topic_2_ns1",
+            "some_topic_2_ns2",
+          ],
+        },
+        "settingsBySource": Object {
+          "": Object {
+            "overrideColor": "128, 0, 0, 1",
+            "overrideCommand": "LinedConvexHull",
+          },
+          "/webviz_bag_2": Object {
+            "overrideColor": "0, 128, 0, 1",
+            "overrideCommand": "LinedConvexHull",
+          },
+        },
+        "topicName": "/some_topic_2",
+        "visibilitiesBySource": Object {
+          "": false,
+          "/webviz_bag_2": true,
+        },
+      },
+    ],
+    "visible": true,
+  },
+  Object {
+    "derivedFields": Object {
+      "id": "Some-Topic-Group-1_1",
+    },
+    "displayName": "Some Topic Group 1",
+    "expanded": true,
+    "items": Array [
+      Object {
+        "derivedFields": Object {
+          "availablePrefixes": Array [
+            "",
+          ],
+          "datatype": "tf2_msgs/TFMessage",
+          "displayName": "/tf",
+          "displayVisibilityBySource": Object {
+            "": Object {
+              "available": true,
+              "badgeText": "B1",
+              "isParentVisible": false,
+              "visible": true,
+            },
+          },
+          "id": "Some-Topic-Group-1_1_0",
+          "namespaceItems": Array [],
+        },
+        "topicName": "/tf",
+      },
+      Object {
+        "derivedFields": Object {
+          "availablePrefixes": Array [
+            "",
+            "/webviz_bag_2",
+          ],
+          "datatype": "visualization_msgs/MarkerArray",
+          "displayName": "/some_topic_2",
+          "displayVisibilityBySource": Object {
+            "": Object {
+              "available": true,
+              "badgeText": "B1",
+              "isParentVisible": false,
+              "visible": true,
+            },
+            "/webviz_bag_2": Object {
+              "available": true,
+              "badgeText": "B2",
+              "isParentVisible": false,
+              "visible": true,
+            },
+          },
+          "id": "Some-Topic-Group-1_1_1",
+          "namespaceItems": Array [
+            Object {
+              "displayVisibilityBySource": Object {
+                "": Object {
+                  "available": true,
+                  "badgeText": "B1",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+                "/webviz_bag_2": Object {
+                  "available": true,
+                  "badgeText": "B2",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+              },
+              "name": "some_topic_2_ns1",
+            },
+            Object {
+              "displayVisibilityBySource": Object {
+                "": Object {
+                  "available": true,
+                  "badgeText": "B1",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+                "/webviz_bag_2": Object {
+                  "available": true,
+                  "badgeText": "B2",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+              },
+              "name": "some_topic_2_ns2",
+            },
+          ],
+        },
+        "expanded": true,
+        "topicName": "/some_topic_2",
+      },
+      Object {
+        "derivedFields": Object {
+          "availablePrefixes": Array [
+            "",
+            "/webviz_tables_2",
+          ],
+          "datatype": "visualization_msgs/MarkerArray",
+          "displayName": "/tables/some_topic",
+          "displayVisibilityBySource": Object {
+            "": Object {
+              "available": true,
+              "badgeText": "T1",
+              "isParentVisible": false,
+              "visible": true,
+            },
+            "/webviz_tables_2": Object {
+              "available": true,
+              "badgeText": "T2",
+              "isParentVisible": false,
+              "visible": true,
+            },
+          },
+          "id": "Some-Topic-Group-1_1_2",
+          "namespaceItems": Array [],
+        },
+        "settingsBySource": Object {
+          "/webviz_tables_2": Object {
+            "overrideColor": "0, 0, 255, 0.5",
+            "overrideCommand": "LinedConvexHull",
+          },
+        },
+        "topicName": "/tables/some_topic",
+        "visibilitiesBySource": Object {
+          "": true,
+          "/webviz_tables_2": true,
+        },
+      },
+      Object {
+        "derivedFields": Object {
+          "availablePrefixes": Array [
+            "/webviz_tables_2",
+          ],
+          "datatype": "visualization_msgs/MarkerArray",
+          "displayName": "/tables/some_topic_with_ns",
+          "displayVisibilityBySource": Object {
+            "/webviz_tables_2": Object {
+              "available": true,
+              "badgeText": "T2",
+              "isParentVisible": false,
+              "visible": true,
+            },
+          },
+          "id": "Some-Topic-Group-1_1_3",
+          "namespaceItems": Array [
+            Object {
+              "displayVisibilityBySource": Object {
+                "/webviz_tables_2": Object {
+                  "available": true,
+                  "badgeText": "T2",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+              },
+              "name": "some_ns1",
+            },
+            Object {
+              "displayVisibilityBySource": Object {
+                "/webviz_tables_2": Object {
+                  "available": true,
+                  "badgeText": "T2",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+              },
+              "name": "some_ns2",
+            },
+          ],
+        },
+        "expanded": true,
+        "topicName": "/tables/some_topic_with_ns",
+        "visibilitiesBySource": Object {
+          "": true,
+          "/webviz_tables_2": true,
+        },
+      },
+    ],
+    "visible": false,
+  },
+]
+`;

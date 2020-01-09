@@ -36,7 +36,7 @@ function setUpChartJSZoom() {
   const pressedKeys = {};
   document.addEventListener("keydown", (event: KeyboardEvent) => {
     [VERTICAL_EXCLUSIVE_ZOOM_KEY, HORIZONTAL_EXCLUSIVE_ZOOM_KEY].forEach((key) => {
-      if (event.key.toLowerCase() === key) {
+      if (event.key && event.key.toLowerCase() === key) {
         pressedKeys[key] = true;
       }
     });
@@ -44,7 +44,7 @@ function setUpChartJSZoom() {
 
   document.addEventListener("keyup", (event: KeyboardEvent) => {
     [VERTICAL_EXCLUSIVE_ZOOM_KEY, HORIZONTAL_EXCLUSIVE_ZOOM_KEY].forEach((key) => {
-      if (event.key.toLowerCase() === key) {
+      if (event.key && event.key.toLowerCase() === key) {
         pressedKeys[key] = false;
       }
     });

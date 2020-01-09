@@ -13,6 +13,7 @@ import PinIcon from "@mdi/svg/svg/pin.svg";
 import { omit, set, cloneDeep, compact } from "lodash";
 import Collapse from "rc-collapse";
 import React, { useState, useCallback, useMemo } from "react";
+import ReactDOM from "react-dom";
 import styled from "styled-components";
 
 import { type Save3DConfig } from "../index";
@@ -25,9 +26,13 @@ import {
   buildAvailableNamespacesByTopic,
   TOPIC_CONFIG,
 } from "./topicGroupsUtils";
+import TopicSettingsEditor from "./TopicSettingsEditor";
 import type { TopicGroupConfig, TopicGroupType } from "./types";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
+import Modal from "webviz-core/src/components/Modal";
+import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
+import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import { type Topic } from "webviz-core/src/players/types";
 import type { Namespace } from "webviz-core/src/types/Messages";
 import { colors } from "webviz-core/src/util/colors";
@@ -108,26 +113,23 @@ const STopicGroupsHeader = styled.div`
   align-items: center;
   background-color: ${colors.DARK5};
 `;
+
 const SFilter = styled.div`
   display: flex;
   flex: 1;
 `;
 
-type BaseProps = {|
+type SharedProps = {|
+  availableTopics: Topic[],
+  pinTopics: boolean,
+  saveConfig: Save3DConfig,
+  sceneBuilder: SceneBuilder,
   topicGroupsConfig: TopicGroupConfig[],
+|};
+type TopicGroupsBaseProps = {|
+  ...SharedProps,
   namespacesByTopic: { [topicName: string]: string[] },
   displayNameByTopic: { [topicName: string]: string },
-  availableTopics: Topic[],
-  pinTopics: boolean,
-  saveConfig: Save3DConfig,
-|};
-type Props = {|
-  topicGroupsConfig: TopicGroupConfig[],
-  availableTopics: Topic[],
-  pinTopics: boolean,
-  saveConfig: Save3DConfig,
-  availableTfs: string[],
-  allNamespaces: Namespace[],
 |};
 
 export function TopicGroupsBase({
@@ -137,8 +139,11 @@ export function TopicGroupsBase({
   availableTopics = [],
   pinTopics,
   saveConfig,
-}: BaseProps) {
-  const [isOpen, setIsOpen] = useState(pinTopics);
+  sceneBuilder,
+}: TopicGroupsBaseProps) {
+  const [isOpen, setIsOpen] = useState<boolean>(pinTopics);
+  const [topicSettingsObjectPath, setTopicSettingsObjectPath] = useState<?string>();
+  const modalRef = React.useRef<HTMLDivElement | null>(null);
 
   const toggleIsOpen = useCallback(() => setIsOpen(!isOpen), [isOpen]);
   const togglePinTopics = useCallback(() => saveConfig({ pinTopics: !pinTopics }), [pinTopics, saveConfig]);
@@ -148,6 +153,8 @@ export function TopicGroupsBase({
     namespacesByTopic,
     availableTopics,
   });
+
+  const onEditTopicSettingsClick = useCallback((objectPath) => setTopicSettingsObjectPath(objectPath), []);
 
   const saveNewTopicGroupsToConfig = useCallback(
     (newTopicGroups: TopicGroupType[]) => {
@@ -183,7 +190,35 @@ export function TopicGroupsBase({
 
   return (
     <STopicGroupsContainer>
-      <ChildToggle position="below" isOpen={isOpen || pinTopics} onToggle={toggleIsOpen} dataTest="open-topic-picker">
+      <div className="webviz-modal" ref={modalRef} />
+      {topicSettingsObjectPath &&
+        modalRef.current &&
+        ReactDOM.createPortal(
+          <RenderToBodyComponent>
+            <Modal
+              onRequestClose={() => setTopicSettingsObjectPath(undefined)}
+              contentStyle={{
+                maxHeight: "calc(100vh - 200px)",
+                maxWidth: 480,
+                display: "flex",
+                flexDirection: "column",
+              }}>
+              <TopicSettingsEditor
+                objectPath={topicSettingsObjectPath}
+                onTopicGroupsChange={onTopicGroupsChange}
+                sceneBuilder={sceneBuilder}
+                topicGroups={topicGroups}
+              />
+            </Modal>
+          </RenderToBodyComponent>,
+          modalRef.current
+        )}
+      <ChildToggle
+        noPortal
+        position="below"
+        isOpen={isOpen || pinTopics}
+        onToggle={toggleIsOpen}
+        dataTest="open-topic-picker">
         <Icon tooltip="Topic Picker" medium fade active={isOpen} style={{ color: "white" }}>
           <LayersIcon />
         </Icon>
@@ -206,7 +241,7 @@ export function TopicGroupsBase({
           </SMutedText>
           <Collapse
             defaultActiveKey={topicGroups
-              .map((group) => (group.expanded ? group.derivedFields.id : null))
+              .map((group) => (group.expanded ? group.derivedFields.id : undefined))
               .filter(Boolean)}
             expandIcon={({ expanded }) => (
               <Icon medium fade style={{ marginRight: 4 }}>
@@ -230,6 +265,7 @@ export function TopicGroupsBase({
                     key={topicGroup.derivedFields.id}
                     objectPath={`[${idx}]`}
                     topicGroup={topicGroup}
+                    onEditTopicSettingsClick={onEditTopicSettingsClick}
                     onTopicGroupsChange={onTopicGroupsChange}
                   />
                 )}
@@ -242,8 +278,13 @@ export function TopicGroupsBase({
   );
 }
 
+type TopicGroupsProps = {|
+  ...SharedProps,
+  availableTfs: string[],
+  allNamespaces: Namespace[],
+|};
 // Use the wrapper component to handle top level data processing
-export default function TopicGroups({ allNamespaces, availableTfs, ...rest }: Props) {
+export default function TopicGroups({ allNamespaces, availableTfs, ...rest }: TopicGroupsProps) {
   const { configDisplayNameByTopic, configNamespacesByTopic } = useMemo(() => {
     return {
       configDisplayNameByTopic: buildItemDisplayNameByTopicOrExtension(TOPIC_CONFIG),

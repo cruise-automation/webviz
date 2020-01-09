@@ -190,7 +190,7 @@ export function migratePanelConfigToTopicGroupConfig({
               : { visibilitiesBySource }),
             ...(selectedNamespacesBySource ? { selectedNamespacesBySource } : undefined),
           }
-        : null;
+        : undefined;
     })
     .filter(Boolean);
 

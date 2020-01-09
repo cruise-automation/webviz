@@ -25,7 +25,9 @@ let error: ?Error;
 window.videoRecording = {
   nextAction() {
     if (error) {
-      return { action: "error", error };
+      // This object is serialized and deserialized to pass it to Puppeteer, so passing the error object itself will
+      // just result in { "action": "error", "error": {} }. Instead pass a string - the stack itself.
+      return { action: "error", error: error.stack };
     }
     if (finishedMsPerFrame) {
       return { action: "finish", msPerFrame: finishedMsPerFrame };

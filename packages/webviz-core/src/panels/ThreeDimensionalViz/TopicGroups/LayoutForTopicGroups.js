@@ -144,7 +144,7 @@ export default function LayoutForTopicGroups({
   const [polygonBuilder, setPolygonBuilder] = useState(() => new PolygonBuilder());
   const [measureInfo, setMeasureInfo] = useState<MeasureInfo>({
     measureState: "idle",
-    measurePoints: { start: null, end: null },
+    measurePoints: { start: undefined, end: undefined },
   });
 
   useEffect(
@@ -169,8 +169,8 @@ export default function LayoutForTopicGroups({
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0); // used for updating DrawPolygon during mouse move
   const measuringElRef = useRef<?MeasuringTool>(null);
-  const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(null);
-  const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(null);
+  const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(undefined);
+  const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(undefined);
   const selectedObject = selectedObjectState && selectedObjectState.selectedObject;
 
   useLayoutEffect(
@@ -321,20 +321,20 @@ export default function LayoutForTopicGroups({
           const selectedObjects = (args && args.objects) || [];
           const clickedPosition = { clientX: ev.clientX, clientY: ev.clientY };
           if (selectedObjects.length === 0) {
-            setSelectedObjectState(null);
+            setSelectedObjectState(undefined);
           } else if (selectedObjects.length === 1) {
             // select the object directly if there is only one
             setSelectedObjectState({ selectedObject: selectedObjects[0], selectedObjects, clickedPosition });
           } else {
             // open up context menu to select one object to show details
-            setSelectedObjectState({ selectedObject: null, selectedObjects, clickedPosition });
+            setSelectedObjectState({ selectedObject: undefined, selectedObjects, clickedPosition });
           }
         },
         onDoubleClick: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onDoubleClick", ev, args),
         onMouseDown: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseDown", ev, args),
         onMouseMove: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseMove", ev, args),
         onMouseUp: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseUp", ev, args),
-        onClearSelectedObject: () => setSelectedObjectState(null),
+        onClearSelectedObject: () => setSelectedObjectState(undefined),
         onSelectObject: (selectedObj: MouseEventObject) =>
           setSelectedObjectState({ ...callbackInputsRef.current.selectedObjectState, selectedObject: selectedObj }),
         onSetPolygons: (polygons: Polygon[]) => setPolygonBuilder(new PolygonBuilder(polygons)),
@@ -429,6 +429,7 @@ export default function LayoutForTopicGroups({
           pinTopics={pinTopics}
           saveConfig={saveConfig}
           topicGroupsConfig={topicGroups || []}
+          sceneBuilder={sceneBuilder}
         />
       </div>
       <div className={styles.world}>

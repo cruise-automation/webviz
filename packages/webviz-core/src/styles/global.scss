@@ -9,6 +9,40 @@
 @import "./mixins.module.scss";
 @import "./fonts.module.scss";
 
+.ant-component {
+  @import "~antd/dist/antd";
+}
+
+.ant-component h1,
+.ant-component h2,
+.ant-component h3,
+.ant-component h4,
+.ant-component h5,
+.ant-component h6 {
+  color: unset;
+}
+
+.ant-component {
+  .ant-tabs {
+    color: unset;
+    .ant-tabs-bar {
+      border-bottom: none;
+      margin: 0;
+    }
+    .ant-tabs-ink-bar {
+      background-color: #9987ff; // highlight color from colors.js
+    }
+    .ant-tabs-nav .ant-tabs-tab {
+      color: unset;
+      :hover {
+        color: #9987ff;
+      }
+    }
+    .ant-tabs-nav .ant-tabs-tab-active {
+      color: #fff;
+    }
+  }
+}
 /* globally apply flex to containers outside our component hierarchy */
 /* this ensures the app container elements stretch edge to edge and do not scroll */
 html,

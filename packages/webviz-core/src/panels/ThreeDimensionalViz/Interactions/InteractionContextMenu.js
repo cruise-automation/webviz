@@ -17,7 +17,7 @@ const SInteractionContextMenu = styled.div`
   position: fixed;
   width: 240px;
   background: ${colors.DARK4};
-  z-index: 1000; /* above the Text marker */
+  z-index: 101; /* above the Text marker */
 `;
 
 const SMenu = styled.ul`

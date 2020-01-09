@@ -28,6 +28,7 @@ type Props = {|
   flatEdges: boolean,
   tooltip?: string,
   dataTest?: string,
+  noPortal?: boolean,
 |};
 
 type State = {
@@ -117,7 +118,8 @@ export default class Dropdown extends React.Component<Props, State> {
         position={position}
         isOpen={isOpen}
         onToggle={this.toggle}
-        dataTest={this.props.dataTest}>
+        dataTest={this.props.dataTest}
+        noPortal={this.props.noPortal}>
         {this.renderButton()}
         <Menu style={style}>{this.renderChildren()}</Menu>
       </ChildToggle>

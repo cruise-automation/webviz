@@ -41,7 +41,8 @@ type DerivedTopicItemFields = {|
   namespaceItems: NamespaceItem[],
   displayVisibilityBySource: DisplayVisibilityBySource,
   displayName: string,
-  available: boolean,
+  availablePrefixes: string[],
+  datatype?: string,
   id: string,
   // TODO(Audrey): support 2nd bag for map and tf with `disableMultiSelection`
 |};

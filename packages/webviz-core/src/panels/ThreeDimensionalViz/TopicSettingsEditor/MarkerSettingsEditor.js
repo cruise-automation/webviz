@@ -29,6 +29,7 @@ export default function MarkerSettingsEditor(props: TopicSettingsEditorProps<Mar
       </SDescription>
       <SInput
         type="text"
+        data-test="color-input"
         value={settings.overrideColor || ""}
         placeholder="e.g. 255, 0, 100, 0.5"
         onChange={(e) => onFieldChange("overrideColor", e.target.value)}

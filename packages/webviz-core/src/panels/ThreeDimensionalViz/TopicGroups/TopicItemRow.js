@@ -80,6 +80,7 @@ export const STopicName = styled.div`
 type Props = {|
   item: TopicItem,
   objectPath: string,
+  onEditTopicSettingsClick: (objectPath: string) => void,
   onTopicGroupsChange: OnTopicGroupsChange,
 |};
 
@@ -87,6 +88,7 @@ function TopicItemRowHeader({
   hasNamespaces,
   item,
   objectPath,
+  onEditTopicSettingsClick,
   onTopicGroupsChange,
   item: {
     topicName,
@@ -122,7 +124,12 @@ function TopicItemRowHeader({
             />
           );
         })}
-        <TopicItemMenu item={item} objectPath={objectPath} onTopicGroupsChange={onTopicGroupsChange} />
+        <TopicItemMenu
+          item={item}
+          objectPath={objectPath}
+          onEditTopicSettingsClick={onEditTopicSettingsClick}
+          onTopicGroupsChange={onTopicGroupsChange}
+        />
       </SItemMainRight>
     </SItemMain>
   );
@@ -136,7 +143,7 @@ export default function TopicItemRow(props: Props) {
     item: {
       expanded: topicExpanded,
       topicName,
-      derivedFields: { namespaceItems, id, available },
+      derivedFields: { namespaceItems, id, availablePrefixes },
     },
   } = props;
 
@@ -151,10 +158,10 @@ export default function TopicItemRow(props: Props) {
   );
 
   return (
-    <SItemRow hasNamespaces={hasNamespaces} available={available}>
+    <SItemRow hasNamespaces={hasNamespaces} available={availablePrefixes.length > 0}>
       {namespaceItems.length ? (
         <Collapse
-          defaultActiveKey={topicExpanded ? id : null}
+          defaultActiveKey={topicExpanded ? id : undefined}
           onChange={onCollapseChange}
           expandIcon={({ expanded }) => (
             <Icon small fade>

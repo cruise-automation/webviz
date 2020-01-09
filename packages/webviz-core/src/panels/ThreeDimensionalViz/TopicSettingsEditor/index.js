@@ -62,6 +62,7 @@ export function CommonPointSettings({
     <Flex col>
       <SLabel>Point size</SLabel>
       <SInput
+        data-test="point-size-input"
         type="number"
         placeholder={defaultPointSize.toString()}
         value={pointSizeVal}
@@ -121,7 +122,7 @@ export type TopicSettingsEditorProps<Msg, Settings: {}> = {|
   onSettingsChange: ({} | (({}) => {})) => void,
 |};
 
-function topicSettingsEditorForDatatype(datatype: string): ?ComponentType<TopicSettingsEditorProps<any, any>> {
+export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType<TopicSettingsEditorProps<any, any>> {
   const editors = {
     [POINT_CLOUD_DATATYPE]: PointCloudSettingsEditor,
     [POSE_STAMPED_DATATYPE]: PoseSettingsEditor,

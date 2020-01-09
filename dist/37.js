@@ -1,4 +1,4 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([[37],{2996:
+(window.webpackJsonp=window.webpackJsonp||[]).push([[37],{3007:
 /*!****************************************************************************!*\
   !*** ./node_modules/monaco-editor/esm/vs/basic-languages/python/python.js ***!
   \****************************************************************************/

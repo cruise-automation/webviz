@@ -144,6 +144,14 @@ module.exports = {
       { test: /\.scss$/, loader: "sass-loader", options: { sourceMap: true } },
       { test: /\.woff2?$/, loader: "url-loader" },
       { test: /\.(glb|bag)$/, loader: "file-loader" },
+      {
+        test: /node_modules\/compressjs\/.*\.js/,
+        loader: "string-replace-loader",
+        options: {
+          search: "if (typeof define !== 'function') { var define = require('amdefine')(module); }",
+          replace: "/* webviz: removed broken amdefine shim (https://github.com/webpack/webpack/issues/5316) */",
+        },
+      },
     ],
   },
   optimization: {

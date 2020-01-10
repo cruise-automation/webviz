@@ -4,6 +4,7 @@ import TinySDF from "@mapbox/tiny-sdf";
 import memoizeOne from "memoize-one";
 import React, { useState } from "react";
 
+import type { Color } from "../types";
 import { defaultBlend, defaultDepth } from "../utils/commandUtils";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";

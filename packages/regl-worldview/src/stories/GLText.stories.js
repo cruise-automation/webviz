@@ -5,6 +5,7 @@ import { quat } from "gl-matrix";
 import { range } from "lodash";
 import React, { useState, useLayoutEffect } from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
+import tinyColor from "tinycolor2";
 
 import { Axes } from "../commands";
 import type { Color } from "../types";
@@ -40,50 +41,6 @@ function textMarkers({
       billboard,
     };
   });
-}
-
-// Originally from: https://css-tricks.com/converting-color-spaces-in-javascript/
-function rgbToHex(color: Color) {
-  let r = Math.floor(color.r * 255).toString(16),
-    g = Math.floor(color.g * 255).toString(16),
-    b = Math.floor(color.b * 255).toString(16);
-
-  if (r.length === 1) {
-    r = `0${r}`;
-  }
-  if (g.length === 1) {
-    g = `0${g}`;
-  }
-  if (b.length === 1) {
-    b = `0${b}`;
-  }
-
-  return `#${r}${g}${b}`;
-}
-
-// Originally from: https://css-tricks.com/converting-color-spaces-in-javascript/
-function hexToRgb(hex: string): Color {
-  let r = 0,
-    g = 0,
-    b = 0;
-
-  // 3 digits
-  if (hex.length === 4) {
-    r = `0x${hex[1]}${hex[1]}`;
-    g = `0x${hex[2]}${hex[2]}`;
-    b = `0x${hex[3]}${hex[3]}`;
-
-    // 6 digits
-  } else if (hex.length === 7) {
-    r = `0x${hex[1]}${hex[2]}`;
-    g = `0x${hex[3]}${hex[4]}`;
-    b = `0x${hex[5]}${hex[6]}`;
-  }
-
-  r = +(r / 255).toFixed(2);
-  g = +(g / 255).toFixed(2);
-  b = +(b / 255).toFixed(2);
-  return { r, g, b, a: 1 };
 }
 
 storiesOf("Worldview/GLText", module)
@@ -205,11 +162,11 @@ storiesOf("Worldview/GLText", module)
             <input
               type="color"
               name="highlight-color"
-              value={rgbToHex(highlightColor)}
+              value={tinyColor.fromRatio(highlightColor).toHexString()}
               onChange={(e) => {
                 const hex = e.target.value;
-                const newColor = hexToRgb(hex);
-                setHighlightColor({ ...newColor, a: 1 });
+                const { r, g, b } = tinyColor(hex).toRgb();
+                setHighlightColor({ r: r / 255, g: g / 255, b: b / 255, a: 1 });
               }}
             />
           </div>

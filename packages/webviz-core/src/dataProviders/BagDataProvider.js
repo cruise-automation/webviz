@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import Bzip2 from "compressjs/lib/Bzip2";
 import { keyBy } from "lodash";
 import Bag, { open, Time, BagReader } from "rosbag";
 import decompress from "wasm-lz4";
@@ -115,7 +116,16 @@ export default class BagDataProvider implements DataProvider {
         message: data.buffer.slice(data.byteOffset, data.byteOffset + data.length),
       });
     };
-    const options = { topics, startTime: start, endTime: end, noParse: true, decompress: { lz4: decompress } };
+    const options = {
+      topics,
+      startTime: start,
+      endTime: end,
+      noParse: true,
+      decompress: {
+        bz2: (buffer: Buffer) => Buffer.from(Bzip2.decompressFile(buffer)),
+        lz4: decompress,
+      },
+    };
     await this._bag.readMessages(options, onMessage);
     return messages;
   }

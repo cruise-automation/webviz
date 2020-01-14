@@ -69,52 +69,51 @@ const memoizedCreateCanvas = memoizeOne((font) => {
   return ctx;
 });
 
+const ascii_chars = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
-const createMemoizedBuildAtlas = () =>
-  memoizeOne(
-    (charSet: Set<string>): FontAtlas => {
-      const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
-      const ctx = memoizedCreateCanvas(`${FONT_SIZE}px sans-serif`);
+const buildAtlas = ((): FontAtlas => {
+  const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
+  const ctx = memoizedCreateCanvas(`${FONT_SIZE}px sans-serif`);
 
-      let textureWidth = 0;
-      const rowHeight = FONT_SIZE + 2 * BUFFER;
-      const charInfo = {};
+  let textureWidth = 0;
+  const rowHeight = FONT_SIZE + 2 * BUFFER;
+  const charInfo = {};
 
-      // Measure and assign positions to all characters
-      let x = 0;
-      let y = 0;
-      for (const char of charSet) {
-        const width = ctx.measureText(char).width;
-        const dx = Math.ceil(width) + 2 * BUFFER;
-        if (x + dx > MAX_ATLAS_WIDTH) {
-          x = 0;
-          y += rowHeight;
-        }
-        charInfo[char] = { x, y, width };
-        x += dx;
-        textureWidth = Math.max(textureWidth, x);
-      }
-
-      const textureHeight = y + rowHeight;
-      const textureData = new Uint8Array(textureWidth * textureHeight);
-
-      // Use tiny-sdf to create SDF images for each character and copy them into a single texture
-      for (const char of charSet) {
-        const { x, y } = charInfo[char];
-        const data = tinySDF.draw(char);
-        for (let i = 0; i < tinySDF.size; i++) {
-          for (let j = 0; j < tinySDF.size; j++) {
-            // if this character is near the right edge, we don't actually copy the whole square of data
-            if (x + j < textureWidth) {
-              textureData[textureWidth * (y + i) + x + j] = data[i * tinySDF.size + j];
-            }
-          }
-        }
-      }
-
-      return { textureData, textureWidth, textureHeight, charInfo };
+  // Measure and assign positions to all characters
+  let x = 0;
+  let y = 0;
+  for (const char of ascii_chars) {
+    const width = ctx.measureText(char).width;
+    const dx = Math.ceil(width) + 2 * BUFFER;
+    if (x + dx > MAX_ATLAS_WIDTH) {
+      x = 0;
+      y += rowHeight;
     }
-  );
+    charInfo[char] = { x, y, width };
+    x += dx;
+    textureWidth = Math.max(textureWidth, x);
+  }
+
+  const textureHeight = y + rowHeight;
+  const textureData = new Uint8Array(textureWidth * textureHeight);
+
+  // Use tiny-sdf to create SDF images for each character and copy them into a single texture
+  for (const char of ascii_chars) {
+    const { x, y } = charInfo[char];
+    const data = tinySDF.draw(char);
+    for (let i = 0; i < tinySDF.size; i++) {
+      for (let j = 0; j < tinySDF.size; j++) {
+        // if this character is near the right edge, we don't actually copy the whole square of data
+        if (x + j < textureWidth) {
+          textureData[textureWidth * (y + i) + x + j] = data[i * tinySDF.size + j];
+        }
+      }
+    }
+  }
+
+  return { textureData, textureWidth, textureHeight, charInfo };
+})();
 
 const vert = `
   precision mediump float;
@@ -212,7 +211,6 @@ const frag = `
 function makeTextCommand() {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
   const charSet = new Set();
-  const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
   const command = (regl: any) => {
     const atlasTexture = regl.texture();
@@ -263,10 +261,7 @@ function makeTextCommand() {
       }
       const charsChanged = charSet.size !== prevNumChars;
 
-      const { textureData, textureWidth, textureHeight, charInfo } = memoizedBuildAtlas(
-        // only use a new set if the characters changed, since memoizeOne uses shallow equality
-        charsChanged ? new Set(charSet) : charSet
-      );
+      const { textureData, textureWidth, textureHeight, charInfo } = buildAtlas;
 
       // re-upload texture only if characters were added
       if (charsChanged) {

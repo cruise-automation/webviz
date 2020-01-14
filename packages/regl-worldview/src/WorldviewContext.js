@@ -9,6 +9,7 @@
 import debounce from "lodash/debounce";
 import * as React from "react";
 import createREGL from "regl";
+import shallowequal from "shallowequal";
 
 import { camera, CameraStore } from "./camera/index";
 import Command from "./commands/Command";
@@ -84,6 +85,10 @@ export class WorldviewContext {
   _drawCalls: Map<React.Component<any>, DrawInput> = new Map();
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
   _hitmapObjectIdManager: HitmapObjectIdManager = new HitmapObjectIdManager();
+  _cachedReadHitmapCall: ?{
+    arguments: Array<any>,
+    result: Array<[MouseEventObject, Command<any>]>,
+  } = null;
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
   counters: { paint?: number, render?: number } = {};
@@ -207,6 +212,7 @@ export class WorldviewContext {
     if (!this.initializedData) {
       return;
     }
+    this._cachedReadHitmapCall = null; // clear the cache every time we paint
     const { regl, camera } = this.initializedData;
     this._clearCanvas(regl);
     camera.draw(this.cameraStore.state, () => {
@@ -232,6 +238,21 @@ export class WorldviewContext {
     ): Promise<Array<[MouseEventObject, Command<any>]>> => {
       if (!this.initializedData) {
         return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
+      }
+      const args = [canvasX, canvasY, enableStackedObjectEvents, maxStackedObjectCount];
+
+      const cachedReadHitmapCall = this._cachedReadHitmapCall;
+      if (cachedReadHitmapCall) {
+        if (shallowequal(cachedReadHitmapCall.arguments, args)) {
+          // Make sure that we aren't returning the exact object identity of the mouseEventObject - we don't know what
+          // callers have done with it.
+          const result = cachedReadHitmapCall.result.map(([mouseEventObject, command]) => [
+            { ...mouseEventObject },
+            command,
+          ]);
+          return Promise.resolve(result);
+        }
+        this._cachedReadHitmapCall = null;
       }
 
       const { regl, camera, _fbo } = this.initializedData;
@@ -326,6 +347,10 @@ export class WorldviewContext {
               // eslint-disable-next-line no-unmodified-loop-condition
             } while (currentObjectId !== 0 && enableStackedObjectEvents);
 
+            this._cachedReadHitmapCall = {
+              arguments: args,
+              result: mouseEventsWithCommands,
+            };
             resolve(mouseEventsWithCommands);
           });
         });

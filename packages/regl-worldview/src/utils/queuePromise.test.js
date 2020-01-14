@@ -7,23 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import queuePromise from "./queuePromise";
-
-type Signal<T> = Promise<T> & {
-  resolve: (T) => void,
-  reject: (Error) => void,
-};
-
-function signal<T>(): Signal<T> {
-  let resolve;
-  let reject;
-  const promise: any = new Promise((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  promise.resolve = resolve;
-  promise.reject = reject;
-  return promise;
-}
+import { signal } from "./signal";
 
 /* eslint-disable jest/valid-expect-in-promise */
 

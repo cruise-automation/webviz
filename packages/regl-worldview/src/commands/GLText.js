@@ -209,12 +209,15 @@ const frag = `
   }
 `;
 
+const OFFSET_MULTIPLIER = Float32Array.BYTES_PER_ELEMENT;
+
 function makeTextCommand() {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
   const charSet = new Set();
   const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
   const command = (regl: any) => {
+    const mainBuffer = regl.buffer({ type: "float" });
     const atlasTexture = regl.texture();
     const drawText = regl({
       depth: defaultDepth,
@@ -233,18 +236,78 @@ function makeTextCommand() {
       attributes: {
         position: [[0, 0], [0, -1], [1, 0], [1, -1]],
         texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
-        srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
-        destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
-        srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
-        scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
-        alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
-        billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
-        foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
-        backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
-        enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
-        enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
-        posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
-        poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
+        srcOffset: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.srcOffsetsOffset * OFFSET_MULTIPLIER,
+          stride: 2 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        destOffset: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.destOffsetsOffset * OFFSET_MULTIPLIER,
+          stride: 2 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        srcWidth: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.srcWidthsOffset * OFFSET_MULTIPLIER,
+          stride: 1 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        scale: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.scaleOffset * OFFSET_MULTIPLIER,
+          stride: 3 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        alignmentOffset: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.alignmentOffsetOffset * OFFSET_MULTIPLIER,
+          stride: 2 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        billboard: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.billboardOffset * OFFSET_MULTIPLIER,
+          stride: 1 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        foregroundColor: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.foregroundColorOffset * OFFSET_MULTIPLIER,
+          stride: 4 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        backgroundColor: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.backgroundColorOffset * OFFSET_MULTIPLIER,
+          stride: 4 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        enableBackground: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.enableBackgroundOffset * OFFSET_MULTIPLIER,
+          stride: 1 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        enableHighlight: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.enableHighlightOffset * OFFSET_MULTIPLIER,
+          stride: 1 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        posePosition: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.posePositionOffset * OFFSET_MULTIPLIER,
+          stride: 3 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
+        poseOrientation: (ctx, props) => ({
+          buffer: mainBuffer,
+          offset: props.poseOrientationOffset * OFFSET_MULTIPLIER,
+          stride: 4 * OFFSET_MULTIPLIER,
+          divisor: 1,
+        }),
       },
     });
 
@@ -281,20 +344,35 @@ function makeTextCommand() {
         });
       }
 
-      const destOffsets = new Float32Array(estimatedInstances * 2);
-      const srcWidths = new Float32Array(estimatedInstances);
-      const srcOffsets = new Float32Array(estimatedInstances * 2);
+      const destOffsetsSize = estimatedInstances * 2;
+      const srcWidthsSize = estimatedInstances;
+      const srcOffsetsSize = estimatedInstances * 2;
+      const alignmentOffsetSize = estimatedInstances * 2;
+      const scaleSize = estimatedInstances * 3;
+      const foregroundColorSize = estimatedInstances * 4;
+      const backgroundColorSize = estimatedInstances * 4;
+      const enableBackgroundSize = estimatedInstances;
+      const billboardSize = estimatedInstances;
+      const posePositionSize = estimatedInstances * 3;
+      const poseOrientationSize = estimatedInstances * 4;
+      const enableHighlightSize = estimatedInstances;
 
-      // These don't vary across characters within a marker, but the divisor can't be dynamic so we have to duplicate the data for each character.
-      const alignmentOffset = new Float32Array(estimatedInstances * 2);
-      const scale = new Float32Array(estimatedInstances * 3);
-      const foregroundColor = new Float32Array(estimatedInstances * 4);
-      const backgroundColor = new Float32Array(estimatedInstances * 4);
-      const enableBackground = new Float32Array(estimatedInstances);
-      const billboard = new Float32Array(estimatedInstances);
-      const posePosition = new Float32Array(estimatedInstances * 3);
-      const poseOrientation = new Float32Array(estimatedInstances * 4);
-      const enableHighlight = new Float32Array(estimatedInstances);
+      let mainSize;
+      const destOffsetsOffset = (mainSize = 0);
+      const srcWidthsOffset = (mainSize = destOffsetsSize);
+      const srcOffsetsOffset = (mainSize = mainSize + srcWidthsSize);
+      const alignmentOffsetOffset = (mainSize = mainSize + srcOffsetsSize);
+      const scaleOffset = (mainSize = mainSize + alignmentOffsetSize);
+      const foregroundColorOffset = (mainSize = mainSize + scaleSize);
+      const backgroundColorOffset = (mainSize = mainSize + foregroundColorSize);
+      const enableBackgroundOffset = (mainSize = mainSize + backgroundColorSize);
+      const billboardOffset = (mainSize = mainSize + enableBackgroundSize);
+      const posePositionOffset = (mainSize = mainSize + billboardSize);
+      const poseOrientationOffset = (mainSize = mainSize + posePositionSize);
+      const enableHighlightOffset = (mainSize = mainSize + poseOrientationSize);
+      mainSize += enableHighlightSize;
+
+      const mainArray = new Float32Array(mainSize);
 
       let totalInstances = 0;
       for (const marker of props) {
@@ -319,11 +397,11 @@ function makeTextCommand() {
           const index = totalInstances + markerInstances;
 
           // Calculate per-character attributes
-          destOffsets[2 * index + 0] = x;
-          destOffsets[2 * index + 1] = -y;
-          srcOffsets[2 * index + 0] = info.x + BUFFER;
-          srcOffsets[2 * index + 1] = info.y + BUFFER;
-          srcWidths[index] = info.width;
+          mainArray[destOffsetsOffset + 2 * index + 0] = x;
+          mainArray[destOffsetsOffset + 2 * index + 1] = -y;
+          mainArray[srcOffsetsOffset + 2 * index + 0] = info.x + BUFFER;
+          mainArray[srcOffsetsOffset + 2 * index + 1] = info.y + BUFFER;
+          mainArray[srcWidthsOffset + index] = info.width;
 
           x += info.width;
           totalWidth = Math.max(totalWidth, x);
@@ -331,65 +409,64 @@ function makeTextCommand() {
           // Copy per-marker attributes. These are duplicated per character so that we can draw
           // all characters from all markers in a single draw call.
 
-          billboard[index] = marker.billboard ?? true ? 1 : 0;
+          mainArray[billboardOffset + index] = marker.billboard ?? true ? 1 : 0;
 
-          scale[3 * index + 0] = marker.scale.x;
-          scale[3 * index + 1] = marker.scale.y;
-          scale[3 * index + 2] = marker.scale.z;
+          mainArray[scaleOffset + 3 * index + 0] = marker.scale.x;
+          mainArray[scaleOffset + 3 * index + 1] = marker.scale.y;
+          mainArray[scaleOffset + 3 * index + 2] = marker.scale.z;
 
-          posePosition[3 * index + 0] = marker.pose.position.x;
-          posePosition[3 * index + 1] = marker.pose.position.y;
-          posePosition[3 * index + 2] = marker.pose.position.z;
+          mainArray[posePositionOffset + 3 * index + 0] = marker.pose.position.x;
+          mainArray[posePositionOffset + 3 * index + 1] = marker.pose.position.y;
+          mainArray[posePositionOffset + 3 * index + 2] = marker.pose.position.z;
 
-          poseOrientation[4 * index + 0] = marker.pose.orientation.x;
-          poseOrientation[4 * index + 1] = marker.pose.orientation.y;
-          poseOrientation[4 * index + 2] = marker.pose.orientation.z;
-          poseOrientation[4 * index + 3] = marker.pose.orientation.w;
+          mainArray[poseOrientationOffset + 4 * index + 0] = marker.pose.orientation.x;
+          mainArray[poseOrientationOffset + 4 * index + 1] = marker.pose.orientation.y;
+          mainArray[poseOrientationOffset + 4 * index + 2] = marker.pose.orientation.z;
+          mainArray[poseOrientationOffset + 4 * index + 3] = marker.pose.orientation.w;
 
-          foregroundColor[4 * index + 0] = fgColor.r;
-          foregroundColor[4 * index + 1] = fgColor.g;
-          foregroundColor[4 * index + 2] = fgColor.b;
-          foregroundColor[4 * index + 3] = fgColor.a;
+          mainArray[foregroundColorOffset + 4 * index + 0] = fgColor.r;
+          mainArray[foregroundColorOffset + 4 * index + 1] = fgColor.g;
+          mainArray[foregroundColorOffset + 4 * index + 2] = fgColor.b;
+          mainArray[foregroundColorOffset + 4 * index + 3] = fgColor.a;
 
-          backgroundColor[4 * index + 0] = bgColor.r;
-          backgroundColor[4 * index + 1] = bgColor.g;
-          backgroundColor[4 * index + 2] = bgColor.b;
-          backgroundColor[4 * index + 3] = bgColor.a;
+          mainArray[backgroundColorOffset + 4 * index + 0] = bgColor.r;
+          mainArray[backgroundColorOffset + 4 * index + 1] = bgColor.g;
+          mainArray[backgroundColorOffset + 4 * index + 2] = bgColor.b;
+          mainArray[backgroundColorOffset + 4 * index + 3] = bgColor.a;
 
-          enableHighlight[index] = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
+          mainArray[enableHighlightOffset + index] =
+            marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
 
-          enableBackground[index] = outline ? 1 : 0;
+          mainArray[enableBackgroundOffset + index] = outline ? 1 : 0;
 
           ++markerInstances;
         }
 
         const totalHeight = y + FONT_SIZE;
         for (let i = 0; i < markerInstances; i++) {
-          alignmentOffset[2 * (totalInstances + i) + 0] = -totalWidth / 2;
-          alignmentOffset[2 * (totalInstances + i) + 1] = totalHeight / 2;
+          mainArray[alignmentOffsetOffset + 2 * (totalInstances + i) + 0] = -totalWidth / 2;
+          mainArray[alignmentOffsetOffset + 2 * (totalInstances + i) + 1] = totalHeight / 2;
         }
 
         totalInstances += markerInstances;
       }
 
+      mainBuffer({ data: mainArray, usage: "dynamic" });
+
       drawText({
         instances: totalInstances,
-
-        // per-character
-        srcOffsets,
-        destOffsets,
-        srcWidths,
-
-        // per-marker
-        alignmentOffset,
-        billboard,
-        enableBackground,
-        enableHighlight,
-        foregroundColor,
-        backgroundColor,
-        poseOrientation,
-        posePosition,
-        scale,
+        destOffsetsOffset,
+        srcWidthsOffset,
+        srcOffsetsOffset,
+        alignmentOffsetOffset,
+        scaleOffset,
+        foregroundColorOffset,
+        backgroundColorOffset,
+        enableBackgroundOffset,
+        billboardOffset,
+        posePositionOffset,
+        poseOrientationOffset,
+        enableHighlightOffset,
       });
     };
   };

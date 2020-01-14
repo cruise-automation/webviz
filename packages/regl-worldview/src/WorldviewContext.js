@@ -36,6 +36,7 @@ type ConstructorArgs = {
   cameraState: CameraState,
   defaultCameraState?: CameraState,
   onCameraStateChange: ?(CameraState) => void,
+  profile: boolean,
 };
 
 type InitializedData = {
@@ -92,11 +93,13 @@ export class WorldviewContext {
   canvasBackgroundColor: Vec4 = [0, 0, 0, 1];
   // group all initialized data together so it can be checked for existence to verify initialization is complete
   initializedData: ?InitializedData;
+  profile: boolean;
 
-  constructor({ dimension, canvasBackgroundColor, cameraState, onCameraStateChange }: ConstructorArgs) {
+  constructor({ dimension, canvasBackgroundColor, cameraState, onCameraStateChange, profile }: ConstructorArgs) {
     // used for children to call paint() directly
     this.onDirty = this._debouncedPaint;
     this.dimension = dimension;
+    this.profile = profile;
     this.canvasBackgroundColor = canvasBackgroundColor;
     this.cameraStore = new CameraStore((cameraState: CameraState) => {
       if (onCameraStateChange) {
@@ -122,7 +125,7 @@ export class WorldviewContext {
           "oes_element_index_uint",
           "oes_standard_derivatives",
         ],
-        profile: getNodeEnv() !== "production",
+        profile: !!this.profile || getNodeEnv() !== "production",
       })
     );
     // compile any components which mounted before regl is initialized

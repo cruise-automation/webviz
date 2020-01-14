@@ -44,6 +44,7 @@ export type BaseProps = {|
   maxStackedObjectCount: number,
   showDebug?: boolean,
   children?: React.Node,
+  profile?: boolean,
   style: { [styleAttribute: string]: number | string },
 
   cameraState?: $Shape<CameraState>,
@@ -118,6 +119,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         // DEFAULT_CAMERA_STATE is applied if both `cameraState` and `defaultCameraState` are not present
         cameraState: props.cameraState || props.defaultCameraState || DEFAULT_CAMERA_STATE,
         onCameraStateChange: props.onCameraStateChange || undefined,
+        profile: !!props.profile,
       }),
     };
   }

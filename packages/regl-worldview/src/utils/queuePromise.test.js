@@ -43,6 +43,37 @@ describe("queuePromise", () => {
     expect(queuedFn.currentPromise).toBeUndefined();
   });
 
+  it("returns a promise", async () => {
+    const promises = [signal(), signal()];
+    let calls = 0;
+    const queuedFn = queuePromise((...args) => {
+      ++calls;
+      return promises[calls - 1];
+    });
+
+    const arePromisesResolved = [false, false];
+    const promiseResults = [queuedFn(), queuedFn()];
+    promiseResults.forEach((promise, index) =>
+      promise.then(() => {
+        arePromisesResolved[index] = true;
+      })
+    );
+    expect(calls).toEqual(1);
+    expect(arePromisesResolved).toEqual([false, false]);
+
+    // resolve the first promise. This should move on to the second promise.
+    promises[0].resolve();
+    await promiseResults[0];
+    expect(calls).toEqual(2);
+    expect(arePromisesResolved).toEqual([true, false]);
+
+    // resolve the second promise.
+    promises[1].resolve();
+    await promiseResults[1];
+    expect(calls).toEqual(2);
+    expect(arePromisesResolved).toEqual([true, true]);
+  });
+
   it("handles nested calls", async () => {
     expect.assertions(3);
 

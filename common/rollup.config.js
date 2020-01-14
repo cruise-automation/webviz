@@ -4,12 +4,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import commonjs from "@rollup/plugin-commonjs";
+import resolve from "@rollup/plugin-node-resolve";
+import replace from "@rollup/plugin-replace";
 import babel from "rollup-plugin-babel";
-import commonjs from "rollup-plugin-commonjs";
 import copy from "rollup-plugin-copy";
-import resolve from "rollup-plugin-node-resolve";
 import peerDepsExternal from "rollup-plugin-peer-deps-external";
-import replace from "rollup-plugin-replace";
 import { terser } from "rollup-plugin-terser";
 
 // Additional options applied on top of babel.config.js

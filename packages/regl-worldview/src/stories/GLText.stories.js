@@ -22,8 +22,8 @@ function textMarkers({
   billboard?: ?boolean,
   background?: ?boolean,
 }) {
-  const radius = 10;
-  const count = 10;
+  const radius = 20;
+  const count = 500;
   return new Array(count).fill().map((_, i) => {
     const angle = (2 * Math.PI * i) / count;
     const color = { r: 0, g: i / count, b: i / count, a: 1 };
@@ -77,7 +77,7 @@ storiesOf("Worldview/GLText", module)
           if (inScreenshotTests()) {
             clearInterval(id);
           }
-        }, 100);
+        }, 2000);
         return () => clearInterval(id);
       }, []);
       return (

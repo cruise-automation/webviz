@@ -341,6 +341,7 @@ export class WorldviewContext {
     const drawCalls = Array.from(this._drawCalls.values()).sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
     drawCalls.forEach((drawInput: DrawInput) => {
       const { reglCommand, children, instance, getChildrenForHitmap } = drawInput;
+
       if (!children) {
         return console.debug(`${isHitmap ? "hitmap" : ""} draw skipped, props was falsy`, drawInput);
       }
@@ -348,6 +349,11 @@ export class WorldviewContext {
       if (!cmd) {
         return console.warn("could not find draw command for", instance ? instance.constructor.displayName : "Unknown");
       }
+      if (!isHitmap) {
+        cmd(children, false);
+        return;
+      }
+
       // draw hitmap
       if (isHitmap && getChildrenForHitmap) {
         const assignNextColorsFn: AssignNextColorsFn = (...rest) => {
@@ -357,8 +363,6 @@ export class WorldviewContext {
         if (hitmapProps) {
           cmd(hitmapProps, true);
         }
-      } else if (!isHitmap) {
-        cmd(children, false);
       }
     });
   };

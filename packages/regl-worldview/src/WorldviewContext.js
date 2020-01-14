@@ -349,21 +349,22 @@ export class WorldviewContext {
       if (!cmd) {
         return console.warn("could not find draw command for", instance ? instance.constructor.displayName : "Unknown");
       }
-      if (!isHitmap) {
-        cmd(children, false);
-        return;
-      }
 
-      // draw hitmap
-      if (isHitmap && getChildrenForHitmap) {
-        const assignNextColorsFn: AssignNextColorsFn = (...rest) => {
-          return this._hitmapObjectIdManager.assignNextColors(instance, ...rest);
-        };
-        const hitmapProps = getChildrenForHitmap(children, assignNextColorsFn, excludedObjects || []);
-        if (hitmapProps) {
-          cmd(hitmapProps, true);
-        }
-      }
+      cmd(children, false);
+      // if (!isHitmap) {
+      // cmd(children, false);
+      // return;
+      // }
+      //
+      // if (isHitmap && getChildrenForHitmap) {
+      // const assignNextColorsFn: AssignNextColorsFn = (...rest) => {
+      // return this._hitmapObjectIdManager.assignNextColors(instance, ...rest);
+      // };
+      // const hitmapProps = getChildrenForHitmap(children, assignNextColorsFn, excludedObjects || []);
+      // if (hitmapProps) {
+      // cmd(hitmapProps, true);
+      // }
+      // }
     });
   };
 

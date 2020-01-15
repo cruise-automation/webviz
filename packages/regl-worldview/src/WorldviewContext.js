@@ -86,9 +86,9 @@ export class WorldviewContext {
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
   _hitmapObjectIdManager: HitmapObjectIdManager = new HitmapObjectIdManager();
   _cachedReadHitmapCall: ?{
-    arguments: Array<any>,
+    arguments: any[],
     result: Array<[MouseEventObject, Command<any>]>,
-  } = null;
+  } = undefined;
   // store every compiled command object compiled for debugging purposes
   reglCommandObjects: { stats: { count: number } }[] = [];
   counters: { paint?: number, render?: number } = {};
@@ -237,7 +237,7 @@ export class WorldviewContext {
       maxStackedObjectCount: number
     ): Promise<Array<[MouseEventObject, Command<any>]>> => {
       if (!this.initializedData) {
-        return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
+        return Promise.reject(new Error("regl data not initialized yet"));
       }
       const args = [canvasX, canvasY, enableStackedObjectEvents, maxStackedObjectCount];
 
@@ -252,7 +252,7 @@ export class WorldviewContext {
           ]);
           return Promise.resolve(result);
         }
-        this._cachedReadHitmapCall = null;
+        this._cachedReadHitmapCall = undefined;
       }
 
       const { regl, camera, _fbo } = this.initializedData;

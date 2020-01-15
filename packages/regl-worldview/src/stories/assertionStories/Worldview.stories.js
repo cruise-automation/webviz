@@ -274,7 +274,7 @@ stories
     })
   )
   .add(
-    `(cached hitmap test) repainting busts the cache`,
+    `(cached hitmap test) Repainting busts the cache`,
     assertionTest({
       story: (setTestData, state) => (
         <WorldviewWrapper

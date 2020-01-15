@@ -38,6 +38,7 @@ export type BaseProps = {|
   backgroundColor?: Vec4,
   // rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
+  collisonMode2D?: boolean,
   // getting events for objects stacked on top of each other is expensive, so disable it by default
   enableStackedObjectEvents?: boolean,
   // allow users to specify the max stacked object count
@@ -229,7 +230,13 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();
     worldviewContext
-      .readHitmap(canvasX, canvasY, !!this.props.enableStackedObjectEvents, this.props.maxStackedObjectCount)
+      .readHitmap(
+        canvasX,
+        canvasY,
+        !!this.props.enableStackedObjectEvents,
+        this.props.maxStackedObjectCount,
+        this.props.collisionMode2D
+      )
       .then((mouseEventsWithCommands) => {
         const mouseEventsByCommand: Map<Command<any>, Array<MouseEventObject>> = aggregate(mouseEventsWithCommands);
         for (const [command, mouseEvents] of mouseEventsByCommand.entries()) {

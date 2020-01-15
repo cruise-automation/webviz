@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import debounce from "lodash/debounce";
+import * as decomp from "poly-decomp";
 import * as React from "react";
 import createREGL from "regl";
 
@@ -26,7 +27,7 @@ import type {
 import { getIdFromPixel, intToRGB } from "./utils/commandUtils";
 import { getNodeEnv } from "./utils/common";
 import HitmapObjectIdManager from "./utils/HitmapObjectIdManager";
-import { getRayFromClick } from "./utils/Raycast";
+import { getRayFromClick, getWorldPointFromCanvasPoint } from "./utils/Raycast";
 
 type Props = any;
 
@@ -72,6 +73,27 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
   const src = cmd(regl);
   return typeof src === "function" ? src : regl(src);
 }
+
+const insidePolygon = (polygon, pt) => {
+  const [pt_x, pt_y] = pt;
+  let counter = 0;
+
+  for (let i = 0; i < polygon.length; i++) {
+    const [p1_x, p1_y] = polygon[i];
+    const [p2_x, p2_y] = polygon[(i + 1) % polygon.length];
+    if (pt_y > Math.min(p1_y, p2_y) && pt_y <= Math.max(p1_y, p2_y) && pt_x <= Math.max(p1_x, p2_x) && p1_y !== p2_y) {
+      const xinters = ((pt_y - p1_y) * (p2_x - p1_x)) / (p2_y - p1_y) + p1_x;
+      if (p1_x === p2_x || pt_x <= xinters) {
+        counter++;
+      }
+    }
+  }
+
+  if (counter % 2 === 0) {
+    return false;
+  }
+  return true;
+};
 
 // This is made available to every Command component as `this.context`.
 // It contains all the regl interaction code and is responsible for collecting and executing
@@ -186,6 +208,20 @@ export class WorldviewContext {
     this.dimension = dimension;
   }
 
+  canvasToWorldPoint = (canvasX: number, canvasY: number) => {
+    if (!this.initializedData) {
+      return undefined;
+    }
+
+    const { width, height } = this.dimension;
+    return getWorldPointFromCanvasPoint(this.initializedData.camera, {
+      clientX: canvasX,
+      clientY: canvasY,
+      width,
+      height,
+    });
+  };
+
   raycast = (canvasX: number, canvasY: number) => {
     if (!this.initializedData) {
       return undefined;
@@ -222,14 +258,63 @@ export class WorldviewContext {
 
   _debouncedPaint = debounce(this.paint, 10);
 
+
   readHitmap(
     canvasX: number,
     canvasY: number,
     enableStackedObjectEvents: boolean,
-    maxStackedObjectCount: number
+    maxStackedObjectCount: number,
+    collisionMode2D: boolean
   ): Promise<Array<[MouseEventObject, Command<any>]>> {
     if (!this.initializedData) {
       return new Promise((_, reject) => reject(new Error("regl data not initialized yet")));
+    }
+
+    if (collisionMode2D) {
+      const mouseEventsWithCommands = [];
+      const [clickX, clickY] = this.canvasToWorldPoint(canvasX, canvasY);
+
+      const drawCalls = Array.from(this._drawCalls.values()).sort((a, b) => (a.layerIndex || 0) - (b.layerIndex || 0));
+      drawCalls.forEach((drawInput: DrawInput) => {
+        const { children, instance, getChildrenForHitmap } = drawInput;
+        if (!children) {
+          return console.debug(`2d hitmap calculation skipped, no draw children`, drawInput);
+        }
+        if (getChildrenForHitmap) {
+          if (!children.length) {
+            return;
+          }
+
+          children.forEach((item) => {
+            if (item.collisionData) {
+              const collisionPoints = item.collisionData.points;
+              const ccwPolygon = [...collisionPoints];
+              decomp.makeCCW(ccwPolygon);
+              const decomposedPolygons = decomp.quickDecomp(ccwPolygon);
+              decomposedPolygons.forEach((polygon) => {
+                const collided = insidePolygon(polygon, [clickX, clickY]);
+                if (collided) {
+                  return mouseEventsWithCommands.push([item, instance]);
+                }
+              });
+            }
+          });
+        }
+      });
+
+      const zSortedMouseEventsWithCommands = mouseEventsWithCommands.sort(([item1], [item2]) => {
+        const layer1 = item1.collisionData.zLayer || 0;
+        const layer2 = item2.collisionData.zLayer || 0;
+        // purposely sorting in opposite order, higher z = hit first
+        if (layer1 > layer2) {
+          return -1;
+        }
+        if (layer1 < layer2) {
+          return 1;
+        }
+        return 0;
+      });
+      return Promise.resolve(zSortedMouseEventsWithCommands);
     }
 
     const { regl, camera, _fbo } = this.initializedData;
@@ -351,9 +436,7 @@ export class WorldviewContext {
           return this._hitmapObjectIdManager.assignNextColors(instance, ...rest);
         };
         const hitmapProps = getChildrenForHitmap(children, assignNextColorsFn, excludedObjects || []);
-        if (hitmapProps) {
-          cmd(hitmapProps, true);
-        }
+        cmd(hitmapProps, true);
       } else if (!isHitmap) {
         cmd(children, false);
       }

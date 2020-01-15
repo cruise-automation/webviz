@@ -138,8 +138,5 @@
     "screenshot-debug": "npm run screenshot -- --parallel 1 --debug --puppeteer-launch-config '{\"headless\": false, \"--args\":[\"--user-agent=PuppeteerTestingChrome/72.\"]}'",
     "ci-commands-for-cruise-proprietary-repo": "npm run install-ci && NODE_ENV=production npm run build && npm run lint && npm run flow && npm test && NODE_ENV=production npm run screenshot-ci",
     "ci": "npm run ci-commands-for-cruise-proprietary-repo && reg-suit run --verbose"
-  },
-  "workspaces": [
-    "packages/*"
-  ]
+  }
 }

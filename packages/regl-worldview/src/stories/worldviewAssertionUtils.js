@@ -16,7 +16,7 @@ import type { CameraState } from "../types";
 import Worldview, { type Props } from "../Worldview";
 import { assertionTest, timeout } from "stories/assertionTestUtils";
 
-const defaultCameraState: $Shape<CameraState> = {
+export const defaultCameraState: $Shape<CameraState> = {
   distance: 75,
   perspective: true,
   phi: Math.PI / 2,

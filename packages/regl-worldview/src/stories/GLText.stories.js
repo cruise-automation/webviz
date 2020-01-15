@@ -151,25 +151,24 @@ storiesOf("Worldview/GLText", module)
 
       return (
         <div style={{ width: "100%", height: "100%" }}>
-          <div style={{ width: "100%", height: "100%" }}>
-            <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-              <GLText>{markers}</GLText>
-              <Axes />
-            </Container>
-          </div>
-          <div style={{ position: "absolute", top: "10px", right: "10px" }}>
-            <label htmlFor="highlight-color">Highlight Color: </label>
-            <input
-              type="color"
-              name="highlight-color"
-              value={tinyColor.fromRatio(highlightColor).toHexString()}
-              onChange={(e) => {
-                const hex = e.target.value;
-                const { r, g, b } = tinyColor(hex).toRgb();
-                setHighlightColor({ r: r / 255, g: g / 255, b: b / 255, a: 1 });
-              }}
-            />
-          </div>
+          <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+            <div style={{ position: "absolute", top: "10px", right: "10px" }}>
+              <label htmlFor="highlight-color">Highlight Color: </label>
+              <input
+                type="color"
+                name="highlight-color"
+                value={tinyColor.fromRatio(highlightColor).toHexString()}
+                onChange={(e) => {
+                  const hex = e.target.value;
+                  const { r, g, b } = tinyColor(hex).toRgb();
+                  setHighlightColor({ r: r / 255, g: g / 255, b: b / 255, a: 1 });
+                }}
+              />
+            </div>
+
+            <GLText>{markers}</GLText>
+            <Axes />
+          </Container>
         </div>
       );
     };

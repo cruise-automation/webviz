@@ -66,15 +66,7 @@ export type WorldviewContextType = {
   +initializedData: ?InitializedData,
 };
 
-// Compile instructions with an initialized regl context into a regl command.
-// If the instructions are a function, pass the context to the instructions and compile the result
-// of the function; otherwise, compile the instructions directly
-function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
-  const src = cmd(regl);
-  return typeof src === "function" ? src : regl(src);
-}
-
-const insidePolygon = (polygon, pt) => {
+const convexPolygonPointCollisionCheck = (polygon, pt) => {
   const [pt_x, pt_y] = pt;
   let counter = 0;
 
@@ -94,6 +86,34 @@ const insidePolygon = (polygon, pt) => {
   }
   return true;
 };
+
+const insidePolygon = (collisionData, pt) => {
+  const collisionPoints = collisionData.points;
+  const ccwPolygon = [...collisionPoints];
+  decomp.makeCCW(ccwPolygon);
+  const decomposedPolygons = decomp.quickDecomp(ccwPolygon);
+  for (const polygon in decomposedPolygons) {
+    if (convexPolygonPointCollisionCheck(polygon, pt)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const insideCircle = (circlePoint, circleRadius, pt) => {
+  const distance = Math.hypot(circlePoint[0] - pt[0], circlePoint[1] - pt[1]);
+
+  return distance < circleRadius;
+};
+
+// Compile instructions with an initialized regl context into a regl command.
+// If the instructions are a function, pass the context to the instructions and compile the result
+// of the function; otherwise, compile the instructions directly
+function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
+  const src = cmd(regl);
+  return typeof src === "function" ? src : regl(src);
+}
 
 // This is made available to every Command component as `this.context`.
 // It contains all the regl interaction code and is responsible for collecting and executing
@@ -258,7 +278,6 @@ export class WorldviewContext {
 
   _debouncedPaint = debounce(this.paint, 10);
 
-
   readHitmap(
     canvasX: number,
     canvasY: number,
@@ -281,23 +300,26 @@ export class WorldviewContext {
           return console.debug(`2d hitmap calculation skipped, no draw children`, drawInput);
         }
         if (getChildrenForHitmap) {
-          const hitmapChildren = getChildrenForHitmap(children, () => [], []);
-          if (!hitmapChildren.length) {
-            return;
+          let hitmapChildren = getChildrenForHitmap(children, () => [], []);
+          if (!Array.isArray(hitmapChildren)) {
+            hitmapChildren = [hitmapChildren];
           }
 
           hitmapChildren.forEach((item) => {
             if (item.collisionData) {
-              const collisionPoints = item.collisionData.points;
-              const ccwPolygon = [...collisionPoints];
-              decomp.makeCCW(ccwPolygon);
-              const decomposedPolygons = decomp.quickDecomp(ccwPolygon);
-              decomposedPolygons.forEach((polygon) => {
-                const collided = insidePolygon(polygon, [clickX, clickY]);
-                if (collided) {
-                  return mouseEventsWithCommands.push([item, instance]);
-                }
-              });
+              let collided = false;
+              switch (item.collisionData.type) {
+                case "polygon":
+                  collided = insidePolygon(item.collisionData, [clickX, clickY]);
+                  break;
+                case "circle":
+                  collided = insideCircle(item.collisionData, [clickX, clickY]);
+                  break;
+              }
+
+              if (collided) {
+                mouseEventsWithCommands.push([item, instance]);
+              }
             }
           });
         }

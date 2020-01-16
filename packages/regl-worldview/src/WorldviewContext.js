@@ -281,11 +281,12 @@ export class WorldviewContext {
           return console.debug(`2d hitmap calculation skipped, no draw children`, drawInput);
         }
         if (getChildrenForHitmap) {
-          if (!children.length) {
+          const hitmapChildren = getChildrenForHitmap(children, () => [], []);
+          if (!hitmapChildren.length) {
             return;
           }
 
-          children.forEach((item) => {
+          hitmapChildren.forEach((item) => {
             if (item.collisionData) {
               const collisionPoints = item.collisionData.points;
               const ccwPolygon = [...collisionPoints];
@@ -436,7 +437,9 @@ export class WorldviewContext {
           return this._hitmapObjectIdManager.assignNextColors(instance, ...rest);
         };
         const hitmapProps = getChildrenForHitmap(children, assignNextColorsFn, excludedObjects || []);
-        cmd(hitmapProps, true);
+        if (hitmapProps) {
+          cmd(hitmapProps, true);
+        }
       } else if (!isHitmap) {
         cmd(children, false);
       }

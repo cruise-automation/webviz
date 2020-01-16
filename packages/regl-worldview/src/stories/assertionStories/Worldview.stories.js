@@ -14,7 +14,7 @@ import React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Cubes from "../../commands/Cubes";
-import { WorldviewWrapper, clickAtOrigin, WORLDVIEW_SIZE } from "../worldviewAssertionUtils";
+import { WorldviewWrapper, clickAtOrigin, WORLDVIEW_SIZE, defaultCameraState } from "../worldviewAssertionUtils";
 import { assertionTest, timeout } from "stories/assertionTestUtils";
 
 const cube = {
@@ -35,15 +35,19 @@ const underCube = {
   color: { r: 0, g: 1, b: 1, a: 0.5 },
 };
 
-async function emitMouseEvent(eventName: "mousemove" | "mousedown" | "mouseup" | "dblclick"): Promise<void> {
+async function emitMouseEvent(
+  eventName: "mousemove" | "mousedown" | "mouseup" | "dblclick",
+  clientX: number = WORLDVIEW_SIZE / 2,
+  clientY: number = WORLDVIEW_SIZE / 2
+): Promise<void> {
   const [element] = document.getElementsByTagName("canvas");
   if (!element) {
     throw new Error("Could not find canvas element");
   }
   const mouseEvent = new MouseEvent(eventName, {
     bubbles: true,
-    clientX: WORLDVIEW_SIZE / 2,
-    clientY: WORLDVIEW_SIZE / 2,
+    clientX,
+    clientY,
   });
   element.dispatchEvent(mouseEvent);
   await timeout(100);
@@ -232,6 +236,82 @@ stories
         const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);
+      },
+    })
+  )
+  .add(
+    `Firing two mouse events at the same time does not cause an error`,
+    assertionTest({
+      story: (setTestData) => (
+        <WorldviewWrapper onMouseDown={(_, clickInfo) => setTestData(clickInfo)}>
+          <Cubes>{[cube]}</Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData) => {
+        emitMouseEvent("mousedown");
+        await emitMouseEvent("mousedown");
+        const result1 = await getTestData();
+        expect(result1.objects[0].object).toEqual(cube);
+      },
+    })
+  )
+  .add(
+    `(cached hitmap test) A second event at the same point correctly selects the same object`,
+    assertionTest({
+      story: (setTestData) => (
+        <WorldviewWrapper onMouseDown={(_, clickInfo) => setTestData(clickInfo)}>
+          <Cubes>{[cube]}</Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData) => {
+        await emitMouseEvent("mousedown");
+        const result1 = await getTestData();
+        expect(result1.objects[0].object).toEqual(cube);
+        await emitMouseEvent("mousedown");
+        const result2 = await getTestData();
+        expect(result2.objects[0].object).toEqual(cube);
+      },
+    })
+  )
+  .add(
+    `(cached hitmap test) Repainting busts the cache`,
+    assertionTest({
+      story: (setTestData, state) => (
+        <WorldviewWrapper
+          cameraState={state || defaultCameraState}
+          onMouseDown={(_, clickInfo) => setTestData(clickInfo)}>
+          <Cubes>{[cube]}</Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData, setState) => {
+        await emitMouseEvent("mousedown");
+        const result1 = await getTestData();
+        expect(result1.objects[0].object).toEqual(cube);
+
+        setState({ ...defaultCameraState, target: [100, 0, 0] });
+        await timeout(100);
+        await emitMouseEvent("mousedown");
+        const result2 = await getTestData();
+        expect(result2.objects.length).toEqual(0);
+      },
+    })
+  )
+  .add(
+    `(cached hitmap test) A second event at a different point does not use the first cached point`,
+    assertionTest({
+      story: (setTestData) => (
+        <WorldviewWrapper onMouseDown={(_, clickInfo) => setTestData(clickInfo)}>
+          <Cubes>{[cube]}</Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData) => {
+        await emitMouseEvent("mousedown");
+        const result1 = await getTestData();
+        expect(result1.objects[0].object).toEqual(cube);
+
+        await emitMouseEvent("mousedown", 0, 0);
+        const result2 = await getTestData();
+        expect(result2.objects.length).toEqual(0);
       },
     })
   );

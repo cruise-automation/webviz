@@ -4,6 +4,7 @@ import TinySDF from "@mapbox/tiny-sdf";
 import memoizeOne from "memoize-one";
 import React, { useState } from "react";
 
+import type { Color } from "../types";
 import { defaultBlend, defaultDepth } from "../utils/commandUtils";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
@@ -32,7 +33,11 @@ import { isColorDark, type TextMarker } from "./Text";
 //   provide support for this. Some font info could be generated/stored offline, possibly including the atlas.
 // - Explore multi-channel SDFs.
 
-type TextMarkerProps = TextMarker & { billboard?: ?boolean, highlightedIndices?: Array<number> };
+type TextMarkerProps = TextMarker & {
+  billboard?: ?boolean,
+  highlightedIndices?: Array<number>,
+  highlightColor?: ?Color,
+};
 type Props = {
   ...CommonCommandProps,
   children: $ReadOnlyArray<TextMarkerProps>,
@@ -140,6 +145,7 @@ const vert = `
   attribute float enableHighlight;
   attribute vec4 foregroundColor;
   attribute vec4 backgroundColor;
+  attribute vec4 highlightColor;
   attribute vec3 posePosition;
   attribute vec4 poseOrientation;
 
@@ -147,6 +153,7 @@ const vert = `
   varying float vEnableBackground;
   varying vec4 vForegroundColor;
   varying vec4 vBackgroundColor;
+  varying vec4 vHighlightColor;
   varying float vEnableHighlight;
 
   // rotate a 3d point v by a rotation quaternion q
@@ -170,6 +177,7 @@ const vert = `
     vEnableBackground = enableBackground;
     vForegroundColor = foregroundColor;
     vBackgroundColor = backgroundColor;
+    vHighlightColor = highlightColor;
     vEnableHighlight = enableHighlight;
   }
 `;
@@ -185,6 +193,7 @@ const frag = `
   varying float vEnableBackground;
   varying vec4 vForegroundColor;
   varying vec4 vBackgroundColor;
+  varying vec4 vHighlightColor;
   varying float vEnableHighlight;
   void main() {
     float dist = texture2D(atlas, vTexCoord).a;
@@ -194,7 +203,7 @@ const frag = `
     // depth test don't work together nicely for partially-transparent pixels.
     float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
     if (vEnableHighlight > 0.5) {
-      gl_FragColor = mix(vec4(1, 1, 0, 1), vec4(0, 0, 0, 1), edgeStep);
+      gl_FragColor = mix(vHighlightColor, vec4(0, 0, 0, 1), edgeStep);
     } else if (vEnableBackground > 0.5) {
       float screenSize = fwidth(vTexCoord.x);
       gl_FragColor = mix(vBackgroundColor, vForegroundColor, edgeStep);
@@ -241,6 +250,7 @@ function makeTextCommand() {
         billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
         foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
         backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
+        highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
         enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
         enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
         posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
@@ -290,6 +300,7 @@ function makeTextCommand() {
       const scale = new Float32Array(estimatedInstances * 3);
       const foregroundColor = new Float32Array(estimatedInstances * 4);
       const backgroundColor = new Float32Array(estimatedInstances * 4);
+      const highlightColor = new Float32Array(estimatedInstances * 4);
       const enableBackground = new Float32Array(estimatedInstances);
       const billboard = new Float32Array(estimatedInstances);
       const posePosition = new Float32Array(estimatedInstances * 3);
@@ -307,6 +318,7 @@ function makeTextCommand() {
         const outline = marker.colors?.[1] != null || command.autoBackgroundColor;
         const bgColor =
           marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK);
+        const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
 
         for (let i = 0; i < marker.text.length; i++) {
           const char = marker.text[i];
@@ -356,6 +368,11 @@ function makeTextCommand() {
           backgroundColor[4 * index + 2] = bgColor.b;
           backgroundColor[4 * index + 3] = bgColor.a;
 
+          highlightColor[4 * index + 0] = hlColor.r;
+          highlightColor[4 * index + 1] = hlColor.g;
+          highlightColor[4 * index + 2] = hlColor.b;
+          highlightColor[4 * index + 3] = hlColor.a;
+
           enableHighlight[index] = marker.highlightedIndices && marker.highlightedIndices.includes(i) ? 1 : 0;
 
           enableBackground[index] = outline ? 1 : 0;
@@ -387,6 +404,7 @@ function makeTextCommand() {
         enableHighlight,
         foregroundColor,
         backgroundColor,
+        highlightColor,
         poseOrientation,
         posePosition,
         scale,

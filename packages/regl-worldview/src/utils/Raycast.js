@@ -61,17 +61,9 @@ export function getWorldPointFromCanvasPoint(camera: CameraCommand, { clientX, c
 }
 
 // adapted from https://github.com/regl-project/regl/blob/master/example/raycast.js
-export function getRayFromClick(camera: CameraCommand, { clientX, clientY, width, height }: ClickInfo) {
-  const projectionMatrix = camera.getProjection();
+export function getRayFromClick(camera: CameraCommand, clickInfo: ClickInfo) {
   const viewMatrix = camera.getView();
-
-  const vp = mat4.multiply(tempMat, projectionMatrix, viewMatrix);
-  const invVp = mat4.invert(tempMat, vp);
-
-  const mouseX = (2.0 * clientX) / width - 1.0;
-  const mouseY = (-2.0 * clientY) / height + 1.0;
-  // get a single point on the camera ray.
-  const rayPoint = vec3.transformMat4([0, 0, 0], [mouseX, mouseY, 0.0], invVp);
+  const rayPoint = getWorldPointFromCanvasPoint(camera, clickInfo);
 
   // get the position of the camera.
   const rayOrigin = vec3.transformMat4([0, 0, 0], [0, 0, 0], mat4.invert(tempMat, viewMatrix));

@@ -87,12 +87,11 @@ const convexPolygonPointCollisionCheck = (polygon, pt) => {
   return true;
 };
 
-const insidePolygon = (collisionData, pt) => {
-  const collisionPoints = collisionData.points;
-  const ccwPolygon = [...collisionPoints];
+const pointInside2DPolygon = ({ points }, pt) => {
+  const ccwPolygon = [...points];
   decomp.makeCCW(ccwPolygon);
   const decomposedPolygons = decomp.quickDecomp(ccwPolygon);
-  for (const polygon in decomposedPolygons) {
+  for (const polygon of decomposedPolygons) {
     if (convexPolygonPointCollisionCheck(polygon, pt)) {
       return true;
     }
@@ -101,10 +100,10 @@ const insidePolygon = (collisionData, pt) => {
   return false;
 };
 
-const insideCircle = (circlePoint, circleRadius, pt) => {
-  const distance = Math.hypot(circlePoint[0] - pt[0], circlePoint[1] - pt[1]);
+const pointInside2DCircle = ({ point, radius }, pt) => {
+  const distance = Math.hypot(point[0] - pt[0], point[1] - pt[1]);
 
-  return distance < circleRadius;
+  return distance < radius;
 };
 
 // Compile instructions with an initialized regl context into a regl command.
@@ -310,10 +309,10 @@ export class WorldviewContext {
               let collided = false;
               switch (item.collisionData.type) {
                 case "polygon":
-                  collided = insidePolygon(item.collisionData, [clickX, clickY]);
+                  collided = pointInside2DPolygon(item.collisionData, [clickX, clickY]);
                   break;
                 case "circle":
-                  collided = insideCircle(item.collisionData, [clickX, clickY]);
+                  collided = pointInside2DCircle(item.collisionData, [clickX, clickY]);
                   break;
               }
 

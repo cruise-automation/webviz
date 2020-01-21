@@ -54,7 +54,7 @@ const logs = [
 ];
 
 storiesOf("<NodePlayground>", module)
-  .addDecorator(withScreenshot({ delay: 7500 }))
+  .addDecorator(withScreenshot({ delay: 10000 }))
   .add("welcome screen", () => {
     return (
       <PanelSetup fixture={fixture}>

@@ -33,7 +33,7 @@
     "case-sensitive-paths-webpack-plugin": "^2.1.2",
     "css-loader": "^1.0.1",
     "enzyme": "^3.9.0",
-    "enzyme-adapter-react-16": "^1.11.2",
+    "enzyme-adapter-react-16": "^1.15.2",
     "eslint": "^5.9.0",
     "eslint-config-prettier": "^3.3.0",
     "eslint-config-problems": "^2.0.0",

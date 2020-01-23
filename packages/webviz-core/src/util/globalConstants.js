@@ -25,6 +25,7 @@ export const DEFAULT_WEBVIZ_NODE_PREFIX = "/webviz_node/";
 
 export const TRANSFORM_TOPIC = "/tf";
 export const DIAGNOSTIC_TOPIC = "/diagnostics";
+export const ROSOUT_TOPIC = "/rosout";
 export const SOCKET_KEY = "dataSource.websocket";
 export const SECOND_BAG_PREFIX = "/webviz_bag_2";
 

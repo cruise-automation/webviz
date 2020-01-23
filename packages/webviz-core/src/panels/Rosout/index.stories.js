@@ -93,6 +93,17 @@ storiesOf("<RosoutPanel>", module)
       </PanelSetup>
     );
   })
+  .add("topicToRender", () => {
+    return (
+      <PanelSetup
+        fixture={{
+          topics: [{ name: "/foo/rosout", datatype: "dummy" }],
+          frame: { "/foo/rosout": fixture.frame["/rosout"].map((msg) => ({ ...msg, topic: "/foo/rosout" })) },
+        }}>
+        <Rosout config={{ searchTerms: [], minLogLevel: 1, topicToRender: "/foo/rosout" }} />
+      </PanelSetup>
+    );
+  })
   .add("with toolbar active", () => {
     return (
       <PanelSetup
@@ -111,14 +122,14 @@ storiesOf("<RosoutPanel>", module)
   .add(`filtered terms: "multiple", "/some_topic"`, () => {
     return (
       <PanelSetup fixture={fixture}>
-        <Rosout config={{ searchTerms: ["multiple", "/some_topic"], minLogLevel: 1 }} />
+        <Rosout config={{ searchTerms: ["multiple", "/some_topic"], minLogLevel: 1, topicToRender: "/rosout" }} />
       </PanelSetup>
     );
   })
   .add(`case insensitive message filtering: "could", "Ipsum"`, () => {
     return (
       <PanelSetup fixture={fixture}>
-        <Rosout config={{ searchTerms: ["could", "Ipsum"], minLogLevel: 1 }} />
+        <Rosout config={{ searchTerms: ["could", "Ipsum"], minLogLevel: 1, topicToRender: "/rosout" }} />
       </PanelSetup>
     );
   });

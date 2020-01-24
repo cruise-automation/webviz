@@ -94,11 +94,32 @@ storiesOf("<RosoutPanel>", module)
     );
   })
   .add("topicToRender", () => {
+    function makeMessages(topic) {
+      return fixture.frame["/rosout"].map((msg) => ({
+        ...msg,
+        topic,
+        message: { ...msg.message, name: `${topic}${msg.message.name}` },
+      }));
+    }
     return (
       <PanelSetup
         fixture={{
-          topics: [{ name: "/foo/rosout", datatype: "dummy" }],
-          frame: { "/foo/rosout": fixture.frame["/rosout"].map((msg) => ({ ...msg, topic: "/foo/rosout" })) },
+          topics: [
+            { name: "/rosout", datatype: "rosgraph_msgs/Log" },
+            { name: "/foo/rosout", datatype: "rosgraph_msgs/Log" },
+            { name: "/webviz_bag_2/rosout", datatype: "rosgraph_msgs/Log" },
+          ],
+          frame: {
+            "/rosout": makeMessages("/rosout"),
+            "/foo/rosout": makeMessages("/foo/rosout"),
+            "/webviz_bag_2/rosout": makeMessages("/webviz_bag_2/rosout"),
+          },
+        }}
+        onMount={(el) => {
+          TestUtils.Simulate.mouseEnter(document.querySelector("[data-test=panel-mouseenter-container]"));
+          setTimeout(() => {
+            TestUtils.Simulate.click(document.querySelector("[data-test=topic-set]"));
+          });
         }}>
         <Rosout config={{ searchTerms: [], minLogLevel: 1, topicToRender: "/foo/rosout" }} />
       </PanelSetup>
@@ -109,10 +130,9 @@ storiesOf("<RosoutPanel>", module)
       <PanelSetup
         fixture={fixture}
         onMount={(el) => {
-          const mouseEnterContainer = document.querySelectorAll("[data-test=panel-mouseenter-container")[0];
-          TestUtils.Simulate.mouseEnter(mouseEnterContainer);
+          TestUtils.Simulate.mouseEnter(document.querySelector("[data-test=panel-mouseenter-container]"));
           setTimeout(() => {
-            document.querySelectorAll("[data-test=panel-settings]")[0].click();
+            TestUtils.Simulate.click(document.querySelector("[data-test=panel-settings]"));
           });
         }}>
         <Rosout />

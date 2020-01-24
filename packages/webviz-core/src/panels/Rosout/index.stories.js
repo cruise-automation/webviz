@@ -116,9 +116,9 @@ storiesOf("<RosoutPanel>", module)
           },
         }}
         onMount={(el) => {
-          TestUtils.Simulate.mouseEnter(document.querySelector("[data-test=panel-mouseenter-container]"));
+          TestUtils.Simulate.mouseEnter(document.querySelectorAll("[data-test=panel-mouseenter-container]")[0]);
           setTimeout(() => {
-            TestUtils.Simulate.click(document.querySelector("[data-test=topic-set]"));
+            TestUtils.Simulate.click(document.querySelectorAll("[data-test=topic-set]")[0]);
           });
         }}>
         <Rosout config={{ searchTerms: [], minLogLevel: 1, topicToRender: "/foo/rosout" }} />
@@ -130,9 +130,9 @@ storiesOf("<RosoutPanel>", module)
       <PanelSetup
         fixture={fixture}
         onMount={(el) => {
-          TestUtils.Simulate.mouseEnter(document.querySelector("[data-test=panel-mouseenter-container]"));
+          TestUtils.Simulate.mouseEnter(document.querySelectorAll("[data-test=panel-mouseenter-container]")[0]);
           setTimeout(() => {
-            TestUtils.Simulate.click(document.querySelector("[data-test=panel-settings]"));
+            TestUtils.Simulate.click(document.querySelectorAll("[data-test=panel-settings]")[0]);
           });
         }}>
         <Rosout />

@@ -1,4 +1,4 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([[35],{3005:
+(window.webpackJsonp=window.webpackJsonp||[]).push([[35],{3006:
 /*!************************************************************************************!*\
   !*** ./node_modules/monaco-editor/esm/vs/basic-languages/powershell/powershell.js ***!
   \************************************************************************************/

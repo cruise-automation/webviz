@@ -93,15 +93,46 @@ storiesOf("<RosoutPanel>", module)
       </PanelSetup>
     );
   })
+  .add("topicToRender", () => {
+    function makeMessages(topic) {
+      return fixture.frame["/rosout"].map((msg) => ({
+        ...msg,
+        topic,
+        message: { ...msg.message, name: `${topic}${msg.message.name}` },
+      }));
+    }
+    return (
+      <PanelSetup
+        fixture={{
+          topics: [
+            { name: "/rosout", datatype: "rosgraph_msgs/Log" },
+            { name: "/foo/rosout", datatype: "rosgraph_msgs/Log" },
+            { name: "/webviz_bag_2/rosout", datatype: "rosgraph_msgs/Log" },
+          ],
+          frame: {
+            "/rosout": makeMessages("/rosout"),
+            "/foo/rosout": makeMessages("/foo/rosout"),
+            "/webviz_bag_2/rosout": makeMessages("/webviz_bag_2/rosout"),
+          },
+        }}
+        onMount={(el) => {
+          TestUtils.Simulate.mouseEnter(document.querySelectorAll("[data-test=panel-mouseenter-container]")[0]);
+          setTimeout(() => {
+            TestUtils.Simulate.click(document.querySelectorAll("[data-test=topic-set]")[0]);
+          });
+        }}>
+        <Rosout config={{ searchTerms: [], minLogLevel: 1, topicToRender: "/foo/rosout" }} />
+      </PanelSetup>
+    );
+  })
   .add("with toolbar active", () => {
     return (
       <PanelSetup
         fixture={fixture}
         onMount={(el) => {
-          const mouseEnterContainer = document.querySelectorAll("[data-test=panel-mouseenter-container")[0];
-          TestUtils.Simulate.mouseEnter(mouseEnterContainer);
+          TestUtils.Simulate.mouseEnter(document.querySelectorAll("[data-test=panel-mouseenter-container]")[0]);
           setTimeout(() => {
-            document.querySelectorAll("[data-test=panel-settings]")[0].click();
+            TestUtils.Simulate.click(document.querySelectorAll("[data-test=panel-settings]")[0]);
           });
         }}>
         <Rosout />
@@ -111,14 +142,14 @@ storiesOf("<RosoutPanel>", module)
   .add(`filtered terms: "multiple", "/some_topic"`, () => {
     return (
       <PanelSetup fixture={fixture}>
-        <Rosout config={{ searchTerms: ["multiple", "/some_topic"], minLogLevel: 1 }} />
+        <Rosout config={{ searchTerms: ["multiple", "/some_topic"], minLogLevel: 1, topicToRender: "/rosout" }} />
       </PanelSetup>
     );
   })
   .add(`case insensitive message filtering: "could", "Ipsum"`, () => {
     return (
       <PanelSetup fixture={fixture}>
-        <Rosout config={{ searchTerms: ["could", "Ipsum"], minLogLevel: 1 }} />
+        <Rosout config={{ searchTerms: ["could", "Ipsum"], minLogLevel: 1, topicToRender: "/rosout" }} />
       </PanelSetup>
     );
   });

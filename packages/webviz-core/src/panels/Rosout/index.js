@@ -28,8 +28,10 @@ import MessageHistory, {
 } from "webviz-core/src/components/MessageHistory";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import type { Message } from "webviz-core/src/players/types";
+import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
+import type { Message, Topic } from "webviz-core/src/players/types";
 import clipboard from "webviz-core/src/util/clipboard";
+import { ROSOUT_TOPIC } from "webviz-core/src/util/globalConstants";
 
 // Remove creatable warning https://github.com/JedWatson/react-select/issues/2181
 class Creatable extends React.Component<{}, {}> {
@@ -46,11 +48,13 @@ type Option = {
 type Config = {
   searchTerms: string[],
   minLogLevel: number,
+  topicToRender: string,
 };
 
 type Props = {
   config: Config,
   saveConfig: (Config) => void,
+  topics: Topic[],
 };
 
 // Create the log level options nodes once since they don't change per render.
@@ -85,7 +89,7 @@ export const getShouldDisplayMsg = (msg: Message, minLogLevel: number, searchTer
 };
 
 class RosoutPanel extends PureComponent<Props> {
-  static defaultConfig = { searchTerms: [], minLogLevel: 1 };
+  static defaultConfig = { searchTerms: [], minLogLevel: 1, topicToRender: ROSOUT_TOPIC };
   static panelType = "RosOut";
 
   _onNodeFilterChange = (selectedOptions: Option[]) => {
@@ -173,16 +177,28 @@ class RosoutPanel extends PureComponent<Props> {
   }
 
   render() {
+    const { topics, config } = this.props;
     const seenNodeNames = new Set();
+
+    const topicToRenderMenu = (
+      <TopicToRenderMenu
+        topicToRender={config.topicToRender}
+        onChange={(topicToRender) => this.props.saveConfig({ ...this.props.config, topicToRender })}
+        topics={topics}
+        singleTopicDatatype="rosgraph_msgs/Log"
+        defaultTopicToRender={ROSOUT_TOPIC}
+      />
+    );
+
     return (
-      <MessageHistory paths={["/rosout"]} historySize={100000}>
+      <MessageHistory paths={[config.topicToRender]} historySize={100000}>
         {({ itemsByPath }: MessageHistoryData) => {
-          const msgs: MessageHistoryItem[] = itemsByPath["/rosout"];
+          const msgs: MessageHistoryItem[] = itemsByPath[config.topicToRender];
           msgs.forEach((msg) => seenNodeNames.add(msg.message.message.name));
 
           return (
             <Flex col>
-              <PanelToolbar floating helpContent={helpContent}>
+              <PanelToolbar floating helpContent={helpContent} additionalIcons={topicToRenderMenu}>
                 {this._renderFiltersBar(seenNodeNames, msgs)}
               </PanelToolbar>
               <div className={styles.content}>

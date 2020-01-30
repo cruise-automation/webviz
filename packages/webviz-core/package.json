@@ -22,7 +22,7 @@
     "nearley": "2.15.1",
     "prop-types": "15.6.2",
     "raven-js": "3.27.0",
-    "react": "16.8.6",
+    "react": "16.11.0",
     "react-autocomplete": "janpaul123/react-autocomplete#bc8737070b5744069719c8fcd4e0a197192b0d48",
     "react-chartjs-2": "2.7.4",
     "react-container-dimensions": "1.4.1",

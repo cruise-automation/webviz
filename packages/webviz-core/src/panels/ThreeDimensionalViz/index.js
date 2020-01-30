@@ -34,7 +34,7 @@ import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTransforms";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { SaveConfig } from "webviz-core/src/types/panels";
-import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
+import { TRANSFORM_TOPIC, TRANSFORM_STATIC_TOPIC } from "webviz-core/src/util/globalConstants";
 
 export type ThreeDimensionalVizConfig = {
   autoTextBackgroundColor?: boolean,
@@ -245,6 +245,7 @@ export default hot(
     FrameCompatibility(withTransforms(Renderer), [
       ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics,
       TRANSFORM_TOPIC,
+      TRANSFORM_STATIC_TOPIC,
     ])
   )
 );

@@ -24,6 +24,7 @@ export const GLOBAL_VARIABLES_QUERY_KEY = "global-variables";
 export const DEFAULT_WEBVIZ_NODE_PREFIX = "/webviz_node/";
 
 export const TRANSFORM_TOPIC = "/tf";
+export const TRANSFORM_STATIC_TOPIC = "/tf_static";
 export const DIAGNOSTIC_TOPIC = "/diagnostics";
 export const ROSOUT_TOPIC = "/rosout";
 export const SOCKET_KEY = "dataSource.websocket";

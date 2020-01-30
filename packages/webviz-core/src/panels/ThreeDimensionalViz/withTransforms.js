@@ -12,7 +12,7 @@ import * as React from "react";
 import { getGlobalHooks } from "../../loadWebviz";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { Frame } from "webviz-core/src/players/types";
-import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
+import { TRANSFORM_TOPIC, TRANSFORM_STATIC_TOPIC } from "webviz-core/src/util/globalConstants";
 
 type State = {| transforms: Transforms |};
 
@@ -37,6 +37,16 @@ function withTransforms<Props: *>(ChildComponent: React.ComponentType<Props>) {
       const tfs = frame[TRANSFORM_TOPIC];
       if (tfs) {
         for (const msg of tfs) {
+          for (const tf of msg.message.transforms) {
+            if (tf.child_frame_id !== getGlobalHooks().perPanelHooks().ThreeDimensionalViz.skipTranformFrame) {
+              transforms.consume(tf);
+            }
+          }
+        }
+      }
+      const tfs_static = frame[TRANSFORM_STATIC_TOPIC];
+      if (tfs_static) {
+        for (const msg of tfs_static) {
           for (const tf of msg.message.transforms) {
             if (tf.child_frame_id !== getGlobalHooks().perPanelHooks().ThreeDimensionalViz.skipTranformFrame) {
               transforms.consume(tf);

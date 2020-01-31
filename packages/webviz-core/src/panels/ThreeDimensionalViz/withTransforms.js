@@ -48,9 +48,7 @@ function withTransforms<Props: *>(ChildComponent: React.ComponentType<Props>) {
       if (tfs_static) {
         for (const msg of tfs_static) {
           for (const tf of msg.message.transforms) {
-            if (tf.child_frame_id !== getGlobalHooks().perPanelHooks().ThreeDimensionalViz.skipTranformFrame) {
-              transforms.consume(tf);
-            }
+            transforms.consume(tf);
           }
         }
       }

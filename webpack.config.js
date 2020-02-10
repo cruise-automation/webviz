@@ -87,6 +87,7 @@ module.exports = {
       },
       {
         test: /\.worker\.js$/,
+        exclude: /node_modules/,
         use: {
           loader: "worker-loader",
           options: { name: "[name].[ext]?[hash]" },

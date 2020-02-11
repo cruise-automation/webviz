@@ -58,6 +58,7 @@ type AutocompleteProps = {|
   minWidth: number,
   menuStyle?: any,
   inputStyle?: any,
+  disableAutoSelect?: boolean,
 |};
 
 type AutocompleteState = {|
@@ -173,6 +174,9 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
   // if it just was a click without a drag. In the latter case, select everything. This is very
   // similar to how, say, the browser bar in Chrome behaves.
   _onMouseDown = (event: SyntheticMouseEvent<HTMLInputElement>) => {
+    if (this.props.disableAutoSelect) {
+      return;
+    }
     if (this.state.focused) {
       return;
     }

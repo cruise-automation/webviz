@@ -11,7 +11,7 @@ import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
 import MenuLeftIcon from "@mdi/svg/svg/menu-left.svg";
 import CompassOutlineIcon from "@mdi/svg/svg/navigation.svg";
 import { sortBy, debounce } from "lodash";
-import React, { memo, createRef, useCallback, useEffect, useState } from "react";
+import React, { memo, createRef, useCallback, useState } from "react";
 import shallowequal from "shallowequal";
 import styled from "styled-components";
 
@@ -131,12 +131,6 @@ const FollowTFControl = memo<Props>((props: Props) => {
   const newFollowTfFrame = allNodes && allNodes[0] && allNodes[0].tf && allNodes[0].tf.id;
 
   const autocomplete = createRef<Autocomplete>();
-
-  useEffect(() => {
-    if (nodesWithoutDefaultFollowTfFrame && !tfToFollow) {
-      onFollowChange(newFollowTfFrame);
-    }
-  });
 
   const getDefaultFollowTransformFrame = useCallback(
     () => {

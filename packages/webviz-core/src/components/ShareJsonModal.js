@@ -14,6 +14,7 @@ import styles from "./ShareJsonModal.module.scss";
 import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
 import Modal from "webviz-core/src/components/Modal";
+import { downloadTextFile } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
 
 type Props = {
@@ -81,6 +82,11 @@ export default class ShareJsonModal extends Component<Props, State> {
     });
   };
 
+  onDownload = () => {
+    const { value } = this.state;
+    downloadTextFile(value, "layout.json");
+  };
+
   renderError() {
     const { error } = this.state;
     if (!error) {
@@ -114,6 +120,7 @@ export default class ShareJsonModal extends Component<Props, State> {
             <Button primary onClick={this.onChange} className="test-apply">
               Apply
             </Button>
+            <Button onClick={this.onDownload}>Download</Button>
             <Button onClick={this.onCopy}>{copied ? "Copied!" : "Copy"}</Button>
             <Button onClick={() => this.setState({ value: "{}" })}>Clear</Button>
           </div>

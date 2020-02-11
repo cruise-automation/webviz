@@ -70,8 +70,7 @@ $spacing: 4px;
     min-height: 30px;
   }
 
-  &.floating.containsOpen,
-  :global(.mosaic-window):hover & {
+  &.floatingShow {
     transform: translateY(0);
     opacity: 1;
   }

@@ -11,10 +11,15 @@ import styled from "styled-components";
 
 import TextHighlight from "./TextHighlight";
 
+const STopicNameDisplay = styled.div`
+  display: inline-block;
+`;
+
 const SDisplayName = styled.div`
-  font-size: 14px;
-  line-height: 1.2;
-  margin-bottom: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-right: 4px;
+  margin-bottom: ${(props: { renderTopicName: boolean }) => (props.renderTopicName ? "0px" : "0px")};
   word-break: break-word;
 `;
 
@@ -27,21 +32,30 @@ const STopicName = styled.div`
 
 type Props = {|
   displayName: string,
+  onlyHighlightTopic?: boolean,
   topicName: string,
   searchText?: string,
+  style?: { [attr: string]: string | number },
 |};
 
-export default function TopicNameDisplay({ displayName, topicName, searchText }: Props) {
+export default function TopicNameDisplay({
+  displayName,
+  topicName,
+  searchText,
+  onlyHighlightTopic,
+  style = {},
+}: Props) {
+  const renderTopicName = displayName !== topicName;
   return (
-    <>
-      <SDisplayName>
-        <TextHighlight targetStr={displayName} searchText={searchText} />
+    <STopicNameDisplay style={style}>
+      <SDisplayName renderTopicName={renderTopicName}>
+        <TextHighlight targetStr={displayName} searchText={onlyHighlightTopic ? undefined : searchText} />
       </SDisplayName>
-      {displayName !== topicName && (
+      {renderTopicName && (
         <STopicName>
           <TextHighlight targetStr={topicName} searchText={searchText} />
         </STopicName>
       )}
-    </>
+    </STopicNameDisplay>
   );
 }

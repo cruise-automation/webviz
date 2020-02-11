@@ -417,14 +417,7 @@ describe("RandomAccessPlayer", () => {
     provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       callCount++;
       switch (callCount) {
-        case 1:
-          // initial getMessages from player initialization
-          expect(start).toEqual({ sec: 10, nsec: 0 });
-          expect(end).toEqual({ sec: 10, nsec: 0 });
-          expect(topics).toContainOnly(["/foo/bar"]);
-          return Promise.resolve([]);
-
-        case 2: {
+        case 1: {
           expect(start).toEqual({ sec: 19, nsec: 1e9 + 50 - SEEK_BACK_NANOSECONDS });
           expect(end).toEqual({ sec: 20, nsec: 50 });
           expect(topics).toContainOnly(["/foo/bar"]);
@@ -437,13 +430,13 @@ describe("RandomAccessPlayer", () => {
           ];
           return Promise.resolve(result);
         }
-        case 3:
+        case 2:
           // make sure after we seek & read again we read exactly from the right nanosecond
           expect(start).toEqual({ sec: 20, nsec: 51 });
           return Promise.resolve([
             { topic: "/foo/bar", receiveTime: { sec: 10, nsec: 101 }, message: { payload: "baz" } },
           ]);
-        case 4:
+        case 3:
           source.pausePlayback();
           return Promise.resolve([]);
         default:
@@ -506,14 +499,7 @@ describe("RandomAccessPlayer", () => {
     provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
       callCount++;
       switch (callCount) {
-        case 1:
-          // initial getMessages from player initialization
-          expect(start).toEqual({ sec: 10, nsec: 0 });
-          expect(end).toEqual({ sec: 10, nsec: 0 });
-          expect(topics).toContainOnly(["/foo/bar"]);
-          return Promise.resolve([]);
-
-        case 2: {
+        case 1: {
           expect(start).toEqual({ sec: 19, nsec: 1e9 + 50 - SEEK_BACK_NANOSECONDS });
           expect(end).toEqual({ sec: 20, nsec: 50 });
           expect(topics).toContainOnly(["/foo/bar"]);
@@ -521,13 +507,13 @@ describe("RandomAccessPlayer", () => {
             backfillPromiseCallback = resolve;
           });
         }
-        case 3:
+        case 2:
           // make sure after we seek & read again we read exactly from the right nanosecond
           expect(start).toEqual({ sec: 20, nsec: 51 });
           return Promise.resolve([
             { topic: "/foo/bar", receiveTime: { sec: 20, nsec: 51 }, message: { payload: "baz" } },
           ]);
-        case 4:
+        case 3:
           source.pausePlayback();
           return Promise.resolve([]);
         default:
@@ -596,8 +582,15 @@ describe("RandomAccessPlayer", () => {
     await source.setListener(async () => {});
     source.setSubscriptions([{ topic: "/foo/bar" }]);
 
+    // Resolve original seek.
+    if (!lastGetMessagesCall) {
+      throw new Error("lastGetMessagesCall not set");
+    }
+    lastGetMessagesCall.resolve([]);
+
     // Test clamping to start time.
     source.seekPlayback({ sec: 10, nsec: 100 });
+    await delay(1);
     if (!lastGetMessagesCall) {
       throw new Error("lastGetMessagesCall not set");
     }
@@ -655,13 +648,21 @@ describe("RandomAccessPlayer", () => {
 
     const store = new MessageStore(7);
     await source.setListener(store.add);
+    await delay(1);
     source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/new/topic" }]);
+    await delay(1);
     source.setSubscriptions([{ topic: "/new/topic" }, { topic: "/foo/bar" }]); // should not trigger getMessages (valid topics are same)
+    await delay(1);
     source.setSubscriptions([{ topic: "/foo/bar" }, { topic: "/baz" }]);
+    await delay(1);
     source.setSubscriptions([{ topic: "/new/topic" }, { topic: "/baz" }]);
+    await delay(1);
     source.setSubscriptions([{ topic: "/baz" }]); // should not trigger getMessages (valid topics are same)
+    await delay(1);
     source.setSubscriptions([{ topic: "/new/topic" }]);
+    await delay(1);
     source.startPlayback();
+    await delay(1);
     const messages = await store.done;
     expect(messages.length).toEqual(7);
 

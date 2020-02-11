@@ -46,7 +46,7 @@ export default class Button extends React.Component<Props> {
     } = this.props;
     // overwrite the primary color for Webviz
     // using `isPrimary` instead of `primary` now to prevent global UI changes until we are ready to migrate all styles
-    const styleAlt = isPrimary ? { ...style, backgroundColor: colors.BLUE1 } : style;
+    const styleAlt = isPrimary ? { ...style, backgroundColor: colors.PRIMARY } : style;
 
     const eventHandlers = disabled ? {} : { onClick, onMouseUp, onMouseLeave };
 

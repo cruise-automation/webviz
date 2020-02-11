@@ -102,6 +102,7 @@ export default function Panel<Config: PanelConfig>(
           topics: Topic[],
           capabilities: string[],
           datatypes: RosDatatypes,
+          isHovered: boolean,
         }>
       >
   ) &
@@ -325,7 +326,7 @@ export default function Panel<Config: PanelConfig>(
             isHovered: this.state.isHovered,
           }}>
           {/* ensures user exits full-screen mode when leaving the window, even if key is still pressed down */}
-          <DocumentEvents target={window.top} enabled onBlur={this._exitFullScreen} />
+          <DocumentEvents target={window} enabled onBlur={this._exitFullScreen} />
           <KeyListener global keyUpHandlers={this._keyUpHandlers} keyDownHandlers={this._keyDownHandlers} />
           <Flex
             onClick={this._onOverlayClick}
@@ -375,6 +376,7 @@ export default function Panel<Config: PanelConfig>(
                 topics={topics}
                 datatypes={datatypes}
                 capabilities={capabilities}
+                isHovered={this.state.isHovered}
               />
             </ErrorBoundary>
           </Flex>

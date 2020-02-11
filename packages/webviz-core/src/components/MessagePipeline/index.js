@@ -8,18 +8,11 @@
 
 import { createMemoryHistory } from "history";
 import { flatten, groupBy } from "lodash";
-import * as React from "react"; // eslint-disable-line import/no-duplicates
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"; // eslint-disable-line import/no-duplicates
+import * as React from "react";
 import { Provider } from "react-redux";
 import { type Time, TimeUtil } from "rosbag";
 
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
-import {
-  useShallowMemo,
-  createSelectableContext,
-  useContextSelector,
-  type BailoutToken,
-} from "webviz-core/src/components/MessageHistory/hooks";
 import type {
   AdvertisePayload,
   Frame,
@@ -34,7 +27,16 @@ import type {
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { hideLoadingLogo } from "webviz-core/src/util/hideLoadingLogo";
+import {
+  useShallowMemo,
+  createSelectableContext,
+  useContextSelector,
+  type BailoutToken,
+} from "webviz-core/src/util/hooks";
 import naturalSort from "webviz-core/src/util/naturalSort";
+
+const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React;
 
 export type MessagePipelineContext = {|
   playerState: PlayerState,
@@ -61,8 +63,8 @@ export function useMessagePipeline<T>(selector: (MessagePipelineContext) => T | 
 function defaultPlayerState(): PlayerState {
   return {
     isPresent: false,
-    showSpinner: false,
-    showInitializing: false,
+    showSpinner: true,
+    showInitializing: true,
     progress: {},
     capabilities: [],
     playerId: "",
@@ -122,6 +124,13 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
         const promise = new Promise((resolve) => {
           resolveFn.current = resolve;
         });
+
+        const { showInitializing, isPresent } = newPlayerState;
+
+        if (!isPresent || !showInitializing) {
+          hideLoadingLogo();
+        }
+
         setPlayerState((currentPlayerState) => {
           if (currentPlayer.current !== player) {
             // It's unclear how we can ever get here, but it looks like React

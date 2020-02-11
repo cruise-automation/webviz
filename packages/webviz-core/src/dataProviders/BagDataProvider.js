@@ -8,7 +8,7 @@
 
 import Bzip2 from "compressjs/lib/Bzip2";
 import { keyBy } from "lodash";
-import Bag, { open, Time, BagReader } from "rosbag";
+import Bag, { open, Time, BagReader, TimeUtil } from "rosbag";
 import decompress from "wasm-lz4";
 
 import BrowserHttpReader from "webviz-core/src/dataProviders/BrowserHttpReader";
@@ -21,6 +21,7 @@ import type {
   DataProviderMessage,
 } from "webviz-core/src/dataProviders/types";
 import { bagConnectionsToDatatypes, bagConnectionsToTopics } from "webviz-core/src/util/bagConnectionsHelper";
+import { getBagChunksOverlapCount } from "webviz-core/src/util/bags";
 import CachedFilelike from "webviz-core/src/util/CachedFilelike";
 import Logger from "webviz-core/src/util/Logger";
 import type { Range } from "webviz-core/src/util/ranges";
@@ -88,12 +89,25 @@ export default class BagDataProvider implements DataProvider {
       extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] });
     }
 
-    const { startTime, endTime } = this._bag;
+    const { startTime, endTime, chunkInfos } = this._bag;
     const connections = ((Object.values(this._bag.connections): any): Connection[]);
     if (!startTime || !endTime || !connections.length) {
       // This will abort video generation:
-      reportError("Invalid bag", "Bag is empty or corrupt.", "user");
+      reportError("Cannot play invalid bag", "Bag is empty or corrupt.", "user");
       return new Promise(() => {}); // Just never finish initializing.
+    }
+    const chunksOverlapCount = getBagChunksOverlapCount(chunkInfos);
+    // If >25% of the chunks overlap, show a warning. It's common for a small number of chunks to overlap
+    // since it looks like `rosbag record` has a bit of a race condition, and that's not too terrible, so
+    // only warn when there's a more serious slowdown.
+    if (chunksOverlapCount > chunkInfos.length * 0.25) {
+      reportError(
+        "Warning: Bag is unsorted, which is slow",
+        `This bag has many overlapping chunks (${chunksOverlapCount} out of ${
+          chunkInfos.length
+        }), which means that we have to decompress many chunks in order to load a particular time range. This is slow. Ideally, fix this where you're generating your bags, by sorting the messages by receive time, e.g. using a script like this: https://gist.github.com/janpaul123/deaa92338d5e8309ef7aa7a55d625152`,
+        "user"
+      );
     }
 
     this._connectionsByTopic = keyBy(connections, "topic");
@@ -127,6 +141,7 @@ export default class BagDataProvider implements DataProvider {
       },
     };
     await this._bag.readMessages(options, onMessage);
+    messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime));
     return messages;
   }
 

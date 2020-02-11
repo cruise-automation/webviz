@@ -6,8 +6,11 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { TimeUtil } from "rosbag";
+
 import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
+import reportError from "webviz-core/src/util/reportError";
 
 const dummyExtensionPoint = {
   progressCallback() {},
@@ -117,5 +120,21 @@ describe("BagDataProvider", () => {
       receiveTime: { nsec: 56262848, sec: 1396293888 },
       message: expect.any(ArrayBuffer),
     });
+  });
+
+  it("sorts shuffled messages (and reports an error)", async () => {
+    const provider = new BagDataProvider(
+      { bagPath: { type: "file", file: `${__dirname}/../../public/fixtures/demo-shuffled.bag` } },
+      []
+    );
+    await provider.initialize(dummyExtensionPoint);
+    const start = { sec: 1490148912, nsec: 0 };
+    const end = { sec: 1490148913, nsec: 0 };
+    const messages = await provider.getMessages(start, end, ["/tf"]);
+    const timestamps = messages.map(({ receiveTime }) => receiveTime);
+    const sortedTimestamps = [...timestamps];
+    sortedTimestamps.sort(TimeUtil.compare);
+    expect(timestamps).toEqual(sortedTimestamps);
+    reportError.expectCalledDuringTest();
   });
 });

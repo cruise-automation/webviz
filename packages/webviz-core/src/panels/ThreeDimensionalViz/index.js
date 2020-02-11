@@ -14,8 +14,8 @@ import { hot } from "react-hot-loader/root";
 import { useSelector } from "react-redux";
 import { cameraStateSelectors, type CameraState, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
+import { FrameCompatibilityDEPRECATED } from "./FrameCompatibility";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
-import { FrameCompatibility } from "webviz-core/src/components/MessageHistory/FrameCompatibility";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -242,7 +242,7 @@ export const Renderer = hoistNonReactStatics(React.forwardRef<Props, typeof Base
 
 export default hot(
   Panel<ThreeDimensionalVizConfig>(
-    FrameCompatibility(withTransforms(Renderer), [
+    FrameCompatibilityDEPRECATED(withTransforms(Renderer), [
       ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics,
       TRANSFORM_TOPIC,
     ])

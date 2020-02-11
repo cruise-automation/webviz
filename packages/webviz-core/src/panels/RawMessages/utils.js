@@ -8,7 +8,7 @@
 import { first, last } from "lodash";
 import React from "react";
 
-import { isTypicalFilterName } from "webviz-core/src/components/MessageHistory";
+import { isTypicalFilterName } from "webviz-core/src/components/MessagePathSyntax/isTypicalFilterName";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { diffLabels } from "webviz-core/src/panels/RawMessages/getDiff";
 import { colors } from "webviz-core/src/util/colors";

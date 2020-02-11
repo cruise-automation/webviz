@@ -408,17 +408,25 @@ export default class ImageCanvas extends React.Component<Props, State> {
   };
 
   applyPanZoom = () => {
-    if (this.panZoomCanvas) {
-      const { mode, zoomPercentage, offset } = this.props.config;
-      if (!mode || mode === "fit") {
-        this.onZoomFit(true);
-      } else if (mode === "fill") {
-        this.onZoomFill(true);
-      } else if (mode === "other") {
-        // Go to prevPercentage
-        this.goToTargetPercentage(zoomPercentage || 100);
-        this.panZoomCanvas.moveTo(offset ? offset[0] : 0, offset ? offset[1] : 0);
-      }
+    if (!this.panZoomCanvas) {
+      return;
+    }
+
+    const { imageViewportHeight, imageViewportWidth } = this.getImageViewport();
+    if (!imageViewportHeight || !imageViewportWidth) {
+      // While dragging, the viewport may have zero height or width, which throws off the panZoomCanvas
+      return;
+    }
+
+    const { mode, zoomPercentage, offset } = this.props.config;
+    if (!mode || mode === "fit") {
+      this.onZoomFit(true);
+    } else if (mode === "fill") {
+      this.onZoomFill(true);
+    } else if (mode === "other") {
+      // Go to prevPercentage
+      this.goToTargetPercentage(zoomPercentage || 100);
+      this.panZoomCanvas.moveTo(offset ? offset[0] : 0, offset ? offset[1] : 0);
     }
   };
 

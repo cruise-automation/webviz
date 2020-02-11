@@ -21,11 +21,17 @@ export const SMenuWrapper = styled.span`
 
 type Props = {|
   objectPath: string,
+  onShowGroupEditModal: () => void,
   onTopicGroupsChange: OnTopicGroupsChange,
   topicGroup: TopicGroupType,
 |};
 
-export default function TopicGroupMenu({ objectPath, topicGroup: { displayName }, onTopicGroupsChange }: Props) {
+export default function TopicGroupMenu({
+  objectPath,
+  onShowGroupEditModal,
+  topicGroup: { displayName },
+  onTopicGroupsChange,
+}: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
   const onToggle = useCallback((ev) => {
@@ -35,15 +41,18 @@ export default function TopicGroupMenu({ objectPath, topicGroup: { displayName }
   return (
     <ChildToggle position="below" isOpen={isOpen} onToggle={onToggle} dataTest={`open-topic-group-menu-${displayName}`}>
       <SMenuWrapper>
-        <Icon onClick={onToggle} style={{ width: 32, height: 32, padding: 8 }} medium>
+        <Icon onClick={onToggle} style={{ padding: "8px 0px 8px 4px" }} medium>
           <DotsVerticalIcon />
         </Icon>
       </SMenuWrapper>
       <Menu>
+        <Item dataTest={`delete-topic-group-menu-${displayName}`} onClick={onShowGroupEditModal}>
+          Edit group
+        </Item>
         <Item
           dataTest={`delete-topic-group-menu-${displayName}`}
           onClick={() => {
-            onTopicGroupsChange(objectPath, null);
+            onTopicGroupsChange(objectPath, undefined);
             setIsOpen(false);
           }}>
           Remove group

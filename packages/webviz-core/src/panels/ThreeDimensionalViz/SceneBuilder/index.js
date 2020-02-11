@@ -10,8 +10,8 @@ import type { Time } from "rosbag";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import MessageCollector from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector";
+import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicSettingsEditor";
 import {
-  parseColorSetting,
   getTopicSettings,
   LINED_CONVEX_HULL_RENDERING_SETTING,
 } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";

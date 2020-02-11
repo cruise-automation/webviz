@@ -96,6 +96,13 @@ const defaultHooks = {
   },
   helpPageFootnote: () => null,
   perPanelHooks: memoize(() => {
+    const BlurIcon = require("@mdi/svg/svg/blur.svg").default;
+    const GridIcon = require("@mdi/svg/svg/grid.svg").default;
+    const HexagonIcon = require("@mdi/svg/svg/hexagon.svg").default;
+    const HexagonMultipleIcon = require("@mdi/svg/svg/hexagon-multiple.svg").default;
+    const PentagonOutlineIcon = require("@mdi/svg/svg/pentagon-outline.svg").default;
+    const RadarIcon = require("@mdi/svg/svg/radar.svg").default;
+    const RobotIcon = require("@mdi/svg/svg/robot.svg").default;
     const LaserScanVert = require("webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert").default;
     const { defaultMapPalette } = require("webviz-core/src/panels/ThreeDimensionalViz/commands/utils");
     const { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE } = require("webviz-core/src/util/globalConstants");
@@ -122,7 +129,7 @@ const defaultHooks = {
       ImageView: {
         defaultConfig: {
           cameraTopic: "",
-          enabledMarkerNames: [],
+          enabledMarkerTopics: [],
           scale: 0.2,
           transformMarkers: false,
           synchronize: false,
@@ -168,6 +175,16 @@ const defaultHooks = {
         ],
         renderAdditionalMarkers: () => {},
         topics: [],
+        iconsByDatatype: {
+          "visualization_msgs/Marker": HexagonIcon,
+          "visualization_msgs/MarkerArray": HexagonMultipleIcon,
+          "nav_msgs/OccupancyGrid": GridIcon,
+          "sensor_msgs/LaserScan": RadarIcon,
+          "geometry_msgs/PolygonStamped": PentagonOutlineIcon,
+          [POINT_CLOUD_DATATYPE]: BlurIcon,
+          [POSE_STAMPED_DATATYPE]: RobotIcon,
+        },
+        // TODO(Audrey): remove icons config after topic group release
         icons: {},
         AdditionalToolbarItems: () => null,
         LaserScanVert,
@@ -205,7 +222,6 @@ const defaultHooks = {
     const Root = require("webviz-core/src/components/Root").default;
     return <Root store={store} />;
   },
-  topicsWithIncorrectHeaders: () => [],
   load: () => {
     if (process.env.NODE_ENV === "production" && window.ga) {
       window.ga("create", "UA-82819136-10", "auto");
@@ -229,9 +245,16 @@ const defaultHooks = {
         developmentDefault: false,
         productionDefault: false,
       },
+      plotWebWorker: {
+        name: "Use a web worker to render the Plot panel",
+        description:
+          "Experimentally render the plot panel using a web worker. This should result in increased performance.",
+        developmentDefault: false,
+        productionDefault: false,
+      },
     };
   },
-  linkTopicPathSyntaxToHelpPage: () => true,
+  linkMessagePathSyntaxToHelpPage: () => true,
 };
 
 let hooks = defaultHooks;
@@ -257,10 +280,15 @@ export function loadWebviz(hooksToSet) {
   const prepareForScreenshots = require("webviz-core/src/stories/prepareForScreenshots").default;
   const installChartjs = require("webviz-core/src/util/installChartjs").default;
   const installDevtoolsFormatters = require("webviz-core/src/util/installDevtoolsFormatters").default;
+  const overwriteFetch = require("webviz-core/src/util/overwriteFetch").default;
+  const { hideLoadingLogo } = require("webviz-core/src/util/hideLoadingLogo");
+  const { clearIndexedDbWithoutConfirmation } = require("webviz-core/src/util/indexeddb/clearIndexedDb");
 
   installChartjs();
   prepareForScreenshots(); // For integration screenshot tests.
   installDevtoolsFormatters();
+  overwriteFetch();
+  window.clearIndexedDb = clearIndexedDbWithoutConfirmation; // For integration tests.
 
   hooks.load();
 
@@ -284,6 +312,7 @@ export function loadWebviz(hooksToSet) {
   const chromeMatch = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
   const chromeVersion = chromeMatch ? parseInt(chromeMatch[2], 10) : 0;
   if (chromeVersion < MINIMUM_CHROME_VERSION) {
+    hideLoadingLogo();
     Confirm({
       title: "Update your browser",
       prompt:

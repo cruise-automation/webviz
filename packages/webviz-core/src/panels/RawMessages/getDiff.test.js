@@ -50,14 +50,25 @@ describe("getDiff", () => {
   it("maps to available ID fields", () => {
     expect(getDiff([obj1, obj2], [obj2, obj1])).toEqual([]);
     expect(getDiff([obj1, obj2], [obj3, obj1, obj2])).toEqual([
-      { [diffLabels.ADDED.labelText]: { name: "THREE", some_id: 3 } },
+      { [diffLabels.ADDED.labelText]: { [diffLabels.ID.labelText]: { some_id: 3 }, name: "THREE", some_id: 3 } },
     ]);
     expect(getDiff([obj1, obj2], [obj3, obj1, { ...obj2, name: "XYZ" }])).toEqual([
       {
         [diffLabels.ID.labelText]: { some_id: 2 },
         name: { [diffLabels.CHANGED.labelText]: `"TWO" -> "XYZ"` },
       },
-      { [diffLabels.ADDED.labelText]: { name: "THREE", some_id: 3 } },
+      {
+        [diffLabels.ADDED.labelText]: { [diffLabels.ID.labelText]: { some_id: 3 }, name: "THREE", some_id: 3 },
+      },
+    ]);
+    expect(getDiff([obj1, obj2, obj3], [obj1, { ...obj2, name: "XYZ" }])).toEqual([
+      {
+        [diffLabels.ID.labelText]: { some_id: 2 },
+        name: { [diffLabels.CHANGED.labelText]: `"TWO" -> "XYZ"` },
+      },
+      {
+        [diffLabels.DELETED.labelText]: { [diffLabels.ID.labelText]: { some_id: 3 }, name: "THREE", some_id: 3 },
+      },
     ]);
   });
   it("does not map ID fields if every object does not have that ID field", () => {

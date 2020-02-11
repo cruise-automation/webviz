@@ -20,10 +20,10 @@ export type NodeDefinition<State> = {
   datatypes: RosDatatypes,
 };
 
-const WEBVIZ_TOPIC_PREFIX = "/webviz/";
+const WEBVIZ_NODE_PREFIX = "/webviz/";
 
 export function isWebvizNodeTopic(topic: string) {
-  return topic.startsWith(WEBVIZ_TOPIC_PREFIX);
+  return topic.startsWith(WEBVIZ_NODE_PREFIX);
 }
 
 export const makeNodeMessage = (topic: string, datatype: string, message: any): Message => {
@@ -59,7 +59,7 @@ export function validateNodeDefinitions(nodeDefinitions: NodeDefinition<*>[]): v
     // Validate otuput topic names
     if (!isWebvizNodeTopic(nodeDefinition.output.name)) {
       throw new Error(
-        `Webviz node: ${nodeDefinition.output.name} must output topics prefixed with ${WEBVIZ_TOPIC_PREFIX}`
+        `Webviz node: ${nodeDefinition.output.name} must output topics prefixed with ${WEBVIZ_NODE_PREFIX}`
       );
     }
 

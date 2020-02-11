@@ -11,18 +11,19 @@ import React, { useCallback } from "react";
 import styled from "styled-components";
 
 import Icon from "webviz-core/src/components/Icon";
-import { type MessageHistoryItem } from "webviz-core/src/components/MessageHistory";
+import type { Message } from "webviz-core/src/players/types";
 import clipboard from "webviz-core/src/util/clipboard";
-import { format } from "webviz-core/src/util/time";
+import { formatTimeRaw } from "webviz-core/src/util/time";
 
-export const SMetadata = styled.div`
+const SMetadata = styled.div`
   margin-top: 4px;
   font-size: 11px;
+  line-height: 1.3;
   color: #aaa;
 `;
-type Props = { data: any, link: ?string, item: MessageHistoryItem };
+type Props = { data: any, link: ?string, message: Message, diffMessage: ?Message };
 
-export default function Metadata({ data, link, item }: Props) {
+export default function Metadata({ data, link, message, diffMessage }: Props) {
   const onClick = useCallback(
     (e: SyntheticMouseEvent<HTMLSpanElement>) => {
       e.stopPropagation();
@@ -38,19 +39,22 @@ export default function Metadata({ data, link, item }: Props) {
   );
   return (
     <SMetadata>
-      <span onClick={onClick}>
-        <Icon tooltip="Copy entire message to clipboard">
-          <ClipboardOutlineIcon style={{ verticalAlign: "middle" }} />{" "}
-        </Icon>
-      </span>
-      {link ? (
-        <a style={{ color: "inherit" }} target="_blank" rel="noopener noreferrer" href={link}>
-          {item.message.datatype}
-        </a>
-      ) : (
-        item.message.datatype
-      )}
-      {item.message.receiveTime && ` received at ${format(item.message.receiveTime)}`}
+      {!diffMessage &&
+        (link ? (
+          <a style={{ color: "inherit" }} target="_blank" rel="noopener noreferrer" href={link}>
+            {message.datatype}
+          </a>
+        ) : (
+          message.datatype
+        ))}
+      {message.receiveTime && `${diffMessage ? " base" : ""} @ ${formatTimeRaw(message.receiveTime)} ROS `}
+      {diffMessage && diffMessage.receiveTime && <div>{`diff @ ${formatTimeRaw(diffMessage.receiveTime)} ROS `}</div>}
+      <a onClick={onClick} href="#" style={{ textDecoration: "none" }}>
+        <Icon tooltip="Copy entire message to clipboard" style={{ position: "relative", top: -1 }}>
+          <ClipboardOutlineIcon style={{ verticalAlign: "middle" }} />
+        </Icon>{" "}
+        copy
+      </a>
     </SMetadata>
   );
 }

@@ -13,9 +13,11 @@ import { MosaicDragType, getNodeAtPath, updateTree } from "react-mosaic-componen
 import { connect } from "react-redux";
 import styled from "styled-components";
 
+import styles from "./index.module.scss";
 import { changePanelLayout, savePanelConfig } from "webviz-core/src/actions/panels";
 import { Item } from "webviz-core/src/components/Menu";
 import SubMenu from "webviz-core/src/components/Menu/SubMenu";
+import Tooltip from "webviz-core/src/components/Tooltip";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import TextHighlight from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TextHighlight";
 import type { State } from "webviz-core/src/reducers";
@@ -102,7 +104,7 @@ class PanelItem extends React.Component<PanelItemProps> {
     const { connectDragSource, searchQuery, panel, onClick, checked } = this.props;
     return connectDragSource(
       <div>
-        <Item onClick={onClick} checked={checked}>
+        <Item onClick={onClick} checked={checked} className={styles.item}>
           <TextHighlight targetStr={panel.title} searchText={searchQuery} />
         </Item>
       </div>
@@ -227,6 +229,11 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
 
     return (
       <div data-test-panel-category>
+        <div style={{ position: "sticky", top: 0 }}>
+          <Tooltip contents="click or drag panels" placement="left" defaultShown>
+            <div style={{ position: "relative", pointerEvents: "none", top: 45 }} />
+          </Tooltip>
+        </div>
         <SearchInput
           type="search"
           placeholder="Filter panels"
@@ -247,6 +254,7 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
                 <SubMenu
                   text={<TextHighlight targetStr={title} searchText={searchQuery} />}
                   key={panelType}
+                  style={{ zIndex: 1 }}
                   checked={panelType === selectedPanelType}>
                   {presets.map((subPanelListItem) => (
                     <DraggablePanelItem

@@ -30,8 +30,8 @@ export default function TextHighlight({ targetStr = "", searchText = "" }: Props
   }
   const result = fuzzySort.highlight(
     fuzzySort.single(searchText, targetStr),
-    "<b class='TextHighlight-highlight'>",
-    "</b>"
+    "<span class='TextHighlight-highlight'>",
+    "</span>"
   );
   // TODO(Audrey): compute highlighted parts separately in order to avoid dangerouslySetInnerHTML
   return <STextHighlight>{result ? <span dangerouslySetInnerHTML={{ __html: result }} /> : targetStr}</STextHighlight>;

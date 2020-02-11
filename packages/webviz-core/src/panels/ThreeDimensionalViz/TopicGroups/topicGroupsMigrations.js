@@ -9,7 +9,13 @@
 import { isEqual, sortBy, flatten, keyBy, mapValues } from "lodash";
 import microMemoize from "micro-memoize";
 
-import { ALL_DATA_SOURCE_PREFIXES, TOPIC_CONFIG, removeTopicPrefixes } from "./topicGroupsUtils";
+import { DEFAULT_IMPORTED_GROUP_NAME } from "./constants";
+import {
+  ALL_DATA_SOURCE_PREFIXES,
+  TOPIC_CONFIG,
+  removeTopicPrefixes,
+  DEFAULT_GROUP_VISIBILITY_BY_SOURCE,
+} from "./topicGroupsUtils";
 import type { TopicGroupConfig } from "./types";
 import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
 
@@ -112,18 +118,20 @@ export function migrateLegacyIds(checkedNodes: string[]): string[] {
 
 // Create a new topic group called 'My Topics' and related fields based the old config
 export function migratePanelConfigToTopicGroupConfig({
+  topicGroupDisplayName = DEFAULT_IMPORTED_GROUP_NAME,
   topicSettings,
   checkedNodes,
   modifiedNamespaceTopics,
 }: {
+  topicGroupDisplayName?: string,
   topicSettings?: ?{ [topicName: string]: any },
   checkedNodes?: ?(string[]),
   modifiedNamespaceTopics?: ?(string[]),
 }): TopicGroupConfig {
   if (!checkedNodes) {
     return {
-      displayName: "My Topics",
-      visible: true,
+      displayName: topicGroupDisplayName,
+      visibilityBySource: DEFAULT_GROUP_VISIBILITY_BY_SOURCE,
       expanded: true,
       items: [],
     };
@@ -141,7 +149,7 @@ export function migratePanelConfigToTopicGroupConfig({
 
   let items = nonPrefixedTopics
     .map((topicName) => {
-      let visibilitiesBySource;
+      let visibilityBySource;
       let settingsBySource;
       let selectedNamespacesBySource;
 
@@ -155,8 +163,8 @@ export function migratePanelConfigToTopicGroupConfig({
           );
         if (isTopicSelected) {
           // migrate visibility
-          visibilitiesBySource = visibilitiesBySource || {};
-          visibilitiesBySource[dataSourcePrefix] = true;
+          visibilityBySource = visibilityBySource || {};
+          visibilityBySource[dataSourcePrefix] = true;
 
           // migrate settings, no need to migrate topic settings for topics that are not selected
           if (topicSettings && topicSettings[prefixedTopicName]) {
@@ -178,19 +186,17 @@ export function migratePanelConfigToTopicGroupConfig({
       }
 
       // only selected the visible topics
-      return visibilitiesBySource
+      return visibilityBySource
         ? {
             topicName,
             // auto expand the topic if it has any selected namespaces
             ...(flatten(Object.values(selectedNamespacesBySource || {})).length > 0 ? { expanded: true } : undefined),
             ...(settingsBySource ? { settingsBySource } : undefined),
-            // no need to store the default visibilitiesBySource in panelConfig
-            ...(!visibilitiesBySource || isEqual(visibilitiesBySource, { "": true })
-              ? undefined
-              : { visibilitiesBySource }),
+            // no need to store the default visibilityBySource in panelConfig
+            ...(!visibilityBySource || isEqual(visibilityBySource, { "": true }) ? undefined : { visibilityBySource }),
             ...(selectedNamespacesBySource ? { selectedNamespacesBySource } : undefined),
           }
-        : null;
+        : undefined;
     })
     .filter(Boolean);
 
@@ -221,9 +227,8 @@ export function migratePanelConfigToTopicGroupConfig({
   }
 
   return {
-    // give default displayName, and select/expand state
-    displayName: "My Topics",
-    visible: true,
+    displayName: topicGroupDisplayName,
+    visibilityBySource: DEFAULT_GROUP_VISIBILITY_BY_SOURCE,
     expanded: true,
     items,
   };

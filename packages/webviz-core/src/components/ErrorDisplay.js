@@ -170,7 +170,11 @@ type State = {
   showErrorList: boolean,
 };
 
-export default class ErrorDisplay extends React.PureComponent<{}, State> {
+type Props = {
+  onError?: (message: string, details: DetailsType) => void,
+};
+
+export default class ErrorDisplay extends React.PureComponent<Props, State> {
   state = {
     errors: [],
     showMostRecent: false,
@@ -192,6 +196,10 @@ export default class ErrorDisplay extends React.PureComponent<{}, State> {
             errors,
           };
         });
+
+        if (this.props.onError) {
+          this.props.onError(message, details);
+        }
 
         clearTimeout(this.hideTimeout);
 

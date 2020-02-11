@@ -36,7 +36,7 @@ const SOption = styled.div`
   cursor: pointer;
   transition: all 80ms ease-in-out;
   border-radius: 4px;
-  background-color: ${(props) => (props.isSelected ? colors.BLUE1 : "transparent")};
+  background-color: ${(props) => (props.isSelected ? colors.PRIMARY : "transparent")};
   color: ${(props) => (props.isSelected ? colors.LIGHT : colors.LIGHT)};
   padding: 8px 16px;
   &:hover {

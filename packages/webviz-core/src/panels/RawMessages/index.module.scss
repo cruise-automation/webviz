@@ -6,6 +6,11 @@
 
 @import "~webviz-core/src/styles/mixins.module.scss";
 
+.topicInputs {
+  width: 100%;
+  line-height: 20px;
+}
+
 .container {
   // match the padding with the default padding used in react-json-tree
   padding-left: 0.5em;

@@ -7,14 +7,14 @@
 //  You may not use this file except in compliance with the License.
 import Confirm from "webviz-core/src/components/Confirm";
 
-// For browser-based integration tests
-window.clearIndexedDb = () => {
+// For browser-based integration tests; don't use directly.
+export function clearIndexedDbWithoutConfirmation() {
   return window.indexedDB.databases().then((databases) => {
     for (const database of databases) {
       window.indexedDB.deleteDatabase(database.name);
     }
   });
-};
+}
 
 export default function clearIndexedDb() {
   const config = {
@@ -27,7 +27,7 @@ export default function clearIndexedDb() {
       return;
     }
     // From https://stackoverflow.com/a/54764150
-    window.clearIndexedDb().then(() => {
+    clearIndexedDbWithoutConfirmation().then(() => {
       window.location.reload();
     });
   });

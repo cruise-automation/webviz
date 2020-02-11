@@ -343,6 +343,12 @@ describe("pipeline", () => {
       },
     };
 
+    const timeDatatypes = {
+      [baseNodeData.name]: {
+        fields: [{ arrayLength: undefined, isArray: false, isComplex: false, name: "stamp", type: "time" }],
+      },
+    };
+
     const posArrayDatatypes = {
       [baseNodeData.name]: {
         fields: [
@@ -732,6 +738,23 @@ describe("pipeline", () => {
             return { pos: { x: 1, y: 1 } };
           };`,
         datatypes: posDatatypes,
+      },
+      {
+        description: "Fields that look like ROS time",
+        sourceCode: `
+          type Time = { sec: number, nsec: number };
+          export default (msg: any): { stamp: Time } => {
+            return { stamp: { sec: 1, nsec: 1 } };
+          };`,
+        datatypes: timeDatatypes,
+      },
+      {
+        description: "Return types that look like ROS time",
+        sourceCode: `
+          export default (msg: any): { stamp: { sec: number, nsec: number } } => {
+            return { stamp: { sec: 1, nsec: 1 } };
+          };`,
+        datatypes: timeDatatypes,
       },
 
       // MARKERS ARRAYS

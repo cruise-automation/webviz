@@ -78,7 +78,7 @@ export type PlayerStateActiveData = {|
   // An array of (ROS-like) messages that should be rendered. Should be ordered by `receiveTime`,
   // and should be immediately following the previous array of messages that was emitted as part of
   // this state. If there is a discontinuity in messages, `lastSeekTime` should be different than
-  // the previous state. Panels collect these messages using `<MessageHistory>`.
+  // the previous state. Panels collect these messages using the `PanelAPI`.
   messages: Message[],
 
   // The current playback position, which will be shown in the playback bar. This time should be
@@ -107,7 +107,7 @@ export type PlayerStateActiveData = {|
   speed: number,
 
   // The last time a seek / discontinuity in messages happened. This will clear out data within
-  // `<MessageHistory>` so we're not looking at stale data.
+  // `PanelAPI` so we're not looking at stale data.
   // TODO(JP): This currently is a time per `Date.now()`, but we don't need that anywhere, so we
   // should change this to a `resetMessagesId` where you just have to set it to a unique id (better
   // to have an id than a boolean, in case the listener skips parsing a state for some reason).

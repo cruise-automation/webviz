@@ -14,7 +14,7 @@ import React, { useCallback } from "react";
 import { plotableRosTypes, type PlotConfig } from "./index";
 import styles from "./PlotLegend.module.scss";
 import Icon from "webviz-core/src/components/Icon";
-import { MessageHistoryInput, type MessageHistoryTimestampMethod } from "webviz-core/src/components/MessageHistory";
+import MessagePathInput, { type TimestampMethod } from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import { type PlotPath, isReferenceLinePlotPathType } from "webviz-core/src/panels/Plot/internalTypes";
 import { lineColors } from "webviz-core/src/util/plotColors";
 
@@ -52,7 +52,7 @@ export default function PlotLegend(props: PlotLegendProps) {
   );
 
   const onInputTimestampMethodChange = useCallback(
-    (value: MessageHistoryTimestampMethod, index: ?number) => {
+    (value: TimestampMethod, index: ?number) => {
       if (index == null) {
         throw new Error("index not set");
       }
@@ -102,7 +102,7 @@ export default function PlotLegend(props: PlotLegendProps) {
                   [styles.itemInput]: true,
                   [styles.itemInputDisabled]: !path.enabled,
                 })}>
-                <MessageHistoryInput
+                <MessagePathInput
                   path={path.value}
                   onChange={onInputChange}
                   onTimestampMethodChange={onInputTimestampMethodChange}

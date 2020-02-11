@@ -9,18 +9,25 @@
 import ParseMessagesDataProvider from "./ParseMessagesDataProvider";
 import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
 import createGetDataProvider from "webviz-core/src/dataProviders/createGetDataProvider";
+import MemoryCacheDataProvider from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 
 function getProvider() {
   return new ParseMessagesDataProvider(
     {},
     [
       {
-        name: "BagDataProvider",
-        args: { bagPath: { type: "file", file: `${__dirname}/../../public/fixtures/example.bag` } },
-        children: [],
+        name: "MemoryCacheDataProvider",
+        args: {},
+        children: [
+          {
+            name: "BagDataProvider",
+            args: { bagPath: { type: "file", file: `${__dirname}/../../public/fixtures/example.bag` } },
+            children: [],
+          },
+        ],
       },
     ],
-    createGetDataProvider({ BagDataProvider })
+    createGetDataProvider({ BagDataProvider, MemoryCacheDataProvider })
   );
 }
 
@@ -100,5 +107,16 @@ describe("ParseMessagesDataProvider", () => {
       receiveTime: { nsec: 56262848, sec: 1396293888 },
       topic: "/tf",
     });
+  });
+
+  it("does some basic caching of messages", async () => {
+    const provider = getProvider();
+    await provider.initialize(dummyExtensionPoint);
+    const start = { sec: 1396293887, nsec: 844783943 };
+    const end = { sec: 1396293888, nsec: 60000000 };
+    const messages1 = await provider.getMessages(start, end, ["/tf"]);
+    const messages2 = await provider.getMessages(start, end, ["/tf"]);
+    expect(messages1[0]).toBe(messages2[0]);
+    expect(messages1[1]).toBe(messages2[1]);
   });
 });

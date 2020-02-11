@@ -7,3 +7,12 @@
 //  You may not use this file except in compliance with the License.
 
 export const EXPERIMENTAL_FEATURES_STORAGE_KEY = "topicGrouping";
+export const DEFAULT_IMPORTED_GROUP_NAME = "Imported Group";
+
+export const DATA_SOURCE_BADGE_SIZE = 28;
+
+export const ICON_PADDING = 2;
+export const ICON_SIZE = 18; // default small icon size
+export const ICON_TOTAL_SIZE = ICON_PADDING * 2 + ICON_SIZE;
+
+export const ITEM_MAIN_PADDING_LEFT = ICON_TOTAL_SIZE * 4 + 8;

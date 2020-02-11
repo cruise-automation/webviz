@@ -32,8 +32,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
             isPresent: false,
             playerId: "",
             progress: {},
-            showInitializing: false,
-            showSpinner: false,
+            showInitializing: true,
+            showSpinner: true,
           },
           subscriptions: [],
           publishers: [],
@@ -72,8 +72,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
             isPresent: false,
             playerId: "",
             progress: {},
-            showInitializing: false,
-            showSpinner: false,
+            showInitializing: true,
+            showSpinner: true,
           },
         }),
       ],
@@ -427,8 +427,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       isPresent: false,
       playerId: "",
       progress: {},
-      showInitializing: false,
-      showSpinner: false,
+      showInitializing: true,
+      showSpinner: true,
     });
   });
 });

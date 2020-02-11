@@ -10,7 +10,7 @@ import cx from "classnames";
 import React from "react";
 
 import styles from "./PlotMenu.module.scss";
-import { PanelToolbarLabel, PanelToolbarInput } from "webviz-core/shared/panelToolbarStyles";
+import { PanelToolbarInput } from "webviz-core/shared/panelToolbarStyles";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Item from "webviz-core/src/components/Menu/Item";
 import type { PlotConfig } from "webviz-core/src/panels/Plot";
@@ -77,15 +77,19 @@ export default function PlotMenu({
   return (
     <>
       <Item>
-        <PanelToolbarLabel>X-axis</PanelToolbarLabel>
-        <Dropdown value={xAxisVal} onChange={(newXAxisVal) => saveConfig({ xAxisVal: newXAxisVal })}>
-          <span value="timestamp">timestamp</span>
-          <span value="index">index</span>
-        </Dropdown>
+        <div className={styles.label}>X-axis</div>
+        <div style={{ display: "inline-block" }}>
+          {/* Use noPortal to prevent the entire menu closing when making a selection */}
+          <Dropdown value={xAxisVal} onChange={(newXAxisVal) => saveConfig({ xAxisVal: newXAxisVal })} noPortal>
+            <span value="timestamp">timestamp</span>
+            <span value="index">index</span>
+          </Dropdown>
+        </div>
       </Item>
-      <Item onClick={() => saveConfig({ maxYValue: maxYValue === "" ? "10" : "" })}>
+      <Item onClick={() => saveConfig({ maxYValue: maxYValue === "" ? "10" : "" })} tooltip="Maximum y-axis value">
         <div className={styles.label}>Maximum</div>
         <PanelToolbarInput
+          type="number"
           className={cx(styles.input, { [styles.inputError]: !isValidInput(maxYValue) })}
           value={maxYValue}
           onChange={(event) => {
@@ -95,9 +99,10 @@ export default function PlotMenu({
           placeholder="auto"
         />
       </Item>
-      <Item onClick={() => saveConfig({ minYValue: minYValue === "" ? "-10" : "" })}>
+      <Item onClick={() => saveConfig({ minYValue: minYValue === "" ? "-10" : "" })} tooltip="Maximum y-axis value">
         <div className={styles.label}>Minimum</div>
         <PanelToolbarInput
+          type="number"
           className={cx(styles.input, { [styles.inputError]: !isValidInput(minYValue) })}
           value={minYValue}
           onChange={(event) => {
@@ -108,7 +113,7 @@ export default function PlotMenu({
         />
       </Item>
       <Item>
-        <button onClick={setMinMax}>Set min and max</button>
+        <button onClick={setMinMax}>Set min/max to current</button>
       </Item>
       <Item>
         <button onClick={() => downloadCsvFile(datasets)}>Download plot data (csv)</button>

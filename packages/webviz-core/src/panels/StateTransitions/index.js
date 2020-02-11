@@ -6,25 +6,23 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEqual, uniq } from "lodash";
+import { uniq } from "lodash";
 import * as React from "react";
 import Dimensions from "react-container-dimensions";
 import { hot } from "react-hot-loader/root";
 import stringHash from "string-hash";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import textWidth from "text-width";
 import tinycolor from "tinycolor2";
 
 import helpContent from "./index.help.md";
 import labelVisibilityMap from "./labelVisibilityMap";
 import Button from "webviz-core/src/components/Button";
-import MessageHistory, {
-  MessageHistoryInput,
+import MessageHistoryDEPRECATED, {
   type MessageHistoryData,
   type MessageHistoryItem,
-  type MessageHistoryTimestampMethod,
-  getTimestampForMessage,
-} from "webviz-core/src/components/MessageHistory";
+} from "webviz-core/src/components/MessageHistoryDEPRECATED";
+import MessagePathInput, { type TimestampMethod } from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TimeBasedChart, { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
@@ -34,7 +32,7 @@ import mixins from "webviz-core/src/styles/mixins.module.scss";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import { positiveModulo } from "webviz-core/src/util";
 import { darkColor, lineColors } from "webviz-core/src/util/plotColors";
-import { subtractTimes, toSec } from "webviz-core/src/util/time";
+import { getTimestampForMessage, subtractTimes, toSec } from "webviz-core/src/util/time";
 import { grey } from "webviz-core/src/util/toolsColorScheme";
 
 export const transitionableRosTypes = [
@@ -68,13 +66,9 @@ const SAddButton = styled.div`
   position: absolute;
   top: 30px;
   right: 5px;
-  opacity: 0;
+  opacity: ${(props) => (props.show ? 1 : 0)};
   transition: opacity 0.1s ease-in-out;
   z-index: 1;
-
-  ${SRoot}:hover & {
-    opacity: 1;
-  }
 `;
 
 const SChartContainerOuter = styled.div`
@@ -104,12 +98,20 @@ const SInputContainer = styled.div`
   height: 20px;
   padding-right: 4px;
   max-width: calc(100% - ${inputLeft}px);
+  min-width: min(100%, 150px); // Don't let it get too small.
   overflow: hidden;
   line-height: 20px;
 
   &:hover {
     background: ${inputColor};
   }
+
+  // Move over the first input on hover for the toolbar.
+  ${(props) =>
+    props.shrink &&
+    css`
+      max-width: calc(100% - 150px);
+    `}
 `;
 
 const SInputDelete = styled.div`
@@ -152,7 +154,6 @@ const plugins = {
     align: 0,
     anchor: "center",
     rotation: 0,
-    offset: -5,
     formatter: (value: any, context: any) => {
       return labelVisibilityMap(context, measureText)[context.datasetIndex][context.dataIndex]
         ? `${value.label}\n\n`
@@ -169,21 +170,14 @@ const plugins = {
   multicolorLineYOffset: 6,
 };
 
-export type StateTransitionPath = { value: string, timestampMethod: MessageHistoryTimestampMethod };
+export type StateTransitionPath = { value: string, timestampMethod: TimestampMethod };
 export type StateTransitionConfig = { paths: StateTransitionPath[] };
-
-const defaultConfig = getGlobalHooks().perPanelHooks().StateTransitions.defaultConfig;
 
 export function openSiblingStateTransitionsPanel(
   openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
   topicName: string
 ) {
   openSiblingPanel("StateTransitions", (config: StateTransitionConfig) => {
-    // If we're opening a brand new panel, don't use the default config, since it might have too
-    // much stuff in it.
-    if (isEqual(config, defaultConfig)) {
-      config = { paths: [] };
-    }
     return ({
       ...config,
       paths: uniq(config.paths.concat([{ value: topicName, enabled: true, timestampMethod: "receiveTime" }])),
@@ -194,11 +188,12 @@ export function openSiblingStateTransitionsPanel(
 type Props = {
   config: StateTransitionConfig,
   saveConfig: ($Shape<StateTransitionConfig>) => void,
+  isHovered: boolean,
 };
 
 class StateTransitions extends React.PureComponent<Props> {
   static panelType = "StateTransitions";
-  static defaultConfig = defaultConfig;
+  static defaultConfig = { paths: [] };
 
   _onInputChange = (value: string, index: ?number) => {
     if (index == null) {
@@ -209,7 +204,7 @@ class StateTransitions extends React.PureComponent<Props> {
     this.props.saveConfig({ paths: newPaths });
   };
 
-  _onInputTimestampMethodChange = (value: MessageHistoryTimestampMethod, index: ?number) => {
+  _onInputTimestampMethodChange = (value: TimestampMethod, index: ?number) => {
     if (index == null) {
       throw new Error("index not set");
     }
@@ -228,7 +223,7 @@ class StateTransitions extends React.PureComponent<Props> {
     return (
       <SRoot>
         <PanelToolbar floating helpContent={helpContent} />
-        <SAddButton>
+        <SAddButton show={this.props.isHovered}>
           <Button
             onClick={() =>
               this.props.saveConfig({
@@ -238,7 +233,7 @@ class StateTransitions extends React.PureComponent<Props> {
             add
           </Button>
         </SAddButton>
-        <MessageHistory paths={paths.map(({ value }) => value)}>
+        <MessageHistoryDEPRECATED paths={paths.map(({ value }) => value)}>
           {({ itemsByPath, startTime }: MessageHistoryData) => {
             const data = {
               yLabels: paths.map((_path, pathIndex) => pathIndex.toString()),
@@ -340,7 +335,10 @@ class StateTransitions extends React.PureComponent<Props> {
                       />
 
                       {paths.map(({ value: path, timestampMethod }, index) => (
-                        <SInputContainer key={index} style={{ top: index * heightPerTopic }}>
+                        <SInputContainer
+                          key={index}
+                          style={{ top: index * heightPerTopic }}
+                          shrink={index === 0 && this.props.isHovered}>
                           <SInputDelete
                             onClick={() => {
                               const newPaths = this.props.config.paths.slice();
@@ -349,7 +347,7 @@ class StateTransitions extends React.PureComponent<Props> {
                             }}>
                             ✕
                           </SInputDelete>
-                          <MessageHistoryInput
+                          <MessagePathInput
                             path={path}
                             onChange={this._onInputChange}
                             index={index}
@@ -367,7 +365,7 @@ class StateTransitions extends React.PureComponent<Props> {
               </SChartContainerOuter>
             );
           }}
-        </MessageHistory>
+        </MessageHistoryDEPRECATED>
       </SRoot>
     );
   }

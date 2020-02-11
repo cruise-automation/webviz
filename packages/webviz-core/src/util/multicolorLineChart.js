@@ -6,7 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Chart } from "react-chartjs-2";
+import { Chart } from "webviz-core/src/components/ReactChartjs";
+
 /* eslint-disable no-underscore-dangle */
 // From https://github.com/chartjs/Chart.js/issues/4895#issuecomment-341874938
 Chart.defaults.multicolorLine = Chart.defaults.scatter;

@@ -7,56 +7,174 @@
 -->
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    </script>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="theme-color" content="#000000" />
-    <title>webviz</title>
-    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
-  </head>
-  <body>
-    <noscript> You need to enable JavaScript to run this app. </noscript>
-    <div id="root"></div>
-    <div id="topLevelError" style="display: none; margin: 20px; font-size: 16px; position: absolute;">
-      An error occurred:<br />
-      <div id="topLevelErrorMessage"></div>
-      <br />
-      Troubleshooting steps:
-      <ul style="list-style: disc inside;">
-        <li>
-          Make sure you&rsquo;re using the latest version of
-          <a href="https://www.google.com/chrome" style="display: inline">Google Chrome</a>.
-        </li>
-        <li>
-          Look in the Chrome
-          <a href="https://developers.google.com/web/tools/chrome-devtools/console/">developer console</a> for more
-          error details.
-        </li>
-        <!-- THIS COMMENT IS A HOOK FOR TROUBLESHOOTING STEPS - please do not change -->
-      </ul>
-    </div>
-    <script type="text/javascript">
-      /* THIS COMMENT IS A HOOK FOR INITIAL STATE - please do not change */
-      // catch and display script errors from bundle.js
-      window.webviz_handleTopLevelError = (event) => {
-        window.webviz_caughtTopLevelError = true;
-        document.getElementById("topLevelErrorMessage").innerText = event.message;
-        document.getElementById("topLevelError").style.display = "block";
-      };
-      window.addEventListener("error", window.webviz_handleTopLevelError);
-    </script>
-    <script src="/dist/webvizCoreBundle.js"></script>
-    <script type="text/javascript">
-      window.removeEventListener("error", window.webviz_handleTopLevelError);
-      if (!window.webviz_caughtTopLevelError) {
-        document.getElementById("topLevelError").remove();
+
+<head>
+  <script>
+    (function (i, s, o, g, r, a, m) {
+      i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+      }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+  </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="theme-color" content="#000000" />
+  <title>webviz</title>
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  <style>
+    @keyframes loadingLogoFadeInOut {
+      0% {
+        opacity: .3;
+        transform: scale(.8) skew(0, 0.312rad);
       }
-    </script>
-  </body>
+
+      10% {
+        opacity: .3;
+        transform: scale(.8) skew(0, 0.312rad);
+        animation-timing-function: ease-in-out;
+      }
+
+
+      30% {
+        opacity: 0.8;
+        transform: scale(1) skew(0, 0.312rad);
+      }
+
+      60% {
+        opacity: 0.8;
+        transform: scale(1) skew(0, 0.312rad);
+        animation-timing-function: ease-in-out;
+      }
+
+      90% {
+        opacity: .3;
+        transform: scale(.8) skew(0, 0.312rad);
+      }
+
+      100% {
+        opacity: .3;
+        transform: scale(.8) skew(0, 0.312rad);
+      }
+    }
+
+    #loadingLogo {
+      top: 0px;
+      left: 0px;
+      right: 0px;
+      bottom: 0px;
+      position: fixed;
+      z-index: 1000;
+      background-color: rgba(0, 0, 0, .3);
+      transition: opacity 0.2s ease-out;
+    }
+
+    #logoFrameContainer {
+      position: relative;
+      margin-top: calc(50vh - 80px);
+      margin-right: calc(50vw - 64px);
+    }
+
+    #logoFrame1,
+    #logoFrame2,
+    #logoFrame3,
+    #logoFrame1blur,
+    #logoFrame2blur,
+    #logoFrame3blur {
+      transform: skew(0, 0.312rad);
+      height: 80px;
+      width: 64px;
+      position: absolute;
+      animation: loadingLogoFadeInOut 1.5s ease-in-out;
+      animation-iteration-count: infinite;
+    }
+
+    #logoFrame1blur,
+    #logoFrame1 {
+      border: 5px solid #E987FF;
+      top: 0px;
+      right: 0px;
+      animation-delay: 200ms;
+    }
+
+    #logoFrame2blur,
+    #logoFrame2 {
+      border: 5px solid #20C0FF;
+      background: rgba(32, 192, 255, 0.3);
+      top: 8px;
+      right: 8px;
+      animation-delay: 100ms;
+    }
+
+    #logoFrame3blur,
+    #logoFrame3 {
+      border: 5px solid #BD10E0;
+      top: 16px;
+      right: 16px;
+      animation-delay: 0ms;
+    }
+
+    #logoFrame1blur,
+    #logoFrame2blur,
+    #logoFrame3blur {
+      filter: blur(3px);
+    }
+  </style>
+</head>
+
+<body style="color: white; background: #121217">
+  <div id="loadingLogo">
+    <div id="logoFrameContainer">
+      <div id="logoFrame1"></div>
+      <div id="logoFrame1blur"></div>
+      <div id="logoFrame2"></div>
+      <div id="logoFrame2blur"></div>
+      <div id="logoFrame3"></div>
+      <div id="logoFrame3blur"></div>
+    </div>
+  </div>
+  <noscript> You need to enable JavaScript to run this app. </noscript>
+  <div id="root"></div>
+  <div id="topLevelError" style="display: none; margin: 20px; font-size: 16px; position: absolute;">
+    An error occurred:<br />
+    <div id="topLevelErrorMessage"></div>
+    <br />
+    Troubleshooting steps:
+    <ul style="list-style: disc inside;">
+      <li>
+        Make sure you&rsquo;re using the latest version of
+        <a href="https://www.google.com/chrome" style="display: inline">Google Chrome</a>.
+      </li>
+      <li>
+        Look in the Chrome
+        <a href="https://developers.google.com/web/tools/chrome-devtools/console/">developer console</a> for more
+        error details.
+      </li>
+      <!-- THIS COMMENT IS A HOOK FOR TROUBLESHOOTING STEPS - please do not change -->
+    </ul>
+  </div>
+  <script type="text/javascript">
+    /* THIS COMMENT IS A HOOK FOR INITIAL STATE - please do not change */
+    // catch and display script errors from bundle.js
+    window.webviz_handleTopLevelError = (event) => {
+      window.webviz_caughtTopLevelError = true;
+      document.getElementById("topLevelErrorMessage").innerText = event.message;
+      document.getElementById("topLevelError").style.display = "block";
+      const loadingLogo = document.getElementById("loadingLogo");
+      if (loadingLogo) {
+        loadingLogo.remove();
+      }
+    };
+    window.addEventListener("error", window.webviz_handleTopLevelError);
+  </script>
+  <script src="/dist/webvizCoreBundle.js"></script>
+  <script type="text/javascript">
+    window.removeEventListener("error", window.webviz_handleTopLevelError);
+    if (!window.webviz_caughtTopLevelError) {
+      document.getElementById("topLevelError").remove();
+    }
+  </script>
+
+</body>
+
 </html>

@@ -6,17 +6,20 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { omit, flatten, uniq, isEmpty } from "lodash";
+import { omit, flatten, uniq, isEmpty, keyBy, mapValues, assign, zipObject } from "lodash";
 import microMemoize from "micro-memoize";
 
 import type {
+  DisplayVisibilityBySource,
+  GroupVisibilityBySource,
+  NamespaceItem,
+  NamespacesBySource,
   TopicGroupConfig,
   TopicGroupType,
-  NamespacesBySource,
-  NamespaceItem,
-  DisplayVisibilityBySource,
+  VisibilityBySource,
 } from "./types";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import type { SceneErrors } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/index";
 import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
 import { type Topic } from "webviz-core/src/players/types";
 import type { Namespace } from "webviz-core/src/types/Messages";
@@ -25,15 +28,20 @@ export const TOPIC_CONFIG = getGlobalHooks()
   .perPanelHooks()
   .ThreeDimensionalViz.getDefaultTopicTree();
 
-export const ALL_DATA_SOURCE_PREFIXES = ["", "/webviz_bag_2", "/webviz_tables_2", "/webviz_tables", "/webviz_labels"];
+export const BASE_DATA_SOURCE_PREFIXES = ["", "/webviz_tables", "/webviz_labels"];
+export const FEATURE_DATA_SOURCE_PREFIXES = ["/webviz_bag_2", "/webviz_tables_2"];
+export const ALL_DATA_SOURCE_PREFIXES = [...BASE_DATA_SOURCE_PREFIXES, ...FEATURE_DATA_SOURCE_PREFIXES];
+export const DEFAULT_GROUP_VISIBILITY_BY_SOURCE = getVisibilityBySource(ALL_DATA_SOURCE_PREFIXES, true);
 
 type DisplayNameByTopic = { [topicName: string]: string };
+type ErrorsByTopic = { [topicName: string]: string[] };
 type NamespacesByTopic = { [topicName: string]: string[] };
 
 export function removeTopicPrefixes(topicNames: string[]): string[] {
   const nonPrefixedNames = topicNames.map((name) => {
     for (const dataSourcePrefix of ALL_DATA_SOURCE_PREFIXES) {
-      if (dataSourcePrefix && name.startsWith(dataSourcePrefix)) {
+      // Add extra `/` as startsWith str to avoid converting `/webviz_tables_2/some_topic` to `_2/some_topic`.
+      if (dataSourcePrefix && name.startsWith(`${dataSourcePrefix}/`)) {
         return name.substr(dataSourcePrefix.length);
       }
     }
@@ -42,80 +50,178 @@ export function removeTopicPrefixes(topicNames: string[]): string[] {
   return uniq(nonPrefixedNames);
 }
 
+function getVisibilityBySource(prefixes: string[], visible: boolean): VisibilityBySource {
+  return zipObject(prefixes, new Array(prefixes.length).fill().map((_) => visible));
+}
+
+// Currently we support two groups of data sources across topics. Separating them into BASE and FEATURE can help the user
+// easily toggle the visibility at the group level. Only add the 2nd group when feature topics are present.
+function getGroupDisplayVisibilityBySourceByColumn(
+  groupVisibilityBySource: VisibilityBySource,
+  availableTopics: Topic[],
+  isFirstTopicGroup: boolean
+): GroupVisibilityBySource[] {
+  const displayVisibilityBySource = [];
+  const isBaseVisible = BASE_DATA_SOURCE_PREFIXES.every((prefix) =>
+    // Only default to true for the first topic group because rendering too many groups may be expensive.
+    groupVisibilityBySource[prefix] == null ? isFirstTopicGroup : groupVisibilityBySource[prefix]
+  );
+  displayVisibilityBySource.push({
+    visible: isBaseVisible,
+    visibilityBySource: getVisibilityBySource(BASE_DATA_SOURCE_PREFIXES, isBaseVisible),
+  });
+  // Only show the 2nd group visibility toggle if any of the 2nd data sources are available.
+  const hasSecondGroupVisibilityToggle = availableTopics.some(({ name }) =>
+    FEATURE_DATA_SOURCE_PREFIXES.some((prefix) => name.startsWith(prefix))
+  );
+  if (hasSecondGroupVisibilityToggle) {
+    const isFeatureVisible = FEATURE_DATA_SOURCE_PREFIXES.every((prefix) =>
+      // Only default to true for the first topic group because rendering too many groups may be expensive.
+      groupVisibilityBySource[prefix] == null ? isFirstTopicGroup : groupVisibilityBySource[prefix]
+    );
+    displayVisibilityBySource.push({
+      visible: isFeatureVisible,
+      visibilityBySource: getVisibilityBySource(FEATURE_DATA_SOURCE_PREFIXES, isFeatureVisible),
+    });
+  }
+  return displayVisibilityBySource;
+}
+
 // Generate topicGroups data for the UI.
 export function getTopicGroups(
   groupsConfig: TopicGroupConfig[],
   {
-    displayNameByTopic = {},
-    namespacesByTopic = {},
-    availableTopics = [],
+    availableTopics,
+    displayNameByTopic,
+    errorsByTopic,
+    namespacesByTopic,
+    filterText,
+    filteredKeysSet,
   }: {|
     displayNameByTopic: DisplayNameByTopic,
     namespacesByTopic: NamespacesByTopic,
     availableTopics: Topic[],
+    errorsByTopic: ErrorsByTopic,
+    filterText?: string,
+    filteredKeysSet?: ?Set<string>,
   |}
 ): TopicGroupType[] {
   const availableTopicNamesSet = new Set(availableTopics.map(({ name }) => name));
+  const datatypeKeyByTopicName = mapValues(keyBy(availableTopics, "name"), "datatype");
 
   return groupsConfig.map(({ items, ...rest }, idx) => {
     const id = `${rest.displayName.split(" ").join("-")}_${idx}`;
-    const isTopicGroupVisible = !!rest.visible;
+    let groupDisplayVisibilityBySourceByColumn = [];
+    let groupVisibilityBySource = {};
+    if (availableTopics.length) {
+      groupDisplayVisibilityBySourceByColumn = getGroupDisplayVisibilityBySourceByColumn(
+        rest.visibilityBySource || {},
+        availableTopics,
+        idx === 0
+      );
+      groupVisibilityBySource = assign(
+        {},
+        ...groupDisplayVisibilityBySourceByColumn.map((item) => item.visibilityBySource)
+      );
+    }
+
+    let isAnyTopicFiltered = false;
+
+    const topicItems = items.map((topicItemConfig, idx1) => {
+      const {
+        displayName,
+        topicName,
+        selectedNamespacesBySource,
+        visibilityBySource = { "": true }, // set the base topic to be visible by default
+      } = topicItemConfig;
+
+      const availableNamespacesBySource = {};
+      const topicDisplayVisibilityBySource = {};
+      const availablePrefixes = [];
+      let datatype;
+      const errors = [];
+      // If base topic and namespaces are not available, we'll use placeholders in the UI so the data source badges are aligned
+      const isBaseTopicAvailable = availableTopicNamesSet.has(topicName);
+      const isBaseNamespaceAvailable = (namespacesByTopic[topicName] || []).length > 0;
+
+      ALL_DATA_SOURCE_PREFIXES.forEach((dataSourcePrefix) => {
+        const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
+        if (availableTopicNamesSet.has(prefixedTopicName)) {
+          if (errorsByTopic[prefixedTopicName]) {
+            const errorSource = dataSourcePrefix ? `(${dataSourcePrefix}) ` : "";
+            errors.push(...errorsByTopic[prefixedTopicName].map((error) => `${errorSource}${error}`));
+          }
+          availablePrefixes.push(dataSourcePrefix);
+          datatype = datatypeKeyByTopicName[prefixedTopicName];
+          // only show namespaces when the topic is available
+          if (namespacesByTopic[prefixedTopicName]) {
+            availableNamespacesBySource[dataSourcePrefix] = namespacesByTopic[prefixedTopicName];
+          }
+
+          topicDisplayVisibilityBySource[dataSourcePrefix] = {
+            isParentVisible: groupVisibilityBySource[dataSourcePrefix],
+            badgeText: getBadgeTextByTopicName(prefixedTopicName),
+            // always visible by default
+            // $FlowFixMe the field is missing in object literal
+            visible: visibilityBySource[dataSourcePrefix] != null ? visibilityBySource[dataSourcePrefix] : true,
+            available: true,
+          };
+        }
+      });
+
+      // build an array of namespace items with visibility and availability for easy render
+      const namespaceItems = getNamespacesItemsBySource(
+        topicName,
+        availableNamespacesBySource,
+        selectedNamespacesBySource,
+        topicDisplayVisibilityBySource,
+        groupVisibilityBySource
+      );
+
+      const displayNameWithFallback = displayName || displayNameByTopic[topicName];
+      const isTopicShownInList =
+        !filteredKeysSet ||
+        (filteredKeysSet && (filteredKeysSet.has(topicName) || filteredKeysSet.has(displayNameWithFallback)));
+
+      // auto select group if any topic in this group is selected
+      if (isTopicShownInList) {
+        isAnyTopicFiltered = true;
+      }
+      return {
+        // save the original config in order to save back to panelConfig
+        ...topicItemConfig,
+        derivedFields: {
+          id: `${id}_${idx1}`,
+          availablePrefixes,
+          isShownInList: isTopicShownInList,
+          // derive data source badge spacing from # of the prefix groups
+          dataSourceBadgeSlots: groupDisplayVisibilityBySourceByColumn.length,
+          displayName: displayNameWithFallback || topicName,
+          displayVisibilityBySource: topicDisplayVisibilityBySource,
+          isBaseNamespaceAvailable,
+          isBaseTopicAvailable,
+          namespaceItems,
+          ...(filterText ? { filterText } : undefined),
+          ...(errors.length ? { errors } : undefined),
+          ...(datatype ? { datatype } : undefined),
+        },
+      };
+    });
+
+    // TODO(Audrey): auto expand visible groups or groups with visible children, need to use react virtualized to improve perf.
+    const isGroupShownInList =
+      !filteredKeysSet || isAnyTopicFiltered || (filteredKeysSet && filteredKeysSet.has(rest.displayName));
+
     return {
       ...rest,
-      derivedFields: { id },
-      items: items.map((topicItemConfig, idx1) => {
-        const {
-          displayName,
-          topicName,
-          selectedNamespacesBySource,
-          visibilitiesBySource = { "": true }, // set the base topic to be visible by default
-        } = topicItemConfig;
-
-        const availableNamespacesBySource = {};
-        const topicDisplayVisibilityBySource = {};
-        let available = false;
-
-        ALL_DATA_SOURCE_PREFIXES.forEach((dataSourcePrefix) => {
-          const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
-          if (availableTopicNamesSet.has(prefixedTopicName)) {
-            available = true;
-            // only show namespaces when the topic is available
-            if (namespacesByTopic[prefixedTopicName]) {
-              availableNamespacesBySource[dataSourcePrefix] = namespacesByTopic[prefixedTopicName];
-            }
-
-            topicDisplayVisibilityBySource[dataSourcePrefix] = {
-              isParentVisible: isTopicGroupVisible,
-              badgeText: getBadgeTextByTopicName(prefixedTopicName),
-              // always visible by default
-              // $FlowFixMe the field is missing in object literal
-              visible: visibilitiesBySource[dataSourcePrefix] != null ? visibilitiesBySource[dataSourcePrefix] : true,
-              available: true,
-            };
-          }
-        });
-
-        // build an array of namespace items with visibility and availability for easy render
-        const namespaceItems = getNamespacesItemsBySource(
-          topicName,
-          availableNamespacesBySource,
-          selectedNamespacesBySource,
-          topicDisplayVisibilityBySource,
-          isTopicGroupVisible
-        );
-
-        return {
-          // save the original config in order to save back to panelConfig
-          ...topicItemConfig,
-          derivedFields: {
-            id: `${id}_${idx1}`,
-            displayName: displayName || displayNameByTopic[topicName] || topicName,
-            displayVisibilityBySource: topicDisplayVisibilityBySource,
-            namespaceItems,
-            available,
-          },
-        };
-      }),
+      expanded: rest.expanded == null ? idx === 0 : rest.expanded,
+      derivedFields: {
+        id,
+        displayVisibilityBySourceByColumn: groupDisplayVisibilityBySourceByColumn,
+        isShownInList: isGroupShownInList,
+        ...(filterText ? { filterText } : undefined),
+      },
+      items: topicItems,
     };
   });
 }
@@ -207,7 +313,7 @@ export function getNamespacesItemsBySource(
   availableNamespacesBySource: NamespacesBySource,
   selectedNamespacesBySource: NamespacesBySource = {},
   topicDisplayVisibilityBySource: DisplayVisibilityBySource,
-  isTopicGroupVisible: boolean
+  groupVisibilityBySource: VisibilityBySource
 ): NamespaceItem[] {
   if (isEmpty(availableNamespacesBySource)) {
     return [];
@@ -221,7 +327,9 @@ export function getNamespacesItemsBySource(
       name: namespace,
       displayVisibilityBySource: availableDataSourcePrefixes.reduce((memo, dataSourcePrefix) => {
         memo[dataSourcePrefix] = {
-          isParentVisible: isTopicGroupVisible ? topicDisplayVisibilityBySource[dataSourcePrefix].visible : false,
+          isParentVisible: groupVisibilityBySource[dataSourcePrefix]
+            ? topicDisplayVisibilityBySource[dataSourcePrefix].visible
+            : false,
           badgeText: getBadgeTextByTopicName(`${dataSourcePrefix}${topicName}`),
           visible:
             selectedNamespacesBySource[dataSourcePrefix] != null
@@ -245,44 +353,114 @@ export function getSelectionsFromTopicGroupConfig(
   const selectedTopicNames = [];
   const selectedNamespacesByTopic = {};
   const selectedTopicSettingsByTopic = {};
-  topicGroupsConfig.forEach(({ visible: topicGroupVisible, items }) => {
-    if (!topicGroupVisible) {
-      return;
-    }
-    items.forEach(({ topicName, visibilitiesBySource, settingsBySource, selectedNamespacesBySource = {} }) => {
-      // if the visibility is not set, default to make the non-prefixed topic visible and add the corresponding namespaces
-      if (!visibilitiesBySource) {
-        selectedTopicNames.push(topicName);
-        if (selectedNamespacesBySource[""]) {
-          selectedNamespacesByTopic[topicName] = selectedNamespacesBySource[""];
+  topicGroupsConfig.forEach(
+    ({ visibilityBySource: topicGroupVisibilityBySource = DEFAULT_GROUP_VISIBILITY_BY_SOURCE, items }) => {
+      items.forEach(({ topicName, visibilityBySource, settingsBySource, selectedNamespacesBySource = {} }) => {
+        // if the visibility is not set, default to make the non-prefixed topic visible and add the corresponding namespaces
+        if (!visibilityBySource) {
+          // return early if the the group prefix is not visible
+          if (!topicGroupVisibilityBySource[""]) {
+            return;
+          }
+          selectedTopicNames.push(topicName);
+          if (selectedNamespacesBySource[""]) {
+            selectedNamespacesByTopic[topicName] = selectedNamespacesBySource[""];
+          }
+        } else {
+          for (const [dataSourcePrefix, visible] of Object.entries(visibilityBySource)) {
+            // no need to process if the the group prefix is not visible
+            if (!topicGroupVisibilityBySource[dataSourcePrefix]) {
+              continue;
+            }
+            const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
+            if (visible) {
+              selectedTopicNames.push(prefixedTopicName);
+            }
+            // only need to set namespaces for the selected topics
+            if (selectedNamespacesBySource[dataSourcePrefix]) {
+              selectedNamespacesByTopic[prefixedTopicName] = selectedNamespacesBySource[dataSourcePrefix];
+            }
+          }
         }
-      } else {
-        for (const [dataSourcePrefix, visible] of Object.entries(visibilitiesBySource)) {
+        if (!settingsBySource) {
+          return;
+        }
+        for (const [dataSourcePrefix, settings] of Object.entries(settingsBySource)) {
           const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
-          if (visible) {
-            selectedTopicNames.push(prefixedTopicName);
-          }
-          // only need to set namespaces for the selected topics
-          if (selectedNamespacesBySource[dataSourcePrefix]) {
-            selectedNamespacesByTopic[prefixedTopicName] = selectedNamespacesBySource[dataSourcePrefix];
+          // only need to set settings for the selected topics
+          if (settings) {
+            selectedTopicSettingsByTopic[prefixedTopicName] = settings;
           }
         }
-      }
-      if (!settingsBySource) {
-        return;
-      }
-      for (const [dataSourcePrefix, settings] of Object.entries(settingsBySource)) {
-        const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
-        // only need to set namespaces for the selected topics
-        if (settings) {
-          selectedTopicSettingsByTopic[prefixedTopicName] = settings;
-        }
-      }
-    });
-  });
+      });
+    }
+  );
   return {
     selectedTopicNames,
     selectedNamespacesByTopic,
     selectedTopicSettingsByTopic,
   };
+}
+
+export function getSceneErrorsByTopic(sceneErrors: SceneErrors): { [topicName: string]: string[] } {
+  const res = {};
+  // generic errors
+  for (const [topic, message] of sceneErrors.topicsWithError) {
+    if (!res[topic]) {
+      res[topic] = [];
+    }
+    res[topic].push(message);
+  }
+  // errors related to missing frame ids and transform ids
+  [
+    { description: "missing frame id", errors: sceneErrors.topicsMissingFrameIds },
+    {
+      description: `missing transforms to ${sceneErrors.rootTransformID}:`,
+      errors: sceneErrors.topicsMissingTransforms,
+    },
+  ].forEach(({ description, errors }) => {
+    errors.forEach((_, topic) => {
+      if (!res[topic]) {
+        res[topic] = [];
+      }
+      res[topic].push(description);
+    });
+  });
+  return res;
+}
+
+export type TreeNodeConfig = {|
+  topicName?: string,
+  name: string,
+  children?: TreeNodeConfig[],
+|};
+
+// Transform the existing topic tree config to the topic group tree by removing extension, icon,
+// legacyIds, and add map and tf topic.
+// TODO(Audrey): remove the transform logic once we release topic grouping feature
+export function transformTopicTree(oldTree: TopicConfig): TreeNodeConfig {
+  const newTree: TreeNodeConfig = {
+    ...(oldTree.name ? { name: oldTree.name || oldTree.topic } : undefined),
+    ...(oldTree.topic ? { topicName: oldTree.topic } : undefined),
+  };
+  if (oldTree.name && oldTree.name === "TF") {
+    newTree.topicName = "/tf";
+  }
+  const oldChildren = oldTree.children;
+
+  if (oldChildren) {
+    const newChildren = [];
+    // Replace extensions with /metadata topic
+    if (oldChildren.some((item) => item.extension)) {
+      newChildren.push({ name: "Map", topicName: "/metadata" });
+    }
+
+    newChildren.push(
+      ...oldChildren.map((child) => (child.extension ? null : transformTopicTree(child))).filter(Boolean)
+    );
+    if (newChildren.length) {
+      newTree.children = newChildren;
+    }
+  }
+  return newTree;
 }

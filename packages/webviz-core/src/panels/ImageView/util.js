@@ -39,37 +39,28 @@ export type MarkerData = ?{|
   cameraModel: ?CameraModel, // null means no transformation is needed
 |};
 
-// given all available marker topics, filter out the names that are available for this image topic
-export function getMarkerOptions(
-  imageTopic: string,
-  markerTopics: string[],
-  allCameraNamespaces: string[]
-): MarkerOption[] {
+export function getMarkerOptions(imageTopic: string, markerTopics: string[], allCameraNamespaces: string[]): string[] {
   const results = [];
   const cameraNamespace = getCameraNamespace(imageTopic);
   for (const topic of markerTopics) {
     if (cameraNamespace && topic.startsWith(cameraNamespace)) {
-      results.push({ topic, name: topic.substr(cameraNamespace.length).replace(/^\//, "") });
+      results.push(topic);
     } else if (cameraNamespace && topic.startsWith(`/old${cameraNamespace}`)) {
-      results.push({ topic, name: topic });
+      results.push(topic);
     } else if (allCameraNamespaces.includes(getCameraNamespace(topic))) {
       // this topic corresponds to a different camera
       continue;
     } else {
-      results.push({ topic, name: topic });
+      results.push(topic);
     }
   }
   return results;
 }
 
-// derive the marker topics from the selected marker names which can be associated with this camera
-// (the camera topic must be rectified in order for markers to align properly)
-export function getMarkerTopics(imageTopic: string, markerNames: string[]): string[] {
-  const cameraNamespace = getCameraNamespace(imageTopic);
-  if (cameraNamespace) {
-    return markerNames.map((name) => (name.startsWith("/") ? name : `${cameraNamespace}/${name}`));
-  }
-  return [];
+export function getRelatedMarkerTopics(enabledMarkerTopics: string[], availableMarkerTopics: string[]): string[] {
+  return availableMarkerTopics.filter((topic) => {
+    return enabledMarkerTopics.some((enabledTopic) => topic.endsWith(enabledTopic.split("/").pop()));
+  });
 }
 
 // get the sensor_msgs/CameraInfo topic associated with an image topic

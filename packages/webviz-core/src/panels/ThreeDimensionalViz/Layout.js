@@ -30,8 +30,8 @@ import {
 } from "regl-worldview";
 import { type Time } from "rosbag";
 
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { Item } from "webviz-core/src/components/Menu";
-import { useShallowMemo } from "webviz-core/src/components/MessageHistory/hooks";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import filterMap from "webviz-core/src/filterMap";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
@@ -47,6 +47,7 @@ import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scs
 import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutToolbar";
 import LayoutTopicSettings from "webviz-core/src/panels/ThreeDimensionalViz/LayoutTopicSettings";
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
+import { useSearchText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
 import { getUpdatedGlobalVariablesBySelectedObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import TopicSelector from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
@@ -60,6 +61,7 @@ import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { SaveConfig } from "webviz-core/src/types/panels";
+import { useShallowMemo } from "webviz-core/src/util/hooks";
 import { videoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
 
@@ -201,6 +203,9 @@ export default function Layout({
   const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(null);
   const selectedObject = selectedObjectState && selectedObjectState.selectedObject;
 
+  const searchTextProps = useSearchText();
+  const { searchTextOpen, searchText, setSearchTextMatches, searchTextMatches, selectedMatchIndex } = searchTextProps;
+
   // If topic settings are changing rapidly, such as when dragging a slider or color picker,
   // the topicSettings will change, but we don't want to rebuild the tree each time so we
   // check for shallow equality on the list of edited topics.
@@ -269,7 +274,7 @@ export default function Layout({
 
   const { playerId } = useDataSourceInfo();
 
-  useMemo(
+  const rootTf = useMemo(
     () => {
       // TODO(Audrey): add tests for the clearing behavior
       if (cleared) {
@@ -303,6 +308,7 @@ export default function Layout({
       transformsBuilder.setTransforms(transforms, rootTfID);
       const tfSelections = memoizedExtensions.filter((ex) => ex.startsWith("TF")).map((ex) => ex.substr("TF.".length));
       transformsBuilder.setSelectedTransforms(tfSelections);
+      return rootTfID;
     },
     [
       cleared,
@@ -496,16 +502,35 @@ export default function Layout({
     saveConfig,
   ]);
 
+  const glTextEnabled = useExperimentalFeature("glText");
   const keyDownHandlers = useMemo(
-    () => ({
-      "3": () => {
-        toggleCameraMode();
-      },
-      Escape: () => {
-        setDrawingTabType(null);
-      },
-    }),
-    [toggleCameraMode]
+    () => {
+      const handlers: { [key: string]: (e: KeyboardEvent) => void } = {
+        "3": () => {
+          toggleCameraMode();
+        },
+        Escape: (e) => {
+          e.preventDefault();
+          setDrawingTabType(null);
+          searchTextProps.toggleSearchTextOpen(false);
+        },
+      };
+
+      if (glTextEnabled) {
+        handlers.f = (e: KeyboardEvent) => {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            searchTextProps.toggleSearchTextOpen(true);
+            if (!searchTextProps.searchInputRef || !searchTextProps.searchInputRef.current) {
+              return;
+            }
+            searchTextProps.searchInputRef.current.select();
+          }
+        };
+      }
+      return handlers;
+    },
+    [glTextEnabled, searchTextProps, toggleCameraMode]
   );
 
   const isDrawing = useMemo(
@@ -598,7 +623,12 @@ export default function Layout({
           onDoubleClick={onDoubleClick}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}>
+          onMouseUp={onMouseUp}
+          searchTextOpen={searchTextOpen}
+          searchText={searchText}
+          setSearchTextMatches={setSearchTextMatches}
+          searchTextMatches={searchTextMatches}
+          selectedMatchIndex={selectedMatchIndex}>
           {mapElement}
           {children}
           <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
@@ -629,6 +659,8 @@ export default function Layout({
               setMeasureInfo={setMeasureInfo}
               showCrosshair={showCrosshair}
               transforms={transforms}
+              rootTf={rootTf}
+              {...searchTextProps}
             />
           </div>
           {selectedObjectState &&

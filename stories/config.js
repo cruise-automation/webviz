@@ -11,9 +11,11 @@ import { initScreenshot, setScreenshotOptions } from "storybook-chrome-screensho
 
 import "webviz-core/src/styles/global.scss";
 import prepareForScreenshots from "./prepareForScreenshots";
+import storiesSetup from "webviz-core/src/stories/setup";
 import waitForFonts from "webviz-core/src/styles/waitForFonts";
 import installChartjs from "webviz-core/src/util/installChartjs";
 
+storiesSetup();
 global.GIT_INFO = {};
 installChartjs();
 

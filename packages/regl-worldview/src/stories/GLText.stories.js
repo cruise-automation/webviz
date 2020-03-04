@@ -45,6 +45,34 @@ function textMarkers({
 
 storiesOf("Worldview/GLText", module)
   .addDecorator(withScreenshot({ delay: 200 }))
+  .add("no-smoothing", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container cameraState={{
+        target: [target.x, target.y, target.z],
+        perspective: true,
+        distance: 3,
+      }}>
+        <GLText>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("hires-smoothing", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container cameraState={{
+        target: [target.x, target.y, target.z],
+        perspective: true,
+        distance: 3,
+      }}>
+        <GLText hiresFont>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
   .add("billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
       <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: true })}</GLText>

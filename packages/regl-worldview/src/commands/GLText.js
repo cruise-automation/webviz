@@ -160,6 +160,7 @@ const vert = `
   varying vec4 vBackgroundColor;
   varying vec4 vHighlightColor;
   varying float vEnableHighlight;
+  varying float vBillboard;
 
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
@@ -183,7 +184,8 @@ const vert = `
     vec3 markerSpacePos = scale * vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
     gl_Position = computeVertexPosition(markerSpacePos);
 
-    if (scaleInvariant) {
+    if (scaleInvariant && billboard == 1.0) {
+      // Scale invariance only works for billboards
       float screenScale = 0.015;
       float w = gl_Position.w;
       w *= screenScale;
@@ -197,6 +199,7 @@ const vert = `
     vBackgroundColor = backgroundColor;
     vHighlightColor = highlightColor;
     vEnableHighlight = enableHighlight;
+    vBillboard = billboard;
   }
 `;
 
@@ -207,6 +210,7 @@ const frag = `
   uniform sampler2D atlas;
   uniform float cutoff;
   uniform bool debugSDF;
+  uniform bool scaleInvariant;
 
   varying vec2 vTexCoord;
   varying float vEnableBackground;
@@ -214,6 +218,8 @@ const frag = `
   varying vec4 vBackgroundColor;
   varying vec4 vHighlightColor;
   varying float vEnableHighlight;
+  varying float vBillboard;
+
   void main() {
     float dist = texture2D(atlas, vTexCoord).a;
 
@@ -221,14 +227,21 @@ const frag = `
     // when the solid background is enabled, because the alpha blending and
     // depth test don't work together nicely for partially-transparent pixels.
     float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
+
+    if (scaleInvariant && vBillboard == 1.0) {
+      // If scale invariant is enabled, do not interpolate the raw distance value
+      // since the text will be displayed in a smaller scale than usual. At such
+      // small scale, the SDF approach causes some visual artifacts.
+      edgeStep = dist;
+    }
+
     if (vEnableHighlight > 0.5) {
       gl_FragColor = mix(vHighlightColor, vec4(0, 0, 0, 1), edgeStep);
     } else if (vEnableBackground > 0.5) {
-      float screenSize = fwidth(vTexCoord.x);
       gl_FragColor = mix(vBackgroundColor, vForegroundColor, edgeStep);
     } else {
       gl_FragColor = vForegroundColor;
-      gl_FragColor.a *= step(1.0 - cutoff, dist);
+      gl_FragColor.a *= edgeStep;
     }
 
     if (debugSDF) {

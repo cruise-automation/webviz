@@ -133,12 +133,6 @@ storiesOf("Worldview/GLText", module)
       <Axes />
     </Container>
   ))
-  .add("non-billboard scaleInvariant", () => (
-    <Container cameraState={{ perspective: true, distance: 40 }}>
-      <GLText scaleInvariant>{textMarkers({ text: "Hello\nWorldview", billboard: false })}</GLText>
-      <Axes />
-    </Container>
-  ))
   .add("no background", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
       <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: false, background: false })}</GLText>

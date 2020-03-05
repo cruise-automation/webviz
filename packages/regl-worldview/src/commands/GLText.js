@@ -43,6 +43,8 @@ type Props = {
   children: $ReadOnlyArray<TextMarkerProps>,
   autoBackgroundColor?: boolean,
   hiresFont?: boolean,
+  debugSDF?: boolean,
+  scaleInvariant?: boolean,
 };
 
 type FontAtlas = {|
@@ -129,6 +131,7 @@ const vert = `
   uniform mat4 projection, view, billboardRotation;
   uniform float fontSize;
   uniform vec2 atlasSize;
+  uniform bool scaleInvariant;
 
   // per-vertex attributes
   attribute vec2 texCoord;
@@ -165,16 +168,29 @@ const vert = `
     return v + (2.0 * cross(q.xyz, temp));
   }
 
+  vec4 computeVertexPosition(vec3 markerPos) {
+    vec3 pos;
+    if (billboard == 1.0) {
+      pos = (billboardRotation * vec4(markerPos, 1.0)).xyz + posePosition;
+    } else {
+      pos = rotate(markerPos, poseOrientation) + posePosition;
+    }
+    return projection * view * vec4(pos, 1.0);
+  }
+
   void main () {
     vec2 srcSize = vec2(srcWidth, fontSize);
     vec3 markerSpacePos = scale * vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
-    vec3 pos;
-    if (billboard == 1.0) {
-      pos = (billboardRotation * vec4(markerSpacePos, 1)).xyz + posePosition;
-    } else {
-      pos = rotate(markerSpacePos, poseOrientation) + posePosition;
+    gl_Position = computeVertexPosition(markerSpacePos);
+
+    if (scaleInvariant) {
+      float screenScale = 0.015;
+      float w = gl_Position.w;
+      w *= screenScale;
+      markerSpacePos *= w;
+      gl_Position = computeVertexPosition(markerSpacePos);
     }
-    gl_Position = projection * view * vec4(pos, 1);
+
     vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
     vEnableBackground = enableBackground;
     vForegroundColor = foregroundColor;
@@ -190,6 +206,7 @@ const frag = `
   uniform mat4 projection;
   uniform sampler2D atlas;
   uniform float cutoff;
+  uniform bool debugSDF;
 
   varying vec2 vTexCoord;
   varying float vEnableBackground;
@@ -214,7 +231,9 @@ const frag = `
       gl_FragColor.a *= step(1.0 - cutoff, dist);
     }
 
-    // gl_FragColor = vec4( dist, dist, dist, 1.0 );
+    if (debugSDF) {
+      gl_FragColor = vec4( dist, dist, dist, 1.0 );
+    }
 
     if (gl_FragColor.a == 0.) {
       discard;
@@ -240,6 +259,8 @@ function makeTextCommand() {
         atlasSize: () => [atlasTexture.width, atlasTexture.height],
         fontSize: command.fontSize,
         cutoff: CUTOFF,
+        debugSDF: command.debugSDF,
+        scaleInvariant: command.scaleInvariant,
       },
       instances: regl.prop("instances"),
       count: 4,
@@ -427,5 +448,7 @@ export default function GLText(props: Props) {
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
   command.fontSize = fontSize;
+  command.debugSDF = props.debugSDF === true;
+  command.scaleInvariant = props.scaleInvariant === true;
   return <Command reglCommand={command} {...props} />;
 }

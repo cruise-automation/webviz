@@ -13,7 +13,7 @@ import { vec4ToOrientation } from "../utils/commandUtils";
 import Container from "./Container";
 import inScreenshotTests from "stories/inScreenshotTests";
 
-import { GLText } from "..";
+import { GLText, Text } from "..";
 
 function textMarkers({
   text,
@@ -59,6 +59,20 @@ storiesOf("Worldview/GLText", module)
       </Container>
     );
   })
+  .add("no-smoothing-sdf", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container cameraState={{
+        target: [target.x, target.y, target.z],
+        perspective: true,
+        distance: 3,
+      }}>
+        <GLText debugSDF>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
   .add("hires-smoothing", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;
@@ -73,6 +87,40 @@ storiesOf("Worldview/GLText", module)
       </Container>
     );
   })
+  .add("hires-smoothing-sdf", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container cameraState={{
+        target: [target.x, target.y, target.z],
+        perspective: true,
+        distance: 3,
+      }}>
+        <GLText hiresFont debugSDF>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("scaleInvariant", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText hiresFont scaleInvariant>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("scaleInvariant-gt", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <Text>{markers}</Text>
+        <Axes />
+      </Container>
+    );
+  })
   .add("billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
       <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: true })}</GLText>
@@ -82,6 +130,12 @@ storiesOf("Worldview/GLText", module)
   .add("non-billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
       <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: false })}</GLText>
+      <Axes />
+    </Container>
+  ))
+  .add("non-billboard scaleInvariant", () => (
+    <Container cameraState={{ perspective: true, distance: 40 }}>
+      <GLText scaleInvariant>{textMarkers({ text: "Hello\nWorldview", billboard: false })}</GLText>
       <Axes />
     </Container>
   ))

@@ -27,7 +27,6 @@ import WorldviewReactContext from "../WorldviewReactContext";
 // ============================
 // - Add hitmap support.
 // - Allow customization of font style, maybe highlight ranges.
-// - Add a scaleInvariant option.
 // - Consider a solid rectangular background instead of an outline. This is challenging because the
 //   instances currently overlap, so there will be z-fighting, but might be possible using the stencil buffer and multiple draw calls.
 // - Somehow support kerning and more advanced font metrics. However, the web font APIs may not
@@ -366,6 +365,12 @@ function makeTextCommand() {
           marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK);
         const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
 
+        if (!marker.billboard && command.scaleInvariant) {
+          console.warn(
+            "Scale invariant option is only supported for billboard markers"
+          );
+        }
+
         for (let i = 0; i < marker.text.length; i++) {
           const char = marker.text[i];
           if (char === "\n") {
@@ -473,7 +478,7 @@ export default function GLText(props: Props) {
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
-  command.fontSize = props.hiresFont ? HIRES_FONT_SIZE : DEFAULT_FONT_SIZE;
+  command.fontSize = (props.hiresFont ?? props.scaleInvariant) ? HIRES_FONT_SIZE : DEFAULT_FONT_SIZE;
   command.debugSDF = props.debugSDF === true;
   command.scaleInvariant = props.scaleInvariant === true;
   command.scaleInvariantSize = scaleInvariantSize;

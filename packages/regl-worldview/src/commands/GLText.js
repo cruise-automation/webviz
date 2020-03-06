@@ -2,12 +2,13 @@
 
 import TinySDF from "@mapbox/tiny-sdf";
 import memoizeOne from "memoize-one";
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 
 import type { Color } from "../types";
 import { defaultBlend, defaultDepth } from "../utils/commandUtils";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
+import WorldviewReactContext from "../WorldviewReactContext";
 
 // The GLText command renders text from a Signed Distance Field texture.
 // There are many external resources about SDFs and text rendering in WebGL, including:
@@ -45,6 +46,7 @@ type Props = {
   hiresFont?: boolean,
   debugSDF?: boolean,
   scaleInvariant?: boolean,
+  scaleInvariantFontSize?: number,
 };
 
 type FontAtlas = {|
@@ -62,6 +64,7 @@ type FontAtlas = {|
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
 const DEFAULT_FONT_SIZE = 40;
+const DEFAULT_SCALE_INVARIANT_SIZE = 10;
 const HIRES_FONT_SIZE = 160;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
@@ -132,6 +135,7 @@ const vert = `
   uniform float fontSize;
   uniform vec2 atlasSize;
   uniform bool scaleInvariant;
+  uniform float scaleInvariantSize;
 
   // per-vertex attributes
   attribute vec2 texCoord;
@@ -186,9 +190,8 @@ const vert = `
 
     if (scaleInvariant && billboard == 1.0) {
       // Scale invariance only works for billboards
-      float screenScale = 0.015;
       float w = gl_Position.w;
-      w *= screenScale;
+      w *= scaleInvariantSize;
       markerSpacePos *= w;
       gl_Position = computeVertexPosition(markerSpacePos);
     }
@@ -211,6 +214,7 @@ const frag = `
   uniform float cutoff;
   uniform bool debugSDF;
   uniform bool scaleInvariant;
+  uniform float scaleInvariantSize;
 
   varying vec2 vTexCoord;
   varying float vEnableBackground;
@@ -228,10 +232,12 @@ const frag = `
     // depth test don't work together nicely for partially-transparent pixels.
     float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
 
-    if (scaleInvariant && vBillboard == 1.0) {
-      // If scale invariant is enabled, do not interpolate the raw distance value
-      // since the text will be displayed in a smaller scale than usual. At such
-      // small scale, the SDF approach causes some visual artifacts.
+    if (scaleInvariant && vBillboard == 1.0 && scaleInvariantSize < 0.03) {
+      // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate 
+      // the raw distance value since at such small scale, the SDF approach causes some 
+      // visual artifacts.
+      // The value used for checking if scaleInvariantSize is "too small" is arbitrary and 
+      // was defined after some experimentation. 
       edgeStep = dist;
     }
 
@@ -274,6 +280,7 @@ function makeTextCommand() {
         cutoff: CUTOFF,
         debugSDF: command.debugSDF,
         scaleInvariant: command.scaleInvariant,
+        scaleInvariantSize: command.scaleInvariantSize,
       },
       instances: regl.prop("instances"),
       count: 4,
@@ -455,13 +462,20 @@ function makeTextCommand() {
 }
 
 export default function GLText(props: Props) {
-  const fontSize = props.hiresFont ? HIRES_FONT_SIZE : DEFAULT_FONT_SIZE;
+  const context = useContext(WorldviewReactContext);
+  const {
+    dimension
+  } = context;
+  const scaleInvariantFontSize = props.scaleInvariantFontSize || DEFAULT_SCALE_INVARIANT_SIZE;
+  const scaleInvariantSize = scaleInvariantFontSize / dimension.height;
+
   const [command] = useState(() => makeTextCommand());
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
-  command.fontSize = fontSize;
+  command.fontSize = props.hiresFont ? HIRES_FONT_SIZE : DEFAULT_FONT_SIZE;
   command.debugSDF = props.debugSDF === true;
   command.scaleInvariant = props.scaleInvariant === true;
+  command.scaleInvariantSize = scaleInvariantSize;
   return <Command reglCommand={command} {...props} />;
 }

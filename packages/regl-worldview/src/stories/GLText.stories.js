@@ -13,7 +13,7 @@ import { vec4ToOrientation } from "../utils/commandUtils";
 import Container from "./Container";
 import inScreenshotTests from "stories/inScreenshotTests";
 
-import { GLText, Text } from "..";
+import { GLText } from "..";
 
 function textMarkers({
   text,
@@ -124,15 +124,6 @@ storiesOf("Worldview/GLText", module)
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
         <GLText hiresFont scaleInvariant scaleInvariantFontSize="40">{markers}</GLText>
-        <Axes />
-      </Container>
-    );
-  })
-  .add("scaleInvariant-html", () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
-    return (
-      <Container cameraState={{ perspective: true, distance: 25 }}>
-        <Text>{markers}</Text>
         <Axes />
       </Container>
     );

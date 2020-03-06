@@ -161,6 +161,18 @@ storiesOf("Worldview/GLText", module)
       <Axes />
     </Container>
   ))
+  .add("autoBackgroundColor hires", () => (
+    <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+      <GLText autoBackgroundColor hiresFont>{textMarkers({ text: "Hello\nWorldview" })}</GLText>
+      <Axes />
+    </Container>
+  ))
+  .add("autoBackgroundColor scaleInvariant", () => (
+    <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+      <GLText autoBackgroundColor scaleInvariant>{textMarkers({ text: "Hello\nWorldview" })}</GLText>
+      <Axes />
+    </Container>
+  ))
   .add("changing text", () => {
     function Example() {
       const [text, setText] = useState("Hello\nWorldview");
@@ -177,6 +189,28 @@ storiesOf("Worldview/GLText", module)
       return (
         <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
           <GLText autoBackgroundColor>{textMarkers({ text })}</GLText>
+          <Axes />
+        </Container>
+      );
+    }
+    return <Example />;
+  })
+  .add("changing text hires", () => {
+    function Example() {
+      const [text, setText] = useState("Hello\nWorldview");
+      useLayoutEffect(() => {
+        let i = 0;
+        const id = setInterval(() => {
+          setText(`New text! ${++i}`);
+          if (inScreenshotTests()) {
+            clearInterval(id);
+          }
+        }, 100);
+        return () => clearInterval(id);
+      }, []);
+      return (
+        <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+          <GLText autoBackgroundColor hiresFont>{textMarkers({ text })}</GLText>
           <Axes />
         </Container>
       );
@@ -213,6 +247,55 @@ storiesOf("Worldview/GLText", module)
           <div style={{ width: "100%", height: "100%" }}>
             <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
               <GLText autoBackgroundColor>{markers}</GLText>
+              <Axes />
+            </Container>
+          </div>
+          <div style={{ position: "absolute", top: "10px", right: "10px" }}>
+            <label htmlFor="search">Search: </label>
+            <input
+              type="text"
+              name="search"
+              placeholder="search text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          </div>
+        </div>
+      );
+    };
+
+    return <Example />;
+  })
+  .add("highlighted text hires", () => {
+    const Example = () => {
+      const [searchText, setSearchText] = useState("ello\nW");
+      const markers = textMarkers({ text: "Hello\nWorldview" }).map((marker) => {
+        if (!searchText) {
+          return marker;
+        }
+        const highlightedIndices = new Set();
+        let match;
+        let regex;
+        try {
+          regex = new RegExp(searchText, "ig");
+        } catch (e) {
+          return marker;
+        }
+        while ((match = regex.exec(marker.text)) !== null) {
+          // $FlowFixMe - Flow doesn't understand the while loop terminating condition.
+          range(0, match[0].length).forEach((i) => {
+            // $FlowFixMe - Flow doesn't understand the while loop terminating condition.
+            highlightedIndices.add(match.index + i);
+          });
+        }
+        return { ...marker, highlightedIndices: Array.from(highlightedIndices) };
+      });
+
+      return (
+        <div style={{ width: "100%", height: "100%" }}>
+          <div style={{ width: "100%", height: "100%" }}>
+            <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+              <GLText autoBackgroundColor hiresFont>{markers}</GLText>
               <Axes />
             </Container>
           </div>

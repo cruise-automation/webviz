@@ -111,7 +111,7 @@ storiesOf("Worldview/GLText", module)
       </Container>
     );
   })
-  .add("scaleInvariant-gt", () => {
+  .add("scaleInvariant-html", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;
     return (

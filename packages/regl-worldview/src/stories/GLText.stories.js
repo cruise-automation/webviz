@@ -49,11 +49,12 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;
     return (
-      <Container cameraState={{
-        target: [target.x, target.y, target.z],
-        perspective: true,
-        distance: 3,
-      }}>
+      <Container
+        cameraState={{
+          target: [target.x, target.y, target.z],
+          perspective: true,
+          distance: 3,
+        }}>
         <GLText>{markers}</GLText>
         <Axes />
       </Container>
@@ -63,11 +64,12 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;
     return (
-      <Container cameraState={{
-        target: [target.x, target.y, target.z],
-        perspective: true,
-        distance: 3,
-      }}>
+      <Container
+        cameraState={{
+          target: [target.x, target.y, target.z],
+          perspective: true,
+          distance: 3,
+        }}>
         <GLText hiresFont>{markers}</GLText>
         <Axes />
       </Container>
@@ -77,7 +79,9 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText hiresFont scaleInvariant>{markers}</GLText>
+        <GLText hiresFont scaleInvariant>
+          {markers}
+        </GLText>
         <Axes />
       </Container>
     );
@@ -86,7 +90,9 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText hiresFont scaleInvariant scaleInvariantFontSize="20">{markers}</GLText>
+        <GLText hiresFont scaleInvariant scaleInvariantFontSize="20">
+          {markers}
+        </GLText>
         <Axes />
       </Container>
     );
@@ -95,7 +101,9 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText hiresFont scaleInvariant scaleInvariantFontSize="40">{markers}</GLText>
+        <GLText hiresFont scaleInvariant scaleInvariantFontSize="40">
+          {markers}
+        </GLText>
         <Axes />
       </Container>
     );
@@ -126,13 +134,17 @@ storiesOf("Worldview/GLText", module)
   ))
   .add("autoBackgroundColor hires", () => (
     <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-      <GLText autoBackgroundColor hiresFont>{textMarkers({ text: "Hello\nWorldview" })}</GLText>
+      <GLText autoBackgroundColor hiresFont>
+        {textMarkers({ text: "Hello\nWorldview" })}
+      </GLText>
       <Axes />
     </Container>
   ))
   .add("autoBackgroundColor scaleInvariant", () => (
     <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-      <GLText autoBackgroundColor scaleInvariant>{textMarkers({ text: "Hello\nWorldview" })}</GLText>
+      <GLText autoBackgroundColor scaleInvariant>
+        {textMarkers({ text: "Hello\nWorldview" })}
+      </GLText>
       <Axes />
     </Container>
   ))
@@ -173,7 +185,9 @@ storiesOf("Worldview/GLText", module)
       }, []);
       return (
         <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-          <GLText autoBackgroundColor hiresFont>{textMarkers({ text })}</GLText>
+          <GLText autoBackgroundColor hiresFont>
+            {textMarkers({ text })}
+          </GLText>
           <Axes />
         </Container>
       );
@@ -258,7 +272,9 @@ storiesOf("Worldview/GLText", module)
         <div style={{ width: "100%", height: "100%" }}>
           <div style={{ width: "100%", height: "100%" }}>
             <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-              <GLText autoBackgroundColor hiresFont>{markers}</GLText>
+              <GLText autoBackgroundColor hiresFont>
+                {markers}
+              </GLText>
               <Axes />
             </Container>
           </div>

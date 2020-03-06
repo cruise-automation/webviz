@@ -6,9 +6,9 @@ import React, { useState, useContext } from "react";
 
 import type { Color } from "../types";
 import { defaultBlend, defaultDepth } from "../utils/commandUtils";
+import WorldviewReactContext from "../WorldviewReactContext";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
-import WorldviewReactContext from "../WorldviewReactContext";
 
 // The GLText command renders text from a Signed Distance Field texture.
 // There are many external resources about SDFs and text rendering in WebGL, including:
@@ -49,15 +49,15 @@ type Props = {
 
 type FontAtlas = {|
   textureData: Uint8Array,
-    textureWidth: number,
-      textureHeight: number,
-        charInfo: {
-  [char: string]: {|
-    x: number,
+  textureWidth: number,
+  textureHeight: number,
+  charInfo: {
+    [char: string]: {|
+      x: number,
       y: number,
-        width: number,
+      width: number,
     |},
-},
+  },
 |};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
@@ -359,9 +359,7 @@ function makeTextCommand() {
         const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
 
         if (!marker.billboard && command.scaleInvariant) {
-          console.warn(
-            "Scale invariant option is only supported for billboard markers"
-          );
+          console.warn("Scale invariant option is only supported for billboard markers");
         }
 
         for (let i = 0; i < marker.text.length; i++) {
@@ -461,9 +459,7 @@ function makeTextCommand() {
 
 export default function GLText(props: Props) {
   const context = useContext(WorldviewReactContext);
-  const {
-    dimension
-  } = context;
+  const { dimension } = context;
   const scaleInvariantFontSize = props.scaleInvariantFontSize || DEFAULT_SCALE_INVARIANT_SIZE;
   const scaleInvariantSize = scaleInvariantFontSize / dimension.height;
 
@@ -471,7 +467,7 @@ export default function GLText(props: Props) {
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
-  command.fontSize = (props.hiresFont ?? props.scaleInvariant) ? HIRES_FONT_SIZE : DEFAULT_FONT_SIZE;
+  command.fontSize = props.hiresFont ?? props.scaleInvariant ? HIRES_FONT_SIZE : DEFAULT_FONT_SIZE;
   command.scaleInvariant = props.scaleInvariant === true;
   command.scaleInvariantSize = scaleInvariantSize;
   return <Command reglCommand={command} {...props} />;

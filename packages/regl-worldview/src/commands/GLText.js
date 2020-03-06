@@ -43,7 +43,6 @@ type Props = {
   children: $ReadOnlyArray<TextMarkerProps>,
   autoBackgroundColor?: boolean,
   hiresFont?: boolean,
-  debugSDF?: boolean,
   scaleInvariant?: boolean,
   scaleInvariantFontSize?: number,
 };
@@ -211,7 +210,6 @@ const frag = `
   uniform mat4 projection;
   uniform sampler2D atlas;
   uniform float cutoff;
-  uniform bool debugSDF;
   uniform bool scaleInvariant;
   uniform float scaleInvariantSize;
 
@@ -249,10 +247,6 @@ const frag = `
       gl_FragColor.a *= edgeStep;
     }
 
-    if (debugSDF) {
-      gl_FragColor = vec4( dist, dist, dist, 1.0 );
-    }
-
     if (gl_FragColor.a == 0.) {
       discard;
     }
@@ -277,7 +271,6 @@ function makeTextCommand() {
         atlasSize: () => [atlasTexture.width, atlasTexture.height],
         fontSize: command.fontSize,
         cutoff: CUTOFF,
-        debugSDF: command.debugSDF,
         scaleInvariant: command.scaleInvariant,
         scaleInvariantSize: command.scaleInvariantSize,
       },
@@ -479,7 +472,6 @@ export default function GLText(props: Props) {
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
   command.fontSize = (props.hiresFont ?? props.scaleInvariant) ? HIRES_FONT_SIZE : DEFAULT_FONT_SIZE;
-  command.debugSDF = props.debugSDF === true;
   command.scaleInvariant = props.scaleInvariant === true;
   command.scaleInvariantSize = scaleInvariantSize;
   return <Command reglCommand={command} {...props} />;

@@ -59,20 +59,6 @@ storiesOf("Worldview/GLText", module)
       </Container>
     );
   })
-  .add("no-smoothing-sdf", () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
-    const target = markers[9].pose.position;
-    return (
-      <Container cameraState={{
-        target: [target.x, target.y, target.z],
-        perspective: true,
-        distance: 3,
-      }}>
-        <GLText debugSDF>{markers}</GLText>
-        <Axes />
-      </Container>
-    );
-  })
   .add("hires-smoothing", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;
@@ -83,20 +69,6 @@ storiesOf("Worldview/GLText", module)
         distance: 3,
       }}>
         <GLText hiresFont>{markers}</GLText>
-        <Axes />
-      </Container>
-    );
-  })
-  .add("hires-smoothing-sdf", () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
-    const target = markers[9].pose.position;
-    return (
-      <Container cameraState={{
-        target: [target.x, target.y, target.z],
-        perspective: true,
-        distance: 3,
-      }}>
-        <GLText hiresFont debugSDF>{markers}</GLText>
         <Axes />
       </Container>
     );

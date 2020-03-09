@@ -60,7 +60,7 @@ storiesOf("Worldview/GLText", module)
       </Container>
     );
   })
-  .add("hires-smoothing", () => {
+  .add("high-resolution-smoothing", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;
     return (
@@ -70,7 +70,7 @@ storiesOf("Worldview/GLText", module)
           perspective: true,
           distance: 3,
         }}>
-        <GLText hiresFont>{markers}</GLText>
+        <GLText highResolutionFont>{markers}</GLText>
         <Axes />
       </Container>
     );
@@ -79,7 +79,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText hiresFont scaleInvariant>
+        <GLText highResolutionFont scaleInvariant>
           {markers}
         </GLText>
         <Axes />
@@ -90,7 +90,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText hiresFont scaleInvariant scaleInvariantFontSize={20}>
+        <GLText highResolutionFont scaleInvariant scaleInvariantFontSize={20}>
           {markers}
         </GLText>
         <Axes />
@@ -101,7 +101,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText hiresFont scaleInvariant scaleInvariantFontSize={40}>
+        <GLText highResolutionFont scaleInvariant scaleInvariantFontSize={40}>
           {markers}
         </GLText>
         <Axes />
@@ -132,9 +132,9 @@ storiesOf("Worldview/GLText", module)
       <Axes />
     </Container>
   ))
-  .add("autoBackgroundColor hires", () => (
+  .add("autoBackgroundColor highResolutionFont", () => (
     <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-      <GLText autoBackgroundColor hiresFont>
+      <GLText autoBackgroundColor highResolutionFont>
         {textMarkers({ text: "Hello\nWorldview" })}
       </GLText>
       <Axes />
@@ -143,7 +143,7 @@ storiesOf("Worldview/GLText", module)
   .add("autoBackgroundColor scaleInvariant", () => (
     <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
       <GLText autoBackgroundColor scaleInvariant>
-        {textMarkers({ text: "Hello\nWorldview" })}
+        {textMarkers({ text: "Hello\nWorldview", billboard: true })}
       </GLText>
       <Axes />
     </Container>
@@ -170,7 +170,7 @@ storiesOf("Worldview/GLText", module)
     }
     return <Example />;
   })
-  .add("changing text hires", () => {
+  .add("changing text highResolutionFont", () => {
     function Example() {
       const [text, setText] = useState("Hello\nWorldview");
       useLayoutEffect(() => {
@@ -185,7 +185,7 @@ storiesOf("Worldview/GLText", module)
       }, []);
       return (
         <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-          <GLText autoBackgroundColor hiresFont>
+          <GLText autoBackgroundColor highResolutionFont>
             {textMarkers({ text })}
           </GLText>
           <Axes />
@@ -243,7 +243,7 @@ storiesOf("Worldview/GLText", module)
 
     return <Example />;
   })
-  .add("highlighted text hires", () => {
+  .add("highlighted text highResolutionFont", () => {
     const Example = () => {
       const [searchText, setSearchText] = useState("ello\nW");
       const markers = textMarkers({ text: "Hello\nWorldview" }).map((marker) => {
@@ -272,7 +272,7 @@ storiesOf("Worldview/GLText", module)
         <div style={{ width: "100%", height: "100%" }}>
           <div style={{ width: "100%", height: "100%" }}>
             <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-              <GLText autoBackgroundColor hiresFont>
+              <GLText autoBackgroundColor highResolutionFont>
                 {markers}
               </GLText>
               <Axes />

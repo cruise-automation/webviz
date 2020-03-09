@@ -42,28 +42,28 @@ type Props = {
   ...CommonCommandProps,
   children: $ReadOnlyArray<TextMarkerProps>,
   autoBackgroundColor?: boolean,
-  hiresFont?: boolean,
+  highResolutionFont?: boolean,
   scaleInvariant?: boolean,
   scaleInvariantFontSize?: number,
 };
 
 type FontAtlas = {|
   textureData: Uint8Array,
-    textureWidth: number,
-      textureHeight: number,
-        charInfo: {
-  [char: string]: {|
-    x: number,
+  textureWidth: number,
+  textureHeight: number,
+  charInfo: {
+    [char: string]: {|
+      x: number,
       y: number,
-        width: number,
+      width: number,
     |},
-},
+  },
 |};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
 const DEFAULT_FONT_SIZE = 40;
 const DEFAULT_SCALE_INVARIANT_SIZE = 10;
-const HIRES_FONT_SIZE = 160;
+const HIGH_RESOLUTION_FONT_SIZE = 160;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
@@ -464,8 +464,8 @@ export default function GLText(props: Props) {
 
   // Compute the actual size for the text object in NDC coordinates (from -1 to 1)
   // In order to make sure the text is always shown at the same size regardless of
-  // the canvas dimensions (as Text does), we need to scale it based on both the desired 
-  // font size and the current worldview resolution. Otherwise, the text will be 
+  // the canvas dimensions (as Text does), we need to scale it based on both the desired
+  // font size and the current worldview resolution. Otherwise, the text will be
   // displayed at different sizes depending on the worlview canvas dimension.
   const scaleInvariantSize = scaleInvariantFontSize / dimension.height;
 
@@ -473,7 +473,7 @@ export default function GLText(props: Props) {
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
-  command.fontSize = props.hiresFont ?? props.scaleInvariant ? HIRES_FONT_SIZE : DEFAULT_FONT_SIZE;
+  command.fontSize = props.highResolutionFont ?? props.scaleInvariant ? HIGH_RESOLUTION_FONT_SIZE : DEFAULT_FONT_SIZE;
   command.scaleInvariant = props.scaleInvariant === true;
   command.scaleInvariantSize = scaleInvariantSize;
   return <Command reglCommand={command} {...props} />;

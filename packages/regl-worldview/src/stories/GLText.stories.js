@@ -11,7 +11,6 @@ import { Axes } from "../commands";
 import type { Color } from "../types";
 import { vec4ToOrientation } from "../utils/commandUtils";
 import Container from "./Container";
-import inScreenshotTests from "stories/inScreenshotTests";
 
 import { GLText } from "..";
 
@@ -64,9 +63,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText scaleInvariantFontSize={10}>
-          {markers}
-        </GLText>
+        <GLText scaleInvariantFontSize={10}>{markers}</GLText>
         <Axes />
       </Container>
     );
@@ -75,9 +72,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText scaleInvariantFontSize={20}>
-          {markers}
-        </GLText>
+        <GLText scaleInvariantFontSize={20}>{markers}</GLText>
         <Axes />
       </Container>
     );
@@ -86,9 +81,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText scaleInvariantFontSize={40}>
-          {markers}
-        </GLText>
+        <GLText scaleInvariantFontSize={40}>{markers}</GLText>
         <Axes />
       </Container>
     );
@@ -133,7 +126,7 @@ storiesOf("Worldview/GLText", module)
       }, []);
       return (
         <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-          <div style={{ position: "absolute", top: 30, left: 30 }}>
+          <div style={{ position: "absolute", top: 30, right: 30 }}>
             <button onClick={() => setText(`Value: ${Math.floor(100 * Math.random())}`)}>Change Text</button>
           </div>
           <GLText autoBackgroundColor>{textMarkers({ text })}</GLText>

@@ -436,8 +436,9 @@ export default class MemoryCacheDataProvider implements DataProvider {
         );
       }
 
-      // Now `this._recentBlockRanges` and `this._blocks` have been updated, so we can purge the
-      // cache and report progress.
+      // Now `this._recentBlockRanges` and `this._blocks` have been updated, so we can resolve
+      // requests, purge the cache and report progress.
+      this._resolveFinishedReadRequests();
       this._purgeOldBlocks();
       this._updateProgress();
 
@@ -456,11 +457,9 @@ export default class MemoryCacheDataProvider implements DataProvider {
         ...this._currentConnection,
         remainingBlockRange: { start: currentBlockIndex + 1, end: blockRange.end },
       };
-      this._resolveFinishedReadRequests();
     }
     // Connection successfully completed.
     delete this._currentConnection;
-    this._resolveFinishedReadRequests();
     return true;
   }
 

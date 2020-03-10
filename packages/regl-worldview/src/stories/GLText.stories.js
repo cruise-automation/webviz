@@ -64,7 +64,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText scaleInvariant>
+        <GLText scaleInvariantFontSize={10}>
           {markers}
         </GLText>
         <Axes />
@@ -75,7 +75,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText scaleInvariant scaleInvariantFontSize={20}>
+        <GLText scaleInvariantFontSize={20}>
           {markers}
         </GLText>
         <Axes />
@@ -86,7 +86,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText scaleInvariant scaleInvariantFontSize={40}>
+        <GLText scaleInvariantFontSize={40}>
           {markers}
         </GLText>
         <Axes />
@@ -119,7 +119,7 @@ storiesOf("Worldview/GLText", module)
   ))
   .add("autoBackgroundColor scaleInvariant", () => (
     <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-      <GLText autoBackgroundColor scaleInvariant>
+      <GLText autoBackgroundColor scaleInvariantFontSize={10}>
         {textMarkers({ text: "Hello\nWorldview", billboard: true })}
       </GLText>
       <Axes />

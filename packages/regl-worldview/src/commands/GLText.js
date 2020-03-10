@@ -42,7 +42,6 @@ type Props = {
   ...CommonCommandProps,
   children: $ReadOnlyArray<TextMarkerProps>,
   autoBackgroundColor?: boolean,
-  scaleInvariant?: boolean,
   scaleInvariantFontSize?: number,
 };
 
@@ -465,7 +464,7 @@ export default function GLText(props: Props) {
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
-  command.scaleInvariant = props.scaleInvariant === true;
+  command.scaleInvariant = !!scaleInvariantSize;
   command.scaleInvariantSize = scaleInvariantSize;
   return <Command reglCommand={command} {...props} />;
 }

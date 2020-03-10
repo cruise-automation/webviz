@@ -280,6 +280,10 @@ export default class MemoryCacheDataProvider implements DataProvider {
     }
 
     // Then see if we need to set a new connection based on the new connection and read requests state.
+    this._maybeRunNewConnections();
+  }
+
+  _maybeRunNewConnections() {
     const newConnection = getNewConnection({
       currentRemainingRange: this._currentConnection ? this._currentConnection.remainingBlockRange : undefined,
       readRequestRange: this._readRequests[0] ? this._readRequests[0].blockRange : undefined,

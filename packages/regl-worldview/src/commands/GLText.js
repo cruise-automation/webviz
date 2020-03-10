@@ -5,7 +5,8 @@ import memoizeOne from "memoize-one";
 import React, { useState, useContext } from "react";
 
 import type { Color } from "../types";
-import { defaultBlend, defaultDepth } from "../utils/commandUtils";
+import { defaultBlend, defaultDepth, vec4ToRGBA } from "../utils/commandUtils";
+import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
@@ -25,7 +26,6 @@ import { isColorDark, type TextMarker } from "./Text";
 //
 // Possible future improvements
 // ============================
-// - Add hitmap support.
 // - Allow customization of font style, maybe highlight ranges.
 // - Consider a solid rectangular background instead of an outline. This is challenging because the
 //   instances currently overlap, so there will be z-fighting, but might be possible using the stencil buffer and multiple draw calls.
@@ -47,15 +47,15 @@ type Props = {
 
 type FontAtlas = {|
   textureData: Uint8Array,
-  textureWidth: number,
-  textureHeight: number,
-  charInfo: {
-    [char: string]: {|
-      x: number,
+    textureWidth: number,
+      textureHeight: number,
+        charInfo: {
+  [char: string]: {|
+    x: number,
       y: number,
-      width: number,
+        width: number,
     |},
-  },
+},
 |};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
@@ -139,7 +139,7 @@ const vert = `
   attribute vec2 srcOffset;
   attribute float srcWidth;
   attribute vec2 destOffset;
-
+  
   // per-marker attributes
   attribute vec3 scale;
   attribute float billboard;
@@ -151,7 +151,7 @@ const vert = `
   attribute vec4 highlightColor;
   attribute vec3 posePosition;
   attribute vec4 poseOrientation;
-
+  
   varying vec2 vTexCoord;
   varying float vEnableBackground;
   varying vec4 vForegroundColor;
@@ -159,7 +159,7 @@ const vert = `
   varying vec4 vHighlightColor;
   varying float vEnableHighlight;
   varying float vBillboard;
-
+  
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
   vec3 rotate(vec3 v, vec4 q) {
@@ -208,6 +208,7 @@ const frag = `
   uniform float cutoff;
   uniform bool scaleInvariant;
   uniform float scaleInvariantSize;
+  uniform bool forHitmap;
 
   varying vec2 vTexCoord;
   varying float vEnableBackground;
@@ -234,7 +235,12 @@ const frag = `
       edgeStep = dist;
     }
 
-    if (vEnableHighlight > 0.5) {
+    if (forHitmap) {
+      // When rendering for the hitmap buffer, we draw flat polygons using the foreground color
+      // instead of the actual glyphs. This way we increase the selection range and provide a
+      // better user experience. 
+      gl_FragColor = vForegroundColor;
+    } else if (vEnableHighlight > 0.5) {
       gl_FragColor = mix(vHighlightColor, vec4(0, 0, 0, 1), edgeStep);
     } else if (vEnableBackground > 0.5) {
       gl_FragColor = mix(vBackgroundColor, vForegroundColor, edgeStep);
@@ -256,42 +262,45 @@ function makeTextCommand() {
 
   const command = (regl: any) => {
     const atlasTexture = regl.texture();
-    const drawText = regl({
-      depth: defaultDepth,
-      blend: defaultBlend,
-      primitive: "triangle strip",
-      vert,
-      frag,
-      uniforms: {
-        atlas: atlasTexture,
-        atlasSize: () => [atlasTexture.width, atlasTexture.height],
-        fontSize: FONT_SIZE,
-        cutoff: CUTOFF,
-        scaleInvariant: command.scaleInvariant,
-        scaleInvariantSize: command.scaleInvariantSize,
-      },
-      instances: regl.prop("instances"),
-      count: 4,
-      attributes: {
-        position: [[0, 0], [0, -1], [1, 0], [1, -1]],
-        texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
-        srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
-        destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
-        srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
-        scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
-        alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
-        billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
-        foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
-        backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
-        highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
-        enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
-        enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
-        posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
-        poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
-      },
-    });
+    const makeDrawText = function (forHitmap: boolean) {
+      return regl({
+        depth: defaultDepth,
+        blend: defaultBlend,
+        primitive: "triangle strip",
+        vert,
+        frag,
+        uniforms: {
+          atlas: atlasTexture,
+          atlasSize: () => [atlasTexture.width, atlasTexture.height],
+          fontSize: FONT_SIZE,
+          cutoff: CUTOFF,
+          scaleInvariant: command.scaleInvariant,
+          scaleInvariantSize: command.scaleInvariantSize,
+          forHitmap: !!forHitmap,
+        },
+        instances: regl.prop("instances"),
+        count: 4,
+        attributes: {
+          position: [[0, 0], [0, -1], [1, 0], [1, -1]],
+          texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
+          srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
+          destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
+          srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
+          scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
+          alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
+          billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
+          foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
+          backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
+          highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
+          enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
+          enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
+          posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
+          poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
+        },
+      });
+    };
 
-    return (props: $ReadOnlyArray<TextMarkerProps>) => {
+    return (props: $ReadOnlyArray<TextMarkerProps>, forHitmap: boolean) => {
       let estimatedInstances = 0;
       const prevNumChars = charSet.size;
       for (const { text } of props) {
@@ -347,7 +356,10 @@ function makeTextCommand() {
         let y = 0;
         let markerInstances = 0;
 
-        const fgColor = marker.colors?.[0] || marker.color || BG_COLOR_LIGHT;
+        // If we need to render text for hitmap framebuffer, we only render the polygons using
+        // the foreground color (which needs to be converted to RGBA since it's a vec4).
+        // See comment on fragment shader above
+        const fgColor = forHitmap ? vec4ToRGBA(marker.color) : marker.colors?.[0] || marker.color || BG_COLOR_LIGHT;
         const outline = marker.colors?.[1] != null || command.autoBackgroundColor;
         const bgColor =
           marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK);
@@ -422,7 +434,7 @@ function makeTextCommand() {
         totalInstances += markerInstances;
       }
 
-      drawText({
+      makeDrawText(forHitmap)({
         instances: totalInstances,
 
         // per-character
@@ -465,5 +477,7 @@ export default function GLText(props: Props) {
   // displayed at different sizes depending on the worlview canvas dimension.
   command.scaleInvariantSize = (props.scaleInvariantFontSize ?? 0) / dimension.height;
 
-  return <Command reglCommand={command} {...props} />;
+  const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
+
+  return <Command getChildrenForHitmap={getChildrenForHitmap} reglCommand={command} {...props} />;
 }

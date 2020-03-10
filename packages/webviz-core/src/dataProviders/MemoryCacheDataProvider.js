@@ -221,9 +221,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     return this._preloadTopics;
   }
 
-  // Gets called any time our "connection", read requests, or topics change.
-  _updateState() {
-    // First, see if there are any read requests that we can resolve now.
+  _resolveFinishedReadRequests() {
     this._readRequests = this._readRequests.filter(({ timeRange, blockRange, topics, resolve }) => {
       if (topics.length === 0) {
         resolve([]);
@@ -269,6 +267,12 @@ export default class MemoryCacheDataProvider implements DataProvider {
 
       return false;
     });
+  }
+
+  // Gets called any time our "connection", read requests, or topics change.
+  _updateState() {
+    // First, see if there are any read requests that we can resolve now.
+    this._resolveFinishedReadRequests();
 
     if (this._currentConnection && !isEqual(this._currentConnection.topics, this._getCurrentTopics())) {
       // If we have a different set of topics, stop the current "connection", and refresh everything.

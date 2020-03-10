@@ -45,7 +45,7 @@ function textMarkers({
 
 storiesOf("Worldview/GLText", module)
   .addDecorator(withScreenshot({ delay: 200 }))
-  .add("no-smoothing", () => {
+  .add("high resolution text", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;
     return (
@@ -60,26 +60,11 @@ storiesOf("Worldview/GLText", module)
       </Container>
     );
   })
-  .add("high-resolution-smoothing", () => {
-    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
-    const target = markers[9].pose.position;
-    return (
-      <Container
-        cameraState={{
-          target: [target.x, target.y, target.z],
-          perspective: true,
-          distance: 3,
-        }}>
-        <GLText highResolutionFont>{markers}</GLText>
-        <Axes />
-      </Container>
-    );
-  })
   .add("scaleInvariant", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText highResolutionFont scaleInvariant>
+        <GLText scaleInvariant>
           {markers}
         </GLText>
         <Axes />
@@ -90,7 +75,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText highResolutionFont scaleInvariant scaleInvariantFontSize={20}>
+        <GLText scaleInvariant scaleInvariantFontSize={20}>
           {markers}
         </GLText>
         <Axes />
@@ -101,7 +86,7 @@ storiesOf("Worldview/GLText", module)
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
-        <GLText highResolutionFont scaleInvariant scaleInvariantFontSize={40}>
+        <GLText scaleInvariant scaleInvariantFontSize={40}>
           {markers}
         </GLText>
         <Axes />
@@ -132,14 +117,6 @@ storiesOf("Worldview/GLText", module)
       <Axes />
     </Container>
   ))
-  .add("autoBackgroundColor highResolutionFont", () => (
-    <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-      <GLText autoBackgroundColor highResolutionFont>
-        {textMarkers({ text: "Hello\nWorldview" })}
-      </GLText>
-      <Axes />
-    </Container>
-  ))
   .add("autoBackgroundColor scaleInvariant", () => (
     <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
       <GLText autoBackgroundColor scaleInvariant>
@@ -164,30 +141,6 @@ storiesOf("Worldview/GLText", module)
       return (
         <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
           <GLText autoBackgroundColor>{textMarkers({ text })}</GLText>
-          <Axes />
-        </Container>
-      );
-    }
-    return <Example />;
-  })
-  .add("changing text highResolutionFont", () => {
-    function Example() {
-      const [text, setText] = useState("Hello\nWorldview");
-      useLayoutEffect(() => {
-        let i = 0;
-        const id = setInterval(() => {
-          setText(`New text! ${++i}`);
-          if (inScreenshotTests()) {
-            clearInterval(id);
-          }
-        }, 100);
-        return () => clearInterval(id);
-      }, []);
-      return (
-        <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-          <GLText autoBackgroundColor highResolutionFont>
-            {textMarkers({ text })}
-          </GLText>
           <Axes />
         </Container>
       );
@@ -224,57 +177,6 @@ storiesOf("Worldview/GLText", module)
           <div style={{ width: "100%", height: "100%" }}>
             <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
               <GLText autoBackgroundColor>{markers}</GLText>
-              <Axes />
-            </Container>
-          </div>
-          <div style={{ position: "absolute", top: "10px", right: "10px" }}>
-            <label htmlFor="search">Search: </label>
-            <input
-              type="text"
-              name="search"
-              placeholder="search text"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </div>
-        </div>
-      );
-    };
-
-    return <Example />;
-  })
-  .add("highlighted text highResolutionFont", () => {
-    const Example = () => {
-      const [searchText, setSearchText] = useState("ello\nW");
-      const markers = textMarkers({ text: "Hello\nWorldview" }).map((marker) => {
-        if (!searchText) {
-          return marker;
-        }
-        const highlightedIndices = new Set();
-        let match;
-        let regex;
-        try {
-          regex = new RegExp(searchText, "ig");
-        } catch (e) {
-          return marker;
-        }
-        while ((match = regex.exec(marker.text)) !== null) {
-          // $FlowFixMe - Flow doesn't understand the while loop terminating condition.
-          range(0, match[0].length).forEach((i) => {
-            // $FlowFixMe - Flow doesn't understand the while loop terminating condition.
-            highlightedIndices.add(match.index + i);
-          });
-        }
-        return { ...marker, highlightedIndices: Array.from(highlightedIndices) };
-      });
-
-      return (
-        <div style={{ width: "100%", height: "100%" }}>
-          <div style={{ width: "100%", height: "100%" }}>
-            <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
-              <GLText autoBackgroundColor highResolutionFont>
-                {markers}
-              </GLText>
               <Axes />
             </Container>
           </div>

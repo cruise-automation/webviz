@@ -358,10 +358,6 @@ function makeTextCommand() {
           marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK);
         const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
 
-        if (!marker.billboard && command.scaleInvariant) {
-          console.warn("Scale invariant option is only supported for billboard markers");
-        }
-
         for (let i = 0; i < marker.text.length; i++) {
           const char = marker.text[i];
           if (char === "\n") {

@@ -7,3 +7,9 @@ import { GLText } from "./jsx/allLiveEditors";
 The prop types are identical to `<Text />`, except that additionally each Text object supports an optional `billboard?: boolean` property. If true (the default), text will always face the camera; if false, text may be rotated in 3D according to `pose.orientation`.
 
 <GLText />
+
+## Scale Invariance
+
+`<GLText />` also supports rendering text at a constant scale regardless of the zoom level by using the optional `scaleInvariantFontSize?: number` property. If set (default is `undefined`), the text will be rendered always at the same size, resembling the behavior of the `<Text />` command. 
+
+Please note that `scaleInvariantFontSize` only works if the `billboard` property is set to true.

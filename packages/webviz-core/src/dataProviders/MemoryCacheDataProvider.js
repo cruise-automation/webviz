@@ -304,11 +304,12 @@ export default class MemoryCacheDataProvider implements DataProvider {
     }
   }
 
-  // Replace the current connection with a new one, spanning a certain range of blocks.
-  async _setConnection(blockRange: Range) {
+  // Replace the current connection with a new one, spanning a certain range of blocks. Return whether we
+  // completed successfully, or whether we were interrupted by another connection.
+  async _setConnection(blockRange: Range): Promise<boolean> {
     if (!this._getCurrentTopics().length) {
       delete this._currentConnection;
-      return;
+      return true;
     }
 
     const id = uuid.v4();
@@ -326,7 +327,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     while (true) {
       const currentConnection = this._currentConnection;
       if (!currentConnection || !isCurrent()) {
-        return;
+        return false;
       }
 
       const currentBlockIndex = currentConnection.remainingBlockRange.start;
@@ -347,7 +348,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
 
       // If we're not current any more, discard the messages, because otherwise we might write duplicate messages.
       if (!isCurrent()) {
-        return;
+        return false;
       }
 
       // Create a new block if necessary.
@@ -364,7 +365,8 @@ export default class MemoryCacheDataProvider implements DataProvider {
       for (const message of messages) {
         if (!(message.message instanceof ArrayBuffer)) {
           reportError("MemoryCacheDataProvider can only be used with unparsed ROS messages", "", "app");
-          return;
+          // Do not retry.
+          return false;
         }
         currentBlock.messagesByTopic[message.topic].push(message);
         currentBlock.sizeInBytes += message.message.byteLength;
@@ -402,14 +404,12 @@ export default class MemoryCacheDataProvider implements DataProvider {
       // Check *again* if we're not current any more, because now we're going to update connection
       // information.
       if (!isCurrent()) {
-        return;
+        return false;
       }
 
       if (currentBlockIndex >= blockRange.end - 1) {
         // If we're at the end of the range, we're done.
-        delete this._currentConnection;
-        this._updateState();
-        return;
+        break;
       }
       // Otherwise, update the `remainingBlockRange`.
       this._currentConnection = {
@@ -418,6 +418,10 @@ export default class MemoryCacheDataProvider implements DataProvider {
       };
       this._updateState();
     }
+    // Connection successfully completed.
+    delete this._currentConnection;
+    this._updateState();
+    return true;
   }
 
   // For the relevant downloaded ranges, we look at `this._blocks` and the most relevant topics.

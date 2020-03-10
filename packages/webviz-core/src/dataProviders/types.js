@@ -92,8 +92,8 @@ export type InitializationResult = {|
   datatypes: RosDatatypes, // Must be "complete", just as in the definition of `Player`.
 
   // If returning raw messages to be parsed by `ParseMessagesDataProvider`, the DataProvider should
-  // also return `connectionsByTopic`, so the right rosbag `Reader` can be instantiated.
-  connectionsByTopic?: ?{ [topic: string]: Connection },
+  // also return `messageDefintionsByTopic`, so the right rosbag `Reader` can be instantiated.
+  messageDefintionsByTopic?: ?{ [topic: string]: string },
 |};
 
 export type ExtensionPoint = {|

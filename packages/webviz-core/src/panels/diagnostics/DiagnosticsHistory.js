@@ -40,7 +40,7 @@ type Props = {|
 |};
 
 export function useDiagnostics(topic: string): DiagnosticsBuffer {
-  const { reducedValue: diagnostics } = PanelAPI.useMessages<DiagnosticsBuffer>({
+  const diagnostics = PanelAPI.useMessageReducer<DiagnosticsBuffer>({
     topics: [topic],
 
     restore: useCallback(

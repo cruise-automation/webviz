@@ -12,7 +12,7 @@ import styled from "styled-components";
 
 import Icon from "./Icon";
 import { colorToAlpha } from "./SegmentedControl";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export type RadioOption = {
   id: string,

@@ -10,6 +10,7 @@ import ArrowSplitHorizontalIcon from "@mdi/svg/svg/arrow-split-horizontal.svg";
 import ArrowSplitVerticalIcon from "@mdi/svg/svg/arrow-split-vertical.svg";
 import CheckboxMultipleBlankOutlineIcon from "@mdi/svg/svg/checkbox-multiple-blank-outline.svg";
 import DragIcon from "@mdi/svg/svg/drag.svg";
+import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
 import JsonIcon from "@mdi/svg/svg/json.svg";
 import SettingsIcon from "@mdi/svg/svg/settings.svg";
 import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
@@ -37,6 +38,7 @@ import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import PanelList from "webviz-core/src/panels/PanelList";
 import type { PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
 import { getPanelIdForType } from "webviz-core/src/util";
+import frameless from "webviz-core/src/util/frameless";
 
 type Props = {|
   children?: React.Node,
@@ -45,6 +47,7 @@ type Props = {|
   menuContent?: React.Node,
   showPanelName?: boolean,
   additionalIcons?: React.Node,
+  hideToolbars?: boolean,
 |};
 
 // separated into a sub-component so it can always skip re-rendering
@@ -117,30 +120,43 @@ class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveCon
       <ReactReduxContext.Consumer>
         {({ store }) => (
           <PanelContext.Consumer>
-            {(panelData) => (
+            {(panelContext) => (
               <>
                 <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />}>
                   {/* $FlowFixMe - not sure why it thinks onPanelSelect is a Redux action */}
-                  <PanelList selectedPanelType={panelData.type} onPanelSelect={this.swap} />
+                  <PanelList selectedPanelType={panelContext.type} onPanelSelect={this.swap} />
                 </SubMenu>
                 <Item
+                  icon={<FullscreenIcon />}
+                  onClick={panelContext && panelContext.enterFullscreen}
+                  dataTest="panel-settings-fullscreen"
+                  tooltip="(shortcut: ` or ~)">
+                  Fullscreen
+                </Item>
+                <Item
                   icon={<ArrowSplitHorizontalIcon />}
-                  onClick={() => this.split(store, panelData && panelData.id, "column")}
-                  dataTest="panel-settings-hsplit">
+                  onClick={() => this.split(store, panelContext && panelContext.id, "column")}
+                  dataTest="panel-settings-hsplit"
+                  tooltip="(shortcut: ` or ~)">
                   Split horizontal
                 </Item>
                 <Item
                   icon={<ArrowSplitVerticalIcon />}
-                  onClick={() => this.split(store, panelData && panelData.id, "row")}
-                  dataTest="panel-settings-vsplit">
+                  onClick={() => this.split(store, panelContext && panelContext.id, "row")}
+                  dataTest="panel-settings-vsplit"
+                  tooltip="(shortcut: ` or ~)">
                   Split vertical
                 </Item>
-                <Item icon={<TrashCanOutlineIcon />} onClick={this.close} disabled={isOnlyPanel}>
+                <Item
+                  icon={<TrashCanOutlineIcon />}
+                  onClick={this.close}
+                  disabled={isOnlyPanel}
+                  tooltip="(shortcut: ` or ~)">
                   Remove panel
                 </Item>
                 <Item
                   icon={<JsonIcon />}
-                  onClick={() => this._onImportClick(store, panelData && panelData.id)}
+                  onClick={() => this._onImportClick(store, panelContext && panelContext.id)}
                   dataTest="panel-settings-config">
                   Import/export panel settings
                 </Item>
@@ -189,7 +205,7 @@ const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Pan
       <MosaicDragHandle onDragStart={onDragStart} onDragEnd={onDragEnd}>
         {/* Can only nest native nodes into <MosaicDragHandle>, so wrapping in a <span> */}
         <span>
-          <Icon fade tooltip="Move panel">
+          <Icon fade tooltip="Move panel (shortcut: ` or ~)">
             <DragIcon className={styles.dragIcon} />
           </Icon>
         </span>
@@ -202,11 +218,15 @@ const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Pan
 // react-mosaic layout.  It adds a drag handle, remove/replace controls
 // and has a place to add custom controls via it's children property
 export default React.memo<Props>(function PanelToolbar(props: Props) {
-  const { children, floating, helpContent, menuContent, additionalIcons } = props;
+  const { children, floating, helpContent, menuContent, additionalIcons, hideToolbars } = props;
   const { isHovered } = useContext(PanelContext) || {};
   const [isDragging, setIsDragging] = useState(false);
   const onDragStart = useCallback(() => setIsDragging(true), []);
   const onDragEnd = useCallback(() => setIsDragging(false), []);
+
+  if (frameless() || hideToolbars) {
+    return null;
+  }
 
   return (
     <Dimensions>
@@ -216,6 +236,7 @@ export default React.memo<Props>(function PanelToolbar(props: Props) {
             <div
               className={cx(styles.panelToolbarContainer, {
                 [styles.floating]: floating,
+                [styles.floatingShow]: floating && (isHovered || containsOpen || isDragging),
                 [styles.containsOpen]: containsOpen,
                 [styles.hasChildren]: !!children,
               })}>

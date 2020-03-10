@@ -10,8 +10,8 @@ import Tree from "react-json-tree";
 import styled from "styled-components";
 
 import type { UserNodeLog } from "webviz-core/src/players/UserNodePlayer/types";
-import { colors } from "webviz-core/src/util/colors";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SListItem = styled.li`
   display: flex;

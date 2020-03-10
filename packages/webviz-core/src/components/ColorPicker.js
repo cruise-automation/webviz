@@ -10,7 +10,7 @@ import Pickr from "@simonwep/pickr";
 import React, { forwardRef, useRef, useLayoutEffect, useImperativeHandle } from "react";
 import styled from "styled-components";
 
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 import "@simonwep/pickr/dist/themes/monolith.min.css";
 

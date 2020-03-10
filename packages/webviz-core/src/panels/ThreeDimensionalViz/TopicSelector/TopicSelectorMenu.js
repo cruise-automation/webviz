@@ -17,6 +17,7 @@ import Menu from "webviz-core/src/components/Menu";
 import Item from "webviz-core/src/components/Menu/Item";
 import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import type { SaveConfig } from "webviz-core/src/types/panels";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SIconWrapper = styled.div`
   display: flex;
@@ -45,12 +46,25 @@ export default function TopicSelectorMenu({ saveConfig, pinTopics, autoTextBackg
         <Item
           onClick={() => saveConfig({ pinTopics: !pinTopics })}
           icon={pinTopics ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}>
-          Pin Topics
+          Pin topics
         </Item>
         <Item
           onClick={() => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor })}
           icon={autoTextBackgroundColor ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}>
-          Auto Text Background
+          Auto text background
+        </Item>
+        <Item
+          tooltip={
+            <div style={{ lineHeight: 1.5 }}>
+              Topic tree will be removed in favor of topic groups. <br />
+              Changes in topic groups will not be kept in sync with the topic tree.
+              <br />
+              Let us know if the topic groups work for you.
+            </div>
+          }
+          onClick={() => saveConfig({ enableTopicTree: false })}
+          icon={<CheckboxBlankOutlineIcon />}>
+          <span style={{ color: colors.GREEN }}>Enable topic groups</span>
         </Item>
       </Menu>
     </ChildToggle>

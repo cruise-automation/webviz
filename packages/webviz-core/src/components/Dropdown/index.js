@@ -28,6 +28,8 @@ type Props = {|
   flatEdges: boolean,
   tooltip?: string,
   dataTest?: string,
+  noPortal?: boolean,
+  btnStyle?: StyleObj,
 |};
 
 type State = {
@@ -89,7 +91,10 @@ export default class Dropdown extends React.Component<Props, State> {
     }
     const { text, value, disabled, tooltip } = this.props;
     const button = (
-      <button className={cx(styles.button, { disabled })} data-test={this.props.dataTest}>
+      <button
+        className={cx(styles.button, { disabled })}
+        style={this.props.btnStyle || {}}
+        data-test={this.props.dataTest}>
         <span className={styles.title}>{text || value}</span>
         <Icon style={{ marginLeft: 4 }}>
           <MenuDownIcon style={{ width: 14, height: 14, opacity: 0.5 }} />
@@ -113,11 +118,12 @@ export default class Dropdown extends React.Component<Props, State> {
     };
     return (
       <ChildToggle
-        style={{ maxWidth: "100%" }}
+        style={{ maxWidth: "100%", zIndex: 1 }}
         position={position}
         isOpen={isOpen}
         onToggle={this.toggle}
-        dataTest={this.props.dataTest}>
+        dataTest={this.props.dataTest}
+        noPortal={this.props.noPortal}>
         {this.renderButton()}
         <Menu style={style}>{this.renderChildren()}</Menu>
       </ChildToggle>

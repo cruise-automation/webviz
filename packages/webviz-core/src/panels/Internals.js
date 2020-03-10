@@ -15,7 +15,7 @@ import Button from "webviz-core/src/components/Button";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Flex from "webviz-core/src/components/Flex";
 import { Item } from "webviz-core/src/components/Menu";
-import MessageHistory from "webviz-core/src/components/MessageHistory";
+import MessageHistoryDEPRECATED from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
@@ -177,7 +177,7 @@ function Internals(): React.Node {
         return false;
       }
       return (
-        <MessageHistory paths={recordingTopics} historySize={1}>
+        <MessageHistoryDEPRECATED paths={recordingTopics} historySize={1}>
           {({ itemsByPath }) => {
             const frame = mapValues(itemsByPath, (items) => items.map(({ message }) => message));
             recordedData.current = {
@@ -190,7 +190,7 @@ function Internals(): React.Node {
             };
             return null;
           }}
-        </MessageHistory>
+        </MessageHistoryDEPRECATED>
       );
     },
     [recordingTopics]

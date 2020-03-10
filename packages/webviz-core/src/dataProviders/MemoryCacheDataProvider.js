@@ -21,12 +21,9 @@ import type {
 } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
 import { getNewConnection } from "webviz-core/src/util/getNewConnection";
-import Logger from "webviz-core/src/util/Logger";
 import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList } from "webviz-core/src/util/ranges";
 import reportError from "webviz-core/src/util/reportError";
 import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time";
-
-const log = new Logger(__filename);
 
 // I (JP) mostly just made these numbers up. It might be worth experimenting with different values
 // for these, but it seems to work reasonably well in my tests.
@@ -34,6 +31,7 @@ export const MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks
 const MINIMUM_CACHE_SIZE_NS = 35e9; // Number of nanoseconds that we'll always keep in the cache.
 const READ_AHEAD_NS = 3e9; // Number of nanoseconds to read ahead from the last `getMessages` call.
 const CACHE_SIZE_BYTES = 2.5e9; // Number of bytes that we aim to keep in the cache.
+export const MAX_BLOCK_SIZE_BYTES = 50e6; // Number of bytes in a block before we show an error.
 
 // For each memory block we store the actual messages (grouped by topic), and a total byte size of
 // the underlying ArrayBuffers.
@@ -148,8 +146,21 @@ export default class MemoryCacheDataProvider implements DataProvider {
   // around this time.
   _lastResolvedCallbackEnd: ?number;
 
-  constructor({ id }: {| id: string |}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
+  // When we log a "block too large" error, we only want to do that once, to prevent
+  // spamming errors.
+  _loggedTooLargeError: boolean = false;
+
+  // If we're configured to use an unlimited cache, we try to just load as much as possible and
+  // never evict anything.
+  _unlimitedCache: boolean = false;
+
+  constructor(
+    { id, unlimitedCache }: {| id: string, unlimitedCache?: boolean |},
+    children: DataProviderDescriptor[],
+    getDataProvider: GetDataProvider
+  ) {
     this._id = id;
+    this._unlimitedCache = unlimitedCache || false;
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to MemoryCacheDataProvider: ${children.length}`);
     }
@@ -164,6 +175,11 @@ export default class MemoryCacheDataProvider implements DataProvider {
     this._totalNs = toNanoSec(subtractTimes(result.end, result.start)) + 1; // +1 since times are inclusive.
     if (this._totalNs > Number.MAX_SAFE_INTEGER * 0.9) {
       throw new Error("Time range is too long to be supported");
+    }
+    // If we know the bag is smaller than MINIMUM_CACHE_SIZE_NS, then this is equivalent to having an
+    // unlimited cache.
+    if (this._totalNs <= MINIMUM_CACHE_SIZE_NS) {
+      this._unlimitedCache = true;
     }
     this._blocks = new Array(Math.ceil(this._totalNs / MEM_CACHE_BLOCK_SIZE_NS));
     this._updateProgress();
@@ -265,9 +281,9 @@ export default class MemoryCacheDataProvider implements DataProvider {
       readRequestRange: this._readRequests[0] ? this._readRequests[0].blockRange : undefined,
       downloadedRanges: this._getDownloadedBlockRanges(),
       lastResolvedCallbackEnd: this._lastResolvedCallbackEnd,
-      cacheSize: this._totalNs <= MINIMUM_CACHE_SIZE_NS ? Infinity : Math.ceil(READ_AHEAD_NS / MEM_CACHE_BLOCK_SIZE_NS),
+      cacheSize: this._unlimitedCache ? Infinity : Math.ceil(READ_AHEAD_NS / MEM_CACHE_BLOCK_SIZE_NS),
       fileSize: this._blocks.length,
-      continueDownloadingThreshold: 3, // Somewhat arbitrary number to not create new connections all the time.
+      continueDownloadingThreshold: 10, // Somewhat arbitrary number to not create new connections all the time.
     });
     if (newConnection) {
       this._setConnection(newConnection).catch((err) => {
@@ -342,11 +358,32 @@ export default class MemoryCacheDataProvider implements DataProvider {
           reportError("MemoryCacheDataProvider can only be used with unparsed ROS messages", "", "app");
           return;
         }
-        if (message.message.byteLength > 10000000) {
-          log.warn(`Message on ${message.topic} is suspiciously large (${message.message.byteLength} bytes)`);
-        }
         currentBlock.messagesByTopic[message.topic].push(message);
         currentBlock.sizeInBytes += message.message.byteLength;
+      }
+
+      if (currentBlock.sizeInBytes > MAX_BLOCK_SIZE_BYTES && !this._loggedTooLargeError) {
+        this._loggedTooLargeError = true;
+        const sizes = [];
+        for (const topic of Object.keys(currentBlock.messagesByTopic)) {
+          let size = 0;
+          for (const message of currentBlock.messagesByTopic[topic]) {
+            size += message.message.byteLength;
+          }
+          const roundedSize = Math.round(size / 1e6);
+          if (roundedSize > 0) {
+            sizes.push(`- ${topic}: ${roundedSize}MB`);
+          }
+        }
+        reportError(
+          "Very large block found",
+          `A very large block (${Math.round(MEM_CACHE_BLOCK_SIZE_NS / 1e6)}ms) was found: ${Math.round(
+            currentBlock.sizeInBytes / 1e6
+          )}MB. Too much data can cause performance problems and even crashes. Please fix this where the data is being generated.\n\nBreakdown of large topics:\n${sizes
+            .sort()
+            .join("\n")}`,
+          "user"
+        );
       }
 
       // Now `this._recentBlockRanges` and `this._blocks` have been updated, so we can purge the
@@ -394,8 +431,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
   }
 
   _purgeOldBlocks() {
-    // If we have less data than the minimum cache size, then we never need to purge.
-    if (this._totalNs <= MINIMUM_CACHE_SIZE_NS) {
+    if (this._unlimitedCache) {
       return;
     }
 

@@ -24,7 +24,7 @@ type ItemProps = {
   children: React.Node,
   icon?: React.Node,
   disabled?: boolean,
-  onClick?: () => void,
+  onClick?: ?() => void,
   hasSubMenu?: boolean,
   direction?: "left" | "right",
   dataTest?: string,

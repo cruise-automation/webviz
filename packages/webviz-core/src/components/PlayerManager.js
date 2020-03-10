@@ -21,6 +21,7 @@ import {
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
+import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import { getRemoteBagGuid } from "webviz-core/src/dataProviders/getRemoteBagGuid";
 import {
   getLocalBagDescriptor,
@@ -38,7 +39,6 @@ import { getGlobalVariablesFromUrl } from "webviz-core/src/util/getGlobalVariabl
 import {
   DEMO_QUERY_KEY,
   LAYOUT_URL_QUERY_KEY,
-  LOAD_ENTIRE_BAG_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
   ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY,
   SECOND_BAG_PREFIX,
@@ -58,7 +58,7 @@ function buildPlayer(files: File[]): ?Player {
   } else if (files.length === 2) {
     return new RandomAccessPlayer(
       {
-        name: "CombinedDataProvider",
+        name: CoreDataProviders.CombinedDataProvider,
         args: { providerInfos: [{}, { prefix: SECOND_BAG_PREFIX }] },
         children: [getLocalBagDescriptor(files[0]), getLocalBagDescriptor(files[1])],
       },
@@ -143,10 +143,7 @@ function PlayerManager({
           ? params.get(REMOTE_BAG_URL_QUERY_KEY) || ""
           : remoteDemoBagUrl;
         getRemoteBagGuid(bagUrl).then((guid: ?string) => {
-          const newPlayer = new RandomAccessPlayer(
-            getRemoteBagDescriptor(bagUrl, guid, params.has(LOAD_ENTIRE_BAG_QUERY_KEY)),
-            getPlayerOptions()
-          );
+          const newPlayer = new RandomAccessPlayer(getRemoteBagDescriptor(bagUrl, guid), getPlayerOptions());
           if (params.has(DEMO_QUERY_KEY)) {
             // When we're showing a demo, then automatically start playback (we don't normally
             // do that).

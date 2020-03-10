@@ -44,9 +44,11 @@ export const ErrorCodes = {
     LIMITED_UNIONS: 16,
   },
   InputTopicsChecker: {
-    NO_INPUTS: 1,
-    TOPIC_UNAVAILABLE: 2,
-    CIRCULAR_IMPORT: 3,
+    NO_TOPIC_AVAIL: 1,
+    CIRCULAR_IMPORT: 2,
+    NO_INPUTS_EXPORT: 3,
+    EMPTY_INPUTS_EXPORT: 4,
+    BAD_INPUTS_TYPE: 5,
   },
   OutputTopicChecker: {
     NO_OUTPUTS: 1,
@@ -81,9 +83,10 @@ export type NodeData = {|
   outputTopic: string,
   outputDatatype: string,
   datatypes: RosDatatypes,
-  // Should be ts.Program. Not strongly typing here since we want to keep
+  // Should be ts.SourceFile and ts.TypeChecker. Not strongly typing here since we want to keep
   // Typescript out of the main bundle.
-  program: ?any,
+  sourceFile: ?any,
+  typeChecker: ?any,
 |};
 
 export type PlayerInfo = $ReadOnly<{|

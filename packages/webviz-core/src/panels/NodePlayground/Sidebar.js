@@ -21,7 +21,7 @@ import type { Explorer } from "webviz-core/src/panels/NodePlayground";
 import nodePlaygroundDocs from "webviz-core/src/panels/NodePlayground/index.help.md";
 import type { UserNodesState } from "webviz-core/src/reducers/userNodes";
 import { type UserNodes } from "webviz-core/src/types/panels";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const MenuWrapper = styled.div`
   display: flex;

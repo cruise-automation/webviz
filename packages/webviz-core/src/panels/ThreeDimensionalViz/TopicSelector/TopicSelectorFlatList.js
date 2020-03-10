@@ -13,7 +13,7 @@ import { TopicTreeNode, getId } from "./treeBuilder";
 import Tree, { type Node } from "webviz-core/src/components/Tree";
 import { setVisibleByHiddenTopics } from "webviz-core/src/panels/ThreeDimensionalViz/topicTreeUtils";
 import type { Namespace } from "webviz-core/src/types/Messages";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import toggle from "webviz-core/src/util/toggle";
 
 import type { Save3DConfig } from "..";

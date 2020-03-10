@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { simplify } from "intervals-fn";
-import { isEqual, uniq } from "lodash";
+import { isEqual, sum, uniq } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
 
@@ -21,14 +21,13 @@ import type {
 } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
 import { getNewConnection } from "webviz-core/src/util/getNewConnection";
-import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList } from "webviz-core/src/util/ranges";
+import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList, missingRanges } from "webviz-core/src/util/ranges";
 import reportError from "webviz-core/src/util/reportError";
 import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time";
 
 // I (JP) mostly just made these numbers up. It might be worth experimenting with different values
 // for these, but it seems to work reasonably well in my tests.
 export const MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
-const MINIMUM_CACHE_SIZE_NS = 35e9; // Number of nanoseconds that we'll always keep in the cache.
 const READ_AHEAD_NS = 3e9; // Number of nanoseconds to read ahead from the last `getMessages` call.
 const READ_AHEAD_BLOCKS = Math.ceil(READ_AHEAD_NS / MEM_CACHE_BLOCK_SIZE_NS);
 const CACHE_SIZE_BYTES = 2.5e9; // Number of bytes that we aim to keep in the cache.
@@ -45,19 +44,10 @@ function getNormalizedTopics(topics: string[]): string[] {
 // Get the blocks to keep for the current cache purge, given the most recently accessed ranges, the
 // blocks byte sizes, the minimum number of blocks to always keep, and the maximum cache size.
 //
-// TODO(JP): It would be good to eventually get rid of the `minimumBlocksToKeep`, since that's a
-// bit of a hack. The reason to have it is so we can read ahead indefinitely when we're reading a
-// bag that is shorter than MINIMUM_CACHE_SIZE_NS. It's a bit harder to do a read-ahead for as long
-// as we don't get any cache evictions, since that is not something we can currently express easily
-// with our `getNewConnection` and `_setConnection` model. But it shouldn't be too much of an
-// overhaul to properly change that. For now we just keep a `minimumBlocksToKeep` so that most users
-// (with relatively short bags) get a great experience, where we buffer the entire bag.
-//
 // Exported for tests.
 export function getBlocksToKeep({
   recentBlockRanges,
   blockSizesInBytes,
-  minimumBlocksToKeep,
   maxCacheSizeInBytes,
 }: {|
   // The most recently requested block ranges, ordered from most recent to least recent.
@@ -66,8 +56,6 @@ export function getBlocksToKeep({
   // not have all blocks actually available (i.e. a seek happened before the whole range was
   // downloaded).
   blockSizesInBytes: (?number)[],
-  // The minimum number of blocks to keep, regardless of byte size.
-  minimumBlocksToKeep: number,
   // The maximum cache size in bytes.
   maxCacheSizeInBytes: number,
 |}): { blockIndexesToKeep: Set<number>, newRecentRanges: Range[] } {
@@ -91,8 +79,8 @@ export function getBlocksToKeep({
         cacheSizeInBytes += sizeInBytes;
       }
 
-      // Terminate if we have exceeded both `minimumBlocksToKeep` and `maxCacheSizeInBytes`.
-      if (blockIndexesToKeep.size > minimumBlocksToKeep && cacheSizeInBytes > maxCacheSizeInBytes) {
+      // Terminate if we have exceeded `maxCacheSizeInBytes`.
+      if (cacheSizeInBytes > maxCacheSizeInBytes) {
         return {
           blockIndexesToKeep,
           // Adjust the oldest `newRecentRanges`.
@@ -102,6 +90,23 @@ export function getBlocksToKeep({
     }
   }
   return { blockIndexesToKeep, newRecentRanges: recentBlockRanges };
+}
+
+// Get the best place to start prefetching a block, given the uncached ranges and the cursor position.
+// In order of preference, we would like to prefetch:
+// - The leftmost uncached block to the right of the cursor, or
+// - The leftmost uncached block to the left of the cursor, if one does not exist to the right.
+//
+// Exported for tests.
+export function getPrefetchStartPoint(uncachedRanges: Range[], cursorPosition: number): number {
+  uncachedRanges.sort((a, b) => {
+    if (a.start < cursorPosition !== b.start < cursorPosition) {
+      // On different sides of the cursor. `a` comes first if it's to the right.
+      return a.start < cursorPosition ? 1 : -1;
+    }
+    return a.start - b.start;
+  });
+  return uncachedRanges[0].start;
 }
 
 // This fills up the memory with messages from an underlying DataProvider. The messages have to be
@@ -176,11 +181,6 @@ export default class MemoryCacheDataProvider implements DataProvider {
     this._totalNs = toNanoSec(subtractTimes(result.end, result.start)) + 1; // +1 since times are inclusive.
     if (this._totalNs > Number.MAX_SAFE_INTEGER * 0.9) {
       throw new Error("Time range is too long to be supported");
-    }
-    // If we know the bag is smaller than MINIMUM_CACHE_SIZE_NS, then this is equivalent to having an
-    // unlimited cache.
-    if (this._totalNs <= MINIMUM_CACHE_SIZE_NS) {
-      this._unlimitedCache = true;
     }
     this._blocks = new Array(Math.ceil(this._totalNs / MEM_CACHE_BLOCK_SIZE_NS));
     this._updateProgress();
@@ -284,19 +284,49 @@ export default class MemoryCacheDataProvider implements DataProvider {
     this._maybeRunNewConnections();
   }
 
+  _getNewConnection() {
+    const connectionForReadRange = getNewConnection({
+      currentRemainingRange: this._currentConnection ? this._currentConnection.remainingBlockRange : undefined,
+      readRequestRange: this._readRequests[0] ? this._readRequests[0].blockRange : undefined,
+      downloadedRanges: this._getDownloadedBlockRanges(),
+      lastResolvedCallbackEnd: this._lastResolvedCallbackEnd,
+      cacheSize: READ_AHEAD_BLOCKS,
+      fileSize: this._blocks.length,
+      continueDownloadingThreshold: 10, // Somewhat arbitrary number to not create new connections all the time.
+    });
+    if (connectionForReadRange) {
+      return connectionForReadRange;
+    }
+    const cacheBytesUsed = sum(filterMap(this._blocks, (block) => block && block.sizeInBytes));
+    if (!this._currentConnection && cacheBytesUsed < CACHE_SIZE_BYTES) {
+      // All read requests have been served, but we have free cache space available. Cache something
+      // useful if possible.
+      return this._getPrefetchRange();
+    }
+    // Either a good connection is already in progress, or we've served all connections and have
+    // nothing useful to prefetch.
+  }
+
+  _getPrefetchRange() {
+    const bounds = { start: 0, end: this._blocks.length };
+    const uncachedRanges = missingRanges(bounds, this._getDownloadedBlockRanges());
+    if (!uncachedRanges.length) {
+      return; // We have loaded the whole file.
+    }
+
+    const prefetchStart = getPrefetchStartPoint(uncachedRanges, this._lastResolvedCallbackEnd || 0);
+    // Just request a single block. We know there's at least one there, and we don't want to cause
+    // blocks that are actually useful to be evicted because of our prefetching. We could consider
+    // a "low priority" connection that aborts as soon as there's memory pressure.
+    return { start: prefetchStart, end: prefetchStart + 1 };
+  }
+
   async _maybeRunNewConnections() {
     while (true) {
-      const newConnection = getNewConnection({
-        currentRemainingRange: this._currentConnection ? this._currentConnection.remainingBlockRange : undefined,
-        readRequestRange: this._readRequests[0] ? this._readRequests[0].blockRange : undefined,
-        downloadedRanges: this._getDownloadedBlockRanges(),
-        lastResolvedCallbackEnd: this._lastResolvedCallbackEnd,
-        cacheSize: this._unlimitedCache <= MINIMUM_CACHE_SIZE_NS ? Infinity : READ_AHEAD_BLOCKS,
-        fileSize: this._blocks.length,
-        continueDownloadingThreshold: 10, // Somewhat arbitrary number to not create new connections all the time.
-      });
+      const newConnection = this._getNewConnection();
       if (!newConnection) {
-        // All read requests done, or there is a connection already in progress handling them.
+        // All read requests done and nothing to prefetch, or there is a good connection already in
+        // progress.
         break;
       }
       const connectionSuccess = await this._setConnection(newConnection).catch((err) => {
@@ -461,7 +491,6 @@ export default class MemoryCacheDataProvider implements DataProvider {
     const { blockIndexesToKeep, newRecentRanges } = getBlocksToKeep({
       recentBlockRanges: this._recentBlockRanges,
       blockSizesInBytes: this._blocks.map((block) => (block ? block.sizeInBytes : undefined)),
-      minimumBlocksToKeep: Math.ceil(MINIMUM_CACHE_SIZE_NS / MEM_CACHE_BLOCK_SIZE_NS),
       maxCacheSizeInBytes: CACHE_SIZE_BYTES,
     });
 

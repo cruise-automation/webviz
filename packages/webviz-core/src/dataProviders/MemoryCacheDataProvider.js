@@ -30,6 +30,7 @@ import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time
 export const MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
 const MINIMUM_CACHE_SIZE_NS = 35e9; // Number of nanoseconds that we'll always keep in the cache.
 const READ_AHEAD_NS = 3e9; // Number of nanoseconds to read ahead from the last `getMessages` call.
+const READ_AHEAD_BLOCKS = Math.ceil(READ_AHEAD_NS / MEM_CACHE_BLOCK_SIZE_NS);
 const CACHE_SIZE_BYTES = 2.5e9; // Number of bytes that we aim to keep in the cache.
 export const MAX_BLOCK_SIZE_BYTES = 50e6; // Number of bytes in a block before we show an error.
 
@@ -283,24 +284,33 @@ export default class MemoryCacheDataProvider implements DataProvider {
     this._maybeRunNewConnections();
   }
 
-  _maybeRunNewConnections() {
-    const newConnection = getNewConnection({
-      currentRemainingRange: this._currentConnection ? this._currentConnection.remainingBlockRange : undefined,
-      readRequestRange: this._readRequests[0] ? this._readRequests[0].blockRange : undefined,
-      downloadedRanges: this._getDownloadedBlockRanges(),
-      lastResolvedCallbackEnd: this._lastResolvedCallbackEnd,
-      cacheSize: this._unlimitedCache ? Infinity : Math.ceil(READ_AHEAD_NS / MEM_CACHE_BLOCK_SIZE_NS),
-      fileSize: this._blocks.length,
-      continueDownloadingThreshold: 10, // Somewhat arbitrary number to not create new connections all the time.
-    });
-    if (newConnection) {
-      this._setConnection(newConnection).catch((err) => {
+  async _maybeRunNewConnections() {
+    while (true) {
+      const newConnection = getNewConnection({
+        currentRemainingRange: this._currentConnection ? this._currentConnection.remainingBlockRange : undefined,
+        readRequestRange: this._readRequests[0] ? this._readRequests[0].blockRange : undefined,
+        downloadedRanges: this._getDownloadedBlockRanges(),
+        lastResolvedCallbackEnd: this._lastResolvedCallbackEnd,
+        cacheSize: this._unlimitedCache <= MINIMUM_CACHE_SIZE_NS ? Infinity : READ_AHEAD_BLOCKS,
+        fileSize: this._blocks.length,
+        continueDownloadingThreshold: 10, // Somewhat arbitrary number to not create new connections all the time.
+      });
+      if (!newConnection) {
+        // All read requests done, or there is a connection already in progress handling them.
+        break;
+      }
+      const connectionSuccess = await this._setConnection(newConnection).catch((err) => {
         reportError(
           `MemoryCacheDataProvider connection ${this._currentConnection ? this._currentConnection.id : ""}`,
           err ? err.message : "<unknown error>",
           "app"
         );
       });
+      if (!connectionSuccess) {
+        // Connection interrupted, or otherwise unsuccessful.
+        break;
+      }
+      // See if there are any more read requests we should field.
     }
   }
 
@@ -416,11 +426,11 @@ export default class MemoryCacheDataProvider implements DataProvider {
         ...this._currentConnection,
         remainingBlockRange: { start: currentBlockIndex + 1, end: blockRange.end },
       };
-      this._updateState();
+      this._resolveFinishedReadRequests();
     }
     // Connection successfully completed.
     delete this._currentConnection;
-    this._updateState();
+    this._resolveFinishedReadRequests();
     return true;
   }
 

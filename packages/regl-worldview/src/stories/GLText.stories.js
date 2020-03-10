@@ -129,17 +129,13 @@ storiesOf("Worldview/GLText", module)
     function Example() {
       const [text, setText] = useState("Hello\nWorldview");
       useLayoutEffect(() => {
-        let i = 0;
-        const id = setInterval(() => {
-          setText(`New text! ${++i}`);
-          if (inScreenshotTests()) {
-            clearInterval(id);
-          }
-        }, 100);
-        return () => clearInterval(id);
+        setText(`New text!`);
       }, []);
       return (
         <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+          <div style={{ position: "absolute", top: 30, left: 30 }}>
+            <button onClick={() => setText(`Value: ${Math.floor(100 * Math.random())}`)}>Change Text</button>
+          </div>
           <GLText autoBackgroundColor>{textMarkers({ text })}</GLText>
           <Axes />
         </Container>

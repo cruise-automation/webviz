@@ -3,7 +3,7 @@
 import { storiesOf } from "@storybook/react";
 import { quat } from "gl-matrix";
 import { range } from "lodash";
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useCallback } from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 import tinyColor from "tinycolor2";
 
@@ -85,6 +85,28 @@ storiesOf("Worldview/GLText", module)
         <Axes />
       </Container>
     );
+  })
+  .add("scaleInvariant resize", () => {
+    function Example() {
+      const [hasRenderedOnce, setHasRenderedOnce] = useState<boolean>(false);
+      const refFn = useCallback(() => {
+        setTimeout(() => {
+          setHasRenderedOnce(true);
+        }, 100);
+      }, []);
+      const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+      return (
+        <div
+          style={{ width: hasRenderedOnce ? 500 : 250, height: hasRenderedOnce ? 500 : 250, background: "black" }}
+          ref={refFn}>
+          <Container cameraState={{ perspective: true, distance: 40 }}>
+            <GLText scaleInvariantFontSize={20}>{markers}</GLText>
+            <Axes />
+          </Container>
+        </div>
+      );
+    }
+    return <Example />;
   })
   .add("billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>

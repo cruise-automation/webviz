@@ -457,7 +457,7 @@ export default function GLText(props: Props) {
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
 
-  command.scaleInvariant = !!props.scaleInvariantFontSize;
+  command.scaleInvariant = props.scaleInvariantFontSize != null;
   // Compute the actual size for the text object in NDC coordinates (from -1 to 1)
   // In order to make sure the text is always shown at the same size regardless of
   // the canvas dimensions (as Text does), we need to scale it based on both the desired

@@ -22,7 +22,7 @@ type Props = { config: Config, saveConfig: SaveConfig<Config> };
 
 function SubscribeToList({ config, saveConfig }: Props): React.Node {
   const topics = config.topics.split(/\s*(?:\n|,|\s)\s*/);
-  const { reducedValue: messagesSeen } = PanelAPI.useMessages<number>({
+  const messagesSeen = PanelAPI.useMessageReducer<number>({
     topics,
     restore: React.useCallback(() => 0, []),
     addMessage: React.useCallback((seenBefore) => seenBefore + 1, []),

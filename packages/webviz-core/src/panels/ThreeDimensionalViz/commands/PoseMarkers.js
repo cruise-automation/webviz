@@ -10,7 +10,7 @@ import React, { type Node } from "react";
 import { Arrows, pointToVec3, vec3ToPoint, orientationToVec4, type Arrow } from "regl-worldview";
 
 import CarModel from "./CarModel";
-import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
+import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicSettingsEditor";
 
 type Props = {
   children: Arrow[],

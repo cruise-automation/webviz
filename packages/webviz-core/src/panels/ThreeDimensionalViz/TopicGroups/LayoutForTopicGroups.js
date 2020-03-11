@@ -29,8 +29,8 @@ import {
 } from "regl-worldview";
 import { type Time } from "rosbag";
 
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { Item } from "webviz-core/src/components/Menu";
-import { useShallowMemo } from "webviz-core/src/components/MessageHistory/hooks";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import filterMap from "webviz-core/src/filterMap";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
@@ -45,6 +45,7 @@ import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutToolbar";
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
+import { useSearchText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
 import { getUpdatedGlobalVariablesBySelectedObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import TopicGroups from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicGroups";
 import { migratePanelConfigToTopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations";
@@ -56,6 +57,7 @@ import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import { useShallowMemo } from "webviz-core/src/util/hooks";
 import { videoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
 
@@ -133,44 +135,43 @@ export default function LayoutForTopicGroups({
     pinTopics,
     selectedPolygonEditFormat = "yaml",
     showCrosshair,
+    autoSyncCameraState,
     topicDisplayMode = TOPIC_DISPLAY_MODES.SHOW_TREE.value,
     topicSettings,
     topicGroups,
   },
 }: Props) {
+  const containerRef = useRef<?HTMLDivElement>();
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
   const { globalVariables, setGlobalVariables } = useGlobalVariables();
   const [debug, setDebug] = useState(false);
   const [polygonBuilder, setPolygonBuilder] = useState(() => new PolygonBuilder());
   const [measureInfo, setMeasureInfo] = useState<MeasureInfo>({
     measureState: "idle",
-    measurePoints: { start: null, end: null },
+    measurePoints: { start: undefined, end: undefined },
   });
 
-  useEffect(
-    () => {
-      // Save the topic group config until we do the final migration
-      if ((!process.env.NODE_ENV || process.env.NODE_ENV === "development") && topicGroups) {
-        return;
-      }
-      // Always migrate the current config to topicGroup and save to panelConfig.
-      // This is only temporary until we do the full migration before release.
-      // TODO(Audrey): move the migration logic upstream
+  const searchTextProps = useSearchText();
+  const { searchTextOpen, searchText, setSearchTextMatches, searchTextMatches, selectedMatchIndex } = searchTextProps;
+
+  const migrateToTopicGroupConfig = useCallback(
+    (topicGroupDisplayName?: string) => {
       const migratedTopicGroupConfig = migratePanelConfigToTopicGroupConfig({
+        topicGroupDisplayName,
         checkedNodes,
         topicSettings,
         modifiedNamespaceTopics,
       });
-      saveConfig({ topicGroups: [migratedTopicGroupConfig] });
+      // Append newly migrated topic group config to existing config
+      saveConfig({ topicGroups: (topicGroups || []).concat(migratedTopicGroupConfig) });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps, only need to migrate and save once
-    []
+    [checkedNodes, modifiedNamespaceTopics, saveConfig, topicGroups, topicSettings]
   );
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0); // used for updating DrawPolygon during mouse move
   const measuringElRef = useRef<?MeasuringTool>(null);
-  const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(null);
-  const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(null);
+  const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(undefined);
+  const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(undefined);
   const selectedObject = selectedObjectState && selectedObjectState.selectedObject;
 
   useLayoutEffect(
@@ -206,7 +207,7 @@ export default function LayoutForTopicGroups({
   useEffect(() => setSubscriptions(memoizedSelectedTopics), [memoizedSelectedTopics, setSubscriptions]);
   const { playerId } = useDataSourceInfo();
 
-  useMemo(
+  const rootTf = useMemo(
     () => {
       // TODO(Audrey): add tests for the clearing behavior
       if (cleared) {
@@ -227,7 +228,7 @@ export default function LayoutForTopicGroups({
 
       // toggle scene builder topics based on visible topic nodes in the tree
       const topicsByName = topicsByTopicName(topics);
-      const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByName[name]);
+      const selectedTopics = filterMap(memoizedSelectedTopics, (name) => topicsByName[name]);
       sceneBuilder.setTopics(selectedTopics);
 
       sceneBuilder.setGlobalVariables(globalVariables);
@@ -238,6 +239,8 @@ export default function LayoutForTopicGroups({
       // update the transforms and set the selected ones to render
       transformsBuilder.setTransforms(transforms, rootTfID);
       transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic["/tf"] || []);
+
+      return rootTfID;
     },
     [
       cleared,
@@ -249,7 +252,7 @@ export default function LayoutForTopicGroups({
       playerId,
       sceneBuilder,
       selectedNamespacesByTopic,
-      selectedTopicNames,
+      memoizedSelectedTopics,
       selectedTopicSettingsByTopic,
       topics,
       transforms,
@@ -274,6 +277,7 @@ export default function LayoutForTopicGroups({
     saveConfig,
     selectedObjectState,
     topics,
+    autoSyncCameraState: !!autoSyncCameraState,
   });
   callbackInputsRef.current = {
     cameraState,
@@ -283,6 +287,7 @@ export default function LayoutForTopicGroups({
     saveConfig,
     selectedObjectState,
     topics,
+    autoSyncCameraState: !!autoSyncCameraState,
   };
 
   const handleEvent = useCallback((eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
@@ -306,6 +311,7 @@ export default function LayoutForTopicGroups({
   const {
     onClick,
     onDoubleClick,
+    onExitTopicGroupFocus,
     onMouseDown,
     onMouseMove,
     onMouseUp,
@@ -321,20 +327,25 @@ export default function LayoutForTopicGroups({
           const selectedObjects = (args && args.objects) || [];
           const clickedPosition = { clientX: ev.clientX, clientY: ev.clientY };
           if (selectedObjects.length === 0) {
-            setSelectedObjectState(null);
+            setSelectedObjectState(undefined);
           } else if (selectedObjects.length === 1) {
             // select the object directly if there is only one
             setSelectedObjectState({ selectedObject: selectedObjects[0], selectedObjects, clickedPosition });
           } else {
             // open up context menu to select one object to show details
-            setSelectedObjectState({ selectedObject: null, selectedObjects, clickedPosition });
+            setSelectedObjectState({ selectedObject: undefined, selectedObjects, clickedPosition });
           }
         },
         onDoubleClick: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onDoubleClick", ev, args),
+        onExitTopicGroupFocus: (ev) => {
+          if (containerRef.current) {
+            containerRef.current.focus();
+          }
+        },
         onMouseDown: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseDown", ev, args),
         onMouseMove: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseMove", ev, args),
         onMouseUp: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseUp", ev, args),
-        onClearSelectedObject: () => setSelectedObjectState(null),
+        onClearSelectedObject: () => setSelectedObjectState(undefined),
         onSelectObject: (selectedObj: MouseEventObject) =>
           setSelectedObjectState({ ...callbackInputsRef.current.selectedObjectState, selectedObject: selectedObj }),
         onSetPolygons: (polygons: Polygon[]) => setPolygonBuilder(new PolygonBuilder(polygons)),
@@ -356,16 +367,47 @@ export default function LayoutForTopicGroups({
     saveConfig,
   ]);
 
+  const onSetAutoTextBackgroundColor = useCallback(
+    () => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor }),
+    [autoTextBackgroundColor, saveConfig]
+  );
+
+  const glTextEnabled = useExperimentalFeature("glText");
   const keyDownHandlers = useMemo(
-    () => ({
-      "3": () => {
-        toggleCameraMode();
-      },
-      Escape: () => {
-        setDrawingTabType(null);
-      },
-    }),
-    [toggleCameraMode]
+    () => {
+      const handlers: { [key: string]: (e: KeyboardEvent) => void } = {
+        "3": () => {
+          toggleCameraMode();
+        },
+        Escape: (e) => {
+          e.preventDefault();
+          setDrawingTabType(null);
+          searchTextProps.toggleSearchTextOpen(false);
+          if (document.activeElement && document.activeElement === containerRef.current) {
+            document.activeElement.blur();
+          }
+        },
+        t: (e) => {
+          e.preventDefault();
+          saveConfig({ pinTopics: !pinTopics });
+        },
+      };
+
+      if (glTextEnabled) {
+        handlers.f = (e: KeyboardEvent) => {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            searchTextProps.toggleSearchTextOpen(true);
+            if (!searchTextProps.searchInputRef || !searchTextProps.searchInputRef.current) {
+              return;
+            }
+            searchTextProps.searchInputRef.current.select();
+          }
+        };
+      }
+      return handlers;
+    },
+    [glTextEnabled, pinTopics, saveConfig, searchTextProps, toggleCameraMode]
   );
 
   const isDrawing = useMemo(
@@ -407,32 +449,49 @@ export default function LayoutForTopicGroups({
   const availableTfs = useShallowMemo(transforms.values().map(({ id }) => id));
 
   return (
-    <div className={styles.container} style={{ cursor: cursorType }}>
+    <div
+      ref={containerRef}
+      tabIndex={-1}
+      className={styles.container}
+      style={{ cursor: cursorType }}
+      data-test="layout-for-topic-groups">
       <KeyListener keyDownHandlers={keyDownHandlers} />
       <PanelToolbar
         floating
         helpContent={helpContent}
         menuContent={
-          <Item
-            tooltip="Markers with 0 as z-value in pose or points are updated to have the z-value of the flattened frame (default to the car)."
-            icon={flattenMarkers ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-            onClick={onSetFlattenMarkers}>
-            Flatten markers
-          </Item>
+          <>
+            <Item
+              tooltip="Markers with 0 as z-value in pose or points are updated to have the z-value of the flattened base frame."
+              icon={flattenMarkers ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
+              onClick={onSetFlattenMarkers}>
+              Flatten markers
+            </Item>
+            <Item
+              tooltip="Automatically apply dark/light background color to text."
+              icon={autoTextBackgroundColor ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
+              onClick={onSetAutoTextBackgroundColor}>
+              Auto Text Background
+            </Item>
+          </>
         }
       />
-      <div style={videoRecordingStyle}>
+      <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
         <TopicGroups
-          allNamespaces={sceneBuilder.allNamespaces}
           availableTfs={availableTfs}
           availableTopics={topics}
+          onExitTopicGroupFocus={onExitTopicGroupFocus}
+          onMigrateToTopicGroupConfig={migrateToTopicGroupConfig}
           pinTopics={pinTopics}
           saveConfig={saveConfig}
           topicGroupsConfig={topicGroups || []}
+          sceneBuilder={sceneBuilder}
+          containerHeight={containerRef.current?.clientHeight || 400}
         />
       </div>
       <div className={styles.world}>
         <World
+          key={`${callbackInputsRef.current.autoSyncCameraState ? "synced" : "not-synced"}`}
           autoTextBackgroundColor={!!autoTextBackgroundColor}
           cameraState={cameraState}
           isPlaying={!!isPlaying}
@@ -442,7 +501,12 @@ export default function LayoutForTopicGroups({
           onDoubleClick={onDoubleClick}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}>
+          onMouseUp={onMouseUp}
+          searchTextOpen={searchTextOpen}
+          searchText={searchText}
+          setSearchTextMatches={setSearchTextMatches}
+          searchTextMatches={searchTextMatches}
+          selectedMatchIndex={selectedMatchIndex}>
           {mapElement}
           {children}
           <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
@@ -460,6 +524,7 @@ export default function LayoutForTopicGroups({
               measuringElRef={measuringElRef}
               onAlignXYAxis={onAlignXYAxis}
               onCameraStateChange={onCameraStateChange}
+              autoSyncCameraState={!!autoSyncCameraState}
               onClearSelectedObject={onClearSelectedObject}
               onFollowChange={onFollowChange}
               onSetDrawingTabType={setDrawingTabType}
@@ -473,6 +538,8 @@ export default function LayoutForTopicGroups({
               setMeasureInfo={setMeasureInfo}
               showCrosshair={showCrosshair}
               transforms={transforms}
+              rootTf={rootTf}
+              {...searchTextProps}
             />
           </div>
           {selectedObjectState &&

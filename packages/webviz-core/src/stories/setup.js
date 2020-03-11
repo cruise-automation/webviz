@@ -7,4 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 // Run setup logic for webviz core before storybook is launched
-export default function storiesSetup() {}
+export default function storiesSetup() {
+  require("../hooksImporter").testSetup();
+}

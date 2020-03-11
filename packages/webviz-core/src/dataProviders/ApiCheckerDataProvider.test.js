@@ -21,9 +21,9 @@ function getProvider() {
       { name: "/some_other_topic", datatype: "some_datatype" },
     ],
     datatypes: { some_datatype: { fields: [] } },
-    connectionsByTopic: {
-      "/some_topic": { messageDefinition: "dummy", md5sum: "dummy", topic: "dummy", type: "dummy" },
-      "/some_other_topic": { messageDefinition: "dummy", md5sum: "dummy", topic: "dummy", type: "dummy" },
+    messageDefintionsByTopic: {
+      "/some_topic": "dummy",
+      "/some_other_topic": "dummy",
     },
   });
 
@@ -43,9 +43,9 @@ describe("ApiCheckerDataProvider", () => {
       const { provider } = getProvider();
       const initializationResult = await provider.initialize(mockExtensionPoint().extensionPoint);
       expect(initializationResult).toEqual({
-        connectionsByTopic: {
-          "/some_topic": { md5sum: "dummy", messageDefinition: "dummy", topic: "dummy", type: "dummy" },
-          "/some_other_topic": { md5sum: "dummy", messageDefinition: "dummy", topic: "dummy", type: "dummy" },
+        messageDefintionsByTopic: {
+          "/some_topic": "dummy",
+          "/some_other_topic": "dummy",
         },
         datatypes: { some_datatype: { fields: [] } },
         end: { nsec: 0, sec: 105 },
@@ -80,10 +80,10 @@ describe("ApiCheckerDataProvider", () => {
         await expect(provider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
       });
 
-      it("throws when topic is missing from connectionsByTopic", async () => {
+      it("throws when topic is missing from messageDefintionsByTopic", async () => {
         const { provider, memoryDataProvider } = getProvider();
-        memoryDataProvider.connectionsByTopic = {
-          "/some_other_topic": { messageDefinition: "dummy", md5sum: "dummy", topic: "dummy", type: "dummy" },
+        memoryDataProvider.messageDefintionsByTopic = {
+          "/some_other_topic": "dummy",
         };
         await expect(provider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
       });

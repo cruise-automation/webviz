@@ -20,11 +20,27 @@ storiesOf("<PlotMenu>", module)
   .addDecorator(withScreenshot())
   .add("With min and max y set", () => (
     <Wrapper>
-      <PlotMenu minYValue="-5" maxYValue="5" saveConfig={noop} setMinMax={noop} datasets={[]} />
+      <PlotMenu
+        minYValue="-5"
+        maxYValue="5"
+        saveConfig={noop}
+        setMinMax={noop}
+        datasets={[]}
+        maxMessages="123"
+        tooltips={[]}
+      />
     </Wrapper>
   ))
   .add("With min and max y not set", () => (
     <Wrapper>
-      <PlotMenu minYValue="" maxYValue="" saveConfig={noop} setMinMax={noop} datasets={[]} />
+      <PlotMenu
+        minYValue=""
+        maxYValue=""
+        saveConfig={noop}
+        setMinMax={noop}
+        datasets={[]}
+        maxMessages=""
+        tooltips={[]}
+      />
     </Wrapper>
   ));

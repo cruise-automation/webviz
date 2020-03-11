@@ -13,6 +13,7 @@ export const fixture = {
     { name: "/baz/num", datatype: "baz/num" },
     { name: "/baz/text", datatype: "baz/text" },
     { name: "/baz/array", datatype: "baz/array" },
+    { name: "/baz/array/obj", datatype: "baz/array/obj" },
     { name: "/geometry/types", datatype: "geometry/types" },
   ],
   frame: {
@@ -46,10 +47,15 @@ export const fixture = {
         op: "message",
         datatype: "std_msgs/String",
         topic: "/foo",
+        receiveTime: { sec: 122, nsec: 456789011 },
+        message: { some_array: ["a", "b", "c"], some_deleted_key: "GONE", some_id_example_2: { some_id: 0 } },
+      },
+      {
+        op: "message",
+        datatype: "std_msgs/String",
+        topic: "/foo",
         receiveTime: { sec: 123, nsec: 456789012 },
-        message: {
-          some_id_example_2: { some_id: 123 },
-        },
+        message: { some_array: ["a", "b", "c", "d", "e", "f"], some_id_example_2: { some_id: 123 } },
       },
     ],
     "/baz/num": [
@@ -77,6 +83,15 @@ export const fixture = {
         topic: "/baz/array",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: [false],
+      },
+    ],
+    "/baz/array/obj": [
+      {
+        op: "message",
+        datatype: "baz/array/obj",
+        topic: "/baz/array/obj",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: [{ a: "b", c: "d", e: "f" }],
       },
     ],
     "/geometry/types": [
@@ -176,6 +191,28 @@ export const enumAdvancedFixture = {
   },
 };
 
+export const withMissingData = {
+  datatypes: {
+    "baz/missing_data": {
+      fields: [{ type: "uint8", name: "value", isArray: false }],
+    },
+  },
+  topics: [{ name: "/baz/missing_data", datatype: "baz/missing_data" }],
+  frame: {
+    "/baz/missing_data": [
+      {
+        op: "message",
+        datatype: "baz/missing_data",
+        topic: "/baz/missing_data",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: {
+          value: null,
+        },
+      },
+    ],
+  },
+};
+
 export const topicsToDiffFixture = {
   datatypes: enumAdvancedFixture.datatypes,
   topics: [
@@ -232,6 +269,36 @@ export const topicsWithIdsToDiffFixture = {
           { ...exampleMessage, state: 5, id: 2 },
           { ...exampleMessage, state: 2, color: 3, newField: "hello", id: 1 },
         ],
+      },
+    ],
+  },
+};
+
+export const multipleNumberMessagesFixture = {
+  datatypes: { multiple_number_messages: { fields: [{ type: "uint32", name: "value", isArray: false }] } },
+  topics: [{ name: "/multiple_number_messages", datatype: "multiple_number_messages" }],
+  frame: {
+    "/baz/enum": [
+      {
+        op: "message",
+        datatype: "multiple_number_messages",
+        topic: "/multiple_number_messages",
+        receiveTime: { sec: 123, nsec: 1 },
+        message: { value: 1 },
+      },
+      {
+        op: "message",
+        datatype: "multiple_number_messages",
+        topic: "/multiple_number_messages",
+        receiveTime: { sec: 123, nsec: 2 },
+        message: { value: 2 },
+      },
+      {
+        op: "message",
+        datatype: "multiple_number_messages",
+        topic: "/multiple_number_messages",
+        receiveTime: { sec: 123, nsec: 3 },
+        message: { value: 3 },
       },
     ],
   },

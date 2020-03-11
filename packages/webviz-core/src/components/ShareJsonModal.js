@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as Sentry from "@sentry/browser";
 import cx from "classnames";
 import React, { Component } from "react";
 
@@ -14,7 +13,9 @@ import styles from "./ShareJsonModal.module.scss";
 import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
 import Modal from "webviz-core/src/components/Modal";
+import { downloadTextFile } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
+import reportError from "webviz-core/src/util/reportError";
 
 type Props = {
   onRequestClose: () => void,
@@ -35,8 +36,7 @@ function encode(value: any): string {
   try {
     return JSON.stringify(value, null, 2);
   } catch (e) {
-    Sentry.captureException(e, { extra: value });
-    console.error("Error encoding value", e);
+    reportError("Error encoding value", e, "app");
     return "";
   }
 }
@@ -81,6 +81,11 @@ export default class ShareJsonModal extends Component<Props, State> {
     });
   };
 
+  onDownload = () => {
+    const { value } = this.state;
+    downloadTextFile(value, "layout.json");
+  };
+
   renderError() {
     const { error } = this.state;
     if (!error) {
@@ -114,6 +119,7 @@ export default class ShareJsonModal extends Component<Props, State> {
             <Button primary onClick={this.onChange} className="test-apply">
               Apply
             </Button>
+            <Button onClick={this.onDownload}>Download</Button>
             <Button onClick={this.onCopy}>{copied ? "Copied!" : "Copy"}</Button>
             <Button onClick={() => this.setState({ value: "{}" })}>Clear</Button>
           </div>

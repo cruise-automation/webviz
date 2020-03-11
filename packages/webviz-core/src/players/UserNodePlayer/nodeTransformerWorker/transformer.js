@@ -41,23 +41,65 @@ import reportError from "webviz-core/src/util/reportError";
 const ts = require("typescript/lib/typescript");
 
 export const getInputTopics = (nodeData: NodeData): NodeData => {
-  const inputTopicDeclaration = nodeData.sourceCode.match(/^\s*export\s+const\s+inputs\s*=\s*\[[^\]]*\]/gm);
-  const inputTopics: $ReadOnlyArray<string> = Array.from(
-    // $FlowFixMe - does not like matchAll
-    (inputTopicDeclaration ? inputTopicDeclaration[0] : "").matchAll(/("([^"]+)"|'([^']+)')/g),
-    (match) => {
-      // Pick either the first matching group or the second, which corresponds
-      // to single quotes or double quotes respectively.
-      return match[2] || match[3];
-    }
-  );
+  const { sourceFile, typeChecker } = nodeData;
+  if (!sourceFile || !typeChecker) {
+    throw new Error("Either the sourceFile or typeChecker is absent'. There is a problem with the `compile` step.");
+  }
 
+  // Do not attempt to run if there were any compile time errors.
+  if (nodeData.diagnostics.find(({ source }) => source === Sources.Typescript)) {
+    return nodeData;
+  }
+
+  if (!sourceFile.symbol) {
+    const error: Diagnostic = {
+      severity: DiagnosticSeverity.Error,
+      message: "Must export an input topics array. E.g. 'export const inputs = ['/some_topics']'",
+      source: Sources.InputTopicsChecker,
+      code: ErrorCodes.InputTopicsChecker.NO_INPUTS_EXPORT,
+    };
+    return {
+      ...nodeData,
+      diagnostics: [...nodeData.diagnostics, error],
+    };
+  }
+
+  const inputsExport = typeChecker.getExportsOfModule(sourceFile.symbol).find((node) => node.escapedName === "inputs");
+  if (!inputsExport) {
+    const error: Diagnostic = {
+      severity: DiagnosticSeverity.Error,
+      message: "Must export a non-empty inputs array.",
+      source: Sources.InputTopicsChecker,
+      code: ErrorCodes.InputTopicsChecker.EMPTY_INPUTS_EXPORT,
+    };
+    return {
+      ...nodeData,
+      diagnostics: [...nodeData.diagnostics, error],
+    };
+  }
+
+  const inputTopicElements = inputsExport?.declarations[0]?.initializer?.elements;
+  if (!inputTopicElements || inputTopicElements.some(({ kind }) => kind !== ts.SyntaxKind.StringLiteral)) {
+    const error: Diagnostic = {
+      severity: DiagnosticSeverity.Error,
+      message:
+        "The exported 'inputs' variable must be an array of string literals. E.g. 'export const inputs = ['/some_topics']'",
+      source: Sources.InputTopicsChecker,
+      code: ErrorCodes.InputTopicsChecker.BAD_INPUTS_TYPE,
+    };
+    return {
+      ...nodeData,
+      diagnostics: [...nodeData.diagnostics, error],
+    };
+  }
+
+  const inputTopics = inputTopicElements.map(({ text }) => text);
   if (!inputTopics.length) {
     const error: Diagnostic = {
       severity: DiagnosticSeverity.Error,
       message: 'Must include non-empty inputs array, e.g. export const inputs = ["/some_input_topic"];',
       source: Sources.InputTopicsChecker,
-      code: ErrorCodes.InputTopicsChecker.NO_INPUTS,
+      code: ErrorCodes.InputTopicsChecker.EMPTY_INPUTS_EXPORT,
     };
 
     return {
@@ -123,7 +165,7 @@ export const validateInputTopics = (nodeData: NodeData, playerStateActiveData: ?
         severity: DiagnosticSeverity.Error,
         message: `Input "${inputTopic}" is not yet available`,
         source: Sources.InputTopicsChecker,
-        code: ErrorCodes.InputTopicsChecker.TOPIC_UNAVAILABLE,
+        code: ErrorCodes.InputTopicsChecker.NO_TOPIC_AVAIL,
       });
     }
   }
@@ -249,17 +291,21 @@ export const compile = (nodeData: NodeData): NodeData => {
 
   const newDiagnostics = diagnostics.map(transformDiagnosticToMarkerData);
 
+  const sourceFile: ts.SourceFile = program.getSourceFile(nodeFileName);
+  const typeChecker = program.getTypeChecker();
+
   return {
     ...nodeData,
-    program,
+    sourceFile,
+    typeChecker,
     diagnostics: [...nodeData.diagnostics, ...newDiagnostics],
   };
 };
 
 export const extractDatatypes = (nodeData: NodeData): NodeData => {
-  const { program, name } = nodeData;
-  if (!program) {
-    throw new Error("No TypeScript 'program'. There is a problem with the `compile` step.");
+  const { sourceFile, typeChecker, name } = nodeData;
+  if (!sourceFile || !typeChecker) {
+    throw new Error("Either the sourceFile or typeChecker is absent'. There is a problem with the `compile` step.");
   }
 
   // Do not attempt to run if there were any compile time errors.
@@ -267,15 +313,10 @@ export const extractDatatypes = (nodeData: NodeData): NodeData => {
     return nodeData;
   }
 
-  const nodeFileName = `${name}.ts`;
-
-  const source: ts.SourceFile = program.getSourceFile(nodeFileName);
-  const checker = program.getTypeChecker();
-
   try {
-    const exportNode = findDefaultExportFunction(source, checker);
-    const typeNode = findReturnType(checker, 0, exportNode);
-    const { outputDatatype, datatypes } = constructDatatypes(checker, typeNode, name);
+    const exportNode = findDefaultExportFunction(sourceFile, typeChecker);
+    const typeNode = findReturnType(typeChecker, 0, exportNode);
+    const { outputDatatype, datatypes } = constructDatatypes(typeChecker, typeNode, name);
     return { ...nodeData, datatypes, outputDatatype };
   } catch (error) {
     if (error instanceof DatatypeExtractionError) {
@@ -335,14 +376,14 @@ const transform = ({
   sourceCode: string,
   playerInfo: ?$ReadOnly<PlayerInfo>,
   priorRegisteredTopics: $ReadOnlyArray<Topic>,
-}): NodeData & { program: ?void } => {
+}): NodeData & { sourceFile: ?void, typeChecker: ?void } => {
   const transformer = compose(
-    getInputTopics,
     getOutputTopic,
-    validateInputTopics,
     validateOutputTopic,
     transpile,
     compile,
+    getInputTopics,
+    validateInputTopics,
     extractDatatypes
   );
 
@@ -356,12 +397,13 @@ const transform = ({
       outputDatatype: "",
       diagnostics: [],
       datatypes: {},
-      program: undefined,
+      sourceFile: undefined,
+      typeChecker: undefined,
     },
     playerInfo,
     priorRegisteredTopics
   );
-  return { ...result, program: null };
+  return { ...result, sourceFile: null, typeChecker: null };
 };
 
 export default transform;

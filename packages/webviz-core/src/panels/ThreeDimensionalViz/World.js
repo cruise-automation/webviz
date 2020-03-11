@@ -33,7 +33,9 @@ import {
   PoseMarkers,
   LinedConvexHulls,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands";
+import { type WorldSearchTextProps, useGLText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import type { TextMarker } from "webviz-core/src/types/Messages";
 import type { MarkerCollector, MarkerProvider } from "webviz-core/src/types/Scene";
 
 type Props = {|
@@ -48,6 +50,7 @@ type Props = {|
   onMouseDown?: MouseHandler,
   onMouseMove?: MouseHandler,
   onMouseUp?: MouseHandler,
+  ...WorldSearchTextProps,
 |};
 
 function getMarkers(markerProviders: MarkerProvider[]) {
@@ -84,6 +87,11 @@ export default function World({
   onMouseDown,
   onMouseMove,
   onMouseUp,
+  setSearchTextMatches,
+  searchText,
+  searchTextOpen,
+  selectedMatchIndex,
+  searchTextMatches,
 }: Props) {
   const getChildrenForHitmap = useMemo(() => createInstancedGetChildrenForHitmap(2), []);
   const {
@@ -111,8 +119,19 @@ export default function World({
     .perPanelHooks()
     .ThreeDimensionalViz.renderAdditionalMarkers(rest);
 
-  const useGLText = useExperimentalFeature("glText");
-  const TextComponent = useGLText ? GLText : Text;
+  const glTextEnabled = useExperimentalFeature("glText");
+  const TextComponent = glTextEnabled ? GLText : Text;
+
+  // Only actually used when GLText is enabled.
+  const textMarkers = useGLText({
+    glTextEnabled,
+    text: (text: TextMarker[]),
+    setSearchTextMatches,
+    searchText,
+    searchTextOpen,
+    selectedMatchIndex,
+    searchTextMatches,
+  });
 
   return (
     <Worldview
@@ -138,19 +157,7 @@ export default function World({
       <Cubes>{[...cube, ...cubeList]}</Cubes>
       <PoseMarkers>{poseMarker}</PoseMarkers>
       <LaserScans>{laserScan}</LaserScans>
-      <TextComponent autoBackgroundColor={autoTextBackgroundColor}>
-        {useGLText
-          ? text.map((marker) => ({
-              ...marker,
-              scale: {
-                // RViz ignores scale.x/y for text and only uses z
-                x: marker.scale.z,
-                y: marker.scale.z,
-                z: marker.scale.z,
-              },
-            }))
-          : text}
-      </TextComponent>
+      <TextComponent autoBackgroundColor={autoTextBackgroundColor}>{textMarkers}</TextComponent>
       <FilledPolygons>{filledPolygon}</FilledPolygons>
       <Lines getChildrenForHitmap={getChildrenForHitmap}>{instancedLineList}</Lines>
       <LinedConvexHulls>{linedConvexHull}</LinedConvexHulls>

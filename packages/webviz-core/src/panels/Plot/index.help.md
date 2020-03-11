@@ -2,7 +2,7 @@
 
 Plots arbitrary values from topics, similar to [rqt_plot](http://wiki.ros.org/rqt_plot).
 
-The values plotted are specified through Webviz's [topic path syntax](/help/topic-path-syntax).
+The values plotted are specified through Webviz's [message path syntax](/help/message-path-syntax).
 
 In the options menu, you can set a minimum and maximum Y-value. By default, the plot will use those bounds unless the data you're looking at extends above the max Y-value or below the min Y-value; in those cases it will automatically expand. If you want to disable this behavior and force the plot to use the exact minimum and maximum Y-values entered, you can "lock" the y-axis in the options menu as well.
 
@@ -20,7 +20,7 @@ To take the derivative of a value (change per second), use the special `.@deriva
 
 ## Array Index as X-Axis
 
-Go into the Plot panel's settings to change your x-axis from being the messages' timestamps to being the message values' array indices. In this mode, if you add topic path `/some_topic.some_array` as a new line in the plot, the plot will chart that array's values against their indices. For example, if `/some_topic.some_array` contained the values `[5, 10, 15]`, the resulting points on the chart would be `[0, 5]`, `[1, 10]`, and `[2, 15]`.
+Go into the Plot panel's settings to change your x-axis from being the messages' timestamps to being the message values' array indices. In this mode, if you add message path `/some_topic.some_array` as a new line in the plot, the plot will chart that array's values against their indices. For example, if `/some_topic.some_array` contained the values `[5, 10, 15]`, the resulting points on the chart would be `[0, 5]`, `[1, 10]`, and `[2, 15]`.
 
 ## User Interactions
 

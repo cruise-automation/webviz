@@ -205,11 +205,7 @@ class DiagnosticStatus extends React.Component<Props, *> {
   }
 
   _renderKeyValueSections = (values: FormattedKeyValue[]): React.Node => {
-    // get topicToRender, hardware_id and idx
-    // Add a icon and open plot panel with this path:
-    // /${topicToRender}.status[:]{hardware_id==${hardware_id}}.values[idx].value
     const { info, topicToRender, openSiblingPanel } = this.props;
-    const hardware_id = info.status.hardware_id;
     let inCollapsedSection = false;
     let ellipsisShown = false;
     return values.map((kv, idx) => {
@@ -237,7 +233,11 @@ class DiagnosticStatus extends React.Component<Props, *> {
           </tr>
         );
       }
-      const valuePath = `${topicToRender}.status[:]{hardware_id=="${hardware_id}"}.values[:]{key=="${kv.key}"}.value`;
+      // We need both `hardware_id` and `name`; one of them is not enough. That's also how we identify
+      // what to show in this very panel; see `selectedHardwareId` AND `selectedName` in the config.
+      const valuePath = `${topicToRender}.status[:]{hardware_id=="${info.status.hardware_id}"}{name=="${
+        info.status.name
+      }"}.values[:]{key=="${kv.key}"}.value`;
       let openPlotPanelIconElem = null;
       if (kv.value && kv.value.length > 0) {
         openPlotPanelIconElem = !isNaN(Number(kv.value)) ? (
@@ -272,6 +272,8 @@ class DiagnosticStatus extends React.Component<Props, *> {
     const {
       info: { status, displayName },
       splitFraction,
+      openSiblingPanel,
+      topicToRender,
     } = this.props;
     const statusClass = style[`status-${LEVEL_NAMES[status.level] || "unknown"}`];
 
@@ -301,8 +303,24 @@ class DiagnosticStatus extends React.Component<Props, *> {
                   <th colSpan={2}>{displayName}</th>
                 </Tooltip>
               </tr>
-              <tr className={statusClass}>
-                <td colSpan={2}>{status.message}</td>
+              <tr className={cx(style.row, statusClass)}>
+                <td colSpan={2}>
+                  {status.message}{" "}
+                  <Icon
+                    fade
+                    className={style.stateTransitionsIcon}
+                    onClick={() =>
+                      openSiblingStateTransitionsPanel(
+                        openSiblingPanel,
+                        `${topicToRender}.status[:]{hardware_id=="${status.hardware_id}"}{name=="${
+                          status.name
+                        }"}.message`
+                      )
+                    }
+                    tooltip="State Transitions">
+                    <DotsHorizontalIcon />
+                  </Icon>
+                </td>
               </tr>
               {this._renderKeyValueSections(getFormattedKeyValues(status))}
             </tbody>

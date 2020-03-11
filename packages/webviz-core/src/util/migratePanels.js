@@ -8,7 +8,10 @@
 
 import { cloneDeep, isEmpty } from "lodash";
 
+import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
 import type { PanelsState } from "webviz-core/src/reducers/panels";
+import { getPanelTypeFromId } from "webviz-core/src/util";
+import migrate3DPanel from "webviz-core/src/util/migrate3DPanel";
 
 export function migrateNodePlaygroundNodesToObjects(originalPanelsState: PanelsState): PanelsState {
   if (originalPanelsState.userNodes) {
@@ -38,6 +41,22 @@ export function migrateGlobalDataToGlobalVariables(originalPanelsState: PanelsSt
   return originalPanelsState;
 }
 
+export function migrate3DPanelSavedProps(migrate3DPanelFn: (ThreeDimensionalVizConfig) => ThreeDimensionalVizConfig) {
+  return function(originalPanelsState: PanelsState): PanelsState {
+    if (!originalPanelsState.savedProps) {
+      return originalPanelsState;
+    }
+    const panelsState = cloneDeep(originalPanelsState);
+    for (const id of Object.keys(panelsState.savedProps)) {
+      if (getPanelTypeFromId(id) === "3D Panel") {
+        const oldSavedProps = panelsState.savedProps[id];
+        panelsState.savedProps[id] = migrate3DPanelFn(oldSavedProps);
+      }
+    }
+    return panelsState;
+  };
+}
+
 function migratePlaybackConfig(state: PanelsState): PanelsState {
   const panelsState = cloneDeep(state);
   const { playbackConfig } = panelsState;
@@ -52,10 +71,12 @@ export default function migratePanels(originalPanelsState: PanelsState): PanelsS
     return originalPanelsState;
   }
   try {
-    return [migrateGlobalDataToGlobalVariables, migratePlaybackConfig, migrateNodePlaygroundNodesToObjects].reduce(
-      (panelState, fn: (PanelsState) => PanelsState) => fn(panelState),
-      originalPanelsState
-    );
+    return [
+      migratePlaybackConfig,
+      migrateNodePlaygroundNodesToObjects,
+      migrate3DPanelSavedProps(migrate3DPanel),
+      migrateGlobalDataToGlobalVariables,
+    ].reduce((panelState, fn: (PanelsState) => PanelsState) => fn(panelState), originalPanelsState);
   } catch (error) {
     return originalPanelsState;
   }

@@ -37,11 +37,12 @@ $row-height: 24px;
 }
 
 .autocompleteItem {
-  padding: 0 6px;
+  padding: 6px;
   cursor: pointer;
-  line-height: $row-height;
-  height: $row-height;
-  white-space: pre;
+  min-height: $row-height;
+  line-height: $row-height - 10px;
+  overflow-wrap: break-word;
+  color: $text-normal;
 }
 
 .selected {

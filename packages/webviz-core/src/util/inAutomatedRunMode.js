@@ -7,11 +7,11 @@
 //  You may not use this file except in compliance with the License.
 
 export function videoRecordingMode() {
-  return window.location.search.includes("video-recording-mode");
+  return new URLSearchParams(window.location.search).has("video-recording-mode");
 }
 
 export function performanceMeasuringMode() {
-  return window.location.search.includes("performance-measuring-mode");
+  return new URLSearchParams(window.location.search).has("performance-measuring-mode");
 }
 
 function inAutomatedRunMode(): boolean {

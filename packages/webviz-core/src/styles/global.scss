@@ -9,6 +9,78 @@
 @import "./mixins.module.scss";
 @import "./fonts.module.scss";
 
+.ant-component {
+  @import "~antd/dist/antd";
+}
+
+.ant-component h1,
+.ant-component h2,
+.ant-component h3,
+.ant-component h4,
+.ant-component h5,
+.ant-component h6 {
+  color: unset;
+}
+
+.ant-component {
+  .ant-tabs {
+    color: unset;
+    .ant-tabs-bar {
+      border-bottom: none;
+      margin: 0;
+    }
+    .ant-tabs-ink-bar {
+      background-color: #9987ff; // highlight color from colors.js
+    }
+    .ant-tabs-nav .ant-tabs-tab {
+      color: unset;
+      :hover {
+        color: #9987ff;
+      }
+    }
+    .ant-tabs-nav .ant-tabs-tab-active {
+      color: #fff;
+    }
+  }
+
+  .ant-checkbox-wrapper {
+    color: unset;
+    display: flex;
+    align-items: flex-start;
+  }
+  .ant-checkbox-disabled + span {
+    color: #9f9fa2;
+  }
+  .ant-checkbox {
+    padding-top: 4px;
+  }
+  .ant-tree,
+  .ant-tree li .ant-tree-node-content-wrapper {
+    color: unset;
+  }
+  .ant-tree.ant-tree-show-line li span.ant-tree-switcher {
+    background: transparent;
+  }
+  .ant-tree-switcher-noop {
+    display: inline-block !important;
+  }
+  .ant-tree li .ant-tree-node-content-wrapper {
+    height: unset;
+    padding-bottom: 4px;
+  }
+  .ant-tree li .ant-tree-node-content-wrapper:hover {
+    background: unset;
+  }
+  .ant-tree {
+    li.ant-tree-treenode-disabled > .ant-tree-node-content-wrapper span {
+      color: #606066;
+    }
+  }
+  .ant-checkbox {
+    margin-top: 4px;
+    padding-top: 0;
+  }
+}
 /* globally apply flex to containers outside our component hierarchy */
 /* this ensures the app container elements stretch edge to edge and do not scroll */
 html,

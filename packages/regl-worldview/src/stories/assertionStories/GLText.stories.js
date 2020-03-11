@@ -16,117 +16,128 @@ import GLText from "../../commands/GLText";
 import { clickAtOrigin, WorldviewWrapper } from "../worldviewAssertionUtils";
 import { assertionTest } from "stories/assertionTestUtils";
 
-const glText = {
-  pose: {
-    orientation: { x: 0, y: 0, z: 0, w: 1 },
-    position: { x: 0, y: 0, z: 0 },
-  },
-  scale: { x: 1, y: 1, z: 1 },
-  color: { r: 1, g: 1, b: 1, a: 1 },
-  text: "CLICK ME!",
-  billboard: true,
-};
+function textMarkers({
+  text,
+  billboard,
+  background = false,
+}: {
+  text: String,
+  billboard?: ?boolean,
+  background?: ?boolean,
+}) {
+  const color = { r: 1, g: 1, b: 1, a: 1 };
+  return [
+    {
+      text,
+      pose: {
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+        position: { x: 0, y: 0, z: 0 },
+      },
+      scale: { x: 1, y: 1, z: 1 },
+      color,
+      colors: background ? [color, { r: 1, g: 1, b: 0, a: 1 }] : undefined,
+      billboard,
+    },
+  ];
+}
 
-const glTextWithO = {
-  pose: {
-    orientation: { x: 0, y: 0, z: 0, w: 1 },
-    position: { x: 0, y: 0, z: 0 },
-  },
-  scale: { x: 1, y: 1, z: 1 },
-  color: { r: 1, g: 1, b: 1, a: 1 },
-  text: "O",
-  billboard: true,
-};
+function createAssertionTest(markers, scaleInvariant) {
+  const expected = markers;
+  return assertionTest({
+    story: (setTestData) => {
+      return (
+        <WorldviewWrapper
+          defaultCameraState={{ perspective: true, distance: 10 }}
+          onClick={(_, { objects }) => setTestData(objects)}>
+          <GLText scaleInvariantFontSize={scaleInvariant ? 40 : null}>{markers}</GLText>
+        </WorldviewWrapper>
+      );
+    },
+    assertions: async (getTestData) => {
+      await clickAtOrigin();
+      const result = getTestData();
+      expect(result.length).toEqual(expected.length);
+      for (let i = 0; i < expected.length; i++) {
+        expect(result[0].object).toEqual(expected[0]);
+      }
+    },
+  });
+}
 
-const cube = {
-  pose: {
-    orientation: { x: 0, y: 0, z: 0, w: 1 },
-    position: { x: 0, y: -20, z: 0 },
-  },
-  scale: { x: 10, y: 10, z: 10 },
-  color: { r: 1, g: 0, b: 1, a: 0.5 },
-};
+function createAssertionTestWithBackgroundObjects(markers, stackedObjectsEnabled) {
+  const backgroundObjects = [
+    {
+      pose: {
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+        position: { x: 0, y: 1, z: -1 },
+      },
+      scale: { x: 1, y: 1, z: 1 },
+      color: { r: 1, g: 0, b: 1, a: 0.5 },
+    },
+  ];
+  const expected = stackedObjectsEnabled ? [...markers, ...backgroundObjects] : markers;
+  return assertionTest({
+    story: (setTestData) => {
+      return (
+        <WorldviewWrapper
+          defaultCameraState={{ perspective: true, distance: 10 }}
+          onClick={(_, { objects }) => setTestData(objects)}
+          enableStackedObjectEvents={stackedObjectsEnabled}>
+          <GLText>{markers}</GLText>
+          <Cubes>{backgroundObjects}</Cubes>
+        </WorldviewWrapper>
+      );
+    },
+    assertions: async (getTestData) => {
+      await clickAtOrigin();
+      const result = getTestData();
+      expect(result.length).toEqual(expected.length);
+      for (let i = 0; i < expected.length; i++) {
+        expect(result[0].object).toEqual(expected[0]);
+      }
+    },
+  });
+}
 
 storiesOf("Integration/GLText", module)
   .addDecorator(withScreenshot())
   .add(
     `Clicks on a single GLText object - worldview event handler`,
-    assertionTest({
-      story: (setTestData) => {
-        return (
-          <WorldviewWrapper onClick={(_, { objects }) => setTestData(objects)}>
-            <GLText highResolutionFont scaleInvariant scaleInvariantFontSize={40}>
-              {[glText]}
-            </GLText>
-          </WorldviewWrapper>
-        );
-      },
-      assertions: async (getTestData) => {
-        await clickAtOrigin();
-        const result = getTestData();
-        expect(result).toEqual([{ object: glText, instanceIndex: undefined }]);
-      },
-    })
+    createAssertionTest(textMarkers({ text: "Click Me!" }))
   )
   .add(
-    `Clicks on a single GLText object with O - worldview event handler`,
-    assertionTest({
-      story: (setTestData) => {
-        return (
-          <WorldviewWrapper onClick={(_, { objects }) => setTestData(objects)}>
-            <GLText highResolutionFont scaleInvariant scaleInvariantFontSize={40}>
-              {[glTextWithO]}
-            </GLText>
-          </WorldviewWrapper>
-        );
-      },
-      assertions: async (getTestData) => {
-        await clickAtOrigin();
-        const result = getTestData();
-        expect(result).toEqual([{ object: glTextWithO, instanceIndex: undefined }]);
-      },
-    })
+    `Clicks on a single GLText billboard object - worldview event handler`,
+    createAssertionTest(textMarkers({ text: "Click Me!", billboard: true }))
+  )
+  .add(
+    `Clicks on a single GLText object with background - worldview event handler`,
+    createAssertionTest(textMarkers({ text: "Click Me!", background: true }))
+  )
+  .add(
+    `Clicks on a single GLText billboard object with background - worldview event handler`,
+    createAssertionTest(textMarkers({ text: "Click Me!", billboard: true, background: true }))
+  )
+  .add(
+    `Clicks on a single GLText object using scale invariance - worldview event handler`,
+    createAssertionTest(textMarkers({ text: "Click Me!", billboard: true }), true)
+  )
+  .add(
+    `Clicks on a single GLText object with a hole in a glyph - worldview event handler`,
+    createAssertionTest(textMarkers({ text: "O" }))
   )
   .add(
     `Clicks on GLText with an object behind it. Stacked objects disabled - worldview event handler`,
-    assertionTest({
-      story: (setTestData) => {
-        return (
-          <WorldviewWrapper onClick={(_, { objects }) => setTestData(objects)}>
-            <GLText highResolutionFont scaleInvariant scaleInvariantFontSize={40}>
-              {[glText]}
-            </GLText>
-            <Cubes>{[cube]}</Cubes>
-          </WorldviewWrapper>
-        );
-      },
-      assertions: async (getTestData) => {
-        await clickAtOrigin();
-        const result = getTestData();
-        expect(result.length).toEqual(1);
-        expect(result[0].object).toEqual(glText);
-      },
-    })
+    createAssertionTestWithBackgroundObjects(textMarkers({ text: "Click Me!", billboard: true }))
   )
   .add(
     `Clicks on GLText with an object behind it - worldview event handler`,
-    assertionTest({
-      story: (setTestData) => {
-        return (
-          <WorldviewWrapper onClick={(_, { objects }) => setTestData(objects)} enableStackedObjectEvents>
-            <GLText highResolutionFont scaleInvariant scaleInvariantFontSize={40}>
-              {[glText]}
-            </GLText>
-            <Cubes>{[cube]}</Cubes>
-          </WorldviewWrapper>
-        );
-      },
-      assertions: async (getTestData) => {
-        await clickAtOrigin();
-        const result = getTestData();
-        expect(result.length).toEqual(2);
-        expect(result[0].object).toEqual(glText);
-        expect(result[1].object).toEqual(cube);
-      },
-    })
+    createAssertionTestWithBackgroundObjects(textMarkers({ text: "Click Me!", billboard: true }), true)
+  )
+  .add(
+    `Clicks on GLText with a hole and an object behind it. Stacked objects disabled - worldview event handler`,
+    createAssertionTestWithBackgroundObjects(textMarkers({ text: "O", billboard: true }))
+  )
+  .add(
+    `Clicks on GLText with a hole and an object behind it - worldview event handler`,
+    createAssertionTestWithBackgroundObjects(textMarkers({ text: "O", billboard: true }), true)
   );

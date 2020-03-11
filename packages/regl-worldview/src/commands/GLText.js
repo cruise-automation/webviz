@@ -47,15 +47,15 @@ type Props = {
 
 type FontAtlas = {|
   textureData: Uint8Array,
-    textureWidth: number,
-      textureHeight: number,
-        charInfo: {
-  [char: string]: {|
-    x: number,
+  textureWidth: number,
+  textureHeight: number,
+  charInfo: {
+    [char: string]: {|
+      x: number,
       y: number,
-        width: number,
+      width: number,
     |},
-},
+  },
 |};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
@@ -262,7 +262,7 @@ function makeTextCommand() {
 
   const command = (regl: any) => {
     const atlasTexture = regl.texture();
-    const makeDrawText = function (forHitmap: boolean) {
+    const makeDrawText = function(forHitmap: boolean) {
       return regl({
         depth: defaultDepth,
         blend: defaultBlend,

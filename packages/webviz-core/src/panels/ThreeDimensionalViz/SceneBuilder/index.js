@@ -10,11 +10,8 @@ import type { Time } from "rosbag";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import MessageCollector from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector";
-import {
-  parseColorSetting,
-  getTopicSettings,
-  LINED_CONVEX_HULL_RENDERING_SETTING,
-} from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
+import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicSettingsEditor";
+import { LINED_CONVEX_HULL_RENDERING_SETTING } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { Topic, Frame, Message } from "webviz-core/src/players/types";
 import type { Marker, Namespace, OccupancyGridMessage, Pose } from "webviz-core/src/types/Messages";
@@ -546,7 +543,7 @@ export default class SceneBuilder implements MarkerProvider {
         }
         // TODO(bmc): once we support more topic settings
         // flesh this out to be more marker type agnostic
-        const settings = getTopicSettings(topic, this._topicSettings[topic.name]);
+        const settings = this._topicSettings[topic.name];
         if (settings) {
           marker.settings = settings;
         }
@@ -573,7 +570,7 @@ export default class SceneBuilder implements MarkerProvider {
     marker = { ...marker, interactionData: { topic: topic.name } };
 
     // allow topic settings to override renderable marker command (see MarkerSettingsEditor.js)
-    const { overrideCommand } = getTopicSettings(topic, this._topicSettings[topic.name]);
+    const { overrideCommand } = this._topicSettings[topic.name] || {};
 
     // prettier-ignore
     switch (marker.type) {

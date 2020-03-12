@@ -25,15 +25,6 @@ import { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE, LASER_SCAN_DATATYPE } from
 
 export const LINED_CONVEX_HULL_RENDERING_SETTING = "LinedConvexHull";
 
-// Parse color saved into topic settings into {r, g, b, a} form.
-export function parseColorSetting(rgba: ?string) {
-  const [r = 255, g = 255, b = 255, a = 1] = (rgba || "")
-    .split(",")
-    .map(parseFloat)
-    .map((x) => (isNaN(x) ? undefined : x));
-  return { r: r / 255, g: g / 255, b: b / 255, a };
-}
-
 export function CommonPointSettings({
   defaultPointSize,
   defaultPointShape = "circle",
@@ -62,6 +53,7 @@ export function CommonPointSettings({
     <Flex col>
       <SLabel>Point size</SLabel>
       <SInput
+        data-test="point-size-input"
         type="number"
         placeholder={defaultPointSize.toString()}
         value={pointSizeVal}
@@ -121,7 +113,7 @@ export type TopicSettingsEditorProps<Msg, Settings: {}> = {|
   onSettingsChange: ({} | (({}) => {})) => void,
 |};
 
-function topicSettingsEditorForDatatype(datatype: string): ?ComponentType<TopicSettingsEditorProps<any, any>> {
+export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType<TopicSettingsEditorProps<any, any>> {
   const editors = {
     [POINT_CLOUD_DATATYPE]: PointCloudSettingsEditor,
     [POSE_STAMPED_DATATYPE]: PoseSettingsEditor,
@@ -135,13 +127,6 @@ function topicSettingsEditorForDatatype(datatype: string): ?ComponentType<TopicS
 
 export function canEditDatatype(datatype: string) {
   return topicSettingsEditorForDatatype(datatype) != null;
-}
-
-// Get topic settings with configurable defaults applied
-export function getTopicSettings(topic: Topic, settings: ?{}) {
-  const { getDefaultTopicSettings } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
-  const defaultSettings = getDefaultTopicSettings && getDefaultTopicSettings(topic);
-  return { ...defaultSettings, ...settings };
 }
 
 type Props = {|
@@ -178,7 +163,7 @@ const TopicSettingsEditor = React.memo<Props>(function TopicSettingsEditor({
       <ErrorBoundary>
         <Editor
           message={message}
-          settings={getTopicSettings(topic, settings)}
+          settings={settings || {}}
           onFieldChange={onFieldChange}
           onSettingsChange={onSettingsChange}
         />

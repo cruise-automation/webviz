@@ -22,10 +22,18 @@ let screenshotResolve: ?() => void;
 let finishedMsPerFrame: ?number;
 let error: ?Error;
 
+export type VideoRecordingAction = {
+  action: "error" | "finish" | "screenshot",
+  error?: string,
+  msPerFrame?: number,
+};
+
 window.videoRecording = {
-  nextAction() {
+  nextAction(): ?VideoRecordingAction {
     if (error) {
-      return { action: "error", error };
+      // This object is serialized and deserialized to pass it to Puppeteer, so passing the error object itself will
+      // just result in { "action": "error", "error": {} }. Instead pass a string - the stack itself.
+      return { action: "error", error: error.stack };
     }
     if (finishedMsPerFrame) {
       return { action: "finish", msPerFrame: finishedMsPerFrame };
@@ -33,7 +41,7 @@ window.videoRecording = {
     if (screenshotResolve) {
       return { action: "screenshot" };
     }
-    return false;
+    return null;
   },
 
   hasTakenScreenshot() {

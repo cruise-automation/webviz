@@ -6,7 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { getDiagnosticId, getDisplayName, getNodesByLevel, LEVELS } from "./util";
+import {
+  getDiagnosticId,
+  getDisplayName,
+  getNodesByLevel,
+  computeDiagnosticInfo,
+  LEVELS,
+  MAX_STRING_LENGTH,
+} from "./util";
 
 const okMap = new Map();
 okMap.set("|watchdog|status|", {
@@ -98,6 +105,34 @@ describe("diagnostics", () => {
       expect(getNodesByLevel(buffer, "watchdog", LEVELS.OK)).toStrictEqual([okMap.get("|watchdog|status|")]);
       expect(getNodesByLevel(buffer, "mctm", LEVELS.OK)).toStrictEqual([okMap.get("|mctm_logger|MCTM Logger|")]);
       expect(getNodesByLevel(buffer, "watchdog", LEVELS.WARN)).toStrictEqual([]);
+    });
+  });
+
+  describe("computeDiagnosticInfo", () => {
+    it("trims extremely long value strings", () => {
+      expect(
+        computeDiagnosticInfo(
+          {
+            name: "example name",
+            hardware_id: "example hardware_id",
+            level: 0,
+            message: "example message",
+            values: [{ key: "example key", value: new Array(10000).join("x") }],
+          },
+          { sec: 1, nsec: 0 }
+        )
+      ).toEqual({
+        displayName: "example hardware_id: example name",
+        id: "|example hardware_id|example name|",
+        stamp: { sec: 1, nsec: 0 },
+        status: {
+          hardware_id: "example hardware_id",
+          level: 0,
+          message: "example message",
+          name: "example name",
+          values: [{ key: "example key", value: `${new Array(MAX_STRING_LENGTH - 2).join("x")}...` }],
+        },
+      });
     });
   });
 });

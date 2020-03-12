@@ -22,7 +22,7 @@ import TopicSelectorTree from "./TopicSelectorTree";
 import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SErrors = styled.div`
   color: ${colors.RED};

@@ -9,7 +9,7 @@
 import {
   getCameraInfoTopic,
   getMarkerOptions,
-  getMarkerTopics,
+  getRelatedMarkerTopics,
   groupTopics,
   buildMarkerData,
   getCameraNamespace,
@@ -37,18 +37,33 @@ describe("ImageView", () => {
     const allCameraNamespaces = ["/some_camera_topic", "/camera_rear_medium"];
     it("filters topics relevant to this camera", () => {
       expect(getMarkerOptions("/some_camera_topic/image_rect_color", allMarkerTopics, allCameraNamespaces)).toEqual([
-        { name: "marker1", topic: "/some_camera_topic/marker1" },
-        { name: "marker2", topic: "/some_camera_topic/marker2" },
-        { name: "/unknown_camera/marker4", topic: "/unknown_camera/marker4" },
+        "/some_camera_topic/marker1",
+        "/some_camera_topic/marker2",
+        "/unknown_camera/marker4",
       ]);
     });
   });
 
-  describe("getMarkerTopics", () => {
-    it("adds camera prefix to relative marker names", () => {
+  describe("getRelatedMarkerTopics", () => {
+    it("returns topics that match the last section of a topic path", () => {
       expect(
-        getMarkerTopics("/some_camera_topic/some_image_type", ["marker1", "marker2", "/unknown_camera/marker4"])
-      ).toEqual(["/some_camera_topic/marker1", "/some_camera_topic/marker2", "/unknown_camera/marker4"]);
+        getRelatedMarkerTopics(
+          ["first_camera_topic/marker1"],
+          ["second_camera_topic/marker2", "second_camera_topic/marker1"]
+        )
+      ).toEqual(["second_camera_topic/marker1"]);
+      expect(
+        getRelatedMarkerTopics(
+          ["first_camera_topic/marker3"],
+          ["second_camera_topic/marker2", "second_camera_topic/marker1"]
+        )
+      ).toEqual([]);
+      expect(
+        getRelatedMarkerTopics(
+          ["first_camera_topic/marker1", "first_camera_topic/marker3"],
+          ["second_camera_topic/marker2", "second_camera_topic/marker1"]
+        )
+      ).toEqual(["second_camera_topic/marker1"]);
     });
   });
 

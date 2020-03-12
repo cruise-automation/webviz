@@ -33,8 +33,8 @@ import Sidebar from "webviz-core/src/panels/NodePlayground/Sidebar";
 import { trustUserNode } from "webviz-core/src/players/UserNodePlayer/nodeSecurity";
 import type { UserNodeState } from "webviz-core/src/reducers/userNodes";
 import type { UserNodes } from "webviz-core/src/types/panels";
-import { colors } from "webviz-core/src/util/colors";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const Editor = React.lazy(() =>
   import(/* webpackChunkName: "node-playground-editor" */ "webviz-core/src/panels/NodePlayground/Editor")

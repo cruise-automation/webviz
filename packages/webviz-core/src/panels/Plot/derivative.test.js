@@ -22,6 +22,9 @@ describe("derivative", () => {
         x: 0,
         y: 0,
         tooltip: {
+          x: 0,
+          y: 0,
+          datasetKey: "0",
           value: 0,
           item: {
             message,
@@ -40,6 +43,9 @@ describe("derivative", () => {
         x: 1,
         y: -1,
         tooltip: {
+          x: 1,
+          y: -1,
+          datasetKey: "0",
           value: -1,
           item: {
             message,
@@ -58,6 +64,9 @@ describe("derivative", () => {
         x: 2,
         y: -1.5,
         tooltip: {
+          x: 2,
+          y: -1.5,
+          datasetKey: "0",
           value: -1.5,
           item: {
             message,
@@ -76,6 +85,9 @@ describe("derivative", () => {
         x: 3,
         y: 5,
         tooltip: {
+          x: 3,
+          y: 5,
+          datasetKey: "0",
           value: 5,
           item: {
             message,
@@ -91,12 +103,17 @@ describe("derivative", () => {
         },
       },
     ];
+    const tooltips = data.map(({ tooltip }) => tooltip);
 
-    expect(derivative(data)).toEqual([
+    const newPoints = [
       {
         x: 1,
         y: -1,
         tooltip: {
+          x: 1,
+          y: -1,
+          datasetKey: "0",
+          datasetIndex: 0,
           value: -1,
           item: {
             message,
@@ -115,6 +132,10 @@ describe("derivative", () => {
         x: 2,
         y: -0.5,
         tooltip: {
+          x: 2,
+          y: -0.5,
+          datasetKey: "0",
+          datasetIndex: 1,
           value: -0.5,
           item: {
             message,
@@ -133,6 +154,10 @@ describe("derivative", () => {
         x: 3,
         y: 6.5,
         tooltip: {
+          x: 3,
+          y: 6.5,
+          datasetKey: "0",
+          datasetIndex: 2,
           value: 6.5,
           item: {
             message,
@@ -147,6 +172,8 @@ describe("derivative", () => {
           startTime: { sec: 0, nsec: 0 },
         },
       },
-    ]);
+    ];
+    const newTooltips = newPoints.map(({ tooltip }, index) => ({ ...tooltip, datasetIndex: index }));
+    expect(derivative(data, tooltips, true)).toEqual({ points: newPoints, tooltips: newTooltips });
   });
 });

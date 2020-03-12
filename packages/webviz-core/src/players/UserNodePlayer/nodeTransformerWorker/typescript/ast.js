@@ -274,6 +274,31 @@ export const constructDatatypes = (
           depth + 1,
           tsNode.typeParameters ? buildTypeMapFromParams(tsNode.typeParameters, typeMap) : typeMap
         );
+        const childFields = nestedDatatypes[nestedType].fields;
+        if (childFields.length === 2) {
+          const secField = childFields.find((field) => field.name === "sec");
+          const nsecField = childFields.find((field) => field.name === "nsec");
+          if (
+            secField &&
+            nsecField &&
+            !secField.isComplex &&
+            !nsecField.isComplex &&
+            !secField.isArray &&
+            !nsecField.isArray
+          ) {
+            // TODO(JP): Might want to do some extra checks for types here. But then again,
+            // "time" is just pretty awkward of a field in general; maybe we should instead
+            // just get rid of it throughout our application and treat it as a regular nested object?
+            return {
+              name,
+              type: "time",
+              isArray: false,
+              isComplex: false,
+              arrayLength: undefined,
+            };
+          }
+        }
+
         datatypes = { ...datatypes, ...nestedDatatypes };
         return {
           name,

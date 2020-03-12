@@ -11,7 +11,7 @@ import React from "react";
 
 import { MessagePipelineConsumer } from "../components/MessagePipeline";
 import Internals from "./Internals";
-import MessageHistory from "webviz-core/src/components/MessageHistory";
+import MessageHistoryDEPRECATED from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 import { downloadTextFile } from "webviz-core/src/util";
 
@@ -41,7 +41,7 @@ describe("<Internals>", () => {
         <>
           <Internals />
           <MessagePipelineConsumer>{contextFn}</MessagePipelineConsumer>
-          <MessageHistory paths={["/foo"]}>{() => null}</MessageHistory>
+          <MessageHistoryDEPRECATED paths={["/foo"]}>{() => null}</MessageHistoryDEPRECATED>
         </>
       ),
     });
@@ -62,7 +62,7 @@ describe("<Internals>", () => {
           topics: [{ name: "/foo", datatype: "foo_msgs/Foo" }],
         }}>
         <Internals />
-        <MessageHistory paths={["/foo"]}>{() => null}</MessageHistory>
+        <MessageHistoryDEPRECATED paths={["/foo"]}>{() => null}</MessageHistoryDEPRECATED>
       </PanelSetup>
     );
 

@@ -51,6 +51,7 @@ export type PanelsState = {
   userNodes: UserNodes,
   linkedGlobalVariables: LinkedGlobalVariables,
   playbackConfig: PlaybackConfig,
+  restrictedTopics?: string[],
 };
 
 export function setStorageStateAndFallbackToDefault(globalState: any = {}) {
@@ -167,6 +168,7 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
     userNodes: migratedPayload.userNodes || {},
     linkedGlobalVariables: migratedPayload.linkedGlobalVariables || [],
     playbackConfig: migratedPayload.playbackConfig || defaultPlaybackConfig,
+    ...(migratedPayload.restrictedTopics ? { restrictedTopics: migratedPayload.restrictedTopics } : undefined),
   };
 
   return newGlobalState;

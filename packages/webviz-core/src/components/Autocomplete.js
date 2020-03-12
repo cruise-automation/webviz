@@ -58,6 +58,7 @@ type AutocompleteProps = {|
   minWidth: number,
   menuStyle?: any,
   inputStyle?: any,
+  disableAutoSelect?: boolean,
 |};
 
 type AutocompleteState = {|
@@ -94,24 +95,6 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
     super(props);
     this._autocomplete = React.createRef<ReactAutocomplete>();
     this.state = { focused: false, showAllItems: false };
-  }
-
-  componentDidMount() {
-    // After mounting, place the cursor at the end of the input. This moves the end of the input
-    // into view (which currently only works properly when using autoSize), which is typically
-    // more useful to see than the beginning of the input (the end contains the actual plotted
-    // value, and often also filters and such, whereas the beginning just contains the topic).
-    if (this._autocomplete.current && this._autocomplete.current.refs.input) {
-      const { input } = this._autocomplete.current.refs;
-      const { length } = input.value;
-      this._ignoreFocus = true;
-      this._ignoreBlur = true;
-      input.setSelectionRange(length, length);
-      input.focus();
-      input.blur();
-      this._ignoreFocus = false;
-      this._ignoreBlur = false;
-    }
   }
 
   // When we lose the scrollbar, we can safely set `showAllItems: false` again, because all items
@@ -173,6 +156,9 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
   // if it just was a click without a drag. In the latter case, select everything. This is very
   // similar to how, say, the browser bar in Chrome behaves.
   _onMouseDown = (event: SyntheticMouseEvent<HTMLInputElement>) => {
+    if (this.props.disableAutoSelect) {
+      return;
+    }
     if (this.state.focused) {
       return;
     }
@@ -341,19 +327,13 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
               style={
                 // If the autocomplete would fall off the screen, pin it to the right.
                 style.left + width <= window.innerWidth
-                  ? { ...menuStyle, ...style, width, maxHeight }
-                  : { ...menuStyle, ...style, width, maxHeight, left: "auto", right: 0 }
+                  ? { ...menuStyle, ...style, width, maxWidth: "100%", maxHeight }
+                  : { ...menuStyle, ...style, width, maxWidth: "100%", maxHeight, left: "auto", right: 0 }
               }
               onScroll={this._onScroll}>
               {/* Have to wrap onMouseEnter and onMouseLeave in a separate <div>, as react-autocomplete
                * would override them on the root <div>. */}
-              <div
-                onMouseEnter={() => (this._ignoreBlur = true)}
-                onMouseLeave={() => (this._ignoreBlur = false)}
-                style={{
-                  height: menuItems.length * rowHeight,
-                  overflow: "hidden",
-                }}>
+              <div onMouseEnter={() => (this._ignoreBlur = true)} onMouseLeave={() => (this._ignoreBlur = false)}>
                 {menuItemsToShow}
               </div>
             </div>

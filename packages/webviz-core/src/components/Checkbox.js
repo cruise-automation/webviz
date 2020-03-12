@@ -12,7 +12,7 @@ import * as React from "react";
 import styled from "styled-components";
 
 import Icon from "webviz-core/src/components/Icon";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export const SCheckbox = styled.div`
   display: flex;

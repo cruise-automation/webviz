@@ -167,8 +167,8 @@ export default class RandomAccessPlayer implements Player {
           }
         },
       })
-      .then(({ start, end, topics, datatypes, connectionsByTopic }) => {
-        if (connectionsByTopic) {
+      .then(({ start, end, topics, datatypes, messageDefintionsByTopic }) => {
+        if (messageDefintionsByTopic) {
           throw new Error("Use ParseMessagesDataProvider to parse raw messages");
         }
 
@@ -340,6 +340,15 @@ export default class RandomAccessPlayer implements Player {
       return [];
     }
     const messages = await this._provider.getMessages(start, end, topics);
+
+    // It is very important that we record first emitted messages here, since
+    // `_emitState` is awaited on `requestAnimationFrame`, which will not be
+    // invoked unless a user's browser is focused on the current session's tab.
+    // Moreover, there is a disproportionally small amount of time between when we procure
+    // messages here and when they are set to playerState.
+    if (messages.length) {
+      this._metricsCollector.recordTimeToFirstMsgs();
+    }
     return filterMap(messages, (message) => {
       if (!topics.includes(message.topic)) {
         reportError(
@@ -418,10 +427,7 @@ export default class RandomAccessPlayer implements Player {
     this._currentTime = time;
   }
 
-  seekPlayback(time: Time): void {
-    this._metricsCollector.seek(time);
-    this._setCurrentTime(time);
-
+  _seekPlaybackInternal = debouncePromise(async () => {
     const seekTime = Date.now();
     this._lastSeekTime = seekTime;
     this._cancelSeekBackfill = false;
@@ -434,23 +440,31 @@ export default class RandomAccessPlayer implements Player {
     // clear out panels until we actually receive new data.
 
     if (!this._isPlaying) {
-      this._getMessages(
-        TimeUtil.add(clampTime(time, TimeUtil.add(this._start, { sec: 0, nsec: SEEK_BACK_NANOSECONDS }), this._end), {
-          sec: 0,
-          nsec: -SEEK_BACK_NANOSECONDS,
-        }),
-        time
-      ).then((messages) => {
-        // Only emit the messages if we haven't seeked again / emitted messages since we
-        // started loading them. Note that for the latter part just checking for `isPlaying`
-        // is not enough because the user might have started playback and then paused again!
-        // Therefore we really need something like `this._cancelSeekBackfill`.
-        if (this._lastSeekTime === seekTime && !this._cancelSeekBackfill) {
-          this._messages = messages;
-          this._emitState();
-        }
-      });
+      const messages = await this._getMessages(
+        TimeUtil.add(
+          clampTime(this._currentTime, TimeUtil.add(this._start, { sec: 0, nsec: SEEK_BACK_NANOSECONDS }), this._end),
+          {
+            sec: 0,
+            nsec: -SEEK_BACK_NANOSECONDS,
+          }
+        ),
+        this._currentTime
+      );
+      // Only emit the messages if we haven't seeked again / emitted messages since we
+      // started loading them. Note that for the latter part just checking for `isPlaying`
+      // is not enough because the user might have started playback and then paused again!
+      // Therefore we really need something like `this._cancelSeekBackfill`.
+      if (this._lastSeekTime === seekTime && !this._cancelSeekBackfill) {
+        this._messages = messages;
+        await this._emitState();
+      }
     }
+  });
+
+  seekPlayback(time: Time): void {
+    this._metricsCollector.seek(time);
+    this._setCurrentTime(time);
+    this._seekPlaybackInternal();
   }
 
   _playFromStart(): void {

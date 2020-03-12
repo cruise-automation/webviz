@@ -22,10 +22,10 @@ import logStyle from "./LogMessage.module.scss";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import LogList from "webviz-core/src/components/LogList";
-import MessageHistory, {
+import MessageHistoryDEPRECATED, {
   type MessageHistoryData,
   type MessageHistoryItem,
-} from "webviz-core/src/components/MessageHistory";
+} from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
@@ -191,7 +191,7 @@ class RosoutPanel extends PureComponent<Props> {
     );
 
     return (
-      <MessageHistory paths={[config.topicToRender]} historySize={100000}>
+      <MessageHistoryDEPRECATED paths={[config.topicToRender]} historySize={100000}>
         {({ itemsByPath }: MessageHistoryData) => {
           const msgs: MessageHistoryItem[] = itemsByPath[config.topicToRender];
           msgs.forEach((msg) => seenNodeNames.add(msg.message.message.name));
@@ -207,7 +207,7 @@ class RosoutPanel extends PureComponent<Props> {
             </Flex>
           );
         }}
-      </MessageHistory>
+      </MessageHistoryDEPRECATED>
     );
   }
 }

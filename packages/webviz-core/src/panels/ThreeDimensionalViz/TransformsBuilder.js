@@ -12,6 +12,7 @@ import type { Vec3 } from "gl-matrix";
 import Transforms, { Transform } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { Marker, ArrowMarker, Color, Pose } from "webviz-core/src/types/Messages";
 import type { MarkerProvider, MarkerCollector } from "webviz-core/src/types/Scene";
+import { MARKER_MSG_TYPES } from "webviz-core/src/util/globalConstants";
 
 const originPosition = { x: 0, y: 0, z: 0 };
 const originOrientation = { x: 0, y: 0, z: 0, w: 1 };
@@ -125,7 +126,7 @@ const getAxisTextMarker = (id: string, transform: Transform, rootTransformID: st
     id: `${id}-name`,
     name: `${id}-name`,
     pose: textPose,
-    type: 9,
+    type: MARKER_MSG_TYPES.TEXT_VIEW_FACING,
     text: id,
   };
 };

@@ -150,6 +150,22 @@ describe("state.panels", () => {
     });
   });
 
+  it("sets restrictedTopics in local storage if present", () => {
+    const store = getStore();
+    const payload = {
+      layout: "foo!baz",
+      savedProps: { foo: { test: true } },
+      restrictedTopics: ["1", "2", "3"],
+    };
+
+    store.dispatch(importPanelLayout(payload));
+    store.checkState((panels) => {
+      const storage = new Storage();
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.restrictedTopics).toEqual(payload.restrictedTopics);
+    });
+  });
+
   it("change globalData key to globalVariables if only globalData key is present", () => {
     const store = getStore();
     const globalVariables = { some_global_data_var: 1 };

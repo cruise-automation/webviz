@@ -6,44 +6,70 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-type SettingsBySource = {
-  overrideColor?: string,
-  overrideCommand?: string,
-};
+import MessageCollector from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector";
 
+export type KeyboardFocusType = "GROUP" | "NEW_GROUP" | "TOPIC" | "NEW_TOPIC";
+export type KeyboardFocusData = {| objectPath: string, focusType: KeyboardFocusType |};
+export type FocusItemOp = "Enter" | "ArrowLeft" | "ArrowRight" | "Backspace" | "ArrowUp" | "ArrowDown";
+
+export type SceneCollectors = { [string]: MessageCollector };
 export type OnTopicGroupsChange = (objectPath: string, newValue: any) => void;
 
-export type VisibilityBySource = { [dataSourcePrefix: string]: boolean };
-export type NamespacesBySource = { [dataSourcePrefix: string]: string[] };
+export type VisibilityByColumn = boolean[];
+// Select all namespaces if the item is undefined, and select none if it's `[]`
+export type SelectedNamespacesByColumn = (?(string[]))[];
+export type SettingsByColumn = any[];
 
-export type DisplayVisibilityBySource = {
-  [topicPrefix: string]: {
-    isParentVisible: boolean,
-    badgeText: string,
-    visible: boolean,
-    available: boolean,
-  },
-};
+type DisplayVisibility = {|
+  isParentVisible: boolean,
+  badgeText: string,
+  visible: boolean,
+  available: boolean,
+|};
+
+export type NamespaceItem = {|
+  name: string,
+  displayVisibilityByColumn: (?DisplayVisibility)[],
+|};
+
 export type TopicItemConfig = {|
   displayName?: string,
   topicName: string,
   expanded?: boolean, // if true, namespaces will be expanded
-  visibilitiesBySource?: VisibilityBySource,
-  settingsBySource?: SettingsBySource,
-  selectedNamespacesBySource?: NamespacesBySource,
+  selectedNamespacesByColumn?: SelectedNamespacesByColumn,
+  settingsByColumn?: any[],
+  visibilityByColumn?: boolean[],
 |};
 
-export type NamespaceItem = {
-  name: string,
-  displayVisibilityBySource: DisplayVisibilityBySource,
+type NamespaceDisplayVisibilityByNamespace = {
+  [name: string]: (?DisplayVisibility)[],
 };
+
 type DerivedTopicItemFields = {|
-  namespaceItems: NamespaceItem[],
-  displayVisibilityBySource: DisplayVisibilityBySource,
-  displayName: string,
-  available: boolean,
   id: string,
+  // An index number to map the keyboard operations (up/down arrow) to the topic item.
+  keyboardFocusIndex: number,
+  // Datatypes we detected from the available topics at the high level after starting to play a bag.
+  // We'll use it to derive the topic settings and topic icons.
+  datatype?: string,
+  // A displayName for people for better glancing and understanding.
+  displayName: string,
+  // Errors collected from the SceneBuilder for this topic.
+  errors?: string[],
+  // User-typed filterText used for text highlighting downstream, added here to avoid passing down as props since we already
+  // update topicGroups based on filterText.
+  filterText?: string,
+  // Check if the currently focusedIndex is the same as the topic's `keyboardFocusIndex`, set it to be true if it is the same.
+  // Adding it here to avoid passing down as props.
+  isKeyboardFocused?: boolean,
+  // Set `isShownInList` to false if the topicName does not match with the filterText.
+  isShownInList: boolean,
   // TODO(Audrey): support 2nd bag for map and tf with `disableMultiSelection`
+  prefixByColumn: string[],
+  // Data for data source badge UI.
+  displayVisibilityByColumn?: (?DisplayVisibility)[],
+  // Object keyed by namespaces and the value contains data for data source badge UI.
+  namespaceDisplayVisibilityByNamespace?: NamespaceDisplayVisibilityByNamespace,
 |};
 
 export type TopicItem = {|
@@ -53,15 +79,33 @@ export type TopicItem = {|
 
 type SharedTopicGroupConfig = {|
   displayName: string,
-  visible?: boolean,
   expanded?: boolean,
+  visibilityByColumn?: boolean[],
 |};
 export type TopicGroupConfig = {|
   ...SharedTopicGroupConfig,
   items: TopicItemConfig[],
 |};
+
 type TopicGroupDerivedFields = {|
   id: string,
+  // An index number to map the keyboard operations (up/down arrow) to adding topic at the bottom of each group.
+  addTopicKeyboardFocusIndex: number,
+  // Computed expanded value based on config and filtering mode (auto expand while filtering).
+  expanded: boolean,
+  // Check if the currently focusedIndex is the same as the group's `keyboardFocusIndex`, set it to be true if it is the same.
+  isKeyboardFocused?: boolean,
+  // User-typed filterText used for text highlighting downstream, added here to avoid passing down as props since we already
+  // update topicGroups based on filterText.
+  filterText?: string,
+  // Set `isShownInList` to false if the group displayName or none of the topic names match with the filterText.
+  isShownInList: boolean,
+  // An index number to map the keyboard operations (up/down arrow) to the group item.
+  keyboardFocusIndex: number,
+  // Each column represents a list of prefixes for the topics in this column.
+  prefixesByColumn: string[][],
+  // Set to true if any topic with feature prefixes is present and we'll render two data source columns in the UI.
+  hasFeatureColumn: boolean,
 |};
 
 export type TopicGroupType = {|

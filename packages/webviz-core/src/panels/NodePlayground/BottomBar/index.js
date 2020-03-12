@@ -15,7 +15,7 @@ import Flex from "webviz-core/src/components/Flex";
 import DiagnosticsSection from "webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection";
 import LogsSection from "webviz-core/src/panels/NodePlayground/BottomBar/LogsSection";
 import type { Diagnostic, UserNodeLog } from "webviz-core/src/players/UserNodePlayer/types";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SHeaderItem = styled.div`
   cursor: pointer;

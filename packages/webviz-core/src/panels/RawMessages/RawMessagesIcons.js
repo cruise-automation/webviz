@@ -21,11 +21,11 @@ import type { PanelConfig } from "webviz-core/src/types/panels";
 type Props = {
   valueAction: ValueAction,
   basePath: string,
-  onTopicNameChange: (string) => void,
+  onTopicPathChange: (string) => void,
   openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
 };
 
-export default function RawMessagesIcons({ valueAction, basePath, onTopicNameChange, openSiblingPanel }: Props): Node {
+export default function RawMessagesIcons({ valueAction, basePath, onTopicPathChange, openSiblingPanel }: Props): Node {
   const openPlotPanel = useCallback(
     (pathSuffix: string) => () => {
       openSiblingPlotPanel(openSiblingPanel, `${basePath}${pathSuffix}`);
@@ -39,8 +39,8 @@ export default function RawMessagesIcons({ valueAction, basePath, onTopicNameCha
     [basePath, openSiblingPanel]
   );
   const onPivot = useCallback(
-    () => onTopicNameChange(`${basePath}${valueAction.type === "pivot" ? valueAction.pivotPath : ""}`),
-    [basePath, onTopicNameChange, valueAction]
+    () => onTopicPathChange(`${basePath}${valueAction.type === "pivot" ? valueAction.pivotPath : ""}`),
+    [basePath, onTopicPathChange, valueAction]
   );
   if (valueAction.type === "pivot") {
     return (
@@ -62,7 +62,7 @@ export default function RawMessagesIcons({ valueAction, basePath, onTopicNameCha
           <ChartBubbleIcon />
         </Icon>
       )}
-      {transitionableRosTypes.includes(primitiveType) && multiSlicePath !== singleSlicePath && (
+      {transitionableRosTypes.includes(primitiveType) && multiSlicePath === singleSlicePath && (
         <Icon
           fade
           className={styles.icon}

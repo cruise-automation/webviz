@@ -11,6 +11,8 @@ import momentDurationFormatSetup from "moment-duration-format";
 import moment from "moment-timezone";
 import { type Time, TimeUtil } from "rosbag";
 
+import type { TimestampMethod } from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
+import type { Message } from "webviz-core/src/players/types";
 import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
 type BatchTimestamp = {
@@ -98,14 +100,19 @@ export function subtractTimes({ sec: sec1, nsec: nsec1 }: Time, { sec: sec2, nse
   return { sec: sec1 - sec2, nsec: nsec1 - nsec2 };
 }
 
+// WARNING! This will not be a precise integer for large time values due to JS only supporting
+// 53-bit integers. Best to only use this when the time represents a relatively small duration
+// (at max a few weeks).
 export function toNanoSec({ sec, nsec }: Time) {
   return sec * 1e9 + nsec;
 }
 
+// WARNING! Imprecise float; see above.
 export function toMicroSec({ sec, nsec }: Time) {
   return (sec * 1e9 + nsec) / 1000;
 }
 
+// WARNING! Imprecise float; see above.
 export function toSec({ sec, nsec }: Time) {
   return sec + nsec * 1e-9;
 }
@@ -248,4 +255,14 @@ export function getSeekToTime(): ?Time {
   const params = new URLSearchParams(window.location.search);
   const seekToParam = params.get(SEEK_TO_QUERY_KEY);
   return seekToParam ? fromMillis(parseInt(seekToParam)) : null;
+}
+
+export function getTimestampForMessage(message: Message, timestampMethod?: TimestampMethod): ?Time {
+  if (timestampMethod === "headerStamp") {
+    if (message.message.header?.stamp?.sec != null && message.message.header?.stamp?.nsec != null) {
+      return message.message.header.stamp;
+    }
+    return undefined;
+  }
+  return message.receiveTime;
 }

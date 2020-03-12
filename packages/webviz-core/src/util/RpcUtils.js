@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import overwriteFetch from "./overwriteFetch";
 import Rpc from "./Rpc";
 import reportError, { setErrorHandler, type DetailsType, type ErrorType } from "webviz-core/src/util/reportError";
 
@@ -14,9 +15,13 @@ import reportError, { setErrorHandler, type DetailsType, type ErrorType } from "
 // reportError is called.
 export function setupSendReportErrorHandler(rpc: Rpc) {
   setErrorHandler((message: string, details: DetailsType, type: ErrorType) => {
+    if (!(details instanceof Error || typeof details === "string")) {
+      console.warn("Invalid Error type");
+      details = JSON.stringify(details) || "<<unknown error>>";
+    }
     rpc.send("reportError", {
       message,
-      details: details instanceof Error ? details.toString() : JSON.stringify(details),
+      details: details instanceof Error ? details.toString() : details,
       type,
     });
   });
@@ -28,4 +33,11 @@ export function setupReceiveReportErrorHandler(rpc: Rpc) {
   rpc.receive("reportError", ({ message, details, type }) => {
     reportError(message, details, type);
   });
+}
+
+export function setupWorker(rpc: Rpc) {
+  if (process.env.NODE_ENV !== "test") {
+    setupSendReportErrorHandler(rpc);
+    overwriteFetch();
+  }
 }

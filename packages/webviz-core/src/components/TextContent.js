@@ -27,7 +27,7 @@ export default class TextContent extends React.Component<Props> {
     // Make links in Markdown work with react-router.
     // Per https://github.com/rexxars/react-markdown/issues/29#issuecomment-275437798
     function renderLink(props) {
-      if (getGlobalHooks().linkTopicPathSyntaxToHelpPage() && props.href === "/help/topic-path-syntax") {
+      if (getGlobalHooks().linkMessagePathSyntaxToHelpPage() && props.href === "/help/message-path-syntax") {
         return (
           <a href="#" onClick={showHelpModalOpenSource}>
             {props.children}

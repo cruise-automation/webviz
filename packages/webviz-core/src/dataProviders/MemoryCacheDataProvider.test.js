@@ -9,8 +9,9 @@
 import { flatten, last } from "lodash";
 import { TimeUtil } from "rosbag";
 
-import MemoryCacheDataProvider, { getBlocksToKeep } from "./MemoryCacheDataProvider";
+import MemoryCacheDataProvider, { getBlocksToKeep, MAX_BLOCK_SIZE_BYTES } from "./MemoryCacheDataProvider";
 import delay from "webviz-core/shared/delay";
+import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
 import type { DataProviderMessage } from "webviz-core/src/dataProviders/types";
@@ -37,7 +38,7 @@ function getProvider(messages: DataProviderMessage[]) {
   return {
     provider: new MemoryCacheDataProvider(
       { id: "some-id" },
-      [{ name: "IdbCacheWriterDataProvider", args: {}, children: [] }],
+      [{ name: CoreDataProviders.MemoryCacheDataProvider, args: {}, children: [] }],
       () => memoryDataProvider
     ),
     memoryDataProvider,
@@ -105,6 +106,16 @@ describe("MemoryCacheDataProvider", () => {
 
   it("does not allow storing non-ArrayBuffer messages", async () => {
     const { provider } = getProvider([{ topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: 0 }]);
+    await provider.initialize(mockExtensionPoint().extensionPoint);
+    provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo"]);
+    await delay(10);
+    reportError.expectCalledDuringTest();
+  });
+
+  it("shows an error when having a block that is very large", async () => {
+    const { provider } = getProvider([
+      { topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: new ArrayBuffer(MAX_BLOCK_SIZE_BYTES + 10) },
+    ]);
     await provider.initialize(mockExtensionPoint().extensionPoint);
     provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo"]);
     await delay(10);

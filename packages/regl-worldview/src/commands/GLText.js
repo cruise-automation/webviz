@@ -5,7 +5,7 @@ import memoizeOne from "memoize-one";
 import React, { useState, useContext } from "react";
 
 import type { Color } from "../types";
-import { defaultBlend, defaultDepth, vec4ToRGBA } from "../utils/commandUtils";
+import { defaultBlend, defaultDepth } from "../utils/commandUtils";
 import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command, { type CommonCommandProps } from "./Command";
@@ -356,10 +356,19 @@ function makeTextCommand() {
         let y = 0;
         let markerInstances = 0;
 
+        const hitmapColor = (markerColor) => {
+          return {
+            r: markerColor?.[0] ?? 0,
+            g: markerColor?.[1] ?? 0,
+            b: markerColor?.[2] ?? 0,
+            a: markerColor?.[3] ?? 1,
+          };
+        };
+
         // If we need to render text for hitmap framebuffer, we only render the polygons using
         // the foreground color (which needs to be converted to RGBA since it's a vec4).
         // See comment on fragment shader above
-        const fgColor = forHitmap ? vec4ToRGBA(marker.color) : marker.colors?.[0] || marker.color || BG_COLOR_LIGHT;
+        const fgColor = forHitmap ? hitmapColor(marker.color) : marker.colors?.[0] || marker.color || BG_COLOR_LIGHT;
         const outline = marker.colors?.[1] != null || command.autoBackgroundColor;
         const bgColor =
           marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK);

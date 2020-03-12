@@ -6,6 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+/* eslint-disable react/display-name */
+
 import { storiesOf } from "@storybook/react";
 import expect from "expect";
 import React from "react";
@@ -21,7 +23,7 @@ function textMarkers({
   billboard,
   background = false,
 }: {
-  text: String,
+  text: string,
   billboard?: ?boolean,
   background?: ?boolean,
 }) {
@@ -49,7 +51,7 @@ function createAssertionTest(markers, scaleInvariant) {
         <WorldviewWrapper
           defaultCameraState={{ perspective: true, distance: 10 }}
           onClick={(_, { objects }) => setTestData(objects)}>
-          <GLText scaleInvariantFontSize={scaleInvariant ? 40 : null}>{markers}</GLText>
+          <GLText scaleInvariantFontSize={scaleInvariant ? 40 : undefined}>{markers}</GLText>
         </WorldviewWrapper>
       );
     },

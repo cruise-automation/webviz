@@ -18,6 +18,7 @@ import Cubes from "./commands/Cubes";
 import Cylinders from "./commands/Cylinders";
 import FilledPolygons from "./commands/FilledPolygons";
 import GLText from "./commands/GLText";
+import GLTextScaleInvariant from "./commands/GLTextScaleInvariant";
 import GLTFScene from "./commands/GLTFScene";
 import LinesDemo from "./commands/LinesDemo";
 import LinesPoses from "./commands/LinesPoses";
@@ -58,6 +59,7 @@ const allDemos = {
   SpheresSingle,
   Text,
   GLText,
+  GLTextScaleInvariant,
   Triangles,
   GLTFScene,
 };

@@ -19,7 +19,7 @@
   },
   "peerDependencies": {
     "react": "16.x",
-    "react-dom": "16.x"
+    "react-dom": "npm:@hot-loader/react-dom@16.x"
   },
   "publishConfig": {
     "access": "public"

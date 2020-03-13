@@ -43,6 +43,7 @@ type Props = {
   children: $ReadOnlyArray<TextMarkerProps>,
   autoBackgroundColor?: boolean,
   scaleInvariantFontSize?: number,
+  resolution?: number,
   alphabet?: string[],
 };
 
@@ -60,7 +61,7 @@ type FontAtlas = {|
 |};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
-const FONT_SIZE = 40;
+const DEFAULT_RESOLUTION = 160;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
@@ -79,12 +80,12 @@ const memoizedCreateCanvas = memoizeOne((font) => {
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
-    (charSet: Set<string>): FontAtlas => {
-      const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
-      const ctx = memoizedCreateCanvas(`${FONT_SIZE}px sans-serif`);
+    (charSet: Set<string>, resolution: number): FontAtlas => {
+      const tinySDF = new TinySDF(resolution, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
+      const ctx = memoizedCreateCanvas(`${resolution}px sans-serif`);
 
       let textureWidth = 0;
-      const rowHeight = FONT_SIZE + 2 * BUFFER;
+      const rowHeight = resolution + 2 * BUFFER;
       const charInfo = {};
 
       // Measure and assign positions to all characters
@@ -267,7 +268,7 @@ function makeTextCommand(alphabet?: string[]) {
       uniforms: {
         atlas: atlasTexture,
         atlasSize: () => [atlasTexture.width, atlasTexture.height],
-        fontSize: FONT_SIZE,
+        fontSize: command.resolution,
         cutoff: CUTOFF,
         scaleInvariant: command.scaleInvariant,
         scaleInvariantSize: command.scaleInvariantSize,
@@ -310,7 +311,8 @@ function makeTextCommand(alphabet?: string[]) {
 
       const { textureData, textureWidth, textureHeight, charInfo } = memoizedBuildAtlas(
         // only use a new set if the characters changed, since memoizeOne uses shallow equality
-        charsChanged ? new Set(charSet) : charSet
+        charsChanged ? new Set(charSet) : charSet,
+        command.resolution
       );
 
       charSetInitialized = true;
@@ -361,7 +363,7 @@ function makeTextCommand(alphabet?: string[]) {
           const char = marker.text[i];
           if (char === "\n") {
             x = 0;
-            y = FONT_SIZE;
+            y = command.resolution;
             continue;
           }
           const info = charInfo[char];
@@ -417,7 +419,7 @@ function makeTextCommand(alphabet?: string[]) {
           ++markerInstances;
         }
 
-        const totalHeight = y + FONT_SIZE;
+        const totalHeight = y + command.resolution;
         for (let i = 0; i < markerInstances; i++) {
           alignmentOffset[2 * (totalInstances + i) + 0] = -totalWidth / 2;
           alignmentOffset[2 * (totalInstances + i) + 1] = totalHeight / 2;
@@ -460,6 +462,8 @@ export default function GLText(props: Props) {
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
+
+  command.resolution = props.resolution || DEFAULT_RESOLUTION;
 
   command.scaleInvariant = props.scaleInvariantFontSize != null;
   // Compute the actual size for the text object in NDC coordinates (from -1 to 1)

@@ -171,7 +171,7 @@ function Example() {
           phi: oldState.phi,
         }))
       }>
-      <GLText>{matrix.toMarkers()}</GLText>
+      <GLText alphabet={ALPHABET}>{matrix.toMarkers()}</GLText>
       <div ref={fpsMeter} style={{ position: "absolute", top: 20, left: 20, fontSize: 20, color: "red" }} />
     </Worldview>
   );

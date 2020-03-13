@@ -108,6 +108,16 @@ storiesOf("Worldview/GLText", module)
     }
     return <Example />;
   })
+  .add("with alphabet", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const alphabet = "HelloWorldview0123456789".split("");
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText alphabet={alphabet}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
   .add("billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
       <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: true })}</GLText>

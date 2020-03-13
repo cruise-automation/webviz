@@ -43,6 +43,7 @@ type Props = {
   children: $ReadOnlyArray<TextMarkerProps>,
   autoBackgroundColor?: boolean,
   scaleInvariantFontSize?: number,
+  alphabet?: string[],
 };
 
 type FontAtlas = {|
@@ -249,9 +250,10 @@ const frag = `
   }
 `;
 
-function makeTextCommand() {
+function makeTextCommand(alphabet?: string[]) {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
-  const charSet = new Set();
+  const charSet = new Set(alphabet || []);
+  let charSetInitialized = false;
   const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
   const command = (regl: any) => {
@@ -304,12 +306,14 @@ function makeTextCommand() {
           charSet.add(char);
         }
       }
-      const charsChanged = charSet.size !== prevNumChars;
+      const charsChanged = !charSetInitialized || charSet.size !== prevNumChars;
 
       const { textureData, textureWidth, textureHeight, charInfo } = memoizedBuildAtlas(
         // only use a new set if the characters changed, since memoizeOne uses shallow equality
         charsChanged ? new Set(charSet) : charSet
       );
+
+      charSetInitialized = true;
 
       // re-upload texture only if characters were added
       if (charsChanged) {
@@ -452,7 +456,7 @@ export default function GLText(props: Props) {
   const context = useContext(WorldviewReactContext);
   const { dimension } = context;
 
-  const [command] = useState(() => makeTextCommand());
+  const [command] = useState(() => makeTextCommand(props.alphabet));
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;

@@ -104,7 +104,15 @@ class MatrixText {
         quat.rotateX(spin, spin, Math.PI / 2);
         markers.push({
           text: char,
-          colors: [{ r: inScreenshotTests() ? oldness : newness, g: inScreenshotTests() ? newness : oldness, b: newness, a: oldness }, { r: 0, g: 0, b: 0, a: oldness }],
+          colors: [
+            {
+              r: inScreenshotTests() ? oldness : newness,
+              g: inScreenshotTests() ? newness : oldness,
+              b: newness,
+              a: oldness,
+            },
+            { r: 0, g: 0, b: 0, a: oldness },
+          ],
           pose: {
             position: { x, y, z: z - i * CHAR_HEIGHT },
             orientation: { x: spin[0], y: spin[1], z: spin[2], w: spin[3] },

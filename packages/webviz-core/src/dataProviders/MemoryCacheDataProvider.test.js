@@ -218,6 +218,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 2, undefined, undefined, undefined],
           maxCacheSizeInBytes: 5,
+          badEvictionLocation: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
     });
@@ -228,6 +229,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 0, 2, undefined, undefined],
           maxCacheSizeInBytes: 5,
+          badEvictionLocation: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([2, 1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
     });
@@ -238,6 +240,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 2, 3, undefined, undefined],
           maxCacheSizeInBytes: 5,
+          badEvictionLocation: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([2, 1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
     });
@@ -248,8 +251,31 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 2, 3, 4, undefined],
           maxCacheSizeInBytes: 5,
+          badEvictionLocation: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([3, 2]), newRecentRanges: [{ start: 2, end: 5 }] });
+    });
+
+    it("removes blocks from the left when the playback cursor is on the right", () => {
+      expect(
+        getBlocksToKeep({
+          recentBlockRanges: [{ start: 0, end: 5 }],
+          blockSizesInBytes: [1, 1, 1, 1, 1],
+          maxCacheSizeInBytes: 2,
+          badEvictionLocation: 5,
+        })
+      ).toEqual({ blockIndexesToKeep: new Set([2, 3, 4]), newRecentRanges: [{ start: 2, end: 5 }] });
+    });
+
+    it("removes blocks from the right when the playback cursor is on the left", () => {
+      expect(
+        getBlocksToKeep({
+          recentBlockRanges: [{ start: 0, end: 5 }],
+          blockSizesInBytes: [1, 1, 1, 1, 1],
+          maxCacheSizeInBytes: 2,
+          badEvictionLocation: 0,
+        })
+      ).toEqual({ blockIndexesToKeep: new Set([0, 1, 2]), newRecentRanges: [{ start: 0, end: 3 }] });
     });
   });
 

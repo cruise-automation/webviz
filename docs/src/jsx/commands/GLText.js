@@ -11,7 +11,11 @@ import React, { useState, useRef } from "react";
 import Worldview, { GLText, DEFAULT_CAMERA_STATE } from "regl-worldview";
 import seedrandom from "seedrandom";
 
-import { inScreenshotTests } from "../utils/codeSandboxUtils";
+// import { inScreenshotTests } from "../utils/codeSandboxUtils";
+
+function inScreenshotTests() {
+  return true;
+}
 
 // #BEGIN EDITABLE
 const rng = seedrandom(1999); // pseudo-random generator for deterministic testing!
@@ -118,12 +122,12 @@ function Example() {
   const [matrix] = useState(() => {
     const matrix = new MatrixText();
     // For screenshot tests we don't start the timer, so just run a few steps explicitly.
-    if (inScreenshotTests()) {
-      for (let i = 0; i < 10; i++) {
-        matrix.frame(STEP_INTERVAL / 1000);
-        matrix.step();
-      }
-    }
+    // if (inScreenshotTests()) {
+    //   for (let i = 0; i < 10; i++) {
+    //     matrix.frame(STEP_INTERVAL / 1000);
+    //     matrix.step();
+    //   }
+    // }
     return matrix;
   });
   const [cameraState, setCameraState] = useState({

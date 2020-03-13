@@ -60,7 +60,7 @@ type FontAtlas = {|
 |};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
-const FONT_SIZE = 160;
+const FONT_SIZE = 40;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;

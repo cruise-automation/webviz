@@ -104,7 +104,7 @@ class MatrixText {
         quat.rotateX(spin, spin, Math.PI / 2);
         markers.push({
           text: char,
-          colors: [{ r: newness, g: oldness, b: newness, a: oldness }, { r: 0, g: 0, b: 0, a: oldness }],
+          colors: [{ r: inScreenshotTests() ? oldness : newness, g: inScreenshotTests() ? newness : oldness, b: newness, a: oldness }, { r: 0, g: 0, b: 0, a: oldness }],
           pose: {
             position: { x, y, z: z - i * CHAR_HEIGHT },
             orientation: { x: spin[0], y: spin[1], z: spin[2], w: spin[3] },
@@ -122,12 +122,12 @@ function Example() {
   const [matrix] = useState(() => {
     const matrix = new MatrixText();
     // For screenshot tests we don't start the timer, so just run a few steps explicitly.
-    // if (inScreenshotTests()) {
-    //   for (let i = 0; i < 10; i++) {
-    //     matrix.frame(STEP_INTERVAL / 1000);
-    //     matrix.step();
-    //   }
-    // }
+    if (inScreenshotTests()) {
+      for (let i = 0; i < 5; i++) {
+        matrix.frame(STEP_INTERVAL / 1000);
+        matrix.step();
+      }
+    }
     return matrix;
   });
   const [cameraState, setCameraState] = useState({

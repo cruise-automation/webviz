@@ -9,17 +9,15 @@
 import { renderImage } from "./renderImage";
 import { type Dimensions, type RawMarkerData, type OffscreenCanvas } from "./util";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupSendReportErrorHandler } from "webviz-core/src/util/RpcUtils";
+import { setupWorker } from "webviz-core/src/util/RpcUtils";
 
 export default class ImageCanvasWorker {
   _idToCanvas: { [string]: OffscreenCanvas } = {};
   _rpc: Rpc;
 
   constructor(rpc: Rpc) {
+    setupWorker(rpc);
     this._rpc = rpc;
-    if (process.env.NODE_ENV !== "test") {
-      setupSendReportErrorHandler(this._rpc);
-    }
 
     rpc.receive("initialize", async ({ id, canvas }: { id: string, canvas: OffscreenCanvas }) => {
       this._idToCanvas[id] = canvas;

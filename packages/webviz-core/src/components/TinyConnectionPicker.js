@@ -14,7 +14,7 @@ import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import SpinningLoadingIcon from "webviz-core/src/components/SpinningLoadingIcon";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import { showHelpModalOpenSource } from "webviz-core/src/util/showHelpModalOpenSource";
 
 const SConnectionPicker = styled.div`

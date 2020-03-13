@@ -261,3 +261,31 @@ describe("time.parseTimeStr", () => {
     });
   });
 });
+
+describe("time.getTimestampForMessage", () => {
+  it("uses headerStamp when available", () => {
+    const messageBase = {
+      topic: "/foo",
+      receiveTime: { sec: 1000, nsec: 0 },
+      op: "message",
+      datatype: "foo",
+    };
+
+    expect(
+      time.getTimestampForMessage(
+        { ...messageBase, message: { header: { stamp: { sec: 123, nsec: 456 } } } },
+        "headerStamp"
+      )
+    ).toEqual({ sec: 123, nsec: 456 });
+    expect(
+      time.getTimestampForMessage(
+        { ...messageBase, message: { header: { stamp: { sec: 0, nsec: 0 } } } },
+        "headerStamp"
+      )
+    ).toEqual({ sec: 0, nsec: 0 });
+    expect(
+      time.getTimestampForMessage({ ...messageBase, message: { header: { stamp: { sec: 123 } } } }, "headerStamp")
+    ).toEqual(undefined);
+    expect(time.getTimestampForMessage({ ...messageBase, message: { header: {} } }, "headerStamp")).toEqual(undefined);
+  });
+});

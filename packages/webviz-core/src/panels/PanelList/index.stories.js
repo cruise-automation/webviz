@@ -27,16 +27,19 @@ storiesOf("<PanelList>", module)
     </DragDropContextProvider>
   ))
   .add("panel list", () => (
-    <PanelList
-      onPanelSelect={() => {}}
-      mosaicId=""
-      mosaicLayout=""
-      changePanelLayout={() => {}}
-      savePanelConfig={() => {}}
-    />
+    <div style={{ margin: 150 }}>
+      <PanelList
+        onPanelSelect={() => {}}
+        mosaicId=""
+        mosaicLayout=""
+        changePanelLayout={() => {}}
+        savePanelConfig={() => {}}
+      />
+    </div>
   ))
   .add("filtered panel list", () => (
     <div
+      style={{ margin: 150 }}
       ref={(el) => {
         if (el) {
           const input: ?HTMLInputElement = (el.querySelector("input"): any);
@@ -58,6 +61,7 @@ storiesOf("<PanelList>", module)
   ))
   .add("case-insensitive filtering and highlight submenu", () => (
     <div
+      style={{ margin: 150 }}
       ref={(el) => {
         if (el) {
           const input: ?HTMLInputElement = (el.querySelector("input"): any);

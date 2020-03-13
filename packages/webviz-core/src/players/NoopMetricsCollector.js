@@ -18,4 +18,5 @@ export default class NoopMetricsCollector implements PlayerMetricsCollectorInter
   close(): void {}
   recordPlaybackTime(time: Time): void {}
   recordBytesReceived(bytes: number): void {}
+  recordTimeToFirstMsgs(): void {}
 }

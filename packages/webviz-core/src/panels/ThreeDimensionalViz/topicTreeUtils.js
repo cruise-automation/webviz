@@ -137,7 +137,6 @@ export function getTopicConfig({
       : [];
 
   // return flattened nodes directly for a single bag
-
   if (!hasMultiBag) {
     return {
       topicConfig: {

@@ -6,17 +6,18 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { uniq } from "lodash";
-import React, { useEffect, useState, useCallback } from "react";
+import { compact, uniq } from "lodash";
+import React, { useEffect, useCallback, useRef } from "react";
 import { hot } from "react-hot-loader/root";
 
 import helpContent from "./index.help.md";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
-import MessageHistory, { type MessageHistoryData } from "webviz-core/src/components/MessageHistory";
+import MessageHistoryDEPRECATED, { type MessageHistoryData } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import type { PlotPath } from "webviz-core/src/panels/Plot/internalTypes";
-import PlotChart, { getDatasets } from "webviz-core/src/panels/Plot/PlotChart";
+import type { BasePlotPath, PlotPath } from "webviz-core/src/panels/Plot/internalTypes";
+import PlotChart, { getDatasetsAndTooltips } from "webviz-core/src/panels/Plot/PlotChart";
 import PlotLegend from "webviz-core/src/panels/Plot/PlotLegend";
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
 import type { PanelConfig } from "webviz-core/src/types/panels";
@@ -43,7 +44,8 @@ export type PlotConfig = {
   minYValue: string,
   maxYValue: string,
   showLegend: boolean,
-  xAxisVal: "timestamp" | "index",
+  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisPath?: BasePlotPath,
 };
 
 export function openSiblingPlotPanel(
@@ -55,7 +57,11 @@ export function openSiblingPlotPanel(
     (config: PlotConfig) =>
       ({
         ...config,
-        paths: uniq(config.paths.concat([{ value: topicName, enabled: true, timestampMethod: "receiveTime" }])),
+        paths: uniq(
+          config.paths
+            .concat([{ value: topicName, enabled: true, timestampMethod: "receiveTime" }])
+            .filter(({ value }) => value)
+        ),
       }: PlotConfig)
   );
 }
@@ -67,20 +73,21 @@ type Props = {
 
 function Plot(props: Props) {
   const { saveConfig, config } = props;
-  const { paths, minYValue, maxYValue, showLegend, xAxisVal } = config;
-  const [currentMinY, setCurrentMinY] = useState(null);
-  const [currentMaxY, setCurrentMaxY] = useState(null);
+  const { paths, minYValue, maxYValue, showLegend, xAxisVal, xAxisPath } = config;
+  // Note that the below values are refs since they are only used in callbacks and are not rendered anywhere.
+  const currentMinY = useRef(null);
+  const currentMaxY = useRef(null);
 
   const saveCurrentYs = useCallback((minY: number, maxY: number) => {
-    setCurrentMinY(maxY);
-    setCurrentMaxY(maxY);
+    currentMinY.current = minY;
+    currentMaxY.current = maxY;
   }, []);
 
   const setMinMax = useCallback(
     () =>
       saveConfig({
-        minYValue: currentMinY ? currentMinY.toString() : "",
-        maxYValue: currentMaxY ? currentMaxY.toString() : "",
+        minYValue: currentMinY.current != null ? currentMinY.current.toString() : "",
+        maxYValue: currentMaxY.current != null ? currentMaxY.current.toString() : "",
       }),
     [currentMaxY, currentMinY, saveConfig]
   );
@@ -91,13 +98,28 @@ function Plot(props: Props) {
     }
   });
 
+  let historySize: ?number;
+  if (xAxisVal === "index") {
+    historySize = 1;
+  }
+
+  const allPaths = paths.map(({ value }) => value).concat(compact([xAxisPath?.value]));
+  const includeTooltipInData = !useExperimentalFeature("plotWebWorker");
+
   return (
     <Flex col clip center style={{ position: "relative" }}>
-      {/* Don't filter out disabled paths when passing into <MessageHistory>, because we still want
+      {/* Don't filter out disabled paths when passing into <MessageHistoryDEPRECATED>, because we still want
           easy access to the history when turning the disabled paths back on. */}
-      <MessageHistory paths={paths.map((path) => path.value)} {...(xAxisVal === "index" ? { historySize: 1 } : null)}>
+      <MessageHistoryDEPRECATED paths={allPaths} {...(historySize ? { historySize } : null)}>
         {({ itemsByPath, startTime }: MessageHistoryData) => {
-          const datasets = getDatasets(paths, itemsByPath, startTime, xAxisVal);
+          const { datasets, tooltips } = getDatasetsAndTooltips(
+            paths,
+            itemsByPath,
+            startTime,
+            xAxisVal,
+            xAxisPath,
+            includeTooltipInData
+          );
           return (
             <>
               <PanelToolbar
@@ -111,6 +133,7 @@ function Plot(props: Props) {
                     setMinMax={setMinMax}
                     datasets={datasets}
                     xAxisVal={xAxisVal}
+                    tooltips={tooltips}
                   />
                 }
               />
@@ -120,17 +143,30 @@ function Plot(props: Props) {
                 maxYValue={parseFloat(maxYValue)}
                 saveCurrentYs={saveCurrentYs}
                 datasets={datasets}
+                tooltips={tooltips}
                 xAxisVal={xAxisVal}
               />
             </>
           );
         }}
-      </MessageHistory>
-      <PlotLegend paths={paths} saveConfig={saveConfig} showLegend={showLegend} xAxisVal={xAxisVal} />
+      </MessageHistoryDEPRECATED>
+      <PlotLegend
+        paths={paths}
+        saveConfig={saveConfig}
+        showLegend={showLegend}
+        xAxisVal={xAxisVal}
+        xAxisPath={xAxisPath}
+      />
     </Flex>
   );
 }
 Plot.panelType = "Plot";
-Plot.defaultConfig = { paths: [], minYValue: "", maxYValue: "", showLegend: true, xAxisVal: "timestamp" };
+Plot.defaultConfig = {
+  paths: [{ value: "", enabled: true, timestampMethod: "receiveTime" }],
+  minYValue: "",
+  maxYValue: "",
+  showLegend: true,
+  xAxisVal: "timestamp",
+};
 
 export default hot(Panel<PlotConfig>(Plot));

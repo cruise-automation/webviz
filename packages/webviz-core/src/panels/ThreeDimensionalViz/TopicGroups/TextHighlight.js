@@ -10,7 +10,7 @@ import fuzzySort from "fuzzysort";
 import React from "react";
 import styled from "styled-components";
 
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const STextHighlight = styled.span`
   .TextHighlight-highlight {
@@ -30,8 +30,8 @@ export default function TextHighlight({ targetStr = "", searchText = "" }: Props
   }
   const result = fuzzySort.highlight(
     fuzzySort.single(searchText, targetStr),
-    "<b class='TextHighlight-highlight'>",
-    "</b>"
+    "<span class='TextHighlight-highlight'>",
+    "</span>"
   );
   // TODO(Audrey): compute highlighted parts separately in order to avoid dangerouslySetInnerHTML
   return <STextHighlight>{result ? <span dangerouslySetInnerHTML={{ __html: result }} /> : targetStr}</STextHighlight>;

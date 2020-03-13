@@ -7,21 +7,27 @@
 //  You may not use this file except in compliance with the License.
 import { every, uniq, keyBy, isEmpty } from "lodash";
 
-import { isTypicalFilterName } from "webviz-core/src/components/MessageHistory";
-import { colors } from "webviz-core/src/util/colors";
+import { isTypicalFilterName } from "webviz-core/src/components/MessagePathSyntax/isTypicalFilterName";
+import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export const diffArrow = "->";
 export const diffLabels = {
   ADDED: { labelText: "WEBVIZ_DIFF___ADDED", color: colors.DARK6, backgroundColor: "#182924", indicator: "+" },
   DELETED: { labelText: "WEBVIZ_DIFF___DELETED", color: colors.DARK6, backgroundColor: "#3d2327", indicator: "-" },
-  CHANGED: { labelText: "WEBVIZ_DIFF___CHANGED", color: colors.ORANGEL1 },
+  CHANGED: { labelText: "WEBVIZ_DIFF___CHANGED", color: jsonTreeTheme.base0B },
   ID: { labelText: "WEBVIZ_DIFF___ID" },
 };
 
 // $FlowFixMe - Flow doesn't understand `Object.values`.
 export const diffLabelsByLabelText = keyBy(Object.values(diffLabels), "labelText");
 
-export default function getDiff(before: mixed, after: mixed) {
+export default function getDiff(
+  before: mixed,
+  after: mixed,
+  idLabel: ?string = null,
+  showFullMessageForDiff: boolean = false
+) {
   if (Array.isArray(before) && Array.isArray(after)) {
     let idToCompareWith: ?string;
     const allItems = before.concat(after);
@@ -71,7 +77,7 @@ export default function getDiff(before: mixed, after: mixed) {
           throw new Error("beforeItem is invalid; should have checked this earlier");
         }
         const id = beforeItem[idToCompareWith];
-        const innerDiff = getDiff(beforeItem, unmatchedAfterById[id]);
+        const innerDiff = getDiff(beforeItem, unmatchedAfterById[id], idToCompareWith, showFullMessageForDiff);
         delete unmatchedAfterById[id];
         if (!isEmpty(innerDiff)) {
           const isDeleted =
@@ -80,7 +86,7 @@ export default function getDiff(before: mixed, after: mixed) {
         }
       }
       for (const afterItem of Object.values(unmatchedAfterById)) {
-        const innerDiff = getDiff(undefined, afterItem);
+        const innerDiff = getDiff(undefined, afterItem, idToCompareWith, showFullMessageForDiff);
         if (!isEmpty(innerDiff)) {
           diff.push(innerDiff);
         }
@@ -91,10 +97,13 @@ export default function getDiff(before: mixed, after: mixed) {
 
   if (before && after && typeof before === "object" && typeof after === "object") {
     const diff = {};
-    for (const key of uniq(Object.keys(before).concat(Object.keys(after)))) {
-      const innerDiff = getDiff(before[key], after[key]);
+    const allKeys = Object.keys(before).concat(Object.keys(after));
+    for (const key of uniq(allKeys)) {
+      const innerDiff = getDiff(before[key], after[key], null, showFullMessageForDiff);
       if (!isEmpty(innerDiff)) {
         diff[key] = innerDiff;
+      } else if (showFullMessageForDiff) {
+        diff[key] = before[key];
       }
     }
     return diff;
@@ -104,10 +113,20 @@ export default function getDiff(before: mixed, after: mixed) {
     return undefined;
   }
   if (before === undefined) {
-    return { [diffLabels.ADDED.labelText]: after };
+    const afterIsNotObj = Array.isArray(after) || typeof after !== "object";
+    if (!idLabel || afterIsNotObj) {
+      return { [diffLabels.ADDED.labelText]: after };
+    }
+    const idLabelObj = { [diffLabels.ID.labelText]: { [idLabel]: { ...after }[idLabel] } };
+    return { [diffLabels.ADDED.labelText]: { ...idLabelObj, ...after } };
   }
   if (after === undefined) {
-    return { [diffLabels.DELETED.labelText]: before };
+    const beforeIsNotObj = Array.isArray(before) || typeof before !== "object";
+    if (!idLabel || beforeIsNotObj) {
+      return { [diffLabels.DELETED.labelText]: before };
+    }
+    const idLabelObj = { [diffLabels.ID.labelText]: { [idLabel]: { ...before }[idLabel] } };
+    return { [diffLabels.DELETED.labelText]: { ...idLabelObj, ...before } };
   }
   return {
     [diffLabels.CHANGED.labelText]: `${JSON.stringify(before) || ""} ${diffArrow} ${JSON.stringify(after) || ""}`,

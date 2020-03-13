@@ -10,12 +10,11 @@ import cx from "classnames";
 import React, { useMemo } from "react";
 import { PolygonBuilder, type MouseEventObject, type Polygon } from "regl-worldview";
 
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import CameraInfo from "webviz-core/src/panels/ThreeDimensionalViz/CameraInfo";
 import Crosshair from "webviz-core/src/panels/ThreeDimensionalViz/Crosshair";
-import DrawingTools, {
-  CAMERA_TAB_TYPE,
-  type DrawingTabType,
-} from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
+import DrawingTools, { type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
 import FollowTFControl from "webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl";
 import Interactions, { type InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
@@ -23,6 +22,7 @@ import { type LayoutToolbarSharedProps } from "webviz-core/src/panels/ThreeDimen
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import MainToolbar from "webviz-core/src/panels/ThreeDimensionalViz/MainToolbar";
 import MeasureMarker from "webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker";
+import SearchText, { type SearchTextProps } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
 
 type Props = {|
   ...LayoutToolbarSharedProps,
@@ -38,10 +38,13 @@ type Props = {|
   onSetDrawingTabType: (?DrawingTabType) => void,
   onSetPolygons: (polygons: Polygon[]) => void,
   onToggleCameraMode: () => void,
+  autoSyncCameraState: boolean,
   onToggleDebug: () => void,
   polygonBuilder: PolygonBuilder,
   selectedObject: ?MouseEventObject,
   setMeasureInfo: (MeasureInfo) => void,
+  rootTf: ?string,
+  ...SearchTextProps,
 |};
 
 function LayoutToolbar({
@@ -62,6 +65,7 @@ function LayoutToolbar({
   onSetDrawingTabType,
   onSetPolygons,
   onToggleCameraMode,
+  autoSyncCameraState,
   onToggleDebug,
   polygonBuilder,
   saveConfig,
@@ -70,6 +74,16 @@ function LayoutToolbar({
   setMeasureInfo,
   showCrosshair,
   transforms,
+  searchTextOpen,
+  toggleSearchTextOpen,
+  searchText,
+  setSearchText,
+  setSearchTextMatches,
+  searchTextMatches,
+  searchInputRef,
+  setSelectedMatchIndex,
+  selectedMatchIndex,
+  rootTf,
 }: Props) {
   const additionalToolbarItemsElem = useMemo(
     () => {
@@ -82,6 +96,8 @@ function LayoutToolbar({
     },
     [transforms]
   );
+
+  const glTextEnabled = useExperimentalFeature("glText");
   return (
     <>
       <MeasuringTool
@@ -91,6 +107,26 @@ function LayoutToolbar({
         onMeasureInfoChange={setMeasureInfo}
       />
       <div className={cx(styles.toolbar, styles.right)}>
+        {glTextEnabled && (
+          <div className={styles.buttons}>
+            <SearchText
+              searchTextOpen={searchTextOpen}
+              toggleSearchTextOpen={toggleSearchTextOpen}
+              searchText={searchText}
+              setSearchText={setSearchText}
+              setSearchTextMatches={setSearchTextMatches}
+              searchTextMatches={searchTextMatches}
+              searchInputRef={searchInputRef}
+              setSelectedMatchIndex={setSelectedMatchIndex}
+              selectedMatchIndex={selectedMatchIndex}
+              onCameraStateChange={onCameraStateChange}
+              cameraState={cameraState}
+              transforms={transforms}
+              rootTf={rootTf}
+              onFollowChange={onFollowChange}
+            />
+          </div>
+        )}
         <div className={styles.buttons}>
           <FollowTFControl
             transforms={transforms}
@@ -115,19 +151,21 @@ function LayoutToolbar({
           selectedObject={selectedObject}
         />
         <DrawingTools
-          // Save some unnecessary re-renders by not passing in the constantly changing cameraState unless it's needed
-          cameraState={drawingTabType === CAMERA_TAB_TYPE ? cameraState : null}
-          followOrientation={followOrientation}
-          followTf={followTf}
-          isPlaying={isPlaying}
-          onAlignXYAxis={onAlignXYAxis}
-          onCameraStateChange={onCameraStateChange}
           onSetPolygons={onSetPolygons}
           polygonBuilder={polygonBuilder}
           saveConfig={saveConfig}
           selectedPolygonEditFormat={selectedPolygonEditFormat}
           onSetDrawingTabType={onSetDrawingTabType}
+        />
+        <CameraInfo
+          cameraState={cameraState}
+          followOrientation={followOrientation}
+          followTf={followTf}
+          isPlaying={isPlaying}
+          onAlignXYAxis={onAlignXYAxis}
+          onCameraStateChange={onCameraStateChange}
           showCrosshair={!!showCrosshair}
+          autoSyncCameraState={autoSyncCameraState}
         />
         {additionalToolbarItemsElem}
       </div>

@@ -116,7 +116,7 @@ export default class Rpc {
   // send a message across the rpc boundary to a receiver on the other side
   // this returns a promise for the receiver's response.  If there is no registered
   // receiver for the given topic, this method throws
-  send<TResult>(topic: string, data: any, transfer?: ArrayBuffer[]): Promise<TResult> {
+  send<TResult>(topic: string, data: any, transfer?: any[]): Promise<TResult> {
     const id = this._messageId++;
     const message = { topic, id, data };
     const result = new Promise((resolve, reject) => {

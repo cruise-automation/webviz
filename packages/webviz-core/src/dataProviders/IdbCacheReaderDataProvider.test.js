@@ -8,6 +8,7 @@
 
 import IdbCacheReaderDataProvider from "./IdbCacheReaderDataProvider";
 import IdbCacheWriterDataProvider from "./IdbCacheWriterDataProvider";
+import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
 import type { DataProviderMessage } from "webviz-core/src/dataProviders/types";
@@ -24,11 +25,11 @@ function generateMessages(): DataProviderMessage[] {
 function getProvider() {
   return new IdbCacheReaderDataProvider(
     { id: "some-id" },
-    [{ name: "IdbCacheWriterDataProvider", args: {}, children: [] }],
+    [{ name: CoreDataProviders.IdbCacheWriterDataProvider, args: {}, children: [] }],
     () =>
       new IdbCacheWriterDataProvider(
         { id: "some-id" },
-        [{ name: "MemoryDataProvider", args: {}, children: [] }],
+        [{ name: CoreDataProviders.MemoryCacheDataProvider, args: {}, children: [] }],
         () => new MemoryDataProvider({ messages: generateMessages() })
       )
   );

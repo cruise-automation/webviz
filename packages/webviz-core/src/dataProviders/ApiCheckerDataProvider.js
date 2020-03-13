@@ -8,6 +8,7 @@
 
 import { TimeUtil, type Time } from "rosbag";
 
+import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import type {
   DataProvider,
   DataProviderDescriptor,
@@ -37,7 +38,7 @@ export function instrumentTreeWithApiCheckerDataProvider(
   depth: number = 0
 ): DataProviderDescriptor {
   return {
-    name: "ApiCheckerDataProvider",
+    name: CoreDataProviders.ApiCheckerDataProvider,
     args: { name: `${treeRoot.name}@${depth}` },
     children: [
       {
@@ -81,8 +82,8 @@ export default class ApiCheckerDataProvider implements DataProvider {
       if (!initializationResult.datatypes[topic.datatype]) {
         this._error(`Topic "${topic.name}" datatype "${topic.datatype}" not present in datatypes`);
       }
-      if (initializationResult.connectionsByTopic && !initializationResult.connectionsByTopic[topic.name]) {
-        this._error(`Topic "${topic.name}"" not present in connectionsByTopic`);
+      if (initializationResult.messageDefintionsByTopic && !initializationResult.messageDefintionsByTopic[topic.name]) {
+        this._error(`Topic "${topic.name}"" not present in messageDefintionsByTopic`);
       }
     }
     return this._initializationResult;

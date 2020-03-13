@@ -45,7 +45,7 @@ export interface AutomatedRunClient {
   finish(): any;
 }
 
-export const AUTOMATED_RUN_START_DELAY = 2000;
+export const AUTOMATED_RUN_START_DELAY = process.env.NODE_ENV === "test" ? 10 : 2000;
 
 const logger = new Logger(__filename);
 
@@ -77,7 +77,7 @@ export default class AutomatedRunPlayer implements Player {
       if (type === "user") {
         error = new Error(`${USER_ERROR_PREFIX} ${message} // ${detailsToString(details)}`);
       } else if (type === "app") {
-        error = new Error(`[WEBVIZ APPLICATION ERROR] ${message} // ${detailsToString(details)}`);
+        error = new Error(`[WEBVIZ APPLICATION ERROR] ${detailsToString(details)}`);
       } else {
         (type: void);
         error = new Error(`Unknown error type! ${type} // ${detailsToString(details)}`);
@@ -242,6 +242,7 @@ export default class AutomatedRunPlayer implements Player {
       const messages = await this._getMessages(currentTime, end);
 
       this._client.markFrameRenderStart();
+      // Wait for the frame render to finish.
       await this._emitState(messages, end);
       this._client.markTotalFrameEnd();
       this._client.markFrameRenderEnd();

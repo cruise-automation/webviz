@@ -6,24 +6,37 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
 import type { PlotChartPoint } from "webviz-core/src/panels/Plot/PlotChart";
 
-export default function derivative(data: PlotChartPoint[]): PlotChartPoint[] {
-  const newData = [];
+export default function derivative(
+  data: PlotChartPoint[],
+  tooltips: TimeBasedChartTooltipData[],
+  includeTooltipInData: boolean
+): { points: PlotChartPoint[], tooltips: TimeBasedChartTooltipData[] } {
+  const points = [];
+  const newTooltips = [];
   for (let i = 1; i < data.length; i++) {
     const secondsDifference = data[i].x - data[i - 1].x;
     const value = (data[i].y - data[i - 1].y) / secondsDifference;
-    newData.push({
-      x: data[i].x,
-      y: value,
-      tooltip: {
-        item: data[i].tooltip.item,
-        path: `${data[i].tooltip.path}.@derivative`,
-        value,
-        constantName: undefined,
-        startTime: data[i].tooltip.startTime,
-      },
-    });
+    const previousTooltip = tooltips[i];
+    const point: PlotChartPoint = { x: data[i].x, y: value };
+    const tooltip = {
+      x: point.x,
+      y: point.y,
+      item: previousTooltip.item,
+      path: `${previousTooltip.path}.@derivative`,
+      datasetKey: previousTooltip.datasetKey,
+      datasetIndex: i - 1,
+      value,
+      constantName: undefined,
+      startTime: previousTooltip.startTime,
+    };
+    newTooltips.push(tooltip);
+    if (includeTooltipInData) {
+      point.tooltip = tooltip;
+    }
+    points.push(point);
   }
-  return newData;
+  return { points, tooltips: newTooltips };
 }

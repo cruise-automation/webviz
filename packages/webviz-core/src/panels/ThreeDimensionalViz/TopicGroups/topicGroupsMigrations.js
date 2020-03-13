@@ -6,11 +6,19 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEqual, sortBy, flatten, keyBy, mapValues } from "lodash";
+import { sortBy, flatten, keyBy, mapValues, omit, isEqual, compact } from "lodash";
 import microMemoize from "micro-memoize";
 
-import { ALL_DATA_SOURCE_PREFIXES, TOPIC_CONFIG, removeTopicPrefixes } from "./topicGroupsUtils";
-import type { TopicGroupConfig } from "./types";
+import { DEFAULT_IMPORTED_GROUP_NAME } from "./constants";
+import {
+  ALL_DATA_SOURCE_PREFIXES,
+  TOPIC_CONFIG,
+  removeTopicPrefixes,
+  BASE_DATA_SOURCE_PREFIXES,
+  FEATURE_DATA_SOURCE_PREFIXES,
+} from "./topicGroupsUtils";
+import type { TopicGroupConfig, VisibilityByColumn, SelectedNamespacesByColumn, SettingsByColumn } from "./types";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
 
 function getSelectionsFromCheckedNodes(
@@ -40,6 +48,9 @@ function getSelectionsFromCheckedNodes(
       }
     } else if (item.startsWith("name:")) {
       selectedNamesSet.add(item.substr("name:".length));
+    } else {
+      // Some checked node names do not start with `name:`
+      selectedNamesSet.add(item);
     }
   });
   return { selectedExtensions, selectedTopics, selectedNamespacesByTopic, selectedNamesSet };
@@ -110,20 +121,27 @@ export function migrateLegacyIds(checkedNodes: string[]): string[] {
   return checkedNodes.map((node) => newCheckedNameOrTopicByOldNames[node] || node);
 }
 
-// Create a new topic group called 'My Topics' and related fields based the old config
-export function migratePanelConfigToTopicGroupConfig({
-  topicSettings,
-  checkedNodes,
-  modifiedNamespaceTopics,
-}: {
+function dataSourcePrefixToColumnIndex(dataSourcePrefix: string): number {
+  return FEATURE_DATA_SOURCE_PREFIXES.includes(dataSourcePrefix) ? 1 : 0;
+}
+
+type MigrateInput = {|
+  topicGroupDisplayName?: string,
   topicSettings?: ?{ [topicName: string]: any },
   checkedNodes?: ?(string[]),
   modifiedNamespaceTopics?: ?(string[]),
-}): TopicGroupConfig {
+|};
+// Create a new topic group called 'My Topics' and related fields based the old config
+export function migratePanelConfigToTopicGroupConfig({
+  topicGroupDisplayName = DEFAULT_IMPORTED_GROUP_NAME,
+  topicSettings,
+  checkedNodes,
+  modifiedNamespaceTopics,
+}: MigrateInput): TopicGroupConfig {
   if (!checkedNodes) {
     return {
-      displayName: "My Topics",
-      visible: true,
+      displayName: topicGroupDisplayName,
+      visibilityByColumn: [true, true],
       expanded: true,
       items: [],
     };
@@ -141,12 +159,13 @@ export function migratePanelConfigToTopicGroupConfig({
 
   let items = nonPrefixedTopics
     .map((topicName) => {
-      let visibilitiesBySource;
-      let settingsBySource;
-      let selectedNamespacesBySource;
+      const visibilityByColumn = [false, false];
+      let settingsByColumn;
+      let selectedNamespacesByColumn;
 
       for (const dataSourcePrefix of ALL_DATA_SOURCE_PREFIXES) {
         const prefixedTopicName = `${dataSourcePrefix}${topicName}`;
+        const columnIndex = dataSourcePrefixToColumnIndex(dataSourcePrefix);
         // a topic is selected if it's checked and all it's parent names are checked as well
         const isTopicSelected =
           selectedTopics.includes(prefixedTopicName) &&
@@ -155,42 +174,41 @@ export function migratePanelConfigToTopicGroupConfig({
           );
         if (isTopicSelected) {
           // migrate visibility
-          visibilitiesBySource = visibilitiesBySource || {};
-          visibilitiesBySource[dataSourcePrefix] = true;
+          visibilityByColumn[columnIndex] = true;
 
           // migrate settings, no need to migrate topic settings for topics that are not selected
           if (topicSettings && topicSettings[prefixedTopicName]) {
-            settingsBySource = settingsBySource || {};
-            settingsBySource[dataSourcePrefix] = topicSettings[prefixedTopicName];
+            settingsByColumn = settingsByColumn || [undefined, undefined];
+            settingsByColumn[columnIndex] = topicSettings[prefixedTopicName];
           }
 
-          // migrate topic namespaces, always set the selectedNamespacesBySource field when the namespaces are modified
+          // migrate topic namespaces, always set the selectedNamespacesByColumn field when the namespaces are modified
           if (
             (modifiedNamespaceTopics && modifiedNamespaceTopics.includes(prefixedTopicName)) ||
             selectedNamespacesByTopic[prefixedTopicName]
           ) {
-            selectedNamespacesBySource = selectedNamespacesBySource || {};
+            // Default to `undefined` will select all namespaces
+            selectedNamespacesByColumn = selectedNamespacesByColumn || [undefined, undefined];
             if (selectedNamespacesByTopic[prefixedTopicName]) {
-              selectedNamespacesBySource[dataSourcePrefix] = selectedNamespacesByTopic[prefixedTopicName];
+              selectedNamespacesByColumn[columnIndex] = selectedNamespacesByTopic[prefixedTopicName];
             }
           }
         }
       }
 
       // only selected the visible topics
-      return visibilitiesBySource
-        ? {
+      return isEqual(visibilityByColumn, [false, false])
+        ? undefined
+        : {
             topicName,
-            // auto expand the topic if it has any selected namespaces
-            ...(flatten(Object.values(selectedNamespacesBySource || {})).length > 0 ? { expanded: true } : undefined),
-            ...(settingsBySource ? { settingsBySource } : undefined),
-            // no need to store the default visibilitiesBySource in panelConfig
-            ...(!visibilitiesBySource || isEqual(visibilitiesBySource, { "": true })
-              ? undefined
-              : { visibilitiesBySource }),
-            ...(selectedNamespacesBySource ? { selectedNamespacesBySource } : undefined),
-          }
-        : null;
+            visibilityByColumn,
+            // Auto expanded any topics with selected namespaces.
+            ...(selectedNamespacesByColumn && flatten(compact(selectedNamespacesByColumn)).length > 0
+              ? { expanded: true }
+              : undefined),
+            ...(settingsByColumn ? { settingsByColumn } : undefined),
+            ...(selectedNamespacesByColumn ? { selectedNamespacesByColumn } : undefined),
+          };
     })
     .filter(Boolean);
 
@@ -209,22 +227,171 @@ export function migratePanelConfigToTopicGroupConfig({
   if (selectedTfNamespaces.length) {
     items.push({
       topicName: "/tf",
-      selectedNamespacesBySource: { "": selectedTfNamespaces },
+      selectedNamespacesByColumn: [selectedTfNamespaces, []],
+      visibilityByColumn: [true, false],
     });
   }
+
   items = sortBy(items, ["topicName"]);
+
   if (selectedMetadataNamespaces.length) {
     items.unshift({
       topicName: "/metadata",
-      selectedNamespacesBySource: { "": selectedMetadataNamespaces },
+      selectedNamespacesByColumn: [selectedMetadataNamespaces, []],
+      visibilityByColumn: [true, false],
     });
   }
 
   return {
-    // give default displayName, and select/expand state
-    displayName: "My Topics",
-    visible: true,
+    displayName: topicGroupDisplayName,
+    visibilityByColumn: [true, true],
     expanded: true,
     items,
   };
+}
+
+type VisibilityBySource = { [dataSourcePrefix: string]: boolean };
+type NamespacesBySource = { [dataSourcePrefix: string]: string[] };
+type SettingsBySource = { [dataSourcePrefix: string]: any };
+
+function getGroupVisibilityByColumn(visibilityByColumn: ?VisibilityByColumn): VisibilityByColumn {
+  if (visibilityByColumn) {
+    return visibilityByColumn;
+  }
+  // Since the prefixes changed quite a bit, it's simpler to always make the base and feature column
+  // visible by default
+  return [true, true];
+}
+
+function getTopicVisibilityByColumn(
+  visibilityByColumn: ?VisibilityByColumn,
+  visibilityBySource: VisibilityBySource
+): boolean[] {
+  if (visibilityByColumn) {
+    return visibilityByColumn;
+  }
+  const isBaseVisible = BASE_DATA_SOURCE_PREFIXES.some((prefix) => !!visibilityBySource[prefix]);
+  const isFeatureVisible = FEATURE_DATA_SOURCE_PREFIXES.some((prefix) => !!visibilityBySource[prefix]);
+  return [isBaseVisible, isFeatureVisible];
+}
+
+function getTopicSelectedNamespacesByColumn(
+  selectedNamespacesByColumn: ?SelectedNamespacesByColumn,
+  namespacesBySource: NamespacesBySource
+): ?{| selectedNamespacesByColumn: SelectedNamespacesByColumn |} {
+  let baseNamespaces = [];
+  BASE_DATA_SOURCE_PREFIXES.forEach((prefix) => {
+    if (namespacesBySource[prefix]) {
+      baseNamespaces = namespacesBySource[prefix];
+    }
+  });
+  let featureNamespaces = [];
+  FEATURE_DATA_SOURCE_PREFIXES.forEach((prefix) => {
+    if (namespacesBySource[prefix]) {
+      featureNamespaces = namespacesBySource[prefix];
+    }
+  });
+  if (isEqual(baseNamespaces, []) && isEqual(featureNamespaces, [])) {
+    return undefined;
+  }
+
+  return { selectedNamespacesByColumn: [baseNamespaces, featureNamespaces] };
+}
+
+function getTopicSettingsByColumn(
+  settingsByColumn: ?SettingsByColumn,
+  settingsBySource: SettingsBySource
+): ?{| settingsByColumn: SettingsByColumn |} {
+  if (settingsByColumn) {
+    return { settingsByColumn };
+  }
+  let baseSettings = {};
+  BASE_DATA_SOURCE_PREFIXES.forEach((prefix) => {
+    if (settingsBySource[prefix]) {
+      baseSettings = settingsBySource[prefix];
+    }
+  });
+  let featureSettings = {};
+  FEATURE_DATA_SOURCE_PREFIXES.forEach((prefix) => {
+    if (settingsBySource[prefix]) {
+      featureSettings = settingsBySource[prefix];
+    }
+  });
+  if (isEqual(baseSettings, {}) && isEqual(featureSettings, {})) {
+    return undefined;
+  }
+
+  return {
+    settingsByColumn: [
+      isEqual(baseSettings, {}) ? undefined : baseSettings,
+      isEqual(featureSettings, {}) ? undefined : featureSettings,
+    ],
+  };
+}
+
+export function migrateTopicGroupFromBySourceToByColumn(topicGroups: any): TopicGroupConfig[] {
+  return topicGroups.map((group) => {
+    return {
+      ...omit(group, ["visibilityBySource"]),
+      visibilityByColumn: getGroupVisibilityByColumn(group.visibilityByColumn),
+      items: group.items.map((item) => {
+        return {
+          ...omit(item, ["visibilityBySource", "selectedNamespacesBySource", "settingsBySource"]),
+          visibilityByColumn: getTopicVisibilityByColumn(
+            item.visibilityByColumn,
+            item.visibilityBySource || { "": true }
+          ),
+          ...getTopicSelectedNamespacesByColumn(item.selectedNamespacesByColumn, item.selectedNamespacesBySource || {}),
+          ...getTopicSettingsByColumn(item.settingsByColumn, item.settingsBySource || {}),
+        };
+      }),
+    };
+  });
+}
+
+export function getSettingsByColumnWithDefaults(
+  topicName: string,
+  settingsByColumn: ?(any[])
+): ?{ settingsByColumn: any[] } {
+  const defaultTopicSettingsByColumn = getGlobalHooks()
+    .startupPerPanelHooks()
+    .ThreeDimensionalViz.getDefaultTopicSettingsByColumn(topicName);
+
+  if (defaultTopicSettingsByColumn) {
+    const newSettingsByColumn = settingsByColumn || [undefined, undefined];
+    newSettingsByColumn.forEach((settings, columnIndex) => {
+      if (settings === undefined) {
+        // Only apply default settings if there are no settings present.
+        newSettingsByColumn[columnIndex] = defaultTopicSettingsByColumn[columnIndex];
+      }
+    });
+    return { settingsByColumn: newSettingsByColumn };
+  }
+  return settingsByColumn ? { settingsByColumn } : undefined;
+}
+
+export function addDefaultTopicSettings(topicGroups: TopicGroupConfig[]): TopicGroupConfig[] {
+  return topicGroups.map((group) => ({
+    ...group,
+    items: group.items.map((item) => ({
+      ...item,
+      ...getSettingsByColumnWithDefaults(item.topicName, item.settingsByColumn),
+    })),
+  }));
+}
+
+export function addDefaultTopicSettingsForTopicTree(topicSettings: any): any {
+  const newTopicSettings = { ...topicSettings };
+  const getDefaultSettingsHook = getGlobalHooks().startupPerPanelHooks().ThreeDimensionalViz.getDefaultSettings;
+  if (!getDefaultSettingsHook) {
+    return topicSettings;
+  }
+  const defaultSettings = getDefaultSettingsHook();
+  // Merge the defaultSettings with the existing topicSettings if it's not already set.
+  Object.keys(defaultSettings).forEach((topicName) => {
+    if (!newTopicSettings[topicName]) {
+      newTopicSettings[topicName] = defaultSettings[topicName];
+    }
+  });
+  return newTopicSettings;
 }

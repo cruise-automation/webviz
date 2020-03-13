@@ -11,7 +11,10 @@
 // etc). We should generally prevent users from making mistakes in the first place, but sometimes
 // its unavoidable to bail out with a generic error message (e.g. when dragging in a malformed
 // ROS bag).
+import * as Sentry from "@sentry/browser";
 import type { Node } from "react";
+
+import { AppError } from "webviz-core/src/util/errors";
 
 export type ErrorType = "app" | "user";
 export type DetailsType = string | Error | Node;
@@ -68,6 +71,10 @@ export function detailsToString(details: DetailsType): string {
 // Call this to add an error to the application nav bar error component if mounted
 // if the component is not mounted, console.error is used as a fallback.
 export default function reportError(message: string, details: DetailsType, type: ErrorType): void {
+  if (type === "app") {
+    Sentry.captureException(new AppError(details, message));
+  }
+
   addError(message, details, type);
 }
 reportError.expectCalledDuringTest = () => {}; // Overridden in tests; added here so Flow doesn't complain.

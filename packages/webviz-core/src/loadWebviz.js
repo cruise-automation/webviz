@@ -6,15 +6,33 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import memoize from "lodash/memoize";
+import * as Sentry from "@sentry/browser";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DIAGNOSTIC_TOPIC } from "./util/globalConstants";
-
 // We put all the internal requires inside functions, so that when they load the hooks have been properly set.
 
+let importedPanelsByCategory;
+let importedPerPanelHooks;
 const defaultHooks = {
+  areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
+  async importHooksAsync() {
+    return new Promise((resolve, reject) => {
+      if (importedPanelsByCategory && importedPerPanelHooks) {
+        resolve();
+      }
+      import(/* webpackChunkName: "hooks_bundle" */ "./hooksImporter")
+        .then((hooksImporter) => {
+          importedPerPanelHooks = hooksImporter.perPanelHooks();
+          importedPanelsByCategory = hooksImporter.panelsByCategory();
+          resolve();
+        })
+        .catch((reason) => {
+          Sentry.captureException(new Error(reason));
+          reject(`Failed to import hooks bundle: ${reason}`);
+        });
+    });
+  },
   nodes: () => [],
   getDefaultGlobalStates() {
     const { defaultPlaybackConfig } = require("webviz-core/src/reducers/panels");
@@ -48,164 +66,36 @@ const defaultHooks = {
       { label: "Debugging", key: "debugging" },
     ];
   },
-  panelsByCategory() {
-    const GlobalVariables = require("webviz-core/src/panels/GlobalVariables").default;
-    const DiagnosticStatusPanel = require("webviz-core/src/panels/diagnostics/DiagnosticStatusPanel").default;
-    const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
-    const ImageViewPanel = require("webviz-core/src/panels/ImageView").default;
-    const Internals = require("webviz-core/src/panels/Internals").default;
-    const NodePlayground = require("webviz-core/src/panels/NodePlayground").default;
-    const Note = require("webviz-core/src/panels/Note").default;
-    const NumberOfRenders = require("webviz-core/src/panels/NumberOfRenders").default;
-    const PlaybackPerformance = require("webviz-core/src/panels/PlaybackPerformance").default;
-    const Plot = require("webviz-core/src/panels/Plot").default;
-    const RawMessages = require("webviz-core/src/panels/RawMessages").default;
-    const Rosout = require("webviz-core/src/panels/Rosout").default;
-    const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
-    const SubscribeToList = require("webviz-core/src/panels/SubscribeToList").default;
-    const TwoDimensionalPlot = require("webviz-core/src/panels/TwoDimensionalPlot").default;
-    const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
-    const { ndash } = require("webviz-core/src/util/entities");
-
-    const ros = [
-      { title: "2D Plot", component: TwoDimensionalPlot },
-      { title: "3D", component: ThreeDimensionalViz },
-      { title: `Diagnostics ${ndash} Summary`, component: DiagnosticSummary },
-      { title: `Diagnostics ${ndash} Detail`, component: DiagnosticStatusPanel },
-      { title: "Image", component: ImageViewPanel },
-      { title: "Plot", component: Plot },
-      { title: "Raw Messages", component: RawMessages },
-      { title: "rosout", component: Rosout },
-      { title: "State Transitions", component: StateTransitions },
-    ];
-
-    const utilities = [
-      { title: "Global Variables", component: GlobalVariables },
-      { title: "Node Playground", component: NodePlayground },
-      { title: "Notes", component: Note },
-      { title: "Webviz Internals", component: Internals },
-    ];
-
-    const debugging = [
-      { title: "Number of Renders", component: NumberOfRenders },
-      { title: "Playback Performance", component: PlaybackPerformance },
-      { title: "Subscribe to List", component: SubscribeToList },
-    ];
-
-    return { ros, utilities, debugging };
+  panelsByCategory: () => {
+    if (!importedPanelsByCategory) {
+      throw new Error("panelsByCategory requested before hooks have been imported");
+    }
+    return importedPanelsByCategory;
   },
   helpPageFootnote: () => null,
-  perPanelHooks: memoize(() => {
-    const LaserScanVert = require("webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert").default;
-    const { defaultMapPalette } = require("webviz-core/src/panels/ThreeDimensionalViz/commands/utils");
-    const { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE } = require("webviz-core/src/util/globalConstants");
-
-    const SUPPORTED_MARKER_DATATYPES = {
-      // generally supported datatypes
-      VISUALIZATION_MSGS_MARKER_DATATYPE: "visualization_msgs/Marker",
-      VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE: "visualization_msgs/MarkerArray",
-      POSE_STAMPED_DATATYPE,
-      POINT_CLOUD_DATATYPE,
-      SENSOR_MSGS_LASER_SCAN_DATATYPE: "sensor_msgs/LaserScan",
-      NAV_MSGS_OCCUPANCY_GRID_DATATYPE: "nav_msgs/OccupancyGrid",
-      GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: "geometry_msgs/PolygonStamped",
-    };
-
+  perPanelHooks: () => {
+    if (!importedPerPanelHooks) {
+      throw new Error("perPanelHooks requested before hooks have been imported");
+    }
+    return importedPerPanelHooks;
+  },
+  startupPerPanelHooks: () => {
     return {
-      DiagnosticSummary: {
-        defaultConfig: {
-          pinnedIds: [],
-          hardwareIdFilter: "",
-          topicToRender: DIAGNOSTIC_TOPIC,
-        },
-      },
-      ImageView: {
-        defaultConfig: {
-          cameraTopic: "",
-          enabledMarkerNames: [],
-          scale: 0.2,
-          transformMarkers: false,
-          synchronize: false,
-          mode: "fit",
-          zoomPercentage: 100,
-          offset: [0, 0],
-        },
-        imageMarkerDatatypes: ["visualization_msgs/ImageMarker"],
-        imageMarkerArrayDatatypes: [],
-        canTransformMarkersByTopic: (topic) => !topic.includes("rect"),
-      },
-      StateTransitions: { defaultConfig: { paths: [] }, customStateTransitionColors: {} },
       ThreeDimensionalViz: {
-        defaultConfig: {
-          checkedNodes: ["name:Topics"],
-          expandedNodes: ["name:Topics"],
-          followTf: null,
-          cameraState: {},
-          modifiedNamespaceTopics: [],
-          pinTopics: false,
-          topicSettings: {},
+        getDefaultTopicSettingsByColumn(topicName) {
+          return undefined;
         },
-        SUPPORTED_MARKER_DATATYPES,
-        allSupportedMarkers: [
-          "arrow",
-          "cube",
-          "cubeList",
-          "cylinder",
-          "filledPolygon",
-          "grid",
-          "instancedLineList",
-          "laserScan",
-          "linedConvexHull",
-          "lineList",
-          "lineStrip",
-          "pointcloud",
-          "points",
-          "poseMarker",
-          "sphere",
-          "sphereList",
-          "text",
-          "triangleList",
-        ],
-        renderAdditionalMarkers: () => {},
-        topics: [],
-        icons: {},
-        AdditionalToolbarItems: () => null,
-        LaserScanVert,
-        setGlobalVariablesInSceneBuilder: (globalVariables, selectionState, topicsToRender) => ({
-          selectionState,
-          topicsToRender,
-        }),
-        consumeMessage: (topic, msg, consumeMethods, { errors }) => {
-          errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${msg.datatype}`);
-        },
-        getMessagePose: (msg) => msg.message.pose,
-        addMarkerToCollector: () => {},
-        getSyntheticArrowMarkerColor: () => ({ r: 0, g: 0, b: 1, a: 0.5 }),
-        getFlattenedPose: () => undefined,
-        getOccupancyGridValues: (topic) => [0.5, "map"],
-        getMapPalette() {
-          return defaultMapPalette;
-        },
-        consumePose: () => {},
-        getMarkerColor: (topic, markerColor) => markerColor,
         getDefaultTopicTree: () => ({
           name: "root",
           children: [{ name: "TF", children: [], description: "Visualize relationships between /tf frames." }],
         }),
-        hasBlacklistTopics: () => false,
-        ungroupedNodesCategory: "Topics",
-        rootTransformFrame: "map",
-        defaultFollowTransformFrame: null,
-        skipTransformFrame: null,
       },
-      RawMessages: { docLinkFunction: () => undefined },
     };
-  }),
+  },
   Root({ store }) {
     const Root = require("webviz-core/src/components/Root").default;
     return <Root store={store} />;
   },
-  topicsWithIncorrectHeaders: () => [],
   load: () => {
     if (process.env.NODE_ENV === "production" && window.ga) {
       window.ga("create", "UA-82819136-10", "auto");
@@ -222,16 +112,30 @@ const defaultHooks = {
   getAdditionalDataProviders: () => {},
   experimentalFeaturesList() {
     return {
-      topicGrouping: {
-        name: "Topic Group Management",
+      plotWebWorker: {
+        name: "Use a web worker to render the Plot panel",
         description:
-          "We're revamping the topic tree to be customizable directly from Webviz. You'll be able to create your own groups and toggle them easily.",
+          "Experimentally render the plot panel using a web worker. This should result in increased performance.",
+        developmentDefault: false,
+        productionDefault: false,
+      },
+      diskBagCaching: {
+        name: "Disk Bag Caching (requires reload)",
+        description:
+          "When streaming bag data, persist it on disk, so that when reloading the page we don't have to download the data again. However, this might result in an overall slower experience, and is generally experimental, so we only recommend it if you're on a slow network connection. Alternatively, you can download the bag to disk manually, and drag it into Webviz.",
+        developmentDefault: false,
+        productionDefault: false,
+      },
+      unlimitedMemoryCache: {
+        name: "Unlimited in-memory cache (requires reload)",
+        description:
+          "If you have a lot of memory in your computer, and you frequently have to play all the way through large bags, you can turn this on to fully buffer the bag into memory. However, use at your own risk, as this might crash the browser.",
         developmentDefault: false,
         productionDefault: false,
       },
     };
   },
-  linkTopicPathSyntaxToHelpPage: () => true,
+  linkMessagePathSyntaxToHelpPage: () => true,
 };
 
 let hooks = defaultHooks;
@@ -255,12 +159,15 @@ export function loadWebviz(hooksToSet) {
 
   require("webviz-core/src/styles/global.scss");
   const prepareForScreenshots = require("webviz-core/src/stories/prepareForScreenshots").default;
-  const installChartjs = require("webviz-core/src/util/installChartjs").default;
   const installDevtoolsFormatters = require("webviz-core/src/util/installDevtoolsFormatters").default;
+  const overwriteFetch = require("webviz-core/src/util/overwriteFetch").default;
+  const { hideLoadingLogo } = require("webviz-core/src/util/hideLoadingLogo");
+  const { clearIndexedDbWithoutConfirmation } = require("webviz-core/src/util/indexeddb/clearIndexedDb");
 
-  installChartjs();
   prepareForScreenshots(); // For integration screenshot tests.
   installDevtoolsFormatters();
+  overwriteFetch();
+  window.clearIndexedDb = clearIndexedDbWithoutConfirmation; // For integration tests.
 
   hooks.load();
 
@@ -284,6 +191,7 @@ export function loadWebviz(hooksToSet) {
   const chromeMatch = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
   const chromeVersion = chromeMatch ? parseInt(chromeMatch[2], 10) : 0;
   if (chromeVersion < MINIMUM_CHROME_VERSION) {
+    hideLoadingLogo();
     Confirm({
       title: "Update your browser",
       prompt:

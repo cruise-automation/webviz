@@ -5,179 +5,123 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import ChevronDownIcon from "@mdi/svg/svg/chevron-down.svg";
-import ChevronUpIcon from "@mdi/svg/svg/chevron-up.svg";
-import Collapse from "rc-collapse";
-import React, { useCallback } from "react";
-import styled, { css } from "styled-components";
+import React, { useMemo, useCallback } from "react";
+import styled from "styled-components";
+import tinyColor from "tinycolor2";
 
-import DataSourceBadge from "./DataSourceBadge";
-import Namespaces from "./Namespaces";
-import { SMenuWrapper } from "./TopicGroupMenu";
-import TopicItemMenu from "./TopicItemMenu";
+import Accordion from "./Accordion";
+import Namespace from "./Namespace";
+import TopicItemRowHeader from "./TopicItemRowHeader";
+import { parseColorSetting } from "./TopicSettingsEditor";
 import type { TopicItem, OnTopicGroupsChange } from "./types";
-import Icon from "webviz-core/src/components/Icon";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-const namespaceCss = css`
-  .rc-collapse {
-    .rc-collapse-item {
-      .rc-collapse-header {
-        padding: 0px 0px 0px 24px !important;
-      }
-    }
-  }
-`;
-const SItemRow = styled.div`
+const SItemRow = styled.li`
   padding: 0;
   display: flex;
   flex-direction: column;
-  color: ${(props) => (props.available ? colors.LIGHT1 : colors.TEXT_MUTED)};
-  ${(props) => (props.hasNamespaces ? namespaceCss : "")};
+  color: ${(props: { available: boolean }) => (props.available ? colors.LIGHT1 : colors.TEXT_MUTED)};
   &:hover {
     color: ${colors.LIGHT};
   }
 `;
 
-const SItemMain = styled.div`
-  display: flex;
-  flex: 1;
-  line-height: 1.2;
-  padding: ${(props) => (props.hasNamespaces ? "8px 0 8px 8px" : " 8px 0px 8px 48px")};
-  transition: 0.3s;
-  &:hover {
-    background-color: ${colors.HOVER_BACKGROUND_COLOR};
-    ${SMenuWrapper} {
-      color: white;
-      opacity: 1;
-    }
-  }
-`;
-
-const SItemMainLeft = styled.div`
-  font-size: 10px;
-  flex: 1;
-`;
-
-const SItemMainRight = styled.div`
-  min-width: 84px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-`;
-
-export const SDisplayName = styled.div`
-  font-size: 14px;
-  margin-bottom: 4px;
-  word-break: break-word;
-`;
-
-export const STopicName = styled.div`
-  font-size: 10px;
-  word-break: break-word;
+const SNamespacesBySource = styled.div`
+  margin-bottom: 8px;
 `;
 
 type Props = {|
+  hasFeatureColumn: boolean,
   item: TopicItem,
   objectPath: string,
+  onOpenEditTopicSettingsModal: (objectPath: string) => void,
   onTopicGroupsChange: OnTopicGroupsChange,
+  dataTestShowErrors: boolean,
 |};
-
-function TopicItemRowHeader({
-  hasNamespaces,
-  item,
-  objectPath,
-  onTopicGroupsChange,
-  item: {
-    topicName,
-    derivedFields: { displayName, namespaceItems, displayVisibilityBySource },
-  },
-}: {|
-  ...Props,
-  hasNamespaces?: boolean,
-|}) {
-  return (
-    <SItemMain hasNamespaces={hasNamespaces}>
-      <SItemMainLeft>
-        <SDisplayName>{displayName}</SDisplayName>
-        {topicName !== displayName && <STopicName>{topicName}</STopicName>}
-      </SItemMainLeft>
-      <SItemMainRight>
-        {Object.keys(displayVisibilityBySource).map((dataSourcePrefix) => {
-          const { visible, available, badgeText, isParentVisible } = displayVisibilityBySource[dataSourcePrefix];
-          return (
-            <DataSourceBadge
-              available={available}
-              badgeText={badgeText}
-              dataTest={`topic-${dataSourcePrefix}${topicName}`}
-              isParentVisible={isParentVisible}
-              key={dataSourcePrefix}
-              visible={visible}
-              onToggleVisibility={() => {
-                onTopicGroupsChange(
-                  `${objectPath}.visibilitiesBySource.${dataSourcePrefix}`,
-                  !displayVisibilityBySource[dataSourcePrefix].visible
-                );
-              }}
-            />
-          );
-        })}
-        <TopicItemMenu item={item} objectPath={objectPath} onTopicGroupsChange={onTopicGroupsChange} />
-      </SItemMainRight>
-    </SItemMain>
-  );
-}
 
 export default function TopicItemRow(props: Props) {
   const {
+    hasFeatureColumn,
     objectPath,
     onTopicGroupsChange,
     item,
     item: {
       expanded: topicExpanded,
+      settingsByColumn = [undefined, undefined],
       topicName,
-      derivedFields: { namespaceItems, id, available },
+      derivedFields: { prefixByColumn, namespaceDisplayVisibilityByNamespace, displayVisibilityByColumn },
     },
   } = props;
 
-  const hasNamespaces = namespaceItems.length > 0;
-  const onCollapseChange = useCallback(
-    (activeKeys) => {
-      if (hasNamespaces) {
-        onTopicGroupsChange(`${objectPath}.expanded`, !topicExpanded);
-      }
+  const overrideColorByColumn = useMemo(
+    (): (?string)[] =>
+      settingsByColumn.map((settings) => {
+        if (settings) {
+          const rgba = parseColorSetting(settings.overrideColor, 1);
+          return tinyColor.fromRatio(rgba).toRgbString();
+        }
+        return undefined;
+      }),
+    [settingsByColumn]
+  );
+  const onToggleExpand = useCallback(
+    () => {
+      // Always store the expanded states even when namespaces are not available.
+      onTopicGroupsChange(`${objectPath}.expanded`, !topicExpanded);
     },
-    [hasNamespaces, objectPath, onTopicGroupsChange, topicExpanded]
+    [objectPath, onTopicGroupsChange, topicExpanded]
   );
 
   return (
-    <SItemRow hasNamespaces={hasNamespaces} available={available}>
-      {namespaceItems.length ? (
-        <Collapse
-          defaultActiveKey={topicExpanded ? id : null}
-          onChange={onCollapseChange}
-          expandIcon={({ expanded }) => (
-            <Icon small fade>
-              {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-            </Icon>
-          )}>
-          <Collapse.Panel key={id} className={`test-${id}`} header={<TopicItemRowHeader hasNamespaces {...props} />}>
-            <Namespaces
-              onToggleNamespace={({ visible, namespace, dataSourcePrefix }) => {
-                let newNamespaces =
-                  (item.selectedNamespacesBySource && item.selectedNamespacesBySource[dataSourcePrefix]) || [];
-                newNamespaces = visible
-                  ? [...newNamespaces, namespace]
-                  : newNamespaces.filter((ns) => ns !== namespace);
-                onTopicGroupsChange(`${objectPath}.selectedNamespacesBySource.${dataSourcePrefix}`, newNamespaces);
-              }}
-              topicName={topicName}
-              namespaceItems={namespaceItems}
+    <SItemRow hasNamespaces={!!namespaceDisplayVisibilityByNamespace} available={!!displayVisibilityByColumn}>
+      {namespaceDisplayVisibilityByNamespace ? (
+        <Accordion
+          active={topicExpanded}
+          onToggle={onToggleExpand}
+          renderHeader={({ onToggle }) => (
+            <TopicItemRowHeader
+              {...props}
+              hasNamespaces
+              onToggleExpand={onToggle}
+              overrideColorByColumn={overrideColorByColumn}
             />
-          </Collapse.Panel>
-        </Collapse>
+          )}>
+          <>
+            {topicExpanded && (
+              <SNamespacesBySource>
+                {Object.keys(namespaceDisplayVisibilityByNamespace)
+                  .sort()
+                  .map((ns) => {
+                    const nsItem = namespaceDisplayVisibilityByNamespace[ns];
+                    return (
+                      <Namespace
+                        key={ns}
+                        hasFeatureColumn={hasFeatureColumn}
+                        name={ns}
+                        prefixByColumn={prefixByColumn}
+                        displayVisibilityByColumn={nsItem}
+                        overrideColorByColumn={overrideColorByColumn}
+                        topicName={topicName}
+                        onToggleNamespace={({ visible, namespace, columnIndex }) => {
+                          let newNamespaces =
+                            (item.selectedNamespacesByColumn && item.selectedNamespacesByColumn[columnIndex]) || [];
+                          newNamespaces = visible
+                            ? [...newNamespaces, namespace]
+                            : newNamespaces.filter((name) => name !== namespace);
+                          onTopicGroupsChange(
+                            `${objectPath}.selectedNamespacesByColumn[${columnIndex}]`,
+                            newNamespaces
+                          );
+                        }}
+                      />
+                    );
+                  })}
+              </SNamespacesBySource>
+            )}
+          </>
+        </Accordion>
       ) : (
-        <TopicItemRowHeader {...props} />
+        <TopicItemRowHeader {...props} overrideColorByColumn={overrideColorByColumn} />
       )}
     </SItemRow>
   );

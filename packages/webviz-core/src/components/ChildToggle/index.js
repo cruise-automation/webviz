@@ -123,7 +123,7 @@ export default class ChildToggle extends React.Component<Props> {
   };
 
   renderFloating() {
-    const { isOpen, children, position, noPortal } = this.props;
+    const { isOpen, children, position, noPortal, style } = this.props;
     if (!isOpen) {
       return;
     }
@@ -134,7 +134,8 @@ export default class ChildToggle extends React.Component<Props> {
     const childEl = this.el.firstElementChild.firstElementChild;
     const childRect = childEl.getBoundingClientRect();
     const padding = 10;
-    const style = {
+    const styleObj = {
+      ...style,
       top: padding,
       bottom: padding,
       left: padding,
@@ -144,17 +145,17 @@ export default class ChildToggle extends React.Component<Props> {
 
     let spacerSize;
     if (position === "left") {
-      style.top = childRect.top;
+      styleObj.top = childRect.top;
       spacerSize = window.innerWidth - childRect.left - padding;
     } else if (position === "below") {
-      style.top = childRect.top + childRect.height;
+      styleObj.top = childRect.top + childRect.height;
       spacerSize = childRect.left - padding;
     } else if (position === "above") {
-      delete style.bottom;
-      style.height = childRect.top - padding;
+      delete styleObj.bottom;
+      styleObj.height = childRect.top - padding;
       spacerSize = childRect.left - padding;
     } else {
-      style.top = childRect.top;
+      styleObj.top = childRect.top;
       spacerSize = childRect.left + childRect.width - padding;
     }
 
@@ -171,7 +172,7 @@ export default class ChildToggle extends React.Component<Props> {
           start={position !== "above"}
           end={position === "above"}
           className={styles.childContainer}
-          style={style}>
+          style={styleObj}>
           {/* shrinkable spacer allows child to have a default position but slide over when it would go offscreen */}
           <span style={{ flexBasis: spacerSize, flexShrink: 1 }} />
           {children[1]}

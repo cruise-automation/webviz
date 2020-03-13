@@ -8,18 +8,13 @@
 
 import { createMemoryHistory } from "history";
 import { flatten, groupBy } from "lodash";
-import * as React from "react"; // eslint-disable-line import/no-duplicates
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"; // eslint-disable-line import/no-duplicates
+import * as React from "react";
 import { Provider } from "react-redux";
 import { type Time, TimeUtil } from "rosbag";
 
+import { pauseFrameForPromises, type FramePromise } from "./pauseFrameForPromise";
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
-import {
-  useShallowMemo,
-  createSelectableContext,
-  useContextSelector,
-  type BailoutToken,
-} from "webviz-core/src/components/MessageHistory/hooks";
+import signal from "webviz-core/shared/signal";
 import type {
   AdvertisePayload,
   Frame,
@@ -34,8 +29,19 @@ import type {
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { hideLoadingLogo } from "webviz-core/src/util/hideLoadingLogo";
+import {
+  useShallowMemo,
+  createSelectableContext,
+  useContextSelector,
+  type BailoutToken,
+} from "webviz-core/src/util/hooks";
 import naturalSort from "webviz-core/src/util/naturalSort";
+import reportError from "webviz-core/src/util/reportError";
 
+const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React;
+
+type ResumeFrame = () => void;
 export type MessagePipelineContext = {|
   playerState: PlayerState,
   frame: Frame,
@@ -50,6 +56,8 @@ export type MessagePipelineContext = {|
   pausePlayback(): void,
   setPlaybackSpeed(speed: number): void,
   seekPlayback(time: Time): void,
+  // Don't render the next frame until the returned function has been called.
+  pauseFrame(name: string): ResumeFrame,
 |};
 
 const Context = createSelectableContext<MessagePipelineContext>();
@@ -61,8 +69,8 @@ export function useMessagePipeline<T>(selector: (MessagePipelineContext) => T | 
 function defaultPlayerState(): PlayerState {
   return {
     isPresent: false,
-    showSpinner: false,
-    showInitializing: false,
+    showSpinner: true,
+    showInitializing: true,
     progress: {},
     capabilities: [],
     playerId: "",
@@ -77,7 +85,9 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
   const lastActiveData = useRef<?PlayerStateActiveData>(playerState.activeData);
   const [subscriptionsById, setAllSubscriptions] = useState<{ [string]: SubscribePayload[] }>({});
   const [publishersById: AdvertisePayload[], setAllPublishers: (AdvertisePayload[]) => void] = useState({});
-  const resolveFn = useRef<?() => void>();
+  const resolveTickFn = useRef<?() => void>();
+  const waitingForPromises = useRef<boolean>(false);
+  const promisesToWaitFor = useRef<FramePromise[]>([]);
 
   const subscriptions: SubscribePayload[] = useMemo(
     () => flatten(Object.keys(subscriptionsById).map((k) => subscriptionsById[k])),
@@ -93,11 +103,38 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
   // Delay the player listener promise until rendering has finished for the latest data.
   useLayoutEffect(
     () => {
-      if (resolveFn.current) {
-        requestAnimationFrame(() => {
-          if (resolveFn.current) {
-            resolveFn.current();
-            resolveFn.current = undefined;
+      if (resolveTickFn.current) {
+        // $FlowFixMe it doesn't matter if this function returns a promise.
+        requestAnimationFrame(async () => {
+          if (waitingForPromises.current) {
+            reportError("MessagePipeline tried to resolve the frame twice, this should never happen", "", "app");
+            return;
+          }
+          if (resolveTickFn.current) {
+            if (promisesToWaitFor.current.length) {
+              // If we have finished rendering but we still have to wait for some promises wait for them here.
+
+              // Set a boolean that indicates we are waiting for promises to resolve. Don't re-enter the
+              // requestAnimationFrame if we are waiting for promises.
+              waitingForPromises.current = true;
+              const promises = promisesToWaitFor.current;
+              promisesToWaitFor.current = [];
+              // If `pauseFrame` is called while we are waiting for any other promises, they just wait for the frame
+              // after the current one.
+              await pauseFrameForPromises(promises);
+
+              if (resolveTickFn.current) {
+                const tickFn = resolveTickFn.current;
+                waitingForPromises.current = false;
+                tickFn();
+                resolveTickFn.current = undefined;
+              } else {
+                throw new Error("Finished waiting for promises but tick has already been resolved");
+              }
+            } else {
+              resolveTickFn.current();
+              resolveTickFn.current = undefined;
+            }
           }
         });
       }
@@ -116,12 +153,19 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
         if (currentPlayer.current !== player) {
           return Promise.resolve();
         }
-        if (resolveFn.current) {
+        if (resolveTickFn.current) {
           throw new Error("New playerState was emitted before last playerState was rendered.");
         }
         const promise = new Promise((resolve) => {
-          resolveFn.current = resolve;
+          resolveTickFn.current = resolve;
         });
+
+        const { showInitializing, isPresent } = newPlayerState;
+
+        if (!isPresent || !showInitializing) {
+          hideLoadingLogo();
+        }
+
         setPlayerState((currentPlayerState) => {
           if (currentPlayer.current !== player) {
             // It's unclear how we can ever get here, but it looks like React
@@ -139,7 +183,7 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
         return promise;
       });
       return () => {
-        currentPlayer.current = resolveFn.current = undefined;
+        currentPlayer.current = resolveTickFn.current = undefined;
         player.close();
         setPlayerState({
           ...defaultPlayerState(),
@@ -179,6 +223,14 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
     player,
   ]);
   const seekPlayback = useCallback((time: Time) => (player ? player.seekPlayback(time) : undefined), [player]);
+  const pauseFrame = useCallback((name: string) => {
+    const promise = signal();
+    promisesToWaitFor.current.push({ name, promise });
+    return () => {
+      promise.resolve();
+    };
+  }, []);
+
   return (
     <Context.Provider
       value={useShallowMemo({
@@ -195,6 +247,7 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
         pausePlayback,
         setPlaybackSpeed,
         seekPlayback,
+        pauseFrame,
       })}>
       {children}
     </Context.Provider>
@@ -298,6 +351,7 @@ export function MockMessagePipelineProvider(props: {|
           pausePlayback: () => {},
           setPlaybackSpeed: (_) => {},
           seekPlayback: props.seekPlayback || ((_) => {}),
+          pauseFrame: () => () => {},
         }}>
         {props.children}
       </Context.Provider>

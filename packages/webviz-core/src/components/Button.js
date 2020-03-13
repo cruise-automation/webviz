@@ -11,7 +11,7 @@ import cx from "classnames";
 import * as React from "react";
 
 import Tooltip from "webviz-core/src/components/Tooltip";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export type Props = {
   ...React.ElementConfig<typeof BaseButton>,
@@ -46,7 +46,7 @@ export default class Button extends React.Component<Props> {
     } = this.props;
     // overwrite the primary color for Webviz
     // using `isPrimary` instead of `primary` now to prevent global UI changes until we are ready to migrate all styles
-    const styleAlt = isPrimary ? { ...style, backgroundColor: colors.BLUE1 } : style;
+    const styleAlt = isPrimary ? { ...style, backgroundColor: colors.PRIMARY } : style;
 
     const eventHandlers = disabled ? {} : { onClick, onMouseUp, onMouseLeave };
 

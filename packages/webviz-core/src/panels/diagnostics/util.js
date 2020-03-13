@@ -6,10 +6,17 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { truncate } from "lodash";
 import type { Time } from "rosbag";
 
 import { type DiagnosticsBuffer } from "webviz-core/src/panels/diagnostics/DiagnosticsHistory";
 import type { Header } from "webviz-core/src/types/Messages";
+
+// Trim the message if it's too long. We sometimes get crazy massive messages here that can
+// otherwise crash our entire UI. I looked at a bunch of messages manually and they are typically
+// way smaller than 5KB, so this is a very generous maximum. But feel free to increase it more if
+// necessary. Exported for tests.
+export const MAX_STRING_LENGTH = 5000; // 5KB
 
 export const LEVELS: { OK: 0, WARN: 1, ERROR: 2, STALE: 3 } = { OK: 0, WARN: 1, ERROR: 2, STALE: 3 };
 
@@ -73,6 +80,19 @@ export function getDisplayName(hardwareId: string, name: string) {
 // ensures the diagnostic status message's name consists of both the hardware id and the name
 export function computeDiagnosticInfo(status: DiagnosticStatusMessage, stamp: Time): DiagnosticInfo {
   const displayName = getDisplayName(status.hardware_id, status.name);
+  if (status.values && status.values.some(({ value }) => value.length > MAX_STRING_LENGTH)) {
+    status = {
+      ...status,
+      values: status.values
+        ? status.values.map((kv) =>
+            kv.value.length > MAX_STRING_LENGTH
+              ? { key: kv.key, value: truncate(kv.value, { length: MAX_STRING_LENGTH }) }
+              : kv
+          )
+        : undefined,
+    };
+  }
+
   return {
     status,
     stamp,

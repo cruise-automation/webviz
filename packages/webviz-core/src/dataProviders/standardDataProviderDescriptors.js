@@ -6,21 +6,27 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import type { DataProviderDescriptor } from "webviz-core/src/dataProviders/types";
 
 export function getLocalBagDescriptor(file: File): DataProviderDescriptor {
+  const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
+
   return {
-    name: "ParseMessagesDataProvider",
+    name: CoreDataProviders.ParseMessagesDataProvider,
     args: {},
     children: [
       {
-        name: "MemoryCacheDataProvider",
-        args: {},
+        name: CoreDataProviders.MemoryCacheDataProvider,
+        args: { unlimitedCache },
         children: [
           {
-            name: "WorkerDataProvider",
+            name: CoreDataProviders.WorkerDataProvider,
             args: {},
-            children: [{ name: "BagDataProvider", args: { bagPath: { type: "file", file } }, children: [] }],
+            children: [
+              { name: CoreDataProviders.BagDataProvider, args: { bagPath: { type: "file", file } }, children: [] },
+            ],
           },
         ],
       },
@@ -28,38 +34,40 @@ export function getLocalBagDescriptor(file: File): DataProviderDescriptor {
   };
 }
 
-export function getRemoteBagDescriptor(url: string, guid: ?string, loadEntireBag?: boolean) {
+export function getRemoteBagDescriptor(url: string, guid: ?string) {
+  const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
+
   const bagDataProvider = {
-    name: "BagDataProvider",
+    name: CoreDataProviders.BagDataProvider,
     args: {
       bagPath: { type: "remoteBagUrl", url },
-      cacheSizeInBytes: loadEntireBag ? Infinity : undefined,
+      cacheSizeInBytes: unlimitedCache ? Infinity : undefined,
     },
     children: [],
   };
 
   // If we have an input identifier (which should be globally unique), then cache in indexeddb.
   // If not, then we don't have a cache key, so just read directly from the bag in memory.
-  return guid
+  return guid && getExperimentalFeature("diskBagCaching")
     ? {
-        name: "ParseMessagesDataProvider",
+        name: CoreDataProviders.ParseMessagesDataProvider,
         args: {},
         children: [
           {
-            name: "MemoryCacheDataProvider",
-            args: {},
+            name: CoreDataProviders.MemoryCacheDataProvider,
+            args: { unlimitedCache },
             children: [
               {
-                name: "IdbCacheReaderDataProvider",
+                name: CoreDataProviders.IdbCacheReaderDataProvider,
                 args: { id: guid },
 
                 children: [
                   {
-                    name: "WorkerDataProvider",
+                    name: CoreDataProviders.WorkerDataProvider,
                     args: {},
                     children: [
                       {
-                        name: "IdbCacheWriterDataProvider",
+                        name: CoreDataProviders.IdbCacheWriterDataProvider,
                         args: { id: guid },
                         children: [bagDataProvider],
                       },
@@ -72,15 +80,15 @@ export function getRemoteBagDescriptor(url: string, guid: ?string, loadEntireBag
         ],
       }
     : {
-        name: "ParseMessagesDataProvider",
+        name: CoreDataProviders.ParseMessagesDataProvider,
         args: {},
         children: [
           {
-            name: "MemoryCacheDataProvider",
-            args: {},
+            name: CoreDataProviders.MemoryCacheDataProvider,
+            args: { unlimitedCache },
             children: [
               {
-                name: "WorkerDataProvider",
+                name: CoreDataProviders.WorkerDataProvider,
                 args: {},
                 children: [bagDataProvider],
               },

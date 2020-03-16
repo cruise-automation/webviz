@@ -43,6 +43,8 @@ type Props = {
   children: $ReadOnlyArray<TextMarkerProps>,
   autoBackgroundColor?: boolean,
   scaleInvariantFontSize?: number,
+  resolution?: number,
+  alphabet?: string[],
 };
 
 type FontAtlas = {|
@@ -59,7 +61,8 @@ type FontAtlas = {|
 |};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
-const FONT_SIZE = 160;
+const MIN_RESOLUTION = 40;
+const DEFAULT_RESOLUTION = 160;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
@@ -78,12 +81,12 @@ const memoizedCreateCanvas = memoizeOne((font) => {
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
-    (charSet: Set<string>): FontAtlas => {
-      const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
-      const ctx = memoizedCreateCanvas(`${FONT_SIZE}px sans-serif`);
+    (charSet: Set<string>, resolution: number): FontAtlas => {
+      const tinySDF = new TinySDF(resolution, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
+      const ctx = memoizedCreateCanvas(`${resolution}px sans-serif`);
 
       let textureWidth = 0;
-      const rowHeight = FONT_SIZE + 2 * BUFFER;
+      const rowHeight = resolution + 2 * BUFFER;
       const charInfo = {};
 
       // Measure and assign positions to all characters
@@ -255,9 +258,10 @@ const frag = `
   }
 `;
 
-function makeTextCommand() {
+function makeTextCommand(alphabet?: string[]) {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
-  const charSet = new Set();
+  const charSet = new Set(alphabet || []);
+  let charSetInitialized = false;
   const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
   const command = (regl: any) => {
@@ -272,7 +276,7 @@ function makeTextCommand() {
         uniforms: {
           atlas: atlasTexture,
           atlasSize: () => [atlasTexture.width, atlasTexture.height],
-          fontSize: FONT_SIZE,
+          fontSize: command.resolution,
           cutoff: CUTOFF,
           scaleInvariant: command.scaleInvariant,
           scaleInvariantSize: command.scaleInvariantSize,
@@ -313,12 +317,15 @@ function makeTextCommand() {
           charSet.add(char);
         }
       }
-      const charsChanged = charSet.size !== prevNumChars;
+      const charsChanged = !charSetInitialized || charSet.size !== prevNumChars;
 
       const { textureData, textureWidth, textureHeight, charInfo } = memoizedBuildAtlas(
         // only use a new set if the characters changed, since memoizeOne uses shallow equality
-        charsChanged ? new Set(charSet) : charSet
+        charsChanged ? new Set(charSet) : charSet,
+        command.resolution
       );
+
+      charSetInitialized = true;
 
       // re-upload texture only if characters were added
       if (charsChanged) {
@@ -378,7 +385,7 @@ function makeTextCommand() {
           const char = marker.text[i];
           if (char === "\n") {
             x = 0;
-            y = FONT_SIZE;
+            y = command.resolution;
             continue;
           }
           const info = charInfo[char];
@@ -434,7 +441,7 @@ function makeTextCommand() {
           ++markerInstances;
         }
 
-        const totalHeight = y + FONT_SIZE;
+        const totalHeight = y + command.resolution;
         for (let i = 0; i < markerInstances; i++) {
           alignmentOffset[2 * (totalInstances + i) + 0] = -totalWidth / 2;
           alignmentOffset[2 * (totalInstances + i) + 1] = totalHeight / 2;
@@ -473,10 +480,12 @@ export default function GLText(props: Props) {
   const context = useContext(WorldviewReactContext);
   const { dimension } = context;
 
-  const [command] = useState(() => makeTextCommand());
+  const [command] = useState(() => makeTextCommand(props.alphabet));
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
+
+  command.resolution = Math.max(MIN_RESOLUTION, props.resolution || DEFAULT_RESOLUTION);
 
   command.scaleInvariant = props.scaleInvariantFontSize != null;
   // Compute the actual size for the text object in NDC coordinates (from -1 to 1)

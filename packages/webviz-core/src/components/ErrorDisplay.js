@@ -18,9 +18,9 @@ import Menu from "webviz-core/src/components/Menu";
 import Modal, { Title } from "webviz-core/src/components/Modal";
 import renderToBody from "webviz-core/src/components/renderToBody";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import colors from "webviz-core/src/styles/colors.module.scss";
-import { colors as RobotStylesColors } from "webviz-core/src/util/colors";
-import { setErrorHandler, unsetErrorHandler, type DetailsType } from "webviz-core/src/util/reportError";
+import { postMessageToIframeHost } from "webviz-core/src/util/iframeUtils";
+import { type DetailsType, type ErrorType, setErrorHandler, unsetErrorHandler } from "webviz-core/src/util/reportError";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type ErrorMessage = {
   +id: string,
@@ -38,8 +38,8 @@ const Container = styled.div`
   align-items: center;
   padding: 0px 8px;
   transition: background-color 200ms linear;
-  background-color: ${(props) => (props.flash ? colors.red : "")};
-  color: ${(props) => (props.flash ? "white" : props.unread ? colors.red : "rgba(255, 255, 255, 0.5)")};
+  background-color: ${(props) => (props.flash ? colors.RED : "")};
+  color: ${(props) => (props.flash ? "white" : props.unread ? colors.RED : "rgba(255, 255, 255, 0.5)")};
 `;
 
 const Fader = styled.span`
@@ -58,7 +58,7 @@ const Fader = styled.span`
 const FLASH_DURATION_MILLIS = 3000;
 
 const ErrorItemContainer = styled.div`
-  color: ${colors.red};
+  color: ${colors.RED};
   cursor: pointer;
   display: flex;
   flex-direction: row;
@@ -81,7 +81,7 @@ const ErrorText = styled.div`
 `;
 
 const ErrorTime = styled.div`
-  color: ${colors.textMuted};
+  color: ${colors.TEXT_MUTED};
   font-size: 11px;
   display: flex;
   flex: 0 0 24px;
@@ -153,7 +153,7 @@ export function showErrorModal(error: ErrorMessage): void {
   const modal = renderToBody(
     <Modal onRequestClose={() => modal.remove()}>
       <ModalBody>
-        <Title style={{ color: colors.red }}>{error.message}</Title>
+        <Title style={{ color: colors.RED }}>{error.message}</Title>
         {typeof details === "string" ? (
           <pre style={{ whiteSpace: "pre-wrap", lineHeight: 1.3 }}>{details}</pre>
         ) : (
@@ -170,7 +170,11 @@ type State = {
   showErrorList: boolean,
 };
 
-export default class ErrorDisplay extends React.PureComponent<{}, State> {
+type Props = {
+  onError?: (message: string, details: DetailsType) => void,
+};
+
+export default class ErrorDisplay extends React.PureComponent<Props, State> {
   state = {
     errors: [],
     showMostRecent: false,
@@ -181,7 +185,7 @@ export default class ErrorDisplay extends React.PureComponent<{}, State> {
 
   componentDidMount() {
     setErrorHandler(
-      (message: string, details: DetailsType): void => {
+      (message: string, details: DetailsType, type: ErrorType): void => {
         this.setState((state: State) => {
           const newErrors = [{ id: uuid(), created: new Date(), message, details, read: false }];
           // shift errors in to the front of the array and keep a max of 100
@@ -193,11 +197,19 @@ export default class ErrorDisplay extends React.PureComponent<{}, State> {
           };
         });
 
+        if (this.props.onError) {
+          this.props.onError(message, details);
+        }
+
         clearTimeout(this.hideTimeout);
 
         this.hideTimeout = setTimeout(() => {
           this.setState({ showMostRecent: false });
         }, FLASH_DURATION_MILLIS);
+
+        // Notify the iFrame from here, since we should always have a `window` here since we're not
+        // in a React component (and not in a worker).
+        postMessageToIframeHost({ type: "webviz-error", data: { message, details, type } });
       }
     );
   }
@@ -234,7 +246,7 @@ export default class ErrorDisplay extends React.PureComponent<{}, State> {
                   display: "flex",
                   flex: "none",
                   alignItems: "center",
-                  color: showMostRecent && RobotStylesColors.RED1,
+                  color: showMostRecent && colors.RED1,
                 }}>
                 <Fader visible={hasUnread}>{unreadCount || ""}</Fader>
                 <Icon small tooltip="Errors">

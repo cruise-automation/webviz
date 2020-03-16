@@ -20,12 +20,12 @@ import useLinkedGlobalVariables from "./useLinkedGlobalVariables";
 import Checkbox from "webviz-core/src/components/Checkbox";
 import ExpandingToolbar, { ToolGroup, ToolGroupFixedSizePane } from "webviz-core/src/components/ExpandingToolbar";
 import Icon from "webviz-core/src/components/Icon";
-import { useChangeDetector } from "webviz-core/src/components/MessageHistory/hooks";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import { decodeAdditionalFields } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import type { SaveConfig, PanelConfig } from "webviz-core/src/types/panels";
-import { colors } from "webviz-core/src/util/colors";
+import { useChangeDetector } from "webviz-core/src/util/hooks";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export const SRow = styled.div`
   display: flex;

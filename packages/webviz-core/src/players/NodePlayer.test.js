@@ -53,11 +53,11 @@ describe("NodePlayer", () => {
       isPlaying: true,
       speed: 0.2,
       lastSeekTime: 0,
-      topics: [{ name: "/input/foo", datatype: "foo" }],
+      topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
       datatypes: { foo: { fields: [] } },
     });
     expect(messages).toHaveLength(1);
-    const activeData = messages[0].activeData;
+    const { activeData } = messages[0];
     expect(activeData).not.toBeUndefined();
     if (!activeData) {
       throw new Error("satisfy flow");
@@ -67,14 +67,73 @@ describe("NodePlayer", () => {
       foo: { fields: [] },
     });
     expect(activeData.topics).toEqual([
-      {
-        name: "/input/foo",
-        datatype: "foo",
-      },
-      {
-        name: "/webviz/test",
-        datatype: "test",
-      },
+      { name: "/input/foo", datatype: "foo" },
+      { name: "/input/bar", datatype: "bar" },
+      { name: "/webviz/test", datatype: "test" },
+    ]);
+  });
+
+  it("does not include a node if none of the input topics are available", () => {
+    const fakePlayer = new FakePlayer();
+    const nodePlayer = new NodePlayer(fakePlayer, [{ ...node, inputs: ["/unavailable_topic"] }]);
+    const messages = [];
+    nodePlayer.setListener(async (playerState) => {
+      messages.push(playerState);
+    });
+    fakePlayer.emit({
+      messages: [],
+      currentTime: { sec: 0, nsec: 0 },
+      startTime: { sec: 0, nsec: 0 },
+      endTime: { sec: 1, nsec: 0 },
+      isPlaying: true,
+      speed: 0.2,
+      lastSeekTime: 0,
+      topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
+      datatypes: { foo: { fields: [] } },
+    });
+    const { activeData } = messages[0];
+    expect(activeData).not.toBeUndefined();
+    if (!activeData) {
+      throw new Error("satisfy flow");
+    }
+    expect(activeData.datatypes).toEqual({ foo: { fields: [] } });
+    expect(activeData.topics).toEqual([
+      { name: "/input/foo", datatype: "foo" },
+      { name: "/input/bar", datatype: "bar" },
+    ]);
+  });
+
+  it("includes a node if one of the input topics is available", () => {
+    const fakePlayer = new FakePlayer();
+    const nodePlayer = new NodePlayer(fakePlayer, [{ ...node, inputs: ["/input/foo", "/unavailable_topic"] }]);
+    const messages = [];
+    nodePlayer.setListener(async (playerState) => {
+      messages.push(playerState);
+    });
+    fakePlayer.emit({
+      messages: [],
+      currentTime: { sec: 0, nsec: 0 },
+      startTime: { sec: 0, nsec: 0 },
+      endTime: { sec: 1, nsec: 0 },
+      isPlaying: true,
+      speed: 0.2,
+      lastSeekTime: 0,
+      topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
+      datatypes: { foo: { fields: [] } },
+    });
+    const { activeData } = messages[0];
+    expect(activeData).not.toBeUndefined();
+    if (!activeData) {
+      throw new Error("satisfy flow");
+    }
+    expect(activeData.datatypes).toEqual({
+      test: { fields: [{ type: "string", name: "foo" }] },
+      foo: { fields: [] },
+    });
+    expect(activeData.topics).toEqual([
+      { name: "/input/foo", datatype: "foo" },
+      { name: "/input/bar", datatype: "bar" },
+      { name: "/webviz/test", datatype: "test" },
     ]);
   });
 

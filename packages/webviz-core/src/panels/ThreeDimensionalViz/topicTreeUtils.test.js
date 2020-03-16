@@ -67,6 +67,9 @@ const TOPIC_CONFIG = {
 jest.mock("webviz-core/src/loadWebviz", () => ({
   getGlobalHooks: () => ({
     perPanelHooks: () => ({
+      ThreeDimensionalViz: {},
+    }),
+    startupPerPanelHooks: () => ({
       ThreeDimensionalViz: {
         getDefaultTopicTree: () => ({
           name: "root",

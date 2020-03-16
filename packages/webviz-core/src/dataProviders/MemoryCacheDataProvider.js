@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { simplify } from "intervals-fn";
-import { isEqual, uniq } from "lodash";
+import { isEqual, sum, uniq } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
 
@@ -21,19 +21,17 @@ import type {
 } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
 import { getNewConnection } from "webviz-core/src/util/getNewConnection";
-import Logger from "webviz-core/src/util/Logger";
-import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList } from "webviz-core/src/util/ranges";
+import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList, missingRanges } from "webviz-core/src/util/ranges";
 import reportError from "webviz-core/src/util/reportError";
 import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time";
-
-const log = new Logger(__filename);
 
 // I (JP) mostly just made these numbers up. It might be worth experimenting with different values
 // for these, but it seems to work reasonably well in my tests.
 export const MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
-const MINIMUM_CACHE_SIZE_NS = 35e9; // Number of nanoseconds that we'll always keep in the cache.
 const READ_AHEAD_NS = 3e9; // Number of nanoseconds to read ahead from the last `getMessages` call.
+const READ_AHEAD_BLOCKS = Math.ceil(READ_AHEAD_NS / MEM_CACHE_BLOCK_SIZE_NS);
 const CACHE_SIZE_BYTES = 2.5e9; // Number of bytes that we aim to keep in the cache.
+export const MAX_BLOCK_SIZE_BYTES = 50e6; // Number of bytes in a block before we show an error.
 
 // For each memory block we store the actual messages (grouped by topic), and a total byte size of
 // the underlying ArrayBuffers.
@@ -46,19 +44,10 @@ function getNormalizedTopics(topics: string[]): string[] {
 // Get the blocks to keep for the current cache purge, given the most recently accessed ranges, the
 // blocks byte sizes, the minimum number of blocks to always keep, and the maximum cache size.
 //
-// TODO(JP): It would be good to eventually get rid of the `minimumBlocksToKeep`, since that's a
-// bit of a hack. The reason to have it is so we can read ahead indefinitely when we're reading a
-// bag that is shorter than MINIMUM_CACHE_SIZE_NS. It's a bit harder to do a read-ahead for as long
-// as we don't get any cache evictions, since that is not something we can currently express easily
-// with our `getNewConnection` and `_setConnection` model. But it shouldn't be too much of an
-// overhaul to properly change that. For now we just keep a `minimumBlocksToKeep` so that most users
-// (with relatively short bags) get a great experience, where we buffer the entire bag.
-//
 // Exported for tests.
 export function getBlocksToKeep({
   recentBlockRanges,
   blockSizesInBytes,
-  minimumBlocksToKeep,
   maxCacheSizeInBytes,
 }: {|
   // The most recently requested block ranges, ordered from most recent to least recent.
@@ -67,8 +56,6 @@ export function getBlocksToKeep({
   // not have all blocks actually available (i.e. a seek happened before the whole range was
   // downloaded).
   blockSizesInBytes: (?number)[],
-  // The minimum number of blocks to keep, regardless of byte size.
-  minimumBlocksToKeep: number,
   // The maximum cache size in bytes.
   maxCacheSizeInBytes: number,
 |}): { blockIndexesToKeep: Set<number>, newRecentRanges: Range[] } {
@@ -92,8 +79,8 @@ export function getBlocksToKeep({
         cacheSizeInBytes += sizeInBytes;
       }
 
-      // Terminate if we have exceeded both `minimumBlocksToKeep` and `maxCacheSizeInBytes`.
-      if (blockIndexesToKeep.size > minimumBlocksToKeep && cacheSizeInBytes > maxCacheSizeInBytes) {
+      // Terminate if we have exceeded `maxCacheSizeInBytes`.
+      if (cacheSizeInBytes > maxCacheSizeInBytes) {
         return {
           blockIndexesToKeep,
           // Adjust the oldest `newRecentRanges`.
@@ -103,6 +90,23 @@ export function getBlocksToKeep({
     }
   }
   return { blockIndexesToKeep, newRecentRanges: recentBlockRanges };
+}
+
+// Get the best place to start prefetching a block, given the uncached ranges and the cursor position.
+// In order of preference, we would like to prefetch:
+// - The leftmost uncached block to the right of the cursor, or
+// - The leftmost uncached block to the left of the cursor, if one does not exist to the right.
+//
+// Exported for tests.
+export function getPrefetchStartPoint(uncachedRanges: Range[], cursorPosition: number): number {
+  uncachedRanges.sort((a, b) => {
+    if (a.start < cursorPosition !== b.start < cursorPosition) {
+      // On different sides of the cursor. `a` comes first if it's to the right.
+      return a.start < cursorPosition ? 1 : -1;
+    }
+    return a.start - b.start;
+  });
+  return uncachedRanges[0].start;
 }
 
 // This fills up the memory with messages from an underlying DataProvider. The messages have to be
@@ -148,8 +152,21 @@ export default class MemoryCacheDataProvider implements DataProvider {
   // around this time.
   _lastResolvedCallbackEnd: ?number;
 
-  constructor({ id }: {| id: string |}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
+  // When we log a "block too large" error, we only want to do that once, to prevent
+  // spamming errors.
+  _loggedTooLargeError: boolean = false;
+
+  // If we're configured to use an unlimited cache, we try to just load as much as possible and
+  // never evict anything.
+  _unlimitedCache: boolean = false;
+
+  constructor(
+    { id, unlimitedCache }: {| id: string, unlimitedCache?: boolean |},
+    children: DataProviderDescriptor[],
+    getDataProvider: GetDataProvider
+  ) {
     this._id = id;
+    this._unlimitedCache = unlimitedCache || false;
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to MemoryCacheDataProvider: ${children.length}`);
     }
@@ -205,9 +222,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     return this._preloadTopics;
   }
 
-  // Gets called any time our "connection", read requests, or topics change.
-  _updateState() {
-    // First, see if there are any read requests that we can resolve now.
+  _resolveFinishedReadRequests() {
     this._readRequests = this._readRequests.filter(({ timeRange, blockRange, topics, resolve }) => {
       if (topics.length === 0) {
         resolve([]);
@@ -253,6 +268,12 @@ export default class MemoryCacheDataProvider implements DataProvider {
 
       return false;
     });
+  }
+
+  // Gets called any time our "connection", read requests, or topics change.
+  _updateState() {
+    // First, see if there are any read requests that we can resolve now.
+    this._resolveFinishedReadRequests();
 
     if (this._currentConnection && !isEqual(this._currentConnection.topics, this._getCurrentTopics())) {
       // If we have a different set of topics, stop the current "connection", and refresh everything.
@@ -260,31 +281,75 @@ export default class MemoryCacheDataProvider implements DataProvider {
     }
 
     // Then see if we need to set a new connection based on the new connection and read requests state.
-    const newConnection = getNewConnection({
+    this._maybeRunNewConnections();
+  }
+
+  _getNewConnection() {
+    const connectionForReadRange = getNewConnection({
       currentRemainingRange: this._currentConnection ? this._currentConnection.remainingBlockRange : undefined,
       readRequestRange: this._readRequests[0] ? this._readRequests[0].blockRange : undefined,
       downloadedRanges: this._getDownloadedBlockRanges(),
       lastResolvedCallbackEnd: this._lastResolvedCallbackEnd,
-      cacheSize: this._totalNs <= MINIMUM_CACHE_SIZE_NS ? Infinity : Math.ceil(READ_AHEAD_NS / MEM_CACHE_BLOCK_SIZE_NS),
+      cacheSize: READ_AHEAD_BLOCKS,
       fileSize: this._blocks.length,
-      continueDownloadingThreshold: 3, // Somewhat arbitrary number to not create new connections all the time.
+      continueDownloadingThreshold: 10, // Somewhat arbitrary number to not create new connections all the time.
     });
-    if (newConnection) {
-      this._setConnection(newConnection).catch((err) => {
+    if (connectionForReadRange) {
+      return connectionForReadRange;
+    }
+    const cacheBytesUsed = sum(filterMap(this._blocks, (block) => block && block.sizeInBytes));
+    if (!this._currentConnection && cacheBytesUsed < CACHE_SIZE_BYTES) {
+      // All read requests have been served, but we have free cache space available. Cache something
+      // useful if possible.
+      return this._getPrefetchRange();
+    }
+    // Either a good connection is already in progress, or we've served all connections and have
+    // nothing useful to prefetch.
+  }
+
+  _getPrefetchRange() {
+    const bounds = { start: 0, end: this._blocks.length };
+    const uncachedRanges = missingRanges(bounds, this._getDownloadedBlockRanges());
+    if (!uncachedRanges.length) {
+      return; // We have loaded the whole file.
+    }
+
+    const prefetchStart = getPrefetchStartPoint(uncachedRanges, this._lastResolvedCallbackEnd || 0);
+    // Just request a single block. We know there's at least one there, and we don't want to cause
+    // blocks that are actually useful to be evicted because of our prefetching. We could consider
+    // a "low priority" connection that aborts as soon as there's memory pressure.
+    return { start: prefetchStart, end: prefetchStart + 1 };
+  }
+
+  async _maybeRunNewConnections() {
+    while (true) {
+      const newConnection = this._getNewConnection();
+      if (!newConnection) {
+        // All read requests done and nothing to prefetch, or there is a good connection already in
+        // progress.
+        break;
+      }
+      const connectionSuccess = await this._setConnection(newConnection).catch((err) => {
         reportError(
           `MemoryCacheDataProvider connection ${this._currentConnection ? this._currentConnection.id : ""}`,
           err ? err.message : "<unknown error>",
           "app"
         );
       });
+      if (!connectionSuccess) {
+        // Connection interrupted, or otherwise unsuccessful.
+        break;
+      }
+      // See if there are any more read requests we should field.
     }
   }
 
-  // Replace the current connection with a new one, spanning a certain range of blocks.
-  async _setConnection(blockRange: Range) {
+  // Replace the current connection with a new one, spanning a certain range of blocks. Return whether we
+  // completed successfully, or whether we were interrupted by another connection.
+  async _setConnection(blockRange: Range): Promise<boolean> {
     if (!this._getCurrentTopics().length) {
       delete this._currentConnection;
-      return;
+      return true;
     }
 
     const id = uuid.v4();
@@ -302,7 +367,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     while (true) {
       const currentConnection = this._currentConnection;
       if (!currentConnection || !isCurrent()) {
-        return;
+        return false;
       }
 
       const currentBlockIndex = currentConnection.remainingBlockRange.start;
@@ -323,7 +388,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
 
       // If we're not current any more, discard the messages, because otherwise we might write duplicate messages.
       if (!isCurrent()) {
-        return;
+        return false;
       }
 
       // Create a new block if necessary.
@@ -340,39 +405,62 @@ export default class MemoryCacheDataProvider implements DataProvider {
       for (const message of messages) {
         if (!(message.message instanceof ArrayBuffer)) {
           reportError("MemoryCacheDataProvider can only be used with unparsed ROS messages", "", "app");
-          return;
-        }
-        if (message.message.byteLength > 10000000) {
-          log.warn(`Message on ${message.topic} is suspiciously large (${message.message.byteLength} bytes)`);
+          // Do not retry.
+          return false;
         }
         currentBlock.messagesByTopic[message.topic].push(message);
         currentBlock.sizeInBytes += message.message.byteLength;
       }
 
-      // Now `this._recentBlockRanges` and `this._blocks` have been updated, so we can purge the
-      // cache and report progress.
+      if (currentBlock.sizeInBytes > MAX_BLOCK_SIZE_BYTES && !this._loggedTooLargeError) {
+        this._loggedTooLargeError = true;
+        const sizes = [];
+        for (const topic of Object.keys(currentBlock.messagesByTopic)) {
+          let size = 0;
+          for (const message of currentBlock.messagesByTopic[topic]) {
+            size += message.message.byteLength;
+          }
+          const roundedSize = Math.round(size / 1e6);
+          if (roundedSize > 0) {
+            sizes.push(`- ${topic}: ${roundedSize}MB`);
+          }
+        }
+        reportError(
+          "Very large block found",
+          `A very large block (${Math.round(MEM_CACHE_BLOCK_SIZE_NS / 1e6)}ms) was found: ${Math.round(
+            currentBlock.sizeInBytes / 1e6
+          )}MB. Too much data can cause performance problems and even crashes. Please fix this where the data is being generated.\n\nBreakdown of large topics:\n${sizes
+            .sort()
+            .join("\n")}`,
+          "user"
+        );
+      }
+
+      // Now `this._recentBlockRanges` and `this._blocks` have been updated, so we can resolve
+      // requests, purge the cache and report progress.
+      this._resolveFinishedReadRequests();
       this._purgeOldBlocks();
       this._updateProgress();
 
       // Check *again* if we're not current any more, because now we're going to update connection
       // information.
       if (!isCurrent()) {
-        return;
+        return false;
       }
 
       if (currentBlockIndex >= blockRange.end - 1) {
         // If we're at the end of the range, we're done.
-        delete this._currentConnection;
-        this._updateState();
-        return;
+        break;
       }
       // Otherwise, update the `remainingBlockRange`.
       this._currentConnection = {
         ...this._currentConnection,
         remainingBlockRange: { start: currentBlockIndex + 1, end: blockRange.end },
       };
-      this._updateState();
     }
+    // Connection successfully completed.
+    delete this._currentConnection;
+    return true;
   }
 
   // For the relevant downloaded ranges, we look at `this._blocks` and the most relevant topics.
@@ -394,8 +482,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
   }
 
   _purgeOldBlocks() {
-    // If we have less data than the minimum cache size, then we never need to purge.
-    if (this._totalNs <= MINIMUM_CACHE_SIZE_NS) {
+    if (this._unlimitedCache) {
       return;
     }
 
@@ -403,7 +490,6 @@ export default class MemoryCacheDataProvider implements DataProvider {
     const { blockIndexesToKeep, newRecentRanges } = getBlocksToKeep({
       recentBlockRanges: this._recentBlockRanges,
       blockSizesInBytes: this._blocks.map((block) => (block ? block.sizeInBytes : undefined)),
-      minimumBlocksToKeep: Math.ceil(MINIMUM_CACHE_SIZE_NS / MEM_CACHE_BLOCK_SIZE_NS),
       maxCacheSizeInBytes: CACHE_SIZE_BYTES,
     });
 

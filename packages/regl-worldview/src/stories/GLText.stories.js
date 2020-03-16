@@ -44,7 +44,7 @@ function textMarkers({
 
 storiesOf("Worldview/GLText", module)
   .addDecorator(withScreenshot({ delay: 200 }))
-  .add("high resolution text", () => {
+  .add("resolution - default", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;
     return (
@@ -55,6 +55,36 @@ storiesOf("Worldview/GLText", module)
           distance: 3,
         }}>
         <GLText>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("resolution - 80", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container
+        cameraState={{
+          target: [target.x, target.y, target.z],
+          perspective: true,
+          distance: 3,
+        }}>
+        <GLText resolution={80}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("resolution - 40", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container
+        cameraState={{
+          target: [target.x, target.y, target.z],
+          perspective: true,
+          distance: 3,
+        }}>
+        <GLText resolution={40}>{markers}</GLText>
         <Axes />
       </Container>
     );
@@ -107,6 +137,16 @@ storiesOf("Worldview/GLText", module)
       );
     }
     return <Example />;
+  })
+  .add("with alphabet", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const alphabet = "HelloWorldview0123456789".split("");
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText alphabet={alphabet}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
   })
   .add("billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>

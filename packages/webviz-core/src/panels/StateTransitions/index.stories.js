@@ -8,14 +8,15 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
+import TestUtils from "react-dom/test-utils";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import StateTransitions from "./index";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 const systemStateMessages = [
-  { header: { stamp: { sec: 1526191539, nsec: 574635076 } }, state: 1 },
-  { header: { stamp: { sec: 1526191539, nsec: 673758203 } }, state: 1 },
+  { header: { stamp: { sec: 1526191539, nsec: 574635076 } }, state: 0 },
+  { header: { stamp: { sec: 1526191539, nsec: 673758203 } }, state: 0 },
   { header: { stamp: { sec: 1526191539, nsec: 770527187 } }, state: 1 },
   { header: { stamp: { sec: 1526191539, nsec: 871076484 } }, state: 1 },
   { header: { stamp: { sec: 1526191539, nsec: 995802312 } }, state: 1 },
@@ -45,7 +46,7 @@ const fixture = {
       fields: [
         { type: "std_msgs/Header", name: "header", isArray: false },
         { type: "int8", name: "UNKNOWN", isConstant: true, value: -1 },
-        { type: "int8", name: "ERROR", isConstant: true, value: 0 },
+        { type: "int8", name: "", isConstant: true, value: 0 },
         { type: "int8", name: "OFF", isConstant: true, value: 1 },
         { type: "int8", name: "BOOTING", isConstant: true, value: 2 },
         { type: "int8", name: "ACTIVE", isConstant: true, value: 3 },
@@ -104,11 +105,49 @@ storiesOf("<StateTransitions>", module)
       </PanelSetup>
     );
   })
+  .add("multiple paths with hover", () => {
+    return (
+      <PanelSetup
+        fixture={fixture}
+        onMount={() => {
+          const mouseEnterContainer = document.querySelectorAll("[data-test=panel-mouseenter-container")[0];
+          TestUtils.Simulate.mouseEnter(mouseEnterContainer);
+        }}
+        style={{ width: 370 }}>
+        <StateTransitions
+          config={{
+            paths: new Array(5).fill({ value: "/some/topic/with/state.state", timestampMethod: "receiveTime" }),
+          }}
+        />
+      </PanelSetup>
+    );
+  })
   .add("long path", () => {
     return (
       <PanelSetup fixture={fixture} style={{ maxWidth: 100 }}>
         <StateTransitions
           config={{ paths: [{ value: "/some/topic/with/state.state", timestampMethod: "receiveTime" }] }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("With a hovered tooltip", () => {
+    return (
+      <PanelSetup
+        fixture={fixture}
+        onMount={() => {
+          setTimeout(() => {
+            const [canvas] = document.getElementsByTagName("canvas");
+            const x = 163;
+            const y = 266;
+            canvas.dispatchEvent(new MouseEvent("mousemove", { screenX: x, clientX: x, screenY: y, clientY: y }));
+          }, 100);
+        }}
+        style={{ width: 370 }}>
+        <StateTransitions
+          config={{
+            paths: new Array(5).fill({ value: "/some/topic/with/state.state", timestampMethod: "receiveTime" }),
+          }}
         />
       </PanelSetup>
     );

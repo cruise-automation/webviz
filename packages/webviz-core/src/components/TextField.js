@@ -9,7 +9,7 @@
 import * as React from "react";
 import styled from "styled-components";
 
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const { useRef, useState, useLayoutEffect, useCallback } = React;
 

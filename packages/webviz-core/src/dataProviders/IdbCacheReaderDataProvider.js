@@ -88,12 +88,25 @@ export default class IdbCacheReaderDataProvider implements DataProvider {
       this._provider.getMessages(startTime, endTime, topics);
     }
 
-    // `Range` has exclusive `end`, but `getRange` has an inclusive `end`.
-    const messages = await this._db.getRange(MESSAGES_STORE_NAME, TIMESTAMP_INDEX, range.start, range.end - 1);
-
-    // We don't remove messages from unsubscribed topics from the database, so just filter them out
-    // here.
-    return messages.map(({ value }) => value.message).filter(({ topic }) => topics.includes(topic));
+    const tx = this._db.transaction(MESSAGES_STORE_NAME);
+    const store = tx.objectStore(MESSAGES_STORE_NAME);
+    const messagePromises = [];
+    // We use a cursor for just the keys, since we don't want to fetch the actual message if the
+    // topic doesn't match, since that can be slow.
+    store.index(TIMESTAMP_INDEX).iterateKeyCursor(IDBKeyRange.bound(range.start, range.end - 1), (cursor) => {
+      if (!cursor) {
+        return;
+      }
+      // Primary key is "timestamp|||arbitrary index|||topic".
+      const topic = cursor.primaryKey.split("|||")[2];
+      if (topics.includes(topic)) {
+        messagePromises.push(store.get(cursor.primaryKey));
+      }
+      cursor.continue();
+    });
+    await tx.complete;
+    // messagePromises will only be filled after `tx.complete`, so await for `tx.complete` first.
+    return (await Promise.all(messagePromises)).map(({ message }) => message);
   }
 
   close(): Promise<void> {

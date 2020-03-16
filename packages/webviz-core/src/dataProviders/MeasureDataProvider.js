@@ -8,6 +8,7 @@
 
 import type { Time } from "rosbag";
 
+import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import type {
   DataProvider,
   DataProviderDescriptor,
@@ -27,7 +28,7 @@ export function instrumentTreeWithMeasureDataProvider(
   depth: number = 1
 ): DataProviderDescriptor {
   return {
-    name: "MeasureDataProvider",
+    name: CoreDataProviders.MeasureDataProvider,
     args: { name: `${new Array(depth * 2 + 1).join("-")}> ${treeRoot.name}` },
     children: [
       {

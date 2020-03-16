@@ -90,8 +90,9 @@ export declare type MultiPointMarker = BaseMarker & {
  * while the 'colors' field takes in an array of RGBA objects to apply to each point. When both are present,
  * the 'colors' field overrides the 'color' field.
   */
-export declare type ArrowMarker = MultiPointMarker & {
+export declare type ArrowMarker = BaseMarker & {
   type: 0,
+  points?: Point[],
   size?: ArrowSize,
 }
 

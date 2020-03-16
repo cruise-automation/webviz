@@ -6,11 +6,15 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { migratePanelConfigToTopicGroupConfig, migrateLegacyIds } from "./topicGroupsMigrations";
+import {
+  migratePanelConfigToTopicGroupConfig,
+  migrateLegacyIds,
+  migrateTopicGroupFromBySourceToByColumn,
+} from "./topicGroupsMigrations";
 
 jest.mock("webviz-core/src/loadWebviz", () => ({
   getGlobalHooks: () => ({
-    perPanelHooks: () => ({
+    startupPerPanelHooks: () => ({
       ThreeDimensionalViz: {
         getDefaultTopicTree: () => ({
           name: "root",
@@ -78,10 +82,25 @@ describe("topicGroupsMigrations", () => {
           modifiedNamespaceTopics: [],
         })
       ).toEqual({
+        displayName: "Imported Group",
+        expanded: true,
+        items: [],
+        visibilityByColumn: [true, true],
+      });
+    });
+    it("can specify topic group displayName", () => {
+      expect(
+        migratePanelConfigToTopicGroupConfig({
+          checkedNodes: [],
+          topicSettings: {},
+          modifiedNamespaceTopics: [],
+          topicGroupDisplayName: "My Topics",
+        })
+      ).toEqual({
         displayName: "My Topics",
         expanded: true,
         items: [],
-        visible: true,
+        visibilityByColumn: [true, true],
       });
     });
     it("migrates panelConfig to topicGroupConfig (single bag)", () => {
@@ -100,18 +119,23 @@ describe("topicGroupsMigrations", () => {
           modifiedNamespaceTopics: [],
         })
       ).toEqual({
-        displayName: "My Topics",
+        displayName: "Imported Group",
         expanded: true,
         items: [
           {
-            selectedNamespacesBySource: { "": ["some_extension_a"] },
+            selectedNamespacesByColumn: [["some_extension_a"], []],
             topicName: "/metadata",
+            visibilityByColumn: [true, false],
           },
-          { selectedNamespacesBySource: { "": ["some_tf_id"] }, topicName: "/tf" },
-          { topicName: "/topic_a" },
-          { topicName: "/topic_b" },
+          {
+            selectedNamespacesByColumn: [["some_tf_id"], []],
+            topicName: "/tf",
+            visibilityByColumn: [true, false],
+          },
+          { topicName: "/topic_a", visibilityByColumn: [true, false] },
+          { topicName: "/topic_b", visibilityByColumn: [true, false] },
         ],
-        visible: true,
+        visibilityByColumn: [true, true],
       });
     });
 
@@ -130,17 +154,18 @@ describe("topicGroupsMigrations", () => {
           modifiedNamespaceTopics: [],
         })
       ).toEqual({
-        displayName: "My Topics",
+        displayName: "Imported Group",
         expanded: true,
         items: [
           {
-            selectedNamespacesBySource: { "": ["some_extension_a"] },
+            selectedNamespacesByColumn: [["some_extension_a"], []],
             topicName: "/metadata",
+            visibilityByColumn: [true, false],
           },
-          { topicName: "/topic_b", visibilitiesBySource: { "/webviz_bag_2": true } },
-          { topicName: "/topic_c", visibilitiesBySource: { "/webviz_bag_2": true } },
+          { topicName: "/topic_b", visibilityByColumn: [false, true] },
+          { topicName: "/topic_c", visibilityByColumn: [false, true] },
         ],
-        visible: true,
+        visibilityByColumn: [true, true],
       });
 
       expect(
@@ -159,10 +184,13 @@ describe("topicGroupsMigrations", () => {
           modifiedNamespaceTopics: [],
         })
       ).toEqual({
-        displayName: "My Topics",
+        displayName: "Imported Group",
         expanded: true,
-        items: [{ topicName: "/topic_a" }, { topicName: "/topic_b" }],
-        visible: true,
+        items: [
+          { topicName: "/topic_a", visibilityByColumn: [true, false] },
+          { topicName: "/topic_b", visibilityByColumn: [true, false] },
+        ],
+        visibilityByColumn: [true, true],
       });
     });
     it("migrates panelConfig to topicGroupConfig (with topicSettings)", () => {
@@ -187,28 +215,29 @@ describe("topicGroupsMigrations", () => {
           modifiedNamespaceTopics: [],
         })
       ).toEqual({
-        displayName: "My Topics",
+        displayName: "Imported Group",
         expanded: true,
         items: [
           {
-            settingsBySource: { "": { overrideColor: "255, 0, 0, 1" } },
+            settingsByColumn: [{ overrideColor: "255, 0, 0, 1" }, undefined],
             topicName: "/topic_a",
+            visibilityByColumn: [true, false],
           },
           {
-            settingsBySource: { "/webviz_bag_2": { overrideCommand: "LinedConvexHull" } },
+            settingsByColumn: [undefined, { overrideCommand: "LinedConvexHull" }],
             topicName: "/topic_b",
-            visibilitiesBySource: { "": true, "/webviz_bag_2": true },
+            visibilityByColumn: [true, true],
           },
           {
-            settingsBySource: { "/webviz_bag_2": { overrideColor: "0, 255, 255, 0.1" } },
+            settingsByColumn: [undefined, { overrideColor: "0, 255, 255, 0.1" }],
             topicName: "/topic_c",
-            visibilitiesBySource: { "/webviz_bag_2": true },
+            visibilityByColumn: [false, true],
           },
         ],
-        visible: true,
+        visibilityByColumn: [true, true],
       });
     });
-    it("sets selectedNamespacesBySource based on modifiedNamespaceTopics and checkedNodes", () => {
+    it("sets selectedNamespacesByColumn based on modifiedNamespaceTopics and checkedNodes", () => {
       expect(
         migratePanelConfigToTopicGroupConfig({
           checkedNodes: [
@@ -224,18 +253,23 @@ describe("topicGroupsMigrations", () => {
           modifiedNamespaceTopics: ["/topic_a"],
         })
       ).toEqual({
-        displayName: "My Topics",
+        displayName: "Imported Group",
         expanded: true,
         items: [
-          { selectedNamespacesBySource: {}, topicName: "/topic_a" },
-          { topicName: "/topic_b" },
           {
-            selectedNamespacesBySource: { "": ["some_ns1", "some_ns2"] },
+            selectedNamespacesByColumn: [undefined, undefined],
+            topicName: "/topic_a",
+            visibilityByColumn: [true, false],
+          },
+          { topicName: "/topic_b", visibilityByColumn: [true, false] },
+          {
+            selectedNamespacesByColumn: [["some_ns1", "some_ns2"], undefined],
             topicName: "/topic_d",
             expanded: true,
+            visibilityByColumn: [true, false],
           },
         ],
-        visible: true,
+        visibilityByColumn: [true, true],
       });
     });
 
@@ -249,21 +283,34 @@ describe("topicGroupsMigrations", () => {
             "x:/some_extension_a",
             "x:TF.some_tf_ns1",
             "name:TF",
-            "name:Nested Group",
+            "Nested Group",
             "name:(Uncategorized)",
           ],
           topicSettings: {},
           modifiedNamespaceTopics: ["/topic_a"],
         })
       ).toEqual({
-        displayName: "My Topics",
+        displayName: "Imported Group",
         expanded: true,
         items: [
-          { selectedNamespacesBySource: { "": ["/some_extension_a"] }, topicName: "/metadata" },
-          { selectedNamespacesBySource: { "": ["some_tf_ns1"] }, topicName: "/tf" },
-          { expanded: true, selectedNamespacesBySource: { "": ["some_ns1", "some_ns2"] }, topicName: "/topic_d" },
+          {
+            selectedNamespacesByColumn: [["/some_extension_a"], []],
+            topicName: "/metadata",
+            visibilityByColumn: [true, false],
+          },
+          {
+            selectedNamespacesByColumn: [["some_tf_ns1"], []],
+            topicName: "/tf",
+            visibilityByColumn: [true, false],
+          },
+          {
+            expanded: true,
+            selectedNamespacesByColumn: [["some_ns1", "some_ns2"], undefined],
+            topicName: "/topic_d",
+            visibilityByColumn: [true, false],
+          },
         ],
-        visible: true,
+        visibilityByColumn: [true, true],
       });
     });
 
@@ -274,7 +321,7 @@ describe("topicGroupsMigrations", () => {
           topicSettings: {},
           modifiedNamespaceTopics: [],
         })
-      ).toEqual({ displayName: "My Topics", expanded: true, visible: true, items: [] });
+      ).toEqual({ displayName: "Imported Group", expanded: true, visibilityByColumn: [true, true], items: [] });
 
       expect(
         migratePanelConfigToTopicGroupConfig({
@@ -282,7 +329,7 @@ describe("topicGroupsMigrations", () => {
           topicSettings: {},
           modifiedNamespaceTopics: [],
         })
-      ).toEqual({ displayName: "My Topics", expanded: true, visible: true, items: [] });
+      ).toEqual({ displayName: "Imported Group", expanded: true, visibilityByColumn: [true, true], items: [] });
 
       expect(
         migratePanelConfigToTopicGroupConfig({
@@ -290,15 +337,19 @@ describe("topicGroupsMigrations", () => {
           topicSettings: {},
           modifiedNamespaceTopics: [],
         })
-      ).toEqual({ displayName: "My Topics", expanded: true, visible: true, items: [{ topicName: "/topic_a" }] });
-
+      ).toEqual({
+        displayName: "Imported Group",
+        expanded: true,
+        visibilityByColumn: [true, true],
+        items: [{ topicName: "/topic_a", visibilityByColumn: [true, false] }],
+      });
       expect(
         migratePanelConfigToTopicGroupConfig({
           checkedNodes: ["/webviz_bag_2/topic_a", "name:Nested Group"],
           topicSettings: {},
           modifiedNamespaceTopics: [],
         })
-      ).toEqual({ displayName: "My Topics", expanded: true, visible: true, items: [] });
+      ).toEqual({ displayName: "Imported Group", expanded: true, visibilityByColumn: [true, true], items: [] });
 
       expect(
         migratePanelConfigToTopicGroupConfig({
@@ -307,17 +358,10 @@ describe("topicGroupsMigrations", () => {
           modifiedNamespaceTopics: [],
         })
       ).toEqual({
-        displayName: "My Topics",
+        displayName: "Imported Group",
         expanded: true,
-        visible: true,
-        items: [
-          {
-            topicName: "/topic_a",
-            visibilitiesBySource: {
-              "/webviz_bag_2": true,
-            },
-          },
-        ],
+        visibilityByColumn: [true, true],
+        items: [{ topicName: "/topic_a", visibilityByColumn: [false, true] }],
       });
     });
   });
@@ -327,6 +371,80 @@ describe("topicGroupsMigrations", () => {
       expect(migrateLegacyIds(["/legacy_topic_a", "name:Legacy Group1", "Legacy Group2", "t:/legacy_topic_c"])).toEqual(
         ["t:/topic_a", "name:Nested Group", "name:TF", "t:/topic_c"]
       );
+    });
+  });
+
+  describe("migrateTopicGroupFromBySourceToByColumn", () => {
+    it("migrateTopicGroupFromBySourceToByColumn", () => {
+      expect(
+        migrateTopicGroupFromBySourceToByColumn([
+          {
+            displayName: "My Topic Group",
+            expanded: true,
+            items: [
+              {
+                topicName: "/tf",
+                expanded: true,
+                selectedNamespacesBySource: { "": ["some_tf_ns1"], "/webviz_bag_2": ["some_tf_ns1", "some_tf_ns2"] },
+                visibilityBySource: { "": true },
+              },
+              { topicName: "/metadata", displayName: "Map", visibilityBySource: { "": true } },
+              { topicName: "/some_topic_1", visibilityBySource: { "": true, "/webviz_bag_2": true } },
+              { topicName: "/labels_json/some_label_topic_1" },
+              {
+                topicName: "/some_topic_2",
+                expanded: true,
+                visibilityBySource: { "": false, "/webviz_bag_2": true },
+                selectedNamespacesBySource: {
+                  "": ["some_topic_2_ns1"],
+                  "/webviz_bag_2": ["some_topic_2_ns1", "some_topic_2_ns2"],
+                },
+                settingsBySource: {
+                  "": { overrideColor: "128, 0, 0, 1", overrideCommand: "LinedConvexHull" },
+                  "/webviz_bag_2": { overrideColor: "0, 128, 0, 1", overrideCommand: "LinedConvexHull" },
+                },
+              },
+            ],
+          },
+        ])
+      ).toEqual([
+        {
+          displayName: "My Topic Group",
+          expanded: true,
+          items: [
+            {
+              expanded: true,
+              selectedNamespacesByColumn: [["some_tf_ns1"], ["some_tf_ns1", "some_tf_ns2"]],
+              topicName: "/tf",
+              visibilityByColumn: [true, false],
+            },
+            {
+              displayName: "Map",
+              topicName: "/metadata",
+              visibilityByColumn: [true, false],
+            },
+            {
+              topicName: "/some_topic_1",
+              visibilityByColumn: [true, true],
+            },
+            {
+              topicName: "/labels_json/some_label_topic_1",
+              visibilityByColumn: [true, false],
+            },
+            {
+              expanded: true,
+              selectedNamespacesByColumn: [["some_topic_2_ns1"], ["some_topic_2_ns1", "some_topic_2_ns2"]],
+              settingsByColumn: [
+                { overrideColor: "128, 0, 0, 1", overrideCommand: "LinedConvexHull" },
+                { overrideColor: "0, 128, 0, 1", overrideCommand: "LinedConvexHull" },
+              ],
+              topicName: "/some_topic_2",
+              visibilityByColumn: [false, true],
+            },
+          ],
+          visibilityByColumn: [true, true],
+        },
+      ]);
     });
   });
 });

@@ -15,7 +15,7 @@ import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
 import styles from "webviz-core/src/components/PanelToolbar/index.module.scss";
 import type { Topic } from "webviz-core/src/players/types";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export type TopicGroup = {
   suffix: string,

@@ -17,6 +17,7 @@ import {
   TOPIC_RANGES_KEY,
   TOPIC_RANGES_STORE_NAME,
   getIdbCacheDataProviderDatabase,
+  PRIMARY_KEY,
 } from "./IdbCacheDataProviderDatabase";
 import type {
   DataProvider,
@@ -252,13 +253,22 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
       this._rangesByTopic = newRangesByTopic;
       const tx = this._db.transaction([MESSAGES_STORE_NAME, TOPIC_RANGES_STORE_NAME], "readwrite");
       const messagesStore = tx.objectStore(MESSAGES_STORE_NAME);
-      for (const message of messages) {
+      for (let index = 0; index < messages.length; index++) {
+        const message = messages[index];
         if (message.message instanceof ArrayBuffer && message.message.byteLength > 10000000) {
           log.warn(`Message on ${message.topic} is suspiciously large (${message.message.byteLength} bytes)`);
         }
+        const nsSinceStart = toNanoSec(subtractTimes(message.receiveTime, this._startTime));
         messagesStore
           .put({
-            [TIMESTAMP_KEY]: toNanoSec(subtractTimes(message.receiveTime, this._startTime)),
+            // Timestamp and topic are *almost* unique, but you could have multiple messages with
+            // the same timestamp and topic. Luckily, we always get all such messages at the same
+            // time. After all, we call `getMessages` on the underlying DataProvider using times
+            // and topics, and the DataProvider will have to return all messages that exist. So, in
+            // order to make the primary key unique, we just need to add something that is locally
+            // unique, and an index over all the current messages will do for that purpose.
+            [PRIMARY_KEY]: `${nsSinceStart}|||${index}|||${message.topic}`,
+            [TIMESTAMP_KEY]: nsSinceStart,
             message,
           })
           .catch(reportTransactionError);

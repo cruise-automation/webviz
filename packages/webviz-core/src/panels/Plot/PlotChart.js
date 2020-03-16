@@ -6,25 +6,30 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { PureComponent } from "react";
+import flatten from "lodash/flatten";
+import React, { memo } from "react";
 import Dimensions from "react-container-dimensions";
 import { createSelector } from "reselect";
 import { Time } from "rosbag";
 import uuid from "uuid";
 
 import styles from "./PlotChart.module.scss";
-import { getTimestampForMessage, type MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistory";
+import { type MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import TimeBasedChart, { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
 import filterMap from "webviz-core/src/filterMap";
 import derivative from "webviz-core/src/panels/Plot/derivative";
-import { type PlotPath, isReferenceLinePlotPathType } from "webviz-core/src/panels/Plot/internalTypes";
+import {
+  type PlotPath,
+  type BasePlotPath,
+  isReferenceLinePlotPathType,
+} from "webviz-core/src/panels/Plot/internalTypes";
 import { lightColor, lineColors } from "webviz-core/src/util/plotColors";
-import { isTime, subtractTimes, format, formatTimeRaw, toSec } from "webviz-core/src/util/time";
+import { format, formatTimeRaw, getTimestampForMessage, isTime, subtractTimes, toSec } from "webviz-core/src/util/time";
 
 export type PlotChartPoint = {|
   x: number,
   y: number,
-  tooltip: TimeBasedChartTooltipData,
+  tooltip?: TimeBasedChartTooltipData,
 |};
 
 export type DataSet = {|
@@ -43,46 +48,80 @@ export type DataSet = {|
 
 const Y_AXIS_ID = "Y_AXIS_ID";
 
-function getDatasetFromMessagePlotPath(
+function getXForPoint(xAxisVal, timestamp, innerIdx, itemsByPath, xAxisPath, outerIdx): number {
+  if (xAxisVal === "custom" && xAxisPath) {
+    if (isReferenceLinePlotPathType(xAxisPath)) {
+      return Number.parseFloat(xAxisPath.value);
+    }
+    if (itemsByPath[xAxisPath.value]) {
+      const item = itemsByPath[xAxisPath.value][outerIdx];
+      return item ? Number(item.queriedData[innerIdx]?.value) : NaN;
+    }
+  }
+  return xAxisVal === "timestamp" ? timestamp : innerIdx;
+}
+
+const scaleOptions = {
+  fixedYAxisWidth: 48,
+  yAxisTicks: "hideFirstAndLast",
+};
+
+function getDatasetAndTooltipsFromMessagePlotPath(
   path: PlotPath,
   itemsByPath: MessageHistoryItemsByPath,
   index: number,
   startTime: Time,
-  xAxisVal: "timestamp" | "index"
-) {
+  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisPath?: BasePlotPath,
+  includeTooltipInData: boolean
+): { dataset: DataSet, tooltips: TimeBasedChartTooltipData[] } {
+  let tooltips: TimeBasedChartTooltipData[] = [];
   let points: PlotChartPoint[] = [];
   let showLine = true;
+  const datasetKey = index.toString();
 
-  for (const item of itemsByPath[path.value]) {
+  for (const [outerIdx, item] of itemsByPath[path.value].entries()) {
     const timestamp = getTimestampForMessage(item.message, path.timestampMethod);
-    if (timestamp === null) {
+    if (!timestamp) {
       continue;
     }
-
-    for (const [idx, { value, path: queriedPath, constantName }] of item.queriedData.entries()) {
+    const elapsedTime = toSec(subtractTimes(timestamp, startTime));
+    for (const [innerIdx, { value, path: queriedPath, constantName }] of item.queriedData.entries()) {
       if (typeof value === "number" || typeof value === "boolean" || typeof value === "string") {
         const valueNum = Number(value);
         if (!isNaN(valueNum)) {
-          points.push({
-            x: xAxisVal === "timestamp" ? toSec(subtractTimes(timestamp, startTime)) : idx,
-            y: valueNum,
-            tooltip: { item, path: queriedPath, value, constantName, startTime },
-          });
+          const x = getXForPoint(xAxisVal, elapsedTime, innerIdx, itemsByPath, xAxisPath, outerIdx);
+          const y = valueNum;
+          const tooltip = { x, y, datasetKey, item, path: queriedPath, value, constantName, startTime };
+          if (includeTooltipInData) {
+            points.push({ x, y, tooltip });
+          } else {
+            points.push({ x, y });
+          }
+          tooltips.push(tooltip);
         }
       } else if (isTime(value)) {
         // $FlowFixMe - %checks on isTime can't convince Flow that the object is actually a Time. Related: https://github.com/facebook/flow/issues/3614
         const timeValue = (value: Time);
-        points.push({
-          x: xAxisVal === "timestamp" ? toSec(subtractTimes(timestamp, startTime)) : idx,
-          y: toSec(timeValue),
-          tooltip: {
-            item,
-            path: queriedPath,
-            value: `${format(timeValue)} (${formatTimeRaw(timeValue)})`,
-            constantName,
-            startTime,
-          },
-        });
+        const x = getXForPoint(xAxisVal, elapsedTime, innerIdx, itemsByPath, xAxisPath, outerIdx);
+        const y = toSec(timeValue);
+        const tooltip = {
+          x,
+          y,
+          datasetKey,
+          datasetIndex: innerIdx,
+          item,
+          path: queriedPath,
+          value: `${format(timeValue)} (${formatTimeRaw(timeValue)})`,
+          constantName,
+          startTime,
+        };
+        if (includeTooltipInData) {
+          points.push({ x, y, tooltip });
+        } else {
+          points.push({ x, y });
+        }
+        tooltips.push(tooltip);
       }
     }
     // If we have added more than one point for this message, make it a scatter plot.
@@ -93,7 +132,13 @@ function getDatasetFromMessagePlotPath(
 
   if (path.value.includes(".@derivative")) {
     if (showLine) {
-      points = derivative(points);
+      const { points: derivativePoints, tooltips: derivativeTooltips } = derivative(
+        points,
+        tooltips,
+        includeTooltipInData
+      );
+      points = derivativePoints;
+      tooltips = derivativeTooltips;
     } else {
       // If we have a scatter plot, we can't take the derivative, so instead show nothing
       // (nothing is better than incorrect data).
@@ -101,10 +146,10 @@ function getDatasetFromMessagePlotPath(
     }
   }
 
-  return {
+  const dataset = {
     borderColor: lineColors[index % lineColors.length],
     label: path.value || uuid.v4(),
-    key: index.toString(),
+    key: datasetKey,
     showLine,
     fill: false,
     borderWidth: 1,
@@ -114,6 +159,7 @@ function getDatasetFromMessagePlotPath(
     pointBorderColor: "transparent",
     data: points,
   };
+  return { dataset, tooltips };
 }
 
 // A "reference line" plot path is a numeric value. It creates a horizontal line on the plot at the specified value.
@@ -131,20 +177,35 @@ function getAnnotationFromReferenceLine(path: PlotPath, index: number) {
   };
 }
 
-export function getDatasets(
+export function getDatasetsAndTooltips(
   paths: PlotPath[],
   itemsByPath: MessageHistoryItemsByPath,
   startTime: Time,
-  xAxisVal: "timestamp" | "index"
-): DataSet[] {
-  return filterMap(paths, (path: PlotPath, index: number) => {
+  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisPath?: BasePlotPath,
+  includeTooltipInData: boolean
+): { datasets: DataSet[], tooltips: TimeBasedChartTooltipData[] } {
+  const datasetsAndTooltips = filterMap(paths, (path: PlotPath, index: number) => {
     if (!path.enabled) {
       return null;
     } else if (!isReferenceLinePlotPathType(path)) {
-      return getDatasetFromMessagePlotPath(path, itemsByPath, index, startTime, xAxisVal);
+      return getDatasetAndTooltipsFromMessagePlotPath(
+        path,
+        itemsByPath,
+        index,
+        startTime,
+        xAxisVal,
+        xAxisPath,
+        includeTooltipInData
+      );
     }
     return null;
   });
+
+  return {
+    datasets: datasetsAndTooltips.map(({ dataset }) => dataset),
+    tooltips: flatten(datasetsAndTooltips.map(({ tooltips }) => tooltips)),
+  };
 }
 
 function getAnnotations(paths: PlotPath[]) {
@@ -190,32 +251,36 @@ type PlotChartProps = {|
   maxYValue: number,
   saveCurrentYs: (minY: number, maxY: number) => void,
   datasets: DataSet[],
-  xAxisVal: "timestamp" | "index",
+  tooltips: TimeBasedChartTooltipData[],
+  xAxisVal: "timestamp" | "index" | "custom",
 |};
-export default class PlotChart extends PureComponent<PlotChartProps> {
-  render() {
-    const { paths, minYValue, maxYValue, saveCurrentYs, datasets, xAxisVal } = this.props;
-    const annotations = getAnnotations(paths);
-    return (
-      <div className={styles.root}>
-        <Dimensions>
-          {({ width, height }) => (
-            <TimeBasedChart
-              isSynced
-              zoom
-              width={width}
-              height={height}
-              data={{ datasets }}
-              annotations={annotations}
-              type="scatter"
-              yAxes={yAxes({ minY: minYValue, maxY: maxYValue, scaleId: Y_AXIS_ID })}
-              saveCurrentYs={saveCurrentYs}
-              xAxisVal={xAxisVal}
-              useFixedYAxisWidth
-            />
-          )}
-        </Dimensions>
-      </div>
-    );
-  }
-}
+export default memo<PlotChartProps>(function PlotChart(props: PlotChartProps) {
+  const { paths, minYValue, maxYValue, saveCurrentYs, datasets, tooltips, xAxisVal } = props;
+  const annotations = getAnnotations(paths);
+
+  return (
+    <div className={styles.root}>
+      <Dimensions>
+        {({ width, height }) => (
+          <TimeBasedChart
+            // Force a redraw every time the x-axis value changes.
+            key={xAxisVal}
+            isSynced
+            zoom
+            width={width}
+            height={height}
+            data={{ datasets }}
+            tooltips={tooltips}
+            annotations={annotations}
+            type="scatter"
+            yAxes={yAxes({ minY: minYValue, maxY: maxYValue, scaleId: Y_AXIS_ID })}
+            saveCurrentYs={saveCurrentYs}
+            xAxisVal={xAxisVal}
+            scaleOptions={scaleOptions}
+            useFixedYAxisWidth
+          />
+        )}
+      </Dimensions>
+    </div>
+  );
+});

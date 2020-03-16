@@ -61,6 +61,7 @@ type FontAtlas = {|
 |};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
+const MIN_RESOLUTION = 40;
 const DEFAULT_RESOLUTION = 160;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
@@ -463,7 +464,7 @@ export default function GLText(props: Props) {
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
 
-  command.resolution = props.resolution || DEFAULT_RESOLUTION;
+  command.resolution = Math.max(MIN_RESOLUTION, props.resolution || DEFAULT_RESOLUTION);
 
   command.scaleInvariant = props.scaleInvariantFontSize != null;
   // Compute the actual size for the text object in NDC coordinates (from -1 to 1)

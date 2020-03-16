@@ -1,4 +1,4 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([[31],{3504:
+(window.webpackJsonp=window.webpackJsonp||[]).push([[31],{3505:
 /*!****************************************************************************!*\
   !*** ./node_modules/monaco-editor/esm/vs/basic-languages/pascal/pascal.js ***!
   \****************************************************************************/

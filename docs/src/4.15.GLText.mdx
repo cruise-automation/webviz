@@ -1,4 +1,4 @@
-import { GLText } from "./jsx/allLiveEditors";
+import { GLText, GLTextScaleInvariant } from "./jsx/allLiveEditors";
 
 # Text
 
@@ -7,3 +7,29 @@ import { GLText } from "./jsx/allLiveEditors";
 The prop types are identical to `<Text />`, except that additionally each Text object supports an optional `billboard?: boolean` property. If true (the default), text will always face the camera; if false, text may be rotated in 3D according to `pose.orientation`.
 
 <GLText />
+
+## Scale Invariance
+
+`<GLText />` also supports rendering text at a constant scale regardless of the zoom level by using the optional `scaleInvariantFontSize?: number` property. If set (default is `undefined`), the text will be rendered always at the same size, resembling the behavior of the `<Text />` command. 
+
+Please note that `scaleInvariantFontSize` only works if the `billboard` property is set to true.
+
+<GLTextScaleInvariant />
+
+## Resolution
+
+By default, `<GLText />` uses a high resolution font texture atlas for rendering text, which may have an impact on the performance of your application. 
+
+The optional `resolution?: number` property allows you to override the default high resolution. If your application does not need to render text that is too close the camera, it is recommended to reduce the font resolution to ensure a better performance.
+
+**Default value is `resolution={160}`. Minimum value is `resolution={40}`.**
+
+## Alphabet
+
+`<GLText />` generates a new texture atlas on the fly whenever a marker's text contains at least one character that was not rendered before. This is a complex operation and may impact on the performance of your application. 
+
+In order to avoid texture generation when you have an expected subset of characters, you can use the optional `alphabet?: string[]`. 
+
+For example, if markers are known to have only digits, you can use the `alphabet` property as follows to reduce the number of times the texture atlas needs to be re-generated from a worst case scenario of 10 times to only once.
+
+`<GLText alphabet{['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']}>{markers}</GLText>`

@@ -3,7 +3,7 @@
 import { storiesOf } from "@storybook/react";
 import { quat } from "gl-matrix";
 import { range } from "lodash";
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useCallback } from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 import tinyColor from "tinycolor2";
 
@@ -11,7 +11,6 @@ import { Axes } from "../commands";
 import type { Color } from "../types";
 import { vec4ToOrientation } from "../utils/commandUtils";
 import Container from "./Container";
-import inScreenshotTests from "stories/inScreenshotTests";
 
 import { GLText } from "..";
 
@@ -45,6 +44,110 @@ function textMarkers({
 
 storiesOf("Worldview/GLText", module)
   .addDecorator(withScreenshot({ delay: 200 }))
+  .add("resolution - default", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container
+        cameraState={{
+          target: [target.x, target.y, target.z],
+          perspective: true,
+          distance: 3,
+        }}>
+        <GLText>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("resolution - 80", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container
+        cameraState={{
+          target: [target.x, target.y, target.z],
+          perspective: true,
+          distance: 3,
+        }}>
+        <GLText resolution={80}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("resolution - 40", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container
+        cameraState={{
+          target: [target.x, target.y, target.z],
+          perspective: true,
+          distance: 3,
+        }}>
+        <GLText resolution={40}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("scaleInvariant", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText scaleInvariantFontSize={10}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("scaleInvariant-20", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText scaleInvariantFontSize={20}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("scaleInvariant-40", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText scaleInvariantFontSize={40}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("scaleInvariant resize", () => {
+    function Example() {
+      const [hasRenderedOnce, setHasRenderedOnce] = useState<boolean>(false);
+      const refFn = useCallback(() => {
+        setTimeout(() => {
+          setHasRenderedOnce(true);
+        }, 100);
+      }, []);
+      const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+      return (
+        <div
+          style={{ width: hasRenderedOnce ? 500 : 250, height: hasRenderedOnce ? 500 : 250, background: "black" }}
+          ref={refFn}>
+          <Container cameraState={{ perspective: true, distance: 40 }}>
+            <GLText scaleInvariantFontSize={20}>{markers}</GLText>
+            <Axes />
+          </Container>
+        </div>
+      );
+    }
+    return <Example />;
+  })
+  .add("with alphabet", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    const alphabet = "HelloWorldview0123456789".split("");
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText alphabet={alphabet}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
   .add("billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
       <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: true })}</GLText>
@@ -69,21 +172,25 @@ storiesOf("Worldview/GLText", module)
       <Axes />
     </Container>
   ))
+  .add("autoBackgroundColor scaleInvariant", () => (
+    <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+      <GLText autoBackgroundColor scaleInvariantFontSize={10}>
+        {textMarkers({ text: "Hello\nWorldview", billboard: true })}
+      </GLText>
+      <Axes />
+    </Container>
+  ))
   .add("changing text", () => {
     function Example() {
       const [text, setText] = useState("Hello\nWorldview");
       useLayoutEffect(() => {
-        let i = 0;
-        const id = setInterval(() => {
-          setText(`New text! ${++i}`);
-          if (inScreenshotTests()) {
-            clearInterval(id);
-          }
-        }, 100);
-        return () => clearInterval(id);
+        setText(`New text!`);
       }, []);
       return (
         <Container cameraState={{ perspective: true, distance: 40 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+          <div style={{ position: "absolute", top: 30, right: 30 }}>
+            <button onClick={() => setText(`Value: ${Math.floor(100 * Math.random())}`)}>Change Text</button>
+          </div>
           <GLText autoBackgroundColor>{textMarkers({ text })}</GLText>
           <Axes />
         </Container>

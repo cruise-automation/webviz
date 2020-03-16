@@ -18,6 +18,7 @@ import Cubes from "./commands/Cubes";
 import Cylinders from "./commands/Cylinders";
 import FilledPolygons from "./commands/FilledPolygons";
 import GLText from "./commands/GLText";
+import GLTextScaleInvariant from "./commands/GLTextScaleInvariant";
 import GLTFScene from "./commands/GLTFScene";
 import LinesDemo from "./commands/LinesDemo";
 import LinesPoses from "./commands/LinesPoses";
@@ -58,6 +59,7 @@ const allDemos = {
   SpheresSingle,
   Text,
   GLText,
+  GLTextScaleInvariant,
   Triangles,
   GLTFScene,
 };
@@ -65,7 +67,7 @@ const allDemos = {
 // Some of these demos have movement, which we do want to allow, but which doesn't play well with screenshot tests.
 const demosWithoutScreenshotTests = [DynamicCommands, FilledPolygons, Overlay, Points, SpheresInstanced];
 
-const stories = storiesOf("Worldview docs", module);
+const stories = storiesOf("Worldview docs", module).addDecorator(withScreenshot({ delay: 200 }));
 
 Object.keys(allDemos).map((demoName) => {
   const Component = allDemos[demoName];

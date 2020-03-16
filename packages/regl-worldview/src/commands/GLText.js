@@ -2,10 +2,11 @@
 
 import TinySDF from "@mapbox/tiny-sdf";
 import memoizeOne from "memoize-one";
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 
 import type { Color } from "../types";
 import { defaultBlend, defaultDepth } from "../utils/commandUtils";
+import WorldviewReactContext from "../WorldviewReactContext";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
 
@@ -26,7 +27,6 @@ import { isColorDark, type TextMarker } from "./Text";
 // ============================
 // - Add hitmap support.
 // - Allow customization of font style, maybe highlight ranges.
-// - Add a scaleInvariant option.
 // - Consider a solid rectangular background instead of an outline. This is challenging because the
 //   instances currently overlap, so there will be z-fighting, but might be possible using the stencil buffer and multiple draw calls.
 // - Somehow support kerning and more advanced font metrics. However, the web font APIs may not
@@ -42,6 +42,9 @@ type Props = {
   ...CommonCommandProps,
   children: $ReadOnlyArray<TextMarkerProps>,
   autoBackgroundColor?: boolean,
+  scaleInvariantFontSize?: number,
+  resolution?: number,
+  alphabet?: string[],
 };
 
 type FontAtlas = {|
@@ -58,7 +61,8 @@ type FontAtlas = {|
 |};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
-const FONT_SIZE = 40;
+const MIN_RESOLUTION = 40;
+const DEFAULT_RESOLUTION = 160;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
@@ -77,12 +81,12 @@ const memoizedCreateCanvas = memoizeOne((font) => {
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
-    (charSet: Set<string>): FontAtlas => {
-      const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
-      const ctx = memoizedCreateCanvas(`${FONT_SIZE}px sans-serif`);
+    (charSet: Set<string>, resolution: number): FontAtlas => {
+      const tinySDF = new TinySDF(resolution, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
+      const ctx = memoizedCreateCanvas(`${resolution}px sans-serif`);
 
       let textureWidth = 0;
-      const rowHeight = FONT_SIZE + 2 * BUFFER;
+      const rowHeight = resolution + 2 * BUFFER;
       const charInfo = {};
 
       // Measure and assign positions to all characters
@@ -127,6 +131,8 @@ const vert = `
   uniform mat4 projection, view, billboardRotation;
   uniform float fontSize;
   uniform vec2 atlasSize;
+  uniform bool scaleInvariant;
+  uniform float scaleInvariantSize;
 
   // per-vertex attributes
   attribute vec2 texCoord;
@@ -155,6 +161,7 @@ const vert = `
   varying vec4 vBackgroundColor;
   varying vec4 vHighlightColor;
   varying float vEnableHighlight;
+  varying float vBillboard;
 
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
@@ -163,22 +170,36 @@ const vert = `
     return v + (2.0 * cross(q.xyz, temp));
   }
 
+  vec4 computeVertexPosition(vec3 markerPos) {
+    vec3 pos;
+    if (billboard == 1.0) {
+      pos = (billboardRotation * vec4(markerPos, 1.0)).xyz + posePosition;
+    } else {
+      pos = rotate(markerPos, poseOrientation) + posePosition;
+    }
+    return projection * view * vec4(pos, 1.0);
+  }
+
   void main () {
     vec2 srcSize = vec2(srcWidth, fontSize);
     vec3 markerSpacePos = scale * vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
-    vec3 pos;
-    if (billboard == 1.0) {
-      pos = (billboardRotation * vec4(markerSpacePos, 1)).xyz + posePosition;
-    } else {
-      pos = rotate(markerSpacePos, poseOrientation) + posePosition;
+    gl_Position = computeVertexPosition(markerSpacePos);
+
+    if (scaleInvariant && billboard == 1.0) {
+      // Scale invariance only works for billboards
+      float w = gl_Position.w;
+      w *= scaleInvariantSize;
+      markerSpacePos *= w;
+      gl_Position = computeVertexPosition(markerSpacePos);
     }
-    gl_Position = projection * view * vec4(pos, 1);
+
     vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
     vEnableBackground = enableBackground;
     vForegroundColor = foregroundColor;
     vBackgroundColor = backgroundColor;
     vHighlightColor = highlightColor;
     vEnableHighlight = enableHighlight;
+    vBillboard = billboard;
   }
 `;
 
@@ -188,6 +209,8 @@ const frag = `
   uniform mat4 projection;
   uniform sampler2D atlas;
   uniform float cutoff;
+  uniform bool scaleInvariant;
+  uniform float scaleInvariantSize;
 
   varying vec2 vTexCoord;
   varying float vEnableBackground;
@@ -195,6 +218,8 @@ const frag = `
   varying vec4 vBackgroundColor;
   varying vec4 vHighlightColor;
   varying float vEnableHighlight;
+  varying float vBillboard;
+
   void main() {
     float dist = texture2D(atlas, vTexCoord).a;
 
@@ -202,14 +227,23 @@ const frag = `
     // when the solid background is enabled, because the alpha blending and
     // depth test don't work together nicely for partially-transparent pixels.
     float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
+
+    if (scaleInvariant && vBillboard == 1.0 && scaleInvariantSize < 0.03) {
+      // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate 
+      // the raw distance value since at such small scale, the SDF approach causes some 
+      // visual artifacts.
+      // The value used for checking if scaleInvariantSize is "too small" is arbitrary and 
+      // was defined after some experimentation. 
+      edgeStep = dist;
+    }
+
     if (vEnableHighlight > 0.5) {
       gl_FragColor = mix(vHighlightColor, vec4(0, 0, 0, 1), edgeStep);
     } else if (vEnableBackground > 0.5) {
-      float screenSize = fwidth(vTexCoord.x);
       gl_FragColor = mix(vBackgroundColor, vForegroundColor, edgeStep);
     } else {
       gl_FragColor = vForegroundColor;
-      gl_FragColor.a *= step(1.0 - cutoff, dist);
+      gl_FragColor.a *= edgeStep;
     }
 
     if (gl_FragColor.a == 0.) {
@@ -218,9 +252,10 @@ const frag = `
   }
 `;
 
-function makeTextCommand() {
+function makeTextCommand(alphabet?: string[]) {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
-  const charSet = new Set();
+  const charSet = new Set(alphabet || []);
+  let charSetInitialized = false;
   const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
   const command = (regl: any) => {
@@ -234,8 +269,10 @@ function makeTextCommand() {
       uniforms: {
         atlas: atlasTexture,
         atlasSize: () => [atlasTexture.width, atlasTexture.height],
-        fontSize: FONT_SIZE,
+        fontSize: command.resolution,
         cutoff: CUTOFF,
+        scaleInvariant: command.scaleInvariant,
+        scaleInvariantSize: command.scaleInvariantSize,
       },
       instances: regl.prop("instances"),
       count: 4,
@@ -271,12 +308,15 @@ function makeTextCommand() {
           charSet.add(char);
         }
       }
-      const charsChanged = charSet.size !== prevNumChars;
+      const charsChanged = !charSetInitialized || charSet.size !== prevNumChars;
 
       const { textureData, textureWidth, textureHeight, charInfo } = memoizedBuildAtlas(
         // only use a new set if the characters changed, since memoizeOne uses shallow equality
-        charsChanged ? new Set(charSet) : charSet
+        charsChanged ? new Set(charSet) : charSet,
+        command.resolution
       );
+
+      charSetInitialized = true;
 
       // re-upload texture only if characters were added
       if (charsChanged) {
@@ -324,7 +364,7 @@ function makeTextCommand() {
           const char = marker.text[i];
           if (char === "\n") {
             x = 0;
-            y = FONT_SIZE;
+            y = command.resolution;
             continue;
           }
           const info = charInfo[char];
@@ -380,7 +420,7 @@ function makeTextCommand() {
           ++markerInstances;
         }
 
-        const totalHeight = y + FONT_SIZE;
+        const totalHeight = y + command.resolution;
         for (let i = 0; i < markerInstances; i++) {
           alignmentOffset[2 * (totalInstances + i) + 0] = -totalWidth / 2;
           alignmentOffset[2 * (totalInstances + i) + 1] = totalHeight / 2;
@@ -416,9 +456,23 @@ function makeTextCommand() {
 }
 
 export default function GLText(props: Props) {
-  const [command] = useState(() => makeTextCommand());
+  const context = useContext(WorldviewReactContext);
+  const { dimension } = context;
+
+  const [command] = useState(() => makeTextCommand(props.alphabet));
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
+
+  command.resolution = Math.max(MIN_RESOLUTION, props.resolution || DEFAULT_RESOLUTION);
+
+  command.scaleInvariant = props.scaleInvariantFontSize != null;
+  // Compute the actual size for the text object in NDC coordinates (from -1 to 1)
+  // In order to make sure the text is always shown at the same size regardless of
+  // the canvas dimensions (as Text does), we need to scale it based on both the desired
+  // font size and the current worldview resolution. Otherwise, the text will be
+  // displayed at different sizes depending on the worlview canvas dimension.
+  command.scaleInvariantSize = (props.scaleInvariantFontSize ?? 0) / dimension.height;
+
   return <Command reglCommand={command} {...props} />;
 }

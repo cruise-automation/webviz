@@ -269,7 +269,7 @@ function makeTextCommand(alphabet?: string[]) {
       uniforms: {
         atlas: atlasTexture,
         atlasSize: () => [atlasTexture.width, atlasTexture.height],
-        fontSize: command.resolution,
+        fontSize: command.resolution + BUFFER,
         cutoff: CUTOFF,
         scaleInvariant: command.scaleInvariant,
         scaleInvariantSize: command.scaleInvariantSize,

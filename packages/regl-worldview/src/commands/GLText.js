@@ -78,6 +78,17 @@ const memoizedCreateCanvas = memoizeOne((font) => {
   return ctx;
 });
 
+// Utility function to convert color from array to {r, g, b, a}
+// This is used when rendering the text for hitmap
+const hitmapColor = (markerColor) => {
+  return {
+    r: markerColor?.[0] ?? 0,
+    g: markerColor?.[1] ?? 0,
+    b: markerColor?.[2] ?? 0,
+    a: markerColor?.[3] ?? 1,
+  };
+};
+
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
@@ -142,7 +153,7 @@ const vert = `
   attribute vec2 srcOffset;
   attribute float srcWidth;
   attribute vec2 destOffset;
-  
+
   // per-marker attributes
   attribute vec3 scale;
   attribute float billboard;
@@ -154,7 +165,7 @@ const vert = `
   attribute vec4 highlightColor;
   attribute vec3 posePosition;
   attribute vec4 poseOrientation;
-  
+
   varying vec2 vTexCoord;
   varying float vEnableBackground;
   varying vec4 vForegroundColor;
@@ -162,7 +173,7 @@ const vert = `
   varying vec4 vHighlightColor;
   varying float vEnableHighlight;
   varying float vBillboard;
-  
+
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
   vec3 rotate(vec3 v, vec4 q) {
@@ -230,18 +241,18 @@ const frag = `
     float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
 
     if (scaleInvariant && vBillboard == 1.0 && scaleInvariantSize < 0.03) {
-      // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate 
-      // the raw distance value since at such small scale, the SDF approach causes some 
+      // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate
+      // the raw distance value since at such small scale, the SDF approach causes some
       // visual artifacts.
-      // The value used for checking if scaleInvariantSize is "too small" is arbitrary and 
-      // was defined after some experimentation. 
+      // The value used for checking if scaleInvariantSize is "too small" is arbitrary and
+      // was defined after some experimentation.
       edgeStep = dist;
     }
 
     if (forHitmap) {
       // When rendering for the hitmap buffer, we draw flat polygons using the foreground color
       // instead of the actual glyphs. This way we increase the selection range and provide a
-      // better user experience. 
+      // better user experience.
       gl_FragColor = vForegroundColor;
     } else if (vEnableHighlight > 0.5) {
       gl_FragColor = mix(vHighlightColor, vec4(0, 0, 0, 1), edgeStep);
@@ -362,15 +373,6 @@ function makeTextCommand(alphabet?: string[]) {
         let x = 0;
         let y = 0;
         let markerInstances = 0;
-
-        const hitmapColor = (markerColor) => {
-          return {
-            r: markerColor?.[0] ?? 0,
-            g: markerColor?.[1] ?? 0,
-            b: markerColor?.[2] ?? 0,
-            a: markerColor?.[3] ?? 1,
-          };
-        };
 
         // If we need to render text for hitmap framebuffer, we only render the polygons using
         // the foreground color (which needs to be converted to RGBA since it's a vec4).

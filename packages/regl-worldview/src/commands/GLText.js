@@ -277,7 +277,7 @@ function makeTextCommand(alphabet?: string[]) {
 
   const command = (regl: any) => {
     const atlasTexture = regl.texture();
-    const makeDrawText = function(forHitmap: boolean) {
+    const makeDrawText = (forHitmap: boolean) => {
       return regl({
         depth: defaultDepth,
         blend: defaultBlend,

@@ -43,30 +43,17 @@ function textMarkers({
   ];
 }
 
-function createAssertionTest(markers, scaleInvariant) {
-  const expected = markers;
-  return assertionTest({
-    story: (setTestData) => {
-      return (
-        <WorldviewWrapper
-          defaultCameraState={{ perspective: true, distance: 10 }}
-          onClick={(_, { objects }) => setTestData(objects)}>
-          <GLText scaleInvariantFontSize={scaleInvariant ? 40 : undefined}>{markers}</GLText>
-        </WorldviewWrapper>
-      );
-    },
-    assertions: async (getTestData) => {
-      await clickAtOrigin();
-      const result = getTestData();
-      expect(result.length).toEqual(expected.length);
-      for (let i = 0; i < expected.length; i++) {
-        expect(result[0].object).toEqual(expected[0]);
-      }
-    },
-  });
-}
-
-function createAssertionTestWithBackgroundObjects(markers, stackedObjectsEnabled) {
+function createAssertionTest({
+  markers,
+  enableScaleInvariant,
+  includeBackgroundObjects,
+  enableStackedObjectEvents,
+}: {|
+  markers: any[],
+  enableScaleInvariant?: boolean,
+  includeBackgroundObjects?: boolean,
+  enableStackedObjectEvents?: boolean,
+|}) {
   const backgroundObjects = [
     {
       pose: {
@@ -77,25 +64,25 @@ function createAssertionTestWithBackgroundObjects(markers, stackedObjectsEnabled
       color: { r: 1, g: 0, b: 1, a: 0.5 },
     },
   ];
-  const expected = stackedObjectsEnabled ? [...markers, ...backgroundObjects] : markers;
+  const expected = enableStackedObjectEvents ? [...markers, ...backgroundObjects] : markers;
   return assertionTest({
     story: (setTestData) => {
       return (
         <WorldviewWrapper
           defaultCameraState={{ perspective: true, distance: 10 }}
           onClick={(_, { objects }) => setTestData(objects)}
-          enableStackedObjectEvents={stackedObjectsEnabled}>
-          <GLText>{markers}</GLText>
-          <Cubes>{backgroundObjects}</Cubes>
+          enableStackedObjectEvents={enableStackedObjectEvents}>
+          <GLText scaleInvariantFontSize={enableScaleInvariant ? 40 : undefined}>{markers}</GLText>
+          <Cubes>{includeBackgroundObjects ? backgroundObjects : []}</Cubes>
         </WorldviewWrapper>
       );
     },
     assertions: async (getTestData) => {
       await clickAtOrigin();
       const result = getTestData();
-      expect(result.length).toEqual(expected.length);
-      for (let i = 0; i < expected.length; i++) {
-        expect(result[0].object).toEqual(expected[0]);
+      expect(result.length).toEqual(enableStackedObjectEvents ? expected.length : 1);
+      for (let i = 0; i < result.length; i++) {
+        expect(result[i].object).toEqual(expected[i]);
       }
     },
   });
@@ -105,41 +92,94 @@ storiesOf("Integration/GLText", module)
   .addDecorator(withScreenshot())
   .add(
     `Clicks on a single GLText object - worldview event handler`,
-    createAssertionTest(textMarkers({ text: "Click Me!" }))
+    createAssertionTest({
+      markers: textMarkers({
+        text: "Click Me!",
+      }),
+    })
   )
   .add(
     `Clicks on a single GLText billboard object - worldview event handler`,
-    createAssertionTest(textMarkers({ text: "Click Me!", billboard: true }))
+    createAssertionTest({
+      markers: textMarkers({
+        text: "Click Me!",
+        billboard: true,
+      }),
+    })
   )
   .add(
     `Clicks on a single GLText object with background - worldview event handler`,
-    createAssertionTest(textMarkers({ text: "Click Me!", background: true }))
+    createAssertionTest({
+      markers: textMarkers({
+        text: "Click Me!",
+        background: true,
+      }),
+    })
   )
   .add(
     `Clicks on a single GLText billboard object with background - worldview event handler`,
-    createAssertionTest(textMarkers({ text: "Click Me!", billboard: true, background: true }))
+    createAssertionTest({
+      markers: textMarkers({
+        text: "Click Me!",
+        billboard: true,
+        background: true,
+      }),
+    })
   )
   .add(
     `Clicks on a single GLText object using scale invariance - worldview event handler`,
-    createAssertionTest(textMarkers({ text: "Click Me!", billboard: true }), true)
+    createAssertionTest({
+      markers: textMarkers({ text: "Click Me!", billboard: true }),
+      enableScaleInvariant: true,
+    })
   )
   .add(
     `Clicks on a single GLText object with a hole in a glyph - worldview event handler`,
-    createAssertionTest(textMarkers({ text: "O" }))
+    createAssertionTest({
+      markers: textMarkers({
+        text: "O",
+      }),
+    })
   )
   .add(
     `Clicks on GLText with an object behind it. Stacked objects disabled - worldview event handler`,
-    createAssertionTestWithBackgroundObjects(textMarkers({ text: "Click Me!", billboard: true }))
+    createAssertionTest({
+      markers: textMarkers({
+        text: "Click Me!",
+        billboard: true,
+      }),
+      includeBackgroundObjects: true,
+    })
   )
   .add(
     `Clicks on GLText with an object behind it - worldview event handler`,
-    createAssertionTestWithBackgroundObjects(textMarkers({ text: "Click Me!", billboard: true }), true)
+    createAssertionTest({
+      markers: textMarkers({
+        text: "Click Me!",
+        billboard: true,
+      }),
+      includeBackgroundObjects: true,
+      enableStackedObjectEvents: true,
+    })
   )
   .add(
     `Clicks on GLText with a hole and an object behind it. Stacked objects disabled - worldview event handler`,
-    createAssertionTestWithBackgroundObjects(textMarkers({ text: "O", billboard: true }))
+    createAssertionTest({
+      markers: textMarkers({
+        text: "O",
+        billboard: true,
+      }),
+      includeBackgroundObjects: true,
+    })
   )
   .add(
     `Clicks on GLText with a hole and an object behind it - worldview event handler`,
-    createAssertionTestWithBackgroundObjects(textMarkers({ text: "O", billboard: true }), true)
+    createAssertionTest({
+      markers: textMarkers({
+        text: "O",
+        billboard: true,
+      }),
+      includeBackgroundObjects: true,
+      enableStackedObjectEvents: true,
+    })
   );

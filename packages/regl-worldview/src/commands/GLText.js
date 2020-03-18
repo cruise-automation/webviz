@@ -229,11 +229,11 @@ const frag = `
     float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
 
     if (scaleInvariant && vBillboard == 1.0 && scaleInvariantSize < 0.03) {
-      // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate 
-      // the raw distance value since at such small scale, the SDF approach causes some 
+      // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate
+      // the raw distance value since at such small scale, the SDF approach causes some
       // visual artifacts.
-      // The value used for checking if scaleInvariantSize is "too small" is arbitrary and 
-      // was defined after some experimentation. 
+      // The value used for checking if scaleInvariantSize is "too small" is arbitrary and
+      // was defined after some experimentation.
       edgeStep = dist;
     }
 
@@ -269,6 +269,9 @@ function makeTextCommand(alphabet?: string[]) {
       uniforms: {
         atlas: atlasTexture,
         atlasSize: () => [atlasTexture.width, atlasTexture.height],
+        // For the font size, make sure there's enough room to handle
+        // both ascent and descent for each glyph. Otherwise, some characters
+        // might get cropped when rendering
         fontSize: command.resolution + BUFFER,
         cutoff: CUTOFF,
         scaleInvariant: command.scaleInvariant,

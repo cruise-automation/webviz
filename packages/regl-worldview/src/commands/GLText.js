@@ -222,7 +222,7 @@ const frag = `
   uniform float cutoff;
   uniform bool scaleInvariant;
   uniform float scaleInvariantSize;
-  uniform bool forHitmap;
+  uniform bool isHitmap;
 
   varying vec2 vTexCoord;
   varying float vEnableBackground;
@@ -249,7 +249,7 @@ const frag = `
       edgeStep = dist;
     }
 
-    if (forHitmap) {
+    if (isHitmap) {
       // When rendering for the hitmap buffer, we draw flat polygons using the foreground color
       // instead of the actual glyphs. This way we increase the selection range and provide a
       // better user experience.
@@ -277,7 +277,7 @@ function makeTextCommand(alphabet?: string[]) {
 
   const command = (regl: any) => {
     const atlasTexture = regl.texture();
-    const makeDrawText = (forHitmap: boolean) => {
+    const makeDrawText = (isHitmap: boolean) => {
       return regl({
         depth: defaultDepth,
         blend: defaultBlend,
@@ -291,7 +291,7 @@ function makeTextCommand(alphabet?: string[]) {
           cutoff: CUTOFF,
           scaleInvariant: command.scaleInvariant,
           scaleInvariantSize: command.scaleInvariantSize,
-          forHitmap: !!forHitmap,
+          isHitmap: !!isHitmap,
         },
         instances: regl.prop("instances"),
         count: 4,
@@ -315,7 +315,7 @@ function makeTextCommand(alphabet?: string[]) {
       });
     };
 
-    return (props: $ReadOnlyArray<TextMarkerProps>, forHitmap: boolean) => {
+    return (props: $ReadOnlyArray<TextMarkerProps>, isHitmap: boolean) => {
       let estimatedInstances = 0;
       const prevNumChars = charSet.size;
       for (const { text } of props) {
@@ -377,7 +377,7 @@ function makeTextCommand(alphabet?: string[]) {
         // If we need to render text for hitmap framebuffer, we only render the polygons using
         // the foreground color (which needs to be converted to RGBA since it's a vec4).
         // See comment on fragment shader above
-        const fgColor = forHitmap ? hitmapColor(marker.color) : marker.colors?.[0] || marker.color || BG_COLOR_LIGHT;
+        const fgColor = isHitmap ? hitmapColor(marker.color) : marker.colors?.[0] || marker.color || BG_COLOR_LIGHT;
         const outline = marker.colors?.[1] != null || command.autoBackgroundColor;
         const bgColor =
           marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK);
@@ -452,7 +452,7 @@ function makeTextCommand(alphabet?: string[]) {
         totalInstances += markerInstances;
       }
 
-      makeDrawText(forHitmap)({
+      makeDrawText(isHitmap)({
         instances: totalInstances,
 
         // per-character

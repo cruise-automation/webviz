@@ -18,11 +18,11 @@ function textMarkers({
   text,
   billboard,
   background = true,
-}: {
+}: {|
   text: string,
   billboard?: ?boolean,
   background?: ?boolean,
-}) {
+|}) {
   const radius = 10;
   const count = 10;
   return new Array(count).fill().map((_, i) => {

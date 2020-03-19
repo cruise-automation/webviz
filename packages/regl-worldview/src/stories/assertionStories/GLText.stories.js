@@ -22,11 +22,11 @@ function textMarkers({
   text,
   billboard,
   background = false,
-}: {
+}: {|
   text: string,
   billboard?: ?boolean,
   background?: ?boolean,
-}) {
+|}) {
   const color = { r: 1, g: 1, b: 1, a: 1 };
   return [
     {

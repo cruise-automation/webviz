@@ -15,6 +15,7 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Cubes from "../../commands/Cubes";
 import GLText from "../../commands/GLText";
+import { type TextMarker } from "../../commands/Text";
 import { clickAtOrigin, WorldviewWrapper } from "../worldviewAssertionUtils";
 import { assertionTest } from "stories/assertionTestUtils";
 
@@ -26,7 +27,7 @@ function textMarkers({
   text: string,
   billboard?: ?boolean,
   background?: ?boolean,
-|}) {
+|}): TextMarker[] {
   const color = { r: 1, g: 1, b: 1, a: 1 };
   return [
     {

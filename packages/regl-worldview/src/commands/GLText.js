@@ -272,7 +272,7 @@ function makeTextCommand(alphabet?: string[]) {
         // For the font size, make sure there's enough room to handle
         // both ascent and descent for each glyph. Otherwise, some characters
         // might get cropped when rendering
-        fontSize: command.resolution + BUFFER,
+        fontSize: command.resolution,
         cutoff: CUTOFF,
         scaleInvariant: command.scaleInvariant,
         scaleInvariantSize: command.scaleInvariantSize,
@@ -377,7 +377,7 @@ function makeTextCommand(alphabet?: string[]) {
           destOffsets[2 * index + 0] = x;
           destOffsets[2 * index + 1] = -y;
           srcOffsets[2 * index + 0] = info.x + BUFFER;
-          srcOffsets[2 * index + 1] = info.y + BUFFER;
+          srcOffsets[2 * index + 1] = info.y + 2 * BUFFER;
           srcWidths[index] = info.width;
 
           x += info.width;

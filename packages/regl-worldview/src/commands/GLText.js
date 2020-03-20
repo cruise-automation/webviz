@@ -5,7 +5,7 @@ import memoizeOne from "memoize-one";
 import React, { useState, useContext } from "react";
 
 import type { Color } from "../types";
-import { defaultBlend, defaultDepth } from "../utils/commandUtils";
+import { defaultBlend, defaultDepth, toColor } from "../utils/commandUtils";
 import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import WorldviewReactContext from "../WorldviewReactContext";
 import Command, { type CommonCommandProps } from "./Command";
@@ -77,17 +77,6 @@ const memoizedCreateCanvas = memoizeOne((font) => {
   ctx.font = font;
   return ctx;
 });
-
-// Utility function to convert color from array to {r, g, b, a}
-// This is used when rendering the text for hitmap
-const hitmapColor = (markerColor) => {
-  return {
-    r: markerColor?.[0] ?? 0,
-    g: markerColor?.[1] ?? 0,
-    b: markerColor?.[2] ?? 0,
-    a: markerColor?.[3] ?? 1,
-  };
-};
 
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
@@ -377,10 +366,13 @@ function makeTextCommand(alphabet?: string[]) {
         // If we need to render text for hitmap framebuffer, we only render the polygons using
         // the foreground color (which needs to be converted to RGBA since it's a vec4).
         // See comment on fragment shader above
-        const fgColor = isHitmap ? hitmapColor(marker.color) : marker.colors?.[0] || marker.color || BG_COLOR_LIGHT;
+        const fgColor = toColor(
+          isHitmap ? marker.color || [0, 0, 0, 1] : marker.colors?.[0] || marker.color || BG_COLOR_LIGHT
+        );
         const outline = marker.colors?.[1] != null || command.autoBackgroundColor;
-        const bgColor =
-          marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK);
+        const bgColor = toColor(
+          marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK)
+        );
         const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
 
         for (let i = 0; i < marker.text.length; i++) {

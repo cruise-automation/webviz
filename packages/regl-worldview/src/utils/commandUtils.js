@@ -54,6 +54,8 @@ export const toRGBA = (val: Color) => {
 
 export const vec4ToRGBA = (color: Vec4): Color => ({ r: color[0], g: color[1], b: color[2], a: color[3] });
 
+export const toColor = (val: Color | Vec4): Color => (Array.isArray(val) ? vec4ToRGBA(val) : val);
+
 export function getCSSColor(color: Color = DEFAULT_TEXT_COLOR) {
   const { r, g, b, a } = color;
   return `rgba(${(r * 255).toFixed()}, ${(g * 255).toFixed()}, ${(b * 255).toFixed()}, ${a.toFixed(3)})`;

@@ -134,7 +134,6 @@ const vert = `
   uniform float scaleInvariantSize;
   uniform float viewportHeight;
   uniform float viewportWidth;
-  uniform float pixelRatio;
   uniform bool isPerspective;
   uniform float cameraFovY;
 
@@ -207,17 +206,17 @@ const vert = `
         gl_Position = computeVertexPosition(markerSpacePos);
         scaleInvariantFactor *= gl_Position.w;
         // We also need to take into account the camera's half vertical FOV
-        scaleInvariantFactor *= 0.5 * cameraFovY;
+        scaleInvariantFactor *= cameraFovY;
       } else {
         // Compute inverse aspect ratio
         float invAspect = viewportHeight / viewportWidth;
         // When using orthographic projection, the scaling factor is obtain from
         // the camera projection itself.
         // We also need applied the inverse aspect ratio
-        scaleInvariantFactor *= invAspect / length(projection[0].xyz);
+        scaleInvariantFactor *= 2.0 * invAspect / length(projection[0].xyz);
       }
-      // Apply scale invariant factor and pixel ratio to get the correct height in pixels
-      markerSpacePos *= pixelRatio * scaleInvariantFactor;
+      // Apply scale invariant factor
+      markerSpacePos *= scaleInvariantFactor;
     }
 
     // Compute final vertex position
@@ -305,7 +304,6 @@ function makeTextCommand(alphabet?: string[]) {
         scaleInvariantSize: command.scaleInvariantSize,
         viewportHeight: regl.context("viewportHeight"),
         viewportWidth: regl.context("viewportWidth"),
-        pixelRatio: regl.context("pixelRatio"),
         isPerspective: regl.context("isPerspective"),
         cameraFovY: regl.context("fovy"),
       },

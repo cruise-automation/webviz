@@ -78,6 +78,14 @@ export default (regl: any) => {
         billboardRotation(context, props) {
           return selectors.billboardRotation(this.cameraState);
         },
+
+        isPerspective(context, props) {
+          return this.cameraState.perspective;
+        },
+
+        fovy(context, props) {
+          return this.cameraState.fovy;
+        },
       },
 
       // adds view and projection as uniforms to every command

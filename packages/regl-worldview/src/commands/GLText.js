@@ -269,9 +269,6 @@ function makeTextCommand(alphabet?: string[]) {
       uniforms: {
         atlas: atlasTexture,
         atlasSize: () => [atlasTexture.width, atlasTexture.height],
-        // For the font size, make sure there's enough room to handle
-        // both ascent and descent for each glyph. Otherwise, some characters
-        // might get cropped when rendering
         fontSize: command.resolution,
         cutoff: CUTOFF,
         scaleInvariant: command.scaleInvariant,
@@ -377,7 +374,10 @@ function makeTextCommand(alphabet?: string[]) {
           destOffsets[2 * index + 0] = x;
           destOffsets[2 * index + 1] = -y;
           srcOffsets[2 * index + 0] = info.x + BUFFER;
-          srcOffsets[2 * index + 1] = info.y + 2 * BUFFER;
+          // In order to make sure there's enough room for glyphs' descenders (i.e. 'g'),
+          // we need to apply an extra offset based on the font resolution.
+          // The value used to compute the offset is a result of experimentation.
+          srcOffsets[2 * index + 1] = info.y + BUFFER + 0.05 * command.resolution;
           srcWidths[index] = info.width;
 
           x += info.width;

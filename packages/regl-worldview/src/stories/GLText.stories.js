@@ -11,6 +11,7 @@ import { Axes } from "../commands";
 import type { Color } from "../types";
 import { vec4ToOrientation } from "../utils/commandUtils";
 import Container from "./Container";
+import { rng } from "./util";
 
 import { GLText } from "..";
 
@@ -31,8 +32,11 @@ function textMarkers({
     if (!randomScale) {
       return { x: 1, y: 1, z: 1 };
     }
-    // It's not really random. Otherwise, screenshot tests won't work correctly
-    return { x: 0.5 + (2 * i) / count, y: 0.5 + (2 * i) / count, z: 1 };
+    return {
+      x: 0.5 + 2.0 * rng(),
+      y: 0.5 + 2.0 * rng(),
+      z: 0.5 + 2.0 * rng(),
+    };
   };
   return new Array(count).fill().map((_, i) => {
     const angle = (2 * Math.PI * i) / count;

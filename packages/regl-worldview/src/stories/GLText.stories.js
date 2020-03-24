@@ -11,6 +11,7 @@ import { Axes } from "../commands";
 import type { Color } from "../types";
 import { vec4ToOrientation } from "../utils/commandUtils";
 import Container from "./Container";
+import { rng } from "./util";
 
 import { GLText } from "..";
 
@@ -18,13 +19,25 @@ function textMarkers({
   text,
   billboard,
   background = true,
+  randomScale = false,
 }: {
   text: string,
   billboard?: ?boolean,
   background?: ?boolean,
+  randomScale?: ?boolean,
 }) {
   const radius = 10;
   const count = 10;
+  const scale = (i: number) => {
+    if (!randomScale) {
+      return { x: 1, y: 1, z: 1 };
+    }
+    return {
+      x: 0.5 + 2.0 * rng(),
+      y: 0.5 + 2.0 * rng(),
+      z: 0.5 + 2.0 * rng(),
+    };
+  };
   return new Array(count).fill().map((_, i) => {
     const angle = (2 * Math.PI * i) / count;
     const color = { r: 0, g: i / count, b: i / count, a: 1 };
@@ -34,7 +47,7 @@ function textMarkers({
         position: { x: radius * Math.cos(angle), y: radius * Math.sin(angle), z: 0 },
         orientation: vec4ToOrientation(quat.rotateZ(quat.create(), quat.create(), Math.PI / 2 + angle)),
       },
-      scale: { x: 1, y: 1, z: 1 },
+      scale: scale(i),
       color,
       colors: background && i % 4 === 0 ? [color, { r: 1, g: 1, b: 0, a: 1 }] : undefined,
       billboard,
@@ -89,6 +102,15 @@ storiesOf("Worldview/GLText", module)
       </Container>
     );
   })
+  .add("random marker scale", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true, randomScale: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText resolution={40}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
   .add("scaleInvariant", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
@@ -110,7 +132,16 @@ storiesOf("Worldview/GLText", module)
   .add("scaleInvariant-40", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     return (
-      <Container cameraState={{ perspective: true, distance: 25 }}>
+      <Container cameraState={{ perspective: true, distance: 25 }} backgroundColor={[0.2, 0.2, 0.4, 1]}>
+        <GLText scaleInvariantFontSize={40}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("scaleInvariant - perspective: false", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    return (
+      <Container cameraState={{ perspective: false, distance: 25 }} backgroundColor={[0.4, 0.2, 0.2, 1]}>
         <GLText scaleInvariantFontSize={40}>{markers}</GLText>
         <Axes />
       </Container>
@@ -137,6 +168,15 @@ storiesOf("Worldview/GLText", module)
       );
     }
     return <Example />;
+  })
+  .add("scaleInvariant - ignore scale", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true, randomScale: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText scaleInvariantFontSize={30}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
   })
   .add("with alphabet", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });

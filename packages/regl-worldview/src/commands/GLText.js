@@ -2,11 +2,10 @@
 
 import TinySDF from "@mapbox/tiny-sdf";
 import memoizeOne from "memoize-one";
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 
 import type { Color } from "../types";
 import { defaultBlend, defaultDepth } from "../utils/commandUtils";
-import WorldviewReactContext from "../WorldviewReactContext";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
 
@@ -133,6 +132,10 @@ const vert = `
   uniform vec2 atlasSize;
   uniform bool scaleInvariant;
   uniform float scaleInvariantSize;
+  uniform float viewportHeight;
+  uniform float viewportWidth;
+  uniform bool isPerspective;
+  uniform float cameraFovY;
 
   // per-vertex attributes
   attribute vec2 texCoord;
@@ -181,17 +184,43 @@ const vert = `
   }
 
   void main () {
-    vec2 srcSize = vec2(srcWidth, fontSize);
-    vec3 markerSpacePos = scale * vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
-    gl_Position = computeVertexPosition(markerSpacePos);
+    // Scale invariance only works for billboards
+    bool scaleInvariantEnabled = scaleInvariant && billboard == 1.0;
 
-    if (scaleInvariant && billboard == 1.0) {
-      // Scale invariance only works for billboards
-      float w = gl_Position.w;
-      w *= scaleInvariantSize;
-      markerSpacePos *= w;
-      gl_Position = computeVertexPosition(markerSpacePos);
+    vec2 srcSize = vec2(srcWidth, fontSize);
+    vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
+
+    if (!scaleInvariantEnabled) {
+      // Apply marker scale only when scale invariance is disabled
+      markerSpacePos *= scale;
+    } else {
+      // If scale invariance is enabled, the text will be rendered at a constant
+      // scale regardless of the zoom level.
+      // The given scaleInvariantSize is in pixels. We need to scale it based on
+      // the current canvas resolution to get the proper dimensions later in NDC
+      float scaleInvariantFactor = scaleInvariantSize / viewportHeight;
+      if (isPerspective) {
+        // When using a perspective projection, the effect is achieved by using
+        // the w-component for scaling, which is obtained by first projecting
+        // the marker position into clip space.
+        gl_Position = computeVertexPosition(markerSpacePos);
+        scaleInvariantFactor *= gl_Position.w;
+        // We also need to take into account the camera's half vertical FOV
+        scaleInvariantFactor *= cameraFovY;
+      } else {
+        // Compute inverse aspect ratio
+        float invAspect = viewportHeight / viewportWidth;
+        // When using orthographic projection, the scaling factor is obtain from
+        // the camera projection itself.
+        // We also need applied the inverse aspect ratio
+        scaleInvariantFactor *= 2.0 * invAspect / length(projection[0].xyz);
+      }
+      // Apply scale invariant factor
+      markerSpacePos *= scaleInvariantFactor;
     }
+
+    // Compute final vertex position
+    gl_Position = computeVertexPosition(markerSpacePos);
 
     vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
     vEnableBackground = enableBackground;
@@ -228,12 +257,12 @@ const frag = `
     // depth test don't work together nicely for partially-transparent pixels.
     float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
 
-    if (scaleInvariant && vBillboard == 1.0 && scaleInvariantSize < 0.03) {
-      // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate 
-      // the raw distance value since at such small scale, the SDF approach causes some 
+    if (scaleInvariant && vBillboard == 1.0 && scaleInvariantSize <= 20.0) {
+      // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate
+      // the raw distance value since at such small scale, the SDF approach causes some
       // visual artifacts.
-      // The value used for checking if scaleInvariantSize is "too small" is arbitrary and 
-      // was defined after some experimentation. 
+      // The value used for checking if scaleInvariantSize is "too small" is arbitrary and
+      // was defined after some experimentation.
       edgeStep = dist;
     }
 
@@ -273,6 +302,10 @@ function makeTextCommand(alphabet?: string[]) {
         cutoff: CUTOFF,
         scaleInvariant: command.scaleInvariant,
         scaleInvariantSize: command.scaleInvariantSize,
+        viewportHeight: regl.context("viewportHeight"),
+        viewportWidth: regl.context("viewportWidth"),
+        isPerspective: regl.context("isPerspective"),
+        cameraFovY: regl.context("fovy"),
       },
       instances: regl.prop("instances"),
       count: 4,
@@ -456,23 +489,12 @@ function makeTextCommand(alphabet?: string[]) {
 }
 
 export default function GLText(props: Props) {
-  const context = useContext(WorldviewReactContext);
-  const { dimension } = context;
-
   const [command] = useState(() => makeTextCommand(props.alphabet));
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
-
   command.resolution = Math.max(MIN_RESOLUTION, props.resolution || DEFAULT_RESOLUTION);
-
   command.scaleInvariant = props.scaleInvariantFontSize != null;
-  // Compute the actual size for the text object in NDC coordinates (from -1 to 1)
-  // In order to make sure the text is always shown at the same size regardless of
-  // the canvas dimensions (as Text does), we need to scale it based on both the desired
-  // font size and the current worldview resolution. Otherwise, the text will be
-  // displayed at different sizes depending on the worlview canvas dimension.
-  command.scaleInvariantSize = (props.scaleInvariantFontSize ?? 0) / dimension.height;
-
+  command.scaleInvariantSize = props.scaleInvariantFontSize ?? 0;
   return <Command reglCommand={command} {...props} />;
 }

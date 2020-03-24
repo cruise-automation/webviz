@@ -20,12 +20,12 @@ function textMarkers({
   billboard,
   background = true,
   randomScale = false,
-}: {
+}: {|
   text: string,
   billboard?: ?boolean,
   background?: ?boolean,
   randomScale?: ?boolean,
-}) {
+|}) {
   const radius = 10;
   const count = 10;
   const scale = (i: number) => {

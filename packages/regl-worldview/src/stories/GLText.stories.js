@@ -102,6 +102,21 @@ storiesOf("Worldview/GLText", module)
       </Container>
     );
   })
+  .add("glyph ascent and descent", () => {
+    const markers = textMarkers({ text: "BDFGHJKLPQTY\nbdfghjklpqty", billboard: true });
+    const target = markers[9].pose.position;
+    return (
+      <Container
+        cameraState={{
+          target: [target.x, target.y + 2, target.z],
+          perspective: true,
+          distance: 8,
+        }}>
+        <GLText>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
   .add("random marker scale", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true, randomScale: true });
     return (

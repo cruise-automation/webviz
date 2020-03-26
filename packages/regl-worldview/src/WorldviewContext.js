@@ -101,7 +101,7 @@ export class WorldviewContext {
 
   constructor({ dimension, canvasBackgroundColor, cameraState, onCameraStateChange }: ConstructorArgs) {
     // used for children to call paint() directly
-    this.onDirty = this.paintAndWarn;
+    this.onDirty = this._throttledPaint;
     this.dimension = dimension;
     this.canvasBackgroundColor = canvasBackgroundColor;
     this.cameraStore = new CameraStore((cameraState: CameraState) => {
@@ -227,7 +227,7 @@ export class WorldviewContext {
     this.counters.render = Date.now() - start;
   }
 
-  paintAndWarn = () => {
+  _throttledPaint = () => {
     const now = performance.now();
     if (now - this._lastPaintCall < 10) {
       console.warn("Worldview paint has been throttled");

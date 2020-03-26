@@ -39,7 +39,7 @@ import {
 import type { UserNodeLog } from "webviz-core/src/players/UserNodePlayer/types";
 import type { UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import Rpc from "webviz-core/src/util/Rpc";
+import Rpc, { type Channel } from "webviz-core/src/util/Rpc";
 
 type UserNodeActions = {
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
@@ -63,7 +63,8 @@ export default class UserNodePlayer implements Player {
   _setUserNodeDiagnostics: (nodeId: string, diagnostics: Diagnostic[]) => void;
   _addUserNodeLogs: (nodeId: string, logs: UserNodeLog[]) => void;
   _setNodeTrust: (nodeId: string, trusted: boolean) => void;
-  _nodeTransformWorker: Rpc = new Rpc(new NodeDataWorker());
+  _nodeTransformWorker: Channel = new NodeDataWorker();
+  _nodeTransformRpc: Rpc = new Rpc(this._nodeTransformWorker);
   _userDatatypes: RosDatatypes = {};
 
   constructor(player: Player, userNodeActions: UserNodeActions) {
@@ -232,7 +233,7 @@ export default class UserNodePlayer implements Player {
       }
 
       const { topics = [], datatypes: playerDatatypes = {} } = this._lastPlayerStateActiveData || {};
-      const nodeData = await this._nodeTransformWorker.send("transform", {
+      const nodeData = await this._nodeTransformRpc.send("transform", {
         name: node.name,
         sourceCode: node.sourceCode,
         playerInfo: { topics, playerDatatypes },
@@ -319,6 +320,7 @@ export default class UserNodePlayer implements Player {
       nodeRegistration.terminate();
     }
     this._player.close();
+    this._nodeTransformWorker.terminate();
   };
 
   setPublishers = (publishers: AdvertisePayload[]) => this._player.setPublishers(publishers);

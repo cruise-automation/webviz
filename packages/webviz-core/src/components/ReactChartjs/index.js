@@ -38,6 +38,7 @@ import WebWorkerManager from "webviz-core/src/util/WebWorkerManager";
 
 export type HoveredElement = any;
 export type ScaleOptions = ManagerScaleOptions;
+type OnEndChartUpdate = () => void;
 
 type Props = {|
   id?: string,
@@ -54,8 +55,7 @@ type Props = {|
   onClick?: (SyntheticMouseEvent<HTMLCanvasElement>, datalabel: ?any) => void,
   forceDisableWorkerRendering?: ?boolean,
   scaleOptions?: ?ScaleOptions,
-  onStartChartUpdate?: () => void,
-  onEndChartUpdate?: () => void,
+  onChartUpdate?: () => OnEndChartUpdate,
 |};
 
 const devicePixelRatio = window.devicePixelRatio || 1;
@@ -70,6 +70,7 @@ class ChartComponent extends React.PureComponent<Props> {
   _id = uuid.v4();
   _scaleBoundsByScaleId = {};
   _usingWebWorker = false;
+  _onEndChartUpdateCallbacks = {};
 
   constructor(props: Props) {
     super(props);
@@ -144,9 +145,12 @@ class ChartComponent extends React.PureComponent<Props> {
   }
 
   componentDidUpdate() {
-    const { data, options, scaleOptions, width, height, onStartChartUpdate, onEndChartUpdate } = this.props;
-    if (onStartChartUpdate) {
-      onStartChartUpdate();
+    const { data, options, scaleOptions, width, height, onChartUpdate } = this.props;
+    let chartUpdateId;
+    if (onChartUpdate) {
+      const onEndChartUpdate = onChartUpdate();
+      chartUpdateId = uuid.v4();
+      this._onEndChartUpdateCallbacks[chartUpdateId] = onEndChartUpdate;
     }
     this._getRpc()
       .send("update", {
@@ -158,14 +162,22 @@ class ChartComponent extends React.PureComponent<Props> {
         height,
       })
       .then((scaleBoundsUpdate) => {
-        if (onEndChartUpdate) {
-          onEndChartUpdate();
-        }
         this._onUpdateScaleBounds(scaleBoundsUpdate);
+      })
+      .finally(() => {
+        if (this._onEndChartUpdateCallbacks[chartUpdateId]) {
+          this._onEndChartUpdateCallbacks[chartUpdateId]();
+          delete this._onEndChartUpdateCallbacks[chartUpdateId];
+        }
       });
   }
 
   componentWillUnmount() {
+    // If this component will unmount, resolve any pending update callbacks.
+    // $FlowFixMe
+    Object.values(this._onEndChartUpdateCallbacks).forEach((callback) => callback());
+    this._onEndChartUpdateCallbacks = {};
+
     if (this._chartRpc) {
       this._chartRpc.send("destroy", { id: this._id });
       this._chartRpc = null;

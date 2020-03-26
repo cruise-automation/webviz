@@ -117,8 +117,8 @@ function Plot(props: Props) {
             itemsByPath,
             startTime,
             xAxisVal,
-            xAxisPath,
-            includeTooltipInData
+            includeTooltipInData,
+            xAxisPath
           );
           return (
             <>

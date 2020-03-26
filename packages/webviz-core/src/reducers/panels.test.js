@@ -55,7 +55,7 @@ describe("state.panels", () => {
     const store = getStore();
     const payload = {
       layout: "foo!bar",
-      savedProps: { foo: { test: true } },
+      savedProps: { "foo!bar": { test: true } },
     };
 
     store.checkState((panels, routing) => {
@@ -67,27 +67,27 @@ describe("state.panels", () => {
     store.dispatch(importPanelLayout(payload));
     store.checkState((panels) => {
       expect(panels.layout).toEqual("foo!bar");
-      expect(panels.savedProps).toEqual({ foo: { test: true } });
+      expect(panels.savedProps).toEqual({ "foo!bar": { test: true } });
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.layout).toEqual(panels.layout);
       expect(globalState.savedProps).toEqual(panels.savedProps);
     });
 
-    store.dispatch(changePanelLayout("foo"));
+    store.dispatch(changePanelLayout("foo!bar"));
     store.checkState((panels) => {
-      expect(panels.layout).toEqual("foo");
-      expect(panels.savedProps).toEqual({ foo: { test: true } });
+      expect(panels.layout).toEqual("foo!bar");
+      expect(panels.savedProps).toEqual({ "foo!bar": { test: true } });
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.layout).toEqual(panels.layout);
       expect(globalState.savedProps).toEqual(panels.savedProps);
     });
 
-    store.dispatch(savePanelConfig({ id: "foo", config: { testing: true }, defaultConfig: { testing: false } }));
+    store.dispatch(savePanelConfig({ id: "foo!bar", config: { testing: true }, defaultConfig: { testing: false } }));
     store.checkState((panels) => {
-      expect(panels.layout).toEqual("foo");
-      expect(panels.savedProps).toEqual({ foo: { test: true, testing: true } });
+      expect(panels.layout).toEqual("foo!bar");
+      expect(panels.savedProps).toEqual({ "foo!bar": { test: true, testing: true } });
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.layout).toEqual(panels.layout);

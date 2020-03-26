@@ -40,9 +40,7 @@ function formatData(
   tooltips: TimeBasedChartTooltipData[]
 ) {
   const { x, y } = data;
-  const tooltip = tooltips.find(
-    (_tooltip) => _tooltip.datasetKey === datasetKey && _tooltip.datasetIndex === dataIndex
-  );
+  const tooltip = tooltips.find((_tooltip) => _tooltip.datasetKey === datasetKey);
   if (!tooltip) {
     throw new Error("Cannot find tooltip for dataset: this should never happen");
   }

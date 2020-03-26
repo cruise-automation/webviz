@@ -17,7 +17,7 @@ import {
   BASE_DATA_SOURCE_PREFIXES,
   FEATURE_DATA_SOURCE_PREFIXES,
 } from "./topicGroupsUtils";
-import type { TopicGroupConfig, VisibilityByColumn, SelectedNamespacesByColumn, SettingsByColumn } from "./types";
+import type { TopicGroupConfig, VisibilityByColumn, NamespacesByColumn, SettingsByColumn } from "./types";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
 
@@ -276,9 +276,9 @@ function getTopicVisibilityByColumn(
 }
 
 function getTopicSelectedNamespacesByColumn(
-  selectedNamespacesByColumn: ?SelectedNamespacesByColumn,
+  selectedNamespacesByColumn: ?NamespacesByColumn,
   namespacesBySource: NamespacesBySource
-): ?{| selectedNamespacesByColumn: SelectedNamespacesByColumn |} {
+): ?{| selectedNamespacesByColumn: NamespacesByColumn |} {
   let baseNamespaces = [];
   BASE_DATA_SOURCE_PREFIXES.forEach((prefix) => {
     if (namespacesBySource[prefix]) {

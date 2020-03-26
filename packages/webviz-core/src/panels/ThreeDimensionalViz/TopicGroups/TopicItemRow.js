@@ -5,22 +5,25 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useContext } from "react";
 import styled from "styled-components";
 import tinyColor from "tinycolor2";
 
 import Accordion from "./Accordion";
 import Namespace from "./Namespace";
+import { KeyboardContext } from "./TopicGroups";
+import { toggleNamespace } from "./topicGroupsVisibilityUtils";
 import TopicItemRowHeader from "./TopicItemRowHeader";
 import { parseColorSetting } from "./TopicSettingsEditor";
 import type { TopicItem, OnTopicGroupsChange } from "./types";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
+type StyleProps = {| available: boolean, visible: boolean |};
 const SItemRow = styled.li`
   padding: 0;
   display: flex;
   flex-direction: column;
-  color: ${(props: { available: boolean }) => (props.available ? colors.LIGHT1 : colors.TEXT_MUTED)};
+  color: ${({ available, visible }: StyleProps) => (available && visible ? colors.LIGHT1 : colors.DARK8)};
   &:hover {
     color: ${colors.LIGHT};
   }
@@ -40,18 +43,26 @@ type Props = {|
 |};
 
 export default function TopicItemRow(props: Props) {
+  const { setFocusIndex } = useContext(KeyboardContext);
   const {
     hasFeatureColumn,
     objectPath,
     onTopicGroupsChange,
-    item,
     item: {
       expanded: topicExpanded,
       settingsByColumn = [undefined, undefined],
       topicName,
-      derivedFields: { prefixByColumn, namespaceDisplayVisibilityByNamespace, displayVisibilityByColumn },
+      selectedNamespacesByColumn,
+      derivedFields: {
+        availableNamespacesByColumn,
+        displayVisibilityByColumn,
+        filterText,
+        prefixByColumn,
+        sortedNamespaceDisplayVisibilityByColumn,
+      },
     },
   } = props;
+  const namespacesMatchedSearch = !!filterText && !!sortedNamespaceDisplayVisibilityByColumn?.length;
 
   const overrideColorByColumn = useMemo(
     (): (?string)[] =>
@@ -72,56 +83,58 @@ export default function TopicItemRow(props: Props) {
     [objectPath, onTopicGroupsChange, topicExpanded]
   );
 
+  const available = !!displayVisibilityByColumn;
+  const visible = displayVisibilityByColumn && displayVisibilityByColumn.some((displayItem) => displayItem?.visible);
+
   return (
-    <SItemRow hasNamespaces={!!namespaceDisplayVisibilityByNamespace} available={!!displayVisibilityByColumn}>
-      {namespaceDisplayVisibilityByNamespace ? (
+    <SItemRow hasNamespaces={!!sortedNamespaceDisplayVisibilityByColumn} available={available} visible={visible}>
+      {sortedNamespaceDisplayVisibilityByColumn ? (
         <Accordion
-          active={topicExpanded}
+          active={topicExpanded || namespacesMatchedSearch}
           onToggle={onToggleExpand}
           renderHeader={({ onToggle }) => (
             <TopicItemRowHeader
               {...props}
+              setFocusIndex={setFocusIndex}
               hasNamespaces
               onToggleExpand={onToggle}
               overrideColorByColumn={overrideColorByColumn}
             />
           )}>
           <>
-            {topicExpanded && (
+            {(topicExpanded || namespacesMatchedSearch) && (
               <SNamespacesBySource>
-                {Object.keys(namespaceDisplayVisibilityByNamespace)
-                  .sort()
-                  .map((ns) => {
-                    const nsItem = namespaceDisplayVisibilityByNamespace[ns];
-                    return (
-                      <Namespace
-                        key={ns}
-                        hasFeatureColumn={hasFeatureColumn}
-                        name={ns}
-                        prefixByColumn={prefixByColumn}
-                        displayVisibilityByColumn={nsItem}
-                        overrideColorByColumn={overrideColorByColumn}
-                        topicName={topicName}
-                        onToggleNamespace={({ visible, namespace, columnIndex }) => {
-                          let newNamespaces =
-                            (item.selectedNamespacesByColumn && item.selectedNamespacesByColumn[columnIndex]) || [];
-                          newNamespaces = visible
-                            ? [...newNamespaces, namespace]
-                            : newNamespaces.filter((name) => name !== namespace);
-                          onTopicGroupsChange(
-                            `${objectPath}.selectedNamespacesByColumn[${columnIndex}]`,
-                            newNamespaces
-                          );
-                        }}
-                      />
-                    );
-                  })}
+                {sortedNamespaceDisplayVisibilityByColumn.map((nsItem, index) => {
+                  return (
+                    <Namespace
+                      {...nsItem}
+                      setFocusIndex={setFocusIndex}
+                      filterText={filterText}
+                      key={nsItem.namespace}
+                      hasFeatureColumn={hasFeatureColumn}
+                      prefixByColumn={prefixByColumn}
+                      overrideColorByColumn={overrideColorByColumn}
+                      topicName={topicName}
+                      onToggleNamespace={({ namespace, columnIndex }) => {
+                        onTopicGroupsChange(
+                          `${objectPath}.selectedNamespacesByColumn`,
+                          toggleNamespace(
+                            selectedNamespacesByColumn || [undefined, undefined],
+                            availableNamespacesByColumn || [[], []],
+                            namespace,
+                            columnIndex
+                          )
+                        );
+                      }}
+                    />
+                  );
+                })}
               </SNamespacesBySource>
             )}
           </>
         </Accordion>
       ) : (
-        <TopicItemRowHeader {...props} overrideColorByColumn={overrideColorByColumn} />
+        <TopicItemRowHeader {...props} setFocusIndex={setFocusIndex} overrideColorByColumn={overrideColorByColumn} />
       )}
     </SItemRow>
   );

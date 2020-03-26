@@ -36,6 +36,7 @@ export const SRow = styled.div`
 export const SLabel = styled.label`
   width: ${(props) => (props.width ? `${props.width}px` : "80px")};
   margin: 4px 0;
+  font-size: 10px;
 `;
 export const SValue = styled.div`
   color: ${colors.HIGHLIGHT};

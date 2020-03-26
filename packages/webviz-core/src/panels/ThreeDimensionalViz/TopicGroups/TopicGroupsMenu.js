@@ -10,11 +10,13 @@ import DotsVerticalIcon from "@mdi/svg/svg/dots-vertical.svg";
 import React, { useState } from "react";
 import styled from "styled-components";
 
-import { DEFAULT_IMPORTED_GROUP_NAME } from "./constants";
+import { DEFAULT_IMPORTED_GROUP_NAME, KEYBOARD_SHORTCUTS } from "./constants";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
+import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
 import Menu from "webviz-core/src/components/Menu";
 import Item from "webviz-core/src/components/Menu/Item";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
@@ -27,6 +29,17 @@ const SIconWrapper = styled.div`
   justify-content: center;
 `;
 
+const SLabel = styled.label`
+  color: ${colors.TEXT_MUTED};
+  display: inline-block;
+  margin: 4px 0;
+`;
+
+const SKeyboardShortcutsWrapper = styled.div`
+  padding: 8px 12px;
+  border-top: 1px solid ${colors.DARK6};
+  margin-top: 4px;
+`;
 type Props = {
   saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
   onImportSettings: () => void,
@@ -56,9 +69,21 @@ export default function TopicGroupsMenu({ saveConfig, onImportSettings }: Props)
               Let us know if the topic groups work for you.
             </div>
           }
-          onClick={() => saveConfig({ enableTopicTree: true })}>
+          onClick={() => {
+            saveConfig({ enableTopicTree: true });
+            const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger() || {};
+            if (logger && eventNames?.TOGGLE_TOPIC_GROUPS && eventTags?.ENABLE_TOPIC_GROUPS) {
+              logger({ name: eventNames.TOGGLE_TOPIC_GROUPS, tags: { [eventTags.ENABLE_TOPIC_GROUPS]: false } });
+            }
+          }}>
           <span style={{ color: colors.RED }}>Enable topic tree</span>
         </Item>
+        <SKeyboardShortcutsWrapper>
+          <SLabel>KEYBOARD SHORTCUTS</SLabel>
+          {KEYBOARD_SHORTCUTS.map(({ description, keys }, idx) => (
+            <KeyboardShortcut key={idx} description={description} keys={keys} descriptionMaxWidth={188} />
+          ))}
+        </SKeyboardShortcutsWrapper>
       </Menu>
     </ChildToggle>
   );

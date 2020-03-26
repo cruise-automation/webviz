@@ -35,13 +35,11 @@ export async function renderImage({
   imageMessage,
   rawMarkerData,
   imageMarkerDatatypes,
-  imageMarkerArrayDatatypes,
 }: {
   canvas: ?(HTMLCanvasElement | OffscreenCanvas),
   imageMessage: any,
   rawMarkerData: RawMarkerData,
   imageMarkerDatatypes: string[],
-  imageMarkerArrayDatatypes: string[],
 }): Promise<?Dimensions> {
   if (!canvas) {
     return null;
@@ -62,7 +60,7 @@ export async function renderImage({
 
   try {
     const bitmap = await decodeMessageToBitmap(imageMessage);
-    const dimensions = paintBitmap(canvas, bitmap, markerData, imageMarkerDatatypes, imageMarkerArrayDatatypes);
+    const dimensions = paintBitmap(canvas, bitmap, markerData, imageMarkerDatatypes);
     bitmap.close();
     return dimensions;
   } catch (error) {
@@ -133,8 +131,7 @@ function paintBitmap(
   canvas: HTMLCanvasElement,
   bitmap: ImageBitmap,
   markerData: MarkerData,
-  imageMarkerDatatypes: string[],
-  imageMarkerArrayDatatypes: string[]
+  imageMarkerDatatypes: string[]
 ): ?Dimensions {
   let bitmapDimensions = { width: bitmap.width, height: bitmap.height };
   const ctx = canvas.getContext("2d");
@@ -162,7 +159,7 @@ function paintBitmap(
   ctx.restore();
   ctx.save();
   try {
-    paintMarkers(ctx, markers, cameraModel, imageMarkerDatatypes, imageMarkerArrayDatatypes);
+    paintMarkers(ctx, markers, cameraModel, imageMarkerDatatypes);
   } catch (err) {
     console.warn("error painting markers:", err);
   } finally {
@@ -173,21 +170,22 @@ function paintBitmap(
 
 function paintMarkers(
   ctx: CanvasRenderingContext2D,
-  markers: Message[],
+  messages: Message[],
   cameraModel: ?CameraModel,
-  imageMarkerDatatypes: string[],
-  imageMarkerArrayDatatypes: string[]
+  imageMarkerDatatypes: string[]
 ) {
-  for (const msg of markers) {
+  for (const { message } of messages) {
     ctx.save();
-    if (imageMarkerArrayDatatypes.includes(msg.datatype)) {
-      for (const marker of msg.message.markers) {
-        paintMarker(ctx, marker, cameraModel);
+    try {
+      if (Array.isArray(message.markers)) {
+        for (const marker of message.markers) {
+          paintMarker(ctx, marker, cameraModel);
+        }
+      } else {
+        paintMarker(ctx, message, cameraModel);
       }
-    } else if (imageMarkerDatatypes.includes(msg.datatype)) {
-      paintMarker(ctx, msg.message, cameraModel);
-    } else {
-      console.warn("unrecognized image marker datatype", msg);
+    } catch (e) {
+      console.error("Unable to paint marker to ImageView", e, message);
     }
     ctx.restore();
   }

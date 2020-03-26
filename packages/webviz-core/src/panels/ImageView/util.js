@@ -37,22 +37,24 @@ export type MarkerData = ?{|
   cameraModel: ?CameraModel, // null means no transformation is needed
 |};
 
-export function getMarkerOptions(imageTopic: string, markerTopics: string[], allCameraNamespaces: string[]): string[] {
+export function getMarkerOptions(
+  imageTopic: string,
+  topics: $ReadOnlyArray<Topic>,
+  allCameraNamespaces: string[],
+  imageMarkerDatatypes: string[]
+): string[] {
   const results = [];
   const cameraNamespace = getCameraNamespace(imageTopic);
-  for (const topic of markerTopics) {
-    if (cameraNamespace && topic.startsWith(cameraNamespace)) {
-      results.push(topic);
-    } else if (cameraNamespace && topic.startsWith(`/old${cameraNamespace}`)) {
-      results.push(topic);
-    } else if (allCameraNamespaces.includes(getCameraNamespace(topic))) {
-      // this topic corresponds to a different camera
-      continue;
-    } else {
-      results.push(topic);
+  for (const { name, datatype } of topics) {
+    if (
+      cameraNamespace &&
+      (name.startsWith(cameraNamespace) || name.startsWith(`/old${cameraNamespace}`)) &&
+      imageMarkerDatatypes.includes(datatype)
+    ) {
+      results.push(name);
     }
   }
-  return results;
+  return results.sort();
 }
 
 export function getRelatedMarkerTopics(enabledMarkerTopics: string[], availableMarkerTopics: string[]): string[] {

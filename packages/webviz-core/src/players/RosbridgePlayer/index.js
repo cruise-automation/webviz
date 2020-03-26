@@ -18,14 +18,15 @@ import {
   messageDetailsToRosDatatypes,
   sanitizeMessage,
 } from "webviz-core/src/players/RosbridgePlayer/utils";
-import type {
-  AdvertisePayload,
-  Message,
-  Player,
-  PlayerState,
-  PublishPayload,
-  SubscribePayload,
-  Topic,
+import {
+  type AdvertisePayload,
+  type Message,
+  type Player,
+  PlayerCapabilities,
+  type PlayerState,
+  type PublishPayload,
+  type SubscribePayload,
+  type Topic,
 } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
@@ -36,6 +37,8 @@ import { fromMillis } from "webviz-core/src/util/time";
 import "roslib/build/roslib";
 
 const ROSLIB = window.ROSLIB;
+
+const capabilities = [PlayerCapabilities.advertise];
 
 // Connects to `rosbridge_server` instance using `roslibjs`. Currently doesn't support seeking or
 // showing simulated time, so current time from Date.now() is always used instead. Also doesn't yet
@@ -55,6 +58,7 @@ export default class RosbridgePlayer implements Player {
   _requestedSubscriptions: SubscribePayload[] = []; // Requested subscriptions by setSubscriptions()
   _messages: Message[] = []; // Queue of messages that we'll send in next _emitState() call.
   _requestTopicsTimeout: ?TimeoutID; // setTimeout() handle for _requestTopics().
+  _topicPublishers: { [topicName: string]: ROSLIB.Topic } = {};
 
   constructor(url: string) {
     this._url = url;
@@ -182,7 +186,7 @@ export default class RosbridgePlayer implements Player {
         showSpinner: true,
         showInitializing: !!this._rosClient,
         progress: {},
-        capabilities: [],
+        capabilities,
         playerId: this._id,
         activeData: undefined,
       });
@@ -199,7 +203,7 @@ export default class RosbridgePlayer implements Player {
       showSpinner: !this._rosClient,
       showInitializing: false,
       progress: {},
-      capabilities: [],
+      capabilities,
       playerId: this._id,
 
       activeData: {
@@ -277,9 +281,36 @@ export default class RosbridgePlayer implements Player {
     }
   }
 
+  setPublishers(publishers: AdvertisePayload[]) {
+    // Since `setPublishers` is rarely called, we can get away with just throwing away the old
+    // ROSLIB.Topic objects and creating new ones.
+    for (const topic of Object.keys(this._topicPublishers)) {
+      this._topicPublishers[topic].unadvertise();
+    }
+    this._topicPublishers = {};
+    for (const { topic, datatype } of publishers) {
+      this._topicPublishers[topic] = new ROSLIB.Topic({
+        ros: this._rosClient,
+        name: topic,
+        messageType: datatype,
+        queue_size: 0,
+      });
+    }
+  }
+
+  publish({ topic, msg }: PublishPayload) {
+    if (!this._topicPublishers[topic]) {
+      reportError(
+        "Invalid publish call",
+        `Tried to publish on a topic that is not registered as a publisher: ${topic}`,
+        "app"
+      );
+      return;
+    }
+    this._topicPublishers[topic].publish(msg);
+  }
+
   // Bunch of unsupported stuff. Just don't do anything for these.
-  setPublishers(publishers: AdvertisePayload[]) {}
-  publish(request: PublishPayload) {}
   startPlayback() {}
   pausePlayback() {}
   seekPlayback(time: Time) {}

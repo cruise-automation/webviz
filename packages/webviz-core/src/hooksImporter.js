@@ -13,7 +13,7 @@ import { DIAGNOSTIC_TOPIC } from "./util/globalConstants";
 
 /*
 We've split this code out seperately from the rest of the hooks so that we can lazy load these components by
-lazily importing this file at runtime. 
+lazily importing this file at runtime.
 */
 
 export function panelsByCategory() {
@@ -27,6 +27,7 @@ export function panelsByCategory() {
   const NumberOfRenders = require("webviz-core/src/panels/NumberOfRenders").default;
   const PlaybackPerformance = require("webviz-core/src/panels/PlaybackPerformance").default;
   const Plot = require("webviz-core/src/panels/Plot").default;
+  const Publish = require("webviz-core/src/panels/Publish").default;
   const RawMessages = require("webviz-core/src/panels/RawMessages").default;
   const Rosout = require("webviz-core/src/panels/Rosout").default;
   const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
@@ -42,6 +43,7 @@ export function panelsByCategory() {
     { title: `Diagnostics ${ndash} Detail`, component: DiagnosticStatusPanel },
     { title: "Image", component: ImageViewPanel },
     { title: "Plot", component: Plot },
+    { title: "Publish", component: Publish },
     { title: "Raw Messages", component: RawMessages },
     { title: "rosout", component: Rosout },
     { title: "State Transitions", component: StateTransitions },
@@ -98,6 +100,7 @@ export function perPanelHooks() {
       defaultConfig: {
         cameraTopic: "",
         enabledMarkerTopics: [],
+        customMarkerTopicOptions: [],
         scale: 0.2,
         transformMarkers: false,
         synchronize: false,
@@ -106,7 +109,6 @@ export function perPanelHooks() {
         offset: [0, 0],
       },
       imageMarkerDatatypes: ["visualization_msgs/ImageMarker"],
-      imageMarkerArrayDatatypes: [],
       canTransformMarkersByTopic: (topic) => !topic.includes("rect"),
     },
     StateTransitions: { defaultConfig: { paths: [] }, customStateTransitionColors: {} },

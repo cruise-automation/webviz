@@ -14,6 +14,7 @@ import {
   buildMarkerData,
   getCameraNamespace,
 } from "./util";
+import type { Topic } from "webviz-core/src/players/types";
 
 describe("ImageView", () => {
   describe("getCameraInfoTopic", () => {
@@ -28,19 +29,21 @@ describe("ImageView", () => {
   });
 
   describe("getMarkerOptions", () => {
-    const allMarkerTopics = [
-      "/some_camera_topic/marker1",
-      "/some_camera_topic/marker2",
-      "/camera_rear_medium/marker3", // not included because it's for a different camera
-      "/unknown_camera/marker4",
+    const allMarkerTopics: Topic[] = [
+      { name: "/some_camera_topic/marker1", datatype: "visualization_msgs/ImageMarker" },
+      { name: "/some_camera_topic/marker2", datatype: "vision_msgs/ImageMarker" },
+      { name: "/old/some_camera_topic/marker3", datatype: "vision_msgs/ImageMarker" },
+      { name: "/camera_rear_medium/marker4", datatype: "vision_msgs/ImageMarker" }, // not included because it's for a different camera
+      { name: "/unknown_camera/marker5", datatype: "vision_msgs/ImageMarker" },
     ];
     const allCameraNamespaces = ["/some_camera_topic", "/camera_rear_medium"];
-    it("filters topics relevant to this camera", () => {
-      expect(getMarkerOptions("/some_camera_topic/image_rect_color", allMarkerTopics, allCameraNamespaces)).toEqual([
-        "/some_camera_topic/marker1",
-        "/some_camera_topic/marker2",
-        "/unknown_camera/marker4",
-      ]);
+    it("filters and sorts topics relevant to this camera", () => {
+      expect(
+        getMarkerOptions("/some_camera_topic/image_rect_color", allMarkerTopics, allCameraNamespaces, [
+          "visualization_msgs/ImageMarker",
+          "vision_msgs/ImageMarker",
+        ])
+      ).toEqual(["/old/some_camera_topic/marker3", "/some_camera_topic/marker1", "/some_camera_topic/marker2"]);
     });
   });
 

@@ -192,9 +192,6 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
 
     case "IMPORT_PANEL_LAYOUT":
       newGlobalState = importPanelLayout(state, action.payload);
-      if (action.payload.skipSettingLocalStorage) {
-        return newGlobalState;
-      }
       break;
 
     case "OVERWRITE_GLOBAL_DATA":
@@ -237,6 +234,9 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
       break;
   }
 
+  if (action.payload && action.payload.skipSettingLocalStorage) {
+    return newGlobalState;
+  }
   storage.set(GLOBAL_STATE_STORAGE_KEY, newGlobalState);
   return newGlobalState;
 }

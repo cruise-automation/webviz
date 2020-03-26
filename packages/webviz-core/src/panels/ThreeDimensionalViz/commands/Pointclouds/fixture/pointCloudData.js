@@ -194,7 +194,7 @@ export const POINT_CLOUD_WITH_ADDITIONAL_FIELDS = {
       count: 1,
     },
     {
-      name: "foo16",
+      name: "foo16_some_really_really_long_name",
       offset: 19,
       datatype: 3,
       count: 1,

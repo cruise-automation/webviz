@@ -16,14 +16,10 @@ import Panel from "webviz-core/src/components/Panel";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 
+type DummyConfig = { someString: string };
+type DummyProps = { config: DummyConfig, saveConfig: ($Shape<DummyConfig>) => void };
+
 function getDummyPanel(renderFn) {
-  type DummyConfig = {
-    someString: string,
-  };
-  type DummyProps = {
-    config: DummyConfig,
-    saveConfig: ($Shape<DummyConfig>) => void,
-  };
   class DummyComponent extends React.Component<DummyProps> {
     static panelType = "Dummy";
     static defaultConfig = { someString: "hello world" };
@@ -82,7 +78,7 @@ describe("Panel", () => {
     const renderFn = jest.fn();
     const DummyPanel = getDummyPanel(renderFn);
 
-    const childId = "someChildId";
+    const childId = "3D Panel!1my2ydk";
     const someString = "someNewString";
 
     const store = getStore();

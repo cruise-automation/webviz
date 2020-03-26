@@ -88,7 +88,26 @@ export default class BagDataProvider implements DataProvider {
     }
 
     const { startTime, endTime, chunkInfos } = this._bag;
-    const connections = ((Object.values(this._bag.connections): any): Connection[]);
+    const connections: Connection[] = [];
+    const malformedConnections: any[] = [];
+    for (const connection: any of Object.values(this._bag.connections)) {
+      const { messageDefinition, md5sum, topic, type } = connection;
+      if (messageDefinition && md5sum && topic && type) {
+        connections.push({ messageDefinition, md5sum, topic, type });
+      } else {
+        malformedConnections.push(connection);
+      }
+    }
+    if (malformedConnections.length > 0) {
+      reportError(
+        "Warning: Malformed connections found",
+        `This bag has some malformed connections. We'll try to play the remaining topics. Details:\n\n${JSON.stringify(
+          malformedConnections
+        )}`,
+        "user"
+      );
+    }
+
     if (!startTime || !endTime || !connections.length) {
       // This will abort video generation:
       reportError("Cannot play invalid bag", "Bag is empty or corrupt.", "user");

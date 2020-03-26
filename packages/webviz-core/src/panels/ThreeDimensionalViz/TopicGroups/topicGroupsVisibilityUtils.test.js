@@ -15,6 +15,8 @@ import {
   toggleAllForTopicVisibility,
   keyboardToggleAllForGroupVisibility,
   keyboardToggleAllForTopicVisibility,
+  toggleNamespace,
+  keyboardToggleNamespace,
 } from "./topicGroupsVisibilityUtils";
 import type { TopicGroupType, TopicItem } from "./types";
 
@@ -71,7 +73,7 @@ describe("toggleAllForGroupVisibility", () => {
           isShownInList: true,
           displayName: "/g1_topic1",
           prefixByColumn: ["", "/webviz_bag_2"],
-          namespaceDisplayVisibilityByNamespace: {},
+          sortedNamespaceDisplayVisibilityByColumn: [],
           displayVisibilityByColumn: [
             { badgeText: "B1", isParentVisible: true, visible: false, available: true },
             null,
@@ -87,14 +89,32 @@ describe("toggleAllForGroupVisibility", () => {
           isShownInList: true,
           displayName: "/g1_topic2_ns",
           prefixByColumn: ["", "/webviz_bag_2"],
-          namespaceDisplayVisibilityByNamespace: {
-            ns1: [{ isParentVisible: false, badgeText: "B1", visible: true, available: true }, null],
-            ns2: [
-              { isParentVisible: false, badgeText: "B1", visible: true, available: true },
-              { isParentVisible: false, badgeText: "B1", visible: true, available: true },
-            ],
-            ns3: [null, { isParentVisible: false, badgeText: "B1", visible: true, available: true }],
-          },
+          sortedNamespaceDisplayVisibilityByColumn: [
+            {
+              namespace: "ns1",
+              keyboardFocusIndex: -1,
+              displayVisibilityByColumn: [
+                { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+                null,
+              ],
+            },
+            {
+              namespace: "ns2",
+              keyboardFocusIndex: -1,
+              displayVisibilityByColumn: [
+                { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+                { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+              ],
+            },
+            {
+              namespace: "ns3",
+              keyboardFocusIndex: -1,
+              displayVisibilityByColumn: [
+                null,
+                { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+              ],
+            },
+          ],
           displayVisibilityByColumn: [
             { badgeText: "B1", isParentVisible: true, visible: false, available: true },
             { badgeText: "B1", isParentVisible: false, visible: false, available: true },
@@ -110,7 +130,7 @@ describe("toggleAllForGroupVisibility", () => {
           isShownInList: true,
           displayName: "/g1_topic3_unavailable",
           prefixByColumn: ["", "/webviz_bag_2"],
-          namespaceDisplayVisibilityByNamespace: {},
+          sortedNamespaceDisplayVisibilityByColumn: [],
           displayVisibilityByColumn: [null, null],
         },
       },
@@ -122,7 +142,7 @@ describe("toggleAllForGroupVisibility", () => {
           isShownInList: true,
           displayName: "/labels_json/g1_topic4",
           prefixByColumn: ["", "/labels_json_2"],
-          namespaceDisplayVisibilityByNamespace: {},
+          sortedNamespaceDisplayVisibilityByColumn: [],
           displayVisibilityByColumn: [
             { badgeText: "B1", isParentVisible: true, visible: false, available: true },
             null,
@@ -138,7 +158,7 @@ describe("toggleAllForGroupVisibility", () => {
           isShownInList: true,
           displayName: "/webviz_tables/g1_topic5_tables",
           prefixByColumn: ["", "/webviz_bag_2"],
-          namespaceDisplayVisibilityByNamespace: {},
+          sortedNamespaceDisplayVisibilityByColumn: [],
           displayVisibilityByColumn: [
             { badgeText: "B1", isParentVisible: true, visible: false, available: true },
             null,
@@ -154,7 +174,7 @@ describe("toggleAllForGroupVisibility", () => {
           isShownInList: true,
           displayName: "/g1_topic6_tables_only_tables_2_available",
           prefixByColumn: ["", "/webviz_bag_2"],
-          namespaceDisplayVisibilityByNamespace: {},
+          sortedNamespaceDisplayVisibilityByColumn: [],
           displayVisibilityByColumn: [null, null],
         },
       },
@@ -166,7 +186,7 @@ describe("toggleAllForGroupVisibility", () => {
           isShownInList: true,
           displayName: "/g1_topic7_only_bag_2_available",
           prefixByColumn: ["", "/webviz_bag_2"],
-          namespaceDisplayVisibilityByNamespace: {},
+          sortedNamespaceDisplayVisibilityByColumn: [],
           displayVisibilityByColumn: [
             null,
             { badgeText: "B1", isParentVisible: false, visible: false, available: true },
@@ -289,9 +309,17 @@ describe("toggleAllForTopicVisibility", () => {
         isShownInList: true,
         displayName: "/g2_topic1_ns_base_only",
         prefixByColumn: ["", "/webviz_bag_2"],
-        namespaceDisplayVisibilityByNamespace: {
-          g2t1ns1: [{ isParentVisible: false, badgeText: "B1", visible: true, available: true }, null],
-        },
+        availableNamespacesByColumn: [["g2t1ns1"], []],
+        sortedNamespaceDisplayVisibilityByColumn: [
+          {
+            namespace: "g2t1ns1",
+            keyboardFocusIndex: -1,
+            displayVisibilityByColumn: [
+              { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+              null,
+            ],
+          },
+        ],
         displayVisibilityByColumn: [{ badgeText: "B1", isParentVisible: false, visible: true, available: true }, null],
         datatype: "visualization_msgs/MarkerArray",
       },
@@ -314,9 +342,17 @@ describe("toggleAllForTopicVisibility", () => {
         isShownInList: true,
         displayName: "/g2_topic2_ns_feature_only",
         prefixByColumn: ["", "/webviz_bag_2"],
-        namespaceDisplayVisibilityByNamespace: {
-          g2t2ns1: [null, { isParentVisible: false, badgeText: "B1", visible: true, available: true }],
-        },
+        availableNamespacesByColumn: [[], ["g2t2ns1"]],
+        sortedNamespaceDisplayVisibilityByColumn: [
+          {
+            namespace: "g2t2ns1",
+            keyboardFocusIndex: -1,
+            displayVisibilityByColumn: [
+              null,
+              { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+            ],
+          },
+        ],
         displayVisibilityByColumn: [null, { badgeText: "B1", isParentVisible: false, visible: false, available: true }],
         datatype: "visualization_msgs/MarkerArray",
       },
@@ -338,9 +374,17 @@ describe("toggleAllForTopicVisibility", () => {
         isShownInList: true,
         displayName: "/g2_topic2_ns_feature_only",
         prefixByColumn: ["", "/webviz_bag_2"],
-        namespaceDisplayVisibilityByNamespace: {
-          g2t2ns1: [null, { isParentVisible: false, badgeText: "B1", visible: true, available: true }],
-        },
+        availableNamespacesByColumn: [["g2t2ns1"], ["g2t2ns1"]],
+        sortedNamespaceDisplayVisibilityByColumn: [
+          {
+            namespace: "g2t2ns1",
+            keyboardFocusIndex: -1,
+            displayVisibilityByColumn: [
+              null,
+              { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+            ],
+          },
+        ],
         displayVisibilityByColumn: [null, { badgeText: "B1", isParentVisible: false, visible: false, available: true }],
         datatype: "visualization_msgs/MarkerArray",
       },
@@ -370,14 +414,33 @@ describe("toggleAllForTopicVisibility", () => {
         isShownInList: true,
         displayName: "/g2_topic3_ns_base_and_feature",
         prefixByColumn: ["", "/webviz_bag_2"],
-        namespaceDisplayVisibilityByNamespace: {
-          g2t3ns1: [{ isParentVisible: false, badgeText: "B1", visible: true, available: true }, null],
-          g2t3ns2: [
-            { isParentVisible: false, badgeText: "B1", visible: true, available: true },
-            { isParentVisible: false, badgeText: "B1", visible: true, available: true },
-          ],
-          g2t3ns3: [null, { isParentVisible: false, badgeText: "B1", visible: true, available: true }],
-        },
+        availableNamespacesByColumn: [["g2t3ns1", "g2t3ns2"], ["g2t3ns2", "g2t3ns3"]],
+        sortedNamespaceDisplayVisibilityByColumn: [
+          {
+            namespace: "g2t3ns1",
+            keyboardFocusIndex: -1,
+            displayVisibilityByColumn: [
+              { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+              null,
+            ],
+          },
+          {
+            namespace: "g2t3ns2",
+            keyboardFocusIndex: -1,
+            displayVisibilityByColumn: [
+              { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+              { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+            ],
+          },
+          {
+            namespace: "g2t3ns3",
+            keyboardFocusIndex: -1,
+            displayVisibilityByColumn: [
+              null,
+              { isParentVisible: false, badgeText: "B1", visible: true, available: true },
+            ],
+          },
+        ],
         displayVisibilityByColumn: [
           { badgeText: "B1", isParentVisible: false, visible: false, available: true },
           { badgeText: "B1", isParentVisible: false, visible: true, available: true },
@@ -388,7 +451,7 @@ describe("toggleAllForTopicVisibility", () => {
 
     let topicItemResult = toggleAllForTopicVisibility(topicItem, 0);
     expect(getTopicItemMappedData(topicItemResult)).toEqual({
-      selectedNamespacesByColumn: [["g2t3ns1", "g2t3ns2", "g2t3ns3"], []],
+      selectedNamespacesByColumn: [["g2t3ns1", "g2t3ns2"], []],
       topicName: "/g2_topic3_ns_base_and_feature",
       visibilityByColumn: [true, true],
     });
@@ -396,7 +459,7 @@ describe("toggleAllForTopicVisibility", () => {
     // step 2: toggle all to be false on feature topic, the base selectedNamespacesByColumn should stay as it is
     topicItemResult = toggleAllForTopicVisibility(topicItemResult, 1);
     expect(getTopicItemMappedData(topicItemResult)).toEqual({
-      selectedNamespacesByColumn: [["g2t3ns1", "g2t3ns2", "g2t3ns3"], []],
+      selectedNamespacesByColumn: [["g2t3ns1", "g2t3ns2"], []],
       topicName: "/g2_topic3_ns_base_and_feature",
       visibilityByColumn: [true, false],
     });
@@ -404,9 +467,110 @@ describe("toggleAllForTopicVisibility", () => {
     // step 3: toggle all to be true on feature topic
     topicItemResult = toggleAllForTopicVisibility(topicItemResult, 1);
     expect(getTopicItemMappedData(topicItemResult)).toEqual({
-      selectedNamespacesByColumn: [["g2t3ns1", "g2t3ns2", "g2t3ns3"], ["g2t3ns1", "g2t3ns2", "g2t3ns3"]],
+      selectedNamespacesByColumn: [["g2t3ns1", "g2t3ns2"], ["g2t3ns2", "g2t3ns3"]],
       topicName: "/g2_topic3_ns_base_and_feature",
       visibilityByColumn: [true, true],
+    });
+  });
+});
+
+describe("namespace toggle", () => {
+  const availableNamespacesByColumn = [["ns1", "ns2", "ns4"], ["ns2", "ns3", "ns5"]];
+
+  describe("toggleNamespace", () => {
+    it("selects all other available namespaces in the column if the selectedNamespaces in this column is not set previously", () => {
+      expect(toggleNamespace([undefined, undefined], availableNamespacesByColumn, "ns2", 0)).toEqual([
+        ["ns1", "ns4"],
+        undefined,
+      ]);
+      expect(toggleNamespace([undefined, undefined], availableNamespacesByColumn, "ns2", 1)).toEqual([
+        undefined,
+        ["ns3", "ns5"],
+      ]);
+    });
+    it("unselects the namespace in the column if already selected", () => {
+      expect(toggleNamespace([["ns1", "ns2", "ns8"], undefined], availableNamespacesByColumn, "ns2", 0)).toEqual([
+        ["ns1", "ns8"],
+        undefined,
+      ]);
+
+      expect(
+        toggleNamespace([["ns1", "ns2", "ns8"], ["ns1", "ns2", "ns3", "ns5"]], availableNamespacesByColumn, "ns2", 1)
+      ).toEqual([["ns1", "ns2", "ns8"], ["ns1", "ns3", "ns5"]]);
+    });
+
+    it("selects the namespace in the column if not already selected", () => {
+      expect(toggleNamespace([["ns1", "ns8"], undefined], availableNamespacesByColumn, "ns2", 0)).toEqual([
+        ["ns1", "ns2", "ns8"],
+        undefined,
+      ]);
+
+      expect(toggleNamespace([["ns1", "ns8"], ["ns1", "ns3", "ns5"]], availableNamespacesByColumn, "ns2", 1)).toEqual([
+        ["ns1", "ns8"],
+        ["ns1", "ns2", "ns3", "ns5"],
+      ]);
+    });
+  });
+
+  describe("keyboardToggleNamespace", () => {
+    describe("when base selectedNamespaces is undefined, selects all other available namespaces in base and", () => {
+      it("selects all other available namespaces in feature column if the selectedNamespaces in this column is not set previously", () => {
+        expect(keyboardToggleNamespace([undefined, undefined], availableNamespacesByColumn, "ns2")).toEqual([
+          ["ns1", "ns4"],
+          ["ns3", "ns5"],
+        ]);
+      });
+
+      it("unselects the namespace in the feature column if already selected", () => {
+        expect(keyboardToggleNamespace([undefined, ["ns2", "ns3", "ns5"]], availableNamespacesByColumn, "ns2")).toEqual(
+          [["ns1", "ns4"], ["ns3", "ns5"]]
+        );
+      });
+      it("does not change the feature column selection if not already selected", () => {
+        expect(keyboardToggleNamespace([undefined, ["ns1", "ns3", "ns5"]], availableNamespacesByColumn, "ns2")).toEqual(
+          [["ns1", "ns4"], ["ns1", "ns3", "ns5"]]
+        );
+      });
+    });
+
+    describe("when base selectedNamespaces contains toggled namespace", () => {
+      it("selects all other available namespaces in feature column if the selectedNamespaces in this column is not set previously", () => {
+        expect(keyboardToggleNamespace([["ns1", "ns2", "ns4"], undefined], availableNamespacesByColumn, "ns2")).toEqual(
+          [["ns1", "ns4"], ["ns3", "ns5"]]
+        );
+      });
+
+      it("unselects the namespace in the feature column if already selected", () => {
+        expect(
+          keyboardToggleNamespace([["ns1", "ns2", "ns4"], ["ns2", "ns3", "ns5"]], availableNamespacesByColumn, "ns2")
+        ).toEqual([["ns1", "ns4"], ["ns3", "ns5"]]);
+      });
+      it("does not change the feature column selection if not already selected", () => {
+        expect(
+          keyboardToggleNamespace([["ns1", "ns2", "ns4"], ["ns1", "ns3", "ns5"]], availableNamespacesByColumn, "ns2")
+        ).toEqual([["ns1", "ns4"], ["ns1", "ns3", "ns5"]]);
+      });
+    });
+
+    describe("when base selectedNamespaces does not contain toggled namespace", () => {
+      it("does not change the feature column if not set previously", () => {
+        expect(keyboardToggleNamespace([["ns1", "ns4"], undefined], availableNamespacesByColumn, "ns2")).toEqual([
+          ["ns1", "ns2", "ns4"],
+          undefined,
+        ]);
+      });
+
+      it("selects the namespace in the feature column if not already selected", () => {
+        expect(keyboardToggleNamespace([["ns1", "ns4"], ["ns3", "ns5"]], availableNamespacesByColumn, "ns2")).toEqual([
+          ["ns1", "ns2", "ns4"],
+          ["ns2", "ns3", "ns5"],
+        ]);
+      });
+      it("does not change the feature column selection if already selected", () => {
+        expect(
+          keyboardToggleNamespace([["ns1", "ns4"], ["ns1", "ns2", "ns3", "ns5"]], availableNamespacesByColumn, "ns2")
+        ).toEqual([["ns1", "ns2", "ns4"], ["ns1", "ns2", "ns3", "ns5"]]);
+      });
     });
   });
 });

@@ -36,7 +36,8 @@ import type { SaveConfig } from "webviz-core/src/types/panels";
 import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 
 export type ThreeDimensionalVizConfig = {
-  enableTopicTree?: boolean,
+  enableShortDisplayNames?: boolean,
+  enableTopicTree?: ?boolean,
   autoTextBackgroundColor?: boolean,
   cameraState: $Shape<CameraState>,
   followTf?: string | false,
@@ -104,6 +105,17 @@ const BaseRenderer = (props: Props, ref) => {
     followOrientation,
     transforms,
   });
+
+  const onSetSubscriptions = useCallback(
+    (subscriptions: string[]) => {
+      setSubscriptions([
+        ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics,
+        TRANSFORM_TOPIC,
+        ...subscriptions,
+      ]);
+    },
+    [setSubscriptions]
+  );
 
   // use callbackInputsRef to make sure the input changes don't trigger `onFollowChange` or `onAlignXYAxis` to change
   const callbackInputsRef = React.useRef({
@@ -221,7 +233,7 @@ const BaseRenderer = (props: Props, ref) => {
           saveConfig={saveConfig}
           topics={topics}
           transforms={transforms}
-          setSubscriptions={setSubscriptions}
+          setSubscriptions={onSetSubscriptions}
         />
       ) : (
         <Layout
@@ -241,7 +253,7 @@ const BaseRenderer = (props: Props, ref) => {
           saveConfig={saveConfig}
           topics={topics}
           transforms={transforms}
-          setSubscriptions={setSubscriptions}
+          setSubscriptions={onSetSubscriptions}
         />
       )}
     </>
@@ -254,11 +266,4 @@ BaseRenderer.defaultConfig = getGlobalHooks().perPanelHooks().ThreeDimensionalVi
 
 export const Renderer = hoistNonReactStatics(React.forwardRef<Props, typeof BaseRenderer>(BaseRenderer), BaseRenderer);
 
-export default hot(
-  Panel<ThreeDimensionalVizConfig>(
-    FrameCompatibilityDEPRECATED(withTransforms(Renderer), [
-      ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topics,
-      TRANSFORM_TOPIC,
-    ])
-  )
-);
+export default hot(Panel<ThreeDimensionalVizConfig>(FrameCompatibilityDEPRECATED(withTransforms(Renderer), [])));

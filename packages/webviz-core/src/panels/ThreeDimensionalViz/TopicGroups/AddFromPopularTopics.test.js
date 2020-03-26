@@ -46,32 +46,32 @@ describe("generateNewTreeAndCreateNodeList", () => {
         { filterKey: "TF /tf", key: "/tf", name: "TF", parentKeys: [], topicName: "/tf" },
         { filterKey: "Nested Group ", key: "Nested Group", name: "Nested Group", parentKeys: [] },
         {
-          filterKey: "Topic A /topic_a",
+          filterKey: "Nested Group Topic A /topic_a",
           key: "/topic_a",
           name: "Topic A",
           parentKeys: ["Nested Group"],
           topicName: "/topic_a",
         },
         {
-          filterKey: "Topic B /topic_b",
+          filterKey: "Nested Group Topic B /topic_b",
           key: "/topic_b",
           name: "Topic B",
           parentKeys: ["Nested Group"],
           topicName: "/topic_b",
         },
         {
-          filterKey: "Deeply Nested Group ",
+          filterKey: "Nested Group Deeply Nested Group ",
           key: "Deeply Nested Group",
           name: "Deeply Nested Group",
           parentKeys: ["Nested Group"],
         },
         {
-          filterKey: " /topic_c",
+          filterKey: "Nested Group Deeply Nested Group /topic_c",
           key: "/topic_c",
           parentKeys: ["Nested Group", "Deeply Nested Group"],
           topicName: "/topic_c",
         },
-        { filterKey: " /topic_d", key: "/topic_d", parentKeys: ["Nested Group"], topicName: "/topic_d" },
+        { filterKey: "Nested Group /topic_d", key: "/topic_d", parentKeys: ["Nested Group"], topicName: "/topic_d" },
       ],
       treeData: [
         { filterKey: "Map /metadata", key: "/metadata", name: "Map", parentKeys: [], topicName: "/metadata" },
@@ -86,14 +86,14 @@ describe("generateNewTreeAndCreateNodeList", () => {
         {
           children: [
             {
-              filterKey: "Topic A /topic_a",
+              filterKey: "Nested Group Topic A /topic_a",
               key: "/topic_a",
               name: "Topic A",
               parentKeys: ["Nested Group"],
               topicName: "/topic_a",
             },
             {
-              filterKey: "Topic B /topic_b",
+              filterKey: "Nested Group Topic B /topic_b",
               key: "/topic_b",
               name: "Topic B",
               parentKeys: ["Nested Group"],
@@ -102,18 +102,23 @@ describe("generateNewTreeAndCreateNodeList", () => {
             {
               children: [
                 {
-                  filterKey: " /topic_c",
+                  filterKey: "Nested Group Deeply Nested Group /topic_c",
                   key: "/topic_c",
                   parentKeys: ["Nested Group", "Deeply Nested Group"],
                   topicName: "/topic_c",
                 },
               ],
-              filterKey: "Deeply Nested Group ",
+              filterKey: "Nested Group Deeply Nested Group ",
               key: "Deeply Nested Group",
               name: "Deeply Nested Group",
               parentKeys: ["Nested Group"],
             },
-            { filterKey: " /topic_d", key: "/topic_d", parentKeys: ["Nested Group"], topicName: "/topic_d" },
+            {
+              filterKey: "Nested Group /topic_d",
+              key: "/topic_d",
+              parentKeys: ["Nested Group"],
+              topicName: "/topic_d",
+            },
           ],
           filterKey: "Nested Group ",
           key: "Nested Group",

@@ -72,8 +72,8 @@ function getDatasetAndTooltipsFromMessagePlotPath(
   index: number,
   startTime: Time,
   xAxisVal: "timestamp" | "index" | "custom",
-  xAxisPath?: BasePlotPath,
-  includeTooltipInData: boolean
+  includeTooltipInData: boolean,
+  xAxisPath?: BasePlotPath
 ): { dataset: DataSet, tooltips: TimeBasedChartTooltipData[] } {
   let tooltips: TimeBasedChartTooltipData[] = [];
   let points: PlotChartPoint[] = [];
@@ -182,8 +182,8 @@ export function getDatasetsAndTooltips(
   itemsByPath: MessageHistoryItemsByPath,
   startTime: Time,
   xAxisVal: "timestamp" | "index" | "custom",
-  xAxisPath?: BasePlotPath,
-  includeTooltipInData: boolean
+  includeTooltipInData: boolean,
+  xAxisPath?: BasePlotPath
 ): { datasets: DataSet[], tooltips: TimeBasedChartTooltipData[] } {
   const datasetsAndTooltips = filterMap(paths, (path: PlotPath, index: number) => {
     if (!path.enabled) {
@@ -195,8 +195,8 @@ export function getDatasetsAndTooltips(
         index,
         startTime,
         xAxisVal,
-        xAxisPath,
-        includeTooltipInData
+        includeTooltipInData,
+        xAxisPath
       );
     }
     return null;

@@ -39,6 +39,10 @@ export const STopicGroupName = styled.div`
   flex: 1;
   cursor: pointer;
 `;
+const STopicsCount = styled.span`
+  font-size: 12px;
+  color: ${colors.TEXT_MUTED};
+`;
 
 type Props = {|
   hasBaseColumn: boolean,
@@ -58,6 +62,7 @@ export default function TopicGroupHeader({
   topicGroup: {
     displayName,
     expanded,
+    items,
     visibilityByColumn = [false, false],
     derivedFields: { id, filterText, isKeyboardFocused, keyboardFocusIndex, prefixesByColumn, hasFeatureColumn },
   },
@@ -88,11 +93,17 @@ export default function TopicGroupHeader({
       <SIconWrapper>
         <DragHandle highlighted={!!isKeyboardFocused} />
       </SIconWrapper>
-      <SIconWrapper>
-        <ExpandIcon dataTest={`test-toggle-expand-icon-${id}`} active={!!expanded} onToggle={onToggleExpand} />
-      </SIconWrapper>
+      {!filterText && (
+        <SIconWrapper>
+          <ExpandIcon dataTest={`test-toggle-expand-icon-${id}`} active={!!expanded} onToggle={onToggleExpand} />
+        </SIconWrapper>
+      )}
       <STopicGroupName data-test={`group-name-${displayName}`} onClick={onToggleExpand}>
         <TextHighlight targetStr={displayName} searchText={filterText} />
+        <STopicsCount>
+          {" "}
+          ({items.length} {items.length === 1 ? "topic" : "topics"})
+        </STopicsCount>
       </STopicGroupName>
       <span>
         {visibilityByColumn.map((colVisible, columnIndex) => {

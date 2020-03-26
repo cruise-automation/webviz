@@ -37,6 +37,7 @@ import type Rpc from "webviz-core/src/util/Rpc";
 import supportsOffscreenCanvas from "webviz-core/src/util/supportsOffscreenCanvas";
 import WebWorkerManager from "webviz-core/src/util/WebWorkerManager";
 
+type OnFinishRenderImage = () => void;
 type Props = {|
   topic: string,
   image: ?Message,
@@ -49,6 +50,7 @@ type Props = {|
   panelHooks?: ImageViewPanelHooks,
   config: Config,
   saveConfig: SaveImagePanelConfig,
+  onStartRenderImage: () => OnFinishRenderImage,
   useMainThreadRenderingForTesting?: boolean,
 |};
 
@@ -347,9 +349,10 @@ export default class ImageCanvas extends React.Component<Props, State> {
   };
 
   renderCurrentImage = debouncePromise(async () => {
-    const { image, rawMarkerData } = this.props;
+    const { image, rawMarkerData, onStartRenderImage } = this.props;
+    const onFinishImageRender = onStartRenderImage();
     try {
-      const { imageMarkerDatatypes, imageMarkerArrayDatatypes } = getGlobalHooks().perPanelHooks().ImageView;
+      const { imageMarkerDatatypes } = getGlobalHooks().perPanelHooks().ImageView;
       let dimensions;
       const canvasRenderer = this._canvasRenderer;
       if (canvasRenderer.type === "rpc") {
@@ -359,7 +362,6 @@ export default class ImageCanvas extends React.Component<Props, State> {
           imageMessage: image,
           rawMarkerData,
           imageMarkerDatatypes,
-          imageMarkerArrayDatatypes,
         });
       } else {
         dimensions = await renderImage({
@@ -367,7 +369,6 @@ export default class ImageCanvas extends React.Component<Props, State> {
           imageMessage: image,
           rawMarkerData,
           imageMarkerDatatypes,
-          imageMarkerArrayDatatypes,
         });
       }
 
@@ -382,6 +383,8 @@ export default class ImageCanvas extends React.Component<Props, State> {
       const topic = image ? image.topic : "";
       reportError(`failed to decode image on ${topic}:`, "", "user");
       this.setState({ error });
+    } finally {
+      onFinishImageRender();
     }
   });
 

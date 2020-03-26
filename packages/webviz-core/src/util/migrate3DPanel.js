@@ -15,7 +15,7 @@ import {
 } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations";
 
 // change this as needed to provide backward compatibility with old saved props
-export const SAVED_PROPS_VERSION = 12;
+export const SAVED_PROPS_VERSION = 13;
 
 export default function migrate3DPanel(config: ThreeDimensionalVizConfig): ThreeDimensionalVizConfig {
   const { checkedNodes, modifiedNamespaceTopics, topicSettings, topicGroups, savedPropsVersion } = config;

@@ -420,7 +420,7 @@ describe("PointCloudBuilder", () => {
       expect(fullyDecodedMarker.bar).toEqual([6, 8]);
       expect(fullyDecodedMarker.baz).toEqual([5, 7]);
       expect(fullyDecodedMarker.foo).toEqual([7, 9]);
-      expect(fullyDecodedMarker.foo16).toEqual([265, 2]);
+      expect(fullyDecodedMarker.foo16_some_really_really_long_name).toEqual([265, 2]);
     });
   });
 
@@ -452,12 +452,12 @@ describe("PointCloudBuilder", () => {
       const partiallyDecodedMarker = ((mapMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): PointCloud2);
       const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
       expect(getClickedInfo(fullyDecodedMarker, 0)).toEqual({
-        additionalFieldValues: { bar: 6, baz: 5, foo: 7, foo16: 265 },
+        additionalFieldValues: { bar: 6, baz: 5, foo: 7, foo16_some_really_really_long_name: 265 },
         clickedPoint: [0, 1, 2],
         clickedPointColor: [255, 255, 255, 1],
       });
       expect(getClickedInfo(fullyDecodedMarker, 1)).toEqual({
-        additionalFieldValues: { bar: 8, baz: 7, foo: 9, foo16: 2 },
+        additionalFieldValues: { bar: 8, baz: 7, foo: 9, foo16_some_really_really_long_name: 2 },
         clickedPoint: [0, 1, 2],
         clickedPointColor: [255, 255, 255, 1],
       });

@@ -10,6 +10,7 @@ import microMemoize from "micro-memoize";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
 import { useEffect, useState } from "react"; // eslint-disable-line import/no-duplicates
 import rosbag from "rosbag";
+import decompress from "wasm-lz4";
 
 import { SECOND_BAG_PREFIX } from "../util/globalConstants";
 import PanelSetup, { type Fixture } from "webviz-core/src/stories/PanelSetup";
@@ -66,16 +67,24 @@ const getFixtureFromBag = async (
   };
 
   await bag
-    .readMessages({ topics }, (result) => {
-      const { message, topic } = result;
-      tempFixture.frame[second ? `${SECOND_BAG_PREFIX}${topic}` : topic].push({
-        datatype: mapTopicToDatatype(topic),
-        topic: second ? `${SECOND_BAG_PREFIX}${topic}` : topic,
-        op: "message",
-        receiveTime: result.timestamp,
-        message,
-      });
-    })
+    .readMessages(
+      {
+        topics,
+        decompress: {
+          lz4: decompress,
+        },
+      },
+      (result) => {
+        const { message, topic } = result;
+        tempFixture.frame[second ? `${SECOND_BAG_PREFIX}${topic}` : topic].push({
+          datatype: mapTopicToDatatype(topic),
+          topic: second ? `${SECOND_BAG_PREFIX}${topic}` : topic,
+          op: "message",
+          receiveTime: result.timestamp,
+          message,
+        });
+      }
+    )
     .catch((err) => {
       log.error(`error reading messages from the bag${second}`, err);
     });

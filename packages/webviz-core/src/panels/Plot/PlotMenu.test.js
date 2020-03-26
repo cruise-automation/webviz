@@ -10,7 +10,100 @@ import { cloneDeep, flatten } from "lodash";
 
 import { getCSVData, getHeader } from "./PlotMenu";
 import { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
-import { type DataSet } from "webviz-core/src/panels/Plot/PlotChart";
+import { type DataSet, getDatasetsAndTooltips } from "webviz-core/src/panels/Plot/PlotChart";
+
+const getDatasetAndTooltipsParameters = [
+  [
+    {
+      value: "/some_topic.ok",
+      enabled: true,
+      timestampMethod: "headerStamp",
+    },
+    {
+      value: "",
+      enabled: true,
+      timestampMethod: "headerStamp",
+    },
+  ],
+  {
+    "/some_topic.ok": [
+      {
+        message: {
+          op: "message",
+          topic: "/some_topic",
+          datatype: "some_datatype",
+          receiveTime: {
+            sec: 1570207539,
+            nsec: 81366108,
+          },
+          message: {
+            header: {
+              seq: 32566,
+              stamp: {
+                sec: 1570207538,
+                nsec: 950411000,
+              },
+              frame_id: "frame",
+            },
+            now: {
+              sec: 1570207539,
+              nsec: 81051807,
+            },
+            ok: true,
+          },
+        },
+        queriedData: [
+          {
+            value: true,
+            path: "/some_topic.ok",
+          },
+        ],
+      },
+      {
+        message: {
+          op: "message",
+          topic: "/some_topic",
+          datatype: "some_datatype",
+          receiveTime: {
+            sec: 1570207539,
+            nsec: 178513840,
+          },
+          message: {
+            header: {
+              seq: 32567,
+              stamp: {
+                sec: 1570207539,
+                nsec: 50344000,
+              },
+              frame_id: "frame",
+            },
+            now: {
+              sec: 1570207539,
+              nsec: 178015187,
+            },
+            ok: true,
+          },
+        },
+        queriedData: [
+          {
+            value: true,
+            path: "/some_topic.ok",
+          },
+        ],
+      },
+    ],
+    "": [],
+  },
+  {
+    sec: 1570207539,
+    nsec: 138873,
+  },
+  "timestamp",
+  false,
+];
+const { tooltips: trackedObjectsTooltips, datasets: trackedObjectsDatasets } = getDatasetsAndTooltips(
+  ...getDatasetAndTooltipsParameters
+);
 
 const data = [
   {
@@ -20,7 +113,6 @@ const data = [
       x: 0.010651803000000001,
       y: 0,
       datasetKey: "default",
-      datasetIndex: 0,
       constantName: "",
       item: {
         message: {
@@ -71,7 +163,6 @@ const data = [
       x: 0.031882799,
       y: 0,
       datasetKey: "default",
-      datasetIndex: 1,
       constantName: "",
       item: {
         message: {
@@ -247,5 +338,9 @@ describe("PlotMenu", () => {
       },
     };
     expect(getHeader(message)).toEqual({ sec: 123, nsec: 456 });
+  });
+
+  it("works with data directly from getDatasetsAndTooltips", () => {
+    expect(getCSVData(trackedObjectsDatasets, trackedObjectsTooltips)).toMatchSnapshot();
   });
 });

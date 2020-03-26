@@ -128,6 +128,7 @@ export default function LayoutForTopicGroups({
   config,
   config: {
     autoTextBackgroundColor,
+    enableShortDisplayNames,
     expandedNodes,
     checkedNodes,
     flattenMarkers,
@@ -145,6 +146,7 @@ export default function LayoutForTopicGroups({
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
   const { globalVariables, setGlobalVariables } = useGlobalVariables();
   const [debug, setDebug] = useState(false);
+  const [showTopicGroups, setShowTopicGroups] = useState<boolean>(false);
   const [polygonBuilder, setPolygonBuilder] = useState(() => new PolygonBuilder());
   const [measureInfo, setMeasureInfo] = useState<MeasureInfo>({
     measureState: "idle",
@@ -274,6 +276,7 @@ export default function LayoutForTopicGroups({
     debug,
     drawingTabType,
     handleDrawPolygons,
+    showTopicGroups,
     saveConfig,
     selectedObjectState,
     topics,
@@ -284,6 +287,7 @@ export default function LayoutForTopicGroups({
     debug,
     drawingTabType,
     handleDrawPolygons,
+    showTopicGroups,
     saveConfig,
     selectedObjectState,
     topics,
@@ -310,6 +314,7 @@ export default function LayoutForTopicGroups({
 
   const {
     onClick,
+    onControlsOverlayClick,
     onDoubleClick,
     onExitTopicGroupFocus,
     onMouseDown,
@@ -334,6 +339,16 @@ export default function LayoutForTopicGroups({
           } else {
             // open up context menu to select one object to show details
             setSelectedObjectState({ selectedObject: undefined, selectedObjects, clickedPosition });
+          }
+        },
+        onControlsOverlayClick: (ev: SyntheticMouseEvent<HTMLDivElement>) => {
+          if (!containerRef.current) {
+            return;
+          }
+          const target = ((ev.target: any): HTMLElement);
+          // Only close if the click target is inside the panel, e.g. don't close when dropdown menus rendered in portals are clicked
+          if (containerRef.current.contains(target)) {
+            setShowTopicGroups(false);
           }
         },
         onDoubleClick: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onDoubleClick", ev, args),
@@ -362,16 +377,6 @@ export default function LayoutForTopicGroups({
     [handleEvent]
   );
 
-  const onSetFlattenMarkers = useCallback(() => saveConfig({ flattenMarkers: !flattenMarkers }), [
-    flattenMarkers,
-    saveConfig,
-  ]);
-
-  const onSetAutoTextBackgroundColor = useCallback(
-    () => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor }),
-    [autoTextBackgroundColor, saveConfig]
-  );
-
   const glTextEnabled = useExperimentalFeature("glText");
   const keyDownHandlers = useMemo(
     () => {
@@ -389,7 +394,12 @@ export default function LayoutForTopicGroups({
         },
         t: (e) => {
           e.preventDefault();
-          saveConfig({ pinTopics: !pinTopics });
+          // Unpin before enabling keyboard toggle open/close.
+          if (pinTopics) {
+            saveConfig({ pinTopics: false });
+            return;
+          }
+          setShowTopicGroups(!showTopicGroups);
         },
       };
 
@@ -407,7 +417,7 @@ export default function LayoutForTopicGroups({
       }
       return handlers;
     },
-    [glTextEnabled, pinTopics, saveConfig, searchTextProps, toggleCameraMode]
+    [glTextEnabled, pinTopics, saveConfig, searchTextProps, showTopicGroups, toggleCameraMode]
   );
 
   const isDrawing = useMemo(
@@ -451,6 +461,7 @@ export default function LayoutForTopicGroups({
   return (
     <div
       ref={containerRef}
+      onClick={onControlsOverlayClick}
       tabIndex={-1}
       className={styles.container}
       style={{ cursor: cursorType }}
@@ -464,14 +475,20 @@ export default function LayoutForTopicGroups({
             <Item
               tooltip="Markers with 0 as z-value in pose or points are updated to have the z-value of the flattened base frame."
               icon={flattenMarkers ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-              onClick={onSetFlattenMarkers}>
+              onClick={() => saveConfig({ flattenMarkers: !flattenMarkers })}>
               Flatten markers
             </Item>
             <Item
               tooltip="Automatically apply dark/light background color to text."
               icon={autoTextBackgroundColor ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-              onClick={onSetAutoTextBackgroundColor}>
+              onClick={() => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor })}>
               Auto Text Background
+            </Item>
+            <Item
+              tooltip="Show shorter topic display names in topic groups."
+              icon={enableShortDisplayNames ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
+              onClick={() => saveConfig({ enableShortDisplayNames: !enableShortDisplayNames })}>
+              Short topic display names
             </Item>
           </>
         }
@@ -480,13 +497,16 @@ export default function LayoutForTopicGroups({
         <TopicGroups
           availableTfs={availableTfs}
           availableTopics={topics}
+          containerHeight={containerRef.current?.clientHeight || 400}
+          enableShortDisplayNames={!!enableShortDisplayNames}
           onExitTopicGroupFocus={onExitTopicGroupFocus}
           onMigrateToTopicGroupConfig={migrateToTopicGroupConfig}
           pinTopics={pinTopics}
           saveConfig={saveConfig}
-          topicGroupsConfig={topicGroups || []}
           sceneBuilder={sceneBuilder}
-          containerHeight={containerRef.current?.clientHeight || 400}
+          setShowTopicGroups={setShowTopicGroups}
+          showTopicGroups={showTopicGroups}
+          topicGroupsConfig={topicGroups || []}
         />
       </div>
       <div className={styles.world}>

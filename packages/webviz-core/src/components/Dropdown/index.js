@@ -118,7 +118,7 @@ export default class Dropdown extends React.Component<Props, State> {
     };
     return (
       <ChildToggle
-        style={{ maxWidth: "100%", zIndex: 1 }}
+        style={{ maxWidth: "100%", zIndex: 0 }}
         position={position}
         isOpen={isOpen}
         onToggle={this.toggle}

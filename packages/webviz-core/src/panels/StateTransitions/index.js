@@ -295,8 +295,11 @@ class StateTransitions extends React.PureComponent<Props> {
 
                   const valueForColor = typeof value === "string" ? stringHash(value) : Math.round(Number(value));
                   const color = baseColors[positiveModulo(valueForColor, Object.values(baseColors).length)];
-                  dataItem.pointBackgroundColor.push(darkColor(color));
-                  dataItem.colors.push(color);
+                  // We add all points, colors, tooltips, etc to the *beginning* of the list, not the end. When
+                  // datalabels overlap we usually care about the later ones (further right). By putting those points
+                  // first in the list, we prioritize datalabels there when the library does its autoclipping.
+                  dataItem.pointBackgroundColor.unshift(darkColor(color));
+                  dataItem.colors.unshift(color);
                   const label = constantName ? `${constantName} (${String(value)})` : String(value);
                   const x = toSec(subtractTimes(timestamp, startTime));
                   const y = pathIndex.toString();
@@ -309,16 +312,16 @@ class StateTransitions extends React.PureComponent<Props> {
                     constantName,
                     startTime,
                   };
-                  tooltips.push(tooltip);
+                  tooltips.unshift(tooltip);
                   const dataPoint: DataPoint = { x, y, tooltip };
                   const showDatalabel = previousValue === undefined || previousValue !== value;
                   // Use "auto" here so that the datalabels library can clip datalabels if they overlap.
-                  dataItem.datalabels.display.push(showDatalabel ? "auto" : false);
+                  dataItem.datalabels.display.unshift(showDatalabel ? "auto" : false);
                   if (showDatalabel) {
                     dataPoint.label = label;
                     dataPoint.labelColor = color;
                   }
-                  dataItem.data.push(dataPoint);
+                  dataItem.data.unshift(dataPoint);
                   previousValue = value;
                 }
                 return dataItem;

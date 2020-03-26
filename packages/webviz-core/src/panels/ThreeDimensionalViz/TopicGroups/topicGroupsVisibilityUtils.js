@@ -6,7 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { TopicGroupType, TopicItem, VisibilityByColumn } from "./types";
+import { cloneDeep } from "lodash";
+
+import type { TopicGroupType, TopicItem, VisibilityByColumn, NamespacesByColumn } from "./types";
 
 export function toggleVisibility(visibilityByColumn: VisibilityByColumn): VisibilityByColumn {
   if (visibilityByColumn.some((val) => val)) {
@@ -44,11 +46,14 @@ export function toggleAllForTopicVisibility(topicItem: TopicItem, columnIndex: n
   const newTopicVisibilityByColumn = [...(topicItem.visibilityByColumn || [false, false])];
   newTopicVisibilityByColumn[columnIndex] = newVisible;
   const newSelectedNsByColumn = [...(topicItem.selectedNamespacesByColumn || [[], []])];
-  if (topicItem.derivedFields.namespaceDisplayVisibilityByNamespace) {
+  if (topicItem.derivedFields.sortedNamespaceDisplayVisibilityByColumn) {
     if (newVisible) {
-      const allNsItems = Object.keys(topicItem.derivedFields.namespaceDisplayVisibilityByNamespace);
-      newSelectedNsByColumn[columnIndex] = allNsItems;
+      const availableNamespacesByColumn = topicItem.derivedFields.availableNamespacesByColumn;
+      // Either select all available namespaces in the column or use fallback to undefined which will make all available namespaces visible.
+      newSelectedNsByColumn[columnIndex] =
+        (availableNamespacesByColumn && availableNamespacesByColumn[columnIndex]) || undefined;
     } else {
+      // Select none.
       newSelectedNsByColumn[columnIndex] = [];
     }
   }
@@ -62,11 +67,12 @@ export function toggleAllForTopicVisibility(topicItem: TopicItem, columnIndex: n
 export function keyboardToggleAllForTopicVisibility(topicItem: TopicItem): TopicItem {
   const newTopicVisibilityByColumn = toggleVisibility([...(topicItem.visibilityByColumn || [false, false])]);
   const newSelectedNsByColumn = [...(topicItem.selectedNamespacesByColumn || [[], []])];
-  const allNsItems = Object.keys(topicItem.derivedFields.namespaceDisplayVisibilityByNamespace || {});
   newTopicVisibilityByColumn.forEach((newVisible, columnIndex) => {
-    if (topicItem.derivedFields.namespaceDisplayVisibilityByNamespace) {
+    if (topicItem.derivedFields.sortedNamespaceDisplayVisibilityByColumn) {
+      const availableNamespacesByColumn = topicItem.derivedFields.availableNamespacesByColumn;
       if (newVisible) {
-        newSelectedNsByColumn[columnIndex] = allNsItems;
+        newSelectedNsByColumn[columnIndex] =
+          (availableNamespacesByColumn && availableNamespacesByColumn[columnIndex]) || undefined;
       } else {
         newSelectedNsByColumn[columnIndex] = [];
       }
@@ -77,4 +83,52 @@ export function keyboardToggleAllForTopicVisibility(topicItem: TopicItem): Topic
     visibilityByColumn: newTopicVisibilityByColumn,
     selectedNamespacesByColumn: newSelectedNsByColumn,
   };
+}
+
+export function toggleNamespace(
+  selectedNamespacesByColumn: NamespacesByColumn,
+  availableNamespacesByColumn: NamespacesByColumn,
+  nsName: string,
+  columnIndex: number
+): NamespacesByColumn {
+  const existingSelectedNamespaces = selectedNamespacesByColumn[columnIndex];
+  const result = cloneDeep(selectedNamespacesByColumn);
+  const availableNamespacesInColumn = availableNamespacesByColumn[columnIndex] || [];
+  if (!existingSelectedNamespaces) {
+    // Select all other namespaces in the column if the column is not set
+    result[columnIndex] = availableNamespacesInColumn.filter((ns) => ns !== nsName);
+  } else if (existingSelectedNamespaces.includes(nsName)) {
+    // Unselects the namespace if already selected
+    result[columnIndex] = existingSelectedNamespaces.filter((ns) => ns !== nsName);
+  } else {
+    result[columnIndex] = [...existingSelectedNamespaces, nsName].sort();
+  }
+  return result;
+}
+
+export function keyboardToggleNamespace(
+  selectedNamespacesByColumn: NamespacesByColumn,
+  availableNamespacesByColumn: NamespacesByColumn,
+  nsName: string
+): NamespacesByColumn {
+  // Toggle the base column first and the feature column should be in sync with the base column.
+  const result = toggleNamespace(selectedNamespacesByColumn, availableNamespacesByColumn, nsName, 0);
+  const availableNamespacesInFeatureColumn = availableNamespacesByColumn[1] || [];
+  const existingSelectedNamespacesInBaseColumn = selectedNamespacesByColumn[0];
+  const existingSelectedNamespacesInFeatureColumn = selectedNamespacesByColumn[1];
+
+  if (!existingSelectedNamespacesInBaseColumn || existingSelectedNamespacesInBaseColumn.includes(nsName)) {
+    if (!existingSelectedNamespacesInFeatureColumn) {
+      // Selects all other available namespaces in feature column if not set previously.
+      result[1] = availableNamespacesInFeatureColumn.filter((ns) => ns !== nsName);
+    } else if (existingSelectedNamespacesInFeatureColumn.includes(nsName)) {
+      // Unselect the namespace in the feature column if already selected.
+      result[1] = existingSelectedNamespacesInFeatureColumn.filter((ns) => ns !== nsName);
+    }
+  } else if (existingSelectedNamespacesInFeatureColumn && !existingSelectedNamespacesInFeatureColumn.includes(nsName)) {
+    // Select the new namespace in feature column if not already selected (when base selectedNamespaces does not contain toggled namespace).
+    result[1] = [...existingSelectedNamespacesInFeatureColumn, nsName].sort();
+  }
+
+  return result;
 }

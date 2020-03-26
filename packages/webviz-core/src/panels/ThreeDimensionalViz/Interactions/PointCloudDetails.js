@@ -10,8 +10,9 @@ import ExportVariantIcon from "@mdi/svg/svg/export-variant.svg";
 import { get } from "lodash";
 import React, { useMemo, useState, useCallback } from "react";
 import { type MouseEventObject } from "regl-worldview";
+import styled from "styled-components";
 
-import { SRow, SValue, SLabel } from "./index";
+import { SValue, SLabel } from "./index";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
@@ -20,6 +21,13 @@ import { getClickedInfo } from "webviz-core/src/panels/ThreeDimensionalViz/comma
 import { downloadFiles } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
 
+const SRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+  margin: 4px 0;
+`;
 type Props = {
   selectedObject: MouseEventObject,
 };
@@ -64,7 +72,7 @@ export default function PointCloudDetails({ selectedObject: { object, instanceIn
 
   return (
     <>
-      <SRow style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <ChildToggle position="below" onToggle={() => setIsOpen(!isOpen)} isOpen={isOpen}>
           <Icon
             small
@@ -87,7 +95,7 @@ export default function PointCloudDetails({ selectedObject: { object, instanceIn
             </Item>
           </Menu>
         </ChildToggle>
-      </SRow>
+      </div>
       <SRow>
         <SLabel width={hasAdditionalFieldNames ? 72 : 44}>Point:</SLabel>
         <SValue style={{ flex: 1, lineHeight: 1.4, ...colorStyle }}>

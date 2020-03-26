@@ -6,7 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Icon, Tree } from "antd";
+import SearchIcon from "@mdi/svg/svg/magnify.svg";
+import { Tree } from "antd";
 import fuzzySort from "fuzzysort";
 import { intersection, omit, uniq, flatten, difference } from "lodash";
 import React, { useState, useEffect, useMemo } from "react";
@@ -15,9 +16,10 @@ import { useDebounce } from "use-debounce";
 import { SAddContainer, SOptionsWrapper, SActionWrapper, SOptions } from "./AddFromAllTopics";
 import { DEFAULT_DEBOUNCE_TIME } from "./constants";
 import { SInputWrapper, SInput } from "./QuickAddTopic";
-import { TOPIC_CONFIG, transformTopicTree, type TreeNodeConfig } from "./topicGroupsUtils";
+import { TOPIC_CONFIG, transformTopicTree, removeBlankSpaces, type TreeNodeConfig } from "./topicGroupsUtils";
 import TopicNameDisplay from "./TopicNameDisplay";
 import Button from "webviz-core/src/components/Button";
+import Icon from "webviz-core/src/components/Icon";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type NodeListItem = {|
@@ -43,12 +45,13 @@ export function generateNewTreeAndCreateNodeList(
   const newTreeData: PopularTopicTreeNode[] = [];
   for (let i = 0; i < oldTreeData.length; i++) {
     const oldNode = oldTreeData[i];
+    const parentKeysStr = parentKeys.length ? `${parentKeys.join(" ")} ` : "";
     const newNode = {
       ...omit(oldNode, "children"),
       // Add unique key for each tree node, use topicName as primary key in order to derive checked keys by topics from the topic group.
       key: oldNode.topicName || oldNode.name,
       // Combine topicName and name as a single key for fast filtering.
-      filterKey: `${oldNode.name || ""} ${oldNode.topicName || ""}`,
+      filterKey: `${parentKeysStr}${oldNode.name ? `${oldNode.name} ` : ""}${oldNode.topicName || ""}`,
       parentKeys,
     };
     nodeList.push(omit(newNode, "children"));
@@ -132,7 +135,8 @@ export default function AddFromPopularTopics({
   const [matchedNodeKeys, setMatchedNodeKeys] = useState<string[]>([]);
   const [autoExpandParent, setAutoExpandParent] = useState<boolean>(true);
   const [filterText, setFilterText] = useState<string>(defaultFilterText || "");
-  const [debouncedFilterText] = useDebounce(filterText, DEFAULT_DEBOUNCE_TIME);
+  const filterTextWithoutSpaces = useMemo(() => removeBlankSpaces(filterText), [filterText]);
+  const [debouncedFilterText] = useDebounce(filterTextWithoutSpaces, DEFAULT_DEBOUNCE_TIME);
   const onlySearchOnTopicNames = !!(debouncedFilterText && debouncedFilterText.startsWith("/"));
 
   const { treeData, nodeList, topicTreeTopics } = useMemo(() => {
@@ -190,7 +194,9 @@ export default function AddFromPopularTopics({
   return (
     <SAddContainer>
       <SInputWrapper style={{ paddingLeft: 16 }}>
-        <Icon type="search" style={{ paddingRight: 2 }} />
+        <Icon small fade>
+          <SearchIcon />
+        </Icon>
         <SInput
           data-test="popular-topics-input"
           placeholder="Filter popular topics"
@@ -220,11 +226,11 @@ export default function AddFromPopularTopics({
             autoExpandParent={autoExpandParent}>
             {renderTreeNodes({
               data: treeData,
-              filterText,
+              filterText: debouncedFilterText,
               onlySearchOnTopicNames,
               existingGroupTopicsSet,
               expandedKeys,
-              matchedNodeKeysSet: filterText ? new Set(matchedNodeKeys) : undefined,
+              matchedNodeKeysSet: debouncedFilterText ? new Set(matchedNodeKeys) : undefined,
             })}
           </Tree>
         </SOptions>

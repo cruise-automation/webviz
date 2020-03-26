@@ -241,6 +241,7 @@ function RGBStory({ encoding }: { encoding: string }) {
       rawMarkerData={noMarkersMarkerData}
       config={config}
       saveConfig={noop}
+      onStartRenderImage={() => () => undefined}
     />
   );
 }
@@ -283,6 +284,7 @@ function BayerStory({ encoding }: { encoding: string }) {
       rawMarkerData={noMarkersMarkerData}
       config={config}
       saveConfig={noop}
+      onStartRenderImage={() => () => undefined}
     />
   );
 }
@@ -311,7 +313,34 @@ function Mono16Story({ bigEndian }: { bigEndian: boolean }) {
       rawMarkerData={noMarkersMarkerData}
       config={config}
       saveConfig={noop}
+      onStartRenderImage={() => () => undefined}
     />
+  );
+}
+
+function ShouldCallOnRenderImage({ children }: { children: (() => () => void) => React.Node }) {
+  const [callsOnStartRenderImage, setCallsOnStartRenderImage] = React.useState(false);
+  const [callsOnFinishRenderImage, setCallsOnFinishRenderImage] = React.useState(false);
+  const onStartRenderImage = React.useCallback(
+    () => {
+      if (!callsOnStartRenderImage) {
+        setCallsOnStartRenderImage(true);
+      }
+      return () => {
+        if (!callsOnFinishRenderImage) {
+          setCallsOnFinishRenderImage(true);
+        }
+      };
+    },
+    [callsOnStartRenderImage, callsOnFinishRenderImage, setCallsOnStartRenderImage, setCallsOnFinishRenderImage]
+  );
+
+  const hasPassed = callsOnStartRenderImage && callsOnFinishRenderImage;
+  return (
+    <div>
+      <div style={{ fontSize: 18, padding: 16 }}>{hasPassed ? "SUCCESS" : "FAIL"}</div>
+      {!hasPassed && children(onStartRenderImage)}
+    </div>
   );
 }
 
@@ -333,6 +362,7 @@ storiesOf("<ImageCanvas>", module)
             }}
             config={config}
             saveConfig={noop}
+            onStartRenderImage={() => () => undefined}
           />
           <br />
           <h2>transformed markers</h2>
@@ -347,6 +377,7 @@ storiesOf("<ImageCanvas>", module)
             }}
             config={config}
             saveConfig={noop}
+            onStartRenderImage={() => () => undefined}
           />
           <h2>markers with different original image size</h2>
           <ImageCanvas
@@ -360,6 +391,7 @@ storiesOf("<ImageCanvas>", module)
             }}
             config={config}
             saveConfig={noop}
+            onStartRenderImage={() => () => undefined}
           />
         </div>
       )}
@@ -382,6 +414,7 @@ storiesOf("<ImageCanvas>", module)
             config={config}
             saveConfig={noop}
             useMainThreadRenderingForTesting
+            onStartRenderImage={() => () => undefined}
           />
           <br />
           <h2>transformed markers</h2>
@@ -397,6 +430,7 @@ storiesOf("<ImageCanvas>", module)
             config={config}
             saveConfig={noop}
             useMainThreadRenderingForTesting
+            onStartRenderImage={() => () => undefined}
           />
           <h2>markers with different original image size</h2>
           <ImageCanvas
@@ -411,6 +445,7 @@ storiesOf("<ImageCanvas>", module)
             config={config}
             saveConfig={noop}
             useMainThreadRenderingForTesting
+            onStartRenderImage={() => () => undefined}
           />
         </div>
       )}
@@ -430,7 +465,55 @@ storiesOf("<ImageCanvas>", module)
         rawMarkerData={noMarkersMarkerData}
         config={config}
         saveConfig={noop}
+        onStartRenderImage={() => () => undefined}
       />
+    );
+  })
+  .add("Calls onRenderFrame when rendering succeeds", () => {
+    return (
+      <ShouldCallOnRenderImage>
+        {(onStartRenderImage) => (
+          <LoadImageMessage>
+            {(imageMessage) => (
+              <ImageCanvas
+                topic={topics[0]}
+                image={imageMessage}
+                rawMarkerData={{
+                  markers,
+                  cameraInfo: null,
+                  scale: 1,
+                  transformMarkers: false,
+                }}
+                config={config}
+                saveConfig={noop}
+                onStartRenderImage={onStartRenderImage}
+              />
+            )}
+          </LoadImageMessage>
+        )}
+      </ShouldCallOnRenderImage>
+    );
+  })
+  .add("calls onRenderFrame when rendering fails", () => {
+    return (
+      <ShouldCallOnRenderImage>
+        {(onStartRenderImage) => (
+          <ImageCanvas
+            topic={topics[0]}
+            image={{
+              op: "message",
+              datatype: "sensor_msgs/Image",
+              topic: "/foo",
+              receiveTime: { sec: 0, nsec: 0 },
+              message: { data: new Uint8Array([]), width: 100, height: 50, encoding: "Foo" },
+            }}
+            rawMarkerData={noMarkersMarkerData}
+            config={config}
+            saveConfig={noop}
+            onStartRenderImage={onStartRenderImage}
+          />
+        )}
+      </ShouldCallOnRenderImage>
     );
   })
   .add("rgb8", () => <RGBStory encoding="rgb8" />)

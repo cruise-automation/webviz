@@ -132,7 +132,6 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   const tooltip = useRef<?HTMLDivElement>(null);
   const hasUnmounted = useRef<boolean>(false);
   const bar = useRef<?HTMLDivElement>(null);
-  const resumeFrameCallback = useRef<?() => void>(null);
 
   const [hasUserPanOrZoomed, setHasUserPannedOrZoomed] = useState(false);
   const [, forceUpdate] = useState();
@@ -166,19 +165,15 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
 
   const pauseFrame = useMessagePipeline(useCallback((messagePipeline) => messagePipeline.pauseFrame, []));
 
-  const onStartChartUpdate = useCallback(
+  const onChartUpdate = useCallback(
     () => {
-      if (!resumeFrameCallback.current) {
-        resumeFrameCallback.current = pauseFrame("TimeBasedChart");
-      }
+      const resumeFrame = pauseFrame("TimeBasedChart");
+      return () => {
+        resumeFrame();
+      };
     },
     [pauseFrame]
   );
-  const onEndChartUpdate = useCallback(() => {
-    if (resumeFrameCallback.current) {
-      resumeFrameCallback.current();
-    }
-  }, []);
 
   const { saveCurrentYs, yAxes } = props;
   const yAxisScaleId = yAxes[0]?.id;
@@ -328,6 +323,12 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
         bar.current.style.left = `${xMousePosition}px`;
       }
 
+      const isTargetingCanvas = event.target === canvas;
+      if (!isTargetingCanvas) {
+        removeTooltip();
+        return;
+      }
+
       if (tooltips && tooltips.length) {
         const tooltipElement = await currentChartComponent.getElementAtXAxis(event);
         updateTooltip(currentChartComponent, canvas, tooltipElement);
@@ -463,8 +464,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
       mode: zoomMode,
     },
     scaleOptions,
-    onStartChartUpdate,
-    onEndChartUpdate,
+    onChartUpdate,
   };
 
   return (

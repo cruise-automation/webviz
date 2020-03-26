@@ -148,11 +148,105 @@ function ZoomExample() {
   );
 }
 
+function PauseFrameExample() {
+  const [, forceUpdate] = useState(0);
+  const [unpauseFrameCount, setUnpauseFrameCount] = useState(0);
+  const pauseFrame = useCallback(
+    () => {
+      return () => {
+        // Set a limit here to avoid unlimited cascading updates.
+        if (unpauseFrameCount < 2) {
+          setUnpauseFrameCount(unpauseFrameCount + 1);
+        }
+      };
+    },
+    [unpauseFrameCount, setUnpauseFrameCount]
+  );
+
+  const refFn = useCallback(() => {
+    setTimeout(() => {
+      forceUpdate(1);
+    }, 200);
+  }, []);
+
+  return (
+    <div style={{ width: "100%", height: "100%", background: "black" }} ref={refFn}>
+      <div style={{ fontSize: 20, padding: 6 }}>Finished pause frame count: {unpauseFrameCount}</div>
+      <MockMessagePipelineProvider pauseFrame={pauseFrame}>
+        <TimeBasedChart {...props} data={{ ...props.data }} />
+      </MockMessagePipelineProvider>
+    </div>
+  );
+}
+
+// We should still call resumeFrame exactly once when removed in the middle of an update.
+// The way this test works:
+// - start by rendering the chart normally
+// - after the timeout (chart should be rendered), force a re-render of the chart.
+// - This rerender updates the chart, which calls `pauseFrame` until the chart has finished updating
+// - in `pauseFrame`, trigger an update that removes the chart. This happens before the returned function
+// (`resumeFrame`) fires.
+// - `resumeFrame` should then fire exactly once.
+function RemoveChartExample() {
+  const [, forceUpdate] = useState(0);
+  const [showChart, setShowChart] = useState(true);
+  const [statusMessage, setStatusMessage] = useState("FAILURE - START");
+  const pauseFrame = useCallback(
+    () => {
+      if (showChart) {
+        setShowChart(false);
+      }
+      return () => {
+        if (statusMessage === "FAILURE - START") {
+          setStatusMessage("SUCCESS");
+        } else {
+          setStatusMessage("FAILURE - CANNOT CALL RESUME FRAME TWICE");
+        }
+      };
+    },
+    [showChart, setShowChart, statusMessage, setStatusMessage]
+  );
+
+  const refFn = useCallback(() => {
+    setTimeout(() => {
+      forceUpdate(1);
+    }, 200);
+  }, []);
+
+  return (
+    <div style={{ width: "100%", height: "100%", background: "black" }} ref={refFn}>
+      <MockMessagePipelineProvider pauseFrame={pauseFrame}>
+        <div style={{ fontSize: 48, padding: 50 }}>{statusMessage}</div>
+        {showChart && <TimeBasedChart {...props} data={{ ...props.data }} />}
+      </MockMessagePipelineProvider>
+    </div>
+  );
+}
+
 storiesOf("<NewTimeBasedChart>", module)
-  .addDecorator(withScreenshot({ delay: 500 }))
+  .addDecorator(withScreenshot({ delay: 1000 }))
   .add("default", () => {
     return (
       <div style={{ width: "100%", height: "100%", background: "black" }}>
+        <MockMessagePipelineProvider>
+          <TimeBasedChart {...props} />
+        </MockMessagePipelineProvider>
+      </div>
+    );
+  })
+  .add("with vertical bar, no tooltip", () => {
+    return (
+      <div
+        style={{ width: "100%", height: "100%", background: "black" }}
+        ref={() => {
+          setTimeout(() => {
+            const [canvas] = document.getElementsByTagName("canvas");
+            const { top, left } = canvas.getBoundingClientRect();
+            // This will show the vertical bar but not the tooltip because the mouse is on top of a different element
+            // (in this case the document), not the canvas itself.
+            document.dispatchEvent(new MouseEvent("mousemove", { clientX: 363 + left, clientY: 400 + top }));
+          }, 200);
+        }}>
         <MockMessagePipelineProvider>
           <TimeBasedChart {...props} />
         </MockMessagePipelineProvider>
@@ -167,7 +261,7 @@ storiesOf("<NewTimeBasedChart>", module)
           setTimeout(() => {
             const [canvas] = document.getElementsByTagName("canvas");
             const { top, left } = canvas.getBoundingClientRect();
-            document.dispatchEvent(new MouseEvent("mousemove", { clientX: 363 + left, clientY: 400 + top }));
+            canvas.dispatchEvent(new MouseEvent("mousemove", { clientX: 363 + left, clientY: 400 + top }));
           }, 200);
         }}>
         <MockMessagePipelineProvider>
@@ -177,6 +271,9 @@ storiesOf("<NewTimeBasedChart>", module)
     );
   })
   .add("can zoom and then update with new data without resetting the zoom", () => <ZoomExample />)
-  .add("cleans up the tooltip when removing the panel", () => {
-    return <CleansUpTooltipExample />;
-  });
+  .add("cleans up the tooltip when removing the panel", () => <CleansUpTooltipExample />)
+  .add("should call pauseFrame twice", () => <PauseFrameExample />)
+  .add(
+    "should still call resumeFrame when removed in the middle of an update (shows `SUCCESS` message with no chart visible)",
+    () => <RemoveChartExample />
+  );

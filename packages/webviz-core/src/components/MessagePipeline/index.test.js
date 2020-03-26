@@ -437,11 +437,11 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
   });
 
   describe("pauseFrame", () => {
-    let pauseFrame, player;
+    let pauseFrame, player, el;
 
     beforeEach(async () => {
       player = new FakePlayer();
-      mount(
+      el = mount(
         <MessagePipelineProvider player={player}>
           <MessagePipelineConsumer>
             {(context) => {
@@ -453,6 +453,17 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       );
 
       await delay(20);
+    });
+
+    it("frames automatically resolve without calling pauseFrame", async () => {
+      let hasFinishedFrame = false;
+      await act(async () => {
+        player.emit().then(() => {
+          hasFinishedFrame = true;
+        });
+      });
+      await delay(20);
+      expect(hasFinishedFrame).toEqual(true);
     });
 
     it("when pausing for multiple promises, waits for all of them to resolve", async () => {
@@ -551,6 +562,43 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       expect(hasFinishedFrame).toEqual(true);
 
       reportError.expectCalledDuringTest();
+    });
+
+    it("does not accidentally resolve the second player's promise when replacing the player", async () => {
+      // Pause the current frame.
+      const firstPlayerResumeFn = pauseFrame("");
+
+      // Then trigger the next emit.
+      await act(async () => {
+        player.emit();
+      });
+      await delay(20);
+
+      // Replace the player.
+      const newPlayer = new FakePlayer();
+      el.setProps({ player: newPlayer });
+      await delay(20);
+
+      const secondPlayerResumeFn = pauseFrame("");
+      let secondPlayerHasFinishedFrame = false;
+      await act(async () => {
+        newPlayer.emit().then(() => {
+          secondPlayerHasFinishedFrame = true;
+        });
+      });
+      await delay(20);
+
+      expect(secondPlayerHasFinishedFrame).toEqual(false);
+
+      firstPlayerResumeFn();
+      await delay(20);
+      // The first player was resumed, but the second player should not have finished its frame.
+      expect(secondPlayerHasFinishedFrame).toEqual(false);
+
+      secondPlayerResumeFn();
+      await delay(20);
+      // The second player was resumed and can now finish its frame.
+      expect(secondPlayerHasFinishedFrame).toEqual(true);
     });
   });
 });

@@ -16,6 +16,7 @@ let importedPanelsByCategory;
 let importedPerPanelHooks;
 const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
+  getEventLogger: () => undefined,
   async importHooksAsync() {
     return new Promise((resolve, reject) => {
       if (importedPanelsByCategory && importedPerPanelHooks) {
@@ -130,6 +131,13 @@ const defaultHooks = {
         name: "Unlimited in-memory cache (requires reload)",
         description:
           "If you have a lot of memory in your computer, and you frequently have to play all the way through large bags, you can turn this on to fully buffer the bag into memory. However, use at your own risk, as this might crash the browser.",
+        developmentDefault: false,
+        productionDefault: false,
+      },
+      layoutHistory: {
+        name: "Undo/redo layout changes with hotkeys",
+        description:
+          "Press ctrl-z or cmd-z to undo layout changes. Press ctrl-shift-z or cmd-shift-z to redo changes after undoing them.",
         developmentDefault: false,
         productionDefault: false,
       },

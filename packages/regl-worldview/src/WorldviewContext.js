@@ -227,6 +227,13 @@ export class WorldviewContext {
     this.counters.render = Date.now() - start;
   }
 
+  /**
+   * Be careful to not use debounce which can delay paint indefinitely.
+   * Also be careful not to use something like Lodash throttle (which uses debounce)
+   * which as of 3/26/2020 appears to be erroneously using setTimeout instead of
+   * requestAnimationFrame. We want the latter so that paint calls can be sync'd
+   * with the browser's animation loop for maximum performance.
+   */
   _throttledPaint = () => {
     const now = performance.now();
     if (now - this._lastPaintCall < 10) {

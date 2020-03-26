@@ -79,7 +79,7 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
 // draw calls, hitmap calls, and raycasting.
 
 export class WorldviewContext {
-  _lastPaintCall: Number;
+  _lastPaintCall: number;
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInput> = new Map();

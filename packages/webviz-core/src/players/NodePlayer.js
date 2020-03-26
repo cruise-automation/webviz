@@ -40,18 +40,30 @@ export default class NodePlayer implements Player {
     this._nodeStates = this._originalNodeStates = this._nodeDefinitions.map((def) => def.defaultState);
   }
 
-  _getTopics = microMemoize((topics: Topic[]) => [
-    ...topics,
-    ...this._nodeDefinitions.map((nodeDefinition) => nodeDefinition.output),
+  _getTopics = microMemoize((availableTopics: Topic[]) => [
+    ...availableTopics,
+    ...this._getFilteredNodeDefinitions(availableTopics).map((nodeDefinition) => nodeDefinition.output),
   ]);
 
-  _getDatatypes = microMemoize((datatypes: RosDatatypes) => {
-    let newDatatypes = { ...datatypes };
-    for (const nodeDefinition of this._nodeDefinitions) {
-      newDatatypes = { ...nodeDefinition.datatypes, ...newDatatypes };
+  _getDatatypes = microMemoize(
+    (datatypes: RosDatatypes, availableTopics: Topic[]): string[] => {
+      let newDatatypes = { ...datatypes };
+      for (const nodeDefinition of this._getFilteredNodeDefinitions(availableTopics)) {
+        newDatatypes = { ...nodeDefinition.datatypes, ...newDatatypes };
+      }
+      return newDatatypes;
     }
-    return newDatatypes;
-  });
+  );
+
+  _getFilteredNodeDefinitions = microMemoize(
+    (availableTopics: Topic[]): NodeDefinition<any>[] => {
+      const availableTopicNamesSet = new Set(availableTopics.map((topic) => topic.name));
+      // Filter out nodes that don't have available input topics.
+      return this._nodeDefinitions.filter((nodeDef) =>
+        nodeDef.inputs.some((inputTopic) => availableTopicNamesSet.has(inputTopic))
+      );
+    }
+  );
 
   setListener(listener: (PlayerState) => Promise<void>) {
     this._player.setListener((playerState: PlayerState) => {
@@ -60,13 +72,11 @@ export default class NodePlayer implements Player {
       }
 
       if (playerState.activeData) {
-        const { lastSeekTime, topics, datatypes } = playerState.activeData;
-
-        const { states, messages } = applyNodesToMessages(
-          this._nodeDefinitions,
-          playerState.activeData.messages,
-          this._nodeStates
-        );
+        const { lastSeekTime, topics, datatypes, messages: playerStateMessages } = playerState.activeData;
+        // Don't use _getFilteredNodeDefinitions here, since the _nodeDefinitions array needs to match up
+        // with the _nodeStates array, and we're only calling the nodes for available topics in applyNodesToMessages
+        // anyway.
+        const { states, messages } = applyNodesToMessages(this._nodeDefinitions, playerStateMessages, this._nodeStates);
 
         this._nodeStates = states;
         this._lastSeekTime = lastSeekTime;
@@ -77,7 +87,7 @@ export default class NodePlayer implements Player {
             ...playerState.activeData,
             messages,
             topics: this._getTopics(topics),
-            datatypes: this._getDatatypes(datatypes),
+            datatypes: this._getDatatypes(datatypes, topics),
           },
         });
       }

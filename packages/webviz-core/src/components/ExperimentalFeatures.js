@@ -91,6 +91,20 @@ export function getExperimentalFeature(id: string): boolean {
   return settings[id].enabled;
 }
 
+export function setExperimentalFeature(id: string, value: "default" | "alwaysOn" | "alwaysOff"): void {
+  const storage = new Storage();
+  const newSettings = { ...storage.get(EXPERIMENTAL_FEATURES_STORAGE_KEY) };
+  if (value === "default") {
+    delete newSettings[id];
+  } else {
+    newSettings[id] = value;
+  }
+  storage.set(EXPERIMENTAL_FEATURES_STORAGE_KEY, newSettings);
+  for (const update of subscribedComponents) {
+    update();
+  }
+}
+
 function IconOn() {
   return (
     <Tooltip contents="on" placement="top">
@@ -165,17 +179,10 @@ export function ExperimentalFeaturesModal(props: {|
                 <Radio
                   selectedId={settings[id].manuallySet ? (settings[id].enabled ? "alwaysOn" : "alwaysOff") : "default"}
                   onChange={(value) => {
-                    const storage = new Storage();
-                    const newSettings = { ...storage.get(EXPERIMENTAL_FEATURES_STORAGE_KEY) };
-                    if (value === "default") {
-                      delete newSettings[id];
-                    } else {
-                      newSettings[id] = value;
+                    if (value !== "default" && value !== "alwaysOn" && value !== "alwaysOff") {
+                      throw new Error(`Invalid value for radio button: ${value}`);
                     }
-                    storage.set(EXPERIMENTAL_FEATURES_STORAGE_KEY, newSettings);
-                    for (const update of subscribedComponents) {
-                      update();
-                    }
+                    setExperimentalFeature(id, value);
                   }}
                   options={[
                     {

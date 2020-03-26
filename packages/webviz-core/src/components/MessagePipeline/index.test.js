@@ -13,7 +13,10 @@ import { act } from "react-dom/test-utils";
 
 import { MessagePipelineProvider, MessagePipelineConsumer } from ".";
 import FakePlayer from "./FakePlayer";
+import { MAX_PROMISE_TIMEOUT_TIME_MS } from "./pauseFrameForPromise";
+import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
+import reportError from "webviz-core/src/util/reportError";
 
 describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
   it("returns empty data when no player is given", () => {
@@ -32,8 +35,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
             isPresent: false,
             playerId: "",
             progress: {},
-            showInitializing: false,
-            showSpinner: false,
+            showInitializing: true,
+            showSpinner: true,
           },
           subscriptions: [],
           publishers: [],
@@ -47,6 +50,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
           pausePlayback: expect.any(Function),
           setPlaybackSpeed: expect.any(Function),
           seekPlayback: expect.any(Function),
+          pauseFrame: expect.any(Function),
         },
       ],
     ]);
@@ -72,8 +76,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
             isPresent: false,
             playerId: "",
             progress: {},
-            showInitializing: false,
-            showSpinner: false,
+            showInitializing: true,
+            showSpinner: true,
           },
         }),
       ],
@@ -427,8 +431,126 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       isPresent: false,
       playerId: "",
       progress: {},
-      showInitializing: false,
-      showSpinner: false,
+      showInitializing: true,
+      showSpinner: true,
+    });
+  });
+
+  describe("pauseFrame", () => {
+    let pauseFrame, player;
+
+    beforeEach(async () => {
+      player = new FakePlayer();
+      mount(
+        <MessagePipelineProvider player={player}>
+          <MessagePipelineConsumer>
+            {(context) => {
+              pauseFrame = context.pauseFrame;
+              return null;
+            }}
+          </MessagePipelineConsumer>
+        </MessagePipelineProvider>
+      );
+
+      await delay(20);
+    });
+
+    it("when pausing for multiple promises, waits for all of them to resolve", async () => {
+      // Start by pausing twice.
+      const resumeFunctions = [pauseFrame(""), pauseFrame("")];
+
+      // Trigger the next emit.
+      let hasFinishedFrame = false;
+      await act(async () => {
+        player.emit().then(() => {
+          hasFinishedFrame = true;
+        });
+      });
+      await delay(20);
+      // We are still pausing.
+      expect(hasFinishedFrame).toEqual(false);
+
+      // If we resume only one, we still don't move on to the next frame.
+      resumeFunctions[0]();
+      await delay(20);
+      expect(hasFinishedFrame).toEqual(false);
+
+      // If we resume them all, we can move on to the next frame.
+      resumeFunctions[1]();
+      await delay(20);
+      expect(hasFinishedFrame).toEqual(true);
+    });
+
+    it("can wait for promises multiple frames in a row", async () => {
+      expect.assertions(8);
+      async function runSingleFrame(shouldPause: boolean) {
+        let resumeFn;
+        if (shouldPause) {
+          resumeFn = pauseFrame("");
+        }
+
+        let hasFinishedFrame = false;
+        await act(async () => {
+          player.emit().then(() => {
+            hasFinishedFrame = true;
+          });
+        });
+        await delay(20);
+
+        if (resumeFn) {
+          expect(hasFinishedFrame).toEqual(false);
+          resumeFn();
+          await delay(20);
+          expect(hasFinishedFrame).toEqual(true);
+        } else {
+          expect(hasFinishedFrame).toEqual(true);
+        }
+      }
+
+      await runSingleFrame(true);
+      await runSingleFrame(true);
+      await runSingleFrame(false);
+      await runSingleFrame(false);
+      await runSingleFrame(true);
+    });
+
+    it("Adding a promise that is previously resolved just plays through", async () => {
+      // Pause the current frame, but immediately resume it before we actually emit.
+      const resumeFn = pauseFrame("");
+      resumeFn();
+
+      // Then trigger the next emit.
+      let hasFinishedFrame = false;
+      await act(async () => {
+        player.emit().then(() => {
+          hasFinishedFrame = true;
+        });
+      });
+
+      await delay(20);
+
+      // Since we have already resumed, we automatically move on to the next frame.
+      expect(hasFinishedFrame).toEqual(true);
+    });
+
+    it("Adding a promise that does not resolve eventually results in an error, and then continues playing", async () => {
+      // Pause the current frame.
+      pauseFrame("");
+
+      // Then trigger the next emit.
+      let hasFinishedFrame = false;
+      await act(async () => {
+        player.emit().then(() => {
+          hasFinishedFrame = true;
+        });
+      });
+      await delay(20);
+      expect(hasFinishedFrame).toEqual(false);
+
+      await delay(MAX_PROMISE_TIMEOUT_TIME_MS + 20);
+      expect(hasFinishedFrame).toEqual(true);
+
+      reportError.expectCalledDuringTest();
     });
   });
 });

@@ -23,6 +23,19 @@ describe("getDiff", () => {
       changedKey: { [diffLabels.CHANGED.labelText]: `2 ${diffArrow} 3` },
       someArray: { "1": { [diffLabels.ADDED.labelText]: 2 }, "2": { [diffLabels.ADDED.labelText]: { key: "value" } } },
     });
+
+    // with showFullMessageForDiff set to true
+    expect(getDiff(firstObj, secondObj, null, true)).toEqual({
+      deletedKey: { [diffLabels.DELETED.labelText]: 1 },
+      addedKey: { [diffLabels.ADDED.labelText]: 1 },
+      changedKey: { [diffLabels.CHANGED.labelText]: `2 ${diffArrow} 3` },
+      unchangedKey: 1,
+      someArray: {
+        "0": 1,
+        "1": { [diffLabels.ADDED.labelText]: 2 },
+        "2": { [diffLabels.ADDED.labelText]: { key: "value" } },
+      },
+    });
   });
 
   it("diffs nested objects with added, deleted, changed, and unchanged values", () => {
@@ -46,20 +59,73 @@ describe("getDiff", () => {
         },
       },
     });
+
+    // with showFullMessageForDiff set to true
+    expect(
+      getDiff({ a: firstObj, b: secondObj, c: secondObj }, { a: secondObj, b: firstObj, c: secondObj }, null, true)
+    ).toEqual({
+      a: {
+        addedKey: { [diffLabels.ADDED.labelText]: 1 },
+        changedKey: { [diffLabels.CHANGED.labelText]: "2 -> 3" },
+        unchangedKey: 1,
+        deletedKey: { [diffLabels.DELETED.labelText]: 1 },
+        someArray: {
+          "0": 1,
+          "1": { [diffLabels.ADDED.labelText]: 2 },
+          "2": { [diffLabels.ADDED.labelText]: { key: "value" } },
+        },
+      },
+      b: {
+        addedKey: { [diffLabels.DELETED.labelText]: 1 },
+        changedKey: { [diffLabels.CHANGED.labelText]: "3 -> 2" },
+        unchangedKey: 1,
+        deletedKey: { [diffLabels.ADDED.labelText]: 1 },
+        someArray: {
+          "0": 1,
+          "1": { [diffLabels.DELETED.labelText]: 2 },
+          "2": { [diffLabels.DELETED.labelText]: { key: "value" } },
+        },
+      },
+      c: {
+        addedKey: 1,
+        changedKey: 3,
+        someArray: {
+          "0": 1,
+          "1": 2,
+          "2": {
+            key: "value",
+          },
+        },
+        unchangedKey: 1,
+      },
+    });
   });
+
   it("maps to available ID fields", () => {
     expect(getDiff([obj1, obj2], [obj2, obj1])).toEqual([]);
     expect(getDiff([obj1, obj2], [obj3, obj1, obj2])).toEqual([
-      { [diffLabels.ADDED.labelText]: { name: "THREE", some_id: 3 } },
+      { [diffLabels.ADDED.labelText]: { [diffLabels.ID.labelText]: { some_id: 3 }, name: "THREE", some_id: 3 } },
     ]);
     expect(getDiff([obj1, obj2], [obj3, obj1, { ...obj2, name: "XYZ" }])).toEqual([
       {
         [diffLabels.ID.labelText]: { some_id: 2 },
         name: { [diffLabels.CHANGED.labelText]: `"TWO" -> "XYZ"` },
       },
-      { [diffLabels.ADDED.labelText]: { name: "THREE", some_id: 3 } },
+      {
+        [diffLabels.ADDED.labelText]: { [diffLabels.ID.labelText]: { some_id: 3 }, name: "THREE", some_id: 3 },
+      },
+    ]);
+    expect(getDiff([obj1, obj2, obj3], [obj1, { ...obj2, name: "XYZ" }])).toEqual([
+      {
+        [diffLabels.ID.labelText]: { some_id: 2 },
+        name: { [diffLabels.CHANGED.labelText]: `"TWO" -> "XYZ"` },
+      },
+      {
+        [diffLabels.DELETED.labelText]: { [diffLabels.ID.labelText]: { some_id: 3 }, name: "THREE", some_id: 3 },
+      },
     ]);
   });
+
   it("does not map ID fields if every object does not have that ID field", () => {
     const newObj2 = { ...obj2 };
     delete newObj2.some_id;
@@ -84,6 +150,7 @@ describe("getDiff", () => {
       },
       "2": { WEBVIZ_DIFF___ADDED: { name: "TWO" } },
     });
+
     expect(getDiff([obj1, obj2], [obj3, obj1, { ...newObj2, name: "XYZ" }])).toEqual({
       "0": {
         name: { [diffLabels.CHANGED.labelText]: '"ONE" -> "THREE"' },
@@ -96,6 +163,7 @@ describe("getDiff", () => {
       "2": { WEBVIZ_DIFF___ADDED: { name: "XYZ" } },
     });
   });
+
   it("prioritizes 'id' over any other possible ID field", () => {
     expect(getDiff([{ ...obj1, id: "A" }, { ...obj2, id: "B" }], [{ ...obj2, id: "A" }, { ...obj1, id: "B" }])).toEqual(
       [
@@ -112,6 +180,7 @@ describe("getDiff", () => {
       ]
     );
   });
+
   it("falls back to different ID if every object does not have 'id' field", () => {
     expect(getDiff([{ ...obj1, id: "A" }, { ...obj2, id: "B" }], [obj2, { ...obj1, id: "B" }])).toEqual([
       {

@@ -73,6 +73,7 @@ const DEFAULT_MOCK_PANEL_CONTEXT: PanelContextType<any> = {
   saveConfig: () => {},
   updatePanelConfig: () => {},
   openSiblingPanel: () => {},
+  enterFullscreen: () => {},
   isHovered: false,
 };
 export class MockPanelContextProvider extends React.Component<{ ...MockProps, children: React.Node }> {
@@ -102,6 +103,7 @@ export default function Panel<Config: PanelConfig>(
           topics: Topic[],
           capabilities: string[],
           datatypes: RosDatatypes,
+          isHovered: boolean,
         }>
       >
   ) &
@@ -237,15 +239,12 @@ export default function Panel<Config: PanelConfig>(
       mosaicWindowActions.split({ type: PanelComponent.panelType });
     };
 
-    _keyUpTimeout = null;
+    _enterFullscreenClicked = () => {
+      this.setState({ shiftKeyPressed: true, fullScreen: true });
+    };
 
     _exitFullScreen = (e) => {
-      // When using Synergy, holding down a key leads to repeated keydown/up events, so give the
-      // keydown events a chance to cancel a pending keyup.
-      this._keyUpTimeout = setTimeout(() => {
-        this.setState({ quickActionsKeyPressed: false, shiftKeyPressed: false, fullScreen: false });
-        this._keyUpTimeout = null;
-      }, 0);
+      this.setState({ quickActionsKeyPressed: false, shiftKeyPressed: false, fullScreen: false });
     };
 
     _keyUpHandlers = {
@@ -276,29 +275,24 @@ export default function Panel<Config: PanelConfig>(
           return;
         }
         if (!e.repeat && !quickActionsKeyPressed) {
-          clearTimeout(this._keyUpTimeout);
           this._tildePressing = true;
           this.setState({ quickActionsKeyPressed: true });
         }
         if (!e.repeat && fullScreen) {
-          clearTimeout(this._keyUpTimeout);
           this._tildePressing = true;
           this._exitFullScreen();
         }
       },
       "~": (e) => {
-        clearTimeout(this._keyUpTimeout);
         this.setState({ quickActionsKeyPressed: true, shiftKeyPressed: true });
       },
       Shift: (e) => {
         if (!this.state.shiftKeyPressed) {
-          clearTimeout(this._keyUpTimeout);
           this.setState({ shiftKeyPressed: true });
         }
       },
       Escape: (e) => {
         if (this.state.fullScreen || this.state.quickActionsKeyPressed || this.state.shiftKeyPressed) {
-          clearTimeout(this._keyUpTimeout);
           this._exitFullScreen();
         }
       },
@@ -322,10 +316,11 @@ export default function Panel<Config: PanelConfig>(
             saveConfig: this._saveConfig,
             updatePanelConfig: this._updatePanelConfig,
             openSiblingPanel: this._openSiblingPanel,
+            enterFullscreen: this._enterFullscreenClicked,
             isHovered: this.state.isHovered,
           }}>
           {/* ensures user exits full-screen mode when leaving the window, even if key is still pressed down */}
-          <DocumentEvents target={window.top} enabled onBlur={this._exitFullScreen} />
+          <DocumentEvents target={window} enabled onBlur={this._exitFullScreen} />
           <KeyListener global keyUpHandlers={this._keyUpHandlers} keyDownHandlers={this._keyDownHandlers} />
           <Flex
             onClick={this._onOverlayClick}
@@ -375,6 +370,7 @@ export default function Panel<Config: PanelConfig>(
                 topics={topics}
                 datatypes={datatypes}
                 capabilities={capabilities}
+                isHovered={this.state.isHovered}
               />
             </ErrorBoundary>
           </Flex>

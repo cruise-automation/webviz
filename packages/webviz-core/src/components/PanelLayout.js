@@ -16,7 +16,10 @@ import { type SET_MOSAIC_ID, setMosaicId } from "webviz-core/src/actions/mosaic"
 import { changePanelLayout, savePanelConfig } from "webviz-core/src/actions/panels";
 import type { CHANGE_PANEL_LAYOUT, Dispatcher, SAVE_PANEL_CONFIG } from "webviz-core/src/actions/panels";
 import Flex from "webviz-core/src/components/Flex";
+import Icon from "webviz-core/src/components/Icon";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import SpinningLoadingIcon from "webviz-core/src/components/SpinningLoadingIcon";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList from "webviz-core/src/panels/PanelList";
 import type { State } from "webviz-core/src/reducers";
 import type { SaveConfigPayload } from "webviz-core/src/types/panels";
@@ -30,6 +33,10 @@ type Props = {
   savePanelConfig: (SaveConfigPayload) => Dispatcher<SAVE_PANEL_CONFIG>,
 };
 
+type OwnState = {
+  hooksImported: boolean,
+};
+
 // we subclass the mosiac layout without dragdropcontext
 // dragdropcontext is initialized in the App container
 // so components outside the mosiac component can participate
@@ -41,7 +48,26 @@ class MosaicRoot extends MosaicWithoutDragDropContext {
   }
 }
 
-class PanelLayout extends PureComponent<Props> {
+class PanelLayout extends PureComponent<Props, OwnState> {
+  state = {
+    hooksImported: getGlobalHooks().areHooksImported(),
+  };
+
+  componentDidMount() {
+    if (!this.state.hooksImported) {
+      const globalHooks = getGlobalHooks();
+      globalHooks
+        .importHooksAsync()
+        .then(() => {
+          globalHooks.perPanelHooks().installChartJs();
+          this.setState({ hooksImported: true });
+        })
+        .catch((reason) => {
+          console.error(`Import failed ${reason}`);
+        });
+    }
+  }
+
   createTile = (config: any) => {
     const defaultPanelType = "RosOut";
     const type = config ? config.type || defaultPanelType : defaultPanelType;
@@ -80,14 +106,22 @@ class PanelLayout extends PureComponent<Props> {
   render() {
     return (
       <ErrorBoundary>
-        <MosaicRoot
-          renderTile={this.renderTile}
-          className="none"
-          resize={{ minimumPaneSizePercentage: 2 }}
-          value={this.props.layout}
-          onChange={this.props.changePanelLayout}
-          setMosaicId={this.props.setMosaicId}
-        />
+        {this.state.hooksImported ? (
+          <MosaicRoot
+            renderTile={this.renderTile}
+            className="none"
+            resize={{ minimumPaneSizePercentage: 2 }}
+            value={this.props.layout}
+            onChange={this.props.changePanelLayout}
+            setMosaicId={this.props.setMosaicId}
+          />
+        ) : (
+          <Flex center style={{ width: "100%", height: "100%" }}>
+            <Icon large>
+              <SpinningLoadingIcon />
+            </Icon>
+          </Flex>
+        )}
       </ErrorBoundary>
     );
   }

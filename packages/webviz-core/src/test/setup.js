@@ -72,3 +72,6 @@ global.crypto = require("@trust/webcrypto");
 
 // $FlowFixMe - Flow does not recognize that `TextEncoder` has been in the util module since v8.3.0.
 global.TextEncoder = util.TextEncoder;
+
+// Override lazy load components
+require("../hooksImporter").testSetup();

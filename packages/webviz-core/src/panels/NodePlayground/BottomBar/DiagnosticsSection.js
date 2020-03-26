@@ -15,7 +15,7 @@ import React from "react";
 import Icon from "webviz-core/src/components/Icon";
 import type { Diagnostic } from "webviz-core/src/players/UserNodePlayer/types";
 import { DiagnosticSeverity } from "webviz-core/src/players/UserNodePlayer/types";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const severityColors = {
   Hint: colors.YELLOWL1,

@@ -73,6 +73,7 @@ describe("Panel", () => {
         saveConfig: expect.any(Function),
         updatePanelConfig: expect.any(Function),
         topics: [{ datatype: "some_datatype", name: "/some/topic" }],
+        isHovered: false,
       },
     ]);
   });
@@ -102,6 +103,7 @@ describe("Panel", () => {
         saveConfig: expect.any(Function),
         updatePanelConfig: expect.any(Function),
         topics: [{ datatype: "some_datatype", name: "/some/topic" }],
+        isHovered: false,
       },
     ]);
   });

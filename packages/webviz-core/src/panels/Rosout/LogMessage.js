@@ -8,6 +8,7 @@
 
 import _ from "lodash";
 import React from "react";
+import type { Time } from "rosbag";
 
 import LevelToString from "./LevelToString";
 import style from "./LogMessage.module.scss";
@@ -18,7 +19,7 @@ function PadStart(val, count) {
   return _.padStart(`${val}`, count, "0");
 }
 
-function Stamp(props) {
+function Stamp(props: { stamp: Time }) {
   const stamp = props.stamp;
   return (
     <span>

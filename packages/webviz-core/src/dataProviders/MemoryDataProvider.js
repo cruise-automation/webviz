@@ -10,7 +10,6 @@ import { last } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import type {
-  Connection,
   ExtensionPoint,
   InitializationResult,
   DataProviderMessage,
@@ -24,7 +23,7 @@ export default class MemoryDataProvider implements DataProvider {
   messages: DataProviderMessage[];
   topics: ?(Topic[]);
   datatypes: ?RosDatatypes;
-  connectionsByTopic: ?{ [topic: string]: Connection };
+  messageDefintionsByTopic: ?{ [topic: string]: string };
   extensionPoint: ExtensionPoint;
   initiallyLoaded: boolean;
 
@@ -33,18 +32,18 @@ export default class MemoryDataProvider implements DataProvider {
     topics,
     datatypes,
     initiallyLoaded,
-    connectionsByTopic,
+    messageDefintionsByTopic,
   }: {
     messages: DataProviderMessage[],
     topics?: Topic[],
     datatypes?: RosDatatypes,
-    connectionsByTopic?: { [topic: string]: Connection },
+    messageDefintionsByTopic?: { [topic: string]: string },
     initiallyLoaded?: boolean,
   }) {
     this.messages = messages;
     this.topics = topics;
     this.datatypes = datatypes;
-    this.connectionsByTopic = connectionsByTopic;
+    this.messageDefintionsByTopic = messageDefintionsByTopic;
     this.initiallyLoaded = !!initiallyLoaded;
   }
 
@@ -63,7 +62,7 @@ export default class MemoryDataProvider implements DataProvider {
       end: last(this.messages).receiveTime,
       topics: this.topics || [],
       datatypes: this.datatypes || {},
-      connectionsByTopic: this.connectionsByTopic,
+      messageDefintionsByTopic: this.messageDefintionsByTopic,
     };
   }
 

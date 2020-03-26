@@ -10,7 +10,7 @@ import * as React from "react";
 import styled from "styled-components";
 import tinyColor from "tinycolor2";
 
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export const colorToAlpha = (hex: string, alpha: number) => {
   const color = tinyColor(hex);
@@ -36,7 +36,7 @@ const SOption = styled.div`
   cursor: pointer;
   transition: all 80ms ease-in-out;
   border-radius: 4px;
-  background-color: ${(props) => (props.isSelected ? colors.BLUE1 : "transparent")};
+  background-color: ${(props) => (props.isSelected ? colors.PRIMARY : "transparent")};
   color: ${(props) => (props.isSelected ? colors.LIGHT : colors.LIGHT)};
   padding: 8px 16px;
   &:hover {

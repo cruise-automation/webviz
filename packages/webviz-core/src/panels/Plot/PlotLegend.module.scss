@@ -18,7 +18,7 @@ $legend-item-height: 20px;
   top: 25px;
   background: $legend-highlight-color;
   color: #eee;
-  max-width: calc(100% - #{$legend-root-left});
+  max-width: calc(100% - #{$legend-root-left} - 25px); // Leave some space at the end for the "X".
 
   &:hover {
     background: $legend-highlight-color;

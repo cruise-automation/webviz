@@ -40,7 +40,7 @@ class MosaicWrapper extends React.Component<{| layout?: any, children: React.Nod
   }
 }
 
-class PanelToolbarWithOpenMenu extends React.PureComponent<{}> {
+class PanelToolbarWithOpenMenu extends React.PureComponent<{ hideToolbars?: boolean }> {
   render() {
     return (
       <div
@@ -54,7 +54,7 @@ class PanelToolbarWithOpenMenu extends React.PureComponent<{}> {
             });
           }
         }}>
-        <PanelToolbar helpContent={<div />}>
+        <PanelToolbar hideToolbars={this.props.hideToolbars} helpContent={<div />}>
           <div style={{ width: "100%", lineHeight: "22px", paddingLeft: 5 }}>Some controls here</div>
           <KeepToolbarVisibleHack />
         </PanelToolbar>
@@ -136,6 +136,18 @@ storiesOf("<PanelToolbar>", module)
         return (
           <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "X" }}>
             <PanelToolbarWithOpenMenu />
+          </MosaicWrapper>
+        );
+      }
+    }
+    return <Story />;
+  })
+  .add("no toolbars", () => {
+    class Story extends React.Component<{}> {
+      render() {
+        return (
+          <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "X" }}>
+            <PanelToolbarWithOpenMenu hideToolbars />
           </MosaicWrapper>
         );
       }

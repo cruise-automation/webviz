@@ -5,7 +5,8 @@ import memoizeOne from "memoize-one";
 import React, { useState } from "react";
 
 import type { Color } from "../types";
-import { defaultBlend, defaultDepth } from "../utils/commandUtils";
+import { defaultBlend, defaultDepth, toColor } from "../utils/commandUtils";
+import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
 
@@ -24,9 +25,7 @@ import { isColorDark, type TextMarker } from "./Text";
 //
 // Possible future improvements
 // ============================
-// - Add hitmap support.
 // - Allow customization of font style, maybe highlight ranges.
-// - Add a scaleInvariant option.
 // - Consider a solid rectangular background instead of an outline. This is challenging because the
 //   instances currently overlap, so there will be z-fighting, but might be possible using the stencil buffer and multiple draw calls.
 // - Somehow support kerning and more advanced font metrics. However, the web font APIs may not
@@ -42,6 +41,9 @@ type Props = {
   ...CommonCommandProps,
   children: $ReadOnlyArray<TextMarkerProps>,
   autoBackgroundColor?: boolean,
+  scaleInvariantFontSize?: number,
+  resolution?: number,
+  alphabet?: string[],
 };
 
 type FontAtlas = {|
@@ -58,7 +60,8 @@ type FontAtlas = {|
 |};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
-const FONT_SIZE = 40;
+const MIN_RESOLUTION = 40;
+const DEFAULT_RESOLUTION = 160;
 const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
@@ -77,12 +80,12 @@ const memoizedCreateCanvas = memoizeOne((font) => {
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
-    (charSet: Set<string>): FontAtlas => {
-      const tinySDF = new TinySDF(FONT_SIZE, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
-      const ctx = memoizedCreateCanvas(`${FONT_SIZE}px sans-serif`);
+    (charSet: Set<string>, resolution: number): FontAtlas => {
+      const tinySDF = new TinySDF(resolution, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
+      const ctx = memoizedCreateCanvas(`${resolution}px sans-serif`);
 
       let textureWidth = 0;
-      const rowHeight = FONT_SIZE + 2 * BUFFER;
+      const rowHeight = resolution + 2 * BUFFER;
       const charInfo = {};
 
       // Measure and assign positions to all characters
@@ -127,6 +130,12 @@ const vert = `
   uniform mat4 projection, view, billboardRotation;
   uniform float fontSize;
   uniform vec2 atlasSize;
+  uniform bool scaleInvariant;
+  uniform float scaleInvariantSize;
+  uniform float viewportHeight;
+  uniform float viewportWidth;
+  uniform bool isPerspective;
+  uniform float cameraFovY;
 
   // per-vertex attributes
   attribute vec2 texCoord;
@@ -155,6 +164,7 @@ const vert = `
   varying vec4 vBackgroundColor;
   varying vec4 vHighlightColor;
   varying float vEnableHighlight;
+  varying float vBillboard;
 
   // rotate a 3d point v by a rotation quaternion q
   // like applyPose(), but we need to use a custom per-instance pose
@@ -163,22 +173,62 @@ const vert = `
     return v + (2.0 * cross(q.xyz, temp));
   }
 
-  void main () {
-    vec2 srcSize = vec2(srcWidth, fontSize);
-    vec3 markerSpacePos = scale * vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
+  vec4 computeVertexPosition(vec3 markerPos) {
     vec3 pos;
     if (billboard == 1.0) {
-      pos = (billboardRotation * vec4(markerSpacePos, 1)).xyz + posePosition;
+      pos = (billboardRotation * vec4(markerPos, 1.0)).xyz + posePosition;
     } else {
-      pos = rotate(markerSpacePos, poseOrientation) + posePosition;
+      pos = rotate(markerPos, poseOrientation) + posePosition;
     }
-    gl_Position = projection * view * vec4(pos, 1);
+    return projection * view * vec4(pos, 1.0);
+  }
+
+  void main () {
+    // Scale invariance only works for billboards
+    bool scaleInvariantEnabled = scaleInvariant && billboard == 1.0;
+
+    vec2 srcSize = vec2(srcWidth, fontSize);
+    vec3 markerSpacePos = vec3((destOffset + position * srcSize + alignmentOffset) / fontSize, 0);
+
+    if (!scaleInvariantEnabled) {
+      // Apply marker scale only when scale invariance is disabled
+      markerSpacePos *= scale;
+    } else {
+      // If scale invariance is enabled, the text will be rendered at a constant
+      // scale regardless of the zoom level.
+      // The given scaleInvariantSize is in pixels. We need to scale it based on
+      // the current canvas resolution to get the proper dimensions later in NDC
+      float scaleInvariantFactor = scaleInvariantSize / viewportHeight;
+      if (isPerspective) {
+        // When using a perspective projection, the effect is achieved by using
+        // the w-component for scaling, which is obtained by first projecting
+        // the marker position into clip space.
+        gl_Position = computeVertexPosition(markerSpacePos);
+        scaleInvariantFactor *= gl_Position.w;
+        // We also need to take into account the camera's half vertical FOV
+        scaleInvariantFactor *= cameraFovY;
+      } else {
+        // Compute inverse aspect ratio
+        float invAspect = viewportHeight / viewportWidth;
+        // When using orthographic projection, the scaling factor is obtain from
+        // the camera projection itself.
+        // We also need applied the inverse aspect ratio
+        scaleInvariantFactor *= 2.0 * invAspect / length(projection[0].xyz);
+      }
+      // Apply scale invariant factor
+      markerSpacePos *= scaleInvariantFactor;
+    }
+
+    // Compute final vertex position
+    gl_Position = computeVertexPosition(markerSpacePos);
+
     vTexCoord = (srcOffset + texCoord * srcSize) / atlasSize;
     vEnableBackground = enableBackground;
     vForegroundColor = foregroundColor;
     vBackgroundColor = backgroundColor;
     vHighlightColor = highlightColor;
     vEnableHighlight = enableHighlight;
+    vBillboard = billboard;
   }
 `;
 
@@ -188,6 +238,9 @@ const frag = `
   uniform mat4 projection;
   uniform sampler2D atlas;
   uniform float cutoff;
+  uniform bool scaleInvariant;
+  uniform float scaleInvariantSize;
+  uniform bool isHitmap;
 
   varying vec2 vTexCoord;
   varying float vEnableBackground;
@@ -195,6 +248,8 @@ const frag = `
   varying vec4 vBackgroundColor;
   varying vec4 vHighlightColor;
   varying float vEnableHighlight;
+  varying float vBillboard;
+
   void main() {
     float dist = texture2D(atlas, vTexCoord).a;
 
@@ -202,14 +257,28 @@ const frag = `
     // when the solid background is enabled, because the alpha blending and
     // depth test don't work together nicely for partially-transparent pixels.
     float edgeStep = smoothstep(1.0 - cutoff - fwidth(dist), 1.0 - cutoff, dist);
-    if (vEnableHighlight > 0.5) {
+
+    if (scaleInvariant && vBillboard == 1.0 && scaleInvariantSize <= 20.0) {
+      // If scale invariant is enabled and scaleInvariantSize is "too small", do not interpolate
+      // the raw distance value since at such small scale, the SDF approach causes some
+      // visual artifacts.
+      // The value used for checking if scaleInvariantSize is "too small" is arbitrary and
+      // was defined after some experimentation.
+      edgeStep = dist;
+    }
+
+    if (isHitmap) {
+      // When rendering for the hitmap buffer, we draw flat polygons using the foreground color
+      // instead of the actual glyphs. This way we increase the selection range and provide a
+      // better user experience.
+      gl_FragColor = vForegroundColor;
+    } else if (vEnableHighlight > 0.5) {
       gl_FragColor = mix(vHighlightColor, vec4(0, 0, 0, 1), edgeStep);
     } else if (vEnableBackground > 0.5) {
-      float screenSize = fwidth(vTexCoord.x);
       gl_FragColor = mix(vBackgroundColor, vForegroundColor, edgeStep);
     } else {
       gl_FragColor = vForegroundColor;
-      gl_FragColor.a *= step(1.0 - cutoff, dist);
+      gl_FragColor.a *= edgeStep;
     }
 
     if (gl_FragColor.a == 0.) {
@@ -218,47 +287,57 @@ const frag = `
   }
 `;
 
-function makeTextCommand() {
+function makeTextCommand(alphabet?: string[]) {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
-  const charSet = new Set();
+  const charSet = new Set(alphabet || []);
+  let charSetInitialized = false;
   const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
   const command = (regl: any) => {
     const atlasTexture = regl.texture();
-    const drawText = regl({
-      depth: defaultDepth,
-      blend: defaultBlend,
-      primitive: "triangle strip",
-      vert,
-      frag,
-      uniforms: {
-        atlas: atlasTexture,
-        atlasSize: () => [atlasTexture.width, atlasTexture.height],
-        fontSize: FONT_SIZE,
-        cutoff: CUTOFF,
-      },
-      instances: regl.prop("instances"),
-      count: 4,
-      attributes: {
-        position: [[0, 0], [0, -1], [1, 0], [1, -1]],
-        texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
-        srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
-        destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
-        srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
-        scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
-        alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
-        billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
-        foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
-        backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
-        highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
-        enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
-        enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
-        posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
-        poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
-      },
-    });
+    const makeDrawText = (isHitmap: boolean) => {
+      return regl({
+        depth: defaultDepth,
+        blend: defaultBlend,
+        primitive: "triangle strip",
+        vert,
+        frag,
+        uniforms: {
+          atlas: atlasTexture,
+          atlasSize: () => [atlasTexture.width, atlasTexture.height],
+          fontSize: command.resolution,
+          cutoff: CUTOFF,
+          scaleInvariant: command.scaleInvariant,
+          scaleInvariantSize: command.scaleInvariantSize,
+          isHitmap: !!isHitmap,
+          viewportHeight: regl.context("viewportHeight"),
+          viewportWidth: regl.context("viewportWidth"),
+          isPerspective: regl.context("isPerspective"),
+          cameraFovY: regl.context("fovy"),
+        },
+        instances: regl.prop("instances"),
+        count: 4,
+        attributes: {
+          position: [[0, 0], [0, -1], [1, 0], [1, -1]],
+          texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
+          srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
+          destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
+          srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
+          scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
+          alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
+          billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
+          foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
+          backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
+          highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
+          enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
+          enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
+          posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
+          poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
+        },
+      });
+    };
 
-    return (props: $ReadOnlyArray<TextMarkerProps>) => {
+    return (props: $ReadOnlyArray<TextMarkerProps>, isHitmap: boolean) => {
       let estimatedInstances = 0;
       const prevNumChars = charSet.size;
       for (const { text } of props) {
@@ -271,12 +350,15 @@ function makeTextCommand() {
           charSet.add(char);
         }
       }
-      const charsChanged = charSet.size !== prevNumChars;
+      const charsChanged = !charSetInitialized || charSet.size !== prevNumChars;
 
       const { textureData, textureWidth, textureHeight, charInfo } = memoizedBuildAtlas(
         // only use a new set if the characters changed, since memoizeOne uses shallow equality
-        charsChanged ? new Set(charSet) : charSet
+        charsChanged ? new Set(charSet) : charSet,
+        command.resolution
       );
+
+      charSetInitialized = true;
 
       // re-upload texture only if characters were added
       if (charsChanged) {
@@ -314,17 +396,23 @@ function makeTextCommand() {
         let y = 0;
         let markerInstances = 0;
 
-        const fgColor = marker.colors?.[0] || marker.color || BG_COLOR_LIGHT;
+        // If we need to render text for hitmap framebuffer, we only render the polygons using
+        // the foreground color (which needs to be converted to RGBA since it's a vec4).
+        // See comment on fragment shader above
+        const fgColor = toColor(
+          isHitmap ? marker.color || [0, 0, 0, 1] : marker.colors?.[0] || marker.color || BG_COLOR_LIGHT
+        );
         const outline = marker.colors?.[1] != null || command.autoBackgroundColor;
-        const bgColor =
-          marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK);
+        const bgColor = toColor(
+          marker.colors?.[1] || (command.autoBackgroundColor && isColorDark(fgColor) ? BG_COLOR_LIGHT : BG_COLOR_DARK)
+        );
         const hlColor = marker?.highlightColor || { r: 1, b: 0, g: 1, a: 1 };
 
         for (let i = 0; i < marker.text.length; i++) {
           const char = marker.text[i];
           if (char === "\n") {
             x = 0;
-            y = FONT_SIZE;
+            y = command.resolution;
             continue;
           }
           const info = charInfo[char];
@@ -334,7 +422,10 @@ function makeTextCommand() {
           destOffsets[2 * index + 0] = x;
           destOffsets[2 * index + 1] = -y;
           srcOffsets[2 * index + 0] = info.x + BUFFER;
-          srcOffsets[2 * index + 1] = info.y + BUFFER;
+          // In order to make sure there's enough room for glyphs' descenders (i.e. 'g'),
+          // we need to apply an extra offset based on the font resolution.
+          // The value used to compute the offset is a result of experimentation.
+          srcOffsets[2 * index + 1] = info.y + BUFFER + 0.05 * command.resolution;
           srcWidths[index] = info.width;
 
           x += info.width;
@@ -380,7 +471,7 @@ function makeTextCommand() {
           ++markerInstances;
         }
 
-        const totalHeight = y + FONT_SIZE;
+        const totalHeight = y + command.resolution;
         for (let i = 0; i < markerInstances; i++) {
           alignmentOffset[2 * (totalInstances + i) + 0] = -totalWidth / 2;
           alignmentOffset[2 * (totalInstances + i) + 1] = totalHeight / 2;
@@ -389,7 +480,7 @@ function makeTextCommand() {
         totalInstances += markerInstances;
       }
 
-      drawText({
+      makeDrawText(isHitmap)({
         instances: totalInstances,
 
         // per-character
@@ -416,9 +507,14 @@ function makeTextCommand() {
 }
 
 export default function GLText(props: Props) {
-  const [command] = useState(() => makeTextCommand());
+  const [command] = useState(() => makeTextCommand(props.alphabet));
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
   command.autoBackgroundColor = props.autoBackgroundColor;
-  return <Command reglCommand={command} {...props} />;
+  command.resolution = Math.max(MIN_RESOLUTION, props.resolution || DEFAULT_RESOLUTION);
+  command.scaleInvariant = props.scaleInvariantFontSize != null;
+  command.scaleInvariantSize = props.scaleInvariantFontSize ?? 0;
+  const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
+
+  return <Command getChildrenForHitmap={getChildrenForHitmap} reglCommand={command} {...props} />;
 }

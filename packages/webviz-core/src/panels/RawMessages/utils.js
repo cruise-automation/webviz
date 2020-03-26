@@ -8,10 +8,10 @@
 import { first, last } from "lodash";
 import React from "react";
 
-import { isTypicalFilterName } from "webviz-core/src/components/MessageHistory";
+import { isTypicalFilterName } from "webviz-core/src/components/MessagePathSyntax/isTypicalFilterName";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { diffLabels } from "webviz-core/src/panels/RawMessages/getDiff";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import { format, formatDuration } from "webviz-core/src/util/time";
 
 const DURATION_20_YEARS_SEC = 20 * 365 * 24 * 60 * 60;

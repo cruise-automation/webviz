@@ -11,7 +11,7 @@ import styled from "styled-components";
 
 import ColorPicker, { COLOR_PICKER_SIZE } from "./ColorPicker";
 import AutoSizingCanvas from "webviz-core/src/components/AutoSizingCanvas";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const GRADIENT_BAR_INSET = Math.floor(COLOR_PICKER_SIZE / 2);
 const GRADIENT_BAR_HEIGHT = 10;

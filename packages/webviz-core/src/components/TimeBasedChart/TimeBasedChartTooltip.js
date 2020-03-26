@@ -10,9 +10,8 @@ import * as React from "react";
 
 import type { TimeBasedChartTooltipData } from "./index";
 import styles from "./TimeBasedChartTooltip.module.scss";
-import { getTimestampForMessage } from "webviz-core/src/components/MessageHistory";
 import Tooltip from "webviz-core/src/components/Tooltip";
-import { formatTime, formatTimeRaw, subtractTimes, toSec } from "webviz-core/src/util/time";
+import { formatTime, formatTimeRaw, getTimestampForMessage, subtractTimes, toSec } from "webviz-core/src/util/time";
 
 type Props = {|
   children: React.Element<any>,

@@ -8,13 +8,13 @@
 import * as React from "react";
 
 import HelpModal from "webviz-core/src/components/HelpModal";
-import topicPathSyntax from "webviz-core/src/components/MessageHistory/topicPathSyntax.help.md";
+import messagePathSyntax from "webviz-core/src/components/MessagePathSyntax/index.help.md";
 import renderToBody from "webviz-core/src/components/renderToBody";
 import helpContent from "webviz-core/src/util/helpModalOpenSource.help.md";
 
 export function showHelpModalOpenSource(event: ?SyntheticMouseEvent<*>) {
   const modal = renderToBody(
-    <HelpModal onRequestClose={() => modal.remove()}>{`${helpContent}\n\n#${topicPathSyntax}`}</HelpModal>
+    <HelpModal onRequestClose={() => modal.remove()}>{`${helpContent}\n\n#${messagePathSyntax}`}</HelpModal>
   );
   if (event) {
     // If used as an onClick callback for links, disable the default link action.

@@ -29,7 +29,8 @@ const baseNodeData: NodeData = {
   outputTopic: "",
   outputDatatype: "",
   datatypes: {},
-  program: undefined,
+  sourceFile: undefined,
+  typeChecker: undefined,
 };
 
 describe("pipeline", () => {
@@ -44,7 +45,7 @@ describe("pipeline", () => {
       ['export const inputs = [ "/rosout", "/tf", "/turtle" ];', ["/rosout", "/tf", "/turtle"]],
       [
         `export const otherVar = 'hi Jp';
-        export const inputs = [ '/my_topic' ];`,
+      export const inputs = [ '/my_topic' ];`,
         ["/my_topic"],
       ],
       ['export const inputs = [ "/rosout", \n"/tf", \n"/turtle" ];', ["/rosout", "/tf", "/turtle"]],
@@ -54,19 +55,54 @@ describe("pipeline", () => {
       ['\nexport const inputs = [ \n"/rosout", \n"/tf", \n"/turtle" \n];', ["/rosout", "/tf", "/turtle"]],
       [
         `export const inputs = [];
-         export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
-         const randomVar = [];`,
+       export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
+       const randomVar = [];`,
         [],
       ],
+      ['\nexport const inputs = [ \n"/rosout", \n// "/tf", \n// "/turtle" \n];', ["/rosout"]],
     ])("should get each input topic", (sourceCode, expectedTopics) => {
-      expect(getInputTopics({ ...baseNodeData, sourceCode }).inputTopics).toEqual(expectedTopics);
+      const { inputTopics } = compose(
+        compile,
+        getInputTopics
+      )({ ...baseNodeData, sourceCode }, undefined, []);
+
+      expect(inputTopics).toEqual(expectedTopics);
     });
+
+    it("should not run getInputTopics if there were any compile time errors", () => {
+      const nodeData = compose(
+        compile,
+        getInputTopics
+      )(
+        {
+          ...baseNodeData,
+          sourceCode: "const x: string = 41",
+        },
+        undefined,
+        []
+      );
+      expect(nodeData.diagnostics.map(({ source }) => source)).toEqual([Sources.Typescript]);
+    });
+
     it.each([
-      ["const inputs = '/some_topic'", ErrorCodes.InputTopicsChecker.NO_INPUTS],
-      ["const x = 'no inputs here'", ErrorCodes.InputTopicsChecker.NO_INPUTS],
-      ["", ErrorCodes.InputTopicsChecker.NO_INPUTS],
+      ["const inputs = '/some_topic'", ErrorCodes.InputTopicsChecker.NO_INPUTS_EXPORT],
+      ["const x = 'no inputs here'", ErrorCodes.InputTopicsChecker.NO_INPUTS_EXPORT],
+      ["", ErrorCodes.InputTopicsChecker.NO_INPUTS_EXPORT],
+      ["// export const inputs = [ '/some_topic' ];", ErrorCodes.InputTopicsChecker.NO_INPUTS_EXPORT],
+      ["export const inputs = []", ErrorCodes.InputTopicsChecker.EMPTY_INPUTS_EXPORT],
+      ["export const inputs = [ 1, '/some_topic']", ErrorCodes.InputTopicsChecker.BAD_INPUTS_TYPE],
+      ["export const inputs = 2", ErrorCodes.InputTopicsChecker.BAD_INPUTS_TYPE],
+      ["export const inputs = 'hello'", ErrorCodes.InputTopicsChecker.BAD_INPUTS_TYPE],
+      [
+        "export const inputs = { 1: 'some_input', 2: 'some_other_input' }",
+        ErrorCodes.InputTopicsChecker.BAD_INPUTS_TYPE,
+      ],
+      ["const input = '/some_topic';\nexport const inputs = [ input ]", ErrorCodes.InputTopicsChecker.BAD_INPUTS_TYPE],
     ])("returns errors for badly formatted inputs", (sourceCode, errorCategory) => {
-      const { diagnostics } = getInputTopics({ ...baseNodeData, sourceCode });
+      const { diagnostics } = compose(
+        compile,
+        getInputTopics
+      )({ ...baseNodeData, sourceCode }, undefined, []);
       expect(diagnostics.length).toEqual(1);
       expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
       expect(diagnostics[0].code).toEqual(errorCategory);
@@ -119,7 +155,7 @@ describe("pipeline", () => {
         );
         expect(diagnostics.length).toEqual(1);
         expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
-        expect(diagnostics[0].code).toEqual(ErrorCodes.InputTopicsChecker.TOPIC_UNAVAILABLE);
+        expect(diagnostics[0].code).toEqual(ErrorCodes.InputTopicsChecker.NO_TOPIC_AVAIL);
       }
     );
     it("errs when a node tries to input another user node", () => {
@@ -340,6 +376,12 @@ describe("pipeline", () => {
             type: "float64",
           },
         ],
+      },
+    };
+
+    const timeDatatypes = {
+      [baseNodeData.name]: {
+        fields: [{ arrayLength: undefined, isArray: false, isComplex: false, name: "stamp", type: "time" }],
       },
     };
 
@@ -732,6 +774,23 @@ describe("pipeline", () => {
             return { pos: { x: 1, y: 1 } };
           };`,
         datatypes: posDatatypes,
+      },
+      {
+        description: "Fields that look like ROS time",
+        sourceCode: `
+          type Time = { sec: number, nsec: number };
+          export default (msg: any): { stamp: Time } => {
+            return { stamp: { sec: 1, nsec: 1 } };
+          };`,
+        datatypes: timeDatatypes,
+      },
+      {
+        description: "Return types that look like ROS time",
+        sourceCode: `
+          export default (msg: any): { stamp: { sec: number, nsec: number } } => {
+            return { stamp: { sec: 1, nsec: 1 } };
+          };`,
+        datatypes: timeDatatypes,
       },
 
       // MARKERS ARRAYS

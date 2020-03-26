@@ -9,7 +9,8 @@
 import { last } from "lodash";
 import memoizeWeak from "memoize-weak";
 
-import { type MessagePathStructureItem, isTypicalFilterName } from "webviz-core/src/components/MessageHistory";
+import { type MessagePathStructureItem } from "webviz-core/src/components/MessagePathSyntax/constants";
+import { isTypicalFilterName } from "webviz-core/src/components/MessagePathSyntax/isTypicalFilterName";
 
 export type ValueAction =
   | {|

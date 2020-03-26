@@ -20,10 +20,10 @@ import styled from "styled-components";
 import uuid from "uuid";
 
 import styles from "./ImageCanvas.module.scss";
-import { registerImageCanvasWorkerListener, unregisterImageCanvasWorkerListener } from "./ImageCanvasWorkerProvider";
+import ImageCanvasWorker from "./ImageCanvas.worker";
 import type { ImageViewPanelHooks, Config, SaveImagePanelConfig } from "./index";
 import { renderImage } from "./renderImage";
-import { checkOutOfBounds, type Dimensions, supportsOffscreenCanvas } from "./util";
+import { checkOutOfBounds, type Dimensions } from "./util";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -33,7 +33,9 @@ import type { CameraInfo } from "webviz-core/src/types/Messages";
 import { downloadFiles } from "webviz-core/src/util";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import reportError from "webviz-core/src/util/reportError";
-import Rpc from "webviz-core/src/util/Rpc";
+import type Rpc from "webviz-core/src/util/Rpc";
+import supportsOffscreenCanvas from "webviz-core/src/util/supportsOffscreenCanvas";
+import WebWorkerManager from "webviz-core/src/util/WebWorkerManager";
 
 type Props = {|
   topic: string,
@@ -70,6 +72,8 @@ const SErrorMessage = styled.div`
 const MAX_ZOOM_PERCENTAGE = 150;
 const ZOOM_STEP = 5;
 
+const webWorkerManager = new WebWorkerManager(ImageCanvasWorker, 1);
+
 type CanvasRenderer =
   | {|
       type: "rpc",
@@ -98,7 +102,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
     this._canvasRenderer =
       !supportsOffscreenCanvas() || props.useMainThreadRenderingForTesting
         ? { type: "mainThread" }
-        : { type: "rpc", worker: registerImageCanvasWorkerListener(this._id) };
+        : { type: "rpc", worker: webWorkerManager.registerWorkerListener(this._id) };
   }
 
   // Returns the existing RPC worker, or initializes one if it doesn't exist yet.
@@ -106,7 +110,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
     const canvasRenderer = this._canvasRenderer;
     if (canvasRenderer.type === "rpc") {
       // Create the worker if it hasn't been initialized yet.
-      const worker = canvasRenderer.worker || registerImageCanvasWorkerListener(this._id);
+      const worker = canvasRenderer.worker || webWorkerManager.registerWorkerListener(this._id);
       if (!canvasRenderer.worker) {
         canvasRenderer.worker = worker;
       }
@@ -250,7 +254,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
     const canvasRenderer = this._canvasRenderer;
     if (canvasRenderer.type === "rpc") {
       // Unset the PRC worker so that we can destroy the worker if it's no longer necessary.
-      unregisterImageCanvasWorkerListener(this._id);
+      webWorkerManager.unregisterWorkerListener(this._id);
       canvasRenderer.worker = null;
     }
     document.removeEventListener("visibilitychange", this._onVisibilityChange);
@@ -408,17 +412,25 @@ export default class ImageCanvas extends React.Component<Props, State> {
   };
 
   applyPanZoom = () => {
-    if (this.panZoomCanvas) {
-      const { mode, zoomPercentage, offset } = this.props.config;
-      if (!mode || mode === "fit") {
-        this.onZoomFit(true);
-      } else if (mode === "fill") {
-        this.onZoomFill(true);
-      } else if (mode === "other") {
-        // Go to prevPercentage
-        this.goToTargetPercentage(zoomPercentage || 100);
-        this.panZoomCanvas.moveTo(offset ? offset[0] : 0, offset ? offset[1] : 0);
-      }
+    if (!this.panZoomCanvas) {
+      return;
+    }
+
+    const { imageViewportHeight, imageViewportWidth } = this.getImageViewport();
+    if (!imageViewportHeight || !imageViewportWidth) {
+      // While dragging, the viewport may have zero height or width, which throws off the panZoomCanvas
+      return;
+    }
+
+    const { mode, zoomPercentage, offset } = this.props.config;
+    if (!mode || mode === "fit") {
+      this.onZoomFit(true);
+    } else if (mode === "fill") {
+      this.onZoomFill(true);
+    } else if (mode === "other") {
+      // Go to prevPercentage
+      this.goToTargetPercentage(zoomPercentage || 100);
+      this.panZoomCanvas.moveTo(offset ? offset[0] : 0, offset ? offset[1] : 0);
     }
   };
 

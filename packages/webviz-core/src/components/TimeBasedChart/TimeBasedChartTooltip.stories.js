@@ -19,6 +19,9 @@ storiesOf("<TimeBasedChartTooltip>", module)
       <div style={{ width: "100%", height: "100%", background: "white" }}>
         <TimeBasedChartTooltip
           tooltip={{
+            x: 0,
+            y: 0,
+            datasetKey: "0",
             path: "/some/topic.path",
             value: 3,
             constantName: "ACTIVE",

@@ -11,13 +11,13 @@ import { type MouseEventObject } from "regl-worldview";
 import styled from "styled-components";
 
 import { type ClickedPosition } from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SInteractionContextMenu = styled.div`
   position: fixed;
   width: 240px;
   background: ${colors.DARK4};
-  z-index: 1000; /* above the Text marker */
+  z-index: 101; /* above the Text marker */
 `;
 
 const SMenu = styled.ul`

@@ -13,16 +13,22 @@ import React, { useCallback } from "react";
 
 import { plotableRosTypes, type PlotConfig } from "./index";
 import styles from "./PlotLegend.module.scss";
+import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
-import { MessageHistoryInput, type MessageHistoryTimestampMethod } from "webviz-core/src/components/MessageHistory";
-import { type PlotPath, isReferenceLinePlotPathType } from "webviz-core/src/panels/Plot/internalTypes";
+import MessagePathInput, { type TimestampMethod } from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
+import {
+  type PlotPath,
+  type BasePlotPath,
+  isReferenceLinePlotPathType,
+} from "webviz-core/src/panels/Plot/internalTypes";
 import { lineColors } from "webviz-core/src/util/plotColors";
 
 type PlotLegendProps = {|
   paths: PlotPath[],
   saveConfig: ($Shape<PlotConfig>) => void,
   showLegend: boolean,
-  xAxisVal: "timestamp" | "index",
+  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisPath?: BasePlotPath,
 |};
 
 function PlotLegendToggle(props: { onToggle: () => void }) {
@@ -36,7 +42,7 @@ function PlotLegendToggle(props: { onToggle: () => void }) {
 }
 
 export default function PlotLegend(props: PlotLegendProps) {
-  const { paths, saveConfig, showLegend, xAxisVal } = props;
+  const { paths, saveConfig, showLegend, xAxisVal, xAxisPath } = props;
   const lastPath = last(paths);
 
   const onInputChange = useCallback(
@@ -52,7 +58,7 @@ export default function PlotLegend(props: PlotLegendProps) {
   );
 
   const onInputTimestampMethodChange = useCallback(
-    (value: MessageHistoryTimestampMethod, index: ?number) => {
+    (value: TimestampMethod, index: ?number) => {
       if (index == null) {
         throw new Error("index not set");
       }
@@ -74,6 +80,39 @@ export default function PlotLegend(props: PlotLegendProps) {
   return (
     <div className={styles.root}>
       <PlotLegendToggle onToggle={() => saveConfig({ showLegend: !showLegend })} />
+      <div className={styles.item}>
+        x:
+        <div className={styles.itemIconContainer} style={{ width: "auto", lineHeight: "normal" }}>
+          <Dropdown
+            value={xAxisVal}
+            btnStyle={{ backgroundColor: "transparent", padding: 3 }}
+            onChange={(newXAxisVal) => saveConfig({ xAxisVal: newXAxisVal })}
+            noPortal>
+            <span value="timestamp">timestamp</span>
+            <span value="index">index</span>
+            <span value="custom">custom</span>
+          </Dropdown>
+        </div>
+        <div
+          className={cx({
+            [styles.itemInput]: true,
+            [styles.itemInputDisabled]: !xAxisPath?.enabled,
+          })}
+          style={{ display: "flex" }}>
+          {xAxisVal === "custom" ? (
+            <MessagePathInput
+              path={xAxisPath?.value || "/"}
+              onChange={(newXAxisVal) =>
+                saveConfig({ xAxisPath: { value: newXAxisVal, enabled: xAxisPath ? xAxisPath.enabled : true } })
+              }
+              validTypes={plotableRosTypes}
+              placeholder="Enter a topic name or a number"
+              disableAutocomplete={xAxisPath && isReferenceLinePlotPathType(xAxisPath)}
+              autoSize
+            />
+          ) : null}
+        </div>
+      </div>
       {paths.map((path: PlotPath, index: number) => {
         const isReferenceLinePlotPath = isReferenceLinePlotPathType(path);
         let timestampMethod;
@@ -85,6 +124,7 @@ export default function PlotLegend(props: PlotLegendProps) {
         return (
           <React.Fragment key={index}>
             <div className={styles.item}>
+              y:
               <div
                 className={styles.itemIconContainer}
                 onClick={() => {
@@ -102,7 +142,7 @@ export default function PlotLegend(props: PlotLegendProps) {
                   [styles.itemInput]: true,
                   [styles.itemInputDisabled]: !path.enabled,
                 })}>
-                <MessageHistoryInput
+                <MessagePathInput
                   path={path.value}
                   onChange={onInputChange}
                   onTimestampMethodChange={onInputTimestampMethodChange}

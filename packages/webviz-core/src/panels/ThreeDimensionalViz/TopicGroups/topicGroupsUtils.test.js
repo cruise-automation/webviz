@@ -7,12 +7,104 @@
 //  You may not use this file except in compliance with the License.
 
 /* eslint-disable jest/no-disabled-tests */
+import { pick } from "lodash";
+
+import { getFilteredKeys } from "./TopicGroups";
 import {
-  buildItemDisplayNameByTopicOrExtension,
-  removeTopicPrefixes,
+  addIsKeyboardFocusedToTopicGroups,
   buildAvailableNamespacesByTopic,
+  buildItemDisplayNameByTopicOrExtension,
+  getBadgeTextByTopicName,
+  getDefaultNewGroupItemConfig,
+  getDefaultTopicItemConfig,
   getSelectionsFromTopicGroupConfig,
+  getTopicGroups,
+  removeBlankSpaces,
+  removeTopicPrefixes,
+  transformTopicTree,
+  updateFocusIndexesAndGetFocusData,
+  DEFAULT_METADATA_NAMESPACES,
+  DEFAULT_GROUP_PREFIXES_BY_COLUMN,
 } from "./topicGroupsUtils";
+import type { TopicGroupConfig, TopicGroupType } from "./types";
+
+const TOPIC_GROUPS_CONFIG: TopicGroupConfig[] = [
+  {
+    displayName: "My Topic Group",
+    expanded: true,
+    items: [
+      {
+        topicName: "/tf",
+        expanded: true,
+        selectedNamespacesByColumn: [["some_tf_ns1"], ["some_tf_ns1", "some_tf_ns2"]],
+        visibilityByColumn: [true, false],
+      },
+      { topicName: "/metadata", displayName: "Map", visibilityByColumn: [true, false] },
+      { topicName: "/some_topic_1", visibilityByColumn: [true, true] },
+      { topicName: "/labels_json/some_label_topic_1" },
+      {
+        topicName: "/some_topic_2",
+        expanded: true,
+        visibilityByColumn: [false, true],
+        selectedNamespacesByColumn: [["some_topic_2_ns1"], ["some_topic_2_ns1", "some_topic_2_ns2"]],
+        settingsByColumn: [
+          { overrideColor: "128, 0, 0, 1", overrideCommand: "LinedConvexHull" },
+          { overrideColor: "0, 128, 0, 1", overrideCommand: "LinedConvexHull" },
+        ],
+      },
+    ],
+  },
+  {
+    displayName: "Some Topic Group 1",
+    visibilityByColumn: [false, false],
+    expanded: true,
+    items: [
+      { topicName: "/tf" },
+      { topicName: "/some_topic_2", expanded: true },
+      {
+        topicName: "/tables/some_topic",
+        visibilityByColumn: [true, true],
+        settingsByColumn: [undefined, { overrideColor: "0, 0, 255, 0.5", overrideCommand: "LinedConvexHull" }],
+      },
+      {
+        topicName: "/tables/some_topic_with_ns",
+        expanded: true,
+        visibilityByColumn: [true, true],
+      },
+    ],
+  },
+];
+const AVAILABLE_TOPICS = [
+  { name: "/some_topic_2", datatype: "visualization_msgs/MarkerArray" },
+  { name: "/webviz_bag_2/some_topic_2", datatype: "visualization_msgs/MarkerArray" },
+  { name: "/webviz_bag_3/some_topic_2", datatype: "visualization_msgs/MarkerArray" },
+  {
+    name: "/tables/some_topic",
+    datatype: "visualization_msgs/MarkerArray",
+  },
+  {
+    name: "/webviz_tables_2/tables/some_topic",
+    datatype: "visualization_msgs/MarkerArray",
+  },
+  {
+    name: "/webviz_tables_2/tables/some_topic_with_ns",
+    datatype: "visualization_msgs/MarkerArray",
+  },
+  {
+    name: "/labels_json/some_label_topic",
+    datatype: "visualization_msgs/MarkerArray",
+  },
+  {
+    name: "/tf",
+    datatype: "tf2_msgs/TFMessage",
+  },
+];
+
+const AVAILABLE_NAMESPACES = {
+  "/some_topic_2": ["some_topic_2_ns1", "some_topic_2_ns2"],
+  "/webviz_bag_2/some_topic_2": ["some_topic_2_ns1", "some_topic_2_ns2"],
+  "/webviz_tables_2/tables/some_topic_with_ns": ["some_ns1", "some_ns2"],
+};
 
 const DEFAULT_TOPIC_CONFIG = {
   name: "root",
@@ -20,44 +112,17 @@ const DEFAULT_TOPIC_CONFIG = {
     {
       name: "Ext A",
       extension: "ExtA.a",
-      children: [
-        {
-          name: "Ext B",
-          extension: "ExtB.b",
-        },
-        {
-          name: "Ext C",
-          extension: "ExtC.c",
-        },
-      ],
+      children: [{ name: "Ext B", extension: "ExtB.b" }, { name: "Ext C", extension: "ExtC.c" }],
     },
-    {
-      name: "Some Topic in JSON Tree",
-      topic: "/topic_in_json_tree",
-    },
-    {
-      name: "TF",
-      children: [],
-      description: "Visualize relationships between /tf frames.",
-    },
+    { name: "Some Topic in JSON Tree", topic: "/topic_in_json_tree" },
+    { name: "TF", children: [], description: "Visualize relationships between /tf frames." },
     {
       name: "Nested Group",
       children: [
-        {
-          name: "Topic A",
-          topic: "/topic_a",
-        },
-        {
-          name: "Topic B",
-          topic: "/topic_b",
-        },
-        {
-          name: "Deeply Nested Group",
-          children: [{ topic: "/topic_c" }],
-        },
-        {
-          topic: "/topic_d",
-        },
+        { name: "Topic A", topic: "/topic_a" },
+        { name: "Topic B", topic: "/topic_b" },
+        { name: "Deeply Nested Group", children: [{ topic: "/topic_c" }] },
+        { topic: "/topic_d" },
       ],
     },
   ],
@@ -66,51 +131,36 @@ const DEFAULT_TOPIC_CONFIG = {
 jest.mock("webviz-core/src/loadWebviz", () => ({
   getGlobalHooks: () => ({
     perPanelHooks: () => ({
+      ThreeDimensionalViz: {},
+    }),
+    startupPerPanelHooks: () => ({
       ThreeDimensionalViz: {
+        getDefaultTopicSettingsByColumn: (topicName) => {
+          if (topicName === "/topic_a") {
+            return [{ colorOverride: "red" }, { colorOverride: "blue" }];
+          }
+          if (topicName === "/topic_b") {
+            return [{ use3DModel: true }, { use3DModel: false }];
+          }
+          return undefined;
+        },
         getDefaultTopicTree: () => ({
           name: "root",
           children: [
             {
               name: "Ext A",
               extension: "ExtA.a",
-              children: [
-                {
-                  name: "Ext B",
-                  extension: "ExtB.b",
-                },
-                {
-                  name: "Ext C",
-                  extension: "ExtC.c",
-                },
-              ],
+              children: [{ name: "Ext B", extension: "ExtB.b" }, { name: "Ext C", extension: "ExtC.c" }],
             },
-            {
-              name: "Some Topic in JSON Tree",
-              topic: "/topic_in_json_tree",
-            },
-            {
-              name: "TF",
-              children: [],
-              description: "Visualize relationships between /tf frames.",
-            },
+            { name: "Some Topic in JSON Tree", topic: "/topic_in_json_tree" },
+            { name: "TF", children: [], description: "Visualize relationships between /tf frames." },
             {
               name: "Nested Group",
               children: [
-                {
-                  name: "Topic A",
-                  topic: "/topic_a",
-                },
-                {
-                  name: "Topic B",
-                  topic: "/topic_b",
-                },
-                {
-                  name: "Deeply Nested Group",
-                  children: [{ topic: "/topic_c" }],
-                },
-                {
-                  topic: "/topic_d",
-                },
+                { name: "Topic A", topic: "/topic_a" },
+                { name: "Topic B", topic: "/topic_b" },
+                { name: "Deeply Nested Group", children: [{ topic: "/topic_c" }] },
+                { topic: "/topic_d" },
               ],
             },
           ],
@@ -122,15 +172,25 @@ jest.mock("webviz-core/src/loadWebviz", () => ({
 
 describe("topicGroupUtils", () => {
   describe("removeTopicPrefixes", () => {
-    it("removes webviz bag prefixes", () => {
+    it("removes webviz feature topic prefixes", () => {
       expect(
         removeTopicPrefixes([
           "/foo/bar",
           "/webviz_bag_2/foo",
-          "/webviz_tables_2/some_table2_topic",
-          "/webviz_labels/some_label_topic",
+          "/webviz_tables_2/tables/some_table2_topic",
+          "/webviz_tables/tables/some_table_topic",
+          // Add another tables_2 topic to test that the order does not matter
+          "/webviz_tables_2/another_table2_topic",
+          "/labels_json/some_label_topic",
         ])
-      ).toEqual(["/foo/bar", "/foo", "/some_table2_topic", "/some_label_topic"]);
+      ).toEqual([
+        "/foo/bar",
+        "/foo",
+        "/tables/some_table2_topic",
+        "/webviz_tables/tables/some_table_topic",
+        "/another_table2_topic",
+        "/labels_json/some_label_topic",
+      ]);
     });
   });
 
@@ -150,6 +210,22 @@ describe("topicGroupUtils", () => {
       });
     });
   });
+
+  describe("getBadgeTextByTopicName", () => {
+    it("gets the badges text by topic prefixes", () => {
+      [
+        { topicName: "/webviz_bag_2/foo", expected: "B2" },
+        { topicName: "/tables/foo", expected: "T1" },
+        { topicName: "/webviz_tables_2/tables/foo", expected: "T2" },
+        { topicName: "/labels_json/foo", expected: "L1" },
+        { topicName: "/labels_json_2/foo", expected: "L2" },
+        { topicName: "/random_prefix/foo", expected: "B1" },
+      ].forEach(({ topicName, expected }) => {
+        expect(getBadgeTextByTopicName(topicName)).toEqual(expected);
+      });
+    });
+  });
+
   describe("buildAvailableNamespacesByTopic", () => {
     it("builds a map of topics to namespaces including metadata, tf and topic namespaces", () => {
       expect(
@@ -173,16 +249,178 @@ describe("topicGroupUtils", () => {
     });
   });
 
-  // TODO(Audrey): finish the tests
-  describe.skip("getTopicGroups", () => {
-    it("generates topic group config for single bag", () => {});
-    it("generates topic group config for two bags", () => {});
-    it("generates topic group config for multiple data sources (bags + tables + labels)", () => {});
+  describe("getTopicGroups", () => {
+    it("generates topic group config based on groupsConfig", () => {
+      expect(
+        getTopicGroups(
+          [
+            { displayName: "Some Group1", items: [{ topicName: "/tf" }] },
+            { displayName: "Some Group2", items: [{ topicName: "/some_topic1" }] },
+          ],
+          {
+            availableTopics: [],
+            namespacesByTopic: {},
+            displayNameByTopic: {},
+            errorsByTopic: {},
+            hasFeatureColumn: false,
+          }
+        )
+      ).toMatchSnapshot();
+    });
+
+    it("updates the groups based on available topics, namespaces, displayNames and errors", () => {
+      expect(
+        getTopicGroups(
+          [
+            { displayName: "Some Group1", items: [{ topicName: "/tf" }, { topicName: "/some_topic2" }] },
+            { displayName: "Some Group2", items: [{ topicName: "/some_topic1" }] },
+          ],
+          {
+            displayNameByTopic: { "/tf": "Transforms", "/some_topic1": "Some Topic 1" },
+            namespacesByTopic: { "/tf": ["tf_ns1", "tf_ns2"] },
+            hasFeatureColumn: true,
+            availableTopics: [
+              { name: "/tf", datatype: "visualization_msgs/MarkerArray" },
+              { name: "/some_topic1", datatype: "visualization_msgs/MarkerArray" },
+              { name: "/webviz_bag_2/some_topic2", datatype: "visualization_msgs/MarkerArray" },
+            ],
+            errorsByTopic: {
+              ["/some_topic1"]: ["missing transforms to my_root_frame"],
+              ["/webviz_bag_2/some_topic2"]: ["missing frame id"],
+            },
+          }
+        )
+      ).toMatchSnapshot();
+    });
+
+    it("generates topic group config for two bags", () => {
+      expect(
+        getTopicGroups([{ displayName: "Some Group", items: [{ topicName: "/some_topic1" }] }], {
+          availableTopics: [
+            { name: "/some_topic1", datatype: "visualization_msgs/MarkerArray" },
+            { name: "/webviz_bag_2/some_topic1", datatype: "visualization_msgs/MarkerArray" },
+          ],
+          namespacesByTopic: {},
+          displayNameByTopic: {},
+          errorsByTopic: {},
+          hasFeatureColumn: true,
+        })
+      ).toMatchSnapshot();
+    });
+    it("returns filtered results based on topic group displayName, topicName and topic displayNames", () => {
+      const topicGroupConfig = [
+        {
+          // filtered because this group has topicName or topic displayName that match with the filter text
+          displayName: "Some Group",
+          items: [
+            { topicName: "/some_topic1" },
+            { topicName: "/some_topic2" },
+            { topicName: "/some_topic3" },
+            { topicName: "/some_topic4", displayName: "Display Name 4 1" },
+          ],
+        },
+        // filtered because group displayName matches
+        { displayName: "Some Group1", items: [{ topicName: "/some_topic2" }] },
+        // filtered out because neither group nor topic matches
+        { displayName: "Some Group2", items: [{ topicName: "/some_topic2" }] },
+      ];
+
+      const displayNameByTopic = {
+        "/some_topic3": "Display Name 31",
+      };
+
+      const filterText = "1";
+      const filteredKeysSet = new Set(getFilteredKeys(topicGroupConfig, displayNameByTopic, filterText));
+
+      // helper function to extract the relevant fields to simplify expect result
+      function getMappedData(topicGroups: TopicGroupType[]) {
+        return topicGroups.map((group) => ({
+          ...pick(group, ["displayName"]),
+          derivedFields: pick(group.derivedFields, ["isShownInList", "filterText"]),
+          items: group.items.map((item) => ({
+            ...pick(item, ["topicName", "displayName"]),
+            derivedFields: pick(item.derivedFields, ["isShownInList", "filterText"]),
+          })),
+        }));
+      }
+
+      const topicGroups = getTopicGroups(topicGroupConfig, {
+        availableTopics: [
+          { name: "/some_topic1", datatype: "visualization_msgs/MarkerArray" },
+          { name: "/webviz_bag_2/some_topic2", datatype: "visualization_msgs/MarkerArray" },
+        ],
+        namespacesByTopic: {},
+        displayNameByTopic,
+        errorsByTopic: {},
+        filterText,
+        filteredKeysSet,
+      });
+
+      expect(getMappedData(topicGroups)).toEqual([
+        {
+          derivedFields: { filterText: "1", isShownInList: true },
+          displayName: "Some Group",
+          items: [
+            { derivedFields: { filterText: "1", isShownInList: true }, topicName: "/some_topic1" },
+            { derivedFields: { filterText: "1", isShownInList: false }, topicName: "/some_topic2" },
+            { derivedFields: { filterText: "1", isShownInList: true }, topicName: "/some_topic3" },
+            {
+              derivedFields: { filterText: "1", isShownInList: true },
+              displayName: "Display Name 4 1",
+              topicName: "/some_topic4",
+            },
+          ],
+        },
+        {
+          derivedFields: { filterText: "1", isShownInList: true },
+          displayName: "Some Group1",
+          items: [{ derivedFields: { filterText: "1", isShownInList: false }, topicName: "/some_topic2" }],
+        },
+        {
+          derivedFields: { filterText: "1", isShownInList: false },
+          displayName: "Some Group2",
+          items: [{ derivedFields: { filterText: "1", isShownInList: false }, topicName: "/some_topic2" }],
+        },
+      ]);
+    });
+    it("filters out groups if none of the underlying topics matches", () => {
+      const topicGroupConfig = [
+        { displayName: "Some Group", items: [{ topicName: "/some_topic1" }] },
+        { displayName: "Some Group2", items: [{ topicName: "/some_topic1" }, { topicName: "/some_topic2" }] },
+      ];
+      const filterText = "2";
+      const filteredKeysSet = new Set(getFilteredKeys(topicGroupConfig, {}, filterText));
+
+      expect(
+        getTopicGroups(topicGroupConfig, {
+          availableTopics: [
+            { name: "/some_topic1", datatype: "visualization_msgs/MarkerArray" },
+            { name: "/webviz_bag_2/some_topic2", datatype: "visualization_msgs/MarkerArray" },
+          ],
+          namespacesByTopic: {},
+          displayNameByTopic: {},
+          errorsByTopic: {},
+          filterText,
+          filteredKeysSet,
+        }).map((group) => ({ displayName: group.displayName, isShownInList: group.derivedFields.isShownInList }))
+      ).toEqual([
+        { displayName: "Some Group", isShownInList: false },
+        { displayName: "Some Group2", isShownInList: true },
+      ]);
+    });
+
+    it("generates topic group config for multiple data sources (bags + tables + labels)", () => {
+      expect(
+        getTopicGroups(TOPIC_GROUPS_CONFIG, {
+          availableTopics: AVAILABLE_TOPICS,
+          namespacesByTopic: AVAILABLE_NAMESPACES,
+          displayNameByTopic: {},
+          errorsByTopic: {},
+        })
+      ).toMatchSnapshot();
+    });
   });
 
-  describe.skip("getNamespacesItemsBySource", () => {
-    it("generates namespaces items with displayVisibilityBySource (hidden + available + badgeText)", () => {});
-  });
   describe("getSelectionsFromTopicGroupConfig", () => {
     it("handles empty input", () => {
       expect(getSelectionsFromTopicGroupConfig([])).toEqual({
@@ -192,91 +430,440 @@ describe("topicGroupUtils", () => {
       });
     });
     it("returns selectedTopicNames and selectedNamespacesByTopic", () => {
+      const defaultGroupProp = { expanded: true, items: [] };
+      const defaultVisibilityByColumn = [true, true];
+      const defaultSettingsByColumn = [{ overrideColor: "128, 0, 0, 1" }, { overrideColor: "0, 128, 0, 1" }];
+
       expect(
         getSelectionsFromTopicGroupConfig([
           {
-            displayName: "My Topic Group",
-            visible: true,
-            expanded: true,
+            ...defaultGroupProp,
+            displayName: "Group 1 (when group visibility is not set)",
+            items: [{ topicName: "/g1t1", visibilityByColumn: [true, false] }],
+          },
+          {
+            ...defaultGroupProp,
+            displayName: "Group 2 (when the group is visible)",
+            visibilityByColumn: [true, true],
+            items: [{ topicName: "/g2t1", visibilityByColumn: [true, false] }, { topicName: "/g2t2" }],
+          },
+          {
+            ...defaultGroupProp,
+            displayName: "Group (topic not visible when group is not visible",
+            visibilityByColumn: [false, false],
+            items: [{ topicName: "/g3t1", visibilityByColumn: [true, false] }],
+          },
+          {
+            ...defaultGroupProp,
+            displayName: "Group 4 (multiple data sources)",
+            visibilityByColumn: [true, true],
             items: [
-              // when missing visibilitiesBySource, select the non-prefixed topic as visible
+              { topicName: "/g4t1" },
+              { topicName: "/g4t1", visibilityByColumn: [true, true] },
+              { topicName: "/tables/g4t2", visibilityByColumn: [false, true] },
+              { topicName: "/tables/g4t3", visibilityByColumn: [false, true] },
+              { topicName: "/tables/g4t4", visibilityByColumn: [true, true] },
+              { topicName: "/labels_json/g4t5", visibilityByColumn: [true, false] },
+            ],
+          },
+          {
+            ...defaultGroupProp,
+            displayName: "Group 5 (namespaces)",
+            visibilityByColumn: [true, true],
+            items: [
               {
-                topicName: "/topic_a",
+                topicName: "/g5t1",
+                selectedNamespacesByColumn: [["ns1", "ns2"]],
               },
               {
-                topicName: "/topic_b",
-                visibilitiesBySource: { "/webviz_bag_2": false },
+                topicName: "/g5t2",
+                visibilityByColumn: [true, false],
+                selectedNamespacesByColumn: [["ns1", "ns2"]],
               },
               {
-                topicName: "/topic_c",
-                visibilitiesBySource: { "": true },
+                topicName: "/g5t3",
+                visibilityByColumn: [false, true],
+                selectedNamespacesByColumn: [["ns1", "ns2"], ["ns3"]],
               },
               {
-                topicName: "/topic_d",
-                visibilitiesBySource: { "": false },
-              },
-              // omit topic if all data sources are not visible
-              {
-                topicName: "/topic_e",
-                visibilitiesBySource: { "": false, "/webviz_bag_2": false },
-              },
-              {
-                topicName: "/topic_f",
-                visibilitiesBySource: { "": false, "/webviz_bag_2": true },
-                selectedNamespacesBySource: {
-                  "": ["some_ns11", "some_ns22"],
-                  "/webviz_bag_2": ["some_ns33"],
-                },
-              },
-              {
-                topicName: "/topic_g",
-                selectedNamespacesBySource: {
-                  "": ["some_ns1", "some_ns2"],
-                  "/webviz_bag_2": ["some_ns3"],
-                },
-                settingsBySource: {
-                  "": {
-                    overrideColor: "128, 0, 0, 1",
-                    overrideCommand: "LinedConvexHull",
-                  },
-                  "/webviz_bag_2": {
-                    overrideColor: "0, 128, 0, 1",
-                    overrideCommand: "LinedConvexHull",
-                  },
-                },
+                topicName: "/g5t4",
+                visibilityByColumn: [true, true],
+                selectedNamespacesByColumn: [["ns1", "ns2"], ["ns3"]],
               },
             ],
           },
           {
-            displayName: "My Topic Group1",
-            // all topics under this group won't be processed since the group is not visible
-            visible: false,
-            expanded: true,
+            ...defaultGroupProp,
+            displayName: "Group 6 (settings)",
+            visibilityByColumn: [true, true],
             items: [
               {
-                topicName: "/topic_h",
+                topicName: "/g6t1",
+                settingsByColumn: [defaultSettingsByColumn[0], undefined],
+              },
+              {
+                topicName: "/g6t2",
+                visibilityByColumn: [true],
+                settingsByColumn: [defaultSettingsByColumn[0], undefined],
+              },
+              {
+                topicName: "/g6t3",
+                visibilityByColumn: [true, false],
+                settingsByColumn: defaultSettingsByColumn,
+              },
+              {
+                topicName: "/g6t4",
+                visibilityByColumn: [false, true],
+                settingsByColumn: defaultSettingsByColumn,
+              },
+            ],
+          },
+          {
+            ...defaultGroupProp,
+            displayName: "Group 7 (mixed combinations)",
+            visibilityByColumn: defaultVisibilityByColumn,
+            items: [
+              {
+                topicName: "/tables/g7t1",
+                visibilityByColumn: [true, true],
+                settingsByColumn: [{ foo: 1 }, { bar: 2 }],
+                selectedNamespacesByColumn: [["ns1", "ns2"], ["ns3"]],
+              },
+              {
+                topicName: "/g7t2",
+                visibilityByColumn: [false, true],
+                settingsByColumn: [{ foo: 1 }, { bar: 2 }],
+                selectedNamespacesByColumn: [["ns1", "ns2"], ["ns3"]],
+              },
+              {
+                topicName: "/labels_json/g7t3",
+                visibilityByColumn: [true, false],
+                settingsByColumn: [{ foo: 1 }],
+                selectedNamespacesByColumn: [["ns1", "ns2"], ["ns3"]],
               },
             ],
           },
         ])
       ).toEqual({
         selectedNamespacesByTopic: {
-          "/topic_f": ["some_ns11", "some_ns22"],
-          "/webviz_bag_2/topic_f": ["some_ns33"],
-          "/topic_g": ["some_ns1", "some_ns2"],
+          "/g5t2": ["ns1", "ns2"],
+          "/g5t4": ["ns1", "ns2"],
+          "/tables/g7t1": ["ns1", "ns2"],
+          "/webviz_bag_2/g5t3": ["ns3"],
+          "/webviz_bag_2/g5t4": ["ns3"],
+          "/webviz_bag_2/g7t2": ["ns3"],
+          "/labels_json/g7t3": ["ns1", "ns2"],
+          "/webviz_tables_2/tables/g7t1": ["ns3"],
         },
-        selectedTopicNames: ["/topic_a", "/topic_c", "/webviz_bag_2/topic_f", "/topic_g"],
+        selectedTopicNames: [
+          "/g2t1",
+          "/g4t1",
+          "/webviz_bag_2/g4t1",
+          "/webviz_tables_2/tables/g4t2",
+          "/webviz_tables_2/tables/g4t3",
+          "/tables/g4t4",
+          "/webviz_tables_2/tables/g4t4",
+          "/labels_json/g4t5",
+          "/g5t2",
+          "/webviz_bag_2/g5t3",
+          "/g5t4",
+          "/webviz_bag_2/g5t4",
+          "/g6t2",
+          "/g6t3",
+          "/webviz_bag_2/g6t4",
+          "/tables/g7t1",
+          "/webviz_tables_2/tables/g7t1",
+          "/webviz_bag_2/g7t2",
+          "/labels_json/g7t3",
+        ],
         selectedTopicSettingsByTopic: {
-          "/topic_g": {
-            overrideColor: "128, 0, 0, 1",
-            overrideCommand: "LinedConvexHull",
-          },
-          "/webviz_bag_2/topic_g": {
-            overrideColor: "0, 128, 0, 1",
-            overrideCommand: "LinedConvexHull",
-          },
+          "/g6t1": { overrideColor: "128, 0, 0, 1" },
+          "/g6t2": { overrideColor: "128, 0, 0, 1" },
+          "/g6t3": { overrideColor: "128, 0, 0, 1" },
+          "/g6t4": { overrideColor: "128, 0, 0, 1" },
+          "/g7t2": { foo: 1 },
+          "/tables/g7t1": { foo: 1 },
+          "/webviz_bag_2/g6t3": { overrideColor: "0, 128, 0, 1" },
+          "/webviz_bag_2/g6t4": { overrideColor: "0, 128, 0, 1" },
+          "/webviz_bag_2/g7t2": { bar: 2 },
+          "/labels_json/g7t3": { foo: 1 },
+          "/webviz_tables_2/tables/g7t1": { bar: 2 },
         },
       });
     });
+  });
+});
+
+describe("transformTopicTree", () => {
+  it("transforms the topic tree to the new tree format", () => {
+    expect(transformTopicTree(DEFAULT_TOPIC_CONFIG)).toEqual({
+      children: [
+        { name: "Map", topicName: "/metadata" },
+        { name: "Some Topic in JSON Tree", topicName: "/topic_in_json_tree" },
+        { name: "TF", topicName: "/tf" },
+        {
+          children: [
+            { name: "Topic A", topicName: "/topic_a" },
+            { name: "Topic B", topicName: "/topic_b" },
+            { children: [{ topicName: "/topic_c" }], name: "Deeply Nested Group" },
+            { topicName: "/topic_d" },
+          ],
+          name: "Nested Group",
+        },
+      ],
+      name: "root",
+    });
+  });
+});
+
+describe("updateFocusIndexesAndGetFocusData", () => {
+  it("updates the focusIndexes and returns the focusData with objectPath and focusType", () => {
+    // helper function to extract the relevant fields to simplify expect result
+    function getMappedData(topicGroups: TopicGroupType[]) {
+      return topicGroups.map((group) => ({
+        ...pick(group, ["displayName"]),
+        derivedFields: pick(group.derivedFields, ["addTopicKeyboardFocusIndex", "keyboardFocusIndex"]),
+        items: group.items.map((item) => ({
+          ...pick(item, ["topicName"]),
+          derivedFields: pick(item.derivedFields, ["keyboardFocusIndex"]),
+        })),
+      }));
+    }
+
+    const result = updateFocusIndexesAndGetFocusData([
+      {
+        derivedFields: {
+          addTopicKeyboardFocusIndex: -1,
+          expanded: true,
+          id: "Some-Group_0",
+          isShownInList: true,
+          keyboardFocusIndex: -1,
+          prefixesByColumn: DEFAULT_GROUP_PREFIXES_BY_COLUMN,
+          hasFeatureColumn: true,
+        },
+        displayName: "Some Group",
+        items: [
+          {
+            derivedFields: {
+              prefixByColumn: ["", "/webviz_bag_2"],
+              datatype: "visualization_msgs/MarkerArray",
+              displayName: "/some_topic1",
+              displayVisibilityByColumn: [
+                { available: true, badgeText: "B1", isParentVisible: true, visible: true },
+                { available: true, badgeText: "B2", isParentVisible: true, visible: true },
+              ],
+              namespaceDisplayVisibilityByNamespace: {},
+              id: "Some-Group_0_0",
+              isShownInList: true,
+              keyboardFocusIndex: -1,
+            },
+            topicName: "/some_topic1",
+          },
+        ],
+      },
+    ]);
+
+    expect(result.focusData).toEqual([
+      { focusType: "GROUP", objectPath: "[0]" },
+      { focusType: "TOPIC", objectPath: "[0].items.[0]" },
+      { focusType: "NEW_TOPIC", objectPath: "[0].items" },
+      { focusType: "NEW_GROUP", objectPath: "" },
+    ]);
+    expect(getMappedData(result.topicGroups)).toEqual([
+      {
+        derivedFields: { addTopicKeyboardFocusIndex: 2, keyboardFocusIndex: 0 },
+        displayName: "Some Group",
+        items: [{ derivedFields: { keyboardFocusIndex: 1 }, topicName: "/some_topic1" }],
+      },
+    ]);
+  });
+});
+
+describe("addIsKeyboardFocusedToTopicGroups", () => {
+  const topicGroupsData = [
+    {
+      derivedFields: {
+        addTopicKeyboardFocusIndex: 2,
+        expanded: true,
+        id: "Some-Group_0",
+        isShownInList: true,
+        keyboardFocusIndex: 0,
+        prefixesByColumn: DEFAULT_GROUP_PREFIXES_BY_COLUMN,
+        hasFeatureColumn: true,
+      },
+      displayName: "Some Group",
+      items: [
+        {
+          derivedFields: {
+            prefixByColumn: ["", "/webviz_bag_2"],
+            datatype: "visualization_msgs/MarkerArray",
+            displayName: "/some_topic1",
+            displayVisibilityByColumn: [
+              { available: true, badgeText: "B1", isParentVisible: true, visible: true },
+              { available: true, badgeText: "B2", isParentVisible: true, visible: true },
+            ],
+            id: "Some-Group_0_0",
+            isShownInList: true,
+            keyboardFocusIndex: 1,
+            namespaceDisplayVisibilityByNamespace: {},
+          },
+          topicName: "/some_topic1",
+        },
+      ],
+    },
+  ];
+
+  // helper function to extract the relevant fields
+  function getMappedData(topicGroups: TopicGroupType[]) {
+    return topicGroups.map((group) => ({
+      ...pick(group, ["displayName"]),
+      derivedFields: pick(group.derivedFields, ["isKeyboardFocused"]),
+      items: group.items.map((item) => ({
+        ...pick(item, ["topicName"]),
+        derivedFields: pick(item.derivedFields, ["isKeyboardFocused"]),
+      })),
+    }));
+  }
+
+  it("add isKeyboardFocused to focused group", () => {
+    expect(getMappedData(addIsKeyboardFocusedToTopicGroups(topicGroupsData, 0))).toEqual([
+      {
+        displayName: "Some Group",
+        derivedFields: { isKeyboardFocused: true },
+        items: [{ derivedFields: { isKeyboardFocused: undefined }, topicName: "/some_topic1" }],
+      },
+    ]);
+  });
+  it("add isKeyboardFocused to focused topic", () => {
+    expect(getMappedData(addIsKeyboardFocusedToTopicGroups(topicGroupsData, 1))).toEqual([
+      {
+        displayName: "Some Group",
+        derivedFields: { isKeyboardFocused: undefined },
+        items: [{ derivedFields: { isKeyboardFocused: true }, topicName: "/some_topic1" }],
+      },
+    ]);
+  });
+});
+
+describe("default config", () => {
+  describe("getDefaultTopicItemConfig", () => {
+    it("returns default topicItemConfig for base topics", () => {
+      let topicName = "/foo";
+      expect(getDefaultTopicItemConfig(topicName)).toEqual({ topicName, visibilityByColumn: [true, false] });
+      topicName = "/webviz_tables/foo";
+      expect(getDefaultTopicItemConfig(topicName)).toEqual({ topicName, visibilityByColumn: [true, false] });
+      topicName = "/labels_json/foo";
+      expect(getDefaultTopicItemConfig(topicName)).toEqual({
+        topicName: "/labels_json/foo",
+        visibilityByColumn: [true, false],
+      });
+    });
+
+    it("returns default topicItemConfig for feature topics", () => {
+      let topicName = "/webviz_bag_2/foo";
+      expect(getDefaultTopicItemConfig(topicName)).toEqual({ topicName: "/foo", visibilityByColumn: [true, false] });
+      topicName = "/webviz_tables_2/tables/foo";
+      expect(getDefaultTopicItemConfig(topicName)).toEqual({
+        topicName: "/tables/foo",
+        visibilityByColumn: [true, false],
+      });
+    });
+
+    it("returns default topicItemConfig with default topic settings", () => {
+      let topicName = "/webviz_bag_2/topic_a";
+      expect(getDefaultTopicItemConfig(topicName)).toEqual({
+        settingsByColumn: [{ colorOverride: "red" }, { colorOverride: "blue" }],
+        topicName: "/topic_a",
+        visibilityByColumn: [true, false],
+      });
+      topicName = "/topic_b";
+
+      expect(getDefaultTopicItemConfig(topicName)).toEqual({
+        settingsByColumn: [{ use3DModel: true }, { use3DModel: false }],
+        topicName: "/topic_b",
+        visibilityByColumn: [true, false],
+      });
+    });
+
+    it("sets the selectedNamespacesByColumn for '/metadata' topic", () => {
+      const topicName = "/metadata";
+      expect(getDefaultTopicItemConfig(topicName)).toEqual({
+        topicName,
+        selectedNamespacesByColumn: [DEFAULT_METADATA_NAMESPACES, []],
+        visibilityByColumn: [true, false],
+      });
+    });
+
+    describe("getDefaultNewGroupItemConfig", () => {
+      it("returns default config for both group and topics", () => {
+        expect(
+          getDefaultNewGroupItemConfig("My Group", [
+            "/foo",
+            "/webviz_bag_2/foo1",
+            "/webviz_tables/bar",
+            "/webviz_tables_2/bar1",
+            "/webviz_tables_2/foo1",
+            "/webviz_tables/foo2",
+            "/webviz_bag_2/topic_b",
+            "/topic_a",
+          ])
+        ).toEqual({
+          displayName: "My Group",
+          expanded: true,
+          items: [
+            { topicName: "/foo", visibilityByColumn: [true, false] },
+            { topicName: "/foo1", visibilityByColumn: [true, false] },
+            { topicName: "/webviz_tables/bar", visibilityByColumn: [true, false] },
+            { topicName: "/bar1", visibilityByColumn: [true, false] },
+            { topicName: "/foo1", visibilityByColumn: [true, false] },
+            { topicName: "/webviz_tables/foo2", visibilityByColumn: [true, false] },
+            {
+              settingsByColumn: [{ use3DModel: true }, { use3DModel: false }],
+              topicName: "/topic_b",
+              visibilityByColumn: [true, false],
+            },
+            {
+              settingsByColumn: [{ colorOverride: "red" }, { colorOverride: "blue" }],
+              topicName: "/topic_a",
+              visibilityByColumn: [true, false],
+            },
+          ],
+          visibilityByColumn: [true, true],
+        });
+      });
+    });
+  });
+
+  describe("removeBlankSpaces", () => {
+    it("removes blank spaces", () => {
+      expect(removeBlankSpaces("      ")).toEqual("");
+      expect(removeBlankSpaces("/ ")).toEqual("/");
+      expect(removeBlankSpaces("/ab f")).toEqual("/abf");
+      expect(removeBlankSpaces("    /ab f")).toEqual("/abf");
+    });
+  });
+
+  // TODO(Audrey): remove skip
+  describe.skip("getNamespacesItemsBySource", () => {
+    it("generates namespaces items with displayVisibilityByColumn (hidden + available + badgeText)", () => {});
+  });
+  describe.skip("getOnTopicGroupsChangeDataByKeyboardOp", () => {
+    it("expands a group", () => {});
+    it("expands a topic", () => {});
+    it("collapses a group", () => {});
+    it("does not collapse a group when filter text is not empty", () => {});
+    it("collapses a topic", () => {});
+    it("delete a group", () => {});
+    it("delete a topic", () => {});
+    it("handles new groups", () => {});
+    it("handles new topic", () => {});
+    it("throws error for un supported ops", () => {});
+    it("throws error when focusIndex does not map to focusDataItem", () => {});
+    it("throws error when when not able get to get topicGroup by objectPath", () => {});
+    it("throws error when when not able get to get topic by objectPath", () => {});
+  });
+
+  describe.skip("getSceneErrorsByTopic", () => {
+    it("groups SceneBuilder errors by topic name", () => {});
   });
 });

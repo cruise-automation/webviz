@@ -380,6 +380,20 @@ storiesOf("<Plot>", module)
       </PanelSetup>
     );
   })
+  .add("custom x-axis topic", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            xAxisVal: "custom",
+            paths: [{ value: "/some_topic/location.pose.acceleration", enabled: true, timestampMethod: "receiveTime" }],
+            xAxisPath: { value: "/some_topic/location.pose.velocity", enabled: true },
+          }}
+        />
+      </PanelSetup>
+    );
+  })
   .add("super close values", () => {
     return (
       <PanelSetup

@@ -114,8 +114,8 @@ export async function updateMetaDatabases(
   maxDatabases: number,
   metadataDatabaseName: string
 ): Promise<void> {
-  log.info("Updating MetaDatabase", {
-    newDatabaseName,
+  log.info("Checking MetaDatabase", {
+    name: newDatabaseName,
   });
   await validateStorageQuota();
 

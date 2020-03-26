@@ -80,6 +80,12 @@ export const FilledPolygonsHitmap = makeCodeComponent(
 
 export const GLText = makeCodeComponent(require("!!raw-loader!./commands/GLText"), "GLText", { noInline: true });
 
+export const GLTextScaleInvariant = makeCodeComponent(
+  require("!!raw-loader!./commands/GLTextScaleInvariant"),
+  "GLTextScaleInvariant",
+  { noInline: true }
+);
+
 export const GLTFScene = makeCodeComponent(require("!!raw-loader!./commands/GLTFScene"), "GLTFScene");
 
 export const GLTFSceneHitmap = makeCodeComponent(require("!!raw-loader!./commands/GLTFSceneHitmap"), "GLTFSceneHitmap");

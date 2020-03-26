@@ -5,13 +5,12 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { colors } from "webviz-core/src/util/colors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 // URL params
 // DANGER: if you change this you break existing urls
 export const REMOTE_BAG_URL_QUERY_KEY = "remote-bag-url";
 export const ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY = "rosbridge-websocket-url";
-export const LOAD_ENTIRE_BAG_QUERY_KEY = "load-entire-bag";
 export const MEASURE_DATA_PROVIDERS_QUERY_KEY = "_measureDataProviders";
 export const DEMO_QUERY_KEY = "demo";
 export const SEEK_TO_QUERY_KEY = "seek-to";
@@ -20,6 +19,8 @@ export const LAYOUT_URL_QUERY_KEY = "layout-url";
 export const PATCH_LAYOUT_QUERY_KEY = "layout-patch";
 export const OLD_GLOBAL_VARIABLES_QUERY_KEY = "global-data";
 export const GLOBAL_VARIABLES_QUERY_KEY = "global-variables";
+export const TITLE_QUERY_KEY = "title";
+export const TEST_EVERYTHING_LAYOUT_QUERY_VAL = "_integration-test-everything-layout";
 
 export const DEFAULT_WEBVIZ_NODE_PREFIX = "/webviz_node/";
 
@@ -33,6 +34,7 @@ export const SECOND_BAG_PREFIX = "/webviz_bag_2";
 export const POINT_CLOUD_DATATYPE = "sensor_msgs/PointCloud2";
 export const POSE_STAMPED_DATATYPE = "geometry_msgs/PoseStamped";
 export const LASER_SCAN_DATATYPE = "sensor_msgs/LaserScan";
+export const TF_DATATYPE = "tf2_msgs/TFMessage";
 
 export const USER_ERROR_PREFIX = "[WEBVIZ USER ERROR]";
 

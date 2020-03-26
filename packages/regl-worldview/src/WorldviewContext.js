@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import debounce from "lodash/debounce";
 import * as React from "react";
 import createREGL from "regl";
 import shallowequal from "shallowequal";
@@ -80,6 +79,7 @@ function compile<T>(regl: any, cmd: RawCommand<T>): CompiledReglCommand<T> {
 // draw calls, hitmap calls, and raycasting.
 
 export class WorldviewContext {
+  _lastPaintCall: Number;
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInput> = new Map();
@@ -101,7 +101,7 @@ export class WorldviewContext {
 
   constructor({ dimension, canvasBackgroundColor, cameraState, onCameraStateChange }: ConstructorArgs) {
     // used for children to call paint() directly
-    this.onDirty = this._debouncedPaint;
+    this.onDirty = this.paintAndWarn;
     this.dimension = dimension;
     this.canvasBackgroundColor = canvasBackgroundColor;
     this.cameraStore = new CameraStore((cameraState: CameraState) => {
@@ -227,7 +227,15 @@ export class WorldviewContext {
     this.counters.render = Date.now() - start;
   }
 
-  _debouncedPaint = debounce(this.paint, 10);
+  paintAndWarn = () => {
+    const now = performance.now();
+    if (now - this._lastPaintCall < 10) {
+      console.warn("Worldview paint has been throttled");
+    } else {
+      this.paint();
+      this._lastPaintCall = now;
+    }
+  };
 
   readHitmap = queuePromise(
     (

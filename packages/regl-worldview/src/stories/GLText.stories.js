@@ -7,7 +7,7 @@ import React, { useState, useLayoutEffect, useCallback } from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 import tinyColor from "tinycolor2";
 
-import { Axes } from "../commands";
+import { Axes, Cubes } from "../commands";
 import type { Color } from "../types";
 import { vec4ToOrientation } from "../utils/commandUtils";
 import Container from "./Container";
@@ -48,6 +48,32 @@ function textMarkers({
         orientation: vec4ToOrientation(quat.rotateZ(quat.create(), quat.create(), Math.PI / 2 + angle)),
       },
       scale: scale(i),
+      color,
+      colors: background && i % 4 === 0 ? [color, { r: 1, g: 1, b: 0, a: 1 }] : undefined,
+      billboard,
+    };
+  });
+}
+
+function overlappingMarkers({
+  text,
+  billboard,
+  background = true,
+}: {|
+  text: string,
+  billboard?: ?boolean,
+  background?: ?boolean,
+|}) {
+  const count = 10;
+  return new Array(count).fill().map((_, i) => {
+    const color = { r: 0, g: i / count, b: i / count, a: 1 };
+    return {
+      text: `${text} ${i}`,
+      pose: {
+        position: { x: 0, y: i * 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 1, y: 1, z: 1 },
       color,
       colors: background && i % 4 === 0 ? [color, { r: 1, g: 1, b: 0, a: 1 }] : undefined,
       billboard,
@@ -203,6 +229,44 @@ storiesOf("Worldview/GLText", module)
       </Container>
     );
   })
+  .add("overlapping fixed", () => {
+    const markers = overlappingMarkers({ text: "Hello Worldview", billboard: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("overlapping fixed scaleInvariant", () => {
+    const markers = overlappingMarkers({ text: "Hello Worldview", billboard: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText scaleInvariantFontSize={30}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("overlapping multiline fixed", () => {
+    const markers = overlappingMarkers({ text: "Hello\nWorld\nview", billboard: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("overlapping mixed fixed", () => {
+    const markers = overlappingMarkers({ text: "Hello Worldview", billboard: true }).concat(
+      textMarkers({ text: "Hello Worldview", billboard: true })
+    );
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
   .add("billboard", () => (
     <Container cameraState={{ perspective: true, distance: 40 }}>
       <GLText>{textMarkers({ text: "Hello\nWorldview", billboard: true })}</GLText>
@@ -336,4 +400,85 @@ storiesOf("Worldview/GLText", module)
     };
 
     return <Example />;
+  })
+  .add("Depth testing enabled for text in the 3D world", () => {
+    const text = {
+      text: "Hello\nWorld!",
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 1, y: 1, z: 1 },
+      color: { r: 1, g: 1, b: 1, a: 1 },
+      billboard: true,
+    };
+    const cube = {
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 2, y: 2, z: 2 },
+      color: { r: 1, g: 0, b: 1, a: 1 },
+    };
+    return (
+      <Container cameraState={{ perspective: false, distance: 25 }}>
+        <Cubes>{[cube]}</Cubes>
+        <GLText>{[text]}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("Depth testing disabled when using scale invariance. Draw order issues.", () => {
+    const text = {
+      text: "Hello\nWorld!",
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 1, y: 1, z: 1 },
+      color: { r: 1, g: 1, b: 1, a: 1 },
+      billboard: true,
+    };
+    const cube = {
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 2, y: 2, z: 2 },
+      color: { r: 1, g: 0, b: 1, a: 1 },
+    };
+    return (
+      <Container cameraState={{ perspective: false, distance: 25 }}>
+        <Axes />
+        <GLText scaleInvariantFontSize={30}>{[text]}</GLText>
+        <Cubes>{[cube]}</Cubes>
+      </Container>
+    );
+  })
+  .add("Depth testing disabled when using scale invariance. GLText render last", () => {
+    const text = {
+      text: "Hello\nWorld!",
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 1, y: 1, z: 1 },
+      color: { r: 1, g: 1, b: 1, a: 1 },
+      billboard: true,
+    };
+    const cube = {
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 2, y: 2, z: 2 },
+      color: { r: 1, g: 0, b: 1, a: 1 },
+    };
+    return (
+      <Container cameraState={{ perspective: false, distance: 25 }}>
+        <Cubes>{[cube]}</Cubes>
+        <Axes />
+        <GLText scaleInvariantFontSize={30}>{[text]}</GLText>
+      </Container>
+    );
   });

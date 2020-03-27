@@ -77,6 +77,20 @@ const memoizedCreateCanvas = memoizeOne((font) => {
   return ctx;
 });
 
+const hashMarkerPosition = (marker: TextMarker): string => {
+  const { x, y, z } = marker.pose.position;
+  // The hash is a simple string with all three components
+  return `x${x}y${y}z${z}`;
+};
+
+const getMarkerYOffset = (offsets: Map<string, number>, marker: TextMarker) => {
+  return offsets.get(hashMarkerPosition(marker)) || 0;
+};
+
+const setMarkerYOffset = (offsets: Map<string, number>, marker: TextMarker, yOffset: number) => {
+  offsets.set(hashMarkerPosition(marker), yOffset);
+};
+
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
@@ -390,11 +404,20 @@ function makeTextCommand(alphabet?: string[]) {
       const enableHighlight = new Float32Array(estimatedInstances);
 
       let totalInstances = 0;
+
+      // Markers sharing the same position will be rendered in multiple lines.
+      // We keep track of offsets for the y-coordinate.
+      // We cannot use same value comparison here, so the
+      // key of the map is a hash based on the marker's position
+      // (see hashMarkerPosition() above).
+      const yOffsets = new Map<string, number>();
+
       for (const marker of props) {
         let totalWidth = 0;
         let x = 0;
-        let y = 0;
+        let y = getMarkerYOffset(yOffsets, marker);
         let markerInstances = 0;
+        let lineCount = 1; // every text has at least one line
 
         // If we need to render text for hitmap framebuffer, we only render the polygons using
         // the foreground color (which needs to be converted to RGBA since it's a vec4).
@@ -412,7 +435,9 @@ function makeTextCommand(alphabet?: string[]) {
           const char = marker.text[i];
           if (char === "\n") {
             x = 0;
-            y = command.resolution;
+            // Make sure every line in the text is offsetted correctly
+            y += command.resolution;
+            lineCount++;
             continue;
           }
           const info = charInfo[char];
@@ -476,6 +501,12 @@ function makeTextCommand(alphabet?: string[]) {
           alignmentOffset[2 * (totalInstances + i) + 0] = -totalWidth / 2;
           alignmentOffset[2 * (totalInstances + i) + 1] = totalHeight / 2;
         }
+
+        // Compute the y-coordinate's offset for the next overlapped marker, if any.
+        // Basically, we add as many offsets as numbers of lines in the marker's text.
+        // Since the y-coordinate is inverted when computing destOffset[] a few lines above
+        // we need an additional command.resolution offset (precomputed in totalHeight).
+        setMarkerYOffset(yOffsets, marker, totalHeight + lineCount * command.resolution);
 
         totalInstances += markerInstances;
       }

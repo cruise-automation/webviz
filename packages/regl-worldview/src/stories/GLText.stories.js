@@ -55,6 +55,32 @@ function textMarkers({
   });
 }
 
+function overlappingMarkers({
+  text,
+  billboard,
+  background = true,
+}: {|
+  text: string,
+  billboard?: ?boolean,
+  background?: ?boolean,
+|}) {
+  const count = 10;
+  return new Array(count).fill().map((_, i) => {
+    const color = { r: 0, g: i / count, b: i / count, a: 1 };
+    return {
+      text: `${text} ${i}`,
+      pose: {
+        position: { x: 0, y: i * 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 1, y: 1, z: 1 },
+      color,
+      colors: background && i % 4 === 0 ? [color, { r: 1, g: 1, b: 0, a: 1 }] : undefined,
+      billboard,
+    };
+  });
+}
+
 storiesOf("Worldview/GLText", module)
   .addDecorator(withScreenshot({ delay: 200 }))
   .add("resolution - default", () => {
@@ -199,6 +225,44 @@ storiesOf("Worldview/GLText", module)
     return (
       <Container cameraState={{ perspective: true, distance: 25 }}>
         <GLText alphabet={alphabet}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("overlapping fixed", () => {
+    const markers = overlappingMarkers({ text: "Hello Worldview", billboard: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("overlapping fixed scaleInvariant", () => {
+    const markers = overlappingMarkers({ text: "Hello Worldview", billboard: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText scaleInvariantFontSize={30}>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("overlapping multiline fixed", () => {
+    const markers = overlappingMarkers({ text: "Hello\nWorld\nview", billboard: true });
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText>{markers}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("overlapping mixed fixed", () => {
+    const markers = overlappingMarkers({ text: "Hello Worldview", billboard: true }).concat(
+      textMarkers({ text: "Hello Worldview", billboard: true })
+    );
+    return (
+      <Container cameraState={{ perspective: true, distance: 25 }}>
+        <GLText>{markers}</GLText>
         <Axes />
       </Container>
     );

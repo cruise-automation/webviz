@@ -110,6 +110,11 @@ export const defaultDepth = {
   mask: (context: any, props: any) => (props.depth && props.depth.mask) || defaultReglDepth.mask,
 };
 
+export const disabledDepth = {
+  enable: (context: any, props: any) => false,
+  mask: (context: any, props: any) => false,
+};
+
 export const defaultBlend = {
   ...defaultReglBlend,
   enable: (context: any, props: any) => (props.blend && props.blend.enable) || defaultReglBlend.enable,

@@ -69,6 +69,9 @@ module.exports = {
     // https://webpack.js.org/configuration/resolve/#resolve-symlinks
     // and https://github.com/webpack/webpack/issues/1866
     symlinks: false,
+    alias: {
+      "react-dom": "@hot-loader/react-dom",
+    },
   },
   module: {
     strictExportPresence: true,

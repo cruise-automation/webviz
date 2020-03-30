@@ -5,6 +5,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cruise-automation/hooks": "0.0.1",
+    "@hot-loader/react-dom": "16.13.0",
     "@mdi/svg": "3.2.89",
     "@sentry/browser": "5.7.1",
     "@simonwep/pickr": "1.4.7",
@@ -45,7 +46,6 @@
     "react-container-dimensions": "1.4.1",
     "react-dnd": "2.5.4",
     "react-document-events": "1.4.0",
-    "react-dom": "16.10.2",
     "react-draggable": "3.0.5",
     "react-hot-loader": "4.8.2",
     "react-hover-observer": "2.1.1",

@@ -82,6 +82,8 @@ export class WorldviewContext {
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInput> = new Map();
+  _dirty = false;
+  _frame: AnimationFrameID;
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
   _hitmapObjectIdManager: HitmapObjectIdManager = new HitmapObjectIdManager();
   _cachedReadHitmapCall: ?{
@@ -100,7 +102,9 @@ export class WorldviewContext {
 
   constructor({ dimension, canvasBackgroundColor, cameraState, onCameraStateChange }: ConstructorArgs) {
     // used for children to call paint() directly
-    this.onDirty = () => (this.dirty = true);
+    this.onDirty = () => {
+      this._dirty = true;
+    };
     this.dimension = dimension;
     this.canvasBackgroundColor = canvasBackgroundColor;
     this.cameraStore = new CameraStore((cameraState: CameraState) => {
@@ -155,7 +159,7 @@ export class WorldviewContext {
     if (this.initializedData) {
       this.initializedData.regl.destroy();
     }
-    cancelAnimationFrame(this.frame);
+    cancelAnimationFrame(this._frame);
   }
 
   // compile a command when it is first mounted, and try to register in _commands and _compiled maps
@@ -228,15 +232,12 @@ export class WorldviewContext {
     this.counters.render = Date.now() - start;
   }
 
-  dirty = false;
-  frame: AnimationFrameID;
-
   tick = () => {
-    cancelAnimationFrame(this.frame);
-    this.frame = window.requestAnimationFrame(() => {
-      if (this.dirty) {
+    cancelAnimationFrame(this._frame);
+    this._frame = window.requestAnimationFrame(() => {
+      if (this._dirty) {
         this.paint();
-        this.dirty = false;
+        this._dirty = false;
       }
       this.tick();
     });

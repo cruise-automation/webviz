@@ -101,7 +101,7 @@ export class WorldviewContext {
 
   constructor({ dimension, canvasBackgroundColor, cameraState, onCameraStateChange }: ConstructorArgs) {
     // used for children to call paint() directly
-    this.onDirty = this._throttledPaint;
+    this.onDirty = () => (this.dirty = true);
     this.dimension = dimension;
     this.canvasBackgroundColor = canvasBackgroundColor;
     this.cameraStore = new CameraStore((cameraState: CameraState) => {
@@ -156,6 +156,7 @@ export class WorldviewContext {
     if (this.initializedData) {
       this.initializedData.regl.destroy();
     }
+    cancelAnimationFrame(this.frame);
   }
 
   // compile a command when it is first mounted, and try to register in _commands and _compiled maps
@@ -169,6 +170,7 @@ export class WorldviewContext {
 
     // for components that mount after regl is initialized
     this._compiled.set(command, compile(initializedData.regl, command));
+    this.tick();
   }
 
   // unregister children hitmap and draw calls
@@ -227,21 +229,18 @@ export class WorldviewContext {
     this.counters.render = Date.now() - start;
   }
 
-  /**
-   * Be careful to not use debounce which can delay paint indefinitely.
-   * Also be careful not to use something like Lodash throttle (which uses debounce)
-   * which as of 3/26/2020 appears to be erroneously using setTimeout instead of
-   * requestAnimationFrame. We want the latter so that paint calls can be sync'd
-   * with the browser's animation loop for maximum performance.
-   */
-  _throttledPaint = () => {
-    const now = performance.now();
-    if (now - this._lastPaintCall < 10) {
-      console.warn("Worldview paint has been throttled");
-    } else {
-      this.paint();
-      this._lastPaintCall = now;
-    }
+  dirty = false;
+  frame: AnimationFrameID;
+
+  tick = () => {
+    cancelAnimationFrame(this.frame);
+    this.frame = window.requestAnimationFrame(() => {
+      if (this.dirty) {
+        this.paint();
+        this.dirty = false;
+      }
+      this.tick();
+    });
   };
 
   readHitmap = queuePromise(

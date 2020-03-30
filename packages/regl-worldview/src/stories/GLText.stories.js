@@ -7,7 +7,7 @@ import React, { useState, useLayoutEffect, useCallback } from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 import tinyColor from "tinycolor2";
 
-import { Axes } from "../commands";
+import { Axes, Cubes } from "../commands";
 import type { Color } from "../types";
 import { vec4ToOrientation } from "../utils/commandUtils";
 import Container from "./Container";
@@ -400,4 +400,85 @@ storiesOf("Worldview/GLText", module)
     };
 
     return <Example />;
+  })
+  .add("Depth testing enabled for text in the 3D world", () => {
+    const text = {
+      text: "Hello\nWorld!",
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 1, y: 1, z: 1 },
+      color: { r: 1, g: 1, b: 1, a: 1 },
+      billboard: true,
+    };
+    const cube = {
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 2, y: 2, z: 2 },
+      color: { r: 1, g: 0, b: 1, a: 1 },
+    };
+    return (
+      <Container cameraState={{ perspective: false, distance: 25 }}>
+        <Cubes>{[cube]}</Cubes>
+        <GLText>{[text]}</GLText>
+        <Axes />
+      </Container>
+    );
+  })
+  .add("Depth testing disabled when using scale invariance. Draw order issues.", () => {
+    const text = {
+      text: "Hello\nWorld!",
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 1, y: 1, z: 1 },
+      color: { r: 1, g: 1, b: 1, a: 1 },
+      billboard: true,
+    };
+    const cube = {
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 2, y: 2, z: 2 },
+      color: { r: 1, g: 0, b: 1, a: 1 },
+    };
+    return (
+      <Container cameraState={{ perspective: false, distance: 25 }}>
+        <Axes />
+        <GLText scaleInvariantFontSize={30}>{[text]}</GLText>
+        <Cubes>{[cube]}</Cubes>
+      </Container>
+    );
+  })
+  .add("Depth testing disabled when using scale invariance. GLText render last", () => {
+    const text = {
+      text: "Hello\nWorld!",
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 1, y: 1, z: 1 },
+      color: { r: 1, g: 1, b: 1, a: 1 },
+      billboard: true,
+    };
+    const cube = {
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: 1 },
+      },
+      scale: { x: 2, y: 2, z: 2 },
+      color: { r: 1, g: 0, b: 1, a: 1 },
+    };
+    return (
+      <Container cameraState={{ perspective: false, distance: 25 }}>
+        <Cubes>{[cube]}</Cubes>
+        <Axes />
+        <GLText scaleInvariantFontSize={30}>{[text]}</GLText>
+      </Container>
+    );
   });

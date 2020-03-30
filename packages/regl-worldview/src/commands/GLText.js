@@ -5,7 +5,7 @@ import memoizeOne from "memoize-one";
 import React, { useState } from "react";
 
 import type { Color } from "../types";
-import { defaultBlend, defaultDepth, toColor } from "../utils/commandUtils";
+import { defaultBlend, defaultDepth, disabledDepth, toColor } from "../utils/commandUtils";
 import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
@@ -311,7 +311,11 @@ function makeTextCommand(alphabet?: string[]) {
     const atlasTexture = regl.texture();
     const makeDrawText = (isHitmap: boolean) => {
       return regl({
-        depth: defaultDepth,
+        // When using scale invariance, we want the text to be drawn on top
+        // of other elements. This is achieved by disabling depth testing
+        // In addition, make sure the <GLText /> command is the last one
+        // being rendered.
+        depth: command.scaleInvariant ? disabledDepth : defaultDepth,
         blend: defaultBlend,
         primitive: "triangle strip",
         vert,

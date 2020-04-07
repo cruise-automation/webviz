@@ -135,7 +135,7 @@
     "publish": "lerna run clean && lerna run build && lerna publish",
     "screenshot": "NODE_ENV=development storybook-chrome-screenshot -c stories --parallel 1 --inject-files stories/injected.js --browser-timeout 1200000",
     "screenshot-ci": "npm run screenshot -- --puppeteer-launch-config '{\"executablePath\": \"/usr/bin/google-chrome\", \"headless\": false, \"args\":[\"--use-gl=swiftshader\", \"--no-sandbox\",\"--disable-setuid-sandbox\", \"--disable-dev-shm-usage\", \"--headless\", \"--mute-audio\", \"--user-agent=PuppeteerTestingChrome/80.\"]}'",
-    "screenshot-proprietary-ci": "npm run screenshot-ci --parallel 8",
+    "screenshot-proprietary-ci": "npm run screenshot-ci -- --parallel 8",
     "screenshot-local": "npm run screenshot -- --puppeteer-launch-config '{\"headless\": false, \"--args\":[\"--user-agent=PuppeteerTestingChrome/80.\"]}' --parallel 8",
     "screenshot-local-debug": "npm run screenshot-local -- --parallel 1 --debug",
     "ci-commands-base": "npm run install-ci && NODE_ENV=production npm run build && npm run lint && npm run flow && npm test",

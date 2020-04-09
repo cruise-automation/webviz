@@ -1,4 +1,4 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([[19],{3535:
+(window.webpackJsonp=window.webpackJsonp||[]).push([[19],{3334:
 /*!******************************************************************************!*\
   !*** ./node_modules/monaco-editor/esm/vs/basic-languages/graphql/graphql.js ***!
   \******************************************************************************/

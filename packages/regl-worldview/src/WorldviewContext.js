@@ -208,6 +208,18 @@ export class WorldviewContext {
   };
 
   paint() {
+    try {
+      this._paint();
+    } catch (error) {
+      if (error.message === "(regl) context lost") {
+        console.warn(error);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  _paint() {
     const start = Date.now();
     this.reglCommandObjects.forEach((cmd) => (cmd.stats.count = 0));
     if (!this.initializedData) {

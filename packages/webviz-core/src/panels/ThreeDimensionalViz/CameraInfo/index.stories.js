@@ -20,6 +20,7 @@ const containerStyle = {
 
 const DEFAULT_PROPS = {
   cameraState: DEFAULT_CAMERA_STATE,
+  targetPose: undefined,
   expanded: true,
   followOrientation: false,
   followTf: "some_frame",

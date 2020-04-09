@@ -92,7 +92,6 @@ export default class RandomAccessPlayer implements Player {
   _lastSeekTime: number = Date.now();
   _cancelSeekBackfill: boolean = false;
   _subscribedTopics: Set<string> = new Set();
-  _sanitizedSubscribedTopics: Set<string> = new Set();
   _providerTopics: Topic[] = [];
   _providerDatatypes: RosDatatypes = {};
   _metricsCollector: PlayerMetricsCollectorInterface;
@@ -482,18 +481,14 @@ export default class RandomAccessPlayer implements Player {
   }
 
   setSubscriptions(newSubscriptions: SubscribePayload[]): void {
-    const oldSanitizedSubscribedTopics = this._sanitizedSubscribedTopics;
-    const subscribedTopics = new Set(newSubscriptions.map(({ topic }) => topic));
-    const sanitizedSubscribedTopics = new Set(getSanitizedTopics(subscribedTopics, this._providerTopics));
+    this._subscribedTopics = new Set(newSubscriptions.map(({ topic }) => topic));
+  }
 
-    this._subscribedTopics = subscribedTopics;
-    this._sanitizedSubscribedTopics = sanitizedSubscribedTopics;
-
-    // seekPlayback only when valid topics (i.e. in this._providerTopics) have changed
-    if (!isEqual(oldSanitizedSubscribedTopics, sanitizedSubscribedTopics) && !this._isPlaying && !this._initializing) {
-      // Trigger a seek so that we backfill recent messages on the newly subscribed topics.
-      this.seekPlayback(this._currentTime);
+  requestBackfill() {
+    if (this._isPlaying || this._initializing) {
+      return;
     }
+    this.seekPlayback(this._currentTime);
   }
 
   setPublishers(publishers: AdvertisePayload[]) {}

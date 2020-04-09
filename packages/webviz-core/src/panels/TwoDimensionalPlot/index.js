@@ -5,12 +5,11 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { cloneDeep, flatten, pick, round } from "lodash";
-import React, { useMemo, useCallback } from "react";
-// For now, we are relying on the old react-chartjs package but we should switch this file to rely on our internal
-// ReactChartjs for performance reasons.
-import ChartComponent from "react-chartjs-2";
+import { flatten, pick, round } from "lodash";
+import React, { useMemo, useCallback, useRef, useEffect } from "react";
 import Dimensions from "react-container-dimensions";
+import DocumentEvents from "react-document-events";
+import ReactDOM from "react-dom";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
 
@@ -23,6 +22,8 @@ import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/Messa
 import { useLatestMessageDataItem } from "webviz-core/src/components/MessagePathSyntax/useLatestMessageDataItem";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import ChartComponent from "webviz-core/src/components/ReactChartjs";
+import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SContainer = styled.div`
@@ -91,6 +92,9 @@ function TwoDimensionalPlot(props: Props) {
     config: { path, minXVal, maxXVal, minYVal, maxYVal },
     saveConfig,
   } = props;
+
+  const tooltip = useRef<?HTMLDivElement>(null);
+  const chartComponent = useRef<?ChartComponent>(null);
 
   const menuContent = useMemo(
     () => (
@@ -179,6 +183,95 @@ function TwoDimensionalPlot(props: Props) {
     : [];
   const allXs = flatten(datasets.map((dataset) => (dataset.data ? dataset.data.map(({ x }) => x) : [])));
   const allYs = flatten(datasets.map((dataset) => (dataset.data ? dataset.data.map(({ y }) => y) : [])));
+
+  const removeTooltip = useCallback(() => {
+    if (tooltip.current) {
+      ReactDOM.unmountComponentAtNode(tooltip.current);
+    }
+    if (tooltip.current && tooltip.current.parentNode) {
+      // Satisfy flow.
+      tooltip.current.parentNode.removeChild(tooltip.current);
+      tooltip.current = null;
+    }
+  }, []);
+
+  // Always clean up tooltips when unmounting.
+  useEffect(
+    () => {
+      return () => {
+        removeTooltip();
+      };
+    },
+    [removeTooltip]
+  );
+
+  const onMouseMove = useCallback(
+    async (event: MouseEvent) => {
+      const currentChartComponent = chartComponent.current;
+      if (!currentChartComponent || !currentChartComponent.canvas) {
+        removeTooltip();
+        return;
+      }
+      const { canvas } = currentChartComponent;
+      const canvasRect = canvas.getBoundingClientRect();
+      const isTargetingCanvas = event.target === canvas;
+      if (
+        event.pageX < canvasRect.left ||
+        event.pageX > canvasRect.right ||
+        event.pageY < canvasRect.top ||
+        event.pageY > canvasRect.bottom ||
+        !isTargetingCanvas
+      ) {
+        removeTooltip();
+        return;
+      }
+
+      const tooltipElement = await currentChartComponent.getElementAtXAxis(event);
+      if (!tooltipElement) {
+        removeTooltip();
+        return;
+      }
+      let tooltipDatapoint, tooltipLabel;
+      for (const { data, label } of datasets) {
+        const datapoint = data.find(
+          (_datapoint) =>
+            _datapoint.x === tooltipElement.data.x && String(_datapoint.y) === String(tooltipElement.data.y)
+        );
+        if (datapoint) {
+          tooltipDatapoint = datapoint;
+          tooltipLabel = label;
+          break;
+        }
+      }
+      if (!tooltipDatapoint) {
+        removeTooltip();
+        return;
+      }
+
+      if (!tooltip.current) {
+        tooltip.current = document.createElement("div");
+        if (canvas.parentNode) {
+          canvas.parentNode.appendChild(tooltip.current);
+        }
+      }
+
+      const currentTooltip = tooltip.current;
+      if (currentTooltip) {
+        let label = tooltipLabel ? `${tooltipLabel}: ` : "";
+        label += `(${round(tooltipDatapoint.x, 5)}, ${round(tooltipDatapoint.y, 5)})`;
+        ReactDOM.render(
+          <div
+            className={tooltipStyles.tooltip}
+            style={{ position: "absolute", left: tooltipElement.view.x, top: tooltipElement.view.y }}>
+            {label}
+          </div>,
+          currentTooltip
+        );
+      }
+    },
+    [removeTooltip, datasets]
+  );
+
   return (
     <SContainer>
       <PanelToolbar helpContent={helpContent} menuContent={menuContent}>
@@ -198,6 +291,7 @@ function TwoDimensionalPlot(props: Props) {
           <Dimensions>
             {({ width, height }) => (
               <ChartComponent
+                ref={chartComponent}
                 type="scatter"
                 width={width}
                 height={height}
@@ -229,27 +323,13 @@ function TwoDimensionalPlot(props: Props) {
                   legend: { display: false },
                   pan: { enabled: false },
                   zoom: { enabled: false },
-                  tooltips: {
-                    callbacks: {
-                      label(tooltipItem, data) {
-                        let label = data.datasets[tooltipItem.datasetIndex].label || "";
-                        if (label) {
-                          label += ": ";
-                        }
-                        label += `(${round(tooltipItem.xLabel, 5)}, ${round(tooltipItem.yLabel, 5)})`;
-                        return label;
-                      },
-                    },
-                  },
+                  plugins: {},
                 }}
-                // Sadly, chartjs mutates its inputs. This can lead to weird bugs, so just do
-                // a deep clone, even if that means it's slower.
-                // See https://github.com/jerairrest/react-chartjs-2/issues/250
-                // https://github.com/jerairrest/react-chartjs-2/issues/343 etc.
-                data={{ datasets: cloneDeep(datasets) }}
+                data={{ datasets }}
               />
             )}
           </Dimensions>
+          <DocumentEvents capture onMouseDown={onMouseMove} onMouseUp={onMouseMove} onMouseMove={onMouseMove} />
         </SRoot>
       )}
     </SContainer>

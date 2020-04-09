@@ -6,27 +6,23 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import AlertCircleIcon from "@mdi/svg/svg/alert-circle.svg";
-import TBoxIcon from "@mdi/svg/svg/alpha-t-box.svg";
-import React, { useContext } from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
 
 import { ExpandIcon } from "./Accordion";
 import { DATA_SOURCE_BADGE_SIZE, ICON_TOTAL_SIZE } from "./constants";
 import DataSourceBadge from "./DataSourceBadge";
+import DatatypeIcon from "./DatatypeIcon";
 import DragHandle from "./DragHandle";
+import EditableTopicNameDisplay from "./EditableTopicNameDisplay";
 import KeyboardFocusIndex from "./KeyboardFocusIndex";
 import { SDataSourceBadgePlaceholder } from "./Namespace";
-import { KeyboardContext } from "./TopicGroups";
 import { toggleAllForTopicVisibility } from "./topicGroupsVisibilityUtils";
 import TopicItemMenu from "./TopicItemMenu";
-import TopicNameDisplay from "./TopicNameDisplay";
 import type { TopicItem, OnTopicGroupsChange } from "./types";
 import Icon from "webviz-core/src/components/Icon";
 import Tooltip from "webviz-core/src/components/Tooltip";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
-
-const ICON_BY_DATATYPE = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.iconsByDatatype;
 
 const SItemMain = styled.div`
   position: relative;
@@ -109,6 +105,7 @@ type Props = {|
   onToggleExpand?: () => void,
   onTopicGroupsChange: OnTopicGroupsChange,
   overrideColorByColumn: (?string)[],
+  setFocusIndex: (number) => void,
 |};
 
 export default function TopicItemRowHeader({
@@ -120,6 +117,7 @@ export default function TopicItemRowHeader({
   onTopicGroupsChange,
   overrideColorByColumn,
   onToggleExpand,
+  setFocusIndex,
   item: {
     expanded,
     topicName,
@@ -134,14 +132,19 @@ export default function TopicItemRowHeader({
       filterText,
       isKeyboardFocused,
       keyboardFocusIndex,
-      namespaceDisplayVisibilityByNamespace,
+      sortedNamespaceDisplayVisibilityByColumn,
     },
   },
   dataTestShowErrors,
 }: Props) {
-  const { setFocusIndex } = useContext(KeyboardContext);
-  const TopicIcon = (datatype && ICON_BY_DATATYPE[datatype]) || TBoxIcon;
   const onlyHighlightTopic = !!(filterText && filterText.startsWith("/"));
+
+  const onChangeDisplayName = useCallback(
+    (newDisplayName: string) => {
+      onTopicGroupsChange(`${objectPath}.displayName`, newDisplayName);
+    },
+    [objectPath, onTopicGroupsChange]
+  );
 
   const dataSourceBadgeSlots = hasFeatureColumn ? 2 : 1;
   return (
@@ -179,15 +182,15 @@ export default function TopicItemRowHeader({
           </Icon>
         )}
       </SIconWrapper>
-      <SIconWrapper>
-        {hasNamespaces && onToggleExpand && (
-          <ExpandIcon dataTest={`test-toggle-expand-icon-${id}`} active={!!expanded} onToggle={onToggleExpand} />
-        )}
-      </SIconWrapper>
+      {!filterText && (
+        <SIconWrapper>
+          {hasNamespaces && onToggleExpand && (
+            <ExpandIcon dataTest={`test-toggle-expand-icon-${id}`} active={!!expanded} onToggle={onToggleExpand} />
+          )}
+        </SIconWrapper>
+      )}
       <SIconWrapper style={{ marginRight: 4 }}>
-        <Icon tooltip={datatype} fade small style={{ cursor: "unset" }} clickable={!!datatype}>
-          <TopicIcon />
-        </Icon>
+        <DatatypeIcon datatype={datatype} />
         {settingsByColumn && (
           <Tooltip contents="Topic settings has changed">
             <SSettingChanged />
@@ -195,17 +198,19 @@ export default function TopicItemRowHeader({
         )}
       </SIconWrapper>
       <SItemMainLeft>
-        <TopicNameDisplay
+        <EditableTopicNameDisplay
           onClick={() => {
             if (onToggleExpand) {
               onToggleExpand();
             }
             setFocusIndex(keyboardFocusIndex);
           }}
+          onChangeDisplayName={onChangeDisplayName}
           displayName={displayName}
           topicName={topicName}
           searchText={filterText}
           onlyHighlightTopic={onlyHighlightTopic}
+          isKeyboardFocused={isKeyboardFocused}
         />
       </SItemMainLeft>
       <SItemMainRight>
@@ -235,7 +240,7 @@ export default function TopicItemRowHeader({
                       !displayVisibilityByColumn[columnIndex]?.visible
                     );
                   }}
-                  {...(namespaceDisplayVisibilityByNamespace
+                  {...(sortedNamespaceDisplayVisibilityByColumn
                     ? {
                         onToggleAllVisibilities: () => {
                           const newItem = toggleAllForTopicVisibility(item, columnIndex);

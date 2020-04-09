@@ -11,11 +11,11 @@ import styled from "styled-components";
 
 import TextHighlight from "./TextHighlight";
 
-const STopicNameDisplay = styled.div`
+export const STopicNameDisplay = styled.div`
   display: inline-block;
 `;
 
-const SDisplayName = styled.div`
+export const SDisplayName = styled.div`
   font-size: 13px;
   line-height: 1.4;
   margin-right: 4px;
@@ -23,9 +23,10 @@ const SDisplayName = styled.div`
   margin-bottom: ${(props: { renderTopicName: boolean }) => (props.renderTopicName ? "0px" : "0px")};
   /* disallow selection to prevent shift + click from accidentally select */
   user-select: none;
+  width: 100%;
 `;
 
-const STopicName = styled.div`
+export const STopicName = styled.div`
   font-size: 10px;
   line-height: 1.2;
   word-break: break-word;
@@ -36,28 +37,17 @@ const STopicName = styled.div`
 
 type Props = {|
   displayName: string,
-  onlyHighlightTopic?: boolean,
   topicName: string,
   searchText?: string,
-  onClick?: () => void,
   style?: { [attr: string]: string | number },
 |};
 
-export default function TopicNameDisplay({
-  displayName,
-  topicName,
-  searchText,
-  onClick,
-  onlyHighlightTopic,
-  style = {},
-}: Props) {
+export default function TopicNameDisplay({ displayName, topicName, searchText, style = {} }: Props) {
   const renderTopicName = displayName !== topicName;
   return (
-    <STopicNameDisplay
-      style={{ ...style, cursor: onClick ? "pointer" : "unset" }}
-      {...(onClick ? { onClick, ["data-test"]: `topic-name-${displayName}` } : undefined)}>
+    <STopicNameDisplay style={{ ...style }}>
       <SDisplayName title={displayName} renderTopicName={renderTopicName}>
-        <TextHighlight targetStr={displayName} searchText={onlyHighlightTopic ? undefined : searchText} />
+        <TextHighlight targetStr={displayName} searchText={searchText} />
       </SDisplayName>
       {renderTopicName && (
         <STopicName>

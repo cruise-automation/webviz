@@ -14,7 +14,8 @@ import type { DataProviderDescriptor, GetDataProvider } from "webviz-core/src/da
 import filterMap from "webviz-core/src/filterMap";
 import reportError from "webviz-core/src/util/reportError";
 
-const CACHE_SIZE_DECISECONDS = 50; // Number of deciseconds (1/10th of a second) that we keep cached.
+// Exported for tests.
+export const CACHE_SIZE_BYTES = 200e6; // Amount of parsed messages measured in unparsed message size that we keep cached.
 
 // Parses raw messages as returned by `BagDataProvider`. To make it fast to seek back and forth, we keep
 // a small cache here, which maps messages from the underlying DataProvider to parsed messages. This assumes
@@ -29,11 +30,18 @@ export default class ParseMessagesDataProvider implements DataProvider {
 
   // Simple LRU cache that maps raw messages to parsed messages. Uses strings like "123.4" as the cache keys.
   _cachesByDeciSecond: {
-    [deciSecond: string]: { map: WeakMap<DataProviderMessage, DataProviderMessage>, lastAccessTime: number },
+    [deciSecond: string]: {
+      map: WeakMap<DataProviderMessage, DataProviderMessage>,
+      lastAccessTime: number,
+      sizeInBytes: number,
+    },
   } = {};
 
   // A number that increases on every access; for use in `lastAccessTime`.
   _cacheAccessIndex: number = 1;
+
+  // Total size in bytes from all the _cachesByDeciSecond.
+  _cacheSizeInBytes: number = 0;
 
   constructor(_: {}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
     if (children.length !== 1) {
@@ -80,6 +88,7 @@ export default class ParseMessagesDataProvider implements DataProvider {
       this._cachesByDeciSecond[deciSecond] = this._cachesByDeciSecond[deciSecond] || {
         map: new WeakMap(),
         lastAccessTime: 0,
+        sizeInBytes: 0,
       };
 
       // Update the access time.
@@ -90,21 +99,30 @@ export default class ParseMessagesDataProvider implements DataProvider {
         outputMessage = this._readMessage(message);
         if (outputMessage) {
           this._cachesByDeciSecond[deciSecond].map.set(message, outputMessage);
+          this._cachesByDeciSecond[deciSecond].sizeInBytes += message.message.byteLength;
+          this._cacheSizeInBytes += message.message.byteLength;
         }
       }
 
       return outputMessage;
     });
 
-    // If we have too many caches, delete the least recently used ones.
-    const cacheEntries = Object.entries(this._cachesByDeciSecond);
-    if (cacheEntries.length > CACHE_SIZE_DECISECONDS) {
+    if (this._cacheSizeInBytes > CACHE_SIZE_BYTES) {
+      // Delete the least recently used caches, once they exceed CACHE_SIZE_BYTES.
+      const cacheEntries = Object.entries(this._cachesByDeciSecond);
       // $FlowFixMe - Object.entries doesn't behave well in Flow.
-      const sortedCaches = sortBy(cacheEntries, (val) => val[1].lastAccessTime);
-      for (const [oldDeciSecond] of sortedCaches.slice(0, sortedCaches.length - CACHE_SIZE_DECISECONDS)) {
-        delete this._cachesByDeciSecond[oldDeciSecond];
+      const sortedCaches = sortBy(cacheEntries, (val) => -val[1].lastAccessTime);
+      let totalBytes = 0;
+      // $FlowFixMe - Object.entries doesn't behave well in Flow.
+      for (const [deciSecond, { sizeInBytes }] of sortedCaches) {
+        totalBytes += sizeInBytes;
+        if (totalBytes > CACHE_SIZE_BYTES) {
+          this._cacheSizeInBytes -= sizeInBytes;
+          delete this._cachesByDeciSecond[deciSecond];
+        }
       }
     }
+
     return outputMessages;
   }
 

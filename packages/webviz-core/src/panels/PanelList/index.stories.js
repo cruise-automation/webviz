@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import { createMemoryHistory } from "history";
 import * as React from "react";
-import { DragDropContextProvider } from "react-dnd";
+import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import TestUtils from "react-dom/test-utils";
 import { Provider } from "react-redux";
@@ -22,9 +22,9 @@ import configureStore from "webviz-core/src/store/configureStore.testing";
 storiesOf("<PanelList>", module)
   .addDecorator(withScreenshot())
   .addDecorator((childrenRenderFcn) => (
-    <DragDropContextProvider backend={HTML5Backend}>
+    <DndProvider backend={HTML5Backend}>
       <Provider store={configureStore(createRootReducer(createMemoryHistory()))}>{childrenRenderFcn()}</Provider>
-    </DragDropContextProvider>
+    </DndProvider>
   ))
   .add("panel list", () => (
     <div style={{ margin: 150 }}>
@@ -33,7 +33,7 @@ storiesOf("<PanelList>", module)
         mosaicId=""
         mosaicLayout=""
         changePanelLayout={() => {}}
-        savePanelConfig={() => {}}
+        savePanelConfigs={() => {}}
       />
     </div>
   ))
@@ -55,7 +55,7 @@ storiesOf("<PanelList>", module)
         mosaicId=""
         mosaicLayout=""
         changePanelLayout={() => {}}
-        savePanelConfig={() => {}}
+        savePanelConfigs={() => {}}
       />
     </div>
   ))
@@ -77,7 +77,7 @@ storiesOf("<PanelList>", module)
         mosaicId=""
         mosaicLayout=""
         changePanelLayout={() => {}}
-        savePanelConfig={() => {}}
+        savePanelConfigs={() => {}}
       />
     </div>
   ));

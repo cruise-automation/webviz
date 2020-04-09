@@ -6,15 +6,20 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { PureComponent } from "react";
+import React, { useCallback, useState, forwardRef, type ElementRef } from "react";
 import { MosaicWithoutDragDropContext, MosaicWindow } from "react-mosaic-component";
-import { connect } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import "react-mosaic-component/react-mosaic-component.css";
+import { bindActionCreators } from "redux";
 
 import ErrorBoundary from "./ErrorBoundary";
-import { type SET_MOSAIC_ID, setMosaicId } from "webviz-core/src/actions/mosaic";
-import { changePanelLayout, savePanelConfig } from "webviz-core/src/actions/panels";
-import type { CHANGE_PANEL_LAYOUT, Dispatcher, SAVE_PANEL_CONFIG } from "webviz-core/src/actions/panels";
+import { setMosaicId } from "webviz-core/src/actions/mosaic";
+import {
+  changePanelLayout,
+  savePanelConfigs,
+  type Dispatcher,
+  type SAVE_PANEL_CONFIGS,
+} from "webviz-core/src/actions/panels";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
@@ -22,19 +27,17 @@ import SpinningLoadingIcon from "webviz-core/src/components/SpinningLoadingIcon"
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList from "webviz-core/src/panels/PanelList";
 import type { State } from "webviz-core/src/reducers";
-import type { SaveConfigPayload } from "webviz-core/src/types/panels";
+import type { SaveConfigsPayload } from "webviz-core/src/types/panels";
 import { getPanelIdForType, getPanelTypeFromId } from "webviz-core/src/util";
 import "./PanelLayout.scss";
 
 type Props = {
   layout: any,
-  changePanelLayout: (panels: any) => Dispatcher<CHANGE_PANEL_LAYOUT>,
-  setMosaicId: (mosaicId: string) => SET_MOSAIC_ID,
-  savePanelConfig: (SaveConfigPayload) => Dispatcher<SAVE_PANEL_CONFIG>,
-};
-
-type OwnState = {
-  hooksImported: boolean,
+  onChange: (panels: any) => void,
+  setMosaicId: (mosaicId: string) => void,
+  savePanelConfigs: (SaveConfigsPayload) => Dispatcher<SAVE_PANEL_CONFIGS>,
+  importHooks: boolean,
+  forwardedRef?: ElementRef<any>,
 };
 
 // we subclass the mosiac layout without dragdropcontext
@@ -48,88 +51,108 @@ class MosaicRoot extends MosaicWithoutDragDropContext {
   }
 }
 
-class PanelLayout extends PureComponent<Props, OwnState> {
-  state = {
-    hooksImported: getGlobalHooks().areHooksImported(),
-  };
+export function UnconnectedPanelLayout(props: Props) {
+  const { importHooks, layout, onChange, savePanelConfigs: saveConfigs } = props;
+  const [hooksImported, setHooksImported] = useState(getGlobalHooks().areHooksImported());
 
-  componentDidMount() {
-    if (!this.state.hooksImported) {
-      const globalHooks = getGlobalHooks();
-      globalHooks
-        .importHooksAsync()
-        .then(() => {
-          globalHooks.perPanelHooks().installChartJs();
-          this.setState({ hooksImported: true });
-        })
-        .catch((reason) => {
-          console.error(`Import failed ${reason}`);
-        });
-    }
+  if (importHooks && !hooksImported) {
+    const globalHooks = getGlobalHooks();
+    globalHooks
+      .importHooksAsync()
+      .then(() => {
+        globalHooks.perPanelHooks().installChartJs();
+        setHooksImported({ hooksImported: true });
+      })
+      .catch((reason) => {
+        console.error(`Import failed ${reason}`);
+      });
   }
 
-  createTile = (config: any) => {
-    const defaultPanelType = "RosOut";
-    const type = config ? config.type || defaultPanelType : defaultPanelType;
-    const id = getPanelIdForType(type);
-    if (config.panelConfig) {
-      this.props.savePanelConfig({ id, config: config.panelConfig, defaultConfig: {} });
-    }
-    return id;
-  };
+  const createTile = useCallback(
+    (config: any) => {
+      const defaultPanelType = "RosOut";
+      const type = config ? config.type || defaultPanelType : defaultPanelType;
+      const id = getPanelIdForType(type);
+      if (config.panelConfig) {
+        saveConfigs({ configs: [{ id, config: config.panelConfig }] });
+      }
+      return id;
+    },
+    [saveConfigs]
+  );
 
-  renderTile = (id: string | {}, path: any) => {
-    // `id` is usually a string. But when `layout` is empty, `id` will be an empty object, in which case we don't need to render Tile
-    if (!id || typeof id !== "string") {
-      return;
-    }
-    const type = getPanelTypeFromId(id);
-    const PanelComponent = PanelList.getComponentForType(type);
-    // if we haven't found a panel of the given type, render the panel selector
-    if (!PanelComponent) {
+  const renderTile = useCallback(
+    (id: string | {}, path: any) => {
+      // `id` is usually a string. But when `layout` is empty, `id` will be an empty object, in which case we don't need to render Tile
+      if (!id || typeof id !== "string") {
+        return;
+      }
+      const type = getPanelTypeFromId(id);
+      const PanelComponent = PanelList.getComponentForType(type);
+      // if we haven't found a panel of the given type, render the panel selector
+      if (!PanelComponent) {
+        return (
+          <MosaicWindow path={path} createNode={createTile} renderPreview={() => null}>
+            <Flex col center>
+              <PanelToolbar floating />
+              Unknown panel type: {type}.
+            </Flex>
+          </MosaicWindow>
+        );
+      }
       return (
-        <MosaicWindow path={path} createNode={this.createTile}>
-          <Flex col center>
-            <PanelToolbar floating />
-            Unknown panel type: {type}.
-          </Flex>
+        <MosaicWindow key={path} path={path} createNode={createTile} renderPreview={() => null}>
+          <PanelComponent childId={id} />
         </MosaicWindow>
       );
-    }
-    return (
-      <MosaicWindow path={path} createNode={this.createTile}>
-        <PanelComponent childId={id} />
-      </MosaicWindow>
-    );
-  };
+    },
+    [createTile]
+  );
 
-  render() {
-    return (
-      <ErrorBoundary>
-        {this.state.hooksImported ? (
-          <MosaicRoot
-            renderTile={this.renderTile}
-            className="none"
-            resize={{ minimumPaneSizePercentage: 2 }}
-            value={this.props.layout}
-            onChange={this.props.changePanelLayout}
-            setMosaicId={this.props.setMosaicId}
-          />
-        ) : (
-          <Flex center style={{ width: "100%", height: "100%" }}>
-            <Icon large>
-              <SpinningLoadingIcon />
-            </Icon>
-          </Flex>
-        )}
-      </ErrorBoundary>
-    );
-  }
+  return (
+    <ErrorBoundary ref={props.forwardedRef}>
+      {hooksImported ? (
+        <MosaicRoot
+          renderTile={renderTile}
+          className="none"
+          resize={{ minimumPaneSizePercentage: 2 }}
+          value={layout}
+          onChange={onChange}
+          setMosaicId={props.setMosaicId}
+        />
+      ) : (
+        <Flex center style={{ width: "100%", height: "100%" }}>
+          <Icon large>
+            <SpinningLoadingIcon />
+          </Icon>
+        </Flex>
+      )}
+    </ErrorBoundary>
+  );
 }
 
-export default connect<Props, {}, _, _, _, _>(
-  (state: State) => ({ layout: state.panels.layout }),
-  { changePanelLayout, savePanelConfig, setMosaicId },
-  undefined,
-  { forwardRef: true }
-)(PanelLayout);
+const ConnectedPanelLayout = ({ importHooks = true }: { importHooks?: boolean }, ref) => {
+  const layout = useSelector((state: State) => state.panels.layout);
+  const dispatch = useDispatch();
+  const actions = React.useMemo(
+    () => bindActionCreators({ changePanelLayout, savePanelConfigs, setMosaicId }, dispatch),
+    [dispatch]
+  );
+  const onChange = useCallback(
+    (newLayout: any) => {
+      actions.changePanelLayout({ layout: newLayout });
+    },
+    [actions]
+  );
+  return (
+    <UnconnectedPanelLayout
+      forwardedRef={ref}
+      importHooks={importHooks}
+      layout={layout}
+      onChange={onChange}
+      savePanelConfigs={actions.savePanelConfigs}
+      setMosaicId={actions.setMosaicId}
+    />
+  );
+};
+export default forwardRef<{ importHooks?: boolean }, _>((props, ref) => ConnectedPanelLayout(props, ref));

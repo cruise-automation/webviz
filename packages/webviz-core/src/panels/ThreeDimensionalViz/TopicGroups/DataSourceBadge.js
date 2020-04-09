@@ -11,8 +11,6 @@ import styled from "styled-components";
 import tinycolor from "tinycolor2";
 
 import { DATA_SOURCE_BADGE_SIZE } from "./constants";
-import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
-import Tooltip from "webviz-core/src/components/Tooltip";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type StyleProps = {|
@@ -34,12 +32,6 @@ const SDataSourceBadgeWrapper = styled.span`
   user-select: none;
 `;
 
-const STooltipRow = styled.div`
-  padding: 4px 0;
-  max-width: 400px;
-  display: flex;
-  justify-content: space-between;
-`;
 const TOPIC_SIZE = 12;
 const NAMESPACE_SIZE = 10;
 const HOVER_TOPIC_SIZE = 22;
@@ -110,7 +102,7 @@ const SDataSourceBadge = styled.span`
   display: flex;
   align-items: center;
   justify-content: center;
-  border-width: 2px;
+  border-width: 1px;
   border-style: solid;
 `;
 
@@ -140,46 +132,6 @@ export default function DataSourceBadge({
   topicName,
   ...rest
 }: Props) {
-  const tooltips = [];
-  if (!rest.isNamespace) {
-    tooltips.push(<KeyboardShortcut key="toggle-visibility" keys={["Enter"]} description="Toggle visibility" />);
-
-    if (onToggleAllVisibilities) {
-      tooltips.push(
-        <KeyboardShortcut key="toggle children in column" keys={["Shift", "Enter"]} description="Toggle children" />
-      );
-      tooltips.push(
-        <KeyboardShortcut
-          key="toggle children"
-          keys={["Shift", "Click"]}
-          description="Toggle children in clicked column"
-        />
-      );
-    }
-    // show any non-empty prefixes in the tooltip
-    if (dataSourcePrefixes.length && !(dataSourcePrefixes.length === 1 && dataSourcePrefixes[0] === "")) {
-      const prefixesElems = dataSourcePrefixes.map((prefix, idx) =>
-        prefix ? (
-          <code key={prefix}>
-            {prefix}
-            {idx < dataSourcePrefixes.length - 1 ? "," : ""}
-          </code>
-        ) : null
-      );
-      tooltips.push(
-        <STooltipRow key="prefix">
-          {dataSourcePrefixes.length > 1 ? "Prefixes" : "Prefix"}: {prefixesElems}
-        </STooltipRow>
-      );
-    }
-  }
-
-  const dataSourceBadgeEl = (
-    <SDataSourceBadge {...rest} style={getStyles(rest)} data-test={dataTest}>
-      {badgeText}
-    </SDataSourceBadge>
-  );
-
   return (
     <SDataSourceBadgeWrapper
       isNamespace={rest.isNamespace}
@@ -194,15 +146,9 @@ export default function DataSourceBadge({
         }
       }}>
       {rest.available && (
-        <>
-          {tooltips.length ? (
-            <Tooltip placement="top" contents={tooltips}>
-              {dataSourceBadgeEl}
-            </Tooltip>
-          ) : (
-            dataSourceBadgeEl
-          )}
-        </>
+        <SDataSourceBadge {...rest} style={getStyles(rest)} data-test={dataTest}>
+          {badgeText}
+        </SDataSourceBadge>
       )}
     </SDataSourceBadgeWrapper>
   );

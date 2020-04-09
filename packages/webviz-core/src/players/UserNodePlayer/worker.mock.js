@@ -6,4 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-export default class MockUserNodePlayerWorker {}
+export default class MockUserNodePlayerWorker {
+  // Property on SharedWorker
+  port = { start: () => null };
+}

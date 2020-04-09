@@ -11,7 +11,7 @@ import thunk from "redux-thunk";
 
 import type { Store } from "webviz-core/src/types/Store";
 
-const configureStore = (reducer: () => any, middleware?: Array<any> = []): Store => {
+const configureStore = (reducer: (any, any) => any, middleware?: Array<any> = []): Store => {
   let enhancer = applyMiddleware(thunk, ...middleware);
   if (process.env.NODE_ENV !== "production") {
     const { composeWithDevTools } = require("redux-devtools-extension");

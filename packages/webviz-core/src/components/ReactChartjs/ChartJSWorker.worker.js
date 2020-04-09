@@ -16,6 +16,6 @@ const inWorkerEnvironment = global.postMessage && !global.onmessage;
 export default ChartJSWorker;
 
 if (inWorkerEnvironment) {
-  installChartjs([Chart], { installZoom: false });
+  installChartjs(Chart);
   new ChartJSWorker(new Rpc(global));
 }

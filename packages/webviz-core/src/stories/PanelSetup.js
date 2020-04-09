@@ -9,8 +9,9 @@
 import { createMemoryHistory } from "history";
 import { flatten } from "lodash";
 import * as React from "react";
-import { DragDropContextProvider } from "react-dnd";
+import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
+import { Mosaic, MosaicWindow } from "react-mosaic-component";
 
 import { setAuxiliaryData } from "webviz-core/src/actions/extensions";
 import { overwriteGlobalVariables, setUserNodes, setLinkedGlobalVariables } from "webviz-core/src/actions/panels";
@@ -90,6 +91,24 @@ export function triggerWheel(target: HTMLElement, deltaX: number) {
   event.deltaX = deltaX;
   target.dispatchEvent(event);
 }
+
+export const MosaicWrapper = ({ children }: { children: React.Node }) => {
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <Mosaic
+        className="none"
+        initialValue="mock"
+        renderTile={(id, path) => {
+          return (
+            <MosaicWindow path={path} id="panel" renderPreview={() => <div />}>
+              {children}
+            </MosaicWindow>
+          );
+        }}
+      />
+    </DndProvider>
+  );
+};
 
 export default class PanelSetup extends React.PureComponent<Props, State> {
   static getDerivedStateFromProps(props: Props, prevState: State) {
@@ -171,10 +190,6 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
   }
 
   render() {
-    return this.props.omitDragAndDrop ? (
-      this.renderInner()
-    ) : (
-      <DragDropContextProvider backend={HTML5Backend}>{this.renderInner()}</DragDropContextProvider>
-    );
+    return this.props.omitDragAndDrop ? this.renderInner() : <MosaicWrapper>{this.renderInner()}</MosaicWrapper>;
   }
 }

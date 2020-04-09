@@ -94,17 +94,19 @@ export function useMessageReducer<T>(props: Props<T>): T {
   const [id] = useState(() => uuid.v4());
   const { type: panelType = undefined } = useContext(PanelContext) || {};
 
-  useShouldNotChangeOften(
-    props.restore,
-    "useMessageReducer restore() is changing frequently. " +
-      "restore() will be called each time it changes, so a new function " +
-      "shouldn't be created on each render. (If you're using Hooks, try useCallback.)"
+  useShouldNotChangeOften(props.restore, () =>
+    console.warn(
+      "useMessageReducer restore() is changing frequently. " +
+        "restore() will be called each time it changes, so a new function " +
+        "shouldn't be created on each render. (If you're using Hooks, try useCallback.)"
+    )
   );
-  useShouldNotChangeOften(
-    props.addMessage,
-    "useMessageReducer addMessage() is changing frequently. " +
-      "restore() will be called each time it changes, so a new function " +
-      "shouldn't be created on each render. (If you're using Hooks, try useCallback.)"
+  useShouldNotChangeOften(props.addMessage, () =>
+    console.warn(
+      "useMessageReducer addMessage() is changing frequently. " +
+        "restore() will be called each time it changes, so a new function " +
+        "shouldn't be created on each render. (If you're using Hooks, try useCallback.)"
+    )
   );
 
   const requestedTopics = useDeepMemo(props.topics);
@@ -118,6 +120,12 @@ export function useMessageReducer<T>(props: Props<T>): T {
   );
   useEffect(() => setSubscriptions(id, subscriptions), [id, setSubscriptions, subscriptions]);
   useCleanup(() => setSubscriptions(id, []));
+
+  const requestBackfill = useMessagePipeline(
+    useCallback(({ requestBackfill: pipelineRequestBackfill }) => pipelineRequestBackfill, [])
+  );
+  // Whenever `subscriptions` change, request a backfill, since we'd like to show fresh data.
+  useEffect(() => requestBackfill(), [requestBackfill, subscriptions]);
 
   // Keep a reference to the last messages we processed to ensure we never process them more than once.
   // If the topics we care about change, the player should send us new messages soon anyway (via backfill if paused).

@@ -6,23 +6,22 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import fuzzySort from "fuzzysort";
-import { flatten } from "lodash";
+import { flatten, isEqual } from "lodash";
 import * as React from "react";
-import { DragSource } from "react-dnd";
+import { useDrag } from "react-dnd";
 import { MosaicDragType, getNodeAtPath, updateTree } from "react-mosaic-component";
 import { connect } from "react-redux";
 import styled from "styled-components";
 
 import styles from "./index.module.scss";
-import { changePanelLayout, savePanelConfig } from "webviz-core/src/actions/panels";
+import { changePanelLayout, savePanelConfigs } from "webviz-core/src/actions/panels";
 import { Item } from "webviz-core/src/components/Menu";
-import SubMenu from "webviz-core/src/components/Menu/SubMenu";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import TextHighlight from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TextHighlight";
 import type { State } from "webviz-core/src/reducers";
-import type { PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
-import { getPanelIdForType } from "webviz-core/src/util";
+import type { PanelConfig, SaveConfigsPayload } from "webviz-core/src/types/panels";
+import { getPanelIdForType, getSaveConfigsPayloadForTab } from "webviz-core/src/util";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SearchInput = styled.input`
@@ -40,7 +39,7 @@ const SearchInput = styled.input`
 type PanelListItem = {|
   title: string,
   component: React.ComponentType<any>,
-  presets?: {| title: string, panelConfig?: PanelConfig |}[],
+  presetSettings?: {| config: PanelConfig, relatedConfigs: { [panelId: string]: PanelConfig } |},
 |};
 
 // getPanelsByCategory() and getPanelsByType() are functions rather than top-level constants
@@ -64,7 +63,8 @@ export function getPanelsByType(): { [type: string]: PanelListItem } {
     gPanelsByType = {};
     const panelsByCategory = getPanelsByCategory();
     for (const category in panelsByCategory) {
-      for (const item of panelsByCategory[category]) {
+      const nonPresetPanels = panelsByCategory[category].filter((panel) => panel && !panel.presetSettings);
+      for (const item of nonPresetPanels) {
         // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
         const panelType = item.component.panelType;
         console.assert(panelType && !(panelType in gPanelsByType));
@@ -76,21 +76,16 @@ export function getPanelsByType(): { [type: string]: PanelListItem } {
 }
 
 type DropDescription = {
-  panelType: string,
-  panelConfig: ?PanelConfig,
+  type: string,
+  config: ?PanelConfig,
+  relatedConfigs?: { [panelId: string]: PanelConfig },
   position: string,
   path: string,
 };
 type PanelItemProps = {
-  panel: {|
-    type: string,
-    title: string,
-    panelConfig?: PanelConfig,
-  |},
+  panel: {| type: string, title: string, config?: PanelConfig, relatedConfigs?: { [panelId: string]: PanelConfig } |},
   searchQuery: string,
   checked?: boolean,
-  // this comes from react-dnd
-  connectDragSource: (any) => React.Node,
   onClick: () => void,
   // the props here are actually used in the dragSource
   // beginDrag and endDrag callbacks - the props are passed via react-dnd
@@ -99,59 +94,55 @@ type PanelItemProps = {
   onDrop: (DropDescription) => void, //eslint-disable-line react/no-unused-prop-types
 };
 
-class PanelItem extends React.Component<PanelItemProps> {
-  render() {
-    const { connectDragSource, searchQuery, panel, onClick, checked } = this.props;
-    return connectDragSource(
-      <div>
-        <Item onClick={onClick} checked={checked} className={styles.item}>
-          <TextHighlight targetStr={panel.title} searchText={searchQuery} />
-        </Item>
-      </div>
-    );
-  }
+function DraggablePanelItem(props: PanelItemProps) {
+  const { searchQuery, panel, onClick, onDrop, checked } = props;
+  const [__, drag] = useDrag({
+    item: { type: MosaicDragType.WINDOW },
+    begin: (monitor) => {
+      return { mosaicId: props.mosaicId };
+    },
+    end: (item, monitor) => {
+      const dropResult = monitor.getDropResult() || {};
+      const { position, path } = dropResult;
+      // dropping outside mosaic does nothing
+      if (!position || !path) {
+        return;
+      }
+      onDrop({
+        type: panel.type,
+        config: panel.config,
+        relatedConfigs: panel.relatedConfigs,
+        position,
+        path,
+      });
+    },
+  });
+  return (
+    <div ref={drag}>
+      <Item onClick={onClick} checked={checked} className={styles.item}>
+        <TextHighlight targetStr={panel.title} searchText={searchQuery} />
+      </Item>
+    </div>
+  );
 }
-// react-dnd based config for what to do on drag events
-const dragConfig = {
-  beginDrag: (props: PanelItemProps, monitor, component) => {
-    return {
-      mosaicId: props.mosaicId,
-    };
-  },
-  endDrag: (props: PanelItemProps, monitor, component) => {
-    const dropResult = monitor.getDropResult() || {};
-    const { position, path } = dropResult;
 
-    // dropping outside mosiac does nothing
-    if (!position || !path) {
-      return;
-    }
-    props.onDrop({
-      panelType: props.panel.type,
-      panelConfig: props.panel.panelConfig,
-      position,
-      path,
-    });
-  },
+export type PanelSelection = {
+  type: string,
+  config?: PanelConfig,
+  relatedConfigs?: { [panelId: string]: PanelConfig },
 };
-// boilerplate required by react-dnd
-const DraggablePanelItem = DragSource(MosaicDragType.WINDOW, dragConfig, (connectArg, monitor) => {
-  return {
-    connectDragSource: connectArg.dragSource(),
-  };
-})(PanelItem);
-
 type OwnProps = {|
-  onPanelSelect: (panelType: string, panelConfig?: PanelConfig) => void,
-  selectedPanelType?: string,
+  onPanelSelect: (PanelSelection) => void,
+  selectedPanelTitle?: string,
 |};
-type Props = {
+type Props = {|
   ...OwnProps,
   mosaicId: string,
   mosaicLayout: any, // this is the opaque mosiac layout config object
-  changePanelLayout: (panelLayout: any) => void,
-  savePanelConfig: (SaveConfigPayload) => void,
-};
+  changePanelLayout: (payload: any) => void,
+  savePanelConfigs: (SaveConfigsPayload) => void,
+|};
+
 class PanelList extends React.Component<Props, { searchQuery: string }> {
   state = { searchQuery: "" };
   static getComponentForType(type: string): any | void {
@@ -166,35 +157,38 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
   // we need to update the panel layout in redux
   // the actual operations to change the layout
   // are supplied by react-mosaic-component
-  onPanelMenuItemDrop = (config: DropDescription) => {
+  onPanelMenuItemDrop = (dropDescription: DropDescription) => {
     const { mosaicLayout } = this.props;
-    const { panelType, position, path } = config;
-    const newNode = getPanelIdForType(panelType);
+    const { config, relatedConfigs, type, position, path } = dropDescription;
+    const id = getPanelIdForType(type);
     const node = getNodeAtPath(mosaicLayout, path);
     const before = position === "left" || position === "top";
-    const [first, second] = before ? [newNode, node] : [node, newNode];
+    const [first, second] = before ? [id, node] : [node, id];
     const direction = position === "left" || position === "right" ? "row" : "column";
-    const updates = [
-      {
-        path,
-        spec: {
-          $set: { first, second, direction },
-        },
-      },
-    ];
-    if (config.panelConfig) {
-      this.props.savePanelConfig({ id: newNode, config: config.panelConfig, defaultConfig: {} });
+    const updates = [{ path, spec: { $set: { first, second, direction } } }];
+
+    if (config && relatedConfigs) {
+      const payload = getSaveConfigsPayloadForTab({ id, config, relatedConfigs });
+      this.props.savePanelConfigs(payload);
+    } else if (config) {
+      this.props.savePanelConfigs({ configs: [{ id, config }] });
     }
     const newLayout = updateTree(mosaicLayout, updates);
-    this.props.changePanelLayout(newLayout);
+    this.props.changePanelLayout({ layout: newLayout });
   };
 
   // sanity checks to help panel authors debug issues
   _verifyPanels() {
-    const panelTypes: Map<string, React.ComponentType<any>> = new Map();
+    const panelTypes: Map<
+      string,
+      {
+        component: React.ComponentType<any>,
+        presetSettings?: { config: PanelConfig, relatedConfigs: { [panelId: string]: PanelConfig } },
+      }
+    > = new Map();
     const panelsByCategory = getPanelsByCategory();
     for (const category in panelsByCategory) {
-      for (const { component } of panelsByCategory[category]) {
+      for (const { component, presetSettings } of panelsByCategory[category]) {
         // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
         const { name, displayName, panelType } = component;
         if (!panelType) {
@@ -203,14 +197,15 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
           );
         }
         const existingPanel = panelTypes.get(panelType);
-        if (existingPanel) {
+        if (existingPanel && isEqual(existingPanel.presetSettings, presetSettings)) {
           throw new Error(
-            `Two components have the same panelType ('${panelType}'): ${existingPanel.displayName ||
-              existingPanel.name ||
+            `Two components have the same panelType ('${panelType}') and same presetSettings: ${existingPanel.component
+              .displayName ||
+              existingPanel.component.name ||
               "<unnamed>"} and ${displayName || name || "<unnamed>"}`
           );
         }
-        panelTypes.set(panelType, component);
+        panelTypes.set(panelType, { component, presetSettings });
       }
     }
   }
@@ -222,7 +217,7 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
 
   render() {
     this._verifyPanels();
-    const { mosaicId, onPanelSelect, selectedPanelType } = this.props;
+    const { mosaicId, onPanelSelect, selectedPanelTitle } = this.props;
     const { searchQuery } = this.state;
     const panelCategories = getGlobalHooks().panelCategories();
     const panelsByCategory = getPanelsByCategory();
@@ -249,41 +244,30 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
 
           return items.map(
             // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
-            ({ presets, title, component: { panelType } }, panelIdx) =>
-              presets ? (
-                <SubMenu
-                  text={<TextHighlight targetStr={title} searchText={searchQuery} />}
-                  key={panelType}
-                  style={{ zIndex: 1 }}
-                  checked={panelType === selectedPanelType}>
-                  {presets.map((subPanelListItem) => (
-                    <DraggablePanelItem
-                      key={subPanelListItem.title}
-                      mosaicId={mosaicId}
-                      panel={{
-                        type: panelType,
-                        title: subPanelListItem.title,
-                        panelConfig: subPanelListItem.panelConfig,
-                      }}
-                      onDrop={this.onPanelMenuItemDrop}
-                      onClick={() => onPanelSelect(panelType, subPanelListItem.panelConfig)}
-                      searchQuery=""
-                    />
-                  ))}
-                </SubMenu>
-              ) : (
-                <div key={panelType}>
-                  {panelIdx === 0 && <Item isHeader>{label}</Item>}
-                  <DraggablePanelItem
-                    mosaicId={mosaicId}
-                    panel={{ type: panelType, title }}
-                    onDrop={this.onPanelMenuItemDrop}
-                    onClick={() => onPanelSelect(panelType)}
-                    checked={panelType === selectedPanelType}
-                    searchQuery={searchQuery}
-                  />
-                </div>
-              )
+            ({ presetSettings, title, component: { panelType } }, panelIdx) => (
+              <div key={`${panelType}-${panelIdx}`}>
+                {panelIdx === 0 && <Item isHeader>{label}</Item>}
+                <DraggablePanelItem
+                  mosaicId={mosaicId}
+                  panel={{
+                    type: panelType,
+                    title,
+                    config: presetSettings?.config,
+                    relatedConfigs: presetSettings?.relatedConfigs,
+                  }}
+                  onDrop={this.onPanelMenuItemDrop}
+                  onClick={() =>
+                    onPanelSelect({
+                      type: panelType,
+                      config: presetSettings?.config || {},
+                      relatedConfigs: presetSettings?.relatedConfigs,
+                    })
+                  }
+                  checked={title === selectedPanelTitle}
+                  searchQuery={searchQuery}
+                />
+              </div>
+            )
           );
         })}
       </div>
@@ -295,7 +279,7 @@ const mapStateToProps = (state: State) => ({
   mosaicId: state.mosaic.mosaicId,
   mosaicLayout: state.panels.layout,
 });
-export default (connect<Props, OwnProps, _, _, _, _>(
+export default connect<Props, OwnProps, _, _, _, _>(
   mapStateToProps,
-  { changePanelLayout, savePanelConfig }
-)(PanelList): typeof PanelList);
+  { changePanelLayout, savePanelConfigs }
+)(PanelList);

@@ -17,7 +17,7 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 import PanelToolbar from "./index";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
-import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
+import MockPanelContextProvider from "webviz-core/src/components/MockPanelContextProvider";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 
@@ -27,7 +27,7 @@ class MosaicWrapper extends React.Component<{| layout?: any, children: React.Nod
     return (
       <Mosaic
         renderTile={(id, path) => (
-          <MosaicWindow path={path} toolbarControls={<div />}>
+          <MosaicWindow path={path} toolbarControls={<div />} renderPreview={() => null}>
             <div style={{ width, height: 300, padding: 30, position: "relative" }}>
               {id === "dummy" ? this.props.children : "Sibling Panel"}
             </div>

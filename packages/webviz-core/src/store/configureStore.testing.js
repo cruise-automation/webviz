@@ -12,7 +12,12 @@ import thunk from "redux-thunk";
 
 import type { State } from "webviz-core/src/reducers";
 
-const configureStore = (reducer: () => any, middleware?: Array<any> = [], history: any, preloadedState?: State) => {
+const configureStore = (
+  reducer: (any, any) => any,
+  middleware?: Array<any> = [],
+  history: any,
+  preloadedState?: State
+) => {
   const store = createStore<*, *, *>(
     reducer,
     preloadedState,

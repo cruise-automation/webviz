@@ -6,21 +6,28 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-// this type mirrors the MessageChannel api which is available on
-// instances of web-workers as well as avaiable on 'global' within a worker
+// this type mirrors the MessageChannel and MessagePort APIs which are available on
+// instances of web-workers and shared-workers respectively, as well as avaiable on
+// 'global' within them.
 export interface Channel {
   postMessage(data: any, transfer?: any[]): void;
-  onmessage: ?(ev: MessageEvent) => void;
-  terminate: () => void;
+  onmessage: null | ((ev: MessageEvent) => mixed);
 }
+
+// Flow complains when some variables are declared with the above interface type, but
+// not when given this non-interface type...
+export type ChannelImpl = {
+  postMessage(data: any, transfer?: any[]): void,
+  onmessage: null | ((ev: MessageEvent) => mixed),
+};
 
 const RESPONSE = "$$RESPONSE";
 const ERROR = "$$ERROR";
 
 // helper function to create linked channels for testing
 export function createLinkedChannels(): { local: Channel, remote: Channel } {
-  const local: Channel = {
-    onmessage: undefined,
+  const local: ChannelImpl = {
+    onmessage: null,
     postMessage(data: any, transfer?: Array<ArrayBuffer>) {
       const ev = new MessageEvent("message", { data });
       // eslint-disable-next-line no-use-before-define
@@ -31,8 +38,8 @@ export function createLinkedChannels(): { local: Channel, remote: Channel } {
     terminate: () => {},
   };
 
-  const remote: Channel = {
-    onmessage: undefined,
+  const remote: ChannelImpl = {
+    onmessage: null,
     postMessage(data: any, transfer?: Array<ArrayBuffer>) {
       const ev = new MessageEvent("message", { data });
       if (local.onmessage) {

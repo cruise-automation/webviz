@@ -74,6 +74,15 @@ function getMarkers(markerProviders: MarkerProvider[]) {
   return markers;
 }
 
+// Generate an alphabet for text makers with the most
+// used ASCII characters to prevent recreating the texture
+// atlas too many times for dynamic texts.
+const ALPHABET = (() => {
+  const start = 32; // SPACE
+  const end = 125; // "}"
+  return new Array(end - start + 1).fill().map((_, i) => String.fromCodePoint(start + i));
+})();
+
 export default function World({
   onClick,
   autoTextBackgroundColor,
@@ -157,7 +166,13 @@ export default function World({
       <Cubes>{[...cube, ...cubeList]}</Cubes>
       <PoseMarkers>{poseMarker}</PoseMarkers>
       <LaserScans>{laserScan}</LaserScans>
-      <TextComponent autoBackgroundColor={autoTextBackgroundColor}>{textMarkers}</TextComponent>
+      <TextComponent
+        layerIndex={10}
+        alphabet={ALPHABET}
+        scaleInvariantFontSize={14}
+        autoBackgroundColor={autoTextBackgroundColor}>
+        {textMarkers}
+      </TextComponent>
       <FilledPolygons>{filledPolygon}</FilledPolygons>
       <Lines getChildrenForHitmap={getChildrenForHitmap}>{instancedLineList}</Lines>
       <LinedConvexHulls>{linedConvexHull}</LinedConvexHulls>

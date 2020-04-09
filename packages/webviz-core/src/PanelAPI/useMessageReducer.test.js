@@ -326,4 +326,42 @@ describe("useMessageReducer", () => {
 
     root.unmount();
   });
+
+  it("calls requestBackfill when topics change", async () => {
+    const Test = createTest();
+    const requestBackfill = jest.fn();
+
+    // Calls `requestBackfill` initially.
+    const root = mount(
+      <MockMessagePipelineProvider requestBackfill={requestBackfill}>
+        <Test topics={["/foo"]} />
+      </MockMessagePipelineProvider>
+    );
+    expect(requestBackfill.mock.calls.length).toEqual(1);
+    requestBackfill.mockClear();
+
+    // Rendering again with the same topics should NOT result in any calls.
+    root.setProps({ children: <Test topics={["/foo"]} /> });
+    expect(requestBackfill.mock.calls.length).toEqual(0);
+    requestBackfill.mockClear();
+
+    // However, changing the topics results in another `requestBackfill` call.
+    root.setProps({ children: <Test topics={["/foo", "/bar"]} /> });
+    expect(requestBackfill.mock.calls.length).toEqual(1);
+    requestBackfill.mockClear();
+
+    // Passing in a different `addMessage` function should NOT result in any calls.
+    Test.addMessage = () => {};
+    root.setProps({ children: <Test topics={["/foo", "/bar"]} /> });
+    expect(requestBackfill.mock.calls.length).toEqual(0);
+    requestBackfill.mockClear();
+
+    // Passing in a different `restore` function should NOT result in any calls.
+    Test.restore = () => {};
+    root.setProps({ children: <Test topics={["/foo", "/bar"]} /> });
+    expect(requestBackfill.mock.calls.length).toEqual(0);
+    requestBackfill.mockClear();
+
+    root.unmount();
+  });
 });

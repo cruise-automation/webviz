@@ -31,6 +31,9 @@ const SKeyWrapper = styled.div`
   border-radius: ${rounded.SMALL};
   font-size: ${textSize.SMALL};
   font-weight: 500;
+  min-width: 20px;
+  align-items: center;
+  justify-content: center;
 `;
 
 const SKey = styled.kbd`
@@ -45,13 +48,16 @@ const SKey = styled.kbd`
 
 type Props = {
   keys: Node[],
-  description: string,
+  description?: string,
+  descriptionMaxWidth?: number,
 };
 
-export default function KeyboardShortcut({ keys, description }: Props) {
+export default function KeyboardShortcut({ keys, description, descriptionMaxWidth }: Props) {
   return (
     <SKeyboardShortcut>
-      <SDescription>{description}</SDescription>
+      {description && (
+        <SDescription style={descriptionMaxWidth ? { width: descriptionMaxWidth } : {}}>{description}</SDescription>
+      )}
       <span>
         {keys.map((key, idx) => (
           <SKeyWrapper key={idx} style={idx < keys.length - 1 ? { marginRight: 4 } : {}}>

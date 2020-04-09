@@ -39,6 +39,7 @@ import { getGlobalVariablesFromUrl } from "webviz-core/src/util/getGlobalVariabl
 import {
   DEMO_QUERY_KEY,
   LAYOUT_URL_QUERY_KEY,
+  REMOTE_BAG_URL_2_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
   ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY,
   SECOND_BAG_PREFIX,
@@ -50,22 +51,72 @@ function getPlayerOptions() {
   return { metricsCollector: undefined, seekToTime: getSeekToTime() };
 }
 
-function buildPlayer(files: File[]): ?Player {
+type PlayerDefinition = {| player: Player, inputDescription: React.Node |};
+
+function buildPlayerFromFiles(files: File[]): ?PlayerDefinition {
   if (files.length === 0) {
     return undefined;
   } else if (files.length === 1) {
-    return new RandomAccessPlayer(getLocalBagDescriptor(files[0]), getPlayerOptions());
+    return {
+      player: new RandomAccessPlayer(getLocalBagDescriptor(files[0]), getPlayerOptions()),
+      inputDescription: (
+        <>
+          Using local bag file <code>{files[0].name}</code>.
+        </>
+      ),
+    };
   } else if (files.length === 2) {
-    return new RandomAccessPlayer(
-      {
-        name: CoreDataProviders.CombinedDataProvider,
-        args: { providerInfos: [{}, { prefix: SECOND_BAG_PREFIX }] },
-        children: [getLocalBagDescriptor(files[0]), getLocalBagDescriptor(files[1])],
-      },
-      getPlayerOptions()
-    );
+    return {
+      player: new RandomAccessPlayer(
+        {
+          name: CoreDataProviders.CombinedDataProvider,
+          args: { providerInfos: [{}, { prefix: SECOND_BAG_PREFIX }] },
+          children: [getLocalBagDescriptor(files[0]), getLocalBagDescriptor(files[1])],
+        },
+        getPlayerOptions()
+      ),
+      inputDescription: (
+        <>
+          Using local bag files <code>{files[0].name}</code> and <code>{files[1].name}</code>.
+        </>
+      ),
+    };
   }
   throw new Error(`Unsupported number of files: ${files.length}`);
+}
+
+async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition> {
+  const guids: (?string)[] = await Promise.all(urls.map(getRemoteBagGuid));
+
+  if (urls.length === 0) {
+    return undefined;
+  } else if (urls.length === 1) {
+    return {
+      player: new RandomAccessPlayer(getRemoteBagDescriptor(urls[0], guids[0]), getPlayerOptions()),
+      inputDescription: (
+        <>
+          Streaming bag from <code>{urls[0]}</code>.
+        </>
+      ),
+    };
+  } else if (urls.length === 2) {
+    return {
+      player: new RandomAccessPlayer(
+        {
+          name: CoreDataProviders.CombinedDataProvider,
+          args: { providerInfos: [{}, { prefix: SECOND_BAG_PREFIX }] },
+          children: [getRemoteBagDescriptor(urls[0], guids[0]), getRemoteBagDescriptor(urls[1], guids[1])],
+        },
+        getPlayerOptions()
+      ),
+      inputDescription: (
+        <>
+          Streaming bag from <code>{urls[0]}</code> and <code>{urls[1]}</code>.
+        </>
+      ),
+    };
+  }
+  throw new Error(`Unsupported number of urls: ${urls.length}`);
 }
 
 type OwnProps = { children: ({ inputDescription: React.Node }) => React.Node };
@@ -93,13 +144,14 @@ function PlayerManager({
   const [inputDescription, setInputDescription] = React.useState<React.Node>("No input selected.");
 
   const setPlayer = React.useCallback(
-    (newPlayer: ?Player, newInputDescription: ?React.Node) => {
-      setInputDescription(newInputDescription || "No input selected.");
-      if (!newPlayer) {
+    (playerDefinition: ?PlayerDefinition) => {
+      if (!playerDefinition) {
         setPlayerInternal(undefined);
+        setInputDescription("No input selected.");
         return;
       }
-      const userNodePlayer = new UserNodePlayer(newPlayer, {
+      setInputDescription(playerDefinition.inputDescription);
+      const userNodePlayer = new UserNodePlayer(playerDefinition.player, {
         setUserNodeDiagnostics: setDiagnostics,
         addUserNodeLogs: setLogs,
         setUserNodeTrust: setTrust,
@@ -138,34 +190,33 @@ function PlayerManager({
       }
 
       const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
-      if (params.has(REMOTE_BAG_URL_QUERY_KEY) || params.has(DEMO_QUERY_KEY)) {
-        const bagUrl = params.has(REMOTE_BAG_URL_QUERY_KEY)
-          ? params.get(REMOTE_BAG_URL_QUERY_KEY) || ""
-          : remoteDemoBagUrl;
-        getRemoteBagGuid(bagUrl).then((guid: ?string) => {
-          const newPlayer = new RandomAccessPlayer(getRemoteBagDescriptor(bagUrl, guid), getPlayerOptions());
-          if (params.has(DEMO_QUERY_KEY)) {
-            // When we're showing a demo, then automatically start playback (we don't normally
-            // do that).
+      if (params.has(DEMO_QUERY_KEY)) {
+        buildPlayerFromBagURLs([remoteDemoBagUrl]).then((playerDefinition: ?PlayerDefinition) => {
+          setPlayer(playerDefinition);
+          // When we're showing a demo, then automatically start playback (we don't normally
+          // do that).
+          if (playerDefinition) {
             setTimeout(() => {
-              newPlayer.startPlayback();
+              playerDefinition.player.startPlayback();
             }, 1000);
           }
-          setPlayer(
-            newPlayer,
-            <>
-              Streaming bag from <code>{bagUrl}</code>.
-            </>
-          );
+        });
+      }
+      if (params.has(REMOTE_BAG_URL_QUERY_KEY)) {
+        const urls = [params.get(REMOTE_BAG_URL_QUERY_KEY), params.get(REMOTE_BAG_URL_2_QUERY_KEY)].filter(Boolean);
+        buildPlayerFromBagURLs(urls).then((playerDefinition: ?PlayerDefinition) => {
+          setPlayer(playerDefinition);
         });
       } else {
         const websocketUrl = params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090";
-        setPlayer(
-          new RosbridgePlayer(websocketUrl),
-          <>
-            Using WebSocket at <code>{websocketUrl}</code>.
-          </>
-        );
+        setPlayer({
+          player: new RosbridgePlayer(websocketUrl),
+          inputDescription: (
+            <>
+              Using WebSocket at <code>{websocketUrl}</code>.
+            </>
+          ),
+        });
       }
     },
     [importLayout, setPlayer, setVariables]
@@ -184,20 +235,7 @@ function PlayerManager({
           } else {
             usedFiles.current = [files[0]];
           }
-          const builtPlayer = buildPlayer(usedFiles.current);
-          setPlayer(
-            builtPlayer,
-            usedFiles.current.length === 2 ? (
-              <>
-                Using local bag files <code>{usedFiles.current[0].name}</code> and{" "}
-                <code>{usedFiles.current[1].name}</code>.
-              </>
-            ) : (
-              <>
-                Using local bag file <code>{usedFiles.current[0].name}</code>.
-              </>
-            )
-          );
+          setPlayer(buildPlayerFromFiles(usedFiles.current));
         }}>
         <DropOverlay>
           <div style={{ fontSize: "4em", marginBottom: "1em" }}>Drop a bag file to load it!</div>

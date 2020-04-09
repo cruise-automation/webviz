@@ -114,7 +114,6 @@ const SINGLE_BAG_SHARED_PROPS = {
     id: "some_uniq_id",
     isShownInList: true,
     keyboardFocusIndex: 1,
-    namespaceDisplayVisibilityByNamespace: {},
     prefixByColumn: ["", "/webviz_bag_2"],
   },
 };
@@ -127,7 +126,6 @@ const MULTI_BAG_SHARED_PROPS = {
     id: "some_uniq_id",
     isShownInList: true,
     keyboardFocusIndex: 1,
-    namespaceDisplayVisibilityByNamespace: {},
     prefixByColumn: ["", "/webviz_bag_2"],
   },
 };

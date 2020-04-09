@@ -240,12 +240,17 @@ describe("UserNodePlayer", () => {
       const signals = [...new Array(numPromises)].map(() => signal());
       let numEmits = 0;
       player.setListener(async (playerState) => {
-        const topics = [];
+        const topicNames = [];
         if (playerState.activeData) {
-          topics.push(...playerState.activeData.topics.map((topic) => topic.name));
+          topicNames.push(...playerState.activeData.topics.map((topic) => topic.name));
         }
         const messages = (playerState.activeData || {}).messages || [];
-        signals[numEmits].resolve({ topics, messages });
+        signals[numEmits].resolve({
+          topicNames,
+          messages,
+          topics: playerState.activeData?.topics,
+          datatypes: playerState.activeData?.datatypes,
+        });
         numEmits += 1;
       });
 
@@ -273,11 +278,61 @@ describe("UserNodePlayer", () => {
         datatypes: { foo: { fields: [] } },
       });
 
-      const { topics, messages } = await done;
+      const { topicNames, messages } = await done;
 
       expect(mockSetNodeDiagnostics).toHaveBeenCalledWith({ nodeId: { diagnostics: [] } });
       expect(messages.length).toEqual(0);
-      expect(topics).toEqual(["/np_input", `${DEFAULT_WEBVIZ_NODE_PREFIX}1`]);
+      expect(topicNames).toEqual(["/np_input", `${DEFAULT_WEBVIZ_NODE_PREFIX}1`]);
+    });
+
+    it("memoizes topics and datatypes (even after seeking / reinitializing nodes)", async () => {
+      const fakePlayer = new FakePlayer();
+      const mockSetNodeDiagnostics = jest.fn();
+      const userNodePlayer = new UserNodePlayer(fakePlayer, {
+        ...defaultUserNodeActions,
+        setUserNodeDiagnostics: mockSetNodeDiagnostics,
+      });
+
+      await trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
+      userNodePlayer.setUserNodes({ nodeId: { name: "someNodeName", sourceCode: nodeUserCode } });
+
+      const [done1, done2, done3] = setListenerHelper(userNodePlayer, 3);
+
+      const playerState = {
+        ...basicPlayerState,
+        messages: [],
+        currentTime: { sec: 0, nsec: 0 },
+        topics: [{ name: "/np_input", datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }],
+        datatypes: { foo: { fields: [] } },
+      };
+
+      fakePlayer.emit(playerState);
+      const { topics: firstTopics, datatypes: firstDatatypes } = await done1;
+      expect(firstTopics).toEqual([
+        { name: "/np_input", datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` },
+        { name: "/webviz_node/1", datatype: "someNodeName" },
+      ]);
+      expect(firstDatatypes).toEqual({
+        foo: { fields: [] },
+        someNodeName: {
+          fields: [
+            { name: "custom_np_field", type: "string", isArray: false, isComplex: false },
+            { name: "value", type: "string", isArray: false, isComplex: false },
+          ],
+        },
+      });
+
+      // Seek should keep topics memoized.
+      fakePlayer.emit({ ...playerState, lastSeekTime: 123 });
+      const { topics: secondTopics, datatypes: secondDatatypes } = await done2;
+      expect(secondTopics).toBe(firstTopics);
+      expect(secondDatatypes).toBe(firstDatatypes);
+
+      // Changing topics/datatypes should not memoize.
+      fakePlayer.emit({ ...playerState, topics: [], datatypes: {} });
+      const { topics: thirdTopics, datatypes: thirdDatatypes } = await done3;
+      expect(thirdTopics).not.toBe(firstTopics);
+      expect(thirdDatatypes).not.toBe(firstDatatypes);
     });
 
     it("gets memoized version of messages if they have not changed", async () => {
@@ -339,9 +394,9 @@ describe("UserNodePlayer", () => {
         datatypes: { foo: { fields: [] } },
       });
 
-      const { topics } = await done;
+      const { topicNames } = await done;
       userNodePlayer.setUserNodes({ nodeId: { name: "someNodeName", sourceCode: nodeUserCode } });
-      userNodePlayer.setSubscriptions(topics.map((topic) => ({ topic })));
+      userNodePlayer.setSubscriptions(topicNames.map((topic) => ({ topic })));
       expect(fakePlayer.subscriptions).toEqual([{ topic: "/np_input" }]);
     });
 
@@ -364,8 +419,8 @@ describe("UserNodePlayer", () => {
         datatypes: { foo: { fields: [] } },
       });
 
-      const { messages, topics } = await done;
-      expect(topics).toEqual(["/np_input", `${DEFAULT_WEBVIZ_NODE_PREFIX}1`]);
+      const { messages, topicNames } = await done;
+      expect(topicNames).toEqual(["/np_input", `${DEFAULT_WEBVIZ_NODE_PREFIX}1`]);
       expect(messages).toEqual([upstreamMessages[0]]);
     });
 
@@ -668,7 +723,7 @@ describe("UserNodePlayer", () => {
         datatypes: { foo: { fields: [] } },
       });
 
-      const { topics, messages } = await done;
+      const { topicNames, messages } = await done;
       expect(mockSetNodeDiagnostics).toHaveBeenLastCalledWith({
         nodeId: {
           diagnostics: [
@@ -683,7 +738,7 @@ describe("UserNodePlayer", () => {
       });
       // Sanity check to ensure none of the user node messages made it through if there was an error.
       expect(messages.map(({ topic }) => topic)).not.toContain(`${DEFAULT_WEBVIZ_NODE_PREFIX}1`);
-      expect(topics).toEqual(["/np_input", `${DEFAULT_WEBVIZ_NODE_PREFIX}1`]);
+      expect(topicNames).toEqual(["/np_input", `${DEFAULT_WEBVIZ_NODE_PREFIX}1`]);
     });
 
     it("properly clears user node registrations", async () => {
@@ -705,8 +760,8 @@ describe("UserNodePlayer", () => {
         datatypes: { foo: { fields: [] } },
       });
 
-      const { topics: firstTopics } = await firstDone;
-      expect(firstTopics).toEqual(["/np_input", `${DEFAULT_WEBVIZ_NODE_PREFIX}1`]);
+      const { topicNames: firstTopicNames } = await firstDone;
+      expect(firstTopicNames).toEqual(["/np_input", `${DEFAULT_WEBVIZ_NODE_PREFIX}1`]);
 
       userNodePlayer.setUserNodes({});
       fakePlayer.emit({
@@ -716,8 +771,8 @@ describe("UserNodePlayer", () => {
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
         datatypes: { foo: { fields: [] } },
       });
-      const { topics: secondTopics } = await secondDone;
-      expect(secondTopics).toEqual(["/np_input"]);
+      const { topicNames: secondTopicNames } = await secondDone;
+      expect(secondTopicNames).toEqual(["/np_input"]);
     });
 
     describe("user logging", () => {
@@ -779,10 +834,10 @@ describe("UserNodePlayer", () => {
           datatypes: { foo: { fields: [] } },
         });
 
-        const { topics } = await done;
+        const { topicNames } = await done;
         expect(mockAddNodeLogs).toHaveBeenCalled();
         expect(mockAddNodeLogs.mock.calls).toEqual(logs.map((log) => [{ nodeId: { logs: log } }]));
-        expect(topics).toEqual(["/np_input", `${DEFAULT_WEBVIZ_NODE_PREFIX}1`]);
+        expect(topicNames).toEqual(["/np_input", `${DEFAULT_WEBVIZ_NODE_PREFIX}1`]);
       });
 
       it("does not record logs if there is an error", async () => {
@@ -823,9 +878,9 @@ describe("UserNodePlayer", () => {
         userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
         userNodePlayer.setUserNodes({ nodeId: { name: "nodeName", sourceCode: code } });
 
-        const { topics } = await done;
+        const { topicNames } = await done;
         expect(mockAddNodeLogs.mock.calls).toEqual([]);
-        expect(topics).toEqual(["/np_input"]);
+        expect(topicNames).toEqual(["/np_input"]);
       });
     });
 

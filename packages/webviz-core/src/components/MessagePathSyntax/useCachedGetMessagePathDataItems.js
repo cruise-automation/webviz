@@ -6,18 +6,19 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { useCallback, useRef } from "react";
+import { isEqual } from "lodash";
+import { useCallback, useMemo, useRef } from "react";
 
 import { type MessagePathFilter } from "./constants";
 import { messagePathStructures } from "./messagePathsForDatatype";
-import type { MessagePathStructureItem } from "webviz-core/src/components/MessagePathSyntax/constants";
+import type { MessagePathStructureItem, RosPath } from "webviz-core/src/components/MessagePathSyntax/constants";
 import { isTypicalFilterName } from "webviz-core/src/components/MessagePathSyntax/isTypicalFilterName";
 import parseRosPath from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
 import useGlobalVariables, { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Message, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { useChangeDetector, useShallowMemo } from "webviz-core/src/util/hooks";
+import { useChangeDetector, useDeepMemo, useShallowMemo } from "webviz-core/src/util/hooks";
 import { enumValuesByDatatypeAndField, topicsByTopicName } from "webviz-core/src/util/selectors";
 
 export type MessagePathDataItem = {|
@@ -38,20 +39,42 @@ export function useCachedGetMessagePathDataItems(
 ): (path: string, message: Message) => ?(MessagePathDataItem[]) {
   const { topics: providerTopics, datatypes } = PanelAPI.useDataSourceInfo();
   const { globalVariables } = useGlobalVariables();
+  const memoizedPaths: string[] = useShallowMemo<string[]>(paths);
+
+  // We first fill in global variables in the paths, so we can later see which paths have really
+  // changed when the global variables have changed.
+  const unmemoizedFilledInPaths: { [string]: RosPath } = useMemo(
+    () => {
+      const filledInPaths = {};
+      for (const path of memoizedPaths) {
+        const rosPath = parseRosPath(path);
+        if (rosPath) {
+          filledInPaths[path] = fillInGlobalVariablesInPath(rosPath, globalVariables);
+        }
+      }
+      return filledInPaths;
+    },
+    [globalVariables, memoizedPaths]
+  );
+  const memoizedFilledInPaths = useDeepMemo<{ [string]: RosPath }>(unmemoizedFilledInPaths);
 
   // Cache MessagePathDataItem arrays by Message. We need to clear out this cache whenever
-  // the topics, datatypes, or global variables change, since that's what getMessagePathDataItems
+  // the topics or datatypes change, since that's what getMessagePathDataItems
   // depends on, outside of the message+path.
-  const weakMapsByPath = useRef<{ [string]: WeakMap<Message, ?(MessagePathDataItem[])> }>({});
-  if (useChangeDetector([providerTopics, datatypes, globalVariables], true)) {
-    weakMapsByPath.current = {};
+  const cachesByPath = useRef<{
+    [string]: {| filledInPath: RosPath, weakMap: WeakMap<Message, ?(MessagePathDataItem[])> |},
+  }>({});
+  if (useChangeDetector([providerTopics, datatypes], true)) {
+    cachesByPath.current = {};
   }
-
-  const memoizedPaths: string[] = useShallowMemo<string[]>(paths);
-  if (useChangeDetector([memoizedPaths], false)) {
-    for (const path of Object.keys(weakMapsByPath.current)) {
-      if (!memoizedPaths.includes(path)) {
-        delete weakMapsByPath.current[path];
+  // When the filled in paths changed, then that means that either the path string changed, or a
+  // relevant global variable changed. Delete the caches for where the `filledInPath` doesn't match
+  // any more.
+  if (useChangeDetector([memoizedFilledInPaths], false)) {
+    for (const path of Object.keys(cachesByPath.current)) {
+      const filledInPath = memoizedFilledInPaths[path];
+      if (!filledInPath || !isEqual(cachesByPath.current[path].filledInPath, filledInPath)) {
+        delete cachesByPath.current[path];
       }
     }
   }
@@ -61,23 +84,29 @@ export function useCachedGetMessagePathDataItems(
       if (!memoizedPaths.includes(path)) {
         throw new Error(`path (${path}) was not in the list of cached paths`);
       }
-      const weakMap = (weakMapsByPath.current[path] = weakMapsByPath.current[path] || new WeakMap());
+      const filledInPath = memoizedFilledInPaths[path];
+      if (!filledInPath) {
+        return;
+      }
+      if (!cachesByPath.current[path]) {
+        cachesByPath.current[path] = { filledInPath, weakMap: new WeakMap() };
+      }
+      const { weakMap } = cachesByPath.current[path];
       if (!weakMap.has(message)) {
-        const messagePathDataItems = getMessagePathDataItems(message, path, providerTopics, datatypes, globalVariables);
+        const messagePathDataItems = getMessagePathDataItems(message, filledInPath, providerTopics, datatypes);
         weakMap.set(message, messagePathDataItems);
         return messagePathDataItems;
       }
       const messagePathDataItems = weakMap.get(message);
       return messagePathDataItems;
     },
-    [datatypes, globalVariables, memoizedPaths, providerTopics]
+    [datatypes, memoizedFilledInPaths, memoizedPaths, providerTopics]
   );
 }
 
-function filterMatches(filter: MessagePathFilter, value: any, globalVariables: any) {
-  let filterValue = filter.value;
-  if (typeof filterValue === "object") {
-    filterValue = globalVariables[filterValue.variableName];
+function filterMatches(filter: MessagePathFilter, value: any) {
+  if (typeof filter.value === "object") {
+    throw new Error("filterMatches only works on paths where global variables have been filled in");
   }
 
   let currentValue = value;
@@ -91,35 +120,64 @@ function filterMatches(filter: MessagePathFilter, value: any, globalVariables: a
   // Test equality using `==` so we can be forgiving for comparing booleans with integers,
   // comparing numbers with strings, and so on.
   // eslint-disable-next-line eqeqeq
-  return currentValue == filterValue;
+  return currentValue == filter.value;
+}
+
+export function fillInGlobalVariablesInPath(rosPath: RosPath, globalVariables: GlobalVariables): RosPath {
+  return {
+    ...rosPath,
+    messagePath: rosPath.messagePath.map((messagePathPart) => {
+      if (messagePathPart.type === "slice") {
+        const start =
+          typeof messagePathPart.start === "object"
+            ? Number(globalVariables[messagePathPart.start.variableName])
+            : messagePathPart.start;
+        const end =
+          typeof messagePathPart.end === "object"
+            ? Number(globalVariables[messagePathPart.end.variableName])
+            : messagePathPart.end;
+
+        return {
+          ...messagePathPart,
+          start: isNaN(start) ? 0 : start,
+          end: isNaN(end) ? Infinity : end,
+        };
+      } else if (messagePathPart.type === "filter" && typeof messagePathPart.value === "object") {
+        let value;
+        const variable = globalVariables[messagePathPart.value.variableName];
+        if (typeof variable === "number" || typeof variable === "string") {
+          value = variable;
+        }
+        return { ...messagePathPart, value };
+      }
+
+      (messagePathPart.type: "name" | "filter");
+      return messagePathPart;
+    }),
+  };
 }
 
 // Get a new item that has `queriedData` set to the values and paths as queried by `rosPath`.
+// Exported just for tests.
 export function getMessagePathDataItems(
   message: Message,
-  rawPath: string,
+  filledInPath: RosPath,
   providerTopics: $ReadOnlyArray<Topic>,
-  datatypes: RosDatatypes,
-  globalVariables: GlobalVariables
+  datatypes: RosDatatypes
 ): ?(MessagePathDataItem[]) {
-  const rosPath = parseRosPath(rawPath);
-  if (!rosPath) {
-    return;
-  }
-
   const structures = messagePathStructures(datatypes);
-  const topic = topicsByTopicName(providerTopics)[rosPath.topicName];
+  const topic = topicsByTopicName(providerTopics)[filledInPath.topicName];
 
   // We don't care about messages that don't match the topic we're looking for.
-  if (!topic || message.topic !== rosPath.topicName) {
+  if (!topic || message.topic !== filledInPath.topicName) {
     return;
   }
 
   // Apply top-level filters first. If a message matches all top-level filters, then this function
   // will *always* return a history item, so this is our only chance to return nothing.
-  for (const item of rosPath.messagePath) {
+  for (const item of filledInPath.messagePath) {
     if (item.type === "filter") {
-      if (!filterMatches(item, message.message, globalVariables)) {
+      if (!filterMatches(item, message.message)) {
         return [];
       }
     } else {
@@ -134,12 +192,12 @@ export function getMessagePathDataItems(
     if (value === undefined || structureItem === undefined) {
       return;
     }
-    const pathItem = rosPath.messagePath[pathIndex];
-    const nextPathItem = rosPath.messagePath[pathIndex + 1];
+    const pathItem = filledInPath.messagePath[pathIndex];
+    const nextPathItem = filledInPath.messagePath[pathIndex + 1];
     if (!pathItem) {
       // If we're at the end of the `messagePath`, we're done! Just store the point.
       let constantName: ?string;
-      const prevPathItem = rosPath.messagePath[pathIndex - 1];
+      const prevPathItem = filledInPath.messagePath[pathIndex - 1];
       if (prevPathItem && prevPathItem.type === "name") {
         const fieldName = prevPathItem.name;
         const enumMap = enumValuesByDatatypeAndField(datatypes)[structureItem.datatype];
@@ -158,8 +216,11 @@ export function getMessagePathDataItems(
       );
     } else if (pathItem.type === "slice" && structureItem.structureType === "array") {
       const { start, end } = pathItem;
-      const startIdx = typeof start === "object" ? globalVariables[start.variableName] : start;
-      const endIdx = typeof end === "object" ? globalVariables[end.variableName] : end;
+      if (typeof start === "object" || typeof end === "object") {
+        throw new Error("getMessagePathDataItems  only works on paths where global variables have been filled in");
+      }
+      const startIdx: number = start;
+      const endIdx: number = end;
       if (isNaN(startIdx) || isNaN(endIdx)) {
         return;
       }
@@ -193,13 +254,13 @@ export function getMessagePathDataItems(
         traverse(value[index], pathIndex + 1, newPath, structureItem.next);
       }
     } else if (pathItem.type === "filter") {
-      if (filterMatches(pathItem, value, globalVariables)) {
+      if (filterMatches(pathItem, value)) {
         traverse(value, pathIndex + 1, `${path}{${pathItem.repr}}`, structureItem);
       }
     } else {
       console.warn(`Unknown pathItem.type ${pathItem.type} for structureType: ${structureItem.structureType}`);
     }
   }
-  traverse(message.message, 0, rosPath.topicName, structures[topic.datatype]);
+  traverse(message.message, 0, filledInPath.topicName, structures[topic.datatype]);
   return queriedData;
 }

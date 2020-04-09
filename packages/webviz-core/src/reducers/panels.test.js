@@ -9,7 +9,7 @@
 import { createMemoryHistory } from "history";
 import { getLeaves } from "react-mosaic-component";
 
-import { changePanelLayout, savePanelConfig, importPanelLayout, setUserNodes } from "webviz-core/src/actions/panels";
+import { changePanelLayout, savePanelConfigs, importPanelLayout, setUserNodes } from "webviz-core/src/actions/panels";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import createRootReducer from "webviz-core/src/reducers";
 import { GLOBAL_STATE_STORAGE_KEY } from "webviz-core/src/reducers/panels";
@@ -55,7 +55,7 @@ describe("state.panels", () => {
     const store = getStore();
     const payload = {
       layout: "foo!bar",
-      savedProps: { foo: { test: true } },
+      savedProps: { "foo!bar": { test: true } },
     };
 
     store.checkState((panels, routing) => {
@@ -67,27 +67,29 @@ describe("state.panels", () => {
     store.dispatch(importPanelLayout(payload));
     store.checkState((panels) => {
       expect(panels.layout).toEqual("foo!bar");
-      expect(panels.savedProps).toEqual({ foo: { test: true } });
+      expect(panels.savedProps).toEqual({ "foo!bar": { test: true } });
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.layout).toEqual(panels.layout);
       expect(globalState.savedProps).toEqual(panels.savedProps);
     });
 
-    store.dispatch(changePanelLayout("foo"));
+    store.dispatch(changePanelLayout({ layout: "foo!bar" }));
     store.checkState((panels) => {
-      expect(panels.layout).toEqual("foo");
-      expect(panels.savedProps).toEqual({ foo: { test: true } });
+      expect(panels.layout).toEqual("foo!bar");
+      expect(panels.savedProps).toEqual({ "foo!bar": { test: true } });
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.layout).toEqual(panels.layout);
       expect(globalState.savedProps).toEqual(panels.savedProps);
     });
 
-    store.dispatch(savePanelConfig({ id: "foo", config: { testing: true }, defaultConfig: { testing: false } }));
+    store.dispatch(
+      savePanelConfigs({ configs: [{ id: "foo!bar", config: { testing: true }, defaultConfig: { testing: false } }] })
+    );
     store.checkState((panels) => {
-      expect(panels.layout).toEqual("foo");
-      expect(panels.savedProps).toEqual({ foo: { test: true, testing: true } });
+      expect(panels.layout).toEqual("foo!bar");
+      expect(panels.savedProps).toEqual({ "foo!bar": { test: true, testing: true } });
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.layout).toEqual(panels.layout);
@@ -217,11 +219,11 @@ describe("state.panels", () => {
   };
 
   testUrlCleanup("removes layout when config changes", () => {
-    return savePanelConfig({ id: "bar", config: { baz: true }, defaultConfig: {} });
+    return savePanelConfigs({ configs: [{ id: "bar", config: { baz: true } }] });
   });
 
   testUrlCleanup("removes layout when layout changes", () => {
-    return changePanelLayout("foo!bar");
+    return changePanelLayout({ layout: "foo!bar" });
   });
 
   testUrlCleanup("removes layout when layout is imported", () => {
@@ -266,17 +268,21 @@ describe("state.panels", () => {
 
   it("does not remove layout if config are saved silently", () => {
     const store = getStore();
-    store.dispatch(changePanelLayout("foo"));
+    store.dispatch(changePanelLayout({ layout: "foo" }));
     store.push("/?layout=foo&name=bar");
     store.checkState((panels, routing) => {
       expect(routing.location.search).toEqual("?layout=foo&name=bar");
     });
     store.dispatch(
-      savePanelConfig({
-        id: "foo",
+      savePanelConfigs({
         silent: true,
-        config: { bar: true },
-        defaultConfig: { bar: false },
+        configs: [
+          {
+            id: "foo",
+            config: { bar: true },
+            defaultConfig: { bar: false },
+          },
+        ],
       })
     );
     store.checkState((panels, routing) => {
@@ -316,7 +322,7 @@ describe("state.panels", () => {
 
     it("removes config when the panel is removed from the layout", () => {
       const store = getStore();
-      store.dispatch(changePanelLayout(panelState.layout));
+      store.dispatch(changePanelLayout({ layout: panelState.layout }));
       store.checkState((panels) => {
         // i want to verify my assumption on how mosaic helper works so if it changes we can know about it
         const leaves = getLeaves(panelState.layout);
@@ -329,9 +335,10 @@ describe("state.panels", () => {
       });
 
       const panelConfig = { id: "SecondPanel!2wydzut", config: { foo: "bar" }, defaultConfig: { foo: "" } };
-      store.dispatch(savePanelConfig(panelConfig));
       store.dispatch(
-        savePanelConfig({ id: "FirstPanel!34otwwt", config: { baz: true }, defaultConfig: { baz: false } })
+        savePanelConfigs({
+          configs: [panelConfig, { id: "FirstPanel!34otwwt", config: { baz: true }, defaultConfig: { baz: false } }],
+        })
       );
       store.checkState((panels) => {
         expect(panels.savedProps).toEqual({
@@ -340,7 +347,7 @@ describe("state.panels", () => {
         });
       });
       store.dispatch(
-        changePanelLayout({ direction: "row", first: "FirstPanel!34otwwt", second: "SecondPanel!2wydzut" })
+        changePanelLayout({ layout: { direction: "row", first: "FirstPanel!34otwwt", second: "SecondPanel!2wydzut" } })
       );
       store.checkState((panels) => {
         expect(panels.savedProps).toEqual({
@@ -348,17 +355,21 @@ describe("state.panels", () => {
           "FirstPanel!34otwwt": { baz: true },
         });
       });
-      store.dispatch(changePanelLayout({ direction: "row", first: "FirstPanel!34otwwt", second: "ThirdPanel!ye6m1m" }));
+      store.dispatch(
+        changePanelLayout({ layout: { direction: "row", first: "FirstPanel!34otwwt", second: "ThirdPanel!ye6m1m" } })
+      );
       store.checkState((panels) => {
         expect(panels.savedProps).toEqual({
           "FirstPanel!34otwwt": { baz: true },
         });
       });
-      store.dispatch(changePanelLayout("foo!1234"));
+      store.dispatch(changePanelLayout({ layout: "foo!1234" }));
       store.checkState((panels) => {
         expect(panels.savedProps).toEqual({});
       });
-      store.dispatch(savePanelConfig({ id: "foo!1234", config: { okay: true }, defaultConfig: { okay: false } }));
+      store.dispatch(
+        savePanelConfigs({ configs: [{ id: "foo!1234", config: { okay: true }, defaultConfig: { okay: false } }] })
+      );
       store.checkState((panels) => {
         expect(panels.savedProps).toEqual({
           "foo!1234": { okay: true },

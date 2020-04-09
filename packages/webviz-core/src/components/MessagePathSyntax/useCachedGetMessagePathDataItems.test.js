@@ -10,18 +10,27 @@ import { createMemoryHistory } from "history";
 import { cloneDeep } from "lodash";
 import * as React from "react";
 
-import { getMessagePathDataItems, useCachedGetMessagePathDataItems } from "./useCachedGetMessagePathDataItems";
+import {
+  getMessagePathDataItems,
+  useCachedGetMessagePathDataItems,
+  fillInGlobalVariablesInPath,
+} from "./useCachedGetMessagePathDataItems";
 import { setGlobalVariables } from "webviz-core/src/actions/panels";
+import parseRosPath from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import type { Message, Topic } from "webviz-core/src/players/types";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
-function addValuesWithPathsToItems(messages, path, providerTopics, datatypes, globalVariables) {
-  return messages.map((message) =>
-    getMessagePathDataItems(message, path, providerTopics, datatypes, globalVariables || {})
-  );
+function addValuesWithPathsToItems(messages, path, providerTopics, datatypes) {
+  return messages.map((message) => {
+    const rosPath = parseRosPath(path);
+    if (!rosPath) {
+      return undefined;
+    }
+    return getMessagePathDataItems(message, rosPath, providerTopics, datatypes);
+  });
 }
 
 describe("useCachedGetMessagePathDataItems", () => {
@@ -92,10 +101,45 @@ describe("useCachedGetMessagePathDataItems", () => {
     root.setProps({ datatypes: cloneDeep(datatypes) });
     expect(Test.cachedGetMessage("/topic.an_array[0]", message)).not.toBe(data0BeforeDatatypesChange);
 
-    // Invalidate cache with globalVariables.
-    const data0BeforeGlobalVariablesChange = Test.cachedGetMessage("/topic.an_array[0]", message);
+    root.unmount();
+  });
+
+  it("clears the cache only when relevant global variables change", async () => {
+    const Test = createTest();
+    const message: Message = {
+      op: "message",
+      topic: "/topic",
+      datatype: "datatype",
+      receiveTime: { sec: 0, nsec: 0 },
+      message: { an_array: [5, 10, 15, 20] },
+    };
+    const topics = [{ name: "/topic", datatype: "datatype" }];
+    const datatypes = { datatype: { fields: [{ name: "an_array", type: "uint32", isArray: true, isComplex: false }] } };
+
+    const store = configureStore(createRootReducer(createMemoryHistory()));
     store.dispatch(setGlobalVariables({ foo: 0 }));
-    expect(Test.cachedGetMessage("/topic.an_array[0]", message)).not.toBe(data0BeforeGlobalVariablesChange);
+
+    const root = mount(
+      <MockMessagePipelineProvider store={store} topics={topics} datatypes={datatypes}>
+        <Test paths={["/topic.an_array[$foo]"]} />
+      </MockMessagePipelineProvider>
+    );
+
+    const data0 = Test.cachedGetMessage("/topic.an_array[$foo]", message);
+    expect(data0).toEqual([{ path: "/topic.an_array[0]", value: 5 }]);
+
+    // Sanity check.
+    expect(Test.cachedGetMessage("/topic.an_array[$foo]", message)).toBe(data0);
+
+    // Changing an unrelated global variable should not invalidate the cache.
+    store.dispatch(setGlobalVariables({ bar: 0 }));
+    expect(Test.cachedGetMessage("/topic.an_array[$foo]", message)).toBe(data0);
+
+    // Changing a relevant global variable.
+    store.dispatch(setGlobalVariables({ foo: 1 }));
+    expect(Test.cachedGetMessage("/topic.an_array[$foo]", message)).toEqual([
+      { path: "/topic.an_array[1]", value: 10 },
+    ]);
 
     root.unmount();
   });
@@ -228,76 +272,6 @@ describe("useCachedGetMessagePathDataItems", () => {
       ]);
     });
 
-    it("slices properly with globalVariables", () => {
-      const messages: Message[] = [
-        {
-          op: "message",
-          topic: "/topic",
-          datatype: "datatype",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: { an_array: [5, 10, 15, 20] },
-        },
-      ];
-      const topics: Topic[] = [{ name: "/topic", datatype: "datatype" }];
-      const datatypes: RosDatatypes = {
-        datatype: { fields: [{ name: "an_array", type: "uint32", isArray: true, isComplex: false }] },
-      };
-
-      // 1 global variable as single index
-      expect(
-        addValuesWithPathsToItems(messages, "/topic.an_array[$global_data_idx_a]", topics, datatypes, {
-          global_data_idx_a: 2,
-        })
-      ).toEqual([[{ value: 15, path: "/topic.an_array[2]" }]]);
-
-      // 2 global variables as indices
-      expect(
-        addValuesWithPathsToItems(
-          messages,
-          "/topic.an_array[$global_data_idx_a:$global_data_idx_b]",
-          topics,
-          datatypes,
-          {
-            global_data_idx_a: 1,
-            global_data_idx_b: 2,
-          }
-        )
-      ).toEqual([[{ path: "/topic.an_array[1]", value: 10 }, { path: "/topic.an_array[2]", value: 15 }]]);
-
-      // 1 global variable for 1 of 2 indices (global variable first)
-      expect(
-        addValuesWithPathsToItems(messages, "/topic.an_array[$global_data_idx_a:1]", topics, datatypes, {
-          global_data_idx_a: 0,
-        })
-      ).toEqual([[{ path: "/topic.an_array[0]", value: 5 }, { path: "/topic.an_array[1]", value: 10 }]]);
-
-      // 1 global variable for 1 of 2 indices (global variable second)
-      expect(
-        addValuesWithPathsToItems(messages, "/topic.an_array[0:$global_data_idx_b]", topics, datatypes, {
-          global_data_idx_b: 3,
-        })
-      ).toEqual([
-        [
-          { path: "/topic.an_array[0]", value: 5 },
-          { path: "/topic.an_array[1]", value: 10 },
-          { path: "/topic.an_array[2]", value: 15 },
-          { path: "/topic.an_array[3]", value: 20 },
-        ],
-      ]);
-
-      // without any global variable value
-      expect(addValuesWithPathsToItems(messages, "/topic.an_array[$global_data_idx_a]", topics, datatypes, {})).toEqual(
-        [[]]
-      );
-
-      // with non-number global variable value
-      expect(
-        addValuesWithPathsToItems(messages, "/topic.an_array[$global_data_idx_a]", topics, datatypes, {
-          global_data_idx_a: "a",
-        })
-      ).toEqual([[]]);
-    });
-
     it("returns nothing for invalid topics", () => {
       const messages: Message[] = [
         {
@@ -366,71 +340,6 @@ describe("useCachedGetMessagePathDataItems", () => {
         )
       ).toEqual([
         [{ constantName: undefined, value: 10, path: "/some/topic.some_array[:]{some_filter_value==0}.some_id" }],
-      ]);
-    });
-
-    it("filters properly for globalVariables, and uses the filter object in the path", () => {
-      const messages: Message[] = [
-        {
-          op: "message",
-          topic: "/some/topic",
-          datatype: "some_datatype",
-          receiveTime: { sec: 0, nsec: 0 },
-          message: {
-            some_array: [
-              {
-                some_filter_value: 5,
-                some_id: 10,
-              },
-              {
-                some_filter_value: 1,
-                some_id: 50,
-              },
-            ],
-          },
-        },
-      ];
-      const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
-      const datatypes: RosDatatypes = {
-        some_datatype: {
-          fields: [
-            {
-              name: "some_array",
-              type: "some_other_datatype",
-              isArray: true,
-            },
-          ],
-        },
-        some_other_datatype: {
-          fields: [
-            {
-              name: "some_filter_value",
-              type: "uint32",
-            },
-            {
-              name: "some_id",
-              type: "uint32",
-            },
-          ],
-        },
-      };
-
-      expect(
-        addValuesWithPathsToItems(
-          messages,
-          "/some/topic.some_array[:]{some_filter_value==$some_global_data_key}.some_id",
-          topics,
-          datatypes,
-          { some_global_data_key: 5 }
-        )
-      ).toEqual([
-        [
-          {
-            constantName: undefined,
-            value: 10,
-            path: "/some/topic.some_array[:]{some_filter_value==$some_global_data_key}.some_id",
-          },
-        ],
       ]);
     });
 
@@ -573,6 +482,70 @@ describe("useCachedGetMessagePathDataItems", () => {
           },
         ],
       ]);
+    });
+  });
+});
+
+describe("fillInGlobalVariablesInPath", () => {
+  it("fills in global variables in slices", () => {
+    expect(
+      fillInGlobalVariablesInPath(
+        {
+          topicName: "/foo",
+          messagePath: [
+            { type: "name", name: "bar" },
+            { type: "slice", start: { variableName: "start", startLoc: 0 }, end: { variableName: "end", startLoc: 0 } },
+          ],
+          modifier: undefined,
+        },
+        { start: 10, end: "123" }
+      )
+    ).toEqual({
+      topicName: "/foo",
+      messagePath: [{ name: "bar", type: "name" }, { type: "slice", start: 10, end: 123 }],
+    });
+
+    // Non-numbers
+    expect(
+      fillInGlobalVariablesInPath(
+        {
+          topicName: "/foo",
+          messagePath: [
+            { type: "name", name: "bar" },
+            { type: "slice", start: { variableName: "start", startLoc: 0 }, end: { variableName: "end", startLoc: 0 } },
+          ],
+          modifier: undefined,
+        },
+        { end: "blah" }
+      )
+    ).toEqual({
+      topicName: "/foo",
+      messagePath: [{ name: "bar", type: "name" }, { type: "slice", start: 0, end: Infinity }],
+    });
+  });
+
+  it("fills in global variables in filters", () => {
+    expect(
+      fillInGlobalVariablesInPath(
+        {
+          topicName: "/foo",
+          messagePath: [
+            {
+              type: "filter",
+              path: ["bar"],
+              value: { variableName: "var", startLoc: 0 },
+              nameLoc: 0,
+              valueLoc: 0,
+              repr: "",
+            },
+          ],
+          modifier: undefined,
+        },
+        { var: 123 }
+      )
+    ).toEqual({
+      topicName: "/foo",
+      messagePath: [{ type: "filter", path: ["bar"], value: 123, nameLoc: 0, valueLoc: 0, repr: "" }],
     });
   });
 });

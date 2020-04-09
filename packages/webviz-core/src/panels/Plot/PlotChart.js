@@ -72,8 +72,7 @@ function getDatasetAndTooltipsFromMessagePlotPath(
   index: number,
   startTime: Time,
   xAxisVal: "timestamp" | "index" | "custom",
-  xAxisPath?: BasePlotPath,
-  includeTooltipInData: boolean
+  xAxisPath?: BasePlotPath
 ): { dataset: DataSet, tooltips: TimeBasedChartTooltipData[] } {
   let tooltips: TimeBasedChartTooltipData[] = [];
   let points: PlotChartPoint[] = [];
@@ -93,11 +92,7 @@ function getDatasetAndTooltipsFromMessagePlotPath(
           const x = getXForPoint(xAxisVal, elapsedTime, innerIdx, itemsByPath, xAxisPath, outerIdx);
           const y = valueNum;
           const tooltip = { x, y, datasetKey, item, path: queriedPath, value, constantName, startTime };
-          if (includeTooltipInData) {
-            points.push({ x, y, tooltip });
-          } else {
-            points.push({ x, y });
-          }
+          points.push({ x, y });
           tooltips.push(tooltip);
         }
       } else if (isTime(value)) {
@@ -109,18 +104,13 @@ function getDatasetAndTooltipsFromMessagePlotPath(
           x,
           y,
           datasetKey,
-          datasetIndex: innerIdx,
           item,
           path: queriedPath,
           value: `${format(timeValue)} (${formatTimeRaw(timeValue)})`,
           constantName,
           startTime,
         };
-        if (includeTooltipInData) {
-          points.push({ x, y, tooltip });
-        } else {
-          points.push({ x, y });
-        }
+        points.push({ x, y });
         tooltips.push(tooltip);
       }
     }
@@ -132,11 +122,7 @@ function getDatasetAndTooltipsFromMessagePlotPath(
 
   if (path.value.includes(".@derivative")) {
     if (showLine) {
-      const { points: derivativePoints, tooltips: derivativeTooltips } = derivative(
-        points,
-        tooltips,
-        includeTooltipInData
-      );
+      const { points: derivativePoints, tooltips: derivativeTooltips } = derivative(points, tooltips);
       points = derivativePoints;
       tooltips = derivativeTooltips;
     } else {
@@ -182,22 +168,13 @@ export function getDatasetsAndTooltips(
   itemsByPath: MessageHistoryItemsByPath,
   startTime: Time,
   xAxisVal: "timestamp" | "index" | "custom",
-  xAxisPath?: BasePlotPath,
-  includeTooltipInData: boolean
+  xAxisPath?: BasePlotPath
 ): { datasets: DataSet[], tooltips: TimeBasedChartTooltipData[] } {
   const datasetsAndTooltips = filterMap(paths, (path: PlotPath, index: number) => {
     if (!path.enabled) {
       return null;
     } else if (!isReferenceLinePlotPathType(path)) {
-      return getDatasetAndTooltipsFromMessagePlotPath(
-        path,
-        itemsByPath,
-        index,
-        startTime,
-        xAxisVal,
-        xAxisPath,
-        includeTooltipInData
-      );
+      return getDatasetAndTooltipsFromMessagePlotPath(path, itemsByPath, index, startTime, xAxisVal, xAxisPath);
     }
     return null;
   });
@@ -233,8 +210,6 @@ const yAxes = createSelector<YAxesInterface, _, _, _>(
           min,
           max,
           precision: 3,
-          callback: (val, idx, vals) =>
-            idx === 0 || idx === vals.length - 1 ? "" : `${Math.round(val * 1000) / 1000}`,
         },
         gridLines: {
           color: "rgba(255, 255, 255, 0.2)",
@@ -277,7 +252,6 @@ export default memo<PlotChartProps>(function PlotChart(props: PlotChartProps) {
             saveCurrentYs={saveCurrentYs}
             xAxisVal={xAxisVal}
             scaleOptions={scaleOptions}
-            useFixedYAxisWidth
           />
         )}
       </Dimensions>

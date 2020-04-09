@@ -176,8 +176,8 @@ describe("useReducedValue", () => {
 
 describe("useShouldNotChangeOften", () => {
   it("logs when value changes twice in a row", () => {
-    const warn = jest.spyOn(console, "warn").mockReturnValue();
-    const { result, rerender } = renderHook((val) => useShouldNotChangeOften(val, "hi"), { initialProps: "a" });
+    const warn = jest.fn();
+    const { result, rerender } = renderHook((val) => useShouldNotChangeOften(val, warn), { initialProps: "a" });
     function update(val) {
       rerender(val);
       expect(result.current).toBe(val);
@@ -187,10 +187,9 @@ describe("useShouldNotChangeOften", () => {
     update("b");
     update("b");
     update("c");
-    expect(warn.mock.calls).toEqual([]);
+    expect(warn).not.toHaveBeenCalled();
     update("d");
-    expect(warn.mock.calls).toEqual([["hi"]]);
-    warn.mockRestore();
+    expect(warn).toHaveBeenCalled();
   });
 });
 

@@ -10,7 +10,7 @@ import { getNodeAtPath } from "react-mosaic-component";
 
 import { getPanelTypeFromId } from "webviz-core/src/util";
 
-export function getPanelTypeFromMosiac(mosaicWindowActions: any, mosaicActions: any) {
+export function getPanelTypeFromMosaic(mosaicWindowActions: any, mosaicActions: any) {
   if (!mosaicWindowActions || !mosaicActions) {
     return null;
   }

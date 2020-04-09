@@ -7,4 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 // imported by worker-loader! in jest
-export default class MockWorker {}
+export default class MockWorker {
+  port = { start: () => null };
+}

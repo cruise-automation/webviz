@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import { createMemoryHistory } from "history";
 import * as React from "react";
-import { DragDropContextProvider } from "react-dnd";
+import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import { Provider } from "react-redux";
 import { withScreenshot } from "storybook-chrome-screenshot";
@@ -23,12 +23,12 @@ storiesOf("<PanelLayout>", module)
   .addDecorator(withScreenshot())
   .add("panel not found", () => {
     const store = configureStore(createRootReducer(createMemoryHistory));
-    store.dispatch(changePanelLayout("DummyPanelType!4co6n9d"));
+    store.dispatch(changePanelLayout({ layout: "DummyPanelType!4co6n9d" }));
     return (
       <Provider store={store}>
-        <DragDropContextProvider backend={HTML5Backend}>
+        <DndProvider backend={HTML5Backend}>
           <PanelLayout />
-        </DragDropContextProvider>
+        </DndProvider>
       </Provider>
     );
   });

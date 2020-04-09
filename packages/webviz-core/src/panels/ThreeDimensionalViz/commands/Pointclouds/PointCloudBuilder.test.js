@@ -25,18 +25,41 @@ describe("PointCloudBuilder", () => {
     expect(Math.floor(pos[3])).toBe(-2239);
     expect(Math.floor(pos[4])).toBe(-706);
     expect(Math.floor(pos[5])).toBe(-3);
-    expect(colorCodes[0]).toBe(255);
+    expect(colorCodes[0]).toBe(127);
     expect(colorCodes[1]).toBe(225);
-    expect(colorCodes[2]).toBe(127);
-    expect(colorCodes[3]).toBe(255);
+    expect(colorCodes[2]).toBe(255);
+    expect(colorCodes[3]).toBe(127);
     expect(colorCodes[4]).toBe(255);
-    expect(colorCodes[5]).toBe(127);
+    expect(colorCodes[5]).toBe(255);
   });
 
   it("uses rgb values when rendering by rgb colorfield", () => {
     const result = mapMarker({
       ...POINT_CLOUD_MESSAGE,
       settings: { colorMode: { mode: "rgb" } },
+    });
+    const pos = result.points;
+    const colorCodes = result.colors;
+    expect(pos).toHaveLength(6);
+    expect(Math.floor(pos[0])).toBe(-2239);
+    expect(Math.floor(pos[1])).toBe(-706);
+    expect(Math.floor(pos[2])).toBe(-3);
+    expect(Math.floor(pos[3])).toBe(-2239);
+    expect(Math.floor(pos[4])).toBe(-706);
+    expect(Math.floor(pos[5])).toBe(-3);
+    expect(colorCodes[0]).toBe(127);
+    expect(colorCodes[1]).toBe(225);
+    expect(colorCodes[2]).toBe(255);
+    expect(colorCodes[3]).toBe(127);
+    expect(colorCodes[4]).toBe(255);
+    expect(colorCodes[5]).toBe(255);
+  });
+
+  it("uses rgb values when rendering by rgb colorfield (big endiannes)", () => {
+    const result = mapMarker({
+      ...POINT_CLOUD_MESSAGE,
+      settings: { colorMode: { mode: "rgb" } },
+      is_bigendian: true,
     });
     const pos = result.points;
     const colorCodes = result.colors;
@@ -59,6 +82,30 @@ describe("PointCloudBuilder", () => {
     const input = {
       ...POINT_CLOUD_MESSAGE,
       settings: { colorMode: { mode: "rainbow", colorField: "x" } },
+    };
+    const result = mapMarker(input);
+    const pos = result.points;
+    const colorCodes = result.colors;
+    expect(pos).toHaveLength(6);
+    expect(Math.floor(pos[0])).toBe(-2239);
+    expect(Math.floor(pos[1])).toBe(-706);
+    expect(Math.floor(pos[2])).toBe(-3);
+    expect(Math.floor(pos[3])).toBe(-2239);
+    expect(Math.floor(pos[4])).toBe(-706);
+    expect(Math.floor(pos[5])).toBe(-3);
+    expect(colorCodes[0]).toBe(255);
+    expect(colorCodes[1]).toBe(0);
+    expect(colorCodes[2]).toBe(0);
+    expect(colorCodes[3]).toBe(255);
+    expect(colorCodes[4]).toBe(0);
+    expect(colorCodes[5]).toBe(0);
+  });
+
+  it("builds point cloud with custom colors (ignore endianness)", () => {
+    const input = {
+      ...POINT_CLOUD_MESSAGE,
+      settings: { colorMode: { mode: "rainbow", colorField: "x" } },
+      is_bigendian: true,
     };
     const result = mapMarker(input);
     const pos = result.points;
@@ -101,6 +148,29 @@ describe("PointCloudBuilder", () => {
     expect(colorCodes[5]).toBe(0x56);
   });
 
+  it("builds point cloud with custom flat color (ignore endianness)", () => {
+    const input = {
+      ...POINT_CLOUD_MESSAGE,
+      settings: { colorMode: { mode: "flat", flatColor: "#123456" } },
+    };
+    const result = mapMarker(input);
+    const pos = result.points;
+    const colorCodes = result.colors;
+    expect(pos).toHaveLength(6);
+    expect(Math.floor(pos[0])).toBe(-2239);
+    expect(Math.floor(pos[1])).toBe(-706);
+    expect(Math.floor(pos[2])).toBe(-3);
+    expect(Math.floor(pos[3])).toBe(-2239);
+    expect(Math.floor(pos[4])).toBe(-706);
+    expect(Math.floor(pos[5])).toBe(-3);
+    expect(colorCodes[0]).toBe(0x12);
+    expect(colorCodes[1]).toBe(0x34);
+    expect(colorCodes[2]).toBe(0x56);
+    expect(colorCodes[3]).toBe(0x12);
+    expect(colorCodes[4]).toBe(0x34);
+    expect(colorCodes[5]).toBe(0x56);
+  });
+
   it("builds a point cloud with height 3", () => {
     const result = mapMarker({
       ...POINT_CLOUD_MESSAGE,
@@ -121,12 +191,12 @@ describe("PointCloudBuilder", () => {
     expect(Math.floor(pos[8])).toBe(-3);
 
     const colorCodes = result.colors;
-    expect(colorCodes[0]).toBe(255);
+    expect(colorCodes[0]).toBe(127);
     expect(colorCodes[1]).toBe(225);
-    expect(colorCodes[2]).toBe(127);
-    expect(colorCodes[3]).toBe(255);
+    expect(colorCodes[2]).toBe(255);
+    expect(colorCodes[3]).toBe(127);
     expect(colorCodes[4]).toBe(255);
-    expect(colorCodes[5]).toBe(127);
+    expect(colorCodes[5]).toBe(255);
     expect(colorCodes[6]).toBe(127);
     expect(colorCodes[7]).toBe(255);
     expect(colorCodes[8]).toBe(127);
@@ -196,7 +266,7 @@ describe("PointCloudBuilder", () => {
       255,
     ],
     height: 1,
-    is_bigendian: 0,
+    is_bigendian: false,
     is_dense: 0,
     point_step: 20,
     row_step: 20,
@@ -262,7 +332,7 @@ describe("PointCloudBuilder", () => {
         },
       },
       height: 1,
-      is_bigendian: 0,
+      is_bigendian: false,
       is_dense: 1,
       point_step: 19,
       row_step: 19,
@@ -420,7 +490,7 @@ describe("PointCloudBuilder", () => {
       expect(fullyDecodedMarker.bar).toEqual([6, 8]);
       expect(fullyDecodedMarker.baz).toEqual([5, 7]);
       expect(fullyDecodedMarker.foo).toEqual([7, 9]);
-      expect(fullyDecodedMarker.foo16).toEqual([265, 2]);
+      expect(fullyDecodedMarker.foo16_some_really_really_long_name).toEqual([265, 2]);
     });
   });
 
@@ -444,6 +514,18 @@ describe("PointCloudBuilder", () => {
       const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
       expect(getClickedInfo(fullyDecodedMarker, 0)).toEqual({
         clickedPoint: [-2238.780517578125, -705.6009521484375, -2.371227741241455],
+        clickedPointColor: [127, 225, 255, 1],
+      });
+    });
+
+    it("returns the clicked point and color (big endianness)", () => {
+      const partiallyDecodedMarker = ((mapMarker({
+        ...POINT_CLOUD_MESSAGE,
+        is_bigendian: true,
+      }): any): PointCloud2);
+      const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
+      expect(getClickedInfo(fullyDecodedMarker, 0)).toEqual({
+        clickedPoint: [-2238.780517578125, -705.6009521484375, -2.371227741241455],
         clickedPointColor: [255, 225, 127, 1],
       });
     });
@@ -452,12 +534,12 @@ describe("PointCloudBuilder", () => {
       const partiallyDecodedMarker = ((mapMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): PointCloud2);
       const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
       expect(getClickedInfo(fullyDecodedMarker, 0)).toEqual({
-        additionalFieldValues: { bar: 6, baz: 5, foo: 7, foo16: 265 },
+        additionalFieldValues: { bar: 6, baz: 5, foo: 7, foo16_some_really_really_long_name: 265 },
         clickedPoint: [0, 1, 2],
         clickedPointColor: [255, 255, 255, 1],
       });
       expect(getClickedInfo(fullyDecodedMarker, 1)).toEqual({
-        additionalFieldValues: { bar: 8, baz: 7, foo: 9, foo16: 2 },
+        additionalFieldValues: { bar: 8, baz: 7, foo: 9, foo16_some_really_really_long_name: 2 },
         clickedPoint: [0, 1, 2],
         clickedPointColor: [255, 255, 255, 1],
       });

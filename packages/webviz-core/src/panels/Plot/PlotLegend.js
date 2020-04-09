@@ -9,7 +9,7 @@
 import MenuIcon from "@mdi/svg/svg/menu.svg";
 import cx from "classnames";
 import { last } from "lodash";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 
 import { plotableRosTypes, type PlotConfig } from "./index";
 import styles from "./PlotLegend.module.scss";
@@ -30,16 +30,6 @@ type PlotLegendProps = {|
   xAxisVal: "timestamp" | "index" | "custom",
   xAxisPath?: BasePlotPath,
 |};
-
-function PlotLegendToggle(props: { onToggle: () => void }) {
-  return (
-    <div className={styles.legendToggle} onClick={props.onToggle}>
-      <Icon>
-        <MenuIcon />
-      </Icon>
-    </div>
-  );
-}
 
 export default function PlotLegend(props: PlotLegendProps) {
   const { paths, saveConfig, showLegend, xAxisVal, xAxisPath } = props;
@@ -69,17 +59,29 @@ export default function PlotLegend(props: PlotLegendProps) {
     [paths, saveConfig]
   );
 
+  const { toggleToHideLegend, toggleToShowLegend } = useMemo(
+    () => ({
+      toggleToHideLegend: () => saveConfig({ showLegend: false }),
+      toggleToShowLegend: () => saveConfig({ showLegend: true }),
+    }),
+    [saveConfig]
+  );
+
   if (!showLegend) {
     return (
       <div className={styles.root}>
-        <PlotLegendToggle onToggle={() => saveConfig({ showLegend: !showLegend })} />
+        <Icon className={styles.legendToggle} onClick={toggleToShowLegend}>
+          <MenuIcon />
+        </Icon>
       </div>
     );
   }
 
   return (
     <div className={styles.root}>
-      <PlotLegendToggle onToggle={() => saveConfig({ showLegend: !showLegend })} />
+      <Icon className={styles.legendToggle} onClick={toggleToHideLegend}>
+        <MenuIcon />
+      </Icon>
       <div className={styles.item}>
         x:
         <div className={styles.itemIconContainer} style={{ width: "auto", lineHeight: "normal" }}>

@@ -15,6 +15,7 @@ import * as Sentry from "@sentry/browser";
 import type { Node } from "react";
 
 import { AppError } from "webviz-core/src/util/errors";
+import { inWebWorker } from "webviz-core/src/util/workers";
 
 export type ErrorType = "app" | "user";
 export type DetailsType = string | Error | Node;
@@ -22,8 +23,7 @@ export type DetailsType = string | Error | Node;
 type ErrorHandler = (message: string, details: DetailsType, type: ErrorType) => void;
 
 const defaultErrorHandler: ErrorHandler = (message: string, details: DetailsType, type: ErrorType): void => {
-  // eslint-disable-next-line no-undef
-  if (typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope) {
+  if (!inWebWorker()) {
     const webWorkerError =
       "Web Worker has uninitialized reportError function; this means this error message cannot show up in the UI (so we show it here in the console instead).";
     if (process.env.NODE_ENV === "test") {

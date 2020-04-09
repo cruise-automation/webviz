@@ -12,7 +12,7 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 
 import MessagePathInput from "./MessagePathInput";
 import Flex from "webviz-core/src/components/Flex";
-import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
+import MockPanelContextProvider from "webviz-core/src/components/MockPanelContextProvider";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 const fixture = {

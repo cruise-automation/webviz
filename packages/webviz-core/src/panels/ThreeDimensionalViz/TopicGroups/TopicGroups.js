@@ -6,10 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import LayersIcon from "@mdi/svg/svg/layers.svg";
-import { Icon as AntIcon } from "antd";
+import SearchIcon from "@mdi/svg/svg/magnify.svg";
 import fuzzySort from "fuzzysort";
 import { omit, set, cloneDeep, compact } from "lodash";
+import memoizeOne from "memoize-one";
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import KeyListener from "react-key-listener";
 import scrollIntoView from "scroll-into-view-if-needed";
@@ -17,24 +17,28 @@ import styled from "styled-components";
 import { useDebounce, useDebouncedCallback } from "use-debounce";
 
 import { type Save3DConfig } from "../index";
-import { DEFAULT_DEBOUNCE_TIME, KEYBOARD_SHORTCUTS, FOCUS_ITEM_OPS } from "./constants";
+import AdditionalSearchResults from "./AdditionalSearchResults";
+import { DEFAULT_DEBOUNCE_TIME, FOCUS_ITEM_OPS } from "./constants";
 import CreateGroupButton from "./CreateGroupButton";
 import { SInput } from "./QuickAddTopic";
 import TopicGroupList from "./TopicGroupList";
 import TopicGroupsMenu from "./TopicGroupsMenu";
+import { getOnTopicGroupsChangeDataByKeyboardOp } from "./topicGroupsOnChangeUtils";
 import {
   addIsKeyboardFocusedToTopicGroups,
   buildAvailableNamespacesByTopic,
   buildItemDisplayNameByTopicOrExtension,
-  getOnTopicGroupsChangeDataByKeyboardOp,
   getSceneErrorsByTopic,
   getTopicGroups,
   removeTopicPrefixes,
   updateFocusIndexesAndGetFocusData,
+  removeBlankSpaces,
   FEATURE_DATA_SOURCE_PREFIXES,
   TOPIC_CONFIG,
+  ALL_DATA_SOURCE_PREFIXES,
 } from "./topicGroupsUtils";
-import type { FocusItemOp, TopicGroupConfig, TopicGroupType } from "./types";
+import TopIcons from "./TopIcons";
+import type { FocusItemOp, TopicGroupConfig, TopicGroupType, TopicGroupsSearchResult } from "./types";
 import Confirm from "webviz-core/src/components/Confirm";
 import Icon from "webviz-core/src/components/Icon";
 import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
@@ -74,6 +78,12 @@ const STopicGroupsContainer = styled.div`
   z-index: 102;
 `;
 
+const SFocusContainer = styled.div`
+  &:focus {
+    outline: none;
+  }
+`;
+
 const STopicGroups = styled.div`
   position: relative;
   color: ${colors.TEXTL1};
@@ -81,14 +91,6 @@ const STopicGroups = styled.div`
   background-color: ${colors.TOOLBAR};
   max-width: 440px;
   padding-bottom: 6px;
-`;
-
-/* TODO(Audrey): stay consistent with other buttons in the 3D panel, will consolidate later. */
-const SIconWrapper = styled.div`
-  width: 28px;
-  border-radius: 4px;
-  padding: 0;
-  padding: 4px;
 `;
 
 const STopicGroupsHeader = styled.div`
@@ -117,6 +119,8 @@ type SharedProps = {|
   onMigrateToTopicGroupConfig: () => void,
   pinTopics: boolean,
   saveConfig: Save3DConfig,
+  setShowTopicGroups: (boolean) => void,
+  showTopicGroups: boolean,
   topicGroupsConfig: TopicGroupConfig[],
 |};
 type TopicGroupsBaseProps = {|
@@ -132,7 +136,8 @@ type TopicGroupsBaseProps = {|
 export function getFilteredKeys(
   topicGroupsConfig: TopicGroupConfig[],
   displayNameByTopic: { [topicName: string]: string },
-  filterText: string
+  filterText: string,
+  namespacesByTopic: { [topicName: string]: string[] }
 ): string[] {
   // Build a list of filtered keys for fuzzy filtering on group displayName, topic displayName and topicName.
   const allFilterKeysSet = new Set(); // no need to have duplicated filter keys
@@ -140,10 +145,21 @@ export function getFilteredKeys(
   topicGroupsConfig.forEach((groupConfig) => {
     allFilterKeysSet.add(groupConfig.displayName);
     groupConfig.items.forEach(({ topicName, displayName }) => {
+      // Search by topicName.
       allFilterKeysSet.add(topicName);
       if (onlySearchOnTopics) {
         return;
       }
+      // Search by namespace.
+      ALL_DATA_SOURCE_PREFIXES.forEach((prefix) => {
+        const prefixedTopicName = `${prefix}${topicName}`;
+        if (namespacesByTopic[prefixedTopicName]) {
+          namespacesByTopic[prefixedTopicName].forEach((ns) => {
+            allFilterKeysSet.add(ns);
+          });
+        }
+      });
+      // Search by displayName.
       if (displayName) {
         allFilterKeysSet.add(displayName);
       } else if (displayNameByTopic[topicName]) {
@@ -155,9 +171,79 @@ export function getFilteredKeys(
   return fuzzySort.go(filterText, [...allFilterKeysSet], { limit: 100 }).map((res: { target: string }) => res.target);
 }
 
+// The availableTopics, displayNames, and namespaces don't change very often - once when we load a bag, or when the user
+// edits a displayName. Precalculate them for faster performance.
+type SearchTopic = {|
+  topic: Topic,
+  // These are fuzzySort primitives that improve the speed of the search.
+  preparedTopicName: mixed,
+  preparedDisplayName: mixed,
+  preparedJoinedNamespaces: mixed,
+  preparedNamespaces: mixed[],
+|};
+const getMemoizedSearchTopics = memoizeOne(
+  (
+    availableTopics: Topic[],
+    displayNameByTopic: { [topicName: string]: string },
+    namespacesByTopic: { [topicName: string]: string[] }
+  ): SearchTopic[] => {
+    const topicsToSearch = availableTopics.map((topic) => {
+      const { name } = topic;
+      return {
+        topic,
+        preparedTopicName: fuzzySort.prepare(name),
+        preparedDisplayName: fuzzySort.prepare(displayNameByTopic[name] || ""),
+        preparedJoinedNamespaces: fuzzySort.prepare((namespacesByTopic[name] || []).join(" ")),
+        preparedNamespaces: (namespacesByTopic[name] || []).map((namespace) => fuzzySort.prepare(namespace)),
+      };
+    });
+    return topicsToSearch;
+  }
+);
+
+const DEFAULT_RESULT_LIMIT = 3;
+const EXPANDED_RESULT_LIMIT = 100;
+export function getTopFilteredAvailableTopics(
+  availableTopics: Topic[],
+  displayNameByTopic: { [topicName: string]: string },
+  namespacesByTopic: { [topicName: string]: string[] },
+  filterText: string,
+  areSearchResultsExpanded: boolean
+): TopicGroupsSearchResult[] {
+  const searchTopics = getMemoizedSearchTopics(availableTopics, displayNameByTopic, namespacesByTopic);
+  const searchMatches = fuzzySort
+    // Increase the result limit in case we get matches for topic name and display name, or different namespaces, of the
+    // same topic.
+    .go(filterText, searchTopics, {
+      limit: areSearchResultsExpanded ? EXPANDED_RESULT_LIMIT : DEFAULT_RESULT_LIMIT,
+      keys: ["preparedTopicName", "preparedDisplayName", "preparedJoinedNamespaces"],
+      scoreFn: ([topicNameResult, displayNameResult, namespaceResult]) => {
+        // This is our custom score function for ordering search results. We take the max score of topic name, display
+        // name, or namespace scores. These numbers are chosen somewhat arbitrarily and can be tweaked to adjust search
+        // results.
+        // See https://github.com/farzher/fuzzysort/tree/c6604993ac51bfe4de8e82c0a4d9b0c6e1794682#advanced-usage
+        const topicNameScore = topicNameResult ? topicNameResult.score : -Infinity;
+        const displayNameScore = displayNameResult ? displayNameResult.score - 1000 : -Infinity;
+        const namespaceScore = namespaceResult ? namespaceResult.score - 2000 : -Infinity;
+        return Math.max(topicNameScore, displayNameScore, namespaceScore);
+      },
+    })
+    .map((res: { obj: SearchTopic }) => res.obj);
+
+  return searchMatches.map(({ topic, preparedNamespaces }) => {
+    // We search namespaces separately so that we can display only the namespaces that match the target.
+    const namespaces: string[] = fuzzySort.go(filterText, preparedNamespaces).map(({ target }) => target);
+    return {
+      topic,
+      namespaces,
+    };
+  });
+}
+
 export function TopicGroupsBase({
   availableTopics = [],
   containerHeight,
+  dataTestShowErrors,
   displayNameByTopic = {},
   errorsByTopic,
   namespacesByTopic = {},
@@ -167,9 +253,12 @@ export function TopicGroupsBase({
   saveConfig,
   sceneCollectorMsgForTopicSetting,
   setSettingsTopicName,
+  setShowTopicGroups,
+  showTopicGroups,
   topicGroupsConfig,
-  dataTestShowErrors,
 }: TopicGroupsBaseProps) {
+  const renderTopicGroups = pinTopics || showTopicGroups;
+
   const inputRef = useRef<?HTMLInputElement>();
   const containerRef = useRef<?HTMLDivElement>();
   // Use focusIndex to control which group/topic/action row to focus on during keyboard nav.
@@ -178,10 +267,28 @@ export function TopicGroupsBase({
   // the specific component to perform the UI changes, and the component will clear focusItemOp upon completing the UI changes.
   const [focusItemOp, setFocusItemOp] = useState<?FocusItemOp>();
 
+  // Reset the focusIndex when close TopicGroups.
+  useEffect(
+    () => {
+      if (!showTopicGroups) {
+        setFocusIndex(-1);
+      }
+    },
+    [showTopicGroups]
+  );
+
+  // use callbackRefs to prevent unnecessary callback changes.
+  const callbackRefs = useRef({ focusIndex });
+  callbackRefs.current = { focusIndex };
+
   const onFocusOnContainer = useCallback(() => {
     // Focus on the container if it's not already focused.
     if (containerRef.current && document.activeElement !== containerRef.current) {
       containerRef.current.focus();
+    }
+    // Always focus on the first item when bringing the focus to the container.
+    if (callbackRefs.current.focusIndex === -1) {
+      setFocusIndex(0);
     }
   }, []);
 
@@ -191,31 +298,55 @@ export function TopicGroupsBase({
     [focusIndex, focusItemOp, onFocusOnContainer]
   );
 
-  // Focus on the container immediately when the pinTopics becomes true
+  // Focus on the container immediately when the opening TopicGroups.
   useEffect(
     () => {
-      if (pinTopics) {
+      if (renderTopicGroups) {
         onFocusOnContainer();
       }
     },
-    [onFocusOnContainer, pinTopics]
+    [onFocusOnContainer, renderTopicGroups]
   );
 
   const [filterText, setFilterText] = useState<string>("");
   const [filteredKeysSet, setFilteredKeysSet] = useState<?Set<string>>();
+  const [filteredSearchResults, setFilteredSearchResults] = useState<?(TopicGroupsSearchResult[])>();
+  const [areSearchResultsExpanded, setAreSearchResultsExpanded] = useState<boolean>(false);
 
-  const [debouncedFilterText] = useDebounce(filterText, DEFAULT_DEBOUNCE_TIME);
+  const filterTextWithoutSpaces = useMemo(() => removeBlankSpaces(filterText), [filterText]);
+  const [debouncedFilterText] = useDebounce(filterTextWithoutSpaces, DEFAULT_DEBOUNCE_TIME);
 
   useEffect(
     () => {
       // Update the filteredKeys based on filterText. Debounce it since the user might type very fast.
       if (debouncedFilterText) {
-        setFilteredKeysSet(new Set(getFilteredKeys(topicGroupsConfig, displayNameByTopic, filterText)));
+        setFilteredKeysSet(
+          new Set(getFilteredKeys(topicGroupsConfig, displayNameByTopic, debouncedFilterText, namespacesByTopic))
+        );
+        setFilteredSearchResults(
+          getTopFilteredAvailableTopics(
+            availableTopics,
+            displayNameByTopic,
+            namespacesByTopic,
+            debouncedFilterText,
+            areSearchResultsExpanded
+          )
+        );
       } else {
         setFilteredKeysSet(undefined);
+        setFilteredSearchResults(undefined);
+        // Reset the search results to no longer be expanded when the user deletes all search input.
+        setAreSearchResultsExpanded(false);
       }
     },
-    [debouncedFilterText, displayNameByTopic, filterText, topicGroupsConfig]
+    [
+      availableTopics,
+      debouncedFilterText,
+      displayNameByTopic,
+      namespacesByTopic,
+      topicGroupsConfig,
+      areSearchResultsExpanded,
+    ]
   );
 
   const nonPrefixedAvailableTopicNames = useMemo(
@@ -233,7 +364,7 @@ export function TopicGroupsBase({
     namespacesByTopic,
     availableTopics,
     errorsByTopic,
-    filterText,
+    filterText: debouncedFilterText,
     filteredKeysSet,
     hasFeatureColumn,
   });
@@ -241,7 +372,7 @@ export function TopicGroupsBase({
   // Update the topicGroups and assign focusIndexes according to the final visibility/expanded states, and collect `focusData`
   // which is an array that can map indexes (focusIndex) to
   //  - objectPath: for getting the group/topic data once the user triggered a keyboard op
-  //  - focusType: including GROUP, NEW_GROUP, TOPIC, NEW_TOPIC, which tells what kind of data and field we need to get to perform the op
+  //  - focusType: including GROUP, NEW_GROUP, TOPIC, NEW_TOPIC, NAMESPACE, which tells what kind of data and field we need to get to perform the op
   const { topicGroups: topicGroupsWithUpdatedFocusIndex, focusData } = useMemo(
     () => updateFocusIndexesAndGetFocusData(topicGroupsWithoutFocusInfo),
     [topicGroupsWithoutFocusInfo]
@@ -267,8 +398,8 @@ export function TopicGroupsBase({
       if (focusElems.length > 0) {
         scrollIntoView(focusElems[0], {
           behavior: "smooth",
+          block: "center",
           boundary: scrollContainerElem,
-          block: "nearest",
           scrollMode: "if-needed",
         });
       }
@@ -309,6 +440,13 @@ export function TopicGroupsBase({
 
   const [debouncedSharedOnKeyHandler] = useDebouncedCallback(
     (focusItemOpAlt: FocusItemOp, isShiftKeyPressed?: boolean) => {
+      // Don't support item expand/collapse when filtering since we auto expand all.
+      if (
+        debouncedFilterText &&
+        (focusItemOpAlt === FOCUS_ITEM_OPS.ArrowLeft || focusItemOpAlt === FOCUS_ITEM_OPS.ArrowRight)
+      ) {
+        return;
+      }
       const onTopicGroupsChangeData = getOnTopicGroupsChangeDataByKeyboardOp({
         focusItemOp: focusItemOpAlt,
         focusData,
@@ -392,9 +530,12 @@ export function TopicGroupsBase({
       let handlers = {
         t: (e) => {
           e.preventDefault();
-          // Toggle pinTopic when the user interacted with topic group UI. Note this is different from toggling
-          // when clicked 3D panel which is handled in Layout.js.
-          saveConfig({ pinTopics: !pinTopics });
+          // Unpin before enabling keyboard toggle open/close.
+          if (pinTopics) {
+            saveConfig({ pinTopics: false });
+            return;
+          }
+          setShowTopicGroups(!showTopicGroups);
         },
         Backspace: (e) => {
           e.preventDefault();
@@ -408,21 +549,21 @@ export function TopicGroupsBase({
           }
           if (activeEl === containerEl) {
             e.preventDefault();
-            // Toggle pinTopic off if the topic group is already open.
-            if (pinTopics) {
-              saveConfig({ pinTopics: false });
+            // Hide TopicGroups if the already open.
+            if (showTopicGroups) {
+              setShowTopicGroups(false);
             } else {
-              // Exit topic group focus if the topic group is closed.
+              // Exit TopicGroups focus if it's closed.
               onExitTopicGroupFocus();
             }
           } else if (containerEl.contains(activeEl)) {
-            // Otherwise, get out of any other topic group focus elements, and simply focus on the topic group container.
+            // Otherwise, get out of any other TopicGroups focus elements, and simply focus on the TopicGroups container.
             e.preventDefault();
             onFocusOnContainer();
           }
         },
       };
-      if (pinTopics) {
+      if (renderTopicGroups) {
         handlers = {
           ...handlers,
           ...sharedHandlers,
@@ -437,13 +578,31 @@ export function TopicGroupsBase({
       }
       return handlers;
     },
-    [debouncedSharedOnKeyHandler, onExitTopicGroupFocus, onFocusOnContainer, pinTopics, saveConfig, sharedHandlers]
+    [
+      debouncedSharedOnKeyHandler,
+      onExitTopicGroupFocus,
+      onFocusOnContainer,
+      pinTopics,
+      renderTopicGroups,
+      saveConfig,
+      setShowTopicGroups,
+      sharedHandlers,
+      showTopicGroups,
+    ]
   );
 
   return (
     <STopicGroupsContainer style={{ maxHeight: containerHeight - 30 }}>
-      <div
+      <SFocusContainer
         style={{ maxHeight: containerHeight - 30 }}
+        onMouseEnter={() => {
+          // Focus on the container in order to enable keyboard navigation.
+          onFocusOnContainer();
+        }}
+        onMouseLeave={() => {
+          setFocusIndex(-1);
+        }}
+        onClick={(e) => e.stopPropagation()}
         data-test={"topic-groups-focus-container"}
         aria-activedescendant={focusIndex === -1 ? "" : `focus-item-${focusIndex}`}
         aria-expanded={topicGroups.length > 0}
@@ -454,27 +613,20 @@ export function TopicGroupsBase({
         tabIndex={0}>
         <KeyListener keyDownHandlers={keyDownHandlers} />
         <KeyboardContext.Provider value={keyboardContextValue}>
-          <SIconWrapper style={{ backgroundColor: pinTopics ? "transparent" : "#2d2c33" }}>
-            <Icon
-              tooltipProps={{
-                contents: KEYBOARD_SHORTCUTS.map(({ description, keys }, idx) => (
-                  <KeyboardShortcut key={idx} description={description} keys={keys} />
-                )),
-              }}
-              dataTest="open-topic-picker"
-              active={pinTopics}
-              fade
-              medium
-              onClick={() => saveConfig({ pinTopics: !pinTopics })}
-              style={{ color: "white" }}>
-              <LayersIcon />
-            </Icon>
-          </SIconWrapper>
-          {pinTopics && (
+          <TopIcons
+            pinTopics={pinTopics}
+            renderTopicGroups={renderTopicGroups}
+            saveConfig={saveConfig}
+            setShowTopicGroups={setShowTopicGroups}
+            showTopicGroups={showTopicGroups}
+          />
+          {renderTopicGroups && (
             <STopicGroups>
               <STopicGroupsHeader>
                 <SFilter>
-                  <AntIcon type="search" style={{ fontSize: 13 }} />
+                  <Icon small fade tooltipProps={{ placement: "bottom", contents: <KeyboardShortcut keys={["/"]} /> }}>
+                    <SearchIcon />
+                  </Icon>
                   <SInput
                     aria-autocomplete="list"
                     aria-controls="topic-group-listbox"
@@ -537,11 +689,24 @@ export function TopicGroupsBase({
                     onAddGroup={onAddGroup}
                   />
                 )}
+                {filteredSearchResults && filteredSearchResults.length > 0 && (
+                  <AdditionalSearchResults
+                    searchText={debouncedFilterText}
+                    filteredSearchResults={filteredSearchResults}
+                    displayNameByTopic={displayNameByTopic}
+                    namespacesByTopic={namespacesByTopic}
+                    onTopicGroupsChange={onTopicGroupsChange}
+                    topicGroups={topicGroups}
+                    onAddGroup={onAddGroup}
+                    areSearchResultsExpanded={areSearchResultsExpanded}
+                    setAreSearchResultsExpanded={setAreSearchResultsExpanded}
+                  />
+                )}
               </div>
             </STopicGroups>
           )}
         </KeyboardContext.Provider>
-      </div>
+      </SFocusContainer>
     </STopicGroupsContainer>
   );
 }
@@ -555,31 +720,39 @@ type SceneData = {|
 type TopicGroupsProps = {|
   ...SharedProps,
   availableTfs: string[],
+  enableShortDisplayNames: boolean,
   sceneBuilder: SceneBuilder,
 |};
 
 type UnMemoizedTopicGroupsProps = {|
   ...SharedProps,
   ...SceneData,
+  enableShortDisplayNames: boolean,
+  availableTfs: string[],
   sceneCollectorMsgForTopicSetting: any,
   setSettingsTopicName: (topicName: ?string) => void,
-  availableTfs: string[],
+  setShowTopicGroups: (boolean) => void,
+  showTopicGroups: boolean,
 |};
-// Use the wrapper component to handle top level data processing.
+// Use the wrapper component to handle displayName, namespace and topic processing.
 function UnMemoizedTopicGroups({
   availableTfs,
   availableTopics,
+  enableShortDisplayNames,
   sceneCollectorMsgForTopicSetting,
   sceneErrorsByTopic,
   sceneNamespacesByTopic,
   ...rest
 }: UnMemoizedTopicGroupsProps) {
-  const { configDisplayNameByTopic, configNamespacesByTopic } = useMemo(() => {
-    return {
-      configDisplayNameByTopic: buildItemDisplayNameByTopicOrExtension(TOPIC_CONFIG),
-      configNamespacesByTopic: buildAvailableNamespacesByTopic(TOPIC_CONFIG),
-    };
-  }, []);
+  const { configDisplayNameByTopic, configNamespacesByTopic } = useMemo(
+    () => {
+      return {
+        configDisplayNameByTopic: buildItemDisplayNameByTopicOrExtension(TOPIC_CONFIG, enableShortDisplayNames),
+        configNamespacesByTopic: buildAvailableNamespacesByTopic(TOPIC_CONFIG),
+      };
+    },
+    [enableShortDisplayNames]
+  );
 
   const namespacesByTopic = useMemo(
     () => {
@@ -623,7 +796,16 @@ const DEFAULT_SCENE_BUILDER_DATA = {
   sceneNamespacesByTopic: {},
 };
 
-export default function TopicGroupsWrapper({ pinTopics, sceneBuilder, ...rest }: TopicGroupsProps) {
+// Use the Wrapper to extract SceneBuilder related data.
+export default function TopicGroupsWrapper({
+  pinTopics,
+  sceneBuilder,
+  setShowTopicGroups,
+  showTopicGroups,
+  ...rest
+}: TopicGroupsProps) {
+  const renderTopicGroups = pinTopics || showTopicGroups;
+
   // Set the settingsTopic at top level so that we can collect the msg needed for topic settings from SceneBuilder and pass it down.
   const [settingsTopicName, setSettingsTopicName] = useState<?string>(undefined);
 
@@ -633,7 +815,7 @@ export default function TopicGroupsWrapper({ pinTopics, sceneBuilder, ...rest }:
   let sceneCollectorMsgForTopicSetting;
 
   // Recompute the scene data on each render.
-  if (pinTopics) {
+  if (renderTopicGroups) {
     sceneErrorsByTopic = getSceneErrorsByTopic(sceneBuilder.errors);
     sceneCollectorMsgForTopicSetting =
       (settingsTopicName &&
@@ -660,9 +842,11 @@ export default function TopicGroupsWrapper({ pinTopics, sceneBuilder, ...rest }:
     <MemoizedTopicGroups
       {...sceneDataRef.current}
       {...rest}
-      setSettingsTopicName={setSettingsTopicName}
       pinTopics={pinTopics}
       sceneCollectorMsgForTopicSetting={sceneCollectorMsgForTopicSetting}
+      setSettingsTopicName={setSettingsTopicName}
+      setShowTopicGroups={setShowTopicGroups}
+      showTopicGroups={showTopicGroups}
     />
   );
 }

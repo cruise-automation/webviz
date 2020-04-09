@@ -24,34 +24,35 @@ describe("<Internals>", () => {
     const wrapper = mount(
       <PanelSetup
         fixture={{
-          frame: {},
           topics: [{ name: "/foo", datatype: "foo_msgs/Foo" }],
+          frame: {},
         }}>
         <Internals />
         <MessagePipelineConsumer>{contextFn}</MessagePipelineConsumer>
       </PanelSetup>
     );
-
     expect(wrapper.find("[data-test='internals-subscriptions']").text()).not.toContain("/foo");
     expect(contextFn.mock.calls).toEqual([[expect.objectContaining({ subscriptions: [] })]]);
-    contextFn.mockClear();
+    wrapper.unmount();
 
-    wrapper.setProps({
-      children: (
-        <>
-          <Internals />
-          <MessagePipelineConsumer>{contextFn}</MessagePipelineConsumer>
-          <MessageHistoryDEPRECATED paths={["/foo"]}>{() => null}</MessageHistoryDEPRECATED>
-        </>
-      ),
-    });
-
-    expect(contextFn.mock.calls).toEqual([
+    const anotherContextFn = jest.fn().mockReturnValue(null);
+    const wrapperWithDeprecatedMessageHistory = mount(
+      <PanelSetup
+        fixture={{
+          topics: [{ name: "/foo", datatype: "foo_msgs/Foo" }],
+          frame: {},
+        }}>
+        <Internals />
+        <MessagePipelineConsumer>{anotherContextFn}</MessagePipelineConsumer>
+        <MessageHistoryDEPRECATED paths={["/foo"]}>{() => null}</MessageHistoryDEPRECATED>
+      </PanelSetup>
+    );
+    expect(anotherContextFn.mock.calls).toEqual([
       [expect.objectContaining({ subscriptions: [] })],
       [expect.objectContaining({ subscriptions: [expect.objectContaining({ topic: "/foo" })] })],
     ]);
-    expect(wrapper.find("[data-test='internals-subscriptions']").text()).toContain("/foo");
-    wrapper.unmount();
+    expect(wrapperWithDeprecatedMessageHistory.find("[data-test='internals-subscriptions']").text()).toContain("/foo");
+    wrapperWithDeprecatedMessageHistory.unmount();
   });
 
   it("records data and exports JSON fixture", async () => {

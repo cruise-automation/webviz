@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import Rpc, { type Channel, createLinkedChannels } from "./Rpc";
+import Rpc, { type ChannelImpl, createLinkedChannels } from "./Rpc";
 
 const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
@@ -91,8 +91,8 @@ describe("Rpc", () => {
 
   it("can send and receive transferrables", async () => {
     const expectedTransfer = new ArrayBuffer(1);
-    const mainChannel: Channel = {
-      onmessage: undefined,
+    const mainChannel: ChannelImpl = {
+      onmessage: null,
       postMessage(data: any, transfer?: ArrayBuffer[]) {
         const ev = new MessageEvent("message", { data });
         // eslint-disable-next-line no-use-before-define
@@ -103,8 +103,8 @@ describe("Rpc", () => {
       terminate: () => {},
     };
 
-    const workerChannel: Channel = {
-      onmessage: undefined,
+    const workerChannel: ChannelImpl = {
+      onmessage: null,
       postMessage(data: any, transfer?: ArrayBuffer[]) {
         const ev = new MessageEvent("message", { data });
         expect(transfer).toHaveLength(1);

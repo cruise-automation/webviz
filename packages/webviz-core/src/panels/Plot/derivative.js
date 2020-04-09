@@ -11,8 +11,7 @@ import type { PlotChartPoint } from "webviz-core/src/panels/Plot/PlotChart";
 
 export default function derivative(
   data: PlotChartPoint[],
-  tooltips: TimeBasedChartTooltipData[],
-  includeTooltipInData: boolean
+  tooltips: TimeBasedChartTooltipData[]
 ): { points: PlotChartPoint[], tooltips: TimeBasedChartTooltipData[] } {
   const points = [];
   const newTooltips = [];
@@ -27,15 +26,11 @@ export default function derivative(
       item: previousTooltip.item,
       path: `${previousTooltip.path}.@derivative`,
       datasetKey: previousTooltip.datasetKey,
-      datasetIndex: i - 1,
       value,
       constantName: undefined,
       startTime: previousTooltip.startTime,
     };
     newTooltips.push(tooltip);
-    if (includeTooltipInData) {
-      point.tooltip = tooltip;
-    }
     points.push(point);
   }
   return { points, tooltips: newTooltips };

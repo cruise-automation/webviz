@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import { createMemoryHistory } from "history";
 import React from "react";
-import { DragDropContextProvider } from "react-dnd";
+import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import { Provider } from "react-redux";
 import { withScreenshot } from "storybook-chrome-screenshot";
@@ -23,11 +23,11 @@ storiesOf("<AppMenu>", module)
   .add("standard", () => {
     return (
       <div style={{ margin: 30, paddingLeft: 300 }}>
-        <Provider store={configureStore(createRootReducer(createMemoryHistory()))}>
-          <DragDropContextProvider backend={HTML5Backend}>
+        <DndProvider backend={HTML5Backend}>
+          <Provider store={configureStore(createRootReducer(createMemoryHistory()))}>
             <AppMenu defaultIsOpen />
-          </DragDropContextProvider>
-        </Provider>
+          </Provider>
+        </DndProvider>
       </div>
     );
   });

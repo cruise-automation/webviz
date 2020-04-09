@@ -80,14 +80,16 @@ export function useMustNotChange<T>(value: T, message: string): T {
 }
 
 // Log a warning if the given value changes twice in a row.
-export function useShouldNotChangeOften<T>(value: T, message: string): T {
+export function useShouldNotChangeOften<T>(value: T, warn: () => void): T {
   const prev = useRef(value);
   const prevPrev = useRef(value);
-  if (value !== prev.current && prev.current !== prevPrev.current) {
-    console.warn(message);
+  const lastTime = useRef<number>(Date.now());
+  if (value !== prev.current && prev.current !== prevPrev.current && Date.now() - lastTime.current < 200) {
+    warn();
   }
   prevPrev.current = prev.current;
   prev.current = value;
+  lastTime.current = Date.now();
   return value;
 }
 
@@ -170,12 +172,13 @@ export function useContextSelector<T, U>(context: SelectableContext<T>, selector
     throw new Error(`useContextSelector was used outside a corresponding <Provider />.`);
   }
 
-  useShouldNotChangeOften(
-    selector,
-    "useContextSelector() selector is changing frequently. " +
-      "Changing the selector will not cause the current context to be re-processed, " +
-      "so you may have a bug if the selector depends on external state. " +
-      "Wrap your selector in a useCallback() to silence this warning."
+  useShouldNotChangeOften(selector, () =>
+    console.warn(
+      "useContextSelector() selector is changing frequently. " +
+        "Changing the selector will not cause the current context to be re-processed, " +
+        "so you may have a bug if the selector depends on external state. " +
+        "Wrap your selector in a useCallback() to silence this warning."
+    )
   );
 
   const [selectedValue, setSelectedValue] = useState(() => {

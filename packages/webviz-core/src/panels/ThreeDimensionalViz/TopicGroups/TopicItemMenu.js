@@ -51,7 +51,10 @@ export default function TopicItemMenu({
         {datatype && canEditDatatype(datatype) && (
           <Item
             dataTest={`edit-topic-settings-menu-${displayName}`}
-            onClick={() => onOpenEditTopicSettingsModal(objectPath)}>
+            onClick={() => {
+              onOpenEditTopicSettingsModal(objectPath);
+              setIsOpen(false);
+            }}>
             Edit settings
           </Item>
         )}

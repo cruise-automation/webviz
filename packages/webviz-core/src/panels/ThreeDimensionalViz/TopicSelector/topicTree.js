@@ -10,6 +10,7 @@ import * as React from "react";
 export type TopicConfig = {|
   // topicConfig fields
   name?: string,
+  displayName?: string,
   topic?: string,
   extension?: string,
   children?: TopicConfig[],

@@ -327,6 +327,7 @@ function NodePlayground(props: Props) {
                 {!selectedNodeId && <WelcomeScreen addNewNode={addNewNode} updateExplorer={updateExplorer} />}
                 <div
                   key={`${height}x${width}`}
+                  data-nativeundoredo="true"
                   style={{
                     height: "100%",
                     width: "100%",

@@ -5,24 +5,16 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
 import type { ActionTypes } from "webviz-core/src/actions";
 
-type MosaicState = {
-  mosaicId: string,
-};
-
-const initialState: MosaicState = {
-  mosaicId: "",
-};
+type MosaicState = { mosaicId: string };
+const initialState: MosaicState = { mosaicId: "" };
 
 export default function mosaicReducer(state: MosaicState = initialState, action: ActionTypes) {
-  if (action.type === "SET_MOSAIC_ID") {
-    const mosaicId = action.payload;
-    return {
-      ...state,
-      mosaicId,
-    };
+  switch (action.type) {
+    case "SET_MOSAIC_ID":
+      return { ...state, mosaicId: action.payload };
+    default:
+      return state;
   }
-  return state;
 }

@@ -30,7 +30,7 @@ import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time
 export const MEM_CACHE_BLOCK_SIZE_NS = 0.1e9; // Messages are laid out in blocks with a fixed number of milliseconds.
 const READ_AHEAD_NS = 3e9; // Number of nanoseconds to read ahead from the last `getMessages` call.
 const READ_AHEAD_BLOCKS = Math.ceil(READ_AHEAD_NS / MEM_CACHE_BLOCK_SIZE_NS);
-const CACHE_SIZE_BYTES = 2.5e9; // Number of bytes that we aim to keep in the cache.
+const DEFAULT_CACHE_SIZE_BYTES = 2.5e9; // Number of bytes that we aim to keep in the cache.
 export const MAX_BLOCK_SIZE_BYTES = 50e6; // Number of bytes in a block before we show an error.
 
 // For each memory block we store the actual messages (grouped by topic), and a total byte size of
@@ -49,6 +49,7 @@ export function getBlocksToKeep({
   recentBlockRanges,
   blockSizesInBytes,
   maxCacheSizeInBytes,
+  badEvictionLocation,
 }: {|
   // The most recently requested block ranges, ordered from most recent to least recent.
   recentBlockRanges: Range[],
@@ -58,6 +59,8 @@ export function getBlocksToKeep({
   blockSizesInBytes: (?number)[],
   // The maximum cache size in bytes.
   maxCacheSizeInBytes: number,
+  // A block index to avoid evicting blocks from near.
+  badEvictionLocation: ?number,
 |}): { blockIndexesToKeep: Set<number>, newRecentRanges: Range[] } {
   let cacheSizeInBytes = 0;
   const blockIndexesToKeep = new Set<number>();
@@ -65,8 +68,10 @@ export function getBlocksToKeep({
   for (let blockRangeIndex = 0; blockRangeIndex < recentBlockRanges.length; blockRangeIndex++) {
     const blockRange = recentBlockRanges[blockRangeIndex];
 
-    // Work backwards from the end of the range, since those blocks are most relevant to keep.
-    for (let blockIndex = blockRange.end - 1; blockIndex >= blockRange.start; blockIndex--) {
+    // Work through blocks from highest priority to lowest. Break and discard low-priority blocks if
+    // we exceed our memory budget.
+    const { startIndex, endIndex, increment } = getBlocksToKeepDirection(blockRange, badEvictionLocation);
+    for (let blockIndex = startIndex; blockIndex !== endIndex; blockIndex += increment) {
       // If we don't have size, there are no blocks to keep!
       const sizeInBytes = blockSizesInBytes[blockIndex];
       if (sizeInBytes === undefined) {
@@ -84,12 +89,33 @@ export function getBlocksToKeep({
         return {
           blockIndexesToKeep,
           // Adjust the oldest `newRecentRanges`.
-          newRecentRanges: [...recentBlockRanges.slice(0, blockRangeIndex), { start: blockIndex, end: blockRange.end }],
+          newRecentRanges: [
+            ...recentBlockRanges.slice(0, blockRangeIndex),
+            increment > 0 ? { start: 0, end: blockIndex + 1 } : { start: blockIndex, end: blockRange.end },
+          ],
         };
       }
     }
   }
   return { blockIndexesToKeep, newRecentRanges: recentBlockRanges };
+}
+
+// Helper to identify which end of a block range is most appropriate to evict when there is an open
+// read request.
+function getBlocksToKeepDirection(
+  blockRange: Range,
+  badEvictionLocation: ?number
+): { startIndex: number, endIndex: number, increment: number } {
+  if (
+    badEvictionLocation != null &&
+    Math.abs(badEvictionLocation - blockRange.start) < Math.abs(badEvictionLocation - blockRange.end)
+  ) {
+    // Read request is closer to the start of the block than the end. Keep blocks from the start
+    // with highest priority.
+    return { startIndex: blockRange.start, endIndex: blockRange.end, increment: 1 };
+  }
+  // In most cases, keep blocks from the end with highest priority.
+  return { startIndex: blockRange.end - 1, endIndex: blockRange.start - 1, increment: -1 };
 }
 
 // Get the best place to start prefetching a block, given the uncached ranges and the cursor position.
@@ -158,7 +184,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
 
   // If we're configured to use an unlimited cache, we try to just load as much as possible and
   // never evict anything.
-  _unlimitedCache: boolean = false;
+  _cacheSizeBytes: number;
 
   constructor(
     { id, unlimitedCache }: {| id: string, unlimitedCache?: boolean |},
@@ -166,7 +192,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     getDataProvider: GetDataProvider
   ) {
     this._id = id;
-    this._unlimitedCache = unlimitedCache || false;
+    this._cacheSizeBytes = unlimitedCache ? Infinity : DEFAULT_CACHE_SIZE_BYTES;
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to MemoryCacheDataProvider: ${children.length}`);
     }
@@ -298,7 +324,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
       return connectionForReadRange;
     }
     const cacheBytesUsed = sum(filterMap(this._blocks, (block) => block && block.sizeInBytes));
-    if (!this._currentConnection && cacheBytesUsed < CACHE_SIZE_BYTES) {
+    if (!this._currentConnection && cacheBytesUsed < this._cacheSizeBytes) {
       // All read requests have been served, but we have free cache space available. Cache something
       // useful if possible.
       return this._getPrefetchRange();
@@ -482,15 +508,23 @@ export default class MemoryCacheDataProvider implements DataProvider {
   }
 
   _purgeOldBlocks() {
-    if (this._unlimitedCache) {
+    if (this._cacheSizeBytes === Infinity) {
       return;
     }
+
+    // If we have open read requests, we really don't want to evict blocks in or near the first one.
+    // If we don't have open read requests, try not to evict blocks near the last one we fetched
+    // (if any), because our next request will likely be nearby.
+    const badEvictionLocation = this._readRequests[0]
+      ? this._readRequests[0].blockRange.start
+      : this._lastResolvedCallbackEnd;
 
     // Call the getBlocksToKeep helper.
     const { blockIndexesToKeep, newRecentRanges } = getBlocksToKeep({
       recentBlockRanges: this._recentBlockRanges,
       blockSizesInBytes: this._blocks.map((block) => (block ? block.sizeInBytes : undefined)),
-      maxCacheSizeInBytes: CACHE_SIZE_BYTES,
+      maxCacheSizeInBytes: this._cacheSizeBytes,
+      badEvictionLocation,
     });
 
     // Update our state.
@@ -510,5 +544,9 @@ export default class MemoryCacheDataProvider implements DataProvider {
         end: range.end / this._blocks.length,
       })),
     });
+  }
+
+  setCacheSizeBytesInTests(cacheSizeBytes: number) {
+    this._cacheSizeBytes = cacheSizeBytes;
   }
 }

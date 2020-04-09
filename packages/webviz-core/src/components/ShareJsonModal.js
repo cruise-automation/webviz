@@ -113,6 +113,7 @@ export default class ShareJsonModal extends Component<Props, State> {
             className={cx("textarea", styles.textarea)}
             value={value}
             onChange={(e) => this.setState({ value: e.target.value })}
+            data-nativeundoredo="true"
           />
           {this.renderError()}
           <div className={styles.buttonBar}>

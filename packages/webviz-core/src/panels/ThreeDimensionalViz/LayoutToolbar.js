@@ -49,6 +49,7 @@ type Props = {|
 
 function LayoutToolbar({
   cameraState,
+  targetPose,
   debug,
   drawingTabType,
   followOrientation,
@@ -159,6 +160,7 @@ function LayoutToolbar({
         />
         <CameraInfo
           cameraState={cameraState}
+          targetPose={targetPose}
           followOrientation={followOrientation}
           followTf={followTf}
           isPlaying={isPlaying}

@@ -15,7 +15,7 @@ By default we try connect to a [rosbridge_server](http://wiki.ros.org/rosbridge_
 
 If no WebSocket is found, you can instead drag and drop a bag into the page. You can drag a second bag while holding the `SHIFT` key. The topics of the second bag will be prefixed with `/webviz_bag_2`.
 
-To stream in a bag, use the `?remote-bag-url=…` parameter, [like this](?remote-bag-url=https%3A%2F%2Fopen-source-webviz-ui.s3.amazonaws.com%2Fdemo.bag). To navigate to a particular point in the bag on load, add in `&seek-to=12345` (in milliseconds since the [Unix epoch](https://en.wikipedia.org/wiki/Unix_time)).
+To stream in a bag, use the `?remote-bag-url=…` parameter, [like this](?remote-bag-url=https%3A%2F%2Fopen-source-webviz-ui.s3.amazonaws.com%2Fdemo.bag). To stream in a second bag (similar to the SHIFT-drag from above), use `?remote-bag-url-2=…`. To navigate to a particular point in the bag on load, add in `&seek-to=12345` (in milliseconds since the [Unix epoch](https://en.wikipedia.org/wiki/Unix_time)).
 
 You can also load a layout from a URL. This can be useful when you have a system that links to Webviz pages, and you know what kind of layout is useful for each link. You can even have a server that dynamically generates a layout based on the URL. Use the `?layout-url=` parameter, for example [like this](?layout-url=https%3A%2F%2Fopen-source-webviz-ui.s3.amazonaws.com%2FdemoLayout.json).
 

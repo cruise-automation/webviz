@@ -21,9 +21,13 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 import { UncontrolledValidatedInput, YamlInput } from "webviz-core/src/components/ValidatedInput";
 import { point2DValidator, cameraStateValidator } from "webviz-core/src/components/validators";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import { Renderer } from "webviz-core/src/panels/ThreeDimensionalViz/index";
+import { Renderer, type ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
 import { SValue, SLabel } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
+import {
+  getNewCameraStateOnFollowChange,
+  type TargetPose,
+} from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import clipboard from "webviz-core/src/util/clipboard";
 
@@ -57,6 +61,7 @@ export type CameraInfoPropsWithoutCameraState = {
 
 type CameraInfoProps = {
   cameraState: $Shape<CameraState>,
+  targetPose: ?TargetPose,
 } & CameraInfoPropsWithoutCameraState;
 
 function CameraStateInfo({ cameraState, onAlignXYAxis }: CameraStateInfoProps) {
@@ -93,6 +98,7 @@ function CameraStateInfo({ cameraState, onAlignXYAxis }: CameraStateInfoProps) {
 
 export default function CameraInfo({
   cameraState,
+  targetPose,
   followOrientation,
   followTf,
   isPlaying,
@@ -110,6 +116,22 @@ export default function CameraInfo({
   const targetHeading = cameraStateSelectors.targetHeading(cameraState);
   const camPos2D = vec3.add(TEMP_VEC3, target, vec3.rotateZ(TEMP_VEC3, targetOffset, ZERO_VEC3, -targetHeading));
   const camPos2DTrimmed = camPos2D.map((num) => +num.toFixed(2));
+
+  const syncCameraState = () => {
+    updatePanelConfig(Renderer.panelType, (config: ThreeDimensionalVizConfig) => {
+      // Transform the camera state by whichever TF or orientation the other panels are following.
+      const newCameraState = getNewCameraStateOnFollowChange({
+        prevCameraState: cameraState,
+        prevTargetPose: targetPose,
+        prevFollowTf: followTf,
+        prevFollowOrientation: followOrientation,
+        newFollowTf: config.followTf,
+        newFollowOrientation: config.followOrientation,
+      });
+      return { ...config, cameraState: newCameraState };
+    });
+  };
+
   return (
     <ExpandingToolbar
       tooltip="Camera"
@@ -138,9 +160,7 @@ export default function CameraInfo({
               onClick={() => setEdit(!edit)}>
               {edit ? "Done" : "Edit"}
             </Button>
-            <Button
-              tooltip="Sync camera state across all 3D panels"
-              onClick={() => updatePanelConfig(Renderer.panelType, (config) => ({ ...config, cameraState }))}>
+            <Button tooltip="Sync camera state across all 3D panels" onClick={syncCameraState}>
               Sync
             </Button>
           </Flex>

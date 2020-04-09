@@ -5,7 +5,8 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { Icon, Checkbox } from "antd";
+import SearchIcon from "@mdi/svg/svg/magnify.svg";
+import { Checkbox } from "antd";
 import Downshift from "downshift";
 import fuzzySort from "fuzzysort";
 import { uniq, partition } from "lodash";
@@ -20,6 +21,7 @@ import { getIsTopicName, SOption, SInput, SInputWrapper } from "./QuickAddTopic"
 import { removeBlankSpaces } from "./topicGroupsUtils";
 import TopicNameDisplay from "./TopicNameDisplay";
 import Button from "webviz-core/src/components/Button";
+import Icon from "webviz-core/src/components/Icon";
 import { useChangeDetector } from "webviz-core/src/util/hooks";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
@@ -135,7 +137,8 @@ export default function AddFromAllTopics({
   onSave,
 }: Props) {
   const [filterText, setFilterText] = useState<string>(defaultFilterText || "");
-  const [debouncedFilterText] = useDebounce(filterText, DEFAULT_DEBOUNCE_TIME);
+  const filterTextWithoutSpaces = useMemo(() => removeBlankSpaces(filterText), [filterText]);
+  const [debouncedFilterText] = useDebounce(filterTextWithoutSpaces, DEFAULT_DEBOUNCE_TIME);
   const onlySearchOnTopicNames = !!(debouncedFilterText && debouncedFilterText.startsWith("/"));
 
   const [checkedTopicNamesSet, setCheckedTopicNamesSet] = useState<Set<string>>(
@@ -232,7 +235,6 @@ export default function AddFromAllTopics({
           : allItems;
 
         const isTopicName = getIsTopicName(debouncedFilterText);
-        const maybeTopicName = isTopicName ? removeBlankSpaces(debouncedFilterText) : debouncedFilterText;
 
         const showCreateOption =
           isTopicName &&
@@ -244,12 +246,14 @@ export default function AddFromAllTopics({
           existingGroupTopicsSet.has(item.topicName)
         );
         itemsToRender = [...otherItems, ...topicGroupCheckedItems];
-        itemsToRender = showCreateOption ? [{ topicName: maybeTopicName }, ...itemsToRender] : itemsToRender;
+        itemsToRender = showCreateOption ? [{ topicName: debouncedFilterText }, ...itemsToRender] : itemsToRender;
 
         return (
           <SAddContainer>
             <SInputWrapper style={{ paddingLeft: 16 }} {...getRootProps({}, { suppressRefError: true })}>
-              <Icon type="search" style={{ paddingRight: 2 }} />
+              <Icon small fade>
+                <SearchIcon />
+              </Icon>
               <SInput
                 ref={inputRef}
                 data-test="all-topics-input"
@@ -265,9 +269,9 @@ export default function AddFromAllTopics({
                     } else if (event.key === "Enter" && showCreateOption && highlightedIndex == null) {
                       // Create a new item when pressed enter without selecting any items.
                       event.preventDownshiftDefault = true;
-                      setCheckedTopicNamesSet(new Set([...checkedTopicNamesSet, maybeTopicName]));
-                      checkedTopicNamesSet.add(maybeTopicName);
-                      setNewlyAddedTopicNamesSet(new Set([...newlyAddedTopicNamesSet, maybeTopicName]));
+                      setCheckedTopicNamesSet(new Set([...checkedTopicNamesSet, debouncedFilterText]));
+                      checkedTopicNamesSet.add(debouncedFilterText);
+                      setNewlyAddedTopicNamesSet(new Set([...newlyAddedTopicNamesSet, debouncedFilterText]));
                     }
                   },
                 })}
@@ -292,7 +296,7 @@ export default function AddFromAllTopics({
                           highlightedIndex,
                           items: itemsToRender,
                           onCheckChange,
-                          searchText: isTopicName ? maybeTopicName : debouncedFilterText,
+                          searchText: debouncedFilterText,
                           showCreateOption,
                         }}>
                         {ItemRenderer}

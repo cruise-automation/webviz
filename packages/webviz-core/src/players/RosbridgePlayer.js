@@ -6,28 +6,25 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEqual, sortBy, uniq } from "lodash";
+import { isEqual, sortBy } from "lodash";
 import * as React from "react";
-import type { Time } from "rosbag";
+import { MessageReader, type Time } from "rosbag";
 import uuid from "uuid";
 
 import renderToBody from "webviz-core/src/components/renderToBody";
 import WssErrorModal from "webviz-core/src/components/WssErrorModal";
 import {
-  type RoslibTypedef,
-  messageDetailsToRosDatatypes,
-  sanitizeMessage,
-} from "webviz-core/src/players/RosbridgePlayer/utils";
-import type {
-  AdvertisePayload,
-  Message,
-  Player,
-  PlayerState,
-  PublishPayload,
-  SubscribePayload,
-  Topic,
+  type AdvertisePayload,
+  type Message,
+  type Player,
+  PlayerCapabilities,
+  type PlayerState,
+  type PublishPayload,
+  type SubscribePayload,
+  type Topic,
 } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { bagConnectionsToDatatypes } from "webviz-core/src/util/bagConnectionsHelper";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import reportError from "webviz-core/src/util/reportError";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
@@ -36,6 +33,8 @@ import { fromMillis } from "webviz-core/src/util/time";
 import "roslib/build/roslib";
 
 const ROSLIB = window.ROSLIB;
+
+const capabilities = [PlayerCapabilities.advertise];
 
 // Connects to `rosbridge_server` instance using `roslibjs`. Currently doesn't support seeking or
 // showing simulated time, so current time from Date.now() is always used instead. Also doesn't yet
@@ -48,13 +47,14 @@ export default class RosbridgePlayer implements Player {
   _listener: (PlayerState) => Promise<void>; // Listener for _emitState().
   _closed: boolean = false; // Whether the player has been completely closed using close().
   _providerTopics: ?(Topic[]); // Topics as published by the WebSocket.
-  _validProviderTopics: ?(Topic[]); // Same topics as above, but only the ones that have valid datatypes.
   _providerDatatypes: ?RosDatatypes; // Datatypes as published by the WebSocket.
+  _messageReadersByDatatype: { [datatype: string]: MessageReader };
   _start: ?Time; // The time at which we started playing.
   _topicSubscriptions: { [topicName: string]: ROSLIB.Topic } = {}; // Active subscriptions.
   _requestedSubscriptions: SubscribePayload[] = []; // Requested subscriptions by setSubscriptions()
   _messages: Message[] = []; // Queue of messages that we'll send in next _emitState() call.
   _requestTopicsTimeout: ?TimeoutID; // setTimeout() handle for _requestTopics().
+  _topicPublishers: { [topicName: string]: ROSLIB.Topic } = {};
 
   constructor(url: string) {
     this._url = url;
@@ -119,11 +119,25 @@ export default class RosbridgePlayer implements Player {
     }
 
     try {
-      // First get the topics and put them in our format.
-      const topicsResult = await new Promise((resolve, reject) => rosClient.getTopics(resolve, reject));
-      const topics: Topic[] = [];
-      for (let i = 0; i < topicsResult.topics.length; i++) {
-        topics.push({ name: topicsResult.topics[i], datatype: topicsResult.types[i] });
+      const result = await new Promise((resolve, reject) => rosClient.getTopicsAndRawTypes(resolve, reject));
+
+      const topicsMissingDatatypes: string[] = [];
+      const topics = [];
+      const datatypeDescriptions = [];
+      const messageReaders = {};
+
+      for (let i = 0; i < result.topics.length; i++) {
+        const topicName = result.topics[i];
+        const type = result.types[i];
+        const messageDefinition = result.typedefs_full_text[i];
+
+        if (!type || !messageDefinition) {
+          topicsMissingDatatypes.push(topicName);
+          continue;
+        }
+        topics.push({ name: topicName, datatype: type });
+        datatypeDescriptions.push({ type, messageDefinition });
+        messageReaders[type] = messageReaders[type] || new MessageReader(messageDefinition);
       }
 
       // Sort them for easy comparison. If nothing has changed here, bail out.
@@ -132,33 +146,19 @@ export default class RosbridgePlayer implements Player {
         return;
       }
 
-      // Fetch all the datatypes in parallel.
-      const uniqueTypes = uniq(topicsResult.types);
-      const messageDetailsResults = await Promise.all(
-        uniqueTypes.map((type) => new Promise((resolve, reject) => rosClient.getMessageDetails(type, resolve, resolve)))
-      );
-
-      // Separate datatypes into actual type definitions, and errors.
-      const typedefs: RoslibTypedef[] = [];
-      const errors: string[] = [];
-      for (let i = 0; i < messageDetailsResults.length; i++) {
-        const result = messageDetailsResults[i];
-        if (typeof result === "string") {
-          errors.push(`Error for message type '${uniqueTypes[i]}':\n${result}`);
-        } else {
-          for (const typedef of result) {
-            typedefs.push(typedef);
-          }
-        }
+      if (topicsMissingDatatypes.length > 0) {
+        reportError(
+          "Could not resolve all message types",
+          `This can happen e.g. when playing a bag from a different codebase. Message types could not be found for these topics:\n${topicsMissingDatatypes.join(
+            "\n"
+          )}`,
+          "user"
+        );
       }
-      if (errors.length > 0) {
-        reportError("Could not resolve all message types", errors.join("\n\n"), "user");
-      }
-      const datatypes = messageDetailsToRosDatatypes(typedefs);
 
       this._providerTopics = sortedTopics;
-      this._validProviderTopics = sortedTopics.filter(({ datatype }) => datatypes[datatype]);
-      this._providerDatatypes = datatypes;
+      this._providerDatatypes = bagConnectionsToDatatypes(datatypeDescriptions);
+      this._messageReadersByDatatype = messageReaders;
       // Try subscribing again, since we might now be able to subscribe to some new topics.
       this.setSubscriptions(this._requestedSubscriptions);
       this._emitState();
@@ -175,14 +175,14 @@ export default class RosbridgePlayer implements Player {
       return Promise.resolve();
     }
 
-    const { _validProviderTopics, _providerDatatypes, _start } = this;
-    if (!_validProviderTopics || !_providerDatatypes || !_start) {
+    const { _providerTopics, _providerDatatypes, _start } = this;
+    if (!_providerTopics || !_providerDatatypes || !_start) {
       return this._listener({
         isPresent: true,
         showSpinner: true,
         showInitializing: !!this._rosClient,
         progress: {},
-        capabilities: [],
+        capabilities,
         playerId: this._id,
         activeData: undefined,
       });
@@ -199,7 +199,7 @@ export default class RosbridgePlayer implements Player {
       showSpinner: !this._rosClient,
       showInitializing: false,
       progress: {},
-      capabilities: [],
+      capabilities,
       playerId: this._id,
 
       activeData: {
@@ -212,7 +212,7 @@ export default class RosbridgePlayer implements Player {
         // We don't support seeking, so we need to set this to any fixed value. Just avoid 0 so
         // that we don't accidentally hit falsy checks.
         lastSeekTime: 1,
-        topics: _validProviderTopics,
+        topics: _providerTopics,
         datatypes: _providerDatatypes,
       },
     });
@@ -238,7 +238,7 @@ export default class RosbridgePlayer implements Player {
     }
 
     // See what topics we actually can subscribe to.
-    const availableTopicsByTopicName = topicsByTopicName(this._validProviderTopics);
+    const availableTopicsByTopicName = topicsByTopicName(this._providerTopics);
     const topicNames = subscriptions
       .map(({ topic }) => topic)
       .filter((topicName) => availableTopicsByTopicName[topicName]);
@@ -249,19 +249,20 @@ export default class RosbridgePlayer implements Player {
         this._topicSubscriptions[topicName] = new ROSLIB.Topic({
           ros: this._rosClient,
           name: topicName,
-          compression: "cbor",
+          compression: "cbor-raw",
         });
+        const { datatype } = availableTopicsByTopicName[topicName];
+        const messageReader = this._messageReadersByDatatype[datatype];
         this._topicSubscriptions[topicName].subscribe((message) => {
-          if (!this._validProviderTopics) {
+          if (!this._providerTopics) {
             return;
           }
-          sanitizeMessage(message);
           this._messages.push({
             op: "message",
             topic: topicName,
-            datatype: availableTopicsByTopicName[topicName].datatype,
+            datatype,
             receiveTime: fromMillis(Date.now()),
-            message,
+            message: messageReader.readMessage(Buffer.from(message.bytes)),
           });
           this._emitState();
         });
@@ -277,11 +278,39 @@ export default class RosbridgePlayer implements Player {
     }
   }
 
+  setPublishers(publishers: AdvertisePayload[]) {
+    // Since `setPublishers` is rarely called, we can get away with just throwing away the old
+    // ROSLIB.Topic objects and creating new ones.
+    for (const topic of Object.keys(this._topicPublishers)) {
+      this._topicPublishers[topic].unadvertise();
+    }
+    this._topicPublishers = {};
+    for (const { topic, datatype } of publishers) {
+      this._topicPublishers[topic] = new ROSLIB.Topic({
+        ros: this._rosClient,
+        name: topic,
+        messageType: datatype,
+        queue_size: 0,
+      });
+    }
+  }
+
+  publish({ topic, msg }: PublishPayload) {
+    if (!this._topicPublishers[topic]) {
+      reportError(
+        "Invalid publish call",
+        `Tried to publish on a topic that is not registered as a publisher: ${topic}`,
+        "app"
+      );
+      return;
+    }
+    this._topicPublishers[topic].publish(msg);
+  }
+
   // Bunch of unsupported stuff. Just don't do anything for these.
-  setPublishers(publishers: AdvertisePayload[]) {}
-  publish(request: PublishPayload) {}
   startPlayback() {}
   pausePlayback() {}
   seekPlayback(time: Time) {}
   setPlaybackSpeed(speedFraction: number) {}
+  requestBackfill() {}
 }

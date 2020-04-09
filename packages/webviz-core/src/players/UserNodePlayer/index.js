@@ -5,15 +5,19 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import { isEqual } from "lodash";
 import microMemoize from "micro-memoize";
 import { TimeUtil, type Time } from "rosbag";
+import uuid from "uuid";
 
+// Filename of nodeTransformerWorker is recognized by the server, and given a special header to
+// ensure user-supplied code cannot make network requests.
+// $FlowFixMe - flow does not like workers.
+import NodeDataWorker from "sharedworker-loader?name=nodeTransformerWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
 import signal from "webviz-core/shared/signal";
 import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeTrust } from "webviz-core/src/actions/userNodes";
 // $FlowFixMe - flow does not like workers.
-import UserNodePlayerWorker from "worker-loader!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
-// $FlowFixMe - flow does not like workers.
-import NodeDataWorker from "worker-loader!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
+import UserNodePlayerWorker from "sharedworker-loader?name=nodeRuntimeWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
 
 import type {
   AdvertisePayload,
@@ -27,24 +31,31 @@ import type {
 } from "webviz-core/src/players/types";
 import { isUserNodeTrusted } from "webviz-core/src/players/UserNodePlayer/nodeSecurity";
 import {
+  type Diagnostic,
   DiagnosticSeverity,
+  ErrorCodes,
   type NodeData,
   type NodeRegistration,
-  type Diagnostic,
   type ProcessMessageOutput,
   type RegistrationOutput,
   Sources,
-  ErrorCodes,
+  type UserNodeLog,
 } from "webviz-core/src/players/UserNodePlayer/types";
-import type { UserNodeLog } from "webviz-core/src/players/UserNodePlayer/types";
 import type { UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
 
 type UserNodeActions = {
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
   addUserNodeLogs: AddUserNodeLogs,
   setUserNodeTrust: SetUserNodeTrust,
+};
+
+const rpcFromNewSharedWorker = (worker) => {
+  const port: MessagePort = worker.port;
+  port.start();
+  return new Rpc(port);
 };
 
 // TODO: FUTURE - Performance tests
@@ -63,7 +74,7 @@ export default class UserNodePlayer implements Player {
   _setUserNodeDiagnostics: (nodeId: string, diagnostics: Diagnostic[]) => void;
   _addUserNodeLogs: (nodeId: string, logs: UserNodeLog[]) => void;
   _setNodeTrust: (nodeId: string, trusted: boolean) => void;
-  _nodeTransformWorker: Rpc = new Rpc(new NodeDataWorker());
+  _nodeTransformRpc: Rpc = rpcFromNewSharedWorker(new NodeDataWorker(uuid.v4()));
   _userDatatypes: RosDatatypes = {};
 
   constructor(player: Player, userNodeActions: UserNodeActions) {
@@ -85,9 +96,8 @@ export default class UserNodePlayer implements Player {
     };
   }
 
-  _getTopics = microMemoize((topics: Topic[], nodeRegistrations: NodeRegistration[]) => {
-    return [...topics, ...nodeRegistrations.map((nodeRegistration) => nodeRegistration.output)];
-  });
+  _getTopics = microMemoize((topics: Topic[], nodeTopics: Topic[]) => [...topics, ...nodeTopics], { isEqual });
+  _getDatatypes = microMemoize((datatypes, userDatatypes) => ({ ...userDatatypes, ...datatypes }), { isEqual });
 
   // When updating Webviz nodes while paused, we seek to the current time
   // (i.e. invoke _getMessages with an empty array) to refresh messages
@@ -108,8 +118,6 @@ export default class UserNodePlayer implements Player {
       return [...messages, ...nodeMessages].sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime));
     }
   );
-
-  _getDatatypes = microMemoize((datatypes, userDatatypes) => ({ ...userDatatypes, ...datatypes }));
 
   // Called when userNode state is updated.
   async setUserNodes(userNodes: UserNodes): Promise<void> {
@@ -140,7 +148,7 @@ export default class UserNodePlayer implements Player {
       processMessage: async (message: Message) => {
         // Register the node within a web worker to be executed.
         if (!rpc) {
-          rpc = this._unusedNodeRuntimeWorkers.pop() || new Rpc(new UserNodePlayerWorker());
+          rpc = this._unusedNodeRuntimeWorkers.pop() || rpcFromNewSharedWorker(new UserNodePlayerWorker(uuid.v4()));
           const { error, userNodeDiagnostics, userNodeLogs } = await rpc.send<RegistrationOutput>("registerNode", {
             nodeCode,
           });
@@ -232,7 +240,7 @@ export default class UserNodePlayer implements Player {
       }
 
       const { topics = [], datatypes: playerDatatypes = {} } = this._lastPlayerStateActiveData || {};
-      const nodeData = await this._nodeTransformWorker.send("transform", {
+      const nodeData = await this._nodeTransformRpc.send("transform", {
         name: node.name,
         sourceCode: node.sourceCode,
         playerInfo: { topics, playerDatatypes },
@@ -269,9 +277,9 @@ export default class UserNodePlayer implements Player {
         // they have inputs that now exist in the current player context.
         if (!this._lastPlayerStateActiveData) {
           this._lastPlayerStateActiveData = activeData;
-          await this._resetWorkers().then(() => {
-            this.setSubscriptions(this._subscriptions);
-          });
+          await this._resetWorkers();
+          this.setSubscriptions(this._subscriptions);
+          this.requestBackfill();
         }
 
         const newPlayerState = {
@@ -279,7 +287,7 @@ export default class UserNodePlayer implements Player {
           activeData: {
             ...activeData,
             messages: await this._getMessages(messages),
-            topics: this._getTopics(topics, this._nodeRegistrations),
+            topics: this._getTopics(topics, this._nodeRegistrations.map((nodeRegistration) => nodeRegistration.output)),
             datatypes: this._getDatatypes(datatypes, this._userDatatypes),
           },
         };
@@ -296,8 +304,22 @@ export default class UserNodePlayer implements Player {
   setSubscriptions(subscriptions: SubscribePayload[]) {
     this._subscriptions = subscriptions;
 
+    const mappedTopics: string[] = [];
     const realTopicSubscriptions: SubscribePayload[] = [];
     for (const subscription of subscriptions) {
+      // For performance, only check topics that start with DEFAULT_WEBVIZ_NODE_PREFIX.
+      if (!subscription.topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX)) {
+        realTopicSubscriptions.push(subscription);
+        continue;
+      }
+
+      // When subscribing to the same node multiple times, only subscribe to the underlying
+      // topics once. This is not strictly necessary, but it makes debugging a bit easier.
+      if (mappedTopics.includes(subscription.topic)) {
+        continue;
+      }
+      mappedTopics.push(subscription.topic);
+
       const nodeRegistration = this._nodeRegistrations.find((info) => info.output.name === subscription.topic);
       if (nodeRegistration) {
         for (const inputTopic of nodeRegistration.inputs) {
@@ -306,8 +328,6 @@ export default class UserNodePlayer implements Player {
             requester: { type: "node", name: nodeRegistration.output.name },
           });
         }
-      } else {
-        realTopicSubscriptions.push(subscription);
       }
     }
 
@@ -319,6 +339,7 @@ export default class UserNodePlayer implements Player {
       nodeRegistration.terminate();
     }
     this._player.close();
+    this._nodeTransformRpc.send("close");
   };
 
   setPublishers = (publishers: AdvertisePayload[]) => this._player.setPublishers(publishers);
@@ -327,4 +348,5 @@ export default class UserNodePlayer implements Player {
   pausePlayback = () => this._player.pausePlayback();
   setPlaybackSpeed = (speed: number) => this._player.setPlaybackSpeed(speed);
   seekPlayback = (time: Time) => this._player.seekPlayback(time);
+  requestBackfill = () => this._player.requestBackfill();
 }

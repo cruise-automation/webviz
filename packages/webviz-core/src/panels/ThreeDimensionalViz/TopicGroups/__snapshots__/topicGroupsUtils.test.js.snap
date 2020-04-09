@@ -198,6 +198,12 @@ Array [
       },
       Object {
         "derivedFields": Object {
+          "availableNamespacesByColumn": Array [
+            Array [
+              "some_topic_2_ns1",
+              "some_topic_2_ns2",
+            ],
+          ],
           "datatype": "visualization_msgs/MarkerArray",
           "displayName": "/some_topic_2",
           "displayVisibilityByColumn": Array [
@@ -211,27 +217,35 @@ Array [
           "id": "My-Topic-Group_0_4",
           "isShownInList": true,
           "keyboardFocusIndex": -1,
-          "namespaceDisplayVisibilityByNamespace": Object {
-            "some_topic_2_ns1": Array [
-              Object {
-                "available": true,
-                "badgeText": "B1",
-                "isParentVisible": false,
-                "visible": true,
-              },
-            ],
-            "some_topic_2_ns2": Array [
-              Object {
-                "available": true,
-                "badgeText": "B1",
-                "isParentVisible": false,
-                "visible": false,
-              },
-            ],
-          },
           "prefixByColumn": Array [
             "",
             "/webviz_bag_2",
+          ],
+          "sortedNamespaceDisplayVisibilityByColumn": Array [
+            Object {
+              "displayVisibilityByColumn": Array [
+                Object {
+                  "available": true,
+                  "badgeText": "B1",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+              ],
+              "keyboardFocusIndex": -1,
+              "namespace": "some_topic_2_ns1",
+            },
+            Object {
+              "displayVisibilityByColumn": Array [
+                Object {
+                  "available": true,
+                  "badgeText": "B1",
+                  "isParentVisible": false,
+                  "visible": false,
+                },
+              ],
+              "keyboardFocusIndex": -1,
+              "namespace": "some_topic_2_ns2",
+            },
           ],
         },
         "expanded": true,
@@ -313,6 +327,12 @@ Array [
       },
       Object {
         "derivedFields": Object {
+          "availableNamespacesByColumn": Array [
+            Array [
+              "some_topic_2_ns1",
+              "some_topic_2_ns2",
+            ],
+          ],
           "datatype": "visualization_msgs/MarkerArray",
           "displayName": "/some_topic_2",
           "displayVisibilityByColumn": Array [
@@ -326,27 +346,35 @@ Array [
           "id": "Some-Topic-Group-1_1_1",
           "isShownInList": true,
           "keyboardFocusIndex": -1,
-          "namespaceDisplayVisibilityByNamespace": Object {
-            "some_topic_2_ns1": Array [
-              Object {
-                "available": true,
-                "badgeText": "B1",
-                "isParentVisible": false,
-                "visible": true,
-              },
-            ],
-            "some_topic_2_ns2": Array [
-              Object {
-                "available": true,
-                "badgeText": "B1",
-                "isParentVisible": false,
-                "visible": true,
-              },
-            ],
-          },
           "prefixByColumn": Array [
             "",
             "/webviz_bag_2",
+          ],
+          "sortedNamespaceDisplayVisibilityByColumn": Array [
+            Object {
+              "displayVisibilityByColumn": Array [
+                Object {
+                  "available": true,
+                  "badgeText": "B1",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+              ],
+              "keyboardFocusIndex": -1,
+              "namespace": "some_topic_2_ns1",
+            },
+            Object {
+              "displayVisibilityByColumn": Array [
+                Object {
+                  "available": true,
+                  "badgeText": "B1",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+              ],
+              "keyboardFocusIndex": -1,
+              "namespace": "some_topic_2_ns2",
+            },
           ],
         },
         "expanded": true,
@@ -499,6 +527,12 @@ Array [
     "items": Array [
       Object {
         "derivedFields": Object {
+          "availableNamespacesByColumn": Array [
+            Array [
+              "tf_ns1",
+              "tf_ns2",
+            ],
+          ],
           "datatype": "visualization_msgs/MarkerArray",
           "displayName": "Transforms",
           "displayVisibilityByColumn": Array [
@@ -512,27 +546,35 @@ Array [
           "id": "Some-Group1_0_0",
           "isShownInList": true,
           "keyboardFocusIndex": -1,
-          "namespaceDisplayVisibilityByNamespace": Object {
-            "tf_ns1": Array [
-              Object {
-                "available": true,
-                "badgeText": "B1",
-                "isParentVisible": false,
-                "visible": true,
-              },
-            ],
-            "tf_ns2": Array [
-              Object {
-                "available": true,
-                "badgeText": "B1",
-                "isParentVisible": false,
-                "visible": true,
-              },
-            ],
-          },
           "prefixByColumn": Array [
             "",
             "/webviz_bag_2",
+          ],
+          "sortedNamespaceDisplayVisibilityByColumn": Array [
+            Object {
+              "displayVisibilityByColumn": Array [
+                Object {
+                  "available": true,
+                  "badgeText": "B1",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+              ],
+              "keyboardFocusIndex": -1,
+              "namespace": "tf_ns1",
+            },
+            Object {
+              "displayVisibilityByColumn": Array [
+                Object {
+                  "available": true,
+                  "badgeText": "B1",
+                  "isParentVisible": false,
+                  "visible": true,
+                },
+              ],
+              "keyboardFocusIndex": -1,
+              "namespace": "tf_ns2",
+            },
           ],
         },
         "topicName": "/tf",

@@ -35,7 +35,7 @@ export interface AutomatedRunClient {
   speed: number;
   msPerFrame: number;
   shouldLoadDataBeforePlaying: boolean;
-  onError(any): void;
+  onError(any): Promise<void>;
   start({ bagLengthMs: number }): void;
   markTotalFrameStart(): void;
   markTotalFrameEnd(): void;
@@ -64,6 +64,7 @@ export default class AutomatedRunPlayer implements Player {
   _msPerFrame: number;
   _client: AutomatedRunClient;
   _error: ?Error;
+  _waitToReportErrorPromise: ?Promise<void>;
   _startCalled: boolean = false;
 
   constructor(provider: DataProvider, client: AutomatedRunClient) {
@@ -83,11 +84,11 @@ export default class AutomatedRunPlayer implements Player {
         error = new Error(`Unknown error type! ${type} // ${detailsToString(details)}`);
       }
       this._error = error;
-      client.onError(error);
+      this._waitToReportErrorPromise = client.onError(error);
     });
     window.addEventListener("error", (e: Error) => {
       this._error = e;
-      client.onError(e);
+      this._waitToReportErrorPromise = client.onError(e);
     });
   }
 
@@ -234,8 +235,8 @@ export default class AutomatedRunPlayer implements Player {
 
     let frameCount = 0;
     while (TimeUtil.isLessThan(currentTime, this._providerResult.end)) {
-      if (this._error) {
-        return;
+      if (this._waitToReportErrorPromise) {
+        await this._waitToReportErrorPromise;
       }
       const end = TimeUtil.add(currentTime, { sec: 0, nsec: nsBagTimePerFrame });
       this._client.markTotalFrameStart();
@@ -285,4 +286,6 @@ export default class AutomatedRunPlayer implements Player {
   seekPlayback(time: Time) {
     throw new Error(`Unsupported in AutomatedRunPlayer`);
   }
+
+  requestBackfill() {}
 }

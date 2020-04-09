@@ -16,6 +16,7 @@ let importedPanelsByCategory;
 let importedPerPanelHooks;
 const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
+  getEventLogger: () => undefined,
   async importHooksAsync() {
     return new Promise((resolve, reject) => {
       if (importedPanelsByCategory && importedPerPanelHooks) {
@@ -112,13 +113,6 @@ const defaultHooks = {
   getAdditionalDataProviders: () => {},
   experimentalFeaturesList() {
     return {
-      plotWebWorker: {
-        name: "Use a web worker to render the Plot panel",
-        description:
-          "Experimentally render the plot panel using a web worker. This should result in increased performance.",
-        developmentDefault: false,
-        productionDefault: false,
-      },
       diskBagCaching: {
         name: "Disk Bag Caching (requires reload)",
         description:

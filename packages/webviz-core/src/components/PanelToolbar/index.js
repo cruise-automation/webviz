@@ -15,30 +15,30 @@ import JsonIcon from "@mdi/svg/svg/json.svg";
 import SettingsIcon from "@mdi/svg/svg/settings.svg";
 import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
-import PropTypes from "prop-types";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
 import { useContext, useState, useCallback } from "react"; // eslint-disable-line import/no-duplicates
 import Dimensions from "react-container-dimensions";
-import { getNodeAtPath } from "react-mosaic-component";
-// $FlowFixMe
+import { getNodeAtPath, MosaicContext, MosaicWindowContext } from "react-mosaic-component";
+// $FlowFixMe - typedefs do not recognize the ReactReduxContext import
 import { connect, ReactReduxContext } from "react-redux";
 
 import HelpButton from "./HelpButton";
 import styles from "./index.module.scss";
 import MosaicDragHandle from "./MosaicDragHandle";
-import { savePanelConfig } from "webviz-core/src/actions/panels";
+import { savePanelConfigs as savePanelConfigsAction } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
 import { Item, SubMenu } from "webviz-core/src/components/Menu";
 import PanelContext from "webviz-core/src/components/PanelContext";
-import { getPanelTypeFromMosiac } from "webviz-core/src/components/PanelToolbar/utils";
+import { getPanelTypeFromMosaic } from "webviz-core/src/components/PanelToolbar/utils";
 import renderToBody from "webviz-core/src/components/renderToBody";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
-import PanelList from "webviz-core/src/panels/PanelList";
-import type { PanelConfig, SaveConfigPayload } from "webviz-core/src/types/panels";
-import { getPanelIdForType } from "webviz-core/src/util";
+import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
+import type { SaveConfigsPayload } from "webviz-core/src/types/panels";
+import { getPanelIdForType, getSaveConfigsPayloadForTab, getPanelIdsInsideTabPanels } from "webviz-core/src/util";
 import frameless from "webviz-core/src/util/frameless";
+import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 
 type Props = {|
   children?: React.Node,
@@ -48,134 +48,152 @@ type Props = {|
   showPanelName?: boolean,
   additionalIcons?: React.Node,
   hideToolbars?: boolean,
+  showHiddenControlsOnHover?: boolean,
 |};
 
 // separated into a sub-component so it can always skip re-rendering
 // it never changes after it initially mounts
-class StandardMenuItems extends React.PureComponent<{| savePanelConfig: (SaveConfigPayload) => void |}> {
-  static contextTypes = {
-    mosaicWindowActions: PropTypes.any,
-    mosaicActions: PropTypes.any,
-    mosaicId: PropTypes.any,
-  };
+function StandardMenuItems({ savePanelConfigs }: {| savePanelConfigs: (SaveConfigsPayload) => void |}) {
+  const { mosaicActions } = useContext(MosaicContext);
+  const { mosaicWindowActions } = useContext(MosaicWindowContext);
 
-  getPanelType() {
-    const { mosaicWindowActions, mosaicActions } = this.context;
+  const getPanelType = useCallback(() => getPanelTypeFromMosaic(mosaicWindowActions, mosaicActions), [
+    mosaicActions,
+    mosaicWindowActions,
+  ]);
 
-    return getPanelTypeFromMosiac(mosaicWindowActions, mosaicActions);
+  const close = useCallback(
+    () => {
+      window.ga("send", "event", "Panel", "Close", getPanelType());
+      mosaicActions.remove(mosaicWindowActions.getPath());
+    },
+    [getPanelType, mosaicActions, mosaicWindowActions]
+  );
+
+  const split = useCallback(
+    (store, id: ?string, direction: "row" | "column") => {
+      const type = getPanelType();
+      if (!id || !type) {
+        throw new Error("Trying to split unknown panel!");
+      }
+      window.ga("send", "event", "Panel", "Split", type);
+
+      const savedProps = store.getState().panels.savedProps;
+      const config = savedProps[id];
+      const newId = getPanelIdForType(type);
+      if (type === TAB_PANEL_TYPE) {
+        const relatedConfigs = getPanelIdsInsideTabPanels([id], savedProps).reduce(
+          (result, panelId) => ({ ...result, [panelId]: savedProps[panelId] }),
+          {}
+        );
+        const payload = getSaveConfigsPayloadForTab({ id: newId, config, relatedConfigs });
+        savePanelConfigs(payload);
+      } else if (config) {
+        savePanelConfigs({ configs: [{ id: newId, config }] });
+      }
+
+      const path = mosaicWindowActions.getPath();
+      const root = mosaicActions.getRoot();
+      mosaicActions.replaceWith(path, { direction, first: getNodeAtPath(root, path), second: newId });
+    },
+    [getPanelType, mosaicActions, mosaicWindowActions, savePanelConfigs]
+  );
+
+  const swap = useCallback(
+    ({ type, config, relatedConfigs }: PanelSelection) => {
+      window.ga("send", "event", "Panel", "Swap", type);
+      if (config && relatedConfigs) {
+        const newId = getPanelIdForType(type);
+        const { configs } = getSaveConfigsPayloadForTab({ id: newId, config, relatedConfigs });
+        savePanelConfigs({ configs });
+        const tabConfigObj = configs.find(({ id }) => id === newId) || {};
+        mosaicWindowActions.replaceWithNew({ type, panelConfig: tabConfigObj.config });
+      } else {
+        mosaicWindowActions.replaceWithNew({ type, panelConfig: config });
+      }
+    },
+    [mosaicWindowActions, savePanelConfigs]
+  );
+
+  const onImportClick = useCallback(
+    (store, id) => {
+      if (!id) {
+        return;
+      }
+      const panelConfigById = store.getState().panels.savedProps;
+      const modal = renderToBody(
+        <ShareJsonModal
+          onRequestClose={() => modal.remove()}
+          value={panelConfigById[id] || {}}
+          onChange={(config) => savePanelConfigs({ configs: [{ id, config, override: true }] })}
+          noun="panel configuration"
+        />
+      );
+    },
+    [savePanelConfigs]
+  );
+
+  const type = getPanelType();
+  if (!type) {
+    return null;
   }
 
-  close = () => {
-    const { mosaicActions, mosaicWindowActions } = this.context;
-    window.ga("send", "event", "Panel", "Close", this.getPanelType());
-    mosaicActions.remove(mosaicWindowActions.getPath());
-  };
-
-  split = (store, id: ?string, direction: "row" | "column") => {
-    const { mosaicActions, mosaicWindowActions } = this.context;
-    const type = this.getPanelType();
-    if (!id || !type) {
-      throw new Error("Trying to split unknown panel!");
-    }
-
-    window.ga("send", "event", "Panel", "Split", type);
-
-    const config = store.getState().panels.savedProps[id];
-    const newId = getPanelIdForType(type);
-    this.props.savePanelConfig({ id: newId, config, defaultConfig: {} });
-
-    const path = mosaicWindowActions.getPath();
-    const root = mosaicActions.getRoot();
-    mosaicActions.replaceWith(path, { direction, first: getNodeAtPath(root, path), second: newId });
-  };
-
-  swap = (type: string, panelConfig?: PanelConfig) => {
-    window.ga("send", "event", "Panel", "Swap", type);
-    this.context.mosaicWindowActions.replaceWithNew({ type, panelConfig });
-  };
-
-  _onImportClick = (store, id) => {
-    if (!id) {
-      return;
-    }
-    const panelConfigById = store.getState().panels.savedProps;
-    const modal = renderToBody(
-      <ShareJsonModal
-        onRequestClose={() => modal.remove()}
-        value={panelConfigById[id] || {}}
-        onChange={(config) => this.props.savePanelConfig({ id, config, override: true, defaultConfig: {} })}
-        noun="panel configuration"
-      />
-    );
-  };
-
-  render() {
-    const type = this.getPanelType();
-    if (!type) {
-      return null;
-    }
-
-    const isOnlyPanel = this.context.mosaicWindowActions.getPath().length === 0;
-    return (
-      <ReactReduxContext.Consumer>
-        {({ store }) => (
-          <PanelContext.Consumer>
-            {(panelContext) => (
-              <>
-                <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />}>
-                  {/* $FlowFixMe - not sure why it thinks onPanelSelect is a Redux action */}
-                  <PanelList selectedPanelType={panelContext.type} onPanelSelect={this.swap} />
-                </SubMenu>
-                <Item
-                  icon={<FullscreenIcon />}
-                  onClick={panelContext && panelContext.enterFullscreen}
-                  dataTest="panel-settings-fullscreen"
-                  tooltip="(shortcut: ` or ~)">
-                  Fullscreen
-                </Item>
-                <Item
-                  icon={<ArrowSplitHorizontalIcon />}
-                  onClick={() => this.split(store, panelContext && panelContext.id, "column")}
-                  dataTest="panel-settings-hsplit"
-                  tooltip="(shortcut: ` or ~)">
-                  Split horizontal
-                </Item>
-                <Item
-                  icon={<ArrowSplitVerticalIcon />}
-                  onClick={() => this.split(store, panelContext && panelContext.id, "row")}
-                  dataTest="panel-settings-vsplit"
-                  tooltip="(shortcut: ` or ~)">
-                  Split vertical
-                </Item>
-                <Item
-                  icon={<TrashCanOutlineIcon />}
-                  onClick={this.close}
-                  disabled={isOnlyPanel}
-                  tooltip="(shortcut: ` or ~)">
-                  Remove panel
-                </Item>
-                <Item
-                  icon={<JsonIcon />}
-                  onClick={() => this._onImportClick(store, panelContext && panelContext.id)}
-                  dataTest="panel-settings-config">
-                  Import/export panel settings
-                </Item>
-              </>
-            )}
-          </PanelContext.Consumer>
-        )}
-      </ReactReduxContext.Consumer>
-    );
-  }
+  const isOnlyPanel = mosaicWindowActions.getPath().length === 0;
+  return (
+    <ReactReduxContext.Consumer>
+      {({ store }) => (
+        <PanelContext.Consumer>
+          {(panelContext) => (
+            <>
+              <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />}>
+                <PanelList selectedPanelTitle={panelContext?.title} onPanelSelect={swap} />
+              </SubMenu>
+              <Item
+                icon={<FullscreenIcon />}
+                onClick={panelContext?.enterFullscreen}
+                dataTest="panel-settings-fullscreen"
+                tooltip="(shortcut: ` or ~)">
+                Fullscreen
+              </Item>
+              <Item
+                icon={<ArrowSplitHorizontalIcon />}
+                onClick={() => split(store, panelContext?.id, "column")}
+                dataTest="panel-settings-hsplit"
+                tooltip="(shortcut: ` or ~)">
+                Split horizontal
+              </Item>
+              <Item
+                icon={<ArrowSplitVerticalIcon />}
+                onClick={() => split(store, panelContext?.id, "row")}
+                dataTest="panel-settings-vsplit"
+                tooltip="(shortcut: ` or ~)">
+                Split vertical
+              </Item>
+              <Item icon={<TrashCanOutlineIcon />} onClick={close} disabled={isOnlyPanel} tooltip="(shortcut: ` or ~)">
+                Remove panel
+              </Item>
+              <Item
+                icon={<JsonIcon />}
+                onClick={() => onImportClick(store, panelContext?.id)}
+                dataTest="panel-settings-config">
+                Import/export panel settings
+              </Item>
+            </>
+          )}
+        </PanelContext.Consumer>
+      )}
+    </ReactReduxContext.Consumer>
+  );
 }
 
 const ConnectedStandardMenuItems = connect(
   null,
-  { savePanelConfig }
+  { savePanelConfigs: savePanelConfigsAction }
 )(StandardMenuItems);
 
 type PanelToolbarControlsProps = {|
   ...Props,
+  isRendered: boolean,
   onDragStart: () => void,
   onDragEnd: () => void,
 |};
@@ -184,10 +202,13 @@ type PanelToolbarControlsProps = {|
 // whole PanelToolbar when only children change.
 const PanelToolbarControls = React.memo(function PanelToolbarControls(props: PanelToolbarControlsProps) {
   const panelData = useContext(PanelContext);
-  const { floating, helpContent, menuContent, showPanelName, additionalIcons, onDragStart, onDragEnd } = props;
+  const { floating, helpContent, menuContent, showPanelName, additionalIcons, showHiddenControlsOnHover } = props;
+  const { isRendered, onDragStart, onDragEnd } = props;
 
   return (
-    <div className={styles.iconContainer}>
+    <div
+      className={styles.iconContainer}
+      style={showHiddenControlsOnHover && !isRendered ? { visibility: "hidden" } : {}}>
       {showPanelName && panelData && <div className={styles.panelName}>{panelData.title}</div>}
       {additionalIcons}
       {helpContent && <HelpButton>{helpContent}</HelpButton>}
@@ -218,7 +239,15 @@ const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Pan
 // react-mosaic layout.  It adds a drag handle, remove/replace controls
 // and has a place to add custom controls via it's children property
 export default React.memo<Props>(function PanelToolbar(props: Props) {
-  const { children, floating, helpContent, menuContent, additionalIcons, hideToolbars } = props;
+  const {
+    children,
+    floating,
+    helpContent,
+    menuContent,
+    additionalIcons,
+    hideToolbars,
+    showHiddenControlsOnHover,
+  } = props;
   const { isHovered } = useContext(PanelContext) || {};
   const [isDragging, setIsDragging] = useState(false);
   const onDragStart = useCallback(() => setIsDragging(true), []);
@@ -232,28 +261,33 @@ export default React.memo<Props>(function PanelToolbar(props: Props) {
     <Dimensions>
       {({ width }) => (
         <ChildToggle.ContainsOpen>
-          {(containsOpen) => (
-            <div
-              className={cx(styles.panelToolbarContainer, {
-                [styles.floating]: floating,
-                [styles.floatingShow]: floating && (isHovered || containsOpen || isDragging),
-                [styles.containsOpen]: containsOpen,
-                [styles.hasChildren]: !!children,
-              })}>
-              {(isHovered || containsOpen || isDragging || !floating) && children}
-              {(isHovered || containsOpen || isDragging) && (
-                <PanelToolbarControls
-                  floating={floating}
-                  helpContent={helpContent}
-                  menuContent={menuContent}
-                  showPanelName={width > 360}
-                  additionalIcons={additionalIcons}
-                  onDragStart={onDragStart}
-                  onDragEnd={onDragEnd}
-                />
-              )}
-            </div>
-          )}
+          {(containsOpen) => {
+            const isRendered = isHovered || containsOpen || isDragging;
+            return (
+              <div
+                className={cx(styles.panelToolbarContainer, {
+                  [styles.floating]: floating,
+                  [styles.floatingShow]: floating && isRendered,
+                  [styles.containsOpen]: containsOpen,
+                  [styles.hasChildren]: !!children,
+                })}>
+                {(isRendered || !floating) && children}
+                {(isRendered || showHiddenControlsOnHover) && (
+                  <PanelToolbarControls
+                    isRendered={isRendered}
+                    showHiddenControlsOnHover={showHiddenControlsOnHover}
+                    floating={floating}
+                    helpContent={helpContent}
+                    menuContent={menuContent}
+                    showPanelName={width > 360}
+                    additionalIcons={additionalIcons}
+                    onDragStart={onDragStart}
+                    onDragEnd={onDragEnd}
+                  />
+                )}
+              </div>
+            );
+          }}
         </ChildToggle.ContainsOpen>
       )}
     </Dimensions>

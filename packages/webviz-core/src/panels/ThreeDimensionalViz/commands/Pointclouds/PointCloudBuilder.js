@@ -65,7 +65,7 @@ function parseHexColor(color: string) {
 
 export function mapMarker(marker: PointCloud2 & { settings?: PointCloudSettings }, decodeAllFields?: boolean) {
   // http://docs.ros.org/api/sensor_msgs/html/msg/PointCloud2.html
-  const { fields, data, width, row_step, height, point_step, settings = {} } = marker;
+  const { fields, data, width, row_step, height, point_step, settings = {}, is_bigendian } = marker;
   const offsetsAndReaders = getFieldOffsetsAndReaders(fields);
 
   for (const float32Field of REQUIRED_FLOAT32_FIELDS) {
@@ -171,9 +171,10 @@ export function mapMarker(marker: PointCloud2 & { settings?: PointCloudSettings 
         colors[colorStart + 1] = flatColorG;
         colors[colorStart + 2] = flatColorB;
       } else if (useRGB) {
-        colors[colorStart] = data[pointDataStart + rgbOffset];
+        // In case of little endianess, colors are in BGR format
+        colors[colorStart + 0] = data[pointDataStart + rgbOffset + (is_bigendian ? 0 : 2)];
         colors[colorStart + 1] = data[pointDataStart + rgbOffset + 1];
-        colors[colorStart + 2] = data[pointDataStart + rgbOffset + 2];
+        colors[colorStart + 2] = data[pointDataStart + rgbOffset + (is_bigendian ? 2 : 0)];
       } else if (colorFieldReader) {
         const colorFieldValue = colorFieldReader.read(data, pointDataStart);
         colorFieldValues[pointCount] = colorFieldValue;

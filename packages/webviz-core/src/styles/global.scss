@@ -54,26 +54,21 @@
   .ant-checkbox {
     padding-top: 4px;
   }
-  .ant-tree,
-  .ant-tree li .ant-tree-node-content-wrapper {
-    color: unset;
-  }
-  .ant-tree.ant-tree-show-line li span.ant-tree-switcher {
-    background: transparent;
-  }
-  .ant-tree-switcher-noop {
-    display: inline-block !important;
-  }
-  .ant-tree li .ant-tree-node-content-wrapper {
-    height: unset;
-    padding-bottom: 4px;
-  }
-  .ant-tree li .ant-tree-node-content-wrapper:hover {
-    background: unset;
-  }
   .ant-tree {
-    li.ant-tree-treenode-disabled > .ant-tree-node-content-wrapper span {
-      color: #606066;
+    background: transparent;
+    color: #fff;
+    .ant-tree-treenode {
+      padding: 0;
+    }
+
+    .ant-tree-node-content-wrapper {
+      padding-bottom: 4px;
+      &.ant-tree-node-selected {
+        background-color: transparent;
+      }
+      &:hover {
+        background: transparent;
+      }
     }
   }
   .ant-checkbox {

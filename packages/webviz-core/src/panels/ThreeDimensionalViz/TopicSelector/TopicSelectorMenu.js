@@ -15,6 +15,7 @@ import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
 import Item from "webviz-core/src/components/Menu/Item";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
@@ -62,7 +63,13 @@ export default function TopicSelectorMenu({ saveConfig, pinTopics, autoTextBackg
               Let us know if the topic groups work for you.
             </div>
           }
-          onClick={() => saveConfig({ enableTopicTree: false })}
+          onClick={() => {
+            saveConfig({ enableTopicTree: false });
+            const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger() || {};
+            if (logger && eventNames?.TOGGLE_TOPIC_GROUPS && eventTags?.ENABLE_TOPIC_GROUPS) {
+              logger({ name: eventNames.TOGGLE_TOPIC_GROUPS, tags: { [eventTags.ENABLE_TOPIC_GROUPS]: true } });
+            }
+          }}
           icon={<CheckboxBlankOutlineIcon />}>
           <span style={{ color: colors.GREEN }}>Enable topic groups</span>
         </Item>

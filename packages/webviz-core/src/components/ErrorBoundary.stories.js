@@ -8,7 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { DragDropContextProvider } from "react-dnd";
+import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
@@ -31,10 +31,10 @@ storiesOf("<ErrorBoundary>", module)
   .addDecorator(withScreenshot())
   .add("examples", () => {
     return (
-      <DragDropContextProvider backend={HTML5Backend}>
+      <DndProvider backend={HTML5Backend}>
         <ErrorBoundary>
           <Broken />
         </ErrorBoundary>
-      </DragDropContextProvider>
+      </DndProvider>
     );
   });

@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import delay from "webviz-core/shared/delay";
+import signal, { type Signal } from "webviz-core/shared/signal";
 
 // This is the interface between the video recording server (recordVideo.js) and
 // the client (whomever uses `videoRecordingClient`). The idea is that the server opens a webpage
@@ -21,6 +22,7 @@ import delay from "webviz-core/shared/delay";
 let screenshotResolve: ?() => void;
 let finishedMsPerFrame: ?number;
 let error: ?Error;
+let errorSignal: ?Signal<void>;
 
 export type VideoRecordingAction = {
   action: "error" | "finish" | "screenshot",
@@ -33,7 +35,14 @@ window.videoRecording = {
     if (error) {
       // This object is serialized and deserialized to pass it to Puppeteer, so passing the error object itself will
       // just result in { "action": "error", "error": {} }. Instead pass a string - the stack itself.
-      return { action: "error", error: error.stack };
+      const payload = { action: "error", error: error.stack };
+      // Clear error, since if it is whitelisted we will ignore and try to keep running
+      error = null;
+      if (errorSignal) {
+        errorSignal.resolve();
+        errorSignal = null;
+      }
+      return payload;
     }
     if (finishedMsPerFrame) {
       return { action: "finish", msPerFrame: finishedMsPerFrame };
@@ -79,6 +88,10 @@ class VideoRecordingClient {
 
   onError(e: Error) {
     error = e;
+    if (!errorSignal) {
+      errorSignal = signal<void>();
+    }
+    return errorSignal;
   }
 
   async onFrameFinished(frameCount: number) {

@@ -48,7 +48,10 @@ import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutTool
 import LayoutTopicSettings from "webviz-core/src/panels/ThreeDimensionalViz/LayoutTopicSettings";
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import { useSearchText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
-import { getUpdatedGlobalVariablesBySelectedObject } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
+import {
+  getUpdatedGlobalVariablesBySelectedObject,
+  type TargetPose,
+} from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import TopicSelector from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
 import treeBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/treeBuilder";
@@ -70,6 +73,7 @@ export type ClickedPosition = { clientX: number, clientY: number };
 
 export type LayoutToolbarSharedProps = {|
   cameraState: $Shape<CameraState>,
+  targetPose: ?TargetPose,
   followOrientation: boolean,
   followTf?: string | false,
   onAlignXYAxis: () => void,
@@ -113,6 +117,7 @@ export type EditTopicState = { tooltipPosX: number, topic: Topic };
 
 export default function Layout({
   cameraState,
+  targetPose,
   children,
   cleared,
   currentTime,
@@ -639,6 +644,7 @@ export default function Layout({
           <div style={videoRecordingStyle}>
             <LayoutToolbar
               cameraState={cameraState}
+              targetPose={targetPose}
               debug={debug}
               drawingTabType={drawingTabType}
               followOrientation={followOrientation}

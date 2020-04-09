@@ -38,27 +38,24 @@ function generateMessages(): DataProviderMessage[] {
 }
 
 function generateLargeMessages(): DataProviderMessage[] {
-  // Any four messages fit into our memory budget, but getBlocksToKeep leaves the cache over-full
-  // and will evict blocks until five messages are present.
   // The input is 201 blocks (20.1 seconds) long, with messages every two seconds.
-  const sharedLargeMessage = new ArrayBuffer(0.6e9);
   return sortMessages([
-    { topic: "/foo", receiveTime: { sec: 0, nsec: 0 }, message: sharedLargeMessage },
-    { topic: "/foo", receiveTime: { sec: 2, nsec: 0 }, message: sharedLargeMessage },
-    { topic: "/foo", receiveTime: { sec: 4, nsec: 0 }, message: sharedLargeMessage },
-    { topic: "/foo", receiveTime: { sec: 6, nsec: 0 }, message: sharedLargeMessage },
-    { topic: "/foo", receiveTime: { sec: 8, nsec: 0 }, message: sharedLargeMessage },
-    { topic: "/foo", receiveTime: { sec: 10, nsec: 0 }, message: sharedLargeMessage },
-    { topic: "/foo", receiveTime: { sec: 12, nsec: 0 }, message: sharedLargeMessage },
-    { topic: "/foo", receiveTime: { sec: 14, nsec: 0 }, message: sharedLargeMessage },
-    { topic: "/foo", receiveTime: { sec: 16, nsec: 0 }, message: sharedLargeMessage },
-    { topic: "/foo", receiveTime: { sec: 18, nsec: 0 }, message: sharedLargeMessage },
-    { topic: "/foo", receiveTime: { sec: 20, nsec: 0 }, message: sharedLargeMessage },
+    { topic: "/foo", receiveTime: { sec: 0, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 2, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 4, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 6, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 8, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 10, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 12, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 14, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 16, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 18, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 20, nsec: 0 }, message: new ArrayBuffer(600) },
   ]);
 }
 
-function getProvider(messages: DataProviderMessage[]) {
-  const memoryDataProvider = new MemoryDataProvider({ messages });
+function getProvider(messages: DataProviderMessage[], unlimitedCache: boolean = false) {
+  const memoryDataProvider = new MemoryDataProvider({ messages, unlimitedCache });
   return {
     provider: new MemoryCacheDataProvider(
       { id: "some-id" },
@@ -135,6 +132,9 @@ describe("MemoryCacheDataProvider", () => {
 
   it("stops prefetching once it hits the memory budget", async () => {
     const { provider } = getProvider(generateLargeMessages());
+    // Fit four 600 byte messages into our memory budget. (getBlocksToKeep leaves the cache over-full
+    // and will evict blocks until five messages are present.)
+    provider.setCacheSizeBytesInTests(2500);
     const { extensionPoint } = mockExtensionPoint();
     const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
 
@@ -146,12 +146,24 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       { fullyLoadedFractionRanges: [{ start: 0, end: 81 / 201 }] },
     ]);
-    // The very large blocks in this test cause warnings to be reported.
-    reportError.expectCalledDuringTest();
+  });
+
+  it("does not stop prefetching with unlimitedCache", async () => {
+    const { provider } = getProvider(generateLargeMessages(), true);
+    const { extensionPoint } = mockExtensionPoint();
+    const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
+
+    await provider.initialize(extensionPoint);
+    await provider.getMessages({ sec: 0, nsec: 0 }, { sec: 0, nsec: 0 }, ["/foo"]);
+    await delay(10);
+    expect(last(mockProgressCallback.mock.calls)).toEqual([{ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] }]);
   });
 
   it("prefetches after the last request", async () => {
     const { provider } = getProvider(generateLargeMessages());
+    // Fit four 600 byte messages into our memory budget. (getBlocksToKeep leaves the cache over-full
+    // and will evict blocks until five messages are present.)
+    provider.setCacheSizeBytesInTests(2500);
     const { extensionPoint } = mockExtensionPoint();
     const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
 
@@ -166,8 +178,6 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       { fullyLoadedFractionRanges: [{ start: 0, end: 10 / 201 }, { start: 100 / 201, end: 161 / 201 }] },
     ]);
-    // The very large blocks in this test cause warnings to be reported.
-    reportError.expectCalledDuringTest();
   });
 
   it("returns messages", async () => {
@@ -218,6 +228,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 2, undefined, undefined, undefined],
           maxCacheSizeInBytes: 5,
+          badEvictionLocation: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
     });
@@ -228,6 +239,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 0, 2, undefined, undefined],
           maxCacheSizeInBytes: 5,
+          badEvictionLocation: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([2, 1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
     });
@@ -238,6 +250,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 2, 3, undefined, undefined],
           maxCacheSizeInBytes: 5,
+          badEvictionLocation: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([2, 1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
     });
@@ -248,8 +261,31 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 2, 3, 4, undefined],
           maxCacheSizeInBytes: 5,
+          badEvictionLocation: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([3, 2]), newRecentRanges: [{ start: 2, end: 5 }] });
+    });
+
+    it("removes blocks from the left when the playback cursor is on the right", () => {
+      expect(
+        getBlocksToKeep({
+          recentBlockRanges: [{ start: 0, end: 5 }],
+          blockSizesInBytes: [1, 1, 1, 1, 1],
+          maxCacheSizeInBytes: 2,
+          badEvictionLocation: 5,
+        })
+      ).toEqual({ blockIndexesToKeep: new Set([2, 3, 4]), newRecentRanges: [{ start: 2, end: 5 }] });
+    });
+
+    it("removes blocks from the right when the playback cursor is on the left", () => {
+      expect(
+        getBlocksToKeep({
+          recentBlockRanges: [{ start: 0, end: 5 }],
+          blockSizesInBytes: [1, 1, 1, 1, 1],
+          maxCacheSizeInBytes: 2,
+          badEvictionLocation: 0,
+        })
+      ).toEqual({ blockIndexesToKeep: new Set([0, 1, 2]), newRecentRanges: [{ start: 0, end: 3 }] });
     });
   });
 

@@ -11,7 +11,6 @@ import React, { useEffect, useCallback, useRef } from "react";
 import { hot } from "react-hot-loader/root";
 
 import helpContent from "./index.help.md";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import MessageHistoryDEPRECATED, { type MessageHistoryData } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import Panel from "webviz-core/src/components/Panel";
@@ -104,7 +103,6 @@ function Plot(props: Props) {
   }
 
   const allPaths = paths.map(({ value }) => value).concat(compact([xAxisPath?.value]));
-  const includeTooltipInData = !useExperimentalFeature("plotWebWorker");
 
   return (
     <Flex col clip center style={{ position: "relative" }}>
@@ -112,14 +110,7 @@ function Plot(props: Props) {
           easy access to the history when turning the disabled paths back on. */}
       <MessageHistoryDEPRECATED paths={allPaths} {...(historySize ? { historySize } : null)}>
         {({ itemsByPath, startTime }: MessageHistoryData) => {
-          const { datasets, tooltips } = getDatasetsAndTooltips(
-            paths,
-            itemsByPath,
-            startTime,
-            xAxisVal,
-            xAxisPath,
-            includeTooltipInData
-          );
+          const { datasets, tooltips } = getDatasetsAndTooltips(paths, itemsByPath, startTime, xAxisVal, xAxisPath);
           return (
             <>
               <PanelToolbar

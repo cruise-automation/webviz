@@ -14,7 +14,7 @@ export const ICON_PADDING = 2;
 export const ICON_SIZE = 18; // default small icon size
 export const ICON_TOTAL_SIZE = ICON_PADDING * 2 + ICON_SIZE;
 
-export const ITEM_MAIN_PADDING_LEFT = ICON_TOTAL_SIZE * 4 + 8;
+export const ITEM_MAIN_PADDING_LEFT = ICON_TOTAL_SIZE * 4 + 12;
 
 export const KEYBOARD_SHORTCUTS = [
   {
@@ -38,8 +38,8 @@ export const KEYBOARD_SHORTCUTS = [
     keys: ["Enter"],
   },
   {
-    description: "Delete group/topic",
-    keys: ["(Shift)", "Delete"],
+    description: "Toggle children",
+    keys: ["Shift", "Enter"],
   },
   {
     description: "Remove focus",
@@ -52,6 +52,7 @@ export const KEYBOARD_FOCUS_TYPES = {
   NEW_GROUP: "NEW_GROUP",
   TOPIC: "TOPIC",
   NEW_TOPIC: "NEW_TOPIC",
+  NAMESPACE: "NAMESPACE",
 };
 
 export const FOCUS_ITEM_OPS = {

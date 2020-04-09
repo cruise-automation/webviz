@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Icon } from "antd";
+import PlusIcon from "@mdi/svg/svg/plus.svg";
 import React, { useCallback, useState, useEffect, useContext } from "react";
 import styled from "styled-components";
 
@@ -15,6 +15,7 @@ import { SBrowseButton } from "./QuickAddTopic";
 import TopicGroupCreate from "./TopicGroupCreate";
 import { KeyboardContext } from "./TopicGroups";
 import type { TopicGroupConfig } from "./types";
+import Icon from "webviz-core/src/components/Icon";
 import Modal from "webviz-core/src/components/Modal";
 import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
@@ -102,7 +103,9 @@ export default function CreateGroupButton({
         style={{ marginLeft: isEmptyStateCreate ? 0 : 12 }}
         className="test-add-group-button"
         onClick={() => setShowModal(true)}>
-        <Icon type="plus" style={{ padding: "4px 10px 0 0" }} />
+        <Icon small>
+          <PlusIcon />
+        </Icon>
         New group
       </SBrowseButton>
     </SCreateGroupButtonWrapper>

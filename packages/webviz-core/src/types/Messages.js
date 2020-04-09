@@ -247,7 +247,7 @@ export type PointCloud2 = StampedMessage & {
   fields: PointField[],
   height: number,
   width: number,
-  is_bigendian: number, // TODO: Do we need this?
+  is_bigendian: boolean, // TODO: Do we need this?
   point_step: number, // Length of point in bytes
   row_step: number, // Length of row in bytes
   data: number[],

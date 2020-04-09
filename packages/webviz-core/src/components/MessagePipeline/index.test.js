@@ -11,7 +11,7 @@ import { last } from "lodash";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 
-import { MessagePipelineProvider, MessagePipelineConsumer } from ".";
+import { MessagePipelineProvider, MessagePipelineConsumer, WARN_ON_SUBSCRIPTIONS_WITHIN_TIME_MS } from ".";
 import FakePlayer from "./FakePlayer";
 import { MAX_PROMISE_TIMEOUT_TIME_MS } from "./pauseFrameForPromise";
 import delay from "webviz-core/shared/delay";
@@ -51,6 +51,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
           setPlaybackSpeed: expect.any(Function),
           seekPlayback: expect.any(Function),
           pauseFrame: expect.any(Function),
+          requestBackfill: expect.any(Function),
         },
       ],
     ]);
@@ -436,12 +437,57 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     });
   });
 
+  it("logs a warning if a panel subscribes just after activeData becomes available", async () => {
+    jest.spyOn(console, "warn").mockReturnValue();
+    const player = new FakePlayer();
+    const fn = jest.fn().mockReturnValue(null);
+    mount(
+      <MessagePipelineProvider player={player}>
+        <MessagePipelineConsumer>{fn}</MessagePipelineConsumer>
+      </MessagePipelineProvider>
+    );
+    expect(fn).toHaveBeenCalledTimes(1);
+    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test" }]));
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(console.warn).toHaveBeenCalledTimes(0);
+
+    // Emit activeData.
+    const activeData = {
+      messages: [],
+      currentTime: { sec: 0, nsec: 0 },
+      startTime: { sec: 0, nsec: 0 },
+      endTime: { sec: 1, nsec: 0 },
+      isPlaying: true,
+      speed: 0.2,
+      lastSeekTime: 1234,
+      topics: [{ name: "/input/foo", datatype: "foo" }],
+      datatypes: { foo: { fields: [] } },
+    };
+    await act(() => player.emit(activeData));
+    expect(fn).toHaveBeenCalledTimes(3);
+
+    // Calling setSubscriptions right after activeData is emitted results in a warning.
+    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test" }]));
+    // $FlowFixMe - Flow doesn't understand `console.warn.mock`
+    expect(console.warn.mock.calls).toEqual([
+      [
+        "Panel subscribed right after Player loaded, which causes unnecessary requests. Please let the Webviz team know about this. Topics: /test",
+      ],
+    ]);
+
+    // If we wait a little bit, we shouldn't get any additional warnings.
+    await delay(WARN_ON_SUBSCRIPTIONS_WITHIN_TIME_MS + 200);
+    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test" }]));
+    // $FlowFixMe - Flow doesn't understand `console.warn.mock`
+    expect(console.warn.mock.calls.length).toEqual(1);
+  });
+
   describe("pauseFrame", () => {
-    let pauseFrame, player;
+    let pauseFrame, player, el;
 
     beforeEach(async () => {
       player = new FakePlayer();
-      mount(
+      el = mount(
         <MessagePipelineProvider player={player}>
           <MessagePipelineConsumer>
             {(context) => {
@@ -453,6 +499,17 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       );
 
       await delay(20);
+    });
+
+    it("frames automatically resolve without calling pauseFrame", async () => {
+      let hasFinishedFrame = false;
+      await act(async () => {
+        player.emit().then(() => {
+          hasFinishedFrame = true;
+        });
+      });
+      await delay(20);
+      expect(hasFinishedFrame).toEqual(true);
     });
 
     it("when pausing for multiple promises, waits for all of them to resolve", async () => {
@@ -551,6 +608,43 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       expect(hasFinishedFrame).toEqual(true);
 
       reportError.expectCalledDuringTest();
+    });
+
+    it("does not accidentally resolve the second player's promise when replacing the player", async () => {
+      // Pause the current frame.
+      const firstPlayerResumeFn = pauseFrame("");
+
+      // Then trigger the next emit.
+      await act(async () => {
+        player.emit();
+      });
+      await delay(20);
+
+      // Replace the player.
+      const newPlayer = new FakePlayer();
+      el.setProps({ player: newPlayer });
+      await delay(20);
+
+      const secondPlayerResumeFn = pauseFrame("");
+      let secondPlayerHasFinishedFrame = false;
+      await act(async () => {
+        newPlayer.emit().then(() => {
+          secondPlayerHasFinishedFrame = true;
+        });
+      });
+      await delay(20);
+
+      expect(secondPlayerHasFinishedFrame).toEqual(false);
+
+      firstPlayerResumeFn();
+      await delay(20);
+      // The first player was resumed, but the second player should not have finished its frame.
+      expect(secondPlayerHasFinishedFrame).toEqual(false);
+
+      secondPlayerResumeFn();
+      await delay(20);
+      // The second player was resumed and can now finish its frame.
+      expect(secondPlayerHasFinishedFrame).toEqual(true);
     });
   });
 });

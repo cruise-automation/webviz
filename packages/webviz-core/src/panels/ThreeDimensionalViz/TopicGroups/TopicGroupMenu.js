@@ -49,7 +49,12 @@ export default function TopicGroupMenu({
         </Icon>
       </SMenuWrapper>
       <Menu>
-        <Item dataTest={`delete-topic-group-menu-${displayName}`} onClick={onShowGroupEditModal}>
+        <Item
+          dataTest={`edit-topic-group-menu-${displayName}`}
+          onClick={() => {
+            onShowGroupEditModal();
+            setIsOpen(false);
+          }}>
           Edit group
         </Item>
         <Item

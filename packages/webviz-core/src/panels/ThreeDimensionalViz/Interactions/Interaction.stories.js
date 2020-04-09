@@ -14,7 +14,7 @@ import styled from "styled-components";
 import Interactions, { OBJECT_TAB_TYPE, LINKED_VARIABLES_TAB_TYPE, type TabType } from "./index";
 import useLinkedGlobalVariables from "./useLinkedGlobalVariables";
 import Flex from "webviz-core/src/components/Flex";
-import { MockPanelContextProvider } from "webviz-core/src/components/Panel";
+import MockPanelContextProvider from "webviz-core/src/components/MockPanelContextProvider";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import {
   POINT_CLOUD_MESSAGE,
@@ -111,6 +111,7 @@ function PanelSetupWithData({
 }) {
   return (
     <PanelSetup
+      omitDragAndDrop
       style={{ width: "auto", height: "auto", display: "inline-flex" }}
       fixture={{
         topics: [],

@@ -22,10 +22,16 @@ $spacing: 14px;
   height: 100%;
 }
 
+.left {
+  width: 100%;
+  display: flex;
+}
+
 .logoWrapper {
   display: inline-block;
   margin-right: 0.5rem;
-  width: 100%;
+  top: 1px;
+  position: relative;
 
   svg {
     vertical-align: middle;

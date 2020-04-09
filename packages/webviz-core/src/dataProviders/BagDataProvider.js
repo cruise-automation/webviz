@@ -32,6 +32,16 @@ type Options = {| bagPath: BagPath, cacheSizeInBytes?: ?number |};
 
 const log = new Logger(__filename);
 
+function reportMalformedError(operation: string, error: Error): void {
+  reportError(
+    `Error during ${operation}`,
+    `An error was encountered during ${operation}. This usually happens if the bag is somehow malformed.\n\n${
+      error.stack
+    }`,
+    "user"
+  );
+}
+
 // Read from a ROS Bag. `bagPath` can either represent a local file, or a remote bag. See
 // `BrowserHttpReader` for how to set up a remote server to be able to directly stream from it.
 // Returns raw messages that still need to be parsed by `ParseMessagesDataProvider`.
@@ -88,7 +98,29 @@ export default class BagDataProvider implements DataProvider {
     }
 
     const { startTime, endTime, chunkInfos } = this._bag;
-    const connections = ((Object.values(this._bag.connections): any): Connection[]);
+    const connections: Connection[] = [];
+    const emptyConnections: any[] = [];
+    for (const connection: any of Object.values(this._bag.connections)) {
+      const { messageDefinition, md5sum, topic, type } = connection;
+      if (messageDefinition && md5sum && topic && type) {
+        connections.push({ messageDefinition, md5sum, topic, type });
+      } else {
+        emptyConnections.push(connection);
+      }
+    }
+    if (emptyConnections.length > 0) {
+      // TODO(JP): Actually support empty message definitions (e.g. "std_msgs/Empty"). For that we
+      // ideally need an actual use case, and then we need to make sure that we don't naively do
+      // `if (messageDefinition)` in a bunch of places.
+      reportError(
+        "Warning: Empty connections found",
+        `This bag has some empty connections, which Webviz does not currently support. We'll try to play the remaining topics. Details:\n\n${JSON.stringify(
+          emptyConnections
+        )}`,
+        "user"
+      );
+    }
+
     if (!startTime || !endTime || !connections.length) {
       // This will abort video generation:
       reportError("Cannot play invalid bag", "Bag is empty or corrupt.", "user");
@@ -138,11 +170,30 @@ export default class BagDataProvider implements DataProvider {
       endTime: end,
       noParse: true,
       decompress: {
-        bz2: (buffer: Buffer) => Buffer.from(Bzip2.decompressFile(buffer)),
-        lz4: decompress,
+        bz2: (...args) => {
+          try {
+            return Buffer.from(Bzip2.decompressFile(...args));
+          } catch (error) {
+            reportMalformedError("bz2 decompression", error);
+            throw error;
+          }
+        },
+        lz4: (...args) => {
+          try {
+            return decompress(...args);
+          } catch (error) {
+            reportMalformedError("lz4 decompression", error);
+            throw error;
+          }
+        },
       },
     };
-    await this._bag.readMessages(options, onMessage);
+    try {
+      await this._bag.readMessages(options, onMessage);
+    } catch (error) {
+      reportMalformedError("bag parsing", error);
+      throw error;
+    }
     messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime));
     return messages;
   }

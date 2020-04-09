@@ -14,14 +14,14 @@ import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type {
-  SaveConfigPayload,
+  SaveConfigsPayload,
   SaveFullConfigPayload,
   ImportPanelLayoutPayload,
   PanelConfig,
   UserNodes,
   PlaybackConfig,
 } from "webviz-core/src/types/panels";
-import { getPanelTypeFromId } from "webviz-core/src/util";
+import { getPanelTypeFromId, getPanelIdsInsideTabPanels } from "webviz-core/src/util";
 import Storage from "webviz-core/src/util/Storage";
 
 const storage = new Storage();
@@ -54,6 +54,10 @@ export type PanelsState = {
   restrictedTopics?: string[],
 };
 
+export const setStoredLayout = (layout: PanelsState) => {
+  storage.set(GLOBAL_STATE_STORAGE_KEY, layout);
+};
+
 export function setStorageStateAndFallbackToDefault(globalState: any = {}) {
   const newGlobalState = { ...globalState };
   const defaultGlobalStates = getGlobalHooks().getDefaultGlobalStates();
@@ -65,7 +69,7 @@ export function setStorageStateAndFallbackToDefault(globalState: any = {}) {
     }
   });
 
-  storage.set(GLOBAL_STATE_STORAGE_KEY, newGlobalState);
+  setStoredLayout(newGlobalState);
   return newGlobalState;
 }
 
@@ -102,36 +106,40 @@ function getDefaultState(): PanelsState {
 }
 
 function changePanelLayout(state: PanelsState, layout: any): PanelsState {
+  const panelIds = getLeaves(layout);
+  const tabPanelIds = panelIds.filter((id) => id.startsWith("Tab!"));
+  const panelIdsInsideTabPanels = getPanelIdsInsideTabPanels(tabPanelIds, state.savedProps);
   // filter saved props in case a panel was removed from the layout
   // we don't want it saved props hanging around forever
-  const savedProps = pick(state.savedProps, getLeaves(layout));
+  const savedProps = pick(state.savedProps, [...panelIdsInsideTabPanels, ...panelIds]);
   return { ...state, savedProps, layout };
 }
 
-function savePanelConfig(state: PanelsState, payload: SaveConfigPayload): PanelsState {
-  const { id, config, defaultConfig } = payload;
+function savePanelConfigs(state: PanelsState, payload: SaveConfigsPayload): PanelsState {
+  const { configs } = payload;
   // imutable update of key/value pairs
-  const newProps = payload.override
-    ? { ...state.savedProps, [id]: config }
-    : {
-        ...state.savedProps,
-        [id]: {
-          // merge new config with old one
-          // similar to how this.setState merges props
-          // When updating the panel state, we merge the new config (which may be just a part of config) with the old config and the default config every time.
-          // Previously this was done inside the component, but since the lifecycle of Redux is Action => Reducer => new state => Component,
-          // dispatching an update to the panel state is not instant and can take some time to propagate back to the component.
-          // If the existing panel config is the complete config1, and two actions were fired in quick succession the component with partial config2 and config3,
-          // the correct behavior is to merge config2 with config1 and dispatch that, and then merge config 3 with the combined config2 and config1.
-          // Instead we had stale state so we would merge config3 with config1 and overwrite any keys that exist in config2 but do not exist in config3.
-          // The solution is to do this merge inside the reducer itself, since the state inside the reducer is never stale (unlike the state inside the component).
-          ...defaultConfig,
-          ...state.savedProps[id],
-          ...config,
-        },
-      };
-
-  return { ...state, savedProps: newProps };
+  const newSavedProps = configs.reduce((currentSavedProps, { id, config, defaultConfig = {}, override }) => {
+    return override
+      ? { ...currentSavedProps, [id]: config }
+      : {
+          ...currentSavedProps,
+          [id]: {
+            // merge new config with old one
+            // similar to how this.setState merges props
+            // When updating the panel state, we merge the new config (which may be just a part of config) with the old config and the default config every time.
+            // Previously this was done inside the component, but since the lifecycle of Redux is Action => Reducer => new state => Component,
+            // dispatching an update to the panel state is not instant and can take some time to propagate back to the component.
+            // If the existing panel config is the complete config1, and two actions were fired in quick succession the component with partial config2 and config3,
+            // the correct behavior is to merge config2 with config1 and dispatch that, and then merge config 3 with the combined config2 and config1.
+            // Instead we had stale state so we would merge config3 with config1 and overwrite any keys that exist in config2 but do not exist in config3.
+            // The solution is to do this merge inside the reducer itself, since the state inside the reducer is never stale (unlike the state inside the component).
+            ...defaultConfig,
+            ...currentSavedProps[id],
+            ...config,
+          },
+        };
+  }, state.savedProps);
+  return { ...state, savedProps: newSavedProps };
 }
 
 function saveFullPanelConfig(state: PanelsState, payload: SaveFullConfigPayload): PanelsState {
@@ -179,11 +187,11 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
   switch (action.type) {
     case "CHANGE_PANEL_LAYOUT":
       // don't allow the last panel to be removed
-      newGlobalState = changePanelLayout(state, action.layout || state.layout);
+      newGlobalState = changePanelLayout(state, action.payload.layout || state.layout);
       break;
 
-    case "SAVE_PANEL_CONFIG":
-      newGlobalState = savePanelConfig(state, action.payload);
+    case "SAVE_PANEL_CONFIGS":
+      newGlobalState = savePanelConfigs(state, action.payload);
       break;
 
     case "SAVE_FULL_PANEL_CONFIG":
@@ -192,9 +200,6 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
 
     case "IMPORT_PANEL_LAYOUT":
       newGlobalState = importPanelLayout(state, action.payload);
-      if (action.payload.skipSettingLocalStorage) {
-        return newGlobalState;
-      }
       break;
 
     case "OVERWRITE_GLOBAL_DATA":
@@ -237,6 +242,9 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
       break;
   }
 
-  storage.set(GLOBAL_STATE_STORAGE_KEY, newGlobalState);
+  if (action.payload && action.payload.skipSettingLocalStorage) {
+    return newGlobalState;
+  }
+  setStoredLayout(newGlobalState);
   return newGlobalState;
 }

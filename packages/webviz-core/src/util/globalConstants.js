@@ -10,6 +10,7 @@ import { colors } from "webviz-core/src/util/sharedStyleConstants";
 // URL params
 // DANGER: if you change this you break existing urls
 export const REMOTE_BAG_URL_QUERY_KEY = "remote-bag-url";
+export const REMOTE_BAG_URL_2_QUERY_KEY = "remote-bag-url-2";
 export const ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY = "rosbridge-websocket-url";
 export const MEASURE_DATA_PROVIDERS_QUERY_KEY = "_measureDataProviders";
 export const DEMO_QUERY_KEY = "demo";
@@ -21,10 +22,12 @@ export const OLD_GLOBAL_VARIABLES_QUERY_KEY = "global-data";
 export const GLOBAL_VARIABLES_QUERY_KEY = "global-variables";
 export const TITLE_QUERY_KEY = "title";
 export const TEST_EVERYTHING_LAYOUT_QUERY_VAL = "_integration-test-everything-layout";
+export const FRAMELESS = "frameless";
 
 export const DEFAULT_WEBVIZ_NODE_PREFIX = "/webviz_node/";
 
 export const TRANSFORM_TOPIC = "/tf";
+export const TRANSFORM_STATIC_TOPIC = "/tf_static";
 export const DIAGNOSTIC_TOPIC = "/diagnostics";
 export const ROSOUT_TOPIC = "/rosout";
 export const SOCKET_KEY = "dataSource.websocket";
@@ -84,3 +87,5 @@ export const jsonTreeTheme = {
   base0D: colors.BLUEL1, // label & arrow
   base03: colors.DARK9, // item string expanded
 };
+
+export const TAB_PANEL_TYPE = "Tab";

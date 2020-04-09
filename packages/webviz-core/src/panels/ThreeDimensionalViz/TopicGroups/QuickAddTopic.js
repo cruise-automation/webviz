@@ -6,8 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import ChevronRightIcon from "@mdi/svg/svg/chevron-right.svg";
 import CloseIcon from "@mdi/svg/svg/close.svg";
-import { Icon } from "antd";
+import SearchIcon from "@mdi/svg/svg/magnify.svg";
+import PlusIcon from "@mdi/svg/svg/plus.svg";
 import Downshift from "downshift";
 import fuzzySort from "fuzzysort";
 import { difference } from "lodash";
@@ -17,24 +19,32 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList as List } from "react-window";
 import styled from "styled-components";
 
-import { ITEM_MAIN_PADDING_LEFT, ICON_TOTAL_SIZE, ICON_PADDING } from "./constants";
+import { ITEM_MAIN_PADDING_LEFT, ICON_TOTAL_SIZE } from "./constants";
 import KeyboardFocusIndex from "./KeyboardFocusIndex";
 import { KeyboardContext } from "./TopicGroups";
 import { getDefaultTopicItemConfig, removeBlankSpaces } from "./topicGroupsUtils";
 import TopicNameDisplay from "./TopicNameDisplay";
 import type { TopicGroupType, OnTopicGroupsChange, QuickAddTopicItem } from "./types";
 import Button from "webviz-core/src/components/Button";
-import WebvizIcon from "webviz-core/src/components/Icon";
+import Icon from "webviz-core/src/components/Icon";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
+type StyleProps = {| showAddView: boolean, highlighted: boolean, filterText: string |};
 const SQuickAddTopic = styled.div`
   position: relative;
   display: flex;
   align-items: center;
-  padding: ${({ showAddView }) => `4px 4px 4px ${showAddView ? 4 : ITEM_MAIN_PADDING_LEFT - ICON_TOTAL_SIZE - 12}`}px;
-  background: ${({ showAddView, highlighted }: { showAddView: boolean, highlighted: boolean }) =>
-    highlighted ? colors.HOVER_BACKGROUND_COLOR : "unset"};
+  padding: ${({ showAddView, filterText }: StyleProps) => {
+    if (showAddView) {
+      return "4px";
+    }
+    const leftPadding = filterText
+      ? ITEM_MAIN_PADDING_LEFT - ICON_TOTAL_SIZE * 3
+      : ITEM_MAIN_PADDING_LEFT - ICON_TOTAL_SIZE * 2;
+    return `4px 4px 4px ${leftPadding}px`;
+  }};
+  background: ${({ showAddView, highlighted }: StyleProps) => (highlighted ? colors.HOVER_BACKGROUND_COLOR : "unset")};
 `;
 
 const SShowAddWrapper = styled.div`
@@ -130,10 +140,10 @@ export function getIsTopicName(topicName: string): boolean {
   return topicName.startsWith("/") && topicName.length > 1;
 }
 
-function getFilteredItems(items: QuickAddTopicItem[], searchText?: string): QuickAddTopicItem[] {
-  return searchText
+function getFilteredItems(items: QuickAddTopicItem[], filterText?: string): QuickAddTopicItem[] {
+  return filterText
     ? fuzzySort
-        .go(searchText, items, {
+        .go(filterText, items, {
           // Fuzzy search on topicName and displayName
           // Note for adding multiple topics through available topics and topic tree view, we are not weighing
           // `disabled` (topics that have been added to the group already), so we don't have to tweak score and threshold accordingly.
@@ -157,14 +167,14 @@ type ItemRendererProps = {|
     items: Item[],
     getItemProps: (GetItemProp) => GetItemProp,
     highlightedIndex: number,
-    searchText: string,
+    filterText: string,
   |},
 |};
 
 function ItemRenderer({
   index,
   style,
-  data: { items, getItemProps, highlightedIndex, searchText },
+  data: { items, getItemProps, highlightedIndex, filterText },
 }: ItemRendererProps) {
   const item = items[index];
   return (
@@ -175,7 +185,7 @@ function ItemRenderer({
       <TopicNameDisplay
         displayName={item.displayName || item.topicName}
         topicName={item.topicName}
-        searchText={searchText}
+        searchText={filterText}
       />
     </SOption>
   );
@@ -184,24 +194,26 @@ function ItemRenderer({
 type AddTopicProps = {|
   availableTopicNames: string[],
   displayNameByTopic: { [topicName: string]: string },
-  searchText: string,
+  filterText: string,
   onAddTopicItem: ({ [topicName: string]: string }) => void,
   onCloseQuickAdd: () => void,
   onGroupEditClick: (currentFilterText: string) => void,
-  setSearchText: (string) => void,
+  setFilterText: (string) => void,
   topicGroup: TopicGroupType,
 |};
 
 function AddTopic({
   availableTopicNames,
   displayNameByTopic,
-  searchText,
+  filterText,
   onAddTopicItem,
   onCloseQuickAdd,
   onGroupEditClick,
-  setSearchText,
+  setFilterText,
   topicGroup,
 }: AddTopicProps) {
+  const filterTextWithoutSpaces = useMemo(() => removeBlankSpaces(filterText), [filterText]);
+
   const inputRef = useRef<?HTMLInputElement>(undefined);
   useEffect(() => {
     // auto focus on input on mount
@@ -231,18 +243,22 @@ function AddTopic({
       onChange={(selection) => onAddTopicItem(selection)}
       itemToString={(item) => (item ? item.topicName : "")}>
       {({ getInputProps, getItemProps, getMenuProps, getRootProps, highlightedIndex }) => {
-        const isTopicName = getIsTopicName(searchText);
-        const maybeTopicName = isTopicName ? removeBlankSpaces(searchText) : searchText;
-
-        const filteredItems = getFilteredItems(allItems, searchText);
+        const isTopicName = getIsTopicName(filterTextWithoutSpaces);
+        const filteredItems = getFilteredItems(allItems, filterTextWithoutSpaces);
         const showCreateOption =
-          isTopicName && !existingGroupTopicsSet.has(maybeTopicName) && !availableTopicNames.includes(maybeTopicName);
-        const itemsToRender = showCreateOption ? [{ topicName: maybeTopicName }, ...filteredItems] : filteredItems;
+          isTopicName &&
+          !existingGroupTopicsSet.has(filterTextWithoutSpaces) &&
+          !availableTopicNames.includes(filterTextWithoutSpaces);
+        const itemsToRender = showCreateOption
+          ? [{ topicName: filterTextWithoutSpaces }, ...filteredItems]
+          : filteredItems;
 
         return (
           <SAddContainer>
             <SInputWrapper {...getRootProps({}, { suppressRefError: true })}>
-              <Icon type="search" />
+              <Icon small fade>
+                <SearchIcon />
+              </Icon>
               <SInput
                 ref={inputRef}
                 data-test="quick-add-topic-input"
@@ -250,9 +266,9 @@ function AddTopic({
                 {...getInputProps({
                   onChange: (ev) => {
                     ev.preventDefault();
-                    setSearchText(ev.target.value);
+                    setFilterText(ev.target.value);
                   },
-                  value: searchText,
+                  value: filterText,
                   onKeyDown: (event) => {
                     if (event.key === "ArrowUp" || event.key === "ArrowDown") {
                       // Prevent topic group container from handling the event since the user can use ArrowUp/Down to navigate the quick add options.
@@ -265,14 +281,14 @@ function AddTopic({
                     } else if (event.key === "Enter" && showCreateOption && highlightedIndex == null) {
                       // Create a new item when pressed enter without selecting any items.
                       event.preventDownshiftDefault = true;
-                      onAddTopicItem({ topicName: maybeTopicName });
+                      onAddTopicItem({ topicName: filterTextWithoutSpaces });
                     }
                   },
                 })}
               />
-              <WebvizIcon fade onClick={onCloseQuickAdd} medium>
+              <Icon fade onClick={onCloseQuickAdd} medium>
                 <CloseIcon />
-              </WebvizIcon>
+              </Icon>
             </SInputWrapper>
             <SOptionsWrapper>
               {itemsToRender.length === 0 ? (
@@ -290,7 +306,7 @@ function AddTopic({
                           getItemProps,
                           highlightedIndex,
                           items: itemsToRender,
-                          searchText: isTopicName ? maybeTopicName : searchText,
+                          filterText: filterTextWithoutSpaces,
                         }}>
                         {ItemRenderer}
                       </List>
@@ -300,8 +316,11 @@ function AddTopic({
               )}
             </SOptionsWrapper>
             <SActionWrapper>
-              <SBrowseButton onClick={() => onGroupEditClick(searchText)}>
-                Edit group <Icon type="right" style={{ padding: `4px 0 0 ${ICON_PADDING}px ` }} />
+              <SBrowseButton onClick={() => onGroupEditClick(filterText)}>
+                Edit group
+                <Icon small style={{ fontSize: 16, paddingTop: 2 }}>
+                  <ChevronRightIcon />
+                </Icon>
               </SBrowseButton>
             </SActionWrapper>
           </SAddContainer>
@@ -329,11 +348,11 @@ export default function QuickAddTopic({
   onTopicGroupsChange,
   topicGroup,
   topicGroup: {
-    derivedFields: { addTopicKeyboardFocusIndex },
+    derivedFields: { addTopicKeyboardFocusIndex, filterText: topLevelFilterText },
   },
   testShowAddView,
 }: Props) {
-  const [searchText, setSearchText] = useState("");
+  const [filterText, setFilterText] = useState("");
   const { focusIndex, setFocusIndex, focusItemOp, onFocusOnContainer, setFocusItemOp } = useContext(KeyboardContext);
   const highlighted = focusIndex !== -1 && focusIndex === addTopicKeyboardFocusIndex;
   const [showAddView, setShowAddView] = useState(testShowAddView || false);
@@ -392,6 +411,7 @@ export default function QuickAddTopic({
       className={`focus-item-${addTopicKeyboardFocusIndex}`}
       role="option"
       highlighted={highlighted}
+      filterText={topLevelFilterText}
       onMouseEnter={(e) => {
         if (!highlighted) {
           setFocusIndex(addTopicKeyboardFocusIndex);
@@ -402,7 +422,9 @@ export default function QuickAddTopic({
       <KeyboardFocusIndex highlighted={highlighted} keyboardFocusIndex={addTopicKeyboardFocusIndex} />
       {!showAddView && (
         <SBrowseButton data-test="show-add-view-btn" onClick={() => setShowAddView(true)}>
-          <Icon type="plus" style={{ padding: "4px 10px 0 0" }} />
+          <Icon small>
+            <PlusIcon />
+          </Icon>
           New topic
         </SBrowseButton>
       )}
@@ -411,11 +433,11 @@ export default function QuickAddTopic({
           <AddTopic
             availableTopicNames={availableTopicNames}
             displayNameByTopic={displayNameByTopic}
-            searchText={searchText}
+            filterText={filterText}
             onAddTopicItem={onAddTopicItem}
             onCloseQuickAdd={onCloseQuickAdd}
             onGroupEditClick={onGroupEditClick}
-            setSearchText={setSearchText}
+            setFilterText={setFilterText}
             topicGroup={topicGroup}
           />
         )}

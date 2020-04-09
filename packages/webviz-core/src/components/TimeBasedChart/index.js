@@ -5,24 +5,22 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { flatten, max, min, minBy } from "lodash";
+import { max, min, flatten } from "lodash";
 import React, { memo, useEffect, useCallback, useState, useRef } from "react";
-import ChartComponent from "react-chartjs-2";
 import DocumentEvents from "react-document-events";
 import ReactDOM from "react-dom";
+import KeyListener from "react-key-listener";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 
-import NewTimeBasedChart from "./NewTimeBasedChart";
 import TimeBasedChartTooltip from "./TimeBasedChartTooltip";
 import Button from "webviz-core/src/components/Button";
 import createSyncingComponent from "webviz-core/src/components/createSyncingComponent";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import type { MessageHistoryItem } from "webviz-core/src/components/MessageHistoryDEPRECATED";
-import { type ScaleOptions } from "webviz-core/src/components/ReactChartjs";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
+import ChartComponent, { type HoveredElement, type ScaleOptions } from "webviz-core/src/components/ReactChartjs";
 import TimeBasedChartLegend from "webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend";
 import Tooltip from "webviz-core/src/components/Tooltip";
-import Y_AXIS_ID from "webviz-core/src/panels/Plot/PlotChart";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
 
 type Bounds = {| minX: ?number, maxX: ?number |};
@@ -35,7 +33,6 @@ export type TimeBasedChartTooltipData = {|
   x: number,
   y: number | string,
   datasetKey?: string,
-  datasetIndex?: number,
   item: MessageHistoryItem,
   path: string,
   value: number | boolean | string,
@@ -46,7 +43,6 @@ export type TimeBasedChartTooltipData = {|
 export type DataPoint = {|
   x: number,
   y: number | string,
-  tooltip?: TimeBasedChartTooltipData,
   label?: string,
   labelColor?: string,
 |};
@@ -107,36 +103,31 @@ type Props = {|
   tooltips?: TimeBasedChartTooltipData[],
   xAxes?: any,
   yAxes: any,
-  plugins?: any,
   annotations?: any[],
-  // Unused but here for compatibility with the NewTimeBasedChart.
   drawLegend?: boolean,
   isSynced?: boolean,
   canToggleLines?: boolean,
   toggleLine?: (datasetId: string | typeof undefined, lineToHide: string) => void,
   linesToHide?: { [string]: boolean },
   datasetId?: string,
-  onClick?: (SyntheticMouseEvent<HTMLCanvasElement>) => void,
+  onClick?: (SyntheticMouseEvent<HTMLCanvasElement>, datalabel: ?any) => void,
   saveCurrentYs?: (minY: number, maxY: number) => void,
   xAxisVal?: "timestamp" | "index" | "custom",
-  useFixedYAxisWidth?: boolean,
-  scaleOptions?: ScaleOptions,
+  plugins?: any,
+  scaleOptions?: ?ScaleOptions,
 |};
-
-type Chart = any;
 
 // Create a chart with any y-axis but with an x-axis that shows time since the
 // start of the bag, and which is kept in sync with other instances of this
 // component. Uses chart.js internally, with a zoom/pan plugin, and with our
 // standard tooltips.
-const WrappedTimeBasedChart = memo<Props>(function TimeBasedChart(props: Props) {
-  const chart = useRef<?ChartComponent>(null);
+export default memo<Props>(function TimeBasedChart(props: Props) {
+  const chartComponent = useRef<?ChartComponent>(null);
   const tooltip = useRef<?HTMLDivElement>(null);
+  const hasUnmounted = useRef<boolean>(false);
   const bar = useRef<?HTMLDivElement>(null);
-  const tooltipModel = useRef<?{ dataPoints?: any[] }>(null);
-  const mousePosition = useRef<?{| x: number, y: number |}>(null);
 
-  const [showResetZoom, setShowResetZoom] = useState(false);
+  const [hasUserPanOrZoomed, setHasUserPannedOrZoomed] = useState(false);
   const [, forceUpdate] = useState();
 
   const onVisibilityChange = useCallback(
@@ -166,48 +157,73 @@ const WrappedTimeBasedChart = memo<Props>(function TimeBasedChart(props: Props) 
     [onVisibilityChange]
   );
 
-  const onPlotChartUpdate = useCallback(
-    (axis: any) => {
-      if (props.saveCurrentYs) {
-        const scaleId = props.yAxes ? props.yAxes[0].id : Y_AXIS_ID;
-        props.saveCurrentYs(axis.chart.scales[scaleId].min, axis.chart.scales[scaleId].max);
-      }
+  const pauseFrame = useMessagePipeline(useCallback((messagePipeline) => messagePipeline.pauseFrame, []));
+
+  const onChartUpdate = useCallback(
+    () => {
+      const resumeFrame = pauseFrame("TimeBasedChart");
+      return () => {
+        resumeFrame();
+      };
     },
-    [props]
+    [pauseFrame]
   );
 
-  const onPanZoomUpdate = (chartWrapper: { chart: Chart }) => {
-    const chartInstance = chartWrapper.chart;
-    const Y_scaleId = props.yAxes[0].id;
-    const minY = chartInstance.scales[Y_scaleId].min;
-    const maxY = chartInstance.scales[Y_scaleId].max;
+  const { saveCurrentYs, yAxes } = props;
+  const yAxisScaleId = yAxes[0]?.id;
+  const onScaleBoundsUpdate = useCallback(
+    (scales) => {
+      const firstYScale = scales.find(({ id }) => id === yAxisScaleId);
+      if (firstYScale && saveCurrentYs && typeof firstYScale.min === "number" && typeof firstYScale.max === "number") {
+        saveCurrentYs(firstYScale.min, firstYScale.max);
+      }
+    },
+    [yAxisScaleId, saveCurrentYs]
+  );
 
-    if (props.saveCurrentYs) {
-      props.saveCurrentYs(minY, maxY);
-    }
-    if (!showResetZoom) {
-      setShowResetZoom(true);
-    }
-  };
+  const onPanZoom = useCallback(
+    () => {
+      if (!hasUserPanOrZoomed) {
+        setHasUserPannedOrZoomed(true);
+      }
+    },
+    [hasUserPanOrZoomed, setHasUserPannedOrZoomed]
+  );
 
   const onResetZoom = useCallback(
     () => {
-      if (chart.current) {
-        chart.current.chartInstance.resetZoom();
-        setShowResetZoom(false);
+      if (chartComponent.current) {
+        chartComponent.current.resetZoom();
+        setHasUserPannedOrZoomed(false);
       }
     },
-    [setShowResetZoom]
+    [setHasUserPannedOrZoomed]
   );
 
-  const onGetTick = (value: number, index: number, values: number[]): string => {
-    if (index === 0 || index === values.length - 1) {
-      // First and last labels sometimes get super long rounding errors when zooming.
-      // This fixes that.
-      return "";
-    }
-    return `${value}`;
-  };
+  const [hasVerticalExclusiveZoom, setHasVerticalExclusiveZoom] = useState<boolean>(false);
+  const [hasHorizontalExclusiveZoom, setHasHorizontalExclusiveZoom] = useState<boolean>(false);
+  let zoomMode = "xy";
+  if (hasVerticalExclusiveZoom && hasHorizontalExclusiveZoom) {
+    zoomMode = "xy";
+  } else if (hasVerticalExclusiveZoom) {
+    zoomMode = "y";
+  } else if (hasHorizontalExclusiveZoom) {
+    zoomMode = "x";
+  }
+  const keyDownHandlers = React.useMemo(
+    () => ({
+      v: () => setHasVerticalExclusiveZoom(true),
+      h: () => setHasHorizontalExclusiveZoom(true),
+    }),
+    [setHasVerticalExclusiveZoom, setHasHorizontalExclusiveZoom]
+  );
+  const keyUphandlers = React.useMemo(
+    () => ({
+      v: () => setHasVerticalExclusiveZoom(false),
+      h: () => setHasHorizontalExclusiveZoom(false),
+    }),
+    [setHasVerticalExclusiveZoom, setHasHorizontalExclusiveZoom]
+  );
 
   const removeTooltip = useCallback(() => {
     if (tooltip.current) {
@@ -222,94 +238,107 @@ const WrappedTimeBasedChart = memo<Props>(function TimeBasedChart(props: Props) 
   // Always clean up tooltips when unmounting.
   useEffect(
     () => {
-      return () => removeTooltip();
+      return () => {
+        hasUnmounted.current = true;
+        removeTooltip();
+      };
     },
     [removeTooltip]
   );
 
+  const tooltips = props.tooltips || [];
   // We use a custom tooltip so we can style it more nicely, and so that it can break
   // out of the bounds of the canvas, in case the panel is small.
   const updateTooltip = useCallback(
-    () => {
-      if (
-        !mousePosition.current ||
-        !tooltipModel.current ||
-        !tooltipModel.current.dataPoints ||
-        tooltipModel.current.dataPoints.length === 0
-      ) {
+    (currentChartComponent: ChartComponent, canvas: HTMLCanvasElement, tooltipItem: ?HoveredElement) => {
+      // This is an async callback, so it can fire after this component is unmounted. Make sure that we remove the
+      // tooltip if this fires after unmount.
+      if (!tooltipItem || hasUnmounted.current) {
         return removeTooltip();
       }
 
-      const { y } = mousePosition.current;
-      const tooltipItem = minBy(tooltipModel.current.dataPoints, (point) => Math.abs(point.y - y));
-
-      if (
-        !chart.current ||
-        !chart.current.chartInstance.data.datasets[tooltipItem.datasetIndex] ||
-        !chart.current.chartInstance.data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]
-      ) {
+      // We have to iterate through all of the tooltips every time the user hovers over a point. However, the cost of
+      // running this search is small (< 10ms even with many tooltips) compared to the cost of indexing tooltips by
+      // coordinates and we care more about render time than tooltip responsiveness.
+      const tooltipData = tooltips.find(
+        (_tooltip) => _tooltip.x === tooltipItem.data.x && String(_tooltip.y) === String(tooltipItem.data.y)
+      );
+      if (!tooltipData) {
         return removeTooltip();
       }
-      const { chartInstance } = chart.current;
 
       if (!tooltip.current) {
         tooltip.current = document.createElement("div");
-        chartInstance.canvas.parentNode.appendChild(tooltip.current);
+        if (canvas.parentNode) {
+          canvas.parentNode.appendChild(tooltip.current);
+        }
       }
+
       if (tooltip.current) {
         ReactDOM.render(
-          <TimeBasedChartTooltip
-            tooltip={chartInstance.data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].tooltip}>
-            <div style={{ position: "absolute", left: tooltipItem.x, top: tooltipItem.y }} />
+          <TimeBasedChartTooltip tooltip={tooltipData}>
+            <div style={{ position: "absolute", left: tooltipItem.view.x, top: tooltipItem.view.y }} />
           </TimeBasedChartTooltip>,
           tooltip.current
         );
       }
     },
-    [removeTooltip]
+    [removeTooltip, tooltips]
   );
 
   const onMouseMove = useCallback(
-    (event: MouseEvent) => {
-      if (!chart.current) {
-        mousePosition.current = null;
-        updateTooltip();
+    async (event: MouseEvent) => {
+      const currentChartComponent = chartComponent.current;
+      if (!currentChartComponent || !currentChartComponent.canvas) {
+        removeTooltip();
         if (bar.current && bar.current.style) {
           bar.current.style.display = "none";
         }
         return;
       }
-      const { chartInstance } = chart.current;
-      const canvasRect = chartInstance.canvas.getBoundingClientRect();
+      const { canvas } = currentChartComponent;
+      const canvasRect = canvas.getBoundingClientRect();
       if (
         event.pageX < canvasRect.left ||
         event.pageX > canvasRect.right ||
         event.pageY < canvasRect.top ||
         event.pageY > canvasRect.bottom
       ) {
-        mousePosition.current = null;
-        updateTooltip();
+        removeTooltip();
         if (bar.current && bar.current.style) {
           bar.current.style.display = "none";
         }
         return;
       }
-      mousePosition.current = {
-        x: event.pageX - canvasRect.left,
-        y: event.pageY - canvasRect.top,
-      };
+
+      const xMousePosition = event.pageX - canvasRect.left;
       if (bar.current && bar.current.style) {
         bar.current.style.display = "block";
-        bar.current.style.left = `${mousePosition.current.x}px`;
+        bar.current.style.left = `${xMousePosition}px`;
       }
-      updateTooltip();
+
+      const isTargetingCanvas = event.target === canvas;
+      if (!isTargetingCanvas) {
+        removeTooltip();
+        return;
+      }
+
+      if (tooltips && tooltips.length) {
+        const tooltipElement = await currentChartComponent.getElementAtXAxis(event);
+        updateTooltip(currentChartComponent, canvas, tooltipElement);
+      } else {
+        removeTooltip();
+      }
     },
-    [updateTooltip]
+    [updateTooltip, removeTooltip, tooltips]
   );
 
   const getChartjsOptions = (minX: ?number, maxX: ?number) => {
-    const { plugins, xAxes, yAxes, useFixedYAxisWidth, onClick } = props;
+    const { xAxes } = props;
+    const plugins = props.plugins || {};
     const annotations = props.annotations || [];
+
+    // We create these objects every time so that they can be modified.
     const defaultXTicksSettings = {
       fontFamily: mixins.monospaceFont,
       fontSize: 10,
@@ -325,11 +354,8 @@ const WrappedTimeBasedChart = memo<Props>(function TimeBasedChart(props: Props) 
     const defaultXAxis = {
       ticks: defaultXTicksSettings,
       gridLines: { color: "rgba(255, 255, 255, 0.2)", zeroLineColor: "rgba(255, 255, 255, 0.2)" },
-      afterUpdate: onPlotChartUpdate,
     };
-    // We create a new `options` object every time, but caching this wouldn't help anyway, since
-    // react-chartjs-2 creates a new object on every render anyway. :'(
-    // See https://github.com/jerairrest/react-chartjs-2/blob/b4047724002bca37486f1b13e618d2bb57162430/src/index.js#L176
+
     const options = {
       maintainAspectRatio: false,
       animation: { duration: 0 },
@@ -344,63 +370,43 @@ const WrappedTimeBasedChart = memo<Props>(function TimeBasedChart(props: Props) 
       tooltips: {
         intersect: false,
         mode: "x",
-        custom: (tooltipModelParam: { dataPoints?: any[] }) => {
-          tooltipModel.current = tooltipModelParam;
-          updateTooltip();
-        },
         enabled: false, // Disable native tooltips since we use custom ones.
       },
       scales: {
         xAxes: xAxes
-          ? xAxes.map((xAxis) => ({
-              ...defaultXAxis,
-              ...xAxis,
-              ticks: {
-                ...defaultXTicksSettings,
-                ...xAxis.ticks,
-                callback: (...args) => (xAxis.ticks.callback ? xAxis.ticks.callback(...args) : onGetTick(...args)),
-              },
-            }))
+          ? xAxes.map((xAxis) => {
+              const axis = {
+                ...defaultXAxis,
+                ...xAxis,
+                ticks: {
+                  ...defaultXTicksSettings,
+                  ...xAxis.ticks,
+                },
+              };
+              return axis;
+            })
           : [defaultXAxis],
         yAxes: yAxes.map((yAxis) => {
           const ticks = {
             ...defaultYTicksSettings,
             ...yAxis.ticks,
-            callback: (...args) => (yAxis.ticks.callback ? yAxis.ticks.callback(...args) : onGetTick(...args)),
           };
           // If the user is manually panning or zooming, don't constrain the y-axis
-          if (showResetZoom) {
+          if (hasUserPanOrZoomed) {
             delete ticks.min;
             delete ticks.max;
           }
 
           return {
             ...yAxis,
-            afterUpdate: onPlotChartUpdate,
-            afterFit: (scaleInstance) => {
-              // Sets y-axis labels to a fixed width, so that vertically-aligned charts can be directly compared.
-              // This width is large enough to easily see legend values up to 6 characters wide (ex: 100000 or -12.638).
-              if (useFixedYAxisWidth) {
-                scaleInstance.width = 48;
-              }
-            },
             ticks,
           };
         }),
       },
-      onClick,
-      pan: {
-        enabled: true,
-        onPan: onPanZoomUpdate,
-      },
-      zoom: {
-        enabled: props.zoom,
-        onZoom: onPanZoomUpdate,
-      },
-      plugins: plugins || {},
+      plugins,
       annotation: { annotations },
     };
-    if (!showResetZoom) {
+    if (!hasUserPanOrZoomed) {
       // $FlowFixMe
       options.scales.xAxes[0].ticks.min = minX;
       // $FlowFixMe
@@ -419,7 +425,9 @@ const WrappedTimeBasedChart = memo<Props>(function TimeBasedChart(props: Props) 
     toggleLine,
     data,
     isSynced,
+    onClick,
     linesToHide = {},
+    scaleOptions,
   } = props;
   const xAxisVal = props.xAxisVal || "timestamp";
   const xVals = flatten(data.datasets.map(({ data: pts }) => (pts.length > 1 ? pts.map(({ x }) => x) : undefined)));
@@ -429,9 +437,19 @@ const WrappedTimeBasedChart = memo<Props>(function TimeBasedChart(props: Props) 
     type,
     width,
     height,
-    key: `${width}x${height}`, // https://github.com/jerairrest/react-chartjs-2/issues/60#issuecomment-406376731
-    ref: chart,
+    key: `${width}x${height}`,
+    ref: chartComponent,
     data: { ...data, datasets: data.datasets.filter((dataset) => !linesToHide[dataset.label]) },
+    onScaleBoundsUpdate,
+    onPanZoom,
+    onClick,
+    zoomOptions: {
+      ...ChartComponent.defaultProps.zoomOptions,
+      enabled: props.zoom,
+      mode: zoomMode,
+    },
+    scaleOptions,
+    onChartUpdate,
   };
 
   return (
@@ -452,7 +470,7 @@ const WrappedTimeBasedChart = memo<Props>(function TimeBasedChart(props: Props) 
             <ChartComponent {...chartProps} options={getChartjsOptions(minX, maxX)} />
           )}
 
-          {showResetZoom && (
+          {hasUserPanOrZoomed && (
             <SResetZoom>
               <Button tooltip="(shortcut: double-click)" onClick={onResetZoom}>
                 reset view
@@ -460,8 +478,9 @@ const WrappedTimeBasedChart = memo<Props>(function TimeBasedChart(props: Props) 
             </SResetZoom>
           )}
 
-          {/* Chart.js seems to not handle tooltips while dragging super well, and this fixes that. */}
+          {/* Handle tooltips while dragging by checking all document events. */}
           <DocumentEvents capture onMouseDown={onMouseMove} onMouseUp={onMouseMove} onMouseMove={onMouseMove} />
+          <KeyListener global keyDownHandlers={keyDownHandlers} keyUpHandlers={keyUphandlers} />
         </SRoot>
       </div>
       {props.zoom && <MemoizedTooltips />}
@@ -479,14 +498,3 @@ const WrappedTimeBasedChart = memo<Props>(function TimeBasedChart(props: Props) 
     </div>
   );
 });
-
-export const OldTimeBasedChart = WrappedTimeBasedChart;
-
-// Add a wrapper that allows switching between TimeBasedChart implementations.
-export default function TimeBasedChartWrapper(props: Props) {
-  const shouldUseWebWorkerPlots = useExperimentalFeature("plotWebWorker");
-  if (shouldUseWebWorkerPlots) {
-    return <NewTimeBasedChart {...props} />;
-  }
-  return <WrappedTimeBasedChart {...props} />;
-}

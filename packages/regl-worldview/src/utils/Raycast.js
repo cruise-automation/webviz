@@ -39,7 +39,7 @@ export class Ray {
       return null;
     }
 
-    const x = d - vec3.dot(planeNormal, this.origin) / cosine;
+    const x = (d - vec3.dot(planeNormal, this.origin)) / cosine;
     const contact = vec3.add([0, 0, 0], this.origin, vec3.scale(tempVec, this.dir, x));
     return contact;
   }

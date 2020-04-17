@@ -245,7 +245,7 @@ export class WorldviewContext {
   }
 
   onDirty = () => {
-    if (undefined !== this._frame) {
+    if (undefined === this._frame) {
       this._frame = requestAnimationFrame(() => this.paint());
     }
   };

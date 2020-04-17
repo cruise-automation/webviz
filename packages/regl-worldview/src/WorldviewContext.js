@@ -212,6 +212,8 @@ export class WorldviewContext {
     try {
       this._paint();
     } catch (error) {
+      // Regl automatically tries to reconnect when losing the canvas 3d context.
+      // We should log this error, but it's not important to throw it.
       if (error.message === "(regl) context lost") {
         console.warn(error);
       } else {

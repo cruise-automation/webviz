@@ -82,7 +82,7 @@ export class WorldviewContext {
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInput> = new Map();
-  _frame: AnimationFrameID | null;
+  _frame: ?AnimationFrameID;
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
   _hitmapObjectIdManager: HitmapObjectIdManager = new HitmapObjectIdManager();
   _cachedReadHitmapCall: ?{
@@ -155,7 +155,9 @@ export class WorldviewContext {
     if (this.initializedData) {
       this.initializedData.regl.destroy();
     }
-    cancelAnimationFrame(this._frame);
+    if (this._frame) {
+      cancelAnimationFrame(this._frame);
+    }
   }
 
   // compile a command when it is first mounted, and try to register in _commands and _compiled maps

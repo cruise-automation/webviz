@@ -239,11 +239,11 @@ export class WorldviewContext {
       paintCall();
     });
     this.counters.render = Date.now() - start;
-    this._frame = null;
+    this._frame = undefined;
   }
 
   onDirty = () => {
-    if (!this._frame) {
+    if (undefined !== this._frame) {
       this._frame = requestAnimationFrame(() => this.paint());
     }
   };

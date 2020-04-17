@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import debounce from "lodash/debounce";
 import * as React from "react";
 import createREGL from "regl";
 import shallowequal from "shallowequal";
@@ -83,6 +82,7 @@ export class WorldviewContext {
   _commands: Set<RawCommand<any>> = new Set();
   _compiled: Map<Function, CompiledReglCommand<any>> = new Map();
   _drawCalls: Map<React.Component<any>, DrawInput> = new Map();
+  _frame: AnimationFrameID | null;
   _paintCalls: Map<PaintFn, PaintFn> = new Map();
   _hitmapObjectIdManager: HitmapObjectIdManager = new HitmapObjectIdManager();
   _cachedReadHitmapCall: ?{
@@ -101,7 +101,6 @@ export class WorldviewContext {
 
   constructor({ dimension, canvasBackgroundColor, cameraState, onCameraStateChange }: ConstructorArgs) {
     // used for children to call paint() directly
-    this.onDirty = this._debouncedPaint;
     this.dimension = dimension;
     this.canvasBackgroundColor = canvasBackgroundColor;
     this.cameraStore = new CameraStore((cameraState: CameraState) => {
@@ -156,6 +155,7 @@ export class WorldviewContext {
     if (this.initializedData) {
       this.initializedData.regl.destroy();
     }
+    cancelAnimationFrame(this._frame);
   }
 
   // compile a command when it is first mounted, and try to register in _commands and _compiled maps
@@ -207,6 +207,18 @@ export class WorldviewContext {
   };
 
   paint() {
+    try {
+      this._paint();
+    } catch (error) {
+      if (error.message === "(regl) context lost") {
+        console.warn(error);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  _paint() {
     const start = Date.now();
     this.reglCommandObjects.forEach((cmd) => (cmd.stats.count = 0));
     if (!this.initializedData) {
@@ -225,9 +237,14 @@ export class WorldviewContext {
       paintCall();
     });
     this.counters.render = Date.now() - start;
+    this._frame = null;
   }
 
-  _debouncedPaint = debounce(this.paint, 10);
+  onDirty = () => {
+    if (!this._frame) {
+      this._frame = requestAnimationFrame(() => this.paint());
+    }
+  };
 
   readHitmap = queuePromise(
     (

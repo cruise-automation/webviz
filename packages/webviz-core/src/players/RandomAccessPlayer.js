@@ -423,7 +423,7 @@ export default class RandomAccessPlayer implements Player {
 
   _setCurrentTime(time: Time): void {
     this._metricsCollector.recordPlaybackTime(time);
-    this._currentTime = time;
+    this._currentTime = clampTime(time, this._start, this._end);
   }
 
   _seekPlaybackInternal = debouncePromise(async () => {

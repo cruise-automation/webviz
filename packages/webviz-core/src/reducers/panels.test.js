@@ -310,27 +310,38 @@ describe("state.panels", () => {
     const panelState = {
       layout: {
         direction: "row",
+        first: "FirstPanel!34otwwt",
         second: {
           direction: "column",
           second: "SecondPanel!2wydzut",
-          first: { direction: "row", second: "ThirdPanel!ye6m1m", first: "FourthPanel!v3l5mu" },
+          first: { direction: "row", second: "ThirdPanel!ye6m1m", first: "FourthPanel!abc" },
         },
+      },
+      savedProps: {},
+    };
+    const tabPanelState = {
+      layout: {
+        direction: "row",
         first: "FirstPanel!34otwwt",
+        second: {
+          direction: "column",
+          second: "SecondPanel!2wydzut",
+          first: { direction: "row", second: "ThirdPanel!ye6m1m", first: "Tab!abc" },
+        },
       },
       savedProps: {},
     };
 
-    it("removes config when the panel is removed from the layout", () => {
+    it("removes a panel's savedProps when it is removed from the layout", () => {
       const store = getStore();
       store.dispatch(changePanelLayout({ layout: panelState.layout }));
       store.checkState((panels) => {
-        // i want to verify my assumption on how mosaic helper works so if it changes we can know about it
         const leaves = getLeaves(panelState.layout);
         expect(leaves).toHaveLength(4);
         expect(leaves).toContain("FirstPanel!34otwwt");
         expect(leaves).toContain("SecondPanel!2wydzut");
         expect(leaves).toContain("ThirdPanel!ye6m1m");
-        expect(leaves).toContain("FourthPanel!v3l5mu");
+        expect(leaves).toContain("FourthPanel!abc");
         expect(panels.savedProps).toEqual({});
       });
 
@@ -374,6 +385,45 @@ describe("state.panels", () => {
         expect(panels.savedProps).toEqual({
           "foo!1234": { okay: true },
         });
+      });
+    });
+
+    it("removes a panel's savedProps when it is removed from Tab panel", () => {
+      const store = getStore();
+      store.dispatch(changePanelLayout({ layout: tabPanelState.layout }));
+      store.checkState((panels) => {
+        const leaves = getLeaves(tabPanelState.layout);
+        expect(leaves).toHaveLength(4);
+        expect(leaves).toContain("FirstPanel!34otwwt");
+        expect(leaves).toContain("SecondPanel!2wydzut");
+        expect(leaves).toContain("ThirdPanel!ye6m1m");
+        expect(leaves).toContain("Tab!abc");
+        expect(panels.savedProps).toEqual({});
+      });
+
+      const baseTabConfig = {
+        id: "Tab!abc",
+        config: { tabs: [{ title: "Tab A", layout: "NestedPanel!xyz" }], activeTabIdx: 0 },
+      };
+      store.dispatch(savePanelConfigs({ configs: [baseTabConfig] }));
+      store.checkState((panels) => {
+        expect(panels.savedProps).toEqual({ "Tab!abc": baseTabConfig.config });
+      });
+
+      const nestedPanelConfig = { id: "NestedPanel!xyz", config: { foo: "bar" } };
+      store.dispatch(savePanelConfigs({ configs: [nestedPanelConfig] }));
+      store.checkState((panels) => {
+        expect(panels.savedProps).toEqual({
+          "Tab!abc": baseTabConfig.config,
+          "NestedPanel!xyz": nestedPanelConfig.config,
+        });
+      });
+
+      const emptyTabConfig = { id: "Tab!abc", config: { tabs: [{ title: "Tab A", layout: null }], activeTabIdx: 0 } };
+      store.dispatch(savePanelConfigs({ configs: [emptyTabConfig] }));
+      store.checkState((panels) => {
+        // "NestedPanel!xyz" key in savedProps should be gone
+        expect(panels.savedProps).toEqual({ "Tab!abc": emptyTabConfig.config });
       });
     });
   });

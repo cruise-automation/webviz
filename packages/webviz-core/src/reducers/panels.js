@@ -14,14 +14,16 @@ import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type {
+  MosaicNode,
   SaveConfigsPayload,
   SaveFullConfigPayload,
   ImportPanelLayoutPayload,
-  PanelConfig,
+  SavedProps,
   UserNodes,
   PlaybackConfig,
 } from "webviz-core/src/types/panels";
-import { getPanelTypeFromId, getPanelIdsInsideTabPanels } from "webviz-core/src/util";
+import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
+import { getPanelTypeFromId, getPanelIdsInsideTabPanels } from "webviz-core/src/util/layout";
 import Storage from "webviz-core/src/util/Storage";
 
 const storage = new Storage();
@@ -40,11 +42,11 @@ const OLD_KEYS = {
 };
 
 export type PanelsState = {
-  layout: any,
+  layout: MosaicNode,
   // We store config for each panel in a hash keyed by the panel id.
   // This should at some point be renamed to `config` or `configById` or so,
   // but it's inconvenient to have this diverge from `PANEL_PROPS_KEY`.
-  savedProps: { [panelId: string]: PanelConfig },
+  savedProps: SavedProps,
   globalVariables: GlobalVariables,
   // old state which is migrated to globalVariables. Keeping it here to satisfy flow
   globalData?: GlobalVariables,
@@ -105,12 +107,11 @@ function getDefaultState(): PanelsState {
   return getGlobalHooks().migratePanels(newGlobalState);
 }
 
-function changePanelLayout(state: PanelsState, layout: any): PanelsState {
+function changePanelLayout(state: PanelsState, layout: MosaicNode): PanelsState {
   const panelIds = getLeaves(layout);
-  const tabPanelIds = panelIds.filter((id) => id.startsWith("Tab!"));
-  const panelIdsInsideTabPanels = getPanelIdsInsideTabPanels(tabPanelIds, state.savedProps);
-  // filter saved props in case a panel was removed from the layout
-  // we don't want it saved props hanging around forever
+  const panelIdsInsideTabPanels = getPanelIdsInsideTabPanels(panelIds, state.savedProps);
+  // Filter savedProps in case a panel was removed from the layout
+  // We don't want its savedProps hanging around forever
   const savedProps = pick(state.savedProps, [...panelIdsInsideTabPanels, ...panelIds]);
   return { ...state, savedProps, layout };
 }
@@ -139,6 +140,14 @@ function savePanelConfigs(state: PanelsState, payload: SaveConfigsPayload): Pane
           },
         };
   }, state.savedProps);
+  const tabPanelConfigSaved = configs.find(({ id }) => getPanelTypeFromId(id) === TAB_PANEL_TYPE);
+  if (tabPanelConfigSaved) {
+    const panelIds = getLeaves(state.layout);
+    const panelIdsInsideTabPanels = getPanelIdsInsideTabPanels(panelIds, newSavedProps);
+    // Filter savedProps in case a panel was removed from a Tab layout
+    // We don't want its savedProps hanging around forever
+    return { ...state, savedProps: pick(newSavedProps, [...panelIdsInsideTabPanels, ...panelIds]) };
+  }
   return { ...state, savedProps: newSavedProps };
 }
 

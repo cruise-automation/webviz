@@ -144,7 +144,7 @@ export default class CombinedDataProvider implements DataProvider {
     const results: InitializationResult[] = [];
     // NOTE: Initialization is done serially instead of concurrently here as a
     // temporary workaround for a major IndexedDB bug that results in runaway
-    // disk usage. TODO: Reference chromium ticket.
+    // disk usage. See https://bugs.chromium.org/p/chromium/issues/detail?id=1035025
     for (let idx = 0; idx < this._providers.length; idx++) {
       const { provider } = this._providers[idx];
       const childExtensionPoint = {

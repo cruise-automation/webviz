@@ -11,24 +11,43 @@ import { createMemoryHistory } from "history";
 import * as React from "react";
 import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
-import { Provider } from "react-redux";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import PanelLayout from "./PanelLayout";
 import { changePanelLayout } from "webviz-core/src/actions/panels";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
+import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 storiesOf("<PanelLayout>", module)
   .addDecorator(withScreenshot())
   .add("panel not found", () => {
     const store = configureStore(createRootReducer(createMemoryHistory));
-    store.dispatch(changePanelLayout({ layout: "DummyPanelType!4co6n9d" }));
+    store.dispatch(changePanelLayout({ layout: "UnknownPanel!4co6n9d" }));
     return (
-      <Provider store={store}>
-        <DndProvider backend={HTML5Backend}>
+      <DndProvider backend={HTML5Backend}>
+        <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }} omitDragAndDrop>
           <PanelLayout />
-        </DndProvider>
-      </Provider>
+        </PanelSetup>
+      </DndProvider>
+    );
+  })
+  .add("tab panel", () => {
+    const store = configureStore(createRootReducer(createMemoryHistory));
+    store.dispatch(
+      changePanelLayout({
+        layout: {
+          first: "Tab!1r7jeml",
+          second: "Global!45ehbhx",
+          direction: "row",
+        },
+      })
+    );
+    return (
+      <DndProvider backend={HTML5Backend}>
+        <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }} omitDragAndDrop>
+          <PanelLayout />
+        </PanelSetup>
+      </DndProvider>
     );
   });

@@ -13,7 +13,7 @@ import { type ReglClickInfo } from "regl-worldview";
 import type { Point } from "webviz-core/src/types/Messages";
 import { arrayToPoint } from "webviz-core/src/util";
 
-export type MeasureState = "idle" | "place-start" | "place-finish" | "done";
+export type MeasureState = "idle" | "place-start" | "place-finish";
 
 export type MeasureInfo = {|
   measureState: MeasureState,
@@ -31,8 +31,7 @@ export default class MeasuringTool extends React.Component<Props> {
   mouseDownCoords: number[] = [-1, -1];
 
   toggleMeasureState = () => {
-    const newMeasureState =
-      this.props.measureState === "idle" || this.props.measureState === "done" ? "place-start" : "idle";
+    const newMeasureState = this.props.measureState === "idle" ? "place-start" : "idle";
     this.props.onMeasureInfoChange({
       measureState: newMeasureState,
       measurePoints: { start: undefined, end: undefined },
@@ -58,17 +57,15 @@ export default class MeasuringTool extends React.Component<Props> {
       return;
     }
 
-    let newMeasureState = measureState;
     if (measureState === "place-start") {
-      newMeasureState = "place-finish";
+      onMeasureInfoChange({ measureState: "place-finish", measurePoints });
     } else if (measureState === "place-finish") {
-      newMeasureState = "done";
+      // Use setImmediate so there is a tick between resetting the measure state and clicking the 3D canvas.
+      // If we call onMeasureInfoChange right away, the clicked object context menu will show up upon finishing measuring.
+      setImmediate(() => {
+        onMeasureInfoChange({ measurePoints, measureState: "idle" });
+      });
     }
-
-    onMeasureInfoChange({
-      measureState: newMeasureState,
-      measurePoints,
-    });
   };
 
   _canvasMouseMoveHandler = (e: MouseEvent, clickInfo: ReglClickInfo) => {

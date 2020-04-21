@@ -12,6 +12,7 @@ import { hot } from "react-hot-loader/root";
 import { connect, Provider } from "react-redux";
 
 import styles from "./Root.module.scss";
+import { redoLayoutChange, undoLayoutChange } from "webviz-core/src/actions/layoutHistory";
 import { importPanelLayout } from "webviz-core/src/actions/panels";
 import Logo from "webviz-core/src/assets/logo.svg";
 import AppMenu from "webviz-core/src/components/AppMenu";
@@ -28,6 +29,7 @@ import SelectableTimestamp from "webviz-core/src/components/SelectableTimestamp"
 import { TinyConnectionPicker } from "webviz-core/src/components/TinyConnectionPicker";
 import Toolbar from "webviz-core/src/components/Toolbar";
 import withDragDropContext from "webviz-core/src/components/withDragDropContext";
+import type { State } from "webviz-core/src/reducers";
 import getGlobalStore from "webviz-core/src/store/getGlobalStore";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import { setReactHotLoaderConfig } from "webviz-core/src/util/dev";
@@ -40,6 +42,10 @@ const LOGO_SIZE = 24;
 
 type Props = {|
   importPanelLayout: typeof importPanelLayout,
+  redoStateCount: number,
+  undoStateCount: number,
+  redoLayoutChange: () => void,
+  undoLayoutChange: () => void,
 |};
 class App extends React.PureComponent<Props> {
   container: ?HTMLDivElement;
@@ -105,7 +111,12 @@ class App extends React.PureComponent<Props> {
                   <AppMenu />
                 </div>
                 <div className={styles.block}>
-                  <LayoutMenu />
+                  <LayoutMenu
+                    redoLayoutChange={this.props.redoLayoutChange}
+                    redoStateCount={this.props.redoStateCount}
+                    undoLayoutChange={this.props.undoLayoutChange}
+                    undoStateCount={this.props.undoStateCount}
+                  />
                 </div>
                 <div className={styles.block}>
                   <TinyConnectionPicker inputDescription={inputDescription} />
@@ -126,8 +137,11 @@ class App extends React.PureComponent<Props> {
 }
 
 const ConnectedApp = connect<Props, {}, _, _, _, _>(
-  null,
-  { importPanelLayout }
+  ({ layoutHistory: { redoStates, undoStates } }: State) => ({
+    redoStateCount: redoStates.length,
+    undoStateCount: undoStates.length,
+  }),
+  { importPanelLayout, redoLayoutChange, undoLayoutChange }
 )(withDragDropContext(App));
 
 const Root = () => {

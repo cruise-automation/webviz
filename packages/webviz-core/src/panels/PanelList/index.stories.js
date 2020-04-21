@@ -34,6 +34,7 @@ storiesOf("<PanelList>", module)
         mosaicLayout=""
         changePanelLayout={() => {}}
         savePanelConfigs={() => {}}
+        savedProps={{}}
       />
     </div>
   ))
@@ -56,6 +57,7 @@ storiesOf("<PanelList>", module)
         mosaicLayout=""
         changePanelLayout={() => {}}
         savePanelConfigs={() => {}}
+        savedProps={{}}
       />
     </div>
   ))
@@ -78,6 +80,7 @@ storiesOf("<PanelList>", module)
         mosaicLayout=""
         changePanelLayout={() => {}}
         savePanelConfigs={() => {}}
+        savedProps={{}}
       />
     </div>
   ));

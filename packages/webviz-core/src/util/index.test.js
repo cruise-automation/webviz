@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { encodeURLQueryParamValue, getPanelTypeFromId, positiveModulo, getSaveConfigsPayloadForTab } from ".";
+import { encodeURLQueryParamValue, positiveModulo } from "./index";
 
 describe("util", () => {
   describe("encodeURLQueryParamValue()", () => {
@@ -37,32 +37,6 @@ describe("util", () => {
       expect(positiveModulo(21, 10)).toEqual(1);
       expect(positiveModulo(-1, 10)).toEqual(9);
       expect(positiveModulo(-11, 10)).toEqual(9);
-    });
-  });
-  describe("getSaveConfigsPayloadForTab", () => {
-    it("properly map template panel IDs to new IDs when adding a Tab panel", () => {
-      const tabConfig = { title: "First tab", layout: { first: "Plot!1", second: "Plot!2" } };
-      const firstPlotConfig = { paths: ["/abc"] };
-      const secondPlotConfig = { paths: ["/def"] };
-      const configsSaved = getSaveConfigsPayloadForTab({
-        id: "Tab!abc",
-        config: { tabs: [tabConfig] },
-        relatedConfigs: { "Plot!1": firstPlotConfig, "Plot!2": secondPlotConfig },
-      }).configs;
-      const newIdForFirstPlot = configsSaved[0].id;
-      expect(configsSaved[0].config).toEqual(firstPlotConfig);
-      expect(getPanelTypeFromId(newIdForFirstPlot)).not.toEqual("Plot!1");
-      expect(getPanelTypeFromId(newIdForFirstPlot)).toEqual("Plot");
-
-      const newIdForSecondPlot = configsSaved[1].id;
-      expect(configsSaved[1].config).toEqual(secondPlotConfig);
-      expect(getPanelTypeFromId(newIdForFirstPlot)).not.toEqual("Plot!2");
-      expect(getPanelTypeFromId(newIdForSecondPlot)).toEqual("Plot");
-
-      expect(configsSaved[2].config).toEqual({
-        tabs: [{ ...tabConfig, layout: { first: newIdForFirstPlot, second: newIdForSecondPlot } }],
-      });
-      expect(configsSaved[2].id).toEqual("Tab!abc");
     });
   });
 });

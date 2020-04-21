@@ -139,8 +139,11 @@ class Publish extends React.PureComponent<Props, PanelState> {
     }
 
     // when the selected datatype changes, replace the textarea contents with a sample message of the correct shape
+    // Make sure not to build a sample message on first load, though -- we don't want to overwrite
+    // the user's message just because state.cachedProps.config hasn't been initialized.
     if (
       props.config.datatype &&
+      state.cachedProps?.config?.datatype != null &&
       props.config.datatype !== state.cachedProps?.config?.datatype &&
       props.datatypes[props.config.datatype] != null
     ) {

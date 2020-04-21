@@ -13,8 +13,9 @@ import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { importPanelLayout } from "webviz-core/src/actions/panels";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
+import type { ImportPanelLayoutPayload } from "webviz-core/src/types/panels";
 
-const onLayoutChange = (layout: any, isFromUrl: boolean = false) => {
+const onLayoutChange = (layout: ImportPanelLayoutPayload, isFromUrl: boolean = false) => {
   importPanelLayout(layout, { isFromUrl });
 };
 

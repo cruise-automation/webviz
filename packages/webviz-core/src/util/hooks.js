@@ -8,6 +8,7 @@
 
 import { isEqual } from "lodash";
 import React, {
+  useCallback,
   useRef,
   useLayoutEffect,
   useState,
@@ -24,6 +25,15 @@ export function usePreviousValue<T>(nextValue: T): ?T {
   const previous = ref.current;
   ref.current = nextValue;
   return previous;
+}
+
+// used to force a component to update
+export function useForceUpdate() {
+  const [, setTick] = useState(0);
+  const update = useCallback(() => {
+    setTick((tick) => tick + 1);
+  }, []);
+  return update;
 }
 
 // Return initiallyTrue the first time, and again if any of the given deps have changed.

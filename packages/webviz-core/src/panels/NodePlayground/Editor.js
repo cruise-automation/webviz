@@ -26,10 +26,11 @@ type Props = {|
   vimMode: boolean,
   /* A minor hack to tell the monaco editor to resize when dimensions change. */
   resizeKey: string,
+  save: (script: string) => void,
 |};
 
-const Editor = ({ script, setScript, vimMode, resizeKey }: Props) => {
-  const editorRef = React.useRef(null);
+const Editor = ({ script, setScript, vimMode, resizeKey, save }: Props) => {
+  const editorRef = React.useRef<monacoApi.Editor>(null);
   const vimModeRef = React.useRef(null);
   React.useEffect(
     () => {
@@ -67,6 +68,19 @@ const Editor = ({ script, setScript, vimMode, resizeKey }: Props) => {
         if (vimMode) {
           vimModeRef.current = initVimMode(editorRef.current);
         }
+        editor.addAction({
+          id: "ctrl-s",
+          label: "Save current node",
+          keybindings: [monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.KEY_S],
+          run: () => {
+            if (editorRef?.current) {
+              const model = editorRef.current.getModel();
+              if (model) {
+                save(model.getValue());
+              }
+            }
+          },
+        });
       }}
       options={{
         // A 'model' in monaco is the interface through which monaco

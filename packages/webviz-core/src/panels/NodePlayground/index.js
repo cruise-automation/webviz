@@ -245,15 +245,15 @@ function NodePlayground(props: Props) {
   );
 
   const saveNode = React.useCallback(
-    () => {
+    (script) => {
       if (!selectedNodeId) {
         return;
       }
-      trustUserNode({ id: selectedNodeId, sourceCode: stagedScript }).then(() => {
-        setUserNodes({ [selectedNodeId]: { ...selectedNode, sourceCode: stagedScript } });
+      trustUserNode({ id: selectedNodeId, sourceCode: script }).then(() => {
+        setUserNodes({ [selectedNodeId]: { ...selectedNode, sourceCode: script } });
       });
     },
-    [selectedNodeId, selectedNode, stagedScript, setUserNodes]
+    [selectedNode, selectedNodeId, setUserNodes]
   );
 
   return (
@@ -349,6 +349,7 @@ function NodePlayground(props: Props) {
                         setScript={setStagedScript}
                         vimMode={vimMode}
                         resizeKey={`${width}-${height}-${explorer || "none"}-${selectedNodeId || "none"}`}
+                        save={saveNode}
                       />
                     )}
                   </React.Suspense>
@@ -356,7 +357,7 @@ function NodePlayground(props: Props) {
                 <BottomBar
                   nodeId={selectedNodeId}
                   isSaved={isNodeSaved}
-                  save={saveNode}
+                  save={() => saveNode(stagedScript)}
                   diagnostics={selectedNodeDiagnostics}
                   logs={selectedNodeLogs}
                 />

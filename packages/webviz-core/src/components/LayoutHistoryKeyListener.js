@@ -12,7 +12,7 @@ import { bindActionCreators } from "redux";
 
 import { redoLayoutChange, undoLayoutChange } from "webviz-core/src/actions/layoutHistory";
 
-const inMonacoEditor = (eventTarget: EventTarget) => {
+const inNativeUndoRedoElement = (eventTarget: EventTarget) => {
   if (eventTarget instanceof HTMLTextAreaElement) {
     let element: ?Element = eventTarget;
     // It's not always convenient to set the data property on the textarea itself, but we can set
@@ -37,7 +37,7 @@ export default function LayoutHistoryKeyListener() {
         // Don't use ctrl-Z for layout history actions inside the Monaco Editor. It isn't
         // controlled, and changes inside it don't result in updates to the Redux state. We could
         // consider making the editor controlled, with a separate "unsaved state".
-        if (inMonacoEditor(e.target)) {
+        if (inNativeUndoRedoElement(e.target)) {
           return;
         }
 

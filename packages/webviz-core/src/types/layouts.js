@@ -5,6 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import type { MosaicNode } from "webviz-core/src/types/panels";
 
 export type LayoutDescription = {
   id: string,
@@ -18,5 +19,10 @@ export type SaveLayoutPayload = {
   folderId: string,
   private: boolean,
   // the layout description
-  layout: any,
+  layout: MosaicNode,
+};
+
+export type TabPanelConfig = {
+  activeTabIdx: number,
+  tabs: {| title: string, layout: ?MosaicNode |}[],
 };

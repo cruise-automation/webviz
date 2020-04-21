@@ -32,8 +32,7 @@ export function panelsByCategory() {
   const Rosout = require("webviz-core/src/panels/Rosout").default;
   const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
   const SubscribeToList = require("webviz-core/src/panels/SubscribeToList").default;
-  // TODO(Esther): Uncomment with Tab panel release
-  // const Tab = require("webviz-core/src/panels/Tab").default;
+  const Tab = require("webviz-core/src/panels/Tab").default;
   const TwoDimensionalPlot = require("webviz-core/src/panels/TwoDimensionalPlot").default;
   const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
   const { ndash } = require("webviz-core/src/util/entities");
@@ -55,8 +54,7 @@ export function panelsByCategory() {
     { title: "Global Variables", component: GlobalVariables },
     { title: "Node Playground", component: NodePlayground },
     { title: "Notes", component: Note },
-    // TODO(Esther): Uncomment with Tab panel release
-    // { title: "Tab", component: Tab },
+    { title: "Tab", component: Tab },
     { title: "Webviz Internals", component: Internals },
   ];
 

@@ -21,21 +21,39 @@ const SMetadata = styled.div`
   line-height: 1.3;
   color: #aaa;
 `;
-type Props = { data: any, link: ?string, message: Message, diffMessage: ?Message };
+type Props = {
+  data: any,
+  diffData: any,
+  diff: any,
+  link: ?string,
+  message: Message,
+  diffMessage: ?Message,
+};
 
-export default function Metadata({ data, link, message, diffMessage }: Props) {
-  const onClick = useCallback(
-    (e: SyntheticMouseEvent<HTMLSpanElement>) => {
+function CopyMessageButton({ text, onClick }) {
+  return (
+    <a onClick={onClick} href="#" style={{ textDecoration: "none" }}>
+      <Icon tooltip="Copy entire message to clipboard" style={{ position: "relative", top: -1 }}>
+        <ClipboardOutlineIcon style={{ verticalAlign: "middle" }} />
+      </Icon>
+      {text}
+    </a>
+  );
+}
+
+export default function Metadata({ data, diffData, diff, link, message, diffMessage }: Props) {
+  const onClickCopy = useCallback(
+    (dataToCopy) => (e: SyntheticMouseEvent<HTMLSpanElement>) => {
       e.stopPropagation();
       e.preventDefault();
-      const dataWithoutLargeArrays = cloneDeepWith(data, (value) => {
+      const dataWithoutLargeArrays = cloneDeepWith(dataToCopy, (value) => {
         if (typeof value === "object" && value.buffer) {
           return "<buffer>";
         }
       });
       clipboard.copy(JSON.stringify(dataWithoutLargeArrays, null, 2) || "");
     },
-    [data]
+    []
   );
   return (
     <SMetadata>
@@ -48,13 +66,17 @@ export default function Metadata({ data, link, message, diffMessage }: Props) {
           message.datatype
         ))}
       {message.receiveTime && `${diffMessage ? " base" : ""} @ ${formatTimeRaw(message.receiveTime)} ROS `}
-      {diffMessage && diffMessage.receiveTime && <div>{`diff @ ${formatTimeRaw(diffMessage.receiveTime)} ROS `}</div>}
-      <a onClick={onClick} href="#" style={{ textDecoration: "none" }}>
-        <Icon tooltip="Copy entire message to clipboard" style={{ position: "relative", top: -1 }}>
-          <ClipboardOutlineIcon style={{ verticalAlign: "middle" }} />
-        </Icon>{" "}
-        copy
-      </a>
+      <CopyMessageButton onClick={onClickCopy(data)} text="Copy msg" />
+
+      {diffMessage && diffMessage.receiveTime && (
+        <>
+          <div>
+            {`diff @ ${formatTimeRaw(diffMessage.receiveTime)} ROS `}
+            <CopyMessageButton onClick={onClickCopy(diffData)} text="Copy msg" />
+          </div>
+          <CopyMessageButton onClick={onClickCopy(diff)} text="Copy diff of msgs" />
+        </>
+      )}
     </SMetadata>
   );
 }

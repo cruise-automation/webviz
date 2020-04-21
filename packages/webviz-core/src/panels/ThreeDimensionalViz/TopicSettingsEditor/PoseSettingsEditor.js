@@ -14,6 +14,7 @@ import { type TopicSettingsEditorProps } from ".";
 import { SLabel, SInput } from "./common";
 import Flex from "webviz-core/src/components/Flex";
 import type { PoseStamped } from "webviz-core/src/types/Messages";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type PoseSettings = {|
   color?: ?string,
@@ -30,7 +31,11 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
   const { message, settings, onFieldChange, onSettingsChange } = props;
 
   if (!message) {
-    return null;
+    return (
+      <div style={{ color: colors.TEXT_MUTED }}>
+        <small>Waiting for messages...</small>
+      </div>
+    );
   }
 
   const alpha = settings.alpha != null ? settings.alpha : 1;

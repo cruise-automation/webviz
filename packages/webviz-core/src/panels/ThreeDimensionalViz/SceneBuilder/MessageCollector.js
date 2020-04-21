@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import { TimeUtil, type Time } from "rosbag";
+import uuid from "uuid";
 
 import type { BaseMarker, StampedMessage } from "webviz-core/src/types/Messages";
 
@@ -119,8 +120,8 @@ export default class MessageCollector {
       // we need to immediately expire any pre-existing message that didn't have a decay time.
       this.markers.delete(topic);
 
-      // Note: messages with same timestamp will override each other, but this is probably very uncommon
-      const key = `${topic}/${this.clock.sec}/${this.clock.nsec}`;
+      // Create a unique key for each new message.
+      const key = `${topic}/${uuid.v4()}`;
       this._addItem(key, message);
     } else {
       // if future messages will not have a decay time set,

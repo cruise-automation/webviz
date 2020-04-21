@@ -9,7 +9,7 @@ import fuzzySort from "fuzzysort";
 import { flatten, isEqual } from "lodash";
 import * as React from "react";
 import { useDrag } from "react-dnd";
-import { MosaicDragType, getNodeAtPath, updateTree } from "react-mosaic-component";
+import { MosaicDragType } from "react-mosaic-component";
 import { connect } from "react-redux";
 import styled from "styled-components";
 
@@ -20,8 +20,15 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import TextHighlight from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TextHighlight";
 import type { State } from "webviz-core/src/reducers";
-import type { PanelConfig, SaveConfigsPayload } from "webviz-core/src/types/panels";
-import { getPanelIdForType, getSaveConfigsPayloadForTab } from "webviz-core/src/util";
+import type {
+  PanelConfig,
+  SaveConfigsPayload,
+  SavedProps,
+  MosaicNode,
+  MosaicPath,
+  MosaicDropTargetPosition,
+} from "webviz-core/src/types/panels";
+import { onNewPanelDrop } from "webviz-core/src/util/layout";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SearchInput = styled.input`
@@ -79,8 +86,9 @@ type DropDescription = {
   type: string,
   config: ?PanelConfig,
   relatedConfigs?: { [panelId: string]: PanelConfig },
-  position: string,
-  path: string,
+  position: MosaicDropTargetPosition,
+  path: MosaicPath,
+  tabId: string,
 };
 type PanelItemProps = {
   panel: {| type: string, title: string, config?: PanelConfig, relatedConfigs?: { [panelId: string]: PanelConfig } |},
@@ -103,9 +111,10 @@ function DraggablePanelItem(props: PanelItemProps) {
     },
     end: (item, monitor) => {
       const dropResult = monitor.getDropResult() || {};
-      const { position, path } = dropResult;
-      // dropping outside mosaic does nothing
-      if (!position || !path) {
+      const { position, path, tabId } = dropResult;
+      // dropping outside mosaic does nothing. If we have a tabId, but no
+      // position or path, we're dragging into an empty tab.
+      if ((!position || !path) && !tabId) {
         return;
       }
       onDrop({
@@ -114,6 +123,7 @@ function DraggablePanelItem(props: PanelItemProps) {
         relatedConfigs: panel.relatedConfigs,
         position,
         path,
+        tabId,
       });
     },
   });
@@ -138,9 +148,10 @@ type OwnProps = {|
 type Props = {|
   ...OwnProps,
   mosaicId: string,
-  mosaicLayout: any, // this is the opaque mosiac layout config object
-  changePanelLayout: (payload: any) => void,
+  mosaicLayout: MosaicNode, // this is the opaque mosaic layout config object
+  changePanelLayout: (payload: { layout: MosaicNode }) => void,
   savePanelConfigs: (SaveConfigsPayload) => void,
+  savedProps: SavedProps,
 |};
 
 class PanelList extends React.Component<Props, { searchQuery: string }> {
@@ -158,23 +169,21 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
   // the actual operations to change the layout
   // are supplied by react-mosaic-component
   onPanelMenuItemDrop = (dropDescription: DropDescription) => {
-    const { mosaicLayout } = this.props;
-    const { config, relatedConfigs, type, position, path } = dropDescription;
-    const id = getPanelIdForType(type);
-    const node = getNodeAtPath(mosaicLayout, path);
-    const before = position === "left" || position === "top";
-    const [first, second] = before ? [id, node] : [node, id];
-    const direction = position === "left" || position === "right" ? "row" : "column";
-    const updates = [{ path, spec: { $set: { first, second, direction } } }];
+    const { mosaicLayout, savedProps } = this.props;
+    const { config, relatedConfigs, type, position, path, tabId } = dropDescription;
+    const { layout, saveConfigsPayload } = onNewPanelDrop({
+      layout: mosaicLayout,
+      newPanelType: type,
+      destinationPath: path,
+      position,
+      savedProps,
+      tabId,
+      config,
+      relatedConfigs,
+    });
 
-    if (config && relatedConfigs) {
-      const payload = getSaveConfigsPayloadForTab({ id, config, relatedConfigs });
-      this.props.savePanelConfigs(payload);
-    } else if (config) {
-      this.props.savePanelConfigs({ configs: [{ id, config }] });
-    }
-    const newLayout = updateTree(mosaicLayout, updates);
-    this.props.changePanelLayout({ layout: newLayout });
+    this.props.changePanelLayout({ layout });
+    this.props.savePanelConfigs(saveConfigsPayload);
   };
 
   // sanity checks to help panel authors debug issues
@@ -278,6 +287,7 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
 const mapStateToProps = (state: State) => ({
   mosaicId: state.mosaic.mosaicId,
   mosaicLayout: state.panels.layout,
+  savedProps: state.panels.savedProps,
 });
 export default connect<Props, OwnProps, _, _, _, _>(
   mapStateToProps,

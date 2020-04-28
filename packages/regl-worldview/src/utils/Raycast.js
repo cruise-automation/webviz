@@ -30,7 +30,7 @@ export class Ray {
     return vec3.distance(this.origin, point);
   }
 
-  // https://stackoverflow.com/questions/7168484/3d-line-segment-and-plane-intersection/35396994#35396994
+  // https://commons.apache.org/proper/commons-math/javadocs/api-3.6/src-html/org/apache/commons/math3/geometry/euclidean/threed/Plane.html#line.394
   planeIntersection(planeCoordinate: Vec3, planeNormal: Vec3): ?Vec3 {
     const d = vec3.dot(planeNormal, planeCoordinate);
     const cosine = vec3.dot(planeNormal, this.dir);
@@ -39,7 +39,7 @@ export class Ray {
       return null;
     }
 
-    const x = d - vec3.dot(planeNormal, this.origin) / cosine;
+    const x = (d - vec3.dot(planeNormal, this.origin)) / cosine;
     const contact = vec3.add([0, 0, 0], this.origin, vec3.scale(tempVec, this.dir, x));
     return contact;
   }

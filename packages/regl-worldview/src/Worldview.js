@@ -213,22 +213,24 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       return;
     }
 
+    // Rendering the hitmap is expensive, so we're disabling it by default when
+    // getting a mouse down event.
     if (mouseEventName === "onMouseDown" && !this.props.hitmapOnMouseDown) {
-      // Rendering the hitmap is expensive, so we're disabling it by default when
-      // getting a mouse down event.
       if (worldviewHandler) {
         return handleWorldviewMouseInteraction([], ray, e, worldviewHandler);
       }
       return;
     }
 
+    // Disable rendering the hitmap after a mouse up if we've dragged the mouse
+    // and the current position is different from the starting one.
+    // For simplicity reasons, just check the final mouse position to determine if there
+    // was a dragging gesture. It's unlikely they'll match after dragging.
     if (
       mouseEventName === "onMouseUp" &&
       !this.props.hitmapAfterMouseDrag &&
       !(this._dragStartPos?.x === clientX && this._dragStartPos?.y === clientY)
     ) {
-      // Disable rendering the hitmap after a mouse up by default if we've dragged the mouse
-      // and the current position is different from the starting one.
       if (worldviewHandler) {
         return handleWorldviewMouseInteraction([], ray, e, worldviewHandler);
       }

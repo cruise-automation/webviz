@@ -38,6 +38,10 @@ export type BaseProps = {|
   backgroundColor?: Vec4,
   // rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
+  // we avoid rendering the hitmap on mouse down by default
+  hitmapOnMouseDown?: boolean,
+  // we avoid rendering the hitmap after dragging by default
+  hitmapAfterMouseDrag?: boolean,
   // getting events for objects stacked on top of each other is expensive, so disable it by default
   enableStackedObjectEvents?: boolean,
   // allow users to specify the max stacked object count
@@ -203,6 +207,28 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
     // rendering the hitmap on mouse move is expensive, so disable it by default
     if (mouseEventName === "onMouseMove" && !this.props.hitmapOnMouseMove) {
+      if (worldviewHandler) {
+        return handleWorldviewMouseInteraction([], ray, e, worldviewHandler);
+      }
+      return;
+    }
+
+    if (mouseEventName === "onMouseDown" && !this.props.hitmapOnMouseDown) {
+      // Rendering the hitmap is expensive, so we're disabling it by default when
+      // getting a mouse down event.
+      if (worldviewHandler) {
+        return handleWorldviewMouseInteraction([], ray, e, worldviewHandler);
+      }
+      return;
+    }
+
+    if (
+      mouseEventName === "onMouseUp" &&
+      !this.props.hitmapAfterMouseDrag &&
+      !(this._dragStartPos?.x === clientX && this._dragStartPos?.y === clientY)
+    ) {
+      // Disable rendering the hitmap after a mouse up by default if we've dragged the mouse
+      // and the current position is different from the starting one.
       if (worldviewHandler) {
         return handleWorldviewMouseInteraction([], ray, e, worldviewHandler);
       }

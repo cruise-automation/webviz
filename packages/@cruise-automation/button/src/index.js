@@ -71,6 +71,7 @@ type Props = {
   danger?: boolean,
   disabled?: boolean,
   onClick?: (event: SyntheticEvent<HTMLButtonElement>) => void,
+  onFocus?: (event: SyntheticEvent<HTMLButtonElement>) => void,
   onMouseUp?: (event: SyntheticEvent<HTMLButtonElement>) => void,
   onMouseLeave?: (event: SyntheticEvent<HTMLButtonElement>) => void,
   children: React.Node,
@@ -218,7 +219,20 @@ export default class Button extends React.Component<Props, State> {
   }
 
   render() {
-    const { children, id, small, large, primary, danger, warning, disabled, className, style, tooltip } = this.props;
+    const {
+      children,
+      id,
+      small,
+      large,
+      primary,
+      danger,
+      warning,
+      disabled,
+      className,
+      style,
+      tooltip,
+      onFocus,
+    } = this.props;
     const classes = cx("button", className || "", {
       // support some bulma classes to be supplied in consumer either through bulma or custom classes
       // these provide backwards compatibility with webviz
@@ -235,6 +249,7 @@ export default class Button extends React.Component<Props, State> {
         className={classes}
         id={id}
         onClick={this.onClick}
+        onFocus={onFocus}
         onMouseDown={this.onMouseDown}
         onMouseLeave={this.onMouseLeave}
         onMouseUp={this.onMouseUp}

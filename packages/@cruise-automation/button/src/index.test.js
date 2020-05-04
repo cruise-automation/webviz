@@ -27,6 +27,11 @@ describe("<Button />", () => {
     el.simulate("mouseLeave");
   });
 
+  it("fires onFocus callback", (done) => {
+    const el = mount(<Button onFocus={() => done()}>hello</Button>);
+    el.simulate("focus");
+  });
+
   it("accepts custom class name", (done) => {
     const el = mount(
       <Button className="foo" onClick={done}>

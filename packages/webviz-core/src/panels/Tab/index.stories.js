@@ -7,24 +7,23 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
+import { createBrowserHistory } from "history";
 import React from "react";
 import TestUtils from "react-dom/test-utils";
+import { Provider } from "react-redux";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Tab from "./index";
+import { changePanelLayout, savePanelConfigs } from "webviz-core/src/actions/panels";
+import PanelLayout from "webviz-core/src/components/PanelLayout";
+import createRootReducer from "webviz-core/src/reducers";
+import configureStore from "webviz-core/src/store/configureStore.testing";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
-// TODO(Esther): Uncomment with Tab panel release
-// import { createBrowserHistory } from "history";
-// import { Provider } from "react-redux";
-// import { changePanelLayout, savePanelConfig } from "webviz-core/src/actions/panels";
-// import PanelLayout from "webviz-core/src/components/PanelLayout";
-// import createRootReducer from "webviz-core/src/reducers";
-// import configureStore from "webviz-core/src/store/configureStore.testing";
-// const rootReducer = createRootReducer(createBrowserHistory());
+const rootReducer = createRootReducer(createBrowserHistory());
 
 const fixture = { topics: [], datatypes: {}, frame: {} };
-const manyTabs = new Array(25).fill(1).map((elem, idx) => ({ title: `Tab #${idx + 1}`, layout: {} }));
+const manyTabs = new Array(25).fill(1).map((elem, idx) => ({ title: `Tab #${idx + 1}`, layout: null }));
 storiesOf("<Tab>", module)
   .addDecorator(withScreenshot({ delay: 1000 }))
   .add("default", () => (
@@ -40,7 +39,7 @@ storiesOf("<Tab>", module)
           tabs: [
             {
               title: "Tab A",
-              layout: {},
+              layout: null,
             },
             {
               title: "Tab B",
@@ -62,7 +61,7 @@ storiesOf("<Tab>", module)
             },
             {
               title: "Tab C",
-              layout: {},
+              layout: null,
             },
           ],
         }}
@@ -78,57 +77,56 @@ storiesOf("<Tab>", module)
       }}>
       <Tab config={{ activeTabIdx: 1, tabs: manyTabs }} />
     </PanelSetup>
-  ));
-// TODO(Esther): Uncomment with Tab panel release
-// .add("add tab", () => {
-//   const store = configureStore(rootReducer);
-//   store.dispatch(changePanelLayout(`Tab!a`));
-//   store.dispatch(
-//     savePanelConfig({
-//       id: "Tab!a",
-//       config: { activeTabIdx: 0, tabs: [{ title: "Tab A", layout: {} }] },
-//       defaultConfig: {},
-//     })
-//   );
+  ))
+  .add("add tab", () => {
+    const store = configureStore(rootReducer);
+    store.dispatch(changePanelLayout({ layout: "Tab!a" }));
+    store.dispatch(
+      savePanelConfigs({
+        configs: [{ id: "Tab!a", config: { activeTabIdx: 0, tabs: [{ title: "Tab A", layout: {} }] } }],
+      })
+    );
 
-//   return (
-//     <Provider store={store}>
-//       <PanelSetup fixture={fixture} style={{ width: "100%" }}>
-//         <PanelLayout
-//           ref={() => {
-//             setImmediate(() => {
-//               const addTabBtn = document.querySelector("[data-test=add-tab]");
-//               if (addTabBtn) {
-//                 addTabBtn.click();
-//               }
-//             });
-//           }}
-//         />
-//       </PanelSetup>
-//     </Provider>
-//   );
-// })
-// .add("remove tab", () => {
-//   const store = configureStore(rootReducer);
-//   store.dispatch(changePanelLayout(`Tab!a`));
-//   store.dispatch(
-//     savePanelConfig({ id: "Tab!a", config: { activeTabIdx: 0, tabs: manyTabs.slice(0, 5) }, defaultConfig: {} })
-//   );
+    return (
+      <Provider store={store}>
+        <PanelSetup fixture={fixture} style={{ width: "100%" }}>
+          <PanelLayout
+            ref={() => {
+              setImmediate(() => {
+                const addTabBtn = document.querySelector("[data-test=add-tab]");
+                if (addTabBtn) {
+                  addTabBtn.click();
+                }
+              });
+            }}
+          />
+        </PanelSetup>
+      </Provider>
+    );
+  })
+  .add("remove tab", () => {
+    const store = configureStore(rootReducer);
+    store.dispatch(changePanelLayout({ layout: "Tab!a" }));
+    store.dispatch(
+      savePanelConfigs({
+        configs: [{ id: "Tab!a", config: { activeTabIdx: 0, tabs: manyTabs.slice(0, 5) } }],
+      })
+    );
 
-//   return (
-//     <Provider store={store}>
-//       <PanelSetup fixture={fixture} style={{ width: "100%" }}>
-//         <PanelLayout
-//           ref={() => {
-//             setImmediate(() => {
-//               const removeTabBtn = document.querySelector("[data-test=remove-tab]");
-//               if (removeTabBtn) {
-//                 removeTabBtn.click();
-//               }
-//             });
-//           }}
-//         />
-//       </PanelSetup>
-//     </Provider>
-//   );
-// });
+    return (
+      <Provider store={store}>
+        <PanelSetup fixture={fixture} style={{ width: "100%" }}>
+          <PanelLayout
+            ref={() => {
+              setImmediate(() => {
+                const removeTabBtn = document.querySelector("[data-test=remove-tab]");
+                if (removeTabBtn) {
+                  removeTabBtn.click();
+                }
+              });
+            }}
+          />
+        </PanelSetup>
+      </Provider>
+    );
+  });

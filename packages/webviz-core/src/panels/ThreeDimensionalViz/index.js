@@ -25,7 +25,6 @@ import {
   useComputedCameraState,
   getNewCameraStateOnFollowChange,
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
-import LayoutForTopicGroups from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/LayoutForTopicGroups";
 import type { TopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/types";
 import { type TopicDisplayMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
 import LayoutForTopicTreeV2 from "webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/LayoutForTopicTreeV2";
@@ -38,11 +37,9 @@ import { TRANSFORM_TOPIC, TRANSFORM_STATIC_TOPIC } from "webviz-core/src/util/gl
 const TOPIC_PICKER_TYPES = {
   TOPIC_TREE: "TOPIC_TREE",
   TOPIC_TREE_V2: "TOPIC_TREE_V2",
-  TOPIC_GROUPS: "TOPIC_GROUPS",
 };
 export type ThreeDimensionalVizConfig = {
   enableShortDisplayNames?: boolean,
-  enableTopicTree?: ?boolean,
   autoTextBackgroundColor?: boolean,
   cameraState: $Shape<CameraState>,
   followTf?: string | false,
@@ -55,20 +52,17 @@ export type ThreeDimensionalVizConfig = {
   selectedPolygonEditFormat?: "json" | "yaml",
   showCrosshair?: boolean,
 
-  topicGroups?: TopicGroupConfig[],
-  // TODO(Audrey): remove the 4 props below once topic groups is released
-  // props to be replaced by topicGroups
   expandedNodes: string[],
   checkedNodes: string[],
   topicSettings: TopicSettingsCollection,
-  // override topic group feature flag for screenshot test
-  testShowTopicTree?: boolean,
 
   // legacy props
   hideMap?: ?boolean, // eslint-disable-line react/no-unused-prop-types
   useHeightMap?: ?boolean, // eslint-disable-line react/no-unused-prop-types
   follow?: boolean,
   autoSyncCameraState?: boolean,
+  topicGroups?: TopicGroupConfig[],
+  enableTopicTree?: ?boolean,
 };
 export type Save3DConfig = SaveConfig<ThreeDimensionalVizConfig>;
 
@@ -92,7 +86,7 @@ const BaseRenderer = (props: Props, ref) => {
     setSubscriptions,
     topics,
     transforms,
-    config: { autoSyncCameraState, followOrientation, followTf, testShowTopicTree },
+    config: { autoSyncCameraState, followOrientation, followTf },
   } = props;
   const extensions = useSelector((state) => state.extensions);
   const { updatePanelConfig } = React.useContext(PanelContext) || {};
@@ -186,27 +180,14 @@ const BaseRenderer = (props: Props, ref) => {
   // useImperativeHandle so consumer component (e.g.Follow stories) can call onFollowChange directly.
   React.useImperativeHandle(ref, (): any => ({ onFollowChange }));
 
-  const enabledTopicPickerType = useMemo(
-    () => {
-      let enabledTopicPicker = !config.enableTopicTree
-        ? TOPIC_PICKER_TYPES.TOPIC_GROUPS
-        : TOPIC_PICKER_TYPES.TOPIC_TREE;
+  const enabledTopicPickerType = useMemo(() => {
+    let enabledTopicPicker = TOPIC_PICKER_TYPES.TOPIC_TREE;
 
-      if (testShowTopicTree != null) {
-        enabledTopicPicker = TOPIC_PICKER_TYPES.TOPIC_TREE;
-      }
-      // Default to topic tree in production if the config for `enableTopicTree` is not already set.
-      if (config.enableTopicTree == null && process.env.NODE_ENV === "production") {
-        enabledTopicPicker = TOPIC_PICKER_TYPES.TOPIC_TREE;
-      }
-
-      if (new URLSearchParams(window.location.search).has("enableTopicTreeV2")) {
-        enabledTopicPicker = TOPIC_PICKER_TYPES.TOPIC_TREE_V2;
-      }
-      return enabledTopicPicker;
-    },
-    [config.enableTopicTree, testShowTopicTree]
-  );
+    if (new URLSearchParams(window.location.search).has("enableTopicTreeV2")) {
+      enabledTopicPicker = TOPIC_PICKER_TYPES.TOPIC_TREE_V2;
+    }
+    return enabledTopicPicker;
+  }, []);
 
   return (
     <>
@@ -228,28 +209,6 @@ const BaseRenderer = (props: Props, ref) => {
           saveConfig={saveConfig}
           topics={topics}
           targetPose={targetPose}
-          transforms={transforms}
-          setSubscriptions={onSetSubscriptions}
-        />
-      )}
-      {enabledTopicPickerType === TOPIC_PICKER_TYPES.TOPIC_GROUPS && (
-        <LayoutForTopicGroups
-          cameraState={cameraState}
-          targetPose={targetPose}
-          config={config}
-          cleared={cleared}
-          currentTime={currentTime}
-          extensions={extensions}
-          followOrientation={!!followOrientation}
-          followTf={followTf}
-          frame={frame}
-          helpContent={helpContent}
-          isPlaying={isPlaying}
-          onAlignXYAxis={onAlignXYAxis}
-          onCameraStateChange={onCameraStateChange}
-          onFollowChange={onFollowChange}
-          saveConfig={saveConfig}
-          topics={topics}
           transforms={transforms}
           setSubscriptions={onSetSubscriptions}
         />

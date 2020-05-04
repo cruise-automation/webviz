@@ -39,11 +39,11 @@ export default function warnOnOutOfSyncMessages(playerState: PlayerState) {
   const { messages, currentTime, lastSeekTime } = playerState.activeData;
   if (lastLastSeekTime !== lastSeekTime) {
     lastLastSeekTime = lastSeekTime;
-    warningTimeout = lastMessages = lastReceiveTime = lastCurrentTime = undefined;
     if (warningTimeout) {
       clearTimeout(warningTimeout);
       incorrectMessages = [];
     }
+    warningTimeout = lastMessages = lastReceiveTime = lastCurrentTime = undefined;
   }
   if (lastMessages !== messages || lastCurrentTime !== currentTime) {
     lastMessages = messages;

@@ -29,7 +29,7 @@ class MosaicWrapper extends React.Component<{| layout?: any, children: React.Nod
         renderTile={(id, path) => (
           <MosaicWindow path={path} toolbarControls={<div />} renderPreview={() => null}>
             <div style={{ width, height: 300, padding: 30, position: "relative" }}>
-              {id === "dummy" ? this.props.children : "Sibling Panel"}
+              {id === "Sibling" ? "Sibling Panel" : this.props.children}
             </div>
           </MosaicWindow>
         )}
@@ -134,7 +134,19 @@ storiesOf("<PanelToolbar>", module)
     class Story extends React.Component<{}> {
       render() {
         return (
-          <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "X" }}>
+          <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "Sibling" }}>
+            <PanelToolbarWithOpenMenu />
+          </MosaicWrapper>
+        );
+      }
+    }
+    return <Story />;
+  })
+  .add("menu for Tab panel", () => {
+    class Story extends React.Component<{}> {
+      render() {
+        return (
+          <MosaicWrapper layout={{ direction: "row", first: "Tab", second: "Sibling" }}>
             <PanelToolbarWithOpenMenu />
           </MosaicWrapper>
         );
@@ -146,7 +158,7 @@ storiesOf("<PanelToolbar>", module)
     class Story extends React.Component<{}> {
       render() {
         return (
-          <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "X" }}>
+          <MosaicWrapper layout={{ direction: "row", first: "dummy", second: "Sibling" }}>
             <PanelToolbarWithOpenMenu hideToolbars />
           </MosaicWrapper>
         );

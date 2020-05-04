@@ -14,12 +14,13 @@ import { MockMessagePipelineProvider } from "webviz-core/src/components/MessageP
 
 describe("useMessageReducer", () => {
   // Create a helper component that exposes restore, addMessage, and the results of the hook for mocking
-  function createTest() {
-    function Test({ topics }) {
+  function createTest(useAddMessage: boolean = true, useAddMessages: boolean = false) {
+    function Test({ topics, addMessagesOverride }: { topics: string[], addMessagesOverride?: any }) {
       Test.result(
         PanelAPI.useMessageReducer({
           topics,
-          addMessage: Test.addMessage,
+          addMessage: useAddMessages ? undefined : Test.addMessage,
+          addMessages: useAddMessages ? addMessagesOverride || Test.addMessages : undefined,
           restore: Test.restore,
         })
       );
@@ -28,6 +29,7 @@ describe("useMessageReducer", () => {
     Test.result = jest.fn();
     Test.restore = jest.fn();
     Test.addMessage = jest.fn();
+    Test.addMessages = jest.fn();
     return Test;
   }
 
@@ -47,6 +49,14 @@ describe("useMessageReducer", () => {
     expect(Test.result.mock.calls).toEqual([[1]]);
 
     root.unmount();
+  });
+
+  it("throws if no message callbacks are provided", async () => {
+    expect(createTest(false, false)).toThrow();
+  });
+
+  it("throws if both message callbacks are provided", async () => {
+    expect(createTest(true, true)).toThrow();
   });
 
   it("calls restore to initialize and addMessage for initial messages", async () => {
@@ -71,6 +81,35 @@ describe("useMessageReducer", () => {
 
     expect(Test.restore.mock.calls).toEqual([[undefined]]);
     expect(Test.addMessage.mock.calls).toEqual([[1, message]]);
+    expect(Test.addMessages.mock.calls).toEqual([]);
+    expect(Test.result.mock.calls).toEqual([[2]]);
+
+    root.unmount();
+  });
+
+  it("calls restore to initialize and addMessages for initial messages", async () => {
+    const Test = createTest(false, true);
+
+    Test.restore.mockReturnValue(1);
+    Test.addMessages.mockImplementation((_, msgs) => msgs[msgs.length - 1].message.value);
+
+    const message = {
+      op: "message",
+      datatype: "Foo",
+      topic: "/foo",
+      receiveTime: { sec: 0, nsec: 0 },
+      message: { value: 2 },
+    };
+
+    const root = mount(
+      <MockMessagePipelineProvider messages={[message]}>
+        <Test topics={["/foo"]} />
+      </MockMessagePipelineProvider>
+    );
+
+    expect(Test.restore.mock.calls).toEqual([[undefined]]);
+    expect(Test.addMessage.mock.calls).toEqual([]);
+    expect(Test.addMessages.mock.calls).toEqual([[1, [message]]]);
     expect(Test.result.mock.calls).toEqual([[2]]);
 
     root.unmount();
@@ -121,6 +160,65 @@ describe("useMessageReducer", () => {
     expect(Test.restore.mock.calls).toEqual([[undefined]]);
     expect(Test.addMessage.mock.calls).toEqual([[1, message1], [2, message2]]);
     expect(Test.result.mock.calls).toEqual([[1], [2], [2], [3]]);
+
+    root.unmount();
+  });
+
+  it("calls addMessages for messages added later", async () => {
+    const Test = createTest(false, true);
+
+    Test.restore.mockReturnValue(1);
+    Test.addMessages.mockImplementation((prevValue, msgs) => msgs[msgs.length - 1].message.value);
+
+    const message1 = {
+      op: "message",
+      datatype: "Foo",
+      topic: "/foo",
+      receiveTime: { sec: 0, nsec: 0 },
+      message: { value: 2 },
+    };
+    const message2 = {
+      op: "message",
+      datatype: "Bar",
+      topic: "/bar",
+      receiveTime: { sec: 0, nsec: 0 },
+      message: { value: 3 },
+    };
+    const message3 = {
+      op: "message",
+      datatype: "Bar",
+      topic: "/bar",
+      receiveTime: { sec: 0, nsec: 0 },
+      message: { value: 4 },
+    };
+
+    const root = mount(
+      <MockMessagePipelineProvider messages={[]}>
+        <Test topics={["/foo"]} />
+      </MockMessagePipelineProvider>
+    );
+
+    root.setProps({ messages: [message1] });
+
+    expect(Test.restore.mock.calls).toEqual([[undefined]]);
+    expect(Test.addMessage.mock.calls).toEqual([]);
+    expect(Test.addMessages.mock.calls).toEqual([[1, [message1]]]);
+    expect(Test.result.mock.calls).toEqual([[1], [2]]);
+
+    // Subscribe to a new topic, then receive a message on that topic
+    root.setProps({ children: <Test topics={["/foo", "/bar"]} /> });
+
+    expect(Test.restore.mock.calls).toEqual([[undefined]]);
+    expect(Test.addMessage.mock.calls).toEqual([]);
+    expect(Test.addMessages.mock.calls).toEqual([[1, [message1]]]);
+    expect(Test.result.mock.calls).toEqual([[1], [2], [2]]);
+
+    root.setProps({ messages: [message2, message3] });
+
+    expect(Test.restore.mock.calls).toEqual([[undefined]]);
+    expect(Test.addMessage.mock.calls).toEqual([]);
+    expect(Test.addMessages.mock.calls).toEqual([[1, [message1]], [2, [message2, message3]]]);
+    expect(Test.result.mock.calls).toEqual([[1], [2], [2], [4]]);
 
     root.unmount();
   });
@@ -361,6 +459,34 @@ describe("useMessageReducer", () => {
     root.setProps({ children: <Test topics={["/foo", "/bar"]} /> });
     expect(requestBackfill.mock.calls.length).toEqual(0);
     requestBackfill.mockClear();
+
+    root.unmount();
+  });
+
+  it("restore called when addMessages changes", async () => {
+    const Test = createTest(false, true);
+
+    Test.restore.mockReturnValue(1);
+    Test.addMessages.mockImplementation((_, msgs) => msgs[msgs.length - 1].message.value);
+
+    const message1 = {
+      op: "message",
+      datatype: "Foo",
+      topic: "/foo",
+      receiveTime: { sec: 0, nsec: 0 },
+      message: { value: 2 },
+    };
+
+    const root = mount(
+      <MockMessagePipelineProvider messages={[message1]}>
+        <Test topics={["/foo"]} />
+      </MockMessagePipelineProvider>
+    );
+
+    expect(Test.restore.mock.calls).toEqual([[undefined]]);
+    expect(Test.result.mock.calls).toEqual([[2]]);
+    root.setProps({ children: <Test topics={["/foo"]} addMessagesOverride={jest.fn()} /> });
+    expect(Test.restore.mock.calls).toEqual([[undefined], [2]]);
 
     root.unmount();
   });

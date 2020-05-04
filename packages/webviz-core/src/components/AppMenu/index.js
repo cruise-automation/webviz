@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import PlusBoxIcon from "@mdi/svg/svg/plus-box.svg";
-import { isEmpty } from "lodash";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 
@@ -18,8 +17,8 @@ import Menu from "webviz-core/src/components/Menu";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import type { State as ReduxState } from "webviz-core/src/reducers";
 import type { PanelsState } from "webviz-core/src/reducers/panels";
-import type { SaveConfigsPayload } from "webviz-core/src/types/panels";
-import { getPanelIdForType, getSaveConfigsPayloadForTab } from "webviz-core/src/util";
+import type { MosaicNode, SaveConfigsPayload } from "webviz-core/src/types/panels";
+import { selectPanelOutput } from "webviz-core/src/util/layout";
 
 type OwnProps = {|
   defaultIsOpen?: boolean, // just for testing
@@ -28,7 +27,7 @@ type OwnProps = {|
 type Props = {|
   ...OwnProps,
   panels: PanelsState,
-  changePanelLayout: (payload: any) => void,
+  changePanelLayout: (payload: { layout: MosaicNode }) => void,
   savePanelConfigs: (SaveConfigsPayload) => void,
 |};
 
@@ -50,18 +49,10 @@ class UnconnectedAppMenu extends Component<Props, State> {
   };
 
   _onPanelSelect = ({ type, config, relatedConfigs }: PanelSelection) => {
-    const id = getPanelIdForType(type);
-    let newPanels = { direction: "row", first: id, second: this.props.panels.layout };
-    if (isEmpty(this.props.panels.layout)) {
-      newPanels = id;
-    }
-    if (config && relatedConfigs) {
-      const payload = getSaveConfigsPayloadForTab({ id, config, relatedConfigs });
-      this.props.savePanelConfigs(payload);
-    } else if (config) {
-      this.props.savePanelConfigs({ configs: [{ id, config }] });
-    }
-    this.props.changePanelLayout({ layout: newPanels });
+    const { panels } = this.props;
+    const { layoutPayload, saveConfigsPayload } = selectPanelOutput(type, panels.layout, { config, relatedConfigs });
+    this.props.savePanelConfigs(saveConfigsPayload);
+    this.props.changePanelLayout(layoutPayload);
     window.ga("send", "event", "Panel", "Select", type);
   };
 

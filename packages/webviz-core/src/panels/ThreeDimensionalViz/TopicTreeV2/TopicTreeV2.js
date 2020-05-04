@@ -7,68 +7,21 @@
 //  You may not use this file except in compliance with the License.
 
 import { Tree } from "antd";
-import React, { useMemo, useState, useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import styled from "styled-components";
 
 import { type Save3DConfig } from "../index";
-import renderTreeNodes from "./renderTreeNode";
+import renderTreeNodes from "./renderTreeNodes";
 import TopicTreeSwitcher, { SWITCHER_HEIGHT } from "./TopicTreeSwitcher";
-import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
-import { generateNewTreeAndCreateNodeList } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/AddFromPopularTopics";
+import type { TreeNode, NamespacesByTopic } from "./types";
 import TopicGroupsMenu from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicGroupsMenu";
-import {
-  TOPIC_CONFIG,
-  transformTopicTree,
-  getSceneErrorsByTopic,
-} from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils";
-import { type Topic } from "webviz-core/src/players/types";
-import { useDeepChangeDetector } from "webviz-core/src/util/hooks";
+import type { Topic } from "webviz-core/src/players/types";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-const SWITCHER_WIDTH = 24;
-const DEFAULT_WIDTH = 512;
 const CONTAINER_SPACING = 15;
+const DEFAULT_WIDTH = 512;
 const SEARCH_BAR_HEIGHT = 40;
-
-const DEFAULT_SCENE_BUILDER_DATA = {
-  sceneCollectorMsgForTopicSetting: undefined,
-  sceneErrorsByTopic: {},
-  sceneNamespacesByTopic: {},
-};
-
-type SceneData = {|
-  sceneCollectorMsgForTopicSetting: any,
-  sceneErrorsByTopic: { [topicName: string]: string[] },
-  sceneNamespacesByTopic: { [topicName: string]: string[] },
-|};
-
-type SharedProps = {|
-  availableTopics: Topic[],
-  containerHeight: number,
-  pinTopics: boolean,
-  saveConfig: Save3DConfig,
-  onExitTopicTreeFocus: () => void,
-  setShowTopicTree: (boolean) => void,
-  showTopicTree: boolean,
-  availableTfs: string[],
-  checkedNodes: string[],
-  expandedNodes: string[],
-  topicSettings: any,
-|};
-
-type Props = {|
-  ...SharedProps,
-  ...SceneData,
-  renderTopicTree: boolean,
-  setSettingsTopicName: (topicName: ?string) => void,
-|};
-
-type TopicTreeV2Props = {|
-  ...SharedProps,
-  setShowTopicTree: (boolean) => void,
-  showTopicTree: boolean,
-  sceneBuilder: SceneBuilder,
-|};
+const SWITCHER_WIDTH = 24;
 
 const TopicTreeV2Container = styled.div`
   position: absolute;
@@ -117,40 +70,47 @@ const SFilter = styled.div`
   flex: 1;
 `;
 
-// TODO(Audrey):
-// - TopicTree data model in a class
-// - Datatype icon
-// - Show available state
-// - Handle namespace
-// - Errors by topic
-export function TopicTreeV2Base({
-  availableTfs,
-  availableTopics,
-  checkedNodes,
-  expandedNodes,
-  topicSettings,
+type Props = {|
+  availableNamespacesByTopic: NamespacesByTopic,
+  checkedKeys: string[],
+  containerHeight: number,
+  expandedKeys: string[],
+  onExitTopicTreeFocus: () => void,
+  pinTopics: boolean,
+  rootTreeNode: TreeNode,
+  saveConfig: Save3DConfig,
+  setCurrentEditingTopic: (?Topic) => void,
+  settingsChangedKeysSet: Set<string>,
+  setShowTopicTree: (boolean) => void,
+  showTopicTree: boolean,
+|};
+
+/**
+ * TODO(Audrey):
+ * - Compute topic and namespace selections from config
+ * - Toggle
+ * - Available state
+ * - Bag2
+ * - Datatype icon
+ * - Errors
+ * - Filter
+ */
+function TopicTreeV2({
+  availableNamespacesByTopic,
+  checkedKeys,
+  rootTreeNode,
+  expandedKeys,
   saveConfig,
   containerHeight,
   pinTopics,
-  renderTopicTree,
   showTopicTree,
+  setCurrentEditingTopic,
   setShowTopicTree,
-  sceneNamespacesByTopic,
+  settingsChangedKeysSet,
 }: Props) {
+  const renderTopicTree = pinTopics || showTopicTree;
   const scrollContainerRef = useRef<?HTMLDivElement>();
-  const checkedNodesSet = useMemo(() => new Set(checkedNodes), [checkedNodes]);
-
-  const [autoExpandParent, setAutoExpandParent] = useState<boolean>(true);
-
-  const { treeData } = useMemo(() => {
-    const treeConfig = transformTopicTree(TOPIC_CONFIG);
-    const result = generateNewTreeAndCreateNodeList(treeConfig.children || [], []);
-    return {
-      ...result,
-      topicTreeTopics: result.nodeList.map((item) => (item.topicName ? item.topicName : null)).filter(Boolean),
-    };
-  }, []);
-
+  const checkedKeysSet = useMemo(() => new Set(checkedKeys), [checkedKeys]);
   const treeContainerHeight = containerHeight - CONTAINER_SPACING * 2;
   const treeHeight = treeContainerHeight - SEARCH_BAR_HEIGHT - SWITCHER_HEIGHT;
 
@@ -174,71 +134,26 @@ export function TopicTreeV2Base({
               height={treeHeight}
               selectable={false}
               onExpand={(newExpandedKeys) => {
-                setAutoExpandParent(true);
                 saveConfig({ expandedNodes: newExpandedKeys });
               }}
-              expandedKeys={expandedNodes}
-              autoExpandParent={autoExpandParent}>
-              {renderTreeNodes({
-                data: treeData,
-                checkedNodesSet,
-                saveConfig,
-                width: DEFAULT_WIDTH,
-              })}
+              expandedKeys={expandedKeys}
+              autoExpandParent={false /* Set autoExpandParent to true when filtering */}>
+              {rootTreeNode.children &&
+                renderTreeNodes({
+                  children: rootTreeNode.children,
+                  checkedKeysSet,
+                  expandedKeys,
+                  saveConfig,
+                  availableNamespacesByTopic,
+                  setCurrentEditingTopic,
+                  settingsChangedKeysSet,
+                  width: DEFAULT_WIDTH,
+                })}
             </Tree>
           </div>
         </STopicTreeV2>
       )}
     </TopicTreeV2Container>
-  );
-}
-
-function TopicTreeV2({ pinTopics, sceneBuilder, setShowTopicTree, showTopicTree, ...rest }: TopicTreeV2Props) {
-  const renderTopicTree = pinTopics || showTopicTree;
-
-  // Set the settingsTopic at top level so that we can collect the msg needed for topic settings from SceneBuilder and pass it down.
-  const [settingsTopicName, setSettingsTopicName] = useState<?string>(undefined);
-
-  const sceneDataRef = useRef<SceneData>(DEFAULT_SCENE_BUILDER_DATA);
-  let sceneErrorsByTopic = {};
-  let sceneNamespacesByTopic = {};
-  let sceneCollectorMsgForTopicSetting;
-
-  // Recompute the scene data on each render.
-  if (renderTopicTree) {
-    sceneErrorsByTopic = getSceneErrorsByTopic(sceneBuilder.errors);
-    sceneCollectorMsgForTopicSetting =
-      (settingsTopicName &&
-        (sceneBuilder.collectors[settingsTopicName] && sceneBuilder.collectors[settingsTopicName].getMessages()[0])) ||
-      undefined;
-    sceneNamespacesByTopic = sceneBuilder.allNamespaces.reduce((memo, { name, topic }) => {
-      memo[topic] = memo[topic] || [];
-      memo[topic].push(name);
-      return memo;
-    }, {});
-  }
-
-  // Do a deep-comparison and detect if the sceneData has changed and set `sceneDataRef` accordingly.
-  const sceneDataChanged = useDeepChangeDetector(
-    [sceneErrorsByTopic, sceneNamespacesByTopic, sceneCollectorMsgForTopicSetting],
-    true
-  );
-  if (sceneDataChanged) {
-    // Update the sceneData so the MemoizedTopicTree can be re-rendered.
-    sceneDataRef.current = { sceneErrorsByTopic, sceneNamespacesByTopic, sceneCollectorMsgForTopicSetting };
-  }
-
-  return (
-    <TopicTreeV2Base
-      {...rest}
-      {...sceneDataRef.current}
-      renderTopicTree={renderTopicTree}
-      pinTopics={pinTopics}
-      sceneCollectorMsgForTopicSetting={sceneCollectorMsgForTopicSetting}
-      setSettingsTopicName={setSettingsTopicName}
-      setShowTopicTree={setShowTopicTree}
-      showTopicTree={showTopicTree}
-    />
   );
 }
 

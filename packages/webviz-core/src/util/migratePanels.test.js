@@ -156,36 +156,7 @@ describe("migratePanels", () => {
       "3D Panel!1": {
         checkedNodes,
         savedPropsVersion: SAVED_PROPS_VERSION,
-        topicGroups: [
-          {
-            displayName: "Imported Group",
-            expanded: true,
-            items: [
-              {
-                selectedNamespacesByColumn: [["ExtA.a", "ExtB.b"], []],
-                topicName: "/metadata",
-                visibilityByColumn: [true, false],
-              },
-              {
-                settingsByColumn: [{ colorOverride: "red" }, { colorOverride: "blue" }],
-                topicName: "/topic_a",
-                visibilityByColumn: [true, false],
-              },
-              {
-                settingsByColumn: [{ use3DModel: true }, { use3DModel: false }],
-                topicName: "/topic_b",
-                visibilityByColumn: [true, false],
-              },
-              {
-                expanded: true,
-                selectedNamespacesByColumn: [["ns1"], undefined],
-                topicName: "/topic_c",
-                visibilityByColumn: [true, false],
-              },
-            ],
-            visibilityByColumn: [true, true],
-          },
-        ],
+        topicGroups: undefined,
       },
     });
   });

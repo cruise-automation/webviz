@@ -5,31 +5,36 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import BorderAllIcon from "@mdi/svg/svg/border-all.svg";
 import CloseIcon from "@mdi/svg/svg/close.svg";
+import ExpandAllOutlineIcon from "@mdi/svg/svg/expand-all-outline.svg";
 import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
 import GridLargeIcon from "@mdi/svg/svg/grid-large.svg";
 import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
+import { last } from "lodash";
 import React, { useState, useCallback, useContext, useMemo, type ComponentType } from "react";
 import DocumentEvents from "react-document-events";
 import KeyListener from "react-key-listener";
 import {
   getNodeAtPath,
+  getOtherBranch,
   isParent,
   MosaicContext,
   MosaicWindowContext,
   type MosaicRootActions,
   type MosaicWindowActions,
 } from "react-mosaic-component";
-// $FlowFixMe
-import { useSelector, useDispatch, ReactReduxContext } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { bindActionCreators } from "redux";
 
 import styles from "./Panel.module.scss";
-import { savePanelConfigs, saveFullPanelConfig } from "webviz-core/src/actions/panels";
+import { addSelectedPanelId, removeSelectedPanelId, setSelectedPanelIds } from "webviz-core/src/actions/mosaic";
+import { savePanelConfigs, saveFullPanelConfig, changePanelLayout } from "webviz-core/src/actions/panels";
 import Button from "webviz-core/src/components/Button";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
+import Icon from "webviz-core/src/components/Icon";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDragHandle";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
@@ -41,16 +46,20 @@ import type {
   SaveFullConfigPayload,
   PanelConfig,
   SaveConfig,
-  PerPanelFunc,
 } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { getPanelTypeFromId } from "webviz-core/src/util";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
+import { groupPanelsOutput, createTabsOutput, getPanelTypeFromId } from "webviz-core/src/util/layout";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-type Props<Config> = { childId?: string, config?: Config, saveConfig?: (Config) => void };
+type Props<Config> = { childId?: string, config?: Config, saveConfig?: (Config) => void, tabId?: string };
 type ActionProps = {|
   savePanelConfigs: (SaveConfigsPayload) => void,
   saveFullPanelConfig: (SaveFullConfigPayload) => PanelConfig,
+  changePanelLayout: (panels: any) => void,
+  addSelectedPanelId: (panelId: string) => void,
+  removeSelectedPanelId: (panelId: string) => void,
+  setSelectedPanelIds: (panelIds: string[]) => void,
 |};
 interface PanelStatics<Config> {
   panelType: string;
@@ -71,7 +80,6 @@ export default function Panel<Config: PanelConfig>(
           config: Config,
           saveConfig: SaveConfig<Config>,
           openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
-          updatePanelConfig: (panelType: string, perPanelFunc: PerPanelFunc<PanelConfig>) => void,
           topics: Topic[],
           capabilities: string[],
           datatypes: RosDatatypes,
@@ -84,32 +92,53 @@ export default function Panel<Config: PanelConfig>(
   // https://stackoverflow.com/questions/52508434/adding-static-variable-to-union-of-class-types
 ): ComponentType<Props<Config>> {
   function ConnectedPanel(props: Props<Config>) {
-    const { store } = useContext(ReactReduxContext);
-    const { topics, datatypes, capabilities } = PanelAPI.useDataSourceInfo();
-    const dispatch = useDispatch();
-    const actions: ActionProps = useMemo(
-      () => bindActionCreators({ savePanelConfigs, saveFullPanelConfig }, dispatch),
-      [dispatch]
-    );
-
-    const { childId, config: originalConfig, saveConfig } = props;
+    const { childId, config: originalConfig, saveConfig, tabId } = props;
     const { mosaicActions }: { mosaicActions: MosaicRootActions } = useContext(MosaicContext);
     const { mosaicWindowActions }: { mosaicWindowActions: MosaicWindowActions } = useContext(MosaicWindowContext);
 
-    const savedPropsForChildId = useSelector(({ panels }) => panels.savedProps[childId]);
-    const isOnlyPanel = useSelector(({ panels }) => !isParent(panels.layout));
-    const config = savedPropsForChildId || originalConfig || {};
+    const layout = useSelector(({ panels }) => panels.layout);
+    const savedProps = useSelector(({ panels }) => panels.savedProps);
+    const selectedPanelIds = useSelector((state) => state.mosaic.selectedPanelIds);
+    const isSelected = selectedPanelIds.includes(childId);
+
+    const validSelectedPanelIds = useMemo(
+      () => selectedPanelIds.filter((panelId) => getPanelTypeFromId(panelId) !== TAB_PANEL_TYPE),
+      [selectedPanelIds]
+    );
+    const isOnlyPanel = useMemo(() => (tabId ? false : !isParent(layout)), [layout, tabId]);
+    const config = savedProps[childId] || originalConfig || {};
+
+    const { topics, datatypes, capabilities } = PanelAPI.useDataSourceInfo();
+    const dispatch = useDispatch();
+    const actions: ActionProps = useMemo(
+      () =>
+        bindActionCreators(
+          {
+            savePanelConfigs,
+            saveFullPanelConfig,
+            changePanelLayout,
+            addSelectedPanelId,
+            removeSelectedPanelId,
+            setSelectedPanelIds,
+          },
+          dispatch
+        ),
+      [dispatch]
+    );
 
     const [quickActionsKeyPressed, setQuickActionsKeyPressed] = useState(false);
     const [shiftKeyPressed, setShiftKeyPressed] = useState(false);
+    const [cmdKeyPressed, setCmdKeyPressed] = useState(false);
     const [fullScreen, setFullScreen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
-    const [pressingTilde, setPressingTilde] = useState(false);
+    const [fullScreenLocked, setFullScreenLocked] = useState(false);
 
     const panelsByType = useMemo(() => getPanelsByType(), []);
     const type = PanelComponent.panelType;
     const title = useMemo(() => panelsByType[type]?.title, [panelsByType, type]);
     const panelComponentConfig = useMemo(() => ({ ...PanelComponent.defaultConfig, ...config }), [config]);
+
+    const isTabPanel = useMemo(() => childId && getPanelTypeFromId(childId) === TAB_PANEL_TYPE, [childId]);
 
     // Mix partial config with current config or `defaultConfig`
     const saveCompleteConfig = useCallback(
@@ -144,15 +173,14 @@ export default function Panel<Config: PanelConfig>(
           return;
         }
         const siblingDefaultConfig = siblingComponent.defaultConfig;
-        const savedProps = store.getState().panels.savedProps;
         const ownPath = mosaicWindowActions.getPath();
 
         // Try to find a sibling summary panel and update it with the `siblingConfig`
-        const siblingPathEnd = ownPath[ownPath.length - 1] === "first" ? "second" : "first";
-        const siblingPath = ownPath.slice(0, ownPath.length - 1).concat(siblingPathEnd);
+        const siblingPathEnd = last(ownPath) ? getOtherBranch(last(ownPath)) : "second";
+        const siblingPath = ownPath.slice(0, -1).concat(siblingPathEnd);
         const siblingId = getNodeAtPath(mosaicActions.getRoot(), siblingPath);
         if (typeof siblingId === "string" && getPanelTypeFromId(siblingId) === panelType) {
-          const siblingConfig: PanelConfig = { ...siblingDefaultConfig, ...(savedProps[siblingId]: any) };
+          const siblingConfig: PanelConfig = { ...siblingDefaultConfig, ...savedProps[siblingId] };
           actions.savePanelConfigs({
             configs: [
               { id: siblingId, config: siblingConfigCreator(siblingConfig), defaultConfig: siblingDefaultConfig },
@@ -176,16 +204,64 @@ export default function Panel<Config: PanelConfig>(
           });
         });
       },
-      [actions, mosaicActions, mosaicWindowActions, store]
+      [actions, mosaicActions, mosaicWindowActions, savedProps]
     );
 
     const onOverlayClick = useCallback(
-      () => {
-        if (quickActionsKeyPressed) {
+      (e) => {
+        if (!fullScreen && quickActionsKeyPressed) {
           setFullScreen(true);
+          if (shiftKeyPressed) {
+            setFullScreenLocked(true);
+          }
+        }
+
+        // Clear selectedPanelIds when user clicks a panel without pressing `Cmd`
+        if (!e.metaKey && selectedPanelIds.length) {
+          actions.setSelectedPanelIds([]);
+        }
+
+        // Don't select panel if it is a Tab panel, is inside a Tab panel, or was clicked without pressing `Cmd`
+        if (tabId || isTabPanel || !e.metaKey) {
+          return;
+        }
+
+        if (selectedPanelIds.includes(childId)) {
+          // If clicked panel is already selected, deselect
+          actions.setSelectedPanelIds(selectedPanelIds.filter((panelId) => panelId !== childId));
+        } else if (childId) {
+          // Otherwise, select clicked panel, while deselecting any already-selected Tab panels
+          // (when panels are grouped to create a Tab panel, that new Tab panel is automatically "selected")
+          actions.setSelectedPanelIds(
+            selectedPanelIds.filter((panelId) => getPanelTypeFromId(panelId) !== TAB_PANEL_TYPE).concat([childId])
+          );
         }
       },
-      [quickActionsKeyPressed]
+      [fullScreen, quickActionsKeyPressed, shiftKeyPressed, childId, tabId, isTabPanel, selectedPanelIds, actions]
+    );
+
+    const groupPanels = useCallback(
+      () => {
+        const { tabPanelId, newLayout, saveConfigsPayload } = groupPanelsOutput(childId, layout, validSelectedPanelIds);
+        // Layout must be updated with new Tab panel before saving its nested panels' configs
+        // savePanelConfigs strips savedProps keys that do not exist in the layout
+        actions.changePanelLayout({ layout: newLayout });
+        actions.savePanelConfigs(saveConfigsPayload);
+        actions.setSelectedPanelIds([tabPanelId]);
+      },
+      [actions, childId, layout, validSelectedPanelIds]
+    );
+
+    const createTabs = useCallback(
+      () => {
+        const { tabPanelId, newLayout, saveConfigsPayload } = createTabsOutput(childId, layout, validSelectedPanelIds);
+        // Layout must be updated with new Tab panel before saving its nested panels' configs
+        // savePanelConfigs strips savedProps keys that do not exist in the layout
+        actions.changePanelLayout({ layout: newLayout });
+        actions.savePanelConfigs(saveConfigsPayload);
+        actions.setSelectedPanelIds([tabPanelId]);
+      },
+      [actions, childId, layout, validSelectedPanelIds]
     );
 
     const { closePanel, splitPanel } = useMemo(
@@ -200,80 +276,55 @@ export default function Panel<Config: PanelConfig>(
       [mosaicActions, mosaicWindowActions]
     );
 
-    const { onMouseEnter, onMouseLeave, enterFullscreen, exitFullScreen } = useMemo(
+    const { onMouseEnter, onMouseLeave, onMouseMove, enterFullscreen, exitFullScreen } = useMemo(
       () => ({
-        onMouseEnter: () => {
-          setIsHovered(true);
-        },
-        onMouseLeave: () => {
-          setIsHovered(false);
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false),
+        onMouseMove: (e) => {
+          if (e.metaKey !== cmdKeyPressed) {
+            setCmdKeyPressed(e.metaKey);
+          }
         },
         enterFullscreen: () => {
-          setShiftKeyPressed(true);
           setFullScreen(true);
+          setFullScreenLocked(true);
         },
         exitFullScreen: () => {
-          setQuickActionsKeyPressed(false);
-          setShiftKeyPressed(false);
           setFullScreen(false);
+          setFullScreenLocked(false);
         },
       }),
-      []
+      [cmdKeyPressed]
+    );
+
+    const onReleaseQuickActionsKey = useCallback(
+      () => {
+        setQuickActionsKeyPressed(false);
+        if (fullScreen && !fullScreenLocked) {
+          exitFullScreen();
+        }
+      },
+      [exitFullScreen, fullScreen, fullScreenLocked]
     );
 
     const { keyUpHandlers, keyDownHandlers } = useMemo(
       () => ({
         keyUpHandlers: {
-          "`": (e) => {
-            setPressingTilde(false);
-            if (!fullScreen || !shiftKeyPressed) {
-              exitFullScreen();
-            }
-          },
-          Shift: (e) => {
-            if (shiftKeyPressed && quickActionsKeyPressed && !fullScreen) {
-              setShiftKeyPressed(false);
-            }
-          },
-          "~": (e) => {
-            if (!fullScreen) {
-              setQuickActionsKeyPressed(false);
-            }
-          },
+          "`": () => onReleaseQuickActionsKey(),
+          "~": () => onReleaseQuickActionsKey(),
+          Meta: () => setCmdKeyPressed(false),
+          Shift: () => setShiftKeyPressed(false),
         },
         keyDownHandlers: {
-          "`": (e) => {
-            if (pressingTilde) {
-              return;
-            }
-            if (!e.repeat && !quickActionsKeyPressed) {
-              setPressingTilde(true);
-              setQuickActionsKeyPressed(true);
-            }
-            if (!e.repeat && fullScreen) {
-              setPressingTilde(true);
-              exitFullScreen();
-            }
-          },
-          "~": (e) => {
-            setQuickActionsKeyPressed(true);
-            setShiftKeyPressed(true);
-          },
-          Shift: (e) => {
-            if (!shiftKeyPressed) {
-              setShiftKeyPressed(true);
-            }
-          },
-          Escape: (e) => {
-            if (fullScreen || quickActionsKeyPressed || shiftKeyPressed) {
-              exitFullScreen();
-            }
-          },
+          "`": () => setQuickActionsKeyPressed(true),
+          "~": () => setQuickActionsKeyPressed(true),
+          Meta: () => setCmdKeyPressed(true),
+          Shift: () => setShiftKeyPressed(true),
+          Escape: () => exitFullScreen(),
         },
       }),
-      [exitFullScreen, fullScreen, pressingTilde, quickActionsKeyPressed, shiftKeyPressed]
+      [exitFullScreen, onReleaseQuickActionsKey]
     );
-
     return (
       // $FlowFixMe - bug prevents requiring panelType on PanelComponent: https://stackoverflow.com/q/52508434/23649
       <PanelContext.Provider
@@ -287,6 +338,7 @@ export default function Panel<Config: PanelConfig>(
           openSiblingPanel,
           enterFullscreen,
           isHovered,
+          tabId,
         }}>
         {/* Ensure user exits full-screen mode when leaving window, even if key is still pressed down */}
         <DocumentEvents target={window} enabled onBlur={exitFullScreen} />
@@ -295,13 +347,36 @@ export default function Panel<Config: PanelConfig>(
           onClick={onOverlayClick}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
+          onMouseMove={onMouseMove}
+          style={{ border: `2px solid ${isSelected ? colors.BLUE : "transparent"}` }}
           className={cx({ [styles.root]: true, [styles.rootFullScreen]: fullScreen })}
           col
           dataTest="panel-mouseenter-container"
           clip>
           {fullScreen ? <div className={styles.notClickable} /> : null}
+          {isSelected && !fullScreen && validSelectedPanelIds.length > 1 && (
+            <div data-tab-options className={styles.tabActionsOverlay}>
+              <Button style={{ backgroundColor: colors.BLUE }} onClick={groupPanels}>
+                <Icon small style={{ marginBottom: 5 }}>
+                  <BorderAllIcon />
+                </Icon>
+                Group in tab
+              </Button>
+              <Button style={{ backgroundColor: colors.BLUE }} onClick={createTabs}>
+                <Icon small style={{ marginBottom: 5 }}>
+                  <ExpandAllOutlineIcon />
+                </Icon>
+                Create {selectedPanelIds.length} tabs
+              </Button>
+            </div>
+          )}
+          {cmdKeyPressed && type === TAB_PANEL_TYPE && (
+            <div data-tab-options-no-op className={styles.prohibitedSelection}>
+              Cannot group Tab panels with other panels
+            </div>
+          )}
           {type !== TAB_PANEL_TYPE && quickActionsKeyPressed && !fullScreen && (
-            <MosaicDragHandle>
+            <MosaicDragHandle tabId={tabId}>
               <div className={styles.quickActionsOverlay} data-panel-overlay>
                 <div>
                   <FullscreenIcon />
@@ -321,7 +396,7 @@ export default function Panel<Config: PanelConfig>(
               </div>
             </MosaicDragHandle>
           )}
-          {fullScreen && shiftKeyPressed ? (
+          {fullScreen ? (
             <button className={styles.exitFullScreen} onClick={exitFullScreen} data-panel-overlay-exit>
               <CloseIcon /> <span>Exit fullscreen</span>
             </button>
@@ -330,7 +405,6 @@ export default function Panel<Config: PanelConfig>(
             <PanelComponent
               config={panelComponentConfig}
               saveConfig={saveCompleteConfig}
-              updatePanelConfig={updatePanelConfig}
               openSiblingPanel={openSiblingPanel}
               topics={[...topics]}
               datatypes={datatypes}

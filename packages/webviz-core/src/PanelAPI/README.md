@@ -53,24 +53,27 @@ PanelAPI.useMessageReducer<T>(props: {|
 
 ### Subscription parameters
 
-- `topics`: set of topics to subscribe to. Changing only the topics will not cause `restore` or `addMessage` to be called. You can pass in an object if you want to set the `imageScale`: a number between 0 and 1 for subscriptions to image topics, requesting that the player downsample images. _(Unused in the open-source version of Webviz.)_
+- `topics`: set of topics to subscribe to. Changing only the topics will not cause `restore` or `addMessage`/`addMessages` to be called. You can pass in an object if you want to set the `imageScale`: a number between 0 and 1 for subscriptions to image topics, requesting that the player downsample images. _(Unused in the open-source version of Webviz.)_
 
 ### Reducer functions
 
-The `useMessageReducer` hook returns a user-defined "state" (`T`). The `restore` and `addMessage` callbacks specify how to initialize and update the state.
+The `useMessageReducer` hook returns a user-defined "state" (`T`). The `restore` and `addMessage`/`addMessages` callbacks specify how to initialize and update the state.
 
 These reducers should be wrapped in [`useCallback()`](https://reactjs.org/docs/hooks-reference.html#usecallback), because the useMessageReducer hook will do extra work when they change, so they should change only when the interpretation of message data is actually changing.
 
 - `restore: (?T) => T`:
   - Called with `undefined` to initialize a new state when the panel first renders, and when the user seeks to a different playback time (at which point Webviz automatically clears out state across all panels).
-  - Called with the previous state when the `restore` or `addMessage` reducer functions change. This allows the panel an opportunity to reuse its previous state when a parameter changes, without totally discarding it (as in the case of a seek) and waiting for new messages to come in from the data source.
+  - Called with the previous state when the `restore` or `addMessage`/`addMessages` reducer functions change. This allows the panel an opportunity to reuse its previous state when a parameter changes, without totally discarding it (as in the case of a seek) and waiting for new messages to come in from the data source.
 
     For example, a panel that filters some incoming messages can use `restore` to create a filtered value immediately when the filter changes. To implement this, the caller might switch from unfiltered reducers:
 
     ```js
     {
       restore: (x: ?string[]) => (x || []),
-      addMessage: (x: string[], m: Message) => x.concat(m.data),
+      addMessages: (x: string[], msgs: Message[]) => {
+        msgs.forEach((m) => x.concat(m.data));
+        return x;
+      },
     }
     ```
 
@@ -79,10 +82,17 @@ These reducers should be wrapped in [`useCallback()`](https://reactjs.org/docs/h
     ```js
     {
       restore: (x: ?string[]) => (x ? x.filter(predicate) : []),
-      addMessage: (x: string[], m: Message) => (predicate(m.data) ? x.concat(m.data) : x),
+      addMessages: (x: string[], msgs: Message[]) => {
+        msgs.forEach((m) =>  if (predicate(m.data)) x.concat(m.data));
+        return x;
+      },
     }
     ```
 
     As soon as the reducers are swapped, the **new** `restore()` will be called with the **previous** data. (If the filter is removed again, the old data that was filtered out can't be magically restored unless it was kept in the state, but hopefully future work to preload data faster than real-time will help us there.)
 
-- `addMessage: (T, Message) => T`: called when any new message comes in on one of the requested topics. The return value from `addMessage` will be the new return value from `useMessageReducer()`.
+- `addMessages?: (T, Message[]) => T`: called when any new messages come in on one of the requested topics. Unlike `addMessage`, this callback is provided with every new message since the last call. Optional for back compat with older panels, this is the recommended approach moving forward.
+
+- (DEPRECATED) `addMessage?: (T, Message) => T`: called when any new message comes in on one of the requested topics. The return value from `addMessage` will be the new return value from `useMessageReducer()`. Will not be called if an addMessages callback was provided.
+
+- Note only one of the two optional parameters above must be provided, providng neither or providing both will result in an error.

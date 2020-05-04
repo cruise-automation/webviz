@@ -14,6 +14,7 @@ import renderToBody from "webviz-core/src/components/renderToBody";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import type { State } from "webviz-core/src/reducers";
 import type { PanelsState } from "webviz-core/src/reducers/panels";
+import type { ImportPanelLayoutPayload } from "webviz-core/src/types/panels";
 
 type OwnProps = {|
   onRequestClose: () => void,
@@ -31,7 +32,7 @@ function UnconnectedLayoutModal({ onRequestClose, importPanelLayout: importLayou
       onRequestClose={onRequestClose}
       value={panels}
       onChange={useCallback(
-        (layout: any) => {
+        (layout: ImportPanelLayoutPayload) => {
           importLayout(layout);
         },
         [importLayout]

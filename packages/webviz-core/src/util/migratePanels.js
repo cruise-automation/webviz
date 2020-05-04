@@ -10,7 +10,7 @@ import { cloneDeep, isEmpty } from "lodash";
 
 import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
 import type { PanelsState } from "webviz-core/src/reducers/panels";
-import { getPanelTypeFromId } from "webviz-core/src/util";
+import { getPanelTypeFromId } from "webviz-core/src/util/layout";
 import migrate3DPanel from "webviz-core/src/util/migrate3DPanel";
 
 export function migrateNodePlaygroundNodesToObjects(originalPanelsState: PanelsState): PanelsState {

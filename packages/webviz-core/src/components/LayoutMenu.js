@@ -23,7 +23,14 @@ type State = {
   isOpen: boolean,
 };
 
-export default class LayoutMenu extends PureComponent<{}, State> {
+type Props = {
+  redoLayoutChange: () => void,
+  redoStateCount: number,
+  undoLayoutChange: () => void,
+  undoStateCount: number,
+};
+
+export default class LayoutMenu extends PureComponent<Props, State> {
   state = {
     isOpen: false,
   };
@@ -47,6 +54,13 @@ export default class LayoutMenu extends PureComponent<{}, State> {
 
   render() {
     const { isOpen } = this.state;
+    const { redoLayoutChange, redoStateCount, undoLayoutChange, undoStateCount } = this.props;
+    const redoDisabled = redoStateCount === 0;
+    const undoDisabled = undoStateCount === 0;
+
+    const mac = navigator.userAgent.includes("Mac OS");
+    const cmd = mac ? "⌘" : "ctrl+";
+    const shift = mac ? "⇧" : "shift+";
 
     return (
       <ChildToggle position="below" onToggle={this._onToggle} isOpen={isOpen}>
@@ -58,6 +72,14 @@ export default class LayoutMenu extends PureComponent<{}, State> {
         <Menu>
           <Item icon={<JsonIcon />} onClick={this._onImportClick}>
             Import/export layout
+          </Item>
+          <Item icon="⟲" tooltip={`Undo (${cmd}Z)`} onClick={undoLayoutChange} disabled={undoDisabled}>
+            Undo change
+            <small>{` (${undoStateCount})`}</small>
+          </Item>
+          <Item icon="⟳" tooltip={`Redo (${cmd}${shift}Z)`} onClick={redoLayoutChange} disabled={redoDisabled}>
+            Redo change
+            <small>{` (${redoStateCount})`}</small>
           </Item>
           <Item icon={<FlagVariantIcon />} onClick={this._onExperimentalFeaturesClick}>
             Experimental Features

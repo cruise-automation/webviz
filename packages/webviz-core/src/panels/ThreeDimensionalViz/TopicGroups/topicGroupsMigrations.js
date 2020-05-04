@@ -20,6 +20,7 @@ import {
 import type { TopicGroupConfig, VisibilityByColumn, NamespacesByColumn, SettingsByColumn } from "./types";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
+import { migrateLegacyIds } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/topicTreeV2Migrations";
 
 function getSelectionsFromCheckedNodes(
   checkedNodes: string[]
@@ -79,47 +80,6 @@ const getParentNamesByTopic = microMemoize(
     return mapValues(keyBy(items, "topic"), ({ parentNames }) => parentNames);
   }
 );
-
-type LegacyIdItem = {| legacyId: string, topic: string |} | {| legacyId: string, name: string |};
-function* generateLegacyIdItems(item: TopicConfig): Generator<LegacyIdItem, void, void> {
-  const { children, name, topic, legacyIds } = item;
-  if (legacyIds) {
-    if (topic) {
-      yield* legacyIds.map((legacyId) => ({ legacyId, topic }));
-    } else if (name) {
-      yield* legacyIds.map((legacyId) => ({ legacyId, name }));
-    }
-  }
-  if (children) {
-    for (const subItem of children) {
-      yield* generateLegacyIdItems(subItem);
-    }
-  }
-}
-
-const getLegacyIdItems = microMemoize(
-  (topicConfig): LegacyIdItem[] => {
-    return flatten(topicConfig.children.map((item) => Array.from(generateLegacyIdItems(item))));
-  }
-);
-
-// Migrate legacyIds related to topics and names to the actual names and topics.
-export function migrateLegacyIds(checkedNodes: string[]): string[] {
-  const legacyIdItems = getLegacyIdItems(TOPIC_CONFIG);
-  const newCheckedNameOrTopicByOldNames = {};
-  for (const { topic, name, legacyId } of legacyIdItems) {
-    if (name) {
-      newCheckedNameOrTopicByOldNames[`${legacyId}`] = `name:${name}`;
-      newCheckedNameOrTopicByOldNames[`name:${legacyId}`] = `name:${name}`;
-    }
-    if (topic) {
-      newCheckedNameOrTopicByOldNames[`t:${legacyId}`] = `t:${topic}`;
-      // If both name and topic are present, only use topic as the new checkedName
-      newCheckedNameOrTopicByOldNames[`${legacyId}`] = `t:${topic}`;
-    }
-  }
-  return checkedNodes.map((node) => newCheckedNameOrTopicByOldNames[node] || node);
-}
 
 function dataSourcePrefixToColumnIndex(dataSourcePrefix: string): number {
   return FEATURE_DATA_SOURCE_PREFIXES.includes(dataSourcePrefix) ? 1 : 0;
@@ -378,20 +338,4 @@ export function addDefaultTopicSettings(topicGroups: TopicGroupConfig[]): TopicG
       ...getSettingsByColumnWithDefaults(item.topicName, item.settingsByColumn),
     })),
   }));
-}
-
-export function addDefaultTopicSettingsForTopicTree(topicSettings: any): any {
-  const newTopicSettings = { ...topicSettings };
-  const getDefaultSettingsHook = getGlobalHooks().startupPerPanelHooks().ThreeDimensionalViz.getDefaultSettings;
-  if (!getDefaultSettingsHook) {
-    return topicSettings;
-  }
-  const defaultSettings = getDefaultSettingsHook();
-  // Merge the defaultSettings with the existing topicSettings if it's not already set.
-  Object.keys(defaultSettings).forEach((topicName) => {
-    if (!newTopicSettings[topicName]) {
-      newTopicSettings[topicName] = defaultSettings[topicName];
-    }
-  });
-  return newTopicSettings;
 }

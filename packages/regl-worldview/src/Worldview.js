@@ -127,7 +127,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
     if (hitmapOnMouseMove) {
       if (disableHitmapForEvents) {
-        console.error(
+        throw new Error(
           "Property 'hitmapOnMouseMove' is deprectated and will be ignored when used along with 'disableHitmapForEvents'."
         );
       } else {

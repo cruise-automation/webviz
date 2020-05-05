@@ -5,7 +5,7 @@ import memoizeOne from "memoize-one";
 import React, { useState } from "react";
 
 import type { Color } from "../types";
-import { defaultBlend, defaultDepth, disabledDepth, toColor } from "../utils/commandUtils";
+import { defaultBlend, defaultDepth, toColor } from "../utils/commandUtils";
 import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 import { isColorDark, type TextMarker } from "./Text";
@@ -309,51 +309,53 @@ function makeTextCommand(alphabet?: string[]) {
 
   const command = (regl: any) => {
     const atlasTexture = regl.texture();
-    const makeDrawText = (isHitmap: boolean) => {
-      return regl({
-        // When using scale invariance, we want the text to be drawn on top
-        // of other elements. This is achieved by disabling depth testing
-        // In addition, make sure the <GLText /> command is the last one
-        // being rendered.
-        depth: command.scaleInvariant ? disabledDepth : defaultDepth,
-        blend: defaultBlend,
-        primitive: "triangle strip",
-        vert,
-        frag,
-        uniforms: {
-          atlas: atlasTexture,
-          atlasSize: () => [atlasTexture.width, atlasTexture.height],
-          fontSize: command.resolution,
-          cutoff: CUTOFF,
-          scaleInvariant: command.scaleInvariant,
-          scaleInvariantSize: command.scaleInvariantSize,
-          isHitmap: !!isHitmap,
-          viewportHeight: regl.context("viewportHeight"),
-          viewportWidth: regl.context("viewportWidth"),
-          isPerspective: regl.context("isPerspective"),
-          cameraFovY: regl.context("fovy"),
-        },
-        instances: regl.prop("instances"),
-        count: 4,
-        attributes: {
-          position: [[0, 0], [0, -1], [1, 0], [1, -1]],
-          texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
-          srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
-          destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
-          srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
-          scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
-          alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
-          billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
-          foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
-          backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
-          highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
-          enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
-          enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
-          posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
-          poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
-        },
-      });
-    };
+
+    const drawText = regl({
+      // When using scale invariance, we want the text to be drawn on top
+      // of other elements. This is achieved by disabling depth testing
+      // In addition, make sure the <GLText /> command is the last one
+      // being rendered.
+      depth: {
+        enable: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.enable(ctx, props)),
+        mask: (ctx, props) => (props.scaleInvariant ? false : defaultDepth.mask(ctx, props)),
+      },
+      blend: defaultBlend,
+      primitive: "triangle strip",
+      vert,
+      frag,
+      uniforms: {
+        atlas: atlasTexture,
+        atlasSize: () => [atlasTexture.width, atlasTexture.height],
+        fontSize: regl.prop("resolution"),
+        cutoff: CUTOFF,
+        scaleInvariant: regl.prop("scaleInvariant"),
+        scaleInvariantSize: regl.prop("scaleInvariantSize"),
+        isHitmap: regl.prop("isHitmap"),
+        viewportHeight: regl.context("viewportHeight"),
+        viewportWidth: regl.context("viewportWidth"),
+        isPerspective: regl.context("isPerspective"),
+        cameraFovY: regl.context("fovy"),
+      },
+      instances: regl.prop("instances"),
+      count: 4,
+      attributes: {
+        position: [[0, 0], [0, -1], [1, 0], [1, -1]],
+        texCoord: [[0, 0], [0, 1], [1, 0], [1, 1]], // flipped
+        srcOffset: (ctx, props) => ({ buffer: props.srcOffsets, divisor: 1 }),
+        destOffset: (ctx, props) => ({ buffer: props.destOffsets, divisor: 1 }),
+        srcWidth: (ctx, props) => ({ buffer: props.srcWidths, divisor: 1 }),
+        scale: (ctx, props) => ({ buffer: props.scale, divisor: 1 }),
+        alignmentOffset: (ctx, props) => ({ buffer: props.alignmentOffset, divisor: 1 }),
+        billboard: (ctx, props) => ({ buffer: props.billboard, divisor: 1 }),
+        foregroundColor: (ctx, props) => ({ buffer: props.foregroundColor, divisor: 1 }),
+        backgroundColor: (ctx, props) => ({ buffer: props.backgroundColor, divisor: 1 }),
+        highlightColor: (ctx, props) => ({ buffer: props.highlightColor, divisor: 1 }),
+        enableBackground: (ctx, props) => ({ buffer: props.enableBackground, divisor: 1 }),
+        enableHighlight: (ctx, props) => ({ buffer: props.enableHighlight, divisor: 1 }),
+        posePosition: (ctx, props) => ({ buffer: props.posePosition, divisor: 1 }),
+        poseOrientation: (ctx, props) => ({ buffer: props.poseOrientation, divisor: 1 }),
+      },
+    });
 
     return (props: $ReadOnlyArray<TextMarkerProps>, isHitmap: boolean) => {
       let estimatedInstances = 0;
@@ -515,8 +517,13 @@ function makeTextCommand(alphabet?: string[]) {
         totalInstances += markerInstances;
       }
 
-      makeDrawText(isHitmap)({
+      drawText({
         instances: totalInstances,
+
+        isHitmap: !!isHitmap,
+        scaleInvariant: command.scaleInvariant,
+        resolution: command.resolution,
+        scaleInvariantSize: command.scaleInvariantSize,
 
         // per-character
         srcOffsets,

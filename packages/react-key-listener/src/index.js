@@ -60,15 +60,11 @@ export default class KeyListener extends React.Component<Props> {
   handleEvent = (event: KeyboardEvent) => {
     const { target, type } = event;
     if (
-      // escape key should still work when a button is focused
-      event.key !== "Escape" &&
-      (target instanceof HTMLButtonElement ||
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLSelectElement ||
-        target instanceof HTMLTextAreaElement ||
-        (target instanceof HTMLElement && target.isContentEditable))
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      (target instanceof HTMLElement && target.isContentEditable)
     ) {
-      // the user is typing in an editable field; ignore the event.
+      // The user is typing in an editable field; ignore the event.
       return;
     }
 

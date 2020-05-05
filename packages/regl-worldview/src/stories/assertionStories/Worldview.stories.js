@@ -142,25 +142,6 @@ stories
     })
   )
   .add(
-    `onMouseMove picks up objects with hitmapOnMouseMove=true (overrides disableHitmapForEvents=[])`,
-    assertionTest({
-      story: (setTestData) => (
-        <WorldviewWrapper
-          onMouseMove={(_, { objects }) => setTestData(objects)}
-          hitmapOnMouseMove
-          disableHitmapForEvents={[]}>
-          <Cubes>{[cube]}</Cubes>
-        </WorldviewWrapper>
-      ),
-      assertions: async (getTestData) => {
-        await emitMouseEvent("mousemove");
-        const result = await getTestData();
-        expect(result.length).toEqual(1);
-        expect(result[0].object).toEqual(cube);
-      },
-    })
-  )
-  .add(
     `onMouseMove picks up objects with disableHitmapForEvents=[]`,
     assertionTest({
       story: (setTestData) => (

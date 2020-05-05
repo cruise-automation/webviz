@@ -143,4 +143,14 @@ describe("MessageCollector", () => {
     collector.addMessage("/foo", message);
     expect(collector.getMessages()).toEqual([{ name: "foo" }]);
   });
+
+  it("allow multiple messages with the same timestamp", () => {
+    const collector = new MessageCollector();
+    // Set a lifetime value so the message collector creates a unique key
+    // See addMessage() implementation in MessageCollector
+    const lifetime = { sec: 123, nsec: 456 };
+    collector.addMessage("/topic", { name: "foo", foo: "bar", lifetime });
+    collector.addMessage("/topic", { name: "foo", foo: "bar", lifetime });
+    expect(collector.getMessages()).toHaveLength(2);
+  });
 });

@@ -16,16 +16,23 @@ import SettingsIcon from "@mdi/svg/svg/settings.svg";
 import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
-import { useContext, useState, useCallback } from "react"; // eslint-disable-line import/no-duplicates
+import { useContext, useState, useCallback, useMemo } from "react"; // eslint-disable-line import/no-duplicates
 import Dimensions from "react-container-dimensions";
-import { getNodeAtPath, MosaicContext, MosaicWindowContext } from "react-mosaic-component";
+import {
+  getNodeAtPath,
+  createRemoveUpdate,
+  updateTree,
+  MosaicContext,
+  MosaicWindowContext,
+} from "react-mosaic-component";
 // $FlowFixMe - typedefs do not recognize the ReactReduxContext import
-import { connect, ReactReduxContext } from "react-redux";
+import { useDispatch, useSelector, ReactReduxContext } from "react-redux";
+import { bindActionCreators } from "redux";
 
 import HelpButton from "./HelpButton";
 import styles from "./index.module.scss";
 import MosaicDragHandle from "./MosaicDragHandle";
-import { savePanelConfigs as savePanelConfigsAction } from "webviz-core/src/actions/panels";
+import { savePanelConfigs, changePanelLayout } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
@@ -35,10 +42,14 @@ import { getPanelTypeFromMosaic } from "webviz-core/src/components/PanelToolbar/
 import renderToBody from "webviz-core/src/components/renderToBody";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
-import type { SaveConfigsPayload } from "webviz-core/src/types/panels";
-import { getPanelIdForType, getSaveConfigsPayloadForTab, getPanelIdsInsideTabPanels } from "webviz-core/src/util";
 import frameless from "webviz-core/src/util/frameless";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
+import {
+  getPanelIdForType,
+  getSaveConfigsPayloadForNewTab,
+  getPanelIdsInsideTabPanels,
+  removePanelFromTabPanel,
+} from "webviz-core/src/util/layout";
 
 type Props = {|
   children?: React.Node,
@@ -53,9 +64,12 @@ type Props = {|
 
 // separated into a sub-component so it can always skip re-rendering
 // it never changes after it initially mounts
-function StandardMenuItems({ savePanelConfigs }: {| savePanelConfigs: (SaveConfigsPayload) => void |}) {
+function StandardMenuItems({ tabId }: { tabId?: string }) {
   const { mosaicActions } = useContext(MosaicContext);
   const { mosaicWindowActions } = useContext(MosaicWindowContext);
+  const savedProps = useSelector(({ panels }) => panels.savedProps);
+  const dispatch = useDispatch();
+  const actions = useMemo(() => bindActionCreators({ savePanelConfigs, changePanelLayout }, dispatch), [dispatch]);
 
   const getPanelType = useCallback(() => getPanelTypeFromMosaic(mosaicWindowActions, mosaicActions), [
     mosaicActions,
@@ -65,9 +79,16 @@ function StandardMenuItems({ savePanelConfigs }: {| savePanelConfigs: (SaveConfi
   const close = useCallback(
     () => {
       window.ga("send", "event", "Panel", "Close", getPanelType());
-      mosaicActions.remove(mosaicWindowActions.getPath());
+      if (tabId) {
+        const saveConfigsPayload = removePanelFromTabPanel(mosaicWindowActions.getPath(), savedProps[tabId], tabId);
+        actions.savePanelConfigs(saveConfigsPayload);
+      } else {
+        const update = createRemoveUpdate(mosaicActions.getRoot(), mosaicWindowActions.getPath());
+        const newLayout = updateTree(mosaicActions.getRoot(), [update]);
+        actions.changePanelLayout({ layout: newLayout });
+      }
     },
-    [getPanelType, mosaicActions, mosaicWindowActions]
+    [actions, getPanelType, mosaicActions, mosaicWindowActions, savedProps, tabId]
   );
 
   const split = useCallback(
@@ -78,7 +99,6 @@ function StandardMenuItems({ savePanelConfigs }: {| savePanelConfigs: (SaveConfi
       }
       window.ga("send", "event", "Panel", "Split", type);
 
-      const savedProps = store.getState().panels.savedProps;
       const config = savedProps[id];
       const newId = getPanelIdForType(type);
       if (type === TAB_PANEL_TYPE) {
@@ -86,17 +106,17 @@ function StandardMenuItems({ savePanelConfigs }: {| savePanelConfigs: (SaveConfi
           (result, panelId) => ({ ...result, [panelId]: savedProps[panelId] }),
           {}
         );
-        const payload = getSaveConfigsPayloadForTab({ id: newId, config, relatedConfigs });
-        savePanelConfigs(payload);
+        const payload = getSaveConfigsPayloadForNewTab({ id: newId, config, relatedConfigs });
+        actions.savePanelConfigs(payload);
       } else if (config) {
-        savePanelConfigs({ configs: [{ id: newId, config }] });
+        actions.savePanelConfigs({ configs: [{ id: newId, config }] });
       }
 
       const path = mosaicWindowActions.getPath();
       const root = mosaicActions.getRoot();
       mosaicActions.replaceWith(path, { direction, first: getNodeAtPath(root, path), second: newId });
     },
-    [getPanelType, mosaicActions, mosaicWindowActions, savePanelConfigs]
+    [actions, getPanelType, mosaicActions, mosaicWindowActions, savedProps]
   );
 
   const swap = useCallback(
@@ -104,15 +124,15 @@ function StandardMenuItems({ savePanelConfigs }: {| savePanelConfigs: (SaveConfi
       window.ga("send", "event", "Panel", "Swap", type);
       if (config && relatedConfigs) {
         const newId = getPanelIdForType(type);
-        const { configs } = getSaveConfigsPayloadForTab({ id: newId, config, relatedConfigs });
-        savePanelConfigs({ configs });
+        const { configs } = getSaveConfigsPayloadForNewTab({ id: newId, config, relatedConfigs });
+        actions.savePanelConfigs({ configs });
         const tabConfigObj = configs.find(({ id }) => id === newId) || {};
         mosaicWindowActions.replaceWithNew({ type, panelConfig: tabConfigObj.config });
       } else {
         mosaicWindowActions.replaceWithNew({ type, panelConfig: config });
       }
     },
-    [mosaicWindowActions, savePanelConfigs]
+    [actions, mosaicWindowActions]
   );
 
   const onImportClick = useCallback(
@@ -125,12 +145,12 @@ function StandardMenuItems({ savePanelConfigs }: {| savePanelConfigs: (SaveConfi
         <ShareJsonModal
           onRequestClose={() => modal.remove()}
           value={panelConfigById[id] || {}}
-          onChange={(config) => savePanelConfigs({ configs: [{ id, config, override: true }] })}
+          onChange={(config) => actions.savePanelConfigs({ configs: [{ id, config, override: true }] })}
           noun="panel configuration"
         />
       );
     },
-    [savePanelConfigs]
+    [actions]
   );
 
   const type = getPanelType();
@@ -169,12 +189,17 @@ function StandardMenuItems({ savePanelConfigs }: {| savePanelConfigs: (SaveConfi
                 tooltip="(shortcut: ` or ~)">
                 Split vertical
               </Item>
-              <Item icon={<TrashCanOutlineIcon />} onClick={close} disabled={isOnlyPanel} tooltip="(shortcut: ` or ~)">
+              <Item
+                icon={<TrashCanOutlineIcon />}
+                onClick={close}
+                disabled={isOnlyPanel && !panelContext?.tabId /* Allow removing the last panel in a tab layout. */}
+                tooltip="(shortcut: ` or ~)">
                 Remove panel
               </Item>
               <Item
                 icon={<JsonIcon />}
                 onClick={() => onImportClick(store, panelContext?.id)}
+                disabled={type === TAB_PANEL_TYPE}
                 dataTest="panel-settings-config">
                 Import/export panel settings
               </Item>
@@ -185,11 +210,6 @@ function StandardMenuItems({ savePanelConfigs }: {| savePanelConfigs: (SaveConfi
     </ReactReduxContext.Consumer>
   );
 }
-
-const ConnectedStandardMenuItems = connect(
-  null,
-  { savePanelConfigs: savePanelConfigsAction }
-)(StandardMenuItems);
 
 type PanelToolbarControlsProps = {|
   ...Props,
@@ -219,11 +239,11 @@ const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Pan
             <SettingsIcon className={styles.icon} />
           </Icon>
         }>
-        <ConnectedStandardMenuItems />
+        <StandardMenuItems tabId={panelData?.tabId} />
         {menuContent && <hr />}
         {menuContent}
       </Dropdown>
-      <MosaicDragHandle onDragStart={onDragStart} onDragEnd={onDragEnd}>
+      <MosaicDragHandle onDragStart={onDragStart} onDragEnd={onDragEnd} tabId={panelData?.tabId}>
         {/* Can only nest native nodes into <MosaicDragHandle>, so wrapping in a <span> */}
         <span>
           <Icon fade tooltip="Move panel (shortcut: ` or ~)">

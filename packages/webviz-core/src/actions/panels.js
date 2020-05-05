@@ -11,6 +11,7 @@ import { push } from "connected-react-router";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type {
   ImportPanelLayoutPayload,
+  MosaicNode,
   SaveConfigsPayload,
   SaveFullConfigPayload,
   UserNodes,
@@ -104,10 +105,13 @@ export const importPanelLayout = (
 
 export type CHANGE_PANEL_LAYOUT = {
   type: "CHANGE_PANEL_LAYOUT",
-  payload: any,
+  payload: { layout: MosaicNode },
 };
 
-export const changePanelLayout = (payload: any): Dispatcher<CHANGE_PANEL_LAYOUT> => (dispatch, getState) => {
+export const changePanelLayout = (payload: { layout: MosaicNode }): Dispatcher<CHANGE_PANEL_LAYOUT> => (
+  dispatch,
+  getState
+) => {
   maybeStripLayoutId(dispatch, getState);
   return dispatch({
     type: PANELS_ACTION_TYPES.CHANGE_PANEL_LAYOUT,
@@ -117,20 +121,20 @@ export const changePanelLayout = (payload: any): Dispatcher<CHANGE_PANEL_LAYOUT>
 
 type OVERWRITE_GLOBAL_DATA = {
   type: "OVERWRITE_GLOBAL_DATA",
-  payload: any,
+  payload: { [key: string]: any },
 };
 
-export const overwriteGlobalVariables = (payload: any): OVERWRITE_GLOBAL_DATA => ({
+export const overwriteGlobalVariables = (payload: { [key: string]: any }): OVERWRITE_GLOBAL_DATA => ({
   type: PANELS_ACTION_TYPES.OVERWRITE_GLOBAL_DATA,
   payload,
 });
 
 type SET_GLOBAL_DATA = {
   type: "SET_GLOBAL_DATA",
-  payload: any,
+  payload: { [key: string]: any },
 };
 
-export const setGlobalVariables = (payload: any): SET_GLOBAL_DATA => ({
+export const setGlobalVariables = (payload: { [key: string]: any }): SET_GLOBAL_DATA => ({
   type: PANELS_ACTION_TYPES.SET_GLOBAL_DATA,
   payload,
 });

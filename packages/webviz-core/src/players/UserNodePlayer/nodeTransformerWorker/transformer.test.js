@@ -793,6 +793,27 @@ describe("pipeline", () => {
         datatypes: timeDatatypes,
       },
 
+      {
+        description: "Boolean return types",
+        sourceCode: `
+          export default (msg: any): { isTrue: boolean } => {
+            return { isTrue: true };
+          };`,
+        datatypes: {
+          [baseNodeData.name]: {
+            fields: [
+              {
+                name: "isTrue",
+                isArray: false,
+                isComplex: false,
+                arrayLength: undefined,
+                type: "bool",
+              },
+            ],
+          },
+        },
+      },
+
       // MARKERS ARRAYS
       {
         description: "Should return marker array if the top level message returns 'markers'",

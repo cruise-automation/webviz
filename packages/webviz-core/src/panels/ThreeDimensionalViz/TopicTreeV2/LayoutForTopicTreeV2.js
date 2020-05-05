@@ -29,6 +29,8 @@ import {
 } from "regl-worldview";
 import { type Time } from "rosbag";
 
+import { toTopicTreeV2Nodes, fromTopicTreeV2Nodes } from "./topicTreeV2Migrations";
+import useTopicTree from "./useTopicTree";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { Item } from "webviz-core/src/components/Menu";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
@@ -50,9 +52,10 @@ import {
   getUpdatedGlobalVariablesBySelectedObject,
   type TargetPose,
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
-import { getSelectionsFromTopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
+import TopicSettingsModal from "webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicSettingsModal";
 import TopicTreeV2 from "webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicTreeV2";
+import useSceneBuilderAndTransformsData from "webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/useSceneBuilderAndTransformsData";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
 import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
@@ -110,7 +113,7 @@ type SelectedObjectState = {
 
 export type EditTopicState = { tooltipPosX: number, topic: Topic };
 
-export default function LayoutForTopicGroups({
+export default function LayoutForTopicTreeV2({
   cameraState,
   children,
   cleared,
@@ -133,8 +136,6 @@ export default function LayoutForTopicGroups({
   config: {
     autoTextBackgroundColor,
     enableShortDisplayNames,
-    expandedNodes,
-    checkedNodes,
     flattenMarkers,
     modifiedNamespaceTopics,
     pinTopics,
@@ -143,7 +144,6 @@ export default function LayoutForTopicGroups({
     autoSyncCameraState,
     topicDisplayMode = TOPIC_DISPLAY_MODES.SHOW_TREE.value,
     topicSettings,
-    topicGroups,
   },
 }: Props) {
   const containerRef = useRef<?HTMLDivElement>();
@@ -156,6 +156,7 @@ export default function LayoutForTopicGroups({
     measureState: "idle",
     measurePoints: { start: undefined, end: undefined },
   });
+  const [currentEditingTopic, setCurrentEditingTopic] = useState<?Topic>(undefined);
 
   const searchTextProps = useSearchText();
   const { searchTextOpen, searchText, setSearchTextMatches, searchTextMatches, selectedMatchIndex } = searchTextProps;
@@ -188,14 +189,57 @@ export default function LayoutForTopicGroups({
     []
   );
 
-  const { selectedTopicNames, selectedNamespacesByTopic, selectedTopicSettingsByTopic } = useMemo(
-    () => getSelectionsFromTopicGroupConfig(topicGroups || []),
-    [topicGroups]
+  const { topicTreeConfig, staticallyAvailableNamespacesByTopic } = useMemo(
+    () => ({
+      topicTreeConfig: getGlobalHooks()
+        .startupPerPanelHooks()
+        .ThreeDimensionalViz.getDefaultTopicTreeV2(),
+      staticallyAvailableNamespacesByTopic: getGlobalHooks()
+        .startupPerPanelHooks()
+        .ThreeDimensionalViz.getStaticallyAvailableNamespacesByTopic(),
+    }),
+    []
   );
 
-  // update subscriptions whenever selected topics change, use deep compare to prevent updating when expanding/collapsing topics
-  const memoizedSelectedTopics = useShallowMemo(selectedTopicNames);
-  useEffect(() => setSubscriptions(memoizedSelectedTopics), [memoizedSelectedTopics, setSubscriptions]);
+  const topicTreeV2SaveConfig: Save3DConfig = useCallback(
+    (newConfig) => {
+      if (newConfig.expandedNodes) {
+        newConfig.expandedNodes = fromTopicTreeV2Nodes(newConfig.expandedNodes);
+      }
+      if (newConfig.checkedNodes) {
+        newConfig.checkedNodes = fromTopicTreeV2Nodes(newConfig.checkedNodes);
+      }
+      return saveConfig(newConfig);
+    },
+    [saveConfig]
+  );
+
+  const expandedNodes = useMemo(() => toTopicTreeV2Nodes(config.expandedNodes), [config.expandedNodes]);
+  const checkedNodes = useMemo(() => toTopicTreeV2Nodes(config.checkedNodes), [config.checkedNodes]);
+
+  const { availableNamespacesByTopic } = useSceneBuilderAndTransformsData({
+    sceneBuilder,
+    transforms,
+    staticallyAvailableNamespacesByTopic,
+  });
+
+  // Use deep compare so that we only regenerate rootTreeNode when topics change.
+  const memoizedTopics = useShallowMemo(topics);
+  const {
+    hasFeatureColumn,
+    rootTreeNode,
+    selectedTopicNames,
+    selectedNamespacesByTopic,
+    settingsChangedKeysSet,
+  } = useTopicTree({
+    topicTreeConfig,
+    modifiedNamespaceTopics,
+    topicSettings,
+    providerTopics: memoizedTopics,
+    checkedKeys: checkedNodes,
+  });
+
+  useEffect(() => setSubscriptions(selectedTopicNames), [selectedTopicNames, setSubscriptions]);
   const { playerId } = useDataSourceInfo();
 
   const rootTf = useMemo(
@@ -215,11 +259,11 @@ export default function LayoutForTopicGroups({
       sceneBuilder.setTransforms(transforms, rootTfID);
       sceneBuilder.setFlattenMarkers(!!flattenMarkers);
       sceneBuilder.setSelectedNamespacesByTopic(selectedNamespacesByTopic);
-      sceneBuilder.setTopicSettings(selectedTopicSettingsByTopic);
+      sceneBuilder.setTopicSettings(topicSettings);
 
       // toggle scene builder topics based on visible topic nodes in the tree
       const topicsByName = topicsByTopicName(topics);
-      const selectedTopics = filterMap(memoizedSelectedTopics, (name) => topicsByName[name]);
+      const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByName[name]);
       sceneBuilder.setTopics(selectedTopics);
 
       sceneBuilder.setGlobalVariables(globalVariables);
@@ -235,18 +279,18 @@ export default function LayoutForTopicGroups({
     },
     [
       cleared,
-      currentTime,
-      flattenMarkers,
-      followTf,
       frame,
-      globalVariables,
-      playerId,
-      sceneBuilder,
-      selectedNamespacesByTopic,
-      memoizedSelectedTopics,
-      selectedTopicSettingsByTopic,
-      topics,
       transforms,
+      followTf,
+      sceneBuilder,
+      playerId,
+      flattenMarkers,
+      selectedNamespacesByTopic,
+      topicSettings,
+      topics,
+      selectedTopicNames,
+      globalVariables,
+      currentTime,
       transformsBuilder,
     ]
   );
@@ -259,6 +303,10 @@ export default function LayoutForTopicGroups({
     [polygonBuilder]
   );
 
+  const isDrawing = useMemo(() => measureInfo.measureState !== "idle" || drawingTabType === POLYGON_TAB_TYPE, [
+    drawingTabType,
+    measureInfo.measureState,
+  ]);
   // use callbackInputsRef to prevent unnecessary callback changes
   const callbackInputsRef = useRef({
     cameraState,
@@ -270,6 +318,7 @@ export default function LayoutForTopicGroups({
     selectedObjectState,
     topics,
     autoSyncCameraState: !!autoSyncCameraState,
+    isDrawing,
   });
   callbackInputsRef.current = {
     cameraState,
@@ -281,6 +330,7 @@ export default function LayoutForTopicGroups({
     selectedObjectState,
     topics,
     autoSyncCameraState: !!autoSyncCameraState,
+    isDrawing,
   };
 
   const handleEvent = useCallback((eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
@@ -318,6 +368,10 @@ export default function LayoutForTopicGroups({
     () => {
       return {
         onClick: (ev: MouseEvent, args: ?ReglClickInfo) => {
+          // Don't set any clicked objects when measuring distance or drawing polygons.
+          if (callbackInputsRef.current.isDrawing) {
+            return;
+          }
           const selectedObjects = (args && args.objects) || [];
           const clickedPosition = { clientX: ev.clientX, clientY: ev.clientY };
           if (selectedObjects.length === 0) {
@@ -409,11 +463,6 @@ export default function LayoutForTopicGroups({
     [glTextEnabled, pinTopics, saveConfig, searchTextProps, showTopicTree, toggleCameraMode]
   );
 
-  const isDrawing = useMemo(
-    () => (measuringElRef.current && measuringElRef.current.measureActive) || drawingTabType === POLYGON_TAB_TYPE,
-    [drawingTabType]
-  );
-
   const markerProviders = useMemo(() => extensions.markerProviders.concat([sceneBuilder, transformsBuilder]), [
     extensions.markerProviders,
     sceneBuilder,
@@ -444,8 +493,6 @@ export default function LayoutForTopicGroups({
       ),
     [MapComponent, cameraState.perspective, debug, mapNamespaces, memoizedScene]
   );
-
-  const availableTfs = useShallowMemo(transforms.values().map(({ id }) => id));
 
   return (
     <div
@@ -478,19 +525,32 @@ export default function LayoutForTopicGroups({
       />
       <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
         <TopicTreeV2
-          availableTfs={availableTfs}
-          availableTopics={topics}
-          checkedNodes={checkedNodes}
-          expandedNodes={expandedNodes}
-          topicSettings={topicSettings}
+          availableNamespacesByTopic={availableNamespacesByTopic}
+          checkedKeys={checkedNodes}
           containerHeight={containerRef.current?.clientHeight || 400}
+          expandedKeys={expandedNodes}
           onExitTopicTreeFocus={onExitTopicTreeFocus}
           pinTopics={pinTopics}
-          saveConfig={saveConfig}
-          sceneBuilder={sceneBuilder}
+          rootTreeNode={rootTreeNode}
+          saveConfig={topicTreeV2SaveConfig}
+          settingsChangedKeysSet={settingsChangedKeysSet}
+          setCurrentEditingTopic={setCurrentEditingTopic}
           setShowTopicTree={setShowTopicTree}
           showTopicTree={showTopicTree}
         />
+        {currentEditingTopic && (
+          <TopicSettingsModal
+            currentEditingTopic={currentEditingTopic}
+            hasFeatureColumn={hasFeatureColumn}
+            setCurrentEditingTopic={setCurrentEditingTopic}
+            sceneBuilderMessage={
+              sceneBuilder.collectors[currentEditingTopic.name] &&
+              sceneBuilder.collectors[currentEditingTopic.name].getMessages()[0]
+            }
+            saveConfig={saveConfig}
+            topicSettings={topicSettings}
+          />
+        )}
       </div>
       <div className={styles.world}>
         <World
@@ -518,10 +578,10 @@ export default function LayoutForTopicGroups({
               cameraState={cameraState}
               debug={debug}
               drawingTabType={drawingTabType}
+              isDrawing={isDrawing}
               followOrientation={followOrientation}
               followTf={followTf}
               interactionData={selectedObject && selectedObject.object && selectedObject.object.interactionData}
-              isDrawing={isDrawing}
               isPlaying={isPlaying}
               measureInfo={measureInfo}
               measuringElRef={measuringElRef}

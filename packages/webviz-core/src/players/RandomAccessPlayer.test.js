@@ -594,16 +594,16 @@ describe("RandomAccessPlayer", () => {
     }
     lastGetMessagesCall.resolve([]);
 
-    // Test clamping to start time.
-    source.seekPlayback({ sec: 10, nsec: 100 });
+    // Try to seek to a time before the start time
+    source.seekPlayback({ sec: 0, nsec: 250 });
     await delay(1);
     if (!lastGetMessagesCall) {
       throw new Error("lastGetMessagesCall not set");
     }
     lastGetMessagesCall.resolve([]);
     expect(lastGetMessagesCall).toEqual({
-      start: { sec: 10, nsec: 0 },
-      end: { sec: 10, nsec: 100 },
+      start: { sec: 10, nsec: 0 }, // Clamped to start
+      end: { sec: 10, nsec: 0 }, // Clamped to start
       topics: ["/foo/bar"],
       resolve: expect.any(Function),
     });
@@ -1145,7 +1145,7 @@ describe("RandomAccessPlayer", () => {
       [{ sec: 100, nsec: 0 }, { sec: 100, nsec: 0 }, ["/foo/bar"]],
       // We don't care too much about the `nsec` part since it might depend on playback speed.
       // As long as the start of the range is actually at the beginning of the source.
-      [{ sec: 10, nsec: 0 }, { sec: 10, nsec: expect.any(Number) }, ["/foo/bar"]],
+      [{ sec: 10, nsec: expect.any(Number) }, { sec: 10, nsec: expect.any(Number) }, ["/foo/bar"]],
     ]);
 
     player.close();

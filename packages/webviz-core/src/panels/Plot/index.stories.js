@@ -367,6 +367,18 @@ storiesOf("<Plot>", module)
       </PanelSetup>
     );
   })
+  .add("open x-axis dropdown menu", () => {
+    return (
+      <PanelSetup
+        fixture={fixture}
+        onMount={() => {
+          const xAxisDropdown = document.querySelectorAll("[data-test=plot-legend-x-axis-menu]")[0];
+          xAxisDropdown.click();
+        }}>
+        <Plot config={exampleConfig} />
+      </PanelSetup>
+    );
+  })
   .add("index-based x-axis for array", () => {
     return (
       <PanelSetup fixture={fixture}>

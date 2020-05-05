@@ -90,6 +90,13 @@ const defaultHooks = {
           name: "root",
           children: [{ name: "TF", children: [], description: "Visualize relationships between /tf frames." }],
         }),
+        getDefaultTopicTreeV2: () => ({
+          name: "root",
+          children: [
+            { name: "TF", topic: "/tf", children: [], description: "Visualize relationships between /tf frames." },
+          ],
+        }),
+        getStaticallyAvailableNamespacesByTopic: () => ({}),
       },
     };
   },

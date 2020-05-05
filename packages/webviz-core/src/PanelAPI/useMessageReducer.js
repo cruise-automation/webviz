@@ -21,19 +21,21 @@ import {
 } from "webviz-core/src/util/hooks";
 
 type MessageReducer<T> = (T, message: Message) => T;
+type MessagesReducer<T> = (T, messages: Message[]) => T;
 export type RequestedTopic = string | {| topic: string, imageScale: number |};
 
 // Apply changes in topics or messages to the reduced value.
 function useReducedValue<T>(
   restore: (?T) => T,
-  addMessage: MessageReducer<T>,
+  addMessage?: MessageReducer<T>,
+  addMessages?: MessagesReducer<T>,
   lastSeekTime: number,
   messages: Message[]
 ): T {
   const reducedValueRef = useRef<?T>();
 
   const shouldClear = useChangeDetector([lastSeekTime], false);
-  const reducersChanged = useChangeDetector([restore, addMessage], false);
+  const reducersChanged = useChangeDetector([restore, addMessage, addMessages], false);
   const messagesChanged = useChangeDetector([messages], true);
 
   if (!reducedValueRef.current || shouldClear) {
@@ -46,12 +48,18 @@ function useReducedValue<T>(
 
   // Use the addMessage reducer to process new messages.
   if (messagesChanged) {
-    reducedValueRef.current = messages.reduce(
-      // .reduce() passes 4 args to callback function,
-      // but we want to call addMessage with only first 2 args
-      (value: T, message: Message) => addMessage(value, message),
-      reducedValueRef.current
-    );
+    if (addMessages) {
+      if (messages.length > 0) {
+        reducedValueRef.current = addMessages(reducedValueRef.current, messages);
+      }
+    } else if (addMessage) {
+      reducedValueRef.current = messages.reduce(
+        // .reduce() passes 4 args to callback function,
+        // but we want to call addMessage with only first 2 args
+        (value: T, message: Message) => addMessage(value, message),
+        reducedValueRef.current
+      );
+    }
   }
 
   return reducedValueRef.current;
@@ -87,12 +95,18 @@ type Props<T> = {|
   // The object is assumed to be immutable, so in order to trigger a re-render, the reducers must
   // return a new object.
   restore: (?T) => T,
-  addMessage: MessageReducer<T>,
+  addMessage?: MessageReducer<T>,
+  addMessages?: MessagesReducer<T>,
 |};
 
 export function useMessageReducer<T>(props: Props<T>): T {
   const [id] = useState(() => uuid.v4());
   const { type: panelType = undefined } = useContext(PanelContext) || {};
+
+  // only one of the add message callbacks should be provided
+  if (props.addMessages ? props.addMessage : !props.addMessage) {
+    throw new Error("useMessageReducer must be provided with either addMessages or addMessage and not both");
+  }
 
   useShouldNotChangeOften(props.restore, () =>
     console.warn(
@@ -104,6 +118,13 @@ export function useMessageReducer<T>(props: Props<T>): T {
   useShouldNotChangeOften(props.addMessage, () =>
     console.warn(
       "useMessageReducer addMessage() is changing frequently. " +
+        "restore() will be called each time it changes, so a new function " +
+        "shouldn't be created on each render. (If you're using Hooks, try useCallback.)"
+    )
+  );
+  useShouldNotChangeOften(props.addMessages, () =>
+    console.warn(
+      "useMessageReducer addMessages() is changing frequently. " +
         "restore() will be called each time it changes, so a new function " +
         "shouldn't be created on each render. (If you're using Hooks, try useCallback.)"
     )
@@ -154,5 +175,5 @@ export function useMessageReducer<T>(props: Props<T>): T {
     useCallback(({ playerState: { activeData } }) => (activeData ? activeData.lastSeekTime : 0), [])
   );
 
-  return useReducedValue<T>(props.restore, props.addMessage, lastSeekTime, messages);
+  return useReducedValue<T>(props.restore, props.addMessage, props.addMessages, lastSeekTime, messages);
 }

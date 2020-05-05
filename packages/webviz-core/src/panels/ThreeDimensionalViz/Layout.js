@@ -377,6 +377,11 @@ export default function Layout({
     [polygonBuilder]
   );
 
+  const isDrawing = useMemo(() => measureInfo.measureState !== "idle" || drawingTabType === POLYGON_TAB_TYPE, [
+    drawingTabType,
+    measureInfo.measureState,
+  ]);
+
   // use callbackInputsRef to prevent unnecessary callback changes
   const callbackInputsRef = useRef({
     cameraState,
@@ -389,6 +394,7 @@ export default function Layout({
     hideTopicTreeCount,
     topics,
     autoSyncCameraState: !!autoSyncCameraState,
+    isDrawing,
   });
   callbackInputsRef.current = {
     cameraState,
@@ -401,6 +407,7 @@ export default function Layout({
     hideTopicTreeCount,
     topics,
     autoSyncCameraState: !!autoSyncCameraState,
+    isDrawing,
   };
 
   const handleEvent = useCallback((eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
@@ -438,6 +445,11 @@ export default function Layout({
     () => {
       return {
         onClick: (ev: MouseEvent, args: ?ReglClickInfo) => {
+          // Don't set any clicked objects when measuring distance or drawing polygons. e.g. object selection context menu
+          // might show up right after finished measuring.
+          if (callbackInputsRef.current.isDrawing) {
+            return;
+          }
           const selectedObjects = (args && args.objects) || [];
           const clickedPosition = { clientX: ev.clientX, clientY: ev.clientY };
           if (selectedObjects.length === 0) {
@@ -541,11 +553,6 @@ export default function Layout({
     [glTextEnabled, searchTextProps, toggleCameraMode]
   );
 
-  const isDrawing = useMemo(
-    () => (measuringElRef.current && measuringElRef.current.measureActive) || drawingTabType === POLYGON_TAB_TYPE,
-    [drawingTabType]
-  );
-
   const markerProviders = useMemo(() => extensions.markerProviders.concat([sceneBuilder, transformsBuilder]), [
     extensions.markerProviders,
     sceneBuilder,
@@ -577,7 +584,12 @@ export default function Layout({
   );
 
   return (
-    <div className={styles.container} ref={wrapperRef} style={{ cursor: cursorType }} onClick={onControlsOverlayClick}>
+    <div
+      className={styles.container}
+      ref={wrapperRef}
+      style={{ cursor: cursorType }}
+      onClick={onControlsOverlayClick}
+      data-test="3dviz-layout">
       <KeyListener keyDownHandlers={keyDownHandlers} />
       <PanelToolbar
         floating
@@ -647,10 +659,10 @@ export default function Layout({
               targetPose={targetPose}
               debug={debug}
               drawingTabType={drawingTabType}
+              isDrawing={isDrawing}
               followOrientation={followOrientation}
               followTf={followTf}
               interactionData={selectedObject && selectedObject.object && selectedObject.object.interactionData}
-              isDrawing={isDrawing}
               isPlaying={isPlaying}
               measureInfo={measureInfo}
               measuringElRef={measuringElRef}

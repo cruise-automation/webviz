@@ -329,6 +329,14 @@ export const constructDatatypes = (
           isComplex,
           arrayLength: undefined,
         };
+      case ts.SyntaxKind.BooleanKeyword:
+        return {
+          name,
+          type: "bool",
+          isArray,
+          isComplex,
+          arrayLength: undefined,
+        };
 
       case ts.SyntaxKind.TypeAliasDeclaration: {
         const newTypeParamMap = buildTypeMapFromParams(tsNode.typeParameters, typeMap);

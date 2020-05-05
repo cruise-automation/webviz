@@ -27,7 +27,25 @@ import Slider from "webviz-core/src/components/Slider";
 import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
 import { type PlayerState } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import { formatTime, formatTimeRaw, subtractTimes, toSec, fromSec } from "webviz-core/src/util/time";
+import {
+  formatTime,
+  formatTimeRaw,
+  subtractTimes,
+  toSec,
+  fromSec,
+  toMillis,
+  fromMillis,
+} from "webviz-core/src/util/time";
+
+// The amount of time to jump forward/back when hitting the left/right arrow keys
+export const ARROW_SEEK_BIG_MS = 500;
+export const ARROW_SEEK_DEFAULT_MS = 100;
+export const ARROW_SEEK_SMALL_MS = 10;
+
+export const DIRECTION = {
+  FORWARD: 1,
+  BACKWARD: -1,
+};
 
 const StyledFullWidthBar = styled.div`
   position: absolute;
@@ -73,6 +91,35 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
     seek(time);
   };
 
+  jumpSeek = (directionSign: $Values<typeof DIRECTION>, modifierKeys?: { altKey: boolean, shiftKey: boolean }) => {
+    const { activeData } = this.props.player;
+    if (!activeData) {
+      return;
+    }
+
+    const timeMs = toMillis(activeData.currentTime, "round-up");
+    const deltaMs = modifierKeys?.altKey
+      ? ARROW_SEEK_BIG_MS
+      : modifierKeys?.shiftKey
+      ? ARROW_SEEK_SMALL_MS
+      : ARROW_SEEK_DEFAULT_MS;
+    const nextTime = fromMillis(timeMs + deltaMs * directionSign);
+    if (nextTime) {
+      this.seek(nextTime);
+    }
+  };
+
+  seek(newTime: Time) {
+    const { seek, player, pause } = this.props;
+    const { activeData } = player;
+    if (activeData) {
+      if (activeData.isPlaying) {
+        pause();
+      }
+      seek(newTime);
+    }
+  }
+
   keyDownHandlers = {
     " ": () => {
       const { pause, play, player } = this.props;
@@ -83,6 +130,8 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
         play();
       }
     },
+    ArrowLeft: (ev: KeyboardEvent) => this.jumpSeek(DIRECTION.BACKWARD, ev),
+    ArrowRight: (ev: KeyboardEvent) => this.jumpSeek(DIRECTION.FORWARD, ev),
   };
 
   onMouseMove = (e: SyntheticMouseEvent<HTMLDivElement>) => {

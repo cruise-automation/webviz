@@ -84,8 +84,9 @@ export default function PlotLegend(props: PlotLegendProps) {
       </Icon>
       <div className={styles.item}>
         x:
-        <div className={styles.itemIconContainer} style={{ width: "auto", lineHeight: "normal" }}>
+        <div className={styles.itemIconContainer} style={{ width: "auto", lineHeight: "normal", zIndex: 2 }}>
           <Dropdown
+            dataTest="plot-legend-x-axis-menu"
             value={xAxisVal}
             btnStyle={{ backgroundColor: "transparent", padding: 3 }}
             onChange={(newXAxisVal) => saveConfig({ xAxisVal: newXAxisVal })}
@@ -129,6 +130,7 @@ export default function PlotLegend(props: PlotLegendProps) {
               y:
               <div
                 className={styles.itemIconContainer}
+                style={{ zIndex: 1 }}
                 onClick={() => {
                   const newPaths = paths.slice();
                   newPaths[index] = { ...newPaths[index], enabled: !newPaths[index].enabled };

@@ -20,7 +20,6 @@ export const SDisplayName = styled.div`
   line-height: 1.4;
   margin-right: 4px;
   word-break: break-word;
-  margin-bottom: ${(props: { renderTopicName: boolean }) => (props.renderTopicName ? "0px" : "0px")};
   /* disallow selection to prevent shift + click from accidentally select */
   user-select: none;
   width: 100%;
@@ -37,23 +36,23 @@ export const STopicName = styled.div`
 
 type Props = {|
   displayName: string,
+  nodeKey: string,
+  onClick?: (ev: SyntheticEvent<HTMLDivElement>) => void,
   topicName: string,
   searchText?: string,
   style?: { [attr: string]: string | number },
 |};
 
-export default function NodeName({ displayName, topicName, searchText, style = {} }: Props) {
-  const renderTopicName = displayName !== topicName;
+export default function NodeName({ displayName, nodeKey, onClick, topicName, searchText, style = {} }: Props) {
+  let targetStr = displayName || topicName;
+  if (searchText) {
+    targetStr = displayName && topicName ? `${displayName} (${topicName})` : displayName || topicName;
+  }
   return (
-    <STopicNameDisplay style={{ ...style }}>
-      <SDisplayName title={displayName} renderTopicName={renderTopicName}>
-        <TextHighlight targetStr={displayName} searchText={searchText} />
+    <STopicNameDisplay style={{ ...style }} onClick={onClick} data-test={`name~${nodeKey}`}>
+      <SDisplayName {...(topicName ? { title: topicName } : undefined)}>
+        <TextHighlight targetStr={targetStr} searchText={searchText} />
       </SDisplayName>
-      {renderTopicName && (
-        <STopicName>
-          <TextHighlight targetStr={topicName} searchText={searchText} />
-        </STopicName>
-      )}
     </STopicNameDisplay>
   );
 }

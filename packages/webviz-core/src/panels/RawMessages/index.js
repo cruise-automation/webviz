@@ -279,7 +279,14 @@ function RawMessages(props: Props) {
 
       return (
         <Flex col clip scroll className={styles.container}>
-          <Metadata data={data} link={link} message={baseItem.message} diffMessage={diffItem?.message} />
+          <Metadata
+            data={data}
+            diffData={diffData}
+            diff={diff}
+            link={link}
+            message={baseItem.message}
+            diffMessage={diffItem?.message}
+          />
           {shouldDisplaySingleVal ? (
             <div className={styles.singleVal}>{String(singleVal)}</div>
           ) : diffEnabled && isEqual({}, diff) ? (

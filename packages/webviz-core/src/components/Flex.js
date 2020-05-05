@@ -38,6 +38,7 @@ type Props = {|
   onClick?: (MouseEvent) => void,
   onMouseEnter?: (MouseEvent) => void,
   onMouseLeave?: (MouseEvent) => void,
+  onMouseMove?: (MouseEvent) => void,
   // for storybook screenshots tests
   dataTest?: string,
 |};
@@ -61,6 +62,7 @@ const Flex = (props: Props) => {
     onClick,
     onMouseEnter,
     onMouseLeave,
+    onMouseMove,
     dataTest,
   } = props;
   if (col != null && col === row) {
@@ -93,7 +95,8 @@ const Flex = (props: Props) => {
       style={fullStyle}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}>
+      onMouseLeave={onMouseLeave}
+      onMouseMove={onMouseMove}>
       {children}
     </div>
   );

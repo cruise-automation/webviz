@@ -108,6 +108,7 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs }: Props) => {
           style={{ padding: "2px 4px" }}
           primary={!isSaved}
           disabled={isSaved}
+          tooltip={"ctrl/cmd + s"}
           onClick={() => {
             if (nodeId) {
               save();

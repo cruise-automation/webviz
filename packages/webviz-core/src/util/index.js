@@ -5,28 +5,6 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { flatMap } from "lodash";
-import { getLeaves } from "react-mosaic-component";
-
-import type { PanelConfig, SaveConfigsPayload } from "webviz-core/src/types/panels";
-
-// given a panel type, create a unique id for a panel
-// with the type embedded within the id
-// we need this because react-mosaic
-export function getPanelIdForType(type: string): string {
-  const factor = 1e10;
-  const rnd = Math.round(Math.random() * factor).toString(36);
-  // a panel id consists of its type, an exclimation mark for splitting, and a random val
-  // because each panel id functions is the react 'key' for the react-mosiac-component layout
-  // but also must encode the panel type for panel factory construction
-  return `${type}!${rnd}`;
-}
-
-// given a panel id, extract the encoded panel type
-export function getPanelTypeFromId(id: string): string {
-  return id.split("!")[0];
-}
-
 export function arrayToPoint(v: ?[number, number, number]) {
   if (!v) {
     return null;
@@ -97,59 +75,4 @@ export function downloadFiles(files: { blob: Blob, fileName: string }[]) {
 // See https://stackoverflow.com/a/4467559 and https://en.wikipedia.org/wiki/Modulo_operation
 export function positiveModulo(number: number, modulus: number): number {
   return ((number % modulus) + modulus) % modulus;
-}
-
-type PanelIdMap = { [panelId: string]: string };
-type Configs = { [panelId: string]: PanelConfig };
-function mapTemplateIdsToNewIds(templateIds: string[]): PanelIdMap {
-  const result = {};
-  for (const id of templateIds) {
-    result[id] = getPanelIdForType(getPanelTypeFromId(id));
-  }
-  return result;
-}
-
-function getLayoutWithNewPanelIds(layout: any, panelIdMap: PanelIdMap): { [panelId: string]: any } {
-  const newLayout = {};
-  Object.keys(layout).forEach((key) => {
-    if (typeof layout[key] === "object" && !Array.isArray(layout[key])) {
-      newLayout[key] = getLayoutWithNewPanelIds(layout[key], panelIdMap);
-    } else if (typeof layout[key] === "string" && panelIdMap[layout[key]]) {
-      newLayout[key] = panelIdMap[layout[key]];
-    } else {
-      newLayout[key] = layout[key];
-    }
-  });
-  return newLayout;
-}
-
-export function getSaveConfigsPayloadForTab({
-  id,
-  config,
-  relatedConfigs,
-}: {
-  id: string,
-  config: PanelConfig,
-  relatedConfigs: Configs,
-}): SaveConfigsPayload {
-  const templateIds = Object.keys(relatedConfigs);
-  const panelIdMap = mapTemplateIdsToNewIds(templateIds);
-  let newConfigs = templateIds.map((tempId) => ({ id: panelIdMap[tempId], config: relatedConfigs[tempId] }));
-  if (config.tabs) {
-    const newTabs = config.tabs.map((t) => ({ ...t, layout: getLayoutWithNewPanelIds(t.layout, panelIdMap) }));
-    newConfigs = newConfigs.concat([{ id, config: { ...config, tabs: newTabs } }]);
-  }
-  return { configs: newConfigs };
-}
-
-export function getPanelIdsInsideTabPanels(tabPanelIds: string[], savedProps: Configs): string[] {
-  const tabLayouts = [];
-  tabPanelIds.forEach((panelId) => {
-    if (savedProps[panelId]?.tabs) {
-      savedProps[panelId].tabs.forEach((tab) => {
-        tabLayouts.push(tab.layout);
-      });
-    }
-  });
-  return flatMap(tabLayouts, getLeaves);
 }

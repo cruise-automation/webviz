@@ -238,8 +238,6 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       return;
     }
 
-    console.log("Hit", mouseEventName);
-
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();
     worldviewContext

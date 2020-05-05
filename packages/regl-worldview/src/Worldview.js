@@ -106,6 +106,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       cameraState,
       defaultCameraState,
       hitmapOnMouseMove,
+      disableHitmapForEvents,
     } = props;
     if (onCameraStateChange) {
       if (!cameraState) {
@@ -125,9 +126,15 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     }
 
     if (hitmapOnMouseMove) {
-      console.warn(
-        "Property 'hitmapOnMouseMove' is deprectated. Please use 'disableHitmapForEvents' property instead."
-      );
+      if (disableHitmapForEvents) {
+        console.error(
+          "Property 'hitmapOnMouseMove' is deprectated and will be ignored when used along with 'disableHitmapForEvents'."
+        );
+      } else {
+        console.warn(
+          "Property 'hitmapOnMouseMove' is deprectated. Please use 'disableHitmapForEvents' property instead."
+        );
+      }
     }
 
     this.state = {
@@ -220,15 +227,18 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       return;
     }
 
-    // Rendering the hitmap is expensive, so we disable it for some events
-    // Rendering the hitmap on mouse move is disabled by default.
-    const { hitmapOnMouseMove, disableHitmapForEvents = ["onMouseMove"] } = this.props;
-    if (!(mouseEventName === "onMouseMove" && hitmapOnMouseMove) && disableHitmapForEvents.includes(mouseEventName)) {
+    // Rendering the hitmap is expensive, so we should disable it for some events.
+    // If 'disableHitmapForEvents' is provided, we ignore any events contained in that property.
+    // Otherwise, we ignore 'onMouseMove' events by default unless 'hitmapOnMouseMove' is 'true'
+    const { hitmapOnMouseMove, disableHitmapForEvents = hitmapOnMouseMove ? [] : ["onMouseMove"] } = this.props;
+    if (disableHitmapForEvents.includes(mouseEventName)) {
       if (worldviewHandler) {
         return handleWorldviewMouseInteraction([], ray, e, worldviewHandler);
       }
       return;
     }
+
+    console.log("Hit", mouseEventName);
 
     // reading hitmap is async so we need to persist the event to use later in the event handler
     (e: any).persist();

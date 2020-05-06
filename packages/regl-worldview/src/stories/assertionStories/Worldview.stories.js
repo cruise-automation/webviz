@@ -142,6 +142,39 @@ stories
     })
   )
   .add(
+    `onMouseMove picks up objects with disableHitmapForEvents=[]`,
+    assertionTest({
+      story: (setTestData) => (
+        <WorldviewWrapper onMouseMove={(_, { objects }) => setTestData(objects)} disableHitmapForEvents={[]}>
+          <Cubes>{[cube]}</Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData) => {
+        await emitMouseEvent("mousemove");
+        const result = await getTestData();
+        expect(result.length).toEqual(1);
+        expect(result[0].object).toEqual(cube);
+      },
+    })
+  )
+  .add(
+    `onMouseMove does not pick up objects with disableHitmapForEvents=['onMouseMove']`,
+    assertionTest({
+      story: (setTestData) => (
+        <WorldviewWrapper
+          onMouseMove={(_, { objects }) => setTestData(objects)}
+          disableHitmapForEvents={["onMouseMove"]}>
+          <Cubes>{[cube]}</Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData) => {
+        await emitMouseEvent("mousemove");
+        const result = await getTestData();
+        expect(result.length).toEqual(0);
+      },
+    })
+  )
+  .add(
     `onMouseUp detects objects`,
     assertionTest({
       story: (setTestData) => (
@@ -158,6 +191,21 @@ stories
     })
   )
   .add(
+    `onMouseUp does not detect objects when disabled`,
+    assertionTest({
+      story: (setTestData) => (
+        <WorldviewWrapper onMouseUp={(_, { objects }) => setTestData(objects)} disableHitmapForEvents={["onMouseUp"]}>
+          <Cubes>{[cube]}</Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData) => {
+        await emitMouseEvent("mouseup");
+        const result = await getTestData();
+        expect(result.length).toEqual(0);
+      },
+    })
+  )
+  .add(
     `onMouseDown detects objects`,
     assertionTest({
       story: (setTestData) => (
@@ -170,6 +218,23 @@ stories
         const result = await getTestData();
         expect(result.length).toEqual(1);
         expect(result[0].object).toEqual(cube);
+      },
+    })
+  )
+  .add(
+    `onMouseDown does not detect objects when disabled`,
+    assertionTest({
+      story: (setTestData) => (
+        <WorldviewWrapper
+          onMouseDown={(_, { objects }) => setTestData(objects)}
+          disableHitmapForEvents={["onMouseDown"]}>
+          <Cubes>{[cube]}</Cubes>
+        </WorldviewWrapper>
+      ),
+      assertions: async (getTestData) => {
+        await emitMouseEvent("mousedown");
+        const result = await getTestData();
+        expect(result.length).toEqual(0);
       },
     })
   )

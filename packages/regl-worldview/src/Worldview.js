@@ -36,8 +36,11 @@ export type BaseProps = {|
   keyMap?: CameraKeyMap,
   shiftKeys: boolean,
   backgroundColor?: Vec4,
-  // rendering the hitmap on mouse move is expensive, so disable it by default
+  // (Deprecated) rendering the hitmap on mouse move is expensive, so disable it by default
   hitmapOnMouseMove?: boolean,
+  // Disable hitmap generation for specific mouse events
+  // For example, if you want to disable hitmap generating on drag, use: ["onMouseDown", "onMouseMove", "onMouseUp"]
+  disableHitmapForEvents?: MouseEventEnum[],
   // getting events for objects stacked on top of each other is expensive, so disable it by default
   enableStackedObjectEvents?: boolean,
   // allow users to specify the max stacked object count
@@ -93,7 +96,18 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
   constructor(props: BaseProps) {
     super(props);
-    const { width, height, top, left, backgroundColor, onCameraStateChange, cameraState, defaultCameraState } = props;
+    const {
+      width,
+      height,
+      top,
+      left,
+      backgroundColor,
+      onCameraStateChange,
+      cameraState,
+      defaultCameraState,
+      hitmapOnMouseMove,
+      disableHitmapForEvents,
+    } = props;
     if (onCameraStateChange) {
       if (!cameraState) {
         console.warn(
@@ -107,6 +121,18 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       if (cameraState) {
         console.warn(
           "You provided `cameraState` without an `onCameraStateChange` handler. This will prevent moving the camera. If the camera should be movable, use `defaultCameraState`, otherwise set `onCameraStateChange`."
+        );
+      }
+    }
+
+    if (hitmapOnMouseMove) {
+      if (disableHitmapForEvents) {
+        throw new Error(
+          "Property 'hitmapOnMouseMove' is deprectated and will be ignored when used along with 'disableHitmapForEvents'."
+        );
+      } else {
+        console.warn(
+          "Property 'hitmapOnMouseMove' is deprectated. Please use 'disableHitmapForEvents' property instead."
         );
       }
     }
@@ -201,8 +227,11 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       return;
     }
 
-    // rendering the hitmap on mouse move is expensive, so disable it by default
-    if (mouseEventName === "onMouseMove" && !this.props.hitmapOnMouseMove) {
+    // Rendering the hitmap is expensive, so we should disable it for some events.
+    // If 'disableHitmapForEvents' is provided, we ignore any events contained in that property.
+    // Otherwise, we ignore 'onMouseMove' events by default unless 'hitmapOnMouseMove' is 'true'
+    const { hitmapOnMouseMove, disableHitmapForEvents = hitmapOnMouseMove ? [] : ["onMouseMove"] } = this.props;
+    if (disableHitmapForEvents.includes(mouseEventName)) {
       if (worldviewHandler) {
         return handleWorldviewMouseInteraction([], ray, e, worldviewHandler);
       }

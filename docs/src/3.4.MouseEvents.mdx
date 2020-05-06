@@ -13,6 +13,8 @@ Currently Worldview supports the following mouse event handlers: `onDoubleClick`
 | `onClick`              | `MouseHandler`         |         |                                                                                                                                                                          |
 | `getChildrenForHitmap` | `GetChildrenForHitmap` |         | Maps the `children` to props to be drawn on the hitmap. Optional, but required for any mouse interactions. Provided by default by all included Commands. See more below. |
 
+It is possible to disable one or more mouse events by using the `disableHitmapForEvents` prop in Worldview. For example, you might need to disable selection while dragging for performance reasons.
+
 ## Event Handler
 
 There are two kinds of event handlers:
@@ -75,7 +77,7 @@ All built in commands allow overriding the `getChildrenForHitmap` function, and 
 
 ```js
 /*
-  Command Component handler stopping the Worldview level one 
+  Command Component handler stopping the Worldview level one
 */
 <Worldview onClick={(evt, { objects }) => console.log("This wont fire")}>
   <Cubes

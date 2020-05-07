@@ -111,6 +111,12 @@ module.exports = {
           },
         ],
       },
+      {
+        // We use stringified Typescript in Node Playground.
+        test: /typescript\/userUtils\/\w*\.ts$/,
+        exclude: /node_modules/,
+        use: { loader: "raw-loader" },
+      },
       { test: /\.md$/, loader: "raw-loader" },
       { test: /\.svg$/, loader: "react-svg-loader" },
       { test: /\.ne$/, loader: "nearley-loader" },

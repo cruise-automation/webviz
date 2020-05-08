@@ -26,7 +26,7 @@ module.exports = {
   setupTestFrameworkScriptFile: "<rootDir>/packages/webviz-core/src/test/setupTestFramework.js",
   moduleNameMapper: {
     // We use stringified Typescript in Node Playground.
-    "typescript/userUtils/w+.ts$": "<rootDir>/jest/rawTransform.js",
+    "^.+typescript\\/userUtils\\/\\w+\\.ts$": "<rootDir>/jest/rawTransform.js",
     "worker-loader.*!.*": "<rootDir>/packages/webviz-core/src/test/MockWorker.js",
     "\\.svg$": "<rootDir>/packages/webviz-core/src/test/MockSvg.js",
     "react-monaco-editor": "<rootDir>/packages/webviz-core/src/test/stubs/MonacoEditor.js",

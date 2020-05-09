@@ -68,6 +68,7 @@ __screenshots__/
 # build files
 dist/
 lib/
+__static_webviz__/
 
 # reg-suit generated files
 .reg/

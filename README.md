@@ -1,8 +1,6 @@
 # [Webviz](https://webviz.io/) [![CircleCI](https://circleci.com/gh/cruise-automation/webviz.svg?style=svg)](https://circleci.com/gh/cruise-automation/webviz)
 
-**Drag and drop your own bag files into [Webviz](https://webviz.io/app/) to explore your robotics data, or connect to a live robot or simulation using the [rosbridge_server](http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge).**
-
-**View a demo of Webviz in action [here](https://webviz.io/app/?demo).**
+**Drag and drop your own bag files into [Webviz](https://webviz.io/app/?demo) to explore your robotics data, or connect to a live robot or simulation using the [rosbridge_server](http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge).**
 
 **Webviz** is a web-based application for playback and visualization of [ROS](http://www.ros.org/) [bag files](http://wiki.ros.org/Bags). This repository also contains some libraries that can be used independently to build web-based visualization tools.
 
@@ -15,6 +13,19 @@
 
 Please see the individual package READMEs for details on how to install and use them.
 
+## Running the static Webviz application
+
+We recommend using the [hosted version of Webviz](https://webviz.io/app/?demo), which can connect to your [rosbridge_server](http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge) or stream in bag data from your S3/GCS bucket. This way you'll always use the latest version of Webviz.
+
+However, sometimes the hosted version is inconvenient, when streaming data from robots on the field where there is poor internet connectivity. For this it is useful to use a static build of webviz.
+
+```sh
+npm run bootstrap # install dependencies
+npm run build # build all packages
+npm run build-static-webviz # generate static build in __static_webviz__
+npm run serve-static-webviz # serve static build on localhost:8080
+```
+
 ## Developing
 
 - `npm run bootstrap` in the root directory to install dependencies.
@@ -26,6 +37,8 @@ Please see the individual package READMEs for details on how to install and use 
 - `npm run flow` to run Flow.
 - `npm run flow-typed-rebuild` to update the flow-typed definitions (any time when changing packages).
 - `npm test` to run tests.
+- `npm run build-static-webviz` to make a special build of just the Webviz application in the `__static_webviz__` directory.
+- `npm run serve-static-webviz` to host the contents of the `__static_webviz__` directory on `localhost:8080`.
 
 If you have the right permissions, you can publish:
 

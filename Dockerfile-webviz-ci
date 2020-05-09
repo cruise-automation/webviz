@@ -4,6 +4,7 @@
 # found in the LICENSE file in the root directory of this source tree.
 # You may not use this file except in compliance with the License.
 
+# This is just for use in CI, as well as the base image for our proprietary version.
 # This container is published at https://hub.docker.com/r/cruise/webviz-ci.
 
 FROM node:10.16-slim

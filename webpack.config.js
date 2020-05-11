@@ -144,7 +144,7 @@ module.exports = {
       },
       { test: /\.scss$/, loader: "sass-loader", options: { sourceMap: true } },
       { test: /\.woff2?$/, loader: "url-loader" },
-      { test: /\.(glb|bag)$/, loader: "file-loader" },
+      { test: /\.(glb|bag|ttf)$/, loader: "file-loader" },
       {
         test: /node_modules\/compressjs\/.*\.js/,
         loader: "string-replace-loader",

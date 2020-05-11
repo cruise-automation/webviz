@@ -10,7 +10,7 @@
 | `keyMap`              | `CameraKeyMap`                                  | {}                     | override default Worldview hotkeys                                                                      |
 | `shiftKeys`           | `boolean`                                       | true                   | enable/disable shift modifier for keyboard controls                                                     |
 | `backgroundColor`     | `Vec4`                                          | `[0,0,0,1]`            | change the scene background color                                                                       |
-| `hitmapOnMouseMove`   | `boolean`                                       |                        | if enabled, the clicked object will be returned from the mouse event handler. Disabled by default for performance reasons. |
+| `disableHitmapForEvents`   | `[MouseEventEnum]`                         | ["onMouseMove"]    | disable rendering the hitmap for some mouse events for performance reasons. Only "onMouseMove" is disabled by default. |
 | `enableStackedObjectEvents` | `boolean`                                 |                        | if enabled, event handlers will be called with all objects the mouse cursor is on top of, not just the top-most object. Disabled by default for performance reasons. |
 | `children`            | `React.Node`                                    |                        | regl components to render inside the Worldview                                                          |
 | `style`               | `{ [styleAttribute: string]: number | string }` | {}                     | html style object for the Worldview root element                                                        |
@@ -20,6 +20,7 @@
 | `onMouseUp`           | `MouseHandler`                                  |                        |                                                                                                         |
 | `onMouseMove`         | `MouseHandler`                                  |                        |                                                                                                         |
 | `onClick`             | `MouseHandler`                                  |                        |                                                                                                         |
+| `hitmapOnMouseMove`   | `boolean`                                       |                        | (DEPRECATED: see `disableHitmapForEvents`) if enabled, the clicked object will be returned from the mouse event handler. Disabled by default for performance reasons. |
 
 _All props are optional._
 

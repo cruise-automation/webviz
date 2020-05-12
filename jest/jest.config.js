@@ -11,6 +11,8 @@ module.exports = {
   testMatch: ["**/*.test.js"],
   testURL: "http://localhost",
   transform: {
+    // We use stringified Typescript in Node Playground.
+    "^.+typescript\\/userUtils\\/\\w+\\.ts$": "<rootDir>/jest/rawTransform.js",
     "^.+\\.(js|jsx)$": "babel-jest",
     "^.+\\.ne$": "<rootDir>/jest/neTransform.js",
     "^(?!.*\\.(js|jsx|css|json)$)": "<rootDir>/jest/fileTransform.js",
@@ -25,8 +27,6 @@ module.exports = {
   ],
   setupTestFrameworkScriptFile: "<rootDir>/packages/webviz-core/src/test/setupTestFramework.js",
   moduleNameMapper: {
-    // We use stringified Typescript in Node Playground.
-    "^.+typescript\\/userUtils\\/\\w+\\.ts$": "<rootDir>/jest/rawTransform.js",
     "worker-loader.*!.*": "<rootDir>/packages/webviz-core/src/test/MockWorker.js",
     "\\.svg$": "<rootDir>/packages/webviz-core/src/test/MockSvg.js",
     "react-monaco-editor": "<rootDir>/packages/webviz-core/src/test/stubs/MonacoEditor.js",

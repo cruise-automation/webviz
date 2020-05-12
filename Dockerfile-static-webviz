@@ -23,9 +23,6 @@ COPY . .
 # Delete .gitignore files, so we don't accidentally pollute our image.
 RUN git clean -Xf
 
-# Bumped up from the default old_space size (512mb) as it was being exceeded during builds.
-ENV NODE_OPTIONS="--max_old_space_size=4096"
-
 # Build the static webviz.
 RUN npm run install-ci
 RUN npm run build

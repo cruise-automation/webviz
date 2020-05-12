@@ -15,6 +15,8 @@ const TerserPlugin = require("terser-webpack-plugin");
 const visit = require("unist-util-visit");
 const webpack = require("webpack");
 
+const STATIC_WEBVIZ = process.env.STATIC_WEBVIZ === "true";
+
 // Enable smart quotes:
 // https://github.com/mdx-js/mdx/blob/ad58be384c07672dc415b3d9d9f45dcebbfd2eb8/docs/advanced/retext-plugins.md
 const smartypantsProcessor = retext().use(retextSmartypants);
@@ -51,13 +53,19 @@ const gitInfo = (() => {
 
 module.exports = {
   devtool: "cheap-module-eval-source-map",
-  entry: {
-    docs: "./docs/src/index.js",
-    webvizCoreBundle: "./packages/webviz-core/src/index.js",
-  },
+  entry: STATIC_WEBVIZ
+    ? {
+        webvizCoreBundle: "./packages/webviz-core/src/index.js",
+      }
+    : {
+        docs: "./docs/src/index.js",
+        webvizCoreBundle: "./packages/webviz-core/src/index.js",
+      },
   output: {
-    path: path.resolve(`${__dirname}/docs/public/dist`),
-    publicPath: "/dist/",
+    path: STATIC_WEBVIZ
+      ? path.resolve(`${__dirname}/__static_webviz__`)
+      : path.resolve(`${__dirname}/docs/public/dist`),
+    publicPath: STATIC_WEBVIZ ? "" : "/dist/",
     pathinfo: true,
     filename: "[name].js",
     devtoolModuleFilenameTemplate: (info) => path.resolve(info.absoluteResourcePath),
@@ -204,6 +212,9 @@ if (process.env.NODE_ENV === "production") {
   module.exports.mode = "production";
   module.exports.devtool = "source-map";
 } else {
+  if (STATIC_WEBVIZ) {
+    throw new Error("If STATIC_WEBVIZ=true is set the NODE_ENV=production must be set!");
+  }
   module.exports.mode = "development";
   module.exports.entry.docs = [module.exports.entry.docs, "webpack-hot-middleware/client"];
   module.exports.plugins.push(new webpack.HotModuleReplacementPlugin());

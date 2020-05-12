@@ -54,6 +54,7 @@
     "gh-pages": "^2.0.1",
     "gl-matrix": "^2.8.1",
     "history": "^4.7.2",
+    "http-server": "^0.12.3",
     "jest": "^23.6.0",
     "jest-canvas-mock": "^2.0.0-beta.1",
     "jest-diff": "24.9.0",
@@ -113,7 +114,6 @@
     "webpack-dev-server": "^3.7.1",
     "worker-loader": "^2.0.0"
   },
-  "dependencies": {},
   "scripts": {
     "bootstrap": "npm install && lerna bootstrap --hoist \"{react,react-dom}\"",
     "install-ci": "npm ci && lerna bootstrap --hoist \"{react,react-dom}\"",
@@ -131,9 +131,10 @@
     "flow": "flow",
     "flow-typed-rebuild": "rm -rf flow-typed/ && flow-typed install && flow-typed install --rootDir packages/@cruise-automation/hooks && flow-typed install --rootDir packages/@cruise-automation/button && flow-typed install --rootDir packages/@cruise-automation/tooltip && flow-typed install --rootDir packages/react-key-listener && flow-typed install --rootDir packages/regl-worldview",
     "docs": "DEV_SERVER=true webpack-dev-server",
-    "docs-deploy": "cp -r docs/public __temp_deploy__ && cp --remove-destination packages/webviz-core/public/index.html __temp_deploy__/app/index.html && echo 'webviz.io' > __temp_deploy__/CNAME && gh-pages -d __temp_deploy__ && rm -rf __temp_deploy__",
+    "docs-deploy": "cp -r docs/public __temp_deploy__ && rm __temp_deploy__/app/index.html && cp packages/webviz-core/public/index.html __temp_deploy__/app/index.html && echo 'webviz.io' > __temp_deploy__/CNAME && gh-pages -d __temp_deploy__ && rm -rf __temp_deploy__",
     "publish": "lerna run clean && lerna run build && lerna publish",
-    "serve-dist": "cd docs/public && npx http-server .",
+    "build-static-webviz": "rm -rf __static_webviz__ && cp -r docs/public/app __static_webviz__ && rm __static_webviz__/index.html && cp packages/webviz-core/public/index.html __static_webviz__/index.html && sed -i -- 's/\\/dist\\/webvizCoreBundle.js/webvizCoreBundle.js/' __static_webviz__/index.html && NODE_ENV=production STATIC_WEBVIZ=true webpack",
+    "serve-static-webviz": "node_modules/http-server/bin/http-server __static_webviz__",
     "screenshot": "NODE_ENV=development storybook-chrome-screenshot -c stories --parallel 1 --inject-files stories/injected.js --browser-timeout 1200000",
     "screenshot-ci": "npm run screenshot -- --puppeteer-launch-config '{\"executablePath\": \"/usr/bin/google-chrome\", \"headless\": false, \"args\":[\"--use-gl=swiftshader\", \"--no-sandbox\",\"--disable-setuid-sandbox\", \"--disable-dev-shm-usage\", \"--headless\", \"--mute-audio\", \"--user-agent=PuppeteerTestingChrome/80.\"]}'",
     "screenshot-proprietary-ci": "npm run screenshot-ci -- --parallel 8",

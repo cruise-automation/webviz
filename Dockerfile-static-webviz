@@ -1,0 +1,36 @@
+# Copyright (c) 2020-present, GM Cruise LLC
+#
+# This source code is licensed under the Apache License, Version 2.0,
+# found in the LICENSE file in the root directory of this source tree.
+# You may not use this file except in compliance with the License.
+
+# This is a static build of just the Webviz application.
+# This container is published at https://hub.docker.com/r/cruise/webviz.
+
+FROM node:10.16-slim
+
+# Install some general dependencies for stuff below and for CircleCI;
+# https://circleci.com/docs/2.0/custom-images/#required-tools-for-primary-containers
+RUN apt-get update && apt-get install -yq gnupg libgconf-2-4 wget git ssh --no-install-recommends
+
+# Install dumb-init which helps with proper signal handling.
+RUN apt-get install -y dumb-init
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
+# Copy in the files
+COPY . .
+
+# Delete .gitignore files, so we don't accidentally pollute our image.
+RUN git clean -Xf
+
+# Bumped up from the default old_space size (512mb) as it was being exceeded during builds.
+ENV NODE_OPTIONS="--max_old_space_size=4096"
+
+# Build the static webviz.
+RUN npm run install-ci
+RUN npm run build
+RUN npm run build-static-webviz
+
+# Start the server.
+EXPOSE 8080
+CMD ["npm", "run", "serve-static-webviz"]

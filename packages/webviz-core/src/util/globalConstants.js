@@ -31,7 +31,7 @@ export const TRANSFORM_STATIC_TOPIC = "/tf_static";
 export const DIAGNOSTIC_TOPIC = "/diagnostics";
 export const ROSOUT_TOPIC = "/rosout";
 export const SOCKET_KEY = "dataSource.websocket";
-export const SECOND_BAG_PREFIX = "/webviz_bag_2";
+export const SECOND_SOURCE_PREFIX = "/webviz_source_2";
 
 export const POINT_CLOUD_DATATYPE = "sensor_msgs/PointCloud2";
 export const POSE_STAMPED_DATATYPE = "geometry_msgs/PoseStamped";

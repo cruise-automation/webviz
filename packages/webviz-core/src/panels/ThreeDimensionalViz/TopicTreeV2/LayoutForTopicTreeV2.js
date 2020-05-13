@@ -18,7 +18,6 @@ import React, {
   useLayoutEffect,
   useEffect,
 } from "react";
-import KeyListener from "react-key-listener";
 import {
   PolygonBuilder,
   DrawPolygons,
@@ -29,9 +28,9 @@ import {
 } from "regl-worldview";
 import { type Time } from "rosbag";
 
-import { toTopicTreeV2Nodes, fromTopicTreeV2Nodes } from "./topicTreeV2Migrations";
 import useTopicTree from "./useTopicTree";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import filterMap from "webviz-core/src/filterMap";
@@ -135,6 +134,8 @@ export default function LayoutForTopicTreeV2({
   config,
   config: {
     autoTextBackgroundColor,
+    checkedKeys,
+    expandedKeys,
     enableShortDisplayNames,
     flattenMarkers,
     modifiedNamespaceTopics,
@@ -146,6 +147,7 @@ export default function LayoutForTopicTreeV2({
     topicSettings,
   },
 }: Props) {
+  const [filterText, setFilterText] = useState(""); // Topic tree text for filtering to see certain topics.
   const containerRef = useRef<?HTMLDivElement>();
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
   const { globalVariables, setGlobalVariables } = useGlobalVariables();
@@ -160,7 +162,8 @@ export default function LayoutForTopicTreeV2({
 
   const searchTextProps = useSearchText();
   const { searchTextOpen, searchText, setSearchTextMatches, searchTextMatches, selectedMatchIndex } = searchTextProps;
-  const [_, forceUpdate] = useReducer((x) => x + 1, 0); // used for updating DrawPolygon during mouse move
+  // used for updating DrawPolygon during mouse move and scenebuilder namespace change.
+  const [_, forceUpdate] = useReducer((x) => x + 1, 0);
   const measuringElRef = useRef<?MeasuringTool>(null);
   const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(undefined);
   const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(undefined);
@@ -189,54 +192,82 @@ export default function LayoutForTopicTreeV2({
     []
   );
 
-  const { topicTreeConfig, staticallyAvailableNamespacesByTopic } = useMemo(
+  // Ensure that we show new namespaces and errors any time scenebuilder adds them.
+  useMemo(
+    () => {
+      sceneBuilder.setOnForceUpdate(forceUpdate);
+    },
+    [sceneBuilder, forceUpdate]
+  );
+
+  const {
+    topicTreeConfig,
+    staticallyAvailableNamespacesByTopic,
+    supportedMarkerDatatypesSet,
+    defaultTopicSettings,
+  } = useMemo(
     () => ({
+      supportedMarkerDatatypesSet: new Set(
+        Object.values(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_MARKER_DATATYPES)
+      ),
       topicTreeConfig: getGlobalHooks()
         .startupPerPanelHooks()
         .ThreeDimensionalViz.getDefaultTopicTreeV2(),
       staticallyAvailableNamespacesByTopic: getGlobalHooks()
         .startupPerPanelHooks()
         .ThreeDimensionalViz.getStaticallyAvailableNamespacesByTopic(),
+      defaultTopicSettings: getGlobalHooks()
+        .startupPerPanelHooks()
+        .ThreeDimensionalViz.getDefaultSettings(),
     }),
     []
   );
 
-  const topicTreeV2SaveConfig: Save3DConfig = useCallback(
-    (newConfig) => {
-      if (newConfig.expandedNodes) {
-        newConfig.expandedNodes = fromTopicTreeV2Nodes(newConfig.expandedNodes);
-      }
-      if (newConfig.checkedNodes) {
-        newConfig.checkedNodes = fromTopicTreeV2Nodes(newConfig.checkedNodes);
-      }
-      return saveConfig(newConfig);
-    },
-    [saveConfig]
-  );
-
-  const expandedNodes = useMemo(() => toTopicTreeV2Nodes(config.expandedNodes), [config.expandedNodes]);
-  const checkedNodes = useMemo(() => toTopicTreeV2Nodes(config.checkedNodes), [config.checkedNodes]);
-
-  const { availableNamespacesByTopic } = useSceneBuilderAndTransformsData({
+  const { availableNamespacesByTopic, sceneErrorsByKey: sceneErrorsByTopicKey } = useSceneBuilderAndTransformsData({
     sceneBuilder,
-    transforms,
     staticallyAvailableNamespacesByTopic,
+    transforms,
   });
 
   // Use deep compare so that we only regenerate rootTreeNode when topics change.
   const memoizedTopics = useShallowMemo(topics);
+
+  // Only show topics with supported datatype as available in topic tree.
+  const topicTreeTopics = useMemo(
+    () => memoizedTopics.filter((topic) => supportedMarkerDatatypesSet.has(topic.datatype)),
+    [memoizedTopics, supportedMarkerDatatypesSet]
+  );
+
   const {
+    allKeys,
+    derivedCustomSettingsByKey,
+    getIsNamespaceCheckedByDefault,
+    getIsTreeNodeVisibleInScene,
+    getIsTreeNodeVisibleInTree,
     hasFeatureColumn,
     rootTreeNode,
-    selectedTopicNames,
+    sceneErrorsByKey,
     selectedNamespacesByTopic,
-    settingsChangedKeysSet,
+    selectedTopicNames,
+    shouldExpandAllKeys,
+    toggleCheckAllAncestors,
+    toggleCheckAllDescendants,
+    toggleNamespaceChecked,
+    toggleNodeChecked,
+    toggleNodeExpanded,
   } = useTopicTree({
-    topicTreeConfig,
-    modifiedNamespaceTopics,
+    availableNamespacesByTopic,
+    checkedKeys,
+    defaultTopicSettings,
+    expandedKeys,
+    filterText,
+    modifiedNamespaceTopics: modifiedNamespaceTopics || [],
+    providerTopics: topicTreeTopics,
+    saveConfig,
+    sceneErrorsByTopicKey,
+    topicDisplayMode,
     topicSettings,
-    providerTopics: memoizedTopics,
-    checkedKeys: checkedNodes,
+    topicTreeConfig,
   });
 
   useEffect(() => setSubscriptions(selectedTopicNames), [selectedTopicNames, setSubscriptions]);
@@ -439,7 +470,7 @@ export default function LayoutForTopicTreeV2({
           e.preventDefault();
           // Unpin before enabling keyboard toggle open/close.
           if (pinTopics) {
-            saveConfig({ pinTopics: false });
+            saveConfig({ pinTopics: false }, { keepLayoutInUrl: true });
             return;
           }
           setShowTopicTree(!showTopicTree);
@@ -501,7 +532,7 @@ export default function LayoutForTopicTreeV2({
       tabIndex={-1}
       className={styles.container}
       style={{ cursor: cursorType }}
-      data-test="layout-for-topic-tree-v2">
+      data-test="3dviz-layout">
       <KeyListener keyDownHandlers={keyDownHandlers} />
       <PanelToolbar
         floating
@@ -524,20 +555,37 @@ export default function LayoutForTopicTreeV2({
         }
       />
       <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
-        <TopicTreeV2
-          availableNamespacesByTopic={availableNamespacesByTopic}
-          checkedKeys={checkedNodes}
-          containerHeight={containerRef.current?.clientHeight || 400}
-          expandedKeys={expandedNodes}
-          onExitTopicTreeFocus={onExitTopicTreeFocus}
-          pinTopics={pinTopics}
-          rootTreeNode={rootTreeNode}
-          saveConfig={topicTreeV2SaveConfig}
-          settingsChangedKeysSet={settingsChangedKeysSet}
-          setCurrentEditingTopic={setCurrentEditingTopic}
-          setShowTopicTree={setShowTopicTree}
-          showTopicTree={showTopicTree}
-        />
+        {containerRef.current && (
+          <TopicTreeV2
+            availableNamespacesByTopic={availableNamespacesByTopic}
+            checkedKeys={checkedKeys}
+            containerHeight={containerRef.current.clientHeight}
+            containerWidth={containerRef.current.clientWidth}
+            expandedKeys={expandedKeys}
+            getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
+            getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
+            getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
+            onExitTopicTreeFocus={onExitTopicTreeFocus}
+            toggleCheckAllAncestors={toggleCheckAllAncestors}
+            toggleCheckAllDescendants={toggleCheckAllDescendants}
+            toggleNamespaceChecked={toggleNamespaceChecked}
+            toggleNodeChecked={toggleNodeChecked}
+            toggleNodeExpanded={toggleNodeExpanded}
+            topicDisplayMode={topicDisplayMode}
+            pinTopics={pinTopics}
+            rootTreeNode={rootTreeNode}
+            saveConfig={saveConfig}
+            derivedCustomSettingsByKey={derivedCustomSettingsByKey}
+            sceneErrorsByKey={sceneErrorsByKey}
+            setCurrentEditingTopic={setCurrentEditingTopic}
+            setShowTopicTree={setShowTopicTree}
+            showTopicTree={showTopicTree}
+            filterText={filterText}
+            setFilterText={setFilterText}
+            allKeys={allKeys}
+            shouldExpandAllKeys={shouldExpandAllKeys}
+          />
+        )}
         {currentEditingTopic && (
           <TopicSettingsModal
             currentEditingTopic={currentEditingTopic}

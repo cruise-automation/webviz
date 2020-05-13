@@ -21,19 +21,19 @@ import {
 import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
 import { TopicTreeNode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/treeBuilder";
 import type { Topic } from "webviz-core/src/players/types";
-import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
+import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { getTopicPrefixes } from "webviz-core/src/util/selectors";
 
 export const BAG1_TOPIC_GROUP_NAME = "Bag";
-export const BAG2_TOPIC_GROUP_NAME = `Bag 2 ${SECOND_BAG_PREFIX}`;
+export const BAG2_TOPIC_GROUP_NAME = `Bag 2 ${SECOND_SOURCE_PREFIX}`;
 
 export function getCheckedTopicsAndExtensions(
-  checkedNodes: string[]
+  checkedKeys: string[]
 ): { selectedTopicsSet: Set<string>, selectedExtensionsSet: Set<string> } {
   const selectedExtensionsSet = new Set();
   const selectedTopicsSet = new Set();
 
-  checkedNodes.forEach((item) => {
+  checkedKeys.forEach((item) => {
     if (item.startsWith("t:")) {
       selectedTopicsSet.add(item.substr("t:".length));
     } else if (item.startsWith("/")) {
@@ -45,41 +45,41 @@ export function getCheckedTopicsAndExtensions(
   return { selectedExtensionsSet, selectedTopicsSet };
 }
 
-// check if we need to turn on any group names, return the original checkedNodes if not
-export function getNewCheckedNodes(selectedAndAvailableTopics: string[], checkedNodes: string[]): string[] {
-  let newCheckedNodes = checkedNodes;
-  const hasBag1Topics = selectedAndAvailableTopics.some((topic) => !topic.startsWith(SECOND_BAG_PREFIX));
-  const hasBag2Topics = selectedAndAvailableTopics.some((topic) => topic.startsWith(SECOND_BAG_PREFIX));
-  if (hasBag1Topics && !checkedNodes.includes(`name:${BAG1_TOPIC_GROUP_NAME}`)) {
-    newCheckedNodes = [...checkedNodes, `name:${BAG1_TOPIC_GROUP_NAME}`];
+// check if we need to turn on any group names, return the original checkedKeys if not
+export function getNewCheckedKeys(selectedAndAvailableTopics: string[], checkedKeys: string[]): string[] {
+  let newCheckedKeys = checkedKeys;
+  const hasBag1Topics = selectedAndAvailableTopics.some((topic) => !topic.startsWith(SECOND_SOURCE_PREFIX));
+  const hasBag2Topics = selectedAndAvailableTopics.some((topic) => topic.startsWith(SECOND_SOURCE_PREFIX));
+  if (hasBag1Topics && !checkedKeys.includes(`name:${BAG1_TOPIC_GROUP_NAME}`)) {
+    newCheckedKeys = [...checkedKeys, `name:${BAG1_TOPIC_GROUP_NAME}`];
   }
-  if (hasBag2Topics && !checkedNodes.includes(`name:${BAG2_TOPIC_GROUP_NAME}`)) {
-    newCheckedNodes = [...newCheckedNodes, `name:${BAG2_TOPIC_GROUP_NAME}`];
+  if (hasBag2Topics && !checkedKeys.includes(`name:${BAG2_TOPIC_GROUP_NAME}`)) {
+    newCheckedKeys = [...newCheckedKeys, `name:${BAG2_TOPIC_GROUP_NAME}`];
   }
-  return newCheckedNodes;
+  return newCheckedKeys;
 }
 
 // get the treeConfig based on various inputs
-// add 'name:Bag' and 'name:Bag 2 /webviz_bag_2' to checkedNodes if needed
+// add 'name:Bag' and 'name:Bag 2 /webviz_source_2' to checkedKeys if needed
 export function getTopicConfig({
-  checkedNodes,
+  checkedKeys,
   topicDisplayMode,
   topics,
   supportedMarkerDatatypes,
 }: {
-  checkedNodes: string[],
+  checkedKeys: string[],
   topicDisplayMode: TopicDisplayMode,
   topics: Topic[],
   supportedMarkerDatatypes: string[],
-}): { topicConfig: TopicConfig, newCheckedNodes: string[] } {
-  const newCheckedNodes = checkedNodes;
+}): { topicConfig: TopicConfig, newCheckedKeys: string[] } {
+  const newCheckedKeys = checkedKeys;
   const showFlattened = topicDisplayMode !== TOPIC_DISPLAY_MODES.SHOW_TREE.value;
   const showSelected = topicDisplayMode === TOPIC_DISPLAY_MODES.SHOW_SELECTED.value;
   const showAvailable = topicDisplayMode === TOPIC_DISPLAY_MODES.SHOW_AVAILABLE.value;
   const showAll = topicDisplayMode === TOPIC_DISPLAY_MODES.SHOW_ALL.value;
   const supportedMarkerDatatypesSet = new Set(supportedMarkerDatatypes);
   if (!showFlattened) {
-    return { topicConfig: TOPIC_CONFIG, newCheckedNodes };
+    return { topicConfig: TOPIC_CONFIG, newCheckedKeys };
   }
 
   // filter out topic datatypes that are not supported in the 3D panel
@@ -89,7 +89,7 @@ export function getTopicConfig({
 
   const topicPrefixes = getTopicPrefixes(availableTopicsNames);
   const hasMultiBag = topicPrefixes.length > 0;
-  const { selectedTopicsSet, selectedExtensionsSet } = getCheckedTopicsAndExtensions(checkedNodes);
+  const { selectedTopicsSet, selectedExtensionsSet } = getCheckedTopicsAndExtensions(checkedKeys);
 
   const selectedAndAvailableTopics = intersection([...selectedTopicsSet], availableTopicsNames);
   const selectedAvailableTopicsWithoutPrefix = removeTopicPrefixes(selectedAndAvailableTopics);
@@ -132,7 +132,7 @@ export function getTopicConfig({
 
   // TF node doesn't associate with any topic, we want to show it conditionally based on the display mode
   const tfNode =
-    showAll || (showAvailable && topics.length > 0) || (showSelected && checkedNodes.includes("name:TF"))
+    showAll || (showAvailable && topics.length > 0) || (showSelected && checkedKeys.includes("name:TF"))
       ? [{ name: "TF", children: [], description: "Visualize relationships between /tf frames." }]
       : [];
 
@@ -143,7 +143,7 @@ export function getTopicConfig({
         ...TOPIC_CONFIG,
         children: [...flattenedTopicNodes, ...tfNode],
       },
-      newCheckedNodes: checkedNodes,
+      newCheckedKeys: checkedKeys,
     };
   }
 
@@ -152,7 +152,7 @@ export function getTopicConfig({
     if (!item.topic) {
       return null;
     }
-    return ({ ...item, topic: `${SECOND_BAG_PREFIX}${item.topic}` }: TopicConfig);
+    return ({ ...item, topic: `${SECOND_SOURCE_PREFIX}${item.topic}` }: TopicConfig);
   });
 
   // show only the selected topics at each bag
@@ -178,7 +178,7 @@ export function getTopicConfig({
 
   return {
     topicConfig,
-    newCheckedNodes: getNewCheckedNodes(selectedAndAvailableTopics, checkedNodes),
+    newCheckedKeys: getNewCheckedKeys(selectedAndAvailableTopics, checkedKeys),
   };
 }
 

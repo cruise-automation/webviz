@@ -19,6 +19,7 @@ import {
   createTabsOutput,
   selectPanelOutput,
   onNewPanelDrop,
+  validateTabPanelConfig,
 } from "./layout";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 
@@ -378,14 +379,16 @@ describe("layout", () => {
 
   describe("groupPanelsOutput", () => {
     it("groups all panels in layout", () => {
-      const { tabPanelId, newLayout = "", saveConfigsPayload } = groupPanelsOutput(
+      const { tabPanelId, changePanelPayload, saveConfigsPayload } = groupPanelsOutput(
         "ImageViewPanel!1nlmn1h",
         { direction: "row", first: "ImageViewPanel!1nlmn1h", second: "3D Panel!2s67wfv" },
         ["ImageViewPanel!1nlmn1h", "3D Panel!2s67wfv"]
       );
 
       expect(getPanelTypeFromId(tabPanelId)).toEqual(TAB_PANEL_TYPE);
-      expect(getPanelTypeFromId(typeof newLayout === "string" ? newLayout : "")).toEqual(TAB_PANEL_TYPE);
+      expect(
+        getPanelTypeFromId(typeof changePanelPayload.layout === "string" ? changePanelPayload.layout : "")
+      ).toEqual(TAB_PANEL_TYPE);
       expect(saveConfigsPayload.configs.length).toEqual(1);
       expect(getPanelTypeFromId(saveConfigsPayload.configs[0].id)).toEqual(TAB_PANEL_TYPE);
       expect(saveConfigsPayload.configs[0].config).toEqual({
@@ -399,7 +402,7 @@ describe("layout", () => {
       });
     });
     it("groups some panels in layout", () => {
-      const { tabPanelId, newLayout, saveConfigsPayload } = groupPanelsOutput(
+      const { tabPanelId, changePanelPayload, saveConfigsPayload } = groupPanelsOutput(
         "ImageViewPanel!1nlmn1h",
         {
           direction: "row",
@@ -410,10 +413,18 @@ describe("layout", () => {
       );
 
       expect(tabPanelId.startsWith(TAB_PANEL_TYPE)).toEqual(true);
-      expect(getPanelTypeFromId(newLayout && typeof newLayout.first === "string" ? newLayout.first : "")).toEqual(
-        TAB_PANEL_TYPE
-      );
-      expect(newLayout && typeof newLayout.second === "string" ? newLayout.second : "").toEqual("RosOut!abc");
+      expect(
+        getPanelTypeFromId(
+          changePanelPayload.layout && typeof changePanelPayload.layout.first === "string"
+            ? changePanelPayload.layout.first
+            : ""
+        )
+      ).toEqual(TAB_PANEL_TYPE);
+      expect(
+        changePanelPayload.layout && typeof changePanelPayload.layout.second === "string"
+          ? changePanelPayload.layout.second
+          : ""
+      ).toEqual("RosOut!abc");
       expect(saveConfigsPayload.configs.length).toEqual(1);
       expect(getPanelTypeFromId(saveConfigsPayload.configs[0].id)).toEqual(TAB_PANEL_TYPE);
       expect(saveConfigsPayload.configs[0].config).toEqual({
@@ -436,7 +447,9 @@ describe("layout", () => {
         ["ImageViewPanel!1nlmn1h", "3D Panel!2s67wfv"]
       );
       expect(getPanelTypeFromId(output.tabPanelId)).toEqual(TAB_PANEL_TYPE);
-      expect(getPanelTypeFromId(typeof output.newLayout === "string" ? output.newLayout : "")).toEqual(TAB_PANEL_TYPE);
+      expect(
+        getPanelTypeFromId(typeof output.changePanelPayload.layout === "string" ? output.changePanelPayload.layout : "")
+      ).toEqual(TAB_PANEL_TYPE);
       expect(output.saveConfigsPayload.configs.length).toEqual(1);
       expect(getPanelTypeFromId(output.saveConfigsPayload.configs[0].id)).toEqual(TAB_PANEL_TYPE);
       expect(output.saveConfigsPayload.configs[0].config).toEqual({
@@ -448,7 +461,7 @@ describe("layout", () => {
       });
     });
     it("creates tabs for some panels in layout", () => {
-      const output = createTabsOutput(
+      const { tabPanelId, changePanelPayload, saveConfigsPayload } = createTabsOutput(
         "ImageViewPanel!1nlmn1h",
         {
           direction: "row",
@@ -458,16 +471,22 @@ describe("layout", () => {
         ["ImageViewPanel!1nlmn1h", "3D Panel!2s67wfv"]
       );
 
-      expect(output.tabPanelId.startsWith(TAB_PANEL_TYPE)).toEqual(true);
+      expect(tabPanelId.startsWith(TAB_PANEL_TYPE)).toEqual(true);
       expect(
-        getPanelTypeFromId(output.newLayout && typeof output.newLayout.first === "string" ? output.newLayout.first : "")
+        getPanelTypeFromId(
+          changePanelPayload.layout && typeof changePanelPayload.layout.first === "string"
+            ? changePanelPayload.layout.first
+            : ""
+        )
       ).toEqual(TAB_PANEL_TYPE);
-      expect(output.newLayout && typeof output.newLayout.second === "string" ? output.newLayout.second : "").toEqual(
-        "RosOut!abc"
-      );
-      expect(output.saveConfigsPayload.configs.length).toEqual(1);
-      expect(getPanelTypeFromId(output.saveConfigsPayload.configs[0].id)).toEqual(TAB_PANEL_TYPE);
-      expect(output.saveConfigsPayload.configs[0].config).toEqual({
+      expect(
+        changePanelPayload.layout && typeof changePanelPayload.layout.second === "string"
+          ? changePanelPayload.layout.second
+          : ""
+      ).toEqual("RosOut!abc");
+      expect(saveConfigsPayload.configs.length).toEqual(1);
+      expect(getPanelTypeFromId(saveConfigsPayload.configs[0].id)).toEqual(TAB_PANEL_TYPE);
+      expect(saveConfigsPayload.configs[0].config).toEqual({
         tabs: [
           { title: "ImageViewPanel", layout: "ImageViewPanel!1nlmn1h" },
           { title: "3D Panel", layout: "3D Panel!2s67wfv" },
@@ -482,7 +501,7 @@ describe("layout", () => {
       const appLayout = "RosOut!xyz";
       const config = { topicPath: "/abc" };
       const panelToAdd = "RawMessages";
-      const { saveConfigsPayload, layoutPayload } = selectPanelOutput(panelToAdd, appLayout, { config });
+      const { saveConfigsPayload, changePanelPayload } = selectPanelOutput(panelToAdd, appLayout, { config });
 
       // Verify saveConfigsPayload
       const { configs } = saveConfigsPayload;
@@ -492,8 +511,8 @@ describe("layout", () => {
       expect(getPanelTypeFromId(id)).toEqual(panelToAdd);
       expect(firstConfig).toEqual(config);
 
-      // Verify layoutPayload
-      const { layout } = layoutPayload;
+      // Verify changePanelPayload
+      const { layout } = changePanelPayload;
       expect(getPanelTypeFromId(typeof layout.first === "string" ? layout.first : "")).toEqual(panelToAdd);
       expect(typeof layout === "object" ? layout.second : "").toEqual(appLayout);
     });
@@ -503,7 +522,7 @@ describe("layout", () => {
       const panelInsideTabPanel = "RawMessages";
       const config = { tabs: [{ title: "A", layout: `${panelInsideTabPanel}!abc` }] };
       const panelToAdd = TAB_PANEL_TYPE;
-      const { saveConfigsPayload, layoutPayload } = selectPanelOutput(panelToAdd, appLayout, {
+      const { saveConfigsPayload, changePanelPayload } = selectPanelOutput(panelToAdd, appLayout, {
         config,
         relatedConfigs: { [`${panelInsideTabPanel}!abc`]: { topicPath: "/abc" } },
       });
@@ -524,8 +543,8 @@ describe("layout", () => {
       expect(getPanelTypeFromId(secondConfig?.tabs[0].layout || "")).toEqual(panelInsideTabPanel);
       expect(secondConfig?.tabs[0].layout).not.toEqual(`${panelInsideTabPanel}!abc`);
 
-      // Verify layoutPayload
-      const { layout } = layoutPayload;
+      // Verify changePanelPayload
+      const { layout } = changePanelPayload;
       expect(getPanelTypeFromId(typeof layout.first === "string" ? layout.first : "")).toEqual(panelToAdd);
       expect(typeof layout === "object" ? layout.second : "").toEqual(appLayout);
     });
@@ -650,6 +669,15 @@ describe("layout", () => {
         },
         layout: "Tab!10j2f46",
       });
+    });
+  });
+  describe("validateTabPanelConfig", () => {
+    it("verifies whether a tab panel config is valid", () => {
+      const tabs = [{ title: "First Tab", layout: "RawMessages!a" }];
+      expect(validateTabPanelConfig({ tabs })).toEqual(false);
+      expect(validateTabPanelConfig({ tabs, activeTabIdx: 1 })).toEqual(false);
+      expect(validateTabPanelConfig({ activeTabIdx: 1 })).toEqual(false);
+      expect(validateTabPanelConfig({ tabs, activeTabIdx: 0 })).toEqual(true);
     });
   });
 });

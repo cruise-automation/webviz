@@ -23,7 +23,7 @@ export const TOPIC_CONFIG = getGlobalHooks()
   .ThreeDimensionalViz.getDefaultTopicTree();
 
 export const BASE_DATA_SOURCE_PREFIXES = ["", "/webviz_tables", "/labels_json"];
-export const FEATURE_DATA_SOURCE_PREFIXES = ["/webviz_bag_2", "/webviz_tables_2"];
+export const FEATURE_DATA_SOURCE_PREFIXES = ["/webviz_source_2", "/webviz_source_2"];
 export const ALL_DATA_SOURCE_PREFIXES = [...BASE_DATA_SOURCE_PREFIXES, ...FEATURE_DATA_SOURCE_PREFIXES];
 export const DEFAULT_GROUP_PREFIXES_BY_COLUMN = [BASE_DATA_SOURCE_PREFIXES, FEATURE_DATA_SOURCE_PREFIXES];
 
@@ -411,10 +411,10 @@ export function buildAvailableNamespacesByTopic({
 
 // Derive data source badge text from topic name. Keep it simple for now as we only have these prefixes.
 export function getBadgeTextByTopicName(topicName: string): string {
-  if (topicName.startsWith("/webviz_bag_2")) {
-    return "B2";
-  } else if (topicName.startsWith("/webviz_tables_2")) {
+  if (topicName.startsWith("/webviz_source_2/tables")) {
     return "T2";
+  } else if (topicName.startsWith("/webviz_source_2")) {
+    return "B2";
   } else if (topicName.startsWith("/tables")) {
     return "T1";
   } else if (topicName.startsWith("/labels_json_2")) {
@@ -425,12 +425,12 @@ export function getBadgeTextByTopicName(topicName: string): string {
   return "B1";
 }
 function getPrefixByColumn(topicName: string): string[] {
-  if (topicName.startsWith("/tables/") || topicName.startsWith("/webviz_tables_2/")) {
-    return ["", "/webviz_tables_2"];
+  if (topicName.startsWith("/tables/") || topicName.startsWith("/webviz_source_2/tables/")) {
+    return ["", "/webviz_source_2"];
   } else if (topicName.startsWith("/labels_json/")) {
     return ["", "/labels_json_2"];
   }
-  return ["", "/webviz_bag_2"];
+  return ["", "/webviz_source_2"];
 }
 
 export function getSelectionsFromTopicGroupConfig(
@@ -501,7 +501,7 @@ export function getSceneErrorsByTopic(sceneErrors: SceneErrors): { [topicName: s
   [
     { description: "missing frame id", errors: sceneErrors.topicsMissingFrameIds },
     {
-      description: `missing transforms to ${sceneErrors.rootTransformID}:`,
+      description: `missing transforms to root transform ${sceneErrors.rootTransformID}`,
       errors: sceneErrors.topicsMissingTransforms,
     },
   ].forEach(({ description, errors }) => {

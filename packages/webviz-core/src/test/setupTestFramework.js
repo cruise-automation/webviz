@@ -9,43 +9,43 @@
 import diff from "jest-diff";
 import { isEqual } from "lodash";
 
-// Always mock reportError and fail if it was called during the test without resetting it. Note that
+// Always mock sendNotification and fail if it was called during the test without resetting it. Note that
 // we have to do this here instead of in setup.js since here we have access to jest methods.
-jest.mock("webviz-core/src/util/reportError", () => {
+jest.mock("webviz-core/src/util/sendNotification", () => {
   // Duplicate the report error functionality here with passing errors to handlers, if they exist.
   const fn: any = jest.fn((...args) => {
     if (fn.handler) {
       fn.handler(...args);
     }
   });
-  fn.setErrorHandler = (handler) => {
+  fn.setNotificationHandler = (handler) => {
     fn.handler = handler;
   };
   // Ensure that there is no handler by default.
-  fn.setErrorHandler(null);
+  fn.setNotificationHandler(null);
   return fn;
 });
 beforeEach(() => {
-  const reportError: any = require("webviz-core/src/util/reportError");
-  reportError.expectCalledDuringTest = () => {
-    if (reportError.mock.calls.length === 0) {
+  const sendNotification: any = require("webviz-core/src/util/sendNotification");
+  sendNotification.expectCalledDuringTest = () => {
+    if (sendNotification.mock.calls.length === 0) {
       // $FlowFixMe
-      fail("Expected reportError to have been called during the test, but it was never called!"); // eslint-disable-line
+      fail("Expected sendNotification to have been called during the test, but it was never called!"); // eslint-disable-line
     }
-    reportError.mockClear();
+    sendNotification.mockClear();
     // Reset the error handler to the default (no error handler).
-    reportError.setErrorHandler(null);
+    sendNotification.setNotificationHandler(null);
   };
 });
 afterEach(() => {
-  const reportError: any = require("webviz-core/src/util/reportError");
-  if (reportError.mock.calls.length > 0) {
-    const calls = reportError.mock.calls;
-    reportError.mockClear();
+  const sendNotification: any = require("webviz-core/src/util/sendNotification");
+  if (sendNotification.mock.calls.length > 0) {
+    const calls = sendNotification.mock.calls;
+    sendNotification.mockClear();
     // Reset the error handler to the default (no error handler).
-    reportError.setErrorHandler(null);
+    sendNotification.setNotificationHandler(null);
     // $FlowFixMe
-    fail(`reportError has been called during this test (call reportError.expectCalledDuringTest(); at the end of your test if you expect this): ${JSON.stringify(calls)}`); // eslint-disable-line
+    fail(`sendNotification has been called during this test (call sendNotification.expectCalledDuringTest(); at the end of your test if you expect this): ${JSON.stringify(calls)}`); // eslint-disable-line
   }
 });
 

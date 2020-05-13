@@ -14,6 +14,7 @@ import styled from "styled-components";
 import { type Save3DConfig } from "../index";
 import Icon from "webviz-core/src/components/Icon";
 import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
+import Tooltip from "webviz-core/src/components/Tooltip";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export const SWITCHER_HEIGHT = 28;
@@ -23,6 +24,17 @@ const STopicTreeSwitcher = styled.div`
   height: ${SWITCHER_HEIGHT}px;
   position: relative;
 `;
+
+const SErrorsBadge = styled.div`
+  position: absolute;
+  top: -4px;
+  left: 24px;
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: ${colors.RED};
+`;
+
 /* TODO(Audrey): stay consistent with other buttons in the 3D panel, will consolidate later. */
 const SIconWrapper = styled.div`
   width: 28px;
@@ -38,6 +50,7 @@ type Props = {|
   renderTopicTree: boolean,
   saveConfig: Save3DConfig,
   setShowTopicTree: (boolean) => void,
+  showErrorBadge: boolean,
   showTopicTree: boolean,
 |};
 
@@ -46,6 +59,7 @@ export default function TopicTreeSwitcher({
   renderTopicTree,
   saveConfig,
   setShowTopicTree,
+  showErrorBadge,
   showTopicTree,
 }: Props) {
   return (
@@ -81,12 +95,17 @@ export default function TopicTreeSwitcher({
           onClick={() => {
             // Keep TopicTree open after unpin.
             setShowTopicTree(true);
-            saveConfig({ pinTopics: !pinTopics });
+            saveConfig({ pinTopics: !pinTopics }, { keepLayoutInUrl: true });
           }}
           style={{ color: pinTopics ? colors.HIGHLIGHT : colors.LIGHT }}>
           <PinIcon />
         </Icon>
       </SIconWrapper>
+      {showErrorBadge && (
+        <Tooltip contents="Errors found in selected topics/namespaces" placement="top">
+          <SErrorsBadge />
+        </Tooltip>
+      )}
     </STopicTreeSwitcher>
   );
 }

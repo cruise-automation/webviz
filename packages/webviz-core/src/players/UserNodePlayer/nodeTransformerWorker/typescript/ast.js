@@ -20,9 +20,9 @@ import {
   preferArrayLiteral,
   classError,
   noTypeOfError,
-  noImportsInReturnType,
   noTuples,
   limitedUnionsError,
+  noNestedAny,
 } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/errors";
 import { DiagnosticSeverity, Sources, ErrorCodes, type Diagnostic } from "webviz-core/src/players/UserNodePlayer/types";
 import type { RosDatatypes, RosMsgField } from "webviz-core/src/types/RosDatatypes";
@@ -77,6 +77,14 @@ export const findDeclaration = (symbol: ts.Symbol, kind: ts.SyntaxKind[]): ?ts.N
       return declaration;
     }
   }
+};
+
+const findImportedTypeDeclaration = (checker: ts.TypeChecker, node: ts.Node, kind: ts.SyntaxKind[]): ?ts.Node => {
+  const declaredType = checker.getDeclaredTypeOfSymbol(node.symbol);
+  if (!declaredType) {
+    throw new Error(`Could not find type import type`);
+  }
+  return findDeclaration(declaredType.symbol, kind);
 };
 
 // These functions are used to build up mapping for generic types.
@@ -180,6 +188,7 @@ export const findReturnType = (
         ts.SyntaxKind.TypeAliasDeclaration,
         ts.SyntaxKind.InterfaceDeclaration,
         ts.SyntaxKind.ClassDeclaration,
+        ts.SyntaxKind.ImportSpecifier,
       ]);
       return visitNext(nextNode);
     }
@@ -192,6 +201,13 @@ export const findReturnType = (
     }
     case ts.SyntaxKind.TypeAliasDeclaration: {
       return visitNext(node.type);
+    }
+    case ts.SyntaxKind.ImportSpecifier: {
+      const declaration = findImportedTypeDeclaration(checker, node, [
+        ts.SyntaxKind.TypeLiteral,
+        ts.SyntaxKind.InterfaceDeclaration,
+      ]);
+      return visitNext(declaration);
     }
     case ts.SyntaxKind.TypeQuery:
       throw new DatatypeExtractionError(noTypeOfError);
@@ -392,7 +408,11 @@ export const constructDatatypes = (
       }
 
       case ts.SyntaxKind.ImportSpecifier: {
-        throw new DatatypeExtractionError(noImportsInReturnType);
+        const declaration = findImportedTypeDeclaration(checker, tsNode, [
+          ts.SyntaxKind.TypeLiteral,
+          ts.SyntaxKind.InterfaceDeclaration,
+        ]);
+        return getRosMsgField(name, declaration, isArray, isComplex, typeMap, innerDepth + 1);
       }
       case ts.SyntaxKind.IntersectionType: {
         throw new DatatypeExtractionError(noIntersectionTypesError);
@@ -414,6 +434,9 @@ export const constructDatatypes = (
       }
       case ts.SyntaxKind.FunctionType:
         throw new DatatypeExtractionError(functionError);
+
+      case ts.SyntaxKind.AnyKeyword:
+        throw new DatatypeExtractionError(noNestedAny);
 
       default:
         throw new Error("Unhandled node kind.");

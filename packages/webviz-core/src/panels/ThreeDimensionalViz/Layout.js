@@ -19,7 +19,6 @@ import React, {
   useLayoutEffect,
   useEffect,
 } from "react";
-import KeyListener from "react-key-listener";
 import {
   PolygonBuilder,
   DrawPolygons,
@@ -31,6 +30,7 @@ import {
 import { type Time } from "rosbag";
 
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import filterMap from "webviz-core/src/filterMap";
@@ -136,8 +136,8 @@ export default function Layout({
   setSubscriptions,
   config: {
     autoTextBackgroundColor,
-    expandedNodes,
-    checkedNodes,
+    expandedKeys,
+    checkedKeys,
     flattenMarkers,
     modifiedNamespaceTopics = [],
     pinTopics,
@@ -151,10 +151,10 @@ export default function Layout({
   // toggle visibility on topics by temporarily storing a list of hidden topics on the state
   const [hiddenTopics, setHiddenTopics] = useState([]);
 
-  const { topicConfig, newCheckedNodes } = useMemo(
+  const { topicConfig, newCheckedKeys } = useMemo(
     () =>
       getTopicConfig({
-        checkedNodes,
+        checkedKeys,
         topicDisplayMode,
         topics,
         // $FlowFixMe
@@ -162,30 +162,30 @@ export default function Layout({
           getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_MARKER_DATATYPES
         ),
       }),
-    [checkedNodes, topicDisplayMode, topics]
+    [checkedKeys, topicDisplayMode, topics]
   );
 
   // update open source checked nodes
   useLayoutEffect(
     () => {
-      const isOpenSource = checkedNodes.length === 1 && checkedNodes[0] === "name:Topics" && topics.length;
+      const isOpenSource = checkedKeys.length === 1 && checkedKeys[0] === "name:Topics" && topics.length;
       if (isOpenSource) {
         saveConfig(
-          { checkedNodes: isOpenSource ? checkedNodes.concat(topics.map((t) => t.name)) : checkedNodes },
+          { checkedKeys: isOpenSource ? checkedKeys.concat(topics.map((t) => t.name)) : checkedKeys },
           { keepLayoutInUrl: true }
         );
       }
     },
-    [checkedNodes, saveConfig, topics]
+    [checkedKeys, saveConfig, topics]
   );
 
   useLayoutEffect(
     () => {
-      if (!isEqual(checkedNodes.sort(), newCheckedNodes.sort())) {
-        saveConfig({ checkedNodes: newCheckedNodes });
+      if (!isEqual(checkedKeys.sort(), newCheckedKeys.sort())) {
+        saveConfig({ checkedKeys: newCheckedKeys });
       }
     },
-    [checkedNodes, newCheckedNodes, saveConfig]
+    [checkedKeys, newCheckedKeys, saveConfig]
   );
 
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
@@ -246,8 +246,8 @@ export default function Layout({
   const defaultTree = useMemo(
     () =>
       treeBuilder({
-        checkedNodes,
-        expandedNodes: [],
+        checkedKeys,
+        expandedKeys: [],
         modifiedNamespaceTopics: [],
         namespaces: [],
         topics,
@@ -341,8 +341,8 @@ export default function Layout({
       topicTreeRef.current = treeBuilder({
         topics,
         namespaces: sceneBuilder.allNamespaces,
-        checkedNodes,
-        expandedNodes,
+        checkedKeys,
+        expandedKeys,
         modifiedNamespaceTopics,
         transforms: transforms.values(),
         editedTopics,
@@ -356,9 +356,9 @@ export default function Layout({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps, instead of trigger change on transforms, we need to use transforms.values().length
     [
-      checkedNodes,
+      checkedKeys,
       editedTopics,
-      expandedNodes,
+      expandedKeys,
       filterText,
       modifiedNamespaceTopics,
       sceneBuilder.allNamespaces,
@@ -606,9 +606,9 @@ export default function Layout({
       <div style={videoRecordingStyle}>
         <TopicSelector
           autoTextBackgroundColor={!!autoTextBackgroundColor}
-          checkedNodes={checkedNodes}
+          checkedKeys={checkedKeys}
           editedTopics={editedTopics}
-          expandedNodes={expandedNodes}
+          expandedKeys={expandedKeys}
           hideTopicTreeCount={hideTopicTreeCount}
           modifiedNamespaceTopics={modifiedNamespaceTopics}
           namespaces={sceneBuilder.allNamespaces}

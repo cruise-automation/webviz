@@ -11,7 +11,6 @@ import fuzzySort from "fuzzysort";
 import { omit, set, cloneDeep, compact } from "lodash";
 import memoizeOne from "memoize-one";
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import KeyListener from "react-key-listener";
 import scrollIntoView from "scroll-into-view-if-needed";
 import styled from "styled-components";
 import { useDebounce, useDebouncedCallback } from "use-debounce";
@@ -42,6 +41,7 @@ import type { FocusItemOp, TopicGroupConfig, TopicGroupType, TopicGroupsSearchRe
 import Confirm from "webviz-core/src/components/Confirm";
 import Icon from "webviz-core/src/components/Icon";
 import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import { type Topic } from "webviz-core/src/players/types";

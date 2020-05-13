@@ -22,7 +22,7 @@ import {
 import { buildMarkerData, type Dimensions, type RawMarkerData, type MarkerData, type OffscreenCanvas } from "./util";
 import type { Message } from "webviz-core/src/players/types";
 import type { ImageMarker, Color, Point } from "webviz-core/src/types/Messages";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 // Just globally keep track of if we've shown an error in rendering, since typically when you get
 // one error, you'd then get a whole bunch more, which is spammy.
@@ -53,7 +53,7 @@ export async function renderImage({
     markerData = buildMarkerData(rawMarkerData);
   } catch (error) {
     if (!hasLoggedCameraModelError) {
-      reportError(`Failed to initialize camera model from CameraInfo`, error, "user");
+      sendNotification(`Failed to initialize camera model from CameraInfo`, error, "user", "warn");
       hasLoggedCameraModelError = true;
     }
   }
@@ -75,7 +75,8 @@ function toRGBA(color: Color) {
   return `rgba(${r}, ${g}, ${b}, ${a || 1})`;
 }
 
-function maybeUnrectifyPoint(cameraModel: ?CameraModel, point: Point): { x: number, y: number } {
+// Note: Return type is inexact -- may contain z.
+function maybeUnrectifyPoint(cameraModel: ?CameraModel, point: Point): $ReadOnly<{ x: number, y: number }> {
   if (cameraModel) {
     return cameraModel.unrectifyPoint(point);
   }

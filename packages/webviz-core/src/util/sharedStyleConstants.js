@@ -69,12 +69,13 @@ export const colors = {
   ...baseColors,
   PRIMARY: baseColors.PURPLE,
   TEXT_MUTED: baseColors.GRAY,
-  HIGHLIGHT: baseColors.PURPLEL1,
+  HIGHLIGHT: baseColors.BLUE,
   // TODO:(Audrey): !!! need design review. Don't use these colors until TopicGrouping feature is finished.
   HOVER_BACKGROUND_COLOR: tinyColor(baseColors.PURPLE)
     .setAlpha(0.2)
     .toRgbString(),
 
+  DISABLED: baseColors.DARK9,
   TEXTL1: baseColors.LIGHT2,
   ACTION: baseColors.BLUE,
   TEXT: baseColors.LIGHT1,

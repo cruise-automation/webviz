@@ -15,13 +15,14 @@ import { plotableRosTypes, type PlotConfig } from "./index";
 import styles from "./PlotLegend.module.scss";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
-import MessagePathInput, { type TimestampMethod } from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
+import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import {
   type PlotPath,
   type BasePlotPath,
   isReferenceLinePlotPathType,
 } from "webviz-core/src/panels/Plot/internalTypes";
 import { lineColors } from "webviz-core/src/util/plotColors";
+import type { TimestampMethod } from "webviz-core/src/util/time";
 
 type PlotLegendProps = {|
   paths: PlotPath[],

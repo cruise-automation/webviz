@@ -11,7 +11,7 @@ import * as React from "react";
 import DocumentEvents from "react-document-events";
 import styled from "styled-components";
 
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 // A low level slider component.
 //
@@ -43,9 +43,9 @@ const StyledSlider = styled.div`
   border-radius: 2px;
 `;
 
-export const StyledRange = styled.div.attrs({
-  style: ({ width = 0 }) => ({ width: `${width * 100}%` }),
-})`
+export const StyledRange = styled.div.attrs(({ width }) => ({
+  style: { width: `${(width || 0) * 100}%` },
+}))`
   background-color: rgba(255, 255, 255, 0.2);
   position: absolute;
   height: 100%;
@@ -141,8 +141,7 @@ export default class Slider extends React.Component<Props> {
     if (max < min) {
       const msg = `Slider component given invalid range: ${min}, ${max}`;
       const err = new Error(msg);
-
-      reportError(err.message, err, "user");
+      sendNotification(err.message, err, "app", "error");
     }
 
     return (

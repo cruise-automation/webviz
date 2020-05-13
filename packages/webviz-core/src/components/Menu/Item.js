@@ -28,6 +28,7 @@ type ItemProps = {
   hasSubMenu?: boolean,
   direction?: "left" | "right",
   dataTest?: string,
+  style?: { [attr: string]: string | number },
 };
 
 const Item = (props: ItemProps) => {
@@ -43,6 +44,7 @@ const Item = (props: ItemProps) => {
     direction = "left",
     tooltip,
     dataTest,
+    style,
   } = props;
   const classes = cx(styles.item, className, {
     [styles.active]: checked && !disabled,
@@ -52,7 +54,7 @@ const Item = (props: ItemProps) => {
   });
 
   const item = (
-    <div className={classes} onClick={disabled ? noop : onClick} data-test={dataTest}>
+    <div className={classes} onClick={disabled ? noop : onClick} data-test={dataTest} style={style}>
       {hasSubMenu && direction === "left" && <ChevronLeftIcon className={styles.submenuIconLeft} />}
       {icon && (
         <span className={styles.icon}>

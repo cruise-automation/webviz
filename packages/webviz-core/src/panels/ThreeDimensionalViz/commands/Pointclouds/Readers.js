@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 export interface FieldReader {
-  read(data: number[], index: number): number;
+  read(data: number[] | Uint8Array, index: number): number;
 }
 
 export class Float32Reader implements FieldReader {
@@ -19,7 +19,7 @@ export class Float32Reader implements FieldReader {
     this.view = new DataView(buffer);
   }
 
-  read(data: number[], index: number): number {
+  read(data: number[] | Uint8Array, index: number): number {
     this.view.setUint8(0, data[index + this.offset]);
     this.view.setUint8(1, data[index + this.offset + 1]);
     this.view.setUint8(2, data[index + this.offset + 2]);
@@ -37,7 +37,7 @@ export class Int32Reader implements FieldReader {
     this.view = new DataView(buffer);
   }
 
-  read(data: number[], index: number): number {
+  read(data: number[] | Uint8Array, index: number): number {
     this.view.setUint8(0, data[index + this.offset]);
     this.view.setUint8(1, data[index + this.offset + 1]);
     this.view.setUint8(2, data[index + this.offset + 2]);
@@ -55,7 +55,7 @@ export class Uint16Reader implements FieldReader {
     this.view = new DataView(buffer);
   }
 
-  read(data: number[], index: number): number {
+  read(data: number[] | Uint8Array, index: number): number {
     this.view.setUint8(0, data[index + this.offset]);
     this.view.setUint8(1, data[index + this.offset + 1]);
     return this.view.getUint16(0, true);
@@ -70,7 +70,7 @@ export class Int16Reader implements FieldReader {
     this.view = new DataView(buffer);
   }
 
-  read(data: number[], index: number): number {
+  read(data: number[] | Uint8Array, index: number): number {
     this.view.setUint8(0, data[index + this.offset]);
     this.view.setUint8(1, data[index + this.offset + 1]);
     return this.view.getInt16(0, true);
@@ -83,7 +83,7 @@ export class Uint8Reader implements FieldReader {
     this.offset = offset;
   }
 
-  read(data: number[], index: number): number {
+  read(data: number[] | Uint8Array, index: number): number {
     return data[index + this.offset];
   }
 }

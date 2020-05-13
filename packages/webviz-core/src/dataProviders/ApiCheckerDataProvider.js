@@ -17,7 +17,7 @@ import type {
   InitializationResult,
   DataProviderMessage,
 } from "webviz-core/src/dataProviders/types";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 
 // We wrap every DataProvider in an ApiCheckerDataProvider to strictly enforce
@@ -59,7 +59,7 @@ export default class ApiCheckerDataProvider implements DataProvider {
   constructor(args: { name: string }, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
     this._name = args.name;
     if (children.length !== 1) {
-      this._error(`Required exactly 1 child, but received ${children.length}`);
+      this._warn(`Required exactly 1 child, but received ${children.length}`);
       return;
     }
     this._provider = getDataProvider(children[0]);
@@ -67,23 +67,21 @@ export default class ApiCheckerDataProvider implements DataProvider {
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
     if (this._initializationResult) {
-      this._error("initialize was called for a second time");
+      this._warn("initialize was called for a second time");
     }
     const initializationResult = await this._provider.initialize(extensionPoint);
     this._initializationResult = initializationResult;
 
     if (initializationResult.topics.length === 0) {
-      this._error(
-        "No topics returned at all; should have thrown error instead (with details of why this is happening)"
-      );
+      this._warn("No topics returned at all; should have thrown error instead (with details of why this is happening)");
     }
     for (const topic of initializationResult.topics) {
       this._topicNames.push(topic.name);
       if (!initializationResult.datatypes[topic.datatype]) {
-        this._error(`Topic "${topic.name}" datatype "${topic.datatype}" not present in datatypes`);
+        this._warn(`Topic "${topic.name}" datatype "${topic.datatype}" not present in datatypes`);
       }
-      if (initializationResult.messageDefintionsByTopic && !initializationResult.messageDefintionsByTopic[topic.name]) {
-        this._error(`Topic "${topic.name}"" not present in messageDefintionsByTopic`);
+      if (!initializationResult.providesParsedMessages && !initializationResult.messageDefinitionsByTopic[topic.name]) {
+        this._warn(`Topic "${topic.name}"" not present in messageDefinitionsByTopic`);
       }
     }
     return this._initializationResult;
@@ -92,27 +90,27 @@ export default class ApiCheckerDataProvider implements DataProvider {
   async getMessages(start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> {
     const initRes = this._initializationResult;
     if (!initRes) {
-      this._error("getMessages was called before initialize finished");
+      this._warn("getMessages was called before initialize finished");
       // Need to return, otherwise we can't refer to initRes later, and this is a really bad violation anyway.
       return [];
     }
     if (TimeUtil.isLessThan(end, start)) {
-      this._error(`getMessages end (${formatTimeRaw(end)}) is before getMessages start (${formatTimeRaw(start)})`);
+      this._warn(`getMessages end (${formatTimeRaw(end)}) is before getMessages start (${formatTimeRaw(start)})`);
     }
     if (TimeUtil.isLessThan(start, initRes.start)) {
-      this._error(
+      this._warn(
         `getMessages start (${formatTimeRaw(start)}) is before global start (${formatTimeRaw(initRes.start)})`
       );
     }
     if (TimeUtil.isLessThan(initRes.end, end)) {
-      this._error(`getMessages end (${formatTimeRaw(end)}) is after global end (${formatTimeRaw(initRes.end)})`);
+      this._warn(`getMessages end (${formatTimeRaw(end)}) is after global end (${formatTimeRaw(initRes.end)})`);
     }
     if (topics.length === 0) {
-      this._error("getMessages was called without any topics");
+      this._warn("getMessages was called without any topics");
     }
     for (const topic of topics) {
       if (!this._topicNames.includes(topic)) {
-        this._error(
+        this._warn(
           `Requested topic (${topic}) is not in the list of topics published by "initialize" (${JSON.stringify(
             this._topicNames
           )})`
@@ -124,18 +122,18 @@ export default class ApiCheckerDataProvider implements DataProvider {
     let lastTime: ?Time;
     for (const message: DataProviderMessage of messages) {
       if (!topics.includes(message.topic)) {
-        this._error(`message.topic (${message.topic}) was never requested (${JSON.stringify(topics)})`);
+        this._warn(`message.topic (${message.topic}) was never requested (${JSON.stringify(topics)})`);
       }
       if (TimeUtil.isLessThan(message.receiveTime, start)) {
-        this._error(
+        this._warn(
           `message.receiveTime (${formatTimeRaw(message.receiveTime)}) is before start (${formatTimeRaw(start)})`
         );
       }
       if (TimeUtil.isLessThan(end, message.receiveTime)) {
-        this._error(`message.receiveTime (${formatTimeRaw(message.receiveTime)}) is after end (${formatTimeRaw(end)})`);
+        this._warn(`message.receiveTime (${formatTimeRaw(message.receiveTime)}) is after end (${formatTimeRaw(end)})`);
       }
       if (lastTime && TimeUtil.isLessThan(message.receiveTime, lastTime)) {
-        this._error(
+        this._warn(
           `message.receiveTime (${formatTimeRaw(
             message.receiveTime
           )}) is before previous message receiveTime (${formatTimeRaw(lastTime)}) -- messages are not sorted by time`
@@ -148,23 +146,23 @@ export default class ApiCheckerDataProvider implements DataProvider {
 
   async close(): Promise<void> {
     if (!this._initializationResult) {
-      this._error("close was called before initialize finished");
+      this._warn("close was called before initialize finished");
     }
     if (this._closed) {
-      this._error("close was called twice");
+      this._warn("close was called twice");
     }
     this._closed = true;
     return this._provider.close();
   }
 
-  _error(error: string) {
-    const errorMessage = `ApiCheckerDataProvider(${this._name}) error: ${error}`;
-    reportError("Internal data provider assertion failed", errorMessage, "app");
+  _warn(message: string) {
+    const prefixedMessage = `ApiCheckerDataProvider(${this._name}): ${message}`;
+    sendNotification("Internal data provider assertion failed", prefixedMessage, "app", "warn");
 
     if (process.env.NODE_ENV !== "production") {
-      // In tests and local development, also throw a hard error so we'll be more
+      // In tests and local development, also throw a hard message so we'll be more
       // likely to notice it / fail CI.
-      throw Error(`ApiCheckerDataProvider assertion failed: ${errorMessage}`);
+      throw Error(`ApiCheckerDataProvider assertion failed: ${prefixedMessage}`);
     }
   }
 }

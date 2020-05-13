@@ -125,7 +125,7 @@ describe("state.panels", () => {
     store.checkState((panels) => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.playbackConfig).toEqual({ speed: 0.2 });
+      expect(globalState.playbackConfig).toEqual({ messageOrder: "receiveTime", speed: 0.2 });
     });
   });
 
@@ -424,6 +424,23 @@ describe("state.panels", () => {
       store.checkState((panels) => {
         // "NestedPanel!xyz" key in savedProps should be gone
         expect(panels.savedProps).toEqual({ "Tab!abc": emptyTabConfig.config });
+      });
+    });
+
+    it("does not remove old savedProps when trimSavedProps = false", () => {
+      const store = getStore();
+      store.dispatch(changePanelLayout({ layout: "foo!bar" }));
+      store.dispatch(savePanelConfigs({ configs: [{ id: "foo!bar", config: { foo: "baz" } }] }));
+      store.dispatch(changePanelLayout({ layout: tabPanelState.layout }));
+      store.checkState((panels) => {
+        expect(panels.savedProps).toEqual({});
+      });
+
+      store.dispatch(changePanelLayout({ layout: "foo!bar" }));
+      store.dispatch(savePanelConfigs({ configs: [{ id: "foo!bar", config: { foo: "baz" } }] }));
+      store.dispatch(changePanelLayout({ layout: tabPanelState.layout, trimSavedProps: false }));
+      store.checkState((panels) => {
+        expect(panels.savedProps).toEqual({ "foo!bar": { foo: "baz" } });
       });
     });
   });

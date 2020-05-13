@@ -53,6 +53,31 @@ const logs = [
   { source: "processMessage", value: { someKey: { nestedKey: "nestedValue" } }, lineNum: 6, colNum: 0 },
 ];
 
+const sourceCodeWithUtils = `
+  import { Time, Message } from "ros";
+  import { norm } from "utils/pointClouds";
+
+  type InputTopicMsg = {header: {stamp: Time}};
+
+  export const inputs = ["/able_to_engage"];
+  export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}/1";
+
+  const publisher = (message: Message<InputTopicMsg>): { val: number } => {
+    const val = norm({x:1, y:2, z:3});
+    return { val };
+  };
+
+  export default publisher;
+`;
+
+const utilsSourceCode = `
+  import { type RGBA } from "ros";
+
+  export function norm() {
+    return 0;
+  }
+`;
+
 storiesOf("<NodePlayground>", module)
   .addDecorator(withScreenshot({ delay: 1000 }))
   .add("welcome screen", () => {
@@ -62,6 +87,83 @@ storiesOf("<NodePlayground>", module)
       </PanelSetup>
     );
   })
+  .add("utils usage in node", () => (
+    <PanelSetup
+      fixture={{
+        ...fixture,
+        userNodes: {
+          nodeId1: {
+            name: "/some/custom/node",
+            sourceCode: sourceCodeWithUtils,
+          },
+        },
+        userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
+        userNodeLogs: { nodeId1: { logs: [] } },
+      }}>
+      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+    </PanelSetup>
+  ))
+  .add("editor goto definition", () => (
+    <PanelSetup
+      fixture={{
+        ...fixture,
+        userNodes: {
+          nodeId1: {
+            name: "/some/custom/node",
+            sourceCode: sourceCodeWithUtils,
+          },
+        },
+        userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
+        userNodeLogs: { nodeId1: { logs: [] } },
+      }}>
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+          additionalBackStackItems: [
+            {
+              fileName: "utils/pointClouds",
+              code: utilsSourceCode,
+              readOnly: true,
+            },
+          ],
+        }}
+      />
+    </PanelSetup>
+  ))
+  .add("go back from goto definition", () => (
+    <PanelSetup
+      fixture={{
+        ...fixture,
+        userNodes: {
+          nodeId1: {
+            name: "/some/custom/node",
+            sourceCode: sourceCodeWithUtils,
+          },
+        },
+        userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
+        userNodeLogs: { nodeId1: { logs: [] } },
+      }}
+      onMount={(el) => {
+        setImmediate(() => {
+          el.querySelectorAll("[data-test=go-back]")[0].click();
+        });
+      }}>
+      <NodePlayground
+        config={{
+          selectedNodeId: "nodeId1",
+          vimMode: false,
+          additionalBackStackItems: [
+            {
+              fileName: "utils/pointClouds",
+              code: utilsSourceCode,
+              readOnly: true,
+            },
+          ],
+        }}
+      />
+    </PanelSetup>
+  ))
   .add("sidebar open - node explorer", () => {
     return (
       <PanelSetup
@@ -108,7 +210,7 @@ storiesOf("<NodePlayground>", module)
         <PanelSetup fixture={{ ...fixture, userNodes }}>
           <Sidebar
             needsUserTrust={false}
-            nodeDiagnosticsAndLogs={{}}
+            userNodeDiagnostics={{}}
             explorer={explorer}
             updateExplorer={updateExplorer}
             selectedNodeId={null}

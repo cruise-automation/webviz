@@ -18,17 +18,19 @@ type Props = {
   icon: Node,
   id?: string,
   style?: StyleObj,
+  disabled?: boolean,
 };
 
 // $FlowFixMe - flow doesn't have a definition for React.memo
 export default React.memo(function IconButton(props: Props) {
-  const { tooltip, onClick, id, icon, style } = props;
+  const { tooltip, onClick, id, icon, style, disabled } = props;
   return (
     <Button
       id={id}
       tooltip={tooltip}
       style={{ width: 32, height: 32, padding: 0, backgroundColor: colors.toolbar, ...style }}
-      onClick={onClick}>
+      onClick={onClick}
+      disabled={disabled}>
       <Icon small>{icon}</Icon>
     </Button>
   );

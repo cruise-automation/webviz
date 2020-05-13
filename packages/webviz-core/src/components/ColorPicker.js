@@ -16,10 +16,10 @@ import "@simonwep/pickr/dist/themes/monolith.min.css";
 
 export const COLOR_PICKER_SIZE = 29;
 
-const SColorPicker = styled.div.attrs({
-  style: (props) => ({ backgroundColor: props.color }),
+const SColorPicker = styled.div.attrs(({ color }) => ({
+  style: { backgroundColor: color },
   "data-test": "ColorPicker",
-})`
+}))`
   display: inline-block;
   vertical-align: middle;
   width: ${COLOR_PICKER_SIZE}px;

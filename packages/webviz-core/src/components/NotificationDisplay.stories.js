@@ -12,54 +12,108 @@ import * as React from "react";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { setHooks } from "../loadWebviz";
-import ErrorDisplay, { ErrorList, showErrorModal } from "webviz-core/src/components/ErrorDisplay";
-import reportError from "webviz-core/src/util/reportError";
+import NotificationDisplay, {
+  NotificationList,
+  showNotificationModal,
+} from "webviz-core/src/components/NotificationDisplay";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
-storiesOf("<ErrorDisplay>", module)
+const randomNum = () => Math.floor(Math.random() * 1000);
+const addError = () => sendNotification(`Another error #${randomNum()}`, "some details", "app", "error");
+const addWarning = () => sendNotification(`Another warning #${randomNum()}`, "some details", "app", "warn");
+const addInfo = () => sendNotification(`Another message #${randomNum()}`, "some details", "app", "info");
+
+const NotificationDisplayWrapper = () => (
+  <div style={{ padding: 10 }}>
+    <div style={{ width: 300, height: 36 }}>
+      <NotificationDisplay />
+    </div>
+    <AddMoreButtons />
+  </div>
+);
+
+const AddMoreButtons = () => (
+  <div style={{ paddingTop: 20 }}>
+    <button onClick={addInfo}>add info</button>
+    <button onClick={addWarning}>add warning</button>
+    <button onClick={addError}>add error</button>
+  </div>
+);
+
+storiesOf("<NotificationDisplay>", module)
   .addDecorator(withScreenshot({ delay: 5000 }))
   .add("No errors", () => {
-    return (
-      <div style={{ padding: 10 }}>
-        <div>there should be nothing here with no errors present</div>
-        <div style={{ width: 300 }}>
-          <ErrorDisplay />
-        </div>
-      </div>
-    );
+    return <NotificationDisplayWrapper />;
   })
   .add("With one error", () => {
     class Wrapper extends React.Component<any> {
       componentDidMount() {
-        reportError("Something bad happened", "This error is on purpose - it comes from the story", "app");
-      }
-
-      addError() {
-        reportError(`${Math.floor(Math.random() * 1000)} new error`, "some details", "app");
+        sendNotification(
+          "Something bad happened",
+          "This error is on purpose - it comes from the story",
+          "app",
+          "error"
+        );
       }
 
       render() {
-        return (
-          <div style={{ padding: 10 }}>
-            <div style={{ width: 300 }}>
-              <ErrorDisplay />
-            </div>
-            <div style={{ paddingTop: 20 }}>
-              <button onClick={this.addError}>add error</button>
-            </div>
-          </div>
-        );
+        return <NotificationDisplayWrapper />;
       }
     }
     return <Wrapper />;
   })
-  .add("expanded with 4 errors", () => {
+  .add("With one warning", () => {
+    class Wrapper extends React.Component<any> {
+      componentDidMount() {
+        sendNotification(
+          "This is the final countdown",
+          "This warning is on purpose - it comes from the story",
+          "app",
+          "warn"
+        );
+      }
+
+      render() {
+        return <NotificationDisplayWrapper />;
+      }
+    }
+    return <Wrapper />;
+  })
+  .add("With one message", () => {
+    class Wrapper extends React.Component<any> {
+      componentDidMount() {
+        sendNotification("Here's a helpful tip", "These are the details of the message", "user", "info");
+      }
+
+      render() {
+        return <NotificationDisplayWrapper />;
+      }
+    }
+    return <Wrapper />;
+  })
+  .add("expanded with 4 messages", () => {
     class Wrapper extends React.Component<any> {
       el: ?HTMLDivElement;
       componentDidMount() {
-        reportError("Something bad happened 1", "This error is on purpose - it comes from the story", "app");
-        reportError("Something bad happened 2", "This error is on purpose - it comes from the story", "app");
-        reportError("Something bad happened 3", "This error is on purpose - it comes from the story", "app");
-        reportError("Something bad happened 4", "This error is on purpose - it comes from the story", "app");
+        sendNotification(
+          "Something bad happened 1",
+          "This error is on purpose - it comes from the story",
+          "app",
+          "error"
+        );
+        sendNotification(
+          "Something bad happened 2",
+          "This error is on purpose - it comes from the story",
+          "app",
+          "error"
+        );
+        sendNotification("Just a warning", "This warning is on purpose - it comes from the story", "app", "warn");
+        sendNotification(
+          "Something bad happened 3",
+          "This error is on purpose - it comes from the story",
+          "app",
+          "error"
+        );
         if (this.el) {
           const icon = this.el.querySelector(".icon");
           if (icon) {
@@ -68,26 +122,17 @@ storiesOf("<ErrorDisplay>", module)
         }
       }
 
-      addError() {
-        reportError(`${Math.floor(Math.random() * 1000)} new error`, "some details", "app");
-      }
-
       render() {
         return (
           <div style={{ padding: 10 }} ref={(el) => (this.el = el)}>
-            <div style={{ width: 300 }}>
-              <ErrorDisplay />
-            </div>
-            <div style={{ paddingTop: 20 }}>
-              <button onClick={this.addError}>add error</button>
-            </div>
+            <NotificationDisplayWrapper />
           </div>
         );
       }
     }
     return <Wrapper />;
   })
-  .add("error list", () => {
+  .add("Error list", () => {
     // make the container very short to test scrolling
     const style = { width: 400, height: 150, margin: 20 };
     const date = new Date();
@@ -100,6 +145,7 @@ storiesOf("<ErrorDisplay>", module)
         created: moment(date)
           .subtract(307, "minutes")
           .toDate(),
+        severity: "error",
       },
       {
         id: "2",
@@ -109,6 +155,7 @@ storiesOf("<ErrorDisplay>", module)
         created: moment(date)
           .subtract(31, "minutes")
           .toDate(),
+        severity: "error",
       },
       {
         id: "5",
@@ -118,15 +165,17 @@ storiesOf("<ErrorDisplay>", module)
         created: moment(date)
           .subtract(17, "minutes")
           .toDate(),
+        severity: "error",
       },
       {
         id: "4",
-        message: "Foo bar baz",
-        details: "Some error details",
+        message: "Warn foo bar baz",
+        details: "Some warning details",
         read: false,
         created: moment(date)
           .subtract(11, "minutes")
           .toDate(),
+        severity: "warn",
       },
       {
         id: "3",
@@ -136,31 +185,45 @@ storiesOf("<ErrorDisplay>", module)
         created: moment(date)
           .subtract(3, "seconds")
           .toDate(),
+        severity: "error",
       },
     ];
     return (
       <div style={style}>
-        <ErrorList errors={errors} onClick={() => {}} />
+        <NotificationList notifications={errors} onClick={() => {}} />
       </div>
     );
   })
   .add("Error Modal", () => {
-    showErrorModal({
+    showNotificationModal({
       id: "1",
       message: "Error 1",
       details: "Some error details",
       read: false,
       created: new Date(),
+      severity: "error",
+    });
+    return <div />;
+  })
+  .add("Warning Modal", () => {
+    showNotificationModal({
+      id: "1",
+      message: "Warning 1",
+      details: "Some error details",
+      read: false,
+      created: new Date(),
+      severity: "warn",
     });
     return <div />;
   })
   .add("Error Modal without details", () => {
-    showErrorModal({
+    showNotificationModal({
       id: "1",
       message: "Error 1",
       details: null,
       read: false,
       created: new Date(),
+      severity: "error",
     });
     return <div />;
   })
@@ -170,17 +233,18 @@ storiesOf("<ErrorDisplay>", module)
         return <span style={{ fontStyle: "italic" }}>Modified details [{details}]</span>;
       },
     });
-    showErrorModal({
+    showNotificationModal({
       id: "1",
       message: "Error Modal without details",
       details: "original",
       read: false,
       created: new Date(),
+      severity: "error",
     });
     return <div />;
   })
   .add("Error Modal with details in React.Node type", () => {
-    showErrorModal({
+    showNotificationModal({
       id: "1",
       message: "Error 1",
       details: (
@@ -190,6 +254,7 @@ storiesOf("<ErrorDisplay>", module)
       ),
       read: false,
       created: new Date(),
+      severity: "error",
     });
     return <div />;
   });

@@ -197,10 +197,10 @@ function MosaicDragHandle(props: { children: Node, tabId?: string, onDragStart?:
         destinationPath,
         ownPath,
       });
-      // NOTE: Order does matter here, since changePanelLayout will clear what it sees
-      // as unused savedProps.
+      // NOTE: Order matters here - must change layout first,
+      // so that savePanelConfigs won't trim configs for panels not present in the layout
+      actions.changePanelLayout({ layout, trimSavedProps: false });
       actions.savePanelConfigs(panelConfigs);
-      actions.changePanelLayout({ layout });
     },
   });
   return <div ref={drag}>{children}</div>;

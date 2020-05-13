@@ -9,7 +9,7 @@
 import { mat4, vec3, quat } from "gl-matrix";
 import type { Mat4 } from "gl-matrix";
 
-import type { TF, Pose, Point, Orientation } from "webviz-core/src/types/Messages";
+import type { TF, MutablePose, Pose, Point, Orientation } from "webviz-core/src/types/Messages";
 
 // allocate some temporary variables
 // so we can copy/in out of them during tf application
@@ -62,7 +62,7 @@ export class Transform {
     return this.parent.rootTransform();
   }
 
-  apply(output: Pose, input: Pose, rootId: string): ?Pose {
+  apply(output: MutablePose, input: Pose, rootId: string): ?MutablePose {
     rootId = stripLeadingSlash(rootId);
     if (this.id === rootId) {
       output.position.x = input.position.x;
@@ -163,7 +163,7 @@ export default class Transforms {
   // or return a new one by calling with apply({ position: { }, orientation: {} }, original).
   // Returns the output pose, or the input pose if no transform was needed, or null if the transform
   // is not available -- the return value must not be ignored.
-  apply(output: Pose, original: Pose, frameId: string, rootId: string): ?Pose {
+  apply(output: MutablePose, original: Pose, frameId: string, rootId: string): ?MutablePose {
     const tf = this.storage.get(frameId);
     return tf.apply(output, original, rootId);
   }

@@ -58,7 +58,7 @@ export interface DataProvider {
 
   // Do any up-front initializing of the provider, and takes an optional extension point for
   // callbacks that only some implementations care about. May only be called once. If there's an
-  // error during initialization, it must be reported using `reportError` (even in Web Workers).
+  // error during initialization, it must be reported using `sendNotification` (even in Web Workers).
   // If the error is unrecoverable, just never resolve the promise.
   // TODO(JP): It would be better to reject the promise explicitly in case of unrecoverable errors,
   // so we can update the UI appropriately.
@@ -91,9 +91,13 @@ export type InitializationResult = {|
   topics: Topic[],
   datatypes: RosDatatypes, // Must be "complete", just as in the definition of `Player`.
 
-  // If returning raw messages to be parsed by `ParseMessagesDataProvider`, the DataProvider should
-  // also return `messageDefintionsByTopic`, so the right rosbag `Reader` can be instantiated.
-  messageDefintionsByTopic?: ?{ [topic: string]: string },
+  // Signals whether the messages returned from calls to getMessages are parsed into Javascript
+  // objects or are returned in ROS binary format.
+  providesParsedMessages: boolean,
+  // The ROS message definitions for each provided topic. Entries are required for topics that are
+  // available through the data provider in binary format, either directly through getMessages calls
+  // or indirectly through the player progress mechanism.
+  messageDefinitionsByTopic: { [topic: string]: string },
 |};
 
 export type ExtensionPoint = {|

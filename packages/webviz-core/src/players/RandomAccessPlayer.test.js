@@ -19,7 +19,7 @@ import {
   type PlayerState,
   PlayerCapabilities,
 } from "webviz-core/src/players/types";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromNanoSec } from "webviz-core/src/util/time";
 
 // By default seek to the start of the bag, since that makes things a bit simpler to reason about.
@@ -96,11 +96,13 @@ describe("RandomAccessPlayer", () => {
           isPlaying: false,
           lastSeekTime: 0,
           messages: [],
+          messageOrder: "receiveTime",
           speed: 0.2,
           startTime: { sec: 10, nsec: 0 },
           topics: [{ datatype: "fooBar", name: "/foo/bar" }, { datatype: "baz", name: "/baz" }],
+          messageDefinitionsByTopic: {},
         },
-        capabilities: ["setSpeed"],
+        capabilities: [PlayerCapabilities.setSpeed],
         isPresent: true,
         progress: {},
         showInitializing: false,
@@ -791,9 +793,9 @@ describe("RandomAccessPlayer", () => {
       expect.objectContaining({ showInitializing: true, activeData: undefined }),
       expect.objectContaining({ showInitializing: false, activeData: undefined }),
     ]);
-    expect(reportError).toHaveBeenCalledWith("Error initializing player", expect.any(Error), "app");
+    expect(sendNotification).toHaveBeenCalledWith("Error initializing player", expect.any(Error), "app", "error");
     // $FlowFixMe
-    reportError.mockClear();
+    sendNotification.mockClear();
   });
 
   it("shows a spinner when a provider is reconnecting", (done) => {

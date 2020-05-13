@@ -15,7 +15,7 @@ import Flex from "webviz-core/src/components/Flex";
 import Modal from "webviz-core/src/components/Modal";
 import { downloadTextFile } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 type Props = {
   onRequestClose: () => void,
@@ -36,7 +36,7 @@ function encode(value: any): string {
   try {
     return JSON.stringify(value, null, 2);
   } catch (e) {
-    reportError("Error encoding value", e, "app");
+    sendNotification("Error encoding value", e, "app", "error");
     return "";
   }
 }
@@ -46,6 +46,13 @@ function decode(value: any): string {
     return JSON.parse(value);
   } catch (err) {
     return JSON.parse(atob(value));
+  }
+}
+
+function selectText(element: ?HTMLTextAreaElement): void {
+  if (element) {
+    element.focus();
+    element.select();
   }
 }
 
@@ -114,6 +121,7 @@ export default class ShareJsonModal extends Component<Props, State> {
             value={value}
             onChange={(e) => this.setState({ value: e.target.value })}
             data-nativeundoredo="true"
+            ref={selectText}
           />
           {this.renderError()}
           <div className={styles.buttonBar}>

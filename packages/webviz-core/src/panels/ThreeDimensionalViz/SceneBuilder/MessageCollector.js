@@ -35,6 +35,16 @@ class MessageWithLifetime {
       return false;
     }
     const lifetime = this.getLifetime();
+    if (!lifetime) {
+      // Do not expire markers if we can't tell what their lifetime is.
+      // They'll be flushed later if needed (see flush below)
+      return false;
+    }
+
+    if (TimeUtil.areSame(lifetime, ZERO_TIME)) {
+      // Do not expire markers with infinite lifetime (lifetime == 0)
+      return false;
+    }
 
     // we use the receive time (clock) instead of the header stamp
     // to match the behavior of rviz
@@ -45,11 +55,13 @@ class MessageWithLifetime {
 
   getLifetime() {
     const marker = ((this.message: any): BaseMarker);
-    return marker.lifetime || ZERO_TIME;
+    return marker.lifetime;
   }
 
+  // Returns 'true' if we have a valid lifetime (even for infinite lifetime)
+  // Returns 'false' if the message has no lifetime and must be flushed.
   hasLifetime() {
-    return !TimeUtil.areSame(this.getLifetime(), ZERO_TIME);
+    return !!this.getLifetime();
   }
 }
 
@@ -73,12 +85,13 @@ export default class MessageCollector {
           this.markers.delete(key);
         }
       });
+      this.flush();
     }
     this.clock = clock;
   }
 
   flush() {
-    // clear out all 0 lifetime markers
+    // clear out all null lifetime markers
     this.markers.forEach((marker, key) => {
       if (!marker.hasLifetime()) {
         this.markers.delete(key);
@@ -138,6 +151,7 @@ export default class MessageCollector {
   getMessages(): any[] {
     const result = [];
     this.markers.forEach((marker, key) => {
+      // Check if the marker has a lifetime and should be deleted
       if (marker.hasLifetime() && marker.isExpired(this.clock)) {
         this.markers.delete(key);
       } else {

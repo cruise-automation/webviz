@@ -20,8 +20,10 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import TextHighlight from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TextHighlight";
 import type { State } from "webviz-core/src/reducers";
+import { type TabPanelConfig } from "webviz-core/src/types/layouts";
 import type {
   PanelConfig,
+  ChangePanelLayoutPayload,
   SaveConfigsPayload,
   SavedProps,
   MosaicNode,
@@ -43,17 +45,16 @@ const SearchInput = styled.input`
   z-index: 2;
 `;
 
-type PanelListItem = {|
-  title: string,
-  component: React.ComponentType<any>,
-  presetSettings?: {| config: PanelConfig, relatedConfigs: { [panelId: string]: PanelConfig } |},
-|};
+type PresetSettings =
+  | { config: TabPanelConfig, relatedConfigs: { [panelId: string]: PanelConfig } }
+  | {| config: PanelConfig, relatedConfigs: typeof undefined |};
+export type PanelListItem = {| title: string, component: React.ComponentType<any>, presetSettings?: PresetSettings |};
 
 // getPanelsByCategory() and getPanelsByType() are functions rather than top-level constants
 // in order to avoid issues with circular imports, such as
 // FooPanel -> PanelToolbar -> PanelList -> getGlobalHooks().panelsByCategory() -> FooPanel.
 let gPanelsByCategory;
-function getPanelsByCategory(): { [string]: PanelListItem[] } {
+function getPanelsByCategory(): { [category: string]: PanelListItem[] } {
   if (!gPanelsByCategory) {
     gPanelsByCategory = getGlobalHooks().panelsByCategory();
 
@@ -85,13 +86,13 @@ export function getPanelsByType(): { [type: string]: PanelListItem } {
 type DropDescription = {
   type: string,
   config: ?PanelConfig,
-  relatedConfigs?: { [panelId: string]: PanelConfig },
+  relatedConfigs: ?{ [panelId: string]: PanelConfig },
   position: MosaicDropTargetPosition,
   path: MosaicPath,
   tabId: string,
 };
 type PanelItemProps = {
-  panel: {| type: string, title: string, config?: PanelConfig, relatedConfigs?: { [panelId: string]: PanelConfig } |},
+  panel: {| type: string, title: string, config: ?PanelConfig, relatedConfigs: ?{ [panelId: string]: PanelConfig } |},
   searchQuery: string,
   checked?: boolean,
   onClick: () => void,
@@ -102,13 +103,10 @@ type PanelItemProps = {
   onDrop: (DropDescription) => void, //eslint-disable-line react/no-unused-prop-types
 };
 
-function DraggablePanelItem(props: PanelItemProps) {
-  const { searchQuery, panel, onClick, onDrop, checked } = props;
+function DraggablePanelItem({ searchQuery, panel, onClick, onDrop, checked, mosaicId }: PanelItemProps) {
   const [__, drag] = useDrag({
     item: { type: MosaicDragType.WINDOW },
-    begin: (monitor) => {
-      return { mosaicId: props.mosaicId };
-    },
+    begin: (monitor) => ({ mosaicId }),
     end: (item, monitor) => {
       const dropResult = monitor.getDropResult() || {};
       const { position, path, tabId } = dropResult;
@@ -117,14 +115,8 @@ function DraggablePanelItem(props: PanelItemProps) {
       if ((!position || !path) && !tabId) {
         return;
       }
-      onDrop({
-        type: panel.type,
-        config: panel.config,
-        relatedConfigs: panel.relatedConfigs,
-        position,
-        path,
-        tabId,
-      });
+      const { type, config, relatedConfigs } = panel;
+      onDrop({ type, config, relatedConfigs, position, path, tabId });
     },
   });
   return (
@@ -149,7 +141,7 @@ type Props = {|
   ...OwnProps,
   mosaicId: string,
   mosaicLayout: MosaicNode, // this is the opaque mosaic layout config object
-  changePanelLayout: (payload: { layout: MosaicNode }) => void,
+  changePanelLayout: (payload: ChangePanelLayoutPayload) => void,
   savePanelConfigs: (SaveConfigsPayload) => void,
   savedProps: SavedProps,
 |};
@@ -168,9 +160,8 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
   // we need to update the panel layout in redux
   // the actual operations to change the layout
   // are supplied by react-mosaic-component
-  onPanelMenuItemDrop = (dropDescription: DropDescription) => {
+  onPanelMenuItemDrop = ({ config, relatedConfigs, type, position, path, tabId }: DropDescription) => {
     const { mosaicLayout, savedProps } = this.props;
-    const { config, relatedConfigs, type, position, path, tabId } = dropDescription;
     const { layout, saveConfigsPayload } = onNewPanelDrop({
       layout: mosaicLayout,
       newPanelType: type,
@@ -182,19 +173,13 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
       relatedConfigs,
     });
 
-    this.props.changePanelLayout({ layout });
+    this.props.changePanelLayout({ layout, trimSavedProps: !relatedConfigs });
     this.props.savePanelConfigs(saveConfigsPayload);
   };
 
   // sanity checks to help panel authors debug issues
   _verifyPanels() {
-    const panelTypes: Map<
-      string,
-      {
-        component: React.ComponentType<any>,
-        presetSettings?: { config: PanelConfig, relatedConfigs: { [panelId: string]: PanelConfig } },
-      }
-    > = new Map();
+    const panelTypes: Map<string, { component: React.ComponentType<any>, presetSettings?: PresetSettings }> = new Map();
     const panelsByCategory = getPanelsByCategory();
     for (const category in panelsByCategory) {
       for (const { component, presetSettings } of panelsByCategory[category]) {
@@ -268,7 +253,7 @@ class PanelList extends React.Component<Props, { searchQuery: string }> {
                   onClick={() =>
                     onPanelSelect({
                       type: panelType,
-                      config: presetSettings?.config || {},
+                      config: presetSettings?.config,
                       relatedConfigs: presetSettings?.relatedConfigs,
                     })
                   }

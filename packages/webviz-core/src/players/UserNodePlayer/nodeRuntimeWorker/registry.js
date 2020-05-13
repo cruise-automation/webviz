@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import type { ProcessMessageOutput, RegistrationOutput } from "webviz-core/src/players/UserNodePlayer/types";
+
 // Each node runtime worker runs one node at a time, hence why we have one
 // global declaration of 'nodeCallback'.
 let nodeCallback: (message: {}) => void | {} = () => {};
@@ -49,7 +50,27 @@ const getArgsToPrint = (args: any[]) => {
   return args.map(stringifyFuncsInObject).map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : arg));
 };
 
-export const registerNode = ({ nodeCode }: { nodeCode: string }): RegistrationOutput => {
+const requireImplementation = (id: string, projectCode: Map<string, string>) => {
+  const requestedFile = `${id}.js`;
+  for (const [file, source] of projectCode.entries()) {
+    if (file.endsWith(requestedFile)) {
+      const sourceExports = {};
+      const require = (reqId: string) => requireImplementation(reqId, projectCode);
+      // $FlowFixMe
+      new Function("exports", "require", source)(sourceExports, require); /* eslint-disable-line no-new-func */
+      return sourceExports;
+    }
+  }
+  throw new Error(`User node required unknown module: '${id}'`);
+};
+
+export const registerNode = ({
+  nodeCode,
+  projectCode,
+}: {
+  nodeCode: string,
+  projectCode: Map<string, string>,
+}): RegistrationOutput => {
   const userNodeLogs = [];
   const userNodeDiagnostics = [];
   self.log = function(...args) {
@@ -60,14 +81,15 @@ export const registerNode = ({ nodeCode }: { nodeCode: string }): RegistrationOu
     }
     userNodeLogs.push(...args.map((value) => ({ source: "registerNode", value })));
   };
-  // TODO: TYPESCRIPT - allow for importing helper functions
   // TODO: Blacklist global methods.
   try {
     const nodeExports = {};
 
+    const require = (id: string) => requireImplementation(id, projectCode);
+
     // Using new Function in order to execute user-input text in Node Playground as code
     // $FlowFixMe
-    new Function("exports", nodeCode)(nodeExports); /* eslint-disable-line no-new-func */
+    new Function("exports", "require", nodeCode)(nodeExports, require); /* eslint-disable-line no-new-func */
     nodeCallback = nodeExports.default;
     return {
       error: null,

@@ -53,15 +53,13 @@ export default class DocumentDropListener extends React.PureComponent<Props, Sta
   };
 
   _onDragOver = (ev: DragEvent) => {
-    ev.stopPropagation();
-    ev.preventDefault();
-    // dataTransfer isn't guaranteed to exist by spec, so must be checked
-    if (ev.dataTransfer) {
-      ev.dataTransfer.dropEffect = "copy";
-
-      if (ev.dataTransfer.types.length === 1 && ev.dataTransfer.types[0] === "Files") {
-        this.setState({ hovering: true });
-      }
+    const { dataTransfer } = ev;
+    // dataTransfer isn't guaranteed to exist by spec, so it must be checked
+    if (dataTransfer && dataTransfer.types.length === 1 && dataTransfer.types[0] === "Files") {
+      ev.stopPropagation();
+      ev.preventDefault();
+      dataTransfer.dropEffect = "copy";
+      this.setState({ hovering: true });
     }
   };
 

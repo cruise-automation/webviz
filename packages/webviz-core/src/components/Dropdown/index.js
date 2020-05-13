@@ -19,7 +19,7 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 type Props = {|
   children?: React.Node,
   value?: any,
-  text?: string,
+  text?: React.Node,
   position: "above" | "below" | "left" | "right",
   disabled?: boolean,
   closeOnChange?: boolean,
@@ -101,7 +101,8 @@ export default class Dropdown extends React.Component<Props, State> {
         </Icon>
       </button>
     );
-    if (tooltip) {
+    if (tooltip && !this.state.isOpen) {
+      // The tooltip often occludes the first item of the open menu.
       return <Tooltip contents={tooltip}>{button}</Tooltip>;
     }
     return button;

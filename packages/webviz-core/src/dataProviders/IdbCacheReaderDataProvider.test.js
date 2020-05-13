@@ -30,7 +30,7 @@ function getProvider() {
       new IdbCacheWriterDataProvider(
         { id: "some-id" },
         [{ name: CoreDataProviders.MemoryCacheDataProvider, args: {}, children: [] }],
-        () => new MemoryDataProvider({ messages: generateMessages() })
+        () => new MemoryDataProvider({ messages: generateMessages(), providesParsedMessages: true })
       )
   );
 }
@@ -47,6 +47,8 @@ describe("IdbCacheReaderDataProvider", () => {
       end: { nsec: 0, sec: 102 },
       topics: [],
       datatypes: {},
+      messageDefinitionsByTopic: {},
+      providesParsedMessages: true,
     });
   });
 

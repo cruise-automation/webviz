@@ -7,29 +7,30 @@
 //  You may not use this file except in compliance with the License.
 
 import * as monacoApi from "monaco-editor/esm/vs/editor/editor.api";
+import { StaticServices } from "monaco-editor/esm/vs/editor/standalone/browser/standaloneServices";
 import { initVimMode } from "monaco-vim";
 import * as React from "react";
 import MonacoEditor from "react-monaco-editor";
 
+import { type Script } from "./script";
 import vsWebvizTheme from "webviz-core/src/panels/NodePlayground/theme/vs-webviz.json";
-import { lib_filename, lib_es6_dts } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/lib";
-import {
-  ros_lib_filename,
-  ros_lib_dts,
-} from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
+import { getNodeProjectConfig } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig";
 
 const VS_WEBVIZ_THEME = "vs-webviz";
 
+const codeEditorService = StaticServices.codeEditorService.get();
+
 type Props = {|
-  script: string,
-  setScript: (script: string) => void,
+  script: Script | null,
+  setScriptCode: (code: string) => void,
   vimMode: boolean,
   /* A minor hack to tell the monaco editor to resize when dimensions change. */
   resizeKey: string,
-  save: (script: string) => void,
+  save: (code: string) => void,
+  setScriptOverride: (script: Script) => void,
 |};
 
-const Editor = ({ script, setScript, vimMode, resizeKey, save }: Props) => {
+const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOverride }: Props) => {
   const editorRef = React.useRef<monacoApi.Editor>(null);
   const vimModeRef = React.useRef(null);
   React.useEffect(
@@ -45,62 +46,161 @@ const Editor = ({ script, setScript, vimMode, resizeKey, save }: Props) => {
     },
     [vimMode]
   );
+
+  /*
+  In order to support go-to across files we override the code editor service doOpenEditor method.
+  Default implementation checks if the requested resource is the current model and no ops if it isn't.
+  Our implementation looks across all of our models to find the one requested and then queues that as
+  an override along with the requested selection (containing line # etc). When we're told to load
+  this override script we'll end up loading the model in the useEffect below, and then using this
+  selection to move to the correct line.
+  */
+  codeEditorService.doOpenEditor = React.useCallback(
+    (editor, input) => {
+      const requestedModel = monacoApi.editor.getModel(input.resource);
+      if (!requestedModel) {
+        return editor;
+      }
+      setScriptOverride({
+        fileName: requestedModel.uri.path,
+        code: requestedModel.getValue(),
+        readOnly: true,
+        selection: input.options ? input.options.selection : undefined,
+      });
+      return editor;
+    },
+    [setScriptOverride]
+  );
+
+  React.useEffect(
+    () => {
+      const editor = editorRef.current;
+      if (!editorRef || !script) {
+        return;
+      }
+      const filePath = monacoApi.Uri.parse(`file://${script.fileName}`);
+      const model =
+        monacoApi.editor.getModel(filePath) || monacoApi.editor.createModel(script.code, "typescript", filePath);
+
+      editor.setModel(model);
+
+      const selection = script.selection;
+      if (selection) {
+        if (selection.endLineNumber && selection.endColumn) {
+          // These fields indicate a range was selected, set the range and reveal it.
+          editor.setSelection(selection);
+          editor.revealRangeInCenter(selection, 1 /* Immediate */);
+        } else {
+          // Otherwise it's just a position
+          const pos = {
+            lineNumber: selection.startLineNumber,
+            column: selection.startColumn,
+          };
+          editor.setPosition(pos);
+          editor.revealPositionInCenter(pos, 1 /* Immediate */);
+        }
+      }
+    },
+    [script]
+  );
+
+  const options = React.useMemo(
+    () => {
+      return {
+        wordWrap: "on",
+        minimap: {
+          enabled: false,
+        },
+        readOnly: script?.readOnly,
+      };
+    },
+    [script]
+  );
+
+  const willMount = React.useCallback(
+    (monaco) => {
+      if (!script) {
+        return;
+      }
+      monaco.editor.defineTheme(VS_WEBVIZ_THEME, vsWebvizTheme);
+      // Set eager model sync to enable intellisense between the user code and utility files
+      monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
+      monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true);
+
+      // Load declarations and additional utility files from project config
+
+      // This ensures the type defs we enforce in
+      // the 'compile' step match that of monaco. Adding the 'lib'
+      // this way (instead of specifying it in the compiler options)
+      // is a hack to overwrite the default type defs since the
+      // typescript language service does not expose such a method.
+      const projectConfig = getNodeProjectConfig();
+      projectConfig.declarations.forEach((lib) =>
+        monaco.languages.typescript.typescriptDefaults.addExtraLib(
+          lib.sourceCode,
+          `file:///node_modules/@types/${lib.fileName}`
+        )
+      );
+      projectConfig.utilityFiles.forEach((sourceFile) => {
+        const filePath = monacoApi.Uri.parse(`file://${sourceFile.filePath}`);
+        if (!monaco.editor.getModel(filePath)) {
+          monaco.editor.createModel(sourceFile.sourceCode, "typescript", filePath);
+        }
+      });
+
+      const filePath = monacoApi.Uri.parse(`file://${script.fileName}`);
+      const model = monaco.editor.getModel(filePath) || monaco.editor.createModel(script.code, "typescript", filePath);
+      return {
+        model,
+      };
+    },
+    [script]
+  );
+
+  const didMount = React.useCallback(
+    (editor) => {
+      editorRef.current = editor;
+      if (vimMode) {
+        vimModeRef.current = initVimMode(editorRef.current);
+      }
+      editor.addAction({
+        id: "ctrl-s",
+        label: "Save current node",
+        keybindings: [monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.KEY_S],
+        run: () => {
+          if (editorRef?.current) {
+            const model = editorRef.current.getModel();
+            if (model && script && !script.readOnly) {
+              save(model.getValue());
+            }
+          }
+        },
+      });
+    },
+    [save, script, vimMode]
+  );
+
+  const onChange = React.useCallback(
+    (scr: string) => {
+      setScriptCode(scr);
+    },
+    [setScriptCode]
+  );
+
+  if (!script) {
+    // No script to load
+    return null;
+  }
+
   return (
     <MonacoEditor
       key={resizeKey}
       language="typescript"
       theme={VS_WEBVIZ_THEME}
-      editorWillMount={(monaco) => {
-        monaco.editor.defineTheme(VS_WEBVIZ_THEME, vsWebvizTheme);
-        // This line ensures the type defs we enforce in
-        // the 'compile' step match that of monaco. Adding the 'lib'
-        // this way (instead of specifying it in the compiler options)
-        // is a hack to overwrite the default type defs since the
-        // typescript language service does not expose such a method.
-        monaco.languages.typescript.typescriptDefaults.addExtraLib(lib_es6_dts, lib_filename);
-        monaco.languages.typescript.typescriptDefaults.addExtraLib(
-          ros_lib_dts,
-          `file:///node_modules/@types/${ros_lib_filename}`
-        );
-      }}
-      editorDidMount={(editor) => {
-        editorRef.current = editor;
-        if (vimMode) {
-          vimModeRef.current = initVimMode(editorRef.current);
-        }
-        editor.addAction({
-          id: "ctrl-s",
-          label: "Save current node",
-          keybindings: [monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.KEY_S],
-          run: () => {
-            if (editorRef?.current) {
-              const model = editorRef.current.getModel();
-              if (model) {
-                save(model.getValue());
-              }
-            }
-          },
-        });
-      }}
-      options={{
-        // A 'model' in monaco is the interface through which monaco
-        // (and consumers of monaco) update and refer to the text model.
-        // E.g. there is a method called `model.pushEditOperations()`
-        // which is how you set user input. If we do not explicitly set
-        // the model with our desired URI (in this case,
-        // 'file:///main.ts'), monaco will create a default model that
-        // is set to `inmemory://model/`, which, for some reason,
-        // blocks our ability to add custom modules (like `lib.d.ts` above) to the system.
-        model:
-          monacoApi.editor.getModel("file:///main.ts") ||
-          monacoApi.editor.createModel(script, "typescript", monacoApi.Uri.parse("file:///main.ts")),
-        wordWrap: "on",
-        minimap: {
-          enabled: false,
-        },
-      }}
-      value={script}
-      onChange={setScript}
+      editorWillMount={willMount}
+      editorDidMount={didMount}
+      options={options}
+      onChange={onChange}
     />
   );
 };

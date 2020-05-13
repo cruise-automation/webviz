@@ -20,6 +20,7 @@ export function panelsByCategory() {
   const DiagnosticStatusPanel = require("webviz-core/src/panels/diagnostics/DiagnosticStatusPanel").default;
   const DiagnosticSummary = require("webviz-core/src/panels/diagnostics/DiagnosticSummary").default;
   const GlobalVariables = require("webviz-core/src/panels/GlobalVariables").default;
+  const GlobalVariableSlider = require("webviz-core/src/panels/GlobalVariableSlider").default;
   const ImageViewPanel = require("webviz-core/src/panels/ImageView").default;
   const Internals = require("webviz-core/src/panels/Internals").default;
   const NodePlayground = require("webviz-core/src/panels/NodePlayground").default;
@@ -52,6 +53,7 @@ export function panelsByCategory() {
 
   const utilities = [
     { title: "Global Variables", component: GlobalVariables },
+    { title: "Global Variable Slider", component: GlobalVariableSlider },
     { title: "Node Playground", component: NodePlayground },
     { title: "Notes", component: Note },
     { title: "Tab", component: Tab },
@@ -113,11 +115,14 @@ export function perPanelHooks() {
       imageMarkerDatatypes: ["visualization_msgs/ImageMarker"],
       canTransformMarkersByTopic: (topic) => !topic.includes("rect"),
     },
+    GlobalVariableSlider: {
+      getVariableSpecificOutput: () => null,
+    },
     StateTransitions: { defaultConfig: { paths: [] }, customStateTransitionColors: {} },
     ThreeDimensionalViz: {
       defaultConfig: {
-        checkedNodes: ["name:Topics"],
-        expandedNodes: ["name:Topics"],
+        checkedKeys: ["name:Topics"],
+        expandedKeys: ["name:Topics"],
         followTf: null,
         cameraState: {},
         modifiedNamespaceTopics: [],
@@ -169,7 +174,9 @@ export function perPanelHooks() {
         errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${msg.datatype}`);
       },
       getMessagePose: (msg) => msg.message.pose,
-      addMarkerToCollector: () => {},
+      addMarkerToCollector(add, topic, marker, setTopicError) {
+        setTopicError(topic, `Unsupported marker type: ${marker.type}`);
+      },
       getSyntheticArrowMarkerColor: () => ({ r: 0, g: 0, b: 1, a: 0.5 }),
       getFlattenedPose: () => undefined,
       getOccupancyGridValues: (topic) => [0.5, "map"],

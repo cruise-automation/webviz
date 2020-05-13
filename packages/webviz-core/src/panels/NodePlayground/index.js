@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
+import ArrowLeftIcon from "@mdi/svg/svg/arrow-left.svg";
 import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxOutlineIcon from "@mdi/svg/svg/checkbox-marked-circle-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
@@ -18,6 +18,7 @@ import { useSelector, useDispatch } from "react-redux";
 import styled from "styled-components";
 import uuid from "uuid";
 
+import { type Script } from "./script";
 import { setUserNodes as setUserNodesAction } from "webviz-core/src/actions/panels";
 import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
@@ -31,7 +32,7 @@ import BottomBar from "webviz-core/src/panels/NodePlayground/BottomBar";
 import Playground from "webviz-core/src/panels/NodePlayground/playground-icon.svg";
 import Sidebar from "webviz-core/src/panels/NodePlayground/Sidebar";
 import { trustUserNode } from "webviz-core/src/players/UserNodePlayer/nodeSecurity";
-import type { UserNodeState } from "webviz-core/src/reducers/userNodes";
+import type { UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
 import type { UserNodes } from "webviz-core/src/types/panels";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
@@ -58,6 +59,8 @@ type Config = {|
   selectedNodeId: ?string,
   // Used only for storybook screenshot testing.
   editorForStorybook?: React.Node,
+  // Used only for storybook screenshot testing.
+  additionalBackStackItems?: Script[],
   vimMode: boolean,
 |};
 
@@ -177,9 +180,9 @@ function NodePlayground(props: Props) {
   const [explorer, updateExplorer] = React.useState<Explorer>(null);
 
   const userNodes = useSelector((state) => state.panels.userNodes);
-  const nodeDiagnosticsAndLogs = useSelector((state) => state.userNodes);
+  const userNodeDiagnostics = useSelector((state) => state.userNodes.userNodeDiagnostics);
   const needsUserTrust = useSelector((state) => {
-    const nodes: UserNodeState[] = (Object.values(state.userNodes): any);
+    const nodes: UserNodeDiagnostics[] = (Object.values(state.userNodes): any);
     return some(nodes, ({ trusted }) => typeof trusted === "boolean" && !trusted);
   });
 
@@ -187,21 +190,38 @@ function NodePlayground(props: Props) {
   const setUserNodes = React.useCallback((payload: UserNodes) => dispatch(setUserNodesAction(payload)), [dispatch]);
 
   const selectedNodeDiagnostics =
-    selectedNodeId && nodeDiagnosticsAndLogs[selectedNodeId] ? nodeDiagnosticsAndLogs[selectedNodeId].diagnostics : [];
+    selectedNodeId && userNodeDiagnostics[selectedNodeId] ? userNodeDiagnostics[selectedNodeId].diagnostics : [];
   const selectedNode = selectedNodeId ? userNodes[selectedNodeId] : undefined;
-  // Holds the not yet saved source code.
-  const [stagedScript, setStagedScript] = React.useState(selectedNode ? selectedNode.sourceCode : "");
-  const isNodeSaved = !selectedNode || (!!selectedNode && stagedScript === selectedNode.sourceCode);
+  const [scriptBackStack, setScriptBackStack] = React.useState<Script[]>([]);
+  // Holds the currently active script
+  const currentScript = scriptBackStack.length > 0 ? scriptBackStack[scriptBackStack.length - 1] : null;
+  const isCurrentScriptSelectedNode = !!selectedNode && !!currentScript && currentScript.fileName === selectedNode.name;
+  const isNodeSaved = !isCurrentScriptSelectedNode || currentScript?.code === selectedNode?.sourceCode;
   const selectedNodeLogs =
-    selectedNodeId && nodeDiagnosticsAndLogs[selectedNodeId] ? nodeDiagnosticsAndLogs[selectedNodeId].logs : [];
+    selectedNodeId && userNodeDiagnostics[selectedNodeId] ? userNodeDiagnostics[selectedNodeId].logs : [];
+
+  const inputTitle = currentScript
+    ? currentScript.fileName + (currentScript.readOnly ? " (READONLY)" : "")
+    : "node name";
+  const inputStyle = {
+    borderRadius: 0,
+    margin: 0,
+    backgroundColor: colors.DARK2,
+    padding: "4px 20px",
+    width: `${inputTitle.length + 4}ch`, // Width based on character count of title + padding
+  };
 
   React.useLayoutEffect(
     () => {
       if (selectedNode) {
-        setStagedScript(selectedNode.sourceCode);
+        const testItems = props.config.additionalBackStackItems || [];
+        setScriptBackStack([
+          { fileName: selectedNode.name, code: selectedNode.sourceCode, readOnly: false },
+          ...testItems,
+        ]);
       }
     },
-    [selectedNode]
+    [props.config.additionalBackStackItems, selectedNode]
   );
 
   // UX nicety so that the user can see which nodes need to be verified.
@@ -246,7 +266,7 @@ function NodePlayground(props: Props) {
 
   const saveNode = React.useCallback(
     (script) => {
-      if (!selectedNodeId) {
+      if (!selectedNodeId || !script) {
         return;
       }
       trustUserNode({ id: selectedNodeId, sourceCode: script }).then(() => {
@@ -254,6 +274,35 @@ function NodePlayground(props: Props) {
       });
     },
     [selectedNode, selectedNodeId, setUserNodes]
+  );
+
+  const setScriptOverride = React.useCallback(
+    (script: Script) => {
+      setScriptBackStack([...scriptBackStack, script]);
+    },
+    [scriptBackStack]
+  );
+
+  const goBack = React.useCallback(
+    () => {
+      setScriptBackStack(scriptBackStack.slice(0, scriptBackStack.length - 1));
+    },
+    [scriptBackStack]
+  );
+
+  const setScriptCode = React.useCallback(
+    (code: string) => {
+      // update code at top of backstack
+      const backStack = [...scriptBackStack];
+      if (backStack.length > 0) {
+        const script = { ...backStack[backStack.length - 1] };
+        if (!script.readOnly) {
+          script.code = code;
+          setScriptBackStack(backStack);
+        }
+      }
+    },
+    [scriptBackStack]
   );
 
   return (
@@ -266,10 +315,10 @@ function NodePlayground(props: Props) {
               explorer={explorer}
               updateExplorer={updateExplorer}
               selectNode={(nodeId) => {
-                if (selectedNodeId) {
+                if (selectedNodeId && currentScript && isCurrentScriptSelectedNode) {
                   // Save current state so that user can seamlessly go back to previous work.
                   setUserNodes({
-                    [selectedNodeId]: { ...selectedNode, sourceCode: stagedScript },
+                    [selectedNodeId]: { ...selectedNode, sourceCode: currentScript.code },
                   });
                 }
                 saveConfig({ selectedNodeId: nodeId });
@@ -281,7 +330,7 @@ function NodePlayground(props: Props) {
               selectedNodeId={selectedNodeId}
               userNodes={userNodes}
               needsUserTrust={needsUserTrust}
-              nodeDiagnosticsAndLogs={nodeDiagnosticsAndLogs}
+              userNodeDiagnostics={userNodeDiagnostics}
             />
             <Flex col>
               <Flex
@@ -291,13 +340,19 @@ function NodePlayground(props: Props) {
                   backgroundColor: colors.DARK1,
                   alignItems: "center",
                 }}>
+                {scriptBackStack.length > 1 && (
+                  <Icon large tooltip="Go back" dataTest="go-back" style={{ color: colors.DARK9 }} onClick={goBack}>
+                    <ArrowLeftIcon />
+                  </Icon>
+                )}
                 {selectedNodeId && (
                   <div style={{ position: "relative" }}>
                     <input
                       type="text"
                       placeholder="node name"
-                      value={selectedNode ? selectedNode.name : ""}
-                      style={{ borderRadius: 0, margin: 0, backgroundColor: colors.DARK2, padding: "4px 20px" }}
+                      value={inputTitle}
+                      disabled={!currentScript || currentScript.readOnly}
+                      style={inputStyle}
                       spellCheck={false}
                       onChange={(e) => {
                         const newNodeName = e.target.value;
@@ -320,9 +375,9 @@ function NodePlayground(props: Props) {
                 </Icon>
               </Flex>
 
-              {nodeDiagnosticsAndLogs[selectedNodeId] &&
-                typeof nodeDiagnosticsAndLogs[selectedNodeId].trusted === "boolean" &&
-                !nodeDiagnosticsAndLogs[selectedNodeId].trusted && <SecurityBar onClick={trustSelectedNode} />}
+              {userNodeDiagnostics[selectedNodeId] &&
+                typeof userNodeDiagnostics[selectedNodeId].trusted === "boolean" &&
+                !userNodeDiagnostics[selectedNodeId].trusted && <SecurityBar onClick={trustSelectedNode} />}
               <Flex col style={{ flexGrow: 1, position: "relative" }}>
                 {!selectedNodeId && <WelcomeScreen addNewNode={addNewNode} updateExplorer={updateExplorer} />}
                 <div
@@ -345,8 +400,9 @@ function NodePlayground(props: Props) {
                     }>
                     {editorForStorybook || (
                       <Editor
-                        script={stagedScript}
-                        setScript={setStagedScript}
+                        script={currentScript}
+                        setScriptCode={setScriptCode}
+                        setScriptOverride={setScriptOverride}
                         vimMode={vimMode}
                         resizeKey={`${width}-${height}-${explorer || "none"}-${selectedNodeId || "none"}`}
                         save={saveNode}
@@ -357,7 +413,7 @@ function NodePlayground(props: Props) {
                 <BottomBar
                   nodeId={selectedNodeId}
                   isSaved={isNodeSaved}
-                  save={() => saveNode(stagedScript)}
+                  save={() => saveNode(currentScript?.code)}
                   diagnostics={selectedNodeDiagnostics}
                   logs={selectedNodeLogs}
                 />

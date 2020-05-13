@@ -6,10 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from "react";
+import * as React from "react";
 import styled from "styled-components";
 
-import TextHighlight from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TextHighlight";
+import TextHighlight from "./TextHighlight";
+import TextMiddleTruncate, { DEFAULT_END_TEXT_LENGTH } from "./TextMiddleTruncate";
+import Tooltip from "webviz-core/src/components/Tooltip";
 
 export const STopicNameDisplay = styled.div`
   display: inline-block;
@@ -25,33 +27,67 @@ export const SDisplayName = styled.div`
   width: 100%;
 `;
 
-export const STopicName = styled.div`
-  font-size: 10px;
-  line-height: 1.2;
-  word-break: break-word;
-  opacity: 0.8;
+export const SName = styled.div`
   /* disallow selection to prevent shift + click from accidentally select */
   user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 type Props = {|
   displayName: string,
-  nodeKey: string,
-  onClick?: (ev: SyntheticEvent<HTMLDivElement>) => void,
+  isXSWidth: boolean,
+  maxWidth: number,
   topicName: string,
   searchText?: string,
   style?: { [attr: string]: string | number },
+  tooltips?: React.Node[],
 |};
 
-export default function NodeName({ displayName, nodeKey, onClick, topicName, searchText, style = {} }: Props) {
+export default function NodeName({
+  displayName,
+  isXSWidth,
+  maxWidth,
+  topicName,
+  searchText,
+  style = {},
+  tooltips,
+}: Props) {
   let targetStr = displayName || topicName;
   if (searchText) {
-    targetStr = displayName && topicName ? `${displayName} (${topicName})` : displayName || topicName;
+    if (displayName && topicName && displayName !== topicName) {
+      targetStr = `${displayName} (${topicName})`;
+    }
   }
+  const xsWidthElem =
+    isXSWidth &&
+    (tooltips ? (
+      <Tooltip contents={tooltips} placement="bottom">
+        <SName>{targetStr}</SName>
+      </Tooltip>
+    ) : (
+      <SName>{targetStr}</SName>
+    ));
+
   return (
-    <STopicNameDisplay style={{ ...style }} onClick={onClick} data-test={`name~${nodeKey}`}>
-      <SDisplayName {...(topicName ? { title: topicName } : undefined)}>
-        <TextHighlight targetStr={targetStr} searchText={searchText} />
+    <STopicNameDisplay style={style}>
+      <SDisplayName style={{ maxWidth }}>
+        {searchText ? (
+          <TextHighlight targetStr={targetStr} searchText={searchText} />
+        ) : (
+          <>
+            {isXSWidth ? (
+              xsWidthElem
+            ) : (
+              <TextMiddleTruncate
+                text={targetStr}
+                endTextLength={topicName ? topicName.split("/").pop().length + 1 : DEFAULT_END_TEXT_LENGTH}
+                tooltips={tooltips}
+              />
+            )}
+          </>
+        )}
       </SDisplayName>
     </STopicNameDisplay>
   );

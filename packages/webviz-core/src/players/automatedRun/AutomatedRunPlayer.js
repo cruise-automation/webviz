@@ -22,13 +22,14 @@ import type {
 } from "webviz-core/src/players/types";
 import { USER_ERROR_PREFIX } from "webviz-core/src/util/globalConstants";
 import Logger from "webviz-core/src/util/Logger";
-import reportError, {
-  type ErrorType,
+import { getSanitizedTopics } from "webviz-core/src/util/selectors";
+import sendNotification, {
+  type NotificationType,
+  type NotificationSeverity,
   type DetailsType,
   detailsToString,
-  setErrorHandler,
-} from "webviz-core/src/util/reportError";
-import { getSanitizedTopics } from "webviz-core/src/util/selectors";
+  setNotificationHandler,
+} from "webviz-core/src/util/sendNotification";
 import { clampTime, subtractTimes, toMillis } from "webviz-core/src/util/time";
 
 export interface AutomatedRunClient {
@@ -72,20 +73,26 @@ export default class AutomatedRunPlayer implements Player {
     this._speed = client.speed;
     this._msPerFrame = client.msPerFrame;
     this._client = client;
-    // Report errors from reportError and those thrown on the window object to the client.
-    setErrorHandler((message: string, details: DetailsType, type: ErrorType) => {
-      let error;
-      if (type === "user") {
-        error = new Error(`${USER_ERROR_PREFIX} ${message} // ${detailsToString(details)}`);
-      } else if (type === "app") {
-        error = new Error(`[WEBVIZ APPLICATION ERROR] ${detailsToString(details)}`);
-      } else {
-        (type: void);
-        error = new Error(`Unknown error type! ${type} // ${detailsToString(details)}`);
+    // Report errors from sendNotification and those thrown on the window object to the client.
+    setNotificationHandler(
+      (message: string, details: DetailsType, type: NotificationType, severity: NotificationSeverity) => {
+        if (severity === "warn") {
+          // We can ignore warnings in automated runs
+          return;
+        }
+        let error;
+        if (type === "user") {
+          error = new Error(`${USER_ERROR_PREFIX} ${message} // ${detailsToString(details)}`);
+        } else if (type === "app") {
+          error = new Error(`[WEBVIZ APPLICATION ERROR] ${detailsToString(details)}`);
+        } else {
+          (type: void);
+          error = new Error(`Unknown error type! ${type} // ${detailsToString(details)}`);
+        }
+        this._error = error;
+        this._waitToReportErrorPromise = client.onError(error);
       }
-      this._error = error;
-      this._waitToReportErrorPromise = client.onError(error);
-    });
+    );
     window.addEventListener("error", (e: Error) => {
       this._error = e;
       this._waitToReportErrorPromise = client.onError(e);
@@ -138,9 +145,11 @@ export default class AutomatedRunPlayer implements Player {
         endTime: this._providerResult.end,
         isPlaying: this._isPlaying,
         speed: this._speed,
+        messageOrder: "receiveTime",
         lastSeekTime: 0,
         topics: this._providerResult.topics,
         datatypes: this._providerResult.datatypes,
+        messageDefinitionsByTopic: this._providerResult.messageDefinitionsByTopic,
       },
     });
   }
@@ -172,10 +181,11 @@ export default class AutomatedRunPlayer implements Player {
       reportMetadataCallback: (metadata: DataProviderMetadata) => {
         switch (metadata.type) {
           case "updateReconnecting":
-            reportError(
+            sendNotification(
               "updateReconnecting should never be called here",
               `AutomatedRunPlayer only supports local playback`,
-              "app"
+              "app",
+              "error"
             );
             break;
           default:
@@ -279,7 +289,7 @@ export default class AutomatedRunPlayer implements Player {
     throw new Error(`Unsupported in AutomatedRunPlayer`);
   }
 
-  setPlaybackSpeed(speed: number) {
+  setPlaybackSpeed(speed: number, backfillDuration: ?Time) {
     // This should be passed into the constructor and should not be changed.
   }
 

@@ -1,0 +1,5 @@
+9639766e9b52bdea863db09bf49af0de102f4e94  ./webviz-core/migrations/frozenMigrations/2020.05.06.00:00:01.migratePlaybackConfig.js
+e391ea0a4dcf80ca2ac0d05d7336c7d416cf4cf4  ./webviz-core/migrations/frozenMigrations/2020.05.06.00:00:02.migrateNodePlaygroundNodesToObjects.js
+e1a9a4fcd8366a7d436178966e696fab05d61918  ./webviz-core/migrations/frozenMigrations/2020.05.06.00:00:03.migrate3DPanel.js
+e331905080cac5e9a8709afef13fc2b814785804  ./webviz-core/migrations/frozenMigrations/2020.05.06.00:00:04.migrateGlobalDataToGlobalVariables.js
+0ded7a5837912781d0ded71aa42a2547814910cb  ./webviz-core/migrations/frozenMigrations/2020.05.06.00:00:05.migrateSourcePrefix.js

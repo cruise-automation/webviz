@@ -6,16 +6,16 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
 import tinyColor from "tinycolor2";
 
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
+export const TOPIC_ROW_PADDING = 3;
+
 const DEFAULT_COLOR = colors.LIGHT1;
-const DISABLED_COLOR = tinyColor(colors.GRAY)
-  .setAlpha(0.3)
-  .toRgbString();
+export const DISABLED_COLOR = colors.DISABLED;
 export const TOGGLE_WRAPPER_SIZE = 24;
 
 export const TOGGLE_SIZE_CONFIG = {
@@ -25,39 +25,45 @@ export const TOGGLE_SIZE_CONFIG = {
 
 const SToggle = styled.label`
   width: ${TOGGLE_WRAPPER_SIZE}px;
-  height: ${TOGGLE_WRAPPER_SIZE}px;
+  height: ${TOPIC_ROW_PADDING * 2 + TOGGLE_WRAPPER_SIZE}px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  > input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+  cursor: pointer;
+  :focus {
+    span {
+      border: 1px solid ${colors.BLUE} !important;
+    }
   }
-  > input:focus + span {
-    border: 1px solid ${colors.BLUE} !important;
+`;
+
+const SSpan = styled.span`
+  :hover {
+    transform: scale(1.2);
   }
 `;
 
 export type Size = $Keys<typeof TOGGLE_SIZE_CONFIG>;
 type Props = {|
   checked: boolean,
-  dataTestId?: string,
+  dataTest?: string,
   onToggle: () => void,
+  onAltToggle?: () => void,
+  onShiftToggle?: () => void,
   overrideColor?: ?string,
   size?: ?Size,
-  visible: boolean,
+  visibleInScene: boolean,
 |};
 
 function getStyles({
   checked,
-  visible,
+  visibleInScene,
   overrideColor,
   size,
 }: {
   checked: boolean,
-  visible: boolean,
+  visibleInScene: boolean,
   overrideColor: ?string,
   size: ?Size,
 }): any {
@@ -74,7 +80,7 @@ function getStyles({
       }
     : { enabledColor: DEFAULT_COLOR, disabledColor: DISABLED_COLOR };
 
-  const color = visible ? enabledColor : disabledColor;
+  const color = visibleInScene ? enabledColor : disabledColor;
   if (checked) {
     styles = { ...styles, background: color };
   } else {
@@ -85,16 +91,40 @@ function getStyles({
 }
 
 // A toggle component that supports using tab key to focus and using space key to check/uncheck.
-export default function VisibilityToggle({ dataTestId, onToggle, checked, visible, overrideColor, size }: Props) {
+export default function VisibilityToggle({
+  dataTest,
+  onToggle,
+  onAltToggle,
+  onShiftToggle,
+  checked,
+  visibleInScene,
+  overrideColor,
+  size,
+}: Props) {
+  // Handle shift + click/enter, option + click/enter, and click/enter.
+  const onChange = useCallback(
+    (e: MouseEvent | KeyboardEvent) => {
+      if (onShiftToggle && e.shiftKey) {
+        onShiftToggle();
+      } else if (onAltToggle && e.altKey) {
+        onAltToggle();
+      } else {
+        onToggle();
+      }
+    },
+    [onAltToggle, onShiftToggle, onToggle]
+  );
   return (
-    <SToggle>
-      <input
-        type="checkbox"
-        checked={checked}
-        {...(dataTestId ? { "data-test": dataTestId } : undefined)}
-        onChange={() => onToggle()}
-      />
-      <span style={getStyles({ checked, visible, size, overrideColor })} />
+    <SToggle
+      data-test={dataTest}
+      tabIndex={0}
+      onKeyDown={(e: KeyboardEvent) => {
+        if (e.key === "Enter") {
+          onChange(e);
+        }
+      }}
+      onClick={(e: MouseEvent) => onChange(e)}>
+      <SSpan style={getStyles({ checked, visibleInScene, size, overrideColor })} />
     </SToggle>
   );
 }

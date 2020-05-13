@@ -8,63 +8,66 @@
 import type { ActionTypes } from "webviz-core/src/actions";
 import type { Diagnostic, UserNodeLog } from "webviz-core/src/players/UserNodePlayer/types";
 
-export type UserNodeState = {
+export type UserNodeDiagnostics = {
   diagnostics: Diagnostic[],
   logs: UserNodeLog[],
   trusted: boolean, // Security flag that indicates whether we should populate a dialogue box.
 };
 
 export type UserNodesState = {
-  [guid: string]: UserNodeState,
+  userNodeDiagnostics: {
+    [guid: string]: UserNodeDiagnostics,
+  },
 };
 
-export default function userNodes(state: UserNodesState = {}, action: ActionTypes) {
+export default function userNodes(state: UserNodesState = { userNodeDiagnostics: {} }, action: ActionTypes) {
   switch (action.type) {
     case "SET_USER_NODE_DIAGNOSTICS": {
-      const nodeStates = { ...state };
+      const userNodeDiagnostics = { ...state.userNodeDiagnostics };
       Object.keys(action.payload).forEach((nodeId) => {
         const payloadDiagnostics = action.payload[nodeId].diagnostics;
         if (action.payload[nodeId] === undefined) {
-          delete nodeStates[nodeId];
-        } else if (!nodeStates[nodeId]) {
-          nodeStates[nodeId] = { diagnostics: payloadDiagnostics, logs: [] };
+          delete userNodeDiagnostics[nodeId];
+        } else if (!userNodeDiagnostics[nodeId]) {
+          userNodeDiagnostics[nodeId] = { diagnostics: payloadDiagnostics, logs: [] };
         } else {
-          nodeStates[nodeId] = { ...nodeStates[nodeId], diagnostics: payloadDiagnostics };
+          userNodeDiagnostics[nodeId] = { ...userNodeDiagnostics[nodeId], diagnostics: payloadDiagnostics };
         }
       });
-      return nodeStates;
+      return { ...state, userNodeDiagnostics };
     }
 
     case "ADD_USER_NODE_LOGS": {
-      const nodeStates = { ...state };
+      const userNodeDiagnostics = { ...state.userNodeDiagnostics };
       for (const nodeId of Object.keys(action.payload)) {
-        const existingLogs = nodeStates[nodeId] && nodeStates[nodeId].logs;
+        const existingLogs = userNodeDiagnostics[nodeId] && userNodeDiagnostics[nodeId].logs;
         const payloadLogs = action.payload[nodeId].logs;
         if (action.payload[nodeId] === undefined) {
-          delete nodeStates[nodeId];
-        } else if (!nodeStates[nodeId]) {
-          nodeStates[nodeId] = { diagnostics: [], logs: payloadLogs };
+          delete userNodeDiagnostics[nodeId];
+        } else if (!userNodeDiagnostics[nodeId]) {
+          userNodeDiagnostics[nodeId] = { diagnostics: [], logs: payloadLogs };
         } else {
-          nodeStates[nodeId] = { ...nodeStates[nodeId], logs: existingLogs.concat(payloadLogs) };
+          userNodeDiagnostics[nodeId] = { ...userNodeDiagnostics[nodeId], logs: existingLogs.concat(payloadLogs) };
         }
       }
-      return nodeStates;
+      return { ...state, userNodeDiagnostics };
     }
 
     case "CLEAR_USER_NODE_LOGS": {
-      const nodeStates = { ...state };
+      const userNodeDiagnostics = { ...state.userNodeDiagnostics };
       const nodeId = action.payload;
-      if (nodeStates[nodeId]) {
-        nodeStates[nodeId] = { ...nodeStates[nodeId], logs: [] };
+      if (userNodeDiagnostics[nodeId]) {
+        userNodeDiagnostics[nodeId] = { ...userNodeDiagnostics[nodeId], logs: [] };
       }
-      return nodeStates;
+
+      return { ...state, userNodeDiagnostics };
     }
 
     case "SET_USER_NODE_TRUST": {
-      const nodeStates = { ...state };
+      const userNodeDiagnostics = { ...state.userNodeDiagnostics };
       const { id, trusted } = action.payload;
-      nodeStates[id] = { logs: [], diagnostics: [], ...nodeStates[id], trusted };
-      return nodeStates;
+      userNodeDiagnostics[id] = { logs: [], diagnostics: [], ...userNodeDiagnostics[id], trusted };
+      return { ...state, userNodeDiagnostics };
     }
 
     default:

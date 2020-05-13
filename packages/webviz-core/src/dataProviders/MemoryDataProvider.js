@@ -23,28 +23,32 @@ export default class MemoryDataProvider implements DataProvider {
   messages: DataProviderMessage[];
   topics: ?(Topic[]);
   datatypes: ?RosDatatypes;
-  messageDefintionsByTopic: ?{ [topic: string]: string };
+  messageDefinitionsByTopic: { [topic: string]: string };
   extensionPoint: ExtensionPoint;
   initiallyLoaded: boolean;
+  providesParsedMessages: boolean;
 
   constructor({
     messages,
     topics,
     datatypes,
     initiallyLoaded,
-    messageDefintionsByTopic,
+    messageDefinitionsByTopic,
+    providesParsedMessages,
   }: {
     messages: DataProviderMessage[],
     topics?: Topic[],
     datatypes?: RosDatatypes,
-    messageDefintionsByTopic?: { [topic: string]: string },
+    messageDefinitionsByTopic?: ?{ [topic: string]: string },
     initiallyLoaded?: boolean,
+    providesParsedMessages: boolean,
   }) {
     this.messages = messages;
     this.topics = topics;
     this.datatypes = datatypes;
-    this.messageDefintionsByTopic = messageDefintionsByTopic;
+    this.messageDefinitionsByTopic = messageDefinitionsByTopic || {};
     this.initiallyLoaded = !!initiallyLoaded;
+    this.providesParsedMessages = providesParsedMessages;
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
@@ -62,7 +66,8 @@ export default class MemoryDataProvider implements DataProvider {
       end: last(this.messages).receiveTime,
       topics: this.topics || [],
       datatypes: this.datatypes || {},
-      messageDefintionsByTopic: this.messageDefintionsByTopic,
+      messageDefinitionsByTopic: this.messageDefinitionsByTopic,
+      providesParsedMessages: this.providesParsedMessages,
     };
   }
 

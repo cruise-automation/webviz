@@ -83,7 +83,7 @@ storiesOf("<Tab>", module)
     store.dispatch(changePanelLayout({ layout: "Tab!a" }));
     store.dispatch(
       savePanelConfigs({
-        configs: [{ id: "Tab!a", config: { activeTabIdx: 0, tabs: [{ title: "Tab A", layout: {} }] } }],
+        configs: [{ id: "Tab!a", config: { activeTabIdx: 0, tabs: [{ title: "Tab A", layout: null }] } }],
       })
     );
 

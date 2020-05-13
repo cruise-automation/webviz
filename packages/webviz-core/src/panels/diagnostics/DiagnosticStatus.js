@@ -35,11 +35,9 @@ type Props = {|
   openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
 |};
 
-const ResizeHandle = styled.div.attrs({
-  style: (props) => ({
-    left: `${100 * props.splitFraction}%`,
-  }),
-})`
+const ResizeHandle = styled.div.attrs(({ splitFraction }) => ({
+  style: { left: `${100 * splitFraction}%` },
+}))`
   position: absolute;
   top: 0;
   bottom: 0;

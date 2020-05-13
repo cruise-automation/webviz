@@ -8,7 +8,7 @@
 import ApiCheckerDataProvider from "webviz-core/src/dataProviders/ApiCheckerDataProvider";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 function getProvider() {
   const memoryDataProvider = new MemoryDataProvider({
@@ -21,10 +21,11 @@ function getProvider() {
       { name: "/some_other_topic", datatype: "some_datatype" },
     ],
     datatypes: { some_datatype: { fields: [] } },
-    messageDefintionsByTopic: {
+    messageDefinitionsByTopic: {
       "/some_topic": "dummy",
       "/some_other_topic": "dummy",
     },
+    providesParsedMessages: false, // to test missing messageDefinitionsByTopic
   });
 
   return {
@@ -43,7 +44,7 @@ describe("ApiCheckerDataProvider", () => {
       const { provider } = getProvider();
       const initializationResult = await provider.initialize(mockExtensionPoint().extensionPoint);
       expect(initializationResult).toEqual({
-        messageDefintionsByTopic: {
+        messageDefinitionsByTopic: {
           "/some_topic": "dummy",
           "/some_other_topic": "dummy",
         },
@@ -54,12 +55,13 @@ describe("ApiCheckerDataProvider", () => {
           { datatype: "some_datatype", name: "/some_topic" },
           { datatype: "some_datatype", name: "/some_other_topic" },
         ],
+        providesParsedMessages: false,
       });
     });
 
     describe("failure", () => {
       afterEach(() => {
-        reportError.expectCalledDuringTest();
+        sendNotification.expectCalledDuringTest();
       });
 
       it("throws when calling twice", async () => {
@@ -80,9 +82,9 @@ describe("ApiCheckerDataProvider", () => {
         await expect(provider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
       });
 
-      it("throws when topic is missing from messageDefintionsByTopic", async () => {
+      it("throws when topic is missing from messageDefinitionsByTopic", async () => {
         const { provider, memoryDataProvider } = getProvider();
-        memoryDataProvider.messageDefintionsByTopic = {
+        memoryDataProvider.messageDefinitionsByTopic = {
           "/some_other_topic": "dummy",
         };
         await expect(provider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
@@ -103,7 +105,7 @@ describe("ApiCheckerDataProvider", () => {
 
     describe("failure", () => {
       afterEach(() => {
-        reportError.expectCalledDuringTest();
+        sendNotification.expectCalledDuringTest();
       });
       it("throws when calling getMessages before initialize", async () => {
         const { provider } = getProvider();
@@ -180,7 +182,7 @@ describe("ApiCheckerDataProvider", () => {
 
     describe("failure", () => {
       afterEach(() => {
-        reportError.expectCalledDuringTest();
+        sendNotification.expectCalledDuringTest();
       });
       it("throws when calling close before initialize", async () => {
         const { provider } = getProvider();

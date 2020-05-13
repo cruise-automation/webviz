@@ -7,33 +7,34 @@
 //  You may not use this file except in compliance with the License.
 
 import Rpc, { createLinkedChannels } from "./Rpc";
-import { setupSendReportErrorHandler, setupReceiveReportErrorHandler } from "./RpcUtils";
-import reportError, { setErrorHandler } from "webviz-core/src/util/reportError";
+import { setupSendReportNotificationHandler, setupReceiveReportErrorHandler } from "./RpcUtils";
+import sendNotification, { setNotificationHandler } from "webviz-core/src/util/sendNotification";
 
 const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
 describe("RpcUtils", () => {
   // We have to test sending and receiving errors separately because in tests we really only have one thread, so we
-  // can't separate `reportError` calls on the local and remote threads.
+  // can't separate `sendNotification` calls on the local and remote threads.
   it("propagates sending errors correctly", async () => {
     const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
     const local = new Rpc(mainChannel);
     let errorObject;
-    local.receive("reportError", (err) => {
+    local.receive("sendNotification", (err) => {
       errorObject = err;
     });
 
     const worker = new Rpc(workerChannel);
-    setupSendReportErrorHandler(worker);
-    reportError("test", new Error("details"), "user");
+    setupSendReportNotificationHandler(worker);
+    sendNotification("test", new Error("details"), "user", "error");
     await delay(10);
     expect(errorObject).toEqual({
       message: "test",
       details: "Error: details",
       type: "user",
+      severity: "error",
     });
 
-    reportError.expectCalledDuringTest();
+    sendNotification.expectCalledDuringTest();
   });
 
   it("propagates receiving errors correctly", async () => {
@@ -41,19 +42,20 @@ describe("RpcUtils", () => {
     const local = new Rpc(mainChannel);
     setupReceiveReportErrorHandler(local);
     let errorObject;
-    setErrorHandler((message, details, type) => {
-      errorObject = { message, details, type };
+    setNotificationHandler((message, details, type, severity) => {
+      errorObject = { message, details, type, severity };
     });
 
     const worker = new Rpc(workerChannel);
-    worker.send("reportError", { message: "test", details: "Error: details", type: "user" });
+    worker.send("sendNotification", { message: "test", details: "details", type: "user", severity: "error" });
     await delay(10);
     expect(errorObject).toEqual({
       message: "test",
-      details: "Error: details",
+      details: "details",
       type: "user",
+      severity: "error",
     });
 
-    reportError.expectCalledDuringTest();
+    sendNotification.expectCalledDuringTest();
   });
 });

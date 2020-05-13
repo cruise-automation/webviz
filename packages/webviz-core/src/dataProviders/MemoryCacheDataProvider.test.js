@@ -20,7 +20,7 @@ import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
 import type { DataProviderMessage } from "webviz-core/src/dataProviders/types";
 import naturalSort from "webviz-core/src/util/naturalSort";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 function sortMessages(messages: DataProviderMessage[]) {
   return messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime) || naturalSort()(a.topic, b.topic));
@@ -55,7 +55,7 @@ function generateLargeMessages(): DataProviderMessage[] {
 }
 
 function getProvider(messages: DataProviderMessage[], unlimitedCache: boolean = false) {
-  const memoryDataProvider = new MemoryDataProvider({ messages, unlimitedCache });
+  const memoryDataProvider = new MemoryDataProvider({ messages, unlimitedCache, providesParsedMessages: false });
   return {
     provider: new MemoryCacheDataProvider(
       { id: "some-id" },
@@ -74,6 +74,8 @@ describe("MemoryCacheDataProvider", () => {
       end: { nsec: 0, sec: 102 },
       topics: [],
       datatypes: {},
+      messageDefinitionsByTopic: {},
+      providesParsedMessages: false,
     });
   });
 
@@ -84,7 +86,14 @@ describe("MemoryCacheDataProvider", () => {
 
     await provider.initialize(extensionPoint);
     memoryDataProvider.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }] });
-    expect(mockProgressCallback.mock.calls).toEqual([[{ fullyLoadedFractionRanges: [] }]]);
+    expect(mockProgressCallback.mock.calls).toEqual([
+      [
+        {
+          fullyLoadedFractionRanges: [],
+          blocks: new Array(21),
+        },
+      ],
+    ]);
   });
 
   it("reads ahead data when some topics are given", async () => {
@@ -96,7 +105,12 @@ describe("MemoryCacheDataProvider", () => {
     await provider.initialize(extensionPoint);
     await provider.getMessages({ sec: 100, nsec: 0 }, { sec: 100, nsec: 0 }, ["/foo"]);
     await delay(10);
-    expect(last(mockProgressCallback.mock.calls)).toEqual([{ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] }]);
+    expect(last(mockProgressCallback.mock.calls)).toEqual([
+      {
+        fullyLoadedFractionRanges: [{ start: 0, end: 1 }],
+        blocks: expect.arrayContaining([]),
+      },
+    ]);
     expect(last(memoryDataProvider.getMessages.mock.calls)).toEqual([
       // The last block will typically be exactly one timestamp since BLOCK_SIZE_NS divides seconds.
       { sec: 102, nsec: 0 },
@@ -115,7 +129,12 @@ describe("MemoryCacheDataProvider", () => {
     await provider.initialize(extensionPoint);
     await provider.getMessages({ sec: 101, nsec: 0 }, { sec: 101, nsec: 0 }, ["/foo"]);
     await delay(10);
-    expect(last(mockProgressCallback.mock.calls)).toEqual([{ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] }]);
+    expect(last(mockProgressCallback.mock.calls)).toEqual([
+      {
+        fullyLoadedFractionRanges: [{ start: 0, end: 1 }],
+        blocks: expect.arrayContaining([]),
+      },
+    ]);
     // The first request is at/after the requested range.
     expect(first(memoryDataProvider.getMessages.mock.calls)).toEqual([
       { sec: 101, nsec: 0 },
@@ -144,7 +163,10 @@ describe("MemoryCacheDataProvider", () => {
     // The input is 20.1 seconds long, or 201 blocks.
     // We read the five messages at 0s, 2s, 4s, 6s and 8s, holding the blocks from 0s to 8.1s.
     expect(last(mockProgressCallback.mock.calls)).toEqual([
-      { fullyLoadedFractionRanges: [{ start: 0, end: 81 / 201 }] },
+      {
+        fullyLoadedFractionRanges: [{ start: 0, end: 81 / 201 }],
+        blocks: expect.arrayContaining([]),
+      },
     ]);
   });
 
@@ -156,7 +178,12 @@ describe("MemoryCacheDataProvider", () => {
     await provider.initialize(extensionPoint);
     await provider.getMessages({ sec: 0, nsec: 0 }, { sec: 0, nsec: 0 }, ["/foo"]);
     await delay(10);
-    expect(last(mockProgressCallback.mock.calls)).toEqual([{ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] }]);
+    expect(last(mockProgressCallback.mock.calls)).toEqual([
+      {
+        fullyLoadedFractionRanges: [{ start: 0, end: 1 }],
+        blocks: expect.arrayContaining([]),
+      },
+    ]);
   });
 
   it("prefetches after the last request", async () => {
@@ -176,7 +203,10 @@ describe("MemoryCacheDataProvider", () => {
     // The second read prefetches the four messages at 10s, 12s, 14s and 16s, holding the blocks
     // from 10s to 16.1s.
     expect(last(mockProgressCallback.mock.calls)).toEqual([
-      { fullyLoadedFractionRanges: [{ start: 0, end: 10 / 201 }, { start: 100 / 201, end: 161 / 201 }] },
+      {
+        fullyLoadedFractionRanges: [{ start: 0, end: 10 / 201 }, { start: 100 / 201, end: 161 / 201 }],
+        blocks: expect.arrayContaining([]),
+      },
     ]);
   });
 
@@ -204,7 +234,7 @@ describe("MemoryCacheDataProvider", () => {
     await provider.initialize(mockExtensionPoint().extensionPoint);
     provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo"]);
     await delay(10);
-    reportError.expectCalledDuringTest();
+    sendNotification.expectCalledDuringTest();
   });
 
   it("shows an error when having a block that is very large", async () => {
@@ -214,7 +244,7 @@ describe("MemoryCacheDataProvider", () => {
     await provider.initialize(mockExtensionPoint().extensionPoint);
     provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo"]);
     await delay(10);
-    reportError.expectCalledDuringTest();
+    sendNotification.expectCalledDuringTest();
   });
 
   // TODO(JP): We test getBlocksToKeep separately, but never as part of MemoryCacheDataProvider.

@@ -7,11 +7,11 @@
 //  You may not use this file except in compliance with the License.
 import React from "react";
 
-import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
+import OrderedStampPlayer from "webviz-core/src/players/OrderedStampPlayer";
 import type { UserNodes } from "webviz-core/src/types/panels";
 
 type Props = {
-  nodePlayer: ?UserNodePlayer,
+  nodePlayer: ?OrderedStampPlayer,
   userNodes: UserNodes,
 };
 

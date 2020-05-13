@@ -20,7 +20,7 @@ import MessageHistoryDEPRECATED, {
   type MessageHistoryData,
   type MessageHistoryItem,
 } from "webviz-core/src/components/MessageHistoryDEPRECATED";
-import MessagePathInput, { type TimestampMethod } from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
+import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TimeBasedChart, {
@@ -33,6 +33,7 @@ import mixins from "webviz-core/src/styles/mixins.module.scss";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import { positiveModulo } from "webviz-core/src/util";
 import { darkColor, lineColors } from "webviz-core/src/util/plotColors";
+import type { TimestampMethod } from "webviz-core/src/util/time";
 import { getTimestampForMessage, subtractTimes, toSec } from "webviz-core/src/util/time";
 import { grey } from "webviz-core/src/util/toolsColorScheme";
 

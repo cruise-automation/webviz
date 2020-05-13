@@ -30,6 +30,7 @@ import {
   OccupancyGrids,
   LaserScans,
   PointClouds,
+  GPUPointClouds,
   PoseMarkers,
   LinedConvexHulls,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands";
@@ -142,12 +143,19 @@ export default function World({
     searchTextMatches,
   });
 
+  const gpuPointCloudsEnabled = useExperimentalFeature("gpuPointCloud");
+  const PointCloudsComponent = gpuPointCloudsEnabled ? GPUPointClouds : PointClouds;
+
   return (
     <Worldview
       cameraState={cameraState}
       enableStackedObjectEvents={!isPlaying}
       hideDebug={inScreenshotTests()}
       onCameraStateChange={onCameraStateChange}
+      // Rendering the hitmap is an expensive operation and we want to avoid
+      // doing it when the user is dragging the view with the mouse. By ignoring
+      // these events, the only way to select an object is when receiving an "onClick" event.
+      disableHitmapForEvents={["onMouseDown", "onMouseMove", "onMouseUp"]}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
@@ -159,7 +167,7 @@ export default function World({
       <Lines>{[...lineList, ...lineStrip]}</Lines>
       <Arrows>{arrow}</Arrows>
       <Points>{points}</Points>
-      <PointClouds>{pointcloud}</PointClouds>
+      <PointCloudsComponent>{pointcloud}</PointCloudsComponent>
       <Triangles>{triangleList}</Triangles>
       <Spheres>{[...sphere, ...sphereList]}</Spheres>
       <Cylinders>{cylinder}</Cylinders>

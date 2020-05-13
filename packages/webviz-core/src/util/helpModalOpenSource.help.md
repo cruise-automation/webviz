@@ -13,7 +13,7 @@
 
 By default we try connect to a [rosbridge_server](http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge) using a WebSocket on `ws://localhost:9090`. If you want to use a different URL, use the `?rosbridge-websocket-url=…` parameter. For example, to connect to `ws://localhost:4321`, use [this URL](?rosbridge-websocket-url=ws://localhost:4321). If you're using a more complex URL, it'd be good to [url-encode](https://www.urlencoder.io/) it, for example [like this](?rosbridge-websocket-url=ws%3A%2F%2Flocalhost%3A4321). This also applies to other parameters mentioned below.
 
-If no WebSocket is found, you can instead drag and drop a bag into the page. You can drag a second bag while holding the `SHIFT` key. The topics of the second bag will be prefixed with `/webviz_bag_2`.
+If no WebSocket is found, you can instead drag and drop a bag into the page. You can drag a second bag while holding the `SHIFT` key. The topics of the second bag will be prefixed with `/webviz_source_2`.
 
 To stream in a bag, use the `?remote-bag-url=…` parameter, [like this](?remote-bag-url=https%3A%2F%2Fopen-source-webviz-ui.s3.amazonaws.com%2Fdemo.bag). To stream in a second bag (similar to the SHIFT-drag from above), use `?remote-bag-url-2=…`. To navigate to a particular point in the bag on load, add in `&seek-to=12345` (in milliseconds since the [Unix epoch](https://en.wikipedia.org/wiki/Unix_time)).
 

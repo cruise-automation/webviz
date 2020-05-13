@@ -26,9 +26,9 @@ import {
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { bagConnectionsToDatatypes } from "webviz-core/src/util/bagConnectionsHelper";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
-import reportError from "webviz-core/src/util/reportError";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
-import { fromMillis } from "webviz-core/src/util/time";
+import sendNotification from "webviz-core/src/util/sendNotification";
+import { fromMillis, type TimestampMethod } from "webviz-core/src/util/time";
 
 import "roslib/build/roslib";
 
@@ -53,8 +53,10 @@ export default class RosbridgePlayer implements Player {
   _topicSubscriptions: { [topicName: string]: ROSLIB.Topic } = {}; // Active subscriptions.
   _requestedSubscriptions: SubscribePayload[] = []; // Requested subscriptions by setSubscriptions()
   _messages: Message[] = []; // Queue of messages that we'll send in next _emitState() call.
+  _messageOrder: TimestampMethod = "receiveTime";
   _requestTopicsTimeout: ?TimeoutID; // setTimeout() handle for _requestTopics().
   _topicPublishers: { [topicName: string]: ROSLIB.Topic } = {};
+  _messageDefinitionsByTopic: { [topicName: string]: string } = {};
 
   constructor(url: string) {
     this._url = url;
@@ -138,6 +140,7 @@ export default class RosbridgePlayer implements Player {
         topics.push({ name: topicName, datatype: type });
         datatypeDescriptions.push({ type, messageDefinition });
         messageReaders[type] = messageReaders[type] || new MessageReader(messageDefinition);
+        this._messageDefinitionsByTopic[topicName] = messageDefinition;
       }
 
       // Sort them for easy comparison. If nothing has changed here, bail out.
@@ -147,12 +150,13 @@ export default class RosbridgePlayer implements Player {
       }
 
       if (topicsMissingDatatypes.length > 0) {
-        reportError(
+        sendNotification(
           "Could not resolve all message types",
           `This can happen e.g. when playing a bag from a different codebase. Message types could not be found for these topics:\n${topicsMissingDatatypes.join(
             "\n"
           )}`,
-          "user"
+          "user",
+          "warn"
         );
       }
 
@@ -163,7 +167,7 @@ export default class RosbridgePlayer implements Player {
       this.setSubscriptions(this._requestedSubscriptions);
       this._emitState();
     } catch (error) {
-      reportError("Error in fetching topics and datatypes", error, "app");
+      sendNotification("Error in fetching topics and datatypes", error, "app", "error");
     } finally {
       // Regardless of what happens, request topics again in a little bit.
       this._requestTopicsTimeout = setTimeout(this._requestTopics, 3000);
@@ -204,6 +208,7 @@ export default class RosbridgePlayer implements Player {
 
       activeData: {
         messages,
+        messageOrder: this._messageOrder,
         startTime: _start,
         endTime: currentTime,
         currentTime,
@@ -214,6 +219,7 @@ export default class RosbridgePlayer implements Player {
         lastSeekTime: 1,
         topics: _providerTopics,
         datatypes: _providerDatatypes,
+        messageDefinitionsByTopic: this._messageDefinitionsByTopic,
       },
     });
   });
@@ -297,10 +303,11 @@ export default class RosbridgePlayer implements Player {
 
   publish({ topic, msg }: PublishPayload) {
     if (!this._topicPublishers[topic]) {
-      reportError(
+      sendNotification(
         "Invalid publish call",
         `Tried to publish on a topic that is not registered as a publisher: ${topic}`,
-        "app"
+        "app",
+        "error"
       );
       return;
     }

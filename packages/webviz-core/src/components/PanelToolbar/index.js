@@ -19,8 +19,8 @@ import * as React from "react"; // eslint-disable-line import/no-duplicates
 import { useContext, useState, useCallback, useMemo } from "react"; // eslint-disable-line import/no-duplicates
 import Dimensions from "react-container-dimensions";
 import {
-  getNodeAtPath,
   createRemoveUpdate,
+  getPathFromNode,
   updateTree,
   MosaicContext,
   MosaicWindowContext,
@@ -49,6 +49,8 @@ import {
   getSaveConfigsPayloadForNewTab,
   getPanelIdsInsideTabPanels,
   removePanelFromTabPanel,
+  updateTabPanelLayout,
+  replacePanelsWithNewPanel,
 } from "webviz-core/src/util/layout";
 
 type Props = {|
@@ -101,38 +103,64 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
 
       const config = savedProps[id];
       const newId = getPanelIdForType(type);
-      if (type === TAB_PANEL_TYPE) {
-        const relatedConfigs = getPanelIdsInsideTabPanels([id], savedProps).reduce(
-          (result, panelId) => ({ ...result, [panelId]: savedProps[panelId] }),
-          {}
-        );
-        const payload = getSaveConfigsPayloadForNewTab({ id: newId, config, relatedConfigs });
-        actions.savePanelConfigs(payload);
-      } else if (config) {
-        actions.savePanelConfigs({ configs: [{ id: newId, config }] });
-      }
 
-      const path = mosaicWindowActions.getPath();
-      const root = mosaicActions.getRoot();
-      mosaicActions.replaceWith(path, { direction, first: getNodeAtPath(root, path), second: newId });
+      if (tabId) {
+        const activeTabLayout = savedProps[tabId].tabs[savedProps[tabId].activeTabIdx].layout;
+        const newTabLayout = updateTree(activeTabLayout, [
+          { path: getPathFromNode(id, activeTabLayout), spec: { $set: { first: id, second: newId, direction } } },
+        ]);
+        const newTabConfig = updateTabPanelLayout(newTabLayout, savedProps[tabId]);
+        actions.savePanelConfigs({ configs: [{ id: tabId, config: newTabConfig }, { id: newId, config }] });
+      } else {
+        actions.changePanelLayout({
+          layout: updateTree(mosaicActions.getRoot(), [
+            { path: mosaicWindowActions.getPath(), spec: { $set: { first: id, second: newId, direction } } },
+          ]),
+          trimSavedProps: type !== TAB_PANEL_TYPE,
+        });
+
+        if (type === TAB_PANEL_TYPE) {
+          const relatedConfigs = getPanelIdsInsideTabPanels([id], savedProps).reduce(
+            (result, panelId) => ({ ...result, [panelId]: savedProps[panelId] }),
+            {}
+          );
+          const { configs } = getSaveConfigsPayloadForNewTab({ id: newId, config, relatedConfigs });
+          actions.savePanelConfigs({ configs });
+        } else {
+          actions.savePanelConfigs({ configs: [{ id: newId, config }] });
+        }
+      }
     },
-    [actions, getPanelType, mosaicActions, mosaicWindowActions, savedProps]
+    [actions, getPanelType, mosaicActions, mosaicWindowActions, savedProps, tabId]
   );
 
   const swap = useCallback(
-    ({ type, config, relatedConfigs }: PanelSelection) => {
+    (id: ?string) => ({ type, config, relatedConfigs }: PanelSelection) => {
       window.ga("send", "event", "Panel", "Swap", type);
+      const newId = getPanelIdForType(type);
+
+      // For a panel inside a Tab panel, update the Tab panel's tab layouts via savedProps
+      if (tabId && id) {
+        const activeTabLayout = savedProps[tabId].tabs[savedProps[tabId].activeTabIdx].layout;
+        const newTabLayout = replacePanelsWithNewPanel(id, newId, [id], activeTabLayout);
+
+        const newTabConfig = updateTabPanelLayout(newTabLayout, savedProps[tabId]);
+        actions.savePanelConfigs({ configs: [{ id: tabId, config: newTabConfig }] });
+      } else {
+        actions.changePanelLayout({
+          layout: updateTree(mosaicActions.getRoot(), [{ path: mosaicWindowActions.getPath(), spec: { $set: newId } }]),
+          trimSavedProps: type !== TAB_PANEL_TYPE,
+        });
+      }
+
       if (config && relatedConfigs) {
-        const newId = getPanelIdForType(type);
         const { configs } = getSaveConfigsPayloadForNewTab({ id: newId, config, relatedConfigs });
         actions.savePanelConfigs({ configs });
-        const tabConfigObj = configs.find(({ id }) => id === newId) || {};
-        mosaicWindowActions.replaceWithNew({ type, panelConfig: tabConfigObj.config });
       } else {
-        mosaicWindowActions.replaceWithNew({ type, panelConfig: config });
+        actions.savePanelConfigs({ configs: [{ id: newId, config }] });
       }
     },
-    [actions, mosaicWindowActions]
+    [actions, mosaicActions, mosaicWindowActions, savedProps, tabId]
   );
 
   const onImportClick = useCallback(
@@ -166,7 +194,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
           {(panelContext) => (
             <>
               <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />}>
-                <PanelList selectedPanelTitle={panelContext?.title} onPanelSelect={swap} />
+                <PanelList selectedPanelTitle={panelContext?.title} onPanelSelect={swap(panelContext?.id)} />
               </SubMenu>
               <Item
                 icon={<FullscreenIcon />}

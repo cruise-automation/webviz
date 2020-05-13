@@ -30,7 +30,7 @@ cors {
   response_header = ["ETag", "Content-Length", "Accept-Ranges", "Range"]
 }
 
-You can also have your own server to host files, but be aware that it has to support both range requests and CORS, which can be quite complicated to set up. So we recommend hosting your bag files in a cloud provider like S3 or GCS.
+You can also have your own server to host files, but be aware that it has to support both range requests and CORS, which can be quite complicated to set up. So we recommend hosting your bag files in a cloud provider like S3 or GCS. However, other people have made this work; see e.g. this comment on how to set up Flask: https://github.com/cruise-automation/webviz/issues/247#issuecomment-621175154
 
 `;
 }

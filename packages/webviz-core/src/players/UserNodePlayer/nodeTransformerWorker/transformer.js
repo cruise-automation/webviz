@@ -13,11 +13,7 @@ import {
   findDefaultExportFunction,
   DatatypeExtractionError,
 } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ast";
-import { lib_es6_dts, lib_filename } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/lib";
-import {
-  ros_lib_dts,
-  ros_lib_filename,
-} from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
+import { getNodeProjectConfig } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig";
 import {
   baseCompilerOptions,
   transformDiagnosticToMarkerData,
@@ -32,7 +28,7 @@ import {
   type NodeDataTransformer,
 } from "webviz-core/src/players/UserNodePlayer/types";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 // Typescript is required since the `import` syntax breaks VSCode, presumably
 // because VSCode has Typescript built in and our import is conflicting with
@@ -216,33 +212,24 @@ export const validateOutputTopic = (
   return nodeData;
 };
 
-// The transpile step is concerned purely with generating javascript we will
-// actually run in the browser.
-export const transpile = (nodeData: NodeData): NodeData => {
-  // TODO: Better pipeline for a SourceFile input to transpileModule:
-  // https://github.com/Microsoft/TypeScript/issues/28365
-  const { outputText, diagnostics } = ts.transpileModule(nodeData.sourceCode, {
-    reportDiagnostics: true,
-    compilerOptions: baseCompilerOptions,
-  });
-
-  return {
-    ...nodeData,
-    transpiledCode: outputText,
-    diagnostics: [...nodeData.diagnostics, ...diagnostics.map(transformDiagnosticToMarkerData)],
-  };
-};
-
 // The compile step is currently used for generating syntactic/semantic errors. In the future, it
 // will be leveraged to:
 // - Generate the AST
 // - Handle external libraries
-// - (Hopefully) emit transpiled code
 export const compile = (nodeData: NodeData): NodeData => {
-  const { sourceCode } = nodeData;
+  const { sourceCode, projectCode } = nodeData;
 
   const options: ts.CompilerOptions = baseCompilerOptions;
   const nodeFileName = `${nodeData.name}.ts`;
+  const projectConfig = getNodeProjectConfig();
+
+  const sourceCodeMap = new Map<string, string>();
+  sourceCodeMap.set(nodeFileName, sourceCode);
+  projectConfig.utilityFiles.forEach((file) => sourceCodeMap.set(file.filePath, file.sourceCode));
+  projectConfig.declarations.forEach((lib) => sourceCodeMap.set(lib.filePath, lib.sourceCode));
+
+  let transpiledCode: string = "";
+  let codeEmitted: boolean = false;
 
   // The compiler host is basically the file system API Typescript is funneled
   // through. All we do is tell Typescript where it can locate files and how to
@@ -254,39 +241,53 @@ export const compile = (nodeData: NodeData): NodeData => {
   // Architectual Overview: https://github.com/Microsoft/TypeScript/wiki/Architectural-Overview#overview-of-the-compilation-process
 
   const host: ts.CompilerHost = {
-    getDefaultLibFileName: () => lib_filename,
+    getDefaultLibFileName: () => projectConfig.defaultLibFileName,
     getCurrentDirectory: () => "",
     getCanonicalFileName: (fileName) => fileName,
     useCaseSensitiveFileNames: () => false,
-    // TODO: path to ros lib differs for client vs. jest test
-    fileExists: (fileName) => fileName === nodeFileName || fileName.endsWith(`node_modules/${ros_lib_filename}`),
-    writeFile: () => {
-      throw new Error(
-        "The compiler host `writeFile` was called, which does not have any handlers written for it. Please write one now that you have hit it!"
-      );
+    fileExists: (fileName) => {
+      for (const [key] of sourceCodeMap.entries()) {
+        if (fileName === key || fileName.endsWith(key)) {
+          return true;
+        }
+      }
+      return false;
     },
-    getNewLine: () => {
-      throw new Error(
-        "The compiler host `getNewLine` was called, which does not have any handlers written for it. Please write one now that you have hit it!"
-      );
+    writeFile: (name: string, data: string) => {
+      codeEmitted = true;
+      if (name === `${nodeData.name}.js`) {
+        transpiledCode = data;
+      } else {
+        // It's one of our utility files
+        projectCode.set(name, data);
+      }
     },
+    getNewLine: () => "\n",
     getSourceFile: (fileName) => {
       let code = "";
-
-      if (fileName === nodeFileName) {
-        code = sourceCode;
-      } else if (fileName === lib_filename) {
-        code = lib_es6_dts;
-        // TODO: path to ros lib differs for client vs. jest test
-      } else if (fileName.endsWith(`node_modules/${ros_lib_filename}`)) {
-        code = ros_lib_dts;
+      for (const [key, value] of sourceCodeMap.entries()) {
+        if (fileName === key || fileName.endsWith(key)) {
+          code = value;
+          break;
+        }
       }
-
       return ts.createSourceFile(fileName, code, baseCompilerOptions.target, true);
     },
   };
 
-  const program = ts.createProgram([nodeFileName], options, host);
+  const program = ts.createProgram(
+    [...projectConfig.utilityFiles.map((file) => file.filePath), nodeFileName],
+    options,
+    host
+  );
+  program.emit();
+  if (!codeEmitted) {
+    // TODO: Remove after this has been running in prod for a while, and we haven't seen anything in Sentry.
+    throw new Error(
+      "Program code was not emitted. This should never happen as program.emit() is supposed to be synchronous."
+    );
+  }
+
   const diagnostics = [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()];
 
   const newDiagnostics = diagnostics.map(transformDiagnosticToMarkerData);
@@ -298,6 +299,7 @@ export const compile = (nodeData: NodeData): NodeData => {
     ...nodeData,
     sourceFile,
     typeChecker,
+    transpiledCode,
     diagnostics: [...nodeData.diagnostics, ...newDiagnostics],
   };
 };
@@ -323,7 +325,12 @@ export const extractDatatypes = (nodeData: NodeData): NodeData => {
       return { ...nodeData, diagnostics: [...nodeData.diagnostics, error.diagnostic] };
     }
     // If we've hit this case, then we should fix it.
-    reportError("Unknown error encountered in Node Playground. Please report to the webviz team.", error, "app");
+    sendNotification(
+      "Unknown error encountered in Node Playground. Please report to the webviz team.",
+      error,
+      "app",
+      "error"
+    );
     return {
       ...nodeData,
       diagnostics: [
@@ -380,7 +387,6 @@ const transform = ({
   const transformer = compose(
     getOutputTopic,
     validateOutputTopic,
-    transpile,
     compile,
     getInputTopics,
     validateInputTopics,
@@ -392,6 +398,7 @@ const transform = ({
       name,
       sourceCode,
       transpiledCode: "",
+      projectCode: new Map<string, string>(),
       inputTopics: [],
       outputTopic: "",
       outputDatatype: "",

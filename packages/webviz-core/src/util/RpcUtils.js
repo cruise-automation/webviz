@@ -8,36 +8,44 @@
 
 import overwriteFetch from "./overwriteFetch";
 import Rpc from "./Rpc";
-import reportError, { setErrorHandler, type DetailsType, type ErrorType } from "webviz-core/src/util/reportError";
+import sendNotification, {
+  setNotificationHandler,
+  type DetailsType,
+  type NotificationType,
+} from "webviz-core/src/util/sendNotification";
+import type { NotificationSeverity } from "webviz-core/src/util/sendNotification";
 
 // We frequently want to propagate errors to the main thread so that they can be displayed to the user.
 // This function should be called inside the worker; it sets up sending a message to the parent thread when
-// reportError is called.
-export function setupSendReportErrorHandler(rpc: Rpc) {
-  setErrorHandler((message: string, details: DetailsType, type: ErrorType) => {
-    if (!(details instanceof Error || typeof details === "string")) {
-      console.warn("Invalid Error type");
-      details = JSON.stringify(details) || "<<unknown error>>";
+// sendNotification is called.
+export function setupSendReportNotificationHandler(rpc: Rpc) {
+  setNotificationHandler(
+    (message: string, details: DetailsType, type: NotificationType, severity: NotificationSeverity) => {
+      if (!(details instanceof Error || typeof details === "string")) {
+        console.warn("Invalid Error type");
+        details = JSON.stringify(details) || "<<unknown error>>";
+      }
+      rpc.send("sendNotification", {
+        message,
+        details: details instanceof Error ? details.toString() : details,
+        type,
+        severity,
+      });
     }
-    rpc.send("reportError", {
-      message,
-      details: details instanceof Error ? details.toString() : details,
-      type,
-    });
-  });
+  );
 }
 
 // This function should be called inside the parent thread; it sets up receiving a message from the worker thread and
-// calling reportError.
+// calling sendNotification.
 export function setupReceiveReportErrorHandler(rpc: Rpc) {
-  rpc.receive("reportError", ({ message, details, type }) => {
-    reportError(message, details, type);
+  rpc.receive("sendNotification", ({ message, details, type, severity }) => {
+    sendNotification(message, details, type, severity);
   });
 }
 
 export function setupWorker(rpc: Rpc) {
   if (process.env.NODE_ENV !== "test") {
-    setupSendReportErrorHandler(rpc);
+    setupSendReportNotificationHandler(rpc);
     overwriteFetch();
   }
 }

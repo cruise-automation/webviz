@@ -16,7 +16,7 @@ import FakePlayer from "./FakePlayer";
 import { MAX_PROMISE_TIMEOUT_TIME_MS } from "./pauseFrameForPromise";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
   it("returns empty data when no player is given", () => {
@@ -412,6 +412,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     );
     const activeData = {
       messages: [],
+      messageOrder: "receiveTime",
       currentTime: { sec: 0, nsec: 0 },
       startTime: { sec: 0, nsec: 0 },
       endTime: { sec: 1, nsec: 0 },
@@ -420,6 +421,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       lastSeekTime: 1234,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
+      messageDefinitionsByTopic: {},
     };
     await act(() => player.emit(activeData));
     expect(fn).toHaveBeenCalledTimes(2);
@@ -454,6 +456,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     // Emit activeData.
     const activeData = {
       messages: [],
+      messageOrder: "receiveTime",
       currentTime: { sec: 0, nsec: 0 },
       startTime: { sec: 0, nsec: 0 },
       endTime: { sec: 1, nsec: 0 },
@@ -462,6 +465,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       lastSeekTime: 1234,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
+      messageDefinitionsByTopic: {},
     };
     await act(() => player.emit(activeData));
     expect(fn).toHaveBeenCalledTimes(3);
@@ -607,7 +611,28 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       await delay(MAX_PROMISE_TIMEOUT_TIME_MS + 20);
       expect(hasFinishedFrame).toEqual(true);
 
-      reportError.expectCalledDuringTest();
+      sendNotification.expectCalledDuringTest();
+    });
+
+    it("Adding multiple promises that do not resolve eventually results in an error, and then continues playing", async () => {
+      // Pause the current frame twice.
+      pauseFrame("");
+      pauseFrame("");
+
+      // Then trigger the next emit.
+      let hasFinishedFrame = false;
+      await act(async () => {
+        player.emit().then(() => {
+          hasFinishedFrame = true;
+        });
+      });
+      await delay(20);
+      expect(hasFinishedFrame).toEqual(false);
+
+      await delay(MAX_PROMISE_TIMEOUT_TIME_MS + 20);
+      expect(hasFinishedFrame).toEqual(true);
+
+      sendNotification.expectCalledDuringTest();
     });
 
     it("does not accidentally resolve the second player's promise when replacing the player", async () => {

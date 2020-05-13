@@ -22,7 +22,7 @@ import type {
 import filterMap from "webviz-core/src/filterMap";
 import { getNewConnection } from "webviz-core/src/util/getNewConnection";
 import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList, missingRanges } from "webviz-core/src/util/ranges";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time";
 
 // I (JP) mostly just made these numbers up. It might be worth experimenting with different values
@@ -35,7 +35,11 @@ export const MAX_BLOCK_SIZE_BYTES = 50e6; // Number of bytes in a block before w
 
 // For each memory block we store the actual messages (grouped by topic), and a total byte size of
 // the underlying ArrayBuffers.
-type MemoryCacheBlock = { messagesByTopic: { [topic: string]: DataProviderMessage[] }, sizeInBytes: number };
+export type MemoryCacheBlock = $ReadOnly<{|
+  messagesByTopic: $ReadOnly<{ [topic: string]: $ReadOnlyArray<DataProviderMessage> }>,
+  sizeInBytes: number,
+|}>;
+const EMPTY_BLOCK: MemoryCacheBlock = { messagesByTopic: {}, sizeInBytes: 0 };
 
 function getNormalizedTopics(topics: string[]): string[] {
   return uniq(topics).sort();
@@ -146,7 +150,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
   // The actual blocks that contain the messages. Blocks have a set "width" in terms of nanoseconds
   // since the start time of the bag. If a block has some messages for a topic, then by definition
   // it has *all* messages for that topic and timespan.
-  _blocks: (?MemoryCacheBlock)[];
+  _blocks: $ReadOnlyArray<?MemoryCacheBlock>;
 
   // The start time of the bag. Used for computing from and to nanoseconds since the start.
   _startTime: Time;
@@ -356,10 +360,11 @@ export default class MemoryCacheDataProvider implements DataProvider {
         break;
       }
       const connectionSuccess = await this._setConnection(newConnection).catch((err) => {
-        reportError(
+        sendNotification(
           `MemoryCacheDataProvider connection ${this._currentConnection ? this._currentConnection.id : ""}`,
           err ? err.message : "<unknown error>",
-          "app"
+          "app",
+          "error"
         );
       });
       if (!connectionSuccess) {
@@ -417,33 +422,29 @@ export default class MemoryCacheDataProvider implements DataProvider {
         return false;
       }
 
-      // Create a new block if necessary.
-      this._blocks[currentBlockIndex] = this._blocks[currentBlockIndex] || { messagesByTopic: {}, sizeInBytes: 0 };
-      const currentBlock = this._blocks[currentBlockIndex];
-      if (!currentBlock) {
-        throw new Error("currentBlock should be set here");
-      }
-
+      const existingBlock = this._blocks[currentBlockIndex] || EMPTY_BLOCK;
+      const messagesByTopic = { ...existingBlock.messagesByTopic };
+      let sizeInBytes = existingBlock.sizeInBytes;
       // Fill up the block with messages.
       for (const topic of topics) {
-        currentBlock.messagesByTopic[topic] = [];
+        messagesByTopic[topic] = [];
       }
       for (const message of messages) {
         if (!(message.message instanceof ArrayBuffer)) {
-          reportError("MemoryCacheDataProvider can only be used with unparsed ROS messages", "", "app");
+          sendNotification("MemoryCacheDataProvider can only be used with unparsed ROS messages", "", "app", "error");
           // Do not retry.
           return false;
         }
-        currentBlock.messagesByTopic[message.topic].push(message);
-        currentBlock.sizeInBytes += message.message.byteLength;
+        messagesByTopic[message.topic].push(message);
+        sizeInBytes += message.message.byteLength;
       }
 
-      if (currentBlock.sizeInBytes > MAX_BLOCK_SIZE_BYTES && !this._loggedTooLargeError) {
+      if (sizeInBytes > MAX_BLOCK_SIZE_BYTES && !this._loggedTooLargeError) {
         this._loggedTooLargeError = true;
         const sizes = [];
-        for (const topic of Object.keys(currentBlock.messagesByTopic)) {
+        for (const topic of Object.keys(messagesByTopic)) {
           let size = 0;
-          for (const message of currentBlock.messagesByTopic[topic]) {
+          for (const message of messagesByTopic[topic]) {
             size += message.message.byteLength;
           }
           const roundedSize = Math.round(size / 1e6);
@@ -451,16 +452,20 @@ export default class MemoryCacheDataProvider implements DataProvider {
             sizes.push(`- ${topic}: ${roundedSize}MB`);
           }
         }
-        reportError(
+        sendNotification(
           "Very large block found",
           `A very large block (${Math.round(MEM_CACHE_BLOCK_SIZE_NS / 1e6)}ms) was found: ${Math.round(
-            currentBlock.sizeInBytes / 1e6
+            sizeInBytes / 1e6
           )}MB. Too much data can cause performance problems and even crashes. Please fix this where the data is being generated.\n\nBreakdown of large topics:\n${sizes
             .sort()
             .join("\n")}`,
-          "user"
+          "user",
+          "warn"
         );
       }
+      this._blocks = this._blocks
+        .slice(0, currentBlockIndex)
+        .concat([{ messagesByTopic, sizeInBytes }], this._blocks.slice(currentBlockIndex + 1));
 
       // Now `this._recentBlockRanges` and `this._blocks` have been updated, so we can resolve
       // requests, purge the cache and report progress.
@@ -529,11 +534,13 @@ export default class MemoryCacheDataProvider implements DataProvider {
 
     // Update our state.
     this._recentBlockRanges = newRecentRanges;
+    const newBlocks = new Array(this._blocks.length);
     for (let blockIndex = 0; blockIndex < this._blocks.length; blockIndex++) {
-      if (this._blocks[blockIndex] && !blockIndexesToKeep.has(blockIndex)) {
-        this._blocks[blockIndex] = undefined;
+      if (this._blocks[blockIndex] && blockIndexesToKeep.has(blockIndex)) {
+        newBlocks[blockIndex] = this._blocks[blockIndex];
       }
     }
+    this._blocks = newBlocks;
   }
 
   _updateProgress() {
@@ -543,6 +550,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
         start: range.start / this._blocks.length,
         end: range.end / this._blocks.length,
       })),
+      blocks: this._blocks,
     });
   }
 

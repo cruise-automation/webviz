@@ -84,16 +84,16 @@ export const noTypeOfError = {
   code: ErrorCodes.DatatypeExtraction.NO_TYPEOF,
 };
 
-export const noImportsInReturnType = {
-  severity: DiagnosticSeverity.Error,
-  message: "Node Playground does not currently support imports in the return type.",
-  source: Sources.DatatypeExtraction,
-  code: ErrorCodes.DatatypeExtraction.NO_IMPORTS_IN_RETURN_TYPE,
-};
-
 export const noTuples = {
   severity: DiagnosticSeverity.Error,
   message: "Tuples are not allowed as types.",
   source: Sources.DatatypeExtraction,
   code: ErrorCodes.DatatypeExtraction.NO_TUPLES,
+};
+
+export const noNestedAny = {
+  severity: DiagnosticSeverity.Error,
+  message: "Cannot nest 'any' in the return type.",
+  source: Sources.DatatypeExtraction,
+  code: ErrorCodes.DatatypeExtraction.NO_NESTED_ANY,
 };

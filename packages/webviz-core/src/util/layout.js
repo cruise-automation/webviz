@@ -19,6 +19,7 @@ import {
 import type { TabPanelConfig } from "webviz-core/src/types/layouts";
 import type {
   PanelConfig,
+  ChangePanelLayoutPayload,
   SaveConfigsPayload,
   MosaicNode,
   MosaicPath,
@@ -42,6 +43,11 @@ export function getPanelIdForType(type: string): string {
 // given a panel id, extract the encoded panel type
 export function getPanelTypeFromId(id: string): string {
   return id.split("!")[0];
+}
+
+// given a panel id, return a panel id with the type changed
+export function getPanelIdWithNewType(id: string, newPanelType: string): string {
+  return id.replace(getPanelTypeFromId(id), newPanelType);
 }
 
 type PanelIdMap = { [panelId: string]: string };
@@ -101,7 +107,7 @@ export function getPanelIdsInsideTabPanels(panelIds: string[], savedProps: Confi
   tabPanelIds.forEach((panelId) => {
     if (savedProps[panelId]?.tabs) {
       savedProps[panelId].tabs.forEach((tab) => {
-        tabLayouts.push(tab.layout);
+        tabLayouts.push(tab.layout, ...getPanelIdsInsideTabPanels(getLeaves(tab.layout), savedProps));
       });
     }
   });
@@ -110,13 +116,17 @@ export function getPanelIdsInsideTabPanels(panelIds: string[], savedProps: Confi
 
 export const DEFAULT_TAB_PANEL_CONFIG = { activeTabIdx: 0, tabs: [{ title: "1", layout: null }] };
 
-const validateTabPanelConfig = (config: ?PanelConfig) => {
+export const validateTabPanelConfig = (config: ?PanelConfig) => {
   if (!Array.isArray(config?.tabs) || typeof config?.activeTabIdx !== "number") {
-    Sentry.captureException(new Error("A non-Tab panel config is being operated on as if it were a tab panel."));
+    const error = new Error("A non-Tab panel config is being operated on as if it were a Tab panel.");
+    console.log("Invalid Tab panel config:", config, error);
+    Sentry.captureException(error);
     return false;
   }
   if (config && config.activeTabIdx >= config.tabs.length) {
-    Sentry.captureException(new Error("A Tab panel has an activeTabIdx for a nonexistent tab"));
+    const error = new Error("A Tab panel has an activeTabIdx for a nonexistent tab.");
+    console.log("Invalid Tab panel config:", config, error);
+    Sentry.captureException(error);
     return false;
   }
   return true;
@@ -136,7 +146,7 @@ export const updateTabPanelLayout = (layout: ?MosaicNode, tabPanelConfig: TabPan
 
 export const removePanelFromTabPanel = (
   path: MosaicPath = [],
-  config: PanelConfig,
+  config: TabPanelConfig,
   tabId: string
 ): SaveConfigsPayload => {
   if (!validateTabPanelConfig(config)) {
@@ -206,7 +216,7 @@ export const replacePanelsWithNewPanel = (
   replacementPanelId: ?string,
   panelIdsToRemove: string[],
   layout: MosaicNode
-) => {
+): ?MosaicNode => {
   if (getLeaves(layout).length === panelIdsToRemove.length) {
     return replacementPanelId;
   }
@@ -225,16 +235,19 @@ export const groupPanelsOutput = (
   panelIdToReplace: ?string,
   layout: MosaicNode,
   panelIdsToGroup: string[]
-): { tabPanelId: string, newLayout: ?MosaicNode, saveConfigsPayload: SaveConfigsPayload } => {
+): {
+  tabPanelId: string,
+  changePanelPayload: ChangePanelLayoutPayload,
+  saveConfigsPayload: SaveConfigsPayload,
+} => {
   const tabPanelId = getPanelIdForType(TAB_PANEL_TYPE);
-  const newLayout =
-    panelIdToReplace && replacePanelsWithNewPanel(panelIdToReplace, tabPanelId, panelIdsToGroup, layout);
+  const newLayout = replacePanelsWithNewPanel(panelIdToReplace, tabPanelId, panelIdsToGroup, layout);
   const panelIdsToRemove = getLeaves(layout).filter((leaf) => !panelIdsToGroup.includes(leaf));
   const tabLayout = replacePanelsWithNewPanel(null, null, panelIdsToRemove, layout);
 
   return {
     tabPanelId,
-    newLayout,
+    changePanelPayload: { layout: newLayout || "", trimSavedProps: false },
     saveConfigsPayload: {
       configs: [{ id: tabPanelId, config: { ...DEFAULT_TAB_PANEL_CONFIG, tabs: [{ title: "1", layout: tabLayout }] } }],
     },
@@ -245,15 +258,18 @@ export const createTabsOutput = (
   panelIdToReplace: ?string,
   layout: MosaicNode,
   panelIdsForTabs: string[]
-): { tabPanelId: string, newLayout: ?MosaicNode, saveConfigsPayload: SaveConfigsPayload } => {
+): {
+  tabPanelId: string,
+  changePanelPayload: ChangePanelLayoutPayload,
+  saveConfigsPayload: SaveConfigsPayload,
+} => {
   const tabPanelId = getPanelIdForType(TAB_PANEL_TYPE);
-  const newLayout =
-    panelIdToReplace && replacePanelsWithNewPanel(panelIdToReplace, tabPanelId, panelIdsForTabs, layout);
+  const newLayout = replacePanelsWithNewPanel(panelIdToReplace, tabPanelId, panelIdsForTabs, layout);
   const tabs = panelIdsForTabs.map((panelId) => ({ title: getPanelTypeFromId(panelId), layout: panelId }));
 
   return {
     tabPanelId,
-    newLayout,
+    changePanelPayload: { layout: newLayout || "", trimSavedProps: false },
     saveConfigsPayload: { configs: [{ id: tabPanelId, config: { ...DEFAULT_TAB_PANEL_CONFIG, tabs } }] },
   };
 };
@@ -262,7 +278,7 @@ export const selectPanelOutput = (
   type: string,
   layout: ?MosaicNode,
   { config, relatedConfigs }: { config?: PanelConfig, relatedConfigs?: { [panelId: string]: PanelConfig } }
-): { saveConfigsPayload: SaveConfigsPayload, layoutPayload: { layout: MosaicNode } } => {
+): { saveConfigsPayload: SaveConfigsPayload, changePanelPayload: ChangePanelLayoutPayload } => {
   const id = getPanelIdForType(type);
   let saveConfigsPayload = { configs: [] };
   if (config) {
@@ -270,9 +286,12 @@ export const selectPanelOutput = (
       ? getSaveConfigsPayloadForNewTab({ id, config, relatedConfigs })
       : { configs: [{ id, config }] };
   }
-  const layoutPayload = { layout: isEmpty(layout) ? id : { direction: "row", first: id, second: layout } };
+  const changePanelPayload = {
+    layout: isEmpty(layout) ? id : { direction: "row", first: id, second: layout },
+    trimSavedProps: !relatedConfigs,
+  };
 
-  return { saveConfigsPayload, layoutPayload };
+  return { saveConfigsPayload, changePanelPayload };
 };
 
 export const onNewPanelDrop = ({

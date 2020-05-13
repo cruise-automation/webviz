@@ -50,7 +50,20 @@ export default class FetchReader extends Readable {
       });
       return undefined;
     }
-    this._reader = data.body.getReader();
+
+    // The fetch succeeded, but there might still be an error streaming.
+    try {
+      // When a stream is closed or errors, any reader it is locked to is released.
+      // If the getReader method is called on an already locked stream, an exception will be thrown.
+      // This is caused by server-side errors, but we should catch it anyway.
+      this._reader = data.body.getReader();
+    } catch (err) {
+      setImmediate(() => {
+        this.emit("error", new Error(`Request succeeded, but failed to stream: ${this._url}`));
+      });
+      return undefined;
+    }
+
     return this._reader;
   }
 

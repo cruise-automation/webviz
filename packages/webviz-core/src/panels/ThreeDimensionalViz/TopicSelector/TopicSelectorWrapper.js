@@ -150,8 +150,8 @@ export type TopicSelectorWrapperProps = {|
 // A wrapper component for TopicSelectorTree and TopicSelectorFlatList to share search menu, error UI and states
 export default function TopicSelectorWrapper({
   autoTextBackgroundColor,
-  checkedNodes,
-  expandedNodes,
+  checkedKeys,
+  expandedKeys,
   topicDisplayMode,
   hideTopicTreeCount,
   modifiedNamespaceTopics,
@@ -262,8 +262,8 @@ export default function TopicSelectorWrapper({
         <STreeWrapper className={cx({ filtered: !!filterText })}>
           {topicDisplayMode === TOPIC_DISPLAY_MODES.SHOW_TREE.value ? (
             <TopicSelectorTree
-              checkedNodes={checkedNodes}
-              expandedNodes={expandedNodes}
+              checkedKeys={checkedKeys}
+              expandedKeys={expandedKeys}
               modifiedNamespaceTopics={modifiedNamespaceTopics}
               namespaces={namespaces}
               onEditClick={onEditClick}
@@ -272,8 +272,8 @@ export default function TopicSelectorWrapper({
             />
           ) : (
             <TopicSelectorFlatList
-              checkedNodes={checkedNodes}
-              expandedNodes={expandedNodes}
+              checkedKeys={checkedKeys}
+              expandedKeys={expandedKeys}
               modifiedNamespaceTopics={modifiedNamespaceTopics}
               namespaces={namespaces}
               onEditClick={onEditClick}

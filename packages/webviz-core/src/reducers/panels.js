@@ -15,6 +15,7 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type {
   MosaicNode,
+  ChangePanelLayoutPayload,
   SaveConfigsPayload,
   SaveFullConfigPayload,
   ImportPanelLayoutPayload,
@@ -29,7 +30,10 @@ import Storage from "webviz-core/src/util/Storage";
 const storage = new Storage();
 
 export const GLOBAL_STATE_STORAGE_KEY = "webvizGlobalState";
-export const defaultPlaybackConfig = { speed: 0.2 };
+export const defaultPlaybackConfig: PlaybackConfig = {
+  speed: 0.2,
+  messageOrder: "receiveTime",
+};
 
 // TODO(Audrey): remove the storage migration logic and fallback to empty in late 2019
 const OLD_KEYS = {
@@ -54,6 +58,7 @@ export type PanelsState = {
   linkedGlobalVariables: LinkedGlobalVariables,
   playbackConfig: PlaybackConfig,
   restrictedTopics?: string[],
+  version?: number,
 };
 
 export const setStoredLayout = (layout: PanelsState) => {
@@ -107,12 +112,17 @@ function getDefaultState(): PanelsState {
   return getGlobalHooks().migratePanels(newGlobalState);
 }
 
-function changePanelLayout(state: PanelsState, layout: MosaicNode): PanelsState {
-  const panelIds = getLeaves(layout);
+function changePanelLayout(
+  state: PanelsState,
+  { layout, trimSavedProps = true }: ChangePanelLayoutPayload
+): PanelsState {
+  const panelIds = getLeaves(layout || state.layout);
   const panelIdsInsideTabPanels = getPanelIdsInsideTabPanels(panelIds, state.savedProps);
   // Filter savedProps in case a panel was removed from the layout
   // We don't want its savedProps hanging around forever
-  const savedProps = pick(state.savedProps, [...panelIdsInsideTabPanels, ...panelIds]);
+  const savedProps = trimSavedProps
+    ? pick(state.savedProps, [...panelIdsInsideTabPanels, ...panelIds])
+    : state.savedProps;
   return { ...state, savedProps, layout };
 }
 
@@ -196,7 +206,7 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
   switch (action.type) {
     case "CHANGE_PANEL_LAYOUT":
       // don't allow the last panel to be removed
-      newGlobalState = changePanelLayout(state, action.payload.layout || state.layout);
+      newGlobalState = changePanelLayout(state, action.payload);
       break;
 
     case "SAVE_PANEL_CONFIGS":
@@ -243,7 +253,7 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
     }
 
     case "SET_PLAYBACK_CONFIG": {
-      newGlobalState.playbackConfig = action.payload;
+      newGlobalState.playbackConfig = { ...newGlobalState.playbackConfig, ...action.payload };
       break;
     }
 

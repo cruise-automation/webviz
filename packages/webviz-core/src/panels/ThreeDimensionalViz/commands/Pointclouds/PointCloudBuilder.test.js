@@ -242,7 +242,7 @@ describe("PointCloudBuilder", () => {
       orientation: { x: 0, y: 0, z: 0, w: 0 },
     },
     name: "foo",
-    data: [
+    data: new Uint8Array([
       // point 1
       0,
       0,
@@ -264,7 +264,7 @@ describe("PointCloudBuilder", () => {
       255,
       255,
       255,
-    ],
+    ]),
     height: 1,
     is_bigendian: false,
     is_dense: 0,
@@ -337,7 +337,7 @@ describe("PointCloudBuilder", () => {
       point_step: 19,
       row_step: 19,
       width: 2,
-      data: [
+      data: new Uint8Array([
         0, // start of point 1
         0,
         0,
@@ -376,7 +376,7 @@ describe("PointCloudBuilder", () => {
         0,
         0,
         0, // baz: int32 = 7
-      ],
+      ]),
     };
 
     it("reads uint8 rainbow with min/max value", () => {

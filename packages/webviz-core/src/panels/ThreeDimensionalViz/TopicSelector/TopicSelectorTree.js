@@ -16,8 +16,8 @@ import toggle from "webviz-core/src/util/toggle";
 import type { Save3DConfig } from "..";
 
 export type TopicSelectorTreeProps = {|
-  checkedNodes: string[],
-  expandedNodes: string[],
+  checkedKeys: string[],
+  expandedKeys: string[],
   modifiedNamespaceTopics: string[],
   namespaces: Namespace[],
   onEditClick: (e: SyntheticMouseEvent<HTMLElement>, topic: string) => void,
@@ -26,8 +26,8 @@ export type TopicSelectorTreeProps = {|
 |};
 
 export default function TopicSelectorTree({
-  checkedNodes,
-  expandedNodes,
+  checkedKeys,
+  expandedKeys,
   modifiedNamespaceTopics,
   namespaces,
   onEditClick,
@@ -38,11 +38,11 @@ export default function TopicSelectorTree({
     ({ legacyIds, id }: Node) => {
       // don't invalidate layout url just because a node was expanded/collapsed
       saveConfig(
-        { expandedNodes: toggle(expandedNodes, id, (item) => legacyIds.includes(item) || item === id) },
+        { expandedKeys: toggle(expandedKeys, id, (item) => legacyIds.includes(item) || item === id) },
         { keepLayoutInUrl: true }
       );
     },
-    [expandedNodes, saveConfig]
+    [expandedKeys, saveConfig]
   );
 
   const onEditClickLocal = useCallback(
@@ -63,21 +63,21 @@ export default function TopicSelectorTree({
       // This helps us avoid re-checking topics when new namespaces show up (on app load).
       if (namespace && topic && !modifiedNamespaceTopics.includes(topic)) {
         // check all namespaces under this topic *except* the clicked one
-        const newCheckedNodes = checkedNodes.slice();
+        const newCheckedKeys = checkedKeys.slice();
         namespaces.forEach((ns) => {
           if (ns.topic === topic && ns.name !== namespace) {
-            newCheckedNodes.push(getId(ns));
+            newCheckedKeys.push(getId(ns));
           }
         });
         saveConfig({
           modifiedNamespaceTopics: modifiedNamespaceTopics.concat(topic),
-          checkedNodes: newCheckedNodes,
+          checkedKeys: newCheckedKeys,
         });
       } else {
-        saveConfig({ checkedNodes: toggle(checkedNodes, id, (item) => legacyIds.includes(item) || item === id) });
+        saveConfig({ checkedKeys: toggle(checkedKeys, id, (item) => legacyIds.includes(item) || item === id) });
       }
     },
-    [checkedNodes, modifiedNamespaceTopics, namespaces, saveConfig]
+    [checkedKeys, modifiedNamespaceTopics, namespaces, saveConfig]
   );
 
   return (

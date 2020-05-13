@@ -17,7 +17,7 @@ import Menu from "webviz-core/src/components/Menu";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import type { State as ReduxState } from "webviz-core/src/reducers";
 import type { PanelsState } from "webviz-core/src/reducers/panels";
-import type { MosaicNode, SaveConfigsPayload } from "webviz-core/src/types/panels";
+import type { ChangePanelLayoutPayload, SaveConfigsPayload } from "webviz-core/src/types/panels";
 import { selectPanelOutput } from "webviz-core/src/util/layout";
 
 type OwnProps = {|
@@ -27,7 +27,7 @@ type OwnProps = {|
 type Props = {|
   ...OwnProps,
   panels: PanelsState,
-  changePanelLayout: (payload: { layout: MosaicNode }) => void,
+  changePanelLayout: (payload: ChangePanelLayoutPayload) => void,
   savePanelConfigs: (SaveConfigsPayload) => void,
 |};
 
@@ -50,9 +50,12 @@ class UnconnectedAppMenu extends Component<Props, State> {
 
   _onPanelSelect = ({ type, config, relatedConfigs }: PanelSelection) => {
     const { panels } = this.props;
-    const { layoutPayload, saveConfigsPayload } = selectPanelOutput(type, panels.layout, { config, relatedConfigs });
+    const { changePanelPayload, saveConfigsPayload } = selectPanelOutput(type, panels.layout, {
+      config,
+      relatedConfigs,
+    });
+    this.props.changePanelLayout(changePanelPayload);
     this.props.savePanelConfigs(saveConfigsPayload);
-    this.props.changePanelLayout(layoutPayload);
     window.ga("send", "event", "Panel", "Select", type);
   };
 

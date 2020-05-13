@@ -11,7 +11,7 @@ import { TimeUtil } from "rosbag";
 import delay from "webviz-core/shared/delay";
 import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 const dummyExtensionPoint = {
   progressCallback() {},
@@ -136,7 +136,7 @@ describe("BagDataProvider", () => {
     const sortedTimestamps = [...timestamps];
     sortedTimestamps.sort(TimeUtil.compare);
     expect(timestamps).toEqual(sortedTimestamps);
-    reportError.expectCalledDuringTest();
+    sendNotification.expectCalledDuringTest();
   });
 
   // Regression test for https://github.com/cruise-automation/webviz/issues/373
@@ -150,14 +150,15 @@ describe("BagDataProvider", () => {
     provider.initialize(dummyExtensionPoint);
     await delay(100); // Call above returns promise that never resolves.
     // $FlowFixMe - doesn't understand this mock
-    expect(reportError.mock.calls).toEqual([
+    expect(sendNotification.mock.calls).toEqual([
       [
-        "Warning: Empty connections found",
+        "Empty connections found",
         'This bag has some empty connections, which Webviz does not currently support. We\'ll try to play the remaining topics. Details:\n\n[{"offset":5254,"dataOffset":5310,"end":5475,"length":221,"conn":0,"topic":"/led_array_status","type":"led_array_msgs/Status","md5sum":"53a14e6cadee4d14930b099922d25397","messageDefinition":"","callerid":"/led_array_node","latching":false}]',
         "user",
+        "warn",
       ],
-      ["Cannot play invalid bag", "Bag is empty or corrupt.", "user"],
+      ["Cannot play invalid bag", "Bag is empty or corrupt.", "user", "error"],
     ]);
-    reportError.expectCalledDuringTest();
+    sendNotification.expectCalledDuringTest();
   });
 });

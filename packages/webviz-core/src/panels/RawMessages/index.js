@@ -28,7 +28,6 @@ import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
-import Item from "webviz-core/src/components/Menu/Item";
 import type { RosPath, MessagePathStructureItem } from "webviz-core/src/components/MessagePathSyntax/constants";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import {
@@ -277,6 +276,7 @@ function RawMessages(props: Props) {
       const diff = diffEnabled && getDiff(data, diffData, null, showFullMessageForDiff);
       const diffLabelTexts = Object.keys(diffLabels).map((key) => diffLabels[key].labelText);
 
+      const CheckboxComponent = showFullMessageForDiff ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
       return (
         <Flex col clip scroll className={styles.container}>
           <Metadata
@@ -292,91 +292,103 @@ function RawMessages(props: Props) {
           ) : diffEnabled && isEqual({}, diff) ? (
             <EmptyState>No difference found</EmptyState>
           ) : (
-            <Tree
-              labelRenderer={(raw) => <SDiffSpan onClick={() => onLabelClick(raw)}>{first(raw)}</SDiffSpan>}
-              shouldExpandNode={shouldExpandNode}
-              hideRoot
-              invertTheme={false}
-              getItemString={diffEnabled ? getItemStringForDiff : getItemString}
-              valueRenderer={(...args) => {
-                if (diffEnabled) {
-                  return valueRenderer(null, diff, diff, ...args);
-                }
-                if (hideWrappingArray) {
-                  // When the wrapping array is hidden, put it back here.
-                  return valueRenderer(rootStructureItem, [data], baseItem.queriedData, ...args, 0);
-                }
-                return valueRenderer(rootStructureItem, data, baseItem.queriedData, ...args);
-              }}
-              postprocessValue={(val: mixed) => {
-                if (
-                  val != null &&
-                  typeof val === "object" &&
-                  Object.keys(val).length === 1 &&
-                  diffLabelTexts.includes(Object.keys(val)[0])
-                ) {
-                  if (Object.keys(val)[0] !== diffLabels.ID.labelText) {
-                    return val[Object.keys(val)[0]];
+            <>
+              {diffEnabled && (
+                <div
+                  style={{ cursor: "pointer", fontSize: "11px" }}
+                  onClick={() => saveConfig({ showFullMessageForDiff: !showFullMessageForDiff })}>
+                  <Icon style={{ verticalAlign: "middle" }}>
+                    <CheckboxComponent />
+                  </Icon>{" "}
+                  Show full msg
+                </div>
+              )}
+              <Tree
+                labelRenderer={(raw) => <SDiffSpan onClick={() => onLabelClick(raw)}>{first(raw)}</SDiffSpan>}
+                shouldExpandNode={shouldExpandNode}
+                hideRoot
+                invertTheme={false}
+                getItemString={diffEnabled ? getItemStringForDiff : getItemString}
+                valueRenderer={(...args) => {
+                  if (diffEnabled) {
+                    return valueRenderer(null, diff, diff, ...args);
                   }
-                }
-                return val;
-              }}
-              theme={{
-                ...jsonTreeTheme,
-                tree: { margin: 0 },
-                nestedNode: ({ style }, keyPath, nodeType, expanded) => {
-                  const baseStyle = {
-                    ...style,
-                    padding: "2px 0 2px 5px",
-                    marginTop: 2,
-                    textDecoration: "inherit",
-                  };
-                  if (!diffEnabled) {
-                    return { style: baseStyle };
+                  if (hideWrappingArray) {
+                    // When the wrapping array is hidden, put it back here.
+                    return valueRenderer(rootStructureItem, [data], baseItem.queriedData, ...args, 0);
                   }
-                  let backgroundColor;
-                  let textDecoration;
-                  if (diffLabelsByLabelText[keyPath[0]]) {
-                    backgroundColor = diffLabelsByLabelText[keyPath[0]].backgroundColor;
-                    textDecoration = keyPath[0] === diffLabels.DELETED.labelText ? "line-through" : "none";
+                  return valueRenderer(rootStructureItem, data, baseItem.queriedData, ...args);
+                }}
+                postprocessValue={(val: mixed) => {
+                  if (
+                    val != null &&
+                    typeof val === "object" &&
+                    Object.keys(val).length === 1 &&
+                    diffLabelTexts.includes(Object.keys(val)[0])
+                  ) {
+                    if (Object.keys(val)[0] !== diffLabels.ID.labelText) {
+                      return val[Object.keys(val)[0]];
+                    }
                   }
-                  const nestedObj = get(diff, keyPath.slice().reverse(), {});
-                  const nestedObjKey = Object.keys(nestedObj)[0];
-                  if (diffLabelsByLabelText[nestedObjKey]) {
-                    backgroundColor = diffLabelsByLabelText[nestedObjKey].backgroundColor;
-                    textDecoration = nestedObjKey === diffLabels.DELETED.labelText ? "line-through" : "none";
-                  }
-                  return {
-                    style: { ...baseStyle, backgroundColor, textDecoration: textDecoration || "inherit" },
-                  };
-                },
-                nestedNodeLabel: ({ style }, keyPath, nodeType, expanded) => ({
-                  style: { ...style, textDecoration: "inherit" },
-                }),
-                nestedNodeChildren: ({ style }, nodeType, expanded) => ({
-                  style: { ...style, textDecoration: "inherit" },
-                }),
-                value: ({ style }, nodeType, keyPath) => {
-                  const baseStyle = { ...style, textDecoration: "inherit" };
-                  if (!diffEnabled) {
-                    return { style: baseStyle };
-                  }
-                  let backgroundColor;
-                  let textDecoration;
-                  const nestedObj = get(diff, keyPath.slice().reverse(), {});
-                  const nestedObjKey = Object.keys(nestedObj)[0];
-                  if (diffLabelsByLabelText[nestedObjKey]) {
-                    backgroundColor = diffLabelsByLabelText[nestedObjKey].backgroundColor;
-                    textDecoration = nestedObjKey === diffLabels.DELETED.labelText ? "line-through" : "none";
-                  }
-                  return {
-                    style: { ...baseStyle, backgroundColor, textDecoration: textDecoration || "inherit" },
-                  };
-                },
-                label: { textDecoration: "inherit" },
-              }}
-              data={diffEnabled ? diff : data}
-            />
+                  return val;
+                }}
+                theme={{
+                  ...jsonTreeTheme,
+                  tree: { margin: 0 },
+                  nestedNode: ({ style }, keyPath, nodeType, expanded) => {
+                    const baseStyle = {
+                      ...style,
+                      padding: "2px 0 2px 5px",
+                      marginTop: 2,
+                      textDecoration: "inherit",
+                    };
+                    if (!diffEnabled) {
+                      return { style: baseStyle };
+                    }
+                    let backgroundColor;
+                    let textDecoration;
+                    if (diffLabelsByLabelText[keyPath[0]]) {
+                      backgroundColor = diffLabelsByLabelText[keyPath[0]].backgroundColor;
+                      textDecoration = keyPath[0] === diffLabels.DELETED.labelText ? "line-through" : "none";
+                    }
+                    const nestedObj = get(diff, keyPath.slice().reverse(), {});
+                    const nestedObjKey = Object.keys(nestedObj)[0];
+                    if (diffLabelsByLabelText[nestedObjKey]) {
+                      backgroundColor = diffLabelsByLabelText[nestedObjKey].backgroundColor;
+                      textDecoration = nestedObjKey === diffLabels.DELETED.labelText ? "line-through" : "none";
+                    }
+                    return {
+                      style: { ...baseStyle, backgroundColor, textDecoration: textDecoration || "inherit" },
+                    };
+                  },
+                  nestedNodeLabel: ({ style }, keyPath, nodeType, expanded) => ({
+                    style: { ...style, textDecoration: "inherit" },
+                  }),
+                  nestedNodeChildren: ({ style }, nodeType, expanded) => ({
+                    style: { ...style, textDecoration: "inherit" },
+                  }),
+                  value: ({ style }, nodeType, keyPath) => {
+                    const baseStyle = { ...style, textDecoration: "inherit" };
+                    if (!diffEnabled) {
+                      return { style: baseStyle };
+                    }
+                    let backgroundColor;
+                    let textDecoration;
+                    const nestedObj = get(diff, keyPath.slice().reverse(), {});
+                    const nestedObjKey = Object.keys(nestedObj)[0];
+                    if (diffLabelsByLabelText[nestedObjKey]) {
+                      backgroundColor = diffLabelsByLabelText[nestedObjKey].backgroundColor;
+                      textDecoration = nestedObjKey === diffLabels.DELETED.labelText ? "line-through" : "none";
+                    }
+                    return {
+                      style: { ...baseStyle, backgroundColor, textDecoration: textDecoration || "inherit" },
+                    };
+                  },
+                  label: { textDecoration: "inherit" },
+                }}
+                data={diffEnabled ? diff : data}
+              />
+            </>
           )}
         </Flex>
       );
@@ -391,6 +403,7 @@ function RawMessages(props: Props) {
       expandedFields,
       onLabelClick,
       rootStructureItem,
+      saveConfig,
       showFullMessageForDiff,
       topicPath,
       valueRenderer,
@@ -399,15 +412,7 @@ function RawMessages(props: Props) {
 
   return (
     <Flex col clip style={{ position: "relative" }}>
-      <PanelToolbar
-        helpContent={helpContent}
-        menuContent={
-          <Item
-            icon={config.showFullMessageForDiff ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-            onClick={() => saveConfig({ showFullMessageForDiff: !config.showFullMessageForDiff })}>
-            <span>Show full message for diff</span>
-          </Item>
-        }>
+      <PanelToolbar helpContent={helpContent}>
         <Icon tooltip="Toggle diff" medium fade onClick={onToggleDiff} active={diffEnabled}>
           <PlusMinusIcon />
         </Icon>

@@ -27,6 +27,7 @@ function getPlayerState(): PlayerState {
     playerId: "1",
     activeData: {
       messages: [],
+      messageOrder: "receiveTime",
       startTime: { sec: START_TIME, nsec: 331 },
       endTime: { sec: START_TIME + 20, nsec: 331 },
       currentTime: { sec: START_TIME + 5, nsec: 331 },
@@ -35,6 +36,7 @@ function getPlayerState(): PlayerState {
       lastSeekTime: 0,
       topics: [],
       datatypes: {},
+      messageDefinitionsByTopic: {},
     },
   };
   return player;

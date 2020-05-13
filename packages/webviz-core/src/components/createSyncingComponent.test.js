@@ -11,7 +11,7 @@ import React from "react";
 
 import createSyncingComponent from "webviz-core/src/components/createSyncingComponent";
 
-const tick = () => new Promise((resolve) => setImmediate(resolve));
+const tick = (time: number = 0) => new Promise((resolve) => setTimeout(resolve, time));
 
 describe("createSyncingComponent", () => {
   const IdentitySyncingComponent = createSyncingComponent("IdentitySyncingComponent", (dataItems) => dataItems);
@@ -66,11 +66,10 @@ describe("createSyncingComponent", () => {
     await tick();
 
     wrapper1.setProps({ data: { component: 1, different: "data" } });
-    await tick();
+    await tick(1000);
 
     expect(childFn1.mock.calls).toEqual([
       [[{ component: 1 }]],
-      [[{ component: 1 }, { component: 2 }]],
       [[{ component: 1, different: "data" }, { component: 2 }]],
     ]);
     expect(childFn2.mock.calls).toEqual([

@@ -14,26 +14,24 @@ import styled from "styled-components";
 
 import Slider from "webviz-core/src/components/Slider";
 
-const StyledRange = styled.div.attrs({
-  style: ({ width = 0 }) => ({ width: `${width * 100}%` }),
-})`
+const StyledRange = styled.div`
   position: absolute;
   top: 40%;
   left: 0;
   background-color: #b3ecf9bd;
   height: 20%;
+  width: ${(props) => (props.width || 0) * 100}%;
   border-radius: 2px;
 `;
 
-const StyledMarker = styled.div.attrs({
-  style: ({ width = 0 }) => ({ left: `${width * 100}%` }),
-})`
+const StyledMarker = styled.div`
   background-color: white;
   position: absolute;
   height: 150%;
   border: 1px solid rgba(0, 0, 0, 0.3);
   width: 6px;
   top: -25%;
+  left: ${(props) => (props.width || 0) * 100}%;
 `;
 
 const initialState = {

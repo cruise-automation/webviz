@@ -130,7 +130,7 @@ export default function TextField({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onBlur, validate, validateOnBlur]
+    [inputStr, onBlur, validate, validateOnBlur]
   );
 
   // only show red border when there is some input and it's not valid

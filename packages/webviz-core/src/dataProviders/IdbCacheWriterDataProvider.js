@@ -31,7 +31,7 @@ import { getNewConnection } from "webviz-core/src/util/getNewConnection";
 import Database from "webviz-core/src/util/indexeddb/Database";
 import Logger from "webviz-core/src/util/Logger";
 import { type Range, deepIntersect, isRangeCoveredByRanges, missingRanges } from "webviz-core/src/util/ranges";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromNanoSec, subtractTimes, toNanoSec } from "webviz-core/src/util/time";
 
 const log = new Logger(__filename);
@@ -171,10 +171,11 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
     });
     if (newConnection) {
       this._setConnection(newConnection).catch((err) => {
-        reportError(
+        sendNotification(
           `IdbCacheWriter connection ${this._currentConnection ? this._currentConnection.id : ""}`,
           err ? err.message : "<unknown error>",
-          "app"
+          "app",
+          "error"
         );
       });
     }
@@ -193,7 +194,7 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
     this._currentConnection = { id, topics: this._getCurrentTopics(), remainingRange: range };
 
     const reportTransactionError = (err) => {
-      reportError(`IDBTransaction for ${id}`, err ? err.message : "<unknown error>", "app");
+      sendNotification(`IDBTransaction for ${id}`, err ? err.message : "<unknown error>", "app", "error");
     };
 
     const isCurrent = () => {

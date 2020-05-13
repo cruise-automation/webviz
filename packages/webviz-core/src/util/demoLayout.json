@@ -31,7 +31,7 @@
   },
   "savedProps": {
     "3D Panel!309p5r8": {
-      "checkedNodes": [
+      "checkedKeys": [
         "/cloud_nodelet/parameter_descriptions",
         "/cloud_nodelet/parameter_updates",
         "/diagnostics",
@@ -53,14 +53,10 @@
         "/velodyne_points",
         "name:Topics"
       ],
-      "expandedNodes": [],
+      "expandedKeys": [],
       "followTf": "velodyne",
       "cameraState": {
-        "targetOffset": [
-          0.09330692712710864,
-          0.04332363563045752,
-          0
-        ],
+        "targetOffset": [0.09330692712710864, 0.04332363563045752, 0],
         "distance": 64.9136785575918,
         "perspective": true,
         "phi": 0,
@@ -85,7 +81,7 @@
       "followOrientation": false
     },
     "3D Panel!1bkpp87": {
-      "checkedNodes": [
+      "checkedKeys": [
         "/cloud_nodelet/parameter_descriptions",
         "/cloud_nodelet/parameter_updates",
         "/diagnostics",
@@ -107,16 +103,10 @@
         "/velodyne_points",
         "name:Topics"
       ],
-      "expandedNodes": [
-        "name:Topics"
-      ],
+      "expandedKeys": ["name:Topics"],
       "followTf": "velodyne",
       "cameraState": {
-        "targetOffset": [
-          2.460426157758374,
-          0.24321332222014067,
-          0
-        ],
+        "targetOffset": [2.460426157758374, 0.24321332222014067, 0],
         "distance": 4.224236212354354,
         "perspective": true,
         "phi": 1.2286699312074771,
@@ -151,10 +141,7 @@
       "synchronize": false,
       "mode": "fit",
       "zoomPercentage": 50.78125,
-      "offset": [
-        47.53125,
-        -0.484375
-      ]
+      "offset": [47.53125, -0.484375]
     },
     "DiagnosticStatusPanel!49o9wd0": {
       "topicToRender": "/diagnostics",

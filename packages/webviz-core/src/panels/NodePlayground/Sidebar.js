@@ -19,7 +19,7 @@ import Icon from "webviz-core/src/components/Icon";
 import TextContent from "webviz-core/src/components/TextContent";
 import type { Explorer } from "webviz-core/src/panels/NodePlayground";
 import nodePlaygroundDocs from "webviz-core/src/panels/NodePlayground/index.help.md";
-import type { UserNodesState } from "webviz-core/src/reducers/userNodes";
+import type { UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
 import { type UserNodes } from "webviz-core/src/types/panels";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
@@ -78,7 +78,9 @@ type NodesListProps = {
   deleteNode: (id: string) => void,
   collapse: () => void,
   selectedNodeId: ?string,
-  nodeDiagnosticsAndLogs: UserNodesState,
+  userNodeDiagnostics: {
+    [guid: string]: UserNodeDiagnostics,
+  },
 };
 
 const NodesList = ({
@@ -87,7 +89,7 @@ const NodesList = ({
   deleteNode,
   collapse,
   selectedNodeId,
-  nodeDiagnosticsAndLogs,
+  userNodeDiagnostics,
 }: NodesListProps) => {
   const [search, updateSearch] = React.useState("");
   return (
@@ -124,7 +126,7 @@ const NodesList = ({
       {Object.keys(nodes)
         .filter((nodeId) => !search || new RegExp(search).test(nodeId))
         .map((nodeId) => {
-          const trusted = nodeDiagnosticsAndLogs[nodeId] ? nodeDiagnosticsAndLogs[nodeId].trusted : true;
+          const trusted = userNodeDiagnostics[nodeId] ? userNodeDiagnostics[nodeId].trusted : true;
           return (
             <ListItem
               key={nodeId}
@@ -149,7 +151,9 @@ type Props = {|
   selectedNodeId: ?string,
   otherMarkdownDocsForTest?: string,
   needsUserTrust: boolean,
-  nodeDiagnosticsAndLogs: UserNodesState,
+  userNodeDiagnostics: {
+    [guid: string]: UserNodeDiagnostics,
+  },
   explorer: Explorer,
   updateExplorer: (explorer: Explorer) => void,
 |};
@@ -171,7 +175,7 @@ const Sidebar = ({
   selectedNodeId,
   otherMarkdownDocsForTest,
   needsUserTrust,
-  nodeDiagnosticsAndLogs,
+  userNodeDiagnostics,
   explorer,
   updateExplorer,
 }: Props) => {
@@ -206,7 +210,7 @@ const Sidebar = ({
             deleteNode={deleteNode}
             collapse={() => updateExplorer(null)}
             selectedNodeId={selectedNodeId}
-            nodeDiagnosticsAndLogs={nodeDiagnosticsAndLogs}
+            userNodeDiagnostics={userNodeDiagnostics}
           />
         ) : (
           <SFlex>

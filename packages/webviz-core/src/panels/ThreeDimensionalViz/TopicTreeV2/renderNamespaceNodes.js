@@ -6,15 +6,23 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Tree } from "antd";
-import xor from "lodash/xor";
-import React, { type Node } from "react";
+import React from "react";
 
 import NodeName from "./NodeName";
-import { SToggles, STreeNodeRow, SLeft, SRightActions } from "./TreeNodeRow";
-import VisibilityToggle, { TOGGLE_SIZE_CONFIG } from "./VisibilityToggle";
+import { type TreeUINode } from "./renderTreeNodes";
+import { TREE_SPACING } from "./TopicTreeV2";
+import { SToggles, STreeNodeRow, SLeft, SRightActions, ICON_SIZE, SDotMenuPlaceholder } from "./TreeNodeRow";
+import type {
+  ToggleNode,
+  TreeTopicNode,
+  GetIsTreeNodeVisibleInScene,
+  GetIsTreeNodeVisibleInTree,
+  ToggleNamespaceChecked,
+} from "./types";
+import VisibilityToggle, { TOGGLE_WRAPPER_SIZE } from "./VisibilityToggle";
 
-const LEFT_SPACING = 12;
+const OUTER_LEFT_MARGIN = 12;
+const INNER_LEFT_MARGIN = 8;
 
 export type NamespaceNode = {|
   checked: boolean,
@@ -23,51 +31,72 @@ export type NamespaceNode = {|
 |};
 
 type Props = {|
-  checkedKeysSet: Set<string>,
   children: NamespaceNode[],
-  saveConfig: (any) => void,
-  topicName: string,
+  getIsTreeNodeVisibleInScene: GetIsTreeNodeVisibleInScene,
+  getIsTreeNodeVisibleInTree: GetIsTreeNodeVisibleInTree,
+  isXSWidth: boolean,
+  overrideColor: ?string,
+  toggleCheckAllAncestors: ToggleNode,
+  toggleNamespaceChecked: ToggleNamespaceChecked,
+  topicNode: TreeTopicNode,
   width: number,
+  filterText: string,
 |};
 
 // Must use function instead of React component as Tree/TreeNode can only accept TreeNode as children.
 export default function renderNamespaceNodes({
-  checkedKeysSet,
   children,
-  saveConfig,
-  topicName,
+  getIsTreeNodeVisibleInScene,
+  getIsTreeNodeVisibleInTree,
+  isXSWidth,
+  overrideColor,
+  toggleCheckAllAncestors,
+  toggleNamespaceChecked,
+  topicNode,
   width,
-}: Props): ?(Node[]) {
-  return children.map(({ key, namespace, checked }) => {
-    return (
-      <Tree.TreeNode
-        key={key}
-        title={
-          <STreeNodeRow style={{ width: width - LEFT_SPACING, marginLeft: "-12px", padding: 0 }}>
-            <SLeft>
-              <NodeName
-                style={{ marginLeft: 8 }}
-                displayName={namespace}
-                nodeKey={key}
-                topicName={""}
-                searchText={""}
-              />
-            </SLeft>
-            <SRightActions>
+  filterText,
+}: Props): TreeUINode[] {
+  return children
+    .filter(({ key }) => getIsTreeNodeVisibleInTree(key))
+    .map(({ key, namespace, checked }) => {
+      const nodeVisibleInScene = getIsTreeNodeVisibleInScene(topicNode, key);
+      const rowWidth = width - (isXSWidth ? 0 : TREE_SPACING * 2) - OUTER_LEFT_MARGIN;
+      const rightActionWidth = topicNode.available ? TOGGLE_WRAPPER_SIZE + ICON_SIZE : ICON_SIZE;
+      const maxNodeNameLen = rowWidth - rightActionWidth - INNER_LEFT_MARGIN * 2;
+
+      const title = (
+        <STreeNodeRow
+          visibleInScene={nodeVisibleInScene}
+          style={{
+            width: rowWidth,
+            marginLeft: `-${OUTER_LEFT_MARGIN}px`,
+          }}>
+          <SLeft>
+            <NodeName
+              isXSWidth={isXSWidth}
+              maxWidth={maxNodeNameLen}
+              displayName={namespace}
+              topicName={""}
+              searchText={filterText}
+            />
+          </SLeft>
+          <SRightActions>
+            {topicNode.available && (
               <SToggles>
                 <VisibilityToggle
+                  dataTest={`visibility-toggle~${key}`}
                   checked={checked}
-                  onToggle={() => {
-                    saveConfig({ checkedNodes: xor(Array.from(checkedKeysSet), [key]) });
-                  }}
-                  size={TOGGLE_SIZE_CONFIG.SMALL.name}
-                  visible // TODO(Audrey): handle actual visibility.
+                  onAltToggle={() => toggleCheckAllAncestors(key, topicNode.topicName)}
+                  onToggle={() => toggleNamespaceChecked({ topicName: topicNode.topicName, namespaceKey: key })}
+                  overrideColor={overrideColor}
+                  visibleInScene={nodeVisibleInScene}
                 />
               </SToggles>
-            </SRightActions>
-          </STreeNodeRow>
-        }
-      />
-    );
-  });
+            )}
+            <SDotMenuPlaceholder />
+          </SRightActions>
+        </STreeNodeRow>
+      );
+      return { key, title };
+    });
 }

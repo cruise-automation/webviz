@@ -11,7 +11,7 @@ import { push } from "connected-react-router";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type {
   ImportPanelLayoutPayload,
-  MosaicNode,
+  ChangePanelLayoutPayload,
   SaveConfigsPayload,
   SaveFullConfigPayload,
   UserNodes,
@@ -103,12 +103,9 @@ export const importPanelLayout = (
   });
 };
 
-export type CHANGE_PANEL_LAYOUT = {
-  type: "CHANGE_PANEL_LAYOUT",
-  payload: { layout: MosaicNode },
-};
+export type CHANGE_PANEL_LAYOUT = { type: "CHANGE_PANEL_LAYOUT", payload: ChangePanelLayoutPayload };
 
-export const changePanelLayout = (payload: { layout: MosaicNode }): Dispatcher<CHANGE_PANEL_LAYOUT> => (
+export const changePanelLayout = (payload: ChangePanelLayoutPayload): Dispatcher<CHANGE_PANEL_LAYOUT> => (
   dispatch,
   getState
 ) => {
@@ -161,10 +158,10 @@ export const setLinkedGlobalVariables = (payload: LinkedGlobalVariables): SET_LI
 
 type SET_PLAYBACK_CONFIG = {
   type: "SET_PLAYBACK_CONFIG",
-  payload: PlaybackConfig,
+  payload: $Shape<PlaybackConfig>,
 };
 
-export const setPlaybackConfig = (payload: PlaybackConfig): SET_PLAYBACK_CONFIG => ({
+export const setPlaybackConfig = (payload: $Shape<PlaybackConfig>): SET_PLAYBACK_CONFIG => ({
   type: PANELS_ACTION_TYPES.SET_PLAYBACK_CONFIG,
   payload,
 });

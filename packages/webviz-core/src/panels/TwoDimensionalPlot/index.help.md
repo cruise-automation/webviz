@@ -36,7 +36,6 @@ Below is a basic example of a message that could be consumed by the 2D Plot pane
   datatype: "webviz_msgs/2DPlotMsg",
   receiveTime: { sec: 1532375120, nsec: 317760607 },
   message: {
-    type: "webviz_msgs/2DPlotMsg",
     title: "This is Plot A",
     xAxisLabel: "This is my X axis label",
     yAxisLabel: "This is my Y axis label",

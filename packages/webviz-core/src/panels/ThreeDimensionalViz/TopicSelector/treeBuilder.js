@@ -35,8 +35,8 @@ type Props = {
   topics: Topic[],
   namespaces: Namespace[],
   transforms: Array<Transform>,
-  checkedNodes: string[],
-  expandedNodes: string[],
+  checkedKeys: string[],
+  expandedKeys: string[],
   modifiedNamespaceTopics: string[],
   filterText?: ?string,
   editedTopics?: string[],
@@ -47,8 +47,8 @@ type Props = {
 
 type UpdateTreeProps = {
   topics: Topic[],
-  checkedNodes: string[],
-  expandedNodes: string[],
+  checkedKeys: string[],
+  expandedKeys: string[],
   modifiedNamespaceTopics: string[],
   filterText?: ?string,
   editedTopics?: string[],
@@ -230,8 +230,8 @@ export class TopicTreeNode {
   // collects all node ids along the way to check for duplicates
   updateState(props: UpdateTreeProps, disabled: boolean, ids: string[], ancestorFilterMatch: boolean): void {
     const {
-      expandedNodes,
-      checkedNodes,
+      expandedKeys,
+      checkedKeys,
       modifiedNamespaceTopics,
       canEditDatatype,
       editedTopics,
@@ -243,8 +243,8 @@ export class TopicTreeNode {
       return nodeIds.includes(this.id) || this.legacyIds.some((id) => nodeIds.includes(id));
     };
 
-    this.expanded = containsThisNode(expandedNodes);
-    this.checked = !this.hasCheckbox || containsThisNode(checkedNodes);
+    this.expanded = containsThisNode(expandedKeys);
+    this.checked = !this.hasCheckbox || containsThisNode(checkedKeys);
 
     // if a topic hasn't had its namespaces modified, check its namespaces by default
     if (this.namespace && !modifiedNamespaceTopics.includes(this.topic)) {
@@ -466,11 +466,11 @@ export default function buildTree({
   const tfRootNode = rootNode.find((node) => node.id === "name:TF");
   if (transforms.length > 0) {
     if (tfRootNode) {
-      const checkedNodesSet = new Set(rest.checkedNodes);
+      const checkedKeysSet = new Set(rest.checkedKeys);
       transforms.forEach((transform) => {
         const nodeId = `x:TF.${transform.id}`;
         const addChildTfNode =
-          !showFlattenedTopics || (showFlattenedTopics && (checkedNodesSet.has(nodeId) || !showSelectedTopicsOnly));
+          !showFlattenedTopics || (showFlattenedTopics && (checkedKeysSet.has(nodeId) || !showSelectedTopicsOnly));
         if (addChildTfNode) {
           const node = new TopicTreeNode({
             name: `TF / ${transform.id}`,

@@ -6,8 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import * as Sentry from "@sentry/browser";
-
 // Overwrite the default fetch error handler with one that catches one message: "Failed to fetch". We see this often
 // in our logs and want the logs to more fully reflect the error message.
 export default function overwriteFetch() {
@@ -19,7 +17,6 @@ export default function overwriteFetch() {
     );
     return originalFetch(url, init).catch((error) => {
       if (error.message === "Failed to fetch") {
-        Sentry.captureException(replacementError);
         throw replacementError;
       }
       throw error;

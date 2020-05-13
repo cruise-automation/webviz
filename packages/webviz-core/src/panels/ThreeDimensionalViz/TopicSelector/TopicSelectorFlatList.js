@@ -24,9 +24,9 @@ const SMutedText = styled.div`
   margin: 8px 12px;
 `;
 export type TopicSelectorFlatListProps = {|
-  checkedNodes: string[],
+  checkedKeys: string[],
   disableCheckbox?: boolean,
-  expandedNodes: string[],
+  expandedKeys: string[],
   modifiedNamespaceTopics: string[],
   namespaces: Namespace[],
   onEditClick: (e: SyntheticMouseEvent<HTMLElement>, topic: string) => void,
@@ -37,9 +37,9 @@ export type TopicSelectorFlatListProps = {|
 |};
 
 export default function TopicSelectorFlatList({
-  checkedNodes,
+  checkedKeys,
   disableCheckbox,
-  expandedNodes,
+  expandedKeys,
   modifiedNamespaceTopics,
   namespaces,
   onEditClick,
@@ -55,11 +55,11 @@ export default function TopicSelectorFlatList({
     ({ legacyIds, id }: Node) => {
       // don't invalidate layout url just because a node was expanded/collapsed
       saveConfig(
-        { expandedNodes: toggle(expandedNodes, id, (item) => legacyIds.includes(item) || item === id) },
+        { expandedKeys: toggle(expandedKeys, id, (item) => legacyIds.includes(item) || item === id) },
         { keepLayoutInUrl: true }
       );
     },
-    [expandedNodes, saveConfig]
+    [expandedKeys, saveConfig]
   );
 
   const onEditClickLocal = useCallback(
@@ -80,21 +80,21 @@ export default function TopicSelectorFlatList({
       // This helps us avoid re-checking topics when new namespaces show up (on app load).
       if (namespace && topic && !modifiedNamespaceTopics.includes(topic)) {
         // check all namespaces under this topic *except* the clicked one
-        const newCheckedNodes = checkedNodes.slice();
+        const newCheckedKeys = checkedKeys.slice();
         namespaces.forEach((ns) => {
           if (ns.topic === topic && ns.name !== namespace) {
-            newCheckedNodes.push(getId(ns));
+            newCheckedKeys.push(getId(ns));
           }
         });
         saveConfig({
           modifiedNamespaceTopics: modifiedNamespaceTopics.concat(topic),
-          checkedNodes: newCheckedNodes,
+          checkedKeys: newCheckedKeys,
         });
       } else {
-        saveConfig({ checkedNodes: toggle(checkedNodes, id, (item) => legacyIds.includes(item) || item === id) });
+        saveConfig({ checkedKeys: toggle(checkedKeys, id, (item) => legacyIds.includes(item) || item === id) });
       }
     },
-    [checkedNodes, modifiedNamespaceTopics, namespaces, saveConfig]
+    [checkedKeys, modifiedNamespaceTopics, namespaces, saveConfig]
   );
 
   const onRemoveNode = useCallback(
@@ -104,9 +104,9 @@ export default function TopicSelectorFlatList({
         console.error("Removing namespace nodes is not yet supported");
         return;
       }
-      saveConfig({ checkedNodes: toggle(checkedNodes, id, (item) => legacyIds.includes(item) || item === id) });
+      saveConfig({ checkedKeys: toggle(checkedKeys, id, (item) => legacyIds.includes(item) || item === id) });
     },
-    [checkedNodes, saveConfig]
+    [checkedKeys, saveConfig]
   );
 
   const toggleVisibility = useCallback(

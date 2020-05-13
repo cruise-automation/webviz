@@ -109,7 +109,7 @@ export default class NodePlayer implements Player {
   startPlayback = () => this._player.startPlayback();
   pausePlayback = () => this._player.pausePlayback();
   setPlaybackSpeed = (speed: number) => this._player.setPlaybackSpeed(speed);
-  seekPlayback = (time: Time) => this._player.seekPlayback(time);
+  seekPlayback = (time: Time, backfillDuration: ?Time) => this._player.seekPlayback(time, backfillDuration);
   requestBackfill = () => this._player.requestBackfill();
   // Will be deprecated once NodePlayer is merged into UserNodePlayer.
   setUserNodes = (data: any) => {};

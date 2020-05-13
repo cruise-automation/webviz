@@ -20,6 +20,8 @@ const data = {
   ],
   topics: [{ name: "/some_topic", datatype: "some_datatype" }],
   datatypes: { some_datatype: { fields: [{ name: "data", type: "string" }] } },
+  providesParsedMessages: false,
+  messageDefinitionsByTopic: {},
 };
 const dummyChildren = [{ name: "MemoryDataProvider", args: {}, children: [] }];
 
@@ -35,6 +37,8 @@ describe("RpcDataProvider", () => {
       end: { nsec: 0, sec: 102 },
       topics: [{ datatype: "some_datatype", name: "/some_topic" }],
       datatypes: { some_datatype: { fields: [{ name: "data", type: "string" }] } },
+      messageDefinitionsByTopic: {},
+      providesParsedMessages: false,
     });
   });
 

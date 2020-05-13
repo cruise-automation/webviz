@@ -24,7 +24,7 @@ import { getBagChunksOverlapCount } from "webviz-core/src/util/bags";
 import CachedFilelike from "webviz-core/src/util/CachedFilelike";
 import Logger from "webviz-core/src/util/Logger";
 import type { Range } from "webviz-core/src/util/ranges";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 type BagPath = { type: "file", file: File | string } | { type: "remoteBagUrl", url: string };
 
@@ -33,12 +33,13 @@ type Options = {| bagPath: BagPath, cacheSizeInBytes?: ?number |};
 const log = new Logger(__filename);
 
 function reportMalformedError(operation: string, error: Error): void {
-  reportError(
+  sendNotification(
     `Error during ${operation}`,
     `An error was encountered during ${operation}. This usually happens if the bag is somehow malformed.\n\n${
       error.stack
     }`,
-    "user"
+    "user",
+    "error"
   );
 }
 
@@ -112,18 +113,19 @@ export default class BagDataProvider implements DataProvider {
       // TODO(JP): Actually support empty message definitions (e.g. "std_msgs/Empty"). For that we
       // ideally need an actual use case, and then we need to make sure that we don't naively do
       // `if (messageDefinition)` in a bunch of places.
-      reportError(
-        "Warning: Empty connections found",
+      sendNotification(
+        "Empty connections found",
         `This bag has some empty connections, which Webviz does not currently support. We'll try to play the remaining topics. Details:\n\n${JSON.stringify(
           emptyConnections
         )}`,
-        "user"
+        "user",
+        "warn"
       );
     }
 
     if (!startTime || !endTime || !connections.length) {
       // This will abort video generation:
-      reportError("Cannot play invalid bag", "Bag is empty or corrupt.", "user");
+      sendNotification("Cannot play invalid bag", "Bag is empty or corrupt.", "user", "error");
       return new Promise(() => {}); // Just never finish initializing.
     }
     const chunksOverlapCount = getBagChunksOverlapCount(chunkInfos);
@@ -131,18 +133,19 @@ export default class BagDataProvider implements DataProvider {
     // since it looks like `rosbag record` has a bit of a race condition, and that's not too terrible, so
     // only warn when there's a more serious slowdown.
     if (chunksOverlapCount > chunkInfos.length * 0.25) {
-      reportError(
-        "Warning: Bag is unsorted, which is slow",
+      sendNotification(
+        "Bag is unsorted, which is slow",
         `This bag has many overlapping chunks (${chunksOverlapCount} out of ${
           chunkInfos.length
         }), which means that we have to decompress many chunks in order to load a particular time range. This is slow. Ideally, fix this where you're generating your bags, by sorting the messages by receive time, e.g. using a script like this: https://gist.github.com/janpaul123/deaa92338d5e8309ef7aa7a55d625152`,
-        "user"
+        "user",
+        "warn"
       );
     }
 
-    const messageDefintionsByTopic = {};
+    const messageDefinitionsByTopic = {};
     for (const connection of connections) {
-      messageDefintionsByTopic[connection.topic] = connection.messageDefinition;
+      messageDefinitionsByTopic[connection.topic] = connection.messageDefinition;
     }
 
     return {
@@ -150,7 +153,8 @@ export default class BagDataProvider implements DataProvider {
       end: endTime,
       topics: bagConnectionsToTopics(connections),
       datatypes: bagConnectionsToDatatypes(connections),
-      messageDefintionsByTopic,
+      messageDefinitionsByTopic,
+      providesParsedMessages: false,
     };
   }
 

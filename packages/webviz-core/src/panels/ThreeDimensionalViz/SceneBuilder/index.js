@@ -10,16 +10,18 @@ import type { Time } from "rosbag";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import MessageCollector from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector";
+import { getSceneErrorsByTopic } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils";
 import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicSettingsEditor";
 import { LINED_CONVEX_HULL_RENDERING_SETTING } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { Topic, Frame, Message } from "webviz-core/src/players/types";
-import type { Marker, Namespace, OccupancyGridMessage, Pose } from "webviz-core/src/types/Messages";
+import type { Marker, Namespace, OccupancyGridMessage, MutablePose, Pose } from "webviz-core/src/types/Messages";
 import type { MarkerProvider, MarkerCollector, Scene } from "webviz-core/src/types/Scene";
 import Bounds from "webviz-core/src/util/Bounds";
 import { POSE_MARKER_SCALE } from "webviz-core/src/util/globalConstants";
+import naturalSort from "webviz-core/src/util/naturalSort";
 import { emptyPose } from "webviz-core/src/util/Pose";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromSec } from "webviz-core/src/util/time";
 
 export type TopicSettingsCollection = {
@@ -43,6 +45,7 @@ export function buildSyntheticArrowMarker(msg: any, flattenedZHeightPose: ?Pose)
   };
 }
 
+// TODO(JP): looks like we might not actually use these fields in the new topic picker?
 export type ErrorDetails = {| frameIds: Set<string>, namespaces: Set<string> |};
 
 export type SceneErrors = {
@@ -60,6 +63,7 @@ type SceneErrorTopics = {
 type SelectedNamespacesByTopic = { [topicName: string]: string[] };
 // constructs a scene containing all objects to be rendered
 // by consuming visualization topics from frames
+
 export default class SceneBuilder implements MarkerProvider {
   topics: Topic[] = [];
   markers: Marker[] = [];
@@ -67,6 +71,8 @@ export default class SceneBuilder implements MarkerProvider {
   rootTransformID: string;
   selectionState: any = {};
   frame: Frame;
+  // TODO(JP): Get rid of these two different variables `errors` and `errorsByTopic` which we
+  // have to keep in sync.
   errors: SceneErrors = {
     rootTransformID: "",
     topicsMissingFrameIds: new Map(),
@@ -74,6 +80,7 @@ export default class SceneBuilder implements MarkerProvider {
     topicsWithBadFrameIds: new Map(),
     topicsWithError: new Map(),
   };
+  errorsByTopic: { [topicName: string]: string[] } = {};
   reportedErrorTopics: SceneErrorTopics = {
     topicsWithBadFrameIds: new Set(),
   };
@@ -84,6 +91,7 @@ export default class SceneBuilder implements MarkerProvider {
   _clock: Time;
   _playerId: ?string = null;
   _topicSettings: TopicSettingsCollection = {};
+  _onForceUpdate: ?() => void = null;
 
   allNamespaces: Namespace[] = [];
   // TODO(Audrey): remove enabledNamespaces once we release topic groups
@@ -118,6 +126,14 @@ export default class SceneBuilder implements MarkerProvider {
   setPlayerId(playerId: string) {
     if (this._playerId !== playerId) {
       this.reportedErrorTopics.topicsWithBadFrameIds.clear();
+      this.errors = {
+        rootTransformID: "",
+        topicsMissingFrameIds: new Map(),
+        topicsMissingTransforms: new Map(),
+        topicsWithBadFrameIds: new Map(),
+        topicsWithError: new Map(),
+      };
+      this._updateErrorsByTopic();
     }
     this._playerId = playerId;
   }
@@ -128,11 +144,20 @@ export default class SceneBuilder implements MarkerProvider {
 
   // set the topics the scene builder should consume from each frame
   setTopics(topics: Topic[]) {
-    this.topics = topics;
+    const topicsToFlush = this.topics.filter((topic) => !topics.find((other) => other.name === topic.name));
+    // Sort the topics by name so the render order is consistent.
+    this.topics = topics.sort(naturalSort("name"));
     // IMPORTANT: when topics change, we also need to reset the frame so that
     // setFrame gets called correctly to set the topicsToRender and lastSeenMessages
     this.frame = {};
-    // TODO(bmc):  delete message collectors we don't need anymore
+    // Delete message collectors we don't need anymore
+    topicsToFlush.forEach((topic) => {
+      const collector = this.collectors[topic.name];
+      if (collector) {
+        collector.flush();
+        delete this.collectors[topic.name];
+      }
+    });
   }
 
   setFrame(frame: Frame) {
@@ -185,13 +210,31 @@ export default class SceneBuilder implements MarkerProvider {
     );
   }
 
+  setOnForceUpdate(callback: () => void) {
+    this._onForceUpdate = callback;
+  }
+
   _addError(map: Map<string, ErrorDetails>, topic: string): ErrorDetails {
     let values = map.get(topic);
     if (!values) {
       values = { namespaces: new Set(), frameIds: new Set() };
       map.set(topic, values);
     }
+    this._updateErrorsByTopic();
     return values;
+  }
+
+  _setTopicError = (topic: string, message: string) => {
+    this.errors.topicsWithError.set(topic, message);
+    this._updateErrorsByTopic();
+  };
+
+  // Update the field everytime when the errors changes in order to generate a new object to trigger TopicTree to rerender.
+  _updateErrorsByTopic() {
+    this.errorsByTopic = getSceneErrorsByTopic(this.errors);
+    if (this._onForceUpdate) {
+      this._onForceUpdate();
+    }
   }
 
   // keep a unique set of all seen namespaces
@@ -200,6 +243,9 @@ export default class SceneBuilder implements MarkerProvider {
       return;
     }
     this.allNamespaces = this.allNamespaces.concat([{ topic, name }]);
+    if (this._onForceUpdate) {
+      this._onForceUpdate();
+    }
   }
 
   // Only public for tests.
@@ -217,15 +263,16 @@ export default class SceneBuilder implements MarkerProvider {
   _reportBadFrameId(topic: string) {
     if (!this.reportedErrorTopics.topicsWithBadFrameIds.has(topic)) {
       this.reportedErrorTopics.topicsWithBadFrameIds.add(topic);
-      reportError(
+      sendNotification(
         `Topic ${topic} has bad frame`,
         "Non-root transforms may be out of sync, since webviz uses the latest transform message instead of the one matching header.stamp",
-        "user"
+        "user",
+        "warn"
       );
     }
   }
 
-  _transformAndCloneMarker = (topic: string, marker: Marker) => {
+  _transformMarkerPose = (topic: string, marker: Marker): ?MutablePose => {
     const { frame_id } = marker.header;
 
     if (!frame_id) {
@@ -234,27 +281,29 @@ export default class SceneBuilder implements MarkerProvider {
       return null;
     }
 
-    if (frame_id !== this.rootTransformID) {
-      this._reportBadFrameId(topic);
-      const error = this._addError(this.errors.topicsWithBadFrameIds, topic);
-      error.namespaces.add(marker.ns);
-      error.frameIds.add(frame_id);
-      // We continue to render these, though they may be inaccurate
+    if (frame_id === this.rootTransformID) {
+      // Transforming is a bit expensive, and this (no transformation necessary) is the common-case
+      // TODO: Need to deep-clone, callers mutate the result; fix this downstream.
+      return {
+        position: { ...marker.pose.position },
+        orientation: { ...marker.pose.orientation },
+      };
     }
 
-    const sourcePose = marker.pose;
-    const pose = this.transforms.apply(emptyPose(), sourcePose, frame_id, this.rootTransformID);
+    // frame_id !== this.rootTransformID.
+    // We continue to render these, though they may be inaccurate
+    this._reportBadFrameId(topic);
+    const badFrameError = this._addError(this.errors.topicsWithBadFrameIds, topic);
+    badFrameError.namespaces.add(marker.ns);
+    badFrameError.frameIds.add(frame_id);
+
+    const pose = this.transforms.apply(emptyPose(), marker.pose, frame_id, this.rootTransformID);
     if (!pose) {
-      const error = this._addError(this.errors.topicsMissingTransforms, topic);
-      error.namespaces.add(marker.ns);
-      error.frameIds.add(frame_id);
-      return null;
+      const topicMissingError = this._addError(this.errors.topicsMissingTransforms, topic);
+      topicMissingError.namespaces.add(marker.ns);
+      topicMissingError.frameIds.add(frame_id);
     }
-
-    return {
-      ...marker,
-      pose,
-    };
+    return pose;
   };
 
   _consumeMarkerArray = (topic: string, message: any): void => {
@@ -277,7 +326,7 @@ export default class SceneBuilder implements MarkerProvider {
       case 0: // add
         break;
       case 1: // deprecated in ros
-        this.errors.topicsWithError.set(topic, "Marker.action=1 is deprecated");
+        this._setTopicError(topic, "Marker.action=1 is deprecated");
         return;
       case 2: // delete
         this.collectors[topic].deleteMarker(name);
@@ -286,39 +335,40 @@ export default class SceneBuilder implements MarkerProvider {
         this.collectors[topic].deleteAll();
         return;
       default:
-        this.errors.topicsWithError.set(topic, `Unsupported action type: ${message.action}`);
+        this._setTopicError(topic, `Unsupported action type: ${message.action}`);
         return;
     }
 
-    const marker = this._transformAndCloneMarker(topic, message);
-    if (!marker) {
+    const pose = this._transformMarkerPose(topic, message);
+    if (!pose) {
       return;
     }
+    const marker = { ...message, name, pose };
 
-    marker.name = name;
     const { points } = (marker: any);
+    const { position } = pose;
 
     let minZ = Number.MAX_SAFE_INTEGER;
 
     // if the marker has points, adjust bounds by the points
     if (points && points.length) {
       points.forEach((point) => {
-        const x = point.x + marker.pose.position.x;
-        const y = point.y + marker.pose.position.y;
-        const z = point.z + marker.pose.position.z;
+        const x = point.x + position.x;
+        const y = point.y + position.y;
+        const z = point.z + position.z;
         minZ = Math.min(minZ, point.z);
         this.bounds.update({ x, y, z });
       });
     } else {
       // otherwise just adjust by the pose
-      minZ = Math.min(minZ, marker.pose.position.z);
-      this.bounds.update(marker.pose.position);
+      minZ = Math.min(minZ, position.z);
+      this.bounds.update(position);
     }
 
     // if the minimum z value of any point (or the pose) is exactly 0
     // then assume this marker can be flattened
     if (minZ === 0 && this.flatten && this.flattenedZHeightPose) {
-      marker.pose.position.z = this.flattenedZHeightPose.position.z;
+      position.z = this.flattenedZHeightPose.position.z;
     }
 
     // HACK(jacob): rather than hard-coding this, we should
@@ -381,9 +431,14 @@ export default class SceneBuilder implements MarkerProvider {
 
     // if we neeed to flatten the ogrid clone the position and change the z to match the flattenedZHeightPose
     if (mappedMessage.info.origin.position.z === 0 && this.flattenedZHeightPose && this.flatten) {
-      mappedMessage.info.origin.position = {
-        ...mappedMessage.info.origin.position,
-        z: this.flattenedZHeightPose.position.z,
+      const originalInfo = mappedMessage.info;
+      const originalPosition = originalInfo.origin.position;
+      mappedMessage.info = {
+        ...originalInfo,
+        origin: {
+          ...originalInfo.origin,
+          position: { ...originalPosition, z: this.flattenedZHeightPose.position.z },
+        },
       };
     }
     this.collectors[topic].addMessage(topic, mappedMessage);
@@ -398,13 +453,16 @@ export default class SceneBuilder implements MarkerProvider {
       return;
     }
 
-    const decayTimeInSec = (this._topicSettings[topic] && this._topicSettings[topic].decayTime) || 0;
+    const decayTimeInSec = this._topicSettings[topic] && this._topicSettings[topic].decayTime;
     const mappedMessage = {
       ...message,
       name: `${topic}/${message.type}`,
       type,
       pose,
-      lifetime: fromSec(decayTimeInSec),
+      // If a decay time is available, we assign a lifetime to this message
+      // Do not automatically assign a 0 (zero) decay time since that translates
+      // to an infinite lifetime. But do allow for 0 values based on user preferences.
+      lifetime: decayTimeInSec !== undefined ? fromSec(decayTimeInSec) : undefined,
     };
 
     this.collectors[topic].addMessage(topic, mappedMessage);
@@ -437,7 +495,7 @@ export default class SceneBuilder implements MarkerProvider {
       try {
         this._consumeTopic(topic);
       } catch (error) {
-        this.errors.topicsWithError.set(topic, error.toString());
+        this._setTopicError(topic, error.toString());
       }
     }
     this.topicsToRender.clear();
@@ -603,7 +661,7 @@ export default class SceneBuilder implements MarkerProvider {
       default: {
         getGlobalHooks()
           .perPanelHooks()
-          .ThreeDimensionalViz.addMarkerToCollector(add, topic.name, marker, this.errors);
+          .ThreeDimensionalViz.addMarkerToCollector(add, topic.name, marker, this._setTopicError);
       }
     }
   }

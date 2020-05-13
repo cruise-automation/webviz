@@ -62,23 +62,33 @@ describe("MessageCollector", () => {
   it("flushes all messages and non-lifetime markers", () => {
     const collector = new MessageCollector();
     const marker = makeMarker("ns", "foo");
-    const lifetimeMarker = makeMarker("", "baz");
-    lifetimeMarker.lifetime = { sec: 0, nsec: 1 };
+    const lifetimeMarker = {
+      ...makeMarker("", "baz"),
+      lifetime: { sec: 0, nsec: 1 },
+    };
+    const noLifetimeMarker = {
+      ...makeMarker("", "fooz"),
+      lifetime: undefined,
+    };
     collector.setClock({ sec: 100, nsec: 100 });
     collector.addMarker("/topic", marker);
     collector.addMarker("/topic2", lifetimeMarker);
-    collector.addMessage("/bar", { baz: true });
+    collector.addMessage("/fooz", noLifetimeMarker);
     expect(collector.getMessages()).toHaveLength(3);
     collector.flush();
-    expect(collector.getMessages()).toEqual([lifetimeMarker]);
+    expect(collector.getMessages()).toHaveLength(2);
+    expect(collector.getMessages()).toEqual([marker, lifetimeMarker]);
   });
 
   it("expires marker if lifetime is exceeded", () => {
     const collector = new MessageCollector();
-    const marker = makeMarker("ns", "foo");
-    marker.header.stamp = { sec: 100, nsec: 90 };
+    const baseMarker = makeMarker("ns", "foo");
     const lifetimeNanos = 5000000;
-    marker.lifetime = { sec: 0, nsec: lifetimeNanos };
+    const marker = {
+      ...baseMarker,
+      header: { ...baseMarker.header, stamp: { sec: 100, nsec: 90 } },
+      lifetime: { sec: 0, nsec: lifetimeNanos },
+    };
 
     collector.setClock({ sec: 100, nsec: 100 });
     collector.addMarker("/topic", marker);

@@ -47,6 +47,7 @@ describe("NodePlayer", () => {
     });
     fakePlayer.emit({
       messages: [],
+      messageOrder: "receiveTime",
       currentTime: { sec: 0, nsec: 0 },
       startTime: { sec: 0, nsec: 0 },
       endTime: { sec: 1, nsec: 0 },
@@ -55,6 +56,7 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
       datatypes: { foo: { fields: [] } },
+      messageDefinitionsByTopic: {},
     });
     expect(messages).toHaveLength(1);
     const { activeData } = messages[0];
@@ -82,6 +84,7 @@ describe("NodePlayer", () => {
     });
     fakePlayer.emit({
       messages: [],
+      messageOrder: "receiveTime",
       currentTime: { sec: 0, nsec: 0 },
       startTime: { sec: 0, nsec: 0 },
       endTime: { sec: 1, nsec: 0 },
@@ -90,6 +93,7 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
       datatypes: { foo: { fields: [] } },
+      messageDefinitionsByTopic: {},
     });
     const { activeData } = messages[0];
     expect(activeData).not.toBeUndefined();
@@ -112,6 +116,7 @@ describe("NodePlayer", () => {
     });
     fakePlayer.emit({
       messages: [],
+      messageOrder: "receiveTime",
       currentTime: { sec: 0, nsec: 0 },
       startTime: { sec: 0, nsec: 0 },
       endTime: { sec: 1, nsec: 0 },
@@ -120,6 +125,7 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
       datatypes: { foo: { fields: [] } },
+      messageDefinitionsByTopic: {},
     });
     const { activeData } = messages[0];
     expect(activeData).not.toBeUndefined();
@@ -199,7 +205,7 @@ describe("NodePlayer", () => {
     });
     expect(fakePlayer.seekPlayback).not.toHaveBeenCalled();
     nodePlayer.seekPlayback({ sec: 2, nsec: 2 });
-    expect(fakePlayer.seekPlayback).toHaveBeenCalledWith({ sec: 2, nsec: 2 });
+    expect(fakePlayer.seekPlayback).toHaveBeenCalledWith({ sec: 2, nsec: 2 }, undefined);
   });
 
   it("delegates publishing to underlying player", () => {
@@ -253,6 +259,7 @@ describe("NodePlayer", () => {
     });
     fakePlayer.emit({
       messages: upstreamMessages,
+      messageOrder: "receiveTime",
       currentTime: upstreamMessages[0].receiveTime,
       startTime: { sec: 0, nsec: 0 },
       endTime: { sec: 1, nsec: 0 },
@@ -261,6 +268,7 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
+      messageDefinitionsByTopic: {},
     });
 
     await done;
@@ -305,6 +313,7 @@ describe("NodePlayer", () => {
     });
     fakePlayer.emit({
       messages: [upstreamMessages[0]],
+      messageOrder: "receiveTime",
       currentTime: upstreamMessages[0].receiveTime,
       startTime: { sec: 0, nsec: 0 },
       endTime: { sec: 1, nsec: 0 },
@@ -313,10 +322,12 @@ describe("NodePlayer", () => {
       lastSeekTime: 0,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
+      messageDefinitionsByTopic: {},
     });
 
     fakePlayer.emit({
       messages: [upstreamMessages[1]],
+      messageOrder: "receiveTime",
       currentTime: upstreamMessages[1].receiveTime,
       startTime: { sec: 0, nsec: 0 },
       endTime: { sec: 1, nsec: 0 },
@@ -326,6 +337,7 @@ describe("NodePlayer", () => {
       lastSeekTime: 1,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
+      messageDefinitionsByTopic: {},
     });
     await done;
     expect(messages).toHaveLength(4);

@@ -28,6 +28,7 @@ import {
   getRemoteBagDescriptor,
 } from "webviz-core/src/dataProviders/standardDataProviderDescriptors";
 import useUserNodes from "webviz-core/src/hooks/useUserNodes";
+import OrderedStampPlayer from "webviz-core/src/players/OrderedStampPlayer";
 import RandomAccessPlayer from "webviz-core/src/players/RandomAccessPlayer";
 import RosbridgePlayer from "webviz-core/src/players/RosbridgePlayer";
 import type { Player } from "webviz-core/src/players/types";
@@ -42,10 +43,10 @@ import {
   REMOTE_BAG_URL_2_QUERY_KEY,
   REMOTE_BAG_URL_QUERY_KEY,
   ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY,
-  SECOND_BAG_PREFIX,
+  SECOND_SOURCE_PREFIX,
 } from "webviz-core/src/util/globalConstants";
-import reportError from "webviz-core/src/util/reportError";
-import { getSeekToTime } from "webviz-core/src/util/time";
+import sendNotification from "webviz-core/src/util/sendNotification";
+import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
 function getPlayerOptions() {
   return { metricsCollector: undefined, seekToTime: getSeekToTime() };
@@ -70,7 +71,7 @@ function buildPlayerFromFiles(files: File[]): ?PlayerDefinition {
       player: new RandomAccessPlayer(
         {
           name: CoreDataProviders.CombinedDataProvider,
-          args: { providerInfos: [{}, { prefix: SECOND_BAG_PREFIX }] },
+          args: { providerInfos: [{}, { prefix: SECOND_SOURCE_PREFIX }] },
           children: [getLocalBagDescriptor(files[0]), getLocalBagDescriptor(files[1])],
         },
         getPlayerOptions()
@@ -104,7 +105,7 @@ async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition
       player: new RandomAccessPlayer(
         {
           name: CoreDataProviders.CombinedDataProvider,
-          args: { providerInfos: [{}, { prefix: SECOND_BAG_PREFIX }] },
+          args: { providerInfos: [{}, { prefix: SECOND_SOURCE_PREFIX }] },
           children: [getRemoteBagDescriptor(urls[0], guids[0]), getRemoteBagDescriptor(urls[1], guids[1])],
         },
         getPlayerOptions()
@@ -123,6 +124,7 @@ type OwnProps = { children: ({ inputDescription: React.Node }) => React.Node };
 
 type Props = OwnProps & {
   importPanelLayout: typeof importPanelLayout,
+  messageOrder: TimestampMethod,
   userNodes: UserNodes,
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
   addUserNodeLogs: AddUserNodeLogs,
@@ -133,6 +135,7 @@ type Props = OwnProps & {
 function PlayerManager({
   importPanelLayout: importLayout,
   children,
+  messageOrder,
   userNodes,
   setUserNodeDiagnostics: setDiagnostics,
   addUserNodeLogs: setLogs,
@@ -140,9 +143,13 @@ function PlayerManager({
   setGlobalVariables: setVariables,
 }: Props) {
   const usedFiles = React.useRef<File[]>([]);
-  const [player, setPlayerInternal] = React.useState<?UserNodePlayer>();
+  const [player, setPlayerInternal] = React.useState<?OrderedStampPlayer>();
   const [inputDescription, setInputDescription] = React.useState<React.Node>("No input selected.");
 
+  // We don't want to recreate the player when the message order changes, but we do want to
+  // initialize it with the right order, so make a variable for its initial value we can use in the
+  // dependency array below to defeat the linter.
+  const [initialMessageOrder] = React.useState(messageOrder);
   const setPlayer = React.useCallback(
     (playerDefinition: ?PlayerDefinition) => {
       if (!playerDefinition) {
@@ -156,9 +163,10 @@ function PlayerManager({
         addUserNodeLogs: setLogs,
         setUserNodeTrust: setTrust,
       });
-      setPlayerInternal(userNodePlayer);
+      const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, initialMessageOrder);
+      setPlayerInternal(headerStampPlayer);
     },
-    [setDiagnostics, setLogs, setTrust]
+    [setDiagnostics, setLogs, setTrust, initialMessageOrder]
   );
 
   React.useEffect(
@@ -179,10 +187,11 @@ function PlayerManager({
             importLayout(json, { isFromUrl: true, skipSettingLocalStorage: false });
           })
           .catch((error) => {
-            reportError(
+            sendNotification(
               "Layout failed to load",
               `Fetching remote file failed. ${corsError(layoutUrl)} ${error}`,
-              "user"
+              "user",
+              "error"
             );
           });
       } else if (params.has(DEMO_QUERY_KEY)) {
@@ -222,6 +231,14 @@ function PlayerManager({
     [importLayout, setPlayer, setVariables]
   );
 
+  React.useEffect(
+    () => {
+      if (player) {
+        player.setMessageOrder(messageOrder);
+      }
+    },
+    [messageOrder, player]
+  );
   useUserNodes({ nodePlayer: player, userNodes });
 
   return (
@@ -242,7 +259,7 @@ function PlayerManager({
           <div style={{ fontSize: "2em" }}>
             (hold SHIFT while dropping a second bag file to add it
             <br />
-            with all topics prefixed with {SECOND_BAG_PREFIX})
+            with all topics prefixed with {SECOND_SOURCE_PREFIX})
           </div>
         </DropOverlay>
       </DocumentDropListener>
@@ -253,6 +270,7 @@ function PlayerManager({
 
 export default connect<Props, OwnProps, _, _, _, _>(
   (state) => ({
+    messageOrder: state.panels.playbackConfig.messageOrder,
     userNodes: state.panels.userNodes,
   }),
   { importPanelLayout, setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust, setGlobalVariables }

@@ -9,13 +9,13 @@ import { max, min, flatten } from "lodash";
 import React, { memo, useEffect, useCallback, useState, useRef } from "react";
 import DocumentEvents from "react-document-events";
 import ReactDOM from "react-dom";
-import KeyListener from "react-key-listener";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 
 import TimeBasedChartTooltip from "./TimeBasedChartTooltip";
 import Button from "webviz-core/src/components/Button";
 import createSyncingComponent from "webviz-core/src/components/createSyncingComponent";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import type { MessageHistoryItem } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import ChartComponent, { type HoveredElement, type ScaleOptions } from "webviz-core/src/components/ReactChartjs";
@@ -452,13 +452,16 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
     onChartUpdate,
   };
 
+  const hasData = chartProps.data.datasets.some((dataset) => dataset.data.length);
+
   return (
     <div style={{ display: "flex", width: "100%" }}>
       <div style={{ display: "flex", width }}>
         <SRoot onDoubleClick={onResetZoom}>
           <SBar ref={bar} />
 
-          {isSynced && xAxisVal === "timestamp" ? (
+          {/* only sync when using x-axis timestamp and actually plotting data. */}
+          {isSynced && xAxisVal === "timestamp" && hasData ? (
             <SyncTimeAxis data={{ minX, maxX }}>
               {(syncedMinMax) => {
                 const syncedMinX = syncedMinMax.minX != null ? min([minX, syncedMinMax.minX]) : minX;

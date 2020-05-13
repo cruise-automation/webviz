@@ -12,7 +12,6 @@ import isEqual from "lodash/isEqual";
 import omit from "lodash/omit";
 import panzoom from "panzoom";
 import React from "react";
-import KeyListener from "react-key-listener";
 import OutsideClickHandler from "react-outside-click-handler";
 import ReactResizeDetector from "react-resize-detector";
 import shallowequal from "shallowequal";
@@ -25,6 +24,7 @@ import type { ImageViewPanelHooks, Config, SaveImagePanelConfig } from "./index"
 import { renderImage } from "./renderImage";
 import { checkOutOfBounds, type Dimensions } from "./util";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { Message } from "webviz-core/src/players/types";
@@ -32,8 +32,8 @@ import colors from "webviz-core/src/styles/colors.module.scss";
 import type { CameraInfo } from "webviz-core/src/types/Messages";
 import { downloadFiles } from "webviz-core/src/util";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
-import reportError from "webviz-core/src/util/reportError";
 import type Rpc from "webviz-core/src/util/Rpc";
+import sendNotification from "webviz-core/src/util/sendNotification";
 import supportsOffscreenCanvas from "webviz-core/src/util/supportsOffscreenCanvas";
 import WebWorkerManager from "webviz-core/src/util/WebWorkerManager";
 
@@ -140,7 +140,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
   keepInBounds = (div: HTMLElement) => {
     const { x, y, scale } = this.panZoomCanvas.getTransform();
     if (isNaN(x) || isNaN(y)) {
-      reportError("Tried to keep canvas in bounds but encountered invalid transform values", "", "app");
+      sendNotification("Tried to keep canvas in bounds but encountered invalid transform values", "", "app", "warn");
       return;
     }
     // When zoom is 1, the percentage is fitPercentage
@@ -202,7 +202,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
 
   moveToCenter = () => {
     if (!this.panZoomCanvas) {
-      reportError("Tried to center when there is no panZoomCanvas", "", "app");
+      sendNotification("Tried to center when there is no panZoomCanvas", "", "app", "error");
       return;
     }
     const { width, height } = this.bitmapDimensions;
@@ -381,7 +381,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
       }
     } catch (error) {
       const topic = image ? image.topic : "";
-      reportError(`failed to decode image on ${topic}:`, "", "user");
+      sendNotification(`failed to decode image on ${topic}:`, "", "user", "error");
       this.setState({ error });
     } finally {
       onFinishImageRender();
@@ -499,20 +499,22 @@ export default class ImageCanvas extends React.Component<Props, State> {
   render() {
     const { mode, zoomPercentage, offset } = this.props.config;
     if (zoomPercentage && (zoomPercentage > 150 || zoomPercentage < 0)) {
-      reportError(
+      sendNotification(
         `zoomPercentage for the image panel was ${zoomPercentage}, but must be between 0 and 150. It has been reset to 100.`,
         "",
-        "user"
+        "user",
+        "warn"
       );
       this.props.saveConfig({ zoomPercentage: 100 });
     }
     if (offset && offset.length !== 2) {
-      reportError(
+      sendNotification(
         `offset for the image panel was ${JSON.stringify(
           offset
         )}, but should be an array of length 2. It has been reset to [0, 0].`,
         "",
-        "user"
+        "user",
+        "warn"
       );
       this.props.saveConfig({ offset: [0, 0] });
     }

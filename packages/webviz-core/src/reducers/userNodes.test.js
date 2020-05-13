@@ -20,7 +20,9 @@ describe("state.userNodes", () => {
       const store = getStore();
       const id = "mock_id";
       store.dispatch(setUserNodeTrust({ id, trusted: true }));
-      expect(store.getState().userNodes).toEqual({ [id]: { trusted: true, diagnostics: [], logs: [] } });
+      expect(store.getState().userNodes.userNodeDiagnostics).toEqual({
+        [id]: { trusted: true, diagnostics: [], logs: [] },
+      });
     });
     it("does not overwrite any diagnostics or logs", () => {
       const store = getStore();
@@ -37,7 +39,7 @@ describe("state.userNodes", () => {
       store.dispatch(addUserNodeLogs({ [id]: { logs } }));
       store.dispatch(setUserNodeDiagnostics({ [id]: { diagnostics } }));
       store.dispatch(setUserNodeTrust({ id, trusted: false }));
-      expect(store.getState().userNodes).toEqual({ [id]: { diagnostics, logs, trusted: false } });
+      expect(store.getState().userNodes.userNodeDiagnostics).toEqual({ [id]: { diagnostics, logs, trusted: false } });
     });
   });
 });

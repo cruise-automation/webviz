@@ -7,23 +7,26 @@
 //  You may not use this file except in compliance with the License.
 
 import promiseTimeout from "webviz-core/shared/promiseTimeout";
-import reportError from "webviz-core/src/util/reportError";
+import inAutomatedRunMode from "webviz-core/src/util/inAutomatedRunMode";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 export type FramePromise = {| name: string, promise: Promise<void> |};
-export const MAX_PROMISE_TIMEOUT_TIME_MS = 3000;
+// Wait longer before erroring if there's no user waiting (in automated run)
+export const MAX_PROMISE_TIMEOUT_TIME_MS = inAutomatedRunMode() ? 30000 : 3000;
 
 export async function pauseFrameForPromises(promises: FramePromise[]) {
   try {
     await promiseTimeout(Promise.all(promises.map(({ promise }) => promise)), MAX_PROMISE_TIMEOUT_TIME_MS);
   } catch (error) {
     if (error.message.includes("Promise timed out")) {
-      reportError(
+      sendNotification(
         `\`pauseFrame\` was called, but frame was not resumed within ${MAX_PROMISE_TIMEOUT_TIME_MS}ms`,
         `One of the following \`pauseFrame\` callers failed to unpause: ${promises.map(({ name }) => name).join(", ")}`,
-        "app"
+        "app",
+        "error"
       );
     } else {
-      reportError("Player ", error, "app");
+      sendNotification("Player ", error, "app", "warn");
     }
   }
 }

@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { Tabs } from "antd";
+import { isEmpty, omit } from "lodash";
 import React, { useCallback } from "react";
 import styled from "styled-components";
 
@@ -18,10 +19,11 @@ import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
 import { getSettingsByColumnWithDefaults } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations";
 import { topicSettingsEditorForDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import type { Topic } from "webviz-core/src/players/types";
+import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-// TODO(Audrey): change to /webviz_source_2
-const DATASOURCE_PREFIX = "/webviz_bag_2";
+// TODO(Audrey): show topic settings for base and feature side by side after TopicPickerV2 release.
+const SHOW_SECOND_DATASOURCE = false;
 
 const STopicSettingsEditor = styled.div`
   background: ${colors.TOOLBAR};
@@ -58,7 +60,7 @@ function MainEditor({
   collectorMessage: any,
   columnIndex: number,
   onFieldChange: (fieldName: string, value: any) => void,
-  onSettingsChange: (settings: {} | ((prevSettings: {}) => {})) => void,
+  onSettingsChange: (settings: any | ((prevSettings: {}) => {})) => void,
   settings: any,
   topicName: string,
 |}) {
@@ -80,10 +82,8 @@ function MainEditor({
           className="test-reset-settings-btn"
           style={{ marginTop: 8 }}
           onClick={() => {
-            // TODO(Audrey): update once /webviz_source_2 work is done.
-            const defaultSettingsByColumn = getSettingsByColumnWithDefaults(topicName)?.settingsByColumn;
-            const defaultSettings = (defaultSettingsByColumn && defaultSettingsByColumn[columnIndex]) || {};
-            onSettingsChange(defaultSettings);
+            const defaultSettingsByColumn = getSettingsByColumnWithDefaults(topicName)?.settingsByColumn || [];
+            onSettingsChange(defaultSettingsByColumn[columnIndex]);
           }}>
           Reset to defaults
         </Button>
@@ -111,7 +111,12 @@ function TopicSettingsModal({
   topicSettings,
 }: Props) {
   const onSettingsChange = useCallback(
-    (settings: {} | ((prevSettings: {}) => {})) => {
+    (settings: any | ((prevSettings: {}) => {})) => {
+      if (typeof settings !== "function" && isEmpty(settings)) {
+        // Remove the field if the topic settings are empty to prevent the panelConfig from every growing.
+        saveConfig({ topicSettings: omit(topicSettings, [topicName]) });
+        return;
+      }
       saveConfig({
         topicSettings: {
           ...topicSettings,
@@ -129,8 +134,8 @@ function TopicSettingsModal({
     [onSettingsChange]
   );
 
-  const columnIndex = topicName.startsWith(DATASOURCE_PREFIX) ? 1 : 0;
-  const nonPrefixedTopic = columnIndex === 1 ? topicName.substr(DATASOURCE_PREFIX.length) : topicName;
+  const columnIndex = topicName.startsWith(SECOND_SOURCE_PREFIX) ? 1 : 0;
+  const nonPrefixedTopic = columnIndex === 1 ? topicName.substr(SECOND_SOURCE_PREFIX.length) : topicName;
 
   const editorElem = (
     <MainEditor
@@ -140,7 +145,7 @@ function TopicSettingsModal({
       onFieldChange={onFieldChange}
       onSettingsChange={onSettingsChange}
       settings={topicSettings[topicName] || {}}
-      topicName={nonPrefixedTopic}
+      topicName={SHOW_SECOND_DATASOURCE ? nonPrefixedTopic : topicName}
     />
   );
   return (
@@ -156,19 +161,19 @@ function TopicSettingsModal({
         <STopicSettingsEditor>
           <STitle>{currentEditingTopic.name}</STitle>
           <SDatatype>{currentEditingTopic.datatype}</SDatatype>
-          {hasFeatureColumn ? (
+          {hasFeatureColumn && SHOW_SECOND_DATASOURCE ? (
             <div className="ant-component">
               <Tabs
                 activeKey={`${columnIndex}`}
                 onChange={(newKey) => {
                   const newEditingTopicName =
-                    newKey === "0" ? nonPrefixedTopic : `${DATASOURCE_PREFIX}${nonPrefixedTopic}`;
+                    newKey === "0" ? nonPrefixedTopic : `${SECOND_SOURCE_PREFIX}${nonPrefixedTopic}`;
                   setCurrentEditingTopic({ datatype, name: newEditingTopicName });
                 }}>
                 <Tabs.TabPane tab={"base"} key={"0"}>
                   {editorElem}
                 </Tabs.TabPane>
-                <Tabs.TabPane tab={DATASOURCE_PREFIX} key={"1"}>
+                <Tabs.TabPane tab={SECOND_SOURCE_PREFIX} key={"1"}>
                   {editorElem}
                 </Tabs.TabPane>
               </Tabs>

@@ -70,7 +70,7 @@ export default function TopicGroupsMenu({ saveConfig, onImportSettings }: Props)
             </div>
           }
           onClick={() => {
-            saveConfig({ enableTopicTree: true });
+            // saveConfig({ enableTopicTree: true });
             const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger() || {};
             if (logger && eventNames?.TOGGLE_TOPIC_GROUPS && eventTags?.ENABLE_TOPIC_GROUPS) {
               logger({ name: eventNames.TOGGLE_TOPIC_GROUPS, tags: { [eventTags.ENABLE_TOPIC_GROUPS]: false } });

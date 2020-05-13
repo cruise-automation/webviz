@@ -17,11 +17,11 @@ import { importPanelLayout } from "webviz-core/src/actions/panels";
 import Logo from "webviz-core/src/assets/logo.svg";
 import AppMenu from "webviz-core/src/components/AppMenu";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
-import ErrorDisplay from "webviz-core/src/components/ErrorDisplay";
 import Icon from "webviz-core/src/components/Icon";
 import LayoutHistoryKeyListener from "webviz-core/src/components/LayoutHistoryKeyListener";
 import LayoutMenu from "webviz-core/src/components/LayoutMenu";
 import { MessagePipelineConsumer, type MessagePipelineContext } from "webviz-core/src/components/MessagePipeline";
+import NotificationDisplay from "webviz-core/src/components/NotificationDisplay";
 import PanelLayout from "webviz-core/src/components/PanelLayout";
 import PlaybackControls from "webviz-core/src/components/PlaybackControls";
 import PlayerManager from "webviz-core/src/components/PlayerManager";
@@ -100,7 +100,7 @@ class App extends React.PureComponent<Props> {
                   </MessagePipelineConsumer>
                 </div>
                 <div className={styles.block} style={{ marginRight: 5 }}>
-                  <ErrorDisplay />
+                  <NotificationDisplay />
                 </div>
                 <div className={styles.block}>
                   <Icon tooltip="Help" small fade onClick={showHelpModalOpenSource}>

@@ -132,7 +132,8 @@ describe("ParseMessagesDataProvider", () => {
         messages,
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: { some_datatype: { fields: [] } },
-        messageDefintionsByTopic: { "/some_topic": "dummy" },
+        messageDefinitionsByTopic: { "/some_topic": "dummy" },
+        providesParsedMessages: false,
       });
       const provider = new ParseMessagesDataProvider(
         {},

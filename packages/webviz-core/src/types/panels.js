@@ -8,6 +8,7 @@
 
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import type { TimestampMethod } from "webviz-core/src/util/time";
 
 // Mosaic Types
 export type MosaicBranch = "first" | "second";
@@ -29,6 +30,7 @@ export type PerPanelFunc<Config> = (Config) => Config;
 
 export type PlaybackConfig = {
   speed: number,
+  messageOrder: TimestampMethod,
 };
 
 export type UserNode = { name: string, sourceCode: string };
@@ -40,6 +42,11 @@ export type UserNodes = { [nodeId: string]: UserNode };
 export type EditHistoryOptions = "SUPPRESS_HISTORY_ENTRY";
 
 export type ConfigsPayload = {| id: string, override?: boolean, config: PanelConfig, defaultConfig?: PanelConfig |};
+export type ChangePanelLayoutPayload = {|
+  layout: MosaicNode,
+  trimSavedProps?: boolean,
+  historyOptions?: EditHistoryOptions,
+|};
 export type SaveConfigsPayload = {|
   // if you set silent to true, the url will not be stripped of a layout id
   // after the props are saved - useful for minor or background UI operations modifying insignificant panel props

@@ -6,7 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { toTopicTreeV2Nodes, fromTopicTreeV2Nodes, migrateLegacyIds } from "./topicTreeV2Migrations";
+import {
+  toTopicTreeV2Nodes,
+  fromTopicTreeV2Nodes,
+  migrateLegacyIds,
+  migrateToFeatureGroupCheckedKeys,
+} from "./topicTreeV2Migrations";
 
 jest.mock("webviz-core/src/loadWebviz", () => ({
   getGlobalHooks: () => ({
@@ -47,6 +52,26 @@ jest.mock("webviz-core/src/loadWebviz", () => ({
             },
           ],
         }),
+        getDefaultTopicTreeV2: () => ({
+          name: "root",
+          children: [
+            {
+              name: "Map",
+              topicName: "/metadata",
+            },
+            { name: "Some Topic in JSON Tree", topicName: "/topic_in_json_tree" },
+            { name: "TF", children: [], description: "Visualize relationships between /tf frames." },
+            {
+              name: "Nested Group",
+              children: [
+                { name: "Topic A", topicName: "/topic_a" },
+                { name: "Topic B", topicName: "/topic_b" },
+                { name: "Deeply Nested Group", children: [{ topicName: "/topic_c" }] },
+                { topicName: "/topic_d" },
+              ],
+            },
+          ],
+        }),
       },
     }),
   }),
@@ -58,7 +83,10 @@ describe("topicTreeV2Migrations", () => {
       expect(toTopicTreeV2Nodes(["Some name", "another name"])).toEqual(["name:Some name", "name:another name"]);
     });
     it("converts extensions to namespaces", () => {
-      expect(toTopicTreeV2Nodes(["x:TF.some_ns", "x:ExB.b"])).toEqual(["ns:/tf:some_ns", "ns:/metadata:ExB.b"]);
+      expect(toTopicTreeV2Nodes(["x:TF.some_ns", "x:TF.", "x:ExB.b"])).toEqual([
+        "ns:/tf:some_ns",
+        "ns:/metadata:ExB.b",
+      ]);
     });
 
     it("handles x:tiles", async () => {
@@ -114,6 +142,21 @@ describe("topicTreeV2Migrations", () => {
       expect(
         migrateLegacyIds(["/topic_a_legacy", "name:Some legacy name1", "Some legacy name", "t:/legacy_topic_c"])
       ).toEqual(["t:/topic_a", "name:Ext A", "name:Nested Group", "t:/topic_c"]);
+    });
+  });
+
+  describe("migrateToFeatureGroupCheckedKeys", () => {
+    it("adds feature column group keys", () => {
+      const checkedKeys = ["t:/foo", "t:/webviz_source_2/foo", "t:/webviz_source_2/topic_c"];
+      //
+      expect(migrateToFeatureGroupCheckedKeys(checkedKeys)).toEqual(checkedKeys);
+      expect(migrateToFeatureGroupCheckedKeys([...checkedKeys, "name:(Uncategorized)"])).toEqual([
+        ...checkedKeys,
+        "name:(Uncategorized)",
+        "name_2:(Uncategorized)",
+        "name_2:Deeply Nested Group",
+        "name_2:Nested Group",
+      ]);
     });
   });
 });

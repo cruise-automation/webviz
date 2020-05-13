@@ -11,7 +11,6 @@ import momentDurationFormatSetup from "moment-duration-format";
 import moment from "moment-timezone";
 import { type Time, TimeUtil } from "rosbag";
 
-import type { TimestampMethod } from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import type { Message } from "webviz-core/src/players/types";
 import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
@@ -21,6 +20,8 @@ type BatchTimestamp = {
 };
 
 momentDurationFormatSetup(moment);
+
+export type TimestampMethod = "receiveTime" | "headerStamp";
 
 // Unfortunately, using %checks on this function doesn't actually allow Flow to conclude that the object is a Time.
 // Related: https://github.com/facebook/flow/issues/3614
@@ -96,8 +97,23 @@ export function percentOf(start: Time, end: Time, target: Time) {
   return (toSec(targetDuration) / toSec(totalDuration)) * 100;
 }
 
+function fixTime(t: Time): Time {
+  // Equivalent to fromNanoSec(toNanoSec(t)), but no chance of precision loss.
+  // nsec should be non-negative, and less than 1e9.
+  let { sec, nsec } = t;
+  while (nsec > 1e9) {
+    nsec -= 1e9;
+    sec += 1;
+  }
+  while (nsec < 0) {
+    nsec += 1e9;
+    sec -= 1;
+  }
+  return { sec, nsec };
+}
+
 export function subtractTimes({ sec: sec1, nsec: nsec1 }: Time, { sec: sec2, nsec: nsec2 }: Time): Time {
-  return { sec: sec1 - sec2, nsec: nsec1 - nsec2 };
+  return fixTime({ sec: sec1 - sec2, nsec: nsec1 - nsec2 });
 }
 
 // WARNING! This will not be a precise integer for large time values due to JS only supporting

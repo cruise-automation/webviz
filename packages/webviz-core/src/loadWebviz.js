@@ -37,6 +37,7 @@ const defaultHooks = {
   nodes: () => [],
   getDefaultGlobalStates() {
     const { defaultPlaybackConfig } = require("webviz-core/src/reducers/panels");
+    const { CURRENT_LAYOUT_VERSION } = require("webviz-core/migrations/constants");
     return {
       layout: {
         direction: "row",
@@ -54,10 +55,11 @@ const defaultHooks = {
       userNodes: {},
       linkedGlobalVariables: [],
       playbackConfig: defaultPlaybackConfig,
+      version: CURRENT_LAYOUT_VERSION,
     };
   },
   migratePanels(panels) {
-    const migratePanels = require("webviz-core/src/util/migratePanels").default;
+    const migratePanels = require("webviz-core/migrations").default;
     return migratePanels(panels);
   },
   panelCategories() {
@@ -86,6 +88,7 @@ const defaultHooks = {
         getDefaultTopicSettingsByColumn(topicName) {
           return undefined;
         },
+        getDefaultSettings: () => ({}),
         getDefaultTopicTree: () => ({
           name: "root",
           children: [{ name: "TF", children: [], description: "Visualize relationships between /tf frames." }],

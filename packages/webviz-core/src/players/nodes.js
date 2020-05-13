@@ -9,7 +9,7 @@ import { flatten, uniq } from "lodash";
 
 import type { Message, SubscribePayload, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { SECOND_BAG_PREFIX } from "webviz-core/src/util/globalConstants";
+import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 
 type Callback<State> = ({| message: Message, state: State |}) => {| messages: Message[], state: State |};
 
@@ -24,7 +24,7 @@ export type NodeDefinition<State> = {
 const WEBVIZ_NODE_PREFIX = "/webviz/";
 
 export function isWebvizNodeTopic(topic: string) {
-  return topic.startsWith(WEBVIZ_NODE_PREFIX) || topic.startsWith(`${SECOND_BAG_PREFIX}${WEBVIZ_NODE_PREFIX}`);
+  return topic.startsWith(WEBVIZ_NODE_PREFIX) || topic.startsWith(`${SECOND_SOURCE_PREFIX}${WEBVIZ_NODE_PREFIX}`);
 }
 
 export const makeNodeMessage = (topic: string, datatype: string, message: any): Message => {

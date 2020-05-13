@@ -88,7 +88,9 @@ export default class UserNodePlayer implements Player {
       setUserNodeDiagnostics({ [nodeId]: { diagnostics } });
     };
     this._addUserNodeLogs = (nodeId: string, logs: UserNodeLog[]) => {
-      addUserNodeLogs({ [nodeId]: { logs } });
+      if (logs.length) {
+        addUserNodeLogs({ [nodeId]: { logs } });
+      }
     };
 
     this._setNodeTrust = (id: string, trusted: boolean) => {
@@ -137,7 +139,7 @@ export default class UserNodePlayer implements Player {
 
   // Defines the inputs/outputs and worker interface of a user node.
   _getNodeRegistration(nodeId: string, nodeData: NodeData): NodeRegistration {
-    const { inputTopics, outputTopic, transpiledCode: nodeCode, outputDatatype, datatypes } = nodeData;
+    const { inputTopics, outputTopic, transpiledCode: nodeCode, projectCode, outputDatatype, datatypes } = nodeData;
     // Update datatypes for the player state to consume.
     this._userDatatypes = { ...this._userDatatypes, ...datatypes };
     let rpc;
@@ -151,6 +153,7 @@ export default class UserNodePlayer implements Player {
           rpc = this._unusedNodeRuntimeWorkers.pop() || rpcFromNewSharedWorker(new UserNodePlayerWorker(uuid.v4()));
           const { error, userNodeDiagnostics, userNodeLogs } = await rpc.send<RegistrationOutput>("registerNode", {
             nodeCode,
+            projectCode,
           });
           if (error) {
             this._setUserNodeDiagnostics(nodeId, [
@@ -347,6 +350,6 @@ export default class UserNodePlayer implements Player {
   startPlayback = () => this._player.startPlayback();
   pausePlayback = () => this._player.pausePlayback();
   setPlaybackSpeed = (speed: number) => this._player.setPlaybackSpeed(speed);
-  seekPlayback = (time: Time) => this._player.seekPlayback(time);
+  seekPlayback = (time: Time, backfillDuration: ?Time) => this._player.seekPlayback(time, backfillDuration);
   requestBackfill = () => this._player.requestBackfill();
 }

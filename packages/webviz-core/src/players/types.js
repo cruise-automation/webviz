@@ -8,8 +8,10 @@
 
 import type { Time } from "rosbag";
 
+import type { MemoryCacheBlock } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import type { Range } from "webviz-core/src/util/ranges";
+import type { TimestampMethod } from "webviz-core/src/util/time";
 
 // A `Player` is a class that manages playback state. It manages subscriptions,
 // current time, which topics and datatypes are available, and so on.
@@ -40,7 +42,7 @@ export interface Player {
   // Basic playback controls.
   startPlayback(): void;
   pausePlayback(): void;
-  seekPlayback(time: Time): void; // Seek to a particular time. Might trigger backfilling.
+  seekPlayback(time: Time, backfillDuration: ?Time): void; // Seek to a particular time. Might trigger backfilling.
 
   // If the Player supports non-real-time speeds (i.e. PlayerState#capabilities contains
   // PlayerCapabilities.setSpeed), set that speed. E.g. 1.0 is real time, 0.2 is 20% of real time.
@@ -116,6 +118,9 @@ export type PlayerStateActiveData = {|
   // E.g. 1.0 is real time, 0.2 is 20% of real time.
   speed: number,
 
+  // The order in which messages are published.
+  messageOrder: TimestampMethod,
+
   // The last time a seek / discontinuity in messages happened. This will clear out data within
   // `PanelAPI` so we're not looking at stale data.
   // TODO(JP): This currently is a time per `Date.now()`, but we don't need that anywhere, so we
@@ -134,6 +139,10 @@ export type PlayerStateActiveData = {|
   // topic must refer to a datatype that is present in this list, every datatypes that refers to
   // another datatype must refer to a datatype that is present in this list).
   datatypes: RosDatatypes,
+
+  // Used for late-parsing of binary messages. Required to cover any topic for which binary data is
+  // given to panels. (May be empty for players that only provide messages parsed into objects.)
+  messageDefinitionsByTopic: { [topic: string]: string },
 |};
 
 // Represents a ROS topic, though the actual data does not need to come from a ROS system.
@@ -153,7 +162,7 @@ export type Topic = {|
 // TODO(JP): `op` bit is unnecessary, and the `datatype` bit is redundant
 // with the `topics` array in `PlayerStateActiveData`. We should remove both
 // and unify type with `DataProviderMessage`.
-export type TypedMessage<T> = {|
+export type TypedMessage<T> = $ReadOnly<{|
   topic: string,
   datatype: string,
   op: "message",
@@ -162,8 +171,8 @@ export type TypedMessage<T> = {|
   // The actual message format. This is currently not very tightly defined, but it's typically
   // JSON-serializable, with the exception of typed arrays
   // (see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays).
-  message: T,
-|};
+  message: $ReadOnly<T>,
+|}>;
 export type Message = TypedMessage<any>;
 
 // Contains different kinds of progress indications, mostly used in the playback bar.
@@ -175,6 +184,10 @@ export type Progress = {
   // `IdbCacheReaderDataProvider` to determine if a range is already available
   // in IndexedDB. Is not directly shown in the UI.
   nsTimeRangesSinceBagStart?: { [string]: Range[] },
+
+  // A raw view into the cached binary data stored by the MemoryCacheDataProvider. Only present when
+  // using the RandomAccessPlayer.
+  blocks?: $ReadOnlyArray<?MemoryCacheBlock>,
 };
 
 // TODO(JP): Deprecated; just inline this type wherever needed.

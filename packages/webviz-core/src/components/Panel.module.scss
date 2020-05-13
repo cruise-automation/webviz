@@ -40,7 +40,7 @@
   z-index: 100000; // highest level within panel
   display: none;
 
-  .root:hover &,
+  .root:hover > &,
   // for screenshot tests
   &:global(.hoverForScreenshot) {
     background-color: rgba(110, 81, 238, 0.15);

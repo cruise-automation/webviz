@@ -34,7 +34,10 @@ function generateMessages(topics: string[]): DataProviderMessage[] {
 }
 
 function getProvider() {
-  const memoryDataProvider = new MemoryDataProvider({ messages: generateMessages(["/foo", "/bar", "/baz"]) });
+  const memoryDataProvider = new MemoryDataProvider({
+    messages: generateMessages(["/foo", "/bar", "/baz"]),
+    providesParsedMessages: true,
+  });
   const provider = new IdbCacheWriterDataProvider(
     { id: "some-id" },
     [{ name: "MemoryDataProvider", args: {}, children: [] }],
@@ -56,6 +59,8 @@ describe("IdbCacheWriterDataProvider", () => {
       end: { nsec: 0, sec: 102 },
       topics: [],
       datatypes: {},
+      messageDefinitionsByTopic: {},
+      providesParsedMessages: true,
     });
   });
 

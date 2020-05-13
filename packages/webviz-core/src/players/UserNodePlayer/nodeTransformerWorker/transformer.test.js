@@ -11,7 +11,6 @@ import {
   validateOutputTopic,
   validateInputTopics,
   compile,
-  transpile,
   extractDatatypes,
   compose,
 } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
@@ -20,9 +19,11 @@ import { DiagnosticSeverity, ErrorCodes, Sources, type NodeData } from "webviz-c
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 
-const baseNodeData: NodeData = {
-  name: "main",
+// Exported for use in other tests.
+export const baseNodeData: NodeData = {
+  name: `${DEFAULT_WEBVIZ_NODE_PREFIX}main`,
   sourceCode: "",
+  projectCode: new Map<string, string>(),
   transpiledCode: "",
   diagnostics: [],
   inputTopics: [],
@@ -295,13 +296,20 @@ describe("pipeline", () => {
         expect(severity).toEqual(DiagnosticSeverity.Error);
       }
     );
-  });
-
-  describe("transpile", () => {
-    it.each(["const x: string = 'hello webviz'"])("can transpile", (sourceCode) => {
-      const { transpiledCode, diagnostics } = transpile({ ...baseNodeData, sourceCode });
+    it.each(["const x: string = 'hello webviz'"])("produces transpiled code", (sourceCode) => {
+      const { transpiledCode, diagnostics } = compile({ ...baseNodeData, sourceCode });
       expect(typeof transpiledCode).toEqual("string");
       expect(diagnostics.length).toEqual(0);
+    });
+    it.each([
+      `
+      import {norm} from "utils/pointClouds";
+      const x = norm({x:1, y:2, z:3});
+      `,
+    ])("produces transpiled code", (sourceCode) => {
+      const { projectCode, diagnostics } = compile({ ...baseNodeData, sourceCode });
+      expect(projectCode.size).toEqual(1);
+      expect(diagnostics).toEqual([]);
     });
   });
 
@@ -370,6 +378,85 @@ describe("pipeline", () => {
           },
           {
             name: "y",
+            isArray: false,
+            isComplex: false,
+            arrayLength: undefined,
+            type: "float64",
+          },
+        ],
+      },
+    };
+
+    const pointFields = {
+      fields: [
+        {
+          name: "x",
+          isArray: false,
+          isComplex: false,
+          arrayLength: undefined,
+          type: "float64",
+        },
+        {
+          name: "y",
+          isArray: false,
+          isComplex: false,
+          arrayLength: undefined,
+          type: "float64",
+        },
+        {
+          name: "z",
+          isArray: false,
+          isComplex: false,
+          arrayLength: undefined,
+          type: "float64",
+        },
+      ],
+    };
+
+    const pointDataType = {
+      [baseNodeData.name]: pointFields,
+    };
+
+    const nestedPointDataType = {
+      [baseNodeData.name]: {
+        fields: [
+          {
+            name: "point",
+            isArray: false,
+            isComplex: true,
+            arrayLength: undefined,
+            type: `${baseNodeData.name}/point`,
+          },
+        ],
+      },
+      [`${baseNodeData.name}/point`]: pointFields,
+    };
+
+    const poseDataType = {
+      [baseNodeData.name]: {
+        fields: [
+          {
+            name: "position",
+            isArray: false,
+            isComplex: true,
+            arrayLength: undefined,
+            type: `${baseNodeData.name}/position`,
+          },
+          {
+            name: "orientation",
+            isArray: false,
+            isComplex: true,
+            arrayLength: undefined,
+            type: `${baseNodeData.name}/orientation`,
+          },
+        ],
+      },
+      [`${baseNodeData.name}/position`]: pointFields,
+      [`${baseNodeData.name}/orientation`]: {
+        fields: [
+          ...pointFields.fields,
+          {
+            name: "w",
             isArray: false,
             isComplex: false,
             arrayLength: undefined,
@@ -495,7 +582,34 @@ describe("pipeline", () => {
           };`,
         datatypes: numDataType,
       },
-
+      {
+        description: "Imported type from 'ros' in return type",
+        sourceCode: `
+          import { Point } from 'ros';
+          export default (msg: any): { point: Point } => {
+            return { point: { x: 1, y: 2, z: 3 } };
+          };`,
+        datatypes: nestedPointDataType,
+      },
+      {
+        description: "Imported type from 'ros' is return type",
+        sourceCode: `
+          import { Point } from 'ros';
+          export default (msg: any): Point => {
+            return { x: 1, y: 2, z: 3 };
+          };`,
+        datatypes: pointDataType,
+      },
+      {
+        description: "Imported nested type from 'ros' is return type",
+        sourceCode: `
+          import { Pose } from 'ros';
+          export default (msg: any): Pose => {
+            return {position: { x: 1, y: 2, z: 3 }, orientation: { x: 4, y: 5, z: 6, w: 7}};
+          };`,
+        datatypes: poseDataType,
+      },
+      // TODO: add a test for an import interface type in the return type
       {
         description: "Type reference as return type",
         sourceCode: `
@@ -910,6 +1024,24 @@ describe("pipeline", () => {
         error: ErrorCodes.DatatypeExtraction.BAD_TYPE_RETURN,
       },
       {
+        description: "Nested 'any' in the return type",
+        sourceCode: `
+          type NestedAny = { prop: any };
+          export default (msg: any): NestedAny => {
+            return { prop: 1 };
+          };`,
+        error: ErrorCodes.DatatypeExtraction.NO_NESTED_ANY,
+      },
+      {
+        description: "Complex nested 'any' in the return type",
+        sourceCode: `
+          type NestedAny = { prop: any[] };
+          export default (msg: any): NestedAny => {
+            return { prop: [ 1 ] };
+          };`,
+        error: ErrorCodes.DatatypeExtraction.NO_NESTED_ANY,
+      },
+      {
         description: "Exporting a publisher function with a return type 'void'",
         sourceCode: `
           export default (): void => {};`,
@@ -1087,15 +1219,6 @@ describe("pipeline", () => {
             return { num: 42 };
           };`,
         error: ErrorCodes.DatatypeExtraction.NO_TYPEOF,
-      },
-      {
-        description: "Imports from 'ros'",
-        sourceCode: `
-          import { Point } from 'ros';
-          export default (msg: any): { point: Point } => {
-            return { point: { x: 1, y: 2, z: 3 } };
-          };`,
-        error: ErrorCodes.DatatypeExtraction.NO_IMPORTS_IN_RETURN_TYPE,
       },
       {
         description: "Bad union return type",

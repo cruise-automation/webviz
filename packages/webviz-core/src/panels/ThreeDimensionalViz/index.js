@@ -8,7 +8,7 @@
 
 import hoistNonReactStatics from "hoist-non-react-statics";
 import { omit } from "lodash";
-import React, { type Node, useCallback, useMemo } from "react";
+import React, { type Node, useCallback } from "react";
 import { hot } from "react-hot-loader/root";
 import { useSelector } from "react-redux";
 import { type CameraState } from "regl-worldview";
@@ -19,7 +19,6 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import helpContent from "webviz-core/src/panels/ThreeDimensionalViz/index.help.md";
-import Layout from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
 import type { TopicSettingsCollection } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import {
   useComputedCameraState,
@@ -34,10 +33,6 @@ import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import { TRANSFORM_TOPIC, TRANSFORM_STATIC_TOPIC } from "webviz-core/src/util/globalConstants";
 
-const TOPIC_PICKER_TYPES = {
-  TOPIC_TREE: "TOPIC_TREE",
-  TOPIC_TREE_V2: "TOPIC_TREE_V2",
-};
 export type ThreeDimensionalVizConfig = {
   enableShortDisplayNames?: boolean,
   autoTextBackgroundColor?: boolean,
@@ -52,17 +47,18 @@ export type ThreeDimensionalVizConfig = {
   selectedPolygonEditFormat?: "json" | "yaml",
   showCrosshair?: boolean,
 
-  expandedNodes: string[],
-  checkedNodes: string[],
+  expandedKeys: string[],
+  checkedKeys: string[],
   topicSettings: TopicSettingsCollection,
+  autoSyncCameraState?: boolean,
 
   // legacy props
   hideMap?: ?boolean, // eslint-disable-line react/no-unused-prop-types
   useHeightMap?: ?boolean, // eslint-disable-line react/no-unused-prop-types
   follow?: boolean,
-  autoSyncCameraState?: boolean,
   topicGroups?: TopicGroupConfig[],
-  enableTopicTree?: ?boolean,
+  checkedNodes?: string[],
+  expandedNodes?: string[],
 };
 export type Save3DConfig = SaveConfig<ThreeDimensionalVizConfig>;
 
@@ -180,62 +176,27 @@ const BaseRenderer = (props: Props, ref) => {
   // useImperativeHandle so consumer component (e.g.Follow stories) can call onFollowChange directly.
   React.useImperativeHandle(ref, (): any => ({ onFollowChange }));
 
-  const enabledTopicPickerType = useMemo(() => {
-    let enabledTopicPicker = TOPIC_PICKER_TYPES.TOPIC_TREE;
-
-    if (new URLSearchParams(window.location.search).has("enableTopicTreeV2")) {
-      enabledTopicPicker = TOPIC_PICKER_TYPES.TOPIC_TREE_V2;
-    }
-    return enabledTopicPicker;
-  }, []);
-
   return (
-    <>
-      {enabledTopicPickerType === TOPIC_PICKER_TYPES.TOPIC_TREE_V2 && (
-        <LayoutForTopicTreeV2
-          cameraState={cameraState}
-          config={config}
-          cleared={cleared}
-          currentTime={currentTime}
-          extensions={extensions}
-          followOrientation={!!followOrientation}
-          followTf={followTf}
-          frame={frame}
-          helpContent={helpContent}
-          isPlaying={isPlaying}
-          onAlignXYAxis={onAlignXYAxis}
-          onCameraStateChange={onCameraStateChange}
-          onFollowChange={onFollowChange}
-          saveConfig={saveConfig}
-          topics={topics}
-          targetPose={targetPose}
-          transforms={transforms}
-          setSubscriptions={onSetSubscriptions}
-        />
-      )}
-      {enabledTopicPickerType === TOPIC_PICKER_TYPES.TOPIC_TREE && (
-        <Layout
-          cameraState={cameraState}
-          targetPose={targetPose}
-          config={config}
-          cleared={cleared}
-          currentTime={currentTime}
-          extensions={extensions}
-          followOrientation={!!followOrientation}
-          followTf={followTf}
-          frame={frame}
-          helpContent={helpContent}
-          isPlaying={isPlaying}
-          onAlignXYAxis={onAlignXYAxis}
-          onCameraStateChange={onCameraStateChange}
-          onFollowChange={onFollowChange}
-          saveConfig={saveConfig}
-          topics={topics}
-          transforms={transforms}
-          setSubscriptions={onSetSubscriptions}
-        />
-      )}
-    </>
+    <LayoutForTopicTreeV2
+      cameraState={cameraState}
+      config={config}
+      cleared={cleared}
+      currentTime={currentTime}
+      extensions={extensions}
+      followOrientation={!!followOrientation}
+      followTf={followTf}
+      frame={frame}
+      helpContent={helpContent}
+      isPlaying={isPlaying}
+      onAlignXYAxis={onAlignXYAxis}
+      onCameraStateChange={onCameraStateChange}
+      onFollowChange={onFollowChange}
+      saveConfig={saveConfig}
+      topics={topics}
+      targetPose={targetPose}
+      transforms={transforms}
+      setSubscriptions={onSetSubscriptions}
+    />
   );
 };
 

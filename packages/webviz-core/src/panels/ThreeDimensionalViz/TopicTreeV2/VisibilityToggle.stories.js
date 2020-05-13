@@ -17,7 +17,7 @@ function Example({
   overrideColor,
   size,
   title,
-  visible,
+  visibleInScene,
   showFocused,
   showToggled,
 }: {|
@@ -25,7 +25,7 @@ function Example({
   overrideColor?: string,
   size?: Size,
   title: string,
-  visible?: boolean,
+  visibleInScene?: boolean,
   showFocused?: boolean,
   showToggled?: boolean,
 |}) {
@@ -45,7 +45,7 @@ function Example({
           return;
         }
         if (showToggled || showFocused) {
-          const toggleEl = ((el.querySelector(`[data-test="myInput"]`): any): HTMLInputElement);
+          const toggleEl = ((el.querySelector(`[data-test="myToggle"]`): any): HTMLInputElement);
           if (showToggled) {
             toggleEl.click();
           } else if (showFocused) {
@@ -58,10 +58,10 @@ function Example({
       <VisibilityToggle
         checked={checked}
         onToggle={onToggle}
-        visible={!!visible}
+        visibleInScene={!!visibleInScene}
         size={size}
         overrideColor={overrideColor}
-        dataTestId="myInput"
+        dataTest="myToggle"
       />
     </div>
   );
@@ -71,40 +71,47 @@ storiesOf("<VisibilityToggle>", module)
   .add("default", () => {
     return (
       <div>
-        <Example checked visible title="checked: true, visible: true" />
-        <Example visible title="visible: true" />
-        <Example visible={false} checked={false} title="visible: false, checked: false" />
-        <Example visible={false} checked title="visible: false, checked: true" />
+        <Example checked visibleInScene title="checked: true, visibleInScene: true" />
+        <Example visibleInScene title="visibleInScene: true" />
+        <Example visibleInScene={false} checked={false} title="visibleInScene: false, checked: false" />
+        <Example visibleInScene={false} checked title="visibleInScene: false, checked: true" />
         <Example
           checked
-          visible
+          visibleInScene
           size={TOGGLE_SIZE_CONFIG.SMALL.name}
-          title="checked: true, visible: true, size: SMALL "
+          title="checked: true, visibleInScene: true, size: SMALL "
         />
         <Example
           checked
-          visible
+          visibleInScene
           overrideColor="rgba(150,200,0,1)"
-          title="checked: true, visible: true, overrideColor: rgba(150,200,0,1)"
+          title="checked: true, visibleInScene: true, overrideColor: rgba(150,200,0,1)"
         />
         <Example
-          visible
+          visibleInScene
           overrideColor="rgba(150,200,0,1)"
-          title="checked: false, visible: true, overrideColor: rgba(150,200,0,1)"
+          title="checked: false, visibleInScene: true, overrideColor: rgba(150,200,0,1)"
         />
         <Example
           checked
-          visible={false}
+          visibleInScene={false}
           overrideColor="rgba(150,200,0,1)"
-          title="checked: true, visible: false, overrideColor: rgba(150,200,0,1)"
+          title="checked: true, visibleInScene: false, overrideColor: rgba(150,200,0,1)"
         />
-        <Example showToggled checked visible title="checked: true, visible: true, click to toggle checked" />
+        <Example
+          showToggled
+          checked
+          visibleInScene
+          title="checked: true, visibleInScene: true, click to toggle checked"
+        />
       </div>
     );
   })
   .add("focused when checked is false", () => {
-    return <Example showFocused visible title="checked: false, visible: true, show focused state" />;
+    return <Example showFocused visibleInScene title="checked: false, visibleInScene: true, show focused state" />;
   })
   .add("focused state when checked is true", () => {
-    return <Example showFocused checked visible title="checked: true, visible: true, show focused state" />;
+    return (
+      <Example showFocused checked visibleInScene title="checked: true, visibleInScene: true, show focused state" />
+    );
   });

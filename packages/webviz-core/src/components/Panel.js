@@ -15,9 +15,10 @@ import cx from "classnames";
 import { last } from "lodash";
 import React, { useState, useCallback, useContext, useMemo, type ComponentType } from "react";
 import DocumentEvents from "react-document-events";
-import KeyListener from "react-key-listener";
 import {
   getNodeAtPath,
+  updateTree,
+  getPathFromNode,
   getOtherBranch,
   isParent,
   MosaicContext,
@@ -35,6 +36,7 @@ import Button from "webviz-core/src/components/Button";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDragHandle";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
@@ -49,7 +51,13 @@ import type {
 } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
-import { groupPanelsOutput, createTabsOutput, getPanelTypeFromId } from "webviz-core/src/util/layout";
+import {
+  groupPanelsOutput,
+  createTabsOutput,
+  getPanelTypeFromId,
+  getPanelIdForType,
+  updateTabPanelLayout,
+} from "webviz-core/src/util/layout";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type Props<Config> = { childId?: string, config?: Config, saveConfig?: (Config) => void, tabId?: string };
@@ -132,6 +140,7 @@ export default function Panel<Config: PanelConfig>(
     const [fullScreen, setFullScreen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [fullScreenLocked, setFullScreenLocked] = useState(false);
+    const [showTabPanelSelectionWarning, setShowTabPanelSelectionWarning] = useState(false);
 
     const panelsByType = useMemo(() => getPanelsByType(), []);
     const type = PanelComponent.panelType;
@@ -216,13 +225,23 @@ export default function Panel<Config: PanelConfig>(
           }
         }
 
-        // Clear selectedPanelIds when user clicks a panel without pressing `Cmd`
-        if (!e.metaKey && selectedPanelIds.length) {
-          actions.setSelectedPanelIds([]);
+        // If user clicks a 1st panel, select it
+        // If user clicks a 2nd+ panel without pressing `Cmd`, clear previous selections & select clicked panel
+        if (!e.metaKey) {
+          // Unless we are a Tab panel or in a Tab panel
+          if (tabId || isTabPanel) {
+            return;
+          }
+          if (childId) {
+            actions.setSelectedPanelIds([childId]);
+          }
+          return;
         }
 
-        // Don't select panel if it is a Tab panel, is inside a Tab panel, or was clicked without pressing `Cmd`
-        if (tabId || isTabPanel || !e.metaKey) {
+        // Show a warning if we are pressing `Cmd` and clicking a Tab panel
+        // Don't select any panels
+        if (tabId || isTabPanel) {
+          setShowTabPanelSelectionWarning(true);
           return;
         }
 
@@ -237,31 +256,50 @@ export default function Panel<Config: PanelConfig>(
           );
         }
       },
-      [fullScreen, quickActionsKeyPressed, shiftKeyPressed, childId, tabId, isTabPanel, selectedPanelIds, actions]
+      [
+        setShowTabPanelSelectionWarning,
+        fullScreen,
+        quickActionsKeyPressed,
+        selectedPanelIds,
+        tabId,
+        isTabPanel,
+        childId,
+        shiftKeyPressed,
+        actions,
+      ]
+    );
+
+    const createTabPanel = useCallback(
+      (tabPanelId, changePanelPayload, saveConfigsPayload) => {
+        actions.changePanelLayout(changePanelPayload);
+        actions.savePanelConfigs(saveConfigsPayload);
+        actions.setSelectedPanelIds([tabPanelId]);
+      },
+      [actions]
     );
 
     const groupPanels = useCallback(
       () => {
-        const { tabPanelId, newLayout, saveConfigsPayload } = groupPanelsOutput(childId, layout, validSelectedPanelIds);
-        // Layout must be updated with new Tab panel before saving its nested panels' configs
-        // savePanelConfigs strips savedProps keys that do not exist in the layout
-        actions.changePanelLayout({ layout: newLayout });
-        actions.savePanelConfigs(saveConfigsPayload);
-        actions.setSelectedPanelIds([tabPanelId]);
+        const { tabPanelId, changePanelPayload, saveConfigsPayload } = groupPanelsOutput(
+          childId,
+          layout,
+          validSelectedPanelIds
+        );
+        createTabPanel(tabPanelId, changePanelPayload, saveConfigsPayload);
       },
-      [actions, childId, layout, validSelectedPanelIds]
+      [childId, layout, createTabPanel, validSelectedPanelIds]
     );
 
     const createTabs = useCallback(
       () => {
-        const { tabPanelId, newLayout, saveConfigsPayload } = createTabsOutput(childId, layout, validSelectedPanelIds);
-        // Layout must be updated with new Tab panel before saving its nested panels' configs
-        // savePanelConfigs strips savedProps keys that do not exist in the layout
-        actions.changePanelLayout({ layout: newLayout });
-        actions.savePanelConfigs(saveConfigsPayload);
-        actions.setSelectedPanelIds([tabPanelId]);
+        const { tabPanelId, changePanelPayload, saveConfigsPayload } = createTabsOutput(
+          childId,
+          layout,
+          validSelectedPanelIds
+        );
+        createTabPanel(tabPanelId, changePanelPayload, saveConfigsPayload);
       },
-      [actions, childId, layout, validSelectedPanelIds]
+      [childId, layout, createTabPanel, validSelectedPanelIds]
     );
 
     const { closePanel, splitPanel } = useMemo(
@@ -270,10 +308,21 @@ export default function Panel<Config: PanelConfig>(
           mosaicActions.remove(mosaicWindowActions.getPath());
         },
         splitPanel: () => {
-          mosaicWindowActions.split({ type: PanelComponent.panelType });
+          if (tabId) {
+            const newId = getPanelIdForType(PanelComponent.panelType);
+            const activeTabLayout = savedProps[tabId].tabs[savedProps[tabId].activeTabIdx].layout;
+            const pathToPanelInTab = getPathFromNode(childId, activeTabLayout);
+            const newTabLayout = updateTree(activeTabLayout, [
+              { path: pathToPanelInTab, spec: { $set: { first: childId, second: newId, direction: "row" } } },
+            ]);
+            const newTabConfig = updateTabPanelLayout(newTabLayout, savedProps[tabId]);
+            actions.savePanelConfigs({ configs: [{ id: tabId, config: newTabConfig }, { id: newId, config }] });
+          } else {
+            mosaicWindowActions.split({ type: PanelComponent.panelType });
+          }
         },
       }),
-      [mosaicActions, mosaicWindowActions]
+      [actions, childId, config, mosaicActions, mosaicWindowActions, savedProps, tabId]
     );
 
     const { onMouseEnter, onMouseLeave, onMouseMove, enterFullscreen, exitFullScreen } = useMemo(
@@ -312,15 +361,21 @@ export default function Panel<Config: PanelConfig>(
         keyUpHandlers: {
           "`": () => onReleaseQuickActionsKey(),
           "~": () => onReleaseQuickActionsKey(),
-          Meta: () => setCmdKeyPressed(false),
           Shift: () => setShiftKeyPressed(false),
+          Meta: () => {
+            setCmdKeyPressed(false);
+            setShowTabPanelSelectionWarning(false);
+          },
         },
         keyDownHandlers: {
           "`": () => setQuickActionsKeyPressed(true),
           "~": () => setQuickActionsKeyPressed(true),
-          Meta: () => setCmdKeyPressed(true),
           Shift: () => setShiftKeyPressed(true),
           Escape: () => exitFullScreen(),
+          Meta: () => {
+            setCmdKeyPressed(true);
+            setShowTabPanelSelectionWarning(false);
+          },
         },
       }),
       [exitFullScreen, onReleaseQuickActionsKey]
@@ -370,31 +425,33 @@ export default function Panel<Config: PanelConfig>(
               </Button>
             </div>
           )}
-          {cmdKeyPressed && type === TAB_PANEL_TYPE && (
+          {showTabPanelSelectionWarning && (
             <div data-tab-options-no-op className={styles.prohibitedSelection}>
               Cannot group Tab panels with other panels
             </div>
           )}
           {type !== TAB_PANEL_TYPE && quickActionsKeyPressed && !fullScreen && (
-            <MosaicDragHandle tabId={tabId}>
-              <div className={styles.quickActionsOverlay} data-panel-overlay>
-                <div>
-                  <FullscreenIcon />
-                  {shiftKeyPressed ? "Lock fullscreen" : "Fullscreen (Shift+click to lock)"}
-                </div>
-                <div>
-                  <Button onClick={closePanel} disabled={isOnlyPanel}>
-                    <TrashCanOutlineIcon />
-                    Remove
-                  </Button>
-                  <Button onClick={splitPanel}>
-                    <GridLargeIcon />
-                    Split
-                  </Button>
-                </div>
-                {!isOnlyPanel && <p>Drag to move</p>}
-              </div>
-            </MosaicDragHandle>
+            <div className={styles.quickActionsOverlay} data-panel-overlay>
+              <MosaicDragHandle tabId={tabId}>
+                <>
+                  <div>
+                    <FullscreenIcon />
+                    {shiftKeyPressed ? "Lock fullscreen" : "Fullscreen (Shift+click to lock)"}
+                  </div>
+                  <div>
+                    <Button onClick={closePanel} disabled={isOnlyPanel}>
+                      <TrashCanOutlineIcon />
+                      Remove
+                    </Button>
+                    <Button onClick={splitPanel}>
+                      <GridLargeIcon />
+                      Split
+                    </Button>
+                  </div>
+                  {!isOnlyPanel && <p>Drag to move</p>}
+                </>
+              </MosaicDragHandle>
+            </div>
           )}
           {fullScreen ? (
             <button className={styles.exitFullScreen} onClick={exitFullScreen} data-panel-overlay-exit>

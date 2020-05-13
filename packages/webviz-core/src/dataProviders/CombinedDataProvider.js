@@ -6,9 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { flatten, uniq, isEqual } from "lodash";
+import { flatten, isEqual } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
+import type { MemoryCacheBlock } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import type {
   DataProviderDescriptor,
   DataProviderMetadata,
@@ -38,6 +39,53 @@ const mapTopics = (topics: Topic[], { provider, prefix }: InternalProviderInfo):
     name: `${prefix}${topic.name}`,
     originalTopic: topic.name,
   }));
+};
+
+// block1 -> block2 -> mergedBlock(block1, block2).
+const mergeBlocksMemo = new WeakMap<MemoryCacheBlock, WeakMap<MemoryCacheBlock, MemoryCacheBlock>>();
+
+const mergedBlock = (block1: MemoryCacheBlock, block2: MemoryCacheBlock): MemoryCacheBlock => ({
+  messagesByTopic: { ...block1.messagesByTopic, ...block2.messagesByTopic },
+  sizeInBytes: block1.sizeInBytes + block2.sizeInBytes,
+});
+
+const memoizedMergedBlock = (block1: ?MemoryCacheBlock, block2: ?MemoryCacheBlock): ?MemoryCacheBlock => {
+  if (block1 == null) {
+    return block2;
+  }
+  if (block2 == null) {
+    return block1;
+  }
+  let memo = mergeBlocksMemo.get(block1);
+  if (memo == null) {
+    memo = new WeakMap<any, MemoryCacheBlock>();
+    mergeBlocksMemo.set(block1, memo);
+  }
+  const memoizedValue = memo.get(block2);
+  if (memoizedValue != null) {
+    return memoizedValue;
+  }
+  const ret = mergedBlock(block1, block2);
+  memo.set(block2, ret);
+  return ret;
+};
+
+// Exported for tests
+export const mergedBlocks = (
+  blocks1: ?$ReadOnlyArray<?MemoryCacheBlock>,
+  blocks2: ?$ReadOnlyArray<?MemoryCacheBlock>
+): ?$ReadOnlyArray<?MemoryCacheBlock> => {
+  if (blocks1 == null) {
+    return blocks2;
+  }
+  if (blocks2 == null) {
+    return blocks1;
+  }
+  const ret = [];
+  for (let i = 0; i < blocks1.length || i < blocks2.length; ++i) {
+    ret.push(memoizedMergedBlock(blocks1[i], blocks2[i]));
+  }
+  return ret;
 };
 
 const merge = (messages1: DataProviderMessage[], messages2: DataProviderMessage[]) => {
@@ -86,13 +134,25 @@ const throwOnUnequalDatatypes = (datatypes: [string, RosMsgField[]][]) => {
     });
 };
 
+const throwOnMixedParsedMessages = (childProvidesParsedMessages: boolean[]) => {
+  if (childProvidesParsedMessages.includes(true) && childProvidesParsedMessages.includes(false)) {
+    throw new Error("Data providers provide different message formats");
+  }
+};
+
 function intersectProgress(progresses: Progress[]): Progress {
   if (progresses.length === 0) {
     return { fullyLoadedFractionRanges: [] };
   }
 
+  let blocks: ?$ReadOnlyArray<?MemoryCacheBlock>;
+  for (const progress of progresses) {
+    blocks = mergedBlocks(blocks, progress.blocks);
+  }
+
   return {
     fullyLoadedFractionRanges: deepIntersect(progresses.map((p) => p.fullyLoadedFractionRanges).filter(Boolean)),
+    ...(blocks != null ? { blocks } : undefined),
   };
 }
 function emptyProgress() {
@@ -121,9 +181,6 @@ export default class CombinedDataProvider implements DataProvider {
       );
     }
     const prefixes = providerInfos.filter(({ prefix }) => prefix).map(({ prefix }) => prefix);
-    if (uniq(prefixes).length !== prefixes.length) {
-      throw new Error(`Duplicate prefixes are not allowed: ${JSON.stringify(prefixes)}`);
-    }
     if (prefixes.find((prefix) => prefix && !prefix.startsWith("/"))) {
       throw new Error(`Each prefix must have a leading forward slash: ${JSON.stringify(prefixes)}`);
     }
@@ -169,10 +226,14 @@ export default class CombinedDataProvider implements DataProvider {
 
     this._initializationResultsPerProvider = [];
     let topics: Topic[] = [];
+    const messageDefinitionsByTopic = {};
     results.forEach((result, i) => {
       const deleteTopics: string[] = this._providers[i].deleteTopics || [];
       const filteredTopics: Topic[] = result.topics.filter(({ name }) => !deleteTopics.includes(name));
       topics = [...topics, ...mapTopics(filteredTopics, this._providers[i])];
+
+      // Duplicate topics are forbidden elsewhere.
+      Object.assign(messageDefinitionsByTopic, result.messageDefinitionsByTopic);
 
       this._initializationResultsPerProvider.push({
         start: result.start,
@@ -185,12 +246,15 @@ export default class CombinedDataProvider implements DataProvider {
     throwOnDuplicateTopics([...topics]);
     // $FlowFixMe - flow does not work with Object.entries :(
     throwOnUnequalDatatypes(flatten(results.map(({ datatypes }) => Object.entries(datatypes))));
+    throwOnMixedParsedMessages(results.map(({ providesParsedMessages }) => providesParsedMessages));
 
     return {
       start,
       end,
       topics,
       datatypes: results.reduce((prev, { datatypes }) => ({ ...prev, ...datatypes }), {}),
+      providesParsedMessages: results.length ? results[0].providesParsedMessages : true,
+      messageDefinitionsByTopic,
     };
   }
 

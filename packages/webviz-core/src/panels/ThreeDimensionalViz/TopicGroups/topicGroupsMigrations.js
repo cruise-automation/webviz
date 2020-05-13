@@ -22,8 +22,8 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
 import { migrateLegacyIds } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/topicTreeV2Migrations";
 
-function getSelectionsFromCheckedNodes(
-  checkedNodes: string[]
+function getSelectionsFromCheckedKeys(
+  checkedKeys: string[]
 ): {
   selectedTopics: string[],
   selectedExtensions: string[],
@@ -34,7 +34,7 @@ function getSelectionsFromCheckedNodes(
   const selectedTopics = [];
   const selectedNamespacesByTopic = {};
   const selectedNamesSet = new Set();
-  checkedNodes.forEach((item) => {
+  checkedKeys.forEach((item) => {
     if (item.startsWith("t:")) {
       selectedTopics.push(item.substr("t:".length));
     } else if (item.startsWith("/")) {
@@ -88,17 +88,17 @@ function dataSourcePrefixToColumnIndex(dataSourcePrefix: string): number {
 type MigrateInput = {|
   topicGroupDisplayName?: string,
   topicSettings?: ?{ [topicName: string]: any },
-  checkedNodes?: ?(string[]),
+  checkedKeys?: ?(string[]),
   modifiedNamespaceTopics?: ?(string[]),
 |};
 // Create a new topic group called 'My Topics' and related fields based the old config
 export function migratePanelConfigToTopicGroupConfig({
   topicGroupDisplayName = DEFAULT_IMPORTED_GROUP_NAME,
   topicSettings,
-  checkedNodes,
+  checkedKeys,
   modifiedNamespaceTopics,
 }: MigrateInput): TopicGroupConfig {
-  if (!checkedNodes) {
+  if (!checkedKeys) {
     return {
       displayName: topicGroupDisplayName,
       visibilityByColumn: [true, true],
@@ -107,13 +107,13 @@ export function migratePanelConfigToTopicGroupConfig({
     };
   }
 
-  const migratedCheckedNodes = migrateLegacyIds(checkedNodes);
+  const migratedCheckedKeys = migrateLegacyIds(checkedKeys);
   const {
     selectedExtensions,
     selectedTopics,
     selectedNamespacesByTopic,
     selectedNamesSet,
-  } = getSelectionsFromCheckedNodes(migratedCheckedNodes);
+  } = getSelectionsFromCheckedKeys(migratedCheckedKeys);
   const parentNamesByTopic = getParentNamesByTopic(TOPIC_CONFIG);
   const nonPrefixedTopics = removeTopicPrefixes(selectedTopics);
 

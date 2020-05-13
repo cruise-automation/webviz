@@ -148,10 +148,10 @@ export default function AddFromPopularTopics({
     };
   }, []);
 
-  const [checkedNodes, setCheckedNodes] = useState<string[]>(() =>
+  const [checkedKeys, setCheckedKeys] = useState<string[]>(() =>
     intersection(topicTreeTopics, [...existingGroupTopicsSet])
   );
-  const checkedTopics = useMemo(() => checkedNodes.filter((node) => node.startsWith("/")), [checkedNodes]);
+  const checkedTopics = useMemo(() => checkedKeys.filter((node) => node.startsWith("/")), [checkedKeys]);
 
   useEffect(
     () => {
@@ -215,8 +215,8 @@ export default function AddFromPopularTopics({
             checkable
             selectable={false}
             checkedKeys={checkedTopicsByVisibility.visibleCheckedTopics}
-            onCheck={(newCheckedNodes) => {
-              setCheckedNodes(uniq([...checkedTopicsByVisibility.invisibleCheckedTopics, ...newCheckedNodes]));
+            onCheck={(newCheckedKeys) => {
+              setCheckedKeys(uniq([...checkedTopicsByVisibility.invisibleCheckedTopics, ...newCheckedKeys]));
             }}
             onExpand={(newExpandedKeys) => {
               setExpandedKeys(newExpandedKeys);

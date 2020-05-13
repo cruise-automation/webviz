@@ -21,7 +21,7 @@ import { lerp } from "webviz-core/src/util";
 
 const EMPTY_ARRAY = [];
 const REQUIRED_FLOAT32_FIELDS = ["x", "y", "z"];
-const DATATYPE = {
+export const DATATYPE = {
   uint8: 2,
   uint16: 4,
   int16: 3,
@@ -29,11 +29,11 @@ const DATATYPE = {
   float32: 7,
 };
 
-type FieldOffsetsAndReaders = {
+export type FieldOffsetsAndReaders = {
   [name: string]: { datatype: string, offset: number, reader: ?FieldReader },
 };
 
-function getReader(datatype, offset: number) {
+export function getReader(datatype: number, offset: number) {
   switch (datatype) {
     case DATATYPE.float32:
       return new Float32Reader(offset);
@@ -50,7 +50,7 @@ function getReader(datatype, offset: number) {
   }
 }
 
-function getFieldOffsetsAndReaders(fields: PointField[]): FieldOffsetsAndReaders {
+export function getFieldOffsetsAndReaders(fields: $ReadOnlyArray<PointField>): FieldOffsetsAndReaders {
   const result = {};
   for (const { name, datatype, offset = 0 } of fields) {
     result[name] = { datatype, offset, reader: getReader(datatype, offset) };
@@ -58,7 +58,7 @@ function getFieldOffsetsAndReaders(fields: PointField[]): FieldOffsetsAndReaders
   return result;
 }
 
-function parseHexColor(color: string) {
+export function parseHexColor(color: string) {
   console.assert(color.length === 7);
   return parseInt(color.slice(1), 16);
 }
@@ -282,7 +282,7 @@ export function getClickedInfo(maybeFullyDecodedMarker: MouseEventObject, instan
   return result;
 }
 
-function getAdditionalFieldNames(fields: PointField[]): string[] {
+function getAdditionalFieldNames(fields: $ReadOnlyArray<PointField>): string[] {
   const allFields = fields.map((field) => field.name);
   return difference(allFields, ["rgb", "x", "y", "z"]);
 }

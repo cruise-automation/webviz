@@ -165,7 +165,7 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
                 onChange={({ target: { value } }) =>
                   onColorModeChange((newColorMode: any) => ({
                     ...newColorMode,
-                    minValue: value === "" ? null : value,
+                    minValue: value === "" ? null : +value,
                   }))
                 }
               />

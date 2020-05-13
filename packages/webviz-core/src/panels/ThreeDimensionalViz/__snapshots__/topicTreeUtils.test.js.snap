@@ -2,19 +2,19 @@
 
 exports[`getTopicConfig topicConfig show flat list topicDisplayMode.SHOW_AVAILABLE 1`] = `
 Object {
-  "newCheckedNodes": Array [
+  "newCheckedKeys": Array [
     "name:Ext A",
     "name:Deeply Nested Group",
     "t:/topic_b",
     "x:ExtA.a",
     "x:ExtC.c",
     "ns:/topic_c:some_namespace",
-    "ns:/webviz_bag_2/topic_c:some_namespace",
+    "ns:/webviz_source_2/topic_c:some_namespace",
     "ns:/ns_to_ignore_due_to_lacking_of_topic_checked:some_name",
     "t:/topic_c",
-    "t:/webviz_bag_2/topic_c",
+    "t:/webviz_source_2/topic_c",
     "name:Bag",
-    "name:Bag 2 /webviz_bag_2",
+    "name:Bag 2 /webviz_source_2",
   ],
   "topicConfig": Object {
     "children": Array [
@@ -60,22 +60,22 @@ Object {
         "children": Array [
           Object {
             "name": "Nested Group / Topic A",
-            "topic": "/webviz_bag_2/topic_a",
+            "topic": "/webviz_source_2/topic_a",
           },
           Object {
             "name": "Nested Group / Topic B",
-            "topic": "/webviz_bag_2/topic_b",
+            "topic": "/webviz_source_2/topic_b",
           },
           Object {
             "name": "Nested Group / Deeply Nested Group",
-            "topic": "/webviz_bag_2/topic_c",
+            "topic": "/webviz_source_2/topic_c",
           },
           Object {
             "name": "/topic_not_in_json_tree",
-            "topic": "/webviz_bag_2/topic_not_in_json_tree",
+            "topic": "/webviz_source_2/topic_not_in_json_tree",
           },
         ],
-        "name": "Bag 2 /webviz_bag_2",
+        "name": "Bag 2 /webviz_source_2",
       },
     ],
     "name": "root",
@@ -132,26 +132,26 @@ Object {
       "children": Array [
         Object {
           "name": "Some Topic in JSON Tree",
-          "topic": "/webviz_bag_2/topic_in_json_tree",
+          "topic": "/webviz_source_2/topic_in_json_tree",
         },
         Object {
           "name": "Nested Group / Topic A",
-          "topic": "/webviz_bag_2/topic_a",
+          "topic": "/webviz_source_2/topic_a",
         },
         Object {
           "name": "Nested Group / Topic B",
-          "topic": "/webviz_bag_2/topic_b",
+          "topic": "/webviz_source_2/topic_b",
         },
         Object {
           "name": "Nested Group / Deeply Nested Group",
-          "topic": "/webviz_bag_2/topic_c",
+          "topic": "/webviz_source_2/topic_c",
         },
         Object {
           "name": "/topic_not_in_json_tree",
-          "topic": "/webviz_bag_2/topic_not_in_json_tree",
+          "topic": "/webviz_source_2/topic_not_in_json_tree",
         },
       ],
-      "name": "Bag 2 /webviz_bag_2",
+      "name": "Bag 2 /webviz_source_2",
     },
   ],
   "name": "root",

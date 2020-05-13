@@ -18,7 +18,6 @@ import React, {
   useLayoutEffect,
   useEffect,
 } from "react";
-import KeyListener from "react-key-listener";
 import {
   PolygonBuilder,
   DrawPolygons,
@@ -30,6 +29,7 @@ import {
 import { type Time } from "rosbag";
 
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import filterMap from "webviz-core/src/filterMap";
@@ -134,8 +134,8 @@ export default function LayoutForTopicGroups({
   config: {
     autoTextBackgroundColor,
     enableShortDisplayNames,
-    expandedNodes,
-    checkedNodes,
+    expandedKeys,
+    checkedKeys,
     flattenMarkers,
     modifiedNamespaceTopics,
     pinTopics,
@@ -165,14 +165,14 @@ export default function LayoutForTopicGroups({
     (topicGroupDisplayName?: string) => {
       const migratedTopicGroupConfig = migratePanelConfigToTopicGroupConfig({
         topicGroupDisplayName,
-        checkedNodes,
+        checkedKeys,
         topicSettings,
         modifiedNamespaceTopics,
       });
       // Append newly migrated topic group config to existing config
       saveConfig({ topicGroups: (topicGroups || []).concat(migratedTopicGroupConfig) });
     },
-    [checkedNodes, modifiedNamespaceTopics, saveConfig, topicGroups, topicSettings]
+    [checkedKeys, modifiedNamespaceTopics, saveConfig, topicGroups, topicSettings]
   );
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0); // used for updating DrawPolygon during mouse move

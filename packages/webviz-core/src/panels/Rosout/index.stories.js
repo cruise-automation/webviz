@@ -107,12 +107,12 @@ storiesOf("<RosoutPanel>", module)
           topics: [
             { name: "/rosout", datatype: "rosgraph_msgs/Log" },
             { name: "/foo/rosout", datatype: "rosgraph_msgs/Log" },
-            { name: "/webviz_bag_2/rosout", datatype: "rosgraph_msgs/Log" },
+            { name: "/webviz_source_2/rosout", datatype: "rosgraph_msgs/Log" },
           ],
           frame: {
             "/rosout": makeMessages("/rosout"),
             "/foo/rosout": makeMessages("/foo/rosout"),
-            "/webviz_bag_2/rosout": makeMessages("/webviz_bag_2/rosout"),
+            "/webviz_source_2/rosout": makeMessages("/webviz_source_2/rosout"),
           },
         }}
         onMount={(el) => {

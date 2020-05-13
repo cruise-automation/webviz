@@ -8,7 +8,7 @@
 
 import memoize from "lodash/memoize";
 
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 const supportsOffscreenCanvas: () => boolean = memoize(
   (): boolean => {
@@ -16,10 +16,11 @@ const supportsOffscreenCanvas: () => boolean = memoize(
       // $FlowFixMe This is a function that is not yet in Flow.
       document.createElement("canvas").transferControlToOffscreen();
     } catch (error) {
-      reportError(
+      sendNotification(
         "Rendering to a canvas in a worker is unsupported in this browser, falling back to rendering using the main thread",
         "",
-        "app"
+        "app",
+        "warn"
       );
       return false;
     }

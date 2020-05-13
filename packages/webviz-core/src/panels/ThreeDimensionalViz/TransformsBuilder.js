@@ -10,7 +10,7 @@ import { mat4, quat, vec3 } from "gl-matrix";
 import type { Vec3 } from "gl-matrix";
 
 import Transforms, { Transform } from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
-import type { Marker, ArrowMarker, Color, Pose } from "webviz-core/src/types/Messages";
+import type { Marker, ArrowMarker, Color, MutablePose } from "webviz-core/src/types/Messages";
 import type { MarkerProvider, MarkerCollector } from "webviz-core/src/types/Scene";
 import { MARKER_MSG_TYPES } from "webviz-core/src/util/globalConstants";
 
@@ -33,7 +33,7 @@ const defaultArrowMarker = {
 
 const defaultArrowScale = { x: 0.2, y: 0.02, z: 0.02 };
 
-const getOriginPose = (): Pose => ({
+const getOriginPose = (): MutablePose => ({
   position: { ...originPosition },
   orientation: { ...originOrientation },
 });
@@ -147,7 +147,7 @@ const getArrowToParentMarkers = (id: string, transform: Transform, rootTransform
     return [];
   }
 
-  const childPose: Pose = { position: { ...originPosition }, orientation: throwawayQuat };
+  const childPose: MutablePose = { position: { ...originPosition }, orientation: throwawayQuat };
   transform.apply(childPose, childPose, rootTransformID);
 
   const parentPose = { position: { ...originPosition }, orientation: throwawayQuat };

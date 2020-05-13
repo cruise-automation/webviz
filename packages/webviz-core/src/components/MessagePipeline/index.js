@@ -38,7 +38,7 @@ import {
   useShouldNotChangeOften,
 } from "webviz-core/src/util/hooks";
 import naturalSort from "webviz-core/src/util/naturalSort";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 export const WARN_ON_SUBSCRIPTIONS_WITHIN_TIME_MS = 1000;
 
@@ -208,19 +208,21 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
 
   const topics: ?(Topic[]) = playerState.activeData?.topics;
   useShouldNotChangeOften(topics, () => {
-    reportError(
+    sendNotification(
       "Provider topics should not change often",
-      "If they do they are probably not memoized properly. Please let the Webviz team know if you see this error.",
-      "app"
+      "If they do they are probably not memoized properly. Please let the Webviz team know if you see this warning.",
+      "app",
+      "warn"
     );
   });
 
   const unmemoizedDatatypes: ?RosDatatypes = playerState.activeData?.datatypes;
   useShouldNotChangeOften(unmemoizedDatatypes, () => {
-    reportError(
+    sendNotification(
       "Provider datatypes should not change often",
-      "If they do they are probably not memoized properly. Please let the Webviz team know if you see this error.",
-      "app"
+      "If they do they are probably not memoized properly. Please let the Webviz team know if you see this warning.",
+      "app",
+      "warn"
     );
   });
 
@@ -236,7 +238,7 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
         lastTimeWhenActiveDataBecameSet.current &&
         Date.now() < lastTimeWhenActiveDataBecameSet.current + WARN_ON_SUBSCRIPTIONS_WITHIN_TIME_MS
       ) {
-        // TODO(JP): Might be nice to use `reportError` here at some point, so users can let us know about this.
+        // TODO(JP): Might be nice to use `sendNotification` here at some point, so users can let us know about this.
         // However, there is currently a race condition where a layout can get loaded just after the player
         // initializes. I'm not too sure how to prevent that, because we also don't want to ignore whenever the
         // layout changes, since a panel might decide to save its config when data becomes available, and that is

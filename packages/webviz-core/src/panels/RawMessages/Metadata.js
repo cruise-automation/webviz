@@ -35,7 +35,7 @@ function CopyMessageButton({ text, onClick }) {
     <a onClick={onClick} href="#" style={{ textDecoration: "none" }}>
       <Icon tooltip="Copy entire message to clipboard" style={{ position: "relative", top: -1 }}>
         <ClipboardOutlineIcon style={{ verticalAlign: "middle" }} />
-      </Icon>
+      </Icon>{" "}
       {text}
     </a>
   );

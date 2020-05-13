@@ -6,49 +6,70 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import AlertCircleIcon from "@mdi/svg/svg/alert-circle.svg";
+import BlockHelperIcon from "@mdi/svg/svg/block-helper.svg";
 import LeadPencilIcon from "@mdi/svg/svg/lead-pencil.svg";
-import xor from "lodash/xor";
-import React from "react";
+import * as React from "react";
 import styled from "styled-components";
 
-import { type Save3DConfig } from "../index";
 import NodeName from "./NodeName";
-import type { TreeNode } from "./types";
-import VisibilityToggle, { TOGGLE_WRAPPER_SIZE } from "./VisibilityToggle";
+import { TREE_SPACING } from "./TopicTreeV2";
+import TreeNodeDotMenu, { DOT_MENU_WIDTH } from "./TreeNodeDotMenu";
+import type { TreeNode, ToggleNode, DerivedCustomSettings, SetCurrentEditingTopic } from "./types";
+import VisibilityToggle, { TOGGLE_WRAPPER_SIZE, TOPIC_ROW_PADDING } from "./VisibilityToggle";
 import Icon from "webviz-core/src/components/Icon";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { canEditDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
-import type { Topic } from "webviz-core/src/players/types";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-const ICON_SIZE = 22;
-const ROW_PADDING = 4;
+export const ICON_SIZE = 22;
+const MAX_GROUP_ERROR_WIDTH = 64;
+export const ROW_CONTENT_HEIGHT = 24;
+
+export const ROW_HEIGHT = 30;
 
 export const STreeNodeRow = styled.div`
+  color: ${(props: { visibleInScene: boolean }) => (props.visibleInScene ? "unset" : colors.DISABLED)};
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: ${ROW_PADDING}px 0;
 `;
 
 export const SLeft = styled.div`
   display: flex;
   align-items: center;
-  margin-right: 4px;
+  flex: 1;
+  min-height: ${TOGGLE_WRAPPER_SIZE}px;
+  padding: ${TOPIC_ROW_PADDING}px 0px;
 `;
 
-const SSettingChanged = styled.div`
-  margin-left: 4px;
-  width: 6px;
-  height: 6px;
-  background: ${colors.BLUE};
-  border-radius: 3px;
+const SErrorCount = styled.small`
+  color: ${colors.RED};
+  width: ${MAX_GROUP_ERROR_WIDTH}px;
+`;
+
+const SIconWrapper = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: ${ICON_SIZE}px;
+  height: ${ICON_SIZE}px;
+`;
+
+const SErrorList = styled.ul`
+  max-width: 240px;
+  word-wrap: break-word;
+  padding-left: 16px;
+`;
+
+const SErrorItem = styled.li`
+  list-style: outside;
 `;
 
 export const SRightActions = styled.div`
   display: flex;
   align-items: center;
-  width: ${ICON_SIZE + TOGGLE_WRAPPER_SIZE * 2}px;
+  justify-content: flex-end;
 `;
 
 export const SToggles = styled.div`
@@ -56,78 +77,166 @@ export const SToggles = styled.div`
   align-items: center;
 `;
 
-const SIconPlaceholder = styled.div`
-  width: ${ICON_SIZE}px;
-  height: 24px;
+export const SDotMenuPlaceholder = styled.span`
+  width: ${DOT_MENU_WIDTH}px;
+  height: ${ROW_HEIGHT}px;
 `;
 
 type Props = {|
   checkedKeysSet: Set<string>,
-  expandedKeys: string[],
+  hasChildren: boolean,
+  isXSWidth: boolean,
   node: TreeNode,
-  saveConfig: Save3DConfig,
-  setCurrentEditingTopic: (?Topic) => void,
-  settingsChanged: boolean,
+  nodeVisibleInScene: boolean,
+  toggleCheckAllAncestors: ToggleNode,
+  toggleCheckAllDescendants: ToggleNode,
+  toggleNodeChecked: ToggleNode,
+  toggleNodeExpanded: ToggleNode,
+  sceneErrors: ?(string[]),
+  setCurrentEditingTopic: SetCurrentEditingTopic,
+  derivedCustomSettings: ?DerivedCustomSettings,
   width: number,
+  filterText: string,
+  tooltips?: React.Node[],
 |};
 
 export default function TreeNodeRow({
   checkedKeysSet,
-  expandedKeys,
+  hasChildren,
+  isXSWidth,
   node,
-  node: { name, key },
-  saveConfig,
+  node: { available, providerAvailable, name, key },
+  nodeVisibleInScene,
+  toggleCheckAllAncestors,
+  toggleCheckAllDescendants,
+  toggleNodeChecked,
+  toggleNodeExpanded,
+  sceneErrors,
   setCurrentEditingTopic,
-  settingsChanged,
+  derivedCustomSettings,
   width,
+  filterText,
+  tooltips,
 }: Props) {
   const topicName = node.type === "topic" ? node.topicName : "";
-  const datatype = node.type === "topic" && node.datatype;
+  const datatype = node.type === "topic" ? node.datatype : undefined;
   const nodeChecked = checkedKeysSet.has(key);
 
-  // TODO(Audrey): handle override color
+  const isDefaultSettings = derivedCustomSettings?.isDefaultSettings || !derivedCustomSettings;
+  const showTopicSettings = topicName && datatype && canEditDatatype(datatype);
+  const showTopicSettingsChanged = showTopicSettings && !isDefaultSettings;
+
+  const showTopicError = node.type === "topic" && sceneErrors && sceneErrors.length > 0;
+  const showGroupError = node.type === "group" && sceneErrors && sceneErrors.length > 0;
+
+  const rowWidth = width - (isXSWidth ? 0 : TREE_SPACING * 2);
+
+  const rightActionWidth = providerAvailable ? TOGGLE_WRAPPER_SIZE + DOT_MENU_WIDTH : DOT_MENU_WIDTH;
+  // -8px to add some spacing between the name and right action area.
+  let maxNodeNameWidth = rowWidth - rightActionWidth - 8;
+
+  if (showTopicSettingsChanged) {
+    maxNodeNameWidth -= ICON_SIZE;
+  }
+  if (showGroupError) {
+    maxNodeNameWidth -= MAX_GROUP_ERROR_WIDTH;
+  }
+  if (showTopicError) {
+    maxNodeNameWidth -= ICON_SIZE;
+  }
+
+  const errorTooltip = sceneErrors && (
+    <SErrorList>
+      {sceneErrors.map((errStr) => (
+        <SErrorItem key={errStr}>{errStr}</SErrorItem>
+      ))}
+    </SErrorList>
+  );
+
   return (
-    <STreeNodeRow style={{ width }}>
-      <SLeft>
+    <STreeNodeRow visibleInScene={nodeVisibleInScene} style={{ width: rowWidth }}>
+      <SLeft
+        style={{ cursor: hasChildren && !filterText ? "pointer" : "default" }}
+        data-test={`name~${key}`}
+        onClick={hasChildren ? () => toggleNodeExpanded(key) : undefined}>
         <NodeName
-          onClick={() => {
-            saveConfig({ expandedNodes: xor(expandedKeys, [key]) });
-          }}
-          style={{ marginLeft: 8 }}
+          isXSWidth={isXSWidth}
+          maxWidth={maxNodeNameWidth}
           displayName={name || topicName}
-          nodeKey={key}
+          tooltips={tooltips}
           topicName={topicName}
-          searchText={""}
+          searchText={filterText}
         />
-        {settingsChanged && (
-          <Tooltip contents="Topic settings edited" placement="bottom">
-            <SSettingChanged />
-          </Tooltip>
-        )}
-      </SLeft>
-      <SRightActions>
-        <SToggles>
-          <VisibilityToggle
-            checked={nodeChecked}
-            onToggle={() => {
-              saveConfig({ checkedNodes: xor(Array.from(checkedKeysSet), [key]) });
-            }}
-            visible // TODO(Audrey): handle actual visibility.
-          />
-        </SToggles>
-        {topicName && datatype && canEditDatatype(datatype) ? (
+        {showTopicSettingsChanged && datatype && (
           <Icon
-            style={{ padding: "0 4px" }}
+            style={{ padding: "0 4px", color: colors.HIGHLIGHT }}
             fade
-            tooltip="Edit topic settings"
-            onClick={() => {
-              setCurrentEditingTopic({ name: topicName, datatype });
-            }}>
+            tooltip="Topic settings edited"
+            onClick={() => setCurrentEditingTopic({ name: topicName, datatype })}>
             <LeadPencilIcon />
           </Icon>
-        ) : (
-          <SIconPlaceholder />
         )}
+        {showGroupError && errorTooltip && sceneErrors && (
+          <Tooltip contents={errorTooltip} placement="top">
+            <SErrorCount>{`${sceneErrors.length} ${sceneErrors.length === 1 ? "error" : "errors"}`}</SErrorCount>
+          </Tooltip>
+        )}
+        {showTopicError && errorTooltip && (
+          <SIconWrapper>
+            <Icon
+              style={{ color: colors.RED, fontSize: 14, display: "inline-flex", alignItems: "center" }}
+              small
+              tooltipProps={{ placement: "top" }}
+              tooltip={errorTooltip}
+              onClick={(e) => e.stopPropagation()}>
+              <AlertCircleIcon />
+            </Icon>
+          </SIconWrapper>
+        )}
+      </SLeft>
+
+      <SRightActions>
+        {providerAvailable && (
+          <SToggles>
+            {available ? (
+              <VisibilityToggle
+                dataTest={`visibility-toggle~${key}`}
+                overrideColor={derivedCustomSettings?.overrideColor}
+                checked={nodeChecked}
+                onToggle={() => toggleNodeChecked(key)}
+                onShiftToggle={() => toggleCheckAllDescendants(key)}
+                onAltToggle={() => toggleCheckAllAncestors(key)}
+                visibleInScene={nodeVisibleInScene}
+              />
+            ) : (
+              <Icon
+                tooltipProps={{ placement: "top" }}
+                tooltip={
+                  node.type === "group" ? "None of the topics in this group are currently available" : "Unavailable"
+                }
+                fade
+                small
+                clickable={false}
+                style={{
+                  fontSize: 12,
+                  cursor: "not-allowed",
+                  height: ROW_HEIGHT,
+                  width: TOGGLE_WRAPPER_SIZE,
+                  padding: "4px 6px",
+                }}>
+                <BlockHelperIcon />
+              </Icon>
+            )}
+          </SToggles>
+        )}
+        <TreeNodeDotMenu
+          datatype={showTopicSettings ? datatype : undefined}
+          nodeKey={key}
+          setCurrentEditingTopic={setCurrentEditingTopic}
+          toggleCheckAllAncestors={toggleCheckAllAncestors}
+          toggleCheckAllDescendants={toggleCheckAllDescendants}
+          topicName={topicName}
+        />
       </SRightActions>
     </STreeNodeRow>
   );

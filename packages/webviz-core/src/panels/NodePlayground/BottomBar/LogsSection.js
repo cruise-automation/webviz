@@ -65,9 +65,7 @@ const LogsSection = ({ nodeId, logs, clearLogs }: Props) => {
         {logs.map(({ source, value }, idx) => {
           const renderTreeObj = value != null && typeof value === "object";
           return (
-            <SListItem
-              key={`${idx}${source}${JSON.stringify(value)}`}
-              style={{ padding: renderTreeObj ? "0px 3px" : "6px 3px 3px" }}>
+            <SListItem key={`${idx}${source}`} style={{ padding: renderTreeObj ? "0px 3px" : "6px 3px 3px" }}>
               {renderTreeObj ? (
                 <Tree hideRoot data={value} invertTheme={false} theme={jsonTreeTheme} />
               ) : (

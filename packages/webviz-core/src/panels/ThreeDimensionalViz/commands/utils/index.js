@@ -74,7 +74,7 @@ export const defaultMapPalette = (() => {
 // convert a number array to a typed array
 // passing a typed array to regl is orders of magnitude
 // faster than passing a number[] and letting regl do the conversion
-function toTypedArray(data: number[] | Int8Array): Uint8Array {
+function toTypedArray(data: $ReadOnlyArray<number> | Int8Array): Uint8Array {
   if (data instanceof Int8Array) {
     return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
   }

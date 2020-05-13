@@ -30,6 +30,7 @@ import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { getTopicNames, topicsByTopicName } from "webviz-core/src/util/selectors";
+import type { TimestampMethod } from "webviz-core/src/util/time";
 
 // To show an input field with an autocomplete so the user can enter message paths, use:
 //
@@ -50,8 +51,6 @@ import { getTopicNames, topicsByTopicName } from "webviz-core/src/util/selectors
 // which gets passed down to `<MessagePathInput onChange>` as the second parameter, so you can
 // avoid creating anonymous functions on every render (which will prevent the component from
 // rendering unnecessarily).
-
-export type TimestampMethod = "receiveTime" | "headerStamp";
 
 function topicHasNoHeaderStamp(topic: Topic, datatypes: RosDatatypes): boolean {
   const structureTraversalResult = traverseStructure(messagePathStructures(datatypes)[topic.datatype], [

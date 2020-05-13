@@ -12,7 +12,6 @@ import PauseIcon from "@mdi/svg/svg/pause.svg";
 import PlayIcon from "@mdi/svg/svg/play.svg";
 import classnames from "classnames";
 import React, { useCallback } from "react";
-import KeyListener from "react-key-listener";
 import type { Time } from "rosbag";
 import styled from "styled-components";
 
@@ -21,31 +20,16 @@ import { ProgressPlot } from "./ProgressPlot";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
+import KeyListener from "webviz-core/src/components/KeyListener";
+import MessageOrderControls from "webviz-core/src/components/MessageOrderControls";
 import { MessagePipelineConsumer } from "webviz-core/src/components/MessagePipeline";
+import { togglePlayPause, jumpSeek, DIRECTION } from "webviz-core/src/components/PlaybackControls/sharedHelpers";
 import PlaybackSpeedControls from "webviz-core/src/components/PlaybackSpeedControls";
 import Slider from "webviz-core/src/components/Slider";
 import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
 import { type PlayerState } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import {
-  formatTime,
-  formatTimeRaw,
-  subtractTimes,
-  toSec,
-  fromSec,
-  toMillis,
-  fromMillis,
-} from "webviz-core/src/util/time";
-
-// The amount of time to jump forward/back when hitting the left/right arrow keys
-export const ARROW_SEEK_BIG_MS = 500;
-export const ARROW_SEEK_DEFAULT_MS = 100;
-export const ARROW_SEEK_SMALL_MS = 10;
-
-export const DIRECTION = {
-  FORWARD: 1,
-  BACKWARD: -1,
-};
+import { formatTime, formatTimeRaw, subtractTimes, toSec, fromSec } from "webviz-core/src/util/time";
 
 const StyledFullWidthBar = styled.div`
   position: absolute;
@@ -56,19 +40,19 @@ const StyledFullWidthBar = styled.div`
   height: 5px;
 `;
 
-const StyledMarker = styled.div.attrs({
-  style: ({ width = 0 }) => ({ left: `calc(${width * 100}% - 2px)` }),
-})`
+const StyledMarker = styled.div`
   background-color: white;
   position: absolute;
   height: 36%;
   border: 1px solid ${colors.divider};
   width: 3px;
   top: 32%;
+  left: calc(${(props) => 100 * (props.width || 0)}% - 2px);
 `;
 
-type Props = {|
+export type PlaybackControlProps = {|
   player: PlayerState,
+  auxiliaryData?: any,
   pause: () => void,
   play: () => void,
   seek: (Time) => void,
@@ -81,7 +65,7 @@ const TooltipItem = ({ title, value }) => (
   </div>
 );
 
-export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
+export class UnconnectedPlaybackControls extends React.PureComponent<PlaybackControlProps> {
   el: ?HTMLDivElement;
   slider: ?Slider;
 
@@ -89,24 +73,6 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
     const { seek } = this.props;
     const time = fromSec(value);
     seek(time);
-  };
-
-  jumpSeek = (directionSign: $Values<typeof DIRECTION>, modifierKeys?: { altKey: boolean, shiftKey: boolean }) => {
-    const { activeData } = this.props.player;
-    if (!activeData) {
-      return;
-    }
-
-    const timeMs = toMillis(activeData.currentTime, "round-up");
-    const deltaMs = modifierKeys?.altKey
-      ? ARROW_SEEK_BIG_MS
-      : modifierKeys?.shiftKey
-      ? ARROW_SEEK_SMALL_MS
-      : ARROW_SEEK_DEFAULT_MS;
-    const nextTime = fromMillis(timeMs + deltaMs * directionSign);
-    if (nextTime) {
-      this.seek(nextTime);
-    }
   };
 
   seek(newTime: Time) {
@@ -121,17 +87,9 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
   }
 
   keyDownHandlers = {
-    " ": () => {
-      const { pause, play, player } = this.props;
-
-      if (player.activeData && player.activeData.isPlaying) {
-        pause();
-      } else {
-        play();
-      }
-    },
-    ArrowLeft: (ev: KeyboardEvent) => this.jumpSeek(DIRECTION.BACKWARD, ev),
-    ArrowRight: (ev: KeyboardEvent) => this.jumpSeek(DIRECTION.FORWARD, ev),
+    " ": () => togglePlayPause(this.props),
+    ArrowLeft: (ev: KeyboardEvent) => jumpSeek(DIRECTION.BACKWARD, ev, this.props),
+    ArrowRight: (ev: KeyboardEvent) => jumpSeek(DIRECTION.FORWARD, ev, this.props),
   };
 
   onMouseMove = (e: SyntheticMouseEvent<HTMLDivElement>) => {
@@ -212,6 +170,7 @@ export class UnconnectedPlaybackControls extends React.PureComponent<Props> {
         <div>
           <PlaybackSpeedControls />
         </div>
+        <MessageOrderControls />
 
         <div className={styles.bar}>
           <StyledFullWidthBar />

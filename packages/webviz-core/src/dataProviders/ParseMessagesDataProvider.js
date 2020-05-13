@@ -12,7 +12,7 @@ import { type Time, MessageReader } from "rosbag";
 import { type DataProvider, type DataProviderMessage, type InitializationResult, type ExtensionPoint } from "./types";
 import type { DataProviderDescriptor, GetDataProvider } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
-import reportError from "webviz-core/src/util/reportError";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 // Exported for tests.
 export const CACHE_SIZE_BYTES = 200e6; // Amount of parsed messages measured in unparsed message size that we keep cached.
@@ -51,17 +51,21 @@ export default class ParseMessagesDataProvider implements DataProvider {
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
-    const { messageDefintionsByTopic, ...otherResults } = await this._provider.initialize(extensionPoint);
-    if (!messageDefintionsByTopic) {
+    const result = await this._provider.initialize(extensionPoint);
+    const { messageDefinitionsByTopic } = result;
+    if (result.providesParsedMessages) {
+      throw new Error("ParseMessagesDataProvider should not be used with a provider provides already-parsed messages");
+    }
+    if (!messageDefinitionsByTopic) {
       throw new Error(
-        "ParseMessagesDataProvider can only be used with a provider that produces `messageDefintionsByTopic`"
+        "ParseMessagesDataProvider can only be used with a provider that produces `messageDefinitionsByTopic`"
       );
     }
     this._readersByTopic = {};
-    for (const topic of Object.keys(messageDefintionsByTopic)) {
-      this._readersByTopic[topic] = new MessageReader(messageDefintionsByTopic[topic]);
+    for (const topic of Object.keys(messageDefinitionsByTopic)) {
+      this._readersByTopic[topic] = new MessageReader(messageDefinitionsByTopic[topic]);
     }
-    return { ...otherResults };
+    return { ...result, providesParsedMessages: true };
   }
 
   _readMessage = (message: DataProviderMessage): ?DataProviderMessage => {
@@ -72,7 +76,7 @@ export default class ParseMessagesDataProvider implements DataProvider {
     try {
       return { ...message, message: reader.readMessage(Buffer.from(message.message)) };
     } catch (error) {
-      reportError(`Error reading messages from ${message.topic}: ${error.message}`, error, "user");
+      sendNotification(`Error reading messages from ${message.topic}: ${error.message}`, error, "user", "warn");
       return undefined;
     }
   };

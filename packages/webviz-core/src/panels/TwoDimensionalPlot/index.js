@@ -79,7 +79,6 @@ export type Line = {
   data: { x: number, y: number }[],
 };
 type PlotMessage = {
-  type: "webviz_msgs/2DPlotMsg",
   lines: Line[],
   points: Line[],
   polygons: Line[],
@@ -162,28 +161,6 @@ function TwoDimensionalPlot(props: Props) {
     };
   }, []);
 
-  const item = useLatestMessageDataItem(path.value);
-  const message: PlotMessage = (item?.queriedData[0]?.value: any);
-
-  const currentData = message && message.type === "webviz_msgs/2DPlotMsg" ? message : null;
-  const { title, yAxisLabel, xAxisLabel, lines = [], points = [], polygons = [] } = currentData || {};
-  const datasets = currentData
-    ? [
-        ...lines.map((line, idx) => ({ ...pick(line, keysToPick), showLine: true, fill: false })),
-        ...points.map((point, idx) => pick(point, keysToPick)),
-        ...polygons.map((polygon, idx) => ({
-          ...pick(polygon, keysToPick),
-          data: polygon.data[0] ? polygon.data.concat([polygon.data[0]]) : polygon.data,
-          fill: true,
-          pointRadius: 0,
-          showLine: true,
-          lineTension: 0,
-        })),
-      ].sort((a, b) => (b.order || 0) - (a.order || 0))
-    : [];
-  const allXs = flatten(datasets.map((dataset) => (dataset.data ? dataset.data.map(({ x }) => x) : [])));
-  const allYs = flatten(datasets.map((dataset) => (dataset.data ? dataset.data.map(({ y }) => y) : [])));
-
   const removeTooltip = useCallback(() => {
     if (tooltip.current) {
       ReactDOM.unmountComponentAtNode(tooltip.current);
@@ -203,6 +180,71 @@ function TwoDimensionalPlot(props: Props) {
       };
     },
     [removeTooltip]
+  );
+
+  const item = useLatestMessageDataItem(path.value);
+  const message: PlotMessage = (item?.queriedData[0]?.value: any);
+  const { title, yAxisLabel, xAxisLabel, lines = [], points = [], polygons = [] } = message || {};
+  const data = useMemo(
+    () =>
+      message
+        ? {
+            datasets: [
+              ...lines.map((line, idx) => ({ ...pick(line, keysToPick), showLine: true, fill: false })),
+              ...points.map((point, idx) => pick(point, keysToPick)),
+              ...polygons.map((polygon, idx) => ({
+                ...pick(polygon, keysToPick),
+                data: polygon.data[0] ? polygon.data.concat([polygon.data[0]]) : polygon.data,
+                fill: true,
+                pointRadius: 0,
+                showLine: true,
+                lineTension: 0,
+              })),
+            ].sort((a, b) => (b.order || 0) - (a.order || 0)),
+          }
+        : { datasets: [] },
+    [lines, message, points, polygons]
+  );
+
+  const { allXs, allYs } = useMemo(
+    () => ({
+      allXs: flatten(data.datasets.map((dataset) => (dataset.data ? dataset.data.map(({ x }) => x) : []))),
+      allYs: flatten(data.datasets.map((dataset) => (dataset.data ? dataset.data.map(({ y }) => y) : []))),
+    }),
+    [data.datasets]
+  );
+
+  const options = useMemo(
+    () => ({
+      title: { display: !!title, text: title },
+      scales: {
+        yAxes: [
+          {
+            scaleLabel: { display: !!yAxisLabel, labelString: yAxisLabel },
+            ticks: {
+              min: parseFloat(minYVal) ? parseFloat(minYVal) : getBufferedMinMax(allYs).min,
+              max: parseFloat(maxYVal) ? parseFloat(maxYVal) : getBufferedMinMax(allYs).max,
+            },
+          },
+        ],
+        xAxes: [
+          {
+            scaleLabel: { display: !!xAxisLabel, labelString: xAxisLabel },
+            ticks: {
+              min: parseFloat(minXVal) ? parseFloat(minXVal) : getBufferedMinMax(allXs).min,
+              max: parseFloat(maxXVal) ? parseFloat(maxXVal) : getBufferedMinMax(allXs).max,
+            },
+          },
+        ],
+      },
+      color: colors.GRAY,
+      animation: { duration: 0 },
+      legend: { display: false },
+      pan: { enabled: false },
+      zoom: { enabled: false },
+      plugins: {},
+    }),
+    [allXs, allYs, getBufferedMinMax, maxXVal, maxYVal, minXVal, minYVal, title, xAxisLabel, yAxisLabel]
   );
 
   const onMouseMove = useCallback(
@@ -232,8 +274,8 @@ function TwoDimensionalPlot(props: Props) {
         return;
       }
       let tooltipDatapoint, tooltipLabel;
-      for (const { data, label } of datasets) {
-        const datapoint = data.find(
+      for (const { data: dataPoints, label } of data.datasets) {
+        const datapoint = dataPoints.find(
           (_datapoint) =>
             _datapoint.x === tooltipElement.data.x && String(_datapoint.y) === String(tooltipElement.data.y)
         );
@@ -269,8 +311,10 @@ function TwoDimensionalPlot(props: Props) {
         );
       }
     },
-    [removeTooltip, datasets]
+    [data.datasets, removeTooltip]
   );
+
+  const emptyMessage = !points.length && !lines.length && !polygons.length;
 
   return (
     <SContainer>
@@ -280,12 +324,14 @@ function TwoDimensionalPlot(props: Props) {
           onChange={(newValue) => saveConfig({ path: { value: newValue } })}
           inputStyle={{ height: "100%" }}
           validTypes={VALID_TYPES}
-          placeholder='Select topic messages with a "type" of "webviz_msgs/2DPlotMsg"'
+          placeholder="Select topic messages with 2D Plot data to visualize"
           autoSize
         />
       </PanelToolbar>
       {!message ? (
-        <EmptyState>No 2D Plot messages found</EmptyState>
+        <EmptyState>Waiting for next message</EmptyState>
+      ) : emptyMessage ? (
+        <EmptyState>No 2D Plot data (lines, points, polygons) to visualize</EmptyState>
       ) : (
         <SRoot>
           <Dimensions>
@@ -296,36 +342,8 @@ function TwoDimensionalPlot(props: Props) {
                 width={width}
                 height={height}
                 key={`${width}x${height}`}
-                options={{
-                  title: { display: !!title, text: title },
-                  scales: {
-                    yAxes: [
-                      {
-                        scaleLabel: { display: !!yAxisLabel, labelString: yAxisLabel },
-                        ticks: {
-                          min: parseFloat(minYVal) ? parseFloat(minYVal) : getBufferedMinMax(allYs).min,
-                          max: parseFloat(maxYVal) ? parseFloat(maxYVal) : getBufferedMinMax(allYs).max,
-                        },
-                      },
-                    ],
-                    xAxes: [
-                      {
-                        scaleLabel: { display: !!xAxisLabel, labelString: xAxisLabel },
-                        ticks: {
-                          min: parseFloat(minXVal) ? parseFloat(minXVal) : getBufferedMinMax(allXs).min,
-                          max: parseFloat(maxXVal) ? parseFloat(maxXVal) : getBufferedMinMax(allXs).max,
-                        },
-                      },
-                    ],
-                  },
-                  color: colors.GRAY,
-                  animation: { duration: 0 },
-                  legend: { display: false },
-                  pan: { enabled: false },
-                  zoom: { enabled: false },
-                  plugins: {},
-                }}
-                data={{ datasets }}
+                options={options}
+                data={data}
               />
             )}
           </Dimensions>

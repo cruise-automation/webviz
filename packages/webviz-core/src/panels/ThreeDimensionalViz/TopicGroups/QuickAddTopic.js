@@ -14,7 +14,6 @@ import Downshift from "downshift";
 import fuzzySort from "fuzzysort";
 import { difference } from "lodash";
 import React, { useMemo, useCallback, useState, useRef, useEffect, useContext } from "react";
-import KeyListener from "react-key-listener";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList as List } from "react-window";
 import styled from "styled-components";
@@ -27,6 +26,7 @@ import TopicNameDisplay from "./TopicNameDisplay";
 import type { TopicGroupType, OnTopicGroupsChange, QuickAddTopicItem } from "./types";
 import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 

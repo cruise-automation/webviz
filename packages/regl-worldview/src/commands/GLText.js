@@ -46,18 +46,13 @@ type Props = {
   alphabet?: string[],
 };
 
-type FontAtlas = {|
-  textureData: Uint8Array,
-  textureWidth: number,
-  textureHeight: number,
-  charInfo: {
-    [char: string]: {|
-      x: number,
-      y: number,
-      width: number,
-    |},
-  },
-|};
+type CharacterLocations = {
+  [char: string]: {|
+    x: number,
+    y: number,
+    width: number,
+  |},
+};
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
 const MIN_RESOLUTION = 40;
@@ -94,7 +89,8 @@ const setMarkerYOffset = (offsets: Map<string, number>, marker: TextMarker, yOff
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
-    (charSet: Set<string>, resolution: number): FontAtlas => {
+    // We update charSet mutably but monotonically. Pass in the size to invalidate the cache.
+    (charSet: Set<string>, _setSize, resolution: number, atlasTexture: any): CharacterLocations => {
       const tinySDF = new TinySDF(resolution, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
       const ctx = memoizedCreateCanvas(`${resolution}px sans-serif`);
 
@@ -134,7 +130,16 @@ const createMemoizedBuildAtlas = () =>
         }
       }
 
-      return { textureData, textureWidth, textureHeight, charInfo };
+      atlasTexture({
+        data: textureData,
+        width: textureWidth,
+        height: textureHeight,
+        format: "alpha",
+        wrap: "clamp",
+        mag: "linear",
+        min: "linear",
+      });
+      return charInfo;
     }
   );
 
@@ -304,7 +309,6 @@ const frag = `
 function makeTextCommand(alphabet?: string[]) {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
   const charSet = new Set(alphabet || []);
-  let charSetInitialized = false;
   const memoizedBuildAtlas = createMemoizedBuildAtlas();
 
   const command = (regl: any) => {
@@ -359,7 +363,6 @@ function makeTextCommand(alphabet?: string[]) {
 
     return (props: $ReadOnlyArray<TextMarkerProps>, isHitmap: boolean) => {
       let estimatedInstances = 0;
-      const prevNumChars = charSet.size;
       for (const { text } of props) {
         if (typeof text !== "string") {
           throw new Error(`Expected typeof 'text' to be a string. But got type '${typeof text}' instead.`);
@@ -370,28 +373,7 @@ function makeTextCommand(alphabet?: string[]) {
           charSet.add(char);
         }
       }
-      const charsChanged = !charSetInitialized || charSet.size !== prevNumChars;
-
-      const { textureData, textureWidth, textureHeight, charInfo } = memoizedBuildAtlas(
-        // only use a new set if the characters changed, since memoizeOne uses shallow equality
-        charsChanged ? new Set(charSet) : charSet,
-        command.resolution
-      );
-
-      charSetInitialized = true;
-
-      // re-upload texture only if characters were added
-      if (charsChanged) {
-        atlasTexture({
-          data: textureData,
-          width: textureWidth,
-          height: textureHeight,
-          format: "alpha",
-          wrap: "clamp",
-          mag: "linear",
-          min: "linear",
-        });
-      }
+      const charInfo = memoizedBuildAtlas(charSet, charSet.size, command.resolution, atlasTexture);
 
       const destOffsets = new Float32Array(estimatedInstances * 2);
       const srcWidths = new Float32Array(estimatedInstances);

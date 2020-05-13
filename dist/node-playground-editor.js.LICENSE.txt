@@ -1,0 +1,37 @@
+/*! ModuleConcatenation bailout: Module is not an ECMAScript module */
+
+/*! all exports used */
+
+/*! exports provided: base, inherit, rules, colors, default */
+
+/*! monaco-editor/esm/vs/editor/editor.api */
+
+/*! monaco-vim */
+
+/*! no static exports found */
+
+/*! react */
+
+/*! react-monaco-editor */
+
+/*! webviz-core/src/panels/NodePlayground/theme/vs-webviz.json */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/lib */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros */
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/NodePlayground/Editor.js ***!
+  \******************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/NodePlayground/theme/vs-webviz.json ***!
+  \*****************************************************************************/
+
+/*!*************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/lib.js ***!
+  \*************************************************************************************************/
+
+/*!*************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros.js ***!
+  \*************************************************************************************************/

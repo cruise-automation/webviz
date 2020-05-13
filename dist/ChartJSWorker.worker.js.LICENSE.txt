@@ -1,0 +1,1354 @@
+/*!
+ * Chart.js v2.9.3
+ * https://www.chartjs.org
+ * (c) 2020 Chart.js Contributors
+ * Released under the MIT License
+ */
+
+/*!
+ * chartjs-plugin-datalabels v0.7.0
+ * https://chartjs-plugin-datalabels.netlify.com
+ * (c) 2020 Chart.js Contributors
+ * Released under the MIT license
+ */
+
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
+
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+
+/*! ../helpers.js */
+
+/*! ./../../../../../../node_modules/node-libs-browser/node_modules/process/browser.js */
+
+/*! ./../../../../../../node_modules/webpack/buildin/global.js */
+
+/*! ./../../../../../../node_modules/webpack/buildin/harmony-module.js */
+
+/*! ./../../../../../node_modules/webpack/buildin/global.js */
+
+/*! ./../../../../node_modules/webpack/buildin/global.js */
+
+/*! ./../../../../node_modules/webpack/buildin/module.js */
+
+/*! ./ChartJSManager */
+
+/*! ./ChartJSWorker */
+
+/*! ./Rpc */
+
+/*! ./_DataView */
+
+/*! ./_Hash */
+
+/*! ./_ListCache */
+
+/*! ./_Map */
+
+/*! ./_MapCache */
+
+/*! ./_Promise */
+
+/*! ./_Set */
+
+/*! ./_SetCache */
+
+/*! ./_Stack */
+
+/*! ./_Symbol */
+
+/*! ./_Uint8Array */
+
+/*! ./_WeakMap */
+
+/*! ./_apply */
+
+/*! ./_arrayAggregator */
+
+/*! ./_arrayEach */
+
+/*! ./_arrayFilter */
+
+/*! ./_arrayLikeKeys */
+
+/*! ./_arrayMap */
+
+/*! ./_arrayPush */
+
+/*! ./_arraySome */
+
+/*! ./_assignValue */
+
+/*! ./_assocIndexOf */
+
+/*! ./_baseAggregator */
+
+/*! ./_baseAssign */
+
+/*! ./_baseAssignIn */
+
+/*! ./_baseAssignValue */
+
+/*! ./_baseClone */
+
+/*! ./_baseCreate */
+
+/*! ./_baseEach */
+
+/*! ./_baseFlatten */
+
+/*! ./_baseFor */
+
+/*! ./_baseForOwn */
+
+/*! ./_baseGet */
+
+/*! ./_baseGetAllKeys */
+
+/*! ./_baseGetTag */
+
+/*! ./_baseHasIn */
+
+/*! ./_baseIsArguments */
+
+/*! ./_baseIsEqual */
+
+/*! ./_baseIsEqualDeep */
+
+/*! ./_baseIsMap */
+
+/*! ./_baseIsMatch */
+
+/*! ./_baseIsNative */
+
+/*! ./_baseIsSet */
+
+/*! ./_baseIsTypedArray */
+
+/*! ./_baseIteratee */
+
+/*! ./_baseKeys */
+
+/*! ./_baseKeysIn */
+
+/*! ./_baseMatches */
+
+/*! ./_baseMatchesProperty */
+
+/*! ./_baseProperty */
+
+/*! ./_basePropertyDeep */
+
+/*! ./_baseSetToString */
+
+/*! ./_baseSlice */
+
+/*! ./_baseTimes */
+
+/*! ./_baseToString */
+
+/*! ./_baseUnary */
+
+/*! ./_baseUnset */
+
+/*! ./_cacheHas */
+
+/*! ./_castPath */
+
+/*! ./_cloneArrayBuffer */
+
+/*! ./_cloneBuffer */
+
+/*! ./_cloneDataView */
+
+/*! ./_cloneRegExp */
+
+/*! ./_cloneSymbol */
+
+/*! ./_cloneTypedArray */
+
+/*! ./_copyArray */
+
+/*! ./_copyObject */
+
+/*! ./_copySymbols */
+
+/*! ./_copySymbolsIn */
+
+/*! ./_coreJsData */
+
+/*! ./_createAggregator */
+
+/*! ./_createBaseEach */
+
+/*! ./_createBaseFor */
+
+/*! ./_customOmitClone */
+
+/*! ./_defineProperty */
+
+/*! ./_equalArrays */
+
+/*! ./_equalByTag */
+
+/*! ./_equalObjects */
+
+/*! ./_flatRest */
+
+/*! ./_freeGlobal */
+
+/*! ./_getAllKeys */
+
+/*! ./_getAllKeysIn */
+
+/*! ./_getMapData */
+
+/*! ./_getMatchData */
+
+/*! ./_getNative */
+
+/*! ./_getPrototype */
+
+/*! ./_getRawTag */
+
+/*! ./_getSymbols */
+
+/*! ./_getSymbolsIn */
+
+/*! ./_getTag */
+
+/*! ./_getValue */
+
+/*! ./_hasPath */
+
+/*! ./_hashClear */
+
+/*! ./_hashDelete */
+
+/*! ./_hashGet */
+
+/*! ./_hashHas */
+
+/*! ./_hashSet */
+
+/*! ./_initCloneArray */
+
+/*! ./_initCloneByTag */
+
+/*! ./_initCloneObject */
+
+/*! ./_isFlattenable */
+
+/*! ./_isIndex */
+
+/*! ./_isKey */
+
+/*! ./_isKeyable */
+
+/*! ./_isMasked */
+
+/*! ./_isPrototype */
+
+/*! ./_isStrictComparable */
+
+/*! ./_listCacheClear */
+
+/*! ./_listCacheDelete */
+
+/*! ./_listCacheGet */
+
+/*! ./_listCacheHas */
+
+/*! ./_listCacheSet */
+
+/*! ./_mapCacheClear */
+
+/*! ./_mapCacheDelete */
+
+/*! ./_mapCacheGet */
+
+/*! ./_mapCacheHas */
+
+/*! ./_mapCacheSet */
+
+/*! ./_mapToArray */
+
+/*! ./_matchesStrictComparable */
+
+/*! ./_memoizeCapped */
+
+/*! ./_nativeCreate */
+
+/*! ./_nativeKeys */
+
+/*! ./_nativeKeysIn */
+
+/*! ./_nodeUtil */
+
+/*! ./_objectToString */
+
+/*! ./_overArg */
+
+/*! ./_overRest */
+
+/*! ./_parent */
+
+/*! ./_root */
+
+/*! ./_setCacheAdd */
+
+/*! ./_setCacheHas */
+
+/*! ./_setToArray */
+
+/*! ./_setToString */
+
+/*! ./_shortOut */
+
+/*! ./_stackClear */
+
+/*! ./_stackDelete */
+
+/*! ./_stackGet */
+
+/*! ./_stackHas */
+
+/*! ./_stackSet */
+
+/*! ./_stringToPath */
+
+/*! ./_toKey */
+
+/*! ./_toSource */
+
+/*! ./annotation.js */
+
+/*! ./constant */
+
+/*! ./element.js */
+
+/*! ./eq */
+
+/*! ./events.js */
+
+/*! ./flatten */
+
+/*! ./get */
+
+/*! ./hasIn */
+
+/*! ./helpers.js */
+
+/*! ./identity */
+
+/*! ./is */
+
+/*! ./isArguments */
+
+/*! ./isArray */
+
+/*! ./isArrayLike */
+
+/*! ./isBuffer */
+
+/*! ./isFunction */
+
+/*! ./isLength */
+
+/*! ./isMap */
+
+/*! ./isObject */
+
+/*! ./isObjectLike */
+
+/*! ./isPlainObject */
+
+/*! ./isSet */
+
+/*! ./isSymbol */
+
+/*! ./isTypedArray */
+
+/*! ./keys */
+
+/*! ./keysIn */
+
+/*! ./last */
+
+/*! ./memo */
+
+/*! ./memoize */
+
+/*! ./misc */
+
+/*! ./overwriteFetch */
+
+/*! ./property */
+
+/*! ./scope */
+
+/*! ./string */
+
+/*! ./stubArray */
+
+/*! ./stubFalse */
+
+/*! ./toString */
+
+/*! ./types/box.js */
+
+/*! ./types/line.js */
+
+/*! ./zoomAndPanHelpers */
+
+/*! @sentry/browser */
+
+/*! @sentry/utils */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js (<- Module uses injected variables (module)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/hub/esm/scope.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js (<- Module uses injected variables (process, global)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js (<- Module uses injected variables (global)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/string.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/syncpromise.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tslib/tslib.es6.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
+
+/*! ModuleConcatenation bailout: Module is not an ECMAScript module */
+
+/*! ModuleConcatenation bailout: Module uses injected variables (global) */
+
+/*! ModuleConcatenation bailout: Module uses injected variables (module) */
+
+/*! ModuleConcatenation bailout: Module uses injected variables (process, global) */
+
+/*! all exports used */
+
+/*! chart.js */
+
+/*! chartjs-plugin-annotation */
+
+/*! chartjs-plugin-datalabels */
+
+/*! exports provided: API_VERSION, Hub, getMainCarrier, makeMain, getCurrentHub, getHubFromCarrier, setHubOnCarrier */
+
+/*! exports provided: Memo */
+
+/*! exports provided: Scope, addGlobalEventProcessor */
+
+/*! exports provided: Severity, Status, addGlobalEventProcessor, addBreadcrumb, captureException, captureEvent, captureMessage, configureScope, getHubFromCarrier, getCurrentHub, Hub, Scope, setContext, setExtra, setExtras, setTag, setTags, setUser, withScope, BrowserClient, defaultIntegrations, forceLoad, init, lastEventId, onLoad, showReportDialog, flush, close, wrap, SDK_NAME, SDK_VERSION, Integrations, Transports */
+
+/*! exports provided: SyncPromise */
+
+/*! exports provided: __extends, __assign, __rest, __decorate, __param, __metadata, __awaiter, __generator, __exportStar, __values, __read, __spread, __spreadArrays, __await, __asyncGenerator, __asyncDelegator, __asyncValues, __makeTemplateObject, __importStar, __importDefault, __classPrivateFieldGet, __classPrivateFieldSet */
+
+/*! exports provided: dynamicRequire, isNodeEnv, getGlobalObject, uuid4, parseUrl, getEventDescription, consoleSandbox, addExceptionTypeValue, addExceptionMechanism, getLocationHref, htmlTreeAsString, timestampWithMs, parseSemver, parseRetryAfterHeader, getFunctionName */
+
+/*! exports provided: fill, urlEncode, normalizeToSize, walk, normalize, extractExceptionKeysForMessage */
+
+/*! exports provided: isError, isErrorEvent, isDOMError, isDOMException, isString, isPrimitive, isPlainObject, isEvent, isElement, isRegExp, isThenable, isSyntheticEvent, isInstanceOf */
+
+/*! exports provided: logger */
+
+/*! exports provided: truncate, snipLine, safeJoin, isMatchingPattern */
+
+/*! exports used: Hub, getCurrentHub, getHubFromCarrier */
+
+/*! exports used: Memo */
+
+/*! exports used: Scope, addGlobalEventProcessor */
+
+/*! exports used: SyncPromise */
+
+/*! exports used: __assign, __extends, __read, __spread, __values */
+
+/*! exports used: addExceptionMechanism, addExceptionTypeValue, consoleSandbox, dynamicRequire, getEventDescription, getFunctionName, getGlobalObject, getLocationHref, htmlTreeAsString, isNodeEnv, parseRetryAfterHeader, parseUrl, timestampWithMs, uuid4 */
+
+/*! exports used: extractExceptionKeysForMessage, fill, normalize, normalizeToSize, urlEncode */
+
+/*! exports used: isDOMError, isDOMException, isElement, isError, isErrorEvent, isEvent, isInstanceOf, isPlainObject, isPrimitive, isRegExp, isString, isSyntheticEvent, isThenable */
+
+/*! exports used: isMatchingPattern, safeJoin, truncate */
+
+/*! exports used: logger */
+
+/*! lodash/cloneDeep */
+
+/*! lodash/keyBy */
+
+/*! lodash/omit */
+
+/*! moment */
+
+/*! no static exports found */
+
+/*! tslib */
+
+/*! webviz-core/src/util/Rpc */
+
+/*! webviz-core/src/util/RpcUtils */
+
+/*! webviz-core/src/util/errors */
+
+/*! webviz-core/src/util/installChartjs */
+
+/*! webviz-core/src/util/multicolorLineChart */
+
+/*! webviz-core/src/util/reportError */
+
+/*! webviz-core/src/util/workers */
+
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
+
+/*!***********************************!*\
+  !*** (webpack)/buildin/module.js ***!
+  \***********************************/
+
+/*!*******************************************!*\
+  !*** (webpack)/buildin/harmony-module.js ***!
+  \*******************************************/
+
+/*!**********************************************!*\
+  !*** ./packages/webviz-core/src/util/Rpc.js ***!
+  \**********************************************/
+
+/*!*************************************************!*\
+  !*** ./packages/webviz-core/src/util/errors.js ***!
+  \*************************************************/
+
+/*!**************************************************!*\
+  !*** ./packages/webviz-core/src/util/workers.js ***!
+  \**************************************************/
+
+/*!***************************************************!*\
+  !*** ./packages/webviz-core/src/util/RpcUtils.js ***!
+  \***************************************************/
+
+/*!******************************************************!*\
+  !*** ./packages/webviz-core/src/util/reportError.js ***!
+  \******************************************************/
+
+/*!********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/eq.js ***!
+  \********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/get.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./packages/webviz-core/src/util/installChartjs.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./packages/webviz-core/src/util/overwriteFetch.js ***!
+  \*********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_Map.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_Set.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/keys.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/last.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/omit.js ***!
+  \**********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_Hash.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_root.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/hasIn.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isMap.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isSet.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/keyBy.js ***!
+  \***********************************************************/
+
+/*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_Stack.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_apply.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_isKey.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_toKey.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/keysIn.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/moment/moment.js ***!
+  \************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_Symbol.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getTag.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_parent.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/flatten.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isArray.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/memoize.js ***!
+  \*************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_Promise.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_WeakMap.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseFor.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseGet.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_hasPath.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_hashGet.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_hashHas.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_hashSet.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_isIndex.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_overArg.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/constant.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/identity.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isBuffer.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isLength.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isObject.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isSymbol.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/property.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/toString.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/tslib/tslib.es6.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/src/util/multicolorLineChart.js ***!
+  \**************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_DataView.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_MapCache.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_SetCache.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_arrayMap.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseEach.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseKeys.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_cacheHas.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_castPath.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_flatRest.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getValue.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_isMasked.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_nodeUtil.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_overRest.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_shortOut.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_stackGet.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_stackHas.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_stackSet.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_toSource.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/cloneDeep.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/stubArray.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/stubFalse.js ***!
+  \***************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_ListCache.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_arrayEach.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_arrayPush.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_arraySome.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseClone.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseHasIn.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseIsMap.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseIsSet.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseSlice.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseTimes.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseUnary.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseUnset.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_copyArray.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getNative.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getRawTag.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_hashClear.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_isKeyable.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isFunction.js ***!
+  \****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_Uint8Array.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseAssign.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseCreate.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseForOwn.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseGetTag.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseKeysIn.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_copyObject.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_coreJsData.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_equalByTag.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_freeGlobal.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getAllKeys.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getMapData.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getSymbols.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_hashDelete.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_mapToArray.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_nativeKeys.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_setToArray.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_stackClear.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isArguments.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isArrayLike.js ***!
+  \*****************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chart.js/dist/Chart.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_arrayFilter.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_assignValue.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseFlatten.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseIsEqual.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseIsMatch.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseMatches.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_cloneBuffer.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_cloneRegExp.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_cloneSymbol.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_copySymbols.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_equalArrays.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_isPrototype.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_mapCacheGet.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_mapCacheHas.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_mapCacheSet.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_setCacheAdd.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_setCacheHas.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_setToString.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_stackDelete.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isObjectLike.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isTypedArray.js ***!
+  \******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_assocIndexOf.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseAssignIn.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseIsNative.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseIteratee.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseProperty.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseToString.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_equalObjects.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getAllKeysIn.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getMatchData.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getPrototype.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_getSymbolsIn.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_listCacheGet.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_listCacheHas.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_listCacheSet.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_nativeCreate.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_nativeKeysIn.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_stringToPath.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/isPlainObject.js ***!
+  \*******************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/hub/esm/scope.js ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_arrayLikeKeys.js ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_cloneDataView.js ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_copySymbolsIn.js ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_createBaseFor.js ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_isFlattenable.js ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_mapCacheClear.js ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_memoizeCapped.js ***!
+  \********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/memo.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseAggregator.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseGetAllKeys.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_createBaseEach.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_defineProperty.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_initCloneArray.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_initCloneByTag.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_listCacheClear.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_mapCacheDelete.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_objectToString.js ***!
+  \*********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_arrayAggregator.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseAssignValue.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseIsArguments.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseIsEqualDeep.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseSetToString.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_cloneTypedArray.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_customOmitClone.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_initCloneObject.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_listCacheDelete.js ***!
+  \**********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/string.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseIsTypedArray.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_basePropertyDeep.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_cloneArrayBuffer.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_createAggregator.js ***!
+  \***********************************************************************/
+
+/*!************************************************************************!*\
+  !*** ./node_modules/node-libs-browser/node_modules/process/browser.js ***!
+  \************************************************************************/
+
+/*!*************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_isStrictComparable.js ***!
+  \*************************************************************************/
+
+/*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseMatchesProperty.js ***!
+  \**************************************************************************/
+
+/*!***************************************************************************!*\
+  !*** ./packages/webviz-core/src/components/ReactChartjs/ChartJSWorker.js ***!
+  \***************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/syncpromise.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./packages/webviz-core/src/components/ReactChartjs/ChartJSManager.js ***!
+  \****************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_matchesStrictComparable.js ***!
+  \******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/src/components/ReactChartjs/zoomAndPanHelpers.js ***!
+  \*******************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/index.js ***!
+  \**********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/events.js ***!
+  \***********************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/element.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/helpers.js ***!
+  \************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 39 modules ***!
+  \*************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/types/box.js ***!
+  \**************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/annotation.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/types/line.js ***!
+  \***************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-datalabels/dist/chartjs-plugin-datalabels.js ***!
+  \*******************************************************************************************************/
+
+/*!*********************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib?cacheDirectory!./packages/webviz-core/src/components/ReactChartjs/ChartJSWorker.worker.js ***!
+  \*********************************************************************************************************************************/

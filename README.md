@@ -19,6 +19,16 @@ We recommend using the [hosted version of Webviz](https://webviz.io/app/?demo), 
 
 However, sometimes the hosted version is inconvenient, when streaming data from robots on the field where there is poor internet connectivity. For this it is useful to use a static build of webviz.
 
+### Docker
+
+The easiest way to use the static build, is to use our Docker image, which is automatically built on every commit to the `master` branch.
+
+```sh
+docker run -p 8080:8080 cruise/webviz
+```
+
+### Building manually
+
 ```sh
 npm run bootstrap # install dependencies
 npm run build # build all packages

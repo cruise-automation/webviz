@@ -6,18 +6,18 @@
  */
 
 /*! *****************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at http://www.apache.org/licenses/LICENSE-2.0
+Copyright (c) Microsoft Corporation.
 
-THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-MERCHANTABLITY OR NON-INFRINGEMENT.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
 
-See the Apache Version 2.0 License for specific language governing permissions
-and limitations under the License.
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 
 /*! ../BagReader */
@@ -176,13 +176,25 @@ and limitations under the License.
 
 /*! @sentry/browser */
 
+/*! @sentry/types */
+
 /*! @sentry/utils */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js (<- Module uses injected variables (module)) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/hub/esm/scope.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/index.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/util/sendNotification.js (referenced with cjs require)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/severity.js because of ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/severity.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -229,6 +241,8 @@ and limitations under the License.
 
 /*! exports provided: API_VERSION, Hub, getMainCarrier, makeMain, getCurrentHub, getHubFromCarrier, setHubOnCarrier */
 
+/*! exports provided: LogLevel, Severity, SpanStatus, Status */
+
 /*! exports provided: Memo */
 
 /*! exports provided: MessageReader */
@@ -237,7 +251,11 @@ and limitations under the License.
 
 /*! exports provided: Scope, addGlobalEventProcessor */
 
+/*! exports provided: Severity */
+
 /*! exports provided: Severity, Status, addGlobalEventProcessor, addBreadcrumb, captureException, captureEvent, captureMessage, configureScope, getHubFromCarrier, getCurrentHub, Hub, Scope, setContext, setExtra, setExtras, setTag, setTags, setUser, withScope, BrowserClient, defaultIntegrations, forceLoad, init, lastEventId, onLoad, showReportDialog, flush, close, wrap, SDK_NAME, SDK_VERSION, Integrations, Transports */
+
+/*! exports provided: Status */
 
 /*! exports provided: SyncPromise */
 
@@ -272,6 +290,10 @@ and limitations under the License.
 /*! exports used: Memo */
 
 /*! exports used: Scope, addGlobalEventProcessor */
+
+/*! exports used: Severity */
+
+/*! exports used: Status */
 
 /*! exports used: SyncPromise */
 
@@ -393,7 +415,7 @@ and limitations under the License.
 
 /*! webviz-core/src/util/ranges */
 
-/*! webviz-core/src/util/reportError */
+/*! webviz-core/src/util/sendNotification */
 
 /*! webviz-core/src/util/sharedStyleConstants */
 
@@ -593,10 +615,6 @@ and limitations under the License.
   !*** ./packages/webviz-core/node_modules/uuid/v4.js ***!
   \******************************************************/
 
-/*!******************************************************!*\
-  !*** ./packages/webviz-core/src/util/reportError.js ***!
-  \******************************************************/
-
 /*!********************************************************!*\
   !*** ./node_modules/readable-stream/duplex-browser.js ***!
   \********************************************************/
@@ -639,6 +657,10 @@ and limitations under the License.
 
 /*!***********************************************************!*\
   !*** ./packages/webviz-core/src/util/getNewConnection.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/src/util/sendNotification.js ***!
   \***********************************************************/
 
 /*!************************************************************!*\
@@ -798,6 +820,10 @@ and limitations under the License.
   \**********************************************************************/
 
 /*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/types/esm/status.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js ***!
   \***********************************************************************/
 
@@ -823,6 +849,10 @@ and limitations under the License.
 
 /*!*************************************************************************!*\
   !*** ./node_modules/readable-stream/lib/internal/streams/BufferList.js ***!
+  \*************************************************************************/
+
+/*!*************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/types/esm/severity.js ***!
   \*************************************************************************/
 
 /*!*************************************************************************!*\
@@ -865,12 +895,16 @@ and limitations under the License.
   !*** ./packages/webviz-core/src/dataProviders/IdbCacheDataProviderDatabase.js ***!
   \********************************************************************************/
 
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/types/esm/index.js + 2 modules ***!
+  \**********************************************************************************/
+
 /*!***********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/moment-timezone/data/packed/latest.json ***!
   \***********************************************************************************/
 
 /*!*************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 39 modules ***!
+  !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 36 modules ***!
   \*************************************************************************************/
 
 /*!************************************************************************************************!*\

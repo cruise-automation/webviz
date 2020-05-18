@@ -57,7 +57,6 @@ type CharacterLocations = {
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
 const MIN_RESOLUTION = 40;
 const DEFAULT_RESOLUTION = 160;
-const MAX_ATLAS_WIDTH = 512;
 const SDF_RADIUS = 8;
 const CUTOFF = 0.25;
 const BUFFER = 10;
@@ -90,7 +89,13 @@ const setMarkerYOffset = (offsets: Map<string, number>, marker: TextMarker, yOff
 const createMemoizedBuildAtlas = () =>
   memoizeOne(
     // We update charSet mutably but monotonically. Pass in the size to invalidate the cache.
-    (charSet: Set<string>, _setSize, resolution: number, atlasTexture: any): CharacterLocations => {
+    (
+      charSet: Set<string>,
+      _setSize,
+      resolution: number,
+      atlasTexture: any,
+      maxAtlasWidth: number
+    ): CharacterLocations => {
       const tinySDF = new TinySDF(resolution, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
       const ctx = memoizedCreateCanvas(`${resolution}px sans-serif`);
 
@@ -104,7 +109,7 @@ const createMemoizedBuildAtlas = () =>
       for (const char of charSet) {
         const width = ctx.measureText(char).width;
         const dx = Math.ceil(width) + 2 * BUFFER;
-        if (x + dx > MAX_ATLAS_WIDTH) {
+        if (x + dx > maxAtlasWidth) {
           x = 0;
           y += rowHeight;
         }
@@ -373,7 +378,10 @@ function makeTextCommand(alphabet?: string[]) {
           charSet.add(char);
         }
       }
-      const charInfo = memoizedBuildAtlas(charSet, charSet.size, command.resolution, atlasTexture);
+      // See http://webglstats.com/webgl/parameter/MAX_TEXTURE_SIZE - everyone has at least min 2048 texture size, and
+      // almost everyone has at least 4096. With a 2048 width we have ~900 height with a full character set.
+      const maxAtlasWidth: number = regl.limits.maxTextureSize || 2048;
+      const charInfo = memoizedBuildAtlas(charSet, charSet.size, command.resolution, atlasTexture, maxAtlasWidth);
 
       const destOffsets = new Float32Array(estimatedInstances * 2);
       const srcWidths = new Float32Array(estimatedInstances);

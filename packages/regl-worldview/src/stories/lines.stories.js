@@ -55,4 +55,97 @@ storiesOf("Worldview/Lines", module)
         <Lines>{emptyLine}</Lines>
       </Worldview>
     );
+  })
+  .add("<Lines> line strip (open)", () => {
+    const lines = [
+      {
+        closed: false,
+        pose: {
+          position: { x: 0, y: 0, z: 0 },
+          orientation: { x: 0, y: 0, z: 0, w: 0 },
+        },
+        scale: { x: 0.1, y: 0.1, z: 0.1 },
+        color: { r: 0, g: 1, b: 0, a: 1 },
+        points: [{ x: 0, y: -3, z: 0 }, { x: 1, y: -3, z: 0 }, { x: 1, y: -2, z: 0 }, { x: 0, y: -2, z: 0 }],
+        colors: [],
+        primitive: "line strip",
+      },
+    ];
+    return (
+      <Worldview defaultCameraState={{ distance: 10 }}>
+        <Lines>{lines}</Lines>
+      </Worldview>
+    );
+  })
+  .add("<Lines> line strip (closed)", () => {
+    const lines = [
+      {
+        closed: true,
+        pose: {
+          position: { x: 0, y: 0, z: 0 },
+          orientation: { x: 0, y: 0, z: 0, w: 0 },
+        },
+        scale: { x: 0.1, y: 0.1, z: 0.1 },
+        color: { r: 0, g: 1, b: 0, a: 1 },
+        points: [{ x: 0, y: -3, z: 0 }, { x: 1, y: -3, z: 0 }, { x: 1, y: -2, z: 0 }, { x: 0, y: -2, z: 0 }],
+        colors: [],
+        primitive: "line strip",
+      },
+    ];
+    return (
+      <Worldview defaultCameraState={{ distance: 10 }}>
+        <Lines>{lines}</Lines>
+      </Worldview>
+    );
+  })
+  .add("<Lines> wireframe", () => {
+    const lines = [
+      {
+        pose: {
+          position: { x: 0, y: 0, z: 0 },
+          orientation: { x: 0, y: 0, z: 0, w: 0 },
+        },
+        scale: { x: 0.1, y: 0.1, z: 0.1 },
+        color: { r: 0, g: 1, b: 0, a: 1 },
+        points: [
+          { x: 0, y: -3, z: 1 },
+          { x: 1, y: -2, z: 1 },
+          { x: 0, y: -3, z: 0 },
+          { x: 1, y: -2, z: 0 },
+
+          { x: 0, y: -3, z: 1 },
+          { x: 0, y: -3, z: 0 },
+
+          { x: 1, y: -2, z: 1 },
+          { x: 0.5, y: 0, z: 1 },
+          { x: 1, y: -2, z: 0 },
+          { x: 0.5, y: 0, z: 0 },
+
+          { x: 1, y: -2, z: 1 },
+          { x: 1, y: -2, z: 0 },
+
+          { x: 0.5, y: 0, z: 1 },
+          { x: -1, y: -1, z: 1 },
+          { x: 0.5, y: 0, z: 0 },
+          { x: -1, y: -1, z: 0 },
+
+          { x: 0.5, y: 0, z: 1 },
+          { x: 0.5, y: 0, z: 0 },
+
+          { x: -1, y: -1, z: 1 },
+          { x: 0, y: -3, z: 1 },
+          { x: -1, y: -1, z: 0 },
+          { x: 0, y: -3, z: 0 },
+
+          { x: -1, y: -1, z: 1 },
+          { x: -1, y: -1, z: 0 },
+        ],
+        colors: [],
+      },
+    ];
+    return (
+      <Worldview defaultCameraState={{ distance: 10 }}>
+        <Lines>{lines}</Lines>
+      </Worldview>
+    );
   });

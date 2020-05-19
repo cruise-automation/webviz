@@ -68,7 +68,8 @@ edge cases.)
 */
 
 const FLOAT_BYTES = Float32Array.BYTES_PER_ELEMENT;
-const POINT_BYTES = 3 * FLOAT_BYTES;
+const POINT_COMPONENTS = 4;
+const POINT_BYTES = POINT_COMPONENTS * FLOAT_BYTES;
 const DEFAULT_MONOCHROME_COLOR = [1, 1, 1, 0.2];
 
 // The four points forming the triangles' vertices.
@@ -84,10 +85,10 @@ attribute float pointType;
 // per-instance attributes
 attribute vec4 colorB;
 attribute vec4 colorC;
-attribute vec3 positionA;
-attribute vec3 positionB;
-attribute vec3 positionC;
-attribute vec3 positionD;
+attribute vec4 positionA;
+attribute vec4 positionB;
+attribute vec4 positionC;
+attribute vec4 positionD;
 // per-instance pose attributes
 attribute vec3 posePosition;
 attribute vec4 poseRotation;
@@ -155,10 +156,10 @@ void main () {
   float scale = isTop ? 1. : -1.;
 
   mat4 projView = projection * view;
-  vec4 projA = projView * vec4(applyPose(applyPoseInstance(positionA, poseRotation, posePosition)), 1);
-  vec4 projB = projView * vec4(applyPose(applyPoseInstance(positionB, poseRotation, posePosition)), 1);
-  vec4 projC = projView * vec4(applyPose(applyPoseInstance(positionC, poseRotation, posePosition)), 1);
-  vec4 projD = projView * vec4(applyPose(applyPoseInstance(positionD, poseRotation, posePosition)), 1);
+  vec4 projA = projView * vec4(applyPose(applyPoseInstance(positionA.xyz, poseRotation, posePosition)), 1);
+  vec4 projB = projView * vec4(applyPose(applyPoseInstance(positionB.xyz, poseRotation, posePosition)), 1);
+  vec4 projC = projView * vec4(applyPose(applyPoseInstance(positionC.xyz, poseRotation, posePosition)), 1);
+  vec4 projD = projView * vec4(applyPose(applyPoseInstance(positionD.xyz, poseRotation, posePosition)), 1);
 
   vec2 aspectVec = vec2(viewportWidth / viewportHeight, 1.0);
   vec2 screenA = projA.xy / projA.w * aspectVec;
@@ -268,11 +269,9 @@ const lines = (regl: any) => {
   const colorBuffer = regl.buffer({ type: "float" });
 
   // All invocations of the vertex shader share data from the positions buffer, but with different
-  // offsets. However, when offset and stride are combined, 3 or 4 attributes reading from the same
-  // buffer produces incorrect results on certain Lenovo hardware running Ubuntu. As a workaround,
-  // we upload the same data into two buffers and have only two attributes reading from each buffer.
-  const positionBuffer1 = regl.buffer({ type: "float" });
-  const positionBuffer2 = regl.buffer({ type: "float" });
+  // offsets. We use 4-compontent positions [x, y, z, w] to prevent alignment errors in some hardware.
+  // The last component 'w' is ignored and set to 1 by default.
+  const positionBuffer = regl.buffer({ type: "float" });
 
   const posePositionBuffer = regl.buffer({ type: "float" });
   const poseRotationBuffer = regl.buffer({ type: "float" });
@@ -305,25 +304,25 @@ const lines = (regl: any) => {
           divisor: monochrome || debug ? 0 : 1,
         }),
         positionA: (context, { joined }) => ({
-          buffer: positionBuffer1,
+          buffer: positionBuffer,
           offset: 0,
           stride: (joined ? 1 : 2) * POINT_BYTES,
           divisor: 1,
         }),
         positionB: (context, { joined }) => ({
-          buffer: positionBuffer1,
+          buffer: positionBuffer,
           offset: POINT_BYTES,
           stride: (joined ? 1 : 2) * POINT_BYTES,
           divisor: 1,
         }),
         positionC: (context, { joined }) => ({
-          buffer: positionBuffer2,
+          buffer: positionBuffer,
           offset: 2 * POINT_BYTES,
           stride: (joined ? 1 : 2) * POINT_BYTES,
           divisor: 1,
         }),
         positionD: (context, { joined }) => ({
-          buffer: positionBuffer2,
+          buffer: positionBuffer,
           offset: 3 * POINT_BYTES,
           stride: (joined ? 1 : 2) * POINT_BYTES,
           divisor: 1,
@@ -352,34 +351,35 @@ const lines = (regl: any) => {
   function fillPointArray(points: any[], alreadyClosed: boolean, shouldClose: boolean) {
     const numTotalPoints = points.length + (shouldClose ? 3 : 2);
     if (allocatedPoints < numTotalPoints) {
-      pointArray = new Float32Array(numTotalPoints * 3);
+      pointArray = new Float32Array(numTotalPoints * POINT_COMPONENTS);
       allocatedPoints = numTotalPoints;
     }
     points.forEach((point, i) => {
       const [x, y, z] = shouldConvert(point) ? pointToVec3(point) : point;
-      const off = 3 + i * 3;
+      const off = POINT_COMPONENTS + i * POINT_COMPONENTS;
       pointArray[off + 0] = x;
       pointArray[off + 1] = y;
       pointArray[off + 2] = z;
+      pointArray[off + 3] = 1.0; // Ignored (see above)
     });
 
     // The "prior" point (A) and "next" point (D) need to be set when rendering the first & last
     // segments, so we copy data from the last point(s) to the beginning of the array, and from the
     // first point(s) to the end of the array.
-    const n = numTotalPoints * 3;
+    const n = numTotalPoints * POINT_COMPONENTS;
     if (alreadyClosed) {
       // First and last points already match; "prior" should be the second-to-last
       // and "next" should be the second.
-      pointArray.copyWithin(0, n - 9, n - 6);
-      pointArray.copyWithin(n - 3, 6, 9);
+      pointArray.copyWithin(0, n - 3 * POINT_COMPONENTS, n - 2 * POINT_COMPONENTS);
+      pointArray.copyWithin(n - POINT_COMPONENTS, 2 * POINT_COMPONENTS, 3 * POINT_COMPONENTS);
     } else if (shouldClose) {
       // First point is being reused after last point; first *two* points need to be copied at the end
-      pointArray.copyWithin(0, n - 9, n - 6);
-      pointArray.copyWithin(n - 6, 3, 9);
+      pointArray.copyWithin(0, n - 3 * POINT_COMPONENTS, n - 2 * POINT_COMPONENTS);
+      pointArray.copyWithin(n - 2 * POINT_COMPONENTS, POINT_COMPONENTS, 3 * POINT_COMPONENTS);
     } else {
       // Endpoints are separate; just duplicate first & last points, resulting in square-looking endcaps
-      pointArray.copyWithin(0, 3, 6);
-      pointArray.copyWithin(n - 3, n - 6, n - 3);
+      pointArray.copyWithin(0, POINT_COMPONENTS, 2 * POINT_COMPONENTS);
+      pointArray.copyWithin(n - POINT_COMPONENTS, n - 2 * POINT_COMPONENTS, n - POINT_COMPONENTS);
     }
   }
 
@@ -478,8 +478,7 @@ const lines = (regl: any) => {
     const shouldClose = !alreadyClosed && props.closed;
 
     fillPointArray(props.points, alreadyClosed, shouldClose);
-    positionBuffer1({ data: pointArray, usage: "dynamic" });
-    positionBuffer2({ data: pointArray, usage: "dynamic" });
+    positionBuffer({ data: pointArray, usage: "dynamic" });
 
     const monochrome = !(props.colors && props.colors.length);
     fillColorArray(props.color, props.colors, monochrome, shouldClose);

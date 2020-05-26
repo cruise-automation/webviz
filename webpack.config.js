@@ -121,7 +121,8 @@ module.exports = {
       },
       {
         // We use stringified Typescript in Node Playground.
-        test: /typescript\/userUtils\/\w*\.ts$/,
+        // eslint-disable-next-line no-useless-escape
+        test: /typescript\/[\.\/\w]*\.ts$/,
         exclude: /node_modules/,
         use: { loader: "raw-loader" },
       },

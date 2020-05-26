@@ -12,7 +12,7 @@ module.exports = {
   testURL: "http://localhost",
   transform: {
     // We use stringified Typescript in Node Playground.
-    "^.+typescript\\/userUtils\\/\\w+\\.ts$": "<rootDir>/jest/rawTransform.js",
+    "^.+typescript\\/[\\/\\w\\.]+\\.ts$": "<rootDir>/jest/rawTransform.js",
     "^.+\\.(js|jsx)$": "babel-jest",
     "^.+\\.ne$": "<rootDir>/jest/neTransform.js",
     "^(?!.*\\.(js|jsx|css|json)$)": "<rootDir>/jest/fileTransform.js",

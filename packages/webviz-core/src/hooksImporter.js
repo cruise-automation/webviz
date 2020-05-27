@@ -31,6 +31,7 @@ export function panelsByCategory() {
   const Publish = require("webviz-core/src/panels/Publish").default;
   const RawMessages = require("webviz-core/src/panels/RawMessages").default;
   const Rosout = require("webviz-core/src/panels/Rosout").default;
+  const SourceInfo = require("webviz-core/src/panels/SourceInfo").default;
   const StateTransitions = require("webviz-core/src/panels/StateTransitions").default;
   const SubscribeToList = require("webviz-core/src/panels/SubscribeToList").default;
   const Tab = require("webviz-core/src/panels/Tab").default;
@@ -58,6 +59,7 @@ export function panelsByCategory() {
     { title: "Notes", component: Note },
     { title: "Tab", component: Tab },
     { title: "Webviz Internals", component: Internals },
+    { title: "Data Source Info", component: SourceInfo },
   ];
 
   const debugging = [

@@ -22,7 +22,14 @@ export type SaveLayoutPayload = {
   layout: MosaicNode,
 };
 
+export type TabConfig = {| title: string, layout: ?MosaicNode |};
+
 export type TabPanelConfig = {
   activeTabIdx: number,
-  tabs: {| title: string, layout: ?MosaicNode |}[],
+  tabs: Array<TabConfig>,
 };
+
+export type TabLocation = {|
+  panelId: string,
+  tabIndex?: number,
+|};

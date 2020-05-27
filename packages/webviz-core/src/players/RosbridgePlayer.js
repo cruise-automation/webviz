@@ -26,6 +26,7 @@ import {
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { bagConnectionsToDatatypes } from "webviz-core/src/util/bagConnectionsHelper";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
+import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromMillis, type TimestampMethod } from "webviz-core/src/util/time";
@@ -139,7 +140,8 @@ export default class RosbridgePlayer implements Player {
         }
         topics.push({ name: topicName, datatype: type });
         datatypeDescriptions.push({ type, messageDefinition });
-        messageReaders[type] = messageReaders[type] || new MessageReader(messageDefinition);
+        messageReaders[type] =
+          messageReaders[type] || new MessageReader(messageDefinition, { freeze: FREEZE_MESSAGES });
         this._messageDefinitionsByTopic[topicName] = messageDefinition;
       }
 

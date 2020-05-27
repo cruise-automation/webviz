@@ -9,9 +9,9 @@
 import { mount } from "enzyme";
 import React from "react";
 
+import delay from "webviz-core/shared/delay";
+import tick from "webviz-core/shared/tick";
 import createSyncingComponent from "webviz-core/src/components/createSyncingComponent";
-
-const tick = (time: number = 0) => new Promise((resolve) => setTimeout(resolve, time));
 
 describe("createSyncingComponent", () => {
   const IdentitySyncingComponent = createSyncingComponent("IdentitySyncingComponent", (dataItems) => dataItems);
@@ -66,7 +66,7 @@ describe("createSyncingComponent", () => {
     await tick();
 
     wrapper1.setProps({ data: { component: 1, different: "data" } });
-    await tick(1000);
+    await delay(1000);
 
     expect(childFn1.mock.calls).toEqual([
       [[{ component: 1 }]],

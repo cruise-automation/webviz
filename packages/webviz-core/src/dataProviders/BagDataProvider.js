@@ -89,7 +89,12 @@ export default class BagDataProvider implements DataProvider {
         },
       });
       await remoteReader.open(); // Important that we call this first, because it might throw an error if the file can't be read.
-      approximateSize = remoteReader.size() * 0.99; // Chop off the last percentage or so for the indexes.
+      const exactSize = remoteReader.size();
+      if (exactSize === 0) {
+        sendNotification("Cannot play invalid bag", "Bag is 0 bytes in size.", "user", "error");
+        return new Promise(() => {}); // Just never finish initializing.
+      }
+      approximateSize = exactSize * 0.99; // Chop off the last percentage or so for the indexes.
 
       this._bag = new Bag(new BagReader(remoteReader));
       await this._bag.open();
@@ -151,7 +156,7 @@ export default class BagDataProvider implements DataProvider {
     return {
       start: startTime,
       end: endTime,
-      topics: bagConnectionsToTopics(connections),
+      topics: bagConnectionsToTopics(connections, chunkInfos),
       datatypes: bagConnectionsToDatatypes(connections),
       messageDefinitionsByTopic,
       providesParsedMessages: false,

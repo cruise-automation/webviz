@@ -36,7 +36,7 @@ export type RenderRow<Item> = (RenderRowInput<Item>) => React.Node;
 
 // List for showing large number of items, which are expected to be appended to the end regularly.
 // Automatically scrolls to the bottom unless you explicitly scroll up.
-function LogList<Item>({ items, renderRow }: {| items: Item[], renderRow: RenderRow<Item> |}) {
+function LogList<Item>({ items, renderRow }: {| items: $ReadOnlyArray<Item>, renderRow: RenderRow<Item> |}) {
   // Automatically scrolling to the bottom by default.
   const [autoScroll, setAutoScroll] = React.useState(true);
 
@@ -51,7 +51,7 @@ function LogList<Item>({ items, renderRow }: {| items: Item[], renderRow: Render
   const lastWidth = React.useRef<number>(-1);
 
   // Keep track of the last items that we rendered to see if we need to clear the cache.
-  const lastItems = React.useRef<Item[]>([]);
+  const lastItems = React.useRef<$ReadOnlyArray<Item>>([]);
 
   // Last time we rendered; used in `onScroll`.
   const lastRenderTime = React.useRef<number>(0);

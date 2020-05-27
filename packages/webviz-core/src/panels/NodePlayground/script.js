@@ -14,7 +14,7 @@ export type EditorSelection = {|
 |};
 
 export type Script = {|
-  fileName: string,
+  filePath: string,
   code: string,
   readOnly: boolean,
   selection?: EditorSelection,

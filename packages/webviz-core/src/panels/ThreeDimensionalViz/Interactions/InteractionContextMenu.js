@@ -10,7 +10,7 @@ import * as React from "react";
 import { type MouseEventObject } from "regl-worldview";
 import styled from "styled-components";
 
-import { type ClickedPosition } from "webviz-core/src/panels/ThreeDimensionalViz/Layout";
+import { type ClickedPosition } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SInteractionContextMenu = styled.div`

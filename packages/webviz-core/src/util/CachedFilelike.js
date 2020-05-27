@@ -96,7 +96,7 @@ export default class CachedFilelike implements Filelike {
   }
 
   async open() {
-    if (this._fileSize) {
+    if (this._fileSize != null) {
       return;
     }
     const { size } = await this._fileReader.open();
@@ -120,7 +120,7 @@ export default class CachedFilelike implements Filelike {
 
   // Get the file size. Requires a call to `open()` or `read()` first.
   size() {
-    if (!this._fileSize) {
+    if (this._fileSize == null) {
       throw new Error("CachedFilelike has not been opened");
     }
     return this._fileSize;
@@ -128,10 +128,15 @@ export default class CachedFilelike implements Filelike {
 
   // Read a certain byte range, and get back a `Buffer` in `callback`.
   read(offset: number, length: number, callback: Callback<Buffer>) {
+    if (length === 0) {
+      callback(null, Buffer.allocUnsafe(0));
+      return;
+    }
+
     const range = { start: offset, end: offset + length };
     this._logFn(`Requested ${rangeToString(range)}`);
 
-    if (offset < 0 || range.end > this._fileSize || length <= 0) {
+    if (offset < 0 || range.end > this._fileSize || length < 0) {
       throw new Error("CachedFilelike#read invalid input");
     }
     if (length > this._cacheSizeInBytes) {

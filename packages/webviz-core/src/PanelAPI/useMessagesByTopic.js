@@ -5,11 +5,24 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import { groupBy } from "lodash";
 import { useCallback } from "react";
 
 import { useMessageReducer } from "./useMessageReducer";
 import type { TypedMessage } from "webviz-core/src/players/types";
 import { useDeepMemo } from "webviz-core/src/util/hooks";
+
+// Exported for tests
+// Equivalent to array1.concat(array2).slice(-limit), but somewhat faster. Also works with limit=0.
+export const concatAndTruncate = <T>(array1: $ReadOnlyArray<T>, array2: $ReadOnlyArray<T>, limit: number): T[] => {
+  const toTakeFromArray1 = limit - array2.length;
+  const ret = toTakeFromArray1 <= 0 ? [] : array1.slice(-toTakeFromArray1);
+  const toTakeFromArray2 = limit - ret.length;
+  for (let i = Math.max(0, array2.length - toTakeFromArray2); i < array2.length; ++i) {
+    ret.push(array2[i]);
+  }
+  return ret;
+};
 
 // Convenience wrapper around `useMessageReducer`, for if you just want some
 // recent messages for a few topics.
@@ -19,19 +32,31 @@ export function useMessagesByTopic<T: any>({
 }: {
   topics: $ReadOnlyArray<string>,
   historySize: number,
-}): { [topic: string]: TypedMessage<T>[] } {
+}): $ReadOnly<{ [topic: string]: $ReadOnlyArray<TypedMessage<T>> }> {
   const requestedTopics = useDeepMemo(topics);
 
-  const addMessage: ({ [string]: TypedMessage<T>[] }, TypedMessage<T>) => { [string]: TypedMessage<T>[] } = useCallback(
-    (prevMessagesByTopic: { [string]: TypedMessage<T>[] }, message: TypedMessage<T>) => ({
-      ...prevMessagesByTopic,
-      [message.topic]: prevMessagesByTopic[message.topic].concat(message).slice(-historySize),
-    }),
+  const addMessages: (
+    $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }>,
+    $ReadOnlyArray<TypedMessage<T>>
+  ) => $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }> = useCallback(
+    (
+      prevMessagesByTopic: $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }>,
+      messages: $ReadOnlyArray<TypedMessage<T>>
+    ) => {
+      const newMessagesByTopic = groupBy(messages, "topic");
+      const ret = { ...prevMessagesByTopic };
+      Object.keys(newMessagesByTopic).forEach((topic) => {
+        ret[topic] = concatAndTruncate(ret[topic], newMessagesByTopic[topic], historySize);
+      });
+      return ret;
+    },
     [historySize]
   );
 
   const restore = useCallback(
-    (prevMessagesByTopic: ?{ [string]: TypedMessage<T>[] }): { [string]: TypedMessage<T>[] } => {
+    (
+      prevMessagesByTopic: ?$ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }>
+    ): $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }> => {
       const newMessagesByTopic: { [topic: string]: TypedMessage<T>[] } = {};
       // When changing topics, we try to keep as many messages around from the previous set of
       // topics as possible.
@@ -44,5 +69,5 @@ export function useMessagesByTopic<T: any>({
     [requestedTopics, historySize]
   );
 
-  return useMessageReducer({ topics: requestedTopics, addMessage, restore });
+  return useMessageReducer({ topics: requestedTopics, addMessages, restore });
 }

@@ -15,7 +15,7 @@ Here are some resources to get yourself ramped up:
 - [Basic Types](https://www.typescriptlang.org/docs/handbook/basic-types.html)
 - [Gitbook](https://basarat.gitbooks.io/typescript/content/docs/why-typescript.html)
 
-Post in #stay-typesafe for TypeScript questions.
+Post in #typescript for TypeScript questions.
 
 ### Writing Your First Webviz Node
 
@@ -28,22 +28,12 @@ Every Webviz node must declare 3 exports that determine how it should execute:
 Here is a basic node that echoes its input:
 
 ```typescript
-import { Message } from "ros";
-
-type RosOutMsg = {
-  level: number,
-  name: string,
-  msg: string,
-  file: string,
-  function: string,
-  line: number,
-  topics: string[],
-};
+import { Input, Messages } from "ros";
 
 export const inputs = [ "/rosout" ];
 export const output = "/webviz_node/echo";
 
-const publisher = (message: Message<RosOutMsg>): RosOutMsg => {
+const publisher = (message: Input<"/rosout">): Messages.rosgraph_msgs__Log => {
   return message.message;
 };
 
@@ -55,15 +45,15 @@ If you drag in a bag, you should now be able to subscribe to the “/webviz_node
 But let’s say you want to render some markers in the 3D panel. When you create a new node, you’ll be presented with some boilerplate:
 
 ```typescript
-import { Message } from "ros";
+import { Input, Messages } from "ros";
 
-type InputTopicMsg = { /* YOUR INPUT TOPIC TYPE HERE */ };
-type Output = { /* DEFINED YOUR OUTPUT HERE */ };
+type Output = {};
 
 export const inputs = [];
 export const output = "/webviz_node/";
 
-const publisher = (message: Message<InputTopicMsg>): Output => {
+// Populate 'Input' with a parameter to properly type your inputs, e.g. 'Input<"/your_input_topic">'
+const publisher = (message: Input<>): Output => {
   return {};
 };
 
@@ -72,15 +62,13 @@ export default publisher;
 
 You’ll notice a few things:
 
-- The type `Message` is being imported from a custom library called `ros`. For more information on these type definitions and where they come from, refer to the [Important Types to Know](#important-types-to-know) section below.
-
-- The type `InputTopicMsg` has no properties.
-
-You'll need to define your own types here from your input topics.
+- The types `Input` and `Messages` are being imported from the `ros` module.
 
 - The type `Output` has no properties.
 
-You will need to fill in this type's definition to include the output properties you care about. For markers, you _must_ return a type of the form `{ markers: MarkerType[] }`. Reference the Markers section below for example types.
+`Input` is a generic type, meaning that it takes a parameter in order to be used. It is left empty on purpose as you'll need to populate it with the name of your input topic, e.g. `Input<"/rosout">`.
+
+As for the `Output` type, you can either manually type out your output with the properties you care about or use one of the dynamically generated types from the `Messages` type imported above. For instance, if you want to publish an array of markers, you can return the type `Messages.visualization_msgs__MarkerArray`.
 
 Strictly typing your nodes will help you debug issues at compile time rather than at runtime. It's not always obvious in Webviz how message properties are affecting the visualized output, and so the more you strictly type your nodes, the less likely you will make mistakes.
 
@@ -91,41 +79,12 @@ With that said, you can disable Typescript checks while getting a rough draft of
 In some cases, you will want to define multiple input topics:
 
 ```typescript
-import { Time, Message, Header, Pose, LineStripMarker } from "ros";
-
-type BaseMessage<Topic, Msg> = Message<Msg> & {
-  topic: Topic
-}
-
-type RosOutMsg = {
-  header: Header,
-  pose: Pose
-};
-type RosOut = BaseMessage<"/rosout", RosOutMsg>;
-
-type Transform = {
-  translation: number[],
-  rotation: number[]
-}
-type TransformMsg = {
-  header: Header,
-  child_frame_id: string,
-  transform: Transform
-}
-type TransformMsgArray = {
-  transforms: TransformMsg[]
-};
-type Tf = BaseMessage<"/tf", TransformMsgArray>;
-
-type Marker = LineStripMarker;
-type MarkerArray = {
-  markers: Marker[]
-}
+import { Input, Messages } from "ros";
 
 export const inputs = [ "/rosout", "/tf" ];
 export const output = "/webviz_node/echo";
 
-const publisher = (message: RosOut | Tf): MarkerArray => {
+const publisher = (message: Input<"/rosout"> | Input<"/tf">): { data: number[] }  => {
 
   if (message.topic === "/rosout") {
     // type is now refined to `/rosout` -- you can use `message.message.pose` safely
@@ -133,7 +92,7 @@ const publisher = (message: RosOut | Tf): MarkerArray => {
     // type is now refined to `/tf` -- you can use `message.message.transforms` safely
   }
 
-  return { markers: [] };
+  return { data: [] };
 };
 
 export default publisher;
@@ -144,10 +103,18 @@ This snippet uses [union types](https://www.typescriptlang.org/docs/handbook/adv
 To combine messages from multiple topics, create a variable in your node's global scope to reference every time your publisher function is invoked. Check timestamps to make sure you are not publishing out-of-sync data.
 
 ```typescript
-let lastReceiveTime: Time | null = null;
-const myScope: { tf: TfMsg, rosout: RosOutMsg } = { 'tf': null, 'rosout': null };
+import { Input, Messages, Time } from "ros";
 
-const publisher = (message: RosOut | Tf): MarkerArray => {
+export const inputs = [ "/rosout", "/tf" ];
+export const output = "/webviz_node/echo";
+
+let lastReceiveTime: Time = { sec: 0, nsec: 0 };
+const myScope: {
+  tf: Messages.tf2_msgs__TFMessage | null,
+  rosout: Messages.rosgraph_msgs__Log | null
+} = { 'tf': null, 'rosout': null };
+
+const publisher = (message: Input<"/rosout"> | Input<"/tf">): { data: number[] } | undefined => {
   const { receiveTime  } = message;
   let inSync = true;
   if (receiveTime.sec !== lastReceiveTime.sec || receiveTime.nsec !== lastReceiveTime.nsec) {
@@ -162,205 +129,9 @@ const publisher = (message: RosOut | Tf): MarkerArray => {
   }
 
   if (!inSync) {
-    return { markers: [] };
+    return { data: [] };
   }
-  ... rest of publishing logic...
-```
-
-## Important Types to Know
-
-By using types to publish your node messages, you can catch errors at compile time, rather than at runtime.
-
-The type definitions below are provided in the Node Playground environment by default, via Webviz's `ros` library.
-
-```typescript
-// RGBA
-type RGBA = { // all values are scaled between 0-1 instead of 0-255
-    r: number,
-    g: number,
-    b: number,
-    a: number // opacity -- typically you should set this to 1.
-};
-
-// Time
-type Time = {
-    sec: number,
-    nsec: number
-};
-
-// Message
-type Message<T> = {
-  topic: string,
-  datatype: string,
-  op: "message",
-  receiveTime: Time,
-  message: T,
 }
-
-// Header
-type Header = {
-  frame_id: string,
-  stamp: Time,
-};
-
-// Point
-type Point = {
-  x: number,
-  y: number,
-  z: number
-};
-
-// Scale
-type Scale = {
-  x: number,
-  y: number,
-  z: number
-};
-
-// Orientation
-type Orientation = {
-  x: number,
-  y: number,
-  z: number,
-  w: number
-};
-
-// Pose
-type Pose = {
-  position: Point,
-  orientation: Orientation
-};
-
-// Markers
-// All marker types build on this base marker type.
-/**
- * For publishing markers, every other marker is built up on this base type.
- * The 'id' property has to be unique, as duplicate ids will cause markers to
- * be overwritten. The 'ns' property corresponds to namespace under which your
- * marker is published. In most cases, you will just want to set the 'action'
- * property to '0'.
-  */
-type BaseMarker = {
-  header: Header,
-  ns: string, // namespace that your marker is published under.
-  id: string | number, // IMPORTANT: Needs to be unique. Duplicate ids will overwrite other markers.
-  action: 0 | 1 | 2 | 3, // In most cases, you will want to use '0' here.
-  pose: Pose,
-  scale: Scale,
-  color?: RGBA,
-  customMetadata?: { [key: string]: any }
-};
-
-// MultiPointMarker
-/**
- * When publishing markers with a 'points' array, the 'color' field takes 1 RGBA object to apply to all points,
- * while the 'colors' field takes in an array of RGBA objects to apply to each point. When both are present,
- * the 'colors' field overrides the 'color' field.
-  */
-type MultiPointMarker = BaseMarker & {
-  points: Point[],
-  color?: RGBA,
-  colors?: RGBA[]
-};
-
-// ArrowMarker
-/**
- * When publishing markers with a 'points' array, the 'color' field takes 1 RGBA object to apply to all points,
- * while the 'colors' field takes in an array of RGBA objects to apply to each point. When both are present,
- * the 'colors' field overrides the 'color' field.
-  */
-export declare type ArrowMarker = BaseMarker & {
-  type: 0,
-  points?: Point[],
-  size?: ArrowSize,
-}
-
-type ArrowSize = {
-  shaftWidth: number,
-  headLength: number,
-  headWidth: number
-};
-
-// CubeMarker
-type CubeMarker = BaseMarker & {
-  type: 1
-};
-
-// CubeListMarker
-type CubeListMarker = MultiPointMarker & {
-  type: 6
-};
-
-// SphereMarker
-type SphereMarker = BaseMarker & {
-  type: 2
-};
-
-// SphereListMarker
-type SphereListMarker = MultiPointMarker & {
-  type: 7
-};
-
-// CylinderMarker
-type CylinderMarker = BaseMarker & {
-  type: 3
-};
-
-// LineStripMarker
-type LineStripMarker = MultiPointMarker & {
-  type: 4
-};
-
-// LineListMarker
-type LineListMarker = MultiPointMarker & {
-  type: 5
-};
-
-// PointsMarker
-type PointsMarker = MultiPointMarker & {
-  type: 8
-};
-
-// TextMarker
-type TextMarker = BaseMarker & {
-  type: 9,
-  text: string
-};
-
-// TriangleListMarker
-type TriangleListMarker = MultiPointMarker & {
-  type: 11
-};
-
-// MeshMarker
-type MeshMarker = MultiPointMarker & {
-  type: 10
-};
-
-// FilledPolygonMarker
-type FilledPolygonMarker = MultiPointMarker & {
-  type: 107
-};
-```
-
-To use these predefined type definitions in your Webviz node code, import them from the `ros` library at the top of your code.
-
-```typescript
-import { RGBA, Header, Message } from 'ros';
-
-type MyCustomMsg = { header: Header, color: RGBA };
-
-export const inputs = ["/some_input"];
-export const output = "/webviz_node/";
-
-type Marker = {};
-type MarkerArray = {
-  markers: Marker[]
-};
-
-const publisher = (message: Message<MyCustomMsg>): MarkerArray => {
-  return { markers: [] };
-};
 
 export default publisher;
 ```
@@ -383,6 +154,8 @@ log({ "add": add, "subtract": (a: number, b: number): number => a - b })
 
 Invoking `log()` outside your publisher function will invoke it once, when your node is registered. Invoking `log()` inside your publisher function will log that value every time your publisher function is called.
 
+Note that if your topic publishes at a high rate (`tick_information` for instance) using `log` will significantly slow down Node Playground.
+
 ## FAQ
 
 > What if I don't want to produce a message every time `publish` is called?
@@ -390,12 +163,12 @@ Invoking `log()` outside your publisher function will invoke it once, when your 
 All you need to do is do an early (or late) return in your function body that is hit when you don't want to publish. For instance, let's say you only wanted to publish messages when a constant in the input is _not_ `3`:
 
 ```typescript
-import { Message } from "ros";
+import { Input } from "ros";
 
 export const inputs = ["/state"];
 export const output = "/webviz_node/manual_metrics";
 
-const publisher = (msg: Message<{ constant: number }>): { metrics: number } | undefined => {
+const publisher = (msg: Input<"/state">): { metrics: number } | undefined => {
   if (msg.message.constant === 3) {
     return;
   }

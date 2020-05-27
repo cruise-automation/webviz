@@ -245,7 +245,7 @@ export function mapMarker(marker: PointCloud2 & { settings?: PointCloudSettings 
   };
 }
 
-type ClickedInfo = {
+export type ClickedInfo = {
   clickedPoint: number[],
   clickedPointColor?: number[],
   additionalFieldValues?: { [name: string]: ?number },
@@ -282,7 +282,7 @@ export function getClickedInfo(maybeFullyDecodedMarker: MouseEventObject, instan
   return result;
 }
 
-function getAdditionalFieldNames(fields: $ReadOnlyArray<PointField>): string[] {
+export function getAdditionalFieldNames(fields: $ReadOnlyArray<PointField>): string[] {
   const allFields = fields.map((field) => field.name);
   return difference(allFields, ["rgb", "x", "y", "z"]);
 }
@@ -324,7 +324,7 @@ export function decodeAdditionalFields(marker: PointCloud2): { [fieldName: strin
 
 // taken from http://docs.ros.org/jade/api/rviz/html/c++/point__cloud__transformers_8cpp_source.html
 // line 47
-function setRainbowColor(colors: Uint8Array, offset: number, pct: number) {
+export function setRainbowColor(colors: Uint8Array | number[], offset: number, pct: number) {
   const h = (1 - pct) * 5.0 + 1.0;
   const i = Math.floor(h);
   let f = h % 1.0;

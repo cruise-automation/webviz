@@ -17,6 +17,7 @@ import Button from "webviz-core/src/components/Button";
 import createSyncingComponent from "webviz-core/src/components/createSyncingComponent";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import type { MessageHistoryItem } from "webviz-core/src/components/MessageHistoryDEPRECATED";
+import type { MessagePathDataItem } from "webviz-core/src/components/MessagePathSyntax/useCachedGetMessagePathDataItems";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import ChartComponent, { type HoveredElement, type ScaleOptions } from "webviz-core/src/components/ReactChartjs";
 import TimeBasedChartLegend from "webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend";
@@ -29,11 +30,23 @@ const SyncTimeAxis = createSyncingComponent<Bounds, Bounds>("SyncTimeAxis", (dat
   maxX: max(dataItems.map(({ maxX }) => (maxX == null ? undefined : maxX))),
 }));
 
+export type TooltipItem = {|
+  queriedData: MessagePathDataItem[],
+  receiveTime: Time,
+  headerStamp: ?Time,
+|};
+
+export const getTooltipItemForMessageHistoryItem = (item: MessageHistoryItem): TooltipItem => ({
+  queriedData: item.queriedData,
+  receiveTime: item.message.receiveTime,
+  headerStamp: item.message.message?.header?.stamp,
+});
+
 export type TimeBasedChartTooltipData = {|
   x: number,
   y: number | string,
   datasetKey?: string,
-  item: MessageHistoryItem,
+  item: TooltipItem,
   path: string,
   value: number | boolean | string,
   constantName?: ?string,

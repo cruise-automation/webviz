@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import transform from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
+import generateRosLib from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typegen";
 import Rpc from "webviz-core/src/util/Rpc";
 import { enforceFetchIsBlocked, inSharedWorker } from "webviz-core/src/util/workers";
 
@@ -27,5 +28,6 @@ global.onconnect = (e) => {
     global.close();
   });
   rpc.receive("transform", enforceFetchIsBlocked(transform));
+  rpc.receive("generateRosLib", generateRosLib);
   port.start();
 };

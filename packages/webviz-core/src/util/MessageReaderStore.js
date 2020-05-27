@@ -8,13 +8,15 @@
 
 import { MessageReader } from "rosbag";
 
+import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
+
 class ReaderItem {
   md5: string;
   reader: MessageReader;
 
   constructor(md5: string, messageDefinition: string) {
     this.md5 = md5;
-    this.reader = new MessageReader(messageDefinition);
+    this.reader = new MessageReader(messageDefinition, { freeze: FREEZE_MESSAGES });
   }
 }
 

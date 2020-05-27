@@ -16,7 +16,6 @@ import {
   Lines,
   Points,
   Spheres,
-  Text,
   Triangles,
   FilledPolygons,
   type CameraState,
@@ -24,6 +23,7 @@ import {
   createInstancedGetChildrenForHitmap,
 } from "regl-worldview";
 
+import { groupLinesIntoInstancedLineLists } from "./utils/groupingUtils";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import {
@@ -129,12 +129,7 @@ export default function World({
     .perPanelHooks()
     .ThreeDimensionalViz.renderAdditionalMarkers(rest);
 
-  const glTextEnabled = useExperimentalFeature("glText");
-  const TextComponent = glTextEnabled ? GLText : Text;
-
-  // Only actually used when GLText is enabled.
   const textMarkers = useGLText({
-    glTextEnabled,
     text: (text: TextMarker[]),
     setSearchTextMatches,
     searchText,
@@ -145,6 +140,16 @@ export default function World({
 
   const gpuPointCloudsEnabled = useExperimentalFeature("gpuPointCloud");
   const PointCloudsComponent = gpuPointCloudsEnabled ? GPUPointClouds : PointClouds;
+
+  // If 'groupLines' is enabled, we group all line strips and line lists
+  // into as few markers as possible. Otherwise, just render them as is.
+  const groupLines = useExperimentalFeature("groupLines");
+  let groupedLines = [];
+  let nonGroupedLines = [...lineList, ...lineStrip];
+  if (groupLines) {
+    groupedLines = groupLinesIntoInstancedLineLists(nonGroupedLines);
+    nonGroupedLines = [];
+  }
 
   return (
     <Worldview
@@ -164,7 +169,7 @@ export default function World({
       {children}
       <OccupancyGrids layerIndex={-1}>{grid}</OccupancyGrids>
       {additionalMarkers}
-      <Lines>{[...lineList, ...lineStrip]}</Lines>
+      <Lines>{nonGroupedLines}</Lines>
       <Arrows>{arrow}</Arrows>
       <Points>{points}</Points>
       <PointCloudsComponent>{pointcloud}</PointCloudsComponent>
@@ -174,15 +179,15 @@ export default function World({
       <Cubes>{[...cube, ...cubeList]}</Cubes>
       <PoseMarkers>{poseMarker}</PoseMarkers>
       <LaserScans>{laserScan}</LaserScans>
-      <TextComponent
+      <GLText
         layerIndex={10}
         alphabet={ALPHABET}
         scaleInvariantFontSize={14}
         autoBackgroundColor={autoTextBackgroundColor}>
         {textMarkers}
-      </TextComponent>
+      </GLText>
       <FilledPolygons>{filledPolygon}</FilledPolygons>
-      <Lines getChildrenForHitmap={getChildrenForHitmap}>{instancedLineList}</Lines>
+      <Lines getChildrenForHitmap={getChildrenForHitmap}>{[...instancedLineList, ...groupedLines]}</Lines>
       <LinedConvexHulls>{linedConvexHull}</LinedConvexHulls>
     </Worldview>
   );

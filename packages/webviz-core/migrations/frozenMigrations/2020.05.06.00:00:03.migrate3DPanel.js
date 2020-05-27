@@ -5,13 +5,113 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { cloneDeep, omit } from "lodash";
 
-import { THREE_DIMENSIONAL_SAVED_PROPS_VERSION } from "webviz-core/migrations/constants/index";
+import { omit, cloneDeep, flatten, uniq } from "lodash";
+import microMemoize from "micro-memoize";
+
 import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
-import { toTopicTreeV2Nodes } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/topicTreeV2Migrations";
 import { type PanelsState } from "webviz-core/src/reducers/panels";
 import { getPanelTypeFromId } from "webviz-core/src/util/layout";
+
+const THREE_DIMENSIONAL_SAVED_PROPS_VERSION = 17;
+
+export type TopicTreeConfig = {|
+  name?: string,
+  // displayName is only used to maintain TopicGroups flow type.
+  displayName?: string,
+  topicName?: string,
+  children?: TopicTreeConfig[],
+  description?: string,
+
+  // Previous names or ids for this item under which it might be saved in old layouts.
+  // Used for automatic conversion so that old saved layouts continue to work when tree nodes are renamed.
+  legacyIds?: string[],
+|};
+
+export const TOPIC_CONFIG: TopicTreeConfig = {
+  name: "root",
+  children: [
+    { name: "TF", topicName: "/tf", children: [], description: "Visualize relationships between /tf frames." },
+  ],
+};
+
+type LegacyIdItem = {| legacyId: string, topic: string |} | {| legacyId: string, name: string |};
+function* generateLegacyIdItems(item: TopicTreeConfig): Generator<LegacyIdItem, void, void> {
+  const { children, name, topicName, legacyIds } = item;
+  if (legacyIds) {
+    if (topicName) {
+      yield* legacyIds.map((legacyId) => ({ legacyId, topic: topicName }));
+    } else if (name) {
+      yield* legacyIds.map((legacyId) => ({ legacyId, name }));
+    }
+  }
+  if (children) {
+    for (const subItem of children) {
+      yield* generateLegacyIdItems(subItem);
+    }
+  }
+}
+
+const getLegacyIdItems = microMemoize(
+  (topicConfig): LegacyIdItem[] => {
+    return flatten(topicConfig.children.map((item) => Array.from(generateLegacyIdItems(item))));
+  }
+);
+
+export function migrateLegacyIds(checkedKeys: string[], topicTreeConfig: TopicTreeConfig): string[] {
+  const legacyIdItems = getLegacyIdItems(topicTreeConfig);
+  const newCheckedNameOrTopicByOldNames = {};
+  for (const { topic, name, legacyId } of legacyIdItems) {
+    if (name) {
+      newCheckedNameOrTopicByOldNames[`${legacyId}`] = `name:${name}`;
+      newCheckedNameOrTopicByOldNames[`name:${legacyId}`] = `name:${name}`;
+    }
+    if (topic) {
+      newCheckedNameOrTopicByOldNames[`t:${legacyId}`] = `t:${topic}`;
+      // If both name and topic are present, only use topic as the new checkedName
+      newCheckedNameOrTopicByOldNames[`${legacyId}`] = `t:${topic}`;
+    }
+  }
+  return checkedKeys.map((node) => newCheckedNameOrTopicByOldNames[node] || node);
+}
+
+export function toTopicTreeNodes(nodes: string[], topicTreeConfig: TopicTreeConfig): string[] {
+  const newNodes = [];
+  for (const item of nodes) {
+    // Add `/t` prefix
+    if (item.startsWith("/")) {
+      newNodes.push(`t:${item}`);
+    } else if (item.startsWith("x:")) {
+      // Convert tf and metadata extensions to namespace selections.
+      if (item.startsWith("x:TF.")) {
+        // Igonore the "empty" TF.
+        if (item !== "x:TF.") {
+          newNodes.push(`ns:/tf:${item.substr("x:TF.".length)}`);
+        }
+      } else if (item === "x:tiles") {
+        // Convert map tile group node to /metadata topic node.
+        newNodes.push("t:/metadata");
+        newNodes.push("ns:/metadata:tiles");
+      } else {
+        newNodes.push(`ns:/metadata:${item.substr("x:".length)}`);
+      }
+    } else if (
+      !item.startsWith("t:") &&
+      !item.startsWith("ns:") &&
+      !item.startsWith("name:") &&
+      !item.startsWith("name_2:")
+    ) {
+      // And name prefix for group nodes which sometimes may not have any prefix.
+      newNodes.push(`name:${item}`);
+    } else if (item === "name:TF") {
+      // Convert TF group node to /tf topic node.
+      newNodes.push("t:/tf");
+    } else {
+      newNodes.push(item);
+    }
+  }
+  return uniq(migrateLegacyIds(newNodes, topicTreeConfig));
+}
 
 function migrate3DPanelFn(originalConfig: ThreeDimensionalVizConfig): ThreeDimensionalVizConfig {
   let config = originalConfig;
@@ -34,8 +134,8 @@ function migrate3DPanelFn(originalConfig: ThreeDimensionalVizConfig): ThreeDimen
   let newCheckedKeys = [...checkedKeys];
   let newExpandedKeys = [...expandedKeys];
   if (!savedPropsVersion || savedPropsVersion < 17) {
-    newCheckedKeys = toTopicTreeV2Nodes(newCheckedKeys);
-    newExpandedKeys = toTopicTreeV2Nodes(newExpandedKeys);
+    newCheckedKeys = toTopicTreeNodes(newCheckedKeys, TOPIC_CONFIG);
+    newExpandedKeys = toTopicTreeNodes(newExpandedKeys, TOPIC_CONFIG);
   }
 
   return {

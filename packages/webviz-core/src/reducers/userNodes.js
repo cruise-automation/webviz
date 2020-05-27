@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import type { ActionTypes } from "webviz-core/src/actions";
+import { ros_lib_dts } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
 import type { Diagnostic, UserNodeLog } from "webviz-core/src/players/UserNodePlayer/types";
 
 export type UserNodeDiagnostics = {
@@ -18,9 +19,13 @@ export type UserNodesState = {
   userNodeDiagnostics: {
     [guid: string]: UserNodeDiagnostics,
   },
+  rosLib: string,
 };
 
-export default function userNodes(state: UserNodesState = { userNodeDiagnostics: {} }, action: ActionTypes) {
+export default function userNodes(
+  state: UserNodesState = { userNodeDiagnostics: {}, rosLib: ros_lib_dts },
+  action: ActionTypes
+) {
   switch (action.type) {
     case "SET_USER_NODE_DIAGNOSTICS": {
       const userNodeDiagnostics = { ...state.userNodeDiagnostics };
@@ -68,6 +73,10 @@ export default function userNodes(state: UserNodesState = { userNodeDiagnostics:
       const { id, trusted } = action.payload;
       userNodeDiagnostics[id] = { logs: [], diagnostics: [], ...userNodeDiagnostics[id], trusted };
       return { ...state, userNodeDiagnostics };
+    }
+
+    case "SET_USER_NODE_ROS_LIB": {
+      return { ...state, rosLib: action.payload };
     }
 
     default:

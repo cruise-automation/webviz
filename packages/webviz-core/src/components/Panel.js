@@ -16,6 +16,7 @@ import { last } from "lodash";
 import React, { useState, useCallback, useContext, useMemo, type ComponentType } from "react";
 import DocumentEvents from "react-document-events";
 import {
+  getLeaves,
   getNodeAtPath,
   updateTree,
   getPathFromNode,
@@ -368,6 +369,12 @@ export default function Panel<Config: PanelConfig>(
           },
         },
         keyDownHandlers: {
+          a: (e) => {
+            e.preventDefault();
+            if (cmdKeyPressed) {
+              actions.setSelectedPanelIds(getLeaves(layout));
+            }
+          },
           "`": () => setQuickActionsKeyPressed(true),
           "~": () => setQuickActionsKeyPressed(true),
           Shift: () => setShiftKeyPressed(true),
@@ -378,7 +385,7 @@ export default function Panel<Config: PanelConfig>(
           },
         },
       }),
-      [exitFullScreen, onReleaseQuickActionsKey]
+      [actions, cmdKeyPressed, exitFullScreen, layout, onReleaseQuickActionsKey]
     );
     return (
       // $FlowFixMe - bug prevents requiring panelType on PanelComponent: https://stackoverflow.com/q/52508434/23649
@@ -406,7 +413,7 @@ export default function Panel<Config: PanelConfig>(
           style={{ border: `2px solid ${isSelected ? colors.BLUE : "transparent"}` }}
           className={cx({ [styles.root]: true, [styles.rootFullScreen]: fullScreen })}
           col
-          dataTest="panel-mouseenter-container"
+          dataTest={`panel-mouseenter-container ${childId || ""}`}
           clip>
           {fullScreen ? <div className={styles.notClickable} /> : null}
           {isSelected && !fullScreen && validSelectedPanelIds.length > 1 && (

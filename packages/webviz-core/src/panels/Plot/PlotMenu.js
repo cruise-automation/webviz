@@ -22,16 +22,6 @@ function isValidInput(value: string) {
   return value === "" || !isNaN(parseFloat(value));
 }
 
-export function getHeader(message: any) {
-  let header = null;
-  for (const key in message) {
-    if (key.includes("header")) {
-      header = message[key];
-    }
-  }
-  return header;
-}
-
 function formatData(
   data: PlotChartPoint,
   dataIndex: number,
@@ -44,10 +34,9 @@ function formatData(
   if (!tooltip) {
     throw new Error("Cannot find tooltip for dataset: this should never happen");
   }
-  const { receiveTime, message } = tooltip.item.message;
+  const { receiveTime, headerStamp } = tooltip.item;
   const receiveTimeFloat = formatTimeRaw(receiveTime);
-  const header = getHeader(message);
-  const stampTime = header ? formatTimeRaw(header.stamp) : "";
+  const stampTime = headerStamp ? formatTimeRaw(headerStamp) : "";
   return [x, receiveTimeFloat, stampTime, label, y];
 }
 

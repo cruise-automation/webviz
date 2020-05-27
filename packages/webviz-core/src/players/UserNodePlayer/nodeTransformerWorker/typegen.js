@@ -92,7 +92,7 @@ export const generateTypeDefs = (datatypes: RosDatatypes): InterfaceDeclarations
         } else {
           node = ts.createTypeReferenceNode(formatInterfaceName(type));
         }
-        if (isArray) {
+        if (isArray && !typedArrayMap[type]) {
           node = ts.createArrayTypeNode(node);
         }
 
@@ -114,21 +114,21 @@ export const generateTypeDefs = (datatypes: RosDatatypes): InterfaceDeclarations
 };
 
 // Creates the entire ros.d.ts declaration file.
-const generateRosDeclarations = ({ topics, datatypes }: { topics: Topic[], datatypes: RosDatatypes }): string => {
-  let topicsToTypeDefinitions = ts.createInterfaceDeclaration(
+const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: RosDatatypes }): string => {
+  let TopicsToMessageDefinition = ts.createInterfaceDeclaration(
     undefined,
     modifiers /* modifiers */,
-    "TopicsToTypeDefinitions"
+    "TopicsToMessageDefinition"
   );
 
   const typedMessage = ts.createInterfaceDeclaration(
     undefined /* decorators */,
     modifiers /* modifiers */,
-    "TypedMessage" /* name */,
+    "Input" /* name */,
     [
       ts.createTypeParameterDeclaration(
         "T",
-        ts.createTypeOperatorNode(ts.SyntaxKind.KeyOfKeyword, topicsToTypeDefinitions.name)
+        ts.createTypeOperatorNode(ts.SyntaxKind.KeyOfKeyword, TopicsToMessageDefinition.name)
       ),
     ] /* typeParameters */,
     undefined /* heritageClauses */,
@@ -137,11 +137,11 @@ const generateRosDeclarations = ({ topics, datatypes }: { topics: Topic[], datat
       createProperty("datatype", ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)),
       createProperty("op", ts.createLiteral("message")),
       createProperty("receiveTime", ts.createTypeReferenceNode("Time")),
-      createProperty("message", ts.createTypeReferenceNode("TopicsToTypeDefinitions[T]")),
+      createProperty("message", ts.createTypeReferenceNode("TopicsToMessageDefinition[T]")),
     ] /* members */
   );
 
-  const DATATYPES_IDENTIFIER = "Datatypes";
+  const DATATYPES_IDENTIFIER = "Messages";
 
   const datatypeInterfaces = generateTypeDefs(datatypes);
   const datatypesNamespace = ts.createModuleDeclaration(
@@ -157,15 +157,15 @@ const generateRosDeclarations = ({ topics, datatypes }: { topics: Topic[], datat
   );
 
   topics.forEach(({ name, datatype }) => {
-    topicsToTypeDefinitions = ts.updateInterfaceDeclaration(
-      topicsToTypeDefinitions /* node */,
+    TopicsToMessageDefinition = ts.updateInterfaceDeclaration(
+      TopicsToMessageDefinition /* node */,
       undefined /* decorators */,
-      [ts.createModifier(ts.SyntaxKind.DeclareKeyword)] /* modifiers */,
-      topicsToTypeDefinitions.name,
+      modifiers /* modifiers */,
+      TopicsToMessageDefinition.name,
       undefined /* typeParameters */,
       undefined /* heritageClauses */,
       [
-        ...topicsToTypeDefinitions.members,
+        ...TopicsToMessageDefinition.members,
         createProperty(
           ts.createStringLiteral(name),
           ts.createTypeReferenceNode(`${DATATYPES_IDENTIFIER}.${formatInterfaceName(datatype)}`)
@@ -186,7 +186,7 @@ const generateRosDeclarations = ({ topics, datatypes }: { topics: Topic[], datat
   // however adding inline comments this way was easier.
   const printer = ts.createPrinter();
   const result = `
-    ${printer.printNode(ts.EmitHint.Unspecified, topicsToTypeDefinitions, sourceFile)}
+    ${printer.printNode(ts.EmitHint.Unspecified, TopicsToMessageDefinition, sourceFile)}
     ${printer.printNode(ts.EmitHint.Unspecified, rosSpecialTypesToTypescriptMap.duration, sourceFile)}
     ${printer.printNode(ts.EmitHint.Unspecified, rosSpecialTypesToTypescriptMap.time, sourceFile)}
 
@@ -198,10 +198,10 @@ const generateRosDeclarations = ({ topics, datatypes }: { topics: Topic[], datat
 
     /**
      * To correctly type your inputs, you use this type to refer to specific
-     * input topics, e.g. 'TypedMessage<"/your_input_topic">'. If you have
+     * input topics, e.g. 'Input<"/your_input_topic">'. If you have
      * multiple input topics, use a union type, e.g.
-     * 'TypedMessage<"/your_input_topic_1"> |
-     * TypedMessage<"/your_input_topic_2">'.
+     * 'Input<"/your_input_topic_1"> |
+     * Input<"/your_input_topic_2">'.
      *
      * These types are dynamically generated from the bag(s) currently in your
      * webviz session, so if a datatype changes, your Node Playground node may
@@ -213,4 +213,4 @@ const generateRosDeclarations = ({ topics, datatypes }: { topics: Topic[], datat
   return result;
 };
 
-export default generateRosDeclarations;
+export default generateRosLib;

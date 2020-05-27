@@ -14,7 +14,7 @@ import { getSettingsByColumnWithDefaults } from "./topicGroupsMigrations";
 import type { KeyboardFocusData, TopicGroupConfig, TopicGroupType, TopicItemConfig } from "./types";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { SceneErrors } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/index";
-import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
+import type { TopicTreeConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/types";
 import { type Topic } from "webviz-core/src/players/types";
 import type { Namespace } from "webviz-core/src/types/Messages";
 
@@ -330,25 +330,25 @@ export function addIsKeyboardFocusedToTopicGroups(topicGroups: TopicGroupType[],
 type TopicTreeItem = {| topic: string, name: string |};
 // Traverse the tree and flatten the children items in the topicConfig.
 function* flattenItem(
-  item: TopicConfig,
+  item: TopicTreeConfig,
   name: string,
   enableShortDisplayNames: boolean
 ): Generator<TopicTreeItem, void, void> {
   const childrenItems = item.children;
   // extensions or leaf nodes
-  if (!childrenItems || item.extension) {
+  if (!childrenItems) {
     // remove children before adding a new node for extensions, otherwise add the node directly
     yield { ...omit(item, "children"), name };
   }
   if (childrenItems) {
     for (const subItem of childrenItems) {
       let subItemName = subItem.displayName || `${name} / ${subItem.name || ""}`;
-      if (!subItem.displayName && !subItem.name && subItem.topic) {
+      if (!subItem.displayName && !subItem.name && subItem.topicName) {
         subItemName = name;
       }
       if (!enableShortDisplayNames) {
         subItemName = `${name} / ${subItem.name || ""}`;
-        if (!subItem.name && subItem.topic) {
+        if (!subItem.name && subItem.topicName) {
           subItemName = name;
         }
       }
@@ -359,7 +359,7 @@ function* flattenItem(
 
 // Memoize the flattened nodes since it only needs to be computed once.
 export const getFlattenedTreeNodes = microMemoize(
-  (topicConfig: TopicConfig, enableShortDisplayNames: boolean): TopicTreeItem[] => {
+  (topicConfig: TopicTreeConfig, enableShortDisplayNames: boolean): TopicTreeItem[] => {
     if (!topicConfig.children) {
       return [];
     }
@@ -371,7 +371,7 @@ export const getFlattenedTreeNodes = microMemoize(
 
 // Generate a map based on topicTree config, so we can map a topicName or extension to a preconfigured name.
 export const buildItemDisplayNameByTopicOrExtension = microMemoize(
-  (topicConfig: TopicConfig, enableShortDisplayNames?: boolean): DisplayNameByTopic => {
+  (topicConfig: TopicTreeConfig, enableShortDisplayNames?: boolean): DisplayNameByTopic => {
     const flattenedTopicNodes = getFlattenedTreeNodes(topicConfig, !!enableShortDisplayNames);
     const result = { "/metadata": "Map", "/tf": "TF" };
     for (const node of flattenedTopicNodes) {
@@ -391,7 +391,7 @@ export function buildAvailableNamespacesByTopic({
   allNamespaces = [],
   transformIds = [],
 }: {
-  topicConfig: TopicConfig,
+  topicConfig: TopicTreeConfig,
   allNamespaces: Namespace[],
   transformIds: string[],
 }): NamespacesByTopic {
@@ -524,10 +524,10 @@ export type TreeNodeConfig = {|
 // Transform the existing topic tree config to the topic group tree by removing extension, icon,
 // legacyIds, and add map and tf topic.
 // TODO(Audrey): remove the transform logic once we release topic grouping feature
-export function transformTopicTree(oldTree: TopicConfig): TreeNodeConfig {
+export function transformTopicTree(oldTree: TopicTreeConfig): TreeNodeConfig {
   const newTree: TreeNodeConfig = {
-    ...(oldTree.name ? { name: oldTree.name || oldTree.topic } : undefined),
-    ...(oldTree.topic ? { topicName: oldTree.topic } : undefined),
+    ...(oldTree.name ? { name: oldTree.name || oldTree.topicName } : undefined),
+    ...(oldTree.topicName ? { topicName: oldTree.topicName } : undefined),
   };
   if (oldTree.name && oldTree.name === "TF") {
     newTree.topicName = "/tf";
@@ -535,15 +535,7 @@ export function transformTopicTree(oldTree: TopicConfig): TreeNodeConfig {
   const oldChildren = oldTree.children;
 
   if (oldChildren) {
-    const newChildren = [];
-    // Replace extensions with /metadata topic
-    if (oldChildren.some((item) => item.extension)) {
-      newChildren.push({ name: "Map", topicName: "/metadata" });
-    }
-
-    newChildren.push(
-      ...oldChildren.map((child) => (child.extension ? null : transformTopicTree(child))).filter(Boolean)
-    );
+    const newChildren = oldChildren.map((child) => transformTopicTree(child));
     if (newChildren.length) {
       newTree.children = newChildren;
     }
@@ -560,12 +552,12 @@ export function removeBlankSpaces(inputText: string): string {
  * Create top level groups based on 1st-level children from topic tree.
  * Return a default group if no 1st-level children but a topicName is present.
  */
-export function getTopLevelGroupsFromTopicTree(topicTree: TopicConfig): TopicGroupConfig[] {
+export function getTopLevelGroupsFromTopicTree(topicTree: TopicTreeConfig): TopicGroupConfig[] {
   if (!topicTree.children) {
-    return topicTree.topic ? [getDefaultNewGroupItemConfig(DEFAULT_GROUP_NAME, [topicTree.topic])] : [];
+    return topicTree.topicName ? [getDefaultNewGroupItemConfig(DEFAULT_GROUP_NAME, [topicTree.topicName])] : [];
   }
   return topicTree.children.map((child) => {
-    let groupTopics = child.topic ? [child.topic] : [];
+    let groupTopics = child.topicName ? [child.topicName] : [];
     // Collect extensions to be used for `/metadata` namespaces.
     let extensions;
     if (child.children) {
@@ -587,7 +579,7 @@ export function getTopLevelGroupsFromTopicTree(topicTree: TopicConfig): TopicGro
       groupTopics = ["/tf"];
     }
     return {
-      displayName: child.name || child.topic || DEFAULT_GROUP_NAME,
+      displayName: child.name || child.topicName || DEFAULT_GROUP_NAME,
       expanded: false,
       items: groupTopics.map((topicName) => getDefaultTopicItemConfig(topicName, extensions)),
     };

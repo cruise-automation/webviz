@@ -40,6 +40,13 @@ export const TF_DATATYPE = "tf2_msgs/TFMessage";
 
 export const USER_ERROR_PREFIX = "[WEBVIZ USER ERROR]";
 
+// In testing there seems to be a small (~4%) performance penalty to freezing messages, so for now
+// we only do it in development/testing. StackOverflow says that there should be no difference
+// though: https://stackoverflow.com/questions/8435080/any-performance-benefit-to-locking-down-javascript-objects
+// So maybe we want to always do the freezing at some point? Probably requires some more testing to
+// be sure.
+export const FREEZE_MESSAGES = process.env.NODE_ENV !== "production";
+
 export const COLORS = {
   RED: { r: 1.0, g: 0.2, b: 0.2, a: 1.0 },
   BLUE: { r: 0.4, g: 0.4, b: 1.0, a: 1.0 },
@@ -89,3 +96,5 @@ export const jsonTreeTheme = {
 };
 
 export const TAB_PANEL_TYPE = "Tab";
+
+export const LINED_CONVEX_HULL_RENDERING_SETTING = "LinedConvexHull";

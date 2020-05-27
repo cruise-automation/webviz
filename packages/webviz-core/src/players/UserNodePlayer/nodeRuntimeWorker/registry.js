@@ -5,7 +5,10 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import path from "path";
+
 import type { ProcessMessageOutput, RegistrationOutput } from "webviz-core/src/players/UserNodePlayer/types";
+import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 
 // Each node runtime worker runs one node at a time, hence why we have one
 // global declaration of 'nodeCallback'.
@@ -50,10 +53,11 @@ const getArgsToPrint = (args: any[]) => {
   return args.map(stringifyFuncsInObject).map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : arg));
 };
 
-const requireImplementation = (id: string, projectCode: Map<string, string>) => {
-  const requestedFile = `${id}.js`;
+// Exported for tests.
+export const requireImplementation = (id: string, projectCode: Map<string, string>) => {
+  const requestedFile = `${path.join(DEFAULT_WEBVIZ_NODE_PREFIX, id)}.js`;
   for (const [file, source] of projectCode.entries()) {
-    if (file.endsWith(requestedFile)) {
+    if (requestedFile.endsWith(file)) {
       const sourceExports = {};
       const require = (reqId: string) => requireImplementation(reqId, projectCode);
       // $FlowFixMe

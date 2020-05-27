@@ -31,9 +31,10 @@ import type {
   SavedProps,
 } from "webviz-core/src/types/panels";
 import {
-  removePanelFromTabPanel,
-  getTreeFromMovePanel,
   addPanelToTab,
+  getPanelIdsInsideTabPanels,
+  getTreeFromMovePanel,
+  removePanelFromTabPanel,
   updateTabPanelLayout,
 } from "webviz-core/src/util/layout";
 
@@ -63,6 +64,13 @@ export const dragHandler = ({
   const withinSameTab = sourceTabId === targetTabId && toTabfromTab; // In case it's simply a drag within the main layout.
   const sourceTabConfig = sourceTabId ? savedProps[sourceTabId] : null;
   const targetTabConfig = targetTabId ? savedProps[targetTabId] : null;
+  const panelIdsInsideTabPanels = (sourceTabId && getPanelIdsInsideTabPanels([sourceTabId], savedProps)) || [];
+  const sourceTabChildConfigs = panelIdsInsideTabPanels
+    .filter((id) => !!savedProps[id])
+    .map((id) => ({
+      id,
+      config: savedProps[id],
+    }));
 
   if (withinSameTab && sourceTabConfig && sourceTabId) {
     const currentTabLayout = sourceTabConfig.tabs[sourceTabConfig.activeTabIdx].layout;
@@ -77,6 +85,7 @@ export const dragHandler = ({
               // replacing it, or keeping it as is.
               config: updateTabPanelLayout(currentTabLayout, sourceTabConfig),
             },
+            ...sourceTabChildConfigs,
           ],
         },
       };
@@ -85,7 +94,12 @@ export const dragHandler = ({
     const updates = createDragToUpdates(currentTabLayout, ownPath, destinationPath, position);
     const newTree = updateTree(currentTabLayout, updates);
     return {
-      panelConfigs: { configs: [{ id: sourceTabId, config: updateTabPanelLayout(newTree, savedProps[sourceTabId]) }] },
+      panelConfigs: {
+        configs: [
+          { id: sourceTabId, config: updateTabPanelLayout(newTree, savedProps[sourceTabId]) },
+          ...sourceTabChildConfigs,
+        ],
+      },
       layout: mainLayout,
     };
   }
@@ -94,19 +108,27 @@ export const dragHandler = ({
     const currentTabLayout = sourceTabConfig.tabs[sourceTabConfig.activeTabIdx].layout;
     // Remove panel from tab layout
     const saveConfigsPayload = removePanelFromTabPanel(ownPath, savedProps[sourceTabId], sourceTabId);
+    const panelConfigs = {
+      ...saveConfigsPayload,
+      configs: [...saveConfigsPayload.configs, ...sourceTabChildConfigs],
+    };
 
     // Insert it into main layout
     const currentNode = getNodeAtPath(currentTabLayout, ownPath);
     const newLayout = getTreeFromMovePanel(currentNode, destinationPath, position, mainLayout);
 
-    return { panelConfigs: saveConfigsPayload, layout: newLayout };
+    return { panelConfigs, layout: newLayout };
   }
 
   if (toTabfromMain && targetTabId) {
     const saveConfigsPayload = addPanelToTab(panelId, destinationPath, position, targetTabConfig, targetTabId);
+    const panelConfigs = {
+      ...saveConfigsPayload,
+      configs: [...saveConfigsPayload.configs, ...sourceTabChildConfigs],
+    };
     const update = createRemoveUpdate(mainLayout, ownPath);
     const newLayout = updateTree(mainLayout, [update]);
-    return { panelConfigs: saveConfigsPayload, layout: newLayout };
+    return { panelConfigs, layout: newLayout };
   }
 
   if (toTabfromTab && sourceTabId && sourceTabConfig && targetTabId) {
@@ -115,7 +137,10 @@ export const dragHandler = ({
 
     // Insert it into another tab.
     const { configs: toTabConfigs } = addPanelToTab(panelId, destinationPath, position, targetTabConfig, targetTabId);
-    return { panelConfigs: { configs: [...fromTabConfigs, ...toTabConfigs] }, layout: mainLayout };
+    return {
+      panelConfigs: { configs: [...fromTabConfigs, ...toTabConfigs, ...sourceTabChildConfigs] },
+      layout: mainLayout,
+    };
   }
 
   if (typeof mainLayout === "string") {
@@ -203,7 +228,11 @@ function MosaicDragHandle(props: { children: Node, tabId?: string, onDragStart?:
       actions.savePanelConfigs(panelConfigs);
     },
   });
-  return <div ref={drag}>{children}</div>;
+  return (
+    <div ref={drag} data-test="mosaic-drag-handle">
+      {children}
+    </div>
+  );
 }
 
 export default MosaicDragHandle;

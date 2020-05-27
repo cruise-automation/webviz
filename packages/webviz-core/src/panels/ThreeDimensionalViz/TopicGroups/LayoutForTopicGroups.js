@@ -28,7 +28,6 @@ import {
 } from "regl-worldview";
 import { type Time } from "rosbag";
 
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
@@ -53,7 +52,7 @@ import {
 import TopicGroups from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicGroups";
 import { migratePanelConfigToTopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations";
 import { getSelectionsFromTopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils";
-import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
+import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import TransformsBuilder from "webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder";
 import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
@@ -142,7 +141,7 @@ export default function LayoutForTopicGroups({
     selectedPolygonEditFormat = "yaml",
     showCrosshair,
     autoSyncCameraState,
-    topicDisplayMode = TOPIC_DISPLAY_MODES.SHOW_TREE.value,
+    topicDisplayMode = TOPIC_DISPLAY_MODES.SHOW_ALL.value,
     topicSettings,
     topicGroups,
   },
@@ -382,7 +381,6 @@ export default function LayoutForTopicGroups({
     [handleEvent]
   );
 
-  const glTextEnabled = useExperimentalFeature("glText");
   const keyDownHandlers = useMemo(
     () => {
       const handlers: { [key: string]: (e: KeyboardEvent) => void } = {
@@ -408,21 +406,19 @@ export default function LayoutForTopicGroups({
         },
       };
 
-      if (glTextEnabled) {
-        handlers.f = (e: KeyboardEvent) => {
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            searchTextProps.toggleSearchTextOpen(true);
-            if (!searchTextProps.searchInputRef || !searchTextProps.searchInputRef.current) {
-              return;
-            }
-            searchTextProps.searchInputRef.current.select();
+      handlers.f = (e: KeyboardEvent) => {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          searchTextProps.toggleSearchTextOpen(true);
+          if (!searchTextProps.searchInputRef || !searchTextProps.searchInputRef.current) {
+            return;
           }
-        };
-      }
+          searchTextProps.searchInputRef.current.select();
+        }
+      };
       return handlers;
     },
-    [glTextEnabled, pinTopics, saveConfig, searchTextProps, showTopicGroups, toggleCameraMode]
+    [pinTopics, saveConfig, searchTextProps, showTopicGroups, toggleCameraMode]
   );
 
   const isDrawing = useMemo(

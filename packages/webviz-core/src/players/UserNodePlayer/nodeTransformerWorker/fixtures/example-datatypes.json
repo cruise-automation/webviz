@@ -231,5 +231,51 @@
       { "type": "float32", "name": "heartbeat_timeout", "isArray": false, "isComplex": false },
       { "type": "float32", "name": "heartbeat_period", "isArray": false, "isComplex": false }
     ]
+  },
+
+  "visualization_msgs/MarkerArray": {
+    "fields": [{ "isArray": true, "isComplex": true, "name": "markers", "type": "visualization_msgs/Marker" }]
+  },
+  "visualization_msgs/Marker": {
+    "fields": [
+      { "type": "uint8", "name": "ARROW", "isConstant": true, "value": 0 },
+      { "type": "uint8", "name": "CUBE", "isConstant": true, "value": 1 },
+      { "type": "uint8", "name": "SPHERE", "isConstant": true, "value": 2 },
+      { "type": "uint8", "name": "CYLINDER", "isConstant": true, "value": 3 },
+      { "type": "uint8", "name": "LINE_STRIP", "isConstant": true, "value": 4 },
+      { "type": "uint8", "name": "LINE_LIST", "isConstant": true, "value": 5 },
+      { "type": "uint8", "name": "CUBE_LIST", "isConstant": true, "value": 6 },
+      { "type": "uint8", "name": "SPHERE_LIST", "isConstant": true, "value": 7 },
+      { "type": "uint8", "name": "POINTS", "isConstant": true, "value": 8 },
+      { "type": "uint8", "name": "TEXT_VIEW_FACING", "isConstant": true, "value": 9 },
+      { "type": "uint8", "name": "MESH_RESOURCE", "isConstant": true, "value": 10 },
+      { "type": "uint8", "name": "TRIANGLE_LIST", "isConstant": true, "value": 11 },
+      { "type": "uint8", "name": "ADD", "isConstant": true, "value": 0 },
+      { "type": "uint8", "name": "MODIFY", "isConstant": true, "value": 0 },
+      { "type": "uint8", "name": "DELETE", "isConstant": true, "value": 2 },
+      { "type": "std_msgs/Header", "name": "header", "isArray": false, "isComplex": true },
+      { "type": "string", "name": "ns", "isArray": false, "isComplex": false },
+      { "type": "int32", "name": "id", "isArray": false, "isComplex": false },
+      { "type": "int32", "name": "type", "isArray": false, "isComplex": false },
+      { "type": "int32", "name": "action", "isArray": false, "isComplex": false },
+      { "type": "geometry_msgs/Pose", "name": "pose", "isArray": false, "isComplex": true },
+      { "type": "geometry_msgs/Vector3", "name": "scale", "isArray": false, "isComplex": true },
+      { "type": "std_msgs/ColorRGBA", "name": "color", "isArray": false, "isComplex": true },
+      { "type": "duration", "name": "lifetime", "isArray": false, "isComplex": false },
+      { "type": "bool", "name": "frame_locked", "isArray": false, "isComplex": false },
+      { "type": "geometry_msgs/Point", "name": "points", "isArray": true, "isComplex": true },
+      { "type": "std_msgs/ColorRGBA", "name": "colors", "isArray": true, "isComplex": true },
+      { "type": "string", "name": "text", "isArray": false, "isComplex": false },
+      { "type": "string", "name": "mesh_resource", "isArray": false, "isComplex": false },
+      { "type": "bool", "name": "mesh_use_embedded_materials", "isArray": false, "isComplex": false }
+    ]
+  },
+  "std_msgs/ColorRGBA": {
+    "fields": [
+      { "type": "float32", "name": "r", "isArray": false, "isComplex": false },
+      { "type": "float32", "name": "g", "isArray": false, "isComplex": false },
+      { "type": "float32", "name": "b", "isArray": false, "isComplex": false },
+      { "type": "float32", "name": "a", "isArray": false, "isComplex": false }
+    ]
   }
 }

@@ -16,14 +16,12 @@ import tinycolor from "tinycolor2";
 
 import helpContent from "./index.help.md";
 import Button from "webviz-core/src/components/Button";
-import MessageHistoryDEPRECATED, {
-  type MessageHistoryData,
-  type MessageHistoryItem,
-} from "webviz-core/src/components/MessageHistoryDEPRECATED";
+import MessageHistoryDEPRECATED, { type MessageHistoryData } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TimeBasedChart, {
+  getTooltipItemForMessageHistoryItem,
   type TimeBasedChartTooltipData,
   type DataPoint,
 } from "webviz-core/src/components/TimeBasedChart";
@@ -34,7 +32,7 @@ import type { PanelConfig } from "webviz-core/src/types/panels";
 import { positiveModulo } from "webviz-core/src/util";
 import { darkColor, lineColors } from "webviz-core/src/util/plotColors";
 import type { TimestampMethod } from "webviz-core/src/util/time";
-import { getTimestampForMessage, subtractTimes, toSec } from "webviz-core/src/util/time";
+import { subtractTimes, toSec } from "webviz-core/src/util/time";
 import { grey } from "webviz-core/src/util/toolsColorScheme";
 
 export const transitionableRosTypes = [
@@ -258,12 +256,12 @@ class StateTransitions extends React.PureComponent<Props> {
                 ] || [grey, ...lineColors];
                 let previousValue, previousTimestamp;
                 for (let index = 0; index < itemsByPath[path].length; index++) {
-                  const item: MessageHistoryItem = itemsByPath[path][index];
+                  const item = getTooltipItemForMessageHistoryItem(itemsByPath[path][index]);
                   if (item.queriedData.length !== 1) {
                     continue;
                   }
 
-                  const timestamp = getTimestampForMessage(item.message, timestampMethod);
+                  const timestamp = timestampMethod === "headerStamp" ? item.headerStamp : item.receiveTime;
                   if (!timestamp) {
                     continue;
                   }

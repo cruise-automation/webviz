@@ -17,6 +17,7 @@ import {
 } from "regl-worldview";
 
 import { FLOAT_SIZE } from "./buffers";
+import { parseHexColor } from "./decodeMarker";
 import { updateMarkerCache } from "./memoization";
 import type { MemoizedMarker, MemoizedVertexBuffer, VertexBuffer } from "./types";
 import VertexBufferCache from "./VertexBufferCache";
@@ -29,11 +30,6 @@ const COLOR_MODE_RGB = 1;
 const COLOR_MODE_BGR = -1;
 const COLOR_MODE_GRADIENT = 2;
 const COLOR_MODE_RAINBOW = 3;
-
-function parseHexColor(color: string) {
-  const parsedFlatColor = parseInt(color.slice(1), 16);
-  return [(parsedFlatColor >> 16) & 0xff, (parsedFlatColor >> 8) & 0xff, parsedFlatColor & 0xff, 1];
-}
 
 // Implements a custom caching mechanism for vertex buffers.
 // Any memoized vertex buffer needs to be re-created whenever the Regl context

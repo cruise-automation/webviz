@@ -78,6 +78,9 @@ export type Line = {
   pointStyle?: string,
   data: { x: number, y: number }[],
 };
+
+// NOTE: Keep this type (and its dependencies) in sync with the corresponding
+// Node Playground types in 'userUtils'.
 type PlotMessage = {
   lines: Line[],
   points: Line[],

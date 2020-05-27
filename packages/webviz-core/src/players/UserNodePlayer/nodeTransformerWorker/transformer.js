@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import type { Topic } from "webviz-core/src/players/types";
+import { formatInterfaceName } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typegen";
 import {
   constructDatatypes,
   findReturnType,
@@ -27,6 +28,7 @@ import {
   type PlayerInfo,
   type NodeDataTransformer,
 } from "webviz-core/src/players/UserNodePlayer/types";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
@@ -217,14 +219,31 @@ export const validateOutputTopic = (
 // - Generate the AST
 // - Handle external libraries
 export const compile = (nodeData: NodeData): NodeData => {
-  const { sourceCode, projectCode } = nodeData;
+  const { sourceCode, rosLib } = nodeData;
+
+  // If a node name does not start with a forward slash, the compiler host will
+  // not be able to match the correct filename.
+  if (!nodeData.name.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX)) {
+    const error: Diagnostic = {
+      severity: DiagnosticSeverity.Error,
+      message: `The filename of your node "${nodeData.name}" must start with "/webviz_node/."`,
+      source: Sources.Other,
+      code: ErrorCodes.Other.FILENAME,
+    };
+    return {
+      ...nodeData,
+      diagnostics: [...nodeData.diagnostics, error],
+    };
+  }
 
   const options: ts.CompilerOptions = baseCompilerOptions;
   const nodeFileName = `${nodeData.name}.ts`;
   const projectConfig = getNodeProjectConfig();
+  const projectCode = new Map<string, string>();
 
   const sourceCodeMap = new Map<string, string>();
   sourceCodeMap.set(nodeFileName, sourceCode);
+  sourceCodeMap.set(projectConfig.rosLib.filePath, rosLib);
   projectConfig.utilityFiles.forEach((file) => sourceCodeMap.set(file.filePath, file.sourceCode));
   projectConfig.declarations.forEach((lib) => sourceCodeMap.set(lib.filePath, lib.sourceCode));
 
@@ -300,30 +319,39 @@ export const compile = (nodeData: NodeData): NodeData => {
     sourceFile,
     typeChecker,
     transpiledCode,
+    projectCode,
     diagnostics: [...nodeData.diagnostics, ...newDiagnostics],
   };
 };
 
 export const extractDatatypes = (nodeData: NodeData): NodeData => {
-  const { sourceFile, typeChecker, name } = nodeData;
+  // Do not attempt to run if there were any compile time errors.
+  if (nodeData.diagnostics.find(({ severity }) => severity === DiagnosticSeverity.Error)) {
+    return nodeData;
+  }
+
+  const { sourceFile, typeChecker, name, datatypes: sourceDatatypes } = nodeData;
   if (!sourceFile || !typeChecker) {
     throw new Error("Either the sourceFile or typeChecker is absent'. There is a problem with the `compile` step.");
   }
 
-  // Do not attempt to run if there were any compile time errors.
-  if (nodeData.diagnostics.find(({ source }) => source === Sources.Typescript)) {
-    return nodeData;
-  }
+  // Keys each message definition like { 'std_msg__ColorRGBA': 'std_msg/ColorRGBA' }
+  const messageDefinitionMap = {};
+  Object.keys(sourceDatatypes).forEach((datatype) => {
+    messageDefinitionMap[formatInterfaceName(datatype)] = datatype;
+  });
 
   try {
     const exportNode = findDefaultExportFunction(sourceFile, typeChecker);
     const typeNode = findReturnType(typeChecker, 0, exportNode);
-    const { outputDatatype, datatypes } = constructDatatypes(typeChecker, typeNode, name);
+
+    const { outputDatatype, datatypes } = constructDatatypes(typeChecker, typeNode, name, messageDefinitionMap);
     return { ...nodeData, datatypes, outputDatatype };
   } catch (error) {
     if (error instanceof DatatypeExtractionError) {
       return { ...nodeData, diagnostics: [...nodeData.diagnostics, error.diagnostic] };
     }
+
     // If we've hit this case, then we should fix it.
     sendNotification(
       "Unknown error encountered in Node Playground. Please report to the webviz team.",
@@ -378,11 +406,15 @@ const transform = ({
   sourceCode,
   playerInfo,
   priorRegisteredTopics,
+  rosLib,
+  datatypes,
 }: {
   name: string,
   sourceCode: string,
   playerInfo: ?$ReadOnly<PlayerInfo>,
   priorRegisteredTopics: $ReadOnlyArray<Topic>,
+  rosLib: string,
+  datatypes: RosDatatypes,
 }): NodeData & { sourceFile: ?void, typeChecker: ?void } => {
   const transformer = compose(
     getOutputTopic,
@@ -397,13 +429,14 @@ const transform = ({
     {
       name,
       sourceCode,
+      rosLib,
       transpiledCode: "",
-      projectCode: new Map<string, string>(),
+      projectCode: undefined,
       inputTopics: [],
       outputTopic: "",
       outputDatatype: "",
       diagnostics: [],
-      datatypes: {},
+      datatypes,
       sourceFile: undefined,
       typeChecker: undefined,
     },

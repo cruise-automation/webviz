@@ -11,7 +11,7 @@ import * as React from "react";
 import type { TimeBasedChartTooltipData } from "./index";
 import styles from "./TimeBasedChartTooltip.module.scss";
 import Tooltip from "webviz-core/src/components/Tooltip";
-import { formatTime, formatTimeRaw, getTimestampForMessage, subtractTimes, toSec } from "webviz-core/src/util/time";
+import { formatTime, formatTimeRaw, subtractTimes, toSec } from "webviz-core/src/util/time";
 
 type Props = {|
   children: React.Element<any>,
@@ -21,8 +21,7 @@ export default class TimeBasedChartTooltip extends React.PureComponent<Props> {
   render() {
     const { tooltip } = this.props;
     const value = typeof tooltip.value === "string" ? tooltip.value : JSON.stringify(tooltip.value);
-    const timestampReceiveTime = getTimestampForMessage(tooltip.item.message, "receiveTime");
-    const timestampHeaderStamp = getTimestampForMessage(tooltip.item.message, "headerStamp");
+    const { receiveTime, headerStamp } = tooltip.item;
     const content = (
       <div className={styles.root}>
         <div>
@@ -33,32 +32,28 @@ export default class TimeBasedChartTooltip extends React.PureComponent<Props> {
           <span className={styles.title}>Path:&nbsp;</span>
           {tooltip.path}
         </div>
-        {timestampReceiveTime && timestampHeaderStamp && (
+        {receiveTime && headerStamp && (
           <table>
             <tbody>
               <tr>
                 <th />
-                {timestampReceiveTime && <th>receive time</th>}
-                {timestampHeaderStamp && <th>header.stamp</th>}
+                {receiveTime && <th>receive time</th>}
+                {headerStamp && <th>header.stamp</th>}
               </tr>
               <tr>
                 <th>ROS</th>
-                {timestampReceiveTime && <td>{formatTimeRaw(timestampReceiveTime)}</td>}
-                {timestampHeaderStamp && <td>{formatTimeRaw(timestampHeaderStamp)}</td>}
+                {receiveTime && <td>{formatTimeRaw(receiveTime)}</td>}
+                {headerStamp && <td>{formatTimeRaw(headerStamp)}</td>}
               </tr>
               <tr>
                 <th>Time</th>
-                {timestampReceiveTime && <td>{formatTime(timestampReceiveTime)}</td>}
-                {timestampHeaderStamp && <td>{formatTime(timestampHeaderStamp)}</td>}
+                {receiveTime && <td>{formatTime(receiveTime)}</td>}
+                {headerStamp && <td>{formatTime(headerStamp)}</td>}
               </tr>
               <tr>
                 <th>Elapsed</th>
-                {timestampReceiveTime && (
-                  <td>{toSec(subtractTimes(timestampReceiveTime, tooltip.startTime)).toFixed(9)} sec</td>
-                )}
-                {timestampHeaderStamp && (
-                  <td>{toSec(subtractTimes(timestampHeaderStamp, tooltip.startTime)).toFixed(9)} sec</td>
-                )}
+                {receiveTime && <td>{toSec(subtractTimes(receiveTime, tooltip.startTime)).toFixed(9)} sec</td>}
+                {headerStamp && <td>{toSec(subtractTimes(headerStamp, tooltip.startTime)).toFixed(9)} sec</td>}
               </tr>
             </tbody>
           </table>

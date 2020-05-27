@@ -9,6 +9,7 @@ import { isEqual } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
 
+import delay from "webviz-core/shared/delay";
 import { MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import { rootGetDataProvider } from "webviz-core/src/dataProviders/rootGetDataProvider";
 import {
@@ -44,9 +45,9 @@ import {
   type TimestampMethod,
 } from "webviz-core/src/util/time";
 
-const LOOP_MIN_BAG_TIME_IN_SEC = 1;
+export const MISSING_CORS_ERROR_TITLE = "Often this is due to missing CORS headers on the requested URL";
 
-const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
+const LOOP_MIN_BAG_TIME_IN_SEC = 1;
 
 // The number of nanoseconds to seek backwards to build context during a seek
 // operation larger values mean more opportunity to capture context before the
@@ -208,7 +209,9 @@ export default class RandomAccessPlayer implements Player {
         }, SEEK_START_DELAY_MS);
       })
       .catch((error: Error) => {
-        this._setError("Error initializing player", error, "app");
+        // When CORS is misconfigured then that is really a user error, so we shouldn't be logging it.
+        const errorType = error.message.includes(MISSING_CORS_ERROR_TITLE) ? "user" : "app";
+        this._setError("Error initializing player", error, errorType);
       });
   }
 

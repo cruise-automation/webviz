@@ -10,13 +10,8 @@ import derivative from "./derivative";
 
 describe("derivative", () => {
   it("takes the derivative using the previous message", () => {
-    const message = {
-      topic: "/some/topic",
-      datatype: "some_datatype",
-      op: "message",
-      receiveTime: { sec: 123, nsec: 456 },
-      message: {},
-    };
+    const headerStamp = undefined;
+    const receiveTime = { sec: 123, nsec: 456 };
     const data = [
       {
         x: 0,
@@ -27,12 +22,9 @@ describe("derivative", () => {
           datasetKey: "0",
           value: 0,
           item: {
-            message,
-            timestamp: { sec: 0, nsec: 0 },
-            elapsedSinceStart: { sec: 0, nsec: 0 },
-            hasAccurateTimestamp: true,
+            headerStamp,
+            receiveTime,
             queriedData: [{ value: 0, path: "/some/topic.something", constantName: undefined }],
-            index: 0,
           },
           path: "/some/topic.something",
           constantName: undefined,
@@ -48,12 +40,9 @@ describe("derivative", () => {
           datasetKey: "0",
           value: -1,
           item: {
-            message,
-            timestamp: { sec: 1, nsec: 0 },
-            elapsedSinceStart: { sec: 1, nsec: 0 },
-            hasAccurateTimestamp: true,
+            headerStamp,
+            receiveTime,
             queriedData: [{ value: -1, path: "/some/topic.something", constantName: undefined }],
-            index: 1,
           },
           path: "/some/topic.something",
           constantName: undefined,
@@ -69,12 +58,9 @@ describe("derivative", () => {
           datasetKey: "0",
           value: -1.5,
           item: {
-            message,
-            timestamp: { sec: 2, nsec: 0 },
-            elapsedSinceStart: { sec: 2, nsec: 0 },
-            hasAccurateTimestamp: true,
+            headerStamp,
+            receiveTime,
             queriedData: [{ value: -1.5, path: "/some/topic.something", constantName: undefined }],
-            index: 2,
           },
           path: "/some/topic.something",
           constantName: undefined,
@@ -90,12 +76,9 @@ describe("derivative", () => {
           datasetKey: "0",
           value: 5,
           item: {
-            message,
-            timestamp: { sec: 3, nsec: 0 },
-            elapsedSinceStart: { sec: 3, nsec: 0 },
-            hasAccurateTimestamp: true,
+            headerStamp,
+            receiveTime,
             queriedData: [{ value: 5, path: "/some/topic.something", constantName: undefined }],
-            index: 3,
           },
           path: "/some/topic.something",
           constantName: undefined,
@@ -126,12 +109,8 @@ describe("derivative", () => {
         datasetKey: "0",
         value: -1,
         item: {
-          message,
-          timestamp: { sec: 1, nsec: 0 },
-          elapsedSinceStart: { sec: 1, nsec: 0 },
-          hasAccurateTimestamp: true,
+          receiveTime,
           queriedData: [{ value: -1, path: "/some/topic.something", constantName: undefined }],
-          index: 1,
         },
         path: "/some/topic.something.@derivative",
         constantName: undefined,
@@ -143,12 +122,8 @@ describe("derivative", () => {
         datasetKey: "0",
         value: -0.5,
         item: {
-          message,
-          timestamp: { sec: 2, nsec: 0 },
-          elapsedSinceStart: { sec: 2, nsec: 0 },
-          hasAccurateTimestamp: true,
+          receiveTime,
           queriedData: [{ value: -1.5, path: "/some/topic.something", constantName: undefined }],
-          index: 2,
         },
         path: "/some/topic.something.@derivative",
         constantName: undefined,
@@ -160,12 +135,8 @@ describe("derivative", () => {
         datasetKey: "0",
         value: 6.5,
         item: {
-          message,
-          timestamp: { sec: 3, nsec: 0 },
-          elapsedSinceStart: { sec: 3, nsec: 0 },
-          hasAccurateTimestamp: true,
+          receiveTime,
           queriedData: [{ value: 5, path: "/some/topic.something", constantName: undefined }],
-          index: 3,
         },
         path: "/some/topic.something.@derivative",
         constantName: undefined,

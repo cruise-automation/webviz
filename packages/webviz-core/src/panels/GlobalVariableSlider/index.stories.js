@@ -48,7 +48,7 @@ storiesOf("<GlobalVariableSliderPanel>", module)
         <GlobalVariableSliderPanel
           ref={() => {
             setImmediate(() => {
-              const mouseEnterContainer = document.querySelectorAll("[data-test=panel-mouseenter-container")[0];
+              const mouseEnterContainer = document.querySelectorAll("[data-test~=panel-mouseenter-container")[0];
               TestUtils.Simulate.mouseEnter(mouseEnterContainer);
               document.querySelectorAll("[data-test=panel-settings]")[0].click();
             });

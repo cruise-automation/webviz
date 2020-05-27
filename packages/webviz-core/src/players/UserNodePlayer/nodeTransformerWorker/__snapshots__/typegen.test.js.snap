@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`typegen generateRosDeclarations basic snapshot 1`] = `
+exports[`typegen generateRosLib basic snapshot 1`] = `
 "
-    declare interface TopicsToTypeDefinitions {
-    \\"/my_topic\\": Datatypes.std_msgs__ColorRGBA;
+    export declare interface TopicsToMessageDefinition {
+    \\"/my_topic\\": Messages.std_msgs__ColorRGBA;
 }
     export declare interface Duration {
     sec: number;
@@ -18,7 +18,7 @@ exports[`typegen generateRosDeclarations basic snapshot 1`] = `
      * This type contains every message declaration in your bag, so that you can
      * refer to the type \\"std_msgs/RGBA\\" as \\"std_msgs__RGBA\\" wherever you like.
      */
-    export declare namespace Datatypes {
+    export declare namespace Messages {
     export interface std_msgs__ColorRGBA {
         r: number;
         g: number;
@@ -29,55 +29,58 @@ exports[`typegen generateRosDeclarations basic snapshot 1`] = `
 
     /**
      * To correctly type your inputs, you use this type to refer to specific
-     * input topics, e.g. 'TypedMessage<\\"/your_input_topic\\">'. If you have
+     * input topics, e.g. 'Input<\\"/your_input_topic\\">'. If you have
      * multiple input topics, use a union type, e.g.
-     * 'TypedMessage<\\"/your_input_topic_1\\"> |
-     * TypedMessage<\\"/your_input_topic_2\\">'.
+     * 'Input<\\"/your_input_topic_1\\"> |
+     * Input<\\"/your_input_topic_2\\">'.
      *
      * These types are dynamically generated from the bag(s) currently in your
      * webviz session, so if a datatype changes, your Node Playground node may
      * not compile on the newly formatted bag.
      */
-    export declare interface TypedMessage<T extends keyof TopicsToTypeDefinitions> {
+    export declare interface Input<T extends keyof TopicsToMessageDefinition> {
     topic: T;
     datatype: string;
     op: \\"message\\";
     receiveTime: Time;
-    message: TopicsToTypeDefinitions[T];
+    message: TopicsToMessageDefinition[T];
 }
   "
 `;
 
-exports[`typegen generateRosDeclarations more complex snapshot 1`] = `
+exports[`typegen generateRosLib more complex snapshot 1`] = `
 "
-    declare interface TopicsToTypeDefinitions {
-    \\"/topic_0\\": Datatypes.tf2_msgs__TFMessage;
-    \\"/topic_1\\": Datatypes.geometry_msgs__TransformStamped;
-    \\"/topic_2\\": Datatypes.std_msgs__Header;
-    \\"/topic_3\\": Datatypes.geometry_msgs__Transform;
-    \\"/topic_4\\": Datatypes.geometry_msgs__Vector3;
-    \\"/topic_5\\": Datatypes.geometry_msgs__Quaternion;
-    \\"/topic_6\\": Datatypes.sensor_msgs__Image;
-    \\"/topic_7\\": Datatypes.velodyne_msgs__VelodyneScan;
-    \\"/topic_8\\": Datatypes.velodyne_msgs__VelodynePacket;
-    \\"/topic_9\\": Datatypes.sensor_msgs__PointCloud2;
-    \\"/topic_10\\": Datatypes.sensor_msgs__PointField;
-    \\"/topic_11\\": Datatypes.sensor_msgs__Range;
-    \\"/topic_12\\": Datatypes.radar_driver__RadarTracks;
-    \\"/topic_13\\": Datatypes.radar_driver__Track;
-    \\"/topic_14\\": Datatypes.diagnostic_msgs__DiagnosticStatus;
-    \\"/topic_15\\": Datatypes.diagnostic_msgs__KeyValue;
-    \\"/topic_16\\": Datatypes.diagnostic_msgs__DiagnosticArray;
-    \\"/topic_17\\": Datatypes.sensor_msgs__TimeReference;
-    \\"/topic_18\\": Datatypes.sensor_msgs__NavSatFix;
-    \\"/topic_19\\": Datatypes.sensor_msgs__NavSatStatus;
-    \\"/topic_20\\": Datatypes.nav_msgs__Odometry;
-    \\"/topic_21\\": Datatypes.geometry_msgs__PoseWithCovariance;
-    \\"/topic_22\\": Datatypes.geometry_msgs__Pose;
-    \\"/topic_23\\": Datatypes.geometry_msgs__Point;
-    \\"/topic_24\\": Datatypes.geometry_msgs__TwistWithCovariance;
-    \\"/topic_25\\": Datatypes.geometry_msgs__Twist;
-    \\"/topic_26\\": Datatypes.bond__Status;
+    export declare interface TopicsToMessageDefinition {
+    \\"/topic_0\\": Messages.tf2_msgs__TFMessage;
+    \\"/topic_1\\": Messages.geometry_msgs__TransformStamped;
+    \\"/topic_2\\": Messages.std_msgs__Header;
+    \\"/topic_3\\": Messages.geometry_msgs__Transform;
+    \\"/topic_4\\": Messages.geometry_msgs__Vector3;
+    \\"/topic_5\\": Messages.geometry_msgs__Quaternion;
+    \\"/topic_6\\": Messages.sensor_msgs__Image;
+    \\"/topic_7\\": Messages.velodyne_msgs__VelodyneScan;
+    \\"/topic_8\\": Messages.velodyne_msgs__VelodynePacket;
+    \\"/topic_9\\": Messages.sensor_msgs__PointCloud2;
+    \\"/topic_10\\": Messages.sensor_msgs__PointField;
+    \\"/topic_11\\": Messages.sensor_msgs__Range;
+    \\"/topic_12\\": Messages.radar_driver__RadarTracks;
+    \\"/topic_13\\": Messages.radar_driver__Track;
+    \\"/topic_14\\": Messages.diagnostic_msgs__DiagnosticStatus;
+    \\"/topic_15\\": Messages.diagnostic_msgs__KeyValue;
+    \\"/topic_16\\": Messages.diagnostic_msgs__DiagnosticArray;
+    \\"/topic_17\\": Messages.sensor_msgs__TimeReference;
+    \\"/topic_18\\": Messages.sensor_msgs__NavSatFix;
+    \\"/topic_19\\": Messages.sensor_msgs__NavSatStatus;
+    \\"/topic_20\\": Messages.nav_msgs__Odometry;
+    \\"/topic_21\\": Messages.geometry_msgs__PoseWithCovariance;
+    \\"/topic_22\\": Messages.geometry_msgs__Pose;
+    \\"/topic_23\\": Messages.geometry_msgs__Point;
+    \\"/topic_24\\": Messages.geometry_msgs__TwistWithCovariance;
+    \\"/topic_25\\": Messages.geometry_msgs__Twist;
+    \\"/topic_26\\": Messages.bond__Status;
+    \\"/topic_27\\": Messages.visualization_msgs__MarkerArray;
+    \\"/topic_28\\": Messages.visualization_msgs__Marker;
+    \\"/topic_29\\": Messages.std_msgs__ColorRGBA;
 }
     export declare interface Duration {
     sec: number;
@@ -92,7 +95,7 @@ exports[`typegen generateRosDeclarations more complex snapshot 1`] = `
      * This type contains every message declaration in your bag, so that you can
      * refer to the type \\"std_msgs/RGBA\\" as \\"std_msgs__RGBA\\" wherever you like.
      */
-    export declare namespace Datatypes {
+    export declare namespace Messages {
     export interface tf2_msgs__TFMessage {
         transforms: geometry_msgs__TransformStamped[];
     }
@@ -128,7 +131,7 @@ exports[`typegen generateRosDeclarations more complex snapshot 1`] = `
         encoding: string;
         is_bigendian: number;
         step: number;
-        data: Uint8Array[];
+        data: Uint8Array;
     }
     export interface velodyne_msgs__VelodyneScan {
         header: std_msgs__Header;
@@ -136,7 +139,7 @@ exports[`typegen generateRosDeclarations more complex snapshot 1`] = `
     }
     export interface velodyne_msgs__VelodynePacket {
         stamp: Time;
-        data: Uint8Array[];
+        data: Uint8Array;
     }
     export interface sensor_msgs__PointCloud2 {
         header: std_msgs__Header;
@@ -146,7 +149,7 @@ exports[`typegen generateRosDeclarations more complex snapshot 1`] = `
         is_bigendian: boolean;
         point_step: number;
         row_step: number;
-        data: Uint8Array[];
+        data: Uint8Array;
         is_dense: boolean;
     }
     export interface sensor_msgs__PointField {
@@ -248,32 +251,58 @@ exports[`typegen generateRosDeclarations more complex snapshot 1`] = `
         heartbeat_timeout: number;
         heartbeat_period: number;
     }
+    export interface visualization_msgs__MarkerArray {
+        markers: visualization_msgs__Marker[];
+    }
+    export interface visualization_msgs__Marker {
+        header: std_msgs__Header;
+        ns: string;
+        id: number;
+        type: number;
+        action: number;
+        pose: geometry_msgs__Pose;
+        scale: geometry_msgs__Vector3;
+        color: std_msgs__ColorRGBA;
+        lifetime: Duration;
+        frame_locked: boolean;
+        points: geometry_msgs__Point[];
+        colors: std_msgs__ColorRGBA[];
+        text: string;
+        mesh_resource: string;
+        mesh_use_embedded_materials: boolean;
+    }
+    export interface std_msgs__ColorRGBA {
+        r: number;
+        g: number;
+        b: number;
+        a: number;
+    }
 }
 
     /**
      * To correctly type your inputs, you use this type to refer to specific
-     * input topics, e.g. 'TypedMessage<\\"/your_input_topic\\">'. If you have
+     * input topics, e.g. 'Input<\\"/your_input_topic\\">'. If you have
      * multiple input topics, use a union type, e.g.
-     * 'TypedMessage<\\"/your_input_topic_1\\"> |
-     * TypedMessage<\\"/your_input_topic_2\\">'.
+     * 'Input<\\"/your_input_topic_1\\"> |
+     * Input<\\"/your_input_topic_2\\">'.
      *
      * These types are dynamically generated from the bag(s) currently in your
      * webviz session, so if a datatype changes, your Node Playground node may
      * not compile on the newly formatted bag.
      */
-    export declare interface TypedMessage<T extends keyof TopicsToTypeDefinitions> {
+    export declare interface Input<T extends keyof TopicsToMessageDefinition> {
     topic: T;
     datatype: string;
     op: \\"message\\";
     receiveTime: Time;
-    message: TopicsToTypeDefinitions[T];
+    message: TopicsToMessageDefinition[T];
 }
   "
 `;
 
-exports[`typegen generateRosDeclarations works with zero topics or datatypes 1`] = `
+exports[`typegen generateRosLib works with zero topics or datatypes 1`] = `
 "
-    export declare interface TopicsToTypeDefinitions {
+    export declare interface TopicsToMessageDefinition {
 }
     export declare interface Duration {
     sec: number;
@@ -288,25 +317,25 @@ exports[`typegen generateRosDeclarations works with zero topics or datatypes 1`]
      * This type contains every message declaration in your bag, so that you can
      * refer to the type \\"std_msgs/RGBA\\" as \\"std_msgs__RGBA\\" wherever you like.
      */
-    export declare namespace Datatypes { }
+    export declare namespace Messages { }
 
     /**
      * To correctly type your inputs, you use this type to refer to specific
-     * input topics, e.g. 'TypedMessage<\\"/your_input_topic\\">'. If you have
+     * input topics, e.g. 'Input<\\"/your_input_topic\\">'. If you have
      * multiple input topics, use a union type, e.g.
-     * 'TypedMessage<\\"/your_input_topic_1\\"> |
-     * TypedMessage<\\"/your_input_topic_2\\">'.
+     * 'Input<\\"/your_input_topic_1\\"> |
+     * Input<\\"/your_input_topic_2\\">'.
      *
      * These types are dynamically generated from the bag(s) currently in your
      * webviz session, so if a datatype changes, your Node Playground node may
      * not compile on the newly formatted bag.
      */
-    export declare interface TypedMessage<T extends keyof TopicsToTypeDefinitions> {
+    export declare interface Input<T extends keyof TopicsToMessageDefinition> {
     topic: T;
     datatype: string;
     op: \\"message\\";
     receiveTime: Time;
-    message: TopicsToTypeDefinitions[T];
+    message: TopicsToMessageDefinition[T];
 }
   "
 `;

@@ -22,6 +22,7 @@ import type {
   Player,
   PlayerState,
   PlayerStateActiveData,
+  Progress,
   PublishPayload,
   SubscribePayload,
   Topic,
@@ -321,6 +322,7 @@ export function MockMessagePipelineProvider(props: {|
   pauseFrame?: (string) => ResumeFrame,
   playerId?: string,
   requestBackfill?: () => void,
+  progress?: Progress,
 |}) {
   const storeRef = useRef(props.store || configureStore(createRootReducer(createMemoryHistory())));
   const startTime = useRef();
@@ -351,7 +353,7 @@ export function MockMessagePipelineProvider(props: {|
     () => ({
       isPresent: true,
       playerId: props.playerId || "1",
-      progress: {},
+      progress: props.progress || {},
       showInitializing: false,
       showSpinner: false,
       capabilities,
@@ -371,16 +373,17 @@ export function MockMessagePipelineProvider(props: {|
           },
     }),
     [
-      capabilities,
-      currentTime,
+      props.playerId,
+      props.progress,
+      props.noActiveData,
       props.messages,
       props.topics,
       props.datatypes,
       props.startTime,
       props.endTime,
       props.activeData,
-      props.noActiveData,
-      props.playerId,
+      capabilities,
+      currentTime,
     ]
   );
 

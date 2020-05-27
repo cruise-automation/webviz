@@ -14,8 +14,10 @@ import { Time } from "rosbag";
 import uuid from "uuid";
 
 import styles from "./PlotChart.module.scss";
-import { type MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistoryDEPRECATED";
-import TimeBasedChart, { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
+import TimeBasedChart, {
+  type TimeBasedChartTooltipData,
+  type TooltipItem,
+} from "webviz-core/src/components/TimeBasedChart";
 import filterMap from "webviz-core/src/filterMap";
 import derivative from "webviz-core/src/panels/Plot/derivative";
 import {
@@ -24,7 +26,7 @@ import {
   isReferenceLinePlotPathType,
 } from "webviz-core/src/panels/Plot/internalTypes";
 import { lightColor, lineColors } from "webviz-core/src/util/plotColors";
-import { format, formatTimeRaw, getTimestampForMessage, isTime, subtractTimes, toSec } from "webviz-core/src/util/time";
+import { format, formatTimeRaw, isTime, subtractTimes, toSec } from "webviz-core/src/util/time";
 
 export type PlotChartPoint = {|
   x: number,
@@ -45,6 +47,10 @@ export type DataSet = {|
   pointRadius: number,
   showLine: boolean,
 |};
+
+export type PlotDataByPath = {
+  [path: string]: TooltipItem[],
+};
 
 const Y_AXIS_ID = "Y_AXIS_ID";
 
@@ -68,7 +74,7 @@ const scaleOptions = {
 
 function getDatasetAndTooltipsFromMessagePlotPath(
   path: PlotPath,
-  itemsByPath: MessageHistoryItemsByPath,
+  itemsByPath: PlotDataByPath,
   index: number,
   startTime: Time,
   xAxisVal: "timestamp" | "index" | "custom",
@@ -80,7 +86,7 @@ function getDatasetAndTooltipsFromMessagePlotPath(
   const datasetKey = index.toString();
 
   for (const [outerIdx, item] of itemsByPath[path.value].entries()) {
-    const timestamp = getTimestampForMessage(item.message, path.timestampMethod);
+    const timestamp = path.timestampMethod === "headerStamp" ? item.headerStamp : item.receiveTime;
     if (!timestamp) {
       continue;
     }
@@ -165,7 +171,7 @@ function getAnnotationFromReferenceLine(path: PlotPath, index: number) {
 
 export function getDatasetsAndTooltips(
   paths: PlotPath[],
-  itemsByPath: MessageHistoryItemsByPath,
+  itemsByPath: PlotDataByPath,
   startTime: Time,
   xAxisVal: "timestamp" | "index" | "custom",
   xAxisPath?: BasePlotPath

@@ -121,7 +121,7 @@ function DraggablePanelItem({ searchQuery, panel, onClick, onDrop, checked, mosa
   });
   return (
     <div ref={drag}>
-      <Item onClick={onClick} checked={checked} className={styles.item}>
+      <Item onClick={onClick} checked={checked} className={styles.item} dataTest={`panel-menu-item ${panel.title}`}>
         <TextHighlight targetStr={panel.title} searchText={searchQuery} />
       </Item>
     </div>

@@ -84,7 +84,7 @@ const findImportedTypeDeclaration = (checker: ts.TypeChecker, node: ts.Node, kin
   if (!declaredType) {
     throw new Error(`Could not find type import type`);
   }
-  return findDeclaration(declaredType.symbol, kind);
+  return findDeclaration(declaredType.symbol || declaredType.aliasSymbol, kind);
 };
 
 // These functions are used to build up mapping for generic types.
@@ -162,6 +162,7 @@ export const findReturnType = (
         ts.SyntaxKind.TypeLiteral,
         ts.SyntaxKind.IntersectionType, // Unhandled type--let next recursive call handle error.
         ts.SyntaxKind.UnionType,
+        ts.SyntaxKind.IndexedAccessType,
       ]);
       if (nextNode) {
         return visitNext(nextNode);
@@ -209,6 +210,16 @@ export const findReturnType = (
       ]);
       return visitNext(declaration);
     }
+
+    case ts.SyntaxKind.IndexedAccessType: {
+      const declaration = visitNext(node.objectType);
+      const indexedProperty = node?.indexType?.literal?.text;
+
+      const next = declaration.members.find((member) => member?.name?.text === indexedProperty);
+
+      return visitNext(next.type);
+    }
+
     case ts.SyntaxKind.TypeQuery:
       throw new DatatypeExtractionError(noTypeOfError);
 
@@ -237,6 +248,7 @@ export const constructDatatypes = (
   checker: ts.TypeChecker,
   node: ts.SyntaxKind.TypeLiteral | ts.SyntaxKind.InterfaceDeclaration,
   currentDatatype: string,
+  messageDefinitionMap: { [formattedDatatype: string]: string },
   depth: number = 1,
   currentTypeParamMap: TypeMap = {}
 ): { outputDatatype: string, datatypes: RosDatatypes } => {
@@ -244,7 +256,20 @@ export const constructDatatypes = (
     throw new Error(`Max AST traversal depth exceeded.`);
   }
 
-  // Hardcoded 'visualization_msgs/MarkerArray' flow.
+  // In the case that the user has specified a dynamically generated message
+  // definition, we can check whether it exists in the 'ros' module and just
+  // return the ros-specific definition, e.g. 'std_msgs/ColorRGBA', instead of
+  // our own definition. This allows user nodes to operate much more freely.
+  const sourceFile = node.getSourceFile();
+  const interfaceName = node?.name?.text;
+  if (sourceFile.fileName.endsWith("ros/index.d.ts") && messageDefinitionMap[interfaceName]) {
+    return {
+      outputDatatype: messageDefinitionMap[interfaceName],
+      datatypes: baseDatatypes,
+    };
+  }
+
+  // TODO: Remove when we remove DEPRECATED__ros. Hardcoded 'visualization_msgs/MarkerArray' flow.
   const memberKeys = node.members.map(({ name }) => name.getText());
   if (memberKeys.includes("markers")) {
     if (memberKeys.length > 1) {
@@ -287,6 +312,7 @@ export const constructDatatypes = (
           checker,
           tsNode,
           nestedType,
+          messageDefinitionMap,
           depth + 1,
           tsNode.typeParameters ? buildTypeMapFromParams(tsNode.typeParameters, typeMap) : typeMap
         );
@@ -411,6 +437,7 @@ export const constructDatatypes = (
         const declaration = findImportedTypeDeclaration(checker, tsNode, [
           ts.SyntaxKind.TypeLiteral,
           ts.SyntaxKind.InterfaceDeclaration,
+          ts.SyntaxKind.TypeAliasDeclaration,
         ]);
         return getRosMsgField(name, declaration, isArray, isComplex, typeMap, innerDepth + 1);
       }

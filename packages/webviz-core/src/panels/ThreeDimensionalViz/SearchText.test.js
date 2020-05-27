@@ -68,7 +68,6 @@ const runUseGLTextTest = async (
   let glTextMarkers = [];
   const Wrapper = () => {
     glTextMarkers = useGLText({
-      glTextEnabled: true,
       text: originalMarkers,
       searchText,
       searchTextOpen: true,
@@ -129,7 +128,6 @@ describe("<SearchText />", () => {
       let glTextMarkers = [];
       const Wrapper = ({ searchText }: { searchText: string }) => {
         glTextMarkers = useGLText({
-          glTextEnabled: true,
           text: originalMarkers,
           searchText,
           searchTextOpen: true,
@@ -153,7 +151,6 @@ describe("<SearchText />", () => {
       let glTextMarkers = [];
       const Wrapper = ({ randomNum }: { randomNum: number }) => {
         glTextMarkers = useGLText({
-          glTextEnabled: true,
           text: originalMarkers,
           searchText: "hello",
           searchTextOpen: true,

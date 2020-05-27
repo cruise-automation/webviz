@@ -18,27 +18,58 @@ import PanelSetup from "webviz-core/src/stories/PanelSetup";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 
 const userNodes = {
-  nodeId1: { name: "/some/custom/node", sourceCode: "const someVariableName = 1;" },
-  nodeId2: { name: "/another/custom/node", sourceCode: "const anotherVariableName = 2;" },
+  nodeId1: { name: "/webviz_node/node", sourceCode: "const someVariableName = 1;" },
+  nodeId2: { name: "/webviz_node/node2", sourceCode: "const anotherVariableName = 2;" },
 };
+
+const userNodeRosLib = `
+  export declare interface TopicsToMessageDefinition {
+    "/my_topic": Messages.std_msgs__ColorRGBA;
+  }
+
+  export declare interface Duration {
+    sec: number;
+    nsec: number;
+  }
+
+  export declare interface Time {
+    sec: number;
+    nsec: number;
+  }
+
+  export declare namespace Messages {
+    export interface std_msgs__ColorRGBA {
+      r: number;
+      g: number;
+      b: number;
+      a: number;
+    }
+  }
+
+  export declare interface Input<T extends keyof TopicsToMessageDefinition> {
+    topic: T;
+    datatype: string;
+    op: "message";
+    receiveTime: Time;
+    message: TopicsToMessageDefinition[T];
+  }
+`;
 
 const fixture = {
   topics: [],
   frame: {},
+  userNodeRosLib,
 };
 
 const sourceCodeWithLogs = `
-  import { Time, Message } from "ros";
-  type InputTopicMsg = {header: {stamp: Time}};
-  type Marker = {};
-  type MarkerArray = { markers: Marker[] }
+  import { Time, Input, Messages } from "ros";
 
-  export const inputs = ["/able_to_engage"];
+  export const inputs = ["/my_topic"];
   export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
 
-  const publisher = (message: Message<InputTopicMsg>): MarkerArray => {
+  const publisher = (message: Input<"/my_topic">): Messages.std_msgs__ColorRGBA => {
     log({ "someKey": { "nestedKey": "nestedValue" } });
-    return { markers: [] };
+    return { r: 1, b: 1, g: 1, a: 1 };
   };
 
   log(100, false, "abc", null, undefined);
@@ -54,15 +85,13 @@ const logs = [
 ];
 
 const sourceCodeWithUtils = `
-  import { Time, Message } from "ros";
-  import { norm } from "utils/pointClouds";
+  import { Input } from "ros";
+  import { norm } from "./pointClouds";
 
-  type InputTopicMsg = {header: {stamp: Time}};
-
-  export const inputs = ["/able_to_engage"];
+  export const inputs = ["/my_topic"];
   export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}/1";
 
-  const publisher = (message: Message<InputTopicMsg>): { val: number } => {
+  const publisher = (message: Input<"/my_topic">): { val: number } => {
     const val = norm({x:1, y:2, z:3});
     return { val };
   };
@@ -93,7 +122,7 @@ storiesOf("<NodePlayground>", module)
         ...fixture,
         userNodes: {
           nodeId1: {
-            name: "/some/custom/node",
+            name: "/webviz_node/node",
             sourceCode: sourceCodeWithUtils,
           },
         },
@@ -109,7 +138,7 @@ storiesOf("<NodePlayground>", module)
         ...fixture,
         userNodes: {
           nodeId1: {
-            name: "/some/custom/node",
+            name: "/webviz_node/node",
             sourceCode: sourceCodeWithUtils,
           },
         },
@@ -122,7 +151,7 @@ storiesOf("<NodePlayground>", module)
           vimMode: false,
           additionalBackStackItems: [
             {
-              fileName: "utils/pointClouds",
+              filePath: "/webviz_node/pointClouds",
               code: utilsSourceCode,
               readOnly: true,
             },
@@ -137,7 +166,7 @@ storiesOf("<NodePlayground>", module)
         ...fixture,
         userNodes: {
           nodeId1: {
-            name: "/some/custom/node",
+            name: "/webviz_node/node",
             sourceCode: sourceCodeWithUtils,
           },
         },
@@ -155,7 +184,7 @@ storiesOf("<NodePlayground>", module)
           vimMode: false,
           additionalBackStackItems: [
             {
-              fileName: "utils/pointClouds",
+              filePath: "/webviz_node/pointClouds",
               code: utilsSourceCode,
               readOnly: true,
             },
@@ -190,6 +219,7 @@ storiesOf("<NodePlayground>", module)
       </PanelSetup>
     );
   })
+
   .add("sidebar open - docs explorer", () => {
     return (
       <PanelSetup
@@ -203,6 +233,33 @@ storiesOf("<NodePlayground>", module)
       </PanelSetup>
     );
   })
+  .add("sidebar open - utils explorer - selected utility", () => {
+    return (
+      <PanelSetup
+        fixture={{ ...fixture, userNodes }}
+        onMount={(el) => {
+          setImmediate(() => {
+            el.querySelectorAll("[data-test=utils-explorer]")[0].click();
+          });
+        }}>
+        <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      </PanelSetup>
+    );
+  })
+  .add("sidebar open - templates explorer", () => {
+    return (
+      <PanelSetup
+        fixture={{ ...fixture, userNodes }}
+        onMount={(el) => {
+          setImmediate(() => {
+            el.querySelectorAll("[data-test=templates-explorer]")[0].click();
+          });
+        }}>
+        <NodePlayground />
+      </PanelSetup>
+    );
+  })
+
   .add("sidebar - code snippets wrap", () => {
     const Story = () => {
       const [explorer, updateExplorer] = React.useState<Explorer>("docs");
@@ -218,6 +275,9 @@ storiesOf("<NodePlayground>", module)
             deleteNode={() => {}}
             selectNode={() => {}}
             otherMarkdownDocsForTest={testDocs}
+            setScriptOverride={() => {}}
+            script={null}
+            addNewNode={() => {}}
           />
         </PanelSetup>
       );
@@ -242,7 +302,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
     <PanelSetup
       fixture={{
         ...fixture,
-        userNodes: { nodeId1: { name: "/some/custom/node", sourceCode: "" } },
+        userNodes: { nodeId1: { name: "/webviz_node/node", sourceCode: "" } },
         userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
       }}>
       <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
@@ -252,7 +312,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
     <PanelSetup
       fixture={{
         ...fixture,
-        userNodes: { nodeId1: { name: "/some/custom/node", sourceCode: "" } },
+        userNodes: { nodeId1: { name: "/webviz_node/node", sourceCode: "" } },
         userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
       }}
       onMount={(el) => {
@@ -270,7 +330,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
     <PanelSetup
       fixture={{
         ...fixture,
-        userNodes: { nodeId1: { name: "/some/custom/node", sourceCode: "" } },
+        userNodes: { nodeId1: { name: "/webviz_node/node", sourceCode: "" } },
         userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
       }}
       onMount={(el) => {
@@ -288,7 +348,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
     <PanelSetup
       fixture={{
         ...fixture,
-        userNodes: { nodeId1: { name: "/some/custom/node", sourceCode: "" } },
+        userNodes: { nodeId1: { name: "/webviz_node/node", sourceCode: "" } },
         userNodeDiagnostics: {
           nodeId1: {
             diagnostics: [
@@ -333,7 +393,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
     <PanelSetup
       fixture={{
         ...fixture,
-        userNodes: { nodeId1: { name: "/some/custom/node", sourceCode: "" } },
+        userNodes: { nodeId1: { name: "/webviz_node/node", sourceCode: "" } },
         userNodeDiagnostics: {
           nodeId1: {
             diagnostics: [
@@ -388,7 +448,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
         ...fixture,
         userNodes: {
           nodeId1: {
-            name: "/some/custom/node",
+            name: "/webviz_node/node",
             sourceCode: sourceCodeWithLogs,
           },
         },
@@ -404,7 +464,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
         ...fixture,
         userNodes: {
           nodeId1: {
-            name: "/some/custom/node",
+            name: "/webviz_node/node",
             sourceCode: sourceCodeWithLogs,
           },
         },
@@ -426,7 +486,7 @@ storiesOf("NodePlayground - <BottomBar>", module)
     <PanelSetup
       fixture={{
         ...fixture,
-        userNodes: { nodeId1: { name: "/some/custom/node", sourceCode: "" } },
+        userNodes: { nodeId1: { name: "/webviz_node/node", sourceCode: "" } },
         userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
         userNodeLogs: { nodeId1: { logs } },
       }}

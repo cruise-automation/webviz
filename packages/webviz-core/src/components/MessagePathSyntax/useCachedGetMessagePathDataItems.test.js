@@ -11,9 +11,10 @@ import { cloneDeep } from "lodash";
 import * as React from "react";
 
 import {
+  fillInGlobalVariablesInPath,
   getMessagePathDataItems,
   useCachedGetMessagePathDataItems,
-  fillInGlobalVariablesInPath,
+  useDecodeMessagePathsForMessagesByTopic,
 } from "./useCachedGetMessagePathDataItems";
 import { setGlobalVariables } from "webviz-core/src/actions/panels";
 import parseRosPath from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
@@ -547,5 +548,54 @@ describe("fillInGlobalVariablesInPath", () => {
       topicName: "/foo",
       messagePath: [{ type: "filter", path: ["bar"], value: 123, nameLoc: 0, valueLoc: 0, repr: "" }],
     });
+  });
+});
+
+describe("useDecodeMessagePathsForMessagesByTopic", () => {
+  // Create a helper component that exposes the results of the hook for mocking.
+  function createTest() {
+    function Test({ paths }: { paths: string[] }) {
+      Test.hook = useDecodeMessagePathsForMessagesByTopic(paths);
+      return null;
+    }
+    return Test;
+  }
+
+  it("results in missing entries when no array is provided for a topic", () => {
+    const Test = createTest();
+    const store = configureStore(createRootReducer(createMemoryHistory()));
+    const topics = [
+      { name: "/topic1", datatype: "datatype" },
+      { name: "/topic2", datatype: "datatype" },
+      { name: "/topic3", datatype: "datatype" },
+    ];
+    const datatypes = { datatype: { fields: [{ name: "value", type: "uint32", isArray: false, isComplex: false }] } };
+    const root = mount(
+      <MockMessagePipelineProvider store={store} topics={topics} datatypes={datatypes}>
+        <Test paths={["/topic1.value", "/topic2.value", "/topic3.value", "/topic3..value"]} />
+      </MockMessagePipelineProvider>
+    );
+
+    const message = {
+      op: "message",
+      topic: "/topic1",
+      datatype: "datatype",
+      receiveTime: { sec: 0, nsec: 0 },
+      message: { value: 1 },
+    };
+    const messagesByTopic = {
+      "/topic1": [message],
+      "/topic2": [],
+    };
+    expect(Test.hook(messagesByTopic)).toEqual({
+      // Value for /topic1.value
+      "/topic1.value": [{ message, queriedData: [{ path: "/topic1.value", value: 1 }] }],
+      // Empty array for /topic2.value
+      "/topic2.value": [],
+      // No array for /topic3.value because the path is valid but the data is missing.
+      // Empty array for /topic3..value because path is invalid.
+      "/topic3..value": [],
+    });
+    root.unmount();
   });
 });

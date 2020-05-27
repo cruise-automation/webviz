@@ -15,7 +15,9 @@ import NodePlayer from "webviz-core/src/players/NodePlayer";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
 import { registerNode, processMessage } from "webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker/registry";
 import { trustUserNode } from "webviz-core/src/players/UserNodePlayer/nodeSecurity";
+import exampleDatatypes from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/fixtures/example-datatypes.json";
 import transform from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
+import generateRosLib from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typegen";
 import { Sources, DiagnosticSeverity, ErrorCodes } from "webviz-core/src/players/UserNodePlayer/types";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
@@ -51,8 +53,8 @@ const nodeUserCode = `
 `;
 
 const nodeUserCodeWithPointClouds = `
-  import { RGBA } from "ros";
-  import {convertToRangeView} from "utils/pointClouds";
+  import { convertToRangeView } from "./pointClouds";
+  import { RGBA } from "./types";
   export const inputs = ["/np_input"];
   export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
   export default (message: { message: { payload: string } }): RGBA => {
@@ -84,6 +86,7 @@ const defaultUserNodeActions = {
   setUserNodeDiagnostics: jest.fn(),
   addUserNodeLogs: jest.fn(),
   setUserNodeTrust: jest.fn(),
+  setUserNodeRosLib: jest.fn(),
 };
 
 describe("UserNodePlayer", () => {
@@ -94,7 +97,7 @@ describe("UserNodePlayer", () => {
     Rpc.mockImplementation(() => ({
       send: (rpc, args) => {
         validateWorkerArgs(args);
-        const rpcFuncMap = { registerNode, processMessage, transform };
+        const rpcFuncMap = { registerNode, processMessage, transform, generateRosLib };
         const result = rpcFuncMap[rpc](args);
         validateWorkerArgs(result);
         return result;
@@ -278,7 +281,7 @@ describe("UserNodePlayer", () => {
       });
 
       await trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
-      userNodePlayer.setUserNodes({ nodeId: { name: "someNodeName", sourceCode: nodeUserCode } });
+      userNodePlayer.setUserNodes({ nodeId: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode } });
 
       const [done] = setListenerHelper(userNodePlayer);
 
@@ -307,7 +310,7 @@ describe("UserNodePlayer", () => {
       });
 
       await trustUserNode({ id: nodeId, sourceCode: nodeUserCode });
-      userNodePlayer.setUserNodes({ nodeId: { name: "someNodeName", sourceCode: nodeUserCode } });
+      userNodePlayer.setUserNodes({ nodeId: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: nodeUserCode } });
 
       const [done1, done2, done3] = setListenerHelper(userNodePlayer, 3);
 
@@ -316,19 +319,19 @@ describe("UserNodePlayer", () => {
         messages: [],
         messageOrder: "receiveTime",
         currentTime: { sec: 0, nsec: 0 },
-        topics: [{ name: "/np_input", datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }],
+        topics: [{ name: "/np_input", datatype: "/np_input_datatype" }],
         datatypes: { foo: { fields: [] } },
       };
 
       fakePlayer.emit(playerState);
       const { topics: firstTopics, datatypes: firstDatatypes } = await done1;
       expect(firstTopics).toEqual([
-        { name: "/np_input", datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` },
-        { name: "/webviz_node/1", datatype: "someNodeName" },
+        { name: "/np_input", datatype: "/np_input_datatype" },
+        { name: "/webviz_node/1", datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` },
       ]);
       expect(firstDatatypes).toEqual({
         foo: { fields: [] },
-        someNodeName: {
+        [`${DEFAULT_WEBVIZ_NODE_PREFIX}1`]: {
           fields: [
             { name: "custom_np_field", type: "string", isArray: false, isComplex: false },
             { name: "value", type: "string", isArray: false, isComplex: false },
@@ -361,7 +364,7 @@ describe("UserNodePlayer", () => {
       await trustUserNode({ id: nodeId, sourceCode: `${nodeUserCode}\nlog("LOG VALUE HERE");` });
       userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
       userNodePlayer.setUserNodes({
-        nodeId: { name: "someNodeName", sourceCode: `${nodeUserCode}\nlog("LOG VALUE HERE");` },
+        nodeId: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: `${nodeUserCode}\nlog("LOG VALUE HERE");` },
       });
 
       const messagesArray = [upstreamMessages[0]];
@@ -506,7 +509,7 @@ describe("UserNodePlayer", () => {
       expect(mockAddUserNodeLogs).not.toHaveBeenCalled();
     });
 
-    it("provides access to 'utils/pointClouds' library for user input node code", async () => {
+    it("provides access to './pointClouds' library for user input node code", async () => {
       const fakePlayer = new FakePlayer();
       const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
 
@@ -633,7 +636,7 @@ describe("UserNodePlayer", () => {
         messageOrder: "receiveTime",
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: { fields: [] } },
+        datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
       });
 
       const { messages } = await done;
@@ -686,7 +689,7 @@ describe("UserNodePlayer", () => {
         messageOrder: "receiveTime",
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: { fields: [] } },
+        datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
       });
 
       await firstDone;
@@ -698,7 +701,7 @@ describe("UserNodePlayer", () => {
         currentTime: upstreamMessages[1].receiveTime,
         lastSeekTime: 1,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: { fields: [] } },
+        datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
       });
 
       const { messages } = await secondDone;
@@ -798,7 +801,7 @@ describe("UserNodePlayer", () => {
 
       await trustUserNode({ id: nodeId, sourceCode: code });
       userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
-      userNodePlayer.setUserNodes({ nodeId: { name: "nodeName", sourceCode: code } });
+      userNodePlayer.setUserNodes({ nodeId: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: code } });
 
       const [done] = setListenerHelper(userNodePlayer);
 
@@ -808,7 +811,7 @@ describe("UserNodePlayer", () => {
         messageOrder: "receiveTime",
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: { fields: [] } },
+        datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
       });
 
       const { topicNames, messages } = await done;
@@ -846,7 +849,7 @@ describe("UserNodePlayer", () => {
         messageOrder: "receiveTime",
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: { fields: [] } },
+        datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
       });
 
       const { topicNames: firstTopicNames } = await firstDone;
@@ -859,7 +862,7 @@ describe("UserNodePlayer", () => {
         messageOrder: "receiveTime",
         currentTime: upstreamMessages[0].receiveTime,
         topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-        datatypes: { foo: { fields: [] } },
+        datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
       });
       const { topicNames: secondTopicNames } = await secondDone;
       expect(secondTopicNames).toEqual(["/np_input"]);
@@ -868,14 +871,14 @@ describe("UserNodePlayer", () => {
     describe("user logging", () => {
       it("records logs in the logs handler", async () => {
         const code = `
-        import { Time, Message } from "ros";
+        import { Time } from "ros";
         type InputTopicMsg = {header: {stamp: Time}};
         type Marker = {};
         type MarkerArray = { markers: Marker[] }
 
         export const inputs = ["/np_input"];
         export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}1";
-        const publisher = (message: Message<InputTopicMsg>): MarkerArray => {
+        const publisher = (message: { message: any }): MarkerArray => {
           log("inside publisher", message.message);
           return { markers: [] };
         };
@@ -922,7 +925,7 @@ describe("UserNodePlayer", () => {
           messageOrder: "receiveTime",
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: { fields: [] } },
+          datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
         });
 
         const { topicNames } = await done;
@@ -964,7 +967,7 @@ describe("UserNodePlayer", () => {
           messageOrder: "receiveTime",
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: { fields: [] } },
+          datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
         });
 
         userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
@@ -998,7 +1001,7 @@ describe("UserNodePlayer", () => {
         const [done] = setListenerHelper(userNodePlayer);
 
         // This will trigger the node to register
-        userNodePlayer.setUserNodes({ [id]: { name: "nodeName", sourceCode: code } });
+        userNodePlayer.setUserNodes({ [id]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: code } });
         userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
 
         fakePlayer.emit({
@@ -1007,7 +1010,7 @@ describe("UserNodePlayer", () => {
           messageOrder: "receiveTime",
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: { fields: [] } },
+          datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
         });
 
         await done;
@@ -1087,7 +1090,7 @@ describe("UserNodePlayer", () => {
         const [done, nextDone] = setListenerHelper(userNodePlayer, 2);
 
         // These actions will trigger the node to register
-        userNodePlayer.setUserNodes({ [id]: { name: "nodeName", sourceCode } });
+        userNodePlayer.setUserNodes({ [id]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode } });
         userNodePlayer.setSubscriptions([{ topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1` }]);
 
         fakePlayer.emit({
@@ -1096,7 +1099,7 @@ describe("UserNodePlayer", () => {
           messageOrder: "receiveTime",
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: { fields: [] } },
+          datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
         });
 
         await done;
@@ -1107,7 +1110,7 @@ describe("UserNodePlayer", () => {
         // Simulate user clicking 'trust'
         await trustUserNode({ id, sourceCode });
         // Trigger workers to reset.
-        await userNodePlayer.setUserNodes({ [id]: { name: "nodeName", sourceCode } });
+        await userNodePlayer.setUserNodes({ [id]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode } });
 
         fakePlayer.emit({
           ...basicPlayerState,
@@ -1115,7 +1118,7 @@ describe("UserNodePlayer", () => {
           messageOrder: "receiveTime",
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: { fields: [] } },
+          datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
         });
 
         await nextDone;
@@ -1168,12 +1171,48 @@ describe("UserNodePlayer", () => {
           messageOrder: "receiveTime",
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-          datatypes: { foo: { fields: [] } },
+
+          datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
         });
 
         const { messages } = await done;
 
         expect(messages[messages.length - 1].datatype).toEqual(`${DEFAULT_WEBVIZ_NODE_PREFIX}state`);
+      });
+      it("uses dynamically generated type definitions", async () => {
+        const sourceCode = `
+          import { Input, Messages } from 'ros';
+          let innerState = 0;
+          export const inputs = ["/np_input"];
+          export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}state";
+          export default (message: Input<"/np_input">): Messages.std_msgs__Header => {
+            return message.message;
+          };
+        `;
+
+        const fakePlayer = new FakePlayer();
+        const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
+        const firstName = `${DEFAULT_WEBVIZ_NODE_PREFIX}state`;
+
+        await trustUserNode({ id: nodeId, sourceCode });
+        userNodePlayer.setUserNodes({
+          [nodeId]: { name: firstName, sourceCode },
+        });
+        userNodePlayer.setSubscriptions([{ topic: firstName }]);
+
+        const [done] = setListenerHelper(userNodePlayer);
+
+        fakePlayer.emit({
+          ...basicPlayerState,
+          messages: [upstreamMessages[0]],
+          messageOrder: "receiveTime",
+          currentTime: upstreamMessages[0].receiveTime,
+          topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
+          datatypes: exampleDatatypes,
+        });
+
+        const { messages } = await done;
+        expect(messages[1].datatype).toEqual(`std_msgs/Header`);
       });
     });
   });

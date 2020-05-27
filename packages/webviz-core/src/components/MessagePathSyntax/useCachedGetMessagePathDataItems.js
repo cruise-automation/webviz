@@ -264,3 +264,41 @@ export function getMessagePathDataItems(
   traverse(message.message, 0, filledInPath.topicName, structures[topic.datatype]);
   return queriedData;
 }
+
+export const useDecodeMessagePathsForMessagesByTopic = (paths: string[]) => {
+  const memoizedPaths = useShallowMemo<string[]>(paths);
+  const cachedGetMessagePathDataItems = useCachedGetMessagePathDataItems(memoizedPaths);
+  // Note: Let callers define their own memoization scheme for messagesByTopic. For regular playback
+  // useMemo might be appropriate, but weakMemo will likely better for blocks.
+  return useCallback(
+    (messagesByTopic: $ReadOnly<{ [topicName: string]: $ReadOnlyArray<Message> }>) => {
+      const obj = {};
+      for (const path of memoizedPaths) {
+        // Create an array for invalid paths, and valid paths with entries in messagesByTopic
+        const rosPath = parseRosPath(path);
+        if (!rosPath) {
+          obj[path] = [];
+          continue;
+        }
+        if (!messagesByTopic[rosPath.topicName]) {
+          // For the playback pipeline messagesByTopic will always include an entry for every topic.
+          // For the blocks, missing entries are semantically interesting, and should result in
+          // missing (not empty) entries in the output so that information is communicated
+          // downstream.
+          continue;
+        }
+        obj[path] = [];
+
+        for (const message of messagesByTopic[rosPath.topicName]) {
+          // Add the item (if it exists) to the array.
+          const queriedData = cachedGetMessagePathDataItems(path, message);
+          if (queriedData) {
+            obj[path].push({ message, queriedData });
+          }
+        }
+      }
+      return obj;
+    },
+    [memoizedPaths, cachedGetMessagePathDataItems]
+  );
+};

@@ -8,9 +8,8 @@
 
 import Rpc, { createLinkedChannels } from "./Rpc";
 import { setupSendReportNotificationHandler, setupReceiveReportErrorHandler } from "./RpcUtils";
+import delay from "webviz-core/shared/delay";
 import sendNotification, { setNotificationHandler } from "webviz-core/src/util/sendNotification";
-
-const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
 describe("RpcUtils", () => {
   // We have to test sending and receiving errors separately because in tests we really only have one thread, so we

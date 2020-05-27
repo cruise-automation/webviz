@@ -21,6 +21,7 @@ export const Sources = {
   InputTopicsChecker: "InputTopicsChecker",
   OutputTopicChecker: "OutputTopicChecker",
   Runtime: "Runtime",
+  Other: "Other",
 };
 
 export const ErrorCodes = {
@@ -55,6 +56,9 @@ export const ErrorCodes = {
     BAD_PREFIX: 2,
     NOT_UNIQUE: 3,
   },
+  Other: {
+    FILENAME: 1,
+  },
 };
 export type NodeRegistration = {|
   inputs: $ReadOnlyArray<string>,
@@ -78,7 +82,7 @@ export type NodeData = {|
   name: string,
   sourceCode: string,
   transpiledCode: string,
-  projectCode: Map<string, string>,
+  projectCode: ?Map<string, string>,
   diagnostics: $ReadOnlyArray<Diagnostic>,
   inputTopics: $ReadOnlyArray<string>,
   outputTopic: string,
@@ -88,6 +92,7 @@ export type NodeData = {|
   // Typescript out of the main bundle.
   sourceFile: ?any,
   typeChecker: ?any,
+  rosLib: string,
 |};
 
 export type PlayerInfo = $ReadOnly<{|

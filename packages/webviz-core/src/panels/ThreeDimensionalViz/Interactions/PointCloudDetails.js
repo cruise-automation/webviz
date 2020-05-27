@@ -14,9 +14,14 @@ import styled from "styled-components";
 
 import { SValue, SLabel } from "./index";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Icon from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
 import Item from "webviz-core/src/components/Menu/Item";
+import {
+  getClickedInfo as getClickedInfoGPU,
+  getAllPoints,
+} from "webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/selection";
 import { getClickedInfo } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import { downloadFiles } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
@@ -34,10 +39,19 @@ type Props = {
 
 export default function PointCloudDetails({ selectedObject: { object, instanceIndex } }: Props) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const allPoints: number[] = object.points || [];
+
+  const gpuPointCloudsEnabled = useExperimentalFeature("gpuPointCloud");
 
   const { clickedPoint, clickedPointColor, additionalFieldValues } =
-    useMemo(() => getClickedInfo(object, instanceIndex), [instanceIndex, object]) || {};
+    useMemo(
+      () => {
+        if (gpuPointCloudsEnabled) {
+          return getClickedInfoGPU(object, instanceIndex);
+        }
+        return getClickedInfo(object, instanceIndex);
+      },
+      [gpuPointCloudsEnabled, instanceIndex, object]
+    ) || {};
 
   const additionalFieldNames = useMemo(() => (additionalFieldValues && Object.keys(additionalFieldValues)) || [], [
     additionalFieldValues,
@@ -46,6 +60,8 @@ export default function PointCloudDetails({ selectedObject: { object, instanceIn
   const hasAdditionalFieldNames = !!additionalFieldNames.length;
   const onCopy = useCallback(
     () => {
+      // GPU point clouds need to extract positions using getAllPoints()
+      const allPoints: number[] = object.points || getAllPoints(object);
       const dataRows = [];
       const len = allPoints.length / 3;
       // get copy data
@@ -61,10 +77,10 @@ export default function PointCloudDetails({ selectedObject: { object, instanceIn
       downloadFiles([{ blob, fileName: "PointCloud.csv" }]);
       setIsOpen(false);
     },
-    [additionalFieldNames, hasAdditionalFieldNames, allPoints, object]
+    [additionalFieldNames, hasAdditionalFieldNames, object]
   );
 
-  if (!clickedPoint || allPoints.length === 0) {
+  if (!clickedPoint) {
     return null;
   }
 

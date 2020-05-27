@@ -15,7 +15,12 @@ import uuid from "uuid";
 // $FlowFixMe - flow does not like workers.
 import NodeDataWorker from "sharedworker-loader?name=nodeTransformerWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
 import signal from "webviz-core/shared/signal";
-import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeTrust } from "webviz-core/src/actions/userNodes";
+import type {
+  SetUserNodeDiagnostics,
+  AddUserNodeLogs,
+  SetUserNodeTrust,
+  SetUserNodeRosLib,
+} from "webviz-core/src/actions/userNodes";
 // $FlowFixMe - flow does not like workers.
 import UserNodePlayerWorker from "sharedworker-loader?name=nodeRuntimeWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
 
@@ -30,6 +35,7 @@ import type {
   Topic,
 } from "webviz-core/src/players/types";
 import { isUserNodeTrusted } from "webviz-core/src/players/UserNodePlayer/nodeSecurity";
+import { ros_lib_dts } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
 import {
   type Diagnostic,
   DiagnosticSeverity,
@@ -50,6 +56,7 @@ type UserNodeActions = {
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
   addUserNodeLogs: AddUserNodeLogs,
   setUserNodeTrust: SetUserNodeTrust,
+  setUserNodeRosLib: SetUserNodeRosLib,
 };
 
 const rpcFromNewSharedWorker = (worker) => {
@@ -74,12 +81,16 @@ export default class UserNodePlayer implements Player {
   _setUserNodeDiagnostics: (nodeId: string, diagnostics: Diagnostic[]) => void;
   _addUserNodeLogs: (nodeId: string, logs: UserNodeLog[]) => void;
   _setNodeTrust: (nodeId: string, trusted: boolean) => void;
+  _setRosLib: (rosLib: string) => void;
   _nodeTransformRpc: Rpc = rpcFromNewSharedWorker(new NodeDataWorker(uuid.v4()));
   _userDatatypes: RosDatatypes = {};
+  _bagDatatypes: RosDatatypes = {};
+  _rosLib: string = ros_lib_dts;
+  _pendingRosLibGeneration: ?Promise<string> = null;
 
   constructor(player: Player, userNodeActions: UserNodeActions) {
     this._player = player;
-    const { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust } = userNodeActions;
+    const { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust, setUserNodeRosLib } = userNodeActions;
 
     // TODO(troy): can we make the below action flow better? Might be better to
     // just add an id, and the thing you want to update? Instead of passing in
@@ -95,6 +106,12 @@ export default class UserNodePlayer implements Player {
 
     this._setNodeTrust = (id: string, trusted: boolean) => {
       setUserNodeTrust({ id, trusted });
+    };
+
+    this._setRosLib = (rosLib: string) => {
+      this._rosLib = rosLib;
+      // We set this in Redux as the monaco editor needs to refer to it.
+      setUserNodeRosLib(rosLib);
     };
   }
 
@@ -231,6 +248,13 @@ export default class UserNodePlayer implements Player {
       nodeRegistration.terminate();
     }
 
+    // Since the ros lib is only generated when the player changes and user
+    // nodes are updated once the layout is loaded, we want to avoid any race
+    // conitions between these separate async processes.
+    if (this._pendingRosLibGeneration) {
+      await this._pendingRosLibGeneration;
+    }
+
     const nodeRegistrations: NodeRegistration[] = [];
     for (const [nodeId, nodeObj] of Object.entries(this._userNodes)) {
       const node = ((nodeObj: any): { name: string, sourceCode: string });
@@ -248,6 +272,8 @@ export default class UserNodePlayer implements Player {
         sourceCode: node.sourceCode,
         playerInfo: { topics, playerDatatypes },
         priorRegisteredTopics: nodeRegistrations.map(({ output }) => output),
+        rosLib: this._rosLib,
+        datatypes: this._bagDatatypes,
       });
       const { diagnostics } = nodeData;
       this._setUserNodeDiagnostics(nodeId, diagnostics);
@@ -258,6 +284,15 @@ export default class UserNodePlayer implements Player {
     }
 
     this._nodeRegistrations = nodeRegistrations;
+  }
+
+  async _generateRosLib(topics: Topic[], datatypes: RosDatatypes) {
+    this._pendingRosLibGeneration = this._nodeTransformRpc.send("generateRosLib", {
+      topics,
+      datatypes,
+    });
+    const newRosLib = await this._pendingRosLibGeneration;
+    this._setRosLib(newRosLib);
   }
 
   setListener(listener: (PlayerState) => Promise<void>) {
@@ -279,6 +314,9 @@ export default class UserNodePlayer implements Player {
         // player just spun up, meaning we should re-run our user nodes in case
         // they have inputs that now exist in the current player context.
         if (!this._lastPlayerStateActiveData) {
+          this._bagDatatypes = datatypes;
+          // also should only run when user nodes are present
+          this._generateRosLib(topics, datatypes);
           this._lastPlayerStateActiveData = activeData;
           await this._resetWorkers();
           this.setSubscriptions(this._subscriptions);

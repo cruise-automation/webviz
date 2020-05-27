@@ -12,13 +12,12 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import MessageCollector from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector";
 import { getSceneErrorsByTopic } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils";
 import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicSettingsEditor";
-import { LINED_CONVEX_HULL_RENDERING_SETTING } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { Topic, Frame, Message } from "webviz-core/src/players/types";
 import type { Marker, Namespace, OccupancyGridMessage, MutablePose, Pose } from "webviz-core/src/types/Messages";
 import type { MarkerProvider, MarkerCollector, Scene } from "webviz-core/src/types/Scene";
 import Bounds from "webviz-core/src/util/Bounds";
-import { POSE_MARKER_SCALE } from "webviz-core/src/util/globalConstants";
+import { POSE_MARKER_SCALE, LINED_CONVEX_HULL_RENDERING_SETTING } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { emptyPose } from "webviz-core/src/util/Pose";
 import sendNotification from "webviz-core/src/util/sendNotification";
@@ -31,13 +30,12 @@ export type TopicSettingsCollection = {
 // builds a syntehtic arrow marker from a geometry_msgs/PoseStamped
 // these pose sizes were manually configured in rviz; for now we hard-code them here
 export function buildSyntheticArrowMarker(msg: any, flattenedZHeightPose: ?Pose) {
-  msg.message.pose = getGlobalHooks()
-    .perPanelHooks()
-    .ThreeDimensionalViz.getMessagePose(msg, flattenedZHeightPose);
   return {
     type: 103,
     header: msg.message.header,
-    pose: msg.message.pose,
+    pose: getGlobalHooks()
+      .perPanelHooks()
+      .ThreeDimensionalViz.getMessagePose(msg, flattenedZHeightPose),
     scale: POSE_MARKER_SCALE,
     color: getGlobalHooks()
       .perPanelHooks()

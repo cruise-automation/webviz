@@ -19,8 +19,7 @@ import {
 } from "./topicGroupsUtils";
 import type { TopicGroupConfig, VisibilityByColumn, NamespacesByColumn, SettingsByColumn } from "./types";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import { type TopicConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/topicTree";
-import { migrateLegacyIds } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/topicTreeV2Migrations";
+import type { TopicTreeConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/types";
 
 function getSelectionsFromCheckedKeys(
   checkedKeys: string[]
@@ -59,12 +58,12 @@ function getSelectionsFromCheckedKeys(
 
 // Generate a list of parent names for each topic so that we know the topic is selected only if all parent names are selected
 function* generateParentNamesByTopic(
-  item: TopicConfig,
+  item: TopicTreeConfig,
   parentNames: string[]
 ): Generator<{| topic: string, parentNames: string[] |}, void, void> {
   const childrenItems = item.children;
-  if (!childrenItems && item.topic) {
-    yield { topic: item.topic, parentNames };
+  if (!childrenItems && item.topicName) {
+    yield { topic: item.topicName, parentNames };
   }
   if (childrenItems) {
     for (const subItem of childrenItems) {
@@ -83,6 +82,50 @@ const getParentNamesByTopic = microMemoize(
 
 function dataSourcePrefixToColumnIndex(dataSourcePrefix: string): number {
   return FEATURE_DATA_SOURCE_PREFIXES.includes(dataSourcePrefix) ? 1 : 0;
+}
+
+// TODO(steel): This code (generateLegacyIdItems, getLegacyIdItems and migrateLegacyIds) was copied
+// from a migration to break an import-link from main-repo code to the migrations directory. The
+// migration code is tested in the migrations directory, but not here.  This code should be moved
+// into a "real" migration. It remains here to unblock a release.
+type LegacyIdItem = {| legacyId: string, topic: string |} | {| legacyId: string, name: string |};
+function* generateLegacyIdItems(item: TopicTreeConfig): Generator<LegacyIdItem, void, void> {
+  const { children, name, topicName, legacyIds } = item;
+  if (legacyIds) {
+    if (topicName) {
+      yield* legacyIds.map((legacyId) => ({ legacyId, topic: topicName }));
+    } else if (name) {
+      yield* legacyIds.map((legacyId) => ({ legacyId, name }));
+    }
+  }
+  if (children) {
+    for (const subItem of children) {
+      yield* generateLegacyIdItems(subItem);
+    }
+  }
+}
+
+const getLegacyIdItems = microMemoize(
+  (topicConfig): LegacyIdItem[] => {
+    return flatten(topicConfig.children.map((item) => Array.from(generateLegacyIdItems(item))));
+  }
+);
+
+export function migrateLegacyIds(checkedKeys: string[]): string[] {
+  const legacyIdItems = getLegacyIdItems(TOPIC_CONFIG);
+  const newCheckedNameOrTopicByOldNames = {};
+  for (const { topic, name, legacyId } of legacyIdItems) {
+    if (name) {
+      newCheckedNameOrTopicByOldNames[`${legacyId}`] = `name:${name}`;
+      newCheckedNameOrTopicByOldNames[`name:${legacyId}`] = `name:${name}`;
+    }
+    if (topic) {
+      newCheckedNameOrTopicByOldNames[`t:${legacyId}`] = `t:${topic}`;
+      // If both name and topic are present, only use topic as the new checkedName
+      newCheckedNameOrTopicByOldNames[`${legacyId}`] = `t:${topic}`;
+    }
+  }
+  return checkedKeys.map((node) => newCheckedNameOrTopicByOldNames[node] || node);
 }
 
 type MigrateInput = {|

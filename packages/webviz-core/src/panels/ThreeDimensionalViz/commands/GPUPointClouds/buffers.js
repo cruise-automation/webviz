@@ -36,6 +36,18 @@ export function getVertexValue(buffer: VertexBuffer, index: number): number {
   return data[index * stride + offset];
 }
 
+// Utility function to get multiple consecutive values from vertex buffers.
+export function getVertexValues(buffer: VertexBuffer, index: number, count: number): number[] {
+  const ret = [];
+  const data = buffer.buffer;
+  const offset = buffer.offset;
+  const stride = buffer.stride;
+  for (let i = 0; i < count; i++) {
+    ret.push(data[index * stride + offset + i]);
+  }
+  return ret;
+}
+
 // The number of points in a buffer is equal to the length of the buffer
 // divided by the number of float values in each vertex
 export function getVertexCount(buffer: VertexBuffer): number {

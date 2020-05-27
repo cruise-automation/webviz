@@ -7,8 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import Rpc, { type ChannelImpl, createLinkedChannels } from "./Rpc";
-
-const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
+import delay from "webviz-core/shared/delay";
 
 describe("Rpc", () => {
   it("only allows setting Rpc once per channel", () => {
@@ -33,7 +32,7 @@ describe("Rpc", () => {
     const local = new Rpc(mainChannel);
     const worker = new Rpc(workerChannel);
     worker.receive("foo", async (msg) => {
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await delay(10);
       return { bar: msg.foo };
     });
     const result = await local.send("foo", { foo: "baz" });
@@ -45,7 +44,7 @@ describe("Rpc", () => {
     const local = new Rpc(mainChannel);
     const worker = new Rpc(workerChannel);
     worker.receive("foo", async (msg) => {
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await delay(10);
       throw new Error("boom");
     });
     return local
@@ -120,7 +119,7 @@ describe("Rpc", () => {
     const local = new Rpc(mainChannel);
     const worker = new Rpc(workerChannel);
     worker.receive("foo", async (msg) => {
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await delay(10);
       return {
         bar: msg.foo,
         [Rpc.transferrables]: [expectedTransfer],

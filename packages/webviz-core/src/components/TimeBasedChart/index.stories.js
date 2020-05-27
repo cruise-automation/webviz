@@ -21,19 +21,8 @@ const tooltipData = {
   x: dataX,
   y: dataY,
   item: {
-    message: {
-      op: "message",
-      topic: "/turtle1/pose",
-      datatype: "turtlesim/Pose",
-      receiveTime: { sec: 1396293889, nsec: 214366 },
-      message: {
-        x: 5.544444561004639,
-        y: 5.544444561004639,
-        theta: 0,
-        linear_velocity: 0,
-        angular_velocity: 0,
-      },
-    },
+    headerStamp: undefined,
+    receiveTime: { sec: 1396293889, nsec: 214366 },
     queriedData: [{ constantName: "", value: 5.544444561004639, path: "/turtle1/pose.x" }],
   },
   path: "/turtle1/pose.x",

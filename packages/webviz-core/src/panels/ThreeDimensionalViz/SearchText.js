@@ -65,7 +65,6 @@ export const getHighlightedIndices = (text?: string, searchText: string): number
 };
 
 export const useGLText = ({
-  glTextEnabled,
   text,
   searchText,
   searchTextOpen,
@@ -75,15 +74,9 @@ export const useGLText = ({
 }: {|
   ...WorldSearchTextProps,
   text: TextMarker[],
-  glTextEnabled: boolean,
 |}): GLTextMarker[] => {
-  // $FlowFixMe - Flow is not understanding the difference between GLText and TextMarker.
   const glText: GLTextMarker[] = React.useMemo(
     () => {
-      if (!glTextEnabled) {
-        return text;
-      }
-
       let numMatches = 0;
       return text.map((marker, i) => {
         const scale = {
@@ -113,7 +106,7 @@ export const useGLText = ({
         return { ...marker, scale };
       });
     },
-    [glTextEnabled, searchText, searchTextOpen, selectedMatchIndex, text]
+    [searchText, searchTextOpen, selectedMatchIndex, text]
   );
 
   const throttledSetSearchTextMatches = useCallback(throttle(setSearchTextMatches, 200, { trailing: true }), [
@@ -122,7 +115,7 @@ export const useGLText = ({
 
   useEffect(
     () => {
-      if (!glTextEnabled || (!searchTextOpen && !searchTextMatches.length)) {
+      if (!searchTextOpen && !searchTextMatches.length) {
         return;
       }
       const matches = glText.filter((marker) => marker.highlightedIndices && marker.highlightedIndices.length);
@@ -132,7 +125,7 @@ export const useGLText = ({
         throttledSetSearchTextMatches([]);
       }
     },
-    [throttledSetSearchTextMatches, glText, glTextEnabled, searchText, searchTextMatches.length, searchTextOpen]
+    [throttledSetSearchTextMatches, glText, searchText, searchTextMatches.length, searchTextOpen]
   );
 
   return glText;

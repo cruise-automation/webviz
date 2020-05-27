@@ -91,12 +91,8 @@ const defaultHooks = {
         getDefaultSettings: () => ({}),
         getDefaultTopicTree: () => ({
           name: "root",
-          children: [{ name: "TF", children: [], description: "Visualize relationships between /tf frames." }],
-        }),
-        getDefaultTopicTreeV2: () => ({
-          name: "root",
           children: [
-            { name: "TF", topic: "/tf", children: [], description: "Visualize relationships between /tf frames." },
+            { name: "TF", topicName: "/tf", children: [], description: "Visualize relationships between /tf frames." },
           ],
         }),
         getStaticallyAvailableNamespacesByTopic: () => ({}),
@@ -123,10 +119,28 @@ const defaultHooks = {
   getAdditionalDataProviders: () => {},
   experimentalFeaturesList() {
     return {
+      gpuPointCloud: {
+        name: "GPU Point Clouds",
+        description: "A new, faster method of rendering point clouds in the 3D panel using GPU.",
+        developmentDefault: true,
+        productionDefault: true,
+      },
+      groupLines: {
+        name: "Group Lines When Rendering",
+        description: "A faster method of rendering lines in the 3D panel by grouping them together.",
+        developmentDefault: true,
+        productionDefault: true,
+      },
       diskBagCaching: {
         name: "Disk Bag Caching (requires reload)",
         description:
           "When streaming bag data, persist it on disk, so that when reloading the page we don't have to download the data again. However, this might result in an overall slower experience, and is generally experimental, so we only recommend it if you're on a slow network connection. Alternatively, you can download the bag to disk manually, and drag it into Webviz.",
+        developmentDefault: false,
+        productionDefault: false,
+      },
+      preloading: {
+        name: "Preloading",
+        description: "Allow panels to use data from caches directly, without playback.",
         developmentDefault: false,
         productionDefault: false,
       },

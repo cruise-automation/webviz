@@ -18,6 +18,8 @@ import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
+jest.setTimeout(MAX_PROMISE_TIMEOUT_TIME_MS * 3);
+
 describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
   it("returns empty data when no player is given", () => {
     const callback = jest.fn().mockReturnValue(null);

@@ -7,8 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { flatMap } from "lodash";
 
-import { incrementVersion } from "webviz-core/migrations/helpers";
-import { type PanelsState } from "webviz-core/src/reducers/panels";
+import incrementVersion from "webviz-core/migrations/activeHelpers/incrementVersion";
 
 const migrationsByVersion = {
   "001": [],
@@ -19,9 +18,12 @@ const migrationsByVersion = {
     require("webviz-core/migrations/frozenMigrations/2020.05.06.00:00:04.migrateGlobalDataToGlobalVariables").default,
     require("webviz-core/migrations/frozenMigrations/2020.05.06.00:00:05.migrateSourcePrefix").default,
   ],
+  "003": [
+    require("webviz-core/migrations/frozenMigrations/2020.05.14.13:39:17.migrate3DPanelFeatureGroupKeys").default,
+  ],
 };
 
-export default function migratePanels(originalPanelsState: PanelsState): PanelsState {
+export default function migratePanels(originalPanelsState: any): any {
   if (originalPanelsState.layout === undefined) {
     return originalPanelsState;
   }
@@ -32,7 +34,7 @@ export default function migratePanels(originalPanelsState: PanelsState): PanelsS
           ? [...migrationsByVersion[version], incrementVersion(parseInt(version))]
           : []
       ),
-    ].reduce((_panelsState, fn: (PanelsState) => PanelsState) => fn(_panelsState), originalPanelsState);
+    ].reduce((_panelsState, fn: (any) => any) => fn(_panelsState), originalPanelsState);
 
     return panelsState;
   } catch (error) {

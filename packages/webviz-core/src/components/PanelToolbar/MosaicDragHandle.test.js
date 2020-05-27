@@ -154,6 +154,10 @@ describe("<MosaicDragHandle />", () => {
                   ],
                 },
               },
+              {
+                id: "DiagnosticSummary!3v8mswd",
+                config: {},
+              },
             ],
           },
           layout: {
@@ -198,7 +202,7 @@ describe("<MosaicDragHandle />", () => {
             savedProps: {
               "Tab!3u9ypnk": {
                 activeTabIdx: 0,
-                tabs: [{ title: "1", layout: "DiagnosticSummary!1x1vwgf" }, { title: "2", layout: {} }],
+                tabs: [{ title: "1", layout: "DiagnosticSummary!1x1vwgf" }, { title: "2", layout: "Audio!a" }],
               },
             },
             sourceTabId: "Tab!3u9ypnk",
@@ -215,7 +219,7 @@ describe("<MosaicDragHandle />", () => {
                 id: "Tab!3u9ypnk",
                 config: {
                   activeTabIdx: 0,
-                  tabs: [{ title: "1", layout: "DiagnosticSummary!1x1vwgf" }, { title: "2", layout: {} }],
+                  tabs: [{ title: "1", layout: "DiagnosticSummary!1x1vwgf" }, { title: "2", layout: "Audio!a" }],
                 },
               },
             ],
@@ -286,6 +290,10 @@ describe("<MosaicDragHandle />", () => {
               {
                 id: "Tab!3u9ypnk",
                 config: { activeTabIdx: 0, tabs: [{ title: "1", layout: "DiagnosticSummary!3v8mswd" }] },
+              },
+              {
+                id: "DiagnosticSummary!3v8mswd",
+                config: {},
               },
             ],
           },

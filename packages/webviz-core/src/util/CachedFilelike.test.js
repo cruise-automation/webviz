@@ -42,6 +42,13 @@ describe("CachedFilelike", () => {
       await cachedFileReader.open();
       expect(cachedFileReader.size()).toEqual(4);
     });
+
+    it("does not throw when the size is 0", async () => {
+      const fileReader = new InMemoryFileReader(buffer.Buffer.from([]));
+      const cachedFileReader = new CachedFilelike({ fileReader, logFn: () => {} });
+      await cachedFileReader.open();
+      expect(cachedFileReader.size()).toEqual(0);
+    });
   });
 
   describe("#read", () => {
@@ -129,6 +136,18 @@ describe("CachedFilelike", () => {
       const data = await readerPromise;
       expect(keepReconnectingCallback.mock.calls).toEqual([[true], [false]]);
       expect([...data]).toEqual([1, 2]);
+    });
+
+    it("returns an empty buffer when requesting size 0 (does not throw an error)", (done) => {
+      const fileReader = new InMemoryFileReader(buffer.Buffer.from([0, 1, 2, 3]));
+      const cachedFileReader = new CachedFilelike({ fileReader, logFn: () => {} });
+      cachedFileReader.read(1, 0, (error, data) => {
+        if (!data) {
+          throw new Error("Missing `data`");
+        }
+        expect([...data]).toEqual([]);
+        done();
+      });
     });
   });
 });

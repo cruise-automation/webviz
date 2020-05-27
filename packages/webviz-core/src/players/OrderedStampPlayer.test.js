@@ -55,6 +55,7 @@ function makePlayers(initialOrder: TimestampMethod): { player: OrderedStampPlaye
         setUserNodeDiagnostics: jest.fn(),
         addUserNodeLogs: jest.fn(),
         setUserNodeTrust: jest.fn(),
+        setUserNodeRosLib: jest.fn(),
       }),
       initialOrder
     ),

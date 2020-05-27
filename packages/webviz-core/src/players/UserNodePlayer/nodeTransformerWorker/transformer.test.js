@@ -5,6 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import exampleDatatypes from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/fixtures/example-datatypes.json";
 import {
   getInputTopics,
   getOutputTopic,
@@ -14,7 +15,9 @@ import {
   extractDatatypes,
   compose,
 } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
+import generateRosLib from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typegen";
 import baseDatatypes from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/baseDatatypes";
+import userUtilsLibs from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils";
 import { DiagnosticSeverity, ErrorCodes, Sources, type NodeData } from "webviz-core/src/players/UserNodePlayer/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
@@ -32,6 +35,10 @@ export const baseNodeData: NodeData = {
   datatypes: {},
   sourceFile: undefined,
   typeChecker: undefined,
+  rosLib: generateRosLib({
+    topics: [{ name: "/some_topic", datatype: "std_msgs/ColorRGBA" }],
+    datatypes: exampleDatatypes,
+  }),
 };
 
 describe("pipeline", () => {
@@ -171,6 +178,10 @@ describe("pipeline", () => {
   });
 
   describe("compile", () => {
+    it("should return an error if a node does not start with the default prefix", () => {
+      const { diagnostics } = compile({ ...baseNodeData, name: "/bad_name" });
+      expect(diagnostics[0].code).toEqual(ErrorCodes.Other.FILENAME);
+    });
     it.each(["const x: string = 'hello webviz'", "const num: number = 1222"])("can compile", (sourceCode) => {
       const { diagnostics } = compile({ ...baseNodeData, sourceCode });
       expect(diagnostics.length).toEqual(0);
@@ -183,25 +194,8 @@ describe("pipeline", () => {
       const { diagnostics } = compile({ ...baseNodeData, sourceCode });
       expect(diagnostics.length).toEqual(0);
     });
-    it.each([
-      "import { Time, Message, SphereMarker } from 'ros';",
-      "import { Time } from 'ros'; const myTime: Time = { sec: 0, nsec: 0 };",
-      `import { Header, Message } from 'ros';
-      type MyCustomMessageType = { header: Header };
-      const myMessage: Message<MyCustomMessageType> = {
-        topic: 'myTopic',
-        datatype: '/my/datatype',
-        op: 'message',
-        receiveTime: { sec: 0, nsec: 0 },
-        message: {
-          header: {
-            frame_id: 'my_frame',
-            stamp: { sec: 0, nsec: 0 }
-          }
-        }
-      };`,
-    ])("can compile type definitions from 'ros'", (sourceCode) => {
-      const { diagnostics } = compile({ ...baseNodeData, sourceCode });
+    it("compiles type definitions from 'ros'", () => {
+      const { diagnostics } = compile({ ...baseNodeData, sourceCode: `import { Time } from 'ros';` });
       expect(diagnostics.length).toEqual(0);
     });
     it.each([
@@ -296,19 +290,53 @@ describe("pipeline", () => {
         expect(severity).toEqual(DiagnosticSeverity.Error);
       }
     );
+
+    describe("generated types", () => {
+      it("can successfully use dynamically typed definitions as input", () => {
+        const tickInfoDatatype = {
+          fields: [{ type: "uint64", name: "cpu_elapsed_ns", isArray: false, isComplex: false }],
+        };
+        const sourceCode = `
+          import { Input, Messages } from "ros";
+
+          export const inputs = ["/tick_information"];
+          export const output = "/webviz_node/my_node";
+
+          const publisher = (message: Input<"/tick_information">): Messages.std_msgs__TickInfo => {
+            return {
+              cpu_elapsed_ns: message.message.cpu_elapsed_ns
+            };
+          };
+
+          export default publisher;
+        `;
+
+        const rosLib = generateRosLib({
+          topics: [{ name: "/tick_information", datatype: "std_msgs/TickInfo" }],
+          datatypes: {
+            "std_msgs/TickInfo": tickInfoDatatype,
+          },
+        });
+        const { diagnostics } = compile({ ...baseNodeData, sourceCode, rosLib: `${rosLib}` });
+        expect(diagnostics).toEqual([]);
+      });
+    });
+
     it.each(["const x: string = 'hello webviz'"])("produces transpiled code", (sourceCode) => {
       const { transpiledCode, diagnostics } = compile({ ...baseNodeData, sourceCode });
       expect(typeof transpiledCode).toEqual("string");
       expect(diagnostics.length).toEqual(0);
     });
     it.each([
+      "const x: string = 'hello webviz'",
       `
-      import {norm} from "utils/pointClouds";
+      import {norm} from "./pointClouds";
       const x = norm({x:1, y:2, z:3});
       `,
     ])("produces transpiled code", (sourceCode) => {
-      const { projectCode, diagnostics } = compile({ ...baseNodeData, sourceCode });
-      expect(projectCode.size).toEqual(1);
+      const { projectCode, diagnostics, transpiledCode } = compile({ ...baseNodeData, sourceCode });
+      expect(projectCode?.size).toEqual(userUtilsLibs.length);
+      expect(typeof transpiledCode).toEqual("string");
       expect(diagnostics).toEqual([]);
     });
   });
@@ -339,6 +367,7 @@ describe("pipeline", () => {
       outputDatatype?: string,
       only?: boolean /* Debugging helper */,
       skip?: boolean /* Debugging helper  */,
+      rosLib?: string,
     };
 
     const numDataType = {
@@ -585,8 +614,8 @@ describe("pipeline", () => {
       {
         description: "Imported type from 'ros' in return type",
         sourceCode: `
-          import { Point } from 'ros';
-          export default (msg: any): { point: Point } => {
+          import { Messages } from 'ros';
+          export default (msg: any): { point: Messages.geometry_msgs__Point } => {
             return { point: { x: 1, y: 2, z: 3 } };
           };`,
         datatypes: nestedPointDataType,
@@ -594,8 +623,8 @@ describe("pipeline", () => {
       {
         description: "Imported type from 'ros' is return type",
         sourceCode: `
-          import { Point } from 'ros';
-          export default (msg: any): Point => {
+          import { Messages } from 'ros';
+          export default (msg: any):  Messages.geometry_msgs__Point => {
             return { x: 1, y: 2, z: 3 };
           };`,
         datatypes: pointDataType,
@@ -603,8 +632,8 @@ describe("pipeline", () => {
       {
         description: "Imported nested type from 'ros' is return type",
         sourceCode: `
-          import { Pose } from 'ros';
-          export default (msg: any): Pose => {
+          import { Messages } from 'ros';
+          export default (msg: any): Messages.geometry_msgs__Pose => {
             return {position: { x: 1, y: 2, z: 3 }, orientation: { x: 4, y: 5, z: 6, w: 7}};
           };`,
         datatypes: poseDataType,
@@ -928,20 +957,41 @@ describe("pipeline", () => {
         },
       },
 
-      // MARKERS ARRAYS
+      {
+        description: "Indexed access type",
+        sourceCode: `
+          interface Pos { position: { pos: { x: number, y: number } }, lala: string  };
+          export default (msg: any): Pos["position"] => {
+            return { pos: { x: 1, y: 2 } };
+          };`,
+        datatypes: posDatatypes,
+      },
+
+      {
+        description: "DEPRECATED__ros",
+        sourceCode: `
+          import { Point } from "DEPRECATED__ros";
+
+          type Output = Point;
+          export const inputs = [];
+          export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
+          const publisher = (message: any): Output => {
+              return { x: 1, y: 1, z: 1 }
+          };
+          export default publisher;`,
+        datatypes: pointDataType,
+      },
+
+      // HARDCODED DATATYPES
       {
         description: "Should return marker array if the top level message returns 'markers'",
         sourceCode: `
-          import { LineStripMarker, Message } from "ros";
-
-          type MarkerArray = {
-            markers: LineStripMarker[]
-          }
+          import { LineStripMarker } from "DEPRECATED__ros";
 
           export const inputs = [];
           export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
 
-          const publisher = (message: any): MarkerArray => {
+          const publisher = (message: any): { markers: LineStripMarker[] } => {
             return { markers: [] };
           };
 
@@ -949,30 +999,77 @@ describe("pipeline", () => {
         datatypes: baseDatatypes,
         outputDatatype: "visualization_msgs/MarkerArray",
       },
-
-      /*
-        ERRORS
-      */
       {
-        description: "Should not allow multiple properties in the return type if one is 'markers'",
+        description: "Should any arbritrary datatype passed as the return type",
         sourceCode: `
-          import { LineStripMarker, Message } from "ros";
-
-          type MarkerArray = {
-            markers: LineStripMarker[],
-            fluff: number
-          }
+          import { Messages } from "ros";
 
           export const inputs = [];
           export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
 
-          const publisher = (message: any): MarkerArray => {
-            return { markers: [], fluff: 42  };
+          const publisher = (message: any): Messages.std_msgs__ColorRGBA => {
+            return { r: 1, g: 1, b: 1, a: 1 };
           };
 
           export default publisher;`,
-        error: ErrorCodes.DatatypeExtraction.STRICT_MARKERS_RETURN_TYPE,
+        datatypes: baseDatatypes,
+        outputDatatype: "std_msgs/ColorRGBA",
       },
+      {
+        description: "Should handle type aliases",
+        sourceCode: `
+          import { Messages } from "ros";
+
+          export const inputs = [];
+          export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
+
+          type ReturnType = Messages.std_msgs__ColorRGBA;
+
+          const publisher = (message: any): ReturnType => {
+            return { r: 1, g: 1, b: 1, a: 1 };
+          };
+
+          export default publisher;`,
+        datatypes: baseDatatypes,
+        outputDatatype: "std_msgs/ColorRGBA",
+      },
+      {
+        description: "Should handle deep type aliases",
+        sourceCode: `
+          import { Messages, TopicsToMessageDefinition } from "ros";
+
+          export const inputs = [];
+          export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
+
+          const publisher = (message: any): TopicsToMessageDefinition["/some_topic"] => {
+            return { r: 1, g: 1, b: 1, a: 1 };
+          };
+
+          export default publisher;`,
+        datatypes: baseDatatypes,
+        outputDatatype: "std_msgs/ColorRGBA",
+      },
+      {
+        description: "Should handle very deep type aliases",
+        sourceCode: `
+          import { Messages, TopicsToMessageDefinition } from "ros";
+
+          export const inputs = [];
+          export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
+
+          type Alias = TopicsToMessageDefinition["/some_topic"]
+
+          const publisher = (message: any): Alias => {
+            return { r: 1, g: 1, b: 1, a: 1 };
+          };
+
+          export default publisher;`,
+        datatypes: baseDatatypes,
+        outputDatatype: "std_msgs/ColorRGBA",
+      },
+      /*
+        ERRORS
+      */
       {
         description: "No default export",
         sourceCode: `
@@ -1161,6 +1258,28 @@ describe("pipeline", () => {
         error: ErrorCodes.DatatypeExtraction.NO_INTERSECTION_TYPES,
       },
       {
+        description: "Imported intersection types",
+        rosLib: `
+          export declare type MultiPointMarker = { badType: boolean } ;
+
+          export declare type LineStripMarker = MultiPointMarker & {
+            type: 4
+          };
+        `,
+        sourceCode: `
+          import { LineStripMarker } from "ros";
+
+          type Output = { m: LineStripMarker[] };
+          export const inputs = [];
+          export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
+          const publisher = (message: any): Output => {
+              return { m: [] }
+          };
+          export default publisher;`,
+
+        error: ErrorCodes.DatatypeExtraction.NO_INTERSECTION_TYPES,
+      },
+      {
         description: "Class types",
         sourceCode: `
           class MyClass {};
@@ -1241,9 +1360,10 @@ describe("pipeline", () => {
         filteredTestCases = testCases;
       }
       filteredTestCases = filteredTestCases.filter(({ skip }) => (typeof skip === "boolean" ? !skip : true));
-      filteredTestCases.forEach(({ description, sourceCode, datatypes, error, outputDatatype }) => {
+      filteredTestCases.forEach(({ description, sourceCode, datatypes = {}, error, outputDatatype, rosLib }) => {
         it(`${error ? "Expected Error: " : ""}${description}`, () => {
-          const nodeData = extract({ ...baseNodeData, sourceCode }, undefined, []);
+          const inputNodeData = { ...baseNodeData, datatypes, sourceCode, ...(rosLib ? { rosLib } : {}) };
+          const nodeData = extract(inputNodeData, undefined, []);
           if (!error) {
             expect(nodeData.diagnostics).toEqual([]);
             expect(nodeData.outputDatatype).toEqual(outputDatatype || nodeData.name);

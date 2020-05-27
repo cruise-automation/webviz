@@ -9,10 +9,10 @@
 import React, { type Node, useMemo } from "react";
 import type { Time } from "rosbag";
 
-import parseRosPath, { getTopicsFromPaths } from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
+import { getTopicsFromPaths } from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
 import {
   type MessagePathDataItem,
-  useCachedGetMessagePathDataItems,
+  useDecodeMessagePathsForMessagesByTopic,
 } from "webviz-core/src/components/MessagePathSyntax/useCachedGetMessagePathDataItems";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Message } from "webviz-core/src/players/types";
@@ -23,7 +23,7 @@ export type MessageHistoryItem = {
   message: Message,
 };
 
-export type MessageHistoryItemsByPath = { [string]: MessageHistoryItem[] };
+export type MessageHistoryItemsByPath = $ReadOnly<{ [string]: $ReadOnlyArray<MessageHistoryItem> }>;
 
 export type MessageHistoryData = {|
   itemsByPath: MessageHistoryItemsByPath,
@@ -53,31 +53,11 @@ export default React.memo<Props>(function MessageHistoryDEPRECATED({ children, p
     historySize: historySize || Infinity,
   });
 
-  const cachedGetMessagePathDataItems = useCachedGetMessagePathDataItems(paths);
-
-  const itemsByPath = useMemo(
-    () => {
-      const obj = {};
-      // Create an array for each path, not just valid paths.
-      for (const path of memoizedPaths) {
-        obj[path] = [];
-        const rosPath = parseRosPath(path);
-        if (!rosPath) {
-          continue;
-        }
-
-        for (const message of messagesByTopic[rosPath.topicName]) {
-          // Add the item (if it exists) to the array.
-          const queriedData = cachedGetMessagePathDataItems(path, message);
-          if (queriedData) {
-            obj[path].push({ message, queriedData });
-          }
-        }
-      }
-      return obj;
-    },
-    [memoizedPaths, messagesByTopic, cachedGetMessagePathDataItems]
-  );
+  const decodeMessagePathsForMessagesByTopic = useDecodeMessagePathsForMessagesByTopic(memoizedPaths);
+  const itemsByPath = useMemo(() => decodeMessagePathsForMessagesByTopic(messagesByTopic), [
+    decodeMessagePathsForMessagesByTopic,
+    messagesByTopic,
+  ]);
 
   return useMemo(() => children({ itemsByPath, startTime: startTime || ZERO_TIME }), [
     children,

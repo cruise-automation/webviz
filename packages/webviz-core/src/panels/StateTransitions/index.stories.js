@@ -110,7 +110,7 @@ storiesOf("<StateTransitions>", module)
       <PanelSetup
         fixture={fixture}
         onMount={() => {
-          const mouseEnterContainer = document.querySelectorAll("[data-test=panel-mouseenter-container")[0];
+          const mouseEnterContainer = document.querySelectorAll("[data-test~=panel-mouseenter-container")[0];
           TestUtils.Simulate.mouseEnter(mouseEnterContainer);
         }}
         style={{ width: 370 }}>

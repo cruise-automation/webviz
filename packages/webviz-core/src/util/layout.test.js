@@ -262,6 +262,18 @@ describe("layout", () => {
         ],
       });
     });
+    it("no tabs", () => {
+      expect(
+        addPanelToTab("DiagnosticSummary!48lhb5y", undefined, undefined, { activeTabIdx: -1, tabs: [] }, "Tab!1pyr7sm")
+      ).toEqual({
+        configs: [
+          {
+            id: "Tab!1pyr7sm",
+            config: { activeTabIdx: 0, tabs: [{ title: "1", layout: "DiagnosticSummary!48lhb5y" }] },
+          },
+        ],
+      });
+    });
     it("no tab layout", () => {
       expect(addPanelToTab("DiagnosticSummary!48lhb5y", undefined, undefined, {}, "Tab!1pyr7sm")).toEqual({
         configs: [
@@ -374,6 +386,12 @@ describe("layout", () => {
           activeTabIdx: 1,
         })
       ).toEqual({ activeTabIdx: 1, tabs: [{ title: "A", layout: null }, { layout: newLayout, title: "B" }] });
+    });
+    it("creates a new tab if there isn't one active", () => {
+      expect(updateTabPanelLayout("RosOut!abc", { tabs: [], activeTabIdx: -1 })).toEqual({
+        activeTabIdx: 0,
+        tabs: [{ layout: "RosOut!abc", title: "1" }],
+      });
     });
   });
 

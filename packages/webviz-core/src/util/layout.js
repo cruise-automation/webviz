@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import * as Sentry from "@sentry/browser";
-import { flatMap, isEmpty } from "lodash";
+import { isEmpty, flatMap } from "lodash";
 import {
   createRemoveUpdate,
   getLeaves,
@@ -16,7 +16,7 @@ import {
   MosaicWithoutDragDropContext,
 } from "react-mosaic-component";
 
-import type { TabPanelConfig } from "webviz-core/src/types/layouts";
+import type { TabLocation, TabPanelConfig } from "webviz-core/src/types/layouts";
 import type {
   PanelConfig,
   ChangePanelLayoutPayload,
@@ -28,6 +28,8 @@ import type {
 } from "webviz-core/src/types/panels";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 
+export const DEFAULT_TAB_PANEL_CONFIG = { activeTabIdx: 0, tabs: [{ title: "1", layout: null }] };
+
 // given a panel type, create a unique id for a panel
 // with the type embedded within the id
 // we need this because react-mosaic
@@ -35,7 +37,7 @@ export function getPanelIdForType(type: string): string {
   const factor = 1e10;
   const rnd = Math.round(Math.random() * factor).toString(36);
   // a panel id consists of its type, an exclimation mark for splitting, and a random val
-  // because each panel id functions is the react 'key' for the react-mosiac-component layout
+  // because each panel id functions is the react 'key' for the react-mosaic-component layout
   // but also must encode the panel type for panel factory construction
   return `${type}!${rnd}`;
 }
@@ -114,8 +116,6 @@ export function getPanelIdsInsideTabPanels(panelIds: string[], savedProps: Confi
   return flatMap(tabLayouts, getLeaves);
 }
 
-export const DEFAULT_TAB_PANEL_CONFIG = { activeTabIdx: 0, tabs: [{ title: "1", layout: null }] };
-
 export const validateTabPanelConfig = (config: ?PanelConfig) => {
   if (!Array.isArray(config?.tabs) || typeof config?.activeTabIdx !== "number") {
     const error = new Error("A non-Tab panel config is being operated on as if it were a Tab panel.");
@@ -133,14 +133,23 @@ export const validateTabPanelConfig = (config: ?PanelConfig) => {
 };
 
 export const updateTabPanelLayout = (layout: ?MosaicNode, tabPanelConfig: TabPanelConfig): TabPanelConfig => {
+  const updatedTabs = tabPanelConfig.tabs.map((tab, i) => {
+    if (i === tabPanelConfig.activeTabIdx) {
+      return { ...tab, layout };
+    }
+    return tab;
+  });
+  // Create a new tab if there isn't one active
+  if (tabPanelConfig.activeTabIdx === -1) {
+    updatedTabs.push({
+      layout,
+      title: "1",
+    });
+  }
   return {
     ...tabPanelConfig,
-    tabs: tabPanelConfig.tabs.map((tab, i) => {
-      if (i === tabPanelConfig.activeTabIdx) {
-        return { ...tab, layout };
-      }
-      return tab;
-    }),
+    tabs: updatedTabs,
+    activeTabIdx: Math.max(0, tabPanelConfig.activeTabIdx),
   };
 };
 
@@ -189,12 +198,11 @@ export const addPanelToTab = (
   tabConfig: ?PanelConfig,
   tabId: string
 ): SaveConfigsPayload => {
-  const safeTabConfig =
-    typeof tabConfig?.activeTabIdx === "number" && tabConfig?.tabs
-      ? ((tabConfig: any): TabPanelConfig)
-      : DEFAULT_TAB_PANEL_CONFIG;
+  const safeTabConfig = validateTabPanelConfig(tabConfig)
+    ? ((tabConfig: any): TabPanelConfig)
+    : DEFAULT_TAB_PANEL_CONFIG;
 
-  const currentTabLayout = safeTabConfig.tabs[safeTabConfig.activeTabIdx].layout;
+  const currentTabLayout = safeTabConfig.tabs[safeTabConfig.activeTabIdx]?.layout;
   const newTree =
     currentTabLayout && destinationPath && destinationPosition
       ? getTreeFromMovePanel(insertedPanelId, destinationPath, destinationPosition, currentTabLayout)
@@ -209,6 +217,80 @@ export const addPanelToTab = (
     ],
   };
   return saveConfigsPayload;
+};
+
+const getValidTabPanelConfig = (panelId: string, savedProps: {}): TabPanelConfig => {
+  const config = savedProps[panelId];
+  return validateTabPanelConfig(config) ? config : DEFAULT_TAB_PANEL_CONFIG;
+};
+
+const reorderTabWithinTabPanel = (source: TabLocation, target: TabLocation, savedProps: {}): SaveConfigsPayload => {
+  const { tabs, activeTabIdx } = getValidTabPanelConfig(source.panelId, savedProps);
+
+  const sourceIndex = source.tabIndex ?? tabs.length - 1; // source.tabIndex will always be set
+  const targetIndex = target.tabIndex ?? tabs.length - 1; // target.tabIndex will only be set when dropping on a tab
+
+  const nextSourceTabs = [...tabs.slice(0, sourceIndex), ...tabs.slice(sourceIndex + 1)];
+  nextSourceTabs.splice(targetIndex, 0, tabs[sourceIndex]);
+
+  // Update activeTabIdx so the active tab does not change when we move the tab
+  const movedActiveTab = activeTabIdx === source.tabIndex;
+  const movedToBeforeActiveTab = targetIndex <= activeTabIdx && sourceIndex >= activeTabIdx;
+  const movedFromBeforeActiveTab = sourceIndex <= activeTabIdx && targetIndex >= activeTabIdx;
+
+  let nextActiveTabIdx = activeTabIdx;
+  if (movedActiveTab) {
+    nextActiveTabIdx = targetIndex;
+  } else if (movedToBeforeActiveTab) {
+    nextActiveTabIdx++;
+  } else if (movedFromBeforeActiveTab) {
+    nextActiveTabIdx--;
+  }
+
+  return {
+    configs: [{ id: source.panelId, config: { tabs: nextSourceTabs, activeTabIdx: nextActiveTabIdx } }],
+  };
+};
+
+const moveTabBetweenTabPanels = (source: TabLocation, target: TabLocation, savedProps: {}): SaveConfigsPayload => {
+  const sourceConfig = getValidTabPanelConfig(source.panelId, savedProps);
+  const targetConfig = getValidTabPanelConfig(target.panelId, savedProps);
+
+  const sourceIndex = source.tabIndex ?? sourceConfig.tabs.length;
+  const targetIndex = target.tabIndex ?? targetConfig.tabs.length;
+  const nextTabsSource = [...sourceConfig.tabs.slice(0, sourceIndex), ...sourceConfig.tabs.slice(sourceIndex + 1)];
+
+  const nextTabsTarget = targetConfig.tabs.slice();
+  nextTabsTarget.splice(targetIndex, 0, sourceConfig.tabs[sourceIndex]);
+
+  // Update activeTabIdx so the active tab does not change as we move the tab
+  const movedToBeforeActiveTabSource = sourceIndex <= sourceConfig.activeTabIdx;
+  const nextActiveTabIdxSource = movedToBeforeActiveTabSource
+    ? sourceConfig.activeTabIdx - 1
+    : sourceConfig.activeTabIdx;
+
+  const movedToBeforeActiveTabTarget = targetIndex <= targetConfig.activeTabIdx;
+  const nextActiveTabIdxTarget = movedToBeforeActiveTabTarget
+    ? targetConfig.activeTabIdx + 1
+    : targetConfig.activeTabIdx;
+
+  return {
+    configs: [
+      { id: source.panelId, config: { tabs: nextTabsSource, activeTabIdx: nextActiveTabIdxSource } },
+      { id: target.panelId, config: { tabs: nextTabsTarget, activeTabIdx: nextActiveTabIdxTarget } },
+    ],
+  };
+};
+
+export const getSaveConfigsPayloadForMoveTab = (
+  source: TabLocation,
+  target: TabLocation,
+  savedProps: {}
+): SaveConfigsPayload => {
+  if (source.panelId === target.panelId) {
+    return reorderTabWithinTabPanel(source, target, savedProps);
+  }
+  return moveTabBetweenTabPanels(source, target, savedProps);
 };
 
 export const replacePanelsWithNewPanel = (

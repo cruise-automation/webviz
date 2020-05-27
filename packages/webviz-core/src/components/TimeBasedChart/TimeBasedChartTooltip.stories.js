@@ -27,21 +27,8 @@ storiesOf("<TimeBasedChartTooltip>", module)
             constantName: "ACTIVE",
             item: {
               queriedData: [],
-              timestamp: { sec: 100, nsec: 30 },
-              hasAccurateTimestamp: false,
-              elapsedSinceStart: { sec: 10, nsec: 30 },
-              message: {
-                topic: "/some/topic",
-                datatype: "some_datatype",
-                op: "message",
-                receiveTime: { sec: 123, nsec: 456 },
-                message: {
-                  header: {
-                    stamp: { sec: 100, nsec: 30 },
-                  },
-                },
-              },
-              index: 0,
+              receiveTime: { sec: 123, nsec: 456 },
+              headerStamp: { sec: 100, nsec: 30 },
             },
             startTime: { sec: 95, nsec: 0 },
           }}>

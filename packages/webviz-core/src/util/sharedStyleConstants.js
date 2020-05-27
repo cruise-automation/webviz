@@ -81,6 +81,7 @@ export const colors = {
   TEXT: baseColors.LIGHT1,
   TOOLBAR: baseColors.DARK2,
   TOOLBARL1: baseColors.DARK4,
+  BRIGHT_YELLOW: "#f6ff00",
 };
 
 export const textSize = {

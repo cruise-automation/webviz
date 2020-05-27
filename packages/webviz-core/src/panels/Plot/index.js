@@ -7,19 +7,25 @@
 //  You may not use this file except in compliance with the License.
 
 import { compact, uniq } from "lodash";
-import React, { useEffect, useCallback, useRef } from "react";
+import memoizeWeak from "memoize-weak";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import { hot } from "react-hot-loader/root";
 
 import helpContent from "./index.help.md";
 import Flex from "webviz-core/src/components/Flex";
-import MessageHistoryDEPRECATED, { type MessageHistoryData } from "webviz-core/src/components/MessageHistoryDEPRECATED";
+import { type MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistoryDEPRECATED";
+import { getTopicsFromPaths } from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
+import { useDecodeMessagePathsForMessagesByTopic } from "webviz-core/src/components/MessagePathSyntax/useCachedGetMessagePathDataItems";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import { getTooltipItemForMessageHistoryItem } from "webviz-core/src/components/TimeBasedChart";
+import { useBlocksByTopic, useDataSourceInfo, useMessagesByTopic } from "webviz-core/src/PanelAPI";
 import type { BasePlotPath, PlotPath } from "webviz-core/src/panels/Plot/internalTypes";
-import PlotChart, { getDatasetsAndTooltips } from "webviz-core/src/panels/Plot/PlotChart";
+import PlotChart, { getDatasetsAndTooltips, type PlotDataByPath } from "webviz-core/src/panels/Plot/PlotChart";
 import PlotLegend from "webviz-core/src/panels/Plot/PlotLegend";
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
 import type { PanelConfig } from "webviz-core/src/types/panels";
+import { useShallowMemo } from "webviz-core/src/util/hooks";
 
 export const plotableRosTypes = [
   "bool",
@@ -70,9 +76,55 @@ type Props = {
   saveConfig: ($Shape<PlotConfig>) => void,
 };
 
+// messagePathItems contains the whole parsed message, and we don't need to cache all of that.
+// Instead, throw away everything but what we need (the timestamps).
+const getPlotDataByPath = (itemsByPath: MessageHistoryItemsByPath): PlotDataByPath => {
+  const ret: PlotDataByPath = {};
+  Object.keys(itemsByPath).forEach((path) => {
+    ret[path] = itemsByPath[path].map(getTooltipItemForMessageHistoryItem);
+  });
+  return ret;
+};
+
+const getMessagePathItemsForBlock = memoizeWeak(
+  (decodeMessagePathsForMessagesByTopic, binaryBlock, messageReadersByTopic): { [path: string]: any } => {
+    const parsedBlock = {};
+    Object.keys(binaryBlock).forEach((topic) => {
+      const reader = messageReadersByTopic[topic];
+      parsedBlock[topic] = binaryBlock[topic].map((message) => ({
+        ...message,
+        message: reader.readMessage(Buffer.from(message.message)),
+      }));
+    });
+    return getPlotDataByPath(decodeMessagePathsForMessagesByTopic(parsedBlock));
+  }
+);
+
+function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks) {
+  const ret = {};
+  blocks.forEach((block) => {
+    const messagePathItemsForBlock = getMessagePathItemsForBlock(
+      decodeMessagePathsForMessagesByTopic,
+      block,
+      messageReadersByTopic
+    );
+    // TODO(steel): We should not interpolate across non-adjacent blocks. Find some way of leaving
+    // a gap in the chart. Could insert NaN values in between. We will likely need to loop over all
+    // paths here, not just over paths present in the block.
+    Object.keys(messagePathItemsForBlock).forEach((path) => {
+      const existingItems = ret[path] || [];
+      for (const item of messagePathItemsForBlock[path]) {
+        existingItems.push(item);
+      }
+      ret[path] = existingItems;
+    });
+  });
+  return ret;
+}
+
 function Plot(props: Props) {
   const { saveConfig, config } = props;
-  const { paths, minYValue, maxYValue, showLegend, xAxisVal, xAxisPath } = config;
+  const { paths: yAxisPaths, minYValue, maxYValue, showLegend, xAxisVal, xAxisPath } = config;
   // Note that the below values are refs since they are only used in callbacks and are not rendered anywhere.
   const currentMinY = useRef(null);
   const currentMaxY = useRef(null);
@@ -92,57 +144,69 @@ function Plot(props: Props) {
   );
 
   useEffect(() => {
-    if (!paths.length) {
+    if (!yAxisPaths.length) {
       saveConfig({ paths: [{ value: "", enabled: true, timestampMethod: "receiveTime" }] });
     }
   });
 
-  let historySize: ?number;
-  if (xAxisVal === "index") {
-    historySize = 1;
-  }
+  const historySize = xAxisVal === "index" ? 1 : Infinity;
 
-  const allPaths = paths.map(({ value }) => value).concat(compact([xAxisPath?.value]));
+  const allPaths = yAxisPaths.map(({ value }) => value).concat(compact([xAxisPath?.value]));
+  const memoizedPaths: string[] = useShallowMemo<string[]>(allPaths);
+  const subscribeTopics = useMemo(() => getTopicsFromPaths(memoizedPaths), [memoizedPaths]);
+  const messagesByTopic = useMessagesByTopic({ topics: subscribeTopics, historySize });
+
+  const decodeMessagePathsForMessagesByTopic = useDecodeMessagePathsForMessagesByTopic(memoizedPaths);
+
+  // NOTE: This does some unnecessary work: The items that are present in the blocks are stored by
+  // path here, and that data will just be ignored below as the block data overrides the streaming
+  // fallback. This repeated work won't happen when we have an appropriate subscription type.
+  const streamedItemsByPath = useMemo(() => getPlotDataByPath(decodeMessagePathsForMessagesByTopic(messagesByTopic)), [
+    decodeMessagePathsForMessagesByTopic,
+    messagesByTopic,
+  ]);
+
+  const { messageReadersByTopic, blocks } = useBlocksByTopic(subscribeTopics);
+  const blockItemsByPath = getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks);
+  const { startTime } = useDataSourceInfo();
+  // Don't filter out disabled paths when passing into getDatasetsAndTooltips, because we still want
+  // easy access to the history when turning the disabled paths back on.
+  const { datasets, tooltips } = getDatasetsAndTooltips(
+    yAxisPaths,
+    { ...streamedItemsByPath, ...blockItemsByPath },
+    startTime || { sec: 0, nsec: 0 },
+    xAxisVal,
+    xAxisPath
+  );
 
   return (
     <Flex col clip center style={{ position: "relative" }}>
-      {/* Don't filter out disabled paths when passing into <MessageHistoryDEPRECATED>, because we still want
-          easy access to the history when turning the disabled paths back on. */}
-      <MessageHistoryDEPRECATED paths={allPaths} {...(historySize ? { historySize } : null)}>
-        {({ itemsByPath, startTime }: MessageHistoryData) => {
-          const { datasets, tooltips } = getDatasetsAndTooltips(paths, itemsByPath, startTime, xAxisVal, xAxisPath);
-          return (
-            <>
-              <PanelToolbar
-                helpContent={helpContent}
-                floating
-                menuContent={
-                  <PlotMenu
-                    minYValue={minYValue}
-                    maxYValue={maxYValue}
-                    saveConfig={saveConfig}
-                    setMinMax={setMinMax}
-                    datasets={datasets}
-                    xAxisVal={xAxisVal}
-                    tooltips={tooltips}
-                  />
-                }
-              />
-              <PlotChart
-                paths={paths}
-                minYValue={parseFloat(minYValue)}
-                maxYValue={parseFloat(maxYValue)}
-                saveCurrentYs={saveCurrentYs}
-                datasets={datasets}
-                tooltips={tooltips}
-                xAxisVal={xAxisVal}
-              />
-            </>
-          );
-        }}
-      </MessageHistoryDEPRECATED>
+      <PanelToolbar
+        helpContent={helpContent}
+        floating
+        menuContent={
+          <PlotMenu
+            minYValue={minYValue}
+            maxYValue={maxYValue}
+            saveConfig={saveConfig}
+            setMinMax={setMinMax}
+            datasets={datasets}
+            xAxisVal={xAxisVal}
+            tooltips={tooltips}
+          />
+        }
+      />
+      <PlotChart
+        paths={yAxisPaths}
+        minYValue={parseFloat(minYValue)}
+        maxYValue={parseFloat(maxYValue)}
+        saveCurrentYs={saveCurrentYs}
+        datasets={datasets}
+        tooltips={tooltips}
+        xAxisVal={xAxisVal}
+      />
       <PlotLegend
-        paths={paths}
+        paths={yAxisPaths}
         saveConfig={saveConfig}
         showLegend={showLegend}
         xAxisVal={xAxisVal}

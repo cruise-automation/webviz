@@ -9,7 +9,7 @@
 // Pulled from our open source demo bag: https://open-source-webviz-ui.s3.amazonaws.com/demo.bag
 import stressTestDatatypes from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/fixtures/example-datatypes.json";
 import { compile } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
-import generateRosDeclarations, {
+import generateRosLib, {
   generateTypeDefs,
   typedArrayMap,
   type InterfaceDeclarations,
@@ -19,7 +19,7 @@ import type { NodeData } from "webviz-core/src/players/UserNodePlayer/types";
 const ts = require("typescript/lib/typescript");
 
 const baseNodeData: NodeData = {
-  name: "main",
+  name: "/webviz_node/main",
   sourceCode: "",
   transpiledCode: "",
   diagnostics: [],
@@ -29,6 +29,7 @@ const baseNodeData: NodeData = {
   datatypes: {},
   sourceFile: undefined,
   typeChecker: undefined,
+  rosLib: "",
   projectCode: new Map<string, string>(),
 };
 
@@ -180,7 +181,7 @@ describe("typegen", () => {
           const formattedTypes = formatTypeDef(declarations);
           const type = ((jsType: any): string);
           expect(formattedTypes).toEqual({
-            "std_msgs/Data": `export interface std_msgs__Data { x: ${type}[]; }`,
+            "std_msgs/Data": `export interface std_msgs__Data { x: ${type}; }`,
           });
 
           const { diagnostics } = compile({ ...baseNodeData, sourceCode: formattedTypes["std_msgs/Data"] });
@@ -220,9 +221,9 @@ describe("typegen", () => {
     });
   });
 
-  describe("generateRosDeclarations", () => {
+  describe("generateRosLib", () => {
     it("basic snapshot", () => {
-      const rosLib = generateRosDeclarations({
+      const rosLib = generateRosLib({
         topics: [
           {
             name: "/my_topic",
@@ -250,14 +251,14 @@ describe("typegen", () => {
         name: `/topic_${i}`,
         datatype,
       }));
-      const rosLib = generateRosDeclarations({ topics: randomTopics, datatypes: stressTestDatatypes });
+      const rosLib = generateRosLib({ topics: randomTopics, datatypes: stressTestDatatypes });
       const { diagnostics } = compile({ ...baseNodeData, sourceCode: rosLib });
       expect(diagnostics).toEqual([]);
 
       expect(rosLib).toMatchSnapshot();
     });
     it("works with zero topics or datatypes", () => {
-      const rosLib = generateRosDeclarations({ topics: [], datatypes: {} });
+      const rosLib = generateRosLib({ topics: [], datatypes: {} });
       expect(rosLib).toMatchSnapshot();
       const { diagnostics } = compile({ ...baseNodeData, sourceCode: rosLib });
       expect(diagnostics).toEqual([]);

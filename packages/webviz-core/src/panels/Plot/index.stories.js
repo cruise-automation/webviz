@@ -8,10 +8,33 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
+import type { Time } from "rosbag";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Plot from "webviz-core/src/panels/Plot";
 import PanelSetup, { triggerWheel } from "webviz-core/src/stories/PanelSetup";
+import { fromSec } from "webviz-core/src/util/time";
+
+const float64StampedDefinition = `std_msgs/Header header
+float64 data
+
+================================================================================
+MSG: std_msgs/Header
+uint32 seq
+time stamp
+string frame_id`;
+
+const serializeFloat64Stamped = ({ value, headerStamp: { sec, nsec } }: { value: number, headerStamp: Time }) => {
+  const buffer = new ArrayBuffer(/*header.seq*/ 4 + /*header.time*/ 8 + /*header.frame_id*/ 4 + /*value*/ 8);
+  const view = new DataView(buffer);
+  const littleEndian = true;
+  view.setUint32(/*offset=*/ 0, 0, littleEndian);
+  view.setUint32(/*offset=*/ 4, sec, littleEndian);
+  view.setUint32(/*offset=*/ 8, nsec, littleEndian);
+  view.setUint32(/*offset=*/ 12, 0, littleEndian);
+  view.setFloat64(/*offset=*/ 16, value, littleEndian);
+  return Buffer.from(buffer);
+};
 
 const locationMessages = [
   { header: { stamp: { sec: 0, nsec: 574635076 } }, pose: { acceleration: -0.00116662939, velocity: 1.184182664 } },
@@ -47,6 +70,28 @@ const otherStateMessages = [
   { header: { stamp: { sec: 1, nsec: 785737230 } }, items: [{ id: 10, speed: 1.5 }, { id: 42, speed: 0.1 }] },
   { header: { stamp: { sec: 2, nsec: 182717960 } }, items: [{ id: 10, speed: 1.57 }, { id: 42, speed: 0.08 }] },
   { header: { stamp: { sec: 2, nsec: 578787057 } }, items: [{ id: 10, speed: 1.63 }, { id: 42, speed: 0.06 }] },
+];
+
+const getPreloadedMessage = (seconds) => ({
+  topic: "/preloaded_topic",
+  receiveTime: fromSec(seconds),
+  message: serializeFloat64Stamped({ value: Math.pow(seconds, 2), headerStamp: fromSec(seconds - 0.5) }),
+});
+
+const blocks = [
+  {
+    sizeInBytes: 0,
+    messagesByTopic: {
+      "/preloaded_topic": [0.6, 0.7, 0.8, 0.9, 1.0].map(getPreloadedMessage),
+    },
+  },
+  undefined,
+  {
+    sizeInBytes: 0,
+    messagesByTopic: {
+      "/preloaded_topic": [1.5, 1.6, 1.7, 1.8, 1.9].map(getPreloadedMessage),
+    },
+  },
 ];
 
 const fixture = {
@@ -89,17 +134,25 @@ const fixture = {
       ],
     },
     "std_msgs/Bool": { fields: [{ name: "data", type: "bool", isArray: false }] },
+    "nonstd_msgs/Float64Stamped": {
+      fields: [
+        { name: "header", type: "std_msgs/Header", isArray: false },
+        { name: "data", type: "float64", isArray: false },
+      ],
+    },
   },
   topics: [
     { name: "/some_topic/location", datatype: "msgs/PoseDebug" },
     { name: "/some_topic/location_subset", datatype: "msgs/PoseDebug" },
     { name: "/some_topic/state", datatype: "msgs/State" },
     { name: "/boolean_topic", datatype: "std_msgs/Bool" },
+    { name: "/preloaded_topic", datatype: "nonstd_msgs/Float64Stamped" },
   ],
   activeData: {
     startTime: { sec: 0, nsec: 202050 },
     endTime: { sec: 24, nsec: 999997069 },
     isPlaying: false,
+    messageDefinitionsByTopic: { "/preloaded_topic": float64StampedDefinition },
     speed: 0.2,
   },
   frame: {
@@ -136,6 +189,7 @@ const fixture = {
       },
     ],
   },
+  progress: { blocks },
 };
 
 const paths = [
@@ -436,6 +490,38 @@ storiesOf("<Plot>", module)
           config={{
             ...exampleConfig,
             paths: [{ value: "/some_number.data", enabled: true, timestampMethod: "receiveTime" }],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("preloaded data in binary blocks", () => {
+    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "headerStamp" },
+            ],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("mixed streamed and preloaded data", () => {
+    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/some_topic/state.items[0].speed", enabled: true, timestampMethod: "receiveTime" },
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+            ],
           }}
         />
       </PanelSetup>

@@ -103,7 +103,7 @@ class RosoutPanel extends PureComponent<Props> {
   _filterFn = (item: MessageHistoryItem) =>
     getShouldDisplayMsg(item.message, this.props.config.minLogLevel, this.props.config.searchTerms);
 
-  _getFilteredMessages(items: MessageHistoryItem[]): MessageHistoryItem[] {
+  _getFilteredMessages(items: $ReadOnlyArray<MessageHistoryItem>): $ReadOnlyArray<MessageHistoryItem> {
     const { minLogLevel, searchTerms } = this.props.config;
     const hasActiveFilters = minLogLevel > 1 || searchTerms.length > 0;
     if (!hasActiveFilters) {
@@ -113,7 +113,7 @@ class RosoutPanel extends PureComponent<Props> {
     return items.filter(this._filterFn);
   }
 
-  _renderFiltersBar = (seenNodeNames: Set<string>, msgs: MessageHistoryItem[]) => {
+  _renderFiltersBar = (seenNodeNames: Set<string>, msgs: $ReadOnlyArray<MessageHistoryItem>) => {
     const { minLogLevel, searchTerms } = this.props.config;
     const nodeNameOptions = Array.from(seenNodeNames).map((name) => ({ label: name, value: name }));
 
@@ -193,7 +193,7 @@ class RosoutPanel extends PureComponent<Props> {
     return (
       <MessageHistoryDEPRECATED paths={[config.topicToRender]} historySize={100000}>
         {({ itemsByPath }: MessageHistoryData) => {
-          const msgs: MessageHistoryItem[] = itemsByPath[config.topicToRender];
+          const msgs: $ReadOnlyArray<MessageHistoryItem> = itemsByPath[config.topicToRender];
           msgs.forEach((msg) => seenNodeNames.add(msg.message.message.name));
 
           return (

@@ -375,7 +375,7 @@ describe("RandomAccessPlayer", () => {
               message: { payload: "foo bar" },
             },
           ];
-          await new Promise((resolve) => setTimeout(resolve, 10));
+          await delay(10);
           mockDateNow.mockReturnValue(Date.now() + 1);
           source.seekPlayback({ sec: 10, nsec: 0 });
           return Promise.resolve(result);

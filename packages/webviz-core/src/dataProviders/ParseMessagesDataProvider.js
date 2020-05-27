@@ -12,6 +12,7 @@ import { type Time, MessageReader } from "rosbag";
 import { type DataProvider, type DataProviderMessage, type InitializationResult, type ExtensionPoint } from "./types";
 import type { DataProviderDescriptor, GetDataProvider } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
+import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 // Exported for tests.
@@ -63,7 +64,7 @@ export default class ParseMessagesDataProvider implements DataProvider {
     }
     this._readersByTopic = {};
     for (const topic of Object.keys(messageDefinitionsByTopic)) {
-      this._readersByTopic[topic] = new MessageReader(messageDefinitionsByTopic[topic]);
+      this._readersByTopic[topic] = new MessageReader(messageDefinitionsByTopic[topic], { freeze: FREEZE_MESSAGES });
     }
     return { ...result, providesParsedMessages: true };
   }

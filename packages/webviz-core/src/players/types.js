@@ -156,6 +156,9 @@ export type Topic = {|
   // The original topic name, if the topic name was at some point renamed, e.g. in
   // CombinedDataProvider.
   originalTopic?: string,
+  // The number of messages present on the topic. Valid only for sources with a fixed number of
+  // messages, such as bags.
+  numMessages?: number,
 |};
 
 // A ROS-like message.

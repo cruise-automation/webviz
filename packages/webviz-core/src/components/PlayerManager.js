@@ -14,9 +14,11 @@ import {
   setUserNodeDiagnostics,
   addUserNodeLogs,
   setUserNodeTrust,
+  setUserNodeRosLib,
   type SetUserNodeDiagnostics,
   type AddUserNodeLogs,
   type SetUserNodeTrust,
+  type SetUserNodeRosLib,
 } from "webviz-core/src/actions/userNodes";
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
@@ -129,6 +131,7 @@ type Props = OwnProps & {
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
   addUserNodeLogs: AddUserNodeLogs,
   setUserNodeTrust: SetUserNodeTrust,
+  setUserNodeRosLib: SetUserNodeRosLib,
   setGlobalVariables: typeof setGlobalVariables,
 };
 
@@ -140,6 +143,7 @@ function PlayerManager({
   setUserNodeDiagnostics: setDiagnostics,
   addUserNodeLogs: setLogs,
   setUserNodeTrust: setTrust,
+  setUserNodeRosLib: setRosLib,
   setGlobalVariables: setVariables,
 }: Props) {
   const usedFiles = React.useRef<File[]>([]);
@@ -162,11 +166,12 @@ function PlayerManager({
         setUserNodeDiagnostics: setDiagnostics,
         addUserNodeLogs: setLogs,
         setUserNodeTrust: setTrust,
+        setUserNodeRosLib: setRosLib,
       });
       const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, initialMessageOrder);
       setPlayerInternal(headerStampPlayer);
     },
-    [setDiagnostics, setLogs, setTrust, initialMessageOrder]
+    [setDiagnostics, setLogs, setTrust, initialMessageOrder, setRosLib]
   );
 
   React.useEffect(
@@ -273,5 +278,12 @@ export default connect<Props, OwnProps, _, _, _, _>(
     messageOrder: state.panels.playbackConfig.messageOrder,
     userNodes: state.panels.userNodes,
   }),
-  { importPanelLayout, setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust, setGlobalVariables }
+  {
+    importPanelLayout,
+    setUserNodeDiagnostics,
+    addUserNodeLogs,
+    setUserNodeTrust,
+    setUserNodeRosLib,
+    setGlobalVariables,
+  }
 )(PlayerManager);

@@ -12,7 +12,7 @@ import { initVimMode } from "monaco-vim";
 import * as React from "react";
 import MonacoEditor from "react-monaco-editor";
 
-import { type Script } from "./script";
+import type { Script, EditorSelection } from "webviz-core/src/panels/NodePlayground/script";
 import vsWebvizTheme from "webviz-core/src/panels/NodePlayground/theme/vs-webviz.json";
 import { getNodeProjectConfig } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig";
 
@@ -24,13 +24,35 @@ type Props = {|
   script: Script | null,
   setScriptCode: (code: string) => void,
   vimMode: boolean,
+  rosLib: string,
   /* A minor hack to tell the monaco editor to resize when dimensions change. */
   resizeKey: string,
   save: (code: string) => void,
   setScriptOverride: (script: Script) => void,
 |};
 
-const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOverride }: Props) => {
+// Taken from:
+// https://github.com/microsoft/vscode/blob/master/src/vs/editor/standalone/browser/standaloneCodeServiceImpl.ts
+const gotoSelection = (editor: monacoApi.Editor, selection?: EditorSelection) => {
+  if (selection) {
+    if (selection.endLineNumber && selection.endColumn) {
+      // These fields indicate a range was selected, set the range and reveal it.
+      editor.setSelection(selection);
+      editor.revealRangeInCenter(selection, 1 /* Immediate */);
+    } else {
+      // Otherwise it's just a position
+      const pos = {
+        lineNumber: selection.startLineNumber,
+        column: selection.startColumn,
+      };
+      editor.setPosition(pos);
+      editor.revealPositionInCenter(pos, 1 /* Immediate */);
+    }
+  }
+};
+
+const projectConfig = getNodeProjectConfig();
+const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOverride, rosLib }: Props) => {
   const editorRef = React.useRef<monacoApi.Editor>(null);
   const vimModeRef = React.useRef(null);
   React.useEffect(
@@ -47,6 +69,16 @@ const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOver
     [vimMode]
   );
 
+  React.useEffect(
+    () => {
+      monacoApi.languages.typescript.typescriptDefaults.addExtraLib(
+        rosLib,
+        `file:///node_modules/@types/${projectConfig.rosLib.fileName}`
+      );
+    },
+    [rosLib]
+  );
+
   /*
   In order to support go-to across files we override the code editor service doOpenEditor method.
   Default implementation checks if the requested resource is the current model and no ops if it isn't.
@@ -61,15 +93,23 @@ const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOver
       if (!requestedModel) {
         return editor;
       }
+
+      // If we are jumping to a definition within the user node, don't push
+      // to script override.
+      if (requestedModel.uri.path === script?.filePath) {
+        gotoSelection(editor, input.options.selection);
+        return;
+      }
+
       setScriptOverride({
-        fileName: requestedModel.uri.path,
+        filePath: requestedModel.uri.path,
         code: requestedModel.getValue(),
         readOnly: true,
         selection: input.options ? input.options.selection : undefined,
       });
       return editor;
     },
-    [setScriptOverride]
+    [script, setScriptOverride]
   );
 
   React.useEffect(
@@ -78,28 +118,13 @@ const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOver
       if (!editorRef || !script) {
         return;
       }
-      const filePath = monacoApi.Uri.parse(`file://${script.fileName}`);
+      const filePath = monacoApi.Uri.parse(`file://${script.filePath}`);
       const model =
         monacoApi.editor.getModel(filePath) || monacoApi.editor.createModel(script.code, "typescript", filePath);
 
       editor.setModel(model);
 
-      const selection = script.selection;
-      if (selection) {
-        if (selection.endLineNumber && selection.endColumn) {
-          // These fields indicate a range was selected, set the range and reveal it.
-          editor.setSelection(selection);
-          editor.revealRangeInCenter(selection, 1 /* Immediate */);
-        } else {
-          // Otherwise it's just a position
-          const pos = {
-            lineNumber: selection.startLineNumber,
-            column: selection.startColumn,
-          };
-          editor.setPosition(pos);
-          editor.revealPositionInCenter(pos, 1 /* Immediate */);
-        }
-      }
+      gotoSelection(editor, script.selection);
     },
     [script]
   );
@@ -134,7 +159,6 @@ const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOver
       // this way (instead of specifying it in the compiler options)
       // is a hack to overwrite the default type defs since the
       // typescript language service does not expose such a method.
-      const projectConfig = getNodeProjectConfig();
       projectConfig.declarations.forEach((lib) =>
         monaco.languages.typescript.typescriptDefaults.addExtraLib(
           lib.sourceCode,
@@ -143,13 +167,16 @@ const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOver
       );
       projectConfig.utilityFiles.forEach((sourceFile) => {
         const filePath = monacoApi.Uri.parse(`file://${sourceFile.filePath}`);
-        if (!monaco.editor.getModel(filePath)) {
-          monaco.editor.createModel(sourceFile.sourceCode, "typescript", filePath);
-        }
+        const model =
+          monaco.editor.getModel(filePath) || monaco.editor.createModel(sourceFile.sourceCode, "typescript", filePath);
+        model.updateOptions({ tabSize: 2 });
       });
 
-      const filePath = monacoApi.Uri.parse(`file://${script.fileName}`);
+      const filePath = monacoApi.Uri.parse(`file://${script.filePath}`);
       const model = monaco.editor.getModel(filePath) || monaco.editor.createModel(script.code, "typescript", filePath);
+
+      // Because anything else is blasphemy.
+      model.updateOptions({ tabSize: 2 });
       return {
         model,
       };

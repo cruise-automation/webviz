@@ -16,11 +16,11 @@ import useLinkedGlobalVariables from "./useLinkedGlobalVariables";
 import Flex from "webviz-core/src/components/Flex";
 import MockPanelContextProvider from "webviz-core/src/components/MockPanelContextProvider";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
+import { decodeMarker } from "webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/decodeMarker";
 import {
   POINT_CLOUD_MESSAGE,
   POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/fixture/pointCloudData";
-import { mapMarker } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 import colors from "webviz-core/src/styles/colors.module.scss";
 
@@ -253,8 +253,8 @@ storiesOf("<Interaction>", module)
     );
   })
   .add("PointCloud", () => {
-    const result = mapMarker(POINT_CLOUD_MESSAGE);
-    const resultWithAdditionalFields = mapMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS);
+    const result = decodeMarker(POINT_CLOUD_MESSAGE);
+    const resultWithAdditionalFields = decodeMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS);
 
     return (
       <SWrapper>

@@ -6,8 +6,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+export const MISSING_CORS_ERROR_TITLE = "Often this is due to missing CORS headers on the requested URL";
+
 export function corsError(url: string): string {
-  return `Often this is due to missing CORS headers on the requested URL: ${url}
+  return `${MISSING_CORS_ERROR_TITLE}: ${url}
 
 First of all, be aware that redirects don't work with CORS. So you'll have to point to the resource directly. So ?remote-bag-url=https%3A%2F%2Fopen-source-webviz-ui.s3.amazonaws.com%2Fdemo.bag will work (note the URL encoded using "encodeURIComponent"), but pointing to a server that then redirects to a URL like that will NOT work.
 

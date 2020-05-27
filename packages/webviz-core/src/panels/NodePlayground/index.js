@@ -41,15 +41,15 @@ const Editor = React.lazy(() =>
   import(/* webpackChunkName: "node-playground-editor" */ "webviz-core/src/panels/NodePlayground/Editor")
 );
 
-const skeletonBody = `import { Message } from "ros";
+const skeletonBody = `import { Input, Messages } from "ros";
 
-type InputTopicMsg = { /* YOUR INPUT TOPIC TYPE HERE */ };
-type Output = { /* DEFINED YOUR OUTPUT HERE */ };
+type Output = {};
 
 export const inputs = [];
 export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
 
-const publisher = (message: Message<InputTopicMsg>): Output => {
+// Populate 'Input' with a parameter to properly type your inputs, e.g. 'Input<"/your_input_topic">'
+const publisher = (message: Input<>): Output => {
   return {};
 };
 
@@ -139,7 +139,7 @@ const SWelcomeScreen = styled.div`
   }
 `;
 
-export type Explorer = null | "docs" | "nodes";
+export type Explorer = null | "docs" | "nodes" | "utils" | "templates";
 
 const WelcomeScreen = ({
   addNewNode,
@@ -181,8 +181,9 @@ function NodePlayground(props: Props) {
 
   const userNodes = useSelector((state) => state.panels.userNodes);
   const userNodeDiagnostics = useSelector((state) => state.userNodes.userNodeDiagnostics);
+  const rosLib = useSelector((state) => state.userNodes.rosLib);
   const needsUserTrust = useSelector((state) => {
-    const nodes: UserNodeDiagnostics[] = (Object.values(state.userNodes): any);
+    const nodes: UserNodeDiagnostics[] = (Object.values(state.userNodes.userNodeDiagnostics): any);
     return some(nodes, ({ trusted }) => typeof trusted === "boolean" && !trusted);
   });
 
@@ -195,13 +196,13 @@ function NodePlayground(props: Props) {
   const [scriptBackStack, setScriptBackStack] = React.useState<Script[]>([]);
   // Holds the currently active script
   const currentScript = scriptBackStack.length > 0 ? scriptBackStack[scriptBackStack.length - 1] : null;
-  const isCurrentScriptSelectedNode = !!selectedNode && !!currentScript && currentScript.fileName === selectedNode.name;
+  const isCurrentScriptSelectedNode = !!selectedNode && !!currentScript && currentScript.filePath === selectedNode.name;
   const isNodeSaved = !isCurrentScriptSelectedNode || currentScript?.code === selectedNode?.sourceCode;
   const selectedNodeLogs =
     selectedNodeId && userNodeDiagnostics[selectedNodeId] ? userNodeDiagnostics[selectedNodeId].logs : [];
 
   const inputTitle = currentScript
-    ? currentScript.fileName + (currentScript.readOnly ? " (READONLY)" : "")
+    ? currentScript.filePath + (currentScript.readOnly ? " (READONLY)" : "")
     : "node name";
   const inputStyle = {
     borderRadius: 0,
@@ -216,7 +217,7 @@ function NodePlayground(props: Props) {
       if (selectedNode) {
         const testItems = props.config.additionalBackStackItems || [];
         setScriptBackStack([
-          { fileName: selectedNode.name, code: selectedNode.sourceCode, readOnly: false },
+          { filePath: selectedNode.name, code: selectedNode.sourceCode, readOnly: false },
           ...testItems,
         ]);
       }
@@ -235,13 +236,14 @@ function NodePlayground(props: Props) {
   );
 
   const addNewNode = React.useCallback(
-    () => {
+    (_, code?: string) => {
       const newNodeId = uuid.v4();
+      const sourceCode = code || skeletonBody;
       // TODO: Add integration test for this flow.
-      trustUserNode({ id: newNodeId, sourceCode: skeletonBody }).then(() => {
+      trustUserNode({ id: newNodeId, sourceCode }).then(() => {
         setUserNodes({
           [newNodeId]: {
-            sourceCode: skeletonBody,
+            sourceCode,
             name: `${DEFAULT_WEBVIZ_NODE_PREFIX}${newNodeId.split("-")[0]}`,
           },
         });
@@ -277,8 +279,12 @@ function NodePlayground(props: Props) {
   );
 
   const setScriptOverride = React.useCallback(
-    (script: Script) => {
-      setScriptBackStack([...scriptBackStack, script]);
+    (script: Script, maxDepth?: number) => {
+      if (maxDepth && scriptBackStack.length >= maxDepth) {
+        setScriptBackStack([...scriptBackStack.slice(0, maxDepth - 1), script]);
+      } else {
+        setScriptBackStack([...scriptBackStack, script]);
+      }
     },
     [scriptBackStack]
   );
@@ -295,10 +301,9 @@ function NodePlayground(props: Props) {
       // update code at top of backstack
       const backStack = [...scriptBackStack];
       if (backStack.length > 0) {
-        const script = { ...backStack[backStack.length - 1] };
+        const script = backStack.pop();
         if (!script.readOnly) {
-          script.code = code;
-          setScriptBackStack(backStack);
+          setScriptBackStack([...backStack, { ...script, code }]);
         }
       }
     },
@@ -331,6 +336,9 @@ function NodePlayground(props: Props) {
               userNodes={userNodes}
               needsUserTrust={needsUserTrust}
               userNodeDiagnostics={userNodeDiagnostics}
+              script={currentScript}
+              setScriptOverride={setScriptOverride}
+              addNewNode={addNewNode}
             />
             <Flex col>
               <Flex
@@ -404,6 +412,7 @@ function NodePlayground(props: Props) {
                         setScriptCode={setScriptCode}
                         setScriptOverride={setScriptOverride}
                         vimMode={vimMode}
+                        rosLib={rosLib}
                         resizeKey={`${width}-${height}-${explorer || "none"}-${selectedNodeId || "none"}`}
                         save={saveNode}
                       />

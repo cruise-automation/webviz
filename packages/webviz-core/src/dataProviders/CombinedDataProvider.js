@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { flatten, isEqual } from "lodash";
+import memoizeWeak from "memoize-weak";
 import { TimeUtil, type Time } from "rosbag";
 
 import type { MemoryCacheBlock } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
@@ -41,34 +42,18 @@ const mapTopics = (topics: Topic[], { provider, prefix }: InternalProviderInfo):
   }));
 };
 
-// block1 -> block2 -> mergedBlock(block1, block2).
-const mergeBlocksMemo = new WeakMap<MemoryCacheBlock, WeakMap<MemoryCacheBlock, MemoryCacheBlock>>();
-
-const mergedBlock = (block1: MemoryCacheBlock, block2: MemoryCacheBlock): MemoryCacheBlock => ({
-  messagesByTopic: { ...block1.messagesByTopic, ...block2.messagesByTopic },
-  sizeInBytes: block1.sizeInBytes + block2.sizeInBytes,
-});
-
-const memoizedMergedBlock = (block1: ?MemoryCacheBlock, block2: ?MemoryCacheBlock): ?MemoryCacheBlock => {
+const memoizedMergedBlock = memoizeWeak((block1, block2) => {
   if (block1 == null) {
     return block2;
   }
   if (block2 == null) {
     return block1;
   }
-  let memo = mergeBlocksMemo.get(block1);
-  if (memo == null) {
-    memo = new WeakMap<any, MemoryCacheBlock>();
-    mergeBlocksMemo.set(block1, memo);
-  }
-  const memoizedValue = memo.get(block2);
-  if (memoizedValue != null) {
-    return memoizedValue;
-  }
-  const ret = mergedBlock(block1, block2);
-  memo.set(block2, ret);
-  return ret;
-};
+  return {
+    messagesByTopic: { ...block1.messagesByTopic, ...block2.messagesByTopic },
+    sizeInBytes: block1.sizeInBytes + block2.sizeInBytes,
+  };
+});
 
 // Exported for tests
 export const mergedBlocks = (

@@ -8,11 +8,12 @@
 
 import React from "react";
 
-import { LINED_CONVEX_HULL_RENDERING_SETTING, type TopicSettingsEditorProps } from ".";
+import { type TopicSettingsEditorProps } from ".";
 import { SLabel, SDescription, SInput } from "./common";
 import Checkbox from "webviz-core/src/components/Checkbox";
 import Flex from "webviz-core/src/components/Flex";
 import type { Marker, MarkerArray } from "webviz-core/src/types/Messages";
+import { LINED_CONVEX_HULL_RENDERING_SETTING } from "webviz-core/src/util/globalConstants";
 
 type MarkerSettings = {|
   overrideColor?: ?string,

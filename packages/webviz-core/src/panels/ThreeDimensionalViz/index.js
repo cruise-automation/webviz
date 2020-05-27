@@ -25,8 +25,8 @@ import {
   getNewCameraStateOnFollowChange,
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import type { TopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/types";
-import { type TopicDisplayMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector";
-import LayoutForTopicTreeV2 from "webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/LayoutForTopicTreeV2";
+import Layout from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
+import { type TopicDisplayMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTransforms";
 import type { Frame, Topic } from "webviz-core/src/players/types";
@@ -177,7 +177,7 @@ const BaseRenderer = (props: Props, ref) => {
   React.useImperativeHandle(ref, (): any => ({ onFollowChange }));
 
   return (
-    <LayoutForTopicTreeV2
+    <Layout
       cameraState={cameraState}
       config={config}
       cleared={cleared}

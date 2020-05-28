@@ -1,7 +1,3 @@
-/*! ./lib */
-
-/*! ./ros */
-
 /*! ModuleConcatenation bailout: Module is not an ECMAScript module */
 
 /*! all exports used */
@@ -24,10 +20,6 @@
 
 /*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig */
 
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils */
-
-/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/pointClouds.ts */
-
 /*!******************************************************************!*\
   !*** ./packages/webviz-core/src/panels/NodePlayground/Editor.js ***!
   \******************************************************************/
@@ -35,23 +27,3 @@
 /*!*****************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/NodePlayground/theme/vs-webviz.json ***!
   \*****************************************************************************/
-
-/*!*************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/lib.js ***!
-  \*************************************************************************************************/
-
-/*!*************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros.js ***!
-  \*************************************************************************************************/
-
-/*!***********************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig.js ***!
-  \***********************************************************************************************************/
-
-/*!*************************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/index.js ***!
-  \*************************************************************************************************************/
-
-/*!*******************************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/pointClouds.ts ***!
-  \*******************************************************************************************************************/

@@ -1,21 +1,17 @@
-/*! ./../../../../../../../../../../node_modules/node-libs-browser/node_modules/process/browser.js */
+/*! ../typescript/typescript.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/language/css/_deps/vscode-uri/index.js (<- Module uses injected variables (process)) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution.js (referenced with import()) */
 
-/*! ModuleConcatenation bailout: Module uses injected variables (process) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution.js (referenced with import()) */
 
 /*! all exports used */
 
-/*! exports provided: URI */
+/*! exports provided: conf, language */
 
-/*! exports provided: setupMode */
+/*!*********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/basic-languages/javascript/javascript.js ***!
+  \*********************************************************************************************************/
 
-/*! exports used: URI */
-
-/*!*****************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/language/css/cssMode.js + 41 modules ***!
-  \*****************************************************************************************************/
-
-/*!*******************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/language/css/_deps/vscode-uri/index.js ***!
-  \*******************************************************************************************************/
+/*!*********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/basic-languages/typescript/typescript.js ***!
+  \*********************************************************************************************************/

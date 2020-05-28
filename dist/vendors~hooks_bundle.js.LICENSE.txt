@@ -4,6 +4,12 @@
 	@license MIT
 	*/
 
+/*
+object-assign
+(c) Sindre Sorhus
+@license MIT
+*/
+
 /*!
   Copyright (c) 2018 Jed Watson.
   Licensed under the MIT License (MIT), see
@@ -59,15 +65,49 @@
  * Released under the MIT License.
  */
 
+/*! !../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../node_modules/postcss-loader/src??postcss!./monolith.min.css */
+
 /*! ../ */
+
+/*! ../../../../../../../node_modules/css-loader/lib/css-base.js */
+
+/*! ../../../../../../../node_modules/style-loader/lib/addStyles.js */
 
 /*! ../../modules/_core */
 
+/*! ../../modules/_wks-ext */
+
+/*! ../../modules/es6.array.from */
+
 /*! ../../modules/es6.number.is-safe-integer */
+
+/*! ../../modules/es6.object.assign */
+
+/*! ../../modules/es6.object.create */
+
+/*! ../../modules/es6.object.define-property */
+
+/*! ../../modules/es6.object.get-own-property-descriptor */
 
 /*! ../../modules/es6.object.get-own-property-names */
 
+/*! ../../modules/es6.object.get-prototype-of */
+
 /*! ../../modules/es6.object.keys */
+
+/*! ../../modules/es6.object.set-prototype-of */
+
+/*! ../../modules/es6.object.to-string */
+
+/*! ../../modules/es6.string.iterator */
+
+/*! ../../modules/es6.symbol */
+
+/*! ../../modules/es7.symbol.async-iterator */
+
+/*! ../../modules/es7.symbol.observable */
+
+/*! ../../modules/web.dom.iterable */
 
 /*! ../5/CheckObjectCoercible */
 
@@ -79,13 +119,35 @@
 
 /*! ../collection-utils */
 
+/*! ../components/AntdIcon */
+
 /*! ../convert/hsl2rgb */
+
+/*! ../core-js/array/from */
 
 /*! ../core-js/get-iterator */
 
 /*! ../core-js/is-iterable */
 
+/*! ../core-js/object/assign */
+
+/*! ../core-js/object/create */
+
+/*! ../core-js/object/define-property */
+
+/*! ../core-js/object/get-own-property-descriptor */
+
+/*! ../core-js/object/get-prototype-of */
+
+/*! ../core-js/object/set-prototype-of */
+
+/*! ../core-js/symbol */
+
+/*! ../core-js/symbol/iterator */
+
 /*! ../helpers.js */
+
+/*! ../helpers/typeof */
 
 /*! ../maps/decode.json */
 
@@ -111,6 +173,8 @@
 
 /*! ../util/clamp */
 
+/*! ../utils */
+
 /*! ../utils/createCallbackMemoizer */
 
 /*! ../utils/requestAnimationTimeout */
@@ -123,7 +187,13 @@
 
 /*! ./../../../../../../node_modules/webpack/buildin/global.js */
 
+/*! ./../../../../../../node_modules/webpack/buildin/module.js */
+
 /*! ./../../../../../node_modules/buffer/index.js */
+
+/*! ./../../../../../node_modules/node-libs-browser/node_modules/process/browser.js */
+
+/*! ./../../../../../node_modules/webpack/buildin/global.js */
 
 /*! ./../../../../node-libs-browser/node_modules/process/browser.js */
 
@@ -145,6 +215,10 @@
 
 /*! ./CollectingHandler.js */
 
+/*! ./EventBaseObject */
+
+/*! ./EventObject */
+
 /*! ./ExecutionEnvironment */
 
 /*! ./Face */
@@ -154,6 +228,8 @@
 /*! ./Grid */
 
 /*! ./HalfEdge */
+
+/*! ./IconBase */
 
 /*! ./ItemRange */
 
@@ -182,6 +258,8 @@
 /*! ./ScalingCellSizeAndPositionManager.js */
 
 /*! ./Stream.js */
+
+/*! ./Switch */
 
 /*! ./Tokenizer.js */
 
@@ -221,11 +299,15 @@
 
 /*! ./_a-function */
 
+/*! ./_add-to-unscopables */
+
 /*! ./_an-instance */
 
 /*! ./_an-object */
 
 /*! ./_apply */
+
+/*! ./_array-includes */
 
 /*! ./_arrayEach */
 
@@ -242,6 +324,10 @@
 /*! ./_arrayPush */
 
 /*! ./_arraySome */
+
+/*! ./_asciiSize */
+
+/*! ./_asciiToArray */
 
 /*! ./_assignValue */
 
@@ -315,6 +401,8 @@
 
 /*! ./_basePropertyDeep */
 
+/*! ./_baseRepeat */
+
 /*! ./_baseRest */
 
 /*! ./_baseSet */
@@ -338,6 +426,8 @@
 /*! ./_cacheHas */
 
 /*! ./_castPath */
+
+/*! ./_castSlice */
 
 /*! ./_classof */
 
@@ -371,9 +461,13 @@
 
 /*! ./_coreJsData */
 
+/*! ./_create-property */
+
 /*! ./_createAggregator */
 
 /*! ./_createBaseFor */
+
+/*! ./_createPadding */
 
 /*! ./_createSet */
 
@@ -383,9 +477,15 @@
 
 /*! ./_defineProperty */
 
+/*! ./_defined */
+
 /*! ./_descriptors */
 
 /*! ./_dom-create */
+
+/*! ./_enum-bug-keys */
+
+/*! ./_enum-keys */
 
 /*! ./_equalArrays */
 
@@ -394,6 +494,8 @@
 /*! ./_equalObjects */
 
 /*! ./_export */
+
+/*! ./_fails */
 
 /*! ./_flatRest */
 
@@ -425,7 +527,11 @@
 
 /*! ./_global */
 
+/*! ./_has */
+
 /*! ./_hasPath */
+
+/*! ./_hasUnicode */
 
 /*! ./_hashClear */
 
@@ -441,6 +547,8 @@
 
 /*! ./_html */
 
+/*! ./_ie8-dom-define */
+
 /*! ./_initCloneArray */
 
 /*! ./_initCloneByTag */
@@ -448,6 +556,10 @@
 /*! ./_initCloneObject */
 
 /*! ./_invoke */
+
+/*! ./_iobject */
+
+/*! ./_is-array */
 
 /*! ./_is-array-iter */
 
@@ -473,7 +585,13 @@
 
 /*! ./_iter-call */
 
+/*! ./_iter-create */
+
+/*! ./_iter-define */
+
 /*! ./_iter-detect */
+
+/*! ./_iter-step */
 
 /*! ./_iterators */
 
@@ -505,6 +623,8 @@
 
 /*! ./_memoizeCapped */
 
+/*! ./_meta */
+
 /*! ./_microtask */
 
 /*! ./_nativeCreate */
@@ -517,11 +637,29 @@
 
 /*! ./_nodeUtil */
 
+/*! ./_object-assign */
+
+/*! ./_object-create */
+
 /*! ./_object-dp */
+
+/*! ./_object-dps */
+
+/*! ./_object-gopd */
+
+/*! ./_object-gopn */
 
 /*! ./_object-gopn-ext */
 
+/*! ./_object-gops */
+
+/*! ./_object-gpo */
+
 /*! ./_object-keys */
+
+/*! ./_object-keys-internal */
+
+/*! ./_object-pie */
 
 /*! ./_object-sap */
 
@@ -537,9 +675,15 @@
 
 /*! ./_promise-resolve */
 
+/*! ./_property-desc */
+
+/*! ./_redefine */
+
 /*! ./_redefine-all */
 
 /*! ./_root */
+
+/*! ./_set-proto */
 
 /*! ./_set-species */
 
@@ -552,6 +696,10 @@
 /*! ./_setToArray */
 
 /*! ./_setToString */
+
+/*! ./_shared */
+
+/*! ./_shared-key */
 
 /*! ./_shortOut */
 
@@ -569,21 +717,45 @@
 
 /*! ./_strictIndexOf */
 
+/*! ./_string-at */
+
+/*! ./_stringSize */
+
+/*! ./_stringToArray */
+
 /*! ./_stringToPath */
 
 /*! ./_task */
+
+/*! ./_to-absolute-index */
+
+/*! ./_to-integer */
+
+/*! ./_to-iobject */
 
 /*! ./_to-length */
 
 /*! ./_to-object */
 
+/*! ./_to-primitive */
+
 /*! ./_toKey */
 
 /*! ./_toSource */
 
+/*! ./_uid */
+
+/*! ./_unicodeSize */
+
+/*! ./_unicodeToArray */
+
 /*! ./_user-agent */
 
 /*! ./_wks */
+
+/*! ./_wks-define */
+
+/*! ./_wks-ext */
 
 /*! ./accessibilityOverscanIndicesGetter */
 
@@ -594,6 +766,8 @@
 /*! ./apathy */
 
 /*! ./array-set */
+
+/*! ./arrows */
 
 /*! ./ashes */
 
@@ -661,6 +835,8 @@
 
 /*! ./default */
 
+/*! ./default-props */
+
 /*! ./defaultCellRangeRenderer */
 
 /*! ./defaultOverscanIndicesGetter */
@@ -670,6 +846,8 @@
 /*! ./detection-strategy/object.js */
 
 /*! ./detection-strategy/scroll.js */
+
+/*! ./dots */
 
 /*! ./eighties */
 
@@ -683,6 +861,8 @@
 
 /*! ./eq */
 
+/*! ./es6.array.iterator */
+
 /*! ./events.js */
 
 /*! ./extractComponents */
@@ -694,6 +874,8 @@
 /*! ./flatten */
 
 /*! ./foreignNames.json */
+
+/*! ./generate */
 
 /*! ./get */
 
@@ -726,6 +908,10 @@
 /*! ./implementation */
 
 /*! ./inDOM */
+
+/*! ./initial-state */
+
+/*! ./inner-slider */
 
 /*! ./input */
 
@@ -776,6 +962,100 @@
 /*! ./lib/element */
 
 /*! ./lib/helpers */
+
+/*! ./lib/icons/ArrowLeftOutlined */
+
+/*! ./lib/icons/ArrowRightOutlined */
+
+/*! ./lib/icons/BarsOutlined */
+
+/*! ./lib/icons/CalendarOutlined */
+
+/*! ./lib/icons/CaretDownFilled */
+
+/*! ./lib/icons/CaretDownOutlined */
+
+/*! ./lib/icons/CaretUpOutlined */
+
+/*! ./lib/icons/CheckCircleFilled */
+
+/*! ./lib/icons/CheckCircleOutlined */
+
+/*! ./lib/icons/CheckOutlined */
+
+/*! ./lib/icons/ClockCircleOutlined */
+
+/*! ./lib/icons/CloseCircleFilled */
+
+/*! ./lib/icons/CloseCircleOutlined */
+
+/*! ./lib/icons/CloseOutlined */
+
+/*! ./lib/icons/CopyOutlined */
+
+/*! ./lib/icons/DeleteOutlined */
+
+/*! ./lib/icons/DoubleLeftOutlined */
+
+/*! ./lib/icons/DoubleRightOutlined */
+
+/*! ./lib/icons/DownOutlined */
+
+/*! ./lib/icons/DownloadOutlined */
+
+/*! ./lib/icons/EditOutlined */
+
+/*! ./lib/icons/EllipsisOutlined */
+
+/*! ./lib/icons/EnterOutlined */
+
+/*! ./lib/icons/ExclamationCircleFilled */
+
+/*! ./lib/icons/ExclamationCircleOutlined */
+
+/*! ./lib/icons/EyeInvisibleOutlined */
+
+/*! ./lib/icons/EyeOutlined */
+
+/*! ./lib/icons/FileOutlined */
+
+/*! ./lib/icons/FileTwoTone */
+
+/*! ./lib/icons/FilterFilled */
+
+/*! ./lib/icons/FolderOpenOutlined */
+
+/*! ./lib/icons/FolderOutlined */
+
+/*! ./lib/icons/InfoCircleFilled */
+
+/*! ./lib/icons/InfoCircleOutlined */
+
+/*! ./lib/icons/LeftOutlined */
+
+/*! ./lib/icons/LoadingOutlined */
+
+/*! ./lib/icons/MinusSquareOutlined */
+
+/*! ./lib/icons/PaperClipOutlined */
+
+/*! ./lib/icons/PictureTwoTone */
+
+/*! ./lib/icons/PlusOutlined */
+
+/*! ./lib/icons/PlusSquareOutlined */
+
+/*! ./lib/icons/RedoOutlined */
+
+/*! ./lib/icons/RightOutlined */
+
+/*! ./lib/icons/SearchOutlined */
+
+/*! ./lib/icons/StarFilled */
+
+/*! ./lib/icons/UpOutlined */
+
+/*! ./lib/icons/WarningFilled */
 
 /*! ./lib/kinetic.js */
 
@@ -837,6 +1117,8 @@
 
 /*! ./noop */
 
+/*! ./now */
+
 /*! ./objType */
 
 /*! ./objectWithoutPropertiesLoose */
@@ -879,6 +1161,8 @@
 
 /*! ./shim */
 
+/*! ./slider */
+
 /*! ./solarized */
 
 /*! ./source-map-generator */
@@ -907,7 +1191,11 @@
 
 /*! ./threezerotwofour */
 
+/*! ./toFinite */
+
 /*! ./toInteger */
+
+/*! ./toNumber */
 
 /*! ./toString */
 
@@ -915,9 +1203,13 @@
 
 /*! ./tomorrow */
 
+/*! ./track */
+
 /*! ./tube */
 
 /*! ./twilight */
+
+/*! ./twoTonePrimaryColor */
 
 /*! ./types */
 
@@ -933,6 +1225,8 @@
 
 /*! ./utils/calculateSizeAndPositionDataAndUpdateScrollOffset */
 
+/*! ./utils/innerSliderUtils */
+
 /*! ./utils/updateScrollIndexHelper */
 
 /*! ./vendor */
@@ -940,6 +1234,102 @@
 /*! ./warn-once */
 
 /*! ./warning */
+
+/*! @ant-design/colors */
+
+/*! @ant-design/icons-svg/lib/asn/ArrowLeftOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/ArrowRightOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/BarsOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/CalendarOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/CaretDownFilled */
+
+/*! @ant-design/icons-svg/lib/asn/CaretDownOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/CaretUpOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/CheckCircleFilled */
+
+/*! @ant-design/icons-svg/lib/asn/CheckCircleOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/CheckOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/ClockCircleOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/CloseCircleFilled */
+
+/*! @ant-design/icons-svg/lib/asn/CloseCircleOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/CloseOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/CopyOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/DeleteOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/DoubleLeftOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/DoubleRightOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/DownOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/DownloadOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/EditOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/EllipsisOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/EnterOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/ExclamationCircleFilled */
+
+/*! @ant-design/icons-svg/lib/asn/ExclamationCircleOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/EyeInvisibleOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/EyeOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/FileOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/FileTwoTone */
+
+/*! @ant-design/icons-svg/lib/asn/FilterFilled */
+
+/*! @ant-design/icons-svg/lib/asn/FolderOpenOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/FolderOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/InfoCircleFilled */
+
+/*! @ant-design/icons-svg/lib/asn/InfoCircleOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/LeftOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/LoadingOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/MinusSquareOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/PaperClipOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/PictureTwoTone */
+
+/*! @ant-design/icons-svg/lib/asn/PlusOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/PlusSquareOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/RedoOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/RightOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/SearchOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/StarFilled */
+
+/*! @ant-design/icons-svg/lib/asn/UpOutlined */
+
+/*! @ant-design/icons-svg/lib/asn/WarningFilled */
 
 /*! @babel/runtime/helpers/interopRequireDefault */
 
@@ -952,6 +1342,126 @@
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/react-dom/index.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./node_modules/react/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/ArrowLeftOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/ArrowRightOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/BarsOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CalendarOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CaretDownFilled.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CaretDownOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CaretUpOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CheckCircleFilled.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CheckCircleOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CheckOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/ClockCircleOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CloseCircleFilled.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CloseCircleOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CloseOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/CopyOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/DeleteOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/DoubleLeftOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/DoubleRightOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/DownOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/DownloadOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/EditOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/EllipsisOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/EnterOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/ExclamationCircleFilled.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/ExclamationCircleOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/EyeInvisibleOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/EyeOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/FileOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/FileTwoTone.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/FilterFilled.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/FolderOpenOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/FolderOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/InfoCircleFilled.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/InfoCircleOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/LeftOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/LoadingOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/MinusSquareOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/PaperClipOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/PictureTwoTone.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/PlusOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/PlusSquareOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/RedoOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/RightOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/SearchOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/StarFilled.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/UpOutlined.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/icons/WarningFilled.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@ant-design/react-slick/lib/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/assertThisInitialized.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/regenerator/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/add-dom-event-listener/lib/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/antd/node_modules/lodash/debounce.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/antd/node_modules/lodash/isEqual.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/antd/node_modules/lodash/padEnd.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/antd/node_modules/lodash/padStart.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/antd/node_modules/prop-types/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/antd/package.json (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/array-tree-filter/lib/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/async-validator/dist-web/index.js (<- Module uses injected variables (process)) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/babel-runtime/core-js/object/assign.js (<- Module is not an ECMAScript module) */
 
@@ -971,6 +1481,8 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/babel-runtime/helpers/extends.js (<- Module is not an ECMAScript module) */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/babel-runtime/helpers/get.js (<- Module is not an ECMAScript module) */
+
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/babel-runtime/helpers/inherits.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/babel-runtime/helpers/objectWithoutProperties.js (<- Module is not an ECMAScript module) */
@@ -979,17 +1491,37 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/babel-runtime/helpers/slicedToArray.js (<- Module is not an ECMAScript module) */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/babel-runtime/helpers/toConsumableArray.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/babel-runtime/helpers/typeof.js (<- Module is not an ECMAScript module) */
+
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/classnames/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/component-classes/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/copy-to-clipboard/index.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/dom-helpers/util/scrollbarSize.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/lodash-es/_freeGlobal.js (<- Module uses injected variables (global)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/lodash/debounce.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/mini-store/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/moment/moment.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/object-assign/index.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/object.omit/index.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/prop-types/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/raf/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/rc-switch/es/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-is/index.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-lifecycles-compat/react-lifecycles-compat.es.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/Grid/Grid.js (referenced with cjs require)) */
 
@@ -999,13 +1531,23 @@
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/resize-observer-polyfill/dist/ResizeObserver.es.js (<- Module uses injected variables (global)) */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/shallowequal/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/warning/warning.js (<- Module is not an ECMAScript module) */
+
 /*! ModuleConcatenation bailout: Module is not an ECMAScript module */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/regl-worldview/dist/index.esm.js (referenced with cjs require) */
 
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/rc-switch/es/index.js (referenced with cjs require) */
+
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/react-outside-click-handler/build/OutsideClickHandler.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/react-virtualized-select/dist/commonjs/VirtualizedSelect/VirtualizedSelect.js (referenced with cjs require), ./packages/webviz-core/src/panels/Rosout/index.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/Grid/Grid.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Checkbox.js (referenced with cjs require), ./packages/webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend.js (referenced with cjs require), ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Publish/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PoseSettingsEditor.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExpandingToolbar.js (referenced with cjs require) */
 
@@ -1013,19 +1555,19 @@
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/hooksImporter.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ImageView/ImageCanvas.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicTreeV2.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ImageView/ImageCanvas.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TreeNodeRow.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeRow.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/Sidebar.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/index.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/TabbedToolbar.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Plot/PlotLegend.js (referenced with cjs require) */
 
@@ -1035,7 +1577,7 @@
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/RawMessages/index.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/RawMessages/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicTreeV2.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/RawMessages/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/CameraInfo/index.js (referenced with cjs require) */
 
@@ -1055,19 +1597,23 @@
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicTreeV2.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTreeSwitcher.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicTreeSwitcher.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTreeSwitcher.js (referenced with cjs require), ./packages/webviz-core/src/panels/diagnostics/DiagnosticSummary.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicTreeSwitcher.js (referenced with cjs require), ./packages/webviz-core/src/panels/diagnostics/DiagnosticSummary.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeDotMenu.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TreeNodeDotMenu.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeRow.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TreeNodeRow.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/VisibilityToggle.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module uses injected variables (global) */
+
+/*! ModuleConcatenation bailout: Module uses injected variables (process) */
+
+/*! Pickr 1.4.7 MIT | https://github.com/Simonwep/pickr */
 
 /*! airbnb-prop-types */
 
@@ -1125,7 +1671,11 @@
 
 /*! classnames */
 
+/*! component-indexof */
+
 /*! consolidated-events */
+
+/*! core-js/library/fn/array/from */
 
 /*! core-js/library/fn/get-iterator */
 
@@ -1133,11 +1683,27 @@
 
 /*! core-js/library/fn/number/is-safe-integer */
 
+/*! core-js/library/fn/object/assign */
+
+/*! core-js/library/fn/object/create */
+
+/*! core-js/library/fn/object/define-property */
+
+/*! core-js/library/fn/object/get-own-property-descriptor */
+
 /*! core-js/library/fn/object/get-own-property-names */
+
+/*! core-js/library/fn/object/get-prototype-of */
 
 /*! core-js/library/fn/object/keys */
 
+/*! core-js/library/fn/object/set-prototype-of */
+
 /*! core-js/library/fn/promise */
+
+/*! core-js/library/fn/symbol */
+
+/*! core-js/library/fn/symbol/iterator */
 
 /*! debug */
 
@@ -1181,6 +1747,8 @@
 
 /*! exports provided: Aacute, aacute, Acirc, acirc, acute, AElig, aelig, Agrave, agrave, amp, AMP, Aring, aring, Atilde, atilde, Auml, auml, brvbar, Ccedil, ccedil, cedil, cent, copy, COPY, curren, deg, divide, Eacute, eacute, Ecirc, ecirc, Egrave, egrave, ETH, eth, Euml, euml, frac12, frac14, frac34, gt, GT, Iacute, iacute, Icirc, icirc, iexcl, Igrave, igrave, iquest, Iuml, iuml, laquo, lt, LT, macr, micro, middot, nbsp, not, Ntilde, ntilde, Oacute, oacute, Ocirc, ocirc, Ograve, ograve, ordf, ordm, Oslash, oslash, Otilde, otilde, Ouml, ouml, para, plusmn, pound, quot, QUOT, raquo, reg, REG, sect, shy, sup1, sup2, sup3, szlig, THORN, thorn, times, Uacute, uacute, Ucirc, ucirc, Ugrave, ugrave, uml, Uuml, uuml, Yacute, yacute, yen, yuml, default */
 
+/*! exports provided: Affix, Anchor, AutoComplete, Alert, Avatar, BackTop, Badge, Breadcrumb, Button, Calendar, Card, Collapse, Carousel, Cascader, Checkbox, Col, Comment, ConfigProvider, DatePicker, Descriptions, Divider, Dropdown, Drawer, Empty, Form, Grid, Input, InputNumber, Layout, List, message, Menu, Mentions, Modal, Statistic, notification, PageHeader, Pagination, Popconfirm, Popover, Progress, Radio, Rate, Result, Row, Select, Skeleton, Slider, Space, Spin, Steps, Switch, Table, Transfer, Tree, TreeSelect, Tabs, Tag, TimePicker, Timeline, Tooltip, Typography, Upload, version */
+
 /*! exports provided: ArrowKeyStepper, AutoSizer, CellMeasurer, CellMeasurerCache, Collection, ColumnSizer, accessibilityOverscanIndicesGetter, defaultCellRangeRenderer, defaultOverscanIndicesGetter, Grid, InfiniteLoader, List, createMasonryCellPositioner, Masonry, MultiGrid, ScrollSync, createTableMultiSort, defaultTableCellDataGetter, defaultTableCellRenderer, defaultTableHeaderRenderer, defaultTableHeaderRowRenderer, defaultTableRowRenderer, Table, Column, SortDirection, SortIndicator, WindowScroller */
 
 /*! exports provided: Async, AsyncCreatable, Creatable, Value, Option, defaultMenuRenderer, defaultArrowRenderer, defaultClearRenderer, defaultFilterOptions, default */
@@ -1195,7 +1763,15 @@
 
 /*! exports provided: glMatrix, mat2, mat2d, mat3, mat4, quat, quat2, vec2, vec3, vec4 */
 
+/*! exports provided: name, version, description, keywords, homepage, bugs, repository, license, contributors, funding, files, sideEffects, main, module, unpkg, typings, scripts, husky, browserslist, dependencies, devDependencies, peerDependencies, publishConfig, bundlesize, title, _resolved, _integrity, _from, default */
+
+/*! exports provided: polyfill */
+
+/*! exports provided: useDebounce, useDebouncedCallback */
+
 /*! exports provided: withResizeDetector, default */
+
+/*! exports used: any, array, func, object, string */
 
 /*! exports used: any, bool, func, node, number, shape, string */
 
@@ -1239,7 +1815,11 @@
 
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 
+/*! indexof */
+
 /*! inherits */
+
+/*! insert-css */
 
 /*! invariant */
 
@@ -1248,6 +1828,8 @@
 /*! is-plain-object */
 
 /*! isobject */
+
+/*! json2mq */
 
 /*! lodash.clonedeep */
 
@@ -1263,6 +1845,8 @@
 
 /*! lodash.mergewith */
 
+/*! lodash/debounce */
+
 /*! moment */
 
 /*! ms */
@@ -1273,11 +1857,15 @@
 
 /*! number-is-nan */
 
+/*! object-assign */
+
 /*! object-keys */
 
 /*! object.values */
 
 /*! path */
+
+/*! performance-now */
 
 /*! point-line-distance */
 
@@ -1292,6 +1880,8 @@
 /*! pure-color/parse */
 
 /*! querystring */
+
+/*! rc-util/lib/warning */
 
 /*! react */
 
@@ -1313,13 +1903,23 @@
 
 /*! readable-stream */
 
+/*! regenerator-runtime */
+
+/*! resize-observer-polyfill */
+
 /*! source-map */
 
 /*! srcset */
 
+/*! string-convert/camel2hyphen */
+
 /*! string_decoder */
 
 /*! supports-color */
+
+/*! tinycolor2 */
+
+/*! toggle-selection */
 
 /*! url */
 
@@ -1441,6 +2041,10 @@
   !*** ./node_modules/util/support/isBufferBrowser.js ***!
   \******************************************************/
 
+/*!********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/raf/index.js ***!
+  \********************************************************/
+
 /*!*********************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/map.js ***!
   \*********************************************************/
@@ -1482,6 +2086,10 @@
   \************************************************************/
 
 /*!************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/json2mq/index.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/sortBy.js ***!
   \************************************************************/
 
@@ -1511,6 +2119,10 @@
 
 /*!*************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/omit.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/package.json ***!
   \*************************************************************/
 
 /*!*************************************************************!*\
@@ -1569,6 +2181,10 @@
   !*** ./packages/webviz-core/node_modules/lodash/_baseMap.js ***!
   \**************************************************************/
 
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/warning/warning.js ***!
+  \**************************************************************/
+
 /*!***************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_Stack.js ***!
   \***************************************************************/
@@ -1615,6 +2231,10 @@
 
 /*!***************************************************************!*\
   !*** ./packages/webviz-core/node_modules/base16/lib/ocean.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/insert-css/index.js ***!
   \***************************************************************/
 
 /*!***************************************************************!*\
@@ -1882,10 +2502,6 @@
   \*****************************************************************/
 
 /*!*****************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/memoize-weak/index.js ***!
-  \*****************************************************************/
-
-/*!*****************************************************************!*\
   !*** ./packages/webviz-core/node_modules/object.values/shim.js ***!
   \*****************************************************************/
 
@@ -1899,6 +2515,10 @@
 
 /*!*****************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/lib/vendor.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-switch/es/index.js ***!
   \*****************************************************************/
 
 /*!******************************************************************!*\
@@ -2058,6 +2678,10 @@
   \******************************************************************/
 
 /*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/object-assign/index.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/object.values/index.js ***!
   \******************************************************************/
 
@@ -2079,6 +2703,14 @@
 
 /*!******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/lib/warning.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-switch/es/Switch.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-util/lib/warning.js ***!
   \******************************************************************/
 
 /*!*******************************************************************!*\
@@ -2513,6 +3145,10 @@
   !*** ./packages/webviz-core/node_modules/pure-color/parse/index.js ***!
   \*********************************************************************/
 
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/toggle-selection/index.js ***!
+  \*********************************************************************/
+
 /*!**********************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_assocIndexOf.js ***!
   \**********************************************************************/
@@ -2586,10 +3222,6 @@
   \**********************************************************************/
 
 /*!**********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/file-tree.svg ***!
-  \**********************************************************************/
-
-/*!**********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/link-plus.svg ***!
   \**********************************************************************/
 
@@ -2611,6 +3243,18 @@
 
 /*!**********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/bezier-easing/src/index.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/component-classes/index.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/component-indexof/index.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/copy-to-clipboard/index.js ***!
   \**********************************************************************/
 
 /*!**********************************************************************!*\
@@ -2722,10 +3366,6 @@
   \***********************************************************************/
 
 /*!***********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/memoize-weak/lib/memoize.js ***!
-  \***********************************************************************/
-
-/*!***********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/lib/previous-map.js ***!
   \***********************************************************************/
 
@@ -2771,6 +3411,10 @@
 
 /*!************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/lead-pencil.svg ***!
+  \************************************************************************/
+
+/*!************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/get.js ***!
   \************************************************************************/
 
 /*!************************************************************************!*\
@@ -2914,11 +3558,27 @@
   \**************************************************************************/
 
 /*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/utils.js ***!
+  \**************************************************************************/
+
+/*!**************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/dots-vertical.svg ***!
   \**************************************************************************/
 
 /*!**************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/file-multiple.svg ***!
+  \**************************************************************************/
+
+/*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/es/index.js + 525 modules ***!
+  \**************************************************************************/
+
+/*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/eq.js ***!
+  \**************************************************************************/
+
+/*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/array-tree-filter/lib/index.js ***!
   \**************************************************************************/
 
 /*!**************************************************************************!*\
@@ -2933,8 +3593,24 @@
   !*** ./packages/webviz-core/node_modules/react-json-tree/lib/objType.js ***!
   \**************************************************************************/
 
+/*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/string-convert/camel2hyphen.js ***!
+  \**************************************************************************/
+
 /*!***************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/batch-processor/src/utils.js ***!
+  \***************************************************************************/
+
+/*!***************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/colors/lib/index.js ***!
+  \***************************************************************************/
+
+/*!***************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/StarFilled.js ***!
+  \***************************************************************************/
+
+/*!***************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/UpOutlined.js ***!
   \***************************************************************************/
 
 /*!***************************************************************************!*\
@@ -2955,6 +3631,18 @@
 
 /*!***************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/export-variant.svg ***!
+  \***************************************************************************/
+
+/*!***************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/now.js ***!
+  \***************************************************************************/
+
+/*!***************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/symbol.js ***!
+  \***************************************************************************/
+
+/*!***************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/typeof.js ***!
   \***************************************************************************/
 
 /*!***************************************************************************!*\
@@ -2986,7 +3674,19 @@
   \****************************************************************************/
 
 /*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/EyeOutlined.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/FileTwoTone.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/arrow-left-bold.svg ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/checkbox-marked.svg ***!
   \****************************************************************************/
 
 /*!****************************************************************************!*\
@@ -2994,7 +3694,23 @@
   \****************************************************************************/
 
 /*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_Map.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_Set.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/keys.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/promise.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/extends.js ***!
   \****************************************************************************/
 
 /*!****************************************************************************!*\
@@ -3026,6 +3742,42 @@
   \*****************************************************************************/
 
 /*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/BarsOutlined.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CopyOutlined.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/DownOutlined.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/EditOutlined.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/FileOutlined.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/FilterFilled.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/LeftOutlined.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/PlusOutlined.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/RedoOutlined.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/hexagon-multiple.svg ***!
   \*****************************************************************************/
 
@@ -3038,6 +3790,26 @@
   \*****************************************************************************/
 
 /*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@simonwep/pickr/dist/pickr.min.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_Hash.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_root.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/async-validator/dist-web/index.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/inherits.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/dom-helpers/util/scrollbarSize.js ***!
   \*****************************************************************************/
 
@@ -3046,8 +3818,64 @@
   \*****************************************************************************/
 
 /*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/colors/lib/generate.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CheckOutlined.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CloseOutlined.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/EnterOutlined.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/RightOutlined.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/WarningFilled.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_Stack.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/padEnd.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-highlight-words/dist/main.js ***!
   \******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/DeleteOutlined.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/FolderOutlined.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/PictureTwoTone.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/SearchOutlined.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/lib/dots.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@babel/runtime/regenerator/index.js ***!
+  \*******************************************************************************/
 
 /*!*******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/chart-line-variant.svg ***!
@@ -3055,6 +3883,30 @@
 
 /*!*******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/expand-all-outline.svg ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/add-dom-event-listener/lib/index.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_Symbol.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_getTag.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isArray.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isEqual.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/array/from.js ***!
   \*******************************************************************************/
 
 /*!*******************************************************************************!*\
@@ -3070,11 +3922,99 @@
   \********************************************************************************/
 
 /*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CaretDownFilled.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CaretUpOutlined.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/LoadingOutlined.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/lib/index.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/lib/track.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_Promise.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_WeakMap.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_hashGet.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_hashHas.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_hashSet.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_isIndex.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_overArg.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/debounce.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isBuffer.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isLength.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isObject.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isSymbol.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/padStart.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/toFinite.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/toNumber.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/toString.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/is-iterable.js ***!
   \********************************************************************************/
 
 /*!********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/object/keys.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/createClass.js ***!
   \********************************************************************************/
 
 /*!********************************************************************************!*\
@@ -3102,6 +4042,98 @@
   \*********************************************************************************/
 
 /*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CalendarOutlined.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/DownloadOutlined.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/EllipsisOutlined.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/InfoCircleFilled.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/lib/arrows.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/lib/slider.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_DataView.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_MapCache.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_SetCache.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_arrayMap.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseKeys.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_cacheHas.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_getValue.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_isMasked.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_nodeUtil.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_stackGet.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_stackHas.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_stackSet.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_toSource.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/stubArray.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/stubFalse.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/toInteger.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/prop-types/index.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/get-iterator.js ***!
   \*********************************************************************************/
 
@@ -3121,12 +4153,96 @@
   !*** ./packages/webviz-core/node_modules/react-json-tree/lib/JSONObjectNode.js ***!
   \*********************************************************************************/
 
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/use-debounce/esm/index.js + 2 modules ***!
+  \*********************************************************************************/
+
 /*!**********************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/memoize-one/dist/memoize-one.esm.js ***!
   \**********************************************************************************/
 
 /*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/ArrowLeftOutlined.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CaretDownOutlined.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CheckCircleFilled.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CloseCircleFilled.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/PaperClipOutlined.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/airbnb-prop-types/build/mocks/index.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_ListCache.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_arrayPush.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_arraySome.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_asciiSize.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseSlice.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseTimes.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseUnary.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_castSlice.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_getNative.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_getRawTag.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_hashClear.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_isKeyable.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isFunction.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/object/assign.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/object/create.js ***!
   \**********************************************************************************/
 
 /*!**********************************************************************************!*\
@@ -3137,12 +4253,120 @@
   !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/index.js ***!
   \**********************************************************************************/
 
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/performance-now/lib/performance-now.js ***!
+  \**********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/ArrowRightOutlined.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/DoubleLeftOutlined.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/FolderOpenOutlined.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/InfoCircleOutlined.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/PlusSquareOutlined.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/checkbox-blank-outline.svg ***!
+  \***********************************************************************************/
+
 /*!***********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/unfold-less-horizontal.svg ***!
   \***********************************************************************************/
 
 /*!***********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/unfold-more-horizontal.svg ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_Uint8Array.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseGetTag.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseRepeat.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_coreJsData.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_equalByTag.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_freeGlobal.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_getAllKeys.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_getMapData.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_getSymbols.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_hasUnicode.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_hashDelete.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_mapToArray.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_nativeKeys.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_setToArray.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_stackClear.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_stringSize.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isArguments.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isArrayLike.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/classCallCheck.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/defineProperty.js ***!
   \***********************************************************************************/
 
 /*!***********************************************************************************!*\
@@ -3163,6 +4387,82 @@
 
 /*!************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/normalize-wheel/src/normalizeWheel.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CheckCircleOutlined.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/ClockCircleOutlined.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/CloseCircleOutlined.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/DoubleRightOutlined.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/MinusSquareOutlined.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_arrayFilter.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseIsEqual.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_equalArrays.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_isPrototype.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_mapCacheGet.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_mapCacheHas.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_mapCacheSet.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_setCacheAdd.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_setCacheHas.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_stackDelete.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_unicodeSize.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isObjectLike.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/isTypedArray.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/symbol/iterator.js ***!
   \************************************************************************************/
 
 /*!************************************************************************************!*\
@@ -3190,6 +4490,62 @@
   \*************************************************************************************/
 
 /*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/EyeInvisibleOutlined.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/StarFilled.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/UpOutlined.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/add-dom-event-listener/lib/EventObject.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_asciiToArray.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_assocIndexOf.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseIsNative.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseProperty.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseToString.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_equalObjects.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_listCacheGet.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_listCacheHas.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_listCacheSet.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_nativeCreate.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-input-autosize/lib/AutosizeInput.js ***!
   \*************************************************************************************/
 
@@ -3210,6 +4566,34 @@
   \**************************************************************************************/
 
 /*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/EyeOutlined.js ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/FileTwoTone.js ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_arrayLikeKeys.js ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_createPadding.js ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_mapCacheClear.js ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_stringToArray.js ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/toConsumableArray.js ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/types/box.js ***!
   \**************************************************************************************/
 
@@ -3219,6 +4603,74 @@
 
 /*!***************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/@babel/runtime/helpers/defineProperty.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/StarFilled.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/UpOutlined.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/BarsOutlined.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CopyOutlined.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/DownOutlined.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/EditOutlined.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/FileOutlined.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/FilterFilled.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/LeftOutlined.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/PlusOutlined.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/RedoOutlined.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/lib/inner-slider.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseGetAllKeys.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_listCacheClear.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_mapCacheDelete.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_objectToString.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_unicodeToArray.js ***!
   \***************************************************************************************/
 
 /*!***************************************************************************************!*\
@@ -3246,6 +4698,70 @@
   \****************************************************************************************/
 
 /*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/EyeOutlined.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/FileTwoTone.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/ExclamationCircleFilled.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/components/AntdIcon.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/components/IconBase.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CheckOutlined.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CloseOutlined.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/EnterOutlined.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/RightOutlined.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/WarningFilled.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/lib/default-props.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/lib/initial-state.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@simonwep/pickr/dist/themes/monolith.min.css ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseIsArguments.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseIsEqualDeep.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_listCacheDelete.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-autocomplete/build/lib/Autocomplete.js ***!
   \****************************************************************************************/
 
@@ -3260,6 +4776,66 @@
 /*!****************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/sanitize-html/node_modules/domutils/index.js ***!
   \****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/BarsOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CopyOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/DownOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/EditOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/FileOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/FilterFilled.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/LeftOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/PlusOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/RedoOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/DeleteOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/FolderOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/PictureTwoTone.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/SearchOutlined.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/add-dom-event-listener/lib/EventBaseObject.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseIsTypedArray.js ***!
+  \*****************************************************************************************/
 
 /*!*****************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/node_modules/source-map/lib/base64.js ***!
@@ -3302,6 +4878,42 @@
   \******************************************************************************************/
 
 /*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CheckOutlined.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CloseOutlined.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/EnterOutlined.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/RightOutlined.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/WarningFilled.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/ExclamationCircleOutlined.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CaretDownFilled.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CaretUpOutlined.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/LoadingOutlined.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/sanitize-html/node_modules/domhandler/index.js ***!
   \******************************************************************************************/
 
@@ -3311,6 +4923,38 @@
 
 /*!*******************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/state-handler.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/DeleteOutlined.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/FolderOutlined.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/PictureTwoTone.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/SearchOutlined.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CalendarOutlined.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/DownloadOutlined.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/EllipsisOutlined.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/InfoCircleFilled.js ***!
   \*******************************************************************************************/
 
 /*!*******************************************************************************************!*\
@@ -3326,6 +4970,10 @@
   \*******************************************************************************************/
 
 /*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/object/define-property.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized-select/dist/commonjs/index.js ***!
   \*******************************************************************************************/
 
@@ -3334,12 +4982,92 @@
   \*******************************************************************************************/
 
 /*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CaretDownFilled.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CaretUpOutlined.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/LoadingOutlined.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/ArrowLeftOutlined.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CaretDownOutlined.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CheckCircleFilled.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CloseCircleFilled.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/PaperClipOutlined.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/object/get-prototype-of.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/object/set-prototype-of.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/objectWithoutProperties.js ***!
+  \********************************************************************************************/
+
+/*!********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/dom-scroll-into-view/lib/dom-scroll-into-view.js ***!
   \********************************************************************************************/
 
 /*!********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/node_modules/source-map/lib/array-set.js ***!
   \********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CalendarOutlined.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/DownloadOutlined.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/EllipsisOutlined.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/InfoCircleFilled.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/ArrowRightOutlined.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/DoubleLeftOutlined.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/FolderOpenOutlined.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/InfoCircleOutlined.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/PlusSquareOutlined.js ***!
+  \*********************************************************************************************/
 
 /*!*********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/node_modules/source-map/lib/base64-vlq.js ***!
@@ -3374,11 +5102,63 @@
   \**********************************************************************************************/
 
 /*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/ArrowLeftOutlined.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CaretDownOutlined.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CheckCircleFilled.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CloseCircleFilled.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/PaperClipOutlined.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CheckCircleOutlined.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/ClockCircleOutlined.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/CloseCircleOutlined.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/DoubleRightOutlined.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/MinusSquareOutlined.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/now.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/helpers/possibleConstructorReturn.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/node_modules/source-map/lib/source-node.js ***!
   \**********************************************************************************************/
 
 /*!**********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/AutoSizer/index.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/resize-observer-polyfill/dist/ResizeObserver.es.js ***!
   \**********************************************************************************************/
 
 /*!**********************************************************************************************!*\
@@ -3388,6 +5168,30 @@
 /*!**********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/sanitize-html/node_modules/domutils/lib/helpers.js ***!
   \**********************************************************************************************/
+
+/*!***********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/ArrowRightOutlined.js ***!
+  \***********************************************************************************************/
+
+/*!***********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/DoubleLeftOutlined.js ***!
+  \***********************************************************************************************/
+
+/*!***********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/FolderOpenOutlined.js ***!
+  \***********************************************************************************************/
+
+/*!***********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/InfoCircleOutlined.js ***!
+  \***********************************************************************************************/
+
+/*!***********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/PlusSquareOutlined.js ***!
+  \***********************************************************************************************/
+
+/*!***********************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/EyeInvisibleOutlined.js ***!
+  \***********************************************************************************************/
 
 /*!***********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/node_modules/source-map/lib/mapping-list.js ***!
@@ -3407,6 +5211,30 @@
 
 /*!************************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/@babel/runtime/helpers/objectWithoutProperties.js ***!
+  \************************************************************************************************/
+
+/*!************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CheckCircleOutlined.js ***!
+  \************************************************************************************************/
+
+/*!************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/ClockCircleOutlined.js ***!
+  \************************************************************************************************/
+
+/*!************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/CloseCircleOutlined.js ***!
+  \************************************************************************************************/
+
+/*!************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/DoubleRightOutlined.js ***!
+  \************************************************************************************************/
+
+/*!************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/MinusSquareOutlined.js ***!
+  \************************************************************************************************/
+
+/*!************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/_root.js ***!
   \************************************************************************************************/
 
 /*!************************************************************************************************!*\
@@ -3441,6 +5269,26 @@
   !*** ./packages/webviz-core/node_modules/sanitize-html/node_modules/htmlparser2/lib/Stream.js ***!
   \************************************************************************************************/
 
+/*!*************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/EyeInvisibleOutlined.js ***!
+  \*************************************************************************************************/
+
+/*!*************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/lib/utils/innerSliderUtils.js ***!
+  \*************************************************************************************************/
+
+/*!*************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-lifecycles-compat/react-lifecycles-compat.es.js ***!
+  \*************************************************************************************************/
+
+/*!**************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/ExclamationCircleFilled.js ***!
+  \**************************************************************************************************/
+
+/*!**************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/_Symbol.js ***!
+  \**************************************************************************************************/
+
 /*!**************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/object/get-own-property-names.js ***!
   \**************************************************************************************************/
@@ -3456,6 +5304,26 @@
 /*!**************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/sanitize-html/node_modules/entities/maps/entities.json ***!
   \**************************************************************************************************/
+
+/*!***************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/components/twoTonePrimaryColor.js ***!
+  \***************************************************************************************************/
+
+/*!***************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/debounce.js ***!
+  \***************************************************************************************************/
+
+/*!***************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/isObject.js ***!
+  \***************************************************************************************************/
+
+/*!***************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/isSymbol.js ***!
+  \***************************************************************************************************/
+
+/*!***************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/toNumber.js ***!
+  \***************************************************************************************************/
 
 /*!***************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/utils/animationFrame.js ***!
@@ -3474,6 +5342,22 @@
   \***************************************************************************************************/
 
 /*!****************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/ExclamationCircleFilled.js ***!
+  \****************************************************************************************************/
+
+/*!****************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons/lib/icons/ExclamationCircleOutlined.js ***!
+  \****************************************************************************************************/
+
+/*!****************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/prop-types/factoryWithThrowingShims.js ***!
+  \****************************************************************************************************/
+
+/*!****************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/antd/node_modules/prop-types/lib/ReactPropTypesSecret.js ***!
+  \****************************************************************************************************/
+
+/*!****************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/promise.js ***!
   \****************************************************************************************************/
 
@@ -3490,8 +5374,48 @@
   \*****************************************************************************************************/
 
 /*!*****************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/_getRawTag.js ***!
+  \*****************************************************************************************************/
+
+/*!*****************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/sanitize-html/node_modules/htmlparser2/lib/FeedHandler.js ***!
   \*****************************************************************************************************/
+
+/*!******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/icons-svg/lib/asn/ExclamationCircleOutlined.js ***!
+  \******************************************************************************************************/
+
+/*!******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/_baseGetTag.js ***!
+  \******************************************************************************************************/
+
+/*!******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/_freeGlobal.js ***!
+  \******************************************************************************************************/
+
+/*!******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@babel/runtime/node_modules/regenerator-runtime/runtime.js ***!
+  \******************************************************************************************************/
+
+/*!******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_cof.js ***!
+  \******************************************************************************************************/
+
+/*!******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_ctx.js ***!
+  \******************************************************************************************************/
+
+/*!******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_has.js ***!
+  \******************************************************************************************************/
+
+/*!******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_uid.js ***!
+  \******************************************************************************************************/
+
+/*!******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_wks.js ***!
+  \******************************************************************************************************/
 
 /*!******************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/node_modules/source-map/lib/source-map-consumer.js ***!
@@ -3507,6 +5431,34 @@
 
 /*!*******************************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/detection-strategy/scroll.js ***!
+  \*******************************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/isObjectLike.js ***!
+  \*******************************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/core-js/object/get-own-property-descriptor.js ***!
+  \*******************************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/array/from.js ***!
+  \*******************************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_core.js ***!
+  \*******************************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_hide.js ***!
+  \*******************************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_html.js ***!
+  \*******************************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_meta.js ***!
   \*******************************************************************************************************/
 
 /*!*******************************************************************************************************!*\
@@ -3538,6 +5490,10 @@
   \********************************************************************************************************/
 
 /*!********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_fails.js ***!
+  \********************************************************************************************************/
+
+/*!********************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-outside-click-handler/node_modules/prop-types/index.js ***!
   \********************************************************************************************************/
 
@@ -3554,11 +5510,27 @@
   \*********************************************************************************************************/
 
 /*!*********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/symbol/index.js ***!
+  \*********************************************************************************************************/
+
+/*!*********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_export.js ***!
+  \*********************************************************************************************************/
+
+/*!*********************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_for-of.js ***!
   \*********************************************************************************************************/
 
 /*!*********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_global.js ***!
+  \*********************************************************************************************************/
+
+/*!*********************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_invoke.js ***!
+  \*********************************************************************************************************/
+
+/*!*********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_shared.js ***!
   \*********************************************************************************************************/
 
 /*!*********************************************************************************************************!*\
@@ -3570,12 +5542,52 @@
   \*********************************************************************************************************/
 
 /*!**********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@ant-design/react-slick/node_modules/lodash/_objectToString.js ***!
+  \**********************************************************************************************************/
+
+/*!**********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/object/assign.js ***!
+  \**********************************************************************************************************/
+
+/*!**********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/object/create.js ***!
+  \**********************************************************************************************************/
+
+/*!**********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_classof.js ***!
+  \**********************************************************************************************************/
+
+/*!**********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_defined.js ***!
+  \**********************************************************************************************************/
+
+/*!**********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_iobject.js ***!
+  \**********************************************************************************************************/
+
+/*!**********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_library.js ***!
+  \**********************************************************************************************************/
+
+/*!**********************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_perform.js ***!
+  \**********************************************************************************************************/
+
+/*!**********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_wks-ext.js ***!
   \**********************************************************************************************************/
 
 /*!**********************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-hover-observer/dist/es/ReactHoverObserver.js + 1 modules ***!
   \**********************************************************************************************************/
+
+/*!***********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_is-array.js ***!
+  \***********************************************************************************************************/
+
+/*!***********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_redefine.js ***!
+  \***********************************************************************************************************/
 
 /*!***********************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/utils/createCallbackMemoizer.js ***!
@@ -3586,7 +5598,59 @@
   \***********************************************************************************************************/
 
 /*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/symbol/iterator.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_an-object.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_enum-keys.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_is-object.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_iter-call.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_iter-step.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_iterators.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_microtask.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-dp.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_set-proto.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_string-at.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_to-length.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_to-object.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.symbol.js ***!
   \************************************************************************************************************/
 
 /*!************************************************************************************************************!*\
@@ -3598,11 +5662,51 @@
   \************************************************************************************************************/
 
 /*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_a-function.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_dom-create.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_is-integer.js ***!
   \*************************************************************************************************************/
 
 /*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-dps.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-gpo.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-pie.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-sap.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_shared-key.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_to-integer.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_to-iobject.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_user-agent.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_wks-define.js ***!
   \*************************************************************************************************************/
 
 /*!*************************************************************************************************************!*\
@@ -3618,6 +5722,38 @@
   \**************************************************************************************************************/
 
 /*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_descriptors.js ***!
+  \**************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_iter-create.js ***!
+  \**************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_iter-define.js ***!
+  \**************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_iter-detect.js ***!
+  \**************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-gopd.js ***!
+  \**************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-gopn.js ***!
+  \**************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-gops.js ***!
+  \**************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-keys.js ***!
+  \**************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_set-species.js ***!
   \**************************************************************************************************************/
 
@@ -3625,9 +5761,45 @@
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_redefine-all.js ***!
   \***************************************************************************************************************/
 
+/*!***************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_to-primitive.js ***!
+  \***************************************************************************************************************/
+
+/*!****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_enum-bug-keys.js ***!
+  \****************************************************************************************************************/
+
+/*!****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_is-array-iter.js ***!
+  \****************************************************************************************************************/
+
+/*!****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-assign.js ***!
+  \****************************************************************************************************************/
+
+/*!****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-create.js ***!
+  \****************************************************************************************************************/
+
+/*!****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_property-desc.js ***!
+  \****************************************************************************************************************/
+
+/*!****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.array.from.js ***!
+  \****************************************************************************************************************/
+
 /*!****************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/Grid/defaultOverscanIndicesGetter.js ***!
   \****************************************************************************************************************/
+
+/*!*****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_array-includes.js ***!
+  \*****************************************************************************************************************/
+
+/*!*****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_ie8-dom-define.js ***!
+  \*****************************************************************************************************************/
 
 /*!*****************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.object.keys.js ***!
@@ -3642,6 +5814,14 @@
   \*****************************************************************************************************************/
 
 /*!******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_create-property.js ***!
+  \******************************************************************************************************************/
+
+/*!******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-gopn-ext.js ***!
+  \******************************************************************************************************************/
+
+/*!******************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_promise-resolve.js ***!
   \******************************************************************************************************************/
 
@@ -3649,17 +5829,61 @@
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/core.is-iterable.js ***!
   \******************************************************************************************************************/
 
+/*!******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/web.dom.iterable.js ***!
+  \******************************************************************************************************************/
+
 /*!*******************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/number/is-safe-integer.js ***!
+  \*******************************************************************************************************************/
+
+/*!*******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/object/define-property.js ***!
   \*******************************************************************************************************************/
 
 /*!*******************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/core.get-iterator.js ***!
   \*******************************************************************************************************************/
 
+/*!*******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.object.assign.js ***!
+  \*******************************************************************************************************************/
+
+/*!*******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.object.create.js ***!
+  \*******************************************************************************************************************/
+
+/*!********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/object/get-prototype-of.js ***!
+  \********************************************************************************************************************/
+
+/*!********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/object/set-prototype-of.js ***!
+  \********************************************************************************************************************/
+
+/*!********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_set-to-string-tag.js ***!
+  \********************************************************************************************************************/
+
+/*!********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_to-absolute-index.js ***!
+  \********************************************************************************************************************/
+
+/*!********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.array.iterator.js ***!
+  \********************************************************************************************************************/
+
 /*!********************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/Grid/utils/CellSizeAndPositionManager.js ***!
   \********************************************************************************************************************/
+
+/*!*********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_add-to-unscopables.js ***!
+  \*********************************************************************************************************************/
+
+/*!*********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.string.iterator.js ***!
+  \*********************************************************************************************************************/
 
 /*!*********************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es7.promise.finally.js ***!
@@ -3678,8 +5902,20 @@
   \**********************************************************************************************************************/
 
 /*!**********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.object.to-string.js ***!
+  \**********************************************************************************************************************/
+
+/*!**********************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/Grid/accessibilityOverscanIndicesGetter.js ***!
   \**********************************************************************************************************************/
+
+/*!***********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_object-keys-internal.js ***!
+  \***********************************************************************************************************************/
+
+/*!***********************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es7.symbol.observable.js ***!
+  \***********************************************************************************************************************/
 
 /*!*************************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/_new-promise-capability.js ***!
@@ -3692,6 +5928,14 @@
 /*!**************************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/object/get-own-property-names.js ***!
   \**************************************************************************************************************************/
+
+/*!**************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/core.get-iterator-method.js ***!
+  \**************************************************************************************************************************/
+
+/*!***************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es7.symbol.async-iterator.js ***!
+  \***************************************************************************************************************************/
 
 /*!***************************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-outside-click-handler/node_modules/prop-types/factoryWithThrowingShims.js ***!
@@ -3709,13 +5953,41 @@
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.number.is-safe-integer.js ***!
   \****************************************************************************************************************************/
 
+/*!****************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.object.define-property.js ***!
+  \****************************************************************************************************************************/
+
+/*!*****************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.object.get-prototype-of.js ***!
+  \*****************************************************************************************************************************/
+
+/*!*****************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.object.set-prototype-of.js ***!
+  \*****************************************************************************************************************************/
+
+/*!*******************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/fn/object/get-own-property-descriptor.js ***!
+  \*******************************************************************************************************************************/
+
+/*!*******************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/mini-store/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js ***!
+  \*******************************************************************************************************************************/
+
 /*!***********************************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.object.get-own-property-names.js ***!
   \***********************************************************************************************************************************/
 
+/*!****************************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/babel-runtime/node_modules/core-js/library/modules/es6.object.get-own-property-descriptor.js ***!
+  \****************************************************************************************************************************************/
+
 /*!*******************************************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/Grid/utils/calculateSizeAndPositionDataAndUpdateScrollOffset.js ***!
   \*******************************************************************************************************************************************/
+
+/*!******************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/@simonwep/pickr/dist/themes/monolith.min.css ***!
+  \******************************************************************************************************************************************************************************/
 
 /**
  * Checks if an event is supported in the current execution environment.

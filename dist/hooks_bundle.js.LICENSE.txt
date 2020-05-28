@@ -1,3 +1,5 @@
+/*! !../../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../../node_modules/postcss-loader/src??postcss!../../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./TopicSettingsEditor.module.scss */
+
 /*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./DiagnosticStatus.module.scss */
 
 /*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./DiagnosticSummary.module.scss */
@@ -10,11 +12,17 @@
 
 /*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./MessagePathInput.module.scss */
 
+/*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./Option.module.scss */
+
 /*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./PlotChart.module.scss */
 
 /*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./PlotLegend.module.scss */
 
 /*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./PlotMenu.module.scss */
+
+/*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./Select.module.scss */
+
+/*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./Tab.module.scss */
 
 /*! !../../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../../node_modules/postcss-loader/src??postcss!../../../../../node_modules/sass-loader/lib/loader.js??ref--16!./TimeBasedChartTooltip.module.scss */
 
@@ -25,6 +33,12 @@
 /*! !../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../node_modules/postcss-loader/src??postcss!../../../../node_modules/sass-loader/lib/loader.js??ref--16!./ExpandingToolbar.module.scss */
 
 /*! !../../../../node_modules/css-loader??ref--14-oneOf-0!../../../../node_modules/postcss-loader/src??postcss!../../../../node_modules/sass-loader/lib/loader.js??ref--16!./Panel.module.scss */
+
+/*! . */
+
+/*! ../../../../../../node_modules/css-loader/lib/css-base.js */
+
+/*! ../../../../../../node_modules/style-loader/lib/addStyles.js */
 
 /*! ../../../../../node_modules/css-loader/lib/css-base.js */
 
@@ -44,6 +58,8 @@
 
 /*! ./../../../../../../node_modules/timers-browserify/main.js */
 
+/*! ./../../../../../node_modules/buffer/index.js */
+
 /*! ./../../../../../node_modules/timers-browserify/main.js */
 
 /*! ./../../../../../node_modules/webpack/buildin/global.js */
@@ -61,6 +77,8 @@
 /*! ./ChartJSWorker */
 
 /*! ./ChartJSWorker.worker */
+
+/*! ./ColorPicker */
 
 /*! ./DiagnosticStatus */
 
@@ -98,6 +116,8 @@
 
 /*! ./Interactions */
 
+/*! ./LaserScanSettingsEditor */
+
 /*! ./LaserScans */
 
 /*! ./LevelToString */
@@ -112,6 +132,8 @@
 
 /*! ./LogMessage.module.scss */
 
+/*! ./MarkerSettingsEditor */
+
 /*! ./MessagePathInput.module.scss */
 
 /*! ./Metadata */
@@ -121,6 +143,10 @@
 /*! ./ObjectDetails */
 
 /*! ./OccupancyGrids */
+
+/*! ./Option */
+
+/*! ./Option.module.scss */
 
 /*! ./Panel.module.scss */
 
@@ -132,15 +158,25 @@
 
 /*! ./PointCloudDetails */
 
+/*! ./PointCloudSettingsEditor */
+
 /*! ./Pointclouds */
 
 /*! ./Polygons */
 
 /*! ./PoseMarkers */
 
+/*! ./PoseSettingsEditor */
+
 /*! ./RawMessagesIcons */
 
 /*! ./Readers */
+
+/*! ./Select */
+
+/*! ./Select.module.scss */
+
+/*! ./Tab.module.scss */
 
 /*! ./TextHighlight */
 
@@ -152,9 +188,11 @@
 
 /*! ./TopicLink */
 
-/*! ./TopicTreeSwitcher */
+/*! ./TopicSettingsEditor.module.scss */
 
-/*! ./TopicTreeV2 */
+/*! ./TopicTree */
+
+/*! ./TopicTreeSwitcher */
 
 /*! ./TopicViewModeSelector */
 
@@ -176,6 +214,8 @@
 
 /*! ./buildSampleMessage */
 
+/*! ./common */
+
 /*! ./constants */
 
 /*! ./decodeMarker */
@@ -194,6 +234,8 @@
 
 /*! ./interactionUtils */
 
+/*! ./lib */
+
 /*! ./loadWebviz */
 
 /*! ./memoization */
@@ -210,6 +252,12 @@
 
 /*! ./renderTreeNodes */
 
+/*! ./topicGroupsMigrations */
+
+/*! ./topicGroupsUtils */
+
+/*! ./twoDimensionalPlot.template.ts */
+
 /*! ./types */
 
 /*! ./useCachedGetMessagePathDataItems */
@@ -223,6 +271,8 @@
 /*! ./util/globalConstants */
 
 /*! ./utils */
+
+/*! ./utils/groupingUtils */
 
 /*! ./zoomAndPanHelpers */
 
@@ -298,8 +348,6 @@
 
 /*! @mdi/svg/svg/file-multiple.svg */
 
-/*! @mdi/svg/svg/file-tree.svg */
-
 /*! @mdi/svg/svg/fullscreen.svg */
 
 /*! @mdi/svg/svg/grid-large.svg */
@@ -362,13 +410,19 @@
 
 /*! @mdi/svg/svg/waves.svg */
 
+/*! @simonwep/pickr */
+
+/*! @simonwep/pickr/dist/themes/monolith.min.css */
+
 /*! ModuleConcatenation bailout: Module is not an ECMAScript module */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/Sidebar.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Tab/index.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Tab/EmptyDropTarget.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicTreeV2.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
 
 /*! all exports used */
 
@@ -393,6 +447,8 @@
 /*! hammerjs */
 
 /*! hoist-non-react-statics */
+
+/*! import() | monaco-api */
 
 /*! import() | node-playground-editor */
 
@@ -433,6 +489,8 @@
 /*! memoize-weak */
 
 /*! micro-memoize */
+
+/*! monaco-editor/esm/vs/editor/editor.api */
 
 /*! nearley */
 
@@ -504,6 +562,8 @@
 
 /*! tinycolor2 */
 
+/*! use-debounce */
+
 /*! uuid */
 
 /*! webviz-core/shared/panelToolbarStyles */
@@ -530,6 +590,8 @@
 
 /*! webviz-core/src/components/ChildToggle */
 
+/*! webviz-core/src/components/ColorPicker */
+
 /*! webviz-core/src/components/ContextMenu */
 
 /*! webviz-core/src/components/Dropdown */
@@ -547,6 +609,8 @@
 /*! webviz-core/src/components/Flex */
 
 /*! webviz-core/src/components/GlobalVariableSlider */
+
+/*! webviz-core/src/components/GradientPicker */
 
 /*! webviz-core/src/components/Icon */
 
@@ -592,7 +656,15 @@
 
 /*! webviz-core/src/components/Publisher */
 
+/*! webviz-core/src/components/Radio */
+
 /*! webviz-core/src/components/ReactChartjs */
+
+/*! webviz-core/src/components/SegmentedControl */
+
+/*! webviz-core/src/components/Select */
+
+/*! webviz-core/src/components/SelectableTimestamp */
 
 /*! webviz-core/src/components/Slider */
 
@@ -652,6 +724,10 @@
 
 /*! webviz-core/src/panels/NodePlayground/Sidebar */
 
+/*! webviz-core/src/panels/NodePlayground/assets/file-document-edit.svg */
+
+/*! webviz-core/src/panels/NodePlayground/assets/hammer-wrench.svg */
+
 /*! webviz-core/src/panels/NodePlayground/index.help.md */
 
 /*! webviz-core/src/panels/NodePlayground/playground-icon.svg */
@@ -686,11 +762,25 @@
 
 /*! webviz-core/src/panels/Rosout */
 
+/*! webviz-core/src/panels/SourceInfo */
+
 /*! webviz-core/src/panels/StateTransitions */
 
 /*! webviz-core/src/panels/SubscribeToList */
 
 /*! webviz-core/src/panels/Tab */
+
+/*! webviz-core/src/panels/Tab/DraggableToolbarTab */
+
+/*! webviz-core/src/panels/Tab/EmptyDropTarget */
+
+/*! webviz-core/src/panels/Tab/TabDndContext */
+
+/*! webviz-core/src/panels/Tab/TabbedToolbar */
+
+/*! webviz-core/src/panels/Tab/ToolbarTab */
+
+/*! webviz-core/src/panels/Tab/index.help.md */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz */
 
@@ -736,19 +826,19 @@
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils */
 
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector */
-
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor */
 
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/LayoutForTopicTreeV2 */
+/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout */
 
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicSettingsModal */
+/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicSettingsModal */
 
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicTreeV2 */
+/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree */
 
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/useSceneBuilderAndTransformsData */
+/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector */
+
+/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/Transforms */
 
@@ -759,6 +849,8 @@
 /*! webviz-core/src/panels/ThreeDimensionalViz/commands */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/commands/CarModel/carModel.glb */
+
+/*! webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/selection */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder */
 
@@ -785,6 +877,28 @@
 /*! webviz-core/src/panels/diagnostics/DiagnosticsHistory */
 
 /*! webviz-core/src/players/UserNodePlayer/nodeSecurity */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/DEPRECATED_ros */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/templates */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/README.md */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/pointClouds.ts */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/readers.ts */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/time.ts */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/types.ts */
+
+/*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/vectors.ts */
 
 /*! webviz-core/src/players/UserNodePlayer/types */
 
@@ -937,6 +1051,10 @@
   \********************************************************/
 
 /*!*********************************************************!*\
+  !*** ./packages/webviz-core/src/components/Checkbox.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
   !*** ./packages/webviz-core/src/panels/Rosout/index.js ***!
   \*********************************************************/
 
@@ -981,6 +1099,10 @@
   \***********************************************************/
 
 /*!***********************************************************!*\
+  !*** ./packages/webviz-core/src/panels/Tab/ToolbarTab.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
   !*** ./packages/webviz-core/src/panels/Tab/index.help.md ***!
   \***********************************************************/
 
@@ -991,6 +1113,10 @@
 /*!***********************************************************!*\
   !*** ./packages/webviz-core/src/util/toolsColorScheme.js ***!
   \***********************************************************/
+
+/*!************************************************************!*\
+  !*** ./packages/webviz-core/src/components/ColorPicker.js ***!
+  \************************************************************/
 
 /*!************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ImageView/index.js ***!
@@ -1025,12 +1151,32 @@
   \*************************************************************/
 
 /*!*************************************************************!*\
+  !*** ./packages/webviz-core/src/components/Select/index.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
   !*** ./packages/webviz-core/src/panels/RawMessages/Diff.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/SourceInfo/index.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/Tab/Tab.module.scss ***!
   \*************************************************************/
 
 /*!*************************************************************!*\
   !*** ./packages/webviz-core/src/panels/diagnostics/util.js ***!
   \*************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/src/components/Select/Option.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/src/components/Select/Select.js ***!
+  \**************************************************************/
 
 /*!**************************************************************!*\
   !*** ./packages/webviz-core/src/hooks/useGlobalVariables.js ***!
@@ -1053,12 +1199,24 @@
   \**************************************************************/
 
 /*!**************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/Tab/TabDndContext.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/Tab/TabbedToolbar.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
   !*** ./packages/webviz-core/src/util/multicolorLineChart.js ***!
   \**************************************************************/
 
 /*!**************************************************************!*\
   !*** ./packages/webviz-core/src/util/synchronizeMessages.js ***!
   \**************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/src/components/GradientPicker.js ***!
+  \***************************************************************/
 
 /*!***************************************************************!*\
   !*** ./packages/webviz-core/src/components/Panel.module.scss ***!
@@ -1086,6 +1244,10 @@
 
 /*!****************************************************************!*\
   !*** ./packages/webviz-core/src/panels/RawMessages/getDiff.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/Tab/EmptyDropTarget.js ***!
   \****************************************************************/
 
 /*!*****************************************************************!*\
@@ -1168,6 +1330,10 @@
   !*** ./packages/webviz-core/src/panels/Plot/PlotChart.module.scss ***!
   \********************************************************************/
 
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/Tab/DraggableToolbarTab.js ***!
+  \********************************************************************/
+
 /*!*********************************************************************!*\
   !*** ./packages/webviz-core/src/components/GlobalVariableSlider.js ***!
   \*********************************************************************/
@@ -1203,6 +1369,14 @@
 /*!**********************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/index.js ***!
   \**********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/src/components/Select/Option.module.scss ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/src/components/Select/Select.module.scss ***!
+  \***********************************************************************/
 
 /*!***********************************************************************!*\
   !*** ./packages/webviz-core/src/components/createSyncingComponent.js ***!
@@ -1377,7 +1551,15 @@
   \*********************************************************************************/
 
 /*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/NodePlayground/assets/hammer-wrench.svg ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/CameraInfo/index.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout.js ***!
   \*********************************************************************************/
 
 /*!**********************************************************************************!*\
@@ -1417,6 +1599,10 @@
   \***********************************************************************************/
 
 /*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NodeName.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/diagnostics/DiagnosticStatusPanel.help.md ***!
   \***********************************************************************************/
 
@@ -1429,6 +1615,10 @@
   \************************************************************************************/
 
 /*!************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/LaserScans.js ***!
   \************************************************************************************/
 
@@ -1436,12 +1626,16 @@
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/utils/drawToolUtils.js ***!
   \************************************************************************************/
 
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/utils/groupingUtils.js ***!
+  \************************************************************************************/
+
 /*!*************************************************************************************!*\
   !*** ./packages/webviz-core/src/components/TimeBasedChart/TimeBasedChartTooltip.js ***!
   \*************************************************************************************/
 
 /*!*************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/NodeName.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/noMatches.svg ***!
   \*************************************************************************************/
 
 /*!*************************************************************************************!*\
@@ -1457,7 +1651,19 @@
   \**************************************************************************************/
 
 /*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/NodePlayground/assets/file-document-edit.svg ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/Polygons.js ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/constants.js ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeRow.js ***!
   \**************************************************************************************/
 
 /*!***************************************************************************************!*\
@@ -1465,7 +1671,7 @@
   \***************************************************************************************/
 
 /*!***************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/noMatches.svg ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree.js ***!
   \***************************************************************************************/
 
 /*!****************************************************************************************!*\
@@ -1473,11 +1679,7 @@
   \****************************************************************************************/
 
 /*!****************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicTreeV2.js ***!
-  \****************************************************************************************/
-
-/*!****************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TreeNodeRow.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TextHighlight.js ***!
   \****************************************************************************************/
 
 /*!****************************************************************************************!*\
@@ -1505,7 +1707,15 @@
   \******************************************************************************************/
 
 /*!******************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TextHighlight.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/index.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeDotMenu.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderTreeNodes.js ***!
   \******************************************************************************************/
 
 /*!******************************************************************************************!*\
@@ -1525,6 +1735,14 @@
   \*******************************************************************************************/
 
 /*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/common.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/VisibilityToggle.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/index.js ***!
   \*******************************************************************************************/
 
@@ -1533,11 +1751,7 @@
   \********************************************************************************************/
 
 /*!********************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TreeNodeDotMenu.js ***!
-  \********************************************************************************************/
-
-/*!********************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/renderTreeNodes.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTreeSwitcher.js ***!
   \********************************************************************************************/
 
 /*!********************************************************************************************!*\
@@ -1545,7 +1759,15 @@
   \********************************************************************************************/
 
 /*!*********************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/VisibilityToggle.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TextMiddleTruncate.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicSettingsModal.js ***!
   \*********************************************************************************************/
 
 /*!*********************************************************************************************!*\
@@ -1565,10 +1787,6 @@
   \**********************************************************************************************/
 
 /*!**********************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicTreeSwitcher.js ***!
-  \**********************************************************************************************/
-
-/*!**********************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/index.js ***!
   \**********************************************************************************************/
 
@@ -1577,11 +1795,7 @@
   \***********************************************************************************************/
 
 /*!***********************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TextMiddleTruncate.js ***!
-  \***********************************************************************************************/
-
-/*!***********************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/TopicSettingsModal.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderNamespaceNodes.js ***!
   \***********************************************************************************************/
 
 /*!************************************************************************************************!*\
@@ -1589,16 +1803,28 @@
   \************************************************************************************************/
 
 /*!************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicSettingsEditor.js ***!
+  \************************************************************************************************/
+
+/*!************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector.js ***!
+  \************************************************************************************************/
+
+/*!************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/buffers.js ***!
   \************************************************************************************************/
 
 /*!*************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/LayoutForTopicTreeV2.js ***!
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/lib.js ***!
   \*************************************************************************************************/
 
-/*!*************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/renderNamespaceNodes.js ***!
-  \*************************************************************************************************/
+/*!**************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations.js ***!
+  \**************************************************************************************************/
+
+/*!**************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/selection.js ***!
+  \**************************************************************************************************/
 
 /*!***************************************************************************************************!*\
   !*** ./packages/webviz-core/src/components/MessagePathSyntax/useCachedGetMessagePathDataItems.js ***!
@@ -1629,24 +1855,80 @@
   \******************************************************************************************************/
 
 /*!*******************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSelector/TopicDisplayModeSelector.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PoseSettingsEditor.js ***!
   \*******************************************************************************************************/
 
 /*!*******************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder.js ***!
   \*******************************************************************************************************/
 
+/*!*********************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/MarkerSettingsEditor.js ***!
+  \*********************************************************************************************************/
+
 /*!**********************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/VertexBufferCache.js ***!
   \**********************************************************************************************************/
 
+/*!***********************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData.js ***!
+  \***********************************************************************************************************/
+
+/*!***********************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig.js ***!
+  \***********************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/LaserScanSettingsEditor.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/DEPRECATED_ros.js ***!
+  \************************************************************************************************************/
+
+/*!************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/time.ts ***!
+  \************************************************************************************************************/
+
 /*!*************************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTreeV2/useSceneBuilderAndTransformsData.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/templates/index.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/index.js ***!
+  \*************************************************************************************************************/
+
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/types.ts ***!
   \*************************************************************************************************************/
 
 /*!**************************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/GlobalVariableLink/UnlinkWrapper.js ***!
   \**************************************************************************************************************/
+
+/*!**************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/README.md ***!
+  \**************************************************************************************************************/
+
+/*!***************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/readers.ts ***!
+  \***************************************************************************************************************/
+
+/*!***************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/vectors.ts ***!
+  \***************************************************************************************************************/
+
+/*!*****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/TopicSettingsEditor.module.scss ***!
+  \*****************************************************************************************************************/
+
+/*!*******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/pointClouds.ts ***!
+  \*******************************************************************************************************************/
 
 /*!*********************************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/GlobalVariableLink/LinkToGlobalVariable.js ***!
@@ -1659,6 +1941,14 @@
 /*!**********************************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/GlobalVariableLink/UnlinkGlobalVariables.js ***!
   \**********************************************************************************************************************/
+
+/*!***********************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/templates/twoDimensionalPlot.template.ts ***!
+  \***********************************************************************************************************************************/
+
+/*!*****************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader??ref--14-oneOf-0!./node_modules/postcss-loader/src??postcss!./node_modules/sass-loader/lib/loader.js??ref--16!./packages/webviz-core/src/panels/Tab/Tab.module.scss ***!
+  \*****************************************************************************************************************************************************************************************************/
 
 /*!*******************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/css-loader??ref--14-oneOf-0!./node_modules/postcss-loader/src??postcss!./node_modules/sass-loader/lib/loader.js??ref--16!./packages/webviz-core/src/components/Panel.module.scss ***!
@@ -1687,6 +1977,14 @@
 /*!**************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/css-loader??ref--14-oneOf-0!./node_modules/postcss-loader/src??postcss!./node_modules/sass-loader/lib/loader.js??ref--16!./packages/webviz-core/src/components/Autocomplete.module.scss ***!
   \**************************************************************************************************************************************************************************************************************/
+
+/*!***************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader??ref--14-oneOf-0!./node_modules/postcss-loader/src??postcss!./node_modules/sass-loader/lib/loader.js??ref--16!./packages/webviz-core/src/components/Select/Option.module.scss ***!
+  \***************************************************************************************************************************************************************************************************************/
+
+/*!***************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader??ref--14-oneOf-0!./node_modules/postcss-loader/src??postcss!./node_modules/sass-loader/lib/loader.js??ref--16!./packages/webviz-core/src/components/Select/Select.module.scss ***!
+  \***************************************************************************************************************************************************************************************************************/
 
 /*!***************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/css-loader??ref--14-oneOf-0!./node_modules/postcss-loader/src??postcss!./node_modules/sass-loader/lib/loader.js??ref--16!./packages/webviz-core/src/panels/RawMessages/index.module.scss ***!
@@ -1723,3 +2021,7 @@
 /*!**************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/css-loader??ref--14-oneOf-0!./node_modules/postcss-loader/src??postcss!./node_modules/sass-loader/lib/loader.js??ref--16!./packages/webviz-core/src/components/TimeBasedChart/TimeBasedChartTooltip.module.scss ***!
   \**************************************************************************************************************************************************************************************************************************************/
+
+/*!*********************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader??ref--14-oneOf-0!./node_modules/postcss-loader/src??postcss!./node_modules/sass-loader/lib/loader.js??ref--16!./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/TopicSettingsEditor.module.scss ***!
+  \*********************************************************************************************************************************************************************************************************************************************************/

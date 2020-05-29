@@ -24,7 +24,7 @@ If one of the filenames is not to your liking, or you'd like to add a new one, j
 For adding new functions and what not, also be sure to add a short description of what it is used for using the multiline comment syntax:
 
 ```typescript
-/*
+/**
 * YOUR COMMENT
 */
 ```

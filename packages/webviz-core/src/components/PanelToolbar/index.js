@@ -50,7 +50,7 @@ import {
   getPanelIdsInsideTabPanels,
   removePanelFromTabPanel,
   updateTabPanelLayout,
-  replacePanelsWithNewPanel,
+  replaceAndRemovePanels,
 } from "webviz-core/src/util/layout";
 
 type Props = {|
@@ -142,7 +142,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
       // For a panel inside a Tab panel, update the Tab panel's tab layouts via savedProps
       if (tabId && id) {
         const activeTabLayout = savedProps[tabId].tabs[savedProps[tabId].activeTabIdx].layout;
-        const newTabLayout = replacePanelsWithNewPanel(id, newId, [id], activeTabLayout);
+        const newTabLayout = replaceAndRemovePanels({ oldId: id, newId }, activeTabLayout);
 
         const newTabConfig = updateTabPanelLayout(newTabLayout, savedProps[tabId]);
         actions.savePanelConfigs({ configs: [{ id: tabId, config: newTabConfig }] });
@@ -193,7 +193,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
         <PanelContext.Consumer>
           {(panelContext) => (
             <>
-              <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />}>
+              <SubMenu text="Change panel" icon={<CheckboxMultipleBlankOutlineIcon />} dataTest="panel-settings-change">
                 <PanelList selectedPanelTitle={panelContext?.title} onPanelSelect={swap(panelContext?.id)} />
               </SubMenu>
               <Item
@@ -221,6 +221,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
                 icon={<TrashCanOutlineIcon />}
                 onClick={close}
                 disabled={isOnlyPanel && !panelContext?.tabId /* Allow removing the last panel in a tab layout. */}
+                dataTest="panel-settings-remove"
                 tooltip="(shortcut: ` or ~)">
                 Remove panel
               </Item>

@@ -7,9 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { cloneDeep } from "lodash";
 
-import { type PanelsState } from "webviz-core/src/reducers/panels";
-
-function migrateNodePlaygroundNodesToObjects(originalPanelsState: PanelsState): PanelsState {
+function migrateNodePlaygroundNodesToObjects(originalPanelsState: any): any {
   if (originalPanelsState.userNodes) {
     const panelsState = cloneDeep(originalPanelsState);
     for (const [nodeName, fieldVal] of Object.entries(panelsState.userNodes)) {

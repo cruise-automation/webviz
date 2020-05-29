@@ -30,13 +30,14 @@ export function groupLinesIntoInstancedLineLists(
 
   for (const [id: string, messageList: any[]] of toPairs(groups)) {
     const baseMessage = messageList[0];
-    const colors = [];
-    const allPoints = [];
+    const allColors = []; // accumulated colors
+    const allPoints = []; // accumulated positions
     const metadataByIndex = [];
     const poses = [];
     for (const message of messageList) {
-      const { points } = message;
-      let lineListPoints = [];
+      const { points, colors } = message;
+      let lineListPoints = []; // marker positions
+      let lineListColors = []; // marker colors
       if (baseMessage.type === MARKER_MSG_TYPES.LINE_STRIP) {
         // Line strips have points of the form [p1, p2, p3] and create lines between each point.
         // We want to turn these into line lists, of the form [p1, p2, p2, p3], so that each consecutive pair of
@@ -44,13 +45,28 @@ export function groupLinesIntoInstancedLineLists(
         // We can't make an instanced line strip because then we'd have no way to tell where one instance stopped and
         // the next one started - we'd have lines leading from one instance to the next.
         lineListPoints = pair(points, !!message.closed);
+        if (colors) {
+          // Point colors, if present, need to be paired in the same way as positions
+          lineListColors = pair(colors, !!message.closed);
+        }
       } else {
         // If the marker is already a line list, just add the points to the list, validating that points
         // are paired correctly.
         lineListPoints = validateLineList(points);
+        if (colors) {
+          // Point colors, if present, need to be validated in the same way as positions
+          lineListColors = validateLineList(colors);
+        }
       }
+
+      // Accumulate positions and colors
       extend(allPoints, lineListPoints);
-      fillExtend(colors, message.color || COLORS.WHITE, lineListPoints.length);
+      extend(allColors, lineListColors);
+
+      // In case no point colors are provided or there are not enough values, we use the provided
+      // color for the marker (or a default value)
+      fillExtend(allColors, message.color || COLORS.WHITE, lineListPoints.length - lineListColors.length);
+
       // We have two points per instance.
       // Save the whole marker as the instanced object so we can display it
       // to the user after selection.
@@ -67,7 +83,7 @@ export function groupLinesIntoInstancedLineLists(
         ns,
         scale,
         pose: emptyPose(),
-        colors,
+        colors: allColors,
         points: allPoints,
         poses,
         metadataByIndex,

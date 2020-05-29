@@ -7,9 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { cloneDeep } from "lodash";
 
-import { type PanelsState } from "webviz-core/src/reducers/panels";
-
-function migrateGlobalDataToGlobalVariables(originalPanelsState: PanelsState): PanelsState {
+function migrateGlobalDataToGlobalVariables(originalPanelsState: any): any {
   const globalData = originalPanelsState.globalData;
   if (globalData) {
     const panelsState = cloneDeep(originalPanelsState);

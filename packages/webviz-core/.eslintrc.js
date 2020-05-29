@@ -12,6 +12,10 @@ module.exports = {
     "no-restricted-imports": [
       "error",
       {
+        paths: [
+          { name: "lodash", importNames: ["get"], message: "Use optional chaining instead of lodash.get." },
+          { name: "lodash/get", message: "Use optional chaining instead of lodash.get." },
+        ],
         patterns: ["client/*", "shared/*", "server/*"],
       },
     ],

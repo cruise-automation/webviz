@@ -211,7 +211,7 @@ describe("useTopicTree", () => {
   });
 
   describe("checked state", () => {
-    it("returns selectedTopicNames based on checkedKeys", async () => {
+    it("returns selectedTopicNames based on checkedKeys", () => {
       const Test = createTest();
       const root = mount(
         <Test {...sharedProps} checkedKeys={["/foo"]} providerTopics={makeTopics(["/bar", "/webviz_source_2/foo"])} />
@@ -226,7 +226,7 @@ describe("useTopicTree", () => {
       expect(Test.result.mock.calls[2][0].selectedTopicNames).toEqual(["/foo", "/webviz_source_2/foo"]);
     });
 
-    it("returns selectedNamespacesByTopic based on checkedKeys", async () => {
+    it("returns selectedNamespacesByTopic based on checkedKeys", () => {
       const Test = createTest();
       const checkedKeys = ["name:Group1", "t:/foo", "t:/bar"];
       const root = mount(
@@ -239,6 +239,19 @@ describe("useTopicTree", () => {
       expect(Test.result.mock.calls[0][0].selectedNamespacesByTopic).toEqual({});
       root.setProps({ checkedKeys: [...checkedKeys, "ns:/foo:ns1", "ns:/foo:ns2"] });
       expect(Test.result.mock.calls[1][0].selectedNamespacesByTopic).toEqual({ "/foo": ["ns1", "ns2"] });
+    });
+
+    it("selects all available namespaces if topic is checked and the namespaces haven't been modified ", () => {
+      const Test = createTest();
+      mount(
+        <Test
+          {...sharedProps}
+          availableNamespacesByTopic={{ "/foo": ["ns1", "ns2"] }}
+          checkedKeys={["name:Group1", "t:/foo"]}
+          providerTopics={makeTopics(["/foo"])}
+        />
+      );
+      expect(Test.result.mock.calls[0][0].selectedNamespacesByTopic).toEqual({ "/foo": ["ns1", "ns2"] });
     });
   });
 
@@ -416,7 +429,12 @@ describe("useTopicTree", () => {
       const topicNodeKey = "t:/foo";
       const Test = createTest();
       mount(
-        <Test {...sharedProps} providerTopics={makeTopics(["/foo"])} checkedKeys={[topicNodeKey, "name:Group1"]} />
+        <Test
+          {...sharedProps}
+          availableNamespacesByTopic={{ "/foo": ["ns1", "ns2"] }}
+          providerTopics={makeTopics(["/foo"])}
+          checkedKeys={[topicNodeKey, "name:Group1"]}
+        />
       );
 
       const result = Test.result.mock.calls[0][0];
@@ -449,6 +467,7 @@ describe("useTopicTree", () => {
       const root = mount(
         <Test
           {...sharedProps}
+          availableNamespacesByTopic={{ "/foo": ["ns1", "ns2"], "/webviz_source_2/foo": ["ns1"] }}
           providerTopics={makeTopics(["/foo", "/webviz_source_2/foo"])}
           checkedKeys={[namespaceNodeKey]}
         />
@@ -1018,7 +1037,7 @@ describe("useTopicTree", () => {
       validateVisibilityByNodeKey(visibiltyByNodeKey, rootTreeNode, getIsTreeNodeVisibleInTree);
     });
 
-    it("without a search text, returns shouldExpandAllKeys=false", async () => {
+    it("without a search text, returns shouldExpandAllKeys=false", () => {
       const Test = createTest();
       mount(
         <Test
@@ -1032,7 +1051,7 @@ describe("useTopicTree", () => {
       expect(shouldExpandAllKeys).toEqual(false);
     });
 
-    it("with a search text, returns shouldExpandAllKeys=true", async () => {
+    it("with a search text, returns shouldExpandAllKeys=true", () => {
       const Test = createTest();
       mount(
         <Test
@@ -1050,7 +1069,7 @@ describe("useTopicTree", () => {
   });
 
   describe("sceneErrorsByKey", () => {
-    it("aggregates errors at group level", async () => {
+    it("aggregates errors at group level", () => {
       const Test = createTest();
       const root = mount(
         <Test

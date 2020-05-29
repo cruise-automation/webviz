@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { FLOAT_SIZE, reinterpretBufferToFloat, expandBufferToFloat } from "./buffers";
-import { POINT_CLOUD_MESSAGE } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/fixture/pointCloudData";
+import { POINT_CLOUD_MESSAGE } from "./fixture/pointCloudData";
 
 describe("<GPUPointClouds />", () => {
   describe("data transformations", () => {

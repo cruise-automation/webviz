@@ -29,7 +29,6 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import {
   OccupancyGrids,
   LaserScans,
-  PointClouds,
   GPUPointClouds,
   PoseMarkers,
   LinedConvexHulls,
@@ -138,9 +137,6 @@ export default function World({
     searchTextMatches,
   });
 
-  const gpuPointCloudsEnabled = useExperimentalFeature("gpuPointCloud");
-  const PointCloudsComponent = gpuPointCloudsEnabled ? GPUPointClouds : PointClouds;
-
   // If 'groupLines' is enabled, we group all line strips and line lists
   // into as few markers as possible. Otherwise, just render them as is.
   const groupLines = useExperimentalFeature("groupLines");
@@ -172,7 +168,7 @@ export default function World({
       <Lines>{nonGroupedLines}</Lines>
       <Arrows>{arrow}</Arrows>
       <Points>{points}</Points>
-      <PointCloudsComponent>{pointcloud}</PointCloudsComponent>
+      <GPUPointClouds>{pointcloud}</GPUPointClouds>
       <Triangles>{triangleList}</Triangles>
       <Spheres>{[...sphere, ...sphereList]}</Spheres>
       <Cylinders>{cylinder}</Cylinders>

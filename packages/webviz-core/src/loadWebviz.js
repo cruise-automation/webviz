@@ -37,7 +37,7 @@ const defaultHooks = {
   nodes: () => [],
   getDefaultGlobalStates() {
     const { defaultPlaybackConfig } = require("webviz-core/src/reducers/panels");
-    const { CURRENT_LAYOUT_VERSION } = require("webviz-core/migrations/constants");
+    const { CURRENT_LAYOUT_VERSION } = require("webviz-core/migrations");
     return {
       layout: {
         direction: "row",
@@ -119,17 +119,11 @@ const defaultHooks = {
   getAdditionalDataProviders: () => {},
   experimentalFeaturesList() {
     return {
-      gpuPointCloud: {
-        name: "GPU Point Clouds",
-        description: "A new, faster method of rendering point clouds in the 3D panel using GPU.",
-        developmentDefault: true,
-        productionDefault: true,
-      },
       groupLines: {
         name: "Group Lines When Rendering",
         description: "A faster method of rendering lines in the 3D panel by grouping them together.",
-        developmentDefault: true,
-        productionDefault: true,
+        developmentDefault: false,
+        productionDefault: false,
       },
       diskBagCaching: {
         name: "Disk Bag Caching (requires reload)",

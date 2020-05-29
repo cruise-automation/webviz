@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { get, mapValues } from "lodash";
+import { mapValues } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import type { MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistoryDEPRECATED";
@@ -20,7 +20,7 @@ function allItemStampsNewestFirst(
   const stamps = [];
   for (const path in itemsByPath) {
     for (const item of itemsByPath[path]) {
-      const stamp = getHeaderStamp ? getHeaderStamp(item.message) : get(item.message, ["message", "header", "stamp"]);
+      const stamp = getHeaderStamp ? getHeaderStamp(item.message) : item.message?.message?.header?.stamp;
       if (!stamp) {
         return [];
       }
@@ -33,7 +33,7 @@ function allMessageStampsNewestFirst(messagesByTopic: { [topic: string]: Message
   const stamps = [];
   for (const topic in messagesByTopic) {
     for (const { message } of messagesByTopic[topic]) {
-      const stamp = get(message, ["header", "stamp"]);
+      const stamp = message?.header?.stamp;
       if (stamp) {
         stamps.push(stamp);
       }
@@ -52,9 +52,7 @@ function itemsMatchingStamp(
   for (const path in itemsByPath) {
     let found = false;
     for (const item of itemsByPath[path]) {
-      const thisStamp = getHeaderStamp
-        ? getHeaderStamp(item.message)
-        : get(item.message, ["message", "header", "stamp"]);
+      const thisStamp = getHeaderStamp ? getHeaderStamp(item.message) : item.message?.message?.header?.stamp;
       if (thisStamp && TimeUtil.areSame(stamp, thisStamp)) {
         found = true;
         synchronizedItemsByPath[path] = [item];
@@ -91,7 +89,7 @@ function getSynchronizedMessages(
   const synchronizedMessages = {};
   for (const topic of topics) {
     const matchingMessage = messages[topic].find(({ message }) => {
-      const thisStamp = get(message, ["header", "stamp"]);
+      const thisStamp = message?.header?.stamp;
       return thisStamp && TimeUtil.areSame(stamp, thisStamp);
     });
     if (!matchingMessage) {
@@ -121,7 +119,7 @@ function getSynchronizedState(
       newSynchronizedMessages = syncedMsgs;
       newMessagesByTopic = mapValues(newMessagesByTopic, (msgsByTopic) =>
         msgsByTopic.filter(({ message }) => {
-          const thisStamp = get(message, ["header", "stamp"]);
+          const thisStamp = message?.header?.stamp;
           return !TimeUtil.isLessThan(thisStamp, stamp);
         })
       );

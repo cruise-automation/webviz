@@ -9,6 +9,7 @@ export type RGBA = {
 export type Header = {
   frame_id: string;
   stamp: Time;
+  seq: number;
 };
 
 export type Point = {
@@ -27,7 +28,20 @@ export type Translation = {
   y: number;
   z: number;
 };
+
 export type Rotation = {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+};
+
+export type Pose = {
+  position: Point;
+  orientation: Quaternion;
+};
+
+export type Quaternion = {
   x: number;
   y: number;
   z: number;

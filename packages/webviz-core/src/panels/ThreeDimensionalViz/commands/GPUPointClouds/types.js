@@ -9,6 +9,14 @@
 import { type PointCloudSettings } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
 import type { PointCloud2 } from "webviz-core/src/types/Messages";
 
+export const DATATYPE = {
+  uint8: 2,
+  uint16: 4,
+  int16: 3,
+  int32: 5,
+  float32: 7,
+};
+
 export type PointCloudMarker = PointCloud2 & {
   settings?: PointCloudSettings,
 

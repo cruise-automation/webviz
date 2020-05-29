@@ -20,7 +20,7 @@ import { decodeMarker } from "webviz-core/src/panels/ThreeDimensionalViz/command
 import {
   POINT_CLOUD_MESSAGE,
   POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
-} from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/fixture/pointCloudData";
+} from "webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/fixture/pointCloudData";
 import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 import colors from "webviz-core/src/styles/colors.module.scss";
 

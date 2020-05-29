@@ -6,6 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { DATATYPE } from "./types";
+import log from "webviz-core/src/panels/ThreeDimensionalViz/logger";
+
 export interface FieldReader {
   read(data: number[] | Uint8Array, index: number): number;
 }
@@ -85,5 +88,22 @@ export class Uint8Reader implements FieldReader {
 
   read(data: number[] | Uint8Array, index: number): number {
     return data[index + this.offset];
+  }
+}
+
+export function getReader(datatype: number, offset: number) {
+  switch (datatype) {
+    case DATATYPE.float32:
+      return new Float32Reader(offset);
+    case DATATYPE.uint8:
+      return new Uint8Reader(offset);
+    case DATATYPE.uint16:
+      return new Uint16Reader(offset);
+    case DATATYPE.int16:
+      return new Int16Reader(offset);
+    case DATATYPE.int32:
+      return new Int32Reader(offset);
+    default:
+      log.error("Unsupported datatype", datatype);
   }
 }

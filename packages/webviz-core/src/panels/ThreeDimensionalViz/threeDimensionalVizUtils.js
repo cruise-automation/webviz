@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import { vec3 } from "gl-matrix";
+// eslint-disable-next-line no-restricted-imports
 import { mergeWith, get } from "lodash";
 import { useRef } from "react";
 import {

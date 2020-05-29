@@ -7,22 +7,19 @@
 //  You may not use this file except in compliance with the License.
 
 import ExportVariantIcon from "@mdi/svg/svg/export-variant.svg";
-import { get } from "lodash";
 import React, { useMemo, useState, useCallback } from "react";
 import { type MouseEventObject } from "regl-worldview";
 import styled from "styled-components";
 
 import { SValue, SLabel } from "./index";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Icon from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
 import Item from "webviz-core/src/components/Menu/Item";
 import {
-  getClickedInfo as getClickedInfoGPU,
+  getClickedInfo,
   getAllPoints,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/selection";
-import { getClickedInfo } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import { downloadFiles } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
 
@@ -40,17 +37,12 @@ type Props = {
 export default function PointCloudDetails({ selectedObject: { object, instanceIndex } }: Props) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  const gpuPointCloudsEnabled = useExperimentalFeature("gpuPointCloud");
-
   const { clickedPoint, clickedPointColor, additionalFieldValues } =
     useMemo(
       () => {
-        if (gpuPointCloudsEnabled) {
-          return getClickedInfoGPU(object, instanceIndex);
-        }
         return getClickedInfo(object, instanceIndex);
       },
-      [gpuPointCloudsEnabled, instanceIndex, object]
+      [instanceIndex, object]
     ) || {};
 
   const additionalFieldNames = useMemo(() => (additionalFieldValues && Object.keys(additionalFieldValues)) || [], [
@@ -67,7 +59,7 @@ export default function PointCloudDetails({ selectedObject: { object, instanceIn
       // get copy data
       for (let i = 0; i < len; i++) {
         const rowData = [allPoints[i * 3], allPoints[i * 3 + 1], allPoints[i * 3 + 2]];
-        rowData.push(...additionalFieldNames.map((fieldName) => get(object, [fieldName, i])));
+        rowData.push(...additionalFieldNames.map((fieldName) => object?.[fieldName]?.[i]));
         dataRows.push(rowData.join(","));
       }
 

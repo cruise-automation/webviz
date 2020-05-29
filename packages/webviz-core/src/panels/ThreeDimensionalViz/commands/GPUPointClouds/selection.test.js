@@ -7,21 +7,46 @@
 //  You may not use this file except in compliance with the License.
 
 import { decodeMarker } from "./decodeMarker";
-import { getClickedInfo, getAllPoints } from "./selection";
-import {
-  POINT_CLOUD_MESSAGE,
-  POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
-} from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/fixture/pointCloudData";
-import { decodeAdditionalFields } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
+import { POINT_CLOUD_MESSAGE, POINT_CLOUD_WITH_ADDITIONAL_FIELDS } from "./fixture/pointCloudData";
+import { getClickedInfo, getAllPoints, decodeAdditionalFields } from "./selection";
+import type { PointCloud2 } from "webviz-core/src/types/Messages";
 
 describe("<GPUPointClouds />", () => {
+  // $FlowFixMe - Flow doens't like that we're overwriting this.
+  console.info = (message) => {
+    // decodeMarker() will log warnings in console whenever a buffer cannot be sent to GPU
+  };
+
   describe("getClickedInfo", () => {
+    it("returns undefined when points field is empty", () => {
+      const partiallyDecodedMarker = ((decodeMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): PointCloud2);
+      const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
+      fullyDecodedMarker.positionBuffer = [];
+      expect(getClickedInfo(fullyDecodedMarker, 1000)).toEqual(undefined);
+    });
+
+    it("returns undefined when instanceIndex does not match any point", () => {
+      const partiallyDecodedMarker = ((decodeMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS): any): PointCloud2);
+      const fullyDecodedMarker = decodeAdditionalFields(partiallyDecodedMarker);
+      expect(getClickedInfo(fullyDecodedMarker, null)).toEqual(undefined);
+      expect(getClickedInfo(fullyDecodedMarker, 1000)).toEqual(undefined);
+    });
+
     it("returns selected point positions and colors", () => {
       const marker = decodeMarker(POINT_CLOUD_MESSAGE);
       const clickInfo = getClickedInfo(marker, 1);
       expect(clickInfo).not.toBeNull();
       expect((clickInfo?.clickedPoint || []).map((v) => Math.floor(v))).toStrictEqual([-2239, -706, -3]);
       expect((clickInfo?.clickedPointColor || []).map((v) => Math.floor(v))).toStrictEqual([127, 255, 255, 1]);
+      expect(clickInfo?.additionalFieldValues).toBeUndefined();
+    });
+
+    it("returns selected point positions and colors when instanceIndex is zero", () => {
+      const marker = decodeMarker(POINT_CLOUD_MESSAGE);
+      const clickInfo = getClickedInfo(marker, 0);
+      expect(clickInfo).not.toBeNull();
+      expect((clickInfo?.clickedPoint || []).map((v) => Math.floor(v))).toStrictEqual([-2239, -706, -3]);
+      expect((clickInfo?.clickedPointColor || []).map((v) => Math.floor(v))).toStrictEqual([127, 225, 255, 1]);
       expect(clickInfo?.additionalFieldValues).toBeUndefined();
     });
 
@@ -39,10 +64,6 @@ describe("<GPUPointClouds />", () => {
     });
 
     it("handles rainbow colors", () => {
-      // $FlowFixMe - Flow doens't like that we're overwriting this.
-      console.info = (message) => {
-        // decodeMarker() will log warnings in console whenever a buffer cannot be sent to GPU
-      };
       const input = {
         ...POINT_CLOUD_MESSAGE,
         settings: { colorMode: { mode: "rainbow", colorField: "y" } },
@@ -92,6 +113,16 @@ describe("<GPUPointClouds />", () => {
       const marker = decodeMarker(POINT_CLOUD_MESSAGE);
       const points = getAllPoints(marker);
       expect(points.map((v) => Math.floor(v))).toStrictEqual([-2239, -706, -3, -2239, -706, -3]);
+    });
+  });
+
+  describe("decodeAdditionalFields", () => {
+    it("decodes additional fields", () => {
+      const fullyDecodedMarker = decodeAdditionalFields(POINT_CLOUD_WITH_ADDITIONAL_FIELDS);
+      expect(fullyDecodedMarker.bar).toEqual([6, 8]);
+      expect(fullyDecodedMarker.baz).toEqual([5, 7]);
+      expect(fullyDecodedMarker.foo).toEqual([7, 9]);
+      expect(fullyDecodedMarker.foo16_some_really_really_long_name).toEqual([265, 2]);
     });
   });
 });

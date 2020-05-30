@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { Tabs } from "antd";
+// eslint-disable-next-line no-restricted-imports
 import { get } from "lodash";
 import React from "react";
 import styled from "styled-components";

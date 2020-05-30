@@ -8,11 +8,12 @@
 import { flatMap } from "lodash";
 
 import incrementVersion from "webviz-core/migrations/activeHelpers/incrementVersion";
+import validateVersions from "webviz-core/migrations/activeHelpers/validateVersions";
 
+export const CURRENT_LAYOUT_VERSION = 3;
 const migrationsByVersion = {
   "001": [],
   "002": [
-    require("webviz-core/migrations/frozenMigrations/2020.05.06.00:00:01.migratePlaybackConfig").default,
     require("webviz-core/migrations/frozenMigrations/2020.05.06.00:00:02.migrateNodePlaygroundNodesToObjects").default,
     require("webviz-core/migrations/frozenMigrations/2020.05.06.00:00:03.migrate3DPanel").default,
     require("webviz-core/migrations/frozenMigrations/2020.05.06.00:00:04.migrateGlobalDataToGlobalVariables").default,
@@ -27,9 +28,15 @@ export default function migratePanels(originalPanelsState: any): any {
   if (originalPanelsState.layout === undefined) {
     return originalPanelsState;
   }
+  const versionNumbers = Object.keys(migrationsByVersion);
+  if (!validateVersions(versionNumbers)) {
+    throw new Error(
+      "CURRENT_LAYOUT_VERSION must match the # of releases specified in webviz-core/migrations/index.js."
+    );
+  }
   try {
     const panelsState = [
-      ...flatMap(Object.keys(migrationsByVersion).sort(), (version) =>
+      ...flatMap(versionNumbers.sort(), (version) =>
         !originalPanelsState.version || originalPanelsState.version < parseInt(version)
           ? [...migrationsByVersion[version], incrementVersion(parseInt(version))]
           : []

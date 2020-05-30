@@ -12,6 +12,7 @@ import { useMemo, useRef } from "react";
 import type { UseSceneBuilderAndTransformsDataInput, UseSceneBuilderAndTransformsDataOutput } from "./types";
 import { generateNodeKey } from "./useTopicTree";
 import useDataSourceInfo from "webviz-core/src/PanelAPI/useDataSourceInfo";
+import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { useChangeDetector, useDeepMemo } from "webviz-core/src/util/hooks";
 
 // Derived namespace and error information for TopicTree from sceneBuilder and transforms.
@@ -52,7 +53,7 @@ export default function useSceneBuilderAndTransformsData({
         result[topic].push(name);
       }
       if (availableTfs.length) {
-        result["/tf"] = availableTfs;
+        result[TRANSFORM_TOPIC] = availableTfs;
       }
       return result;
     },

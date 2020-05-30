@@ -10,6 +10,7 @@ import DotsVerticalIcon from "@mdi/svg/svg/dots-vertical.svg";
 import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 
+import { ROW_HEIGHT } from "./TreeNodeRow";
 import type { SetCurrentEditingTopic, ToggleNodeByColumn } from "./types";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
@@ -59,7 +60,17 @@ export default function TreeNodeDotMenu({
 
   return (
     <ChildToggle position="below" isOpen={isOpen} onToggle={onToggle} dataTest={`topic-row-menu-${topicName}`}>
-      <Icon small fade onClick={onToggle} style={{ padding: "5px 0px" }}>
+      <Icon
+        small
+        fade
+        onClick={onToggle}
+        style={{
+          padding: "4px 0px",
+          height: ROW_HEIGHT,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
         <DotsVerticalIcon />
       </Icon>
       <Menu>

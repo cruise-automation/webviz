@@ -11,7 +11,8 @@ import ConsoleLineIcon from "@mdi/svg/svg/console-line.svg";
 import PlusMinusIcon from "@mdi/svg/svg/plus-minus.svg";
 import LessIcon from "@mdi/svg/svg/unfold-less-horizontal.svg";
 import MoreIcon from "@mdi/svg/svg/unfold-more-horizontal.svg";
-import { first, get, isEqual, last } from "lodash";
+// eslint-disable-next-line no-restricted-imports
+import { first, isEqual, get, last } from "lodash";
 import React, { useState, useCallback, useMemo } from "react";
 import { hot } from "react-hot-loader/root";
 import ReactHoverObserver from "react-hover-observer";

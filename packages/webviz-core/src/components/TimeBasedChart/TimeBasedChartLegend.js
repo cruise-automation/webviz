@@ -11,11 +11,13 @@ import React from "react";
 
 import { PLOT_DASHED_STYLE, PLOT_DOT_DASHED_STYLE } from "webviz-core/src/components/TimeBasedChart/constants";
 
-type Dataset = { label: string, color: string, borderDash: string };
+// This type describes our use, but chart.js supports many more properties if we want them:
+// https://www.chartjs.org/docs/latest/charts/line.html#dataset-properties
+type Dataset = $ReadOnly<{ label: string, color?: string, borderDash?: $ReadOnlyArray<number> }>;
 
 type Props = {
   canToggleLines?: boolean,
-  datasets: Dataset[],
+  datasets: $ReadOnlyArray<Dataset>,
   linesToHide: { [string]: boolean },
   toggleLine: (datasetId: string | typeof undefined, lineToHide: string) => void,
   datasetId?: string,

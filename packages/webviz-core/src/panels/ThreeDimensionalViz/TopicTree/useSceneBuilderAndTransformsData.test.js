@@ -14,6 +14,7 @@ import type { UseSceneBuilderAndTransformsDataInput } from "./types";
 import useSceneBuilderAndTransformsData from "./useSceneBuilderAndTransformsData";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import type { Namespace } from "webviz-core/src/types/Messages";
+import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 
 type ErrorsByTopic = { [topicName: string]: string[] };
 class MockTransform {
@@ -110,7 +111,7 @@ describe("useSceneBuilderAndTransformsData", () => {
 
       expect(Test.result.mock.calls[1][0].availableNamespacesByTopic).toEqual({
         "/foo": ["ns1", "ns2"],
-        "/tf": ["some_tf1", "some_tf2"],
+        [TRANSFORM_TOPIC]: ["some_tf1", "some_tf2"],
         ...staticallyAvailableNamespacesByTopic,
       });
     });
@@ -121,15 +122,19 @@ describe("useSceneBuilderAndTransformsData", () => {
         // $FlowFixMe mocked implementation
         <Test {...getMockProps({ showTransforms: true })} />
       );
-      expect(Test.result.mock.calls[0][0].availableNamespacesByTopic).toEqual({ "/tf": ["some_tf1", "some_tf2"] });
+      expect(Test.result.mock.calls[0][0].availableNamespacesByTopic).toEqual({
+        [TRANSFORM_TOPIC]: ["some_tf1", "some_tf2"],
+      });
 
       // TFs were removed, but we still report them in the available namespaces.
       root.setProps(getMockProps({}));
-      expect(Test.result.mock.calls[1][0].availableNamespacesByTopic).toEqual({ "/tf": ["some_tf1", "some_tf2"] });
+      expect(Test.result.mock.calls[1][0].availableNamespacesByTopic).toEqual({
+        [TRANSFORM_TOPIC]: ["some_tf1", "some_tf2"],
+      });
 
       root.setProps(getMockProps({ mockTfIds: ["some_tf3"] }));
       expect(Test.result.mock.calls[2][0].availableNamespacesByTopic).toEqual({
-        "/tf": ["some_tf1", "some_tf2", "some_tf3"],
+        [TRANSFORM_TOPIC]: ["some_tf1", "some_tf2", "some_tf3"],
       });
     });
 
@@ -139,7 +144,9 @@ describe("useSceneBuilderAndTransformsData", () => {
         // $FlowFixMe mocked implementation
         <Test {...getMockProps({ showTransforms: true })} />
       );
-      expect(Test.result.mock.calls[0][0].availableNamespacesByTopic).toEqual({ "/tf": ["some_tf1", "some_tf2"] });
+      expect(Test.result.mock.calls[0][0].availableNamespacesByTopic).toEqual({
+        [TRANSFORM_TOPIC]: ["some_tf1", "some_tf2"],
+      });
 
       root.setProps({ ...getMockProps({}), messagePipelineProps: { playerId: "somePlayerId" } });
       expect(Test.result.mock.calls[1][0].availableNamespacesByTopic).toEqual({});

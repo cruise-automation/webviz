@@ -25,7 +25,7 @@ export const ICON_SIZE = 22;
 const MAX_GROUP_ERROR_WIDTH = 64;
 export const ROW_CONTENT_HEIGHT = 24;
 
-export const ROW_HEIGHT = 30;
+export const ROW_HEIGHT = 24;
 
 export const STreeNodeRow = styled.div`
   color: ${(props: { visibleInScene: boolean }) => (props.visibleInScene ? "unset" : colors.TEXT_MUTED)};
@@ -37,7 +37,7 @@ export const STreeNodeRow = styled.div`
 export const SLeft = styled.div`
   display: flex;
   align-items: center;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: ${TOGGLE_WRAPPER_SIZE}px;
   padding: ${TOPIC_ROW_PADDING}px 0px;
 `;
@@ -206,6 +206,7 @@ export default function TreeNodeRow({
                 available={available}
                 dataTest={`visibility-toggle~${key}~column${columnIdx}`}
                 key={columnIdx}
+                size={node.type === "topic" ? "SMALL" : "NORMAL"}
                 overrideColor={(derivedCustomSettings?.overrideColorByColumn || [])[columnIdx]}
                 checked={checkedKeysSet.has(columnIdx === 1 ? featureKey : key)}
                 onToggle={() => toggleNodeChecked(key, columnIdx)}

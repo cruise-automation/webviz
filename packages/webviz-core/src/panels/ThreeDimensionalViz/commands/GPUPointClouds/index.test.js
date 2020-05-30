@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { decodeMarker } from "./decodeMarker";
-import { POINT_CLOUD_MESSAGE } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/fixture/pointCloudData";
+import { POINT_CLOUD_MESSAGE } from "./fixture/pointCloudData";
 
 describe("<GPUPointClouds />", () => {
   describe("hitmap", () => {

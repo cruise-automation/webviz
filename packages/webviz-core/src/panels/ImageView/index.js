@@ -12,7 +12,7 @@ import CloseIcon from "@mdi/svg/svg/close.svg";
 import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
 import WavesIcon from "@mdi/svg/svg/waves.svg";
 import cx from "classnames";
-import { last, get, uniq } from "lodash";
+import { last, uniq } from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
 import { createSelector } from "reselect";
@@ -419,7 +419,7 @@ function ImageView(props: Props) {
     shouldSynchronize,
     imageAndMarkerTopics
   );
-  const imageMessage = get(messagesByTopic, [cameraTopic, 0]);
+  const imageMessage = messagesByTopic?.[cameraTopic]?.[0];
 
   const markersToRender: Message[] = useMemo(
     () =>

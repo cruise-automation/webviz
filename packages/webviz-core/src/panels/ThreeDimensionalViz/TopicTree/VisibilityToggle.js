@@ -23,17 +23,21 @@ export const TOGGLE_WRAPPER_SIZE = 24;
 
 export const TOGGLE_SIZE_CONFIG = {
   NORMAL: { name: "NORMAL", size: 12 },
-  SMALL: { name: "SMALL", size: 8 },
+  SMALL: { name: "SMALL", size: 10 },
 };
 
 const SToggle = styled.label`
   width: ${TOGGLE_WRAPPER_SIZE}px;
-  height: ${TOPIC_ROW_PADDING * 2 + TOGGLE_WRAPPER_SIZE}px;
+  height: ${TOGGLE_WRAPPER_SIZE}px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   position: relative;
   cursor: pointer;
+  outline: 0;
+  :hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
   :focus {
     span {
       border: 1px solid ${colors.BLUE} !important;
@@ -130,11 +134,14 @@ export default function VisibilityToggle({
         small
         clickable={false}
         style={{
-          fontSize: 12,
+          fontSize: 10,
           cursor: "not-allowed",
           height: ROW_HEIGHT,
           width: TOGGLE_WRAPPER_SIZE,
-          padding: 6,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "all 80ms ease-in-out",
         }}>
         <BlockHelperIcon />
       </Icon>

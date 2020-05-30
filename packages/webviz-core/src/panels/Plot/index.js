@@ -18,7 +18,7 @@ import { getTopicsFromPaths } from "webviz-core/src/components/MessagePathSyntax
 import { useDecodeMessagePathsForMessagesByTopic } from "webviz-core/src/components/MessagePathSyntax/useCachedGetMessagePathDataItems";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
-import { getTooltipItemForMessageHistoryItem } from "webviz-core/src/components/TimeBasedChart";
+import { getTooltipItemForMessageHistoryItem, type TooltipItem } from "webviz-core/src/components/TimeBasedChart";
 import { useBlocksByTopic, useDataSourceInfo, useMessagesByTopic } from "webviz-core/src/PanelAPI";
 import type { BasePlotPath, PlotPath } from "webviz-core/src/panels/Plot/internalTypes";
 import PlotChart, { getDatasetsAndTooltips, type PlotDataByPath } from "webviz-core/src/panels/Plot/PlotChart";
@@ -81,13 +81,13 @@ type Props = {
 const getPlotDataByPath = (itemsByPath: MessageHistoryItemsByPath): PlotDataByPath => {
   const ret: PlotDataByPath = {};
   Object.keys(itemsByPath).forEach((path) => {
-    ret[path] = itemsByPath[path].map(getTooltipItemForMessageHistoryItem);
+    ret[path] = [itemsByPath[path].map(getTooltipItemForMessageHistoryItem)];
   });
   return ret;
 };
 
 const getMessagePathItemsForBlock = memoizeWeak(
-  (decodeMessagePathsForMessagesByTopic, binaryBlock, messageReadersByTopic): { [path: string]: any } => {
+  (decodeMessagePathsForMessagesByTopic, binaryBlock, messageReadersByTopic): PlotDataByPath => {
     const parsedBlock = {};
     Object.keys(binaryBlock).forEach((topic) => {
       const reader = messageReadersByTopic[topic];
@@ -96,27 +96,34 @@ const getMessagePathItemsForBlock = memoizeWeak(
         message: reader.readMessage(Buffer.from(message.message)),
       }));
     });
-    return getPlotDataByPath(decodeMessagePathsForMessagesByTopic(parsedBlock));
+    return Object.freeze(getPlotDataByPath(decodeMessagePathsForMessagesByTopic(parsedBlock)));
   }
 );
 
 function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks) {
   const ret = {};
-  blocks.forEach((block) => {
-    const messagePathItemsForBlock = getMessagePathItemsForBlock(
+  const lastBlockIndexForPath = {};
+  blocks.forEach((block, i) => {
+    const messagePathItemsForBlock: PlotDataByPath = getMessagePathItemsForBlock(
       decodeMessagePathsForMessagesByTopic,
       block,
       messageReadersByTopic
     );
-    // TODO(steel): We should not interpolate across non-adjacent blocks. Find some way of leaving
-    // a gap in the chart. Could insert NaN values in between. We will likely need to loop over all
-    // paths here, not just over paths present in the block.
     Object.keys(messagePathItemsForBlock).forEach((path) => {
-      const existingItems = ret[path] || [];
-      for (const item of messagePathItemsForBlock[path]) {
-        existingItems.push(item);
+      const existingItems: TooltipItem[][] = ret[path] || [];
+      // getMessagePathItemsForBlock returns an array of exactly one range of items.
+      const [pathItems] = messagePathItemsForBlock[path];
+      if (lastBlockIndexForPath[path] === i - 1) {
+        // If we are continuing directly from the previous block index (i - 1) then add to the
+        // existing range, otherwise start a new range
+        const currentRange = existingItems[existingItems.length - 1];
+        currentRange.push(...pathItems);
+      } else {
+        // Start a new contiguous range. Make a copy so we can extend it.
+        existingItems.push(pathItems.slice());
       }
       ret[path] = existingItems;
+      lastBlockIndexForPath[path] = i;
     });
   });
   return ret;

@@ -6,13 +6,22 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { VertexBuffer } from "./types";
-import {
-  DATATYPE,
-  type FieldOffsetsAndReaders,
-} from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
-import { type FieldReader, Uint8Reader } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/Readers";
+import { type FieldReader, Uint8Reader, getReader } from "./readers";
+import { DATATYPE, type VertexBuffer } from "./types";
 import { type ColorMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
+import type { PointField } from "webviz-core/src/types/Messages";
+
+export type FieldOffsetsAndReaders = {
+  [name: string]: { datatype: string, offset: number, reader: ?FieldReader },
+};
+
+export function getFieldOffsetsAndReaders(fields: $ReadOnlyArray<PointField>): FieldOffsetsAndReaders {
+  const result = {};
+  for (const { name, datatype, offset = 0 } of fields) {
+    result[name] = { datatype, offset, reader: getReader(datatype, offset) };
+  }
+  return result;
+}
 
 export const FLOAT_SIZE = Float32Array.BYTES_PER_ELEMENT;
 

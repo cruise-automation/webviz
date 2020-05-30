@@ -5,13 +5,10 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
-import { omit, cloneDeep, flatten, uniq } from "lodash";
+import { flatten, cloneDeep, omit, uniq } from "lodash";
 import microMemoize from "micro-memoize";
 
-import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
-import { type PanelsState } from "webviz-core/src/reducers/panels";
-import { getPanelTypeFromId } from "webviz-core/src/util/layout";
+import getPanelTypeFromId from "webviz-core/migrations/activeHelpers/getPanelTypeFromId";
 
 const THREE_DIMENSIONAL_SAVED_PROPS_VERSION = 17;
 
@@ -35,7 +32,10 @@ export const TOPIC_CONFIG: TopicTreeConfig = {
   ],
 };
 
+// DUPLICATED from webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations.js
 type LegacyIdItem = {| legacyId: string, topic: string |} | {| legacyId: string, name: string |};
+
+// DUPLICATED from webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations.js
 function* generateLegacyIdItems(item: TopicTreeConfig): Generator<LegacyIdItem, void, void> {
   const { children, name, topicName, legacyIds } = item;
   if (legacyIds) {
@@ -52,12 +52,14 @@ function* generateLegacyIdItems(item: TopicTreeConfig): Generator<LegacyIdItem, 
   }
 }
 
+// DUPLICATED from webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations.js
 const getLegacyIdItems = microMemoize(
   (topicConfig): LegacyIdItem[] => {
     return flatten(topicConfig.children.map((item) => Array.from(generateLegacyIdItems(item))));
   }
 );
 
+// DUPLICATED from webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations.js
 export function migrateLegacyIds(checkedKeys: string[], topicTreeConfig: TopicTreeConfig): string[] {
   const legacyIdItems = getLegacyIdItems(topicTreeConfig);
   const newCheckedNameOrTopicByOldNames = {};
@@ -113,7 +115,7 @@ export function toTopicTreeNodes(nodes: string[], topicTreeConfig: TopicTreeConf
   return uniq(migrateLegacyIds(newNodes, topicTreeConfig));
 }
 
-function migrate3DPanelFn(originalConfig: ThreeDimensionalVizConfig): ThreeDimensionalVizConfig {
+function migrate3DPanelFn(originalConfig: any): any {
   let config = originalConfig;
 
   if (config.savedPropsVersion === THREE_DIMENSIONAL_SAVED_PROPS_VERSION) {
@@ -146,8 +148,8 @@ function migrate3DPanelFn(originalConfig: ThreeDimensionalVizConfig): ThreeDimen
   };
 }
 
-export function migrate3DPanelSavedProps(migrateFn: (ThreeDimensionalVizConfig) => ThreeDimensionalVizConfig) {
-  return function(originalPanelsState: PanelsState): PanelsState {
+export function migrate3DPanelSavedProps(migrateFn: (any) => any) {
+  return function(originalPanelsState: any): any {
     if (!originalPanelsState.savedProps) {
       return originalPanelsState;
     }

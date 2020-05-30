@@ -526,4 +526,20 @@ storiesOf("<Plot>", module)
         />
       </PanelSetup>
     );
+  })
+  .add("preloaded data and its derivative", () => {
+    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              { value: "/preloaded_topic.data.@derivative", enabled: true, timestampMethod: "receiveTime" },
+            ],
+          }}
+        />
+      </PanelSetup>
+    );
   });

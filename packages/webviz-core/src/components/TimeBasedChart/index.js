@@ -107,12 +107,19 @@ const MemoizedTooltips = memo<{}>(function Tooltips() {
   );
 });
 
+type DataSet = $ReadOnly<{
+  data: $ReadOnlyArray<$ReadOnly<{ x: number, y: number | string }>>,
+  label: string,
+  borderDash?: $ReadOnlyArray<number>,
+  color?: string,
+}>;
+
 type Props = {|
   type: "scatter" | "multicolorLine",
   width: number,
   height: number,
   zoom: boolean,
-  data: any,
+  data: {| datasets: $ReadOnlyArray<DataSet>, yLabels?: $ReadOnlyArray<string>, minIsZero?: boolean |},
   tooltips?: TimeBasedChartTooltipData[],
   xAxes?: any,
   yAxes: any,

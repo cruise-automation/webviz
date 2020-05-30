@@ -6,9 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { POINT_CLOUD_MESSAGE } from "./fixture/pointCloudData";
 import { memoizedMarker, updateMarkerCache } from "./memoization";
 import type { MemoizedMarker } from "./types";
-import { POINT_CLOUD_MESSAGE } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/fixture/pointCloudData";
 
 describe("<GPUPointClouds />", () => {
   describe("marker memoization", () => {

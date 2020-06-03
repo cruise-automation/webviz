@@ -66,7 +66,6 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message = {
-      op: "message",
       datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
@@ -94,7 +93,6 @@ describe("useMessageReducer", () => {
     Test.addMessages.mockImplementation((_, msgs) => msgs[msgs.length - 1].message.value);
 
     const message = {
-      op: "message",
       datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
@@ -122,14 +120,12 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message1 = {
-      op: "message",
       datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
     };
     const message2 = {
-      op: "message",
       datatype: "Bar",
       topic: "/bar",
       receiveTime: { sec: 0, nsec: 0 },
@@ -171,21 +167,18 @@ describe("useMessageReducer", () => {
     Test.addMessages.mockImplementation((prevValue, msgs) => msgs[msgs.length - 1].message.value);
 
     const message1 = {
-      op: "message",
       datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
     };
     const message2 = {
-      op: "message",
       datatype: "Bar",
       topic: "/bar",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 3 },
     };
     const message3 = {
-      op: "message",
       datatype: "Bar",
       topic: "/bar",
       receiveTime: { sec: 0, nsec: 0 },
@@ -253,7 +246,6 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message1 = {
-      op: "message",
       datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
@@ -288,14 +280,12 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message1 = {
-      op: "message",
       datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
     };
     const message2 = {
-      op: "message",
       datatype: "Bar",
       topic: "/bar",
       receiveTime: { sec: 0, nsec: 0 },
@@ -328,14 +318,12 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message1 = {
-      op: "message",
       datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
     };
     const message2 = {
-      op: "message",
       datatype: "Bar",
       topic: "/bar",
       receiveTime: { sec: 0, nsec: 0 },
@@ -373,7 +361,6 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message = {
-      op: "message",
       datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
@@ -470,7 +457,6 @@ describe("useMessageReducer", () => {
     Test.addMessages.mockImplementation((_, msgs) => msgs[msgs.length - 1].message.value);
 
     const message1 = {
-      op: "message",
       datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },

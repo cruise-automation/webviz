@@ -10,7 +10,7 @@ import { POINT_CLOUD_MESSAGE } from "./fixture/pointCloudData";
 import { memoizedMarker, updateMarkerCache } from "./memoization";
 import type { MemoizedMarker } from "./types";
 
-describe("<GPUPointClouds />", () => {
+describe("<PointClouds />", () => {
   describe("marker memoization", () => {
     it("returns memoized object", () => {
       let cache = new Map<Uint8Array, MemoizedMarker>();

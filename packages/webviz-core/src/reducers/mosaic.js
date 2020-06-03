@@ -6,25 +6,37 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import { uniq } from "lodash";
+import { getLeaves } from "react-mosaic-component";
 
 import type { ActionTypes } from "webviz-core/src/actions";
+import type { State } from "webviz-core/src/reducers";
 
-type MosaicState = { mosaicId: string, selectedPanelIds: string[] };
-const initialState: MosaicState = { mosaicId: "", selectedPanelIds: [] };
-
-export default function mosaicReducer(state: MosaicState = initialState, action: ActionTypes) {
+export default function mosaicReducer(state: State, action: ActionTypes): State {
+  const newMosaicState = { ...state.mosaic };
   switch (action.type) {
     case "SET_MOSAIC_ID":
-      return { ...state, mosaicId: action.payload };
+      return { ...state, mosaic: { ...newMosaicState, mosaicId: action.payload } };
     case "ADD_SELECTED_PANEL_ID":
-      return { ...state, selectedPanelIds: uniq<string>([...state.selectedPanelIds, action.payload]) };
+      return {
+        ...state,
+        mosaic: {
+          ...newMosaicState,
+          selectedPanelIds: uniq<string>([...newMosaicState.selectedPanelIds, action.payload]),
+        },
+      };
     case "REMOVE_SELECTED_PANEL_ID":
-      return { ...state, selectedPanelIds: state.selectedPanelIds.filter((id) => id !== action.payload) };
+      return {
+        ...state,
+        mosaic: {
+          ...newMosaicState,
+          selectedPanelIds: newMosaicState.selectedPanelIds.filter((id) => id !== action.payload),
+        },
+      };
     case "SET_SELECTED_PANEL_IDS":
-      return { ...state, selectedPanelIds: action.payload };
+      return { ...state, mosaic: { ...newMosaicState, selectedPanelIds: action.payload } };
     case "SELECT_ALL_PANELS":
-      return { ...state, selectedPanelIds: action.payload };
+      return { ...state, mosaic: { ...newMosaicState, selectedPanelIds: getLeaves(state.panels.layout) } };
     default:
-      return state;
+      return { ...state, mosaic: newMosaicState };
   }
 }

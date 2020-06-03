@@ -125,8 +125,14 @@ export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType
   return editors[datatype];
 }
 
-export function canEditDatatype(datatype: string) {
+export function canEditDatatype(datatype: string): boolean {
   return topicSettingsEditorForDatatype(datatype) != null;
+}
+
+export function canEditNamespaceOverrideColorDatatype(datatype: string): boolean {
+  const editor = topicSettingsEditorForDatatype(datatype);
+  // $FlowFixMe added static field `canEditNamespaceOverrideColor` to the React component
+  return !!(editor && editor.canEditNamespaceOverrideColor);
 }
 
 type Props = {|

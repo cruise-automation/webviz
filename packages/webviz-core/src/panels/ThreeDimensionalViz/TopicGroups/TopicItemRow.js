@@ -14,8 +14,8 @@ import Namespace from "./Namespace";
 import { KeyboardContext } from "./TopicGroups";
 import { toggleNamespace } from "./topicGroupsVisibilityUtils";
 import TopicItemRowHeader from "./TopicItemRowHeader";
-import { parseColorSetting } from "./TopicSettingsEditor";
 import type { TopicItem, OnTopicGroupsChange } from "./types";
+import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type StyleProps = {| available: boolean, visible: boolean |};

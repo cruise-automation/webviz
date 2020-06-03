@@ -266,7 +266,6 @@ export default class RosbridgePlayer implements Player {
             return;
           }
           this._messages.push({
-            op: "message",
             topic: topicName,
             datatype,
             receiveTime: fromMillis(Date.now()),

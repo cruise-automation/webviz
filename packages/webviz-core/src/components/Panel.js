@@ -384,6 +384,17 @@ export default function Panel<Config: PanelConfig>(
       }),
       [actions, cmdKeyPressed, exitFullScreen, onReleaseQuickActionsKey]
     );
+
+    const onBlurDocument = useCallback(
+      () => {
+        exitFullScreen();
+        setCmdKeyPressed(false);
+        setShiftKeyPressed(false);
+        onReleaseQuickActionsKey();
+      },
+      [exitFullScreen, onReleaseQuickActionsKey]
+    );
+
     return (
       // $FlowFixMe - bug prevents requiring panelType on PanelComponent: https://stackoverflow.com/q/52508434/23649
       <PanelContext.Provider
@@ -400,7 +411,7 @@ export default function Panel<Config: PanelConfig>(
           tabId,
         }}>
         {/* Ensure user exits full-screen mode when leaving window, even if key is still pressed down */}
-        <DocumentEvents target={window} enabled onBlur={exitFullScreen} />
+        <DocumentEvents target={window} enabled onBlur={onBlurDocument} />
         <KeyListener global keyUpHandlers={keyUpHandlers} keyDownHandlers={keyDownHandlers} />
         <Flex
           onClick={onOverlayClick}

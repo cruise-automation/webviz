@@ -29,7 +29,7 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import {
   OccupancyGrids,
   LaserScans,
-  GPUPointClouds,
+  PointClouds,
   PoseMarkers,
   LinedConvexHulls,
 } from "webviz-core/src/panels/ThreeDimensionalViz/commands";
@@ -168,7 +168,7 @@ export default function World({
       <Lines>{nonGroupedLines}</Lines>
       <Arrows>{arrow}</Arrows>
       <Points>{points}</Points>
-      <GPUPointClouds>{pointcloud}</GPUPointClouds>
+      <PointClouds>{pointcloud}</PointClouds>
       <Triangles>{triangleList}</Triangles>
       <Spheres>{[...sphere, ...sphereList]}</Spheres>
       <Cylinders>{cylinder}</Cylinders>

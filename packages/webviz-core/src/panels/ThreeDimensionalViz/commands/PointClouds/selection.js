@@ -10,8 +10,12 @@ import { omit, difference, isEmpty, isNil } from "lodash";
 import { type MouseEventObject } from "regl-worldview";
 
 import { getVertexValues, getVertexValue, getFieldOffsetsAndReaders, getVertexCount } from "./buffers";
-import { parseHexColor } from "./decodeMarker";
-import { DEFAULT_FLAT_COLOR } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
+import { getRgbaArray } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
+import {
+  DEFAULT_FLAT_COLOR,
+  DEFAULT_MIN_COLOR,
+  DEFAULT_MAX_COLOR,
+} from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
 import type { PointCloud2, PointField } from "webviz-core/src/types/Messages";
 import { lerp } from "webviz-core/src/util";
 
@@ -58,8 +62,8 @@ export function getClickedInfo(maybeFullyDecodedMarker: MouseEventObject, instan
       const colorFieldRange = maxColorValue - minColorValue || Infinity;
       const pct = Math.max(0, Math.min((colorFieldValue - minColorValue) / colorFieldRange, 1));
       const { minColor, maxColor } = colorMode;
-      const parsedMinColor = parseHexColor(minColor);
-      const parsedMaxColor = parseHexColor(maxColor);
+      const parsedMinColor = getRgbaArray(minColor || DEFAULT_MIN_COLOR);
+      const parsedMaxColor = getRgbaArray(maxColor || DEFAULT_MAX_COLOR);
       clickedPointColor = [
         lerp(pct, parsedMinColor[0], parsedMaxColor[0]), // R
         lerp(pct, parsedMinColor[1], parsedMaxColor[1]), // G
@@ -74,7 +78,7 @@ export function getClickedInfo(maybeFullyDecodedMarker: MouseEventObject, instan
       clickedPointColor = [0, 0, 0, 1];
       setRainbowColor(clickedPointColor, 0, pct);
     } else if (colorMode.mode === "flat") {
-      clickedPointColor = parseHexColor(colorMode.flatColor || DEFAULT_FLAT_COLOR);
+      clickedPointColor = getRgbaArray(colorMode.flatColor || DEFAULT_FLAT_COLOR);
     }
   }
 

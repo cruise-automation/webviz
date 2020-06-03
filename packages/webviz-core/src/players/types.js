@@ -162,13 +162,11 @@ export type Topic = {|
 |};
 
 // A ROS-like message.
-// TODO(JP): `op` bit is unnecessary, and the `datatype` bit is redundant
-// with the `topics` array in `PlayerStateActiveData`. We should remove both
-// and unify type with `DataProviderMessage`.
+// TODO(JP): The `datatype` bit is redundant with the `topics` array in `PlayerStateActiveData`.
+// We should remove both and unify type with `DataProviderMessage`.
 export type TypedMessage<T> = $ReadOnly<{|
   topic: string,
   datatype: string,
-  op: "message",
   receiveTime: Time,
 
   // The actual message format. This is currently not very tightly defined, but it's typically

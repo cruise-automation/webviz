@@ -19,7 +19,7 @@ import Item from "webviz-core/src/components/Menu/Item";
 import {
   getClickedInfo,
   getAllPoints,
-} from "webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/selection";
+} from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection";
 import { downloadFiles } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
 

@@ -31,7 +31,6 @@ Below is a basic example of a message that could be consumed by the 2D Plot pane
 
 ```js
 {
-  op: "message",
   topic: "/plot_a",
   datatype: "webviz_msgs/2DPlotMsg",
   receiveTime: { sec: 1532375120, nsec: 317760607 },

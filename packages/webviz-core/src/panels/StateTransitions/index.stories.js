@@ -74,7 +74,6 @@ const fixture = {
   },
   frame: {
     "/some/topic/with/state": systemStateMessages.map((message) => ({
-      op: "message",
       datatype: "msgs/SystemState",
       topic: "/some/topic/with/state",
       receiveTime: message.header.stamp,

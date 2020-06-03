@@ -135,7 +135,6 @@ const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: Ros
     [
       createProperty("topic", ts.createTypeReferenceNode("T")),
       createProperty("datatype", ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)),
-      createProperty("op", ts.createLiteral("message")),
       createProperty("receiveTime", ts.createTypeReferenceNode("Time")),
       createProperty("message", ts.createTypeReferenceNode("TopicsToMessageDefinition[T]")),
     ] /* members */
@@ -143,20 +142,13 @@ const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: Ros
 
   const DATATYPES_IDENTIFIER = "Messages";
 
-  const datatypeInterfaces = generateTypeDefs(datatypes);
-  const datatypesNamespace = ts.createModuleDeclaration(
-    undefined /* decorators */,
-    modifiers /* modifiers */,
-    ts.createIdentifier(DATATYPES_IDENTIFIER),
-    ts.createModuleBlock(
-      Object.values(datatypeInterfaces).map((val) => {
-        return val;
-      })
-    ),
-    ts.NodeFlags.Namespace
-  );
+  let datatypeInterfaces = generateTypeDefs(datatypes);
 
   topics.forEach(({ name, datatype }) => {
+    if (!datatypeInterfaces[datatype]) {
+      datatypeInterfaces = { ...datatypeInterfaces, ...generateTypeDefs({ [datatype]: { fields: [] } }) };
+    }
+
     TopicsToMessageDefinition = ts.updateInterfaceDeclaration(
       TopicsToMessageDefinition /* node */,
       undefined /* decorators */,
@@ -173,6 +165,18 @@ const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: Ros
       ] /* members */
     );
   });
+
+  const datatypesNamespace = ts.createModuleDeclaration(
+    undefined /* decorators */,
+    modifiers /* modifiers */,
+    ts.createIdentifier(DATATYPES_IDENTIFIER),
+    ts.createModuleBlock(
+      Object.values(datatypeInterfaces).map((val) => {
+        return val;
+      })
+    ),
+    ts.NodeFlags.Namespace
+  );
 
   const sourceFile = ts.createSourceFile(
     "", // This argument doesn't really matter.

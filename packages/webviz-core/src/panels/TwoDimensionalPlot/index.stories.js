@@ -66,7 +66,6 @@ const fixture = {
   frame: {
     "/plot_a": [
       {
-        op: "message",
         topic: "/plot_a",
         datatype: "our_plot_type",
         receiveTime: { sec: 1532375120, nsec: 317760607 },

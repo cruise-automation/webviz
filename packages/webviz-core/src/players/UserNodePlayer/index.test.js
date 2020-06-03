@@ -32,7 +32,6 @@ const hardcodedNode = {
   callback: ({ message, state }) => ({
     messages: [
       {
-        op: "message",
         topic: "/webviz/test",
         datatype: "test",
         receiveTime: message.receiveTime,
@@ -234,7 +233,7 @@ describe("UserNodePlayer", () => {
       {
         topic: "/np_input",
         datatype: "std_msgs/Header",
-        op: "message",
+
         receiveTime: { sec: 0, nsec: 1 },
         message: {
           payload: "bar",
@@ -243,7 +242,7 @@ describe("UserNodePlayer", () => {
       {
         topic: "/np_input",
         datatype: "std_msgs/Header",
-        op: "message",
+
         receiveTime: { sec: 0, nsec: 100 },
         message: {
           payload: "baz",
@@ -471,7 +470,6 @@ describe("UserNodePlayer", () => {
         upstreamMessages[0],
         {
           datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
-          op: "message",
           receiveTime: upstreamMessages[0].receiveTime,
           message: { custom_np_field: "abc", value: "bar" },
           topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
@@ -536,7 +534,6 @@ describe("UserNodePlayer", () => {
         upstreamMessages[0],
         {
           datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
-          op: "message",
           receiveTime: upstreamMessages[0].receiveTime,
           message: { a: 1, b: 0.7483314773547883, g: 0.7483314773547883, r: 1 },
           topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
@@ -595,7 +592,6 @@ describe("UserNodePlayer", () => {
         upstreamMessages[1],
         {
           datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
-          op: "message",
           receiveTime: upstreamMessages[1].receiveTime,
           message: { custom_np_field: "abc", value: "baz" },
           topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
@@ -646,14 +642,12 @@ describe("UserNodePlayer", () => {
         upstreamMessages[0],
         {
           datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
-          op: "message",
           receiveTime: upstreamMessages[0].receiveTime,
           message: { custom_np_field: "abc", value: "bar" },
           topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
         },
         {
           datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}2`,
-          op: "message",
           receiveTime: upstreamMessages[0].receiveTime,
           message: { custom_np_field: "abc", value: "bar" },
           topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}2`,

@@ -135,6 +135,7 @@ type Props = {|
   xAxisVal?: "timestamp" | "index" | "custom",
   plugins?: any,
   scaleOptions?: ?ScaleOptions,
+  currentTime?: ?number,
 |};
 
 // Create a chart with any y-axis but with an x-axis that shows time since the
@@ -354,9 +355,9 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   );
 
   const getChartjsOptions = (minX: ?number, maxX: ?number) => {
-    const { xAxes } = props;
+    const { currentTime } = props;
     const plugins = props.plugins || {};
-    const annotations = props.annotations || [];
+    const annotations = [...(props.annotations || [])];
 
     // We create these objects every time so that they can be modified.
     const defaultXTicksSettings = {
@@ -372,9 +373,31 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
       padding: 0,
     };
     const defaultXAxis = {
+      id: "X_AXIS_ID",
       ticks: defaultXTicksSettings,
       gridLines: { color: "rgba(255, 255, 255, 0.2)", zeroLineColor: "rgba(255, 255, 255, 0.2)" },
     };
+    const xAxes = props.xAxes
+      ? props.xAxes.map((xAxis) => ({
+          ...defaultXAxis,
+          ...xAxis,
+          ticks: {
+            ...defaultXTicksSettings,
+            ...xAxis.ticks,
+          },
+        }))
+      : [defaultXAxis];
+    if (currentTime != null) {
+      annotations.push({
+        type: "line",
+        drawTime: "beforeDatasetsDraw",
+        scaleID: xAxes[0].id,
+        borderColor: "#aaa",
+        borderWidth: 1,
+        mode: "vertical",
+        value: currentTime,
+      });
+    }
 
     const options = {
       maintainAspectRatio: false,
@@ -393,19 +416,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
         enabled: false, // Disable native tooltips since we use custom ones.
       },
       scales: {
-        xAxes: xAxes
-          ? xAxes.map((xAxis) => {
-              const axis = {
-                ...defaultXAxis,
-                ...xAxis,
-                ticks: {
-                  ...defaultXTicksSettings,
-                  ...xAxis.ticks,
-                },
-              };
-              return axis;
-            })
-          : [defaultXAxis],
+        xAxes,
         yAxes: yAxes.map((yAxis) => {
           const ticks = {
             ...defaultYTicksSettings,

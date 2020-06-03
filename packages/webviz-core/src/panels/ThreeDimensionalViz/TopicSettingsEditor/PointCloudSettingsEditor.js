@@ -10,8 +10,8 @@ import React, { useCallback } from "react";
 import styled from "styled-components";
 
 import { CommonPointSettings, CommonDecaySettings, type TopicSettingsEditorProps } from ".";
+import ColorPickerForTopicSettings from "./ColorPickerForTopicSettings";
 import { SLabel, SInput } from "./common";
-import ColorPicker from "webviz-core/src/components/ColorPicker";
 import Flex from "webviz-core/src/components/Flex";
 import GradientPicker from "webviz-core/src/components/GradientPicker";
 import Radio from "webviz-core/src/components/Radio";
@@ -37,7 +37,9 @@ export type ColorMode =
       maxValue?: number,
     |};
 
-export const DEFAULT_FLAT_COLOR = "#ffffff";
+export const DEFAULT_FLAT_COLOR = "255,255,255,1";
+export const DEFAULT_MIN_COLOR = "0,0,255,1";
+export const DEFAULT_MAX_COLOR = "255,0,0,1";
 
 export type PointCloudSettings = {|
   pointSize?: ?number,
@@ -117,7 +119,7 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
         <Flex row style={{ margin: "2px 0 2px 12px", alignItems: "center" }}>
           {colorMode.mode === "flat" ? (
             // For flat mode, pick a single color
-            <ColorPicker
+            <ColorPickerForTopicSettings
               color={colorMode.flatColor}
               onChange={(flatColor) => onColorModeChange({ mode: "flat", flatColor })}
             />
@@ -189,7 +191,14 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
               onColorModeChange(({ colorField, minValue, maxValue }: any) =>
                 id === "rainbow"
                   ? { mode: "rainbow", colorField, minValue, maxValue }
-                  : { mode: "gradient", colorField, minValue, maxValue, minColor: "#0000ff", maxColor: "#ff0000" }
+                  : {
+                      mode: "gradient",
+                      colorField,
+                      minValue,
+                      maxValue,
+                      minColor: DEFAULT_MIN_COLOR,
+                      maxColor: DEFAULT_MAX_COLOR,
+                    }
               )
             }
             options={[
@@ -205,8 +214,8 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
       {colorMode.mode === "gradient" && (
         <div style={{ margin: "8px" }}>
           <GradientPicker
-            minColor={colorMode.minColor}
-            maxColor={colorMode.maxColor}
+            minColor={colorMode.minColor || DEFAULT_MIN_COLOR}
+            maxColor={colorMode.maxColor || DEFAULT_MAX_COLOR}
             onChange={({ minColor, maxColor }) =>
               onColorModeChange((newColorMode) => ({ mode: "gradient", ...newColorMode, minColor, maxColor }))
             }
@@ -216,3 +225,5 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
     </Flex>
   );
 }
+
+PointCloudSettingsEditor.canEditNamespaceOverrideColor = true;

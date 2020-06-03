@@ -23,7 +23,6 @@ import { bagConnectionsToDatatypes, bagConnectionsToTopics } from "webviz-core/s
 import { getBagChunksOverlapCount } from "webviz-core/src/util/bags";
 import CachedFilelike from "webviz-core/src/util/CachedFilelike";
 import Logger from "webviz-core/src/util/Logger";
-import type { Range } from "webviz-core/src/util/ranges";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 type BagPath = { type: "file", file: File | string } | { type: "remoteBagUrl", url: string };
@@ -62,8 +61,6 @@ export default class BagDataProvider implements DataProvider {
     await decompress.isLoaded;
 
     if (bagPath.type === "remoteBagUrl") {
-      extensionPoint.progressCallback({ fullyLoadedFractionRanges: [] });
-      let approximateSize = 0;
       const fileReader = new BrowserHttpReader(bagPath.url);
       const remoteReader = new CachedFilelike({
         fileReader,
@@ -77,30 +74,17 @@ export default class BagDataProvider implements DataProvider {
             reconnecting,
           });
         },
-        rangesCallback: (ranges: Range[]) => {
-          if (approximateSize) {
-            extensionPoint.progressCallback({
-              fullyLoadedFractionRanges: ranges.map(({ start, end }) => ({
-                start: Math.max(0, start / approximateSize),
-                end: Math.min(1, end / approximateSize),
-              })),
-            });
-          }
-        },
       });
       await remoteReader.open(); // Important that we call this first, because it might throw an error if the file can't be read.
-      const exactSize = remoteReader.size();
-      if (exactSize === 0) {
+      if (remoteReader.size() === 0) {
         sendNotification("Cannot play invalid bag", "Bag is 0 bytes in size.", "user", "error");
         return new Promise(() => {}); // Just never finish initializing.
       }
-      approximateSize = exactSize * 0.99; // Chop off the last percentage or so for the indexes.
 
       this._bag = new Bag(new BagReader(remoteReader));
       await this._bag.open();
     } else {
       this._bag = await open(bagPath.file);
-      extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] });
     }
 
     const { startTime, endTime, chunkInfos } = this._bag;

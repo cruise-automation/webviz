@@ -37,16 +37,6 @@ const STabWrapper = styled.div`
   color: ${colors.TEXT};
 `;
 
-// TODO(Audrey): use tinyColor instead
-// Parse color saved into topic settings into {r, g, b, a} form.
-export function parseColorSetting(rgba: ?string, divisor?: number = 255) {
-  const [r = 255, g = 255, b = 255, a = 1] = (rgba || "")
-    .split(",")
-    .map(parseFloat)
-    .map((x) => (isNaN(x) ? undefined : x));
-  return { r: r / divisor, g: g / divisor, b: b / divisor, a };
-}
-
 type Props = {|
   objectPath: string,
   onTopicGroupsChange: OnTopicGroupsChange,

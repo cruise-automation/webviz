@@ -9,7 +9,8 @@
 import React from "react";
 
 import { type TopicSettingsEditorProps } from ".";
-import { SLabel, SDescription, SInput } from "./common";
+import ColorPickerForTopicSettings from "./ColorPickerForTopicSettings";
+import { SLabel, SDescription } from "./common";
 import Checkbox from "webviz-core/src/components/Checkbox";
 import Flex from "webviz-core/src/components/Flex";
 import type { Marker, MarkerArray } from "webviz-core/src/types/Messages";
@@ -24,16 +25,13 @@ export default function MarkerSettingsEditor(props: TopicSettingsEditorProps<Mar
   const { settings = {}, onFieldChange } = props;
   return (
     <Flex col>
-      <SLabel>Color (r,g,b,a)</SLabel>
+      <SLabel>Color</SLabel>
       <SDescription>
         Overrides <code>color</code>/<code>colors</code> for all markers on this topic.
       </SDescription>
-      <SInput
-        type="text"
-        data-test="color-input"
-        value={settings.overrideColor || ""}
-        placeholder="e.g. 255, 0, 100, 0.5"
-        onChange={(e) => onFieldChange("overrideColor", e.target.value)}
+      <ColorPickerForTopicSettings
+        color={settings.overrideColor}
+        onChange={(newColor) => onFieldChange("overrideColor", newColor)}
       />
       <SLabel>Line marker click events override</SLabel>
       <SDescription>
@@ -54,3 +52,5 @@ export default function MarkerSettingsEditor(props: TopicSettingsEditorProps<Mar
     </Flex>
   );
 }
+
+MarkerSettingsEditor.canEditNamespaceOverrideColor = true;

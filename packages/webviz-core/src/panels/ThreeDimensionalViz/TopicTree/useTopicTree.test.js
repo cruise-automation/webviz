@@ -40,6 +40,7 @@ const sharedProps = {
   topicDisplayMode: TOPIC_DISPLAY_MODES.SHOW_ALL.value,
   topicSettings: {},
   topicTreeConfig: TREE_CONFIG,
+  uncategorizedGroupName: "(Uncategorized)",
 };
 
 function makeTopics(topicNames: string[]): Topic[] {

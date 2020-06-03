@@ -19,7 +19,6 @@ export const fixture = {
   frame: {
     "/msgs/big_topic": [
       {
-        op: "message",
         datatype: "msgs/big_topic",
         topic: "/msgs/big_topic",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -44,14 +43,12 @@ export const fixture = {
     ],
     "/foo": [
       {
-        op: "message",
         datatype: "std_msgs/String",
         topic: "/foo",
         receiveTime: { sec: 122, nsec: 456789011 },
         message: { some_array: ["a", "b", "c"], some_deleted_key: "GONE", some_id_example_2: { some_id: 0 } },
       },
       {
-        op: "message",
         datatype: "std_msgs/String",
         topic: "/foo",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -60,7 +57,6 @@ export const fixture = {
     ],
     "/baz/num": [
       {
-        op: "message",
         datatype: "baz/num",
         topic: "/baz/num",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -69,7 +65,6 @@ export const fixture = {
     ],
     "/baz/text": [
       {
-        op: "message",
         datatype: "baz/text",
         topic: "/baz/text",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -78,7 +73,6 @@ export const fixture = {
     ],
     "/baz/array": [
       {
-        op: "message",
         datatype: "baz/array",
         topic: "/baz/array",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -87,7 +81,6 @@ export const fixture = {
     ],
     "/baz/array/obj": [
       {
-        op: "message",
         datatype: "baz/array/obj",
         topic: "/baz/array/obj",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -96,7 +89,6 @@ export const fixture = {
     ],
     "/geometry/types": [
       {
-        op: "message",
         datatype: "geometry/types",
         topic: "/geometry/types",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -133,7 +125,6 @@ export const enumFixture = {
   frame: {
     "/baz/enum": [
       {
-        op: "message",
         datatype: "baz/enum",
         topic: "/baz/enum",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -181,7 +172,6 @@ export const enumAdvancedFixture = {
   frame: {
     "/baz/enum_advanced": [
       {
-        op: "message",
         datatype: "baz/enum_advanced",
         topic: "/baz/enum_advanced",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -201,7 +191,6 @@ export const withMissingData = {
   frame: {
     "/baz/missing_data": [
       {
-        op: "message",
         datatype: "baz/missing_data",
         topic: "/baz/missing_data",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -222,7 +211,6 @@ export const topicsToDiffFixture = {
   frame: {
     "/baz/enum_advanced": [
       {
-        op: "message",
         datatype: "baz/enum_advanced",
         topic: "/baz/enum_advanced",
         receiveTime: { sec: 123, nsec: 456789012 },
@@ -280,21 +268,18 @@ export const multipleNumberMessagesFixture = {
   frame: {
     "/baz/enum": [
       {
-        op: "message",
         datatype: "multiple_number_messages",
         topic: "/multiple_number_messages",
         receiveTime: { sec: 123, nsec: 1 },
         message: { value: 1 },
       },
       {
-        op: "message",
         datatype: "multiple_number_messages",
         topic: "/multiple_number_messages",
         receiveTime: { sec: 123, nsec: 2 },
         message: { value: 2 },
       },
       {
-        op: "message",
         datatype: "multiple_number_messages",
         topic: "/multiple_number_messages",
         receiveTime: { sec: 123, nsec: 3 },

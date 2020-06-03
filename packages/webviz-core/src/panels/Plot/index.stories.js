@@ -151,13 +151,13 @@ const fixture = {
   activeData: {
     startTime: { sec: 0, nsec: 202050 },
     endTime: { sec: 24, nsec: 999997069 },
+    currentTime: { sec: 0, nsec: 750000000 },
     isPlaying: false,
     messageDefinitionsByTopic: { "/preloaded_topic": float64StampedDefinition },
     speed: 0.2,
   },
   frame: {
     "/some_topic/location": locationMessages.map((message) => ({
-      op: "message",
       datatype: "msgs/PoseDebug",
       topic: "/some_topic/location",
       receiveTime: message.header.stamp,
@@ -166,14 +166,12 @@ const fixture = {
     "/some_topic/location_subset": locationMessages
       .slice(locationMessages.length / 3, (locationMessages.length * 2) / 3)
       .map((message) => ({
-        op: "message",
         datatype: "msgs/PoseDebug",
         topic: "/some_topic/location_subset",
         receiveTime: message.header.stamp,
         message,
       })),
     "/some_topic/state": otherStateMessages.map((message) => ({
-      op: "message",
       datatype: "msgs/State",
       topic: "/some_topic/state",
       receiveTime: message.header.stamp,
@@ -181,7 +179,6 @@ const fixture = {
     })),
     "/boolean_topic": [
       {
-        op: "message",
         datatype: "std_msgs/Bool",
         topic: "/boolean_topic",
         receiveTime: { sec: 1, nsec: 0 },
@@ -470,14 +467,12 @@ storiesOf("<Plot>", module)
           frame: {
             "/some_number": [
               {
-                op: "message",
                 datatype: "std_msgs/Float32",
                 topic: "/some_number",
                 receiveTime: { sec: 0, nsec: 0 },
                 message: { data: 1.8548483304974972 },
               },
               {
-                op: "message",
                 datatype: "std_msgs/Float32",
                 topic: "/some_number",
                 receiveTime: { sec: 1, nsec: 0 },

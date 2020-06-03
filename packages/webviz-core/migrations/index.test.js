@@ -6,7 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import migratePanels, { CURRENT_LAYOUT_VERSION } from "webviz-core/migrations";
+import migratePanels from "webviz-core/migrations";
+import { CURRENT_LAYOUT_VERSION } from "webviz-core/migrations/constants";
 
 const THREE_DIMENSIONAL_SAVED_PROPS_VERSION = 17;
 describe("migratePanels", () => {
@@ -20,7 +21,10 @@ describe("migratePanels", () => {
       globalData,
       linkedGlobalVariables: [],
       userNodes: {},
-      playbackConfig: { speed: 0.2 },
+      playbackConfig: {
+        messageOrder: "receiveTime",
+        speed: 0.2,
+      },
     };
 
     // keep the old globalVariable value and delete globalData key
@@ -32,7 +36,10 @@ describe("migratePanels", () => {
       linkedGlobalVariables: [],
       savedProps: {},
       userNodes: {},
-      playbackConfig: { speed: 0.2 },
+      playbackConfig: {
+        messageOrder: "receiveTime",
+        speed: 0.2,
+      },
       version: CURRENT_LAYOUT_VERSION,
     });
 
@@ -51,12 +58,15 @@ describe("migratePanels", () => {
       linkedGlobalVariables: [],
       savedProps: {},
       userNodes: {},
-      playbackConfig: { speed: 0.2 },
+      playbackConfig: {
+        messageOrder: "receiveTime",
+        speed: 0.2,
+      },
       version: CURRENT_LAYOUT_VERSION,
     });
   });
 
-  it("migrates from 3D panel checkedKeys -> current (TopicTree checkedKeys)", () => {
+  it("migrates from 3D panel to current", () => {
     expect(
       migratePanels({
         savedProps: {
@@ -72,6 +82,22 @@ describe("migratePanels", () => {
               "x:ExtB.b",
               "(Uncategorized)",
             ],
+            topicSettings: {
+              "/foo": {
+                colorMode: {
+                  mode: "flat",
+                  flatColor: "#c51d1dff",
+                },
+              },
+              "/bar": {
+                colorMode: {
+                  mode: "gradient",
+                  colorField: "z",
+                  minColor: "#66e29896",
+                  maxColor: "#FF008E",
+                },
+              },
+            },
           },
         },
         linkedGlobalVariables: [],
@@ -94,6 +120,22 @@ describe("migratePanels", () => {
           "name:(Uncategorized)",
           "name_2:(Uncategorized)",
         ],
+        topicSettings: {
+          "/bar": {
+            colorMode: {
+              colorField: "z",
+              maxColor: "255,0,142,1",
+              minColor: "102,226,152,0.5882352941176471",
+              mode: "gradient",
+            },
+          },
+          "/foo": {
+            colorMode: {
+              flatColor: "197,29,29,1",
+              mode: "flat",
+            },
+          },
+        },
         expandedKeys: [],
         savedPropsVersion: THREE_DIMENSIONAL_SAVED_PROPS_VERSION,
       },

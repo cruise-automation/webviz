@@ -17,12 +17,16 @@ import {
 } from "regl-worldview";
 
 import { FLOAT_SIZE } from "./buffers";
-import { parseHexColor } from "./decodeMarker";
 import { updateMarkerCache } from "./memoization";
 import type { MemoizedMarker, MemoizedVertexBuffer, VertexBuffer } from "./types";
 import VertexBufferCache from "./VertexBufferCache";
 import filterMap from "webviz-core/src/filterMap";
-import { DEFAULT_FLAT_COLOR } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
+import { getRgbaArray } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
+import {
+  DEFAULT_FLAT_COLOR,
+  DEFAULT_MIN_COLOR,
+  DEFAULT_MAX_COLOR,
+} from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
 import type { PointCloud } from "webviz-core/src/types/Messages";
 
 const COLOR_MODE_FLAT = 0;
@@ -223,16 +227,13 @@ const pointCloud = (regl: Regl) => {
         return is_bigendian ? COLOR_MODE_RGB : COLOR_MODE_BGR;
       },
       flatColor: (context, props) => {
-        const { colorMode } = props.settings;
-        return parseHexColor(colorMode.flatColor || DEFAULT_FLAT_COLOR);
+        return getRgbaArray(props.settings.colorMode.flatColor || DEFAULT_FLAT_COLOR);
       },
       minGradientColor: (context, props) => {
-        const { colorMode } = props.settings;
-        return parseHexColor(colorMode.minColor || DEFAULT_FLAT_COLOR);
+        return getRgbaArray(props.settings.colorMode.minColor || DEFAULT_MIN_COLOR);
       },
       maxGradientColor: (context, props) => {
-        const { colorMode } = props.settings;
-        return parseHexColor(colorMode.maxColor || DEFAULT_FLAT_COLOR);
+        return getRgbaArray(props.settings.colorMode.maxColor || DEFAULT_MAX_COLOR);
       },
       minColorFieldValue: (context, props) => {
         return props.minColorValue;

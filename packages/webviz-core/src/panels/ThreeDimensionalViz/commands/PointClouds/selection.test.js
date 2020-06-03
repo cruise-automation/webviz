@@ -11,7 +11,7 @@ import { POINT_CLOUD_MESSAGE, POINT_CLOUD_WITH_ADDITIONAL_FIELDS } from "./fixtu
 import { getClickedInfo, getAllPoints, decodeAdditionalFields } from "./selection";
 import type { PointCloud2 } from "webviz-core/src/types/Messages";
 
-describe("<GPUPointClouds />", () => {
+describe("<PointClouds />", () => {
   // $FlowFixMe - Flow doens't like that we're overwriting this.
   console.info = (message) => {
     // decodeMarker() will log warnings in console whenever a buffer cannot be sent to GPU

@@ -19,11 +19,6 @@ import {
   type ColorMode,
 } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
 
-export function parseHexColor(color: string) {
-  const parsedFlatColor = parseInt(color.slice(1), 16);
-  return [(parsedFlatColor >> 16) & 0xff, (parsedFlatColor >> 8) & 0xff, parsedFlatColor & 0xff, 1];
-}
-
 // Decode a marker and generate position and color buffers for rendering
 // The resulting marker should be memoized for better performance
 export function decodeMarker(marker: PointCloudMarker) {

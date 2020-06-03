@@ -10,7 +10,7 @@ import { FLOAT_SIZE } from "./buffers";
 import { decodeMarker } from "./decodeMarker";
 import { POINT_CLOUD_MESSAGE, POINT_CLOUD_WITH_ADDITIONAL_FIELDS } from "./fixture/pointCloudData";
 
-describe("<GPUPointClouds />", () => {
+describe("<PointClouds />", () => {
   describe("positions", () => {
     it("builds position buffer by reinterpreting data from PointCloud2", () => {
       const result = decodeMarker(POINT_CLOUD_MESSAGE);

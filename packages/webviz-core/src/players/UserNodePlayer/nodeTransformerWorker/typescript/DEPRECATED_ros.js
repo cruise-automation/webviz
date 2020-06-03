@@ -23,7 +23,6 @@ export declare type Time = {
 export declare type Message<T> = {
   topic: string,
   datatype: string,
-  op: "message",
   receiveTime: Time,
   message: T,
 }

@@ -287,9 +287,10 @@ type PlotChartProps = {|
   datasets: DataSet[],
   tooltips: TimeBasedChartTooltipData[],
   xAxisVal: "timestamp" | "index" | "custom",
+  currentTime?: ?number,
 |};
 export default memo<PlotChartProps>(function PlotChart(props: PlotChartProps) {
-  const { paths, minYValue, maxYValue, saveCurrentYs, datasets, tooltips, xAxisVal } = props;
+  const { paths, currentTime, minYValue, maxYValue, saveCurrentYs, datasets, tooltips, xAxisVal } = props;
   const annotations = getAnnotations(paths);
 
   return (
@@ -311,6 +312,7 @@ export default memo<PlotChartProps>(function PlotChart(props: PlotChartProps) {
             saveCurrentYs={saveCurrentYs}
             xAxisVal={xAxisVal}
             scaleOptions={scaleOptions}
+            currentTime={currentTime}
           />
         )}
       </Dimensions>

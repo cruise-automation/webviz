@@ -49,7 +49,6 @@ describe("useCachedGetMessagePathDataItems", () => {
   it("clears the cache whenever any inputs to getMessagePathDataItems change", async () => {
     const Test = createTest();
     const message: Message = {
-      op: "message",
       topic: "/topic",
       datatype: "datatype",
       receiveTime: { sec: 0, nsec: 0 },
@@ -108,7 +107,6 @@ describe("useCachedGetMessagePathDataItems", () => {
   it("clears the cache only when relevant global variables change", async () => {
     const Test = createTest();
     const message: Message = {
-      op: "message",
       topic: "/topic",
       datatype: "datatype",
       receiveTime: { sec: 0, nsec: 0 },
@@ -149,7 +147,6 @@ describe("useCachedGetMessagePathDataItems", () => {
     it("traverses down the path for every item", () => {
       const messages: Message[] = [
         {
-          op: "message",
           topic: "/some/topic",
           datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
@@ -166,7 +163,6 @@ describe("useCachedGetMessagePathDataItems", () => {
           },
         },
         {
-          op: "message",
           topic: "/some/topic",
           datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
@@ -253,7 +249,6 @@ describe("useCachedGetMessagePathDataItems", () => {
     it("works with negative slices", () => {
       const messages: Message[] = [
         {
-          op: "message",
           topic: "/some/topic",
           datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
@@ -276,7 +271,6 @@ describe("useCachedGetMessagePathDataItems", () => {
     it("returns nothing for invalid topics", () => {
       const messages: Message[] = [
         {
-          op: "message",
           topic: "/some/topic",
           datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
@@ -289,7 +283,6 @@ describe("useCachedGetMessagePathDataItems", () => {
     it("filters properly, and uses the filter name in the path", () => {
       const messages: Message[] = [
         {
-          op: "message",
           topic: "/some/topic",
           datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
@@ -347,7 +340,6 @@ describe("useCachedGetMessagePathDataItems", () => {
     it("filters entire messages", () => {
       const messages: Message[] = [
         {
-          op: "message",
           topic: "/some/topic",
           datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
@@ -357,7 +349,6 @@ describe("useCachedGetMessagePathDataItems", () => {
           },
         },
         {
-          op: "message",
           topic: "/some/topic",
           datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
@@ -367,7 +358,6 @@ describe("useCachedGetMessagePathDataItems", () => {
           },
         },
         {
-          op: "message",
           topic: "/some/topic",
           datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
@@ -425,7 +415,6 @@ describe("useCachedGetMessagePathDataItems", () => {
     it("returns matching constants", () => {
       const messages: Message[] = [
         {
-          op: "message",
           topic: "/some/topic",
           datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
@@ -434,7 +423,6 @@ describe("useCachedGetMessagePathDataItems", () => {
           },
         },
         {
-          op: "message",
           topic: "/some/topic",
           datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
@@ -577,7 +565,6 @@ describe("useDecodeMessagePathsForMessagesByTopic", () => {
     );
 
     const message = {
-      op: "message",
       topic: "/topic1",
       datatype: "datatype",
       receiveTime: { sec: 0, nsec: 0 },

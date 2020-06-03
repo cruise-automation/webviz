@@ -16,11 +16,11 @@ import useLinkedGlobalVariables from "./useLinkedGlobalVariables";
 import Flex from "webviz-core/src/components/Flex";
 import MockPanelContextProvider from "webviz-core/src/components/MockPanelContextProvider";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
-import { decodeMarker } from "webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/decodeMarker";
+import { decodeMarker } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/decodeMarker";
 import {
   POINT_CLOUD_MESSAGE,
   POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
-} from "webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/fixture/pointCloudData";
+} from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/fixture/pointCloudData";
 import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
 import colors from "webviz-core/src/styles/colors.module.scss";
 

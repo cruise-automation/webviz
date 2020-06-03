@@ -11,7 +11,6 @@ import { getShouldDisplayMsg } from "./index";
 describe("RosOutPanel", () => {
   describe("getShouldDisplayMsg", () => {
     const msg = {
-      op: "message",
       topic: "/some_topic",
       datatype: "some_datatype",
       receiveTime: { sec: 123, nsec: 456 },

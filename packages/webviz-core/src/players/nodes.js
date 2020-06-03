@@ -29,7 +29,6 @@ export function isWebvizNodeTopic(topic: string) {
 
 export const makeNodeMessage = (topic: string, datatype: string, message: any): Message => {
   return {
-    op: "message",
     topic,
     datatype,
     message,

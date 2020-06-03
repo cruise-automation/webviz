@@ -46,7 +46,6 @@ const playerStateWithMessages = (messages, messageOrder) => ({
 
 const message = (headerStampSeconds: ?number, receiveTimeSeconds: ?number): Message => ({
   topic: "/foo",
-  op: "message",
   datatype: "visualization_msgs/Marker",
   // $FlowFixMe: Flow type asserts that receiveTime is present but we check it works without anyway.
   receiveTime: receiveTimeSeconds == null ? undefined : { sec: receiveTimeSeconds, nsec: 1 },

@@ -267,7 +267,6 @@ describe("time.getTimestampForMessage", () => {
     const messageBase = {
       topic: "/foo",
       receiveTime: { sec: 1000, nsec: 0 },
-      op: "message",
       datatype: "foo",
     };
 

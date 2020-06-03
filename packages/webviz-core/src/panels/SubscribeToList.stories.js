@@ -22,7 +22,6 @@ storiesOf("<SubscribeToList>", module)
           frame: {
             "/my/topic": [
               {
-                op: "message",
                 receiveTime: { sec: 1, nsec: 0 },
                 topic: "/my/topic",
                 datatype: "my_datatype",

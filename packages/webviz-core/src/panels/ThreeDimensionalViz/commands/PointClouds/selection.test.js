@@ -11,7 +11,7 @@ import { POINT_CLOUD_MESSAGE, POINT_CLOUD_WITH_ADDITIONAL_FIELDS } from "./fixtu
 import { getClickedInfo, getAllPoints, decodeAdditionalFields } from "./selection";
 import type { PointCloud2 } from "webviz-core/src/types/Messages";
 
-describe("<GPUPointClouds />", () => {
+describe("<PointClouds />", () => {
   // $FlowFixMe - Flow doens't like that we're overwriting this.
   console.info = (message) => {
     // decodeMarker() will log warnings in console whenever a buffer cannot be sent to GPU
@@ -79,7 +79,9 @@ describe("<GPUPointClouds />", () => {
     it("handles gradient colors", () => {
       const input = {
         ...POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
-        settings: { colorMode: { mode: "gradient", minColor: "#ff0000", maxColor: "#0000ff", colorField: "foo" } },
+        settings: {
+          colorMode: { mode: "gradient", minColor: "255,0,0,1", maxColor: "0,0,255,1", colorField: "foo" },
+        },
       };
       const marker = decodeMarker(input);
       const clickInfo = getClickedInfo(marker, 1);

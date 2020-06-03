@@ -13,12 +13,10 @@ import { useDebounce } from "use-debounce";
 
 import type { TreeNode, TopicTreeConfig, UseTreeInput, UseTreeOutput, DerivedCustomSettingsByKey } from "./types";
 import filterMap from "webviz-core/src/filterMap";
-import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicSettingsEditor";
+import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
-
-const UNCATEGORIZED_NAME = "(Uncategorized)";
 
 // TODO(Audrey): opaque type for node keys: https://flow.org/en/docs/types/opaque-types/
 export function generateNodeKey({
@@ -147,6 +145,7 @@ export default function useTree({
   topicDisplayMode,
   topicSettings,
   topicTreeConfig,
+  uncategorizedGroupName,
 }: UseTreeInput): UseTreeOutput {
   const topicTreeTopics = useMemo(
     () =>
@@ -174,7 +173,7 @@ export default function useTree({
       if (uncategorizedTopicNames.length) {
         // Add uncategorized group node to root config.
         newChildren.push({
-          name: UNCATEGORIZED_NAME,
+          name: uncategorizedGroupName,
           children: uncategorizedTopicNames.map((topicName) => ({ topicName })),
         });
       }
@@ -184,7 +183,7 @@ export default function useTree({
         { parentKey: undefined, datatypesByTopic, availableTopicsNamesSet, hasFeatureColumn }
       );
     },
-    [hasFeatureColumn, providerTopics, topicTreeConfig, topicTreeTopics]
+    [hasFeatureColumn, providerTopics, topicTreeConfig, topicTreeTopics, uncategorizedGroupName]
   );
 
   const nodesByKey = useMemo(

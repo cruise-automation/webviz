@@ -10,7 +10,6 @@ import { TimeUtil } from "rosbag";
 
 import delay from "webviz-core/shared/delay";
 import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
-import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 const dummyExtensionPoint = {
@@ -85,17 +84,6 @@ describe("BagDataProvider", () => {
       "tf/tfMessage",
       "geometry_msgs/Twist",
     ]);
-  });
-
-  it("calls progress callback while initializing with a local bag", async () => {
-    const provider = new BagDataProvider(
-      { bagPath: { type: "file", file: `${__dirname}/../../public/fixtures/example.bag` } },
-      []
-    );
-    const extensionPoint = mockExtensionPoint().extensionPoint;
-    jest.spyOn(extensionPoint, "progressCallback");
-    await provider.initialize(extensionPoint);
-    expect(extensionPoint.progressCallback).toHaveBeenCalledWith({ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] });
   });
 
   it("gets messages", async () => {

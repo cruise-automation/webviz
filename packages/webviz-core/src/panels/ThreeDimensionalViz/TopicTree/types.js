@@ -82,6 +82,7 @@ export type UseTreeInput = {|
   topicDisplayMode: TopicDisplayMode,
   topicSettings: { [topicName: string]: any },
   topicTreeConfig: TopicTreeConfig, // Never changes!
+  uncategorizedGroupName: string,
 |};
 
 export type GetIsTreeNodeVisibleInScene = (topicNode: TreeNode, columnIndex: number, namespaceKey?: string) => boolean;

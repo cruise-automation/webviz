@@ -13,8 +13,35 @@ import {
   TOPIC_CONFIG,
   type TopicTreeConfig,
 } from "webviz-core/migrations/frozenMigrations/2020.05.06.00:00:03.migrate3DPanel";
-import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
-import type { TreeNode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/types";
+
+export type TreeGroupNode = {|
+  type: "group",
+  name: string,
+  key: string,
+  featureKey: string,
+  parentKey?: string,
+  availableByColumn: boolean[],
+  // Whether the data providers are available. If it is and the current node is not available, we'll show
+  // the node name being striked through in the UI.
+  providerAvailable: boolean,
+  // eslint-disable-next-line
+  children: TreeNode[],
+|};
+
+export type TreeTopicNode = {|
+  type: "topic",
+  topicName: string,
+  key: string,
+  featureKey: string,
+  parentKey?: string,
+  name?: string,
+  datatype?: string,
+  description?: string,
+  providerAvailable: boolean,
+  availableByColumn: boolean[],
+|};
+
+export type TreeNode = TreeGroupNode | TreeTopicNode;
 
 const UNCATEGORIZED_KEY = "name:(Uncategorized)";
 const SECOND_SOURCE_PREFIX = "/webviz_source_2";
@@ -173,10 +200,7 @@ export function migrateToFeatureGroupCheckedKeys(checkedKeys: string[], topicTre
   return uniq(newCheckedKeys);
 }
 
-export function migrate3DPanelFeatureGroupKeys(
-  config: ThreeDimensionalVizConfig,
-  topicTreeConfig: ?TopicTreeConfig
-): ThreeDimensionalVizConfig {
+export function migrate3DPanelFeatureGroupKeys(config: any, topicTreeConfig: ?TopicTreeConfig): any {
   return {
     ...config,
     checkedKeys: migrateToFeatureGroupCheckedKeys([...config.checkedKeys], topicTreeConfig || TOPIC_CONFIG),

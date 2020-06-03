@@ -10,7 +10,6 @@ import { flatMap } from "lodash";
 import incrementVersion from "webviz-core/migrations/activeHelpers/incrementVersion";
 import validateVersions from "webviz-core/migrations/activeHelpers/validateVersions";
 
-export const CURRENT_LAYOUT_VERSION = 3;
 const migrationsByVersion = {
   "001": [],
   "002": [
@@ -21,6 +20,13 @@ const migrationsByVersion = {
   ],
   "003": [
     require("webviz-core/migrations/frozenMigrations/2020.05.14.13:39:17.migrate3DPanelFeatureGroupKeys").default,
+  ],
+  "004": [
+    require("webviz-core/migrations/frozenMigrations/2020.06.02.11:27:59.addDefaultPlaybackConfig").default,
+    require("webviz-core/migrations/frozenMigrations/2020.06.01.11:34:51.migrate3DPanelPointCloudHexColors").default,
+  ],
+  "005": [
+    require("webviz-core/migrations/activeMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode").default,
   ],
 };
 

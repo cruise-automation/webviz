@@ -13,6 +13,7 @@ import type { ActionTypes } from "webviz-core/src/actions";
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import type { State } from "webviz-core/src/reducers";
 import type {
   MosaicNode,
   ChangePanelLayoutPayload,
@@ -66,50 +67,50 @@ export const setStoredLayout = (layout: PanelsState) => {
 };
 
 export function setStorageStateAndFallbackToDefault(globalState: any = {}) {
-  const newGlobalState = { ...globalState };
+  const newPanelsState = { ...globalState };
   const defaultGlobalStates = getGlobalHooks().getDefaultGlobalStates();
   // extra checks to make sure all the common fields are present
   Object.keys(defaultGlobalStates).forEach((fieldName) => {
     const newFieldValue = globalState[fieldName];
     if (isEmpty(newFieldValue)) {
-      newGlobalState[fieldName] = defaultGlobalStates[fieldName];
+      newPanelsState[fieldName] = defaultGlobalStates[fieldName];
     }
   });
 
-  setStoredLayout(newGlobalState);
-  return newGlobalState;
+  setStoredLayout(newPanelsState);
+  return newPanelsState;
 }
 
 function getOldStorageAndRemoveKey() {
   // retrieve state from the old storages and delete those afterwards
   const defaultGlobalStates = getGlobalHooks().getDefaultGlobalStates();
-  const newGlobalState = cloneDeep(defaultGlobalStates);
+  const newPanelsState = cloneDeep(defaultGlobalStates);
   Object.keys(OLD_KEYS).forEach((fieldName) => {
     const storageKey = OLD_KEYS[fieldName];
     const oldStorage = storage.get(storageKey);
     if (oldStorage) {
-      newGlobalState[fieldName] = oldStorage;
+      newPanelsState[fieldName] = oldStorage;
       storage.remove(storageKey);
     }
   });
 
-  return newGlobalState;
+  return newPanelsState;
 }
-// getDefaultState will be called once when the store initializes this reducer.
+// getInitialPanelsState will be called once when the store initializes this reducer.
 // It is a function instead of a const so we can manipulate localStorage in test setup
 // and when we create new stores they will use the new values in localStorage
-function getDefaultState(): PanelsState {
-  let newGlobalState = storage.get(GLOBAL_STATE_STORAGE_KEY);
-  if (newGlobalState) {
+function getInitialPanelsState(): PanelsState {
+  let newPanelsState = storage.get(GLOBAL_STATE_STORAGE_KEY);
+  if (newPanelsState) {
     // use the new global state storage directly if it's present
-    setStorageStateAndFallbackToDefault(newGlobalState);
+    setStorageStateAndFallbackToDefault(newPanelsState);
     // don't use the old storage but simply remove the keys in case both new key and old keys are present
     getOldStorageAndRemoveKey();
   } else {
-    newGlobalState = getOldStorageAndRemoveKey();
+    newPanelsState = getOldStorageAndRemoveKey();
   }
 
-  return getGlobalHooks().migratePanels(newGlobalState);
+  return getGlobalHooks().migratePanels(newPanelsState);
 }
 
 function changePanelLayout(
@@ -188,7 +189,7 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
     return state;
   }
 
-  const newGlobalState = {
+  const newPanelsState = {
     layout: migratedPayload.layout || {},
     savedProps: migratedPayload.savedProps || {},
     globalVariables: migratedPayload.globalVariables || {},
@@ -198,62 +199,62 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
     ...(migratedPayload.restrictedTopics ? { restrictedTopics: migratedPayload.restrictedTopics } : undefined),
   };
 
-  return newGlobalState;
+  return newPanelsState;
 }
 
-export default function panelsReducer(state: PanelsState = getDefaultState(), action: ActionTypes) {
-  let newGlobalState = { ...state };
+export default function panelsReducer(state: State, action: ActionTypes): State {
+  let newPanelsState: PanelsState = { ...getInitialPanelsState(), ...state.panels };
   switch (action.type) {
     case "CHANGE_PANEL_LAYOUT":
       // don't allow the last panel to be removed
-      newGlobalState = changePanelLayout(state, action.payload);
+      newPanelsState = changePanelLayout(newPanelsState, action.payload);
       break;
 
     case "SAVE_PANEL_CONFIGS":
-      newGlobalState = savePanelConfigs(state, action.payload);
+      newPanelsState = savePanelConfigs(newPanelsState, action.payload);
       break;
 
     case "SAVE_FULL_PANEL_CONFIG":
-      newGlobalState = saveFullPanelConfig(state, action.payload);
+      newPanelsState = saveFullPanelConfig(newPanelsState, action.payload);
       break;
 
     case "IMPORT_PANEL_LAYOUT":
-      newGlobalState = importPanelLayout(state, action.payload);
+      newPanelsState = importPanelLayout(newPanelsState, action.payload);
       break;
 
     case "OVERWRITE_GLOBAL_DATA":
-      newGlobalState.globalVariables = action.payload;
+      newPanelsState.globalVariables = action.payload;
       break;
 
     case "SET_GLOBAL_DATA": {
-      const globalVariables = { ...state.globalVariables, ...action.payload };
+      const globalVariables = { ...newPanelsState.globalVariables, ...action.payload };
       Object.keys(globalVariables).forEach((key) => {
         if (globalVariables[key] === undefined) {
           delete globalVariables[key];
         }
       });
-      newGlobalState.globalVariables = globalVariables;
+      newPanelsState.globalVariables = globalVariables;
       break;
     }
 
     case "SET_USER_NODES": {
-      const userNodes = { ...state.userNodes, ...action.payload };
+      const userNodes = { ...newPanelsState.userNodes, ...action.payload };
       Object.keys(action.payload).forEach((key) => {
         if (userNodes[key] === undefined) {
           delete userNodes[key];
         }
       });
-      newGlobalState.userNodes = userNodes;
+      newPanelsState.userNodes = userNodes;
       break;
     }
 
     case "SET_LINKED_GLOBAL_VARIABLES": {
-      newGlobalState.linkedGlobalVariables = action.payload;
+      newPanelsState.linkedGlobalVariables = action.payload;
       break;
     }
 
     case "SET_PLAYBACK_CONFIG": {
-      newGlobalState.playbackConfig = { ...newGlobalState.playbackConfig, ...action.payload };
+      newPanelsState.playbackConfig = { ...newPanelsState.playbackConfig, ...action.payload };
       break;
     }
 
@@ -262,8 +263,8 @@ export default function panelsReducer(state: PanelsState = getDefaultState(), ac
   }
 
   if (action.payload && action.payload.skipSettingLocalStorage) {
-    return newGlobalState;
+    return { ...state, panels: newPanelsState };
   }
-  setStoredLayout(newGlobalState);
-  return newGlobalState;
+  setStoredLayout(newPanelsState);
+  return { ...state, panels: newPanelsState };
 }

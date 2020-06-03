@@ -346,7 +346,6 @@ describe("<MessageHistoryDEPRECATED />", () => {
     };
 
     const message = {
-      op: "message",
       datatype: "dtype/Foo",
       topic: "/some/topic",
       receiveTime: { sec: 100, nsec: 0 },

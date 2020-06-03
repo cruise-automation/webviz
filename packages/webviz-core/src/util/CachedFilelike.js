@@ -21,7 +21,6 @@ import VirtualLRUBuffer from "./VirtualLRUBuffer";
 //     becomes the largest range of data that can be requested.
 // - logFn (optional): a log function. Useful for logging in a particular format. Defaults to
 //     `console.log`.
-// - rangesCallback (optional): a callback that gets called any time the available ranges change.
 // - keepReconnectingCallback (optional): if set, we assume that we want to keep retrying on connection
 //     error, in which case the callback gets called with an update on whether we are currently
 //     reconnecting. This is useful when the connection is expected to be spotty, e.g. when
@@ -65,7 +64,6 @@ export default class CachedFilelike implements Filelike {
   _virtualBuffer: VirtualLRUBuffer;
   _logFn: (string) => void = (msg) => console.log(msg);
   _closed: boolean = false;
-  _rangesCallback: (Range[]) => void = () => {};
   _keepReconnectingCallback: ?(reconnecting: boolean) => void;
 
   // The current active connection, if there is one. `remainingRange.start` gets updated whenever
@@ -85,13 +83,11 @@ export default class CachedFilelike implements Filelike {
     fileReader: FileReader,
     cacheSizeInBytes?: ?number,
     logFn?: (string) => void,
-    rangesCallback?: (Range[]) => void,
     keepReconnectingCallback?: (reconnecting: boolean) => void,
   |}) {
     this._fileReader = options.fileReader;
     this._cacheSizeInBytes = options.cacheSizeInBytes || this._cacheSizeInBytes;
     this._logFn = options.logFn || this._logFn;
-    this._rangesCallback = options.rangesCallback || this._rangesCallback;
     this._keepReconnectingCallback = options.keepReconnectingCallback;
   }
 
@@ -188,8 +184,6 @@ export default class CachedFilelike implements Filelike {
     if (newConnection) {
       this._setConnection(newConnection);
     }
-
-    this._rangesCallback(this._virtualBuffer.getRangesWithData());
   }
 
   // Replace the current connection with a new one, spanning a certain range.

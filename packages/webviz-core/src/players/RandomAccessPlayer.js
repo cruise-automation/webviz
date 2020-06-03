@@ -394,7 +394,6 @@ export default class RandomAccessPlayer implements Player {
       }
 
       return {
-        op: "message",
         topic: message.topic,
         datatype: topic.datatype,
         receiveTime: message.receiveTime,

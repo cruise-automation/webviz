@@ -219,6 +219,18 @@ describe("typegen", () => {
         });
       });
     });
+    describe("empty references", () => {
+      it("contains an empty interface definition if the datatype does not have any properties", () => {
+        const declarations = generateTypeDefs({
+          "std_msgs/NoDef": {
+            fields: [],
+          },
+        });
+        expect(formatTypeDef(declarations)).toEqual({
+          "std_msgs/NoDef": "export interface std_msgs__NoDef { }",
+        });
+      });
+    });
   });
 
   describe("generateRosLib", () => {
@@ -229,6 +241,7 @@ describe("typegen", () => {
             name: "/my_topic",
             datatype: "std_msgs/ColorRGBA",
           },
+          { name: "/empty_topic", datatype: "std_msgs/NoDef" },
         ],
         datatypes: {
           "std_msgs/ColorRGBA": {

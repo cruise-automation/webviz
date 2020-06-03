@@ -215,9 +215,8 @@ export default class UserNodePlayer implements Player {
         return {
           topic: outputTopic,
           datatype: nodeData.outputDatatype,
-          op: "message",
-          message: result.message,
           receiveTime: message.receiveTime,
+          message: result.message,
         };
       },
       terminate: () => {

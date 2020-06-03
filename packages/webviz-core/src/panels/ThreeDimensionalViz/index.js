@@ -41,7 +41,6 @@ export type ThreeDimensionalVizConfig = {
   followOrientation?: boolean,
   modifiedNamespaceTopics?: string[],
   pinTopics: boolean,
-  savedPropsVersion?: ?number, // eslint-disable-line react/no-unused-prop-types
   topicDisplayMode?: TopicDisplayMode,
   flattenMarkers?: boolean,
   selectedPolygonEditFormat?: "json" | "yaml",
@@ -53,12 +52,7 @@ export type ThreeDimensionalVizConfig = {
   autoSyncCameraState?: boolean,
 
   // legacy props
-  hideMap?: ?boolean, // eslint-disable-line react/no-unused-prop-types
-  useHeightMap?: ?boolean, // eslint-disable-line react/no-unused-prop-types
-  follow?: boolean,
   topicGroups?: TopicGroupConfig[],
-  checkedNodes?: string[],
-  expandedNodes?: string[],
 };
 export type Save3DConfig = SaveConfig<ThreeDimensionalVizConfig>;
 

@@ -118,7 +118,6 @@ export default class AutomatedRunPlayer implements Player {
       }
 
       return {
-        op: "message",
         topic: message.topic,
         datatype: topic.datatype,
         receiveTime: message.receiveTime,

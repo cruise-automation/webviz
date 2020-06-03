@@ -81,7 +81,7 @@ export interface DataProvider {
 export type TypedDataProviderMessage<T> = {|
   topic: string,
   receiveTime: Time,
-  message: T,
+  message: $ReadOnly<T>,
 |};
 export type DataProviderMessage = TypedDataProviderMessage<any>;
 

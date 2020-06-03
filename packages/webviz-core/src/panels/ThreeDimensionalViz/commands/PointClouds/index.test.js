@@ -9,7 +9,7 @@
 import { decodeMarker } from "./decodeMarker";
 import { POINT_CLOUD_MESSAGE } from "./fixture/pointCloudData";
 
-describe("<GPUPointClouds />", () => {
+describe("<PointClouds />", () => {
   describe("hitmap", () => {
     it("builds empty color buffer if hitmap colors are provided", () => {
       const result = decodeMarker({

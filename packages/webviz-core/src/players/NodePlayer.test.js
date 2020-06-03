@@ -22,7 +22,6 @@ const node = {
     return {
       messages: [
         {
-          op: "message",
           topic: "/webviz/test",
           datatype: "test",
           receiveTime: message.receiveTime,
@@ -228,7 +227,6 @@ describe("NodePlayer", () => {
     {
       topic: "/input/foo",
       datatype: "foo",
-      op: "message",
       receiveTime: { sec: 0, nsec: 1 },
       message: {
         payload: "bar",
@@ -237,7 +235,6 @@ describe("NodePlayer", () => {
     {
       topic: "/input/foo",
       datatype: "foo",
-      op: "message",
       receiveTime: { sec: 0, nsec: 100 },
       message: {
         payload: "baz",
@@ -277,7 +274,6 @@ describe("NodePlayer", () => {
       upstreamMessages[0],
       {
         topic: "/webviz/test",
-        op: "message",
         receiveTime: { sec: 0, nsec: 1 },
         datatype: "test",
         message: {
@@ -288,7 +284,6 @@ describe("NodePlayer", () => {
       upstreamMessages[1],
       {
         topic: "/webviz/test",
-        op: "message",
         receiveTime: { sec: 0, nsec: 100 },
         datatype: "test",
         message: {
@@ -344,7 +339,6 @@ describe("NodePlayer", () => {
     expect(messages[0]).toEqual(upstreamMessages[0]);
     expect(messages[1]).toEqual({
       topic: "/webviz/test",
-      op: "message",
       receiveTime: { sec: 0, nsec: 1 },
       datatype: "test",
       message: {
@@ -355,7 +349,6 @@ describe("NodePlayer", () => {
     expect(messages[2]).toEqual(upstreamMessages[1]);
     expect(messages[3]).toEqual({
       topic: "/webviz/test",
-      op: "message",
       receiveTime: { sec: 0, nsec: 100 },
       datatype: "test",
       message: {

@@ -5,44 +5,52 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
 import { connectRouter } from "connected-react-router";
-import { combineReducers } from "redux";
 
-import auth from "./auth";
-import extensions from "./extensions";
-import layoutHistory, { defaultLayoutHistory, type LayoutHistory } from "./layoutHistory";
-import mosaic from "./mosaic";
-import panels, { type PanelsState } from "./panels";
-import userNodes from "./userNodes";
 import type { ActionTypes } from "webviz-core/src/actions";
+import { ros_lib_dts } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
+import extensions, { type Extensions as ExtensionsState } from "webviz-core/src/reducers/extensions";
+import layoutHistory, { type LayoutHistory, initialLayoutHistoryState } from "webviz-core/src/reducers/layoutHistory";
+import mosaic from "webviz-core/src/reducers/mosaic";
+import panels, { type PanelsState } from "webviz-core/src/reducers/panels";
+import userNodes, { type UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
+import type { Auth as AuthState } from "webviz-core/src/types/Auth";
 
-const getReducers = (history: any) => ({
+const getReducers = (history: any) => [
   panels,
   mosaic,
-  auth,
   extensions,
   userNodes,
-  router: connectRouter(history),
-  // Dummy reducers for undo/redo to satisfy combineReducers, which complains if it sees keys it
-  // does not expect. We have a separate "real" history reducer for these that can't go through
-  // combineReducers because it depends on the state of panels.
-  layoutHistory: (state): LayoutHistory => state || defaultLayoutHistory(),
-});
+  (state) => ({ ...state, router: connectRouter(history)() }),
+  layoutHistory,
+];
 
-export type Reducers = $Exact<$Call<typeof getReducers, any>>;
-export type State = $ObjMap<Reducers, <F>(_: F) => $Call<F, any, any>>;
+export type State = {
+  panels: PanelsState,
+  mosaic: { mosaicId: string, selectedPanelIds: string[] },
+  auth: AuthState,
+  extensions: ExtensionsState,
+  userNodes: { userNodeDiagnostics: UserNodeDiagnostics, rosLib: string },
+  router: { location: { pathname: string, search: string } },
+  layoutHistory: LayoutHistory,
+};
 
 export default function createRootReducer(history: any) {
-  const combinedReducers = combineReducers<Reducers, any>(getReducers(history));
-
-  // We wrap combineReducers because the layout history reducer doesn't fit with it: layout history
-  // changes require access to two top-level fields (panels and layoutHistory).
-  return (state: $Shape<State>, action: ActionTypes): State => {
-    const newState = combinedReducers(state, action);
-
-    const oldPanels: ?PanelsState = state && state.panels;
-    const newLayoutHistory = layoutHistory(oldPanels, newState.panels, newState.layoutHistory, action);
-    return { ...newState, ...newLayoutHistory };
+  const initialState: State = {
+    panels: {},
+    mosaic: { mosaicId: "", selectedPanelIds: [] },
+    auth: Object.freeze({ username: undefined }),
+    extensions: Object.freeze({ markerProviders: [], auxiliaryData: {} }),
+    userNodes: { userNodeDiagnostics: {}, rosLib: ros_lib_dts },
+    router: connectRouter(history)(),
+    layoutHistory: initialLayoutHistoryState,
+  };
+  return (state: State, action: ActionTypes): State => {
+    const oldPanelsState: ?PanelsState = state?.panels;
+    const reducers: Array<(State, ActionTypes, ?PanelsState) => State> = (getReducers(history): any);
+    return reducers.reduce((builtState, reducer) => reducer(builtState, action, oldPanelsState), {
+      ...initialState,
+      ...state,
+    });
   };
 }

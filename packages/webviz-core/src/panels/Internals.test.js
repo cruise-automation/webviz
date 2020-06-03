@@ -84,7 +84,6 @@ describe("<Internals>", () => {
     mockDownloadTextFile.mockClear();
 
     const message = {
-      op: "message",
       topic: "/foo",
       datatype: "Foo",
       receiveTime: { sec: 0, nsec: 0 },

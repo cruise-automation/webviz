@@ -229,7 +229,6 @@ describe("RandomAccessPlayer", () => {
       [],
       [
         {
-          op: "message",
           topic: "/foo/bar",
           datatype: "fooBar",
           receiveTime: { sec: 10, nsec: 2 },
@@ -337,7 +336,6 @@ describe("RandomAccessPlayer", () => {
       [],
       [
         {
-          op: "message",
           topic: "/foo/bar",
           datatype: "fooBar",
           receiveTime: { sec: 10, nsec: 0 },
@@ -469,7 +467,6 @@ describe("RandomAccessPlayer", () => {
     expect(messages.map((msg) => (msg.activeData ? msg.activeData.messages : []))).toEqual([
       [
         {
-          op: "message",
           datatype: "fooBar",
           topic: "/foo/bar",
           receiveTime: { sec: 10, nsec: 5 },
@@ -486,7 +483,6 @@ describe("RandomAccessPlayer", () => {
         {
           topic: "/foo/bar",
           datatype: "fooBar",
-          op: "message",
           receiveTime: { sec: 10, nsec: 101 },
           message: { payload: "baz" },
         },
@@ -553,7 +549,6 @@ describe("RandomAccessPlayer", () => {
         {
           topic: "/foo/bar",
           datatype: "fooBar",
-          op: "message",
           receiveTime: { sec: 20, nsec: 51 },
           message: { payload: "baz" },
         },
@@ -732,7 +727,6 @@ describe("RandomAccessPlayer", () => {
     source.pausePlayback();
     expect(received).toEqual([
       {
-        op: "message",
         datatype: "fooBar",
         topic: "/foo/bar",
         receiveTime: { sec: 10, nsec: 0 },
@@ -740,21 +734,18 @@ describe("RandomAccessPlayer", () => {
       },
       {
         topic: "/baz",
-        op: "message",
         datatype: "baz",
         receiveTime: { sec: 10, nsec: 500 },
         message: { payload: "baz 1" },
       },
       {
         topic: "/baz",
-        op: "message",
         datatype: "baz",
         receiveTime: { sec: 10, nsec: 5000 },
         message: { payload: "baz 2" },
       },
       {
         topic: "/foo/bar",
-        op: "message",
         datatype: "fooBar",
         receiveTime: { sec: 10, nsec: 9000000 },
         message: { payload: "foo bar 2" },

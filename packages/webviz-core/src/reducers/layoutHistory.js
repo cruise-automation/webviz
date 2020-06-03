@@ -10,6 +10,7 @@ import { isEqual } from "lodash";
 
 import type { ActionTypes } from "webviz-core/src/actions";
 import { panelEditingActions } from "webviz-core/src/actions/panels";
+import type { State } from "webviz-core/src/reducers";
 import { setStoredLayout, type PanelsState } from "webviz-core/src/reducers/panels";
 import { type EditHistoryOptions } from "webviz-core/src/types/panels";
 import { pushState, redoChange, undoChange, type StateHistory } from "webviz-core/src/util/stateHistory";
@@ -28,11 +29,11 @@ export type LayoutHistory = {|
   lastTimestamp: number,
 |};
 
-export const defaultLayoutHistory = (): LayoutHistory => ({
+export const initialLayoutHistoryState: LayoutHistory = {
   undoStates: [],
   redoStates: [],
   lastTimestamp: 0,
-});
+};
 
 // Helper to encode the panels and layout history as a StateHistory object so we can do generic
 // push, undo and redo operations.
@@ -49,7 +50,7 @@ const fromStateHistory = (
     panels: currentState,
     // After undo/redo, any subsequent layout action should result in the state being pushed onto
     // the undo history.
-    layoutHistory: { ...defaultLayoutHistory(), redoStates, undoStates },
+    layoutHistory: { ...initialLayoutHistoryState, redoStates, undoStates },
   };
 };
 
@@ -92,27 +93,26 @@ const pushLayoutChange = (
   return { ...layoutHistory, lastTimestamp: time };
 };
 
-export default function(
-  oldPanels: ?PanelsState,
-  panels: PanelsState,
-  layoutHistory: LayoutHistory = defaultLayoutHistory(),
-  action: ActionTypes
-): { panels: PanelsState, layoutHistory: LayoutHistory } {
+export default function(state: State, action: ActionTypes, oldPanelsState?: PanelsState): State {
+  const newLayoutHistoryState: LayoutHistory = { ...state.layoutHistory };
   switch (action.type) {
     case "UNDO_LAYOUT_CHANGE": {
-      const ret = undoLayoutChange(panels, layoutHistory);
+      const ret = undoLayoutChange(state.panels, newLayoutHistoryState);
       setStoredLayout(ret.panels);
-      return ret;
+      return { ...state, ...ret };
     }
     case "REDO_LAYOUT_CHANGE": {
-      const ret = redoLayoutChange(panels, layoutHistory);
+      const ret = redoLayoutChange(state.panels, newLayoutHistoryState);
       setStoredLayout(ret.panels);
-      return ret;
+      return { ...state, ...ret };
     }
     default:
       if (panelEditingActions.has(action.type)) {
-        return { panels, layoutHistory: pushLayoutChange(oldPanels, panels, layoutHistory, action) };
+        return {
+          ...state,
+          layoutHistory: pushLayoutChange(oldPanelsState, state.panels, newLayoutHistoryState, action),
+        };
       }
-      return { layoutHistory, panels };
+      return { ...state, layoutHistory: newLayoutHistoryState };
   }
 }

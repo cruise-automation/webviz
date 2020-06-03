@@ -26,7 +26,6 @@ const messageAtLevel = (level: Level): Message => ({
   topic: "/foo",
   receiveTime: { sec: 1547062466, nsec: 1674890 },
   datatype: "bar",
-  op: "message",
 });
 
 const diagnosticInfoAtLevel = (level: Level): DiagnosticInfo => {

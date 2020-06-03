@@ -16,14 +16,12 @@ module.exports = {
           { name: "lodash", importNames: ["get"], message: "Use optional chaining instead of lodash.get." },
           { name: "lodash/get", message: "Use optional chaining instead of lodash.get." },
         ],
-        patterns: ["client/*", "shared/*", "server/*"],
+        patterns: ["client/*", "shared/*", "server/*", "webviz-core/migrations", "webviz-core/migrations/*"],
       },
     ],
     "no-restricted-modules": [
       "error",
-      {
-        patterns: ["client/*", "shared/*", "server/*"],
-      },
+      { patterns: ["client/*", "shared/*", "server/*", "webviz-core/migrations", "webviz-core/migrations/*"] },
     ],
     "no-shadow": "error",
     "no-restricted-syntax": [

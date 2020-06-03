@@ -10,12 +10,15 @@ import { compact, uniq } from "lodash";
 import memoizeWeak from "memoize-weak";
 import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import { hot } from "react-hot-loader/root";
+import type { Time } from "rosbag";
 
 import helpContent from "./index.help.md";
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import { type MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import { getTopicsFromPaths } from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
 import { useDecodeMessagePathsForMessagesByTopic } from "webviz-core/src/components/MessagePathSyntax/useCachedGetMessagePathDataItems";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getTooltipItemForMessageHistoryItem, type TooltipItem } from "webviz-core/src/components/TimeBasedChart";
@@ -26,6 +29,7 @@ import PlotLegend from "webviz-core/src/panels/Plot/PlotLegend";
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
+import { subtractTimes, toSec } from "webviz-core/src/util/time";
 
 export const plotableRosTypes = [
   "bool",
@@ -186,6 +190,15 @@ function Plot(props: Props) {
     xAxisPath
   );
 
+  const currentTime: ?Time = useMessagePipeline(
+    useCallback(({ playerState: { activeData } }) => activeData?.currentTime, [])
+  );
+  // Only display the time with preloaded plots. For others it will always be the right edge.
+  const displayTime =
+    getExperimentalFeature("preloading") && xAxisVal === "timestamp" && currentTime && startTime
+      ? toSec(subtractTimes(currentTime, startTime))
+      : undefined;
+
   return (
     <Flex col clip center style={{ position: "relative" }}>
       <PanelToolbar
@@ -211,6 +224,7 @@ function Plot(props: Props) {
         datasets={datasets}
         tooltips={tooltips}
         xAxisVal={xAxisVal}
+        currentTime={displayTime}
       />
       <PlotLegend
         paths={yAxisPaths}

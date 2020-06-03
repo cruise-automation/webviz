@@ -65,13 +65,7 @@ object-assign
  * Released under the MIT License.
  */
 
-/*! !../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../node_modules/postcss-loader/src??postcss!./monolith.min.css */
-
 /*! ../ */
-
-/*! ../../../../../../../node_modules/css-loader/lib/css-base.js */
-
-/*! ../../../../../../../node_modules/style-loader/lib/addStyles.js */
 
 /*! ../../modules/_core */
 
@@ -209,11 +203,19 @@ object-assign
 
 /*! ./../webpack/buildin/global.js */
 
+/*! ./Alpha */
+
 /*! ./AutoSizer */
+
+/*! ./Board */
 
 /*! ./CellSizeAndPositionManager */
 
 /*! ./CollectingHandler.js */
+
+/*! ./ColorPicker */
+
+/*! ./Event */
 
 /*! ./EventBaseObject */
 
@@ -249,11 +251,19 @@ object-assign
 
 /*! ./List */
 
+/*! ./Panel */
+
+/*! ./Params */
+
 /*! ./Parser.js */
+
+/*! ./Preview */
 
 /*! ./ProxyHandler.js */
 
 /*! ./QuickHull */
+
+/*! ./Ribbon */
 
 /*! ./ScalingCellSizeAndPositionManager.js */
 
@@ -867,6 +877,8 @@ object-assign
 
 /*! ./extractComponents */
 
+/*! ./factory */
+
 /*! ./factoryWithThrowingShims */
 
 /*! ./flat */
@@ -892,6 +904,10 @@ object-assign
 /*! ./hasIn */
 
 /*! ./helpers.js */
+
+/*! ./helpers/color */
+
+/*! ./helpers/percentage */
 
 /*! ./hex */
 
@@ -1131,6 +1147,8 @@ object-assign
 
 /*! ./parser */
 
+/*! ./placements */
+
 /*! ./polyfill */
 
 /*! ./pop */
@@ -1228,6 +1246,8 @@ object-assign
 /*! ./utils/innerSliderUtils */
 
 /*! ./utils/updateScrollIndexHelper */
+
+/*! ./utils/validationColor */
 
 /*! ./vendor */
 
@@ -1445,8 +1465,6 @@ object-assign
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/regenerator/index.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/add-dom-event-listener/lib/index.js (<- Module is not an ECMAScript module) */
-
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/antd/node_modules/lodash/debounce.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/antd/node_modules/lodash/isEqual.js (<- Module is not an ECMAScript module) */
@@ -1493,13 +1511,21 @@ object-assign
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/babel-runtime/helpers/toConsumableArray.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/babel-runtime/helpers/typeof.js (<- Module is not an ECMAScript module) */
-
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/classnames/index.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/component-classes/index.js (<- Module is not an ECMAScript module) */
-
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/copy-to-clipboard/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/create-react-class/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/css-animation/es/Event.js because of ./packages/webviz-core/node_modules/rc-color-picker/node_modules/rc-trigger/es/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/css-animation/es/index.js because of ./packages/webviz-core/node_modules/antd/es/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/css-animation/es/index.js because of ./packages/webviz-core/node_modules/rc-color-picker/node_modules/rc-trigger/es/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/dom-align/dist-web/index.js because of ./packages/webviz-core/node_modules/antd/es/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/dom-align/dist-web/index.js because of ./packages/webviz-core/node_modules/rc-color-picker/node_modules/rc-trigger/es/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/dom-helpers/util/scrollbarSize.js (<- Module is not an ECMAScript module) */
 
@@ -1519,7 +1545,23 @@ object-assign
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/raf/index.js (<- Module is not an ECMAScript module) */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/rc-animate/es/Animate.js because of ./packages/webviz-core/node_modules/antd/es/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/rc-animate/es/Animate.js because of ./packages/webviz-core/node_modules/rc-color-picker/node_modules/rc-trigger/es/index.js */
+
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/rc-switch/es/index.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/rc-util/es/Dom/addEventListener.js because of ./packages/webviz-core/node_modules/antd/es/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/rc-util/es/Dom/addEventListener.js because of ./packages/webviz-core/node_modules/rc-color-picker/node_modules/rc-trigger/es/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/rc-util/es/Dom/contains.js because of ./packages/webviz-core/node_modules/antd/es/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/rc-util/es/Dom/contains.js because of ./packages/webviz-core/node_modules/rc-color-picker/node_modules/rc-trigger/es/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/rc-util/lib/Dom/addEventListener.js (<- Module is not an ECMAScript module) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/rc-util/lib/getContainerRenderMixin.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-is/index.js (<- Module is not an ECMAScript module) */
 
@@ -1613,7 +1655,7 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module uses injected variables (process) */
 
-/*! Pickr 1.4.7 MIT | https://github.com/Simonwep/pickr */
+/*! add-dom-event-listener */
 
 /*! airbnb-prop-types */
 
@@ -1670,6 +1712,8 @@ object-assign
 /*! chart.js */
 
 /*! classnames */
+
+/*! component-classes */
 
 /*! component-indexof */
 
@@ -1759,9 +1803,13 @@ object-assign
 
 /*! exports provided: default */
 
+/*! exports provided: default, alignElement, alignPoint */
+
 /*! exports provided: elementNames, attributeNames, default */
 
 /*! exports provided: glMatrix, mat2, mat2d, mat3, mat4, quat, quat2, vec2, vec3, vec4 */
+
+/*! exports provided: isCssAnimationSupported, default */
 
 /*! exports provided: name, version, description, keywords, homepage, bugs, repository, license, contributors, funding, files, sideEffects, main, module, unpkg, typings, scripts, husky, browserslist, dependencies, devDependencies, peerDependencies, publishConfig, bundlesize, title, _resolved, _integrity, _from, default */
 
@@ -1771,11 +1819,19 @@ object-assign
 
 /*! exports provided: withResizeDetector, default */
 
+/*! exports used: alignElement, alignPoint */
+
 /*! exports used: any, array, func, object, string */
 
 /*! exports used: any, bool, func, node, number, shape, string */
 
 /*! exports used: default */
+
+/*! exports used: default, isCssAnimationSupported */
+
+/*! fbjs/lib/emptyObject */
+
+/*! fbjs/lib/invariant */
 
 /*! fs */
 
@@ -1880,6 +1936,10 @@ object-assign
 /*! pure-color/parse */
 
 /*! querystring */
+
+/*! rc-trigger */
+
+/*! rc-util/lib/Dom/addEventListener */
 
 /*! rc-util/lib/warning */
 
@@ -2494,6 +2554,10 @@ object-assign
   \*****************************************************************/
 
 /*!*****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/fbjs/lib/invariant.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash.curry/index.js ***!
   \*****************************************************************/
 
@@ -2834,6 +2898,10 @@ object-assign
   \*******************************************************************/
 
 /*!*******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/fbjs/lib/emptyObject.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/js-yaml/dist/js-yaml.js ***!
   \*******************************************************************/
 
@@ -3118,6 +3186,14 @@ object-assign
   \*********************************************************************/
 
 /*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/css-animation/es/Event.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/css-animation/es/index.js ***!
+  \*********************************************************************/
+
+/*!*********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/document.contains/shim.js ***!
   \*********************************************************************/
 
@@ -3293,6 +3369,10 @@ object-assign
   !*** ./packages/webviz-core/node_modules/postcss/lib/stringifier.js ***!
   \**********************************************************************/
 
+/*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-util/es/Dom/contains.js ***!
+  \**********************************************************************/
+
 /*!***********************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_arrayLikeKeys.js ***!
   \***********************************************************************/
@@ -3347,6 +3427,14 @@ object-assign
 
 /*!***********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/base16/lib/atelier-heath.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/create-react-class/index.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/dom-align/dist-web/index.js ***!
   \***********************************************************************/
 
 /*!***********************************************************************!*\
@@ -3438,6 +3526,22 @@ object-assign
   \************************************************************************/
 
 /*!************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/Alpha.js ***!
+  \************************************************************************/
+
+/*!************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/Board.js ***!
+  \************************************************************************/
+
+/*!************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/Panel.js ***!
+  \************************************************************************/
+
+/*!************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/index.js ***!
+  \************************************************************************/
+
+/*!************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-json-tree/lib/index.js ***!
   \************************************************************************/
 
@@ -3502,6 +3606,10 @@ object-assign
   \*************************************************************************/
 
 /*!*************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/create-react-class/factory.js ***!
+  \*************************************************************************/
+
+/*!*************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/document.contains/polyfill.js ***!
   \*************************************************************************/
 
@@ -3531,6 +3639,14 @@ object-assign
 
 /*!*************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/pure-color/convert/rgb2hex.js ***!
+  \*************************************************************************/
+
+/*!*************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/Params.js ***!
+  \*************************************************************************/
+
+/*!*************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/Ribbon.js ***!
   \*************************************************************************/
 
 /*!**************************************************************************!*\
@@ -3566,7 +3682,7 @@ object-assign
   \**************************************************************************/
 
 /*!**************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/antd/es/index.js + 525 modules ***!
+  !*** ./packages/webviz-core/node_modules/antd/es/index.js + 515 modules ***!
   \**************************************************************************/
 
 /*!**************************************************************************!*\
@@ -3583,6 +3699,10 @@ object-assign
 
 /*!**************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/base16/lib/threezerotwofour.js ***!
+  \**************************************************************************/
+
+/*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/Preview.js ***!
   \**************************************************************************/
 
 /*!**************************************************************************!*\
@@ -3786,10 +3906,6 @@ object-assign
   \*****************************************************************************/
 
 /*!*****************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@simonwep/pickr/dist/pickr.min.js ***!
-  \*****************************************************************************/
-
-/*!*****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_Hash.js ***!
   \*****************************************************************************/
 
@@ -3807,6 +3923,10 @@ object-assign
 
 /*!*****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/dom-helpers/util/scrollbarSize.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/placements.js ***!
   \*****************************************************************************/
 
 /*!*****************************************************************************!*\
@@ -3843,6 +3963,14 @@ object-assign
 
 /*!******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/padEnd.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/ColorPicker.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-util/es/Dom/addEventListener.js ***!
   \******************************************************************************/
 
 /*!******************************************************************************!*\
@@ -3907,6 +4035,10 @@ object-assign
 
 /*!*******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/document.contains/implementation.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-util/lib/Dom/addEventListener.js ***!
   \*******************************************************************************/
 
 /*!********************************************************************************!*\
@@ -4015,6 +4147,14 @@ object-assign
 
 /*!********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/consolidated-events/lib/index.esm.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-animate/es/Animate.js + 4 modules ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/helpers/color.js ***!
   \********************************************************************************/
 
 /*!********************************************************************************!*\
@@ -4251,6 +4391,10 @@ object-assign
 
 /*!**********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/performance-now/lib/performance-now.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-util/lib/getContainerRenderMixin.js ***!
   \**********************************************************************************/
 
 /*!***********************************************************************************!*\
@@ -4542,6 +4686,10 @@ object-assign
   \*************************************************************************************/
 
 /*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/helpers/percentage.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-input-autosize/lib/AutosizeInput.js ***!
   \*************************************************************************************/
 
@@ -4742,10 +4890,6 @@ object-assign
   \****************************************************************************************/
 
 /*!****************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@simonwep/pickr/dist/themes/monolith.min.css ***!
-  \****************************************************************************************/
-
-/*!****************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_baseIsArguments.js ***!
   \****************************************************************************************/
 
@@ -4755,6 +4899,10 @@ object-assign
 
 /*!****************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_listCacheDelete.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/utils/validationColor.js ***!
   \****************************************************************************************/
 
 /*!****************************************************************************************!*\
@@ -5586,6 +5734,10 @@ object-assign
   \***********************************************************************************************************/
 
 /*!***********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/rc-color-picker/node_modules/rc-trigger/es/index.js + 7 modules ***!
+  \***********************************************************************************************************/
+
+/*!***********************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/utils/createCallbackMemoizer.js ***!
   \***********************************************************************************************************/
 
@@ -5980,10 +6132,6 @@ object-assign
 /*!*******************************************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-virtualized/dist/commonjs/Grid/utils/calculateSizeAndPositionDataAndUpdateScrollOffset.js ***!
   \*******************************************************************************************************************************************/
-
-/*!******************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/@simonwep/pickr/dist/themes/monolith.min.css ***!
-  \******************************************************************************************************************************************************************************/
 
 /**
  * Checks if an event is supported in the current execution environment.

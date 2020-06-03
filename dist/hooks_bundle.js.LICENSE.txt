@@ -78,7 +78,7 @@
 
 /*! ./ChartJSWorker.worker */
 
-/*! ./ColorPicker */
+/*! ./ColorPickerForTopicSettings */
 
 /*! ./DiagnosticStatus */
 
@@ -97,8 +97,6 @@
 /*! ./ExpandingToolbar.module.scss */
 
 /*! ./FrameCompatibility */
-
-/*! ./GPUPointClouds */
 
 /*! ./GeneralInfo */
 
@@ -159,6 +157,8 @@
 /*! ./PointCloudDetails */
 
 /*! ./PointCloudSettingsEditor */
+
+/*! ./PointClouds */
 
 /*! ./Polygons */
 
@@ -410,10 +410,6 @@
 
 /*! @mdi/svg/svg/waves.svg */
 
-/*! @simonwep/pickr */
-
-/*! @simonwep/pickr/dist/themes/monolith.min.css */
-
 /*! ModuleConcatenation bailout: Module is not an ECMAScript module */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/Sidebar.js (referenced with cjs require) */
@@ -504,6 +500,8 @@
 
 /*! quickhull3d */
 
+/*! rc-color-picker */
+
 /*! react */
 
 /*! react-autocomplete */
@@ -589,8 +587,6 @@
 /*! webviz-core/src/components/Checkbox */
 
 /*! webviz-core/src/components/ChildToggle */
-
-/*! webviz-core/src/components/ColorPicker */
 
 /*! webviz-core/src/components/ContextMenu */
 
@@ -820,13 +816,13 @@
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/SearchText */
 
-/*! webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicSettingsEditor */
-
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor */
+
+/*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor */
 
@@ -850,7 +846,7 @@
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/commands/CarModel/carModel.glb */
 
-/*! webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/selection */
+/*! webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/commands/utils */
 
@@ -1111,10 +1107,6 @@
 /*!***********************************************************!*\
   !*** ./packages/webviz-core/src/util/toolsColorScheme.js ***!
   \***********************************************************/
-
-/*!************************************************************!*\
-  !*** ./packages/webviz-core/src/components/ColorPicker.js ***!
-  \************************************************************/
 
 /*!************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ImageView/index.js ***!
@@ -1740,6 +1732,14 @@
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/VisibilityToggle.js ***!
   \*******************************************************************************************/
 
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/index.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/types.js ***!
+  \*******************************************************************************************/
+
 /*!********************************************************************************************!*\
   !*** ./packages/webviz-core/src/components/MessagePathSyntax/MessagePathInput.module.scss ***!
   \********************************************************************************************/
@@ -1764,6 +1764,14 @@
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicSettingsModal.js ***!
   \*********************************************************************************************/
 
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/buffers.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/readers.js ***!
+  \*********************************************************************************************/
+
 /*!**********************************************************************************************!*\
   !*** ./packages/webviz-core/src/components/TimeBasedChart/TimeBasedChartTooltip.module.scss ***!
   \**********************************************************************************************/
@@ -1776,14 +1784,6 @@
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector.js ***!
   \**********************************************************************************************/
 
-/*!**********************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/index.js ***!
-  \**********************************************************************************************/
-
-/*!**********************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/types.js ***!
-  \**********************************************************************************************/
-
 /*!***********************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/PointCloudDetails.js ***!
   \***********************************************************************************************/
@@ -1792,25 +1792,21 @@
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderNamespaceNodes.js ***!
   \***********************************************************************************************/
 
-/*!************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/GlobalVariableName.js ***!
-  \************************************************************************************************/
+/*!***********************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection.js ***!
+  \***********************************************************************************************/
 
 /*!************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/TopicSettingsEditor.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/GlobalVariableName.js ***!
   \************************************************************************************************/
 
 /*!************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector.js ***!
   \************************************************************************************************/
 
-/*!************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/buffers.js ***!
-  \************************************************************************************************/
-
-/*!************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/readers.js ***!
-  \************************************************************************************************/
+/*!*************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/memoization.js ***!
+  \*************************************************************************************************/
 
 /*!*************************************************************************************************!*\
   !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/lib.js ***!
@@ -1821,7 +1817,7 @@
   \**************************************************************************************************/
 
 /*!**************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/selection.js ***!
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/decodeMarker.js ***!
   \**************************************************************************************************/
 
 /*!***************************************************************************************************!*\
@@ -1831,14 +1827,6 @@
 /*!****************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/InteractionContextMenu.js ***!
   \****************************************************************************************************/
-
-/*!****************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/memoization.js ***!
-  \****************************************************************************************************/
-
-/*!*****************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/decodeMarker.js ***!
-  \*****************************************************************************************************/
 
 /*!******************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/GlobalVariableLink/index.js ***!
@@ -1856,13 +1844,13 @@
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PoseSettingsEditor.js ***!
   \*******************************************************************************************************/
 
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/VertexBufferCache.js ***!
+  \*******************************************************************************************************/
+
 /*!*********************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/MarkerSettingsEditor.js ***!
   \*********************************************************************************************************/
-
-/*!**********************************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/VertexBufferCache.js ***!
-  \**********************************************************************************************************/
 
 /*!***********************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData.js ***!
@@ -1919,6 +1907,10 @@
 /*!***************************************************************************************************************!*\
   !*** ./packages/webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/vectors.ts ***!
   \***************************************************************************************************************/
+
+/*!****************************************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings.js ***!
+  \****************************************************************************************************************/
 
 /*!*****************************************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/TopicSettingsEditor.module.scss ***!

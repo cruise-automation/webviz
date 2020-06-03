@@ -139,8 +139,12 @@ const SInput = styled.input`
 const SSwitcherIcon = styled.span`
   width: ${SWITCHER_WIDTH}px;
   height: ${ROW_CONTENT_HEIGHT}px;
-  padding-top: 4px;
-  transition: transform 0.2s ease-in-out;
+  transition: transform 80ms ease-in-out;
+  &.ant-tree-switcher-icon {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
   & .ant-tree-switcher_close {
     transform: rotate(-90deg);
   }

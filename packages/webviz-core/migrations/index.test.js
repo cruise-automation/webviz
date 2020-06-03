@@ -6,9 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { CURRENT_LAYOUT_VERSION, THREE_DIMENSIONAL_SAVED_PROPS_VERSION } from "webviz-core/migrations/constants/index";
-import migratePanels from "webviz-core/migrations/index";
+import migratePanels, { CURRENT_LAYOUT_VERSION } from "webviz-core/migrations";
 
+const THREE_DIMENSIONAL_SAVED_PROPS_VERSION = 17;
 describe("migratePanels", () => {
   it("migrates globalData to globalVariables", () => {
     const globalVariables = { some_global_data_var: 1 };
@@ -32,7 +32,7 @@ describe("migratePanels", () => {
       linkedGlobalVariables: [],
       savedProps: {},
       userNodes: {},
-      playbackConfig: { speed: 0.2, messageOrder: "receiveTime" },
+      playbackConfig: { speed: 0.2 },
       version: CURRENT_LAYOUT_VERSION,
     });
 
@@ -51,34 +51,9 @@ describe("migratePanels", () => {
       linkedGlobalVariables: [],
       savedProps: {},
       userNodes: {},
-      playbackConfig: { speed: 0.2, messageOrder: "receiveTime" },
+      playbackConfig: { speed: 0.2 },
       version: CURRENT_LAYOUT_VERSION,
     });
-  });
-
-  it("adds a playback config with speed", () => {
-    expect(
-      migratePanels({
-        savedProps: {},
-        linkedGlobalVariables: [],
-        globalVariables: {},
-        layout: "",
-        userNodes: {},
-      }).playbackConfig
-    ).toEqual({ messageOrder: "receiveTime", speed: 0.2 });
-  });
-
-  it("correctly defaults an empty playback config with appropriate speed", () => {
-    expect(
-      migratePanels({
-        savedProps: {},
-        linkedGlobalVariables: [],
-        globalVariables: {},
-        layout: "",
-        userNodes: {},
-        playbackConfig: {},
-      }).playbackConfig
-    ).toEqual({ messageOrder: "receiveTime", speed: 0.2 });
   });
 
   it("migrates from 3D panel checkedKeys -> current (TopicTree checkedKeys)", () => {

@@ -257,6 +257,16 @@ export default function useTree({
         }
       });
 
+      const selectedTopicNames = Array.from(selectedTopicNamesSet);
+
+      // If any selectedNamespaces is empty, fill in all available namespaces as default if
+      // the topic for the namespace is not modified.
+      difference(selectedTopicNames, modifiedNamespaceTopics).forEach((topicName) => {
+        if (availableNamespacesByTopic[topicName] && !selectedNamespacesByTopic[topicName]) {
+          selectedNamespacesByTopic[topicName] = availableNamespacesByTopic[topicName];
+        }
+      });
+
       // Returns whether a node/namespace is rendered in the 3d scene. Keep it inside useMemo since it needs to acces the same isSelectedMemo.
       // A node is visible if it's available, itself and all ancestor nodes are selected.
       function getIsTreeNodeVisibleInScene(node: TreeNode, columnIndex: number, namespace?: string): boolean {
@@ -269,23 +279,23 @@ export default function useTree({
                 ? `${SECOND_SOURCE_PREFIX}${node.topicName}`
                 : node.topicName
               : undefined;
-
-          const prefixedNamespaceKey = generateNodeKey({ topicName: node.topicName, namespace, isFeatureColumn });
-          const namespaceChecked =
-            checkedKeysSet.has(prefixedNamespaceKey) ||
-            !!(prefixedTopicName && !selectedNamespacesByTopic[prefixedTopicName]);
-
-          return namespaceChecked && !!node.availableByColumn[columnIndex] && isSelected(baseKey, isFeatureColumn);
+          if (!prefixedTopicName) {
+            return false;
+          }
+          return (
+            selectedTopicNamesSet.has(prefixedTopicName) &&
+            (selectedNamespacesByTopic[prefixedTopicName] || []).includes(namespace)
+          );
         }
         return !!node.availableByColumn[columnIndex] && isSelected(baseKey, isFeatureColumn);
       }
       return {
-        selectedTopicNames: Array.from(selectedTopicNamesSet),
+        selectedTopicNames,
         selectedNamespacesByTopic,
         getIsTreeNodeVisibleInScene,
       };
     },
-    [checkedKeys, modifiedNamespaceTopics, nodesByKey]
+    [availableNamespacesByTopic, checkedKeys, modifiedNamespaceTopics, nodesByKey]
   );
 
   const { selectedTopicNames, selectedNamespacesByTopic, getIsTreeNodeVisibleInScene } = selections;

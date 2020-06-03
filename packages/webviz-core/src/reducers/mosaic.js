@@ -22,6 +22,8 @@ export default function mosaicReducer(state: MosaicState = initialState, action:
       return { ...state, selectedPanelIds: state.selectedPanelIds.filter((id) => id !== action.payload) };
     case "SET_SELECTED_PANEL_IDS":
       return { ...state, selectedPanelIds: action.payload };
+    case "SELECT_ALL_PANELS":
+      return { ...state, selectedPanelIds: action.payload };
     default:
       return state;
   }

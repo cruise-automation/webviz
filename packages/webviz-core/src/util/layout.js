@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import * as Sentry from "@sentry/browser";
-import { isEmpty, flatMap } from "lodash";
+import { compact, flatMap, isEmpty, xor, uniq } from "lodash";
 import {
   createRemoveUpdate,
   getLeaves,
@@ -28,28 +28,31 @@ import type {
 } from "webviz-core/src/types/panels";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 
-export const DEFAULT_TAB_PANEL_CONFIG = { activeTabIdx: 0, tabs: [{ title: "1", layout: null }] };
-
 // given a panel type, create a unique id for a panel
 // with the type embedded within the id
 // we need this because react-mosaic
+// DUPLICATED in webviz-core/migrations/ to be used for frozen migrations
 export function getPanelIdForType(type: string): string {
   const factor = 1e10;
   const rnd = Math.round(Math.random() * factor).toString(36);
-  // a panel id consists of its type, an exclimation mark for splitting, and a random val
+  // a panel id consists of its type, an exclamation mark for splitting, and a random val
   // because each panel id functions is the react 'key' for the react-mosaic-component layout
   // but also must encode the panel type for panel factory construction
   return `${type}!${rnd}`;
 }
 
-// given a panel id, extract the encoded panel type
+// DUPLICATED in webviz-core/migrations/ to be used for frozen migrations
 export function getPanelTypeFromId(id: string): string {
   return id.split("!")[0];
 }
 
-// given a panel id, return a panel id with the type changed
+// DUPLICATED in webviz-core/migrations/ to be used for frozen migrations
 export function getPanelIdWithNewType(id: string, newPanelType: string): string {
   return id.replace(getPanelTypeFromId(id), newPanelType);
+}
+
+export function isTabPanel(panelId: string) {
+  return getPanelTypeFromId(panelId) === TAB_PANEL_TYPE;
 }
 
 type PanelIdMap = { [panelId: string]: string };
@@ -84,6 +87,62 @@ function getLayoutWithNewPanelIds(layout: MosaicNode, panelIdMap: PanelIdMap): ?
   return ((newLayout: any): MosaicNode);
 }
 
+// Recursively removes all empty nodes from a layout
+function compactLayout(layout: MosaicNode): MosaicNode {
+  if (typeof layout === "string") {
+    return layout;
+  }
+
+  const prunedChildren = [layout.first, layout.second].filter(Boolean).map(compactLayout);
+  return prunedChildren.length < 2
+    ? prunedChildren[0]
+    : {
+        ...layout,
+        first: prunedChildren[0],
+        second: prunedChildren[1],
+      };
+}
+
+// Recursively replaces all leaves of the current layout
+function replaceLeafLayouts(layout: MosaicNode, replacerFn: (layout: MosaicNode) => MosaicNode) {
+  if (typeof layout === "string") {
+    return replacerFn(layout);
+  }
+  return {
+    ...layout,
+    first: replaceLeafLayouts(layout.first, replacerFn),
+    second: replaceLeafLayouts(layout.second, replacerFn),
+  };
+}
+
+// Replaces Tab panels with their active tab's layout
+function inlineTabPanelLayouts(layout: MosaicNode, savedProps: SavedProps, preserveTabPanelIds: string[]) {
+  const tabFreeLayout = replaceLeafLayouts(layout, (id) => {
+    if (typeof id === "string" && isTabPanel(id) && !preserveTabPanelIds.includes(id)) {
+      const panelProps = getValidTabPanelConfig(id, savedProps);
+      const tabLayout = panelProps.tabs[panelProps.activeTabIdx]?.layout;
+      if (tabLayout) {
+        return inlineTabPanelLayouts(tabLayout, savedProps, preserveTabPanelIds);
+      }
+    }
+    return id;
+  });
+  return compactLayout(tabFreeLayout);
+}
+
+// Maps panels to their parent Tab panel
+export const getParentTabPanelByPanelId = (savedProps: SavedProps): { [string]: string } =>
+  Object.entries(savedProps).reduce((memo, [savedPanelId, savedConfig]) => {
+    if (isTabPanel(savedPanelId) && savedConfig) {
+      const tabPanelConfig: TabPanelConfig = (savedConfig: any);
+      tabPanelConfig.tabs.forEach((tab) => {
+        const panelIdsInTab = getLeaves(tab.layout);
+        panelIdsInTab.forEach((id) => (memo[id] = savedPanelId));
+      });
+    }
+    return memo;
+  }, {});
+
 export const getSaveConfigsPayloadForNewTab = ({
   id,
   config,
@@ -104,7 +163,7 @@ export const getSaveConfigsPayloadForNewTab = ({
 };
 
 export function getPanelIdsInsideTabPanels(panelIds: string[], savedProps: Configs): string[] {
-  const tabPanelIds = panelIds.filter((id) => getPanelTypeFromId(id) === TAB_PANEL_TYPE);
+  const tabPanelIds = panelIds.filter(isTabPanel);
   const tabLayouts = [];
   tabPanelIds.forEach((panelId) => {
     if (savedProps[panelId]?.tabs) {
@@ -114,6 +173,14 @@ export function getPanelIdsInsideTabPanels(panelIds: string[], savedProps: Confi
     }
   });
   return flatMap(tabLayouts, getLeaves);
+}
+
+export const DEFAULT_TAB_PANEL_CONFIG = { activeTabIdx: 0, tabs: [{ title: "1", layout: null }] };
+// Returns all panelIds for a given layout (including layouts stored in Tab panels)
+export function getAllPanelIds(layout: MosaicNode, savedProps: SavedProps): string[] {
+  const layoutPanelIds = getLeaves(layout);
+  const tabPanelIds = getPanelIdsInsideTabPanels(layoutPanelIds, savedProps);
+  return [...layoutPanelIds, ...tabPanelIds];
 }
 
 export const validateTabPanelConfig = (config: ?PanelConfig) => {
@@ -219,10 +286,10 @@ export const addPanelToTab = (
   return saveConfigsPayload;
 };
 
-const getValidTabPanelConfig = (panelId: string, savedProps: {}): TabPanelConfig => {
+function getValidTabPanelConfig(panelId: string, savedProps: {}): TabPanelConfig {
   const config = savedProps[panelId];
   return validateTabPanelConfig(config) ? config : DEFAULT_TAB_PANEL_CONFIG;
-};
+}
 
 const reorderTabWithinTabPanel = (source: TabLocation, target: TabLocation, savedProps: {}): SaveConfigsPayload => {
   const { tabs, activeTabIdx } = getValidTabPanelConfig(source.panelId, savedProps);
@@ -293,45 +360,75 @@ export const getSaveConfigsPayloadForMoveTab = (
   return moveTabBetweenTabPanels(source, target, savedProps);
 };
 
-export const replacePanelsWithNewPanel = (
-  panelIdToReplace: ?string,
-  replacementPanelId: ?string,
-  panelIdsToRemove: string[],
+export const replaceAndRemovePanels = (
+  panelArgs: {|
+    oldId?: ?string,
+    newId?: ?string,
+    idsToRemove?: string[],
+  |},
   layout: MosaicNode
 ): ?MosaicNode => {
-  if (getLeaves(layout).length === panelIdsToRemove.length) {
-    return replacementPanelId;
+  const { oldId = null, newId = null, idsToRemove = [] } = panelArgs;
+  const panelIds = getLeaves(layout);
+  if (xor(panelIds, idsToRemove).length === 0) {
+    return newId;
   }
-  const newTree = panelIdsToRemove.reduce((currentLayout, panelId) => {
-    const pathToNode = getPathFromNode(panelId, currentLayout);
+
+  return uniq(compact([...idsToRemove, oldId])).reduce((currentLayout, panelIdToRemove) => {
+    if (!panelIds.includes(panelIdToRemove)) {
+      return currentLayout;
+    } else if (currentLayout === oldId) {
+      return newId;
+    } else if (!currentLayout || currentLayout === panelIdToRemove) {
+      return null;
+    }
+
+    const pathToNode = getPathFromNode(panelIdToRemove, currentLayout);
     const update =
-      panelId === panelIdToReplace
-        ? { path: pathToNode, spec: { $set: replacementPanelId } }
+      panelIdToRemove === oldId
+        ? { path: pathToNode, spec: { $set: newId } }
         : createRemoveUpdate(currentLayout, pathToNode);
     return updateTree(currentLayout, [update]);
   }, layout);
-  return newTree;
 };
 
 export const groupPanelsOutput = (
   panelIdToReplace: ?string,
   layout: MosaicNode,
-  panelIdsToGroup: string[]
+  panelIdsToGroup: string[],
+  savedProps: SavedProps
 ): {
   tabPanelId: string,
   changePanelPayload: ChangePanelLayoutPayload,
   saveConfigsPayload: SaveConfigsPayload,
 } => {
+  // Build the layout for the new tab
+  const layoutWithInlinedTabs = inlineTabPanelLayouts(layout, savedProps, panelIdsToGroup);
+  const panelIdsNotInNewTab = getAllPanelIds(layout, savedProps).filter((leaf) => !panelIdsToGroup.includes(leaf));
+  const tabLayout = replaceAndRemovePanels({ idsToRemove: panelIdsNotInNewTab }, layoutWithInlinedTabs);
+
   const tabPanelId = getPanelIdForType(TAB_PANEL_TYPE);
-  const newLayout = replacePanelsWithNewPanel(panelIdToReplace, tabPanelId, panelIdsToGroup, layout);
-  const panelIdsToRemove = getLeaves(layout).filter((leaf) => !panelIdsToGroup.includes(leaf));
-  const tabLayout = replacePanelsWithNewPanel(null, null, panelIdsToRemove, layout);
+  const newLayout = replaceAndRemovePanels(
+    { oldId: panelIdToReplace, newId: tabPanelId, idsToRemove: panelIdsToGroup },
+    layout
+  );
+
+  const tabPanelConfig = {
+    id: tabPanelId,
+    config: { ...DEFAULT_TAB_PANEL_CONFIG, tabs: [{ title: "1", layout: tabLayout }] },
+  };
+  const otherPanelConfigs = getSaveConfigsPayloadToEditTabLayout(
+    panelIdToReplace,
+    tabPanelId,
+    panelIdsToGroup,
+    savedProps
+  ).configs;
 
   return {
     tabPanelId,
     changePanelPayload: { layout: newLayout || "", trimSavedProps: false },
     saveConfigsPayload: {
-      configs: [{ id: tabPanelId, config: { ...DEFAULT_TAB_PANEL_CONFIG, tabs: [{ title: "1", layout: tabLayout }] } }],
+      configs: [tabPanelConfig, ...otherPanelConfigs],
     },
   };
 };
@@ -339,22 +436,63 @@ export const groupPanelsOutput = (
 export const createTabsOutput = (
   panelIdToReplace: ?string,
   layout: MosaicNode,
-  panelIdsForTabs: string[]
+  panelIdsForTabs: string[],
+  savedProps: SavedProps
 ): {
   tabPanelId: string,
   changePanelPayload: ChangePanelLayoutPayload,
   saveConfigsPayload: SaveConfigsPayload,
 } => {
   const tabPanelId = getPanelIdForType(TAB_PANEL_TYPE);
-  const newLayout = replacePanelsWithNewPanel(panelIdToReplace, tabPanelId, panelIdsForTabs, layout);
+  const newLayout = replaceAndRemovePanels(
+    { oldId: panelIdToReplace, newId: tabPanelId, idsToRemove: panelIdsForTabs },
+    layout
+  );
   const tabs = panelIdsForTabs.map((panelId) => ({ title: getPanelTypeFromId(panelId), layout: panelId }));
+
+  const tabPanelConfig = { id: tabPanelId, config: { ...DEFAULT_TAB_PANEL_CONFIG, tabs } };
+  const otherPanelConfigs = getSaveConfigsPayloadToEditTabLayout(
+    panelIdToReplace,
+    tabPanelId,
+    panelIdsForTabs,
+    savedProps
+  ).configs;
 
   return {
     tabPanelId,
     changePanelPayload: { layout: newLayout || "", trimSavedProps: false },
-    saveConfigsPayload: { configs: [{ id: tabPanelId, config: { ...DEFAULT_TAB_PANEL_CONFIG, tabs } }] },
+    saveConfigsPayload: { configs: [tabPanelConfig, ...otherPanelConfigs] },
   };
 };
+
+// Returns a SaveConfigsPayload to edit layouts inside Tab panels
+function getSaveConfigsPayloadToEditTabLayout(
+  panelIdToReplace: ?string,
+  replacementPanelId: ?string,
+  panelIdsToRemove: string[],
+  savedProps: SavedProps
+): SaveConfigsPayload {
+  const configs = [];
+  Object.entries(savedProps).forEach(([panelId, panelConfig]) => {
+    if (isTabPanel(panelId)) {
+      const tabConfig: TabPanelConfig = (panelConfig: any);
+      const { tabs, activeTabIdx } = getValidTabPanelConfig(panelId, savedProps);
+      const tabLayout = tabs[activeTabIdx]?.layout;
+      if (tabLayout) {
+        const tabPanelLeaves = getLeaves(tabLayout);
+        if (tabLayout && tabPanelLeaves.some((id) => panelIdsToRemove.includes(id))) {
+          const newTabLayout = replaceAndRemovePanels(
+            { oldId: panelIdToReplace, newId: replacementPanelId, idsToRemove: panelIdsToRemove },
+            tabLayout
+          );
+          const newTabConfig = updateTabPanelLayout(newTabLayout, tabConfig);
+          configs.push({ id: panelId, config: newTabConfig });
+        }
+      }
+    }
+  });
+  return { configs };
+}
 
 export const selectPanelOutput = (
   type: string,

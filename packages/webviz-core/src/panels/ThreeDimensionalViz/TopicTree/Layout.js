@@ -60,6 +60,7 @@ import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
 import { videoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import { topicsByTopicName } from "webviz-core/src/util/selectors";
@@ -303,7 +304,7 @@ export default function Layout({
 
       // update the transforms and set the selected ones to render
       transformsBuilder.setTransforms(transforms, rootTfID);
-      transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic["/tf"] || []);
+      transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic[TRANSFORM_TOPIC] || []);
 
       return rootTfID;
     },

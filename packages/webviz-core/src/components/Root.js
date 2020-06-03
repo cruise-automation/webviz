@@ -13,6 +13,7 @@ import { connect, Provider } from "react-redux";
 
 import styles from "./Root.module.scss";
 import { redoLayoutChange, undoLayoutChange } from "webviz-core/src/actions/layoutHistory";
+import { selectAllPanelIds } from "webviz-core/src/actions/mosaic";
 import { importPanelLayout } from "webviz-core/src/actions/panels";
 import Logo from "webviz-core/src/assets/logo.svg";
 import AppMenu from "webviz-core/src/components/AppMenu";
@@ -46,6 +47,7 @@ type Props = {|
   undoStateCount: number,
   redoLayoutChange: () => void,
   undoLayoutChange: () => void,
+  selectAllPanelIds: () => void,
 |};
 class App extends React.PureComponent<Props> {
   container: ?HTMLDivElement;
@@ -112,6 +114,7 @@ class App extends React.PureComponent<Props> {
                 </div>
                 <div className={styles.block}>
                   <LayoutMenu
+                    selectAllPanels={this.props.selectAllPanelIds}
                     redoLayoutChange={this.props.redoLayoutChange}
                     redoStateCount={this.props.redoStateCount}
                     undoLayoutChange={this.props.undoLayoutChange}
@@ -141,7 +144,7 @@ const ConnectedApp = connect<Props, {}, _, _, _, _>(
     redoStateCount: redoStates.length,
     undoStateCount: undoStates.length,
   }),
-  { importPanelLayout, redoLayoutChange, undoLayoutChange }
+  { importPanelLayout, selectAllPanelIds, redoLayoutChange, undoLayoutChange }
 )(withDragDropContext(App));
 
 const Root = () => {

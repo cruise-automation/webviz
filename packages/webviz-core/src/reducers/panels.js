@@ -194,7 +194,7 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
     globalVariables: migratedPayload.globalVariables || {},
     userNodes: migratedPayload.userNodes || {},
     linkedGlobalVariables: migratedPayload.linkedGlobalVariables || [],
-    playbackConfig: migratedPayload.playbackConfig || defaultPlaybackConfig,
+    playbackConfig: { ...defaultPlaybackConfig, ...migratedPayload.playbackConfig },
     ...(migratedPayload.restrictedTopics ? { restrictedTopics: migratedPayload.restrictedTopics } : undefined),
   };
 

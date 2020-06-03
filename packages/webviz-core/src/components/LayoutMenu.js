@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import AppsIcon from "@mdi/svg/svg/apps.svg";
+import BorderAllIcon from "@mdi/svg/svg/border-all.svg";
 import FlagVariantIcon from "@mdi/svg/svg/flag-variant.svg";
 import JsonIcon from "@mdi/svg/svg/json.svg";
 import ScriptTextOutlineIcon from "@mdi/svg/svg/script-text-outline.svg";
@@ -28,6 +29,7 @@ type Props = {
   redoStateCount: number,
   undoLayoutChange: () => void,
   undoStateCount: number,
+  selectAllPanels: () => void,
 };
 
 export default class LayoutMenu extends PureComponent<Props, State> {
@@ -72,6 +74,9 @@ export default class LayoutMenu extends PureComponent<Props, State> {
         <Menu>
           <Item icon={<JsonIcon />} onClick={this._onImportClick}>
             Import/export layout
+          </Item>
+          <Item icon={<BorderAllIcon />} onClick={this.props.selectAllPanels}>
+            Select all panels
           </Item>
           <Item icon="⟲" tooltip={`Undo (${cmd}Z)`} onClick={undoLayoutChange} disabled={undoDisabled}>
             Undo change

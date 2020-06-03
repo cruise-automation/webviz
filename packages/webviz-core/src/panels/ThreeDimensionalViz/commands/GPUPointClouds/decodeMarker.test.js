@@ -8,10 +8,7 @@
 
 import { FLOAT_SIZE } from "./buffers";
 import { decodeMarker } from "./decodeMarker";
-import {
-  POINT_CLOUD_MESSAGE,
-  POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
-} from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/fixture/pointCloudData";
+import { POINT_CLOUD_MESSAGE, POINT_CLOUD_WITH_ADDITIONAL_FIELDS } from "./fixture/pointCloudData";
 
 describe("<GPUPointClouds />", () => {
   describe("positions", () => {

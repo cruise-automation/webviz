@@ -20,6 +20,7 @@ import type {
   ToggleNamespaceChecked,
 } from "./types";
 import VisibilityToggle, { TOGGLE_WRAPPER_SIZE } from "./VisibilityToggle";
+import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 
 const OUTER_LEFT_MARGIN = 12;
 const INNER_LEFT_MARGIN = 8;
@@ -73,7 +74,7 @@ export default function renderNamespaceNodes({
 
       // TODO(Audrey): remove the special tooltip once we add 2nd bag support for map and tf namespaces.
       const unavailableTooltip =
-        topicNode.topicName === "/tf" || topicNode.topicName === "/metadata" ? "Unsupported" : "Unavailable";
+        topicNode.topicName === TRANSFORM_TOPIC || topicNode.topicName === "/metadata" ? "Unsupported" : "Unavailable";
 
       const title = (
         <STreeNodeRow
@@ -98,6 +99,7 @@ export default function renderNamespaceNodes({
                   <VisibilityToggle
                     available={available}
                     key={columnIndex}
+                    size="SMALL"
                     dataTest={`visibility-toggle~${key}~column${columnIndex}`}
                     checked={checkedByColumn[columnIndex]}
                     onAltToggle={() => toggleCheckAllAncestors(key, columnIndex, topicNode.topicName)}

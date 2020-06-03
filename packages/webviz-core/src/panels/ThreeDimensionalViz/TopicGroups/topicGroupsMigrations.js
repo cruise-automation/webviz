@@ -88,7 +88,10 @@ function dataSourcePrefixToColumnIndex(dataSourcePrefix: string): number {
 // from a migration to break an import-link from main-repo code to the migrations directory. The
 // migration code is tested in the migrations directory, but not here.  This code should be moved
 // into a "real" migration. It remains here to unblock a release.
+// DUPLICATED in webviz-core/migrations/frozenMigrations/2020.05.06.00:00:03.migrate3DPanel.js
 type LegacyIdItem = {| legacyId: string, topic: string |} | {| legacyId: string, name: string |};
+
+// DUPLICATED in webviz-core/migrations/frozenMigrations/2020.05.06.00:00:03.migrate3DPanel.js
 function* generateLegacyIdItems(item: TopicTreeConfig): Generator<LegacyIdItem, void, void> {
   const { children, name, topicName, legacyIds } = item;
   if (legacyIds) {
@@ -105,12 +108,14 @@ function* generateLegacyIdItems(item: TopicTreeConfig): Generator<LegacyIdItem, 
   }
 }
 
+// DUPLICATED in webviz-core/migrations/frozenMigrations/2020.05.06.00:00:03.migrate3DPanel.js
 const getLegacyIdItems = microMemoize(
   (topicConfig): LegacyIdItem[] => {
     return flatten(topicConfig.children.map((item) => Array.from(generateLegacyIdItems(item))));
   }
 );
 
+// DUPLICATED in webviz-core/migrations/frozenMigrations/2020.05.06.00:00:03.migrate3DPanel.js
 export function migrateLegacyIds(checkedKeys: string[]): string[] {
   const legacyIdItems = getLegacyIdItems(TOPIC_CONFIG);
   const newCheckedNameOrTopicByOldNames = {};

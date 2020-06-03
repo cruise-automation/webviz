@@ -6,9 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { createPositionBuffer, createColorBuffer, getVertexCount, getVertexValue } from "./buffers";
+import {
+  getFieldOffsetsAndReaders,
+  createPositionBuffer,
+  createColorBuffer,
+  getVertexCount,
+  getVertexValue,
+} from "./buffers";
 import type { PointCloudMarker } from "./types";
-import { getFieldOffsetsAndReaders } from "webviz-core/src/panels/ThreeDimensionalViz/commands/Pointclouds/PointCloudBuilder";
 import {
   DEFAULT_FLAT_COLOR,
   type ColorMode,

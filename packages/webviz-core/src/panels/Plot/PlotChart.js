@@ -31,7 +31,6 @@ import { format, formatTimeRaw, isTime, subtractTimes, toSec } from "webviz-core
 export type PlotChartPoint = {|
   x: number,
   y: number,
-  tooltip?: TimeBasedChartTooltipData,
 |};
 
 export type DataSet = {|
@@ -49,19 +48,18 @@ export type DataSet = {|
 |};
 
 export type PlotDataByPath = {
-  [path: string]: TooltipItem[],
+  [path: string]: $ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
 };
 
 const Y_AXIS_ID = "Y_AXIS_ID";
 
-function getXForPoint(xAxisVal, timestamp, innerIdx, itemsByPath, xAxisPath, outerIdx): number {
+function getXForPoint(xAxisVal, timestamp, innerIdx, xAxisRanges, xItem, xAxisPath, xAxisData): number {
   if (xAxisVal === "custom" && xAxisPath) {
     if (isReferenceLinePlotPathType(xAxisPath)) {
       return Number.parseFloat(xAxisPath.value);
     }
-    if (itemsByPath[xAxisPath.value]) {
-      const item = itemsByPath[xAxisPath.value][outerIdx];
-      return item ? Number(item.queriedData[innerIdx]?.value) : NaN;
+    if (xAxisRanges) {
+      return xItem ? Number(xItem.queriedData[innerIdx]?.value) : NaN;
     }
   }
   return xAxisVal === "timestamp" ? timestamp : innerIdx;
@@ -72,71 +70,124 @@ const scaleOptions = {
   yAxisTicks: "hideFirstAndLast",
 };
 
-function getDatasetAndTooltipsFromMessagePlotPath(
-  path: PlotPath,
-  itemsByPath: PlotDataByPath,
-  index: number,
+function getPointsAndTooltipsForMessagePathItem(
+  yItem: TooltipItem,
+  xItem: ?TooltipItem,
   startTime: Time,
+  timestampMethod,
   xAxisVal: "timestamp" | "index" | "custom",
-  xAxisPath?: BasePlotPath
-): { dataset: DataSet, tooltips: TimeBasedChartTooltipData[] } {
-  let tooltips: TimeBasedChartTooltipData[] = [];
-  let points: PlotChartPoint[] = [];
-  let showLine = true;
-  const datasetKey = index.toString();
-
-  for (const [outerIdx, item] of itemsByPath[path.value].entries()) {
-    const timestamp = path.timestampMethod === "headerStamp" ? item.headerStamp : item.receiveTime;
-    if (!timestamp) {
-      continue;
-    }
-    const elapsedTime = toSec(subtractTimes(timestamp, startTime));
-    for (const [innerIdx, { value, path: queriedPath, constantName }] of item.queriedData.entries()) {
-      if (typeof value === "number" || typeof value === "boolean" || typeof value === "string") {
-        const valueNum = Number(value);
-        if (!isNaN(valueNum)) {
-          const x = getXForPoint(xAxisVal, elapsedTime, innerIdx, itemsByPath, xAxisPath, outerIdx);
-          const y = valueNum;
-          const tooltip = { x, y, datasetKey, item, path: queriedPath, value, constantName, startTime };
-          points.push({ x, y });
-          tooltips.push(tooltip);
-        }
-      } else if (isTime(value)) {
-        // $FlowFixMe - %checks on isTime can't convince Flow that the object is actually a Time. Related: https://github.com/facebook/flow/issues/3614
-        const timeValue = (value: Time);
-        const x = getXForPoint(xAxisVal, elapsedTime, innerIdx, itemsByPath, xAxisPath, outerIdx);
-        const y = toSec(timeValue);
-        const tooltip = {
-          x,
-          y,
-          datasetKey,
-          item,
-          path: queriedPath,
-          value: `${format(timeValue)} (${formatTimeRaw(timeValue)})`,
-          constantName,
-          startTime,
-        };
+  xAxisPath?: BasePlotPath,
+  xAxisRanges: ?$ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
+  datasetKey: string
+) {
+  const points = [];
+  const tooltips = [];
+  const timestamp = timestampMethod === "headerStamp" ? yItem.headerStamp : yItem.receiveTime;
+  if (!timestamp) {
+    return { points, tooltips };
+  }
+  const elapsedTime = toSec(subtractTimes(timestamp, startTime));
+  for (const [innerIdx, { value, path: queriedPath, constantName }] of yItem.queriedData.entries()) {
+    if (typeof value === "number" || typeof value === "boolean" || typeof value === "string") {
+      const valueNum = Number(value);
+      if (!isNaN(valueNum)) {
+        const x = getXForPoint(xAxisVal, elapsedTime, innerIdx, xAxisRanges, xItem, xAxisPath);
+        const y = valueNum;
+        const tooltip = { x, y, datasetKey, item: yItem, path: queriedPath, value, constantName, startTime };
         points.push({ x, y });
         tooltips.push(tooltip);
       }
+    } else if (isTime(value)) {
+      // $FlowFixMe - %checks on isTime can't convince Flow that the object is actually a Time. Related: https://github.com/facebook/flow/issues/3614
+      const timeValue = (value: Time);
+      const x = getXForPoint(xAxisVal, elapsedTime, innerIdx, xAxisRanges, xItem, xAxisPath);
+      const y = toSec(timeValue);
+      const tooltip = {
+        x,
+        y,
+        datasetKey,
+        item: yItem,
+        path: queriedPath,
+        value: `${format(timeValue)} (${formatTimeRaw(timeValue)})`,
+        constantName,
+        startTime,
+      };
+      points.push({ x, y });
+      tooltips.push(tooltip);
     }
-    // If we have added more than one point for this message, make it a scatter plot.
-    if (item.queriedData.length > 1 && xAxisVal !== "index") {
-      showLine = false;
+  }
+  return { points, tooltips };
+}
+
+function getDatasetAndTooltipsFromMessagePlotPath(
+  path: PlotPath,
+  yAxisRanges: $ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
+  index: number,
+  startTime: Time,
+  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisRanges: ?$ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
+  xAxisPath?: BasePlotPath
+): { dataset: DataSet, tooltips: TimeBasedChartTooltipData[] } {
+  let showLine = true;
+  const datasetKey = index.toString();
+
+  let rangesOfTooltips: TimeBasedChartTooltipData[][] = [];
+  let rangesOfPoints: PlotChartPoint[][] = [];
+  for (const [rangeIdx, range] of yAxisRanges.entries()) {
+    const xRange: ?$ReadOnlyArray<TooltipItem> = xAxisRanges?.[rangeIdx];
+    const rangeTooltips = [];
+    const rangePoints = [];
+    for (const [outerIdx, item] of range.entries()) {
+      const xItem: ?TooltipItem = xRange?.[outerIdx];
+      const { points: itemPoints, tooltips: itemTooltips } = getPointsAndTooltipsForMessagePathItem(
+        item,
+        xItem,
+        startTime,
+        path.timestampMethod,
+        xAxisVal,
+        xAxisPath,
+        xAxisRanges,
+        datasetKey
+      );
+      rangePoints.push(...itemPoints);
+      rangeTooltips.push(...itemTooltips);
+      // If we have added more than one point for this message, make it a scatter plot.
+      if (item.queriedData.length > 1 && xAxisVal !== "index") {
+        showLine = false;
+      }
     }
+    rangesOfTooltips.push(rangeTooltips);
+    rangesOfPoints.push(rangePoints);
   }
 
   if (path.value.includes(".@derivative")) {
     if (showLine) {
-      const { points: derivativePoints, tooltips: derivativeTooltips } = derivative(points, tooltips);
-      points = derivativePoints;
-      tooltips = derivativeTooltips;
+      const newRangesOfTooltips = [];
+      const newRangesOfPoints = [];
+      for (const [rangeIdx, rangePoints] of rangesOfPoints.entries()) {
+        const rangeTooltips = rangesOfTooltips[rangeIdx];
+        const { points, tooltips } = derivative(rangePoints, rangeTooltips);
+        newRangesOfTooltips.push(tooltips);
+        newRangesOfPoints.push(points);
+      }
+      rangesOfPoints = newRangesOfPoints;
+      rangesOfTooltips = newRangesOfTooltips;
     } else {
       // If we have a scatter plot, we can't take the derivative, so instead show nothing
       // (nothing is better than incorrect data).
-      points = [];
+      rangesOfPoints = [];
+      rangesOfTooltips = [];
     }
   }
+
+  // Put gaps between ranges.
+  rangesOfPoints.forEach((rangePoints, i) => {
+    if (i !== rangesOfPoints.length - 1) {
+      // NaN points are not displayed, and result in a break in the line. A note: After this point
+      // there may be fewer tooltips than points, which we rely on above. We should do this last.
+      rangePoints.push({ x: NaN, y: NaN });
+    }
+  });
 
   const dataset = {
     borderColor: lineColors[index % lineColors.length],
@@ -149,9 +200,9 @@ function getDatasetAndTooltipsFromMessagePlotPath(
     pointHoverRadius: 3,
     pointBackgroundColor: lightColor(lineColors[index % lineColors.length]),
     pointBorderColor: "transparent",
-    data: points,
+    data: flatten(rangesOfPoints),
   };
-  return { dataset, tooltips };
+  return { dataset, tooltips: flatten(rangesOfTooltips) };
 }
 
 // A "reference line" plot path is a numeric value. It creates a horizontal line on the plot at the specified value.
@@ -177,10 +228,12 @@ export function getDatasetsAndTooltips(
   xAxisPath?: BasePlotPath
 ): { datasets: DataSet[], tooltips: TimeBasedChartTooltipData[] } {
   const datasetsAndTooltips = filterMap(paths, (path: PlotPath, index: number) => {
+    const yRanges = itemsByPath[path.value];
+    const xRanges = xAxisPath && itemsByPath[xAxisPath.value];
     if (!path.enabled) {
       return null;
     } else if (!isReferenceLinePlotPathType(path)) {
-      return getDatasetAndTooltipsFromMessagePlotPath(path, itemsByPath, index, startTime, xAxisVal, xAxisPath);
+      return getDatasetAndTooltipsFromMessagePlotPath(path, yRanges, index, startTime, xAxisVal, xRanges, xAxisPath);
     }
     return null;
   });

@@ -12,81 +12,65 @@ describe("derivative", () => {
   it("takes the derivative using the previous message", () => {
     const headerStamp = undefined;
     const receiveTime = { sec: 123, nsec: 456 };
-    const data = [
+    const tooltips = [
       {
         x: 0,
         y: 0,
-        tooltip: {
-          x: 0,
-          y: 0,
-          datasetKey: "0",
-          value: 0,
-          item: {
-            headerStamp,
-            receiveTime,
-            queriedData: [{ value: 0, path: "/some/topic.something", constantName: undefined }],
-          },
-          path: "/some/topic.something",
-          constantName: undefined,
-          startTime: { sec: 0, nsec: 0 },
+        datasetKey: "0",
+        value: 0,
+        item: {
+          headerStamp,
+          receiveTime,
+          queriedData: [{ value: 0, path: "/some/topic.something", constantName: undefined }],
         },
+        path: "/some/topic.something",
+        constantName: undefined,
+        startTime: { sec: 0, nsec: 0 },
       },
       {
         x: 1,
         y: -1,
-        tooltip: {
-          x: 1,
-          y: -1,
-          datasetKey: "0",
-          value: -1,
-          item: {
-            headerStamp,
-            receiveTime,
-            queriedData: [{ value: -1, path: "/some/topic.something", constantName: undefined }],
-          },
-          path: "/some/topic.something",
-          constantName: undefined,
-          startTime: { sec: 0, nsec: 0 },
+        datasetKey: "0",
+        value: -1,
+        item: {
+          headerStamp,
+          receiveTime,
+          queriedData: [{ value: -1, path: "/some/topic.something", constantName: undefined }],
         },
+        path: "/some/topic.something",
+        constantName: undefined,
+        startTime: { sec: 0, nsec: 0 },
       },
       {
         x: 2,
         y: -1.5,
-        tooltip: {
-          x: 2,
-          y: -1.5,
-          datasetKey: "0",
-          value: -1.5,
-          item: {
-            headerStamp,
-            receiveTime,
-            queriedData: [{ value: -1.5, path: "/some/topic.something", constantName: undefined }],
-          },
-          path: "/some/topic.something",
-          constantName: undefined,
-          startTime: { sec: 0, nsec: 0 },
+        datasetKey: "0",
+        value: -1.5,
+        item: {
+          headerStamp,
+          receiveTime,
+          queriedData: [{ value: -1.5, path: "/some/topic.something", constantName: undefined }],
         },
+        path: "/some/topic.something",
+        constantName: undefined,
+        startTime: { sec: 0, nsec: 0 },
       },
       {
         x: 3,
         y: 5,
-        tooltip: {
-          x: 3,
-          y: 5,
-          datasetKey: "0",
-          value: 5,
-          item: {
-            headerStamp,
-            receiveTime,
-            queriedData: [{ value: 5, path: "/some/topic.something", constantName: undefined }],
-          },
-          path: "/some/topic.something",
-          constantName: undefined,
-          startTime: { sec: 0, nsec: 0 },
+        datasetKey: "0",
+        value: 5,
+        item: {
+          headerStamp,
+          receiveTime,
+          queriedData: [{ value: 5, path: "/some/topic.something", constantName: undefined }],
         },
+        path: "/some/topic.something",
+        constantName: undefined,
+        startTime: { sec: 0, nsec: 0 },
       },
     ];
-    const tooltips = data.map(({ tooltip }) => tooltip);
+    const data = tooltips.map(({ x, y }) => ({ x, y }));
 
     const newPoints = [
       {

@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 import { renderHook, act } from "@testing-library/react-hooks";
 import { mount } from "enzyme";
-import * as _ from "lodash";
 import * as React from "react";
 import { type CameraState } from "regl-worldview";
 

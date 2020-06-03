@@ -81,7 +81,7 @@ export function perPanelHooks() {
   const RobotIcon = require("@mdi/svg/svg/robot.svg").default;
   const LaserScanVert = require("webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert").default;
   const { defaultMapPalette } = require("webviz-core/src/panels/ThreeDimensionalViz/commands/utils");
-  const { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE } = require("webviz-core/src/util/globalConstants");
+  const { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE, TF_DATATYPE } = require("webviz-core/src/util/globalConstants");
 
   const SUPPORTED_MARKER_DATATYPES = {
     // generally supported datatypes
@@ -92,6 +92,7 @@ export function perPanelHooks() {
     SENSOR_MSGS_LASER_SCAN_DATATYPE: "sensor_msgs/LaserScan",
     NAV_MSGS_OCCUPANCY_GRID_DATATYPE: "nav_msgs/OccupancyGrid",
     GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: "geometry_msgs/PolygonStamped",
+    TF_DATATYPE,
   };
 
   return {
@@ -173,6 +174,10 @@ export function perPanelHooks() {
         topicsToRender,
       }),
       consumeMessage: (topic, msg, consumeMethods, { errors }) => {
+        // TF messages are consumed by TransformBuilder, not SceneBuilder.
+        if (msg.datatype === SUPPORTED_MARKER_DATATYPES.TF_DATATYPE) {
+          return;
+        }
         errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${msg.datatype}`);
       },
       getMessagePose: (msg) => msg.message.pose,

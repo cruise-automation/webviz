@@ -5,6 +5,10 @@
 # You may not use this file except in compliance with the License.
 
 version: 2
+
+experimental:
+  pipelines: true
+
 jobs:
   build:
     machine: true

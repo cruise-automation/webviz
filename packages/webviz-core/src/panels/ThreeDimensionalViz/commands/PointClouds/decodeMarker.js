@@ -19,11 +19,6 @@ import {
   type ColorMode,
 } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor";
 
-export function parseHexColor(color: string) {
-  const parsedFlatColor = parseInt(color.slice(1), 16);
-  return [(parsedFlatColor >> 16) & 0xff, (parsedFlatColor >> 8) & 0xff, parsedFlatColor & 0xff, 1];
-}
-
 // Decode a marker and generate position and color buffers for rendering
 // The resulting marker should be memoized for better performance
 export function decodeMarker(marker: PointCloudMarker) {
@@ -72,12 +67,12 @@ export function decodeMarker(marker: PointCloudMarker) {
   // These calculations can be ignored if we're rendering to the hitmap
   if (colorBuffer && !isHitmap && (colorMode.mode === "gradient" || colorMode.mode === "rainbow")) {
     let hasMinValue = false;
-    if (colorMode.minValue) {
+    if (colorMode.minValue != null) {
       hasMinValue = true;
       minColorValue = colorMode.minValue;
     }
     let hasMaxValue = false;
-    if (colorMode.maxValue) {
+    if (colorMode.maxValue != null) {
       hasMaxValue = true;
       maxColorValue = colorMode.maxValue;
     }

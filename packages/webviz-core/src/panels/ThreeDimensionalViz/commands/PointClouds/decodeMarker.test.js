@@ -10,7 +10,7 @@ import { FLOAT_SIZE } from "./buffers";
 import { decodeMarker } from "./decodeMarker";
 import { POINT_CLOUD_MESSAGE, POINT_CLOUD_WITH_ADDITIONAL_FIELDS } from "./fixture/pointCloudData";
 
-describe("<GPUPointClouds />", () => {
+describe("<PointClouds />", () => {
   describe("positions", () => {
     it("builds position buffer by reinterpreting data from PointCloud2", () => {
       const result = decodeMarker(POINT_CLOUD_MESSAGE);
@@ -54,7 +54,7 @@ describe("<GPUPointClouds />", () => {
       };
       const input = {
         ...POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
-        settings: { colorMode: { mode: "gradient", minColor: "#ff0000", maxColor: "#0000ff", colorField: "foo" } },
+        settings: { colorMode: { mode: "gradient", minColor: "255,0,0,1", maxColor: "0,0,255,1", colorField: "foo" } },
       };
       const result = decodeMarker(input);
       const { positionBuffer } = result;
@@ -69,7 +69,7 @@ describe("<GPUPointClouds />", () => {
     it("builds empty color buffer from PointCloud2 when colorMode=='flat'", () => {
       const result = decodeMarker({
         ...POINT_CLOUD_MESSAGE,
-        settings: { colorMode: { mode: "flat", flatColor: "#ff0000" } },
+        settings: { colorMode: { mode: "flat", flatColor: "255,0,0,1" } },
       });
       const { colorBuffer } = result;
       expect(colorBuffer).toBeNull();
@@ -160,7 +160,7 @@ describe("<GPUPointClouds />", () => {
     it("builds point cloud with rainbow colors. Reinterpret positions and colors", () => {
       const input = {
         ...POINT_CLOUD_MESSAGE,
-        settings: { colorMode: { mode: "gradient", minColor: "#ff0000", maxColor: "#0000ff", colorField: "y" } },
+        settings: { colorMode: { mode: "gradient", minColor: "255,0,0,1", maxColor: "0,0,255,1", colorField: "y" } },
       };
       const result = decodeMarker(input);
       const { positionBuffer, colorBuffer } = result;
@@ -183,7 +183,7 @@ describe("<GPUPointClouds />", () => {
       };
       const input = {
         ...POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
-        settings: { colorMode: { mode: "gradient", minColor: "#ff0000", maxColor: "#0000ff", colorField: "foo" } },
+        settings: { colorMode: { mode: "gradient", minColor: "255,0,0,1", maxColor: "0,0,255,1", colorField: "foo" } },
       };
       const result = decodeMarker(input);
       const { positionBuffer, colorBuffer } = result;

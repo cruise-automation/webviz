@@ -58,8 +58,8 @@ describe("state.panels", () => {
       savedProps: { "foo!bar": { test: true } },
     };
 
-    store.checkState((panels, routing) => {
-      expect(routing.location.pathname).toEqual("/");
+    store.checkState((panels, router) => {
+      expect(router.location.pathname).toEqual("/");
       expect(panels.layout).not.toEqual("foo!bar");
       expect(panels.savedProps).toEqual({});
     });
@@ -196,24 +196,24 @@ describe("state.panels", () => {
     it(desc, () => {
       const store = getStore();
       store.push("/?layout=foo");
-      store.checkState((panels, routing) => {
-        expect(routing.location.search).toEqual("?layout=foo");
+      store.checkState((panels, router) => {
+        expect(router.location.search).toEqual("?layout=foo");
       });
       store.dispatch(actionCreator());
-      store.checkState((panels, routing) => {
-        expect(routing.location.search).toEqual("");
+      store.checkState((panels, router) => {
+        expect(router.location.search).toEqual("");
       });
 
       store.push("/?layout=foo&name=bar");
       store.dispatch(actionCreator());
-      store.checkState((panels, routing) => {
-        expect(routing.location.search).toEqual("?name=bar");
+      store.checkState((panels, router) => {
+        expect(router.location.search).toEqual("?name=bar");
       });
 
       store.push("/?laYOut=zug&layout=foo&name=bar");
       store.dispatch(actionCreator());
-      store.checkState((panels, routing) => {
-        expect(routing.location.search).toEqual("?laYOut=zug&name=bar");
+      store.checkState((panels, router) => {
+        expect(router.location.search).toEqual("?laYOut=zug&name=bar");
       });
     });
   };
@@ -233,12 +233,12 @@ describe("state.panels", () => {
   it("does not remove layout if layout is imported from url", () => {
     const store = getStore();
     store.push("/?layout=foo&name=bar");
-    store.checkState((panels, routing) => {
-      expect(routing.location.search).toEqual("?layout=foo&name=bar");
+    store.checkState((panels, router) => {
+      expect(router.location.search).toEqual("?layout=foo&name=bar");
     });
     store.dispatch(importPanelLayout({ layout: null, savedProps: {} }, { isFromUrl: true }));
-    store.checkState((panels, routing) => {
-      expect(routing.location.search).toEqual("?layout=foo&name=bar");
+    store.checkState((panels, router) => {
+      expect(router.location.search).toEqual("?layout=foo&name=bar");
     });
   });
 
@@ -270,8 +270,8 @@ describe("state.panels", () => {
     const store = getStore();
     store.dispatch(changePanelLayout({ layout: "foo" }));
     store.push("/?layout=foo&name=bar");
-    store.checkState((panels, routing) => {
-      expect(routing.location.search).toEqual("?layout=foo&name=bar");
+    store.checkState((panels, router) => {
+      expect(router.location.search).toEqual("?layout=foo&name=bar");
     });
     store.dispatch(
       savePanelConfigs({
@@ -285,8 +285,8 @@ describe("state.panels", () => {
         ],
       })
     );
-    store.checkState((panels, routing) => {
-      expect(routing.location.search).toEqual("?layout=foo&name=bar");
+    store.checkState((panels, router) => {
+      expect(router.location.search).toEqual("?layout=foo&name=bar");
     });
   });
 

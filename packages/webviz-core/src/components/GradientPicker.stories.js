@@ -8,18 +8,17 @@
 
 import { storiesOf } from "@storybook/react";
 import React, { useRef, useLayoutEffect, useState } from "react";
+import TestUtils from "react-dom/test-utils";
 import { withScreenshot } from "storybook-chrome-screenshot";
 
 import GradientPicker from "./GradientPicker";
 
 function Story({
-  openOnMount,
   changeMinColorAfterMount,
   changeMaxColorAfterMount,
   initialMinColor,
   initialMaxColor,
 }: {
-  openOnMount?: boolean,
   changeMinColorAfterMount?: boolean,
   changeMaxColorAfterMount?: boolean,
   initialMinColor?: string,
@@ -33,40 +32,28 @@ function Story({
 
   useLayoutEffect(
     () => {
-      if (changeMinColorAfterMount && containerRef.current) {
-        containerRef.current.querySelectorAll('[data-test="ColorPicker"]')[0].click();
+      if (!(changeMinColorAfterMount || changeMaxColorAfterMount)) {
+        return;
       }
-      if (changeMaxColorAfterMount && containerRef.current) {
-        containerRef.current.querySelectorAll('[data-test="ColorPicker"]')[1].click();
-      }
-    },
-    [changeMaxColorAfterMount, changeMinColorAfterMount]
-  );
+      const [minTriggerEl, maxTriggerEl] = document.querySelectorAll(".rc-color-picker-trigger");
 
-  useLayoutEffect(
-    () => {
-      setImmediate(() => {
-        if (changeMinColorAfterMount && minRef.current) {
-          const slider = minRef.current.getPickrForTesting().getRoot().hue.slider;
-          const rect = slider.getBoundingClientRect();
-          slider.dispatchEvent(
-            new MouseEvent("mousedown", {
-              clientX: rect.left + rect.width * 0.2,
-              clientY: rect.top + rect.height / 2,
-            })
-          );
-        }
-        if (changeMaxColorAfterMount && maxRef.current) {
-          const slider = maxRef.current.getPickrForTesting().getRoot().hue.slider;
-          const rect = slider.getBoundingClientRect();
-          slider.dispatchEvent(
-            new MouseEvent("mousedown", {
-              clientX: rect.left + rect.width * 0.8,
-              clientY: rect.top + rect.height / 2,
-            })
-          );
-        }
-      });
+      if (changeMinColorAfterMount) {
+        minTriggerEl.click();
+        setImmediate(() => {
+          const hexInput = ((document.querySelector(".rc-color-picker-panel-params-hex"): any): HTMLInputElement);
+          hexInput.value = "#d2ff03";
+          TestUtils.Simulate.change(hexInput);
+          TestUtils.Simulate.blur(hexInput);
+        });
+      } else {
+        maxTriggerEl.click();
+        setImmediate(() => {
+          const hexInput = ((document.querySelector(".rc-color-picker-panel-params-hex"): any): HTMLInputElement);
+          hexInput.value = "#c501ff";
+          TestUtils.Simulate.change(hexInput);
+          TestUtils.Simulate.blur(hexInput);
+        });
+      }
     },
     [changeMaxColorAfterMount, changeMinColorAfterMount]
   );
@@ -89,8 +76,10 @@ function Story({
 
 storiesOf("<GradientPicker>", module)
   .addDecorator(withScreenshot({ viewport: { width: 585, height: 500 } }))
-  .add("basic", () => <Story initialMinColor="#ff0000" initialMaxColor="#0000ff" />)
-  .add("change min color", () => <Story initialMinColor="#ff0000" initialMaxColor="#0000ff" changeMinColorAfterMount />)
+  .add("basic", () => <Story initialMinColor="255,0,0,1" initialMaxColor="0,0,255,1" />)
+  .add("change min color", () => (
+    <Story initialMinColor="255,0,0,1" initialMaxColor="0,0,255,1" changeMinColorAfterMount />
+  ))
   .add("change max color", () => (
-    <Story initialMinColor="#ff0000" initialMaxColor="#0000ff" changeMaxColorAfterMount />
+    <Story initialMinColor="255,0,0,1" initialMaxColor="0,0,255,1" changeMaxColorAfterMount />
   ));

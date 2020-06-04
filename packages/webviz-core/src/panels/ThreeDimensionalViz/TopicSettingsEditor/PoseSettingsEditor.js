@@ -11,6 +11,7 @@ import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import React from "react";
 
 import { type TopicSettingsEditorProps } from ".";
+import ColorPickerForTopicSettings from "./ColorPickerForTopicSettings";
 import { SLabel, SInput } from "./common";
 import Flex from "webviz-core/src/components/Flex";
 import type { PoseStamped } from "webviz-core/src/types/Messages";
@@ -57,16 +58,8 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
   const currentHeadLength = settings.size?.headLength ?? 0.1;
   const colorInputFields = (
     <Flex col>
-      <SLabel>Color (r,g,b,a)</SLabel>
-      <SInput
-        type="text"
-        value={
-          // must be non-undefined to avoid changing to an uncontrolled component when switching on/off the car model
-          settings.color || ""
-        }
-        placeholder="e.g. 255, 0, 100, 0.5"
-        onChange={(e) => onFieldChange("color", e.target.value)}
-      />
+      <SLabel>Color</SLabel>
+      <ColorPickerForTopicSettings color={settings.color} onChange={(newColor) => onFieldChange("color", newColor)} />
       <SLabel>Shaft width</SLabel>
       <SInput
         type="number"
@@ -121,3 +114,5 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
     </Flex>
   );
 }
+
+PoseSettingsEditor.canEditNamespaceOverrideColor = true;

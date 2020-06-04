@@ -8,6 +8,7 @@
 @import "./colors.module.scss";
 @import "./mixins.module.scss";
 @import "./fonts.module.scss";
+@import "~rc-color-picker/assets/index.css";
 
 .ant-component {
   @import "~antd/dist/antd";
@@ -76,6 +77,26 @@
     padding-top: 0;
   }
 }
+
+.rc-color-picker {
+  .rc-color-picker-panel {
+    // TOOLBAR
+    background: #1a1a1f;
+    .rc-color-picker-panel-inner {
+      box-shadow: none;
+      // DARK7
+      border: 1px solid #4b4b52;
+    }
+    .rc-color-picker-panel-ribbon,
+    .rc-color-picker-panel-alpha {
+      span {
+        // LIGHT1
+        border: 1px solid #f0f0f0;
+      }
+    }
+  }
+}
+
 /* globally apply flex to containers outside our component hierarchy */
 /* this ensures the app container elements stretch edge to edge and do not scroll */
 html,

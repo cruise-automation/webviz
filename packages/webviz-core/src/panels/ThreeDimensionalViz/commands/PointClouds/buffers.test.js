@@ -9,7 +9,7 @@
 import { FLOAT_SIZE, reinterpretBufferToFloat, expandBufferToFloat } from "./buffers";
 import { POINT_CLOUD_MESSAGE } from "./fixture/pointCloudData";
 
-describe("<GPUPointClouds />", () => {
+describe("<PointClouds />", () => {
   describe("data transformations", () => {
     it("reinterprets data buffer as a float array", () => {
       const { data } = POINT_CLOUD_MESSAGE;

@@ -205,6 +205,7 @@ export default function Layout({
     staticallyAvailableNamespacesByTopic,
     supportedMarkerDatatypesSet,
     defaultTopicSettings,
+    uncategorizedGroupName,
   } = useMemo(
     () => ({
       supportedMarkerDatatypesSet: new Set(
@@ -219,6 +220,7 @@ export default function Layout({
       defaultTopicSettings: getGlobalHooks()
         .startupPerPanelHooks()
         .ThreeDimensionalViz.getDefaultSettings(),
+      uncategorizedGroupName: getGlobalHooks().perPanelHooks().ThreeDimensionalViz.ungroupedNodesCategory,
     }),
     []
   );
@@ -268,6 +270,7 @@ export default function Layout({
     topicDisplayMode,
     topicSettings,
     topicTreeConfig,
+    uncategorizedGroupName,
   });
 
   useEffect(() => setSubscriptions(selectedTopicNames), [selectedTopicNames, setSubscriptions]);

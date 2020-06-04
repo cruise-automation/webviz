@@ -9,10 +9,14 @@
 import React, { useCallback } from "react";
 import styled from "styled-components";
 
-import ColorPicker, { COLOR_PICKER_SIZE } from "./ColorPicker";
 import AutoSizingCanvas from "webviz-core/src/components/AutoSizingCanvas";
+import ColorPickerForTopicSettings, {
+  PICKER_SIZE,
+  getHexFromColorSettingWithDefault,
+} from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
+const COLOR_PICKER_SIZE = PICKER_SIZE.NORMAL.size;
 const GRADIENT_BAR_INSET = Math.floor(COLOR_PICKER_SIZE / 2);
 const GRADIENT_BAR_HEIGHT = 10;
 const GRADIENT_LINE_HEIGHT = 6;
@@ -55,29 +59,30 @@ export default function GradientPicker({
   maxColorRefForTesting?: any,
   minColorRefForTesting?: any,
 }) {
+  const hexMinColor = getHexFromColorSettingWithDefault(minColor);
+  const hexMaxColor = getHexFromColorSettingWithDefault(maxColor);
+
   const drawGradient = useCallback(
     (ctx, width, height) => {
       const gradient = ctx.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, minColor);
-      gradient.addColorStop(1, maxColor);
+      gradient.addColorStop(0, hexMinColor);
+      gradient.addColorStop(1, hexMaxColor);
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
     },
-    [maxColor, minColor]
+    [hexMaxColor, hexMinColor]
   );
 
   return (
     <>
       <SPickerWrapper>
-        <ColorPicker
-          ref={minColorRefForTesting}
+        <ColorPickerForTopicSettings
           color={minColor}
-          onChange={useCallback((newColor) => onChange({ minColor: newColor, maxColor }), [maxColor, onChange])}
+          onChange={(newColor) => onChange({ minColor: newColor, maxColor })}
         />
-        <ColorPicker
-          ref={maxColorRefForTesting}
+        <ColorPickerForTopicSettings
           color={maxColor}
-          onChange={useCallback((newColor) => onChange({ minColor, maxColor: newColor }), [minColor, onChange])}
+          onChange={(newColor) => onChange({ minColor, maxColor: newColor })}
         />
       </SPickerWrapper>
       <SBarWrapper>

@@ -16,21 +16,18 @@ const topics = [{ name: "/topic", datatype: "datatype" }];
 const datatypes = { datatype: { fields: [{ name: "value", type: "uint32", isArray: false, isComplex: false }] } };
 const messages: Message[] = [
   {
-    op: "message",
     topic: "/topic",
     datatype: "datatype",
     receiveTime: { sec: 0, nsec: 0 },
     message: { value: 0 },
   },
   {
-    op: "message",
     topic: "/topic",
     datatype: "datatype",
     receiveTime: { sec: 1, nsec: 0 },
     message: { value: 1 },
   },
   {
-    op: "message",
     topic: "/topic",
     datatype: "datatype",
     receiveTime: { sec: 2, nsec: 0 },

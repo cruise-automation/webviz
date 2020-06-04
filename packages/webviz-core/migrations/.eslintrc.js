@@ -8,13 +8,16 @@
 const fs = require("fs");
 const path = require("path");
 
-const getRestrictedDirectories = (source) =>
+const getRestrictedDirs = (source) =>
   fs
     .readdirSync(source)
     .map((name) => path.join(source, name))
     .filter((eachSource) => fs.lstatSync(eachSource).isDirectory())
-    .filter((dirPath) => dirPath !== "webviz-core/migrations");
+    .filter((dirPath) => !dirPath.endsWith(`webviz-core/migrations`))
+    .map((eachPath) => `webviz-core/${eachPath.split("webviz-core/")[1]}`);
 
+const restrictedDirs = getRestrictedDirs(path.join(__dirname, "../"));
+const getSubDirs = (arr) => arr.map((eachPath) => `${eachPath}/*`);
 module.exports = {
   rules: {
     "no-restricted-imports": [
@@ -24,7 +27,15 @@ module.exports = {
           { name: "lodash", importNames: ["get"], message: "Use optional chaining instead of lodash.get." },
           { name: "lodash/get", message: "Use optional chaining instead of lodash.get." },
         ],
-        patterns: ["client/*", "shared/*", "server/*", ...getRestrictedDirectories(path.join(__dirname, "../"))],
+        // migrations/ directory can import from within itself, but not from outside directories
+        patterns: ["client/*", "shared/*", "server/*", ...restrictedDirs, ...getSubDirs(restrictedDirs)],
+      },
+    ],
+    "no-restricted-modules": [
+      "error",
+      {
+        // migrations/ directory can import from within itself, but not from outside directories
+        patterns: ["client/*", "shared/*", "server/*", ...restrictedDirs, ...getSubDirs(restrictedDirs)],
       },
     ],
   },

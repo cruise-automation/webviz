@@ -12,7 +12,6 @@ function message(topic, stamp) {
   return {
     topic,
     datatype: "Foo",
-    op: "message",
     receiveTime: { sec: 0, nsec: 0 },
     message: { header: { stamp } },
   };

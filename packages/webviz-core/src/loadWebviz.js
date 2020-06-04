@@ -37,7 +37,8 @@ const defaultHooks = {
   nodes: () => [],
   getDefaultGlobalStates() {
     const { defaultPlaybackConfig } = require("webviz-core/src/reducers/panels");
-    const { CURRENT_LAYOUT_VERSION } = require("webviz-core/migrations");
+    /* eslint-disable no-restricted-modules */
+    const { CURRENT_LAYOUT_VERSION } = require("webviz-core/migrations/constants");
     return {
       layout: {
         direction: "row",
@@ -122,8 +123,8 @@ const defaultHooks = {
       groupLines: {
         name: "Group Lines When Rendering",
         description: "A faster method of rendering lines in the 3D panel by grouping them together.",
-        developmentDefault: false,
-        productionDefault: false,
+        developmentDefault: true,
+        productionDefault: true,
       },
       diskBagCaching: {
         name: "Disk Bag Caching (requires reload)",

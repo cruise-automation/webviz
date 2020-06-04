@@ -21,7 +21,7 @@ import Checkbox from "webviz-core/src/components/Checkbox";
 import ExpandingToolbar, { ToolGroup, ToolGroupFixedSizePane } from "webviz-core/src/components/ExpandingToolbar";
 import Icon from "webviz-core/src/components/Icon";
 import PanelContext from "webviz-core/src/components/PanelContext";
-import { decodeAdditionalFields } from "webviz-core/src/panels/ThreeDimensionalViz/commands/GPUPointClouds/selection";
+import { decodeAdditionalFields } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import type { SaveConfig, PanelConfig } from "webviz-core/src/types/panels";
 import { useChangeDetector } from "webviz-core/src/util/hooks";

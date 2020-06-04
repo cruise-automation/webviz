@@ -16,7 +16,6 @@ import { fromSec, type TimestampMethod } from "webviz-core/src/util/time";
 
 function makeMessage(headerStamp: number, receiveTime: number) {
   return {
-    op: "message",
     topic: "/dummy_topic",
     datatype: "dummy_datatype",
     message: {

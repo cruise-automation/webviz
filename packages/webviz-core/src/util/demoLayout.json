@@ -125,7 +125,7 @@
           "colorMode": {
             "mode": "gradient",
             "colorField": "intensity",
-            "minValue": "0",
+            "minValue": 0,
             "maxValue": 6,
             "minColor": "#FF0000",
             "maxColor": "#A8AEEE"

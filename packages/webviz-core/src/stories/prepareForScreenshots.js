@@ -11,7 +11,7 @@ import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 function prepareForScreenshots() {
   if (inScreenshotTests()) {
     // We have some animations here and there. Disable them for screenshots.
-    // Per https://github.com/tsuyoshiwada/storybook-chrome-screenshot#disable-component-animation
+    // Per https://github.com/tsuyoshiwada/storycap#disable-component-animation
     const style = document.createElement("style");
     style.innerHTML = `* {
       transition: none !important;

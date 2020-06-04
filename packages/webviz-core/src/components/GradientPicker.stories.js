@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import React, { useRef, useLayoutEffect, useState } from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import GradientPicker from "./GradientPicker";
 

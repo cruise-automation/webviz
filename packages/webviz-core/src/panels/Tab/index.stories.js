@@ -10,7 +10,7 @@ import { storiesOf } from "@storybook/react";
 import { createBrowserHistory } from "history";
 import React from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 import styled from "styled-components";
 
 import Tab from "./index";

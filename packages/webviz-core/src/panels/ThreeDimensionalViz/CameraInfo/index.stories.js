@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 import { DEFAULT_CAMERA_STATE } from "regl-worldview";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import CameraInfo, { CAMERA_TAB_TYPE } from "webviz-core/src/panels/ThreeDimensionalViz/CameraInfo";
 

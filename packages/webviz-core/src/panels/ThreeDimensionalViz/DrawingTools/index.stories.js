@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 import { PolygonBuilder } from "regl-worldview";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import DrawingTools, { POLYGON_TAB_TYPE } from "./index";
 import { pointsToPolygons } from "webviz-core/src/panels/ThreeDimensionalViz/utils/drawToolUtils";

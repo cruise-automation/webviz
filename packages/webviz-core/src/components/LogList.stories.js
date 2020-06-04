@@ -8,7 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import React, { Component } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import LogList from "./LogList";
 import type { RenderRow } from "./LogList";

@@ -13,7 +13,7 @@ import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import TestUtils from "react-dom/test-utils";
 import { Provider } from "react-redux";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import PanelList from "webviz-core/src/panels/PanelList";
 import createRootReducer from "webviz-core/src/reducers";

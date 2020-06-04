@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import Publish from "webviz-core/src/panels/Publish";
 import { PlayerCapabilities } from "webviz-core/src/players/types";

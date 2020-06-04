@@ -9,7 +9,7 @@ import { storiesOf } from "@storybook/react";
 import cloneDeep from "lodash/cloneDeep";
 import React, { useState, useCallback } from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import ChartComponent from ".";
 

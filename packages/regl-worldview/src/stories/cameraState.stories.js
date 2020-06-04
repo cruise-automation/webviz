@@ -10,7 +10,7 @@ import { withKnobs, boolean, number } from "@storybook/addon-knobs";
 import { storiesOf } from "@storybook/react";
 import { quat, vec3 } from "gl-matrix";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import { vec4ToOrientation, vec3ToPoint } from "../utils/commandUtils";
 import Container from "./Container";

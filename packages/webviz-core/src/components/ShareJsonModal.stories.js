@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import { importPanelLayout } from "webviz-core/src/actions/panels";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";

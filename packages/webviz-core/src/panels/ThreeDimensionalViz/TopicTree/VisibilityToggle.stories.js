@@ -8,7 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import React, { useState, useCallback, useRef } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import VisibilityToggle, { type Size, TOGGLE_SIZE_CONFIG } from "./VisibilityToggle";
 

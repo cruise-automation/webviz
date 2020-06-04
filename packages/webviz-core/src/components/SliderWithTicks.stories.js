@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import { noop } from "lodash";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import { SliderWithTicks } from "webviz-core/src/components/SliderWithTicks";
 

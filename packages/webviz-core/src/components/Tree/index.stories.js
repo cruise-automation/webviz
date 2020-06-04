@@ -10,7 +10,7 @@ import GridIcon from "@mdi/svg/svg/grid.svg";
 import MapMarkerIcon from "@mdi/svg/svg/map-marker.svg";
 import { storiesOf } from "@storybook/react";
 import React, { useState } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import Menu from "webviz-core/src/components/Menu";
 import Tree, { type Node } from "webviz-core/src/components/Tree";

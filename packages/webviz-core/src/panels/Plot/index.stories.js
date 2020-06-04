@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import type { Time } from "rosbag";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import Plot from "webviz-core/src/panels/Plot";
 import PanelSetup, { triggerWheel } from "webviz-core/src/stories/PanelSetup";
@@ -151,7 +151,6 @@ const fixture = {
   activeData: {
     startTime: { sec: 0, nsec: 202050 },
     endTime: { sec: 24, nsec: 999997069 },
-    currentTime: { sec: 0, nsec: 750000000 },
     isPlaying: false,
     messageDefinitionsByTopic: { "/preloaded_topic": float64StampedDefinition },
     speed: 0.2,

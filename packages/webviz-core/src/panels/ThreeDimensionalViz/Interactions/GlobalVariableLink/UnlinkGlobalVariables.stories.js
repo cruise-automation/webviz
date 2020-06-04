@@ -8,7 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import UnlinkGlobalVariables from "./UnlinkGlobalVariables";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";

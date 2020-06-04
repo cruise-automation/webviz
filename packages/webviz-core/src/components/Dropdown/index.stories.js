@@ -9,7 +9,7 @@
 import SettingsIcon from "@mdi/svg/svg/settings.svg";
 import { storiesOf } from "@storybook/react";
 import React, { useState } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";

@@ -11,7 +11,7 @@ import MinusCircleIcon from "@mdi/svg/svg/minus-circle.svg";
 import PlusCircleIcon from "@mdi/svg/svg/plus-circle.svg";
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Flex from "webviz-core/src/components/Flex";

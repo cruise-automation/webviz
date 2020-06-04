@@ -8,7 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import polygonGenerator from "polygon-generator";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import FilledPolygons from "../../commands/FilledPolygons";
 import type { PolygonType } from "../../types";

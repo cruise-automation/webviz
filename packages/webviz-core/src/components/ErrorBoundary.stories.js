@@ -10,7 +10,7 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import ErrorBoundary from "./ErrorBoundary";
 

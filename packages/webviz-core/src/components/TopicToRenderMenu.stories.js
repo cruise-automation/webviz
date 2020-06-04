@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";

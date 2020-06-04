@@ -2,7 +2,7 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import type { MouseHandler } from "../types";
 import Container from "./Container";

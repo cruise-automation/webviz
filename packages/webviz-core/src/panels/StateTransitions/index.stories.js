@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import StateTransitions from "./index";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";

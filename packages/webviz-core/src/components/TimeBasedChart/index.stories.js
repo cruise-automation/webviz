@@ -8,7 +8,7 @@
 import { storiesOf } from "@storybook/react";
 import cloneDeep from "lodash/cloneDeep";
 import React, { useState, useCallback } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import TimeBasedChart from "./index";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";

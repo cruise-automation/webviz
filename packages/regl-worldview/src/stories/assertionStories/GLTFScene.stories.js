@@ -11,7 +11,7 @@
 import { storiesOf } from "@storybook/react";
 import expect from "expect";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import GLTFScene from "../../commands/GLTFScene";
 import { clickAtOrigin, WorldviewWrapper } from "../worldviewAssertionUtils";

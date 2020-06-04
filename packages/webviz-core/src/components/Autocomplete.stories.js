@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import React, { Component } from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import Autocomplete from "webviz-core/src/components/Autocomplete";
 

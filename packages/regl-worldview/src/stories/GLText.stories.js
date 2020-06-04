@@ -4,7 +4,7 @@ import { storiesOf } from "@storybook/react";
 import { quat } from "gl-matrix";
 import { range } from "lodash";
 import React, { useState, useLayoutEffect, useCallback } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 import tinyColor from "tinycolor2";
 
 import { Axes, Cubes } from "../commands";

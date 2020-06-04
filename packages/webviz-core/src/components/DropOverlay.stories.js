@@ -8,7 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 

@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import { range, noop } from "lodash";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import ImageCanvas from "webviz-core/src/panels/ImageView/ImageCanvas";

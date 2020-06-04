@@ -8,7 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import MessagePathInput from "./MessagePathInput";
 import Flex from "webviz-core/src/components/Flex";

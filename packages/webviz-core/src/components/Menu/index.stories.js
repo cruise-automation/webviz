@@ -9,7 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 import ReactDOM from "react-dom";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import Menu, { Item, SubMenu } from "webviz-core/src/components/Menu";
 

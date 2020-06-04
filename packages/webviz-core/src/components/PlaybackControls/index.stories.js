@@ -9,7 +9,7 @@
 import { action } from "@storybook/addon-actions";
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import { UnconnectedPlaybackControls } from ".";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";

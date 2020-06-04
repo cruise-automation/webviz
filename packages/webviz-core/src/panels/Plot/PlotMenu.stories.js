@@ -8,7 +8,7 @@
 import { storiesOf } from "@storybook/react";
 import { noop } from "lodash";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
 

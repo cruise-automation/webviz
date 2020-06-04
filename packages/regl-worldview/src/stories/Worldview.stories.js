@@ -8,7 +8,7 @@ import { withKnobs } from "@storybook/addon-knobs";
 import { storiesOf } from "@storybook/react";
 import polygonGenerator from "polygon-generator";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import Container from "./Container";
 import { p } from "./util";

@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import { withScreenshot } from "storybook-chrome-screenshot";
+import { withScreenshot } from "storycap";
 
 import Points from "../../commands/Points";
 import type { PointType } from "../../types";

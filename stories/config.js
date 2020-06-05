@@ -25,7 +25,6 @@ global.GIT_INFO = {};
 installChartjs();
 
 addDecorator((storyFn) => {
-  // TODO: [EP-26051] This can be removed when modals remove themselves
   document.querySelectorAll("[data-modalcontainer]").forEach((el) => el.remove()); // Remove leftover modals
   return React.createElement(storyFn);
 });

@@ -151,6 +151,7 @@ const fixture = {
   activeData: {
     startTime: { sec: 0, nsec: 202050 },
     endTime: { sec: 24, nsec: 999997069 },
+    currentTime: { sec: 0, nsec: 750000000 },
     isPlaying: false,
     messageDefinitionsByTopic: { "/preloaded_topic": float64StampedDefinition },
     speed: 0.2,

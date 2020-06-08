@@ -185,23 +185,21 @@ object-assign
 
 /*! ./../../../../../node_modules/buffer/index.js */
 
-/*! ./../../../../../node_modules/node-libs-browser/node_modules/process/browser.js */
-
 /*! ./../../../../../node_modules/webpack/buildin/global.js */
 
-/*! ./../../../../node-libs-browser/node_modules/process/browser.js */
+/*! ./../../../../../node_modules/webpack/node_modules/process/browser.js */
 
 /*! ./../../../../node_modules/webpack/buildin/global.js */
 
 /*! ./../../../../node_modules/webpack/buildin/module.js */
 
-/*! ./../../../webpack/buildin/global.js */
+/*! ./../../../../webpack/node_modules/process/browser.js */
 
-/*! ./../../../webpack/buildin/module.js */
+/*! ./../../buildin/global.js */
 
-/*! ./../node-libs-browser/node_modules/process/browser.js */
+/*! ./../../buildin/module.js */
 
-/*! ./../webpack/buildin/global.js */
+/*! ./../process/browser.js */
 
 /*! ./Alpha */
 
@@ -1997,10 +1995,6 @@ object-assign
   !*** ./node_modules/url/util.js ***!
   \**********************************/
 
-/*!***********************************!*\
-  !*** ./node_modules/util/util.js ***!
-  \***********************************/
-
 /*!*************************************!*\
   !*** ./node_modules/gl-vec3/add.js ***!
   \*************************************/
@@ -2032,6 +2026,10 @@ object-assign
 /*!******************************************!*\
   !*** ./node_modules/gl-vec3/subtract.js ***!
   \******************************************/
+
+/*!*******************************************!*\
+  !*** (webpack)/node_modules/util/util.js ***!
+  \*******************************************/
 
 /*!*******************************************!*\
   !*** ./node_modules/gl-vec3/normalize.js ***!
@@ -2078,6 +2076,10 @@ object-assign
   \*************************************************/
 
 /*!***************************************************!*\
+  !*** (webpack)/node_modules/punycode/punycode.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
   !*** ./node_modules/point-line-distance/index.js ***!
   \***************************************************/
 
@@ -2096,10 +2098,6 @@ object-assign
 /*!*****************************************************!*\
   !*** ./node_modules/quickhull3d/dist/VertexList.js ***!
   \*****************************************************/
-
-/*!******************************************************!*\
-  !*** ./node_modules/util/support/isBufferBrowser.js ***!
-  \******************************************************/
 
 /*!********************************************************!*\
   !*** ./packages/webviz-core/node_modules/raf/index.js ***!
@@ -2200,6 +2198,10 @@ object-assign
 /*!*************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/flatMap.js ***!
   \*************************************************************/
+
+/*!**************************************************************!*\
+  !*** (webpack)/node_modules/util/support/isBufferBrowser.js ***!
+  \**************************************************************/
 
 /*!**************************************************************!*\
   !*** ./node_modules/gl-matrix/lib/gl-matrix.js + 10 modules ***!
@@ -3648,10 +3650,6 @@ object-assign
 /*!*************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/rc-color-picker/lib/Ribbon.js ***!
   \*************************************************************************/
-
-/*!**************************************************************************!*\
-  !*** ./node_modules/node-libs-browser/node_modules/punycode/punycode.js ***!
-  \**************************************************************************/
 
 /*!**************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_baseIsTypedArray.js ***!

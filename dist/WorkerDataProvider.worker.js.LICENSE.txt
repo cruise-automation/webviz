@@ -28,21 +28,19 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ../types */
 
-/*! ./../../../../../../node_modules/node-libs-browser/node_modules/process/browser.js */
-
 /*! ./../../../../../../node_modules/webpack/buildin/global.js */
 
 /*! ./../../../../../../node_modules/webpack/buildin/harmony-module.js */
 
-/*! ./../../../../../node_modules/buffer/index.js */
+/*! ./../../../../../../node_modules/webpack/node_modules/process/browser.js */
 
-/*! ./../../../../../node_modules/node-libs-browser/node_modules/process/browser.js */
+/*! ./../../../../../node_modules/buffer/index.js */
 
 /*! ./../../../../../node_modules/webpack/buildin/global.js */
 
-/*! ./../../../../node_modules/buffer/index.js */
+/*! ./../../../../../node_modules/webpack/node_modules/process/browser.js */
 
-/*! ./../../../../node_modules/node-libs-browser/node_modules/process/browser.js */
+/*! ./../../../../node_modules/buffer/index.js */
 
 /*! ./../../../../node_modules/timers-browserify/main.js */
 
@@ -50,11 +48,11 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./../../../../node_modules/webpack/buildin/module.js */
 
+/*! ./../../../../node_modules/webpack/node_modules/process/browser.js */
+
 /*! ./../../../webpack/buildin/global.js */
 
 /*! ./../../buffer/index.js */
-
-/*! ./../../node-libs-browser/node_modules/process/browser.js */
 
 /*! ./../../node_modules/timers-browserify/main.js */
 
@@ -62,13 +60,15 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./../../webpack/buildin/global.js */
 
-/*! ./../node-libs-browser/node_modules/process/browser.js */
+/*! ./../../webpack/node_modules/process/browser.js */
 
 /*! ./../node_modules/timers-browserify/main.js */
 
 /*! ./../process/browser.js */
 
 /*! ./../webpack/buildin/global.js */
+
+/*! ./../webpack/node_modules/process/browser.js */
 
 /*! ./BWT */
 
@@ -183,8 +183,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js (<- Module uses injected variables (module)) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/hub/esm/scope.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/index.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/util/sendNotification.js (referenced with cjs require)) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/severity.js because of ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js */
 
@@ -496,6 +494,10 @@ PERFORMANCE OF THIS SOFTWARE.
   \**************************************/
 
 /*!***************************************!*\
+  !*** ./node_modules/events/events.js ***!
+  \***************************************/
+
+/*!***************************************!*\
   !*** ./node_modules/heap/lib/heap.js ***!
   \***************************************/
 
@@ -536,10 +538,6 @@ PERFORMANCE OF THIS SOFTWARE.
   \***********************************************/
 
 /*!***********************************************!*\
-  !*** ./node_modules/path-browserify/index.js ***!
-  \***********************************************/
-
-/*!***********************************************!*\
   !*** ./packages/webviz-core/src/util/bags.js ***!
   \***********************************************/
 
@@ -554,6 +552,10 @@ PERFORMANCE OF THIS SOFTWARE.
 /*!************************************************!*\
   !*** ./node_modules/util-deprecate/browser.js ***!
   \************************************************/
+
+/*!*************************************************!*\
+  !*** (webpack)/node_modules/process/browser.js ***!
+  \*************************************************/
 
 /*!*************************************************!*\
   !*** ./node_modules/stream-browserify/index.js ***!
@@ -604,16 +606,16 @@ PERFORMANCE OF THIS SOFTWARE.
   \*****************************************************/
 
 /*!******************************************************!*\
-  !*** ./node_modules/node-libs-browser/mock/empty.js ***!
-  \******************************************************/
-
-/*!******************************************************!*\
   !*** ./packages/webviz-core/node_modules/uuid/v1.js ***!
   \******************************************************/
 
 /*!******************************************************!*\
   !*** ./packages/webviz-core/node_modules/uuid/v4.js ***!
   \******************************************************/
+
+/*!*******************************************************!*\
+  !*** (webpack)/node_modules/path-browserify/index.js ***!
+  \*******************************************************/
 
 /*!********************************************************!*\
   !*** ./node_modules/readable-stream/duplex-browser.js ***!
@@ -690,6 +692,10 @@ PERFORMANCE OF THIS SOFTWARE.
 /*!*************************************************************!*\
   !*** ./packages/webviz-core/src/util/indexeddb/DbWriter.js ***!
   \*************************************************************/
+
+/*!**************************************************************!*\
+  !*** (webpack)/node_modules/node-libs-browser/mock/empty.js ***!
+  \**************************************************************/
 
 /*!**************************************************************!*\
   !*** ./node_modules/readable-stream/lib/_stream_readable.js ***!
@@ -812,10 +818,6 @@ PERFORMANCE OF THIS SOFTWARE.
   \*********************************************************************/
 
 /*!**********************************************************************!*\
-  !*** ./node_modules/node-libs-browser/node_modules/events/events.js ***!
-  \**********************************************************************/
-
-/*!**********************************************************************!*\
   !*** ./node_modules/readable-stream/lib/internal/streams/destroy.js ***!
   \**********************************************************************/
 
@@ -842,10 +844,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*!***********************************************************************!*\
   !*** ./packages/webviz-core/src/dataProviders/MeasureDataProvider.js ***!
   \***********************************************************************/
-
-/*!************************************************************************!*\
-  !*** ./node_modules/node-libs-browser/node_modules/process/browser.js ***!
-  \************************************************************************/
 
 /*!*************************************************************************!*\
   !*** ./node_modules/readable-stream/lib/internal/streams/BufferList.js ***!
@@ -904,7 +902,7 @@ PERFORMANCE OF THIS SOFTWARE.
   \***********************************************************************************/
 
 /*!*************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 36 modules ***!
+  !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 35 modules ***!
   \*************************************************************************************/
 
 /*!************************************************************************************************!*\

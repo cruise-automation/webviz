@@ -166,13 +166,13 @@ and limitations under the License.
 
 /*! ./../../../../webpack/buildin/global.js */
 
-/*! ./../../../node_modules/node-libs-browser/node_modules/process/browser.js */
+/*! ./../../../node_modules/webpack/node_modules/process/browser.js */
 
 /*! ./../../buffer/index.js */
 
-/*! ./../../node-libs-browser/node_modules/process/browser.js */
-
 /*! ./../../webpack/buildin/module.js */
+
+/*! ./../../webpack/node_modules/process/browser.js */
 
 /*! ./../webpack/buildin/global.js */
 
@@ -2029,6 +2029,10 @@ and limitations under the License.
   \************************************************/
 
 /*!*************************************************!*\
+  !*** (webpack)/node_modules/process/browser.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
   !*** ./docs/src/jsx/utils/icons/CodeSandbox.js ***!
   \*************************************************/
 
@@ -3503,10 +3507,6 @@ and limitations under the License.
 /*!***********************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/normalize-wheel/index.js ***!
   \***********************************************************************/
-
-/*!************************************************************************!*\
-  !*** ./node_modules/node-libs-browser/node_modules/process/browser.js ***!
-  \************************************************************************/
 
 /*!************************************************************************!*\
   !*** ./node_modules/raw-loader!./docs/src/jsx/commands/LinesHitmap.js ***!

@@ -13,11 +13,11 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 
-/*! ./../../../../../../node_modules/node-libs-browser/node_modules/process/browser.js */
-
 /*! ./../../../../../../node_modules/webpack/buildin/global.js */
 
 /*! ./../../../../../../node_modules/webpack/buildin/harmony-module.js */
+
+/*! ./../../../../../../node_modules/webpack/node_modules/process/browser.js */
 
 /*! ./../../../../../node_modules/webpack/buildin/global.js */
 
@@ -76,8 +76,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js (<- Module uses injected variables (module)) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/hub/esm/scope.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/index.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/util/sendNotification.js (referenced with cjs require)) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/severity.js because of ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js */
 
@@ -190,6 +188,10 @@ PERFORMANCE OF THIS SOFTWARE.
 /*!**********************************************!*\
   !*** ./packages/webviz-core/src/util/Rpc.js ***!
   \**********************************************/
+
+/*!*************************************************!*\
+  !*** (webpack)/node_modules/process/browser.js ***!
+  \*************************************************/
 
 /*!*************************************************!*\
   !*** ./packages/webviz-core/src/util/errors.js ***!
@@ -315,10 +317,6 @@ PERFORMANCE OF THIS SOFTWARE.
   !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/string.js ***!
   \***********************************************************************/
 
-/*!************************************************************************!*\
-  !*** ./node_modules/node-libs-browser/node_modules/process/browser.js ***!
-  \************************************************************************/
-
 /*!*************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@sentry/types/esm/severity.js ***!
   \*************************************************************************/
@@ -332,7 +330,7 @@ PERFORMANCE OF THIS SOFTWARE.
   \**********************************************************************************/
 
 /*!*************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 36 modules ***!
+  !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 35 modules ***!
   \*************************************************************************************/
 
 /*!************************************************************************************************************************!*\

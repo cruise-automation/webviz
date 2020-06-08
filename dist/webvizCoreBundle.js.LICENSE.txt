@@ -1249,7 +1249,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/asap/dist/esm/browser/raw.js (<- Module uses injected variables (global)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd-multi-backend/dist/esm/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd-touch-backend/dist/esm/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/index.js */
 
@@ -1295,7 +1295,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd-preview/node_modules/prop-types/index.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndContext.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndProvider.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndContext.js because of ./packages/webviz-core/node_modules/react-dnd-multi-backend/dist/esm/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndProvider.js (<- Module uses injected variables (global)) */
 
@@ -1802,6 +1802,8 @@ and limitations under the License.
 
 /*! sharedworker-loader?name=nodeTransformerWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker */
 
+/*! simple-deep-freeze */
+
 /*! state-toggle */
 
 /*! stream */
@@ -1858,15 +1860,13 @@ and limitations under the License.
 
 /*! webviz-core/migrations */
 
-/*! webviz-core/migrations/activeHelpers/getPanelTypeFromId */
-
-/*! webviz-core/migrations/activeHelpers/incrementVersion */
-
-/*! webviz-core/migrations/activeHelpers/validateVersions */
-
-/*! webviz-core/migrations/activeMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode */
-
 /*! webviz-core/migrations/constants */
+
+/*! webviz-core/migrations/frozenHelpers/getPanelTypeFromId */
+
+/*! webviz-core/migrations/frozenHelpers/incrementVersion */
+
+/*! webviz-core/migrations/frozenHelpers/validateVersions */
 
 /*! webviz-core/migrations/frozenMigrations/2020.05.06.00:00:02.migrateNodePlaygroundNodesToObjects */
 
@@ -1881,6 +1881,10 @@ and limitations under the License.
 /*! webviz-core/migrations/frozenMigrations/2020.06.01.11:34:51.migrate3DPanelPointCloudHexColors */
 
 /*! webviz-core/migrations/frozenMigrations/2020.06.02.11:27:59.addDefaultPlaybackConfig */
+
+/*! webviz-core/migrations/frozenMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode */
+
+/*! webviz-core/migrations/frozenMigrations/2020.06.03.13:56:52.migrate3DPanelTopicSettingsToSettingsByKey */
 
 /*! webviz-core/shared/delay */
 
@@ -4243,6 +4247,10 @@ and limitations under the License.
   \***********************************************************************/
 
 /*!***********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/simple-deep-freeze/index.js ***!
+  \***********************************************************************/
+
+/*!***********************************************************************!*\
   !*** ./packages/webviz-core/src/components/AutoSizingCanvas/index.js ***!
   \***********************************************************************/
 
@@ -4391,11 +4399,11 @@ and limitations under the License.
   \**************************************************************************/
 
 /*!***************************************************************************!*\
-  !*** ./packages/webviz-core/migrations/activeHelpers/incrementVersion.js ***!
+  !*** ./packages/webviz-core/migrations/frozenHelpers/incrementVersion.js ***!
   \***************************************************************************/
 
 /*!***************************************************************************!*\
-  !*** ./packages/webviz-core/migrations/activeHelpers/validateVersions.js ***!
+  !*** ./packages/webviz-core/migrations/frozenHelpers/validateVersions.js ***!
   \***************************************************************************/
 
 /*!***************************************************************************!*\
@@ -4467,7 +4475,7 @@ and limitations under the License.
   \*****************************************************************************/
 
 /*!*****************************************************************************!*\
-  !*** ./packages/webviz-core/migrations/activeHelpers/getPanelTypeFromId.js ***!
+  !*** ./packages/webviz-core/migrations/frozenHelpers/getPanelTypeFromId.js ***!
   \*****************************************************************************/
 
 /*!*****************************************************************************!*\
@@ -5559,7 +5567,7 @@ and limitations under the License.
   \*****************************************************************************************************************/
 
 /*!*****************************************************************************************************************!*\
-  !*** ./packages/webviz-core/migrations/activeMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode.js ***!
+  !*** ./packages/webviz-core/migrations/frozenMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode.js ***!
   \*****************************************************************************************************************/
 
 /*!*****************************************************************************************************************!*\
@@ -5597,6 +5605,10 @@ and limitations under the License.
 /*!**************************************************************************************************************************!*\
   !*** ./node_modules/styled-components/node_modules/@emotion/is-prop-valid/dist/is-prop-valid.browser.esm.js + 1 modules ***!
   \**************************************************************************************************************************/
+
+/*!****************************************************************************************************************************!*\
+  !*** ./packages/webviz-core/migrations/frozenMigrations/2020.06.03.13:56:52.migrate3DPanelTopicSettingsToSettingsByKey.js ***!
+  \****************************************************************************************************************************/
 
 /*!******************************************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-dnd/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js ***!

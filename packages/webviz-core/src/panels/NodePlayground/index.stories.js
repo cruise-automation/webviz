@@ -107,7 +107,11 @@ const utilsSourceCode = `
 `;
 
 storiesOf("<NodePlayground>", module)
-  .addDecorator(withScreenshot({ delay: 1000 }))
+  .addParameters({
+    screenshot: {
+      delay: 1000,
+    },
+  })
   .add("welcome screen", () => {
     return (
       <PanelSetup fixture={fixture}>
@@ -295,8 +299,11 @@ storiesOf("<NodePlayground>", module)
   });
 
 storiesOf("NodePlayground - <BottomBar>", module)
-  .addDecorator(withScreenshot({ delay: 1000 }))
-
+  .addParameters({
+    screenshot: {
+      delay: 1000,
+    },
+  })
   .add("no errors or logs - closed", () => (
     <PanelSetup
       fixture={{
@@ -511,7 +518,11 @@ storiesOf("NodePlayground - <BottomBar>", module)
   ));
 
 storiesOf("<NodePlaygroundSettings>", module)
-  .addDecorator(withScreenshot({ delay: 1000 }))
+  .addParameters({
+    screenshot: {
+      delay: 1000,
+    },
+  })
   .add("enabled vim mode", () => (
     <NodePlaygroundSettings config={{ selectedNodeId: undefined, vimMode: true }} saveConfig={() => {}} />
   ))

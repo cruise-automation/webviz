@@ -40,7 +40,11 @@ const AddMoreButtons = () => (
 );
 
 storiesOf("<NotificationDisplay>", module)
-  .addDecorator(withScreenshot({ delay: 5000 }))
+  .addParameters({
+    screenshot: {
+      delay: 5000,
+    },
+  })
   .add("No errors", () => {
     return <NotificationDisplayWrapper />;
   })

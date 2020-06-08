@@ -138,7 +138,11 @@ function DatalabelClickExample() {
 }
 
 storiesOf("<ChartComponent>", module)
-  .addDecorator(withScreenshot({ delay: 500 }))
+  .addParameters({
+    screenshot: {
+      delay: 500,
+    },
+  })
   .add("default", () => (
     <div style={divStyle}>
       <ChartComponent {...props} />

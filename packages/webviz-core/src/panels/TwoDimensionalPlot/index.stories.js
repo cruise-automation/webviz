@@ -76,7 +76,11 @@ const fixture = {
   },
 };
 storiesOf("<TwoDimensionalPlot>", module)
-  .addDecorator(withScreenshot({ delay: 500 }))
+  .addParameters({
+    screenshot: {
+      delay: 500,
+    },
+  })
   .add("example", () => {
     return (
       <PanelSetup fixture={fixture}>

@@ -30,7 +30,11 @@ function PanelWithData() {
 }
 
 storiesOf("<SourceInfo>", module)
-  .addDecorator(withScreenshot({ delay: 750 }))
+  .addParameters({
+    screenshot: {
+      delay: 750,
+    },
+  })
   .add("default", () => {
     return <PanelWithData />;
   })

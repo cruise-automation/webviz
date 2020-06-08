@@ -16,7 +16,9 @@ import {
 } from "webviz-core/src/components/ExperimentalFeatures.fixture";
 
 storiesOf("<ExperimentalFeatures>", module)
-  .addDecorator(withScreenshot({ viewport: { width: 1000, height: 1300 } }))
+  .addParameters({
+    viewport: { width: 1000, height: 1300 },
+  })
   .add("empty list", () => <ExperimentalFeaturesModal listForStories={{}} settingsForStories={{}} />)
   .add("basic fixture", () => (
     <ExperimentalFeaturesModal

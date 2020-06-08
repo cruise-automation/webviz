@@ -199,7 +199,11 @@ const paths = [
 
 const exampleConfig = { paths, minYValue: "", maxYValue: "", showLegend: true, xAxisVal: "timestamp" };
 storiesOf("<Plot>", module)
-  .addDecorator(withScreenshot({ delay: 1000 }))
+  .addParameters({
+    screenshot: {
+      delay: 1000,
+    },
+  })
   .add("line graph", () => {
     return (
       <PanelSetup fixture={fixture}>

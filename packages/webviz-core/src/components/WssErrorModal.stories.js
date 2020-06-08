@@ -12,9 +12,9 @@ import React from "react";
 import WssErrorModal from "webviz-core/src/components/WssErrorModal";
 
 storiesOf("<WssErrorModal>", module)
-  .addDecorator(
-    withScreenshot({
-      delay: 1000, // Image takes a little longer to load.
-    })
-  )
+  .addParameters({
+    screenshot: {
+      delay: 1000,
+    },
+  })
   .add("standard", () => <WssErrorModal onRequestClose={() => {}} />);

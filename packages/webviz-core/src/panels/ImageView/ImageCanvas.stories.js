@@ -339,7 +339,11 @@ function ShouldCallOnRenderImage({ children }: { children: (() => () => void) =>
 }
 
 storiesOf("<ImageCanvas>", module)
-  .addDecorator(withScreenshot({ delay: 1500 }))
+  .addParameters({
+    screenshot: {
+      delay: 1500,
+    },
+  })
   .add("markers", () => (
     <LoadImageMessage>
       {(imageMessage) => (

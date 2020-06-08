@@ -81,7 +81,11 @@ function overlappingMarkers({
 }
 
 storiesOf("Worldview/GLText", module)
-  .addDecorator(withScreenshot({ delay: 200 }))
+  .addParameters({
+    screenshot: {
+      delay: 200,
+    },
+  })
   .add("resolution - default", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;

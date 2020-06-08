@@ -74,7 +74,11 @@ function Example({ alpha = 0.3, color = "50,150,50,0.3" }: { alpha?: number, col
 }
 
 storiesOf("<3DViz> - PoseMarkers", module)
-  .addDecorator(withScreenshot({ delay: 3000 }))
+  .addParameters({
+    screenshot: {
+      delay: 3000,
+    },
+  })
   .add("alpha_0.3", () => <Example alpha={0.3} />)
   .add("alpha_0.5, color_50,200,50,0.8", () => <Example alpha={0.5} color="50,200,50,0.8" />)
   .add("alpha 0.8", () => <Example alpha={0.8} />)

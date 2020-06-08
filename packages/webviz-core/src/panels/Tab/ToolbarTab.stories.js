@@ -37,7 +37,6 @@ const Container = React.forwardRef(({ children }, ref) => (
 ));
 
 storiesOf("<ToolbarTab>", module)
-  .addDecorator(withScreenshot({ delay: 0 }))
   .add("default", () => (
     <Container>
       <ToolbarTab {...baseProps} />

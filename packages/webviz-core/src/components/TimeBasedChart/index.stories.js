@@ -211,7 +211,11 @@ function RemoveChartExample() {
 }
 
 storiesOf("<TimeBasedChart>", module)
-  .addDecorator(withScreenshot({ delay: 1000 }))
+  .addParameters({
+    screenshot: {
+      delay: 1000,
+    },
+  })
   .add("default", () => {
     return (
       <div style={{ width: "100%", height: "100%", background: "black" }}>

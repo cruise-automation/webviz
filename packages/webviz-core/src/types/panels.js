@@ -64,6 +64,13 @@ export type SaveFullConfigPayload = {
 
 export type SavedProps = { [panelId: string]: PanelConfig };
 
+export type CreateTabPanelPayload = {
+  idToReplace: ?string,
+  layout: MosaicNode,
+  idsToRemove: string[],
+  singleTab: boolean,
+};
+
 export type ImportPanelLayoutPayload = {
   // layout is the object passed to react-mosaic
   layout: ?MosaicNode,

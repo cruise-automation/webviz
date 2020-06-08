@@ -75,7 +75,9 @@ function Story({
 
 storiesOf("<GradientPicker>", module)
   .addParameters({
-    viewport: { width: 585, height: 500 },
+    screenshot: {
+      viewport: { width: 585, height: 500 },
+    },
   })
   .add("basic", () => <Story initialMinColor="255,0,0,1" initialMaxColor="0,0,255,1" />)
   .add("change min color", () => (

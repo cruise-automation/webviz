@@ -10,12 +10,14 @@ import { push } from "connected-react-router";
 
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type {
+  CreateTabPanelPayload,
   ImportPanelLayoutPayload,
   ChangePanelLayoutPayload,
   SaveConfigsPayload,
   SaveFullConfigPayload,
   UserNodes,
   PlaybackConfig,
+  MosaicNode,
 } from "webviz-core/src/types/panels";
 import type { Dispatch, GetState } from "webviz-core/src/types/Store";
 import { LAYOUT_QUERY_KEY } from "webviz-core/src/util/globalConstants";
@@ -25,11 +27,14 @@ const PANELS_ACTION_TYPES = {
   IMPORT_PANEL_LAYOUT: "IMPORT_PANEL_LAYOUT",
   SAVE_PANEL_CONFIGS: "SAVE_PANEL_CONFIGS",
   SAVE_FULL_PANEL_CONFIG: "SAVE_FULL_PANEL_CONFIG",
+  CREATE_TAB_PANEL: "CREATE_TAB_PANEL",
   OVERWRITE_GLOBAL_DATA: "OVERWRITE_GLOBAL_DATA",
   SET_GLOBAL_DATA: "SET_GLOBAL_DATA",
   SET_USER_NODES: "SET_USER_NODES",
   SET_LINKED_GLOBAL_VARIABLES: "SET_LINKED_GLOBAL_VARIABLES",
   SET_PLAYBACK_CONFIG: "SET_PLAYBACK_CONFIG",
+  SPLIT_PANEL: "SPLIT_PANEL",
+  SWAP_PANEL: "SWAP_PANEL",
 };
 
 export type SAVE_PANEL_CONFIGS = {
@@ -39,6 +44,10 @@ export type SAVE_PANEL_CONFIGS = {
 export type SAVE_FULL_PANEL_CONFIG = {
   type: "SAVE_FULL_PANEL_CONFIG",
   payload: SaveFullConfigPayload,
+};
+export type CREATE_TAB_PANEL = {
+  type: "CREATE_TAB_PANEL",
+  payload: CreateTabPanelPayload,
 };
 
 export type Dispatcher<T> = (dispatch: Dispatch, getState: GetState) => T;
@@ -81,6 +90,11 @@ export const saveFullPanelConfig = (payload: SaveFullConfigPayload): Dispatcher<
     payload,
   });
 };
+
+export const createTabPanel = (payload: CreateTabPanelPayload): CREATE_TAB_PANEL => ({
+  type: PANELS_ACTION_TYPES.CREATE_TAB_PANEL,
+  payload,
+});
 
 type IMPORT_PANEL_LAYOUT = {
   type: "IMPORT_PANEL_LAYOUT",
@@ -166,16 +180,52 @@ export const setPlaybackConfig = (payload: $Shape<PlaybackConfig>): SET_PLAYBACK
   payload,
 });
 
+type SplitPanelPayload = {|
+  tabId?: string,
+  id: string,
+  direction: "row" | "column",
+  root: MosaicNode,
+  path: string[],
+  config: { [key: string]: any },
+|};
+
+type SPLIT_PANEL = { type: "SPLIT_PANEL", payload: SplitPanelPayload };
+
+export const splitPanel = (payload: SplitPanelPayload): SPLIT_PANEL => ({
+  type: PANELS_ACTION_TYPES.SPLIT_PANEL,
+  payload,
+});
+
+type SwapPanelPayload = {|
+  tabId?: string,
+  originalId: string,
+  type: string,
+  root: MosaicNode,
+  path: string[],
+  config: { [key: string]: any },
+  relatedConfigs?: { [key: string]: any },
+|};
+
+type SWAP_PANEL = { type: "SWAP_PANEL", payload: SwapPanelPayload };
+
+export const swapPanel = (payload: SwapPanelPayload): SWAP_PANEL => ({
+  type: PANELS_ACTION_TYPES.SWAP_PANEL,
+  payload,
+});
+
 export type PanelsActions =
   | CHANGE_PANEL_LAYOUT
   | IMPORT_PANEL_LAYOUT
   | SAVE_PANEL_CONFIGS
   | SAVE_FULL_PANEL_CONFIG
+  | CREATE_TAB_PANEL
   | OVERWRITE_GLOBAL_DATA
   | SET_GLOBAL_DATA
   | SET_WEBVIZ_NODES
   | SET_LINKED_GLOBAL_VARIABLES
-  | SET_PLAYBACK_CONFIG;
+  | SET_PLAYBACK_CONFIG
+  | SPLIT_PANEL
+  | SWAP_PANEL;
 
 type PanelsActionTypes = $Values<typeof PANELS_ACTION_TYPES>;
 export const panelEditingActions = new Set<PanelsActionTypes>(Object.keys(PANELS_ACTION_TYPES));

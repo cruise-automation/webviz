@@ -24,7 +24,7 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromSec } from "webviz-core/src/util/time";
 
 export type TopicSettingsCollection = {
-  [topic: string]: any,
+  [topicOrNamespaceKey: string]: any,
 };
 
 // builds a syntehtic arrow marker from a geometry_msgs/PoseStamped
@@ -88,7 +88,7 @@ export default class SceneBuilder implements MarkerProvider {
   collectors: { [string]: MessageCollector } = {};
   _clock: Time;
   _playerId: ?string = null;
-  _topicSettings: TopicSettingsCollection = {};
+  _settingsByKey: TopicSettingsCollection = {};
   _onForceUpdate: ?() => void = null;
 
   allNamespaces: Namespace[] = [];
@@ -136,8 +136,8 @@ export default class SceneBuilder implements MarkerProvider {
     this._playerId = playerId;
   }
 
-  setTopicSettings(settings: TopicSettingsCollection) {
-    this._topicSettings = settings;
+  setSettingsByKey(settings: TopicSettingsCollection) {
+    this._settingsByKey = settings;
   }
 
   // set the topics the scene builder should consume from each frame
@@ -312,7 +312,12 @@ export default class SceneBuilder implements MarkerProvider {
 
   _consumeMarker(topic: string, message: Marker): void {
     if (message.ns) {
+      // Consume namespaces even if the message is later discarded
+      // Otherwise, the namespace won't be shown as available.
       this._consumeNamespace(topic, message.ns);
+      if (!this.namespaceIsEnabled(topic, message.ns)) {
+        return;
+      }
     }
 
     // Every marker needs a name property as a unique id. In each topic, the namespace (`ns`) and
@@ -377,7 +382,8 @@ export default class SceneBuilder implements MarkerProvider {
       .ThreeDimensionalViz.getMarkerColor(topic, marker.color);
 
     // allow topic settings to override marker color (see MarkerSettingsEditor.js)
-    const { overrideColor } = this._topicSettings[topic] || {};
+    const { overrideColor } =
+      this._settingsByKey[`t:${topic}`] || this._settingsByKey[`ns:${topic}:${message.ns}`] || {};
     if (overrideColor) {
       marker.color = parseColorSetting(overrideColor);
       marker.colors = [];
@@ -451,7 +457,7 @@ export default class SceneBuilder implements MarkerProvider {
       return;
     }
 
-    const decayTimeInSec = this._topicSettings[topic] && this._topicSettings[topic].decayTime;
+    const decayTimeInSec = this._settingsByKey[`t:${topic}`] && this._settingsByKey[`t:${topic}`].decayTime;
     const mappedMessage = {
       ...message,
       name: `${topic}/${message.type}`,
@@ -599,7 +605,7 @@ export default class SceneBuilder implements MarkerProvider {
         }
         // TODO(bmc): once we support more topic settings
         // flesh this out to be more marker type agnostic
-        const settings = this._topicSettings[topic.name];
+        const settings = this._settingsByKey[`t:${topic.name}`];
         if (settings) {
           marker.settings = settings;
         }
@@ -626,7 +632,7 @@ export default class SceneBuilder implements MarkerProvider {
     marker = { ...marker, interactionData: { topic: topic.name } };
 
     // allow topic settings to override renderable marker command (see MarkerSettingsEditor.js)
-    const { overrideCommand } = this._topicSettings[topic.name] || {};
+    const { overrideCommand } = this._settingsByKey[`t:${topic.name}`] || {};
 
     // prettier-ignore
     switch (marker.type) {

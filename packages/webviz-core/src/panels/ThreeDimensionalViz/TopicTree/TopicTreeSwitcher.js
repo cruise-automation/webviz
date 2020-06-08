@@ -8,7 +8,7 @@
 
 import LayersIcon from "@mdi/svg/svg/layers.svg";
 import PinIcon from "@mdi/svg/svg/pin.svg";
-import React from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
 
 import { type Save3DConfig } from "../index";
@@ -49,7 +49,7 @@ type Props = {|
   pinTopics: boolean,
   renderTopicTree: boolean,
   saveConfig: Save3DConfig,
-  setShowTopicTree: (boolean) => void,
+  setShowTopicTree: (boolean | ((boolean) => boolean)) => void,
   showErrorBadge: boolean,
   showTopicTree: boolean,
 |};
@@ -62,6 +62,7 @@ export default function TopicTreeSwitcher({
   showErrorBadge,
   showTopicTree,
 }: Props) {
+  const onClick = useCallback(() => setShowTopicTree((shown) => !shown), [setShowTopicTree]);
   return (
     <STopicTreeSwitcher>
       <SIconWrapper
@@ -76,7 +77,7 @@ export default function TopicTreeSwitcher({
           active={renderTopicTree}
           fade
           medium
-          onClick={() => setShowTopicTree(!showTopicTree)}>
+          onClick={onClick}>
           <LayersIcon />
         </Icon>
       </SIconWrapper>

@@ -142,7 +142,7 @@ export default function LayoutForTopicGroups({
     showCrosshair,
     autoSyncCameraState,
     topicDisplayMode = TOPIC_DISPLAY_MODES.SHOW_ALL.value,
-    topicSettings,
+    settingsByKey,
     topicGroups,
   },
 }: Props) {
@@ -165,13 +165,13 @@ export default function LayoutForTopicGroups({
       const migratedTopicGroupConfig = migratePanelConfigToTopicGroupConfig({
         topicGroupDisplayName,
         checkedKeys,
-        topicSettings,
+        settingsByKey,
         modifiedNamespaceTopics,
       });
       // Append newly migrated topic group config to existing config
       saveConfig({ topicGroups: (topicGroups || []).concat(migratedTopicGroupConfig) });
     },
-    [checkedKeys, modifiedNamespaceTopics, saveConfig, topicGroups, topicSettings]
+    [checkedKeys, modifiedNamespaceTopics, saveConfig, topicGroups, settingsByKey]
   );
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0); // used for updating DrawPolygon during mouse move
@@ -230,7 +230,7 @@ export default function LayoutForTopicGroups({
       sceneBuilder.setTransforms(transforms, rootTfID);
       sceneBuilder.setFlattenMarkers(!!flattenMarkers);
       sceneBuilder.setSelectedNamespacesByTopic(selectedNamespacesByTopic);
-      sceneBuilder.setTopicSettings(selectedTopicSettingsByTopic);
+      sceneBuilder.setSettingsByKey(selectedTopicSettingsByTopic);
 
       // toggle scene builder topics based on visible topic nodes in the tree
       const topicsByName = topicsByTopicName(topics);
@@ -402,7 +402,7 @@ export default function LayoutForTopicGroups({
             saveConfig({ pinTopics: false });
             return;
           }
-          setShowTopicGroups(!showTopicGroups);
+          setShowTopicGroups((shown) => !shown);
         },
       };
 
@@ -418,7 +418,7 @@ export default function LayoutForTopicGroups({
       };
       return handlers;
     },
-    [pinTopics, saveConfig, searchTextProps, showTopicGroups, toggleCameraMode]
+    [pinTopics, saveConfig, searchTextProps, toggleCameraMode]
   );
 
   const isDrawing = useMemo(

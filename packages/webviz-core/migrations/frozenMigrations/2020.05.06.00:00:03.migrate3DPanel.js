@@ -8,7 +8,7 @@
 import { flatten, cloneDeep, omit, uniq } from "lodash";
 import microMemoize from "micro-memoize";
 
-import getPanelTypeFromId from "webviz-core/migrations/activeHelpers/getPanelTypeFromId";
+import getPanelTypeFromId from "webviz-core/migrations/frozenHelpers/getPanelTypeFromId";
 
 const THREE_DIMENSIONAL_SAVED_PROPS_VERSION = 17;
 

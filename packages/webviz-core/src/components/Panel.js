@@ -37,7 +37,12 @@ import {
   setSelectedPanelIds,
   selectAllPanelIds,
 } from "webviz-core/src/actions/mosaic";
-import { savePanelConfigs, saveFullPanelConfig, changePanelLayout } from "webviz-core/src/actions/panels";
+import {
+  savePanelConfigs,
+  saveFullPanelConfig,
+  changePanelLayout,
+  createTabPanel,
+} from "webviz-core/src/actions/panels";
 import Button from "webviz-core/src/components/Button";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
@@ -50,6 +55,7 @@ import PanelList, { getPanelsByType } from "webviz-core/src/panels/PanelList";
 import type { Topic } from "webviz-core/src/players/types";
 import { type TabPanelConfig } from "webviz-core/src/types/layouts";
 import type {
+  CreateTabPanelPayload,
   EditHistoryOptions,
   SaveConfigsPayload,
   SaveFullConfigPayload,
@@ -59,12 +65,10 @@ import type {
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 import {
-  createTabsOutput,
   getAllPanelIds,
   getPanelIdForType,
   getPanelTypeFromId,
   getParentTabPanelByPanelId,
-  groupPanelsOutput,
   isTabPanel,
   updateTabPanelLayout,
 } from "webviz-core/src/util/layout";
@@ -79,6 +83,7 @@ type ActionProps = {|
   removeSelectedPanelId: (panelId: string) => void,
   setSelectedPanelIds: (panelIds: string[]) => void,
   selectAllPanelIds: () => void,
+  createTabPanel: (CreateTabPanelPayload) => void,
 |};
 interface PanelStatics<Config> {
   panelType: string;
@@ -136,6 +141,7 @@ export default function Panel<Config: PanelConfig>(
             removeSelectedPanelId,
             setSelectedPanelIds,
             selectAllPanelIds,
+            createTabPanel,
           },
           dispatch
         ),
@@ -271,39 +277,28 @@ export default function Panel<Config: PanelConfig>(
       [childId, fullScreen, quickActionsKeyPressed, selectPanel, shiftKeyPressed]
     );
 
-    const createTabPanel = useCallback(
-      (tabPanelId, changePanelPayload, saveConfigsPayload) => {
-        actions.changePanelLayout(changePanelPayload);
-        actions.savePanelConfigs(saveConfigsPayload);
-        actions.setSelectedPanelIds([tabPanelId]);
-      },
-      [actions]
-    );
-
     const groupPanels = useCallback(
       () => {
-        const { tabPanelId, changePanelPayload, saveConfigsPayload } = groupPanelsOutput(
-          childId,
+        actions.createTabPanel({
+          idToReplace: childId,
           layout,
-          selectedPanelIds,
-          savedProps
-        );
-        createTabPanel(tabPanelId, changePanelPayload, saveConfigsPayload);
+          idsToRemove: selectedPanelIds,
+          singleTab: true,
+        });
       },
-      [childId, layout, selectedPanelIds, savedProps, createTabPanel]
+      [actions, childId, layout, selectedPanelIds]
     );
 
     const createTabs = useCallback(
       () => {
-        const { tabPanelId, changePanelPayload, saveConfigsPayload } = createTabsOutput(
-          childId,
+        actions.createTabPanel({
+          idToReplace: childId,
           layout,
-          selectedPanelIds,
-          savedProps
-        );
-        createTabPanel(tabPanelId, changePanelPayload, saveConfigsPayload);
+          idsToRemove: selectedPanelIds,
+          singleTab: false,
+        });
       },
-      [childId, layout, selectedPanelIds, savedProps, createTabPanel]
+      [actions, childId, layout, selectedPanelIds]
     );
 
     const { closePanel, splitPanel } = useMemo(

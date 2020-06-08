@@ -194,7 +194,7 @@ export function loadWebviz(hooksToSet) {
       throw new Error("missing #root element");
     }
 
-    waitForFonts(() => {
+    waitForFonts().then(() => {
       ReactDOM.render(<hooks.Root history={history} />, rootEl);
     });
   }

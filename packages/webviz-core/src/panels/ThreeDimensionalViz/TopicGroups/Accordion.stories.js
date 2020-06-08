@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import React from "react";
+import React, { useCallback } from "react";
 
 import Accordion from "./Accordion";
 
@@ -47,6 +47,7 @@ const childrenContent = (
 );
 function ClickedExample() {
   const [active, setActive] = React.useState(false);
+  const onAccordionToggle = useCallback(() => setActive((currVal) => !currVal), []);
   return (
     <div
       ref={() => {
@@ -57,7 +58,7 @@ function ClickedExample() {
       }}>
       <Accordion
         active={active}
-        onToggle={() => setActive(!active)}
+        onToggle={onAccordionToggle}
         renderHeader={({ onToggle }) => (
           <div>
             <button data-test="test-btn" onClick={onToggle}>

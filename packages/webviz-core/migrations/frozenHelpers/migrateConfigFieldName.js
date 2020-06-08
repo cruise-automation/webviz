@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { cloneDeep } from "lodash";
 
-import getPanelTypeFromId from "webviz-core/migrations/activeHelpers/getPanelTypeFromId";
+import getPanelTypeFromId from "webviz-core/migrations/frozenHelpers/getPanelTypeFromId";
 
 const migrateConfigFieldName = (panelType: string, oldField: string, newField: string) => (
   originalPanelsState: any

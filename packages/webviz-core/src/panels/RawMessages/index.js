@@ -131,13 +131,10 @@ function RawMessages(props: Props) {
     [diffEnabled, saveConfig]
   );
 
-  const onToggleExpandAll = useCallback(
-    () => {
-      setExpandedFields(new Set());
-      setExpandAll(!expandAll);
-    },
-    [expandAll]
-  );
+  const onToggleExpandAll = useCallback(() => {
+    setExpandedFields(new Set());
+    setExpandAll((currVal) => !currVal);
+  }, []);
 
   const onLabelClick = useCallback(
     (keypath: string[]) => {

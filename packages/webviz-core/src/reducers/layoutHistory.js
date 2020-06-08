@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { isEqual } from "lodash";
+import simpleDeepFreeze from "simple-deep-freeze";
 
 import type { ActionTypes } from "webviz-core/src/actions";
 import { panelEditingActions } from "webviz-core/src/actions/panels";
@@ -29,11 +30,11 @@ export type LayoutHistory = {|
   lastTimestamp: number,
 |};
 
-export const initialLayoutHistoryState: LayoutHistory = {
+export const initialLayoutHistoryState: LayoutHistory = simpleDeepFreeze({
   undoStates: [],
   redoStates: [],
   lastTimestamp: 0,
-};
+});
 
 // Helper to encode the panels and layout history as a StateHistory object so we can do generic
 // push, undo and redo operations.
@@ -94,15 +95,14 @@ const pushLayoutChange = (
 };
 
 export default function(state: State, action: ActionTypes, oldPanelsState?: PanelsState): State {
-  const newLayoutHistoryState: LayoutHistory = { ...state.layoutHistory };
   switch (action.type) {
     case "UNDO_LAYOUT_CHANGE": {
-      const ret = undoLayoutChange(state.panels, newLayoutHistoryState);
+      const ret = undoLayoutChange(state.panels, state.layoutHistory);
       setStoredLayout(ret.panels);
       return { ...state, ...ret };
     }
     case "REDO_LAYOUT_CHANGE": {
-      const ret = redoLayoutChange(state.panels, newLayoutHistoryState);
+      const ret = redoLayoutChange(state.panels, state.layoutHistory);
       setStoredLayout(ret.panels);
       return { ...state, ...ret };
     }
@@ -110,9 +110,9 @@ export default function(state: State, action: ActionTypes, oldPanelsState?: Pane
       if (panelEditingActions.has(action.type)) {
         return {
           ...state,
-          layoutHistory: pushLayoutChange(oldPanelsState, state.panels, newLayoutHistoryState, action),
+          layoutHistory: pushLayoutChange(oldPanelsState, state.panels, state.layoutHistory, action),
         };
       }
-      return { ...state, layoutHistory: newLayoutHistoryState };
+      return { ...state, layoutHistory: state.layoutHistory };
   }
 }

@@ -18,13 +18,7 @@ import cx from "classnames";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
 import { useContext, useState, useCallback, useMemo } from "react"; // eslint-disable-line import/no-duplicates
 import Dimensions from "react-container-dimensions";
-import {
-  createRemoveUpdate,
-  getPathFromNode,
-  updateTree,
-  MosaicContext,
-  MosaicWindowContext,
-} from "react-mosaic-component";
+import { createRemoveUpdate, updateTree, MosaicContext, MosaicWindowContext } from "react-mosaic-component";
 // $FlowFixMe - typedefs do not recognize the ReactReduxContext import
 import { useDispatch, useSelector, ReactReduxContext } from "react-redux";
 import { bindActionCreators } from "redux";
@@ -32,7 +26,7 @@ import { bindActionCreators } from "redux";
 import HelpButton from "./HelpButton";
 import styles from "./index.module.scss";
 import MosaicDragHandle from "./MosaicDragHandle";
-import { savePanelConfigs, changePanelLayout } from "webviz-core/src/actions/panels";
+import { savePanelConfigs, changePanelLayout, splitPanel, swapPanel } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
@@ -44,14 +38,7 @@ import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import frameless from "webviz-core/src/util/frameless";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
-import {
-  getPanelIdForType,
-  getSaveConfigsPayloadForNewTab,
-  getPanelIdsInsideTabPanels,
-  removePanelFromTabPanel,
-  updateTabPanelLayout,
-  replaceAndRemovePanels,
-} from "webviz-core/src/util/layout";
+import { removePanelFromTabPanel } from "webviz-core/src/util/layout";
 
 type Props = {|
   children?: React.Node,
@@ -71,7 +58,10 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
   const { mosaicWindowActions } = useContext(MosaicWindowContext);
   const savedProps = useSelector(({ panels }) => panels.savedProps);
   const dispatch = useDispatch();
-  const actions = useMemo(() => bindActionCreators({ savePanelConfigs, changePanelLayout }, dispatch), [dispatch]);
+  const actions = useMemo(
+    () => bindActionCreators({ savePanelConfigs, changePanelLayout, splitPanel, swapPanel }, dispatch),
+    [dispatch]
+  );
 
   const getPanelType = useCallback(() => getPanelTypeFromMosaic(mosaicWindowActions, mosaicActions), [
     mosaicActions,
@@ -102,34 +92,14 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
       window.ga("send", "event", "Panel", "Split", type);
 
       const config = savedProps[id];
-      const newId = getPanelIdForType(type);
-
-      if (tabId) {
-        const activeTabLayout = savedProps[tabId].tabs[savedProps[tabId].activeTabIdx].layout;
-        const newTabLayout = updateTree(activeTabLayout, [
-          { path: getPathFromNode(id, activeTabLayout), spec: { $set: { first: id, second: newId, direction } } },
-        ]);
-        const newTabConfig = updateTabPanelLayout(newTabLayout, savedProps[tabId]);
-        actions.savePanelConfigs({ configs: [{ id: tabId, config: newTabConfig }, { id: newId, config }] });
-      } else {
-        actions.changePanelLayout({
-          layout: updateTree(mosaicActions.getRoot(), [
-            { path: mosaicWindowActions.getPath(), spec: { $set: { first: id, second: newId, direction } } },
-          ]),
-          trimSavedProps: type !== TAB_PANEL_TYPE,
-        });
-
-        if (type === TAB_PANEL_TYPE) {
-          const relatedConfigs = getPanelIdsInsideTabPanels([id], savedProps).reduce(
-            (result, panelId) => ({ ...result, [panelId]: savedProps[panelId] }),
-            {}
-          );
-          const { configs } = getSaveConfigsPayloadForNewTab({ id: newId, config, relatedConfigs });
-          actions.savePanelConfigs({ configs });
-        } else {
-          actions.savePanelConfigs({ configs: [{ id: newId, config }] });
-        }
-      }
+      actions.splitPanel({
+        id,
+        tabId,
+        direction,
+        root: mosaicActions.getRoot(),
+        path: mosaicWindowActions.getPath(),
+        config,
+      });
     },
     [actions, getPanelType, mosaicActions, mosaicWindowActions, savedProps, tabId]
   );
@@ -137,30 +107,17 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
   const swap = useCallback(
     (id: ?string) => ({ type, config, relatedConfigs }: PanelSelection) => {
       window.ga("send", "event", "Panel", "Swap", type);
-      const newId = getPanelIdForType(type);
-
-      // For a panel inside a Tab panel, update the Tab panel's tab layouts via savedProps
-      if (tabId && id) {
-        const activeTabLayout = savedProps[tabId].tabs[savedProps[tabId].activeTabIdx].layout;
-        const newTabLayout = replaceAndRemovePanels({ oldId: id, newId }, activeTabLayout);
-
-        const newTabConfig = updateTabPanelLayout(newTabLayout, savedProps[tabId]);
-        actions.savePanelConfigs({ configs: [{ id: tabId, config: newTabConfig }] });
-      } else {
-        actions.changePanelLayout({
-          layout: updateTree(mosaicActions.getRoot(), [{ path: mosaicWindowActions.getPath(), spec: { $set: newId } }]),
-          trimSavedProps: type !== TAB_PANEL_TYPE,
-        });
-      }
-
-      if (config && relatedConfigs) {
-        const { configs } = getSaveConfigsPayloadForNewTab({ id: newId, config, relatedConfigs });
-        actions.savePanelConfigs({ configs });
-      } else {
-        actions.savePanelConfigs({ configs: [{ id: newId, config }] });
-      }
+      actions.swapPanel({
+        tabId,
+        originalId: id,
+        type,
+        root: mosaicActions.getRoot(),
+        path: mosaicWindowActions.getPath(),
+        config,
+        relatedConfigs,
+      });
     },
-    [actions, mosaicActions, mosaicWindowActions, savedProps, tabId]
+    [actions, mosaicActions, mosaicWindowActions, tabId]
   );
 
   const onImportClick = useCallback(

@@ -143,7 +143,7 @@ export default function useTree({
   saveConfig,
   sceneErrorsByTopicKey,
   topicDisplayMode,
-  topicSettings,
+  settingsByKey,
   topicTreeConfig,
   uncategorizedGroupName,
 }: UseTreeInput): UseTreeOutput {
@@ -305,7 +305,9 @@ export default function useTree({
   const derivedCustomSettingsByKey = useMemo(
     (): DerivedCustomSettingsByKey => {
       const result = {};
-      for (const [topicName, settings] of Object.entries(topicSettings)) {
+      for (const [topicOrNamespaceKey, settings] of Object.entries(settingsByKey)) {
+        // Only handle topic case now. The namespace case will be handled in the next PR.
+        const topicName = topicOrNamespaceKey.substr("t:".length);
         const isFeatureTopic = topicName.startsWith(SECOND_SOURCE_PREFIX);
         const columnIndex = isFeatureTopic ? 1 : 0;
         const baseTopicName = isFeatureTopic ? topicName.replace(SECOND_SOURCE_PREFIX, "") : topicName;
@@ -333,7 +335,7 @@ export default function useTree({
       }
       return result;
     },
-    [defaultTopicSettings, topicSettings]
+    [defaultTopicSettings, settingsByKey]
   );
 
   const checkedNamespacesByTopicName = useMemo(

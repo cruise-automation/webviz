@@ -190,7 +190,7 @@ type Props = {|
   sceneErrorsByKey: SceneErrorsByKey,
   setCurrentEditingTopic: SetCurrentEditingTopic,
   setFilterText: (string) => void,
-  setShowTopicTree: (boolean) => void,
+  setShowTopicTree: (boolean | ((boolean) => boolean)) => void,
   shouldExpandAllKeys: boolean,
   showTopicTree: boolean,
   toggleCheckAllAncestors: ToggleNodeByColumn,

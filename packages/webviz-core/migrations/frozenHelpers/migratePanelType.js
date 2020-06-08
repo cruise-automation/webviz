@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { cloneDeep } from "lodash";
 
-import replacePanelLayout from "webviz-core/migrations/activeHelpers/replacePanelLayout";
+import replacePanelLayout from "webviz-core/migrations/frozenHelpers/replacePanelLayout";
 
 function replacePanelSavedProps(savedProps: any, oldPanelType: string, newPanelType: string) {
   for (const panelKey of Object.keys(savedProps)) {

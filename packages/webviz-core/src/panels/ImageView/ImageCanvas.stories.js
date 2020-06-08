@@ -341,7 +341,7 @@ function ShouldCallOnRenderImage({ children }: { children: (() => () => void) =>
 storiesOf("<ImageCanvas>", module)
   .addParameters({
     screenshot: {
-      delay: 1500,
+      delay: 500,
     },
   })
   .add("markers", () => (

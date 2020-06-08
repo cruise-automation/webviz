@@ -48,7 +48,7 @@ export type ThreeDimensionalVizConfig = {
 
   expandedKeys: string[],
   checkedKeys: string[],
-  topicSettings: TopicSettingsCollection,
+  settingsByKey: TopicSettingsCollection,
   autoSyncCameraState?: boolean,
 
   // legacy props

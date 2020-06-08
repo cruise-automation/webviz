@@ -78,7 +78,7 @@ const fixture = {
 storiesOf("<TwoDimensionalPlot>", module)
   .addParameters({
     screenshot: {
-      delay: 500,
+      delay: 2500,
     },
   })
   .add("example", () => {

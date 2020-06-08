@@ -35,7 +35,6 @@ import type {
   Topic,
 } from "webviz-core/src/players/types";
 import { isUserNodeTrusted } from "webviz-core/src/players/UserNodePlayer/nodeSecurity";
-import { ros_lib_dts } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
 import {
   type Diagnostic,
   DiagnosticSeverity,
@@ -82,11 +81,11 @@ export default class UserNodePlayer implements Player {
   _addUserNodeLogs: (nodeId: string, logs: UserNodeLog[]) => void;
   _setNodeTrust: (nodeId: string, trusted: boolean) => void;
   _setRosLib: (rosLib: string) => void;
-  _nodeTransformRpc: Rpc = rpcFromNewSharedWorker(new NodeDataWorker(uuid.v4()));
+  _nodeTransformRpc: ?Rpc = null;
   _userDatatypes: RosDatatypes = {};
   _bagDatatypes: RosDatatypes = {};
-  _rosLib: string = ros_lib_dts;
-  _pendingRosLibGeneration: ?Promise<string> = null;
+  _rosLib: ?string;
+  _pendingResetWorkers: ?Promise<void>;
 
   constructor(player: Player, userNodeActions: UserNodeActions) {
     this._player = player;
@@ -142,9 +141,15 @@ export default class UserNodePlayer implements Player {
   async setUserNodes(userNodes: UserNodes): Promise<void> {
     this._userNodes = userNodes;
 
+    if (!this._lastPlayerStateActiveData) {
+      return;
+    }
+
+    const { topics, datatypes } = this._lastPlayerStateActiveData;
+
     // TODO: Currently the below causes us to reset workers twice, since we are
     // forcing a 'seek' here.
-    return this._resetWorkers().then(() => {
+    return this._resetWorkers(topics, datatypes).then(() => {
       const currentTime = this._lastPlayerStateActiveData && this._lastPlayerStateActiveData.currentTime;
       const isPlaying = this._lastPlayerStateActiveData && this._lastPlayerStateActiveData.isPlaying;
       if (!currentTime || isPlaying) {
@@ -228,6 +233,13 @@ export default class UserNodePlayer implements Player {
     };
   }
 
+  _getTransformWorker(): Rpc {
+    if (!this._nodeTransformRpc) {
+      this._nodeTransformRpc = rpcFromNewSharedWorker(new NodeDataWorker(uuid.v4()));
+    }
+    return this._nodeTransformRpc;
+  }
+
   // We need to reset workers in a variety of circumstances:
   // - When a user node is updated, added or deleted
   // - When we seek (in order to reset state)
@@ -235,11 +247,21 @@ export default class UserNodePlayer implements Player {
   //
   // For the time being, resetWorkers is a catchall for these circumstances. As
   // performance bottlenecks are identified, it will be subject to change.
-  async _resetWorkers() {
+  async _resetWorkers(topics: Topic[], datatypes: RosDatatypes) {
+    // Make sure that we only run this function once at a time, but using this instead of `debouncePromise` so that it
+    // returns a promise.
+    if (this._pendingResetWorkers) {
+      await this._pendingResetWorkers;
+    }
+    const pending = signal();
+    this._pendingResetWorkers = pending;
+
     // This early return is an optimization measure so that the
     // `nodeRegistrations` array is not re-defined, which will invalidate
     // downstream caches. (i.e. `this._getTopics`)
     if (!this._nodeRegistrations.length && !Object.entries(this._userNodes).length) {
+      pending.resolve();
+      this._pendingResetWorkers = null;
       return;
     }
 
@@ -247,12 +269,7 @@ export default class UserNodePlayer implements Player {
       nodeRegistration.terminate();
     }
 
-    // Since the ros lib is only generated when the player changes and user
-    // nodes are updated once the layout is loaded, we want to avoid any race
-    // conitions between these separate async processes.
-    if (this._pendingRosLibGeneration) {
-      await this._pendingRosLibGeneration;
-    }
+    const rosLib = await this._getRosLib(topics, datatypes);
 
     const nodeRegistrations: NodeRegistration[] = [];
     for (const [nodeId, nodeObj] of Object.entries(this._userNodes)) {
@@ -265,13 +282,13 @@ export default class UserNodePlayer implements Player {
         this._setNodeTrust(nodeId, true);
       }
 
-      const { topics = [], datatypes: playerDatatypes = {} } = this._lastPlayerStateActiveData || {};
-      const nodeData = await this._nodeTransformRpc.send("transform", {
+      const transformWorker = this._getTransformWorker();
+      const nodeData = await transformWorker.send("transform", {
         name: node.name,
         sourceCode: node.sourceCode,
-        playerInfo: { topics, playerDatatypes },
+        playerInfo: { topics, playerDatatypes: datatypes },
         priorRegisteredTopics: nodeRegistrations.map(({ output }) => output),
-        rosLib: this._rosLib,
+        rosLib,
         datatypes: this._bagDatatypes,
       });
       const { diagnostics } = nodeData;
@@ -283,15 +300,26 @@ export default class UserNodePlayer implements Player {
     }
 
     this._nodeRegistrations = nodeRegistrations;
+
+    pending.resolve();
+    this._pendingResetWorkers = null;
   }
 
-  async _generateRosLib(topics: Topic[], datatypes: RosDatatypes) {
-    this._pendingRosLibGeneration = this._nodeTransformRpc.send("generateRosLib", {
+  async _getRosLib(topics: Topic[], datatypes: RosDatatypes): Promise<string> {
+    // We only generate the roslib once, because available topics and datatypes should never change. If they do, for
+    // a source or player change, we destroy this player and create a new one.
+    if (this._rosLib) {
+      return this._rosLib;
+    }
+
+    const transformWorker = this._getTransformWorker();
+    const rosLib = await transformWorker.send("generateRosLib", {
       topics,
       datatypes,
     });
-    const newRosLib = await this._pendingRosLibGeneration;
-    this._setRosLib(newRosLib);
+    this._setRosLib(rosLib);
+
+    return rosLib;
   }
 
   setListener(listener: (PlayerState) => Promise<void>) {
@@ -307,17 +335,15 @@ export default class UserNodePlayer implements Player {
           this._lastPlayerStateActiveData &&
           activeData.lastSeekTime !== this._lastPlayerStateActiveData.lastSeekTime
         ) {
-          await this._resetWorkers();
+          await this._resetWorkers(topics, datatypes);
         }
         // If we do not have active player data from a previous call, then our
         // player just spun up, meaning we should re-run our user nodes in case
         // they have inputs that now exist in the current player context.
         if (!this._lastPlayerStateActiveData) {
           this._bagDatatypes = datatypes;
-          // also should only run when user nodes are present
-          this._generateRosLib(topics, datatypes);
           this._lastPlayerStateActiveData = activeData;
-          await this._resetWorkers();
+          await this._resetWorkers(topics, datatypes);
           this.setSubscriptions(this._subscriptions);
           this.requestBackfill();
         }
@@ -379,7 +405,9 @@ export default class UserNodePlayer implements Player {
       nodeRegistration.terminate();
     }
     this._player.close();
-    this._nodeTransformRpc.send("close");
+    if (this._nodeTransformRpc) {
+      this._nodeTransformRpc.send("close");
+    }
   };
 
   setPublishers = (publishers: AdvertisePayload[]) => this._player.setPublishers(publishers);

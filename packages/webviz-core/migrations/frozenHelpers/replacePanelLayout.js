@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { isEmpty } from "lodash";
 
-import getPanelTypeFromId from "webviz-core/migrations/activeHelpers/getPanelTypeFromId";
+import getPanelTypeFromId from "webviz-core/migrations/frozenHelpers/getPanelTypeFromId";
 
 type MosaicDirection = "row" | "column";
 type MosaicNode =

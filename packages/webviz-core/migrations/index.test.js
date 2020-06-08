@@ -121,8 +121,8 @@ describe("migratePanels", () => {
           "name:Topic",
           "name_2:Topic",
         ],
-        topicSettings: {
-          "/bar": {
+        settingsByKey: {
+          "t:/bar": {
             colorMode: {
               colorField: "z",
               maxColor: "255,0,142,1",
@@ -132,7 +132,7 @@ describe("migratePanels", () => {
               maxValue: 6,
             },
           },
-          "/foo": {
+          "t:/foo": {
             colorMode: {
               flatColor: "197,29,29,1",
               mode: "flat",

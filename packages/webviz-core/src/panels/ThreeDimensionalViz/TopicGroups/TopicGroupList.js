@@ -109,7 +109,7 @@ export default function TopicGroupList({
   topicGroups,
 }: Props) {
   const [groupEditingState, setGroupEditingState] = useState<?TopicGroupEditingState>(undefined);
-  const [topicSettingsObjectPath, setTopicSettingsObjectPath] = useState<?string>();
+  const [settingsByKeyObjectPath, setTopicSettingsObjectPath] = useState<?string>();
 
   const {
     onCloseGroupEditModal,
@@ -150,7 +150,7 @@ export default function TopicGroupList({
     <div id="topic-group-listbox" role="listbox" aria-labelledby="topic-group-label">
       <RenderToBodyComponent>
         <>
-          {topicSettingsObjectPath && (
+          {settingsByKeyObjectPath && (
             <Modal
               onRequestClose={onCloseTopicSettingsModal}
               contentStyle={{
@@ -160,7 +160,7 @@ export default function TopicGroupList({
                 flexDirection: "column",
               }}>
               <TopicSettingsEditor
-                objectPath={topicSettingsObjectPath}
+                objectPath={settingsByKeyObjectPath}
                 onTopicGroupsChange={onTopicGroupsChange}
                 sceneCollectorMsgForTopicSetting={sceneCollectorMsgForTopicSetting}
                 topicGroups={topicGroups}

@@ -7,8 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import PlusBoxIcon from "@mdi/svg/svg/plus-box.svg";
-import React, { Component } from "react";
-import { connect } from "react-redux";
+import React, { useState, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import { changePanelLayout, savePanelConfigs } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
@@ -16,69 +16,44 @@ import Icon from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import type { State as ReduxState } from "webviz-core/src/reducers";
-import type { PanelsState } from "webviz-core/src/reducers/panels";
-import type { ChangePanelLayoutPayload, SaveConfigsPayload } from "webviz-core/src/types/panels";
 import { selectPanelOutput } from "webviz-core/src/util/layout";
 
-type OwnProps = {|
+type Props = {|
   defaultIsOpen?: boolean, // just for testing
 |};
 
-type Props = {|
-  ...OwnProps,
-  panels: PanelsState,
-  changePanelLayout: (payload: ChangePanelLayoutPayload) => void,
-  savePanelConfigs: (SaveConfigsPayload) => void,
-|};
+function AppMenu(props: Props) {
+  const [isOpen, setIsOpen] = useState<boolean>(props.defaultIsOpen || false);
+  const onToggle = useCallback(() => setIsOpen((open) => !open), []);
 
-type State = {| isOpen: boolean |};
+  const layout = useSelector((state: ReduxState) => state.panels.layout);
+  const dispatch = useDispatch();
 
-class UnconnectedAppMenu extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { isOpen: props.defaultIsOpen || false };
-  }
+  const onPanelSelect = useCallback(
+    ({ type, config, relatedConfigs }: PanelSelection) => {
+      const { changePanelPayload, saveConfigsPayload } = selectPanelOutput(type, layout, {
+        config,
+        relatedConfigs,
+      });
+      dispatch(changePanelLayout(changePanelPayload));
+      dispatch(savePanelConfigs(saveConfigsPayload));
+      window.ga("send", "event", "Panel", "Select", type);
+    },
+    [dispatch, layout]
+  );
 
-  shouldComponentUpdate(nextProps: Props, nextState: State) {
-    return nextState.isOpen !== this.state.isOpen;
-  }
-
-  _onToggle = () => {
-    const { isOpen } = this.state;
-    this.setState({ isOpen: !isOpen });
-  };
-
-  _onPanelSelect = ({ type, config, relatedConfigs }: PanelSelection) => {
-    const { panels } = this.props;
-    const { changePanelPayload, saveConfigsPayload } = selectPanelOutput(type, panels.layout, {
-      config,
-      relatedConfigs,
-    });
-    this.props.changePanelLayout(changePanelPayload);
-    this.props.savePanelConfigs(saveConfigsPayload);
-    window.ga("send", "event", "Panel", "Select", type);
-  };
-
-  render() {
-    const { isOpen } = this.state;
-    return (
-      <ChildToggle position="below" onToggle={this._onToggle} isOpen={isOpen}>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <Icon small fade active={isOpen} tooltip="Add Panel">
-            <PlusBoxIcon />
-          </Icon>
-        </div>
-        <Menu>
-          <PanelList onPanelSelect={this._onPanelSelect} />
-        </Menu>
-      </ChildToggle>
-    );
-  }
+  return (
+    <ChildToggle position="below" onToggle={onToggle} isOpen={isOpen}>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <Icon small fade active={isOpen} tooltip="Add Panel">
+          <PlusBoxIcon />
+        </Icon>
+      </div>
+      <Menu>
+        <PanelList onPanelSelect={onPanelSelect} />
+      </Menu>
+    </ChildToggle>
+  );
 }
 
-export default connect<Props, OwnProps, _, _, _, _>(
-  (state: ReduxState) => ({
-    panels: state.panels,
-  }),
-  { changePanelLayout, savePanelConfigs }
-)(UnconnectedAppMenu);
+export default AppMenu;

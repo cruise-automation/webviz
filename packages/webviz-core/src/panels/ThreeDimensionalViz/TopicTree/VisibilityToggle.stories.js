@@ -31,12 +31,9 @@ function Example({
   showToggled?: boolean,
 |}) {
   const [checked, setChecked] = useState(!!defaultChecked);
-  const onToggle = useCallback(
-    () => {
-      setChecked(!checked);
-    },
-    [checked]
-  );
+  const onToggle = useCallback(() => {
+    setChecked((currentChecked) => !currentChecked);
+  }, []);
   const renderedRef = useRef(false);
   return (
     <div

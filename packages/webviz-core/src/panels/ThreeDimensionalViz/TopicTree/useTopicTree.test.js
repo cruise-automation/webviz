@@ -38,7 +38,7 @@ const sharedProps = {
   saveConfig: () => {},
   sceneErrorsByTopicKey: {},
   topicDisplayMode: TOPIC_DISPLAY_MODES.SHOW_ALL.value,
-  topicSettings: {},
+  settingsByKey: {},
   topicTreeConfig: TREE_CONFIG,
   uncategorizedGroupName: "(Uncategorized)",
 };
@@ -260,15 +260,15 @@ describe("useTopicTree", () => {
     it("returns derivedCustomSettingsByKey with optional overrideColor field", () => {
       const Test = createTest();
       const root = mount(
-        <Test {...sharedProps} topicSettings={{}} providerTopics={makeTopics(["/bar", "/webviz_source_2/foo"])} />
+        <Test {...sharedProps} settingsByKey={{}} providerTopics={makeTopics(["/bar", "/webviz_source_2/foo"])} />
       );
 
       expect(Test.result.mock.calls[0][0].derivedCustomSettingsByKey).toEqual({});
       root.setProps({
-        topicSettings: {
-          "/bar": { pointSize: 1 },
-          "/foo": { someSetting: 1 },
-          "/bar1": { someSetting1: "some value" },
+        settingsByKey: {
+          "t:/bar": { pointSize: 1 },
+          "t:/foo": { someSetting: 1 },
+          "t:/bar1": { someSetting1: "some value" },
         },
       });
       expect(Test.result.mock.calls[1][0].derivedCustomSettingsByKey).toEqual({
@@ -279,11 +279,11 @@ describe("useTopicTree", () => {
 
       // Convert overrideColor to rgb format if present.
       root.setProps({
-        topicSettings: {
-          "/bar": { pointSize: 1 },
-          "/bar1": { someSetting1: "some value", overrideColor: "123,122,121,1" },
-          "/webviz_source_2/bar1": { someSetting1: "some value2", overrideColor: "123,100,100,1" },
-          "/webviz_source_2/foo": { overrideColor: "100,122,121,1" },
+        settingsByKey: {
+          "t:/bar": { pointSize: 1 },
+          "t:/bar1": { someSetting1: "some value", overrideColor: "123,122,121,1" },
+          "t:/webviz_source_2/bar1": { someSetting1: "some value2", overrideColor: "123,100,100,1" },
+          "t:/webviz_source_2/foo": { overrideColor: "100,122,121,1" },
         },
       });
       expect(Test.result.mock.calls[2][0].derivedCustomSettingsByKey).toEqual({
@@ -304,13 +304,13 @@ describe("useTopicTree", () => {
             "/webviz_source_2/foo": { someSetting: 1 },
             "/foo1": { pointSize: 2 },
           }}
-          topicSettings={{
-            "/bar": { pointSize: 1 },
-            "/webviz_source_2/bar": { pointSize: 1 },
-            "/foo": { someSetting: 1, overrideColor: "255,1,1,0.9" },
-            "/webviz_source_2/foo": { someSetting: 1 },
-            "/foo1": { pointSize: 1 },
-            "/webviz_source_2/foo1": { pointSize: 1 },
+          settingsByKey={{
+            "t:/bar": { pointSize: 1 },
+            "t:/webviz_source_2/bar": { pointSize: 1 },
+            "t:/foo": { someSetting: 1, overrideColor: "255,1,1,0.9" },
+            "t:/webviz_source_2/foo": { someSetting: 1 },
+            "t:/foo1": { pointSize: 1 },
+            "t:/webviz_source_2/foo1": { pointSize: 1 },
           }}
         />
       );

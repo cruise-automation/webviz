@@ -16,12 +16,14 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 
+const MAX_ALLOWABLE_RENDER_COUNT = 10;
+
 // Little dummy panel that just shows the number of renders that happen when not subscribing
 // to anything. Useful for debugging performance issues.
 let panelRenderCount = 0;
 let messageHistoryRenderCount = 0;
-let useMessageReducerRenderCount = 0;
 let messagePipelineRenderCount = 0;
+let useMessageReducerRenderCount = 0;
 
 window.getNumberOfRendersCountsForTests = function() {
   return {
@@ -32,13 +34,16 @@ window.getNumberOfRendersCountsForTests = function() {
   };
 };
 
+const getRenderCountMessage = (renderCount) =>
+  renderCount <= MAX_ALLOWABLE_RENDER_COUNT ? "✅ Ok!" : `🆇 Too many renders = ${renderCount}`;
+
 function HooksComponent() {
   PanelAPI.useMessageReducer({
     topics: [],
     restore: React.useCallback(() => null, []),
     addMessage: React.useCallback(() => null, []),
   });
-  return `useMessageReducerRenderCount: ${++useMessageReducerRenderCount}`;
+  return `useMessageReducerRenderCount: ${getRenderCountMessage(useMessageReducerRenderCount++)}`;
 }
 
 function MessagePipelineRendersComponent() {
@@ -57,8 +62,8 @@ function NumberOfRenders(): React.Node {
         <MessageHistoryDEPRECATED paths={[]}>
           {() => (
             <>
-              panelRenderCount: {panelRenderCount} <br />
-              messageHistoryRenderCount: {++messageHistoryRenderCount}
+              panelRenderCount: {getRenderCountMessage(panelRenderCount)} <br />
+              messageHistoryRenderCount: {getRenderCountMessage(++messageHistoryRenderCount)}
             </>
           )}
         </MessageHistoryDEPRECATED>

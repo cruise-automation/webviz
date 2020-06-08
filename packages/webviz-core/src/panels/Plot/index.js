@@ -182,7 +182,7 @@ function Plot(props: Props) {
   const { startTime } = useDataSourceInfo();
   // Don't filter out disabled paths when passing into getDatasetsAndTooltips, because we still want
   // easy access to the history when turning the disabled paths back on.
-  const { datasets, tooltips } = getDatasetsAndTooltips(
+  const { datasets, tooltips, pathsWithMismatchedDataLengths } = getDatasetsAndTooltips(
     yAxisPaths,
     { ...streamedItemsByPath, ...blockItemsByPath },
     startTime || { sec: 0, nsec: 0 },
@@ -232,6 +232,7 @@ function Plot(props: Props) {
         showLegend={showLegend}
         xAxisVal={xAxisVal}
         xAxisPath={xAxisPath}
+        pathsWithMismatchedDataLengths={pathsWithMismatchedDataLengths}
       />
     </Flex>
   );

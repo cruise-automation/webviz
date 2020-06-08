@@ -140,7 +140,7 @@ function DatalabelClickExample() {
 storiesOf("<ChartComponent>", module)
   .addParameters({
     screenshot: {
-      delay: 500,
+      delay: 1500,
     },
   })
   .add("default", () => (

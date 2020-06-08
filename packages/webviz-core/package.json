@@ -73,6 +73,7 @@
     "scroll-into-view-if-needed": "2.2.24",
     "shallowequal": "1.1.0",
     "sharedworker-loader": "2.1.1",
+    "simple-deep-freeze": "0.0.2",
     "string-hash": "1.1.3",
     "text-width": "1.2.0",
     "tinycolor2": "1.4.1",

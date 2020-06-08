@@ -8,29 +8,26 @@
 
 import {
   getPanelTypeFromId,
-  getSaveConfigsPayloadForNewTab,
+  getSaveConfigsPayloadForAddedPanel,
   removePanelFromTabPanel,
   getPanelIdsInsideTabPanels,
   getTreeFromMovePanel,
   addPanelToTab,
   replaceAndRemovePanels,
   updateTabPanelLayout,
-  groupPanelsOutput,
-  createTabsOutput,
   selectPanelOutput,
   onNewPanelDrop,
   validateTabPanelConfig,
-  isTabPanel,
 } from "./layout";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 
 describe("layout", () => {
-  describe("getSaveConfigsPayloadForNewTab", () => {
+  describe("getSaveConfigsPayloadForAddedPanel", () => {
     it("properly map template panel IDs to new IDs when adding a Tab panel", () => {
       const tabConfig = { title: "First tab", layout: { first: "Plot!1", second: "Plot!2" } };
       const firstPlotConfig = { paths: ["/abc"] };
       const secondPlotConfig = { paths: ["/def"] };
-      const configsSaved = getSaveConfigsPayloadForNewTab({
+      const configsSaved = getSaveConfigsPayloadForAddedPanel({
         id: "Tab!abc",
         config: { tabs: [tabConfig] },
         relatedConfigs: { "Plot!1": firstPlotConfig, "Plot!2": secondPlotConfig },
@@ -59,7 +56,7 @@ describe("layout", () => {
         },
         relatedConfigs: {},
       };
-      const { configs } = getSaveConfigsPayloadForNewTab(inputConfig);
+      const { configs } = getSaveConfigsPayloadForAddedPanel(inputConfig);
       expect(inputConfig.config.tabs.length).toEqual(configs[0].config.tabs.length);
 
       const inputLayout = inputConfig.config.tabs[0].layout;
@@ -73,7 +70,16 @@ describe("layout", () => {
         id: "Tab!abc",
         config: { tabs: [{ title: "First tab", layout: null }] },
       };
-      const { configs } = getSaveConfigsPayloadForNewTab({ ...originalConfig, relatedConfigs: {} });
+      const { configs } = getSaveConfigsPayloadForAddedPanel({ ...originalConfig, relatedConfigs: {} });
+      expect(originalConfig).toEqual(configs[0]);
+    });
+    it("returns config when there are no related configs", () => {
+      const originalConfig = {
+        id: "Tab!abc",
+        config: { tabs: [{ title: "First tab", layout: null }] },
+      };
+      const { configs } = getSaveConfigsPayloadForAddedPanel({ ...originalConfig, relatedConfigs: undefined });
+      expect(configs.length).toEqual(1);
       expect(originalConfig).toEqual(configs[0]);
     });
   });
@@ -291,7 +297,7 @@ describe("layout", () => {
     it("will replace multiple panel ids with new panel id", () => {
       expect(
         replaceAndRemovePanels(
-          { oldId: "OldId!y", newId: "NewId!z", idsToRemove: ["RemoveMe!a", "RemoveMe!b"] },
+          { originalId: "OldId!y", newId: "NewId!z", idsToRemove: ["RemoveMe!a", "RemoveMe!b"] },
           {
             direction: "row",
             first: { direction: "row", first: "Dummy!abc", second: "RemoveMe!b" },
@@ -312,7 +318,7 @@ describe("layout", () => {
     it("will replace whole layout with new panel id if all panels are removed", () => {
       expect(
         replaceAndRemovePanels(
-          { oldId: "OldId!y", newId: "NewId!z", idsToRemove: ["RemoveMe!a", "RemoveMe!b"] },
+          { originalId: "OldId!y", newId: "NewId!z", idsToRemove: ["RemoveMe!a", "RemoveMe!b"] },
           {
             direction: "row",
             first: "RemoveMe!b",
@@ -328,7 +334,7 @@ describe("layout", () => {
     it("will just remove specified panels if no panel is specified to be replaced", () => {
       expect(
         replaceAndRemovePanels(
-          { oldId: "OldId!y", idsToRemove: ["RemoveMe!a", "RemoveMe!b"] },
+          { originalId: "OldId!y", idsToRemove: ["RemoveMe!a", "RemoveMe!b"] },
           {
             direction: "row",
             first: "RemoveMe!b",
@@ -392,7 +398,7 @@ describe("layout", () => {
     it("will return null if all panels are replaced", () => {
       expect(
         replaceAndRemovePanels(
-          { oldId: "OldId!y", idsToRemove: ["Remove!a", "Remove!b"] },
+          { originalId: "OldId!y", idsToRemove: ["Remove!a", "Remove!b"] },
           {
             direction: "row",
             first: "Remove!a",
@@ -434,219 +440,6 @@ describe("layout", () => {
         activeTabIdx: 0,
         tabs: [{ layout: "RosOut!abc", title: "1" }],
       });
-    });
-  });
-
-  describe("groupPanelsOutput", () => {
-    it("groups all panels in layout", () => {
-      const { tabPanelId, changePanelPayload, saveConfigsPayload } = groupPanelsOutput(
-        "ImageViewPanel!1nlmn1h",
-        { direction: "row", first: "ImageViewPanel!1nlmn1h", second: "3D Panel!2s67wfv" },
-        ["ImageViewPanel!1nlmn1h", "3D Panel!2s67wfv"],
-        {}
-      );
-
-      expect(isTabPanel(tabPanelId)).toEqual(true);
-      expect(
-        getPanelTypeFromId(typeof changePanelPayload.layout === "string" ? changePanelPayload.layout : "")
-      ).toEqual(TAB_PANEL_TYPE);
-      expect(saveConfigsPayload.configs.length).toEqual(1);
-      expect(getPanelTypeFromId(saveConfigsPayload.configs[0].id)).toEqual(TAB_PANEL_TYPE);
-      expect(saveConfigsPayload.configs[0].config).toEqual({
-        tabs: [
-          {
-            title: "1",
-            layout: { direction: "row", first: "ImageViewPanel!1nlmn1h", second: "3D Panel!2s67wfv" },
-          },
-        ],
-        activeTabIdx: 0,
-      });
-    });
-
-    it("groups some panels in layout", () => {
-      const { tabPanelId, changePanelPayload, saveConfigsPayload } = groupPanelsOutput(
-        "ImageViewPanel!1nlmn1h",
-        {
-          direction: "row",
-          first: "ImageViewPanel!1nlmn1h",
-          second: { direction: "column", first: "RosOut!abc", second: "3D Panel!2s67wfv" },
-        },
-        ["ImageViewPanel!1nlmn1h", "3D Panel!2s67wfv"],
-        {}
-      );
-
-      expect(isTabPanel(tabPanelId)).toEqual(true);
-      expect(
-        getPanelTypeFromId(
-          changePanelPayload.layout && typeof changePanelPayload.layout.first === "string"
-            ? changePanelPayload.layout.first
-            : ""
-        )
-      ).toEqual(TAB_PANEL_TYPE);
-      expect(
-        changePanelPayload.layout && typeof changePanelPayload.layout.second === "string"
-          ? changePanelPayload.layout.second
-          : ""
-      ).toEqual("RosOut!abc");
-      expect(saveConfigsPayload.configs.length).toEqual(1);
-      expect(getPanelTypeFromId(saveConfigsPayload.configs[0].id)).toEqual(TAB_PANEL_TYPE);
-      expect(saveConfigsPayload.configs[0].config).toEqual({
-        tabs: [
-          {
-            title: "1",
-            layout: { direction: "row", first: "ImageViewPanel!1nlmn1h", second: "3D Panel!2s67wfv" },
-          },
-        ],
-        activeTabIdx: 0,
-      });
-    });
-
-    it("groups panels inside tab panels", () => {
-      // Setup: A Tab panel with a single tab containing layout with two plots
-      const { tabPanelId, changePanelPayload, saveConfigsPayload } = groupPanelsOutput(
-        "Plot!A",
-        "Tab!A",
-        ["Plot!A", "Plot!B"],
-        {
-          "Tab!A": {
-            activeTabIdx: 0,
-            tabs: [{ title: "Tab A", layout: { direction: "row", first: "Plot!A", second: "Plot!B" } }],
-          },
-        }
-      );
-      expect(isTabPanel(tabPanelId)).toEqual(true);
-      expect(changePanelPayload.layout).toEqual("Tab!A");
-      expect(saveConfigsPayload.configs).toEqual([
-        {
-          id: tabPanelId,
-          config: {
-            activeTabIdx: 0,
-            tabs: [
-              {
-                title: "1",
-                layout: { direction: "row", first: "Plot!A", second: "Plot!B" },
-              },
-            ],
-          },
-        },
-        {
-          id: "Tab!A",
-          config: {
-            activeTabIdx: 0,
-            tabs: [
-              {
-                title: "Tab A",
-                layout: tabPanelId,
-              },
-            ],
-          },
-        },
-      ]);
-    });
-  });
-
-  describe("createTabsOutput", () => {
-    it("creates tabs for all panels in layout", () => {
-      const output = createTabsOutput(
-        "ImageViewPanel!1nlmn1h",
-        { direction: "row", first: "ImageViewPanel!1nlmn1h", second: "3D Panel!2s67wfv" },
-        ["ImageViewPanel!1nlmn1h", "3D Panel!2s67wfv"],
-        {}
-      );
-      expect(getPanelTypeFromId(output.tabPanelId)).toEqual(TAB_PANEL_TYPE);
-      expect(
-        getPanelTypeFromId(typeof output.changePanelPayload.layout === "string" ? output.changePanelPayload.layout : "")
-      ).toEqual(TAB_PANEL_TYPE);
-      expect(output.saveConfigsPayload.configs.length).toEqual(1);
-      expect(getPanelTypeFromId(output.saveConfigsPayload.configs[0].id)).toEqual(TAB_PANEL_TYPE);
-      expect(output.saveConfigsPayload.configs[0].config).toEqual({
-        tabs: [
-          { title: "ImageViewPanel", layout: "ImageViewPanel!1nlmn1h" },
-          { title: "3D Panel", layout: "3D Panel!2s67wfv" },
-        ],
-        activeTabIdx: 0,
-      });
-    });
-    it("creates tabs for some panels in layout", () => {
-      const { tabPanelId, changePanelPayload, saveConfigsPayload } = createTabsOutput(
-        "ImageViewPanel!1nlmn1h",
-        {
-          direction: "row",
-          first: "ImageViewPanel!1nlmn1h",
-          second: { direction: "column", first: "RosOut!abc", second: "3D Panel!2s67wfv" },
-        },
-        ["ImageViewPanel!1nlmn1h", "3D Panel!2s67wfv"],
-        {}
-      );
-
-      expect(isTabPanel(tabPanelId)).toEqual(true);
-      expect(
-        getPanelTypeFromId(
-          changePanelPayload.layout && typeof changePanelPayload.layout.first === "string"
-            ? changePanelPayload.layout.first
-            : ""
-        )
-      ).toEqual(TAB_PANEL_TYPE);
-      expect(
-        changePanelPayload.layout && typeof changePanelPayload.layout.second === "string"
-          ? changePanelPayload.layout.second
-          : ""
-      ).toEqual("RosOut!abc");
-      expect(saveConfigsPayload.configs.length).toEqual(1);
-      expect(getPanelTypeFromId(saveConfigsPayload.configs[0].id)).toEqual(TAB_PANEL_TYPE);
-      expect(saveConfigsPayload.configs[0].config).toEqual({
-        tabs: [
-          { title: "ImageViewPanel", layout: "ImageViewPanel!1nlmn1h" },
-          { title: "3D Panel", layout: "3D Panel!2s67wfv" },
-        ],
-        activeTabIdx: 0,
-      });
-    });
-    it("creates tabs inside tab panels", () => {
-      // Setup: A Tab panel with a single tab containing layout with two plots
-      const { tabPanelId, changePanelPayload, saveConfigsPayload } = createTabsOutput(
-        "Plot!A",
-        "Tab!A",
-        ["Plot!A", "Plot!B"],
-        {
-          "Tab!A": {
-            activeTabIdx: 0,
-            tabs: [{ title: "Tab A", layout: { direction: "row", first: "Plot!A", second: "Plot!B" } }],
-          },
-        }
-      );
-      expect(isTabPanel(tabPanelId)).toEqual(true);
-      expect(changePanelPayload.layout).toEqual("Tab!A");
-      expect(saveConfigsPayload.configs).toEqual([
-        {
-          id: tabPanelId,
-          config: {
-            activeTabIdx: 0,
-            tabs: [
-              {
-                title: "Plot",
-                layout: "Plot!A",
-              },
-              {
-                title: "Plot",
-                layout: "Plot!B",
-              },
-            ],
-          },
-        },
-        {
-          id: "Tab!A",
-          config: {
-            activeTabIdx: 0,
-            tabs: [
-              {
-                title: "Tab A",
-                layout: tabPanelId,
-              },
-            ],
-          },
-        },
-      ]);
     });
   });
 

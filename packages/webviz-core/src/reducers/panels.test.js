@@ -9,11 +9,21 @@
 import { createMemoryHistory } from "history";
 import { getLeaves } from "react-mosaic-component";
 
-import { changePanelLayout, savePanelConfigs, importPanelLayout, setUserNodes } from "webviz-core/src/actions/panels";
+import {
+  changePanelLayout,
+  savePanelConfigs,
+  importPanelLayout,
+  createTabPanel,
+  setUserNodes,
+  splitPanel,
+  swapPanel,
+} from "webviz-core/src/actions/panels";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import createRootReducer from "webviz-core/src/reducers";
 import { GLOBAL_STATE_STORAGE_KEY } from "webviz-core/src/reducers/panels";
 import configureStore from "webviz-core/src/store";
+import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
+import { getPanelTypeFromId } from "webviz-core/src/util/layout";
 import Storage from "webviz-core/src/util/Storage";
 
 const getStore = () => {
@@ -242,6 +252,19 @@ describe("state.panels", () => {
     });
   });
 
+  it("resets panels to a valid state when importing an empty layout", () => {
+    const store = getStore();
+    store.dispatch(importPanelLayout({ layout: undefined }));
+    expect(store.getState().panels).toEqual({
+      globalVariables: {},
+      layout: {},
+      linkedGlobalVariables: [],
+      playbackConfig: { messageOrder: "receiveTime", speed: 0.2 },
+      savedProps: {},
+      userNodes: {},
+    });
+  });
+
   it("will set local storage when importing a panel layout, if reducer is not told to skipSettingLocalStorage", () => {
     const store = getStore();
     const storage = new Storage();
@@ -263,6 +286,113 @@ describe("state.panels", () => {
     store.checkState((panels) => {
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.layout).not.toEqual(panels.layout);
+    });
+  });
+
+  describe("creates Tab panels from existing panels correctly", () => {
+    const store = getStore();
+    const regularLayoutPayload = {
+      layout: {
+        first: "Audio!a",
+        second: { first: "RawMessages!a", second: "Audio!c", direction: "column" },
+        direction: "row",
+      },
+      savedProps: { "Audio!a": { foo: "bar" }, "RawMessages!a": { foo: "baz" } },
+    };
+    const basePayload = {
+      idToReplace: "Audio!a",
+      newId: "Tab!a",
+      idsToRemove: ["Audio!a", "RawMessages!a"],
+    };
+    const nestedLayoutPayload = {
+      layout: {
+        first: "Audio!a",
+        second: "Tab!z",
+        direction: "column",
+      },
+      savedProps: {
+        "Audio!a": { foo: "bar" },
+        "Tab!z": {
+          activeTabIdx: 0,
+          tabs: [{ title: "First tab", layout: { first: "Audio!b", second: "RawMessages!a", direction: "row" } }],
+        },
+        "Audio!b": { foo: "baz" },
+        "RawMessages!a": { raw: "messages" },
+      },
+    };
+    const createTabPanelPayload = {
+      ...basePayload,
+      layout: regularLayoutPayload.layout,
+    };
+    const nestedCreateTabPanelPayload = {
+      ...basePayload,
+      layout: nestedLayoutPayload.layout,
+    };
+
+    it("will group selected panels into a Tab panel", () => {
+      store.dispatch(importPanelLayout(regularLayoutPayload, { isFromUrl: true, skipSettingLocalStorage: true }));
+      store.dispatch(createTabPanel({ ...createTabPanelPayload, singleTab: true }));
+
+      store.checkState(({ savedProps, layout }) => {
+        expect(getPanelTypeFromId(layout.first)).toEqual(TAB_PANEL_TYPE);
+        expect(getPanelTypeFromId(layout.second)).toEqual("Audio");
+        expect(savedProps[layout.first]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "1", layout: { direction: "row", first: "Audio!a", second: "RawMessages!a" } }],
+        });
+        expect(savedProps[layout.second]).toEqual(regularLayoutPayload.savedProps[layout.second]);
+      });
+    });
+
+    it("will group selected panels into a Tab panel, even when a selected panel is nested", () => {
+      store.dispatch(importPanelLayout(nestedLayoutPayload, { isFromUrl: true, skipSettingLocalStorage: true }));
+      store.dispatch(createTabPanel({ ...nestedCreateTabPanelPayload, singleTab: true }));
+
+      store.checkState(({ savedProps, layout }) => {
+        expect(getPanelTypeFromId(layout.first)).toEqual(TAB_PANEL_TYPE);
+        expect(getPanelTypeFromId(layout.second)).toEqual(TAB_PANEL_TYPE);
+        expect(savedProps[layout.first]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "1", layout: { direction: "column", first: "Audio!a", second: "RawMessages!a" } }],
+        });
+        expect(savedProps[layout.second]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "First tab", layout: "Audio!b" }],
+        });
+      });
+    });
+
+    it("will create individual tabs for selected panels in a new Tab panel", () => {
+      store.dispatch(importPanelLayout(regularLayoutPayload, { isFromUrl: true, skipSettingLocalStorage: true }));
+      store.dispatch(createTabPanel({ ...createTabPanelPayload, singleTab: false }));
+
+      store.checkState(({ savedProps, layout }) => {
+        expect(getPanelTypeFromId(layout.first)).toEqual(TAB_PANEL_TYPE);
+        expect(getPanelTypeFromId(layout.second)).toEqual("Audio");
+        expect(savedProps[layout.first]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "Audio", layout: "Audio!a" }, { title: "RawMessages", layout: "RawMessages!a" }],
+        });
+        expect(savedProps[layout.second]).toEqual(regularLayoutPayload.savedProps[layout.second]);
+      });
+    });
+
+    it("will create individual tabs for selected panels in a new Tab panel, even when a selected panel is nested", () => {
+      store.dispatch(importPanelLayout(nestedLayoutPayload, { isFromUrl: true, skipSettingLocalStorage: true }));
+      store.dispatch(createTabPanel({ ...nestedCreateTabPanelPayload, singleTab: false }));
+
+      store.checkState(({ layout, savedProps }) => {
+        expect(getPanelTypeFromId(layout.first)).toEqual(TAB_PANEL_TYPE);
+        expect(getPanelTypeFromId(layout.second)).toEqual(TAB_PANEL_TYPE);
+        expect(savedProps[layout.first]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "Audio", layout: "Audio!a" }, { title: "RawMessages", layout: "RawMessages!a" }],
+        });
+        expect(savedProps[layout.second]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "First tab", layout: "Audio!b" }],
+        });
+      });
     });
   });
 
@@ -303,6 +433,155 @@ describe("state.panels", () => {
     store.dispatch(setUserNodes(secondPayload));
     store.checkState((panelState) => {
       expect(panelState.userNodes).toEqual({ ...firstPayload, ...secondPayload });
+    });
+  });
+
+  describe("panel toolbar actions", () => {
+    it("can split panel", () => {
+      const store = getStore();
+      store.dispatch(changePanelLayout({ layout: "Audio!a" }));
+
+      const audioConfig = { foo: "bar" };
+      store.dispatch(savePanelConfigs({ configs: [{ id: "Audio!a", config: audioConfig }] }));
+
+      store.dispatch(splitPanel({ id: "Audio!a", config: audioConfig, direction: "row", path: [], root: "Audio!a" }));
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout.first).toEqual("Audio!a");
+        expect(getPanelTypeFromId(layout.second)).toEqual("Audio");
+        expect(layout.direction).toEqual("row");
+        expect(savedProps["Audio!a"]).toEqual(audioConfig);
+        expect(savedProps[layout.second]).toEqual(audioConfig);
+      });
+    });
+
+    it("can split Tab panel", () => {
+      const store = getStore();
+      store.dispatch(changePanelLayout({ layout: "Tab!a" }));
+
+      const audioConfig = { foo: "bar" };
+      const tabConfig = { activeTabIdx: 0, tabs: [{ title: "A", layout: "Audio!a" }] };
+      store.dispatch(
+        savePanelConfigs({
+          configs: [{ id: "Tab!a", config: tabConfig }, { id: "Audio!a", config: audioConfig }],
+        })
+      );
+
+      store.dispatch(splitPanel({ id: "Tab!a", config: tabConfig, direction: "row", path: [], root: "Tab!a" }));
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout.first).toEqual("Tab!a");
+        expect(getPanelTypeFromId(layout.second)).toEqual("Tab");
+        expect(layout.direction).toEqual("row");
+        expect(savedProps["Tab!a"]).toEqual(tabConfig);
+        expect(getPanelTypeFromId(savedProps[layout.second].tabs[0].layout)).toEqual("Audio");
+        expect(savedProps["Audio!a"]).toEqual(audioConfig);
+      });
+    });
+
+    it("can split panel inside Tab panel", () => {
+      const store = getStore();
+      store.dispatch(changePanelLayout({ layout: "Tab!a" }));
+
+      const audioConfig = { foo: "bar" };
+      const tabConfig = { activeTabIdx: 0, tabs: [{ title: "A", layout: "Audio!a" }] };
+      store.dispatch(
+        savePanelConfigs({
+          configs: [{ id: "Tab!a", config: tabConfig }, { id: "Audio!a", config: audioConfig }],
+        })
+      );
+
+      store.dispatch(
+        splitPanel({ id: "Audio!a", tabId: "Tab!a", config: audioConfig, direction: "row", path: [], root: "Audio!a" })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual("Tab!a");
+        const tabLayout = savedProps["Tab!a"].tabs[0].layout;
+        expect(tabLayout.first).toEqual("Audio!a");
+        expect(getPanelTypeFromId(tabLayout.second)).toEqual("Audio");
+        expect(tabLayout.direction).toEqual("row");
+        expect(savedProps["Audio!a"]).toEqual(audioConfig);
+        expect(savedProps[tabLayout.second]).toEqual(audioConfig);
+      });
+    });
+
+    it("can swap panels", () => {
+      const store = getStore();
+      store.dispatch(changePanelLayout({ layout: "Audio!a" }));
+
+      const audioConfig = { foo: "bar" };
+      const rawMessagesConfig = { foo: "baz" };
+      store.dispatch(savePanelConfigs({ configs: [{ id: "Audio!a", config: audioConfig }] }));
+
+      store.dispatch(
+        swapPanel({
+          originalId: "Audio!a",
+          type: "RawMessages",
+          config: rawMessagesConfig,
+          path: [],
+          root: "Audio!a",
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(getPanelTypeFromId(layout)).toEqual("RawMessages");
+        expect(savedProps["Audio!a"]).toEqual(undefined);
+        expect(savedProps[layout]).toEqual(rawMessagesConfig);
+      });
+    });
+
+    it("can swap panel for a Tab panel", () => {
+      const store = getStore();
+      store.dispatch(changePanelLayout({ layout: "Audio!a" }));
+
+      const audioConfig = { foo: "bar" };
+      const tabConfig = { activeTabIdx: 0, tabs: [{ title: "A", layout: "RawMessages!a" }] };
+      const rawMessagesConfig = { path: "foo" };
+      store.dispatch(savePanelConfigs({ configs: [{ id: "Audio!a", config: audioConfig }] }));
+
+      store.dispatch(
+        swapPanel({
+          originalId: "Audio!a",
+          type: "Tab",
+          config: tabConfig,
+          relatedConfigs: { "RawMessages!a": rawMessagesConfig },
+          path: [],
+          root: "Audio!a",
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(getPanelTypeFromId(layout)).toEqual("Tab");
+        const tabLayout = savedProps[layout].tabs[0].layout;
+        expect(getPanelTypeFromId(tabLayout)).toEqual("RawMessages");
+        expect(savedProps[tabLayout]).toEqual(rawMessagesConfig);
+      });
+    });
+
+    it("can swap panel inside a Tab", () => {
+      const store = getStore();
+      store.dispatch(changePanelLayout({ layout: "Tab!a" }));
+
+      const rawMessagesConfig = { foo: "baz" };
+      const tabConfig = { activeTabIdx: 0, tabs: [{ title: "A", layout: "Audio!a" }] };
+      store.dispatch(
+        savePanelConfigs({
+          configs: [{ id: "Tab!a", config: tabConfig }],
+        })
+      );
+
+      store.dispatch(
+        swapPanel({
+          originalId: "Audio!a",
+          tabId: "Tab!a",
+          type: "RawMessages",
+          config: rawMessagesConfig,
+          path: [],
+          root: "Audio!a",
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual("Tab!a");
+        const tabLayout = savedProps["Tab!a"].tabs[0].layout;
+        expect(getPanelTypeFromId(tabLayout)).toEqual("RawMessages");
+        expect(savedProps[tabLayout]).toEqual(rawMessagesConfig);
+      });
     });
   });
 

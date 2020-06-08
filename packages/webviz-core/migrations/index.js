@@ -7,8 +7,8 @@
 //  You may not use this file except in compliance with the License.
 import { flatMap } from "lodash";
 
-import incrementVersion from "webviz-core/migrations/activeHelpers/incrementVersion";
-import validateVersions from "webviz-core/migrations/activeHelpers/validateVersions";
+import incrementVersion from "webviz-core/migrations/frozenHelpers/incrementVersion";
+import validateVersions from "webviz-core/migrations/frozenHelpers/validateVersions";
 
 const migrationsByVersion = {
   "001": [],
@@ -26,7 +26,9 @@ const migrationsByVersion = {
     require("webviz-core/migrations/frozenMigrations/2020.06.01.11:34:51.migrate3DPanelPointCloudHexColors").default,
   ],
   "005": [
-    require("webviz-core/migrations/activeMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode").default,
+    require("webviz-core/migrations/frozenMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode").default,
+    require("webviz-core/migrations/frozenMigrations/2020.06.03.13:56:52.migrate3DPanelTopicSettingsToSettingsByKey")
+      .default,
   ],
 };
 

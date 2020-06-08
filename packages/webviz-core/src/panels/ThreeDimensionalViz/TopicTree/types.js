@@ -80,7 +80,7 @@ export type UseTreeInput = {|
   saveConfig: Save3DConfig,
   sceneErrorsByTopicKey: SceneErrorsByKey,
   topicDisplayMode: TopicDisplayMode,
-  topicSettings: { [topicName: string]: any },
+  settingsByKey: { [topicOrNamespaceKey: string]: any },
   topicTreeConfig: TopicTreeConfig, // Never changes!
   uncategorizedGroupName: string,
 |};

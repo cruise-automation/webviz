@@ -130,7 +130,7 @@ export function perPanelHooks() {
         cameraState: {},
         modifiedNamespaceTopics: [],
         pinTopics: false,
-        topicSettings: {},
+        settingsByKey: {},
         autoSyncCameraState: false,
       },
       SUPPORTED_MARKER_DATATYPES,

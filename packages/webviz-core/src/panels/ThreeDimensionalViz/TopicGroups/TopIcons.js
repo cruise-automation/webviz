@@ -8,7 +8,7 @@
 
 import LayersIcon from "@mdi/svg/svg/layers.svg";
 import PinIcon from "@mdi/svg/svg/pin.svg";
-import React from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
 
 import { type Save3DConfig } from "../index";
@@ -37,7 +37,7 @@ type Props = {|
   pinTopics: boolean,
   renderTopicGroups: boolean,
   saveConfig: Save3DConfig,
-  setShowTopicGroups: (boolean) => void,
+  setShowTopicGroups: (boolean | ((boolean) => boolean)) => void,
   showTopicGroups: boolean,
 |};
 
@@ -48,6 +48,7 @@ export default function TopIcons({
   setShowTopicGroups,
   showTopicGroups,
 }: Props) {
+  const onClick = useCallback(() => setShowTopicGroups((shown) => !shown), [setShowTopicGroups]);
   return (
     <STopIcons>
       <SIconWrapper
@@ -62,7 +63,7 @@ export default function TopIcons({
           active={renderTopicGroups}
           fade
           medium
-          onClick={() => setShowTopicGroups(!showTopicGroups)}
+          onClick={onClick}
           style={{ color: "white" }}>
           <LayersIcon />
         </Icon>

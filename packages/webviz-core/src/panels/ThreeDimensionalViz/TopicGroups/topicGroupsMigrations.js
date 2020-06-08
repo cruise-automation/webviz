@@ -135,14 +135,14 @@ export function migrateLegacyIds(checkedKeys: string[]): string[] {
 
 type MigrateInput = {|
   topicGroupDisplayName?: string,
-  topicSettings?: ?{ [topicName: string]: any },
+  settingsByKey?: ?{ [topicKey: string]: any },
   checkedKeys?: ?(string[]),
   modifiedNamespaceTopics?: ?(string[]),
 |};
 // Create a new topic group called 'My Topics' and related fields based the old config
 export function migratePanelConfigToTopicGroupConfig({
   topicGroupDisplayName = DEFAULT_IMPORTED_GROUP_NAME,
-  topicSettings,
+  settingsByKey,
   checkedKeys,
   modifiedNamespaceTopics,
 }: MigrateInput): TopicGroupConfig {
@@ -185,9 +185,9 @@ export function migratePanelConfigToTopicGroupConfig({
           visibilityByColumn[columnIndex] = true;
 
           // migrate settings, no need to migrate topic settings for topics that are not selected
-          if (topicSettings && topicSettings[prefixedTopicName]) {
+          if (settingsByKey && settingsByKey[`t:${prefixedTopicName}`]) {
             settingsByColumn = settingsByColumn || [undefined, undefined];
-            settingsByColumn[columnIndex] = topicSettings[prefixedTopicName];
+            settingsByColumn[columnIndex] = settingsByKey[`t:${prefixedTopicName}`];
           }
 
           // migrate topic namespaces, always set the selectedNamespacesByColumn field when the namespaces are modified

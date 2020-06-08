@@ -5,8 +5,8 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import validateVersions from "webviz-core/migrations/activeHelpers/validateVersions";
 import { CURRENT_LAYOUT_VERSION } from "webviz-core/migrations/constants";
+import validateVersions from "webviz-core/migrations/frozenHelpers/validateVersions";
 
 describe("validateVersions", () => {
   it(`returns true if last version matches CURRENT_LAYOUT_VERSION`, () => {

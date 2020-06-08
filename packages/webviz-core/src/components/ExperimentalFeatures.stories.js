@@ -17,7 +17,9 @@ import {
 
 storiesOf("<ExperimentalFeatures>", module)
   .addParameters({
-    viewport: { width: 1000, height: 1300 },
+    screenshot: {
+      viewport: { width: 1000, height: 1300 },
+    },
   })
   .add("empty list", () => <ExperimentalFeaturesModal listForStories={{}} settingsForStories={{}} />)
   .add("basic fixture", () => (

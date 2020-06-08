@@ -111,6 +111,7 @@ export default function CameraInfo({
   const [selectedTab, setSelectedTab] = React.useState(defaultSelectedTab);
   const { updatePanelConfig, saveConfig } = React.useContext(PanelContext) || {};
   const [edit, setEdit] = React.useState<boolean>(false);
+  const onEditToggle = React.useCallback(() => setEdit((currVal) => !currVal), []);
 
   const { target, targetOffset } = cameraState;
   const targetHeading = cameraStateSelectors.targetHeading(cameraState);
@@ -157,7 +158,7 @@ export default function CameraInfo({
             <Button
               disabled={!!isPlaying}
               tooltip={isPlaying ? "Pause player to edit raw camera state object" : "Edit raw camera state object"}
-              onClick={() => setEdit(!edit)}>
+              onClick={onEditToggle}>
               {edit ? "Done" : "Edit"}
             </Button>
             <Button tooltip="Sync camera state across all 3D panels" onClick={syncCameraState}>

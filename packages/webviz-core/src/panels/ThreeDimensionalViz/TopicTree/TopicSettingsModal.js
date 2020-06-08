@@ -95,7 +95,7 @@ type Props = {|
   saveConfig: Save3DConfig,
   sceneBuilderMessage: any,
   setCurrentEditingTopic: (?Topic) => void,
-  topicSettings: { [topic: string]: any },
+  settingsByKey: { [topic: string]: any },
 |};
 
 function TopicSettingsModal({
@@ -105,23 +105,25 @@ function TopicSettingsModal({
   saveConfig,
   sceneBuilderMessage,
   setCurrentEditingTopic,
-  topicSettings,
+  settingsByKey,
 }: Props) {
+  const topicSettingsKey = `t:${topicName}`;
   const onSettingsChange = useCallback(
     (settings: any | ((prevSettings: {}) => {})) => {
       if (typeof settings !== "function" && isEmpty(settings)) {
         // Remove the field if the topic settings are empty to prevent the panelConfig from every growing.
-        saveConfig({ topicSettings: omit(topicSettings, [topicName]) });
+        saveConfig({ settingsByKey: omit(settingsByKey, [topicSettingsKey]) });
         return;
       }
       saveConfig({
-        topicSettings: {
-          ...topicSettings,
-          [topicName]: typeof settings === "function" ? settings(topicSettings[topicName] || {}) : settings,
+        settingsByKey: {
+          ...settingsByKey,
+          [topicSettingsKey]:
+            typeof settings === "function" ? settings(settingsByKey[topicSettingsKey] || {}) : settings,
         },
       });
     },
-    [saveConfig, topicName, topicSettings]
+    [saveConfig, settingsByKey, topicSettingsKey]
   );
 
   const onFieldChange = useCallback(
@@ -141,7 +143,7 @@ function TopicSettingsModal({
       datatype={datatype}
       onFieldChange={onFieldChange}
       onSettingsChange={onSettingsChange}
-      settings={topicSettings[topicName] || {}}
+      settings={settingsByKey[topicSettingsKey] || {}}
       topicName={nonPrefixedTopic}
     />
   );

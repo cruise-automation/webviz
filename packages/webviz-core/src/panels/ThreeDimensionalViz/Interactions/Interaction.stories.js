@@ -210,7 +210,9 @@ function AutoOpenCloseExample({
 
 storiesOf("<Interaction>", module)
   .addParameters({
-    viewport: { width: 1001, height: 1101 },
+    screenshot: {
+      viewport: { width: 1001, height: 1101 },
+    },
   })
   .add("default", () => {
     return (

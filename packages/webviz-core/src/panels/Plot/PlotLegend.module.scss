@@ -127,6 +127,7 @@ $legend-item-height: 20px;
 .itemInput {
   overflow: hidden;
   width: 100%;
+  display: flex;
 }
 
 // <input> is several levels deeper, and there's not too much chance

@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import AlertCircleIcon from "@mdi/svg/svg/alert-circle.svg";
 import MenuIcon from "@mdi/svg/svg/menu.svg";
 import cx from "classnames";
 import { last } from "lodash";
@@ -22,6 +23,7 @@ import {
   isReferenceLinePlotPathType,
 } from "webviz-core/src/panels/Plot/internalTypes";
 import { lineColors } from "webviz-core/src/util/plotColors";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import type { TimestampMethod } from "webviz-core/src/util/time";
 
 type PlotLegendProps = {|
@@ -30,10 +32,11 @@ type PlotLegendProps = {|
   showLegend: boolean,
   xAxisVal: "timestamp" | "index" | "custom",
   xAxisPath?: BasePlotPath,
+  pathsWithMismatchedDataLengths: string[],
 |};
 
 export default function PlotLegend(props: PlotLegendProps) {
-  const { paths, saveConfig, showLegend, xAxisVal, xAxisPath } = props;
+  const { paths, saveConfig, showLegend, xAxisVal, xAxisPath, pathsWithMismatchedDataLengths } = props;
   const lastPath = last(paths);
 
   const onInputChange = useCallback(
@@ -101,8 +104,7 @@ export default function PlotLegend(props: PlotLegendProps) {
           className={cx({
             [styles.itemInput]: true,
             [styles.itemInputDisabled]: !xAxisPath?.enabled,
-          })}
-          style={{ display: "flex" }}>
+          })}>
           {xAxisVal === "custom" ? (
             <MessagePathInput
               path={xAxisPath?.value || "/"}
@@ -125,6 +127,8 @@ export default function PlotLegend(props: PlotLegendProps) {
         if (!isReferenceLinePlotPath && path.value.length > 0) {
           timestampMethod = path.timestampMethod;
         }
+        const hasMismatchedDataLength = pathsWithMismatchedDataLengths.includes(path.value);
+
         return (
           <React.Fragment key={index}>
             <div className={styles.item}>
@@ -158,6 +162,16 @@ export default function PlotLegend(props: PlotLegendProps) {
                   disableAutocomplete={isReferenceLinePlotPath}
                   {...(xAxisVal === "timestamp" ? { timestampMethod } : null)}
                 />
+                {hasMismatchedDataLength && (
+                  <Icon
+                    style={{ color: colors.RED }}
+                    clickable={false}
+                    small
+                    tooltipProps={{ placement: "top" }}
+                    tooltip="Mismatch in the number of elements in x-axis and y-axis messages">
+                    <AlertCircleIcon />
+                  </Icon>
+                )}
               </div>
               <div
                 className={styles.itemRemove}

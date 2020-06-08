@@ -119,7 +119,7 @@ type SharedProps = {|
   onMigrateToTopicGroupConfig: () => void,
   pinTopics: boolean,
   saveConfig: Save3DConfig,
-  setShowTopicGroups: (boolean) => void,
+  setShowTopicGroups: (boolean | ((boolean) => boolean)) => void,
   showTopicGroups: boolean,
   topicGroupsConfig: TopicGroupConfig[],
 |};
@@ -731,7 +731,7 @@ type UnMemoizedTopicGroupsProps = {|
   availableTfs: string[],
   sceneCollectorMsgForTopicSetting: any,
   setSettingsTopicName: (topicName: ?string) => void,
-  setShowTopicGroups: (boolean) => void,
+  setShowTopicGroups: (boolean | ((boolean) => boolean)) => void,
   showTopicGroups: boolean,
 |};
 // Use the wrapper component to handle displayName, namespace and topic processing.

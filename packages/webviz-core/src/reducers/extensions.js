@@ -12,24 +12,23 @@ import type { State } from "webviz-core/src/reducers";
 export type Extensions = { markerProviders: any[], auxiliaryData: any };
 
 export default function(state: State, action: ExtensionsActions): State {
-  const newExtensionsState: Extensions = { ...state.extensions };
   switch (action.type) {
     case "REGISTER_MARKER_PROVIDER":
-      if (newExtensionsState.markerProviders.indexOf(action.payload) !== -1) {
+      if (state.extensions.markerProviders.indexOf(action.payload) !== -1) {
         console.warn("attempted to register duplicate MarkerProvider", action.payload);
-        return { ...state, extensions: newExtensionsState };
+        return { ...state, extensions: state.extensions };
       }
       return {
         ...state,
-        extensions: { ...newExtensionsState, markerProviders: [...newExtensionsState.markerProviders, action.payload] },
+        extensions: { ...state.extensions, markerProviders: [...state.extensions.markerProviders, action.payload] },
       };
 
     case "UNREGISTER_MARKER_PROVIDER":
       return {
         ...state,
         extensions: {
-          ...newExtensionsState,
-          markerProviders: newExtensionsState.markerProviders.filter((p) => p !== action.payload),
+          ...state.extensions,
+          markerProviders: state.extensions.markerProviders.filter((p) => p !== action.payload),
         },
       };
 
@@ -37,12 +36,12 @@ export default function(state: State, action: ExtensionsActions): State {
       return {
         ...state,
         extensions: {
-          ...newExtensionsState,
-          auxiliaryData: { ...newExtensionsState.auxiliaryData, ...action.payload(newExtensionsState.auxiliaryData) },
+          ...state.extensions,
+          auxiliaryData: { ...state.extensions.auxiliaryData, ...action.payload(state.extensions.auxiliaryData) },
         },
       };
 
     default:
-      return { ...state, extensions: newExtensionsState };
+      return { ...state, extensions: state.extensions };
   }
 }

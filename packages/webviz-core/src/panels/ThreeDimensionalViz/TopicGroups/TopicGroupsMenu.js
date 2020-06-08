@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import DotsVerticalIcon from "@mdi/svg/svg/dots-vertical.svg";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import styled from "styled-components";
 
 import { DEFAULT_IMPORTED_GROUP_NAME, KEYBOARD_SHORTCUTS } from "./constants";
@@ -47,8 +47,9 @@ type Props = {
 
 export default function TopicGroupsMenu({ saveConfig, onImportSettings }: Props) {
   const [isOpen, setIsOpen] = useState(false);
+  const onToggle = useCallback(() => setIsOpen((open) => !open), []);
   return (
-    <ChildToggle position="below" onToggle={() => setIsOpen(!isOpen)} isOpen={isOpen}>
+    <ChildToggle position="below" onToggle={onToggle} isOpen={isOpen}>
       <SIconWrapper>
         <Icon medium fade active={isOpen}>
           <DotsVerticalIcon />

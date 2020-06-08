@@ -369,11 +369,11 @@ export default function QuickAddTopic({
     () => {
       // Open quick add view upon pressing `Enter` key
       if (highlighted && focusItemOp && focusItemOp === "Enter") {
-        setShowAddView(!showAddView);
+        setShowAddView((shown) => !shown);
         setFocusItemOp(undefined);
       }
     },
-    [focusItemOp, highlighted, setFocusItemOp, showAddView]
+    [focusItemOp, highlighted, setFocusItemOp]
   );
 
   const onGroupEditClick = useCallback(

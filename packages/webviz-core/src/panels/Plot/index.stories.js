@@ -460,6 +460,27 @@ storiesOf("<Plot>", module)
       </PanelSetup>
     );
   })
+  .add("custom x-axis topic with mismatched data lengths", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            xAxisVal: "custom",
+            paths: [
+              // Extra items in y-axis
+              { value: "/some_topic/location.pose.acceleration", enabled: true, timestampMethod: "receiveTime" },
+              // Same number of items
+              { value: "/some_topic/location_subset.pose.acceleration", enabled: true, timestampMethod: "receiveTime" },
+              // Fewer items in y-axis
+              { value: "/some_topic/state.items[:].speed", enabled: true, timestampMethod: "receiveTime" },
+            ],
+            xAxisPath: { value: "/some_topic/location_subset.pose.velocity", enabled: true },
+          }}
+        />
+      </PanelSetup>
+    );
+  })
   .add("super close values", () => {
     return (
       <PanelSetup

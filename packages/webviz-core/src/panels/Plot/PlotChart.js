@@ -84,7 +84,7 @@ function getPointsAndTooltipsForMessagePathItem(
   const tooltips = [];
   const timestamp = timestampMethod === "headerStamp" ? yItem.headerStamp : yItem.receiveTime;
   if (!timestamp) {
-    return { points, tooltips };
+    return { points, tooltips, hasMismatchedData: false };
   }
   const elapsedTime = toSec(subtractTimes(timestamp, startTime));
   for (const [innerIdx, { value, path: queriedPath, constantName }] of yItem.queriedData.entries()) {
@@ -116,7 +116,8 @@ function getPointsAndTooltipsForMessagePathItem(
       tooltips.push(tooltip);
     }
   }
-  return { points, tooltips };
+  const hasMismatchedData = xAxisVal === "custom" && (!xItem || yItem.queriedData.length !== xItem.queriedData.length);
+  return { points, tooltips, hasMismatchedData };
 }
 
 function getDatasetAndTooltipsFromMessagePlotPath(
@@ -127,10 +128,15 @@ function getDatasetAndTooltipsFromMessagePlotPath(
   xAxisVal: "timestamp" | "index" | "custom",
   xAxisRanges: ?$ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
   xAxisPath?: BasePlotPath
-): { dataset: DataSet, tooltips: TimeBasedChartTooltipData[] } {
+): { dataset: DataSet, tooltips: TimeBasedChartTooltipData[], hasMismatchedData: boolean, path: string } {
   let showLine = true;
   const datasetKey = index.toString();
 
+  let hasMismatchedData =
+    xAxisVal === "custom" &&
+    xAxisRanges != null &&
+    (yAxisRanges.length !== xAxisRanges.length ||
+      xAxisRanges.every((range, rangeIndex) => range.length !== yAxisRanges[rangeIndex].length));
   let rangesOfTooltips: TimeBasedChartTooltipData[][] = [];
   let rangesOfPoints: PlotChartPoint[][] = [];
   for (const [rangeIdx, range] of yAxisRanges.entries()) {
@@ -139,7 +145,11 @@ function getDatasetAndTooltipsFromMessagePlotPath(
     const rangePoints = [];
     for (const [outerIdx, item] of range.entries()) {
       const xItem: ?TooltipItem = xRange?.[outerIdx];
-      const { points: itemPoints, tooltips: itemTooltips } = getPointsAndTooltipsForMessagePathItem(
+      const {
+        points: itemPoints,
+        tooltips: itemTooltips,
+        hasMismatchedData: itemHasMistmatchedData,
+      } = getPointsAndTooltipsForMessagePathItem(
         item,
         xItem,
         startTime,
@@ -151,6 +161,7 @@ function getDatasetAndTooltipsFromMessagePlotPath(
       );
       rangePoints.push(...itemPoints);
       rangeTooltips.push(...itemTooltips);
+      hasMismatchedData = hasMismatchedData || itemHasMistmatchedData;
       // If we have added more than one point for this message, make it a scatter plot.
       if (item.queriedData.length > 1 && xAxisVal !== "index") {
         showLine = false;
@@ -202,7 +213,12 @@ function getDatasetAndTooltipsFromMessagePlotPath(
     pointBorderColor: "transparent",
     data: flatten(rangesOfPoints),
   };
-  return { dataset, tooltips: flatten(rangesOfTooltips) };
+  return {
+    dataset,
+    tooltips: flatten(rangesOfTooltips),
+    hasMismatchedData,
+    path: path.value,
+  };
 }
 
 // A "reference line" plot path is a numeric value. It creates a horizontal line on the plot at the specified value.
@@ -226,7 +242,7 @@ export function getDatasetsAndTooltips(
   startTime: Time,
   xAxisVal: "timestamp" | "index" | "custom",
   xAxisPath?: BasePlotPath
-): { datasets: DataSet[], tooltips: TimeBasedChartTooltipData[] } {
+): { datasets: DataSet[], tooltips: TimeBasedChartTooltipData[], pathsWithMismatchedDataLengths: string[] } {
   const datasetsAndTooltips = filterMap(paths, (path: PlotPath, index: number) => {
     const yRanges = itemsByPath[path.value];
     const xRanges = xAxisPath && itemsByPath[xAxisPath.value];
@@ -241,6 +257,9 @@ export function getDatasetsAndTooltips(
   return {
     datasets: datasetsAndTooltips.map(({ dataset }) => dataset),
     tooltips: flatten(datasetsAndTooltips.map(({ tooltips }) => tooltips)),
+    pathsWithMismatchedDataLengths: datasetsAndTooltips
+      .filter(({ hasMismatchedData }) => hasMismatchedData)
+      .map(({ path }) => path),
   };
 }
 

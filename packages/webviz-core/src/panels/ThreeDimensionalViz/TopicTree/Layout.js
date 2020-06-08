@@ -144,7 +144,7 @@ export default function Layout({
     showCrosshair,
     autoSyncCameraState,
     topicDisplayMode = TOPIC_DISPLAY_MODES.SHOW_ALL.value,
-    topicSettings,
+    settingsByKey,
   },
 }: Props) {
   const [filterText, setFilterText] = useState(""); // Topic tree text for filtering to see certain topics.
@@ -268,7 +268,7 @@ export default function Layout({
     saveConfig,
     sceneErrorsByTopicKey,
     topicDisplayMode,
-    topicSettings,
+    settingsByKey,
     topicTreeConfig,
     uncategorizedGroupName,
   });
@@ -293,7 +293,7 @@ export default function Layout({
       sceneBuilder.setTransforms(transforms, rootTfID);
       sceneBuilder.setFlattenMarkers(!!flattenMarkers);
       sceneBuilder.setSelectedNamespacesByTopic(selectedNamespacesByTopic);
-      sceneBuilder.setTopicSettings(topicSettings);
+      sceneBuilder.setSettingsByKey(settingsByKey);
 
       // toggle scene builder topics based on visible topic nodes in the tree
       const topicsByName = topicsByTopicName(topics);
@@ -320,7 +320,7 @@ export default function Layout({
       playerId,
       flattenMarkers,
       selectedNamespacesByTopic,
-      topicSettings,
+      settingsByKey,
       topics,
       selectedTopicNames,
       globalVariables,
@@ -475,7 +475,7 @@ export default function Layout({
             saveConfig({ pinTopics: false }, { keepLayoutInUrl: true });
             return;
           }
-          setShowTopicTree(!showTopicTree);
+          setShowTopicTree((shown) => !shown);
         },
       };
 
@@ -491,7 +491,7 @@ export default function Layout({
       };
       return handlers;
     },
-    [pinTopics, saveConfig, searchTextProps, showTopicTree, toggleCameraMode]
+    [pinTopics, saveConfig, searchTextProps, toggleCameraMode]
   );
 
   const markerProviders = useMemo(() => extensions.markerProviders.concat([sceneBuilder, transformsBuilder]), [
@@ -597,7 +597,7 @@ export default function Layout({
               sceneBuilder.collectors[currentEditingTopic.name].getMessages()[0]
             }
             saveConfig={saveConfig}
-            topicSettings={topicSettings}
+            settingsByKey={settingsByKey}
           />
         )}
       </div>

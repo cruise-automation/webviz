@@ -59,7 +59,7 @@ type Props = {|
 export const EmptyDropTarget = ({ mosaicId, tabId, onChangeLayout }: Props) => {
   const dispatch = useDispatch();
   const [showPanelList, setShowPanelList] = useState(false);
-  const toggleShowPanelList = useCallback(() => setShowPanelList(!showPanelList), [showPanelList]);
+  const toggleShowPanelList = useCallback(() => setShowPanelList((show) => !show), []);
 
   const [{ isOver }, drop] = useDrop({
     accept: MosaicDragType.WINDOW,

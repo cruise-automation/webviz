@@ -32,7 +32,7 @@ function PanelWithData() {
 storiesOf("<SourceInfo>", module)
   .addParameters({
     screenshot: {
-      delay: 750,
+      delay: 1750,
     },
   })
   .add("default", () => {

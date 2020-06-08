@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import { range, noop } from "lodash";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import ImageCanvas from "webviz-core/src/panels/ImageView/ImageCanvas";
@@ -340,7 +339,11 @@ function ShouldCallOnRenderImage({ children }: { children: (() => () => void) =>
 }
 
 storiesOf("<ImageCanvas>", module)
-  .addDecorator(withScreenshot())
+  .addParameters({
+    screenshot: {
+      delay: 1500,
+    },
+  })
   .add("markers", () => (
     <LoadImageMessage>
       {(imageMessage) => (

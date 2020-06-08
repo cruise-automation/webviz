@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Cones from "../../commands/Cones";
 import type { Cone } from "../../types";
@@ -42,7 +41,7 @@ const instancedCone = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration/Cones", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Cones", module);
 generateNonInstancedClickAssertions<Cone>("Cone", Cones, twoConesInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

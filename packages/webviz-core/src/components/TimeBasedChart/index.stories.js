@@ -8,7 +8,6 @@
 import { storiesOf } from "@storybook/react";
 import cloneDeep from "lodash/cloneDeep";
 import React, { useState, useCallback } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import TimeBasedChart from "./index";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
@@ -212,7 +211,11 @@ function RemoveChartExample() {
 }
 
 storiesOf("<TimeBasedChart>", module)
-  .addDecorator(withScreenshot({ delay: 1000 }))
+  .addParameters({
+    screenshot: {
+      delay: 1000,
+    },
+  })
   .add("default", () => {
     return (
       <div style={{ width: "100%", height: "100%", background: "black" }}>

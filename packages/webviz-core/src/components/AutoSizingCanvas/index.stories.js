@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import React, { useState, useEffect } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import AutoSizingCanvas from ".";
 
@@ -62,7 +61,6 @@ function Example({
 }
 
 storiesOf("<AutoSizingCanvas>", module)
-  .addDecorator(withScreenshot())
   .add("static", () => <Example />)
   .add("changing size", () => <Example changeSize />)
   .add("pixel ratio 2", () => <Example devicePixelRatio={2} />)

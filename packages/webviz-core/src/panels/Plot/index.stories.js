@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import type { Time } from "rosbag";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Plot from "webviz-core/src/panels/Plot";
 import PanelSetup, { triggerWheel } from "webviz-core/src/stories/PanelSetup";
@@ -200,7 +199,11 @@ const paths = [
 
 const exampleConfig = { paths, minYValue: "", maxYValue: "", showLegend: true, xAxisVal: "timestamp" };
 storiesOf("<Plot>", module)
-  .addDecorator(withScreenshot({ delay: 1000 }))
+  .addParameters({
+    screenshot: {
+      delay: 1000,
+    },
+  })
   .add("line graph", () => {
     return (
       <PanelSetup fixture={fixture}>

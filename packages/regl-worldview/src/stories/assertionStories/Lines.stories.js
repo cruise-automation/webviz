@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Lines from "../../commands/Lines";
 import type { Line } from "../../types";
@@ -34,7 +33,7 @@ const twoLinesInARow = [
   },
 ];
 
-const stories = storiesOf("Integration/Lines", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Lines", module);
 generateNonInstancedClickAssertions<Line>("Line", Lines, twoLinesInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

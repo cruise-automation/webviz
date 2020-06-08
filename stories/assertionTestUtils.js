@@ -27,7 +27,7 @@ type AssertionTest = {|
  * This function takes a storybook story and some assertions about it and runs those assertions in the browser as the
  * storybook test is running. It enables treating our storybook stories as tests.
  *
- * This function has an integration with the storybook-chrome-screenshot package that we use to generate screenshots:
+ * This function has an integration with the storycap package that we use to generate screenshots:
  * it adds a `window.waitFor` function that returns a promise that only resolves once the assertions have run.
  *
  * Usage:

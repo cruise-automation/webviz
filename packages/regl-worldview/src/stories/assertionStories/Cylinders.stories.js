@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Cylinders from "../../commands/Cylinders";
 import type { Cylinder } from "../../types";
@@ -42,7 +41,7 @@ const instancedCylinder = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration/Cylinders", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Cylinders", module);
 generateNonInstancedClickAssertions<Cylinder>("Cylinder", Cylinders, twoCylindersInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

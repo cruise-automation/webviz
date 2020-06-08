@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import {
   fixture,
@@ -36,7 +35,6 @@ const expandAll = () => {
   }
 };
 storiesOf("<RawMessages>", module)
-  .addDecorator(withScreenshot())
   .add("folded", () => {
     return (
       <PanelSetup fixture={fixture} style={{ width: 350 }}>

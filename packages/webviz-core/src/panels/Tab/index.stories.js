@@ -10,7 +10,6 @@ import { storiesOf } from "@storybook/react";
 import { createBrowserHistory } from "history";
 import React from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storybook-chrome-screenshot";
 import styled from "styled-components";
 
 import Tab from "./index";
@@ -36,7 +35,11 @@ const SExpectedResult = styled.div`
 const fixture = { topics: [], datatypes: {}, frame: {}, layout: "Tab!a" };
 const manyTabs = new Array(25).fill(1).map((elem, idx) => ({ title: `Tab #${idx + 1}`, layout: null }));
 storiesOf("<Tab>", module)
-  .addDecorator(withScreenshot({ delay: 1000 }))
+  .addParameters({
+    screenshot: {
+      delay: 1000,
+    },
+  })
   .add("default", () => (
     <PanelSetup fixture={fixture}>
       <Tab />

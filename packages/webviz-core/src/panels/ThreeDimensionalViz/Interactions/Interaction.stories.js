@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 import styled from "styled-components";
 
 import Interactions, { OBJECT_TAB_TYPE, LINKED_VARIABLES_TAB_TYPE, type TabType } from "./index";
@@ -210,7 +209,9 @@ function AutoOpenCloseExample({
 }
 
 storiesOf("<Interaction>", module)
-  .addDecorator(withScreenshot({ viewport: { width: 1001, height: 1101 } }))
+  .addParameters({
+    viewport: { width: 1001, height: 1101 },
+  })
   .add("default", () => {
     return (
       <SWrapper>

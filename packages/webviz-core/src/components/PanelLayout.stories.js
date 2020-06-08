@@ -11,7 +11,6 @@ import { createMemoryHistory } from "history";
 import * as React from "react";
 import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import PanelLayout from "./PanelLayout";
 import { changePanelLayout } from "webviz-core/src/actions/panels";
@@ -20,7 +19,6 @@ import configureStore from "webviz-core/src/store/configureStore.testing";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 storiesOf("<PanelLayout>", module)
-  .addDecorator(withScreenshot())
   .add("panel not found", () => {
     const store = configureStore(createRootReducer(createMemoryHistory));
     store.dispatch(changePanelLayout({ layout: "UnknownPanel!4co6n9d" }));

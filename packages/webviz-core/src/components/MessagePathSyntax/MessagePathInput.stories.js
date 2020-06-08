@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import MessagePathInput from "./MessagePathInput";
 import Flex from "webviz-core/src/components/Flex";
@@ -101,7 +100,6 @@ function MessagePathInputStory(props: {| path: string, prioritizedDatatype?: str
 }
 
 storiesOf("<MessagePathInput>", module)
-  .addDecorator(withScreenshot())
   .add("autocomplete topics", () => {
     return <MessagePathInputStory path="/" />;
   })

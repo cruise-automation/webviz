@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import PlaybackSpeedControls from "webviz-core/src/components/PlaybackSpeedControls";
@@ -30,7 +29,6 @@ function ControlsStory() {
 }
 
 storiesOf("<PlaybackSpeedControls>", module)
-  .addDecorator(withScreenshot())
   .add("without speed capability", () => {
     return (
       <MockMessagePipelineProvider>

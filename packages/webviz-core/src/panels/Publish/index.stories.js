@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Publish from "webviz-core/src/panels/Publish";
 import { PlayerCapabilities } from "webviz-core/src/players/types";
@@ -36,7 +35,6 @@ const publishConfig = (advancedView: boolean, json: string) => ({
 });
 
 storiesOf("<Publish>", module)
-  .addDecorator(withScreenshot())
   .add("example can publish, advanced", () => {
     const allowPublish = true;
     return (

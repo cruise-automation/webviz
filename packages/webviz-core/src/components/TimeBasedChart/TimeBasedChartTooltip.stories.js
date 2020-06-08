@@ -8,32 +8,29 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import TimeBasedChartTooltip from "./TimeBasedChartTooltip";
 
-storiesOf("<TimeBasedChartTooltip>", module)
-  .addDecorator(withScreenshot())
-  .add("default", () => {
-    return (
-      <div style={{ width: "100%", height: "100%", background: "white" }}>
-        <TimeBasedChartTooltip
-          tooltip={{
-            x: 0,
-            y: 0,
-            datasetKey: "0",
-            path: "/some/topic.path",
-            value: 3,
-            constantName: "ACTIVE",
-            item: {
-              queriedData: [],
-              receiveTime: { sec: 123, nsec: 456 },
-              headerStamp: { sec: 100, nsec: 30 },
-            },
-            startTime: { sec: 95, nsec: 0 },
-          }}>
-          <div />
-        </TimeBasedChartTooltip>
-      </div>
-    );
-  });
+storiesOf("<TimeBasedChartTooltip>", module).add("default", () => {
+  return (
+    <div style={{ width: "100%", height: "100%", background: "white" }}>
+      <TimeBasedChartTooltip
+        tooltip={{
+          x: 0,
+          y: 0,
+          datasetKey: "0",
+          path: "/some/topic.path",
+          value: 3,
+          constantName: "ACTIVE",
+          item: {
+            queriedData: [],
+            receiveTime: { sec: 123, nsec: 456 },
+            headerStamp: { sec: 100, nsec: 30 },
+          },
+          startTime: { sec: 95, nsec: 0 },
+        }}>
+        <div />
+      </TimeBasedChartTooltip>
+    </div>
+  );
+});

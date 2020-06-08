@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import polygonGenerator from "polygon-generator";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import FilledPolygons from "../../commands/FilledPolygons";
 import type { PolygonType } from "../../types";
@@ -37,7 +36,7 @@ const twoFilledPolygonsInARow = [
   },
 ];
 
-const stories = storiesOf("Integration/FilledPolygons", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/FilledPolygons", module);
 generateNonInstancedClickAssertions<PolygonType>("FilledPolygon", FilledPolygons, twoFilledPolygonsInARow, {
   // Because filled polygons have some weird rendering, the second always shows up on top. They can't really be
   // stacked correctly anyways so this rendering artifact isn't important, just that we test the hitmap code.

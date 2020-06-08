@@ -11,7 +11,6 @@
 import { storiesOf } from "@storybook/react";
 import expect from "expect";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import GLTFScene from "../../commands/GLTFScene";
 import { clickAtOrigin, WorldviewWrapper } from "../worldviewAssertionUtils";
@@ -36,7 +35,7 @@ const secondModelPosition = {
 // ensure that the module has been loaded.
 const WAIT_FOR_MODEL_LOAD_TIMEOUT = 2000;
 
-const stories = storiesOf("Integration/GLTFScene", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/GLTFScene", module);
 stories
   .add(
     `Clicks on a single GLTFScene object - worldview event handler`,

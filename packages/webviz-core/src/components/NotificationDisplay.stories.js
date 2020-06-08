@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import moment from "moment";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { setHooks } from "../loadWebviz";
 import NotificationDisplay, {
@@ -41,7 +40,11 @@ const AddMoreButtons = () => (
 );
 
 storiesOf("<NotificationDisplay>", module)
-  .addDecorator(withScreenshot({ delay: 5000 }))
+  .addParameters({
+    screenshot: {
+      delay: 5000,
+    },
+  })
   .add("No errors", () => {
     return <NotificationDisplayWrapper />;
   })

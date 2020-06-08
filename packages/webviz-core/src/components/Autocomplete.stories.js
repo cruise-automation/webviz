@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import React, { Component } from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Autocomplete from "webviz-core/src/components/Autocomplete";
 
@@ -23,7 +22,6 @@ function focusInput(el) {
 }
 
 storiesOf("<Autocomplete>", module)
-  .addDecorator(withScreenshot())
   .add("filtering to 'o'", () => {
     class Example extends Component<{}> {
       render() {

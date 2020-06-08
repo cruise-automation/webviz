@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Accordion from "./Accordion";
 
@@ -72,7 +71,6 @@ function ClickedExample() {
   );
 }
 storiesOf("<Accordion>", module)
-  .addDecorator(withScreenshot())
   .add("default", () => {
     return (
       <div>

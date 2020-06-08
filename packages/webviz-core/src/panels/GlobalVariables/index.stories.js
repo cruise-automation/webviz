@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import GlobalVariables from "./index";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -86,7 +85,6 @@ function PanelWithData({
 }
 
 storiesOf("<GlobalVariables>", module)
-  .addDecorator(withScreenshot())
   .add("default", () => {
     return <PanelWithData />;
   })

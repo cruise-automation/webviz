@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 import styled from "styled-components";
 
 import bagFile from "./fixtures/example.bag";
@@ -31,7 +30,11 @@ function PanelWithData() {
 }
 
 storiesOf("<SourceInfo>", module)
-  .addDecorator(withScreenshot({ delay: 750 }))
+  .addParameters({
+    screenshot: {
+      delay: 750,
+    },
+  })
   .add("default", () => {
     return <PanelWithData />;
   })

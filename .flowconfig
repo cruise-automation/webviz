@@ -24,6 +24,9 @@ module.name_mapper.extension='worker.js' -> '<PROJECT_ROOT>/packages/webviz-core
 # We use stringified Typescript in Node Playground.
 module.name_mapper.extension='ts' -> '<PROJECT_ROOT>/packages/webviz-core/src/types/modules/Markdown.js.flow'
 
+# Fix flow crash "SharedMem.Hash_table_full" – https://github.com/facebook/flow/issues/7132
+sharedmemory.hash_table_pow=21
+
 module.file_ext=.js
 module.file_ext=.jsx
 module.file_ext=.json

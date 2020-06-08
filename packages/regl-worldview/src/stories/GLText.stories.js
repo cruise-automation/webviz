@@ -4,7 +4,6 @@ import { storiesOf } from "@storybook/react";
 import { quat } from "gl-matrix";
 import { range } from "lodash";
 import React, { useState, useLayoutEffect, useCallback } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 import tinyColor from "tinycolor2";
 
 import { Axes, Cubes } from "../commands";
@@ -82,7 +81,11 @@ function overlappingMarkers({
 }
 
 storiesOf("Worldview/GLText", module)
-  .addDecorator(withScreenshot({ delay: 200 }))
+  .addParameters({
+    screenshot: {
+      delay: 200,
+    },
+  })
   .add("resolution - default", () => {
     const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
     const target = markers[9].pose.position;

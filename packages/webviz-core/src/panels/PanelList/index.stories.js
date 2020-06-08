@@ -13,14 +13,12 @@ import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import TestUtils from "react-dom/test-utils";
 import { Provider } from "react-redux";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import PanelList from "webviz-core/src/panels/PanelList";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 
 storiesOf("<PanelList>", module)
-  .addDecorator(withScreenshot())
   .addDecorator((childrenRenderFcn) => (
     <DndProvider backend={HTML5Backend}>
       <Provider store={configureStore(createRootReducer(createMemoryHistory()))}>{childrenRenderFcn()}</Provider>

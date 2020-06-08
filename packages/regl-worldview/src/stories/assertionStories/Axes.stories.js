@@ -11,7 +11,6 @@
 import { storiesOf } from "@storybook/react";
 import expect from "expect";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Axes from "../../commands/Axes";
 import Cubes from "../../commands/Cubes";
@@ -42,7 +41,7 @@ const cube = {
 };
 
 // Axes do not have individual event handlers, but they could still be clicked on by worldview event handlers.
-const stories = storiesOf("Integration/Axes", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Axes", module);
 stories
   .add(
     `Clicks on a single Axis - worldview event handler`,

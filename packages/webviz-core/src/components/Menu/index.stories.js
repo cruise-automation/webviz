@@ -9,12 +9,10 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 import ReactDOM from "react-dom";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Menu, { Item, SubMenu } from "webviz-core/src/components/Menu";
 
 storiesOf("<Menu>", module)
-  .addDecorator(withScreenshot())
   .add("standard", () => {
     return (
       <div style={{ margin: 20 }}>

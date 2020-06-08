@@ -8,7 +8,6 @@ import { withKnobs } from "@storybook/addon-knobs";
 import { storiesOf } from "@storybook/react";
 import polygonGenerator from "polygon-generator";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Container from "./Container";
 import { p } from "./util";
@@ -18,7 +17,6 @@ import { FilledPolygons, Lines, DEFAULT_CAMERA_STATE } from "..";
 
 storiesOf("Worldview", module)
   .addDecorator(withKnobs)
-  .addDecorator(withScreenshot())
   .add("<Lines> - instability", () => {
     const points = [
       { x: -812.2277333190451, y: 2961.4633761946707, z: 0 },

@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Arrows from "../../commands/Arrows";
 import type { Arrow } from "../../types";
@@ -32,7 +31,7 @@ const twoArrowsInARow = [
   },
 ];
 
-const stories = storiesOf("Integration/Arrows", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Arrows", module);
 generateNonInstancedClickAssertions<Arrow>("Arrow", Arrows, twoArrowsInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

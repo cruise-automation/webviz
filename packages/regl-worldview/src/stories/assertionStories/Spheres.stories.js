@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Spheres from "../../commands/Spheres";
 import type { SphereList } from "../../types";
@@ -42,7 +41,7 @@ const instancedSphere = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration/Spheres", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Spheres", module);
 generateNonInstancedClickAssertions<SphereList>("Sphere", Spheres, twoSpheresInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

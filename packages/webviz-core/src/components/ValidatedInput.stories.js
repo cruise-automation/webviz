@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import { DEFAULT_CAMERA_STATE } from "regl-worldview";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import ValidatedInput, { EDIT_FORMAT, type EditFormat } from "./ValidatedInput";
 import Flex from "webviz-core/src/components/Flex";
@@ -73,7 +72,6 @@ function Example({
 }
 
 storiesOf("<ValidatedInput>", module)
-  .addDecorator(withScreenshot())
   .add("default", () => {
     return (
       <Flex>

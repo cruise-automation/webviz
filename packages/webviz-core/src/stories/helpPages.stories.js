@@ -9,11 +9,10 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 import { MemoryRouter } from "react-router";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import HelpModal from "webviz-core/src/components/HelpModal";
 
-const stories = storiesOf("Help pages", module).addDecorator(withScreenshot());
+const stories = storiesOf("Help pages", module);
 
 export function makeHelpPageStories(req: any) {
   const helpData = req.keys().map((name) => ({ name, data: req(name) }));

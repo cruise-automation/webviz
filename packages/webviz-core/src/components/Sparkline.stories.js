@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { Sparkline, type SparklinePoint } from "webviz-core/src/components/Sparkline";
 
@@ -28,7 +27,6 @@ const props = {
 };
 
 storiesOf("<Sparkline>", module)
-  .addDecorator(withScreenshot())
   .add("standard", () => {
     return (
       <div style={{ padding: 8 }}>

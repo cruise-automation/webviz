@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import React, { useRef, useLayoutEffect, useState } from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import GradientPicker from "./GradientPicker";
 
@@ -75,7 +74,9 @@ function Story({
 }
 
 storiesOf("<GradientPicker>", module)
-  .addDecorator(withScreenshot({ viewport: { width: 585, height: 500 } }))
+  .addParameters({
+    viewport: { width: 585, height: 500 },
+  })
   .add("basic", () => <Story initialMinColor="255,0,0,1" initialMaxColor="0,0,255,1" />)
   .add("change min color", () => (
     <Story initialMinColor="255,0,0,1" initialMaxColor="0,0,255,1" changeMinColorAfterMount />

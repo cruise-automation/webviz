@@ -1,13 +1,13 @@
 // @flow
-
 //  Copyright (c) 2018-present, GM Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { addDecorator, configure } from "@storybook/react";
-import { initScreenshot, setScreenshotOptions } from "storybook-chrome-screenshot";
+import { addDecorator, addParameters } from "@storybook/react";
+import React from "react";
+import { withScreenshot } from "storycap";
 
 import "webviz-core/src/styles/global.scss";
 import prepareForScreenshots from "./prepareForScreenshots";
@@ -15,20 +15,29 @@ import storiesSetup from "webviz-core/src/stories/setup";
 import waitForFonts from "webviz-core/src/styles/waitForFonts";
 import installChartjs from "webviz-core/src/util/installChartjs";
 
+export const SCREENSHOT_VIEWPORT = {
+  width: 1001,
+  height: 745,
+};
+
 storiesSetup();
 global.GIT_INFO = {};
 installChartjs();
 
-addDecorator(initScreenshot());
-setScreenshotOptions({
-  // if this function is present on the page, we wait for the promise it returns to resolve before taking a screenshot.
-  waitFor: "waitFor",
-  delay: 100, // Small delay for rerenders that some components do.
-  viewport: {
-    width: 1001,
-    height: 745,
+addDecorator((storyFn) => {
+  document.querySelectorAll("[data-modalcontainer]").forEach((el) => el.remove()); // Remove leftover modals
+  return React.createElement(storyFn);
+});
+
+addDecorator(withScreenshot);
+addParameters({
+  screenshot: {
+    delay: 100,
+    waitFor: waitForFonts,
+    viewport: SCREENSHOT_VIEWPORT,
   },
 });
+
 prepareForScreenshots();
 
 // automatically import all files ending in *.stories.js
@@ -37,11 +46,6 @@ const req = require.context("../packages", true, /\.stories\.js$/);
 // $FlowFixMe - require.context seems not correctly typed.
 const reqDocs = require.context("../docs", true, /\.stories\.js$/);
 
-function loadStories() {
-  req.keys().forEach((filename) => req(filename));
-  reqDocs.keys().forEach((filename) => reqDocs(filename));
-}
-
-waitForFonts(() => {
-  configure(loadStories, module);
-});
+// load the stories
+req.keys().forEach((filename) => req(filename));
+reqDocs.keys().forEach((filename) => reqDocs(filename));

@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 import { DEFAULT_CAMERA_STATE } from "regl-worldview";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import CameraInfo, { CAMERA_TAB_TYPE } from "webviz-core/src/panels/ThreeDimensionalViz/CameraInfo";
 
@@ -41,7 +40,6 @@ const CameraInfoWrapper = (props) => (
 );
 
 storiesOf("<CameraInfo>", module)
-  .addDecorator(withScreenshot())
   .add("Default", () => <CameraInfoWrapper />)
   .add("Follow orientation", () => <CameraInfoWrapper followOrientation />)
   .add("3D and showCrosshair", () => <CameraInfoWrapper showCrosshair />)

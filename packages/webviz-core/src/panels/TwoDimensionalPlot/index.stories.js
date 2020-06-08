@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 import { storiesOf } from "@storybook/react";
 import React, { useState } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import TwoDimensionalPlot from "./index";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
@@ -77,7 +76,11 @@ const fixture = {
   },
 };
 storiesOf("<TwoDimensionalPlot>", module)
-  .addDecorator(withScreenshot({ delay: 500 }))
+  .addParameters({
+    screenshot: {
+      delay: 500,
+    },
+  })
   .add("example", () => {
     return (
       <PanelSetup fixture={fixture}>

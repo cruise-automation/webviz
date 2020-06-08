@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Points from "../../commands/Points";
 import type { PointType } from "../../types";
@@ -44,7 +43,7 @@ const instancedPoints = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration/Points", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Points", module);
 generateNonInstancedClickAssertions<PointType>("Point", Points, twoPointsInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

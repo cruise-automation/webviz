@@ -31,7 +31,7 @@ module.exports = {
     ],
     react: ["Component", "PureComponent"],
     "@storybook/react": ["storiesOf"],
-    "storybook-chrome-screenshot": ["withScreenshot", "initScreenshot", "setScreenshotOptions"],
+    storycap: ["withScreenshot"],
     "react-dom": ["createPortal"],
     reselect: ["createSelector"],
   },

@@ -8,14 +8,12 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Internals from "webviz-core/src/panels/Internals";
 import SubscribeToList from "webviz-core/src/panels/SubscribeToList";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 storiesOf("<Internals>", module)
-  .addDecorator(withScreenshot())
   .add("default", () => {
     return (
       <PanelSetup

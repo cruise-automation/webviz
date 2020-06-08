@@ -9,7 +9,6 @@ import { storiesOf } from "@storybook/react";
 import cloneDeep from "lodash/cloneDeep";
 import React, { useState, useCallback } from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import ChartComponent from ".";
 
@@ -139,7 +138,11 @@ function DatalabelClickExample() {
 }
 
 storiesOf("<ChartComponent>", module)
-  .addDecorator(withScreenshot({ delay: 500 }))
+  .addParameters({
+    screenshot: {
+      delay: 500,
+    },
+  })
   .add("default", () => (
     <div style={divStyle}>
       <ChartComponent {...props} />

@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Cubes from "../../commands/Cubes";
 import type { Cube } from "../../types";
@@ -42,7 +41,7 @@ const instancedCube = {
   points: [[0, 0, 0], [0, -20, 0]],
 };
 
-const stories = storiesOf("Integration/Cubes", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Cubes", module);
 generateNonInstancedClickAssertions<Cube>("Cube", Cubes, twoCubesInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );

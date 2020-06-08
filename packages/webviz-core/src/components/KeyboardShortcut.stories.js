@@ -8,15 +8,12 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import KeyboardShortcut from "./KeyboardShortcut";
 
-storiesOf("<KeyboardShortcut>", module)
-  .addDecorator(withScreenshot())
-  .add("basic", () => (
-    <div>
-      <KeyboardShortcut description="Toggle visibility" keys={["Enter"]} />
-      <KeyboardShortcut description="Copy all" keys={["Shift", "Option", "V"]} />
-    </div>
-  ));
+storiesOf("<KeyboardShortcut>", module).add("basic", () => (
+  <div>
+    <KeyboardShortcut description="Toggle visibility" keys={["Enter"]} />
+    <KeyboardShortcut description="Copy all" keys={["Shift", "Option", "V"]} />
+  </div>
+));

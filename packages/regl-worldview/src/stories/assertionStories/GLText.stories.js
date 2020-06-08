@@ -11,7 +11,6 @@
 import { storiesOf } from "@storybook/react";
 import expect from "expect";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Cubes from "../../commands/Cubes";
 import GLText from "../../commands/GLText";
@@ -90,7 +89,6 @@ function createAssertionTest({
 }
 
 storiesOf("Integration/GLText", module)
-  .addDecorator(withScreenshot())
   .add(
     `Clicks on a single GLText object - worldview event handler`,
     createAssertionTest({

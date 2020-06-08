@@ -11,7 +11,6 @@
 import { storiesOf } from "@storybook/react";
 import expect from "expect";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Cubes from "../../commands/Cubes";
 import Grid from "../../commands/Grid";
@@ -41,7 +40,6 @@ const cube = {
 };
 
 storiesOf("Integration/Grid", module)
-  .addDecorator(withScreenshot())
   .add(
     "Clicks on a Grid - worldview event handler",
     // The grid does have individual event handlers, but they could still be clicked on by worldview event handlers.

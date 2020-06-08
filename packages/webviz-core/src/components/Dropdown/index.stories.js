@@ -9,7 +9,6 @@
 import SettingsIcon from "@mdi/svg/svg/settings.svg";
 import { storiesOf } from "@storybook/react";
 import React, { useState } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
@@ -44,7 +43,6 @@ function Example({
   );
 }
 storiesOf("<Dropdown>", module)
-  .addDecorator(withScreenshot())
   .add("position_below", () => <Example position="below" />)
   .add("position_left", () => <Example position="left" />)
   .add("position_right", () => <Example position="right" />)

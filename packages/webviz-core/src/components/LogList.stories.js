@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import React, { Component } from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import LogList from "./LogList";
 import type { RenderRow } from "./LogList";
@@ -88,24 +87,22 @@ class Example extends Component<Props, State> {
   }
 }
 
-storiesOf("<LogList>", module)
-  .addDecorator(withScreenshot())
-  .add("default", () => {
-    return (
-      <Example
-        renderRow={({ item, style }) => (
-          <div
-            style={{
-              ...style,
-              display: "flex",
-              flexDirection: "column",
-              padding: 8,
-              borderBottom: "1px solid gray",
-            }}
-            key={item.id}>
-            <h2 style={{ color: "orange", marginRight: 8 }}>{item.id}</h2> {item.text}
-          </div>
-        )}
-      />
-    );
-  });
+storiesOf("<LogList>", module).add("default", () => {
+  return (
+    <Example
+      renderRow={({ item, style }) => (
+        <div
+          style={{
+            ...style,
+            display: "flex",
+            flexDirection: "column",
+            padding: 8,
+            borderBottom: "1px solid gray",
+          }}
+          key={item.id}>
+          <h2 style={{ color: "orange", marginRight: 8 }}>{item.id}</h2> {item.text}
+        </div>
+      )}
+    />
+  );
+});

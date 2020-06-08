@@ -10,7 +10,6 @@ import { withKnobs, boolean, number } from "@storybook/addon-knobs";
 import { storiesOf } from "@storybook/react";
 import { quat, vec3 } from "gl-matrix";
 import * as React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { vec4ToOrientation, vec3ToPoint } from "../utils/commandUtils";
 import Container from "./Container";
@@ -143,127 +142,124 @@ class CameraStateStory extends React.Component<Props, State> {
 }
 
 const stories = storiesOf("Worldview/cameraState", module);
-stories
-  .addDecorator(withKnobs)
-  .addDecorator(withScreenshot())
-  .add("cameraState", () => {
-    const controlled = boolean("controlled (disable mouse controls)", true);
-    const perspective = boolean("is perspective", true);
+stories.addDecorator(withKnobs).add("cameraState", () => {
+  const controlled = boolean("controlled (disable mouse controls)", true);
+  const perspective = boolean("is perspective", true);
 
-    const distance = number("distance", 50, {
-      range: true,
-      min: 0,
-      max: 400,
-      step: 1,
-    });
-    const thetaOffset = number("thetaOffset", 0.3, {
-      range: true,
-      min: 0,
-      max: Math.PI * 2,
-      step: 0.01,
-    });
-    const phi = number("phi", 0.85, {
-      range: true,
-      min: 0,
-      max: Math.PI,
-      step: 0.01,
-    });
-    const orientationX = number("orientation - x", 0, {
-      range: true,
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-    const orientationY = number("orientation - y", 0, {
-      range: true,
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-    const orientationZ = number("orientation - z", 0, {
-      range: true,
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-
-    const posX = number("target - x", 0, {
-      range: true,
-      min: 0,
-      max: 20,
-      step: 0.1,
-    });
-    const posY = number("target - y", 0, {
-      range: true,
-      min: 0,
-      max: 20,
-      step: 0.1,
-    });
-    const posZ = number("target - z", 0, {
-      range: true,
-      min: 0,
-      max: 20,
-      step: 0.1,
-    });
-
-    const offsetX = number("targetOffset - x", 0, {
-      range: true,
-      min: 0,
-      max: 20,
-      step: 0.1,
-    });
-    const offsetY = number("targetOffset - y", 0, {
-      range: true,
-      min: 0,
-      max: 20,
-      step: 0.1,
-    });
-    const offsetZ = number("targetOffset - z", 0, {
-      range: true,
-      min: 0,
-      max: 20,
-      step: 0.1,
-    });
-
-    const fovy = number("fovy", Math.PI / 4, {
-      range: true,
-      min: 0,
-      max: Math.PI,
-      step: 0.01,
-    });
-    const near = number("near", 0.01, {
-      range: true,
-      min: 0.001,
-      max: 1000,
-      step: 0.01,
-    });
-    const far = number("far", 5000, {
-      range: true,
-      min: 10,
-      max: 10000,
-      step: 0.01,
-    });
-
-    let length = Math.hypot(orientationX, orientationY, orientationZ);
-    if (length > 1) {
-      length /= 2;
-    }
-    const orientationW = Math.sqrt(1 - length * length);
-
-    const target = [posX, posY, posZ];
-    const targetOffset = [offsetX, offsetY, offsetZ];
-    const targetOrientation = [orientationX, orientationY, orientationZ, orientationW];
-    const cameraState = {
-      perspective,
-      distance,
-      thetaOffset,
-      phi,
-      target,
-      targetOffset,
-      targetOrientation,
-      fovy,
-      near,
-      far,
-    };
-    return <CameraStateStory controlled={controlled} cameraStateFromKnobs={cameraState} />;
+  const distance = number("distance", 50, {
+    range: true,
+    min: 0,
+    max: 400,
+    step: 1,
   });
+  const thetaOffset = number("thetaOffset", 0.3, {
+    range: true,
+    min: 0,
+    max: Math.PI * 2,
+    step: 0.01,
+  });
+  const phi = number("phi", 0.85, {
+    range: true,
+    min: 0,
+    max: Math.PI,
+    step: 0.01,
+  });
+  const orientationX = number("orientation - x", 0, {
+    range: true,
+    min: 0,
+    max: 1,
+    step: 0.01,
+  });
+  const orientationY = number("orientation - y", 0, {
+    range: true,
+    min: 0,
+    max: 1,
+    step: 0.01,
+  });
+  const orientationZ = number("orientation - z", 0, {
+    range: true,
+    min: 0,
+    max: 1,
+    step: 0.01,
+  });
+
+  const posX = number("target - x", 0, {
+    range: true,
+    min: 0,
+    max: 20,
+    step: 0.1,
+  });
+  const posY = number("target - y", 0, {
+    range: true,
+    min: 0,
+    max: 20,
+    step: 0.1,
+  });
+  const posZ = number("target - z", 0, {
+    range: true,
+    min: 0,
+    max: 20,
+    step: 0.1,
+  });
+
+  const offsetX = number("targetOffset - x", 0, {
+    range: true,
+    min: 0,
+    max: 20,
+    step: 0.1,
+  });
+  const offsetY = number("targetOffset - y", 0, {
+    range: true,
+    min: 0,
+    max: 20,
+    step: 0.1,
+  });
+  const offsetZ = number("targetOffset - z", 0, {
+    range: true,
+    min: 0,
+    max: 20,
+    step: 0.1,
+  });
+
+  const fovy = number("fovy", Math.PI / 4, {
+    range: true,
+    min: 0,
+    max: Math.PI,
+    step: 0.01,
+  });
+  const near = number("near", 0.01, {
+    range: true,
+    min: 0.001,
+    max: 1000,
+    step: 0.01,
+  });
+  const far = number("far", 5000, {
+    range: true,
+    min: 10,
+    max: 10000,
+    step: 0.01,
+  });
+
+  let length = Math.hypot(orientationX, orientationY, orientationZ);
+  if (length > 1) {
+    length /= 2;
+  }
+  const orientationW = Math.sqrt(1 - length * length);
+
+  const target = [posX, posY, posZ];
+  const targetOffset = [offsetX, offsetY, offsetZ];
+  const targetOrientation = [orientationX, orientationY, orientationZ, orientationW];
+  const cameraState = {
+    perspective,
+    distance,
+    thetaOffset,
+    phi,
+    target,
+    targetOffset,
+    targetOrientation,
+    fovy,
+    near,
+    far,
+  };
+  return <CameraStateStory controlled={controlled} cameraStateFromKnobs={cameraState} />;
+});

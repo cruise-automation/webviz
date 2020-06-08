@@ -11,19 +11,16 @@
 import { storiesOf } from "@storybook/react";
 import expect from "expect";
 import React from "react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import { assertionTest } from "stories/assertionTestUtils";
 
-storiesOf("Integration/ExampleTest", module)
-  .addDecorator(withScreenshot())
-  .add(
-    // Store this as a failed test to ensure that our tests will actually fail.
-    "Should fail",
-    assertionTest({
-      story: (setTestData) => <div />,
-      assertions: async (getTestData) => {
-        expect(true).toEqual(false);
-      },
-    })
-  );
+storiesOf("Integration/ExampleTest", module).add(
+  // Store this as a failed test to ensure that our tests will actually fail.
+  "Should fail",
+  assertionTest({
+    story: (setTestData) => <div />,
+    assertions: async (getTestData) => {
+      expect(true).toEqual(false);
+    },
+  })
+);

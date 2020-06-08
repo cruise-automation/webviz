@@ -7,7 +7,6 @@
 //  You may not use this file except in compliance with the License.
 
 import { storiesOf } from "@storybook/react";
-import { withScreenshot } from "storybook-chrome-screenshot";
 
 import Triangles from "../../commands/Triangles";
 import type { TriangleList } from "../../types";
@@ -53,7 +52,7 @@ const instancedTriangles = {
   points: [[-10, 0, 0], [0, 0, 10], [10, 0, -10], [-10, -20, 0], [0, -20, 10], [10, -20, -10]],
 };
 
-const stories = storiesOf("Integration/Triangles", module).addDecorator(withScreenshot());
+const stories = storiesOf("Integration/Triangles", module);
 generateNonInstancedClickAssertions<TriangleList>("Triangle", Triangles, twoTrianglesInARow).forEach(
   ({ name, story }) => stories.add(name, story)
 );

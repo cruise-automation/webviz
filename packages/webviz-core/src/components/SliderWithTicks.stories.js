@@ -9,18 +9,15 @@
 import { storiesOf } from "@storybook/react";
 import { noop } from "lodash";
 import React from "react";
-import { withScreenshot } from "storycap";
 
 import { SliderWithTicks } from "webviz-core/src/components/SliderWithTicks";
 
-storiesOf("<SliderWithTicks>", module)
-  .addDecorator(withScreenshot())
-  .add("examples", () => {
-    return (
-      <div style={{ width: 300 }}>
-        <SliderWithTicks sliderProps={{ min: 0, max: 10, step: 1 }} value={3} onChange={noop} />
-        <SliderWithTicks sliderProps={{ min: 0, max: 1, step: 0.1 }} value={0.1} onChange={noop} />
-        <SliderWithTicks sliderProps={{ min: 0, max: 10000, step: 2000 }} value={590} onChange={noop} />
-      </div>
-    );
-  });
+storiesOf("<SliderWithTicks>", module).add("examples", () => {
+  return (
+    <div style={{ width: 300 }}>
+      <SliderWithTicks sliderProps={{ min: 0, max: 10, step: 1 }} value={3} onChange={noop} />
+      <SliderWithTicks sliderProps={{ min: 0, max: 1, step: 0.1 }} value={0.1} onChange={noop} />
+      <SliderWithTicks sliderProps={{ min: 0, max: 10000, step: 2000 }} value={590} onChange={noop} />
+    </div>
+  );
+});

@@ -9,7 +9,6 @@
 import { action } from "@storybook/addon-actions";
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storycap";
 
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Dropdown from "webviz-core/src/components/Dropdown/index";
@@ -56,7 +55,6 @@ function ContentStory({ showChildToggle }: {| showChildToggle?: boolean |}) {
   );
 }
 storiesOf("<Modal>", module)
-  .addDecorator(withScreenshot())
   .add("basic", () => (
     <Modal onRequestClose={() => action("close")}>
       <div style={{ padding: 20 }}>

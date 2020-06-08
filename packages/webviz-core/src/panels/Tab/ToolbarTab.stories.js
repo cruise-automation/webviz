@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import { noop } from "lodash";
 import React from "react";
-import { withScreenshot } from "storycap";
 
 import tick from "webviz-core/shared/tick";
 import { ToolbarTab } from "webviz-core/src/panels/Tab/ToolbarTab";

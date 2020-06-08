@@ -8,7 +8,6 @@
 import { storiesOf } from "@storybook/react";
 import { noop } from "lodash";
 import * as React from "react";
-import { withScreenshot } from "storycap";
 
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
 
@@ -17,7 +16,6 @@ function Wrapper({ children }) {
 }
 
 storiesOf("<PlotMenu>", module)
-  .addDecorator(withScreenshot())
   .add("With min and max y set", () => (
     <Wrapper>
       <PlotMenu

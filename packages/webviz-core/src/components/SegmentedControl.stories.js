@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storycap";
 
 import SegmentedControl, { type Option } from "webviz-core/src/components/SegmentedControl";
 
@@ -68,13 +67,11 @@ function ControlledExample() {
     </Box>
   );
 }
-storiesOf("<SegmentedControl>", module)
-  .addDecorator(withScreenshot())
-  .add("basic", () => (
-    <div>
-      <Box title="default">
-        <SegmentedControl options={optionArr} selectedId="first" onChange={() => {}} />
-      </Box>
-      <ControlledExample />
-    </div>
-  ));
+storiesOf("<SegmentedControl>", module).add("basic", () => (
+  <div>
+    <Box title="default">
+      <SegmentedControl options={optionArr} selectedId="first" onChange={() => {}} />
+    </Box>
+    <ControlledExample />
+  </div>
+));

@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import React, { useState, useCallback, useRef } from "react";
-import { withScreenshot } from "storycap";
 
 import VisibilityToggle, { type Size, TOGGLE_SIZE_CONFIG } from "./VisibilityToggle";
 
@@ -71,7 +70,6 @@ function Example({
 }
 
 storiesOf("<VisibilityToggle>", module)
-  .addDecorator(withScreenshot())
   .add("default", () => {
     return (
       <div>

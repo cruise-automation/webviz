@@ -7,30 +7,27 @@
 //  You may not use this file except in compliance with the License.
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storycap";
 
 import SubscribeToList from "./SubscribeToList";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
-storiesOf("<SubscribeToList>", module)
-  .addDecorator(withScreenshot())
-  .add("shows a topic list", () => {
-    return (
-      <PanelSetup
-        fixture={{
-          topics: [{ name: "/my/topic", datatype: "my_datatype" }],
-          frame: {
-            "/my/topic": [
-              {
-                receiveTime: { sec: 1, nsec: 0 },
-                topic: "/my/topic",
-                datatype: "my_datatype",
-                message: {},
-              },
-            ],
-          },
-        }}>
-        <SubscribeToList config={{ topics: "/my/topic" }} />
-      </PanelSetup>
-    );
-  });
+storiesOf("<SubscribeToList>", module).add("shows a topic list", () => {
+  return (
+    <PanelSetup
+      fixture={{
+        topics: [{ name: "/my/topic", datatype: "my_datatype" }],
+        frame: {
+          "/my/topic": [
+            {
+              receiveTime: { sec: 1, nsec: 0 },
+              topic: "/my/topic",
+              datatype: "my_datatype",
+              message: {},
+            },
+          ],
+        },
+      }}>
+      <SubscribeToList config={{ topics: "/my/topic" }} />
+    </PanelSetup>
+  );
+});

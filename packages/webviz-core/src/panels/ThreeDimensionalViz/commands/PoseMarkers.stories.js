@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import { Worldview, DEFAULT_CAMERA_STATE } from "regl-worldview";
-import { withScreenshot } from "storycap";
 
 import PoseMarkers from "./PoseMarkers";
 

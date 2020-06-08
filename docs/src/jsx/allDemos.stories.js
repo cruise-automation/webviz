@@ -6,7 +6,6 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storycap";
 
 import CameraStateControlled from "./api/CameraStateControlled";
 import CameraStateUncontrolled from "./api/CameraStateUncontrolled";

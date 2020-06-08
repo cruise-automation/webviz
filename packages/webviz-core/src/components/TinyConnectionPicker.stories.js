@@ -8,26 +8,23 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storycap";
 
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { TinyConnectionPicker } from "webviz-core/src/components/TinyConnectionPicker";
 
-storiesOf("<TinyConnectionPicker>", module)
-  .addDecorator(withScreenshot())
-  .add("default", () => {
-    return (
-      <MockMessagePipelineProvider>
-        <div style={{ padding: 8, textAlign: "right", width: "100%" }}>
-          <TinyConnectionPicker
-            defaultIsOpen
-            inputDescription={
-              <>
-                Using local bag file <code>only-a-cube.bag</code>.
-              </>
-            }
-          />
-        </div>
-      </MockMessagePipelineProvider>
-    );
-  });
+storiesOf("<TinyConnectionPicker>", module).add("default", () => {
+  return (
+    <MockMessagePipelineProvider>
+      <div style={{ padding: 8, textAlign: "right", width: "100%" }}>
+        <TinyConnectionPicker
+          defaultIsOpen
+          inputDescription={
+            <>
+              Using local bag file <code>only-a-cube.bag</code>.
+            </>
+          }
+        />
+      </div>
+    </MockMessagePipelineProvider>
+  );
+});

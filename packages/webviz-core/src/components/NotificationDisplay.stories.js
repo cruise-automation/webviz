@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import moment from "moment";
 import * as React from "react";
-import { withScreenshot } from "storycap";
 
 import { setHooks } from "../loadWebviz";
 import NotificationDisplay, {

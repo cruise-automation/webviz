@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storycap";
 
 import InteractionContextMenu from "./InteractionContextMenu";
 
@@ -68,12 +67,10 @@ const sharedProps = {
   clickedPosition: { clientX: 100, clientY: 200 },
 };
 
-storiesOf("<InteractionContextMenu>", module)
-  .addDecorator(withScreenshot())
-  .add("default", () => {
-    return (
-      <div style={{ background: "#2d2c33", display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
-        <InteractionContextMenu {...sharedProps} />
-      </div>
-    );
-  });
+storiesOf("<InteractionContextMenu>", module).add("default", () => {
+  return (
+    <div style={{ background: "#2d2c33", display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
+      <InteractionContextMenu {...sharedProps} />
+    </div>
+  );
+});

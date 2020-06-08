@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 import { PolygonBuilder } from "regl-worldview";
-import { withScreenshot } from "storycap";
 
 import DrawingTools, { POLYGON_TAB_TYPE } from "./index";
 import { pointsToPolygons } from "webviz-core/src/panels/ThreeDimensionalViz/utils/drawToolUtils";
@@ -37,17 +36,15 @@ const DEFAULT_PROPS = {
   updatePanelConfig: () => {},
 };
 
-storiesOf("<DrawingTools>", module)
-  .addDecorator(withScreenshot())
-  .add("Polygon", () => {
-    return (
-      <div style={containerStyle}>
-        <div style={{ margin: 8 }}>
-          <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="yaml" />
-        </div>
-        <div style={{ margin: 8 }}>
-          <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="json" />
-        </div>
+storiesOf("<DrawingTools>", module).add("Polygon", () => {
+  return (
+    <div style={containerStyle}>
+      <div style={{ margin: 8 }}>
+        <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="yaml" />
       </div>
-    );
-  });
+      <div style={{ margin: 8 }}>
+        <DrawingTools {...DEFAULT_PROPS} defaultSelectedTab={POLYGON_TAB_TYPE} selectedPolygonEditFormat="json" />
+      </div>
+    </div>
+  );
+});

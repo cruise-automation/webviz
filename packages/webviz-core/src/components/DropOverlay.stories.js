@@ -8,12 +8,9 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storycap";
 
 import DropOverlay from "webviz-core/src/components/DropOverlay";
 
-storiesOf("<DropOverlay>", module)
-  .addDecorator(withScreenshot())
-  .add("default", () => {
-    return <DropOverlay>Some DropOverlay</DropOverlay>;
-  });
+storiesOf("<DropOverlay>", module).add("default", () => {
+  return <DropOverlay>Some DropOverlay</DropOverlay>;
+});

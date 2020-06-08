@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import type { Time } from "rosbag";
-import { withScreenshot } from "storycap";
 
 import Plot from "webviz-core/src/panels/Plot";
 import PanelSetup, { triggerWheel } from "webviz-core/src/stories/PanelSetup";

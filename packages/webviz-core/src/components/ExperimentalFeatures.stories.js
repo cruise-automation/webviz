@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storycap";
 
 import { ExperimentalFeaturesModal } from "webviz-core/src/components/ExperimentalFeatures";
 import {

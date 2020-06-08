@@ -8,31 +8,28 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storycap";
 
 import ContextMenu from "webviz-core/src/components/ContextMenu";
 import Menu, { Item } from "webviz-core/src/components/Menu";
 
-storiesOf("<ContextMenu>", module)
-  .addDecorator(withScreenshot())
-  .add("standard", () => {
-    const onContextMenu = (e: any) => {
-      e.stopPropagation();
-      e.preventDefault();
-      const menu = (
-        <Menu>
-          <Item>foo</Item>
-          <Item>bar</Item>
-          <Item>baz</Item>
-        </Menu>
-      );
-      ContextMenu.show(e.clientX, e.clientY, menu);
-    };
-    return (
-      <div style={{ margin: 20 }}>
-        <div onContextMenu={onContextMenu} style={{ margin: 20, padding: 20, backgroundColor: "pink" }}>
-          right click on me
-        </div>
-      </div>
+storiesOf("<ContextMenu>", module).add("standard", () => {
+  const onContextMenu = (e: any) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const menu = (
+      <Menu>
+        <Item>foo</Item>
+        <Item>bar</Item>
+        <Item>baz</Item>
+      </Menu>
     );
-  });
+    ContextMenu.show(e.clientX, e.clientY, menu);
+  };
+  return (
+    <div style={{ margin: 20 }}>
+      <div onContextMenu={onContextMenu} style={{ margin: 20, padding: 20, backgroundColor: "pink" }}>
+        right click on me
+      </div>
+    </div>
+  );
+});

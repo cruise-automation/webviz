@@ -12,7 +12,6 @@ import { createMemoryHistory } from "history";
 import * as React from "react";
 import { Mosaic, MosaicWindow } from "react-mosaic-component";
 import { Provider } from "react-redux";
-import { withScreenshot } from "storycap";
 
 import PanelToolbar from "./index";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
@@ -74,7 +73,6 @@ function KeepToolbarVisibleHack() {
 }
 
 storiesOf("<PanelToolbar>", module)
-  .addDecorator(withScreenshot())
   .addDecorator((childrenRenderFcn) => {
     // Provide all stories with PanelContext and redux state
     return (

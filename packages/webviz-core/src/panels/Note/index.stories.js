@@ -8,13 +8,11 @@
 
 import { storiesOf } from "@storybook/react";
 import React from "react";
-import { withScreenshot } from "storycap";
 
 import Note from "./index";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
 storiesOf("<Note>", module)
-  .addDecorator(withScreenshot())
   .add("empty", () => {
     return (
       <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }}>

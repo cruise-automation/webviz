@@ -10,12 +10,10 @@ import { storiesOf } from "@storybook/react";
 import React from "react";
 import ReactDOM from "react-dom";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storycap";
 
 import { Select, Option } from ".";
 
 storiesOf("<Select>", module)
-  .addDecorator(withScreenshot())
   .add("closed", () => {
     return (
       <div style={{ padding: 30, width: 300 }}>

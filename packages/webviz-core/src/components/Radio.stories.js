@@ -8,7 +8,6 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { withScreenshot } from "storycap";
 
 import Radio, { type RadioOption } from "webviz-core/src/components/Radio";
 
@@ -71,13 +70,11 @@ function ControlledExample() {
     </Box>
   );
 }
-storiesOf("<Radio>", module)
-  .addDecorator(withScreenshot())
-  .add("basic", () => (
-    <div>
-      <Box title="default">
-        <Radio options={optionArr} selectedId="first" onChange={() => {}} />
-      </Box>
-      <ControlledExample />
-    </div>
-  ));
+storiesOf("<Radio>", module).add("basic", () => (
+  <div>
+    <Box title="default">
+      <Radio options={optionArr} selectedId="first" onChange={() => {}} />
+    </Box>
+    <ControlledExample />
+  </div>
+));

@@ -10,7 +10,6 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
-import { withScreenshot } from "storycap";
 
 import ErrorBoundary from "./ErrorBoundary";
 
@@ -27,14 +26,12 @@ class Broken extends React.Component<{}> {
   }
 }
 
-storiesOf("<ErrorBoundary>", module)
-  .addDecorator(withScreenshot())
-  .add("examples", () => {
-    return (
-      <DndProvider backend={HTML5Backend}>
-        <ErrorBoundary>
-          <Broken />
-        </ErrorBoundary>
-      </DndProvider>
-    );
-  });
+storiesOf("<ErrorBoundary>", module).add("examples", () => {
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <ErrorBoundary>
+        <Broken />
+      </ErrorBoundary>
+    </DndProvider>
+  );
+});

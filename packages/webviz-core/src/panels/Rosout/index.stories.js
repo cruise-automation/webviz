@@ -9,7 +9,6 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 import TestUtils from "react-dom/test-utils";
-import { withScreenshot } from "storycap";
 
 import Rosout from "webviz-core/src/panels/Rosout";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
@@ -81,7 +80,6 @@ const fixture = {
 };
 
 storiesOf("<RosoutPanel>", module)
-  .addDecorator(withScreenshot())
   .add("default", () => {
     return (
       <PanelSetup fixture={fixture}>

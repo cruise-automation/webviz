@@ -139,12 +139,8 @@
     "serve-static-webviz": "node_modules/http-server/bin/http-server __static_webviz__",
     "screenshot": "NODE_ENV=development storycap http://localhost:6006 --serverTimeout 120000 --captureTimeout 35000 --disableCssAnimation --serverCmd \"yarn run storybook\" --viewport \"1001x745\" --parallel 4",
     "screenshot-ci": "npm run screenshot -- --puppeteerLaunchConfig '{\"executablePath\": \"/usr/bin/google-chrome\", \"headless\": true, \"args\":[\"--use-gl=swiftshader\", \"--no-sandbox\",\"--disable-setuid-sandbox\", \"--disable-dev-shm-usage\", \"--headless\", \"--mute-audio\", \"--user-agent=PuppeteerTestingChrome/80.\"]}'",
-    "screenshot-proprietary-ci": "npm run screenshot-ci -- --parallel 4",
     "screenshot-local": "npm run screenshot -- --puppeteerLaunchConfig '{\"headless\": true, \"--args\":[\"--user-agent=PuppeteerTestingChrome/80.\"]}' --parallel 4",
     "screenshot-local-debug": "npm run screenshot-local -- --parallel 1 --debug",
-    "ci-commands-base": "npm run install-ci && NODE_ENV=production npm run build && npm run lint && npm run flow && npm test",
-    "ci-commands-for-cruise-open-source-repo": "npm run ci-commands-base && NODE_ENV=production npm run screenshot-ci",
-    "ci-commands-for-cruise-proprietary-repo": "npm run ci-commands-base && NODE_ENV=production npm run screenshot-proprietary-ci",
-    "ci": "npm run ci-commands-for-cruise-open-source-repo && reg-suit run --verbose"
+    "ci": "npm run install-ci && NODE_ENV=production npm run build && npm run lint && npm run flow && npm test && NODE_ENV=production npm run screenshot-ci && reg-suit run --verbose"
   }
 }

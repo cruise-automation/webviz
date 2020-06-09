@@ -15,7 +15,7 @@ Please see the individual package READMEs for details on how to install and use 
 
 ## Slack
 
-We have a [Slack workspace](https://webvizchat.slack.com/) to make it easier to ask questions and chat with other people who use Webviz. Please send an email to jp.posma@getcruise.com and david.crawford@getcruise.com so we can invite you.
+We have a [Slack workspace](https://github.com/cruise-automation/webviz/issues/461) to make it easier to ask questions and chat with other people who use Webviz. Join using the latest link posted [here](https://github.com/cruise-automation/webviz/issues/461).
 
 ## Running the static Webviz application
 

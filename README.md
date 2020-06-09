@@ -13,6 +13,10 @@
 
 Please see the individual package READMEs for details on how to install and use them.
 
+## Slack
+
+We have a [Slack workspace](https://github.com/cruise-automation/webviz/issues/461) to make it easier to ask questions and chat with other people who use Webviz. Join using the latest link posted [here](https://github.com/cruise-automation/webviz/issues/461).
+
 ## Running the static Webviz application
 
 We recommend using the [hosted version of Webviz](https://webviz.io/app/?demo), which can connect to your [rosbridge_server](http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge) or stream in bag data from your S3/GCS bucket. This way you'll always use the latest version of Webviz.
@@ -54,6 +58,8 @@ If you have the right permissions, you can publish:
 
 - `npm run publish` to publish npm packages.
 - `npm run docs-deploy` to deploy that statically hosted website (this is also done automatically in CI on the master branch).
+
+If you run into any issues, file an issue on Github or ask us on Slack (see above).
 
 ## Contributing
 

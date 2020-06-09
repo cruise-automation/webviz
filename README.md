@@ -59,7 +59,7 @@ If you have the right permissions, you can publish:
 - `npm run publish` to publish npm packages.
 - `npm run docs-deploy` to deploy that statically hosted website (this is also done automatically in CI on the master branch).
 
-If you run into any issues, file an issue or Github or ask us on Slack (see above).
+If you run into any issues, file an issue on Github or ask us on Slack (see above).
 
 ## Contributing
 

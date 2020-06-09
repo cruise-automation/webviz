@@ -3,16 +3,19 @@
 import { storiesOf } from "@storybook/react";
 import { quat } from "gl-matrix";
 import { range } from "lodash";
-import React, { useState, useLayoutEffect, useCallback } from "react";
+import React, { useState, useLayoutEffect, useCallback, useEffect } from "react";
 import tinyColor from "tinycolor2";
 
 import { Axes, Cubes } from "../commands";
 import type { Color } from "../types";
 import { vec4ToOrientation } from "../utils/commandUtils";
 import Container from "./Container";
+import getTextAtlas from "./pregeneratedTextAtlas";
 import { rng } from "./util";
 
 import { GLText } from "..";
+
+const getAtlasPromise = getTextAtlas();
 
 function textMarkers({
   text,
@@ -231,6 +234,26 @@ storiesOf("Worldview/GLText", module)
         <Axes />
       </Container>
     );
+  })
+  .add("with pregenerated text atlas", () => {
+    const markers = textMarkers({ text: "Hello\nWorldview", billboard: true });
+    function Example() {
+      const [textAtlas, setTextAtlas] = useState();
+      useEffect(() => {
+        getAtlasPromise.then((atlas) => {
+          setTextAtlas(atlas);
+        });
+      });
+
+      return (
+        <Container cameraState={{ perspective: true, distance: 25 }}>
+          {textAtlas && <GLText textAtlas={textAtlas}>{markers}</GLText>}
+          <Axes />
+        </Container>
+      );
+    }
+
+    return <Example />;
   })
   .add("overlapping fixed", () => {
     const markers = overlappingMarkers({ text: "Hello Worldview", billboard: true });

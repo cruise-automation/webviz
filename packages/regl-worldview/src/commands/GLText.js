@@ -1,6 +1,7 @@
 // @flow
 
 import TinySDF from "@mapbox/tiny-sdf";
+import difference from "lodash/difference";
 import memoizeOne from "memoize-one";
 import React, { useState } from "react";
 
@@ -32,6 +33,21 @@ import { isColorDark, type TextMarker } from "./Text";
 //   provide support for this. Some font info could be generated/stored offline, possibly including the atlas.
 // - Explore multi-channel SDFs.
 
+type CharacterLocations = {
+  [char: string]: {|
+    x: number,
+    y: number,
+    width: number,
+  |},
+};
+
+export type GeneratedAtlas = {|
+  charInfo: CharacterLocations,
+  textureWidth: number,
+  textureHeight: number,
+  textureData: Uint8Array,
+|};
+
 type TextMarkerProps = TextMarker & {
   billboard?: ?boolean,
   highlightedIndices?: Array<number>,
@@ -44,14 +60,7 @@ type Props = {
   scaleInvariantFontSize?: number,
   resolution?: number,
   alphabet?: string[],
-};
-
-type CharacterLocations = {
-  [char: string]: {|
-    x: number,
-    y: number,
-    width: number,
-  |},
+  textAtlas?: GeneratedAtlas,
 };
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
@@ -86,16 +95,10 @@ const setMarkerYOffset = (offsets: Map<string, number>, marker: TextMarker, yOff
 };
 
 // Build a single font atlas: a texture containing all characters and position/size data for each character.
-const createMemoizedBuildAtlas = () =>
+const createMemoizedGenerateAtlas = () =>
   memoizeOne(
     // We update charSet mutably but monotonically. Pass in the size to invalidate the cache.
-    (
-      charSet: Set<string>,
-      _setSize,
-      resolution: number,
-      atlasTexture: any,
-      maxAtlasWidth: number
-    ): CharacterLocations => {
+    (charSet: Set<string>, _setSize, resolution: number, maxAtlasWidth: number): GeneratedAtlas => {
       const tinySDF = new TinySDF(resolution, BUFFER, SDF_RADIUS, CUTOFF, "sans-serif", "normal");
       const ctx = memoizedCreateCanvas(`${resolution}px sans-serif`);
 
@@ -135,18 +138,27 @@ const createMemoizedBuildAtlas = () =>
         }
       }
 
-      atlasTexture({
-        data: textureData,
-        width: textureWidth,
-        height: textureHeight,
-        format: "alpha",
-        wrap: "clamp",
-        mag: "linear",
-        min: "linear",
-      });
-      return charInfo;
+      return {
+        charInfo,
+        textureWidth,
+        textureHeight,
+        textureData,
+      };
     }
   );
+
+const createMemoizedDrawAtlasTexture = () =>
+  memoizeOne((textAtlas: GeneratedAtlas, atlasTexture: any) => {
+    atlasTexture({
+      data: textAtlas.textureData,
+      width: textAtlas.textureWidth,
+      height: textAtlas.textureHeight,
+      format: "alpha",
+      wrap: "clamp",
+      mag: "linear",
+      min: "linear",
+    });
+  });
 
 const vert = `
   precision mediump float;
@@ -314,7 +326,8 @@ const frag = `
 function makeTextCommand(alphabet?: string[]) {
   // Keep the set of rendered characters around so we don't have to rebuild the font atlas too often.
   const charSet = new Set(alphabet || []);
-  const memoizedBuildAtlas = createMemoizedBuildAtlas();
+  const memoizedGenerateAtlas = createMemoizedGenerateAtlas();
+  const memoizedDrawAtlasTexture = createMemoizedDrawAtlasTexture();
 
   const command = (regl: any) => {
     const atlasTexture = regl.texture();
@@ -378,10 +391,18 @@ function makeTextCommand(alphabet?: string[]) {
           charSet.add(char);
         }
       }
-      // See http://webglstats.com/webgl/parameter/MAX_TEXTURE_SIZE - everyone has at least min 2048 texture size, and
-      // almost everyone has at least 4096. With a 2048 width we have ~900 height with a full character set.
-      const maxAtlasWidth: number = regl.limits.maxTextureSize || 2048;
-      const charInfo = memoizedBuildAtlas(charSet, charSet.size, command.resolution, atlasTexture, maxAtlasWidth);
+
+      let generatedAtlas = command.textAtlas;
+      const generatedAtlasChars = generatedAtlas ? Object.keys(generatedAtlas.charInfo) : [];
+      const textChars = Array.from(charSet);
+      const generatedAtlasHasAllChars = difference(textChars, generatedAtlasChars).length === 0;
+      if (!generatedAtlas || !generatedAtlasHasAllChars) {
+        // See http://webglstats.com/webgl/parameter/MAX_TEXTURE_SIZE - everyone has at least min 2048 texture size, and
+        // almost everyone has at least 4096. With a 2048 width we have ~900 height with a full character set.
+        const maxAtlasWidth: number = regl.limits.maxTextureSize || 2048;
+        generatedAtlas = memoizedGenerateAtlas(charSet, charSet.size, command.resolution, maxAtlasWidth);
+      }
+      memoizedDrawAtlasTexture(generatedAtlas, atlasTexture);
 
       const destOffsets = new Float32Array(estimatedInstances * 2);
       const srcWidths = new Float32Array(estimatedInstances);
@@ -436,7 +457,7 @@ function makeTextCommand(alphabet?: string[]) {
             lineCount++;
             continue;
           }
-          const info = charInfo[char];
+          const info = generatedAtlas.charInfo[char];
           const index = totalInstances + markerInstances;
 
           // Calculate per-character attributes
@@ -546,6 +567,7 @@ export default function GLText(props: Props) {
   command.resolution = Math.max(MIN_RESOLUTION, props.resolution || DEFAULT_RESOLUTION);
   command.scaleInvariant = props.scaleInvariantFontSize != null;
   command.scaleInvariantSize = props.scaleInvariantFontSize ?? 0;
+  command.textAtlas = props.textAtlas;
   const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 
   return <Command getChildrenForHitmap={getChildrenForHitmap} reglCommand={command} {...props} />;

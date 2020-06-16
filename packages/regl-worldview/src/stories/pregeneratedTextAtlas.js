@@ -1,10 +1,7 @@
 // @flow
 
-// Import this gzipped and unzip to reduce space in git (it's 1.8mb uncompressed), and because when I download it
-// uncompressed it doesn't seem to actually load the file correctly :(
-// $FlowFixMe
-import textureAtlasDataUrl from "file-loader!./textureAtlasData.bin.gz";
-import pako from "pako";
+// $FlowFixMe flow doesn't like file-loader
+import textureAtlasDataUrl from "file-loader!./textureAtlasData.bin";
 
 import { type GeneratedAtlas } from "../commands/GLText";
 
@@ -108,12 +105,12 @@ const textureWidth = 2034;
 const textureHeight = 900;
 
 export default async function getTextAtlas(): Promise<GeneratedAtlas> {
-  const { body } = await fetch(textureAtlasDataUrl);
-  if (!body) {
+  const textureDataResponse = await fetch(textureAtlasDataUrl);
+  if (!textureDataResponse) {
     throw new Error("Cannot find texture body");
   }
-  const { value } = await body.getReader().read();
-  const textureData = pako.inflate(value);
+  const buffer = await textureDataResponse.arrayBuffer();
+  const textureData = new Uint8Array(buffer, 0, buffer.byteLength);
 
   return {
     textureData,

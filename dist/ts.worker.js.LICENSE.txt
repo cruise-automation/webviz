@@ -1,0 +1,92 @@
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved. 
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0  
+ 
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE, 
+MERCHANTABLITY OR NON-INFRINGEMENT. 
+ 
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+
+/*! ./../../../../../../../timers-browserify/main.js */
+
+/*! ./../../../../../../../webpack/buildin/global.js */
+
+/*! ./../../../../../../webpack/buildin/harmony-module.js */
+
+/*! ./../../../../../../webpack/node_modules/process/browser.js */
+
+/*! ./../../../../../webpack/buildin/global.js */
+
+/*! ./../../../../../webpack/node_modules/process/browser.js */
+
+/*! ./../webpack/buildin/global.js */
+
+/*! ./../webpack/node_modules/process/browser.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/platform.js (<- Module uses injected variables (process, global)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/language/typescript/lib/typescriptServices.js (<- Module uses injected variables (process, __dirname, module)) */
+
+/*! ModuleConcatenation bailout: Module is not an ECMAScript module */
+
+/*! ModuleConcatenation bailout: Module uses injected variables (process, __dirname, module) */
+
+/*! ModuleConcatenation bailout: Module uses injected variables (process, global) */
+
+/*! all exports used */
+
+/*! exports provided: createClassifier, createLanguageService, displayPartsToString, EndOfLineState, flattenDiagnosticMessageText, IndentStyle, ScriptKind, ScriptTarget, TokenClass */
+
+/*! exports provided: isWindows, isMacintosh, isLinux, isNative, isWeb, isIOS, globals, setImmediate, OS */
+
+/*! exports used: ScriptKind, ScriptTarget, createLanguageService */
+
+/*! exports used: globals, isWeb, isWindows */
+
+/*! no exports provided */
+
+/*! no static exports found */
+
+/*! setimmediate */
+
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
+
+/*!*******************************************!*\
+  !*** (webpack)/buildin/harmony-module.js ***!
+  \*******************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/timers-browserify/main.js ***!
+  \************************************************/
+
+/*!*************************************************!*\
+  !*** (webpack)/node_modules/process/browser.js ***!
+  \*************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/setimmediate/setImmediate.js ***!
+  \***************************************************/
+
+/*!*******************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/base/common/platform.js ***!
+  \*******************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/language/typescript/lib/typescriptServices.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/language/typescript/ts.worker.js + 34 modules ***!
+  \*****************************************************************************************/
+
+/*!*************************************************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/editor/common/standalone/promise-polyfill/polyfill.js ***!
+  \*************************************************************************************************/

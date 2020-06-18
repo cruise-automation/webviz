@@ -20,7 +20,7 @@
 
 /*! exports provided: initialize */
 
-/*! exports provided: isWindows, isMacintosh, isLinux, isNative, isWeb, globals, setImmediate, OS */
+/*! exports provided: isWindows, isMacintosh, isLinux, isNative, isWeb, isIOS, globals, setImmediate, OS */
 
 /*! exports used: globals, isWeb, isWindows */
 
@@ -49,7 +49,7 @@
   \*******************************************************************/
 
 /*!********************************************************************************!*\
-  !*** ./node_modules/monaco-editor/esm/vs/editor/editor.worker.js + 30 modules ***!
+  !*** ./node_modules/monaco-editor/esm/vs/editor/editor.worker.js + 31 modules ***!
   \********************************************************************************/
 
 /*!*************************************************************************************************!*\

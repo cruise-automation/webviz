@@ -1,318 +1,14 @@
-/*! !../../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../../node_modules/postcss-loader/src??postcss!./codicon-animations.css */
-
-/*! !../../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../../node_modules/postcss-loader/src??postcss!./codicon.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./accessibilityHelp.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./checkbox.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./countBadge.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./editorQuickOpen.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./findInput.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./goToDefinitionAtPosition.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./gotoErrorWidget.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./gotoLine.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./iPadShowKeyboard.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./iconlabel.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./inputBox.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./inspectTokens.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./keybindingLabel.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./outlineTree.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./peekViewWidget.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./progressbar.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./quickOutline.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./quickopen.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./referencesWidget.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./splitview.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./suggest.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./suggestStatusBar.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./symbol-icons.css */
-
-/*! !../../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../../node_modules/postcss-loader/src??postcss!./tree.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./bracketMatching.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./clipboard.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./codelensWidget.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./colorPicker.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./dnd.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./findWidget.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./folding.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./hover.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./lightBulbWidget.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./links.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./messageController.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./parameterHints.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./renameInputField.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./snippetSession.css */
-
-/*! !../../../../../../../../../node_modules/css-loader??ref--14-oneOf-1!../../../../../../../../../node_modules/postcss-loader/src??postcss!./zoneWidget.css */
-
 /*! !./editor.main.js */
-
-/*! ../../../../../../../../../../../node_modules/css-loader/lib/css-base.js */
-
-/*! ../../../../../../../../../../../node_modules/css-loader/lib/url/escape.js */
-
-/*! ../../../../../../../../../../../node_modules/style-loader/lib/addStyles.js */
-
-/*! ../../../../../../../../../../node_modules/css-loader/lib/css-base.js */
-
-/*! ../../../../../../../../../../node_modules/style-loader/lib/addStyles.js */
-
-/*! ../../../../../../../../../node_modules/css-loader/lib/css-base.js */
-
-/*! ../../../../../../../../../node_modules/style-loader/lib/addStyles.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/browser/controller/coreCommands.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/bracketMatching/bracketMatching.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/caretOperations/caretOperations.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/caretOperations/transpose.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/clipboard/clipboard.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/codeActionContributions.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorDetector.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/comment/comment.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/contextmenu/contextmenu.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/cursorUndo/cursorUndo.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/dnd/dnd.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/folding/folding.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/fontZoom/fontZoom.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/format/formatActions.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/goToDefinition/goToDefinitionCommands.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/goToDefinition/goToDefinitionMouse.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/gotoError.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/linesOperations/linesOperations.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/links/links.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/multicursor/multicursor.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/referenceSearch/referenceSearch.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/smartSelect/smartSelect.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetController2.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/wordHighlighter/wordHighlighter.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/wordOperations/wordOperations.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/contrib/wordPartOperations/wordPartOperations.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/gotoLine.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickOutline.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/standalone/browser/referenceSearch/standaloneReferenceSearch.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/editor/standalone/browser/toggleHighContrast/toggleHighContrast.js */
-
-/*! ../../../../../../../node_modules/monaco-editor/esm/vs/language/typescript/monaco.contribution.js */
-
-/*! ../../../../base/browser/browser.js */
-
-/*! ../../../../base/browser/dom.js */
-
-/*! ../../../../base/browser/fastDomNode.js */
-
-/*! ../../../../base/browser/formattedTextRenderer.js */
-
-/*! ../../../../base/browser/ui/aria/aria.js */
-
-/*! ../../../../base/browser/ui/widget.js */
-
-/*! ../../../../base/common/color.js */
-
-/*! ../../../../base/common/errors.js */
-
-/*! ../../../../base/common/filters.js */
-
-/*! ../../../../base/common/lifecycle.js */
-
-/*! ../../../../base/common/platform.js */
-
-/*! ../../../../base/common/strings.js */
-
-/*! ../../../../base/common/uri.js */
-
-/*! ../../../../base/parts/quickopen/browser/quickOpenModel.js */
-
-/*! ../../../../platform/configuration/common/configuration.js */
-
-/*! ../../../../platform/contextkey/common/contextkey.js */
-
-/*! ../../../../platform/instantiation/common/instantiation.js */
-
-/*! ../../../../platform/keybinding/common/keybinding.js */
-
-/*! ../../../../platform/notification/common/notification.js */
-
-/*! ../../../../platform/opener/common/opener.js */
-
-/*! ../../../../platform/storage/common/storage.js */
-
-/*! ../../../../platform/theme/common/colorRegistry.js */
-
-/*! ../../../../platform/theme/common/themeService.js */
-
-/*! ../../../base/browser/ui/aria/aria.js */
-
-/*! ../../../base/common/event.js */
-
-/*! ../../../base/common/idGenerator.js */
-
-/*! ../../../base/common/lifecycle.js */
-
-/*! ../../../base/common/objects.js */
-
-/*! ../../../base/common/resources.js */
-
-/*! ../../../base/common/strings.js */
-
-/*! ../../../browser/editorBrowser.js */
-
-/*! ../../../browser/editorExtensions.js */
-
-/*! ../../../browser/services/codeEditorService.js */
-
-/*! ../../../common/codicons.js */
-
-/*! ../../../common/core/position.js */
-
-/*! ../../../common/core/range.js */
-
-/*! ../../../common/editorContextKeys.js */
-
-/*! ../../../common/lifecycle.js */
-
-/*! ../../../common/modes.js */
-
-/*! ../../../common/modes/nullMode.js */
-
-/*! ../../../common/objects.js */
-
-/*! ../../../common/range.js */
-
-/*! ../../../common/services/modeService.js */
-
-/*! ../../../common/standaloneStrings.js */
-
-/*! ../../../common/strings.js */
-
-/*! ../../../contrib/gotoSymbol/peek/referencesController.js */
-
-/*! ../../../contrib/toggleTabFocusMode/toggleTabFocusMode.js */
-
-/*! ../../../nls.js */
-
-/*! ../../../platform/accessibility/common/accessibility.js */
-
-/*! ../../../platform/commands/common/commands.js */
-
-/*! ../../../platform/contextkey/common/contextkey.js */
-
-/*! ../../../platform/instantiation/common/instantiation.js */
-
-/*! ../../../platform/notification/common/notification.js */
-
-/*! ../../../platform/theme/common/colorRegistry.js */
-
-/*! ../../../platform/theme/common/themeService.js */
-
-/*! ../../browser/editorExtensions.js */
-
-/*! ../../common/config/commonEditorConfig.js */
-
-/*! ../../common/core/range.js */
-
-/*! ../../common/standaloneThemeService.js */
-
-/*! ../../dom.js */
 
 /*! ../../editor/editor.api.js */
 
+/*! ../basic-languages/javascript/javascript.contribution.js */
+
 /*! ../basic-languages/monaco.contribution */
 
-/*! ../cm_adapter */
+/*! ../basic-languages/typescript/typescript.contribution.js */
 
-/*! ../highlightedlabel/highlightedLabel.js */
+/*! ../cm_adapter */
 
 /*! ../language/css/monaco.contribution */
 
@@ -322,11 +18,9 @@
 
 /*! ../language/typescript/monaco.contribution */
 
-/*! ../services/codeEditorService.js */
+/*! ../language/typescript/monaco.contribution.js */
 
 /*! ./abap.js */
-
-/*! ./accessibilityHelp.css */
 
 /*! ./apex.js */
 
@@ -334,21 +28,79 @@
 
 /*! ./bat.js */
 
+/*! ./browser/controller/coreCommands.js */
+
 /*! ./cameligo.js */
 
 /*! ./clojure.js */
 
 /*! ./cm/keymap_vim */
 
-/*! ./codeEditorWidget.js */
-
-/*! ./codicon.ttf */
-
-/*! ./codicon/codicon-animations.css */
-
-/*! ./codicon/codicon.css */
-
 /*! ./coffee.js */
+
+/*! ./contrib/bracketMatching/bracketMatching.js */
+
+/*! ./contrib/caretOperations/caretOperations.js */
+
+/*! ./contrib/caretOperations/transpose.js */
+
+/*! ./contrib/clipboard/clipboard.js */
+
+/*! ./contrib/codeAction/codeActionContributions.js */
+
+/*! ./contrib/codelens/codelensController.js */
+
+/*! ./contrib/colorPicker/colorDetector.js */
+
+/*! ./contrib/comment/comment.js */
+
+/*! ./contrib/contextmenu/contextmenu.js */
+
+/*! ./contrib/cursorUndo/cursorUndo.js */
+
+/*! ./contrib/dnd/dnd.js */
+
+/*! ./contrib/find/findController.js */
+
+/*! ./contrib/folding/folding.js */
+
+/*! ./contrib/fontZoom/fontZoom.js */
+
+/*! ./contrib/format/formatActions.js */
+
+/*! ./contrib/gotoError/gotoError.js */
+
+/*! ./contrib/gotoSymbol/goToCommands.js */
+
+/*! ./contrib/gotoSymbol/link/goToDefinitionAtPosition.js */
+
+/*! ./contrib/hover/hover.js */
+
+/*! ./contrib/inPlaceReplace/inPlaceReplace.js */
+
+/*! ./contrib/linesOperations/linesOperations.js */
+
+/*! ./contrib/links/links.js */
+
+/*! ./contrib/multicursor/multicursor.js */
+
+/*! ./contrib/parameterHints/parameterHints.js */
+
+/*! ./contrib/rename/rename.js */
+
+/*! ./contrib/smartSelect/smartSelect.js */
+
+/*! ./contrib/snippet/snippetController2.js */
+
+/*! ./contrib/suggest/suggestController.js */
+
+/*! ./contrib/toggleTabFocusMode/toggleTabFocusMode.js */
+
+/*! ./contrib/wordHighlighter/wordHighlighter.js */
+
+/*! ./contrib/wordOperations/wordOperations.js */
+
+/*! ./contrib/wordPartOperations/wordPartOperations.js */
 
 /*! ./cpp.js */
 
@@ -364,8 +116,6 @@
 
 /*! ./dockerfile.js */
 
-/*! ./dom.js */
-
 /*! ./edcore.main */
 
 /*! ./editor */
@@ -374,15 +124,11 @@
 
 /*! ./editor.api.js */
 
-/*! ./editorQuickOpen.js */
-
 /*! ./factoryWithThrowingShims */
 
 /*! ./fsharp.js */
 
 /*! ./go.js */
-
-/*! ./gotoLine.css */
 
 /*! ./graphql.js */
 
@@ -392,17 +138,9 @@
 
 /*! ./htmlMode.js */
 
-/*! ./iPadShowKeyboard.css */
-
-/*! ./iconlabel.css */
-
 /*! ./ini.js */
 
-/*! ./inspectTokens.css */
-
 /*! ./java.js */
-
-/*! ./javascript.js */
 
 /*! ./jsonMode.js */
 
@@ -416,17 +154,11 @@
 
 /*! ./markdown.js */
 
-/*! ./media/outlineTree.css */
-
-/*! ./media/symbol-icons.css */
-
 /*! ./mips.js */
 
 /*! ./msdax.js */
 
 /*! ./mysql.js */
-
-/*! ./network.js */
 
 /*! ./objective-c.js */
 
@@ -434,15 +166,11 @@
 
 /*! ./pascaligo.js */
 
-/*! ./path.js */
-
 /*! ./perl.js */
 
 /*! ./pgsql.js */
 
 /*! ./php.js */
-
-/*! ./platform.js */
 
 /*! ./postiats.js */
 
@@ -461,8 +189,6 @@
 /*! ./redis.js */
 
 /*! ./redshift.js */
-
-/*! ./resources.js */
 
 /*! ./restructuredtext.js */
 
@@ -504,19 +230,11 @@
 
 /*! ./statusbar */
 
-/*! ./strings.js */
-
 /*! ./swift.js */
 
 /*! ./tcl.js */
 
-/*! ./tsMode.js */
-
 /*! ./twig.js */
-
-/*! ./typescript.js */
-
-/*! ./uri.js */
 
 /*! ./utils */
 
@@ -526,267 +244,91 @@
 
 /*! ./yaml.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/browser.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/base/common/stopwatch.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/dnd.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/basic-languages/_.contribution.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/dom.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/event.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/formattedTextRenderer.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/controller/coreCommands.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/globalMouseMoveMonitor.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/editorExtensions.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/keyboardEvent.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/widget/codeEditorWidget.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/mouseEvent.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/widget/diffEditorWidget.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/touch.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/browser/widget/diffNavigator.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/actionbar/actionbar.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/common/standaloneStrings.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/aria/aria.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/bracketMatching/bracketMatching.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/codiconLabel/codiconLabel.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/caretOperations/caretOperations.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/highlightedlabel/highlightedLabel.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/caretOperations/transpose.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/iconLabel/iconLabel.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/clipboard/clipboard.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/inputbox/inputBox.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/codeActionContributions.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/list/listWidget.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensController.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/menu/menu.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorDetector.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/sash/sash.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/comment/comment.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/scrollbar/scrollableElement.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/contextmenu/contextmenu.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/widget.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/cursorUndo/cursorUndo.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/actions.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/dnd/dnd.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/arrays.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/find/findController.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/assert.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/folding/folding.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/async.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/fontZoom/fontZoom.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/cancellation.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/format/formatActions.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/codicons.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/gotoError.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/collections.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/goToCommands.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/color.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/link/goToDefinitionAtPosition.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/diff/diff.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/errors.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/inPlaceReplace.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/event.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/linesOperations/linesOperations.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/filters.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/links/links.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/functional.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/multicursor/multicursor.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/hash.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/idGenerator.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/rename/rename.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/iterator.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/smartSelect/smartSelect.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/keyCodes.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetController2.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/keybindingLabels.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/suggest/suggestController.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/labels.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/lifecycle.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/wordHighlighter/wordHighlighter.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/linkedList.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/wordOperations/wordOperations.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/map.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/editor/contrib/wordPartOperations/wordPartOperations.js (<- Module is referenced from these modules with unsupported syntax: include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.api.js (referenced with cjs require), include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/marshalling.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/network.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/numbers.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/objects.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/path.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/platform.js (<- Module uses injected variables (process, global)) */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/resources.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/severity.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/stopwatch.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/strings.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/types.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/uri.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/parts/quickopen/browser/quickOpenModel.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/controller/coreCommands.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/controller/textAreaInput.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/core/editorState.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/editorBrowser.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/editorExtensions.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/services/bulkEditService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/services/codeEditorService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/widget/codeEditorWidget.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/widget/diffEditorWidget.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/widget/diffNavigator.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/widget/embeddedCodeEditorWidget.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/commands/replaceCommand.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/commands/shiftCommand.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/config/editorOptions.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/config/editorZoom.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/controller/cursorCommon.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/controller/cursorMoveCommands.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/controller/cursorMoveOperations.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/controller/cursorTypeOperations.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/node_modules/monaco-vim/lib/cm_adapter.js (referenced with cjs require)) */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/controller/cursorWordOperations.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/controller/wordCharacterClassifier.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/core/characterClassifier.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/core/editOperation.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/core/position.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/core/range.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/core/selection.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/editorContextKeys.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/model.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/model/textModel.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/model/textModelSearch.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/modes.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/modes/languageConfiguration.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/modes/languageConfigurationRegistry.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/modes/modesRegistry.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/modes/textToHtmlTokenizer.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/services/editorWorkerService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/services/markersDecorationService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/services/modeService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/services/modelService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/services/resolverService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/services/textResourceConfigurationService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/standaloneStrings.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/common/view/editorColorRegistry.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/documentSymbols/outlineTree.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/peek/referencesController.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/referencesModel.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/peekView/peekView.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/editorQuickOpen.js because of ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/nls.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/accessibility/common/accessibility.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/actions/common/actions.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/clipboard/common/clipboardService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/commands/common/commands.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/configuration/common/configuration.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/configuration/common/configurationRegistry.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/contextkey/common/contextkey.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/contextview/browser/contextView.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/instantiation/common/extensions.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/instantiation/common/instantiation.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/keybinding/common/keybinding.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/keybinding/common/keybindingsRegistry.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/label/common/label.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/list/browser/listService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/log/common/log.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/markers/common/markers.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/notification/common/notification.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/opener/common/opener.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/progress/common/progress.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/registry/common/platform.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/storage/common/storage.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/telemetry/common/telemetry.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/theme/common/colorRegistry.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/theme/common/styler.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/theme/common/themeService.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/monaco-editor/esm/vs/platform/workspace/common/workspace.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/nls.js */
 
 /*! ModuleConcatenation bailout: Module exports are unknown */
 
@@ -794,75 +336,7 @@
 
 /*! all exports used */
 
-/*! exports provided: EditorActionCommandEntry, QuickCommandAction */
-
-/*! exports provided: EmbeddedCodeEditorWidget */
-
-/*! exports provided: GotoLineEntry, GotoLineAction */
-
-/*! exports provided: HighlightedLabel */
-
-/*! exports provided: IPadShowKeyboard */
-
-/*! exports provided: IPeekViewService, PeekContext, getOuterEditor, PeekViewWidget, peekViewTitleBackground, peekViewTitleForeground, peekViewTitleInfoForeground, peekViewBorder, peekViewResultsBackground, peekViewResultsMatchForeground, peekViewResultsFileForeground, peekViewResultsSelectionBackground, peekViewResultsSelectionForeground, peekViewEditorBackground, peekViewEditorGutterBackground, peekViewResultsMatchHighlight, peekViewEditorMatchHighlight, peekViewEditorMatchHighlightBorder */
-
-/*! exports provided: IconLabel */
-
-/*! exports provided: IdGenerator, defaultGenerator */
-
-/*! exports provided: InputBox, HistoryInputBox */
-
 /*! exports provided: LanguageServiceDefaultsImpl */
-
-/*! exports provided: OneReference, FilePreview, FileReferences, ReferencesModel */
-
-/*! exports provided: QuickOpenController, BaseEditorQuickOpenAction */
-
-/*! exports provided: QuickOpenEntry, QuickOpenEntryGroup, QuickOpenModel */
-
-/*! exports provided: SYMBOL_ICON_ARRAY_FOREGROUND, SYMBOL_ICON_BOOLEAN_FOREGROUND, SYMBOL_ICON_CLASS_FOREGROUND, SYMBOL_ICON_COLOR_FOREGROUND, SYMBOL_ICON_CONSTANT_FOREGROUND, SYMBOL_ICON_CONSTRUCTOR_FOREGROUND, SYMBOL_ICON_ENUMERATOR_FOREGROUND, SYMBOL_ICON_ENUMERATOR_MEMBER_FOREGROUND, SYMBOL_ICON_EVENT_FOREGROUND, SYMBOL_ICON_FIELD_FOREGROUND, SYMBOL_ICON_FILE_FOREGROUND, SYMBOL_ICON_FOLDER_FOREGROUND, SYMBOL_ICON_FUNCTION_FOREGROUND, SYMBOL_ICON_INTERFACE_FOREGROUND, SYMBOL_ICON_KEY_FOREGROUND, SYMBOL_ICON_KEYWORD_FOREGROUND, SYMBOL_ICON_METHOD_FOREGROUND, SYMBOL_ICON_MODULE_FOREGROUND, SYMBOL_ICON_NAMESPACE_FOREGROUND, SYMBOL_ICON_NULL_FOREGROUND, SYMBOL_ICON_NUMBER_FOREGROUND, SYMBOL_ICON_OBJECT_FOREGROUND, SYMBOL_ICON_OPERATOR_FOREGROUND, SYMBOL_ICON_PACKAGE_FOREGROUND, SYMBOL_ICON_PROPERTY_FOREGROUND, SYMBOL_ICON_REFERENCE_FOREGROUND, SYMBOL_ICON_SNIPPET_FOREGROUND, SYMBOL_ICON_STRING_FOREGROUND, SYMBOL_ICON_STRUCT_FOREGROUND, SYMBOL_ICON_TEXT_FOREGROUND, SYMBOL_ICON_TYPEPARAMETER_FOREGROUND, SYMBOL_ICON_UNIT_FOREGROUND, SYMBOL_ICON_VARIABLE_FOREGROUND */
-
-/*! exports provided: StandaloneReferencesController */
-
-/*! exports provided: SymbolEntry, QuickOutlineAction */
-
-/*! exports provided: ToggleTabFocusModeAction */
-
-/*! exports provided: ctxReferenceSearchVisible, ReferencesController */
-
-/*! exports provided: escapeCodicons, markdownEscapeEscapedCodicons, renderCodicons */
-
-/*! exports provided: getPathLabel, getBaseLabel, normalizeDriveLetter, tildify */
-
-/*! exports provided: renderText, renderFormattedText, createElement */
-
-/*! exports used: BaseEditorQuickOpenAction */
-
-/*! exports used: EmbeddedCodeEditorWidget */
-
-/*! exports used: FileReferences, OneReference, ReferencesModel */
-
-/*! exports used: HighlightedLabel */
-
-/*! exports used: HistoryInputBox, InputBox */
-
-/*! exports used: IPeekViewService, PeekContext, PeekViewWidget, getOuterEditor, peekViewBorder, peekViewEditorBackground, peekViewEditorGutterBackground, peekViewEditorMatchHighlight, peekViewEditorMatchHighlightBorder, peekViewResultsBackground, peekViewResultsFileForeground, peekViewResultsMatchForeground, peekViewResultsMatchHighlight, peekViewResultsSelectionBackground, peekViewResultsSelectionForeground, peekViewTitleBackground, peekViewTitleForeground, peekViewTitleInfoForeground */
-
-/*! exports used: IconLabel */
-
-/*! exports used: IdGenerator, defaultGenerator */
-
-/*! exports used: QuickOpenEntry, QuickOpenEntryGroup, QuickOpenModel */
-
-/*! exports used: ReferencesController */
-
-/*! exports used: ToggleTabFocusModeAction */
-
-/*! exports used: createElement, renderFormattedText, renderText */
-
-/*! exports used: escapeCodicons, markdownEscapeEscapedCodicons, renderCodicons */
-
-/*! exports used: getBaseLabel, getPathLabel, normalizeDriveLetter */
 
 /*! import() */
 
@@ -880,6 +354,30 @@
 
 /*! react */
 
+/*!******************************************************!*\
+  !*** ./node_modules/react-monaco-editor/lib/diff.js ***!
+  \******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/react-monaco-editor/lib/index.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/react-monaco-editor/lib/utils.js ***!
+  \*******************************************************/
+
+/*!********************************************************!*\
+  !*** ./node_modules/react-monaco-editor/lib/editor.js ***!
+  \********************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/editor/edcore.main.js ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/editor/editor.main.js ***!
+  \*****************************************************************/
+
 /*!*******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/monaco-vim/lib/index.js ***!
   \*******************************************************************/
@@ -893,497 +391,41 @@
   \************************************************************************/
 
 /*!***************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-vim/lib/cm/keymap_vim.js ***!
+  !*** ./node_modules/react-monaco-editor/node_modules/prop-types/index.js ***!
   \***************************************************************************/
 
 /*!***************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/react-monaco-editor/lib/diff.js ***!
+  !*** ./packages/webviz-core/node_modules/monaco-vim/lib/cm/keymap_vim.js ***!
   \***************************************************************************/
 
 /*!****************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/react-monaco-editor/lib/index.js ***!
+  !*** ./node_modules/monaco-editor/esm/vs/editor/editor.all.js + 1 modules ***!
   \****************************************************************************/
 
-/*!****************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/react-monaco-editor/lib/utils.js ***!
-  \****************************************************************************/
+/*!*******************************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/language/css/monaco.contribution.js ***!
+  \*******************************************************************************/
 
-/*!*****************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/react-monaco-editor/lib/editor.js ***!
-  \*****************************************************************************/
+/*!********************************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/language/html/monaco.contribution.js ***!
+  \********************************************************************************/
 
-/*!**************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/labels.js ***!
-  \**************************************************************************************/
+/*!********************************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/language/json/monaco.contribution.js ***!
+  \********************************************************************************/
 
-/*!**************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/edcore.main.js ***!
-  \**************************************************************************************/
+/*!********************************************************************************!*\
+  !*** include-loader!./node_modules/monaco-editor/esm/vs/editor/editor.main.js ***!
+  \********************************************************************************/
 
-/*!**************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/editor.main.js ***!
-  \**************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** ./node_modules/react-monaco-editor/node_modules/prop-types/factoryWithThrowingShims.js ***!
+  \**********************************************************************************************/
 
-/*!****************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/codicons.js ***!
-  \****************************************************************************************/
-
-/*!*******************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/common/idGenerator.js ***!
-  \*******************************************************************************************/
-
-/*!*******************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/dnd/dnd.css ***!
-  \*******************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** ./node_modules/react-monaco-editor/node_modules/prop-types/lib/ReactPropTypesSecret.js ***!
+  \**********************************************************************************************/
 
 /*!***********************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.css ***!
+  !*** ./node_modules/monaco-editor/esm/vs/basic-languages/monaco.contribution.js + 58 modules ***!
   \***********************************************************************************************/
-
-/*!***********************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/links/links.css ***!
-  \***********************************************************************************************/
-
-/*!************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/react-monaco-editor/node_modules/prop-types/index.js ***!
-  \************************************************************************************************/
-
-/*!*************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/parts/tree/browser/tree.css ***!
-  \*************************************************************************************************/
-
-/*!***************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/find/findWidget.css ***!
-  \***************************************************************************************************/
-
-/*!***************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/folding/folding.css ***!
-  \***************************************************************************************************/
-
-/*!***************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/editor.all.js + 119 modules ***!
-  \***************************************************************************************************/
-
-/*!****************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/language/css/monaco.contribution.js ***!
-  \****************************************************************************************************/
-
-/*!*****************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/language/html/monaco.contribution.js ***!
-  \*****************************************************************************************************/
-
-/*!*****************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/language/json/monaco.contribution.js ***!
-  \*****************************************************************************************************/
-
-/*!*****************************************************************************************************!*\
-  !*** include-loader!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/editor.main.js ***!
-  \*****************************************************************************************************/
-
-/*!******************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/formattedTextRenderer.js ***!
-  \******************************************************************************************************/
-
-/*!******************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/checkbox/checkbox.css ***!
-  \******************************************************************************************************/
-
-/*!******************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/inputbox/inputBox.css ***!
-  \******************************************************************************************************/
-
-/*!*******************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/iconLabel/iconLabel.js ***!
-  \*******************************************************************************************************/
-
-/*!*******************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/clipboard/clipboard.css ***!
-  \*******************************************************************************************************/
-
-/*!********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/findinput/findInput.css ***!
-  \********************************************************************************************************/
-
-/*!********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/iconLabel/iconlabel.css ***!
-  \********************************************************************************************************/
-
-/*!********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/splitview/splitview.css ***!
-  \********************************************************************************************************/
-
-/*!*********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/suggest/media/suggest.css ***!
-  \*********************************************************************************************************/
-
-/*!*********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/zoneWidget/zoneWidget.css ***!
-  \*********************************************************************************************************/
-
-/*!**********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/countBadge/countBadge.css ***!
-  \**********************************************************************************************************/
-
-/*!**********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetSession.css ***!
-  \**********************************************************************************************************/
-
-/*!***********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/parts/quickopen/browser/quickopen.css ***!
-  \***********************************************************************************************************/
-
-/*!***********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensWidget.css ***!
-  \***********************************************************************************************************/
-
-/*!***********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorPicker.css ***!
-  \***********************************************************************************************************/
-
-/*!***********************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/rename/renameInputField.css ***!
-  \***********************************************************************************************************/
-
-/*!************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/progressbar/progressbar.css ***!
-  \************************************************************************************************************/
-
-/*!*************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/codiconLabel/codiconLabel.js ***!
-  \*************************************************************************************************************/
-
-/*!*************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/referencesModel.js ***!
-  \*************************************************************************************************************/
-
-/*!*************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/message/messageController.css ***!
-  \*************************************************************************************************************/
-
-/*!**************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/lightBulbWidget.css ***!
-  \**************************************************************************************************************/
-
-/*!**************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/documentSymbols/outlineTree.js ***!
-  \**************************************************************************************************************/
-
-/*!****************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/peekView/peekView.js + 1 modules ***!
-  \****************************************************************************************************************/
-
-/*!****************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/gotoLine.js ***!
-  \****************************************************************************************************************/
-
-/*!*****************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/codiconLabel/codicon/codicon.css ***!
-  \*****************************************************************************************************************/
-
-/*!*****************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/codiconLabel/codicon/codicon.ttf ***!
-  \*****************************************************************************************************************/
-
-/*!*****************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/inputbox/inputBox.js + 1 modules ***!
-  \*****************************************************************************************************************/
-
-/*!*****************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.css ***!
-  \*****************************************************************************************************************/
-
-/*!*****************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/peekView/media/peekViewWidget.css ***!
-  \*****************************************************************************************************************/
-
-/*!*****************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/gotoLine.css ***!
-  \*****************************************************************************************************************/
-
-/*!******************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/browser/widget/embeddedCodeEditorWidget.js ***!
-  \******************************************************************************************************************/
-
-/*!******************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/suggest/media/suggestStatusBar.css ***!
-  \******************************************************************************************************************/
-
-/*!*******************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/bracketMatching/bracketMatching.css ***!
-  \*******************************************************************************************************************/
-
-/*!*******************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/media/gotoErrorWidget.css ***!
-  \*******************************************************************************************************************/
-
-/*!*******************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/react-monaco-editor/node_modules/prop-types/factoryWithThrowingShims.js ***!
-  \*******************************************************************************************************************/
-
-/*!*******************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/react-monaco-editor/node_modules/prop-types/lib/ReactPropTypesSecret.js ***!
-  \*******************************************************************************************************************/
-
-/*!********************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/keybindingLabel/keybindingLabel.css ***!
-  \********************************************************************************************************************/
-
-/*!********************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/basic-languages/monaco.contribution.js + 61 modules ***!
-  \********************************************************************************************************************/
-
-/*!********************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/peek/referencesWidget.css ***!
-  \********************************************************************************************************************/
-
-/*!********************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickCommand.js ***!
-  \********************************************************************************************************************/
-
-/*!*********************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/highlightedlabel/highlightedLabel.js ***!
-  \*********************************************************************************************************************/
-
-/*!*********************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/documentSymbols/media/outlineTree.css ***!
-  \*********************************************************************************************************************/
-
-/*!*********************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickOutline.css ***!
-  \*********************************************************************************************************************/
-
-/*!**********************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/documentSymbols/media/symbol-icons.css ***!
-  \**********************************************************************************************************************/
-
-/*!***********************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/language/typescript/monaco.contribution.js + 1 modules ***!
-  \***********************************************************************************************************************/
-
-/*!************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode.js ***!
-  \************************************************************************************************************************/
-
-/*!************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/editorQuickOpen.css ***!
-  \************************************************************************************************************************/
-
-/*!*************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js ***!
-  \*************************************************************************************************************************/
-
-/*!**************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.css ***!
-  \**************************************************************************************************************************/
-
-/*!***************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/parts/quickopen/browser/quickOpenModel.js + 1 modules ***!
-  \***************************************************************************************************************************/
-
-/*!****************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/codiconLabel/codicon/codicon-animations.css ***!
-  \****************************************************************************************************************************/
-
-/*!****************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/link/goToDefinitionAtPosition.css ***!
-  \****************************************************************************************************************************/
-
-/*!*******************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js ***!
-  \*******************************************************************************************************************************/
-
-/*!********************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.css ***!
-  \********************************************************************************************************************************/
-
-/*!********************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickOutline.js + 2 modules ***!
-  \********************************************************************************************************************************/
-
-/*!*********************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js ***!
-  \*********************************************************************************************************************************/
-
-/*!**********************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.css ***!
-  \**********************************************************************************************************************************/
-
-/*!***********************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/peek/referencesController.js + 4 modules ***!
-  \***********************************************************************************************************************************/
-
-/*!***********************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/toggleHighContrast/toggleHighContrast.js ***!
-  \***********************************************************************************************************************************/
-
-/*!************************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/editorQuickOpen.js + 11 modules ***!
-  \************************************************************************************************************************************/
-
-/*!***************************************************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/referenceSearch/standaloneReferenceSearch.js ***!
-  \***************************************************************************************************************************************/
-
-/*!*********************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/dnd/dnd.css ***!
-  \*********************************************************************************************************************************************************************************/
-
-/*!*************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/hover/hover.css ***!
-  \*************************************************************************************************************************************************************************************/
-
-/*!*************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/links/links.css ***!
-  \*************************************************************************************************************************************************************************************/
-
-/*!***************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/parts/tree/browser/tree.css ***!
-  \***************************************************************************************************************************************************************************************/
-
-/*!*****************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/find/findWidget.css ***!
-  \*****************************************************************************************************************************************************************************************/
-
-/*!*****************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/folding/folding.css ***!
-  \*****************************************************************************************************************************************************************************************/
-
-/*!********************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/checkbox/checkbox.css ***!
-  \********************************************************************************************************************************************************************************************/
-
-/*!********************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/inputbox/inputBox.css ***!
-  \********************************************************************************************************************************************************************************************/
-
-/*!*********************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/clipboard/clipboard.css ***!
-  \*********************************************************************************************************************************************************************************************/
-
-/*!**********************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/findinput/findInput.css ***!
-  \**********************************************************************************************************************************************************************************************/
-
-/*!**********************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/iconLabel/iconlabel.css ***!
-  \**********************************************************************************************************************************************************************************************/
-
-/*!**********************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/splitview/splitview.css ***!
-  \**********************************************************************************************************************************************************************************************/
-
-/*!***********************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/suggest/media/suggest.css ***!
-  \***********************************************************************************************************************************************************************************************/
-
-/*!***********************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/zoneWidget/zoneWidget.css ***!
-  \***********************************************************************************************************************************************************************************************/
-
-/*!************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/countBadge/countBadge.css ***!
-  \************************************************************************************************************************************************************************************************/
-
-/*!************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/snippet/snippetSession.css ***!
-  \************************************************************************************************************************************************************************************************/
-
-/*!*************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/parts/quickopen/browser/quickopen.css ***!
-  \*************************************************************************************************************************************************************************************************/
-
-/*!*************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/codelens/codelensWidget.css ***!
-  \*************************************************************************************************************************************************************************************************/
-
-/*!*************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/colorPicker.css ***!
-  \*************************************************************************************************************************************************************************************************/
-
-/*!*************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/rename/renameInputField.css ***!
-  \*************************************************************************************************************************************************************************************************/
-
-/*!**************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/progressbar/progressbar.css ***!
-  \**************************************************************************************************************************************************************************************************/
-
-/*!***************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/message/messageController.css ***!
-  \***************************************************************************************************************************************************************************************************/
-
-/*!****************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/lightBulbWidget.css ***!
-  \****************************************************************************************************************************************************************************************************/
-
-/*!*******************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/codiconLabel/codicon/codicon.css ***!
-  \*******************************************************************************************************************************************************************************************************/
-
-/*!*******************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/parameterHints.css ***!
-  \*******************************************************************************************************************************************************************************************************/
-
-/*!*******************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/peekView/media/peekViewWidget.css ***!
-  \*******************************************************************************************************************************************************************************************************/
-
-/*!*******************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/gotoLine.css ***!
-  \*******************************************************************************************************************************************************************************************************/
-
-/*!********************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/suggest/media/suggestStatusBar.css ***!
-  \********************************************************************************************************************************************************************************************************/
-
-/*!*********************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/bracketMatching/bracketMatching.css ***!
-  \*********************************************************************************************************************************************************************************************************/
-
-/*!*********************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/media/gotoErrorWidget.css ***!
-  \*********************************************************************************************************************************************************************************************************/
-
-/*!**********************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/keybindingLabel/keybindingLabel.css ***!
-  \**********************************************************************************************************************************************************************************************************/
-
-/*!**********************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/peek/referencesWidget.css ***!
-  \**********************************************************************************************************************************************************************************************************/
-
-/*!***********************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/documentSymbols/media/outlineTree.css ***!
-  \***********************************************************************************************************************************************************************************************************/
-
-/*!***********************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/quickOutline.css ***!
-  \***********************************************************************************************************************************************************************************************************/
-
-/*!************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/documentSymbols/media/symbol-icons.css ***!
-  \************************************************************************************************************************************************************************************************************/
-
-/*!**************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickOpen/editorQuickOpen.css ***!
-  \**************************************************************************************************************************************************************************************************************/
-
-/*!****************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.css ***!
-  \****************************************************************************************************************************************************************************************************************/
-
-/*!******************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/base/browser/ui/codiconLabel/codicon/codicon-animations.css ***!
-  \******************************************************************************************************************************************************************************************************************/
-
-/*!******************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/link/goToDefinitionAtPosition.css ***!
-  \******************************************************************************************************************************************************************************************************************/
-
-/*!**********************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.css ***!
-  \**********************************************************************************************************************************************************************************************************************/
-
-/*!************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--14-oneOf-1!./node_modules/postcss-loader/src??postcss!./packages/webviz-core/node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.css ***!
-  \************************************************************************************************************************************************************************************************************************/

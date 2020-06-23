@@ -16,6 +16,10 @@ Please see the individual package READMEs for details on how to install and use 
 
 We have a [Slack workspace](https://github.com/cruise-automation/webviz/issues/461) to make it easier to ask questions and chat with other people who use Webviz. Join using the latest link posted [here](https://github.com/cruise-automation/webviz/issues/461).
 
+## How to use Webviz
+
+We have in-app help resources. Go to the [application](https://webviz.io/app/) and click the "?" icon in the top right. Each individual panel also has a "?" icon in its top right.
+
 ## Running the static Webviz application
 
 We recommend using the [hosted version of Webviz](https://webviz.io/app/?demo), which can connect to your [rosbridge_server](http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge) or stream in bag data from your S3/GCS bucket. This way you'll always use the latest version of Webviz.

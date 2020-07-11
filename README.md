@@ -6,12 +6,19 @@
 
 - **webviz-core** ([homepage](https://webviz.io/), [tool](https://webviz.io/app), [github](https://github.com/cruise-automation/webviz/tree/master/packages/webviz-core)): A tool to inspect [ROS bags](http://wiki.ros.org/ROS/Tutorials/Recording%20and%20playing%20back%20data).
 - **regl-worldview** ([homepage](https://webviz.io/worldview/), [npm](https://www.npmjs.com/package/regl-worldview), [github](https://github.com/cruise-automation/webviz/tree/master/packages/regl-worldview)): React library for rendering 2D and 3D scenes using [regl](https://github.com/regl-project/regl).
-- **react-key-listener** ([npm](https://www.npmjs.com/package/react-key-listener), [github](https://github.com/cruise-automation/webviz/tree/master/packages/react-key-listener)): React component for handling keyboard events, without interfering with editable fields and buttons.
 - **@cruise-automation/hooks** ([npm](https://www.npmjs.com/package/@cruise-automation/hooks), [github](https://github.com/cruise-automation/webviz/tree/master/packages/@cruise-automation/hooks)): A list of resusable React hooks.
 - **@cruise-automation/button** ([npm](https://www.npmjs.com/package/@cruise-automation/button), [github](https://github.com/cruise-automation/webviz/tree/master/packages/@cruise-automation/button)): React button component that supports animated progress for destructive actions, "pulse" animation, and Bulma classes.
 - **@cruise-automation/tooltip** ([npm](https://www.npmjs.com/package/@cruise-automation/tooltip), [github](https://github.com/cruise-automation/webviz/tree/master/packages/@cruise-automation/tooltip)): React component that uses [popper.js](https://popper.js.org/) to add rich, customizable tooltips to DOM elements.
 
 Please see the individual package READMEs for details on how to install and use them.
+
+## Slack
+
+We have a [Slack workspace](https://github.com/cruise-automation/webviz/issues/461) to make it easier to ask questions and chat with other people who use Webviz. Join using the latest link posted [here](https://github.com/cruise-automation/webviz/issues/461).
+
+## How to use Webviz
+
+We have in-app help resources. Go to the [application](https://webviz.io/app/) and click the "?" icon in the top right. Each individual panel also has a "?" icon in its top right.
 
 ## Running the static Webviz application
 
@@ -54,6 +61,8 @@ If you have the right permissions, you can publish:
 
 - `npm run publish` to publish npm packages.
 - `npm run docs-deploy` to deploy that statically hosted website (this is also done automatically in CI on the master branch).
+
+If you run into any issues, file an issue on Github or ask us on Slack (see above).
 
 ## Contributing
 

@@ -59,12 +59,6 @@ const singleColor = (regl) =>
         }
         return props.points;
       },
-      color: (context, props) => {
-        if (shouldConvert(props.colors) || shouldConvert(props.color)) {
-          return getVertexColors(props);
-        }
-        return props.color || props.colors;
-      },
     },
     uniforms: {
       color: (context, props) => {
@@ -125,10 +119,13 @@ const vertexColors = (regl) =>
         return props.points;
       },
       color: (context, props) => {
-        if (shouldConvert(props.colors) || shouldConvert(props.color)) {
+        if (!props.colors || !props.colors.length) {
+          throw new Error(`Invalid empty or null prop "colors" when rendering triangles using vertex colors`);
+        }
+        if (shouldConvert(props.colors)) {
           return getVertexColors(props);
         }
-        return props.color || props.colors;
+        return props.colors;
       },
     },
 

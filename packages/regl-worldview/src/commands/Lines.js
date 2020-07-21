@@ -10,7 +10,15 @@ import flatten from "lodash/flatten";
 import * as React from "react";
 
 import type { Line, Vec4, Color, Pose } from "../types";
-import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import {
+  defaultBlend,
+  withPose,
+  toRGBA,
+  shouldConvert,
+  pointToVec3,
+  defaultReglDepth,
+  defaultReglBlend,
+} from "../utils/commandUtils";
 import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 
@@ -456,11 +464,12 @@ const lines = (regl: any) => {
   }
 
   // Disable depth for debug rendering (so lines stay visible)
-  const render = (debug, commands) => {
+  const render = (props, commands) => {
+    const { debug, depth = defaultReglDepth, blend = defaultReglBlend } = props;
     if (debug) {
       regl({ depth: { enable: false } })(commands);
     } else {
-      commands();
+      regl({ depth, blend })(commands);
     }
   };
 
@@ -502,7 +511,7 @@ const lines = (regl: any) => {
       poseRotationBuffer({ data: rotationArray, usage: "dynamic" });
     }
 
-    render(debug, () => {
+    render(props, () => {
       // Use Object.assign because it's actually faster than babel's object spread polyfill.
       command(
         Object.assign({}, props, {

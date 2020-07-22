@@ -10,9 +10,12 @@ import * as React from "react";
 import styled from "styled-components";
 
 import TextHighlight from "./TextHighlight";
-import TextMiddleTruncate, { DEFAULT_END_TEXT_LENGTH } from "./TextMiddleTruncate";
+import TextMiddleTruncate from "./TextMiddleTruncate";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+
+// Extra text length to make sure text such as `1000 visible topics` don't get truncated.
+const DEFAULT_END_TEXT_LENGTH = 22;
 
 export const STopicNameDisplay = styled.div`
   display: inline-block;
@@ -35,8 +38,14 @@ export const SName = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
 `;
+const SWrapper = styled.div`
+  display: flex;
+  align-items: center;
+`;
 
 type Props = {|
+  // Additional element to show in non xs view when not searching. Currently only used for showing visible topic count.
+  additionalElem?: React.Node,
   displayName: string,
   isXSWidth: boolean,
   maxWidth: number,
@@ -47,6 +56,7 @@ type Props = {|
 |};
 
 export default function NodeName({
+  additionalElem,
   displayName,
   isXSWidth,
   maxWidth,
@@ -74,13 +84,20 @@ export default function NodeName({
   const xsWidthElem =
     isXSWidth &&
     (tooltips ? (
-      <Tooltip contents={tooltips} placement="bottom">
+      <Tooltip contents={tooltips} placement="top">
         <SName>{targetStr}</SName>
       </Tooltip>
     ) : (
       <SName>{targetStr}</SName>
     ));
 
+  const textTruncateElem = (
+    <TextMiddleTruncate
+      text={targetStr}
+      endTextLength={topicName ? topicName.split("/").pop().length + 1 : DEFAULT_END_TEXT_LENGTH}
+      tooltips={tooltips}
+    />
+  );
   return (
     <STopicNameDisplay style={style}>
       <SDisplayName style={{ maxWidth }}>
@@ -91,11 +108,16 @@ export default function NodeName({
             {isXSWidth ? (
               xsWidthElem
             ) : (
-              <TextMiddleTruncate
-                text={targetStr}
-                endTextLength={topicName ? topicName.split("/").pop().length + 1 : DEFAULT_END_TEXT_LENGTH}
-                tooltips={tooltips}
-              />
+              <>
+                {additionalElem ? (
+                  <SWrapper style={{ width: maxWidth }}>
+                    {textTruncateElem}
+                    {additionalElem}
+                  </SWrapper>
+                ) : (
+                  textTruncateElem
+                )}
+              </>
             )}
           </>
         )}

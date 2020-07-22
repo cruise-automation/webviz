@@ -62,10 +62,8 @@ export default function TopicGroupBody({
   objectPath,
   topicGroup,
   topicGroup: {
-    displayName,
-    expanded,
     items,
-    derivedFields: { addTopicKeyboardFocusIndex, hasFeatureColumn },
+    derivedFields: { hasFeatureColumn },
   },
   onOpenEditTopicSettingsModal,
   onTopicGroupsChange,
@@ -78,7 +76,7 @@ export default function TopicGroupBody({
     [onOpenGroupEditModal, topicGroupIndex]
   );
 
-  const onSortEnd = ({ oldIndex, newIndex, ...rest }) => {
+  const onSortEnd = ({ oldIndex, newIndex }) => {
     // Move the dragged item from the oldIndex to the newIndex
     const movingItem = items[oldIndex];
     const newItems = [...items];

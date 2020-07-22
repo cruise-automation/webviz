@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { groupBy, keyBy, sortBy, mapValues } from "lodash";
+import { groupBy, sortBy, mapValues } from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";
@@ -24,6 +24,7 @@ import filterMap from "webviz-core/src/filterMap";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Topic, Message, SubscribePayload, AdvertisePayload } from "webviz-core/src/players/types";
 import { downloadTextFile } from "webviz-core/src/util";
+import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
 
 const { useCallback } = React;
 
@@ -82,6 +83,7 @@ function getPublisherGroup({ advertiser }: AdvertisePayload): string {
 // Display webviz internal state for debugging and viewing topic dependencies.
 function Internals(): React.Node {
   const { topics } = PanelAPI.useDataSourceInfo();
+  const topicsByName = React.useMemo(() => getTopicsByTopicName(topics), [topics]);
   const subscriptions = useMessagePipeline(
     useCallback(({ subscriptions: pipelineSubscriptions }) => pipelineSubscriptions, [])
   );
@@ -100,8 +102,6 @@ function Internals(): React.Node {
       if (subscriptions.length === 0) {
         return "(none)";
       }
-      const topicsByName = keyBy(topics, (topic) => topic.name);
-
       return Object.keys(groupedSubscriptions)
         .sort()
         .map((key) => {
@@ -124,7 +124,7 @@ function Internals(): React.Node {
           );
         });
     },
-    [groupedSubscriptions, subscriptions, topics]
+    [groupedSubscriptions, subscriptions.length, topicsByName]
   );
 
   const renderedPublishers = React.useMemo(
@@ -183,7 +183,7 @@ function Internals(): React.Node {
             recordedData.current = {
               topics: filterMap(Object.keys(itemsByPath), (topic) =>
                 itemsByPath[topic] && itemsByPath[topic].length
-                  ? { name: topic, datatype: itemsByPath[topic][0].message.datatype }
+                  ? { name: topic, datatype: topicsByName[topic].datatype }
                   : null
               ),
               frame,
@@ -193,7 +193,7 @@ function Internals(): React.Node {
         </MessageHistoryDEPRECATED>
       );
     },
-    [recordingTopics]
+    [recordingTopics, topicsByName]
   );
 
   return (

@@ -137,7 +137,7 @@ export default function TopicGroupList({
     [setSettingsTopicName, topicGroups]
   );
 
-  const onSortEnd = ({ oldIndex, newIndex, ...rest }) => {
+  const onSortEnd = ({ oldIndex, newIndex }) => {
     // Move the dragged item from the oldIndex to the newIndex
     const movingItem = topicGroups[oldIndex];
     const newItems = [...topicGroups];

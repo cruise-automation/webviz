@@ -13,11 +13,12 @@ import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS, SEEK_ON_START_NS, SEEK_START
 import TestProvider from "./TestProvider";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
-import { type DataProviderMessage } from "webviz-core/src/dataProviders/types";
+import type { GetMessagesExtra } from "webviz-core/src/dataProviders/types";
 import {
+  type Message,
+  PlayerCapabilities,
   type PlayerMetricsCollectorInterface,
   type PlayerState,
-  PlayerCapabilities,
 } from "webviz-core/src/players/types";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromNanoSec } from "webviz-core/src/util/time";
@@ -101,6 +102,7 @@ describe("RandomAccessPlayer", () => {
           startTime: { sec: 10, nsec: 0 },
           topics: [{ datatype: "fooBar", name: "/foo/bar" }, { datatype: "baz", name: "/baz" }],
           messageDefinitionsByTopic: {},
+          playerWarnings: {},
         },
         capabilities: [PlayerCapabilities.setSpeed],
         isPresent: true,
@@ -137,7 +139,7 @@ describe("RandomAccessPlayer", () => {
     const store = new MessageStore(2);
     await source.setListener(store.add);
     // make getMessages do nothing since we're going to start reading
-    provider.getMessages = () => new Promise((resolve) => {});
+    provider.getMessages = () => new Promise(() => {});
     const messages = await store.done;
     expect(messages.map((msg) => (msg.activeData || {}).isPlaying)).toEqual([undefined, false]);
     store.reset(1);
@@ -178,7 +180,7 @@ describe("RandomAccessPlayer", () => {
     expect.assertions(7);
     const provider = new TestProvider();
     let callCount = 0;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<Message[]> => {
       callCount++;
       switch (callCount) {
         case 1:
@@ -191,7 +193,7 @@ describe("RandomAccessPlayer", () => {
           expect(start).toEqual({ sec: 10, nsec: 1 });
           expect(end).toEqual({ sec: 10, nsec: 4000000 });
           expect(topics).toEqual(["/foo/bar"]);
-          const result: DataProviderMessage[] = [
+          const result: Message[] = [
             {
               topic: "/foo/bar",
               receiveTime: { sec: 10, nsec: 2 },
@@ -230,7 +232,6 @@ describe("RandomAccessPlayer", () => {
       [
         {
           topic: "/foo/bar",
-          datatype: "fooBar",
           receiveTime: { sec: 10, nsec: 2 },
           message: { payload: "foo bar" },
         },
@@ -244,7 +245,7 @@ describe("RandomAccessPlayer", () => {
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
 
     let callCount = 0;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<Message[]> => {
       callCount++;
       switch (callCount) {
         case 1:
@@ -283,7 +284,7 @@ describe("RandomAccessPlayer", () => {
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
 
     let callCount = 0;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<Message[]> => {
       callCount++;
       switch (callCount) {
         case 1:
@@ -297,7 +298,7 @@ describe("RandomAccessPlayer", () => {
           expect(start).toEqual({ sec: 10, nsec: 1 });
           expect(end).toEqual({ sec: 10, nsec: 4000000 });
           expect(topics).toContainOnly(["/foo/bar"]);
-          const result: DataProviderMessage[] = [
+          const result: Message[] = [
             {
               topic: "/foo/bar",
               receiveTime: { sec: 10, nsec: 0 },
@@ -337,7 +338,6 @@ describe("RandomAccessPlayer", () => {
       [
         {
           topic: "/foo/bar",
-          datatype: "fooBar",
           receiveTime: { sec: 10, nsec: 0 },
           message: { payload: "foo bar" },
         },
@@ -352,7 +352,7 @@ describe("RandomAccessPlayer", () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
     let callCount = 0;
-    provider.getMessages = async (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+    provider.getMessages = async (start: Time, end: Time, topics: string[]): Promise<Message[]> => {
       expect(topics).toContainOnly(["/foo/bar"]);
       callCount++;
       switch (callCount) {
@@ -366,7 +366,7 @@ describe("RandomAccessPlayer", () => {
           expect(start).toEqual({ sec: 10, nsec: 1 });
           expect(end).toEqual({ sec: 10, nsec: 4000000 });
           expect(topics).toContainOnly(["/foo/bar"]);
-          const result: DataProviderMessage[] = [
+          const result: Message[] = [
             {
               topic: "/foo/bar",
               receiveTime: { sec: 10, nsec: 0 },
@@ -418,14 +418,14 @@ describe("RandomAccessPlayer", () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
     let callCount = 0;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<Message[]> => {
       callCount++;
       switch (callCount) {
         case 1: {
           expect(start).toEqual({ sec: 19, nsec: 1e9 + 50 - SEEK_BACK_NANOSECONDS });
           expect(end).toEqual({ sec: 20, nsec: 50 });
           expect(topics).toContainOnly(["/foo/bar"]);
-          const result: DataProviderMessage[] = [
+          const result: Message[] = [
             {
               topic: "/foo/bar",
               receiveTime: { sec: 10, nsec: 5 },
@@ -467,7 +467,6 @@ describe("RandomAccessPlayer", () => {
     expect(messages.map((msg) => (msg.activeData ? msg.activeData.messages : []))).toEqual([
       [
         {
-          datatype: "fooBar",
           topic: "/foo/bar",
           receiveTime: { sec: 10, nsec: 5 },
           message: { payload: "foo bar" },
@@ -482,7 +481,6 @@ describe("RandomAccessPlayer", () => {
       [
         {
           topic: "/foo/bar",
-          datatype: "fooBar",
           receiveTime: { sec: 10, nsec: 101 },
           message: { payload: "baz" },
         },
@@ -498,7 +496,7 @@ describe("RandomAccessPlayer", () => {
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
     let callCount = 0;
     let backfillPromiseCallback;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<Message[]> => {
       callCount++;
       switch (callCount) {
         case 1: {
@@ -548,7 +546,6 @@ describe("RandomAccessPlayer", () => {
       [
         {
           topic: "/foo/bar",
-          datatype: "fooBar",
           receiveTime: { sec: 20, nsec: 51 },
           message: { payload: "baz" },
         },
@@ -557,7 +554,7 @@ describe("RandomAccessPlayer", () => {
     ]);
 
     store.reset(0); // We expect 0 more messages; this will throw an error later if we received more.
-    const result: DataProviderMessage = {
+    const result: Message = {
       topic: "/foo/bar",
       receiveTime: { sec: 10, nsec: 5 },
       message: { payload: "foo bar" },
@@ -574,7 +571,7 @@ describe("RandomAccessPlayer", () => {
     source.setSubscriptions([{ topic: "/foo/bar" }]);
     source.requestBackfill(); // We always get a `requestBackfill` after each `setSubscriptions`.
     let lastGetMessagesCall;
-    const getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+    const getMessages = (start: Time, end: Time, topics: string[]): Promise<Message[]> => {
       return new Promise((resolve) => {
         lastGetMessagesCall = { start, end, topics, resolve };
       });
@@ -626,7 +623,7 @@ describe("RandomAccessPlayer", () => {
     const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
 
     let callCount = 0;
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<Message[]> => {
       callCount++;
       switch (callCount) {
         case 1:
@@ -680,7 +677,7 @@ describe("RandomAccessPlayer", () => {
 
   it("reads a bunch of messages", async () => {
     const provider = new TestProvider();
-    const items: DataProviderMessage[] = [
+    const items: Message[] = [
       {
         topic: "/foo/bar",
         receiveTime: { sec: 10, nsec: 0 },
@@ -704,7 +701,7 @@ describe("RandomAccessPlayer", () => {
     ];
     let resolve;
     const done = new Promise((_resolve) => (resolve = _resolve));
-    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+    provider.getMessages = (start: Time, end: Time, topics: string[]): Promise<Message[]> => {
       expect(topics).toContainOnly(["/foo/bar", "/baz"]);
       const next = items.shift();
       if (!next) {
@@ -727,26 +724,22 @@ describe("RandomAccessPlayer", () => {
     source.pausePlayback();
     expect(received).toEqual([
       {
-        datatype: "fooBar",
         topic: "/foo/bar",
         receiveTime: { sec: 10, nsec: 0 },
         message: { payload: "foo bar 1" },
       },
       {
         topic: "/baz",
-        datatype: "baz",
         receiveTime: { sec: 10, nsec: 500 },
         message: { payload: "baz 1" },
       },
       {
         topic: "/baz",
-        datatype: "baz",
         receiveTime: { sec: 10, nsec: 5000 },
         message: { payload: "baz 2" },
       },
       {
         topic: "/foo/bar",
-        datatype: "fooBar",
         receiveTime: { sec: 10, nsec: 9000000 },
         message: { payload: "foo bar 2" },
       },
@@ -843,7 +836,16 @@ describe("RandomAccessPlayer", () => {
     player.startPlayback();
 
     await firstGetMessagesCall;
-    expect(getMessages.mock.calls).toEqual([[{ sec: 10, nsec: 1 }, { sec: 10, nsec: 4000000 }, ["/foo/bar"]]]);
+    expect(getMessages.mock.calls).toEqual([
+      [
+        { sec: 10, nsec: 1 },
+        { sec: 10, nsec: 4000000 },
+        ["/foo/bar"],
+        {
+          topicsToOnlyLoadInBlocks: new Set(),
+        },
+      ],
+    ]);
 
     expect(await store.done).toEqual([
       expect.objectContaining({ activeData: undefined }),
@@ -909,10 +911,10 @@ describe("RandomAccessPlayer", () => {
       initialized(): void {
         this._initialized++;
       }
-      play(speed: number): void {
+      play(_speed: number): void {
         this._played++;
       }
-      seek(time: Time): void {
+      seek(_time: Time): void {
         this._seeked++;
       }
       setSpeed(speed: number): void {
@@ -922,8 +924,9 @@ describe("RandomAccessPlayer", () => {
         this._paused++;
       }
       close(): void {}
-      recordPlaybackTime(time: Time): void {}
-      recordBytesReceived(bytes: number): void {}
+      recordDataProviderPerformance(): void {}
+      recordPlaybackTime(_time: Time): void {}
+      recordBytesReceived(_bytes: number): void {}
       stats() {
         return {
           initialized: this._initialized,
@@ -952,7 +955,7 @@ describe("RandomAccessPlayer", () => {
         seeked: 0,
         speed: [],
       });
-      const listener = jest.fn().mockImplementation(async (msg) => {
+      const listener = jest.fn().mockImplementation(async (_msg) => {
         // just discard messages
       });
 
@@ -1055,7 +1058,9 @@ describe("RandomAccessPlayer", () => {
     player.startPlayback();
 
     await firstGetMessagesCall;
-    expect(getMessages.mock.calls).toEqual([[{ sec: 10, nsec: 1 }, { sec: 10, nsec: 4000000 }, ["/foo/bar"]]]);
+    expect(getMessages.mock.calls).toEqual([
+      [{ sec: 10, nsec: 1 }, { sec: 10, nsec: 4000000 }, ["/foo/bar"], { topicsToOnlyLoadInBlocks: new Set() }],
+    ]);
 
     // $FlowFixMe
     Object.defineProperty(document, "visibilityState", {
@@ -1135,12 +1140,51 @@ describe("RandomAccessPlayer", () => {
 
     // $FlowFixMe - doesn't understand getMessages.mock
     expect(provider.getMessages.mock.calls).toEqual([
-      [{ sec: 100, nsec: 0 }, { sec: 100, nsec: 0 }, ["/foo/bar"]],
+      [{ sec: 100, nsec: 0 }, { sec: 100, nsec: 0 }, ["/foo/bar"], { topicsToOnlyLoadInBlocks: new Set() }],
       // We don't care too much about the `nsec` part since it might depend on playback speed.
       // As long as the start of the range is actually at the beginning of the source.
-      [{ sec: 10, nsec: expect.any(Number) }, { sec: 10, nsec: expect.any(Number) }, ["/foo/bar"]],
+      [
+        { sec: 10, nsec: expect.any(Number) },
+        { sec: 10, nsec: expect.any(Number) },
+        ["/foo/bar"],
+        { topicsToOnlyLoadInBlocks: new Set() },
+      ],
     ]);
 
     player.close();
+  });
+
+  it("sets topicsToOnlyLoadInBlocks", async () => {
+    expect.assertions(2);
+    const provider = new TestProvider({
+      topics: [
+        { name: "/streaming_topic", datatype: "dummy" },
+        { name: "/blocks_and_streaming_topic", datatype: "dummy" },
+        { name: "/only_blocks_topic", datatype: "dummy" },
+      ],
+    });
+    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+
+    provider.getMessages = (
+      start: Time,
+      end: Time,
+      topics: string[],
+      extra?: ?GetMessagesExtra
+    ): Promise<Message[]> => {
+      expect(topics).toEqual(["/streaming_topic", "/blocks_and_streaming_topic", "/only_blocks_topic"]);
+      expect(extra?.topicsToOnlyLoadInBlocks).toEqual(new Set(["/only_blocks_topic"]));
+      return Promise.resolve([]);
+    };
+
+    const store = new MessageStore(2);
+    await source.setListener(store.add);
+    source.setSubscriptions([
+      { topic: "/unknown_topic" }, // Shouldn't appear in getMessages at all!
+      { topic: "/streaming_topic" },
+      { topic: "/blocks_and_streaming_topic" },
+      { topic: "/blocks_and_streaming_topic", onlyLoadInBlocks: true },
+      { topic: "/only_blocks_topic", onlyLoadInBlocks: true },
+    ]);
+    await store.done;
   });
 });

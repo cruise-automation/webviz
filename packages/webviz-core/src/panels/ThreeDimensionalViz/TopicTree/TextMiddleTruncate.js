@@ -58,7 +58,7 @@ export default function TextMiddleTruncate({ tooltips, text, endTextLength, styl
     </STextMiddleTruncate>
   );
   return tooltips ? (
-    <Tooltip contents={tooltips} placement="bottom" defaultShown={testShowTooltip}>
+    <Tooltip contents={tooltips} placement="top" defaultShown={testShowTooltip}>
       {elem}
     </Tooltip>
   ) : (

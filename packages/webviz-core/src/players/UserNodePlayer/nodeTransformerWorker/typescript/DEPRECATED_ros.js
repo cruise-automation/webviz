@@ -22,7 +22,6 @@ export declare type Time = {
 
 export declare type Message<T> = {
   topic: string,
-  datatype: string,
   receiveTime: Time,
   message: T,
 }
@@ -71,7 +70,7 @@ export declare type BaseMarker = {
   pose: Pose,
   scale: Scale,
   color?: RGBA,
-  customMetadata?: { [key: string]: any }
+  metadata?: { [key: string]: any }
 };
 
 /**

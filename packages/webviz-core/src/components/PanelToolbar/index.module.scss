@@ -6,16 +6,17 @@
 
 @import "~webviz-core/src/styles/colors.module.scss";
 
-$spacing: 4px;
+$panelToolbarHeight: 26px;
+$panelToolbarSpacing: 4px;
 
 .iconContainer {
-  padding-top: $spacing;
+  padding-top: $panelToolbarSpacing;
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  margin-left: $spacing;
+  margin-left: $panelToolbarSpacing;
   flex-direction: row;
-  min-height: 22px;
+  min-height: $panelToolbarHeight - $panelToolbarSpacing;
   padding: 2px 2px 2px 6px;
   svg {
     font-size: 14px;
@@ -35,6 +36,7 @@ $spacing: 4px;
   flex-direction: row;
   justify-content: flex-end;
   background-color: $toolbar-fixed;
+  padding: $panelToolbarSpacing;
 
   &.floating {
     position: absolute;
@@ -66,7 +68,7 @@ $spacing: 4px;
   }
 
   &:not(.floating) {
-    min-height: 30px;
+    min-height: $panelToolbarHeight + $panelToolbarSpacing;
   }
 
   &.floatingShow {

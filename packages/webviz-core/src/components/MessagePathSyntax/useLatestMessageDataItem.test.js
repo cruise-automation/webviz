@@ -17,19 +17,16 @@ const datatypes = { datatype: { fields: [{ name: "value", type: "uint32", isArra
 const messages: Message[] = [
   {
     topic: "/topic",
-    datatype: "datatype",
     receiveTime: { sec: 0, nsec: 0 },
     message: { value: 0 },
   },
   {
     topic: "/topic",
-    datatype: "datatype",
     receiveTime: { sec: 1, nsec: 0 },
     message: { value: 1 },
   },
   {
     topic: "/topic",
-    datatype: "datatype",
     receiveTime: { sec: 2, nsec: 0 },
     message: { value: 2 },
   },

@@ -32,8 +32,7 @@ type Props = {|
   msg: { file: string, line: string, level: number, name: string, msg: string, header: Header },
 |};
 
-// $FlowFixMe - flow doesn't have a definition for React.memo
-export default React.memo(function LogMessage({ msg }: Props) {
+export default React.memo<Props>(function LogMessage({ msg }: Props) {
   const altStr = `${msg.file}:${msg.line}`;
 
   const strLevel = LevelToString(msg.level);

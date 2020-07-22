@@ -379,7 +379,7 @@ storiesOf("<Tab>", module)
       </PanelSetup>
     );
   })
-  .add("dragging and dropping a tab panel does not remove any nested tabs", () => {
+  .add("dragging and dropping a nested tab panel does not remove any tabs", () => {
     const store = configureStore(rootReducer);
     return (
       <PanelSetup

@@ -37,13 +37,15 @@ function getStore() {
 }
 
 function Context(props: { children: React.Node, store?: any }) {
+  const extraProps = props.store == null ? undefined : { store: props.store };
   return (
     <PanelSetup
       fixture={{
         topics: [{ name: "/some/topic", datatype: "some_datatype" }],
         datatypes: { some_datatype: { fields: [] } },
         frame: {},
-      }}>
+      }}
+      {...extraProps}>
       {props.children}
     </PanelSetup>
   );

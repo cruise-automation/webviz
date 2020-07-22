@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import Queue from "promise-queue";
 import { type Time, TimeUtil } from "rosbag";
 import uuid from "uuid";
 
@@ -42,11 +43,14 @@ export interface AutomatedRunClient {
   markTotalFrameEnd(): void;
   markFrameRenderStart(): void;
   markFrameRenderEnd(): void;
+  markPreloadStart(): void;
+  markPreloadEnd(): void;
   onFrameFinished(frameIndex: number): Promise<void>;
   finish(): any;
 }
 
 export const AUTOMATED_RUN_START_DELAY = process.env.NODE_ENV === "test" ? 10 : 2000;
+const NO_WARNINGS = Object.freeze({});
 
 const logger = new Logger(__filename);
 
@@ -67,6 +71,9 @@ export default class AutomatedRunPlayer implements Player {
   _error: ?Error;
   _waitToReportErrorPromise: ?Promise<void>;
   _startCalled: boolean = false;
+  // Calls to this._listener must not happen concurrently, and we want them to happen
+  // deterministically so we put them in a FIFO queue.
+  _emitStateQueue: Queue = new Queue(1);
 
   constructor(provider: DataProvider, client: AutomatedRunClient) {
     this._provider = provider;
@@ -119,37 +126,39 @@ export default class AutomatedRunPlayer implements Player {
 
       return {
         topic: message.topic,
-        datatype: topic.datatype,
         receiveTime: message.receiveTime,
         message: message.message,
       };
     });
   }
 
-  async _emitState(messages: Message[], currentTime: Time): Promise<void> {
-    if (!this._listener) {
-      return;
-    }
-    return this._listener({
-      isPresent: true,
-      showSpinner: false,
-      showInitializing: false,
-      progress: this._progress,
-      capabilities: [],
-      playerId: this._id,
-      activeData: {
-        messages,
-        currentTime,
-        startTime: this._providerResult.start,
-        endTime: this._providerResult.end,
-        isPlaying: this._isPlaying,
-        speed: this._speed,
-        messageOrder: "receiveTime",
-        lastSeekTime: 0,
-        topics: this._providerResult.topics,
-        datatypes: this._providerResult.datatypes,
-        messageDefinitionsByTopic: this._providerResult.messageDefinitionsByTopic,
-      },
+  _emitState(messages: Message[], currentTime: Time): Promise<void> {
+    return this._emitStateQueue.add(async () => {
+      if (!this._listener) {
+        return;
+      }
+      return this._listener({
+        isPresent: true,
+        showSpinner: false,
+        showInitializing: false,
+        progress: this._progress,
+        capabilities: [],
+        playerId: this._id,
+        activeData: {
+          messages,
+          currentTime,
+          startTime: this._providerResult.start,
+          endTime: this._providerResult.end,
+          isPlaying: this._isPlaying,
+          speed: this._speed,
+          messageOrder: "receiveTime",
+          lastSeekTime: 0,
+          topics: this._providerResult.topics,
+          datatypes: this._providerResult.datatypes,
+          messageDefinitionsByTopic: this._providerResult.messageDefinitionsByTopic,
+          playerWarnings: NO_WARNINGS,
+        },
+      });
     });
   }
 
@@ -187,6 +196,9 @@ export default class AutomatedRunPlayer implements Player {
               "error"
             );
             break;
+          case "performance":
+            // Don't need analytics for data provider callbacks in video generation.
+            break;
           default:
             (metadata.type: empty);
         }
@@ -200,31 +212,42 @@ export default class AutomatedRunPlayer implements Player {
     // Call _getMessages to start data loading and rendering for the first frame.
     const messages = await this._getMessages(this._providerResult.start, this._providerResult.start);
     await this._emitState(messages, this._providerResult.start);
+    if (!this._startCalled) {
+      this._client.markPreloadStart();
+    }
+
     this._startCalled = true;
     this._maybeStartPlayback();
   }
 
   async _onUpdateProgress() {
+    if (this._client.shouldLoadDataBeforePlaying && this._providerResult != null) {
+      // Update the view and do preloading calculations. Not necessary if we're already playing.
+      this._emitState([], this._providerResult.start);
+    }
     this._maybeStartPlayback();
   }
 
   async _maybeStartPlayback() {
-    if (!this._startCalled) {
-      return;
-    }
-    if (!this._client.shouldLoadDataBeforePlaying && this._providerResult) {
+    if (this._readyToPlay()) {
       this._run();
-    } else if (
-      this._client.shouldLoadDataBeforePlaying &&
-      this._providerResult &&
+    }
+  }
+
+  _readyToPlay() {
+    if (!this._startCalled || this._providerResult == null) {
+      return false;
+    }
+    if (!this._client.shouldLoadDataBeforePlaying) {
+      return true;
+    }
+    // If the client has shouldLoadDataBeforePlaying set to true, only start playback once all data has loaded.
+    return (
       this._progress &&
       this._progress.fullyLoadedFractionRanges &&
       this._progress.fullyLoadedFractionRanges.length &&
       this._progress.fullyLoadedFractionRanges.every(({ start, end }) => start === 0 && end === 1)
-    ) {
-      // If the client has shouldLoadDataBeforePlaying set to true, only start playback once all data has loaded.
-      this._run();
-    }
+    );
   }
 
   async _run() {
@@ -232,12 +255,13 @@ export default class AutomatedRunPlayer implements Player {
       return; // Only run once
     }
     this._isPlaying = true;
+    this._client.markPreloadEnd();
     logger.info("AutomatedRunPlayer._run()");
     await this._emitState([], this._providerResult.start);
 
     let currentTime = this._providerResult.start;
     this._client.start({
-      bagLengthMs: toMillis(subtractTimes(this._providerResult.end, this._providerResult.start), "round-up"),
+      bagLengthMs: toMillis(subtractTimes(this._providerResult.end, this._providerResult.start)),
     });
 
     const nsBagTimePerFrame = Math.round(this._msPerFrame * this._speed * 1000000);
@@ -270,9 +294,10 @@ export default class AutomatedRunPlayer implements Player {
   /* Public API shared functions */
 
   requestMessages() {}
-  setPublishers(publishers: AdvertisePayload[]) {}
 
-  publish(payload: PublishPayload) {
+  setPublishers(_publishers: AdvertisePayload[]) {}
+
+  publish(_payload: PublishPayload) {
     throw new Error(`Unsupported in AutomatedRunPlayer`);
   }
 
@@ -288,11 +313,11 @@ export default class AutomatedRunPlayer implements Player {
     throw new Error(`Unsupported in AutomatedRunPlayer`);
   }
 
-  setPlaybackSpeed(speed: number, backfillDuration: ?Time) {
+  setPlaybackSpeed(_speed: number, _backfillDuration: ?Time) {
     // This should be passed into the constructor and should not be changed.
   }
 
-  seekPlayback(time: Time) {
+  seekPlayback(_time: Time) {
     throw new Error(`Unsupported in AutomatedRunPlayer`);
   }
 

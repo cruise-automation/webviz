@@ -59,6 +59,7 @@ const defaultHooks = {
       version: CURRENT_LAYOUT_VERSION,
     };
   },
+  getDefaultGlobalVariables: () => ({}),
   migratePanels(panels) {
     const migratePanels = require("webviz-core/migrations").default;
     return migratePanels(panels);
@@ -86,7 +87,7 @@ const defaultHooks = {
   startupPerPanelHooks: () => {
     return {
       ThreeDimensionalViz: {
-        getDefaultTopicSettingsByColumn(topicName) {
+        getDefaultTopicSettingsByColumn(_topicName) {
           return undefined;
         },
         getDefaultSettings: () => ({}),
@@ -136,8 +137,8 @@ const defaultHooks = {
       preloading: {
         name: "Preloading",
         description: "Allow panels to use data from caches directly, without playback.",
-        developmentDefault: false,
-        productionDefault: false,
+        developmentDefault: true,
+        productionDefault: true,
       },
       unlimitedMemoryCache: {
         name: "Unlimited in-memory cache (requires reload)",
@@ -146,9 +147,19 @@ const defaultHooks = {
         developmentDefault: false,
         productionDefault: false,
       },
+      highlightGlobalVariableMatchingMarkers: {
+        name: "Highlight markers matching linked global variables",
+        description: "Markers matching any linkedGlobalVariables will be automatically highlighted in the 3D panel",
+        developmentDefault: false,
+        productionDefault: false,
+      },
     };
   },
   linkMessagePathSyntaxToHelpPage: () => true,
+  getSecondSourceUrlParams() {
+    const { REMOTE_BAG_URL_2_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
+    return [REMOTE_BAG_URL_2_QUERY_KEY];
+  },
 };
 
 let hooks = defaultHooks;

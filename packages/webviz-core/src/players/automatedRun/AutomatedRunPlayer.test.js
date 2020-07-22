@@ -34,6 +34,8 @@ class TestRunClient implements AutomatedRunClient {
   markTotalFrameEnd() {}
   markFrameRenderStart() {}
   markFrameRenderEnd() {}
+  markPreloadStart = jest.fn();
+  markPreloadEnd = jest.fn();
   async onFrameFinished() {}
   finish() {
     this.finished = true;
@@ -60,6 +62,51 @@ describe("AutomatedRunPlayer", () => {
     expect(player._isPlaying).toEqual(true);
   });
 
+  it("measures preloading performance", async () => {
+    const provider = new TestProvider({ getMessages: async () => [] });
+    const client = new TestRunClient({ shouldLoadDataBeforePlaying: true });
+    const player = new AutomatedRunPlayer(provider, client);
+    let emitStateCalls = 0;
+    player.setListener(async () => {
+      emitStateCalls += 1;
+    });
+
+    expect(client.markPreloadStart.mock.calls.length).toBe(0);
+    expect(client.markPreloadEnd.mock.calls.length).toBe(0);
+    expect(emitStateCalls).toBe(0);
+
+    player.setSubscriptions([{ topic: "/foo/bar" }]);
+    await delay(AUTOMATED_RUN_START_DELAY + 10);
+
+    // Preloading has started but not finished.
+    expect(client.markPreloadStart.mock.calls.length).toBe(1);
+    expect(client.markPreloadEnd.mock.calls.length).toBe(0);
+    // _emitState called on initialization.
+    expect(emitStateCalls).toBe(1);
+
+    expect(player._initialized).toEqual(true);
+    expect(player._isPlaying).toEqual(false);
+
+    // Partially preloaded.
+    provider.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }] });
+    expect(player._isPlaying).toEqual(false);
+
+    expect(client.markPreloadStart.mock.calls.length).toBe(1);
+    expect(client.markPreloadEnd.mock.calls.length).toBe(0);
+    // _emitState called on progress.
+    expect(emitStateCalls).toBe(2);
+
+    // Finish preloading.
+    provider.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] });
+    await delay(0);
+    // Finished preloading.
+    expect(client.markPreloadStart.mock.calls.length).toBe(1);
+    expect(client.markPreloadEnd.mock.calls.length).toBe(1);
+    // _emitState called on progress (and also during playback.)
+    expect(emitStateCalls).toBeGreaterThan(2);
+    expect(player._isPlaying).toEqual(true);
+  });
+
   it("makes calls to getMessages with the correct frames", async () => {
     const frames = [];
     const provider = new TestProvider({
@@ -76,7 +123,7 @@ describe("AutomatedRunPlayer", () => {
     expect(player._initialized).toEqual(true);
     expect(player._isPlaying).toEqual(true);
     const listener = { signal: signal() };
-    player.setListener((state) => {
+    player.setListener(() => {
       return listener.signal;
     });
     while (!client.finished) {
@@ -100,7 +147,7 @@ describe("AutomatedRunPlayer", () => {
     let getMessagesCallCount = 0;
     const getMessagesSignal = { signal: signal() };
     const provider = new TestProvider({
-      getMessages: async (startTime, endTime) => {
+      getMessages: async () => {
         getMessagesCallCount++;
         return getMessagesSignal.signal;
       },

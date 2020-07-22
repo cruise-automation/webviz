@@ -52,5 +52,5 @@ export default class BrowserHttpReader implements FileReader {
     return new FetchReader(this._url, { headers });
   }
 
-  recordBytesPerSecond(bytesPerSecond: number): void {}
+  recordBytesPerSecond(_bytesPerSecond: number): void {}
 }

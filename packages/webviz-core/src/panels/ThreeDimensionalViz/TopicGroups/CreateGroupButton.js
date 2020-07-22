@@ -42,7 +42,6 @@ export default function CreateGroupButton({
   displayNameByTopic,
   keyboardFocusIndex,
   onAddGroup,
-  testShowAddView,
 }: Props) {
   const [showModal, setShowModal] = useState(false);
   const { focusIndex, setFocusIndex, focusItemOp, onFocusOnContainer, setFocusItemOp } = useContext(KeyboardContext);
@@ -73,7 +72,7 @@ export default function CreateGroupButton({
       className={`focus-item-${keyboardFocusIndex}`}
       role="option"
       highlighted={highlighted}
-      onMouseEnter={(e) => {
+      onMouseEnter={() => {
         if (!highlighted) {
           setFocusIndex(keyboardFocusIndex);
         }

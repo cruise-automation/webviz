@@ -78,7 +78,7 @@ export const useGLText = ({
   const glText: GLTextMarker[] = React.useMemo(
     () => {
       let numMatches = 0;
-      return text.map((marker, i) => {
+      return text.map((marker) => {
         const scale = {
           // RViz ignores scale.x/y for text and only uses z
           x: marker.scale.z,
@@ -220,7 +220,6 @@ const SearchText = React.memo<SearchTextComponentProps>(
     cameraState,
     transforms,
     rootTf,
-    onFollowChange,
   }: SearchTextComponentProps) => {
     const currentMatch = searchTextMatches[selectedMatchIndex];
     const iterateCurrentIndex = useCallback(

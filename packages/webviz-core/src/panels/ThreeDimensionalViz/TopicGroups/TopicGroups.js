@@ -514,12 +514,12 @@ export function TopicGroupsBase({
   const sharedHandlers = useMemo(
     () => {
       return {
-        ArrowDown: (e) => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.ArrowDown),
-        ArrowUp: (e) => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.ArrowUp),
-        ArrowLeft: (e) => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.ArrowLeft),
-        ArrowRight: (e) => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.ArrowRight),
+        ArrowDown: () => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.ArrowDown),
+        ArrowUp: () => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.ArrowUp),
+        ArrowLeft: () => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.ArrowLeft),
+        ArrowRight: () => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.ArrowRight),
         Enter: (e) => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.Enter, e.shiftKey),
-        Tab: (e) => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.Enter),
+        Tab: () => debouncedSharedOnKeyHandler(FOCUS_ITEM_OPS.Enter),
       };
     },
     [debouncedSharedOnKeyHandler]
@@ -618,7 +618,6 @@ export function TopicGroupsBase({
             renderTopicGroups={renderTopicGroups}
             saveConfig={saveConfig}
             setShowTopicGroups={setShowTopicGroups}
-            showTopicGroups={showTopicGroups}
           />
           {renderTopicGroups && (
             <STopicGroups>

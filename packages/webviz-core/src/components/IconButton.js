@@ -21,8 +21,7 @@ type Props = {
   disabled?: boolean,
 };
 
-// $FlowFixMe - flow doesn't have a definition for React.memo
-export default React.memo(function IconButton(props: Props) {
+export default React.memo<Props>(function IconButton(props: Props) {
   const { tooltip, onClick, id, icon, style, disabled } = props;
   return (
     <Button

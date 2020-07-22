@@ -127,6 +127,9 @@ export default class Slider extends React.Component<Props> {
     if (!draggable) {
       return;
     }
+    if (document.activeElement) {
+      document.activeElement.blur();
+    }
     e.preventDefault();
     const value = this.getValueAtMouse(e);
     onChange(value);

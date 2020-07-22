@@ -81,7 +81,7 @@ const parseJson = (val: string): ?mixed => {
 };
 
 const keyValMap = { ArrowDown: -1, ArrowUp: 1 };
-function JSONInput(props: {| value: string, onChange: (mixed) => void |}) {
+export function JSONInput(props: {| value: string, onChange: (mixed) => void |}) {
   const [internalValue, setInternalValue] = useState<string>(props.value);
   const lastPropsValue = useRef<string>(props.value);
   if (lastPropsValue.current !== props.value) {
@@ -145,7 +145,7 @@ const changeGlobalKey = (newKey, oldKey, globalVariables, idx, overwriteGlobalVa
   });
 };
 
-function GlobalVariables(props: {}): Node {
+function GlobalVariables(): Node {
   const [btnMessage, setBtnMessage] = useState<string>("Copy");
   const { globalVariables, setGlobalVariables, overwriteGlobalVariables } = useGlobalVariables();
   const { linkedGlobalVariables } = useLinkedGlobalVariables();

@@ -2,6 +2,8 @@
 
 exports[`typegen generateRosLib basic snapshot 1`] = `
 "
+    export declare interface json {
+}
     export declare interface TopicsToMessageDefinition {
     \\"/my_topic\\": Messages.std_msgs__ColorRGBA;
     \\"/empty_topic\\": Messages.std_msgs__NoDef;
@@ -43,7 +45,6 @@ exports[`typegen generateRosLib basic snapshot 1`] = `
      */
     export declare interface Input<T extends keyof TopicsToMessageDefinition> {
     topic: T;
-    datatype: string;
     receiveTime: Time;
     message: TopicsToMessageDefinition[T];
 }
@@ -52,6 +53,8 @@ exports[`typegen generateRosLib basic snapshot 1`] = `
 
 exports[`typegen generateRosLib more complex snapshot 1`] = `
 "
+    export declare interface json {
+}
     export declare interface TopicsToMessageDefinition {
     \\"/topic_0\\": Messages.tf2_msgs__TFMessage;
     \\"/topic_1\\": Messages.geometry_msgs__TransformStamped;
@@ -294,7 +297,6 @@ exports[`typegen generateRosLib more complex snapshot 1`] = `
      */
     export declare interface Input<T extends keyof TopicsToMessageDefinition> {
     topic: T;
-    datatype: string;
     receiveTime: Time;
     message: TopicsToMessageDefinition[T];
 }
@@ -303,6 +305,8 @@ exports[`typegen generateRosLib more complex snapshot 1`] = `
 
 exports[`typegen generateRosLib works with zero topics or datatypes 1`] = `
 "
+    export declare interface json {
+}
     export declare interface TopicsToMessageDefinition {
 }
     export declare interface Duration {
@@ -333,7 +337,6 @@ exports[`typegen generateRosLib works with zero topics or datatypes 1`] = `
      */
     export declare interface Input<T extends keyof TopicsToMessageDefinition> {
     topic: T;
-    datatype: string;
     receiveTime: Time;
     message: TopicsToMessageDefinition[T];
 }

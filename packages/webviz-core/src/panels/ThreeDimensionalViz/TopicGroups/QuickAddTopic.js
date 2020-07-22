@@ -44,7 +44,7 @@ const SQuickAddTopic = styled.div`
       : ITEM_MAIN_PADDING_LEFT - ICON_TOTAL_SIZE * 2;
     return `4px 4px 4px ${leftPadding}px`;
   }};
-  background: ${({ showAddView, highlighted }: StyleProps) => (highlighted ? colors.HOVER_BACKGROUND_COLOR : "unset")};
+  background: ${({ highlighted }: StyleProps) => (highlighted ? colors.HOVER_BACKGROUND_COLOR : "unset")};
 `;
 
 const SShowAddWrapper = styled.div`
@@ -412,7 +412,7 @@ export default function QuickAddTopic({
       role="option"
       highlighted={highlighted}
       filterText={topLevelFilterText}
-      onMouseEnter={(e) => {
+      onMouseEnter={() => {
         if (!highlighted) {
           setFocusIndex(addTopicKeyboardFocusIndex);
         }

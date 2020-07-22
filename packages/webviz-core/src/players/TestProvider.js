@@ -8,13 +8,8 @@
 
 import { type Time } from "rosbag";
 
-import {
-  type ExtensionPoint,
-  type InitializationResult,
-  type DataProviderMessage,
-  type DataProvider,
-} from "webviz-core/src/dataProviders/types";
-import { type Topic } from "webviz-core/src/players/types";
+import { type ExtensionPoint, type InitializationResult, type DataProvider } from "webviz-core/src/dataProviders/types";
+import { type Message, type Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 const defaultStart = { sec: 10, nsec: 0 };
@@ -38,7 +33,7 @@ const datatypes: RosDatatypes = {
   },
 };
 const defaultTopics: Topic[] = [{ name: "/foo/bar", datatype: "fooBar" }, { name: "/baz", datatype: "baz" }];
-type GetMessages = (start: Time, end: Time, topics: string[]) => Promise<DataProviderMessage[]>;
+type GetMessages = (start: Time, end: Time, topics: string[]) => Promise<Message[]>;
 
 export default class TestProvider implements DataProvider {
   _start: Time;
@@ -48,10 +43,10 @@ export default class TestProvider implements DataProvider {
   extensionPoint: ExtensionPoint;
   closed: boolean = false;
 
-  constructor({ getMessages }: { getMessages: GetMessages } = {}) {
+  constructor({ getMessages, topics }: { getMessages?: GetMessages, topics?: Topic[] } = {}) {
     this._start = defaultStart;
     this._end = defaultEnd;
-    this._topics = defaultTopics;
+    this._topics = topics ?? defaultTopics;
     this._datatypes = datatypes;
     if (getMessages) {
       this.getMessages = getMessages;
@@ -70,7 +65,7 @@ export default class TestProvider implements DataProvider {
     });
   }
 
-  getMessages: GetMessages = (start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> => {
+  getMessages: GetMessages = (_start: Time, _end: Time, _topics: string[]): Promise<Message[]> => {
     throw new Error("not implemented");
   };
 

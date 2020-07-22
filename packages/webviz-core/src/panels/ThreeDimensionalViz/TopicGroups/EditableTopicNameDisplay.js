@@ -57,7 +57,6 @@ export default function EditableTopicNameDisplay({
   onClick,
   onChangeDisplayName,
   onlyHighlightTopic,
-  isKeyboardFocused,
   style = {},
 }: Props) {
   const [editableDisplayName, setEditableDisplayName] = useState(null);

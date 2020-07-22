@@ -85,7 +85,6 @@ describe("<Internals>", () => {
 
     const message = {
       topic: "/foo",
-      datatype: "Foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: {
         value: "hi",
@@ -102,7 +101,10 @@ describe("<Internals>", () => {
 
     downloadButton.simulate("click");
     expect(mockDownloadTextFile.mock.calls).toEqual([
-      [JSON.stringify({ topics: [{ name: "/foo", datatype: "Foo" }], frame: { "/foo": [message] } }), "fixture.json"],
+      [
+        JSON.stringify({ topics: [{ name: "/foo", datatype: "foo_msgs/Foo" }], frame: { "/foo": [message] } }),
+        "fixture.json",
+      ],
     ]);
 
     wrapper.unmount();

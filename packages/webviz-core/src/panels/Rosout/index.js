@@ -29,7 +29,8 @@ import MessageHistoryDEPRECATED, {
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
-import type { Message, Topic } from "webviz-core/src/players/types";
+import { cast, type ReflectiveMessage, type Topic } from "webviz-core/src/players/types";
+import { type Header } from "webviz-core/src/types/Messages";
 import clipboard from "webviz-core/src/util/clipboard";
 import { ROSOUT_TOPIC } from "webviz-core/src/util/globalConstants";
 
@@ -70,8 +71,24 @@ export const stringsToOptions = createSelector<*, *, *, _>(
   (strs: string[]): Option[] => strs.map((value) => ({ label: value, value }))
 );
 
-export const getShouldDisplayMsg = (msg: Message, minLogLevel: number, searchTerms: string[]): boolean => {
-  if (msg.message.level < minLogLevel) {
+type RosgraphMsgs$Log = $ReadOnly<{|
+  header: Header,
+  level: number,
+  name: string,
+  msg: string,
+  file: string,
+  function: string,
+  line: number,
+  topics: $ReadOnlyArray<string>,
+|}>;
+
+export const getShouldDisplayMsg = (
+  message: ReflectiveMessage,
+  minLogLevel: number,
+  searchTerms: string[]
+): boolean => {
+  const logMessage = cast<RosgraphMsgs$Log>(message.message);
+  if (logMessage.level < minLogLevel) {
     return false;
   }
 
@@ -80,12 +97,10 @@ export const getShouldDisplayMsg = (msg: Message, minLogLevel: number, searchTer
     return true;
   }
   const searchTermsInLowerCase = searchTerms.map((term) => term.toLowerCase());
-  for (const searchTerm of searchTermsInLowerCase) {
-    if (msg.message.name.toLowerCase().includes(searchTerm) || msg.message.msg.toLowerCase().includes(searchTerm)) {
-      return true;
-    }
-  }
-  return false;
+  const { name, msg } = logMessage;
+  const lowerCaseName = name.toLowerCase();
+  const lowerCaseMsg = msg.toLowerCase();
+  return searchTermsInLowerCase.some((term) => lowerCaseName.includes(term) || lowerCaseMsg.includes(term));
 };
 
 class RosoutPanel extends PureComponent<Props> {
@@ -127,7 +142,7 @@ class RosoutPanel extends PureComponent<Props> {
           optionHeight={parseInt(styles.optionHeight)}
           maxHeight={parseInt(styles.optionHeight) * KNOWN_LOG_LEVELS.length}
           options={LOG_LEVEL_OPTIONS}
-          optionRenderer={({ key, style: styleProp, option, selectValue, focusedOption }) => (
+          optionRenderer={({ key, style: styleProp, option, focusedOption }) => (
             <div
               className={cx(logStyle[LevelToString(option.value).toLowerCase()], "VirtualizedSelectOption", {
                 VirtualizedSelectFocusedOption: focusedOption === option,
@@ -194,7 +209,7 @@ class RosoutPanel extends PureComponent<Props> {
       <MessageHistoryDEPRECATED paths={[config.topicToRender]} historySize={100000}>
         {({ itemsByPath }: MessageHistoryData) => {
           const msgs: $ReadOnlyArray<MessageHistoryItem> = itemsByPath[config.topicToRender];
-          msgs.forEach((msg) => seenNodeNames.add(msg.message.message.name));
+          msgs.forEach((msg) => seenNodeNames.add(cast<RosgraphMsgs$Log>(msg.message.message).name));
 
           return (
             <Flex col>

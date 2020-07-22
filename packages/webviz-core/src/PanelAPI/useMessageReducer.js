@@ -66,23 +66,33 @@ function useReducedValue<T>(
 }
 
 // Compute the subscriptions to be requested from the player.
-function useSubscriptions(requestedTopics: $ReadOnlyArray<RequestedTopic>, panelType?: ?string): SubscribePayload[] {
+function useSubscriptions(options: {|
+  requestedTopics: $ReadOnlyArray<RequestedTopic>,
+  panelType: ?string,
+  onlyLoadInBlocks: ?boolean,
+|}): SubscribePayload[] {
   return useMemo(
     () => {
-      const requester = panelType ? { type: "panel", name: panelType } : undefined;
-      return requestedTopics.map((request) => {
+      const commonFields = {};
+      if (options.panelType) {
+        commonFields.requester = { type: "panel", name: options.panelType };
+      }
+      if (options.onlyLoadInBlocks) {
+        commonFields.onlyLoadInBlocks = options.onlyLoadInBlocks;
+      }
+      return options.requestedTopics.map((request) => {
         if (typeof request === "object") {
           // We might be able to remove the `encoding` field from the protocol entirely, and only
           // use scale. Or we can deal with scaling down in a different way altogether, such as having
           // special topics or syntax for scaled down versions of images or so. In any case, we should
           // be cautious about having metadata on subscriptions, as that leads to the problem of how to
           // deal with multiple subscriptions to the same topic but with different metadata.
-          return { topic: request.topic, requester, encoding: "image/compressed", scale: request.imageScale };
+          return { ...commonFields, topic: request.topic, encoding: "image/compressed", scale: request.imageScale };
         }
-        return { topic: request, requester };
+        return { ...commonFields, topic: request };
       });
     },
-    [requestedTopics, panelType]
+    [options.panelType, options.onlyLoadInBlocks, options.requestedTopics]
   );
 }
 
@@ -97,6 +107,13 @@ type Props<T> = {|
   restore: (?T) => T,
   addMessage?: MessageReducer<T>,
   addMessages?: MessagesReducer<T>,
+
+  // If we should only load these topics in blocks, set this variable. This means that addMessage
+  // won't receive these messages if they're instead available in `useBlocksByTopic`.
+  // TODO(JP): Eventually we should deprecate these multiple ways of getting data, and we should
+  // always have blocks available. Then `useMessageReducer` should just become a wrapper around
+  // `useBlocksByTopic` for backwards compatibility.
+  onlyLoadInBlocks?: ?boolean,
 |};
 
 export function useMessageReducer<T>(props: Props<T>): T {
@@ -135,7 +152,7 @@ export function useMessageReducer<T>(props: Props<T>): T {
     () => new Set(requestedTopics.map((req) => (typeof req === "object" ? req.topic : req))),
     [requestedTopics]
   );
-  const subscriptions = useSubscriptions(requestedTopics, panelType);
+  const subscriptions = useSubscriptions({ requestedTopics, panelType, onlyLoadInBlocks: props.onlyLoadInBlocks });
   const setSubscriptions = useMessagePipeline(
     useCallback(({ setSubscriptions: pipelineSetSubscriptions }) => pipelineSetSubscriptions, [])
   );

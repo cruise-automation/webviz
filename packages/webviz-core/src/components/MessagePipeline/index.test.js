@@ -424,6 +424,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
       messageDefinitionsByTopic: {},
+      playerWarnings: {},
     };
     await act(() => player.emit(activeData));
     expect(fn).toHaveBeenCalledTimes(2);
@@ -468,6 +469,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
       messageDefinitionsByTopic: {},
+      playerWarnings: {},
     };
     await act(() => player.emit(activeData));
     expect(fn).toHaveBeenCalledTimes(3);

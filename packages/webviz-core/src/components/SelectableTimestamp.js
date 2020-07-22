@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import ChevronRightIcon from "@mdi/svg/svg/chevron-right.svg";
-import * as React from "react";
+import React, { useEffect } from "react";
 import { type Time } from "rosbag";
 import styled from "styled-components";
 
@@ -74,6 +74,7 @@ type Props = {
   endTime: Time,
   pausePlayback: () => void,
   seekPlayback: (Time) => void,
+  timezone?: ?string,
 };
 
 function getValidTime(timeStr: string, start: Time, end: Time, isRosTime: boolean) {
@@ -87,14 +88,26 @@ export default React.memo<Props>(function SelectableTimestamp({
   endTime,
   seekPlayback,
   pausePlayback,
+  timezone,
 }: Props) {
   const [rosTimeStr, setRosTimeStr] = React.useState<string>(`${currentTime.sec}.${currentTime.nsec}`);
-  const initialTimeStr = formatTime(currentTime);
-  const [timeStr, setTimeStr] = React.useState<string>(initialTimeStr);
+  const currentTimeStr = formatTime(currentTime, timezone);
+  const [timeStr, setTimeStr] = React.useState<string>(currentTimeStr);
   const [isEditingRosTime, setIsEditingRosTime] = React.useState<boolean>(false);
   const [isEditingTime, setIsEditingTime] = React.useState<boolean>(false);
   const [error, setError] = React.useState<boolean>(false);
-  const date = formatDate(currentTime);
+  const date = formatDate(currentTime, timezone);
+
+  useEffect(
+    () => {
+      // Reset the timeStr when timezone becomes available.
+      if (timezone) {
+        setTimeStr(currentTimeStr);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps, only need to reset timeStr when timezone becomes available
+    [timezone]
+  );
 
   const rawTime = formatTimeRaw(currentTime);
 
@@ -153,7 +166,7 @@ export default React.memo<Props>(function SelectableTimestamp({
               />
             </form>
           ) : (
-            <span onClick={() => onTimeTextClick(false)}>{formatTime(currentTime)}</span>
+            <span onClick={() => onTimeTextClick(false)}>{currentTimeStr}</span>
           )}
         </TimeWrapper>
 

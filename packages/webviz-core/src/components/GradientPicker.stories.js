@@ -9,6 +9,7 @@
 import { storiesOf } from "@storybook/react";
 import React, { useRef, useLayoutEffect, useState } from "react";
 import TestUtils from "react-dom/test-utils";
+import { type Color } from "regl-worldview";
 
 import GradientPicker from "./GradientPicker";
 
@@ -20,8 +21,8 @@ function Story({
 }: {
   changeMinColorAfterMount?: boolean,
   changeMaxColorAfterMount?: boolean,
-  initialMinColor?: string,
-  initialMaxColor?: string,
+  initialMinColor?: Color,
+  initialMaxColor?: Color,
 }) {
   const containerRef = useRef<?HTMLDivElement>();
   const minRef = useRef();
@@ -79,10 +80,20 @@ storiesOf("<GradientPicker>", module)
       viewport: { width: 585, height: 500 },
     },
   })
-  .add("basic", () => <Story initialMinColor="255,0,0,1" initialMaxColor="0,0,255,1" />)
+  .add("basic", () => (
+    <Story initialMinColor={{ r: 1, g: 0, b: 0, a: 1 }} initialMaxColor={{ r: 0, g: 0, b: 1, a: 1 }} />
+  ))
   .add("change min color", () => (
-    <Story initialMinColor="255,0,0,1" initialMaxColor="0,0,255,1" changeMinColorAfterMount />
+    <Story
+      initialMinColor={{ r: 1, g: 0, b: 0, a: 1 }}
+      initialMaxColor={{ r: 0, g: 0, b: 1, a: 1 }}
+      changeMinColorAfterMount
+    />
   ))
   .add("change max color", () => (
-    <Story initialMinColor="255,0,0,1" initialMaxColor="0,0,255,1" changeMaxColorAfterMount />
+    <Story
+      initialMinColor={{ r: 1, g: 0, b: 0, a: 1 }}
+      initialMaxColor={{ r: 0, g: 0, b: 1, a: 1 }}
+      changeMaxColorAfterMount
+    />
   ));

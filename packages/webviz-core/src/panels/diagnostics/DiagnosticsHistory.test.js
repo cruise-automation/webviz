@@ -25,7 +25,6 @@ const messageAtLevel = (level: Level): Message => ({
   },
   topic: "/foo",
   receiveTime: { sec: 1547062466, nsec: 1674890 },
-  datatype: "bar",
 });
 
 const diagnosticInfoAtLevel = (level: Level): DiagnosticInfo => {
@@ -37,15 +36,30 @@ describe("addMessage", () => {
   it("adds a message at the right warning level", () => {
     const message = messageAtLevel(LEVELS.OK);
     const info = diagnosticInfoAtLevel(LEVELS.OK);
+    const hardwareId = `|${info.status.hardware_id}|`;
     expect(addMessage(defaultDiagnosticsBuffer(), message)).toEqual({
-      diagnosticsById: new Map([[info.id, info]]),
+      diagnosticsById: new Map([
+        [info.id, info],
+        [
+          hardwareId,
+          { ...info, displayName: info.status.hardware_id, id: hardwareId, status: { ...info.status, name: "" } },
+        ],
+      ]),
       diagnosticsByLevel: {
         [LEVELS.OK]: new Map([[info.id, info]]),
         [LEVELS.WARN]: new Map(),
         [LEVELS.ERROR]: new Map(),
         [LEVELS.STALE]: new Map(),
       },
+      diagnosticsInOrderReceived: [info],
       sortedAutocompleteEntries: [
+        {
+          displayName: info.status.hardware_id,
+          hardware_id: info.status.hardware_id,
+          id: hardwareId,
+          name: "",
+          sortKey: info.status.hardware_id.toLowerCase(),
+        },
         {
           displayName: info.displayName,
           hardware_id: info.status.hardware_id,
@@ -61,15 +75,30 @@ describe("addMessage", () => {
     const message1 = messageAtLevel(LEVELS.OK);
     const message2 = messageAtLevel(LEVELS.ERROR);
     const info = diagnosticInfoAtLevel(LEVELS.ERROR);
+    const hardwareId = `|${info.status.hardware_id}|`;
     expect(addMessage(addMessage(defaultDiagnosticsBuffer(), message1), message2)).toEqual({
-      diagnosticsById: new Map([[info.id, info]]),
+      diagnosticsById: new Map([
+        [info.id, info],
+        [
+          hardwareId,
+          { ...info, displayName: info.status.hardware_id, id: hardwareId, status: { ...info.status, name: "" } },
+        ],
+      ]),
       diagnosticsByLevel: {
         [LEVELS.OK]: new Map(),
         [LEVELS.WARN]: new Map(),
         [LEVELS.ERROR]: new Map([[info.id, info]]),
         [LEVELS.STALE]: new Map(),
       },
+      diagnosticsInOrderReceived: [info],
       sortedAutocompleteEntries: [
+        {
+          displayName: info.status.hardware_id,
+          hardware_id: info.status.hardware_id,
+          id: hardwareId,
+          name: "",
+          sortKey: info.status.hardware_id.toLowerCase(),
+        },
         {
           displayName: info.displayName,
           hardware_id: info.status.hardware_id,

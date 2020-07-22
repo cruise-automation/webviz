@@ -7,5 +7,5 @@
 442bc6016fce25a1a5c2a9705084fa4fa9d11d06  ./webviz-core/migrations/frozenHelpers/replacePanelLayout.js
 2e1d12bc332d0f1c2627b9421f0d4fb3b3376e2c  ./webviz-core/migrations/frozenHelpers/replacePanelSavedProps.js
 958ebd1976e71e9d4ce912c1a9cfad0f763f03f9  ./webviz-core/migrations/frozenHelpers/replaceSavedPropsLayouts.js
-1cfd1421e71a1a89e4d87fbed122e8daecc22012  ./webviz-core/migrations/frozenHelpers/validateVersions.js
+6fbede06f2f9e7f18d691d302e228d1d09aae486  ./webviz-core/migrations/frozenHelpers/validateVersions.js
 f3bbdbda8332ac0a2cc8ccd28118b0969d0d2dd4  ./webviz-core/migrations/frozenHelpers/validateVersions.test.js

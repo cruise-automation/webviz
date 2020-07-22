@@ -8,6 +8,7 @@
 
 import { renderImage } from "./renderImage";
 import { type Dimensions, type RawMarkerData, type OffscreenCanvas } from "./util";
+import type { Message } from "webviz-core/src/players/types";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupWorker } from "webviz-core/src/util/RpcUtils";
 
@@ -28,16 +29,16 @@ export default class ImageCanvasWorker {
       async ({
         id,
         imageMessage,
+        imageMessageDatatype,
         rawMarkerData,
-        imageMarkerDatatypes,
       }: {
         id: string,
-        imageMessage: any,
+        imageMessage: ?Message,
+        imageMessageDatatype: ?string,
         rawMarkerData: RawMarkerData,
-        imageMarkerDatatypes: string[],
       }): Promise<?Dimensions> => {
         const canvas = this._idToCanvas[id];
-        return renderImage({ canvas, imageMessage, rawMarkerData, imageMarkerDatatypes });
+        return renderImage({ canvas, imageMessage, imageMessageDatatype, rawMarkerData });
       }
     );
   }

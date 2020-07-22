@@ -229,7 +229,7 @@ export default function AddFromAllTopics({
     <Downshift
       defaultHighlightedIndex={defaultHighlightedIndexRef.current}
       itemToString={(item) => (item ? item.topicName : "")}>
-      {({ getInputProps, getItemProps, getMenuProps, inputValue, getRootProps, highlightedIndex }) => {
+      {({ getInputProps, getItemProps, getMenuProps, getRootProps, highlightedIndex }) => {
         let itemsToRender = debouncedFilterText
           ? allItems.filter((item) => filteredKeysSet.has(item.filterKey))
           : allItems;

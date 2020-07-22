@@ -15,7 +15,6 @@ import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type StyleProps = {|
   visible: boolean,
-  available: boolean,
   isParentVisible: boolean,
   isNamespace: ?boolean,
   highlighted: boolean,
@@ -123,20 +122,22 @@ type Props = {|
 |};
 
 export default function DataSourceBadge({
+  available,
   badgeText,
   dataTest,
-  dataSourcePrefixes,
-  isTopicGroup,
   onToggleVisibility,
   onToggleAllVisibilities,
-  topicName,
-  ...rest
+  isParentVisible,
+  isNamespace,
+  highlighted,
+  overrideColor,
+  visible,
 }: Props) {
   return (
     <SDataSourceBadgeWrapper
-      isNamespace={rest.isNamespace}
+      isNamespace={isNamespace}
       onClick={(e) => {
-        if (rest.isParentVisible) {
+        if (isParentVisible) {
           // press shift key to toggle all
           if (onToggleAllVisibilities && e.shiftKey) {
             onToggleAllVisibilities();
@@ -145,8 +146,11 @@ export default function DataSourceBadge({
           }
         }
       }}>
-      {rest.available && (
-        <SDataSourceBadge {...rest} style={getStyles(rest)} data-test={dataTest}>
+      {available && (
+        <SDataSourceBadge
+          isNamespace={isNamespace}
+          style={getStyles({ isParentVisible, isNamespace, highlighted, overrideColor, visible })}
+          data-test={dataTest}>
           {badgeText}
         </SDataSourceBadge>
       )}

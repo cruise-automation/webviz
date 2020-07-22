@@ -17,7 +17,7 @@ export default class RpcDataProviderRemote {
   constructor(rpc: Rpc, getDataProvider: (DataProviderDescriptor) => DataProvider) {
     setupWorker(rpc);
     let provider: DataProvider;
-    rpc.receive("initialize", async ({ childDescriptor, hasExtensionPoint }) => {
+    rpc.receive("initialize", async ({ childDescriptor }) => {
       provider = getDataProvider(childDescriptor);
       return provider.initialize({
         progressCallback: (data) => {

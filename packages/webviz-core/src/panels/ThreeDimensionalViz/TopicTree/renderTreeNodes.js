@@ -18,17 +18,21 @@ import type {
   GetIsTreeNodeVisibleInScene,
   GetIsTreeNodeVisibleInTree,
   NamespacesByTopic,
+  OnNamespaceOverrideColorChange,
   SceneErrorsByKey,
   SetCurrentEditingTopic,
+  SetEditingNamespace,
   ToggleNamespaceChecked,
   ToggleNode,
   ToggleNodeByColumn,
   TopicDisplayMode,
   TreeNode,
   TreeTopicNode,
+  VisibleTopicsCountByKey,
 } from "./types";
 import { generateNodeKey } from "./useTopicTree";
 import filterMap from "webviz-core/src/filterMap";
+import { canEditNamespaceOverrideColorDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/index";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
@@ -45,7 +49,7 @@ export const SToggle = styled.div`
   height: 24px;
 `;
 
-const TooltipRow = styled.div`
+export const TooltipRow = styled.div`
   margin: 4px 0;
   &:first-child {
     margin-top: 0;
@@ -59,7 +63,7 @@ const TooltipDescription = styled(TooltipRow)`
   max-width: 300px;
 `;
 
-const TooltipTable = styled.table`
+export const TooltipTable = styled.table`
   th,
   td {
     border: none;
@@ -71,6 +75,7 @@ const TooltipTable = styled.table`
   max-width: 100%;
   th {
     color: ${colors.TEXT_MUTED};
+    padding-right: 4px;
   }
 `;
 
@@ -85,14 +90,17 @@ type Props = {|
   getIsTreeNodeVisibleInTree: GetIsTreeNodeVisibleInTree,
   hasFeatureColumn: boolean,
   isXSWidth: boolean,
+  onNamespaceOverrideColorChange: OnNamespaceOverrideColorChange,
   sceneErrorsByKey: SceneErrorsByKey,
   setCurrentEditingTopic: SetCurrentEditingTopic,
+  setEditingNamespace: SetEditingNamespace,
   toggleCheckAllAncestors: ToggleNodeByColumn,
   toggleCheckAllDescendants: ToggleNodeByColumn,
   toggleNamespaceChecked: ToggleNamespaceChecked,
   toggleNodeChecked: ToggleNodeByColumn,
   toggleNodeExpanded: ToggleNode,
   topicDisplayMode: TopicDisplayMode,
+  visibleTopicsCountByKey: VisibleTopicsCountByKey,
   width: number,
 |};
 
@@ -100,7 +108,9 @@ export type TreeUINode = {| title: Node, key: string, children?: TreeUINode[], d
 
 export function getNamespaceNodes({
   availableNamespacesByTopic,
+  canEditNamespaceOverrideColor,
   checkedKeysSet,
+  derivedCustomSettingsByKey,
   getIsNamespaceCheckedByDefault,
   getIsTreeNodeVisibleInScene,
   hasFeatureColumn,
@@ -108,7 +118,9 @@ export function getNamespaceNodes({
   showVisible,
 }: {|
   availableNamespacesByTopic: NamespacesByTopic,
+  canEditNamespaceOverrideColor: boolean,
   checkedKeysSet: Set<string>,
+  derivedCustomSettingsByKey: DerivedCustomSettingsByKey,
   getIsNamespaceCheckedByDefault: GetIsNamespaceCheckedByDefault,
   getIsTreeNodeVisibleInScene: GetIsTreeNodeVisibleInScene,
   hasFeatureColumn: boolean,
@@ -125,10 +137,30 @@ export function getNamespaceNodes({
   return filterMap(uniqueNamespaces, (namespace) => {
     const namespaceKey = generateNodeKey({ topicName, namespace });
     const featureKey = generateNodeKey({ topicName, namespace, isFeatureColumn: true });
+    const topicNodeKey = node.key;
+    const overrideColorByColumn = [];
+    const hasNamespaceOverrideColorChangedByColumn = [];
+
+    if (canEditNamespaceOverrideColor) {
+      // Use namespace overrideColor by default, and fall back to topic overrideColor.
+      const namespaceOverrideColorByColumn =
+        (derivedCustomSettingsByKey[namespaceKey] && derivedCustomSettingsByKey[namespaceKey].overrideColorByColumn) ||
+        [];
+      const topicOverrideColorByColumn =
+        (derivedCustomSettingsByKey[topicNodeKey] && derivedCustomSettingsByKey[topicNodeKey].overrideColorByColumn) ||
+        [];
+      columns.forEach((columnIdx) => {
+        overrideColorByColumn.push(namespaceOverrideColorByColumn[columnIdx] || topicOverrideColorByColumn[columnIdx]);
+        // The namespace color has changed if there is an override color.
+        hasNamespaceOverrideColorChangedByColumn.push(!!namespaceOverrideColorByColumn[columnIdx]);
+      });
+    }
     const namespaceNode = {
       key: namespaceKey,
       featureKey,
       namespace,
+      overrideColorByColumn,
+      hasNamespaceOverrideColorChangedByColumn,
       availableByColumn: columns.map((columnIdx) =>
         columnIdx === 1 ? featureNamespacesSet.has(namespace) : baseNamespacesSet.has(namespace)
       ),
@@ -162,14 +194,17 @@ export default function renderTreeNodes({
   getIsTreeNodeVisibleInTree,
   hasFeatureColumn,
   isXSWidth,
+  onNamespaceOverrideColorChange,
   sceneErrorsByKey,
   setCurrentEditingTopic,
+  setEditingNamespace,
   toggleCheckAllAncestors,
   toggleCheckAllDescendants,
   toggleNamespaceChecked,
   toggleNodeChecked,
   toggleNodeExpanded,
   topicDisplayMode,
+  visibleTopicsCountByKey,
   width,
 }: Props): TreeUINode[] {
   const titleWidth = width - SWITCHER_WIDTH;
@@ -194,12 +229,15 @@ export default function renderTreeNodes({
 
       const itemChildren = item.type === "group" ? item.children : [];
       const topicName = item.type === "topic" ? item.topicName : "";
+      const datatype = item.type === "topic" ? item.datatype : undefined;
 
       const namespaceNodes =
         item.type === "topic"
           ? getNamespaceNodes({
               availableNamespacesByTopic,
+              canEditNamespaceOverrideColor: !!(datatype && canEditNamespaceOverrideColorDatatype(datatype)),
               checkedKeysSet,
+              derivedCustomSettingsByKey,
               getIsNamespaceCheckedByDefault,
               getIsTreeNodeVisibleInScene,
               hasFeatureColumn,
@@ -255,6 +293,7 @@ export default function renderTreeNodes({
           toggleNodeExpanded={toggleNodeExpanded}
           visibleByColumn={visibleByColumn}
           width={titleWidth}
+          visibleTopicsCount={visibleTopicsCountByKey[item.key] || 0}
           {...(tooltips.length ? { tooltips } : undefined)}
         />
       );
@@ -264,16 +303,15 @@ export default function renderTreeNodes({
         childrenNodes.push(
           ...renderNamespaceNodes({
             children: namespaceNodes.sort(naturalSort("namespace")),
-            getIsTreeNodeVisibleInScene,
             getIsTreeNodeVisibleInTree,
             hasFeatureColumn,
             isXSWidth,
+            onNamespaceOverrideColorChange,
+            setEditingNamespace,
             toggleCheckAllAncestors,
             toggleNamespaceChecked,
             topicNode: item,
             width: titleWidth,
-            overrideColorByColumn:
-              (derivedCustomSettingsByKey[key] && derivedCustomSettingsByKey[key].overrideColorByColumn) || [],
             filterText,
           })
         );
@@ -289,6 +327,8 @@ export default function renderTreeNodes({
             getIsNamespaceCheckedByDefault,
             hasFeatureColumn,
             isXSWidth,
+            onNamespaceOverrideColorChange,
+            setEditingNamespace,
             toggleCheckAllAncestors,
             toggleCheckAllDescendants,
             toggleNamespaceChecked,
@@ -298,6 +338,7 @@ export default function renderTreeNodes({
             sceneErrorsByKey,
             setCurrentEditingTopic,
             derivedCustomSettingsByKey,
+            visibleTopicsCountByKey,
             width: titleWidth,
             filterText,
           })

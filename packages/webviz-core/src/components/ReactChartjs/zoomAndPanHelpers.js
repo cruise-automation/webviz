@@ -36,7 +36,16 @@ export type PanOptions = $ReadOnly<{
   speed: number,
   threshold: number,
 }>;
-export type ScaleBounds = {| id: string, min: ?number, max: ?number |};
+export type ScaleBounds = {|
+  id: string,
+  min: number,
+  max: number,
+  axes: "xAxes" | "yAxes",
+  // Axis coordinates are measured in pixels from the edge of the chart canvas (vertically when axes
+  // is "yAxes", horizontally when axes is "xAxes".)
+  minAlongAxis: number,
+  maxAlongAxis: number,
+|};
 
 type ChartInstance = any;
 
@@ -86,7 +95,7 @@ function zoomCategoryScale(scale, zoom, center, zoomOptions, chartId) {
   }
 }
 
-function zoomNumericalScale(scale, zoom, center, zoomOptions) {
+function zoomNumericalScale(scale, zoom, center) {
   const range = scale.max - scale.min;
   const newDiff = range * (zoom - 1);
 
@@ -101,8 +110,8 @@ function zoomNumericalScale(scale, zoom, center, zoomOptions) {
   scale.options.ticks.max = scale.max - maxDelta;
 }
 
-function zoomTimeScale(scale, zoom, center, zoomOptions) {
-  zoomNumericalScale(scale, zoom, center, zoomOptions);
+function zoomTimeScale(scale, zoom, center) {
+  zoomNumericalScale(scale, zoom, center);
 
   const options = scale.options;
   if (options.time) {
@@ -235,7 +244,7 @@ function panCategoryScale(scale, delta, panOptions, chartId) {
   scale.options.ticks.max = labels[maxIndex];
 }
 
-function panNumericalScale(scale, delta, panOptions) {
+function panNumericalScale(scale, delta) {
   const tickOpts = scale.options.ticks;
   const prevStart = scale.min;
   const prevEnd = scale.max;
@@ -248,8 +257,8 @@ function panNumericalScale(scale, delta, panOptions) {
   tickOpts.max = newMax;
 }
 
-function panTimeScale(scale, delta, panOptions) {
-  panNumericalScale(scale, delta, panOptions);
+function panTimeScale(scale, delta) {
+  panNumericalScale(scale, delta);
 
   const options = scale.options;
   if (options.time) {
@@ -366,21 +375,54 @@ export function wheelZoomHandler(event: SyntheticWheelEvent<HTMLCanvasElement>, 
 }
 
 export function getScaleBounds(chartInstance: ChartInstance): ScaleBounds[] {
+  const xAxisScales = chartInstance.options.scales.xAxes.map(({ id }) => id);
   return Object.keys(chartInstance.scales).map((scaleKey) => {
     const scale = chartInstance.scales[scaleKey];
-    let min, max;
+    const { min, max } = scale;
 
-    const timeOptions = scale.options.time;
-    const tickOptions = scale.options.ticks;
-    if (timeOptions) {
-      min = timeOptions.min;
-      max = timeOptions.max;
-    }
-    if (tickOptions) {
-      min = tickOptions.min;
-      max = tickOptions.max;
+    let minAlongAxis;
+    let maxAlongAxis;
+    let axes;
+    if (xAxisScales.includes(scale.id)) {
+      minAlongAxis = scale.left;
+      maxAlongAxis = scale.right;
+      axes = "xAxes";
+    } else {
+      minAlongAxis = scale.bottom;
+      maxAlongAxis = scale.top;
+      axes = "yAxes";
     }
 
-    return { id: scale.id, min, max };
+    return { id: scale.id, axes, min, max, minAlongAxis, maxAlongAxis };
   });
+}
+
+export function getChartValue(bounds: ?ScaleBounds, canvasPx: number): ?number {
+  if (bounds == null) {
+    return;
+  }
+  const { min, max, minAlongAxis, maxAlongAxis } = bounds;
+  const chartOffsetPx = canvasPx - minAlongAxis;
+  return min + (chartOffsetPx * (max - min)) / (maxAlongAxis - minAlongAxis);
+}
+
+export function getChartPx(bounds: ?ScaleBounds, value: number): ?number {
+  if (bounds == null) {
+    return;
+  }
+  const { min, max, minAlongAxis, maxAlongAxis } = bounds;
+  // If [min, value, max] = [5, 7, 10], then valuePercent is 2/5 = 0.4.
+  const valuePercent = (value - min) / (max - min);
+  // If the chart goes from 104px to 154px, a bar at 40% should be at 104 + 20px.
+  return minAlongAxis + valuePercent * (maxAlongAxis - minAlongAxis);
+}
+
+export function inBounds(position: number, bounds: ?ScaleBounds): boolean {
+  if (bounds == null) {
+    return false;
+  }
+  // The position of the minimum value may not be the minimum coordinate if the axis is reversed.
+  const minBound = Math.min(bounds.minAlongAxis, bounds.maxAlongAxis);
+  const maxBound = Math.max(bounds.minAlongAxis, bounds.maxAlongAxis);
+  return position >= minBound && position <= maxBound;
 }

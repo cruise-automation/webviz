@@ -229,7 +229,7 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
 
   const messages: ?(Message[]) = playerState.activeData?.messages;
   const frame = useMemo(() => groupBy(messages || [], "topic"), [messages]);
-  const sortedTopics = useMemo(() => (topics || []).sort(naturalSort("name")), [topics]);
+  const sortedTopics = useMemo(() => (topics || []).sort(), [topics]);
   const datatypes: RosDatatypes = useMemo(() => unmemoizedDatatypes ?? {}, [unmemoizedDatatypes]);
   const setSubscriptions = useCallback(
     (id: string, subscriptionsForId: SubscribePayload[]) => {
@@ -308,17 +308,23 @@ export function MessagePipelineConsumer({ children }: ConsumerProps) {
 // TODO(Audrey): put messages under activeData, add ability to mock seeking
 export function MockMessagePipelineProvider(props: {|
   children: React.Node,
+  isPresent?: ?boolean,
   topics?: Topic[],
   datatypes?: RosDatatypes,
   messages?: Message[],
   setSubscriptions?: (string, SubscribePayload[]) => void,
   noActiveData?: boolean,
-  activeData?: $Shape<PlayerStateActiveData>,
+  showInitializing?: boolean,
+  activeData?: ?$Shape<PlayerStateActiveData>,
   capabilities?: string[],
   store?: any,
-  seekPlayback?: (Time) => void,
+  startPlayback?: ?() => void,
+  pausePlayback?: ?() => void,
+  seekPlayback?: ?(Time) => void,
+  currentTime?: Time,
   startTime?: Time,
   endTime?: Time,
+  isPlaying?: ?boolean,
   pauseFrame?: (string) => ResumeFrame,
   playerId?: string,
   requestBackfill?: () => void,
@@ -326,13 +332,15 @@ export function MockMessagePipelineProvider(props: {|
 |}) {
   const storeRef = useRef(props.store || configureStore(createRootReducer(createMemoryHistory())));
   const startTime = useRef();
-  let currentTime;
-  for (const message of props.messages || []) {
-    if (!startTime.current || TimeUtil.isLessThan(message.receiveTime, startTime.current)) {
-      startTime.current = message.receiveTime;
-    }
-    if (!currentTime || TimeUtil.isLessThan(currentTime, message.receiveTime)) {
-      currentTime = message.receiveTime;
+  let currentTime = props.currentTime;
+  if (!currentTime) {
+    for (const message of props.messages || []) {
+      if (!startTime.current || TimeUtil.isLessThan(message.receiveTime, startTime.current)) {
+        startTime.current = message.receiveTime;
+      }
+      if (!currentTime || TimeUtil.isLessThan(currentTime, message.receiveTime)) {
+        currentTime = message.receiveTime;
+      }
     }
   }
 
@@ -351,10 +359,10 @@ export function MockMessagePipelineProvider(props: {|
 
   const playerState = useMemo(
     () => ({
-      isPresent: true,
+      isPresent: props.isPresent == null ? true : props.isPresent,
       playerId: props.playerId || "1",
       progress: props.progress || {},
-      showInitializing: false,
+      showInitializing: !!props.showInitializing,
       showSpinner: false,
       capabilities,
       activeData: props.noActiveData
@@ -366,21 +374,24 @@ export function MockMessagePipelineProvider(props: {|
             startTime: props.startTime || startTime.current || { sec: 100, nsec: 0 },
             currentTime: currentTime || { sec: 100, nsec: 0 },
             endTime: props.endTime || currentTime || { sec: 100, nsec: 0 },
-            isPlaying: false,
+            isPlaying: !!props.isPlaying,
             speed: 0.2,
             lastSeekTime: 0,
             ...props.activeData,
           },
     }),
     [
+      props.isPresent,
       props.playerId,
       props.progress,
+      props.showInitializing,
       props.noActiveData,
       props.messages,
       props.topics,
       props.datatypes,
       props.startTime,
       props.endTime,
+      props.isPlaying,
       props.activeData,
       capabilities,
       currentTime,
@@ -400,8 +411,8 @@ export function MockMessagePipelineProvider(props: {|
           setSubscriptions: props.setSubscriptions || setSubscriptions,
           setPublishers: (_, __) => {},
           publish: (_) => {},
-          startPlayback: () => {},
-          pausePlayback: () => {},
+          startPlayback: props.startPlayback || (() => {}),
+          pausePlayback: props.pausePlayback || (() => {}),
           setPlaybackSpeed: (_) => {},
           seekPlayback: props.seekPlayback || ((_) => {}),
           pauseFrame: props.pauseFrame || (() => () => {}),

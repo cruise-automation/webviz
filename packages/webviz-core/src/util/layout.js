@@ -6,21 +6,20 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import * as Sentry from "@sentry/browser";
-import { compact, flatMap, isEmpty, xor, uniq } from "lodash";
+import { compact, flatMap, xor, uniq } from "lodash";
 import {
   createRemoveUpdate,
   getLeaves,
   getNodeAtPath,
   getPathFromNode,
   updateTree,
-  MosaicWithoutDragDropContext,
+  type MosaicUpdate,
 } from "react-mosaic-component";
 
 import type { TabLocation, TabPanelConfig } from "webviz-core/src/types/layouts";
 import type {
   ConfigsPayload,
   PanelConfig,
-  ChangePanelLayoutPayload,
   SaveConfigsPayload,
   MosaicNode,
   MosaicPath,
@@ -57,7 +56,6 @@ export function isTabPanel(panelId: string) {
 }
 
 type PanelIdMap = { [panelId: string]: string };
-type Configs = { [panelId: string]: PanelConfig };
 function mapTemplateIdsToNewIds(templateIds: string[]): PanelIdMap {
   const result = {};
   for (const id of templateIds) {
@@ -146,6 +144,18 @@ export const getParentTabPanelByPanelId = (savedProps: SavedProps): { [string]: 
     return memo;
   }, {});
 
+const replaceMaybeTabLayoutWithNewPanelIds = (panelIdMap) => ({ id, config }) => {
+  return config.tabs
+    ? {
+        id,
+        config: {
+          ...config,
+          tabs: config.tabs.map((t) => ({ ...t, layout: getLayoutWithNewPanelIds(t.layout, panelIdMap) })),
+        },
+      }
+    : { id, config };
+};
+
 export const getSaveConfigsPayloadForAddedPanel = ({
   id,
   config,
@@ -153,7 +163,7 @@ export const getSaveConfigsPayloadForAddedPanel = ({
 }: {
   id: string,
   config: PanelConfig,
-  relatedConfigs: ?Configs,
+  relatedConfigs: ?SavedProps,
 }): SaveConfigsPayload => {
   if (!relatedConfigs) {
     return { configs: [{ id, config }] };
@@ -161,14 +171,11 @@ export const getSaveConfigsPayloadForAddedPanel = ({
   const templateIds = Object.keys(relatedConfigs);
   const panelIdMap = mapTemplateIdsToNewIds(templateIds);
   let newConfigs = templateIds.map((tempId) => ({ id: panelIdMap[tempId], config: relatedConfigs[tempId] }));
-  if (config.tabs) {
-    const newTabs = config.tabs.map((t) => ({ ...t, layout: getLayoutWithNewPanelIds(t.layout, panelIdMap) }));
-    newConfigs = newConfigs.concat([{ id, config: { ...config, tabs: newTabs } }]);
-  }
+  newConfigs = newConfigs.concat([{ id, config }]).map(replaceMaybeTabLayoutWithNewPanelIds(panelIdMap));
   return { configs: newConfigs };
 };
 
-export function getPanelIdsInsideTabPanels(panelIds: string[], savedProps: Configs): string[] {
+export function getPanelIdsInsideTabPanels(panelIds: string[], savedProps: SavedProps): string[] {
   const tabPanelIds = panelIds.filter(isTabPanel);
   const tabLayouts = [];
   tabPanelIds.forEach((panelId) => {
@@ -245,20 +252,21 @@ export const removePanelFromTabPanel = (
   return saveConfigsPayload;
 };
 
-export const getTreeFromMovePanel = (
+export const createAddUpdates = (
+  tree: ?MosaicNode,
   panelId: string,
   newPath: MosaicPath,
-  position: MosaicDropTargetPosition,
-  tree: MosaicNode
-): MosaicNode => {
+  position: MosaicDropTargetPosition
+): MosaicUpdate[] => {
+  if (!tree) {
+    return [];
+  }
   const node = getNodeAtPath(tree, newPath);
   const before = position === "left" || position === "top";
   const [first, second] = before ? [panelId, node] : [node, panelId];
   const direction = position === "left" || position === "right" ? "row" : "column";
   const updates = [{ path: newPath, spec: { $set: { first, second, direction } } }];
-  const newTree = updateTree(tree, updates);
-
-  return newTree;
+  return updates;
 };
 
 export const addPanelToTab = (
@@ -275,7 +283,10 @@ export const addPanelToTab = (
   const currentTabLayout = safeTabConfig.tabs[safeTabConfig.activeTabIdx]?.layout;
   const newTree =
     currentTabLayout && destinationPath && destinationPosition
-      ? getTreeFromMovePanel(insertedPanelId, destinationPath, destinationPosition, currentTabLayout)
+      ? updateTree(
+          currentTabLayout,
+          createAddUpdates(currentTabLayout, insertedPanelId, destinationPath, destinationPosition)
+        )
       : insertedPanelId;
 
   const saveConfigsPayload = {
@@ -294,11 +305,15 @@ function getValidTabPanelConfig(panelId: string, savedProps: SavedProps): TabPan
   return validateTabPanelConfig(config) ? config : DEFAULT_TAB_PANEL_CONFIG;
 }
 
-const reorderTabWithinTabPanel = (
+export const reorderTabWithinTabPanel = ({
+  source,
+  target,
+  savedProps,
+}: {
   source: TabLocation,
   target: TabLocation,
-  savedProps: SavedProps
-): SaveConfigsPayload => {
+  savedProps: SavedProps,
+}): SaveConfigsPayload => {
   const { tabs, activeTabIdx } = getValidTabPanelConfig(source.panelId, savedProps);
 
   const sourceIndex = source.tabIndex ?? tabs.length - 1; // source.tabIndex will always be set
@@ -326,11 +341,15 @@ const reorderTabWithinTabPanel = (
   };
 };
 
-const moveTabBetweenTabPanels = (
+export const moveTabBetweenTabPanels = ({
+  source,
+  target,
+  savedProps,
+}: {
   source: TabLocation,
   target: TabLocation,
-  savedProps: SavedProps
-): SaveConfigsPayload => {
+  savedProps: SavedProps,
+}): SaveConfigsPayload => {
   const sourceConfig = getValidTabPanelConfig(source.panelId, savedProps);
   const targetConfig = getValidTabPanelConfig(target.panelId, savedProps);
 
@@ -344,7 +363,7 @@ const moveTabBetweenTabPanels = (
   // Update activeTabIdx so the active tab does not change as we move the tab
   const movedToBeforeActiveTabSource = sourceIndex <= sourceConfig.activeTabIdx;
   const nextActiveTabIdxSource = movedToBeforeActiveTabSource
-    ? sourceConfig.activeTabIdx - 1
+    ? Math.max(0, sourceConfig.activeTabIdx - 1)
     : sourceConfig.activeTabIdx;
 
   const movedToBeforeActiveTabTarget = targetIndex <= targetConfig.activeTabIdx;
@@ -358,17 +377,6 @@ const moveTabBetweenTabPanels = (
       { id: target.panelId, config: { tabs: nextTabsTarget, activeTabIdx: nextActiveTabIdxTarget } },
     ],
   };
-};
-
-export const getSaveConfigsPayloadForMoveTab = (
-  source: TabLocation,
-  target: TabLocation,
-  savedProps: {}
-): SaveConfigsPayload => {
-  if (source.panelId === target.panelId) {
-    return reorderTabWithinTabPanel(source, target, savedProps);
-  }
-  return moveTabBetweenTabPanels(source, target, savedProps);
 };
 
 export const replaceAndRemovePanels = (
@@ -425,66 +433,3 @@ export function getConfigsForNestedPanelsInsideTab(
   });
   return configs;
 }
-
-export const selectPanelOutput = (
-  type: string,
-  layout: ?MosaicNode,
-  { config, relatedConfigs }: { config?: PanelConfig, relatedConfigs?: { [panelId: string]: PanelConfig } }
-): { saveConfigsPayload: SaveConfigsPayload, changePanelPayload: ChangePanelLayoutPayload } => {
-  const id = getPanelIdForType(type);
-  let saveConfigsPayload = { configs: [] };
-  if (config) {
-    saveConfigsPayload = relatedConfigs
-      ? getSaveConfigsPayloadForAddedPanel({ id, config, relatedConfigs })
-      : { configs: [{ id, config }] };
-  }
-  const changePanelPayload = {
-    layout: isEmpty(layout) ? id : { direction: "row", first: id, second: layout },
-    trimSavedProps: !relatedConfigs,
-  };
-
-  return { saveConfigsPayload, changePanelPayload };
-};
-
-export const onNewPanelDrop = ({
-  layout,
-  newPanelType,
-  destinationPath = [],
-  position,
-  savedProps,
-  tabId,
-  config,
-  relatedConfigs,
-}: {
-  layout: MosaicNode,
-  newPanelType: string,
-  destinationPath?: MosaicPath,
-  position: MosaicWithoutDragDropContext,
-  savedProps: SavedProps,
-  tabId: ?string,
-  config: ?PanelConfig,
-  relatedConfigs: ?{ [panelId: string]: PanelConfig },
-}): { saveConfigsPayload: SaveConfigsPayload, layout: MosaicNode } => {
-  const id = getPanelIdForType(newPanelType);
-  let newLayout = layout;
-
-  const configs = [];
-  // This means we've dragged into a Tab panel.
-  if (tabId) {
-    const { configs: newConfigs } = addPanelToTab(id, destinationPath, position, savedProps[tabId], tabId);
-    configs.push(...newConfigs);
-  } else {
-    newLayout = getTreeFromMovePanel(id, destinationPath, position, layout);
-  }
-
-  // 'relatedConfigs' are used in Tab panel presets, so that the panels'
-  // respective configs will be saved globally.
-  if (config && relatedConfigs) {
-    const { configs: newConfigs } = getSaveConfigsPayloadForAddedPanel({ id, config, relatedConfigs });
-    configs.push(...newConfigs);
-  } else if (config) {
-    configs.push({ id, config });
-  }
-
-  return { saveConfigsPayload: { configs }, layout: newLayout };
-};

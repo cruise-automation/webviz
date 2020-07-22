@@ -43,7 +43,7 @@ describe("Rpc", () => {
     const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
     const local = new Rpc(mainChannel);
     const worker = new Rpc(workerChannel);
-    worker.receive("foo", async (msg) => {
+    worker.receive("foo", async (_msg) => {
       await delay(10);
       throw new Error("boom");
     });
@@ -61,7 +61,7 @@ describe("Rpc", () => {
     const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
     const local = new Rpc(mainChannel);
     const worker = new Rpc(workerChannel);
-    worker.receive("foo", (msg) => {
+    worker.receive("foo", (_msg) => {
       throw new Error("boom");
     });
     return local
@@ -92,7 +92,7 @@ describe("Rpc", () => {
     const expectedTransfer = new ArrayBuffer(1);
     const mainChannel: ChannelImpl = {
       onmessage: null,
-      postMessage(data: any, transfer?: ArrayBuffer[]) {
+      postMessage(data: any, _transfer?: ArrayBuffer[]) {
         const ev = new MessageEvent("message", { data });
         // eslint-disable-next-line no-use-before-define
         if (workerChannel.onmessage) {

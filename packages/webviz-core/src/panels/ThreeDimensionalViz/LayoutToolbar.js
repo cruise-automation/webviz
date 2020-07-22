@@ -10,25 +10,29 @@ import cx from "classnames";
 import React, { useMemo } from "react";
 import { PolygonBuilder, type MouseEventObject, type Polygon } from "regl-worldview";
 
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import CameraInfo from "webviz-core/src/panels/ThreeDimensionalViz/CameraInfo";
 import Crosshair from "webviz-core/src/panels/ThreeDimensionalViz/Crosshair";
 import DrawingTools, { type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
 import FollowTFControl from "webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl";
+import GlobalVariableStyles from "webviz-core/src/panels/ThreeDimensionalViz/GlobalVariableStyles";
 import Interactions, { type InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import MainToolbar from "webviz-core/src/panels/ThreeDimensionalViz/MainToolbar";
 import MeasureMarker from "webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker";
 import SearchText, { type SearchTextProps } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
-import { type LayoutToolbarSharedProps } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
+import {
+  type ColorOverridesByGlobalVariableName,
+  type LayoutToolbarSharedProps,
+} from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
 
 type Props = {|
   ...LayoutToolbarSharedProps,
   autoSyncCameraState: boolean,
   debug: boolean,
   isDrawing: boolean,
-  drawingTabType: ?DrawingTabType,
   interactionData: ?InteractionData,
   measureInfo: MeasureInfo,
   measuringElRef: { current: ?MeasuringTool },
@@ -43,6 +47,8 @@ type Props = {|
   selectedObject: ?MouseEventObject,
   selectedPolygonEditFormat: "json" | "yaml",
   showCrosshair: ?boolean,
+  colorOverridesByGlobalVariable: ColorOverridesByGlobalVariableName,
+  setColorOverridesByGlobalVariable: (ColorOverridesByGlobalVariableName) => void,
   ...SearchTextProps,
 |};
 
@@ -51,7 +57,6 @@ function LayoutToolbar({
   cameraState,
   debug,
   isDrawing,
-  drawingTabType,
   followOrientation,
   followTf,
   interactionData,
@@ -84,6 +89,8 @@ function LayoutToolbar({
   targetPose,
   toggleSearchTextOpen,
   transforms,
+  colorOverridesByGlobalVariable,
+  setColorOverridesByGlobalVariable,
 }: Props) {
   const additionalToolbarItemsElem = useMemo(
     () => {
@@ -96,6 +103,7 @@ function LayoutToolbar({
     },
     [transforms]
   );
+  const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("highlightGlobalVariableMatchingMarkers");
 
   return (
     <>
@@ -141,6 +149,12 @@ function LayoutToolbar({
           onToggleDebug={onToggleDebug}
         />
         {measuringElRef.current && measuringElRef.current.measureDistance}
+        {highlightMarkersThatMatchGlobalVariables && (
+          <GlobalVariableStyles
+            colorOverridesByGlobalVariable={colorOverridesByGlobalVariable}
+            setColorOverridesByGlobalVariable={setColorOverridesByGlobalVariable}
+          />
+        )}
         <Interactions
           isDrawing={isDrawing}
           interactionData={interactionData}

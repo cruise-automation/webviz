@@ -42,7 +42,7 @@ describe("useCachedGetMessagePathDataItems", () => {
       Test.cachedGetMessage = cachedGetMessagePathDataItems;
       return null;
     }
-    Test.cachedGetMessage = (path: string, message: Message) => {};
+    Test.cachedGetMessage = (_path: string, _message: Message) => {};
     return Test;
   }
 
@@ -50,7 +50,6 @@ describe("useCachedGetMessagePathDataItems", () => {
     const Test = createTest();
     const message: Message = {
       topic: "/topic",
-      datatype: "datatype",
       receiveTime: { sec: 0, nsec: 0 },
       message: { an_array: [5, 10, 15, 20] },
     };
@@ -108,7 +107,6 @@ describe("useCachedGetMessagePathDataItems", () => {
     const Test = createTest();
     const message: Message = {
       topic: "/topic",
-      datatype: "datatype",
       receiveTime: { sec: 0, nsec: 0 },
       message: { an_array: [5, 10, 15, 20] },
     };
@@ -148,40 +146,16 @@ describe("useCachedGetMessagePathDataItems", () => {
       const messages: Message[] = [
         {
           topic: "/some/topic",
-          datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
-          message: {
-            some_array: [
-              {
-                some_id: 10,
-                some_message: {
-                  x: 10,
-                  y: 20,
-                },
-              },
-            ],
-          },
+          message: { some_array: [{ some_id: 10, some_message: { x: 10, y: 20 } }] },
         },
         {
           topic: "/some/topic",
-          datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
           message: {
             some_array: [
-              {
-                some_id: 10,
-                some_message: {
-                  x: 10,
-                  y: 20,
-                },
-              },
-              {
-                some_id: 50,
-                some_message: {
-                  x: 50,
-                  y: 60,
-                },
-              },
+              { some_id: 10, some_message: { x: 10, y: 20 } },
+              { some_id: 50, some_message: { x: 50, y: 60 } },
             ],
           },
         },
@@ -189,37 +163,13 @@ describe("useCachedGetMessagePathDataItems", () => {
       const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
       const datatypes: RosDatatypes = {
         some_datatype: {
-          fields: [
-            {
-              name: "some_array",
-              type: "some_other_datatype",
-              isArray: true,
-            },
-          ],
+          fields: [{ name: "some_array", type: "some_other_datatype", isArray: true }],
         },
         some_other_datatype: {
-          fields: [
-            {
-              name: "some_id",
-              type: "uint32",
-            },
-            {
-              name: "some_message",
-              type: "yet_another_datatype",
-            },
-          ],
+          fields: [{ name: "some_id", type: "uint32" }, { name: "some_message", type: "yet_another_datatype" }],
         },
         yet_another_datatype: {
-          fields: [
-            {
-              name: "x",
-              type: "uint32",
-            },
-            {
-              name: "y",
-              type: "uint32",
-            },
-          ],
+          fields: [{ name: "x", type: "uint32" }, { name: "y", type: "uint32" }],
         },
       };
 
@@ -245,12 +195,104 @@ describe("useCachedGetMessagePathDataItems", () => {
         ],
       ]);
     });
+    describe("JSON", () => {
+      it("traverses JSON fields", () => {
+        const messages: Message[] = [
+          { topic: "/some/topic", receiveTime: { sec: 0, nsec: 0 }, message: { someJson: { someId: 10 } } },
+          {
+            topic: "/some/topic",
+            receiveTime: { sec: 0, nsec: 0 },
+            message: { someJson: { someId: 11, anotherId: 12 } },
+          },
+        ];
+        const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+        const datatypes: RosDatatypes = {
+          some_datatype: { fields: [{ name: "someJson", type: "json", isArray: false }] },
+        };
+
+        expect(addValuesWithPathsToItems(messages, "/some/topic.someJson", topics, datatypes)).toEqual([
+          [{ value: { someId: 10 }, path: "/some/topic.someJson", constantName: undefined }],
+          [{ value: { someId: 11, anotherId: 12 }, path: "/some/topic.someJson", constantName: undefined }],
+        ]);
+        expect(addValuesWithPathsToItems(messages, "/some/topic.someJson.someId", topics, datatypes)).toEqual([
+          [{ value: 10, path: "/some/topic.someJson.someId", constantName: undefined }],
+          [{ value: 11, path: "/some/topic.someJson.someId", constantName: undefined }],
+        ]);
+      });
+
+      it("traverses nested JSON arrays", () => {
+        const messages: Message[] = [
+          { topic: "/some/topic", receiveTime: { sec: 0, nsec: 0 }, message: { jsonArr: [{ foo: { bar: 42 } }] } },
+        ];
+        const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+        const datatypes: RosDatatypes = {
+          some_datatype: { fields: [{ name: "jsonArr", type: "json", isArray: false }] },
+        };
+
+        expect(addValuesWithPathsToItems(messages, "/some/topic.jsonArr[0].foo.bar", topics, datatypes)).toEqual([
+          [{ value: 42, path: "/some/topic.jsonArr[0].foo.bar", constantName: undefined }],
+        ]);
+      });
+
+      it("filters JSON arrays", () => {
+        const messages: Message[] = [
+          {
+            topic: "/some/topic",
+            receiveTime: { sec: 0, nsec: 0 },
+            message: { jsonArr: [{ id: 1, val: 42 }, { id: 2 }] },
+          },
+        ];
+        const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+        const datatypes: RosDatatypes = {
+          some_datatype: { fields: [{ name: "jsonArr", type: "json", isArray: false }] },
+        };
+        const path = "/some/topic.jsonArr[:]{id==1}.val";
+        expect(addValuesWithPathsToItems(messages, path, topics, datatypes)).toEqual([
+          [{ value: 42, path, constantName: undefined }],
+        ]);
+      });
+
+      it("traverses arrays of JSON", () => {
+        const messages: Message[] = [
+          { topic: "/some/topic", receiveTime: { sec: 0, nsec: 0 }, message: { jsonArr: [{ foo: 42 }] } },
+        ];
+        const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+        const datatypes: RosDatatypes = {
+          some_datatype: { fields: [{ name: "jsonArr", type: "json", isArray: true }] },
+        };
+
+        expect(addValuesWithPathsToItems(messages, "/some/topic.jsonArr[0].foo", topics, datatypes)).toEqual([
+          [{ value: 42, path: "/some/topic.jsonArr[0].foo", constantName: undefined }],
+        ]);
+      });
+
+      it("gracefully handles non-existent JSON fields", () => {
+        const messages: Message[] = [
+          {
+            topic: "/some/topic",
+            receiveTime: { sec: 0, nsec: 0 },
+            message: { someJson: { someId: 11, anotherId: 12 } },
+          },
+        ];
+        const topics: Topic[] = [{ name: "/some/topic", datatype: "some_datatype" }];
+        const datatypes: RosDatatypes = {
+          some_datatype: { fields: [{ name: "someJson", type: "json", isArray: false }] },
+        };
+
+        expect(addValuesWithPathsToItems(messages, "/some/topic.someJson.badPath", topics, datatypes)).toEqual([[]]);
+        expect(addValuesWithPathsToItems(messages, "/some/topic.someJson.someId.badPath", topics, datatypes)).toEqual([
+          [],
+        ]);
+        expect(
+          addValuesWithPathsToItems(messages, "/some/topic.someJson[0].someId.badPath", topics, datatypes)
+        ).toEqual([[]]);
+      });
+    });
 
     it("works with negative slices", () => {
       const messages: Message[] = [
         {
           topic: "/some/topic",
-          datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
           message: { some_array: [1, 2, 3, 4, 5] },
         },
@@ -272,7 +314,6 @@ describe("useCachedGetMessagePathDataItems", () => {
       const messages: Message[] = [
         {
           topic: "/some/topic",
-          datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
           message: 123,
         },
@@ -280,11 +321,27 @@ describe("useCachedGetMessagePathDataItems", () => {
       expect(addValuesWithPathsToItems(messages, "/some/topic", [], {})).toEqual([undefined]);
     });
 
+    it("handles fields inside times", () => {
+      const topics: Topic[] = [{ name: "/some/topic", datatype: "std_msgs/Header" }];
+      const datatypes: RosDatatypes = {
+        "std_msgs/Header": { fields: [{ name: "stamp", type: "time", isArray: false }] },
+      };
+      const messages: Message[] = [
+        {
+          topic: "/some/topic",
+          receiveTime: { sec: 0, nsec: 0 },
+          message: { stamp: { sec: 1, nsec: 2 } },
+        },
+      ];
+      expect(addValuesWithPathsToItems(messages, "/some/topic.stamp.nsec", topics, datatypes)).toEqual([
+        [{ constantName: undefined, path: "/some/topic.stamp.nsec", value: 2 }],
+      ]);
+    });
+
     it("filters properly, and uses the filter name in the path", () => {
       const messages: Message[] = [
         {
           topic: "/some/topic",
-          datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
           message: {
             some_array: [
@@ -341,7 +398,6 @@ describe("useCachedGetMessagePathDataItems", () => {
       const messages: Message[] = [
         {
           topic: "/some/topic",
-          datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
           message: {
             str_field: "A",
@@ -350,7 +406,6 @@ describe("useCachedGetMessagePathDataItems", () => {
         },
         {
           topic: "/some/topic",
-          datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
           message: {
             str_field: "A",
@@ -359,7 +414,6 @@ describe("useCachedGetMessagePathDataItems", () => {
         },
         {
           topic: "/some/topic",
-          datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
           message: {
             str_field: "B",
@@ -416,7 +470,6 @@ describe("useCachedGetMessagePathDataItems", () => {
       const messages: Message[] = [
         {
           topic: "/some/topic",
-          datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
           message: {
             state: 0,
@@ -424,7 +477,6 @@ describe("useCachedGetMessagePathDataItems", () => {
         },
         {
           topic: "/some/topic",
-          datatype: "some_datatype",
           receiveTime: { sec: 0, nsec: 0 },
           message: {
             state: 1,
@@ -566,7 +618,6 @@ describe("useDecodeMessagePathsForMessagesByTopic", () => {
 
     const message = {
       topic: "/topic1",
-      datatype: "datatype",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 1 },
     };

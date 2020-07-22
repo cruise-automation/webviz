@@ -48,8 +48,8 @@ export default class LayoutMenu extends PureComponent<Props, State> {
 
   _onExperimentalFeaturesClick = () => {
     this.setState({ isOpen: false });
-    const modal = renderToBody(<ExperimentalFeaturesModal onRequestClose={() => close(false)} />);
-    function close(value) {
+    const modal = renderToBody(<ExperimentalFeaturesModal onRequestClose={() => close()} />);
+    function close() {
       modal.remove();
     }
   };

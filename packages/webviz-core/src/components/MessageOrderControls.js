@@ -12,6 +12,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { setPlaybackConfig } from "webviz-core/src/actions/panels";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
+import NoHeaderTopicsButton from "webviz-core/src/components/NoHeaderTopicsButton";
 
 const BUTTON_STYLE = {
   display: "flex",
@@ -45,18 +46,22 @@ export default function MessageOrderControls() {
     </>
   );
   const tooltip = `Order messages by ${orderText.toLowerCase()}`;
+  const noHeaderTopicsButton = messageOrder === "headerStamp" ? <NoHeaderTopicsButton /> : null;
   return (
-    <div>
-      <Dropdown
-        position="above"
-        value={messageOrder}
-        text={dropdownButton}
-        onChange={setMessageOrder}
-        tooltip={tooltip}
-        btnStyle={BUTTON_STYLE}>
-        <span value={"receiveTime"}>{messageOrderLabel.receiveTime}</span>
-        <span value={"headerStamp"}>{messageOrderLabel.headerStamp}</span>
-      </Dropdown>
-    </div>
+    <>
+      <div>
+        <Dropdown
+          position="above"
+          value={messageOrder}
+          text={dropdownButton}
+          onChange={setMessageOrder}
+          tooltip={tooltip}
+          btnStyle={BUTTON_STYLE}>
+          <span value={"receiveTime"}>{messageOrderLabel.receiveTime}</span>
+          <span value={"headerStamp"}>{messageOrderLabel.headerStamp}</span>
+        </Dropdown>
+      </div>
+      {noHeaderTopicsButton}
+    </>
   );
 }

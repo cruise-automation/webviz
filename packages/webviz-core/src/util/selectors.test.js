@@ -8,7 +8,7 @@
 import {
   constantsByDatatype,
   getTopicNames,
-  topicsByTopicName,
+  getTopicsByTopicName,
   enumValuesByDatatypeAndField,
   extractTypeFromWebizEnumAnnotation,
 } from "webviz-core/src/util/selectors";
@@ -30,7 +30,10 @@ describe("selectors", () => {
   describe("topicsByTopicName", () => {
     it("indexes the topics by topic name", () => {
       expect(
-        topicsByTopicName([{ name: "/some/topic", datatype: "dummy" }, { name: "/another/topic", datatype: "dummy" }])
+        getTopicsByTopicName([
+          { name: "/some/topic", datatype: "dummy" },
+          { name: "/another/topic", datatype: "dummy" },
+        ])
       ).toEqual({
         "/some/topic": { name: "/some/topic", datatype: "dummy" },
         "/another/topic": { name: "/another/topic", datatype: "dummy" },

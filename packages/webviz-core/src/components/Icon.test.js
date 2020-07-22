@@ -24,7 +24,7 @@ describe("<Icon />", () => {
   });
 
   it("stops click event with custom handler", (done: (any) => void) => {
-    const Container = (props) => (
+    const Container = () => (
       <div onClick={() => done("should not bubble")}>
         <Icon onClick={() => done()}>
           <CircleIcon />
@@ -36,7 +36,7 @@ describe("<Icon />", () => {
   });
 
   it("does not prevent click by default", (done: (any) => void) => {
-    const Container = (props) => (
+    const Container = () => (
       <div onClick={() => done()}>
         <Icon>
           <CircleIcon />

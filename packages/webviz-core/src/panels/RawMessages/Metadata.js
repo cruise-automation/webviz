@@ -10,6 +10,7 @@ import { cloneDeepWith } from "lodash";
 import React, { useCallback } from "react";
 import styled from "styled-components";
 
+import { getMessageDocumentationLink } from "./utils";
 import Icon from "webviz-core/src/components/Icon";
 import type { Message } from "webviz-core/src/players/types";
 import clipboard from "webviz-core/src/util/clipboard";
@@ -25,7 +26,7 @@ type Props = {
   data: any,
   diffData: any,
   diff: any,
-  link: ?string,
+  datatype: ?string,
   message: Message,
   diffMessage: ?Message,
 };
@@ -41,7 +42,7 @@ function CopyMessageButton({ text, onClick }) {
   );
 }
 
-export default function Metadata({ data, diffData, diff, link, message, diffMessage }: Props) {
+export default function Metadata({ data, diffData, diff, datatype, message, diffMessage }: Props) {
   const onClickCopy = useCallback(
     (dataToCopy) => (e: SyntheticMouseEvent<HTMLSpanElement>) => {
       e.stopPropagation();
@@ -58,12 +59,14 @@ export default function Metadata({ data, diffData, diff, link, message, diffMess
   return (
     <SMetadata>
       {!diffMessage &&
-        (link ? (
-          <a style={{ color: "inherit" }} target="_blank" rel="noopener noreferrer" href={link}>
-            {message.datatype}
+        (datatype && (
+          <a
+            style={{ color: "inherit" }}
+            target="_blank"
+            rel="noopener noreferrer"
+            href={getMessageDocumentationLink(datatype)}>
+            {datatype}
           </a>
-        ) : (
-          message.datatype
         ))}
       {message.receiveTime && `${diffMessage ? " base" : ""} @ ${formatTimeRaw(message.receiveTime)} ROS `}
       <CopyMessageButton onClick={onClickCopy(data)} text="Copy msg" />

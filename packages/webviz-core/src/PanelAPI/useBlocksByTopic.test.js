@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { mount } from "enzyme";
+import { cloneDeep } from "lodash";
 import * as React from "react";
 import { MessageReader } from "rosbag";
 
@@ -25,10 +26,6 @@ describe("useBlocksByTopic", () => {
     return Test;
   }
 
-  beforeEach(() => {
-    setExperimentalFeature("preloading", "alwaysOn");
-  });
-
   afterEach(() => {
     setExperimentalFeature("preloading", "default");
   });
@@ -42,7 +39,6 @@ describe("useBlocksByTopic", () => {
       </MockMessagePipelineProvider>
     );
 
-    await Promise.resolve();
     expect(Test.result.mock.calls).toEqual([[{ blocks: [], messageReadersByTopic: {} }]]);
 
     root.unmount();
@@ -69,18 +65,21 @@ describe("useBlocksByTopic", () => {
       },
     };
     const progress = {
-      blocks: [
-        {
-          sizeInBytes: 0,
-          messagesByTopic: {
-            "/just_present": [],
-            "/defined_and_present": [],
-            "/subscribed_and_present": [],
-            "/subscribed_defined_and_present": [],
+      messageCache: {
+        blocks: [
+          {
+            sizeInBytes: 0,
+            messagesByTopic: {
+              "/just_present": [],
+              "/defined_and_present": [],
+              "/subscribed_and_present": [],
+              "/subscribed_defined_and_present": [],
+            },
           },
-        },
-        undefined,
-      ],
+          undefined,
+        ],
+        startTime: { sec: 0, nsec: 0 },
+      },
     };
     const Test = createTest();
 
@@ -97,7 +96,6 @@ describe("useBlocksByTopic", () => {
       </MockMessagePipelineProvider>
     );
 
-    await Promise.resolve();
     expect(Test.result.mock.calls).toEqual([
       [
         {
@@ -131,7 +129,6 @@ describe("useBlocksByTopic", () => {
         <Test topics={["/topic1"]} />
       </MockMessagePipelineProvider>
     );
-    await Promise.resolve();
     // Consumers just need to check in one place to see whether they need a fallback for a topic:
     // in messageReadersByTopic. (They don't also need to check the presence of blocks.)
     expect(Test.result.mock.calls).toEqual([[{ blocks: [], messageReadersByTopic: {} }]]);
@@ -139,16 +136,20 @@ describe("useBlocksByTopic", () => {
   });
 
   it("returns no data when the experimental feature is turned off (default)", async () => {
-    setExperimentalFeature("preloading", "default");
+    setExperimentalFeature("preloading", "alwaysOff");
     const activeData = { messageDefinitionsByTopic: { "/topic1": "uint32 id" } };
-    const progress = { blocks: [{ sizeInBytes: 0, messagesByTopic: { "/topic1": [] } }] };
+    const progress = {
+      messageCache: {
+        blocks: [{ sizeInBytes: 0, messagesByTopic: { "/topic1": [] } }],
+        startTime: { sec: 0, nsec: 0 },
+      },
+    };
     const Test = createTest();
     const root = mount(
       <MockMessagePipelineProvider activeData={activeData} progress={progress}>
         <Test topics={["/topic1"]} />
       </MockMessagePipelineProvider>
     );
-    await Promise.resolve();
     // No message readers, even though we have a definition and we try to subscribe to the topic.
     // This means the data will never be provided.
     expect(Test.result.mock.calls).toEqual([[{ blocks: [{}], messageReadersByTopic: {} }]]);
@@ -159,17 +160,70 @@ describe("useBlocksByTopic", () => {
     // messagesByTopic will not exist.
     const activeData = undefined;
     // Note: progress.blocks.map() does not iterate over the blocks.
-    const progress = { blocks: new Array(2) };
+    const progress = {
+      messageCache: {
+        blocks: new Array(2),
+        startTime: { sec: 0, nsec: 0 },
+      },
+    };
     const Test = createTest();
     const root = mount(
       <MockMessagePipelineProvider activeData={activeData} progress={progress}>
         <Test topics={["/topic1"]} />
       </MockMessagePipelineProvider>
     );
-    await Promise.resolve();
     // No message readers, even though we have a definition and we try to subscribe to the topic.
     // This means the data will never be provided.
     expect(Test.result.mock.calls).toEqual([[{ blocks: [{}, {}], messageReadersByTopic: {} }]]);
+    root.unmount();
+  });
+
+  it("maintains block identity across repeated renders", async () => {
+    const activeData = { messageDefinitionsByTopic: { "/topic": "uint32 id" } };
+    const progress = {
+      messageCache: {
+        blocks: [{ sizeInBytes: 0, messagesByTopic: { "/topic": [] } }],
+        startTime: { sec: 0, nsec: 0 },
+      },
+    };
+    const Test = createTest();
+
+    const root = mount(
+      <MockMessagePipelineProvider activeData={activeData} progress={progress}>
+        <Test topics={["/topic"]} />
+      </MockMessagePipelineProvider>
+    );
+
+    // Make sure the calls are actual rerenders caused
+    const expectedCall = [
+      {
+        blocks: [{ "/topic": [] }],
+        messageReadersByTopic: { "/topic": expect.any(MessageReader) },
+      },
+    ];
+    expect(Test.result.mock.calls).toEqual([expectedCall]);
+
+    // Same identity on everything. useBlocksByTopic does not run again.
+    root.setProps({ activeData, progress: { messageCache: { ...progress.messageCache } } });
+
+    // Block identity is the same, but blocks array identity changes.
+    root.setProps({
+      activeData,
+      progress: { messageCache: { ...progress.messageCache, blocks: progress.messageCache.blocks.slice() } },
+    });
+
+    // Both identities change.
+    root.setProps({ activeData, progress: { messageCache: cloneDeep(progress.messageCache) } });
+
+    expect(Test.result.mock.calls).toEqual([expectedCall, expectedCall, expectedCall]);
+    const [[c1], [c3], [c4]] = Test.result.mock.calls;
+    expect(c1.blocks).not.toBe(c3.blocks);
+    expect(c1.blocks[0]).toBe(c3.blocks[0]);
+    expect(c1.messageReadersByTopic).toBe(c3.messageReadersByTopic);
+
+    expect(c3.blocks).not.toBe(c4.blocks);
+    expect(c3.blocks[0]).not.toBe(c4.blocks[0]);
+    expect(c3.messageReadersByTopic).toBe(c4.messageReadersByTopic);
     root.unmount();
   });
 });

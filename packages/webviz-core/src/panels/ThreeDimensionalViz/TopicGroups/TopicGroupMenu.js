@@ -37,7 +37,7 @@ export default function TopicGroupMenu({
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onToggle = useCallback((ev) => {
+  const onToggle = useCallback(() => {
     setIsOpen((prevIsOpen) => !prevIsOpen);
   }, []);
 

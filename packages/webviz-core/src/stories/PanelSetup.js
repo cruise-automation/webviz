@@ -33,6 +33,7 @@ import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensio
 import type { Frame, Topic, PlayerStateActiveData, Progress } from "webviz-core/src/players/types";
 import type { UserNodeDiagnostics, UserNodeLogs } from "webviz-core/src/players/UserNodePlayer/types";
 import createRootReducer from "webviz-core/src/reducers";
+import Store from "webviz-core/src/store";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import type { MosaicNode, SavedProps, UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
@@ -46,7 +47,7 @@ export type Fixture = {|
   datatypes?: RosDatatypes,
   auxiliaryData?: any,
   globalVariables?: GlobalVariables,
-  layout?: MosaicNode,
+  layout?: ?MosaicNode,
   linkedGlobalVariables?: LinkedGlobalVariables,
   userNodes?: UserNodes,
   userNodeDiagnostics?: UserNodeDiagnostics,
@@ -60,14 +61,14 @@ type Props = {|
   children: React.Node,
   fixture: Fixture,
   omitDragAndDrop?: boolean,
-  onMount?: (HTMLDivElement) => void,
+  onMount?: (HTMLDivElement, store?: Store) => void,
   onFirstMount?: (HTMLDivElement) => void,
-  store?: any,
+  store?: Store,
   style?: { [string]: any },
 |};
 
 type State = {|
-  store: *,
+  store: Store,
 |};
 
 function setNativeValue(element, value) {
@@ -150,7 +151,7 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
     if (userNodes) {
       store.dispatch(setUserNodes(userNodes));
     }
-    if (layout) {
+    if (layout !== undefined) {
       store.dispatch(changePanelLayout({ layout }));
     }
     if (linkedGlobalVariables) {
@@ -207,7 +208,7 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
             onFirstMount(el);
           }
           if (el && onMount) {
-            onMount(el);
+            onMount(el, this.state.store);
           }
         }}>
         {/* $FlowFixMe - for some reason Flow doesn't like this :( */}

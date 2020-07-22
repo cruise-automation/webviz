@@ -10,10 +10,11 @@ import { sortedIndexBy } from "lodash";
 import { type Node } from "react";
 
 import {
-  type DiagnosticStatusArray,
+  type DiagnosticStatusArrayMsg,
   type DiagnosticsById,
   type DiagnosticId,
   type DiagnosticsByLevel,
+  type DiagnosticInfo,
   LEVELS,
   computeDiagnosticInfo,
 } from "./util";
@@ -32,6 +33,7 @@ export type DiagnosticsBuffer = {|
   diagnosticsById: DiagnosticsById,
   sortedAutocompleteEntries: DiagnosticAutocompleteEntry[],
   diagnosticsByLevel: DiagnosticsByLevel,
+  diagnosticsInOrderReceived: DiagnosticInfo[],
 |};
 
 type Props = {|
@@ -41,21 +43,38 @@ type Props = {|
 
 // Exported for tests
 export function addMessage(buffer: DiagnosticsBuffer, message: Message): DiagnosticsBuffer {
-  const statusArray: DiagnosticStatusArray = message.message;
-  if (statusArray.status.length === 0) {
+  const { header, status: statusArray }: DiagnosticStatusArrayMsg = message.message;
+  if (statusArray.length === 0) {
     return buffer;
   }
-  for (const status of statusArray.status) {
-    const info = computeDiagnosticInfo(status, statusArray.header.stamp);
 
+  for (const status of statusArray) {
+    const info = computeDiagnosticInfo(status, header.stamp);
     const oldInfo = buffer.diagnosticsById.get(info.id);
+    const oldHardwareIdInfo = buffer.diagnosticsById.get(`|${info.id.split("|")[1]}|`);
+
+    if (oldInfo) {
+      buffer.diagnosticsInOrderReceived = buffer.diagnosticsInOrderReceived.map((node) =>
+        node.id === info.id ? info : node
+      );
+    } else {
+      buffer.diagnosticsInOrderReceived.push(info);
+    }
 
     // update diagnosticsByLevel
     if (status.level in buffer.diagnosticsByLevel) {
       buffer.diagnosticsByLevel[status.level].set(info.id, info);
+      buffer.diagnosticsById.set(info.id, info);
+      buffer.diagnosticsById.set(oldHardwareIdInfo?.id || `|${info.id.split("|")[1]}|`, {
+        ...oldHardwareIdInfo,
+        status: { ...(oldHardwareIdInfo?.status || info.status), level: status.level, name: "" },
+      });
       // Remove it from the old map if its level has changed.
       if (oldInfo && oldInfo.status.level !== status.level) {
         buffer.diagnosticsByLevel[oldInfo.status.level].delete(info.id);
+      }
+      if (oldHardwareIdInfo && oldHardwareIdInfo.status.level !== status.level) {
+        buffer.diagnosticsByLevel[oldHardwareIdInfo.status.level].delete(oldHardwareIdInfo.id);
       }
     } else {
       console.warn("unrecognized status level", status);
@@ -72,10 +91,26 @@ export function addMessage(buffer: DiagnosticsBuffer, message: Message): Diagnos
       };
       const index = sortedIndexBy(buffer.sortedAutocompleteEntries, newEntry, "displayName");
       buffer.sortedAutocompleteEntries.splice(index, 0, newEntry);
-    }
+      buffer.diagnosticsById.set(info.id, info);
 
-    // update diagnosticsById
-    buffer.diagnosticsById.set(info.id, info);
+      if (oldHardwareIdInfo === undefined) {
+        const newHardwareEntry = {
+          hardware_id: info.status.hardware_id,
+          id: `|${info.id.split("|")[1]}|`,
+          name: "",
+          displayName: info.status.hardware_id,
+          sortKey: info.status.hardware_id.replace(/^\//, "").toLowerCase(),
+        };
+        const hardwareIdx = sortedIndexBy(buffer.sortedAutocompleteEntries, newHardwareEntry, "displayName");
+        buffer.sortedAutocompleteEntries.splice(hardwareIdx, 0, newHardwareEntry);
+        buffer.diagnosticsById.set(`|${info.id.split("|")[1]}|`, {
+          ...info,
+          id: `|${info.id.split("|")[1]}|`,
+          displayName: info.status.hardware_id,
+          status: { ...info.status, name: "" },
+        });
+      }
+    }
   }
   return { ...buffer };
 }
@@ -91,6 +126,7 @@ export function defaultDiagnosticsBuffer(): DiagnosticsBuffer {
       [LEVELS.ERROR]: new Map(),
       [LEVELS.STALE]: new Map(),
     },
+    diagnosticsInOrderReceived: [],
   };
 }
 

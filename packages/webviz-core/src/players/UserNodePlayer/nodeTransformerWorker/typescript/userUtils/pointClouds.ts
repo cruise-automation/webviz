@@ -1,5 +1,61 @@
-import { RGBA, Point, Transform } from "./types";
+import { Point, Header, RGBA } from "./types";
 import { rotate } from "./vectors";
+import { FieldReader, getReader } from "./readers";
+
+interface sensor_msgs__PointField {
+  name: string;
+  offset: number;
+  datatype: number;
+  count: number;
+}
+
+export interface sensor_msgs__PointCloud2 {
+  header: Header;
+  height: number;
+  width: number;
+  fields: sensor_msgs__PointField[];
+  is_bigendian: boolean;
+  point_step: number;
+  row_step: number;
+  data: Uint8Array;
+  is_dense: boolean;
+}
+
+type Reader = { datatype: number; offset: number; reader: FieldReader };
+
+function getFieldOffsetsAndReaders(fields: sensor_msgs__PointField[]): Reader[] {
+  const result: Reader[] = [];
+  for (const { name, datatype, offset = 0 } of fields) {
+    result.push({ datatype, offset, reader: getReader(datatype, offset) });
+  }
+  return result;
+}
+
+type Field = number | string;
+
+/**
+ * Read points from a sensor_msgs.PointCloud2 message. Returns a nested array
+ * of values whose index corresponds to that of the 'fields' value.
+ */
+export const readPoints = (message: sensor_msgs__PointCloud2): Array<Field[]> => {
+  const { fields, height, point_step, row_step, width, data } = message;
+  const readers = getFieldOffsetsAndReaders(fields);
+
+  const points: Array<Field[]> = [];
+  for (let i = 0; i < height; i++) {
+    const dataOffset = i * row_step;
+    for (let j = 0; j < width; j++) {
+      const row: Field[] = [];
+      const dataStart = j * point_step + dataOffset;
+      for (const reader of readers) {
+        const value = reader.reader.read(data, dataStart);
+        row.push(value);
+      }
+      points.push(row);
+    }
+  }
+  return points;
+};
 
 export function norm({ x, y, z }: Point) {
   return Math.sqrt(x * x + y * y + z * z);
@@ -51,76 +107,4 @@ export function convertToRangeView(points: Point[], range: number, makeColors: b
     points[i] = setRayDistance(pt, range);
   }
   return colors;
-}
-
-/*
- * Only returns point clouds that differ. `cloud1` is colored in blue, and
- * `cloud2` is colored in red.
- */
-export function diffPoints(
-  cloud1: Point[],
-  cloud2: Point[]
-): {
-  points: Point[];
-  colors: RGBA[];
-} {
-  // TODO: This hash can have collisions, need a better one
-  const hash = (p: Point) => p.x + p.y + p.z;
-
-  const colorOnlyCloud1 = {
-    r: 0,
-    g: 0,
-    b: 1,
-    a: 1,
-  };
-  const colorOnlyCloud2 = {
-    r: 1,
-    g: 0,
-    b: 0,
-    a: 1,
-  };
-
-  const points: Point[] = [];
-  const colors: RGBA[] = [];
-
-  const map = new Map();
-  for (let i = 0; i < cloud1.length; ++i) {
-    const h = hash(cloud1[i]);
-    map.set(h, cloud1[i]);
-  }
-
-  for (let i = 0; i < cloud2.length; ++i) {
-    const h = hash(cloud2[i]);
-    if (map.has(h)) {
-      map.delete(h);
-    } else {
-      // Point in Cloud2, not Cloud1
-      points.push(cloud2[i]);
-      colors.push(colorOnlyCloud2);
-    }
-  }
-
-  // All remaining points in map are points
-  // that are in Cloud1, not Cloud2
-  map.forEach((val) => {
-    points.push(val);
-    colors.push(colorOnlyCloud1);
-  });
-
-  return { points: points, colors: colors };
-}
-
-export function transformPoint(transform: Transform, point: Point) {
-  const translation = transform.transform.translation;
-  const rotation = transform.transform.rotation;
-  let pt = { ...point };
-  pt.x -= translation.x;
-  pt.y -= translation.y;
-  pt.z -= translation.z;
-  pt = rotate(rotation, pt);
-  return pt;
-}
-
-export function transformPoints(transform: Transform, points: Point[]): Point[] {
-  return points.map((point) => transformPoint(transform, point));
 }

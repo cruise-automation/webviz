@@ -14,7 +14,7 @@ import { MockMessagePipelineProvider } from "webviz-core/src/components/MessageP
 
 describe("useMessageReducer", () => {
   // Create a helper component that exposes restore, addMessage, and the results of the hook for mocking
-  function createTest(useAddMessage: boolean = true, useAddMessages: boolean = false) {
+  function createTest(_useAddMessage: boolean = true, useAddMessages: boolean = false) {
     function Test({ topics, addMessagesOverride }: { topics: string[], addMessagesOverride?: any }) {
       Test.result(
         PanelAPI.useMessageReducer({
@@ -66,7 +66,6 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
@@ -93,7 +92,6 @@ describe("useMessageReducer", () => {
     Test.addMessages.mockImplementation((_, msgs) => msgs[msgs.length - 1].message.value);
 
     const message = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
@@ -120,13 +118,11 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message1 = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
     };
     const message2 = {
-      datatype: "Bar",
       topic: "/bar",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 3 },
@@ -167,19 +163,16 @@ describe("useMessageReducer", () => {
     Test.addMessages.mockImplementation((prevValue, msgs) => msgs[msgs.length - 1].message.value);
 
     const message1 = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
     };
     const message2 = {
-      datatype: "Bar",
       topic: "/bar",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 3 },
     };
     const message3 = {
-      datatype: "Bar",
       topic: "/bar",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 4 },
@@ -246,7 +239,6 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message1 = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
@@ -280,13 +272,11 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message1 = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
     };
     const message2 = {
-      datatype: "Bar",
       topic: "/bar",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 3 },
@@ -318,13 +308,11 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message1 = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
     };
     const message2 = {
-      datatype: "Bar",
       topic: "/bar",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 3 },
@@ -361,7 +349,6 @@ describe("useMessageReducer", () => {
     Test.addMessage.mockImplementation((_, msg) => msg.message.value);
 
     const message = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
@@ -457,7 +444,6 @@ describe("useMessageReducer", () => {
     Test.addMessages.mockImplementation((_, msgs) => msgs[msgs.length - 1].message.value);
 
     const message1 = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },

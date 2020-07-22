@@ -29,9 +29,11 @@ export const concatAndTruncate = <T>(array1: $ReadOnlyArray<T>, array2: $ReadOnl
 export function useMessagesByTopic<T: any>({
   topics,
   historySize,
+  onlyLoadInBlocks,
 }: {
   topics: $ReadOnlyArray<string>,
   historySize: number,
+  onlyLoadInBlocks?: ?boolean,
 }): $ReadOnly<{ [topic: string]: $ReadOnlyArray<TypedMessage<T>> }> {
   const requestedTopics = useDeepMemo(topics);
 
@@ -69,5 +71,5 @@ export function useMessagesByTopic<T: any>({
     [requestedTopics, historySize]
   );
 
-  return useMessageReducer({ topics: requestedTopics, addMessages, restore });
+  return useMessageReducer({ topics: requestedTopics, addMessages, restore, onlyLoadInBlocks });
 }

@@ -215,7 +215,7 @@ describe("createSelectableContext/useContextSelector", () => {
   it("throws when first selector call returns BAILOUT", () => {
     jest.spyOn(console, "error").mockReturnValue(); // Library logs an error.
     const C = createSelectableContext();
-    const Consumer = createTestConsumer(C, (x) => useContextSelector.BAILOUT);
+    const Consumer = createTestConsumer(C, () => useContextSelector.BAILOUT);
 
     expect(() =>
       mount(

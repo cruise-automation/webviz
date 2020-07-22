@@ -15,6 +15,7 @@ import GlobalVariableLink from "./GlobalVariableLink/index";
 import type { InteractionData } from "./types";
 import { type LinkedGlobalVariables } from "./useLinkedGlobalVariables";
 import Dropdown from "webviz-core/src/components/Dropdown";
+import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
 
 const SObjectDetails = styled.div`
@@ -34,11 +35,7 @@ type Props = CommonProps & {
   objectToDisplay: any,
 };
 
-export const getInstanceObj = (marker: any, idx: number) => {
-  return marker.metadataByIndex && marker.metadataByIndex[idx];
-};
-
-export default function ObjectDetailsWrapper({
+function ObjectDetailsWrapper({
   interactionData,
   linkedGlobalVariables,
   selectedObject: { object, instanceIndex },
@@ -75,7 +72,7 @@ export default function ObjectDetailsWrapper({
   );
 }
 
-function ObjectDetails({ interactionData, linkedGlobalVariables, objectToDisplay }: Props) {
+function ObjectDetails({ interactionData, objectToDisplay }: Props) {
   const topic = (interactionData && interactionData.topic) || "";
   const originalObject = omit(objectToDisplay, "interactionData");
 
@@ -103,7 +100,7 @@ function ObjectDetails({ interactionData, linkedGlobalVariables, objectToDisplay
         theme={{ ...jsonTreeTheme, tree: { margin: 0 } }}
         hideRoot
         getItemString={(type, data, itemType, itemString) => <span>{itemString}</span>}
-        labelRenderer={(markerKeyPath: string[], p1, p2, hasChildren: boolean, ...rest) => {
+        labelRenderer={(markerKeyPath: string[], p1, p2, hasChildren: boolean) => {
           const label = first(markerKeyPath);
           if (!hasChildren) {
             return <span style={{ padding: "0 4px" }}>{label}</span>;
@@ -145,3 +142,5 @@ function ObjectDetails({ interactionData, linkedGlobalVariables, objectToDisplay
     </SObjectDetails>
   );
 }
+
+export default ObjectDetailsWrapper;

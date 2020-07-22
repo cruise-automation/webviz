@@ -14,6 +14,7 @@ import {
   enumFixture,
   enumAdvancedFixture,
   withMissingData,
+  withLongString,
   topicsToDiffFixture,
   topicsWithIdsToDiffFixture,
   multipleNumberMessagesFixture,
@@ -95,6 +96,13 @@ storiesOf("<RawMessages>", module)
     return (
       <PanelSetup fixture={withMissingData} style={{ width: 350 }}>
         <RawMessages config={{ topicPath: "/baz/missing_data", ...noDiffConfig }} />
+      </PanelSetup>
+    );
+  })
+  .add("with a truncated long string", () => {
+    return (
+      <PanelSetup fixture={withLongString} style={{ width: 350 }}>
+        <RawMessages config={{ topicPath: "/baz/text", ...noDiffConfig }} />
       </PanelSetup>
     );
   })

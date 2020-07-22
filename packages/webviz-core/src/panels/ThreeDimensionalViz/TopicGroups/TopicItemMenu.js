@@ -28,7 +28,6 @@ export default function TopicItemMenu({
   highlighted,
   objectPath,
   item: {
-    topicName,
     derivedFields: { displayName, datatype },
   },
   onTopicGroupsChange,
@@ -36,7 +35,7 @@ export default function TopicItemMenu({
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onToggle = useCallback((ev) => {
+  const onToggle = useCallback(() => {
     setIsOpen((prevIsOpen) => !prevIsOpen);
   }, []);
 

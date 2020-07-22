@@ -21,6 +21,7 @@ const RosPrimitives = {
   string: null,
   time: null,
   duration: null,
+  json: null,
 };
 
 export type RosPrimitive = $Keys<typeof RosPrimitives>;

@@ -19,26 +19,32 @@ storiesOf("<PlotMenu>", module)
   .add("With min and max y set", () => (
     <Wrapper>
       <PlotMenu
+        displayWidth=""
         minYValue="-5"
         maxYValue="5"
         saveConfig={noop}
         setMinMax={noop}
+        setWidth={noop}
         datasets={[]}
         maxMessages="123"
         tooltips={[]}
+        xAxisVal="timestamp"
       />
     </Wrapper>
   ))
   .add("With min and max y not set", () => (
     <Wrapper>
       <PlotMenu
+        displayWidth=""
         minYValue=""
         maxYValue=""
         saveConfig={noop}
         setMinMax={noop}
+        setWidth={noop}
         datasets={[]}
         maxMessages=""
         tooltips={[]}
+        xAxisVal="timestamp"
       />
     </Wrapper>
   ));

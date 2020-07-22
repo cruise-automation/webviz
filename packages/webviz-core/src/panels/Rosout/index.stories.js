@@ -18,7 +18,6 @@ const fixture = {
   frame: {
     "/rosout": [
       {
-        datatype: "rosgraph_msgs/Log",
         topic: "/rosout",
         receiveTime: { sec: 123, nsec: 456 },
         message: {
@@ -32,7 +31,6 @@ const fixture = {
         },
       },
       {
-        datatype: "rosgraph_msgs/Log",
         topic: "/rosout",
         receiveTime: { sec: 123, nsec: 456 },
         message: {
@@ -46,7 +44,6 @@ const fixture = {
         },
       },
       {
-        datatype: "rosgraph_msgs/Log",
         topic: "/rosout",
         receiveTime: { sec: 123, nsec: 456 },
         message: {
@@ -60,7 +57,6 @@ const fixture = {
         },
       },
       {
-        datatype: "rosgraph_msgs/Log",
         topic: "/rosout",
         receiveTime: { sec: 0, nsec: 0 },
         message: {
@@ -109,7 +105,7 @@ storiesOf("<RosoutPanel>", module)
             "/webviz_source_2/rosout": makeMessages("/webviz_source_2/rosout"),
           },
         }}
-        onMount={(el) => {
+        onMount={() => {
           TestUtils.Simulate.mouseEnter(document.querySelectorAll("[data-test~=panel-mouseenter-container]")[0]);
           setTimeout(() => {
             TestUtils.Simulate.click(document.querySelectorAll("[data-test=topic-set]")[0]);
@@ -123,7 +119,7 @@ storiesOf("<RosoutPanel>", module)
     return (
       <PanelSetup
         fixture={fixture}
-        onMount={(el) => {
+        onMount={() => {
           TestUtils.Simulate.mouseEnter(document.querySelectorAll("[data-test~=panel-mouseenter-container]")[0]);
           setTimeout(() => {
             TestUtils.Simulate.click(document.querySelectorAll("[data-test=panel-settings]")[0]);

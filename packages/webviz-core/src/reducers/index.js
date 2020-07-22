@@ -10,16 +10,19 @@ import { connectRouter } from "connected-react-router";
 import type { ActionTypes } from "webviz-core/src/actions";
 import { ros_lib_dts } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
 import extensions, { type Extensions as ExtensionsState } from "webviz-core/src/reducers/extensions";
+import hoverValue from "webviz-core/src/reducers/hoverValue";
 import layoutHistory, { type LayoutHistory, initialLayoutHistoryState } from "webviz-core/src/reducers/layoutHistory";
 import mosaic from "webviz-core/src/reducers/mosaic";
 import panels, { type PanelsState } from "webviz-core/src/reducers/panels";
 import userNodes, { type UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
 import type { Auth as AuthState } from "webviz-core/src/types/Auth";
+import type { HoverValue } from "webviz-core/src/types/hoverValue";
 
 const getReducers = (history: any) => [
   panels,
   mosaic,
   extensions,
+  hoverValue,
   userNodes,
   (state) => ({ ...state, router: connectRouter(history)() }),
   layoutHistory,
@@ -30,6 +33,7 @@ export type State = {
   mosaic: { mosaicId: string, selectedPanelIds: string[] },
   auth: AuthState,
   extensions: ExtensionsState,
+  hoverValue: ?HoverValue,
   userNodes: { userNodeDiagnostics: UserNodeDiagnostics, rosLib: string },
   router: { location: { pathname: string, search: string } },
   layoutHistory: LayoutHistory,
@@ -41,6 +45,7 @@ export default function createRootReducer(history: any) {
     mosaic: { mosaicId: "", selectedPanelIds: [] },
     auth: Object.freeze({ username: undefined }),
     extensions: Object.freeze({ markerProviders: [], auxiliaryData: {} }),
+    hoverValue: null,
     userNodes: { userNodeDiagnostics: {}, rosLib: ros_lib_dts },
     router: connectRouter(history)(),
     layoutHistory: initialLayoutHistoryState,

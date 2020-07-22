@@ -20,6 +20,7 @@ const DEFAULT_MOCK_PANEL_CONTEXT: PanelContextType<any> = {
   openSiblingPanel: () => {},
   enterFullscreen: () => {},
   isHovered: false,
+  isFocused: false,
 };
 function MockPanelContextProvider({ children, ...rest }: { ...MockProps, children: Node }) {
   return (

@@ -19,7 +19,6 @@ export const fixture = {
   frame: {
     "/msgs/big_topic": [
       {
-        datatype: "msgs/big_topic",
         topic: "/msgs/big_topic",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: {
@@ -43,13 +42,11 @@ export const fixture = {
     ],
     "/foo": [
       {
-        datatype: "std_msgs/String",
         topic: "/foo",
         receiveTime: { sec: 122, nsec: 456789011 },
         message: { some_array: ["a", "b", "c"], some_deleted_key: "GONE", some_id_example_2: { some_id: 0 } },
       },
       {
-        datatype: "std_msgs/String",
         topic: "/foo",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: { some_array: ["a", "b", "c", "d", "e", "f"], some_id_example_2: { some_id: 123 } },
@@ -57,7 +54,6 @@ export const fixture = {
     ],
     "/baz/num": [
       {
-        datatype: "baz/num",
         topic: "/baz/num",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: 3425363211,
@@ -65,7 +61,6 @@ export const fixture = {
     ],
     "/baz/text": [
       {
-        datatype: "baz/text",
         topic: "/baz/text",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: "lidar_side_left/caliper_ogrid_node",
@@ -73,7 +68,6 @@ export const fixture = {
     ],
     "/baz/array": [
       {
-        datatype: "baz/array",
         topic: "/baz/array",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: [false],
@@ -81,7 +75,6 @@ export const fixture = {
     ],
     "/baz/array/obj": [
       {
-        datatype: "baz/array/obj",
         topic: "/baz/array/obj",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: [{ a: "b", c: "d", e: "f" }],
@@ -89,7 +82,6 @@ export const fixture = {
     ],
     "/geometry/types": [
       {
-        datatype: "geometry/types",
         topic: "/geometry/types",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: {
@@ -125,7 +117,6 @@ export const enumFixture = {
   frame: {
     "/baz/enum": [
       {
-        datatype: "baz/enum",
         topic: "/baz/enum",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: {
@@ -172,7 +163,6 @@ export const enumAdvancedFixture = {
   frame: {
     "/baz/enum_advanced": [
       {
-        datatype: "baz/enum_advanced",
         topic: "/baz/enum_advanced",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: exampleMessage,
@@ -191,11 +181,26 @@ export const withMissingData = {
   frame: {
     "/baz/missing_data": [
       {
-        datatype: "baz/missing_data",
         topic: "/baz/missing_data",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: {
           value: null,
+        },
+      },
+    ],
+  },
+};
+
+export const withLongString = {
+  topics: [{ name: "/baz/text", datatype: "baz/text" }],
+  frame: {
+    "/baz/text": [
+      {
+        topic: "/baz/text",
+        receiveTime: { sec: 123, nsec: 456789012 },
+        message: {
+          text: new Array(10).fill("string").join(" "),
+          long_text: new Array(1024).fill("string").join(" "),
         },
       },
     ],
@@ -211,7 +216,6 @@ export const topicsToDiffFixture = {
   frame: {
     "/baz/enum_advanced": [
       {
-        datatype: "baz/enum_advanced",
         topic: "/baz/enum_advanced",
         receiveTime: { sec: 123, nsec: 456789012 },
         message: { ...exampleMessage, toBeDeletedVal: "Bye!", toBeDeletedObj: { a: 1, b: 2, c: 3 } },
@@ -268,19 +272,16 @@ export const multipleNumberMessagesFixture = {
   frame: {
     "/baz/enum": [
       {
-        datatype: "multiple_number_messages",
         topic: "/multiple_number_messages",
         receiveTime: { sec: 123, nsec: 1 },
         message: { value: 1 },
       },
       {
-        datatype: "multiple_number_messages",
         topic: "/multiple_number_messages",
         receiveTime: { sec: 123, nsec: 2 },
         message: { value: 2 },
       },
       {
-        datatype: "multiple_number_messages",
         topic: "/multiple_number_messages",
         receiveTime: { sec: 123, nsec: 3 },
         message: { value: 3 },

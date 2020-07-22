@@ -19,6 +19,7 @@ import {
 } from "regl-worldview";
 
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import type { InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import { emptyPose } from "webviz-core/src/util/Pose";
@@ -51,18 +52,18 @@ export function getTargetPose(followTf?: string | false, transforms: Transforms)
   return null;
 }
 
-export function useComputedCameraState({
-  currentCameraState,
+export function useTransformedCameraState({
+  configCameraState,
   followTf,
   followOrientation,
   transforms,
 }: {
-  currentCameraState: $Shape<CameraState>,
+  configCameraState: $Shape<CameraState>,
   followTf?: string | false,
   followOrientation?: boolean,
   transforms: Transforms,
-}): { cameraState: CameraState, targetPose: ?TargetPose } {
-  let newCameraState = { ...currentCameraState };
+}): { transformedCameraState: CameraState, targetPose: ?TargetPose } {
+  let transformedCameraState = { ...configCameraState };
   const targetPose = getTargetPose(followTf, transforms);
   // Store last seen target pose because the target may become available/unavailable over time as
   // the player changes, and we want to avoid moving the camera when it disappears.
@@ -71,41 +72,55 @@ export function useComputedCameraState({
   // Recompute cameraState based on the new inputs at each render
   if (targetPose) {
     lastTargetPoseRef.current = targetPose;
-    newCameraState.target = targetPose.target;
+    transformedCameraState.target = targetPose.target;
     if (followOrientation) {
-      newCameraState.targetOrientation = targetPose.targetOrientation;
+      transformedCameraState.targetOrientation = targetPose.targetOrientation;
     }
   } else if (followTf && lastTargetPose) {
     // If follow is enabled but no target is available (such as when seeking), keep the camera
     // position the same as it would have been by reusing the last seen target pose.
-    newCameraState.target = lastTargetPose.target;
+    transformedCameraState.target = lastTargetPose.target;
     if (followOrientation) {
-      newCameraState.targetOrientation = lastTargetPose.targetOrientation;
+      transformedCameraState.targetOrientation = lastTargetPose.targetOrientation;
     }
   }
   // Read the distance from URL when World is first loaded with empty cameraState distance in savedProps
-  if (currentCameraState.distance == null) {
-    newCameraState.distance = getZoomDistanceFromURLParam();
+  if (configCameraState?.distance == null) {
+    transformedCameraState.distance = getZoomDistanceFromURLParam();
   }
 
-  newCameraState = mergeWith(newCameraState, DEFAULT_CAMERA_STATE, (objVal, srcVal) => objVal ?? srcVal);
+  transformedCameraState = mergeWith(
+    transformedCameraState,
+    DEFAULT_CAMERA_STATE,
+    (objVal, srcVal) => objVal ?? srcVal
+  );
 
-  return { cameraState: newCameraState, targetPose: targetPose || lastTargetPose };
+  return { transformedCameraState, targetPose: targetPose || lastTargetPose };
 }
+
+export const getInstanceObj = (marker: any, idx: number) => marker?.metadataByIndex?.[idx];
+export const getObject = (selectedObject: MouseEventObject) =>
+  (selectedObject.instanceIndex !== undefined &&
+    selectedObject.object.metadataByIndex !== undefined &&
+    getInstanceObj(selectedObject.object, selectedObject.instanceIndex)) ||
+  selectedObject?.object;
+export const getInteractionData = (selectedObject: MouseEventObject): ?InteractionData =>
+  selectedObject.object.interactionData || getObject(selectedObject)?.interactionData;
 
 export function getUpdatedGlobalVariablesBySelectedObject(
   selectedObject: MouseEventObject,
   linkedGlobalVariables: LinkedGlobalVariables
 ): ?GlobalVariables {
-  const interactionData = selectedObject && selectedObject.object.interactionData;
-  const objectTopic = interactionData && interactionData.topic;
-  if (!linkedGlobalVariables.length || !objectTopic) {
+  const instanceObject = selectedObject && getInstanceObj(selectedObject.object, selectedObject.instanceIndex);
+  const interactionData = selectedObject?.object.interactionData;
+  if (!linkedGlobalVariables.length || !interactionData?.topic) {
     return;
   }
+  const object = instanceObject || selectedObject.object;
   const newGlobalVariables = {};
   linkedGlobalVariables.forEach(({ topic, markerKeyPath, name }) => {
-    if (objectTopic === topic) {
-      const objectForPath = get(selectedObject.object, [...markerKeyPath].reverse());
+    if (interactionData?.topic === topic) {
+      const objectForPath = get(object, [...markerKeyPath].reverse());
       newGlobalVariables[name] = objectForPath;
     }
   });

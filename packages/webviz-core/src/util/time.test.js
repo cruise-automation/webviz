@@ -78,6 +78,24 @@ describe("time.formatDuration", () => {
   });
 });
 
+describe("time.formatDate", () => {
+  it("formats date based on provided timezone", () => {
+    expect(time.formatDate({ sec: 1, nsec: 0 }, "Asia/Bangkok")).toBe("1970-01-01");
+    expect(time.formatDate({ sec: 1, nsec: 1 }, "Australia/Currie")).toBe("1970-01-01");
+    expect(time.formatDate({ sec: 1000000, nsec: 0 }, "Pacific/Midway")).toBe("1970-01-12");
+    expect(time.formatDate({ sec: 1100000, nsec: 1000000000 }, "America/Los_Angeles")).toBe("1970-01-13");
+  });
+});
+
+describe("time.formatTime", () => {
+  it("formats time based on provided timezone", () => {
+    expect(time.formatTime({ sec: 1, nsec: 0 }, "America/Phoenix")).toBe("5:00:01.000 PM MST");
+    expect(time.formatTime({ sec: 1, nsec: 1 }, "America/Detroit")).toBe("7:00:01.000 PM EST");
+    expect(time.formatTime({ sec: 1, nsec: 999999999 }, "America/Phoenix")).toBe("5:00:01.999 PM MST");
+    expect(time.formatTime({ sec: 1, nsec: 1000000000 }, "America/Los_Angeles")).toBe("4:00:02.000 PM PST");
+  });
+});
+
 describe("time.formatTimeRaw", () => {
   it("formats whole values correction", () => {
     expect(time.formatTimeRaw({ sec: 1, nsec: 0 })).toEqual("1.000000000");
@@ -267,7 +285,6 @@ describe("time.getTimestampForMessage", () => {
     const messageBase = {
       topic: "/foo",
       receiveTime: { sec: 1000, nsec: 0 },
-      datatype: "foo",
     };
 
     expect(

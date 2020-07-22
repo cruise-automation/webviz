@@ -64,17 +64,24 @@ const getIsTreeNodeVisibleInSceneMock = (topicName) => {
   };
 };
 
+const sharedProps = {
+  availableNamespacesByTopic: {},
+  canEditNamespaceOverrideColor: false,
+  checkedKeysSet: new Set(),
+  derivedCustomSettingsByKey: {},
+  hasFeatureColumn: false,
+  showVisible: false,
+};
 describe("getNamespaceNodes", () => {
   it("returns namespace nodes when topics are not unavailable (for statically available namespaces)", () => {
     const topicName = UNAVAILABLE_TOPIC_NAME;
 
     expect(
       getNamespaceNodes({
+        ...sharedProps,
         availableNamespacesByTopic: { [topicName]: ["ns1", "ns2"] },
-        checkedKeysSet: new Set(),
         getIsNamespaceCheckedByDefault: getIsNamespaceCheckedByDefaultMock(topicName),
         getIsTreeNodeVisibleInScene: getIsTreeNodeVisibleInSceneMock(topicName),
-        hasFeatureColumn: false,
         node: {
           type: "topic",
           topicName,
@@ -83,23 +90,26 @@ describe("getNamespaceNodes", () => {
           providerAvailable: false,
           availableByColumn: [true],
         },
-        showVisible: false,
       })
     ).toEqual([
       {
         availableByColumn: [true],
         checkedByColumn: [false],
         featureKey: "ns:/webviz_source_2/foo_unavailable:ns1",
+        hasNamespaceOverrideColorChangedByColumn: [],
         key: "ns:/foo_unavailable:ns1",
         namespace: "ns1",
+        overrideColorByColumn: [],
         visibleInSceneByColumn: [false],
       },
       {
         availableByColumn: [true],
         checkedByColumn: [false],
         featureKey: "ns:/webviz_source_2/foo_unavailable:ns2",
+        hasNamespaceOverrideColorChangedByColumn: [],
         key: "ns:/foo_unavailable:ns2",
         namespace: "ns2",
+        overrideColorByColumn: [],
         visibleInSceneByColumn: [false],
       },
     ]);
@@ -109,7 +119,9 @@ describe("getNamespaceNodes", () => {
     expect(
       getNamespaceNodes({
         availableNamespacesByTopic: { [topicName]: ["ns1", "ns2"] },
+        canEditNamespaceOverrideColor: false,
         checkedKeysSet: new Set([`t:${topicName}`]),
+        derivedCustomSettingsByKey: {},
         getIsNamespaceCheckedByDefault: getIsNamespaceCheckedByDefaultMock(topicName),
         getIsTreeNodeVisibleInScene: getIsTreeNodeVisibleInSceneMock(topicName),
         hasFeatureColumn: false,
@@ -128,16 +140,20 @@ describe("getNamespaceNodes", () => {
         availableByColumn: [true],
         checkedByColumn: [true],
         featureKey: "ns:/webviz_source_2/foo_base_available:ns1",
+        hasNamespaceOverrideColorChangedByColumn: [],
         key: "ns:/foo_base_available:ns1",
         namespace: "ns1",
+        overrideColorByColumn: [],
         visibleInSceneByColumn: [true],
       },
       {
         availableByColumn: [true],
         checkedByColumn: [true],
         featureKey: "ns:/webviz_source_2/foo_base_available:ns2",
+        hasNamespaceOverrideColorChangedByColumn: [],
         key: "ns:/foo_base_available:ns2",
         namespace: "ns2",
+        overrideColorByColumn: [],
         visibleInSceneByColumn: [true],
       },
     ]);
@@ -147,6 +163,7 @@ describe("getNamespaceNodes", () => {
     const topicName = BASE_AVAILABLE_TOPIC_NAME;
     expect(
       getNamespaceNodes({
+        ...sharedProps,
         availableNamespacesByTopic: { [topicName]: ["ns1", "ns2"] },
         checkedKeysSet: new Set([`t:${topicName}`]),
         getIsNamespaceCheckedByDefault: getIsNamespaceCheckedByDefaultMock(topicName),
@@ -160,23 +177,26 @@ describe("getNamespaceNodes", () => {
           providerAvailable: true,
           availableByColumn: [true, false],
         },
-        showVisible: false,
       })
     ).toEqual([
       {
         availableByColumn: [true, false],
         checkedByColumn: [true, false],
         featureKey: "ns:/webviz_source_2/foo_base_available:ns1",
+        hasNamespaceOverrideColorChangedByColumn: [],
         key: "ns:/foo_base_available:ns1",
         namespace: "ns1",
+        overrideColorByColumn: [],
         visibleInSceneByColumn: [true, false],
       },
       {
         availableByColumn: [true, false],
         checkedByColumn: [true, false],
         featureKey: "ns:/webviz_source_2/foo_base_available:ns2",
+        hasNamespaceOverrideColorChangedByColumn: [],
         key: "ns:/foo_base_available:ns2",
         namespace: "ns2",
+        overrideColorByColumn: [],
         visibleInSceneByColumn: [true, false],
       },
     ]);
@@ -185,6 +205,7 @@ describe("getNamespaceNodes", () => {
     const topicName = FEATURE_AVAILABLE_TOPIC_NAME;
     expect(
       getNamespaceNodes({
+        ...sharedProps,
         availableNamespacesByTopic: { [`/webviz_source_2${topicName}`]: ["ns1", "ns2"] },
         checkedKeysSet: new Set([`t:/webviz_source_/2${topicName}`]),
         getIsNamespaceCheckedByDefault: getIsNamespaceCheckedByDefaultMock(topicName),
@@ -198,23 +219,26 @@ describe("getNamespaceNodes", () => {
           providerAvailable: true,
           availableByColumn: [false, true],
         },
-        showVisible: false,
       })
     ).toEqual([
       {
         availableByColumn: [false, true],
         checkedByColumn: [false, true],
         featureKey: "ns:/webviz_source_2/foo_feature_available:ns1",
+        hasNamespaceOverrideColorChangedByColumn: [],
         key: "ns:/foo_feature_available:ns1",
         namespace: "ns1",
+        overrideColorByColumn: [],
         visibleInSceneByColumn: [false, true],
       },
       {
         availableByColumn: [false, true],
         checkedByColumn: [false, true],
         featureKey: "ns:/webviz_source_2/foo_feature_available:ns2",
+        hasNamespaceOverrideColorChangedByColumn: [],
         key: "ns:/foo_feature_available:ns2",
         namespace: "ns2",
+        overrideColorByColumn: [],
         visibleInSceneByColumn: [false, true],
       },
     ]);
@@ -223,6 +247,7 @@ describe("getNamespaceNodes", () => {
   it("does not have duplicates namespace names", () => {
     const topicName = AVAILABLE_TOPIC_NAME;
     const nsNodes = getNamespaceNodes({
+      ...sharedProps,
       availableNamespacesByTopic: {
         [topicName]: ["ns1", "ns3"],
         [`/webviz_source_2${topicName}`]: ["ns1", "ns2"],
@@ -239,7 +264,6 @@ describe("getNamespaceNodes", () => {
         providerAvailable: true,
         availableByColumn: [true, true],
       },
-      showVisible: false,
     });
     expect(nsNodes.map((node) => node.namespace)).toEqual(["ns1", "ns3", "ns2"]);
   });
@@ -247,6 +271,7 @@ describe("getNamespaceNodes", () => {
   it("handles namespaces checked by default", () => {
     const topicName = CHECKED_BY_DEFAULT_TOPIC_NAME;
     const nsNodes = getNamespaceNodes({
+      ...sharedProps,
       availableNamespacesByTopic: {
         [topicName]: ["ns1", "ns3"],
         [`/webviz_source_2${topicName}`]: ["ns1", "ns2"],
@@ -263,7 +288,6 @@ describe("getNamespaceNodes", () => {
         providerAvailable: true,
         availableByColumn: [true, true],
       },
-      showVisible: false,
     });
     expect(nsNodes.map(({ checkedByColumn, namespace }) => ({ checkedByColumn, namespace }))).toEqual([
       { checkedByColumn: [true, true], namespace: "ns1" },
@@ -275,6 +299,7 @@ describe("getNamespaceNodes", () => {
   it("handles namespaces checked by checkedKeys", () => {
     const topicName = CHECKED_BY_CHECKED_KEYS_TOPIC_NAME;
     const nsNodes = getNamespaceNodes({
+      ...sharedProps,
       availableNamespacesByTopic: {
         [topicName]: ["ns1", "ns3"],
         [`/webviz_source_2${topicName}`]: ["ns1", "ns2"],
@@ -296,7 +321,6 @@ describe("getNamespaceNodes", () => {
         providerAvailable: true,
         availableByColumn: [true, true],
       },
-      showVisible: false,
     });
 
     expect(nsNodes.map(({ checkedByColumn, namespace }) => ({ checkedByColumn, namespace }))).toEqual([
@@ -309,6 +333,7 @@ describe("getNamespaceNodes", () => {
   it("does not return invisible nodes when showVisible is true", () => {
     const topicName = TOPIC_NAME;
     const nsNodes = getNamespaceNodes({
+      ...sharedProps,
       availableNamespacesByTopic: {
         [topicName]: ["ns1", INVISIBLE_NAMESPACE],
         [`/webviz_source_2${topicName}`]: ["ns1", "ns2"],
@@ -333,5 +358,53 @@ describe("getNamespaceNodes", () => {
       showVisible: true,
     });
     expect(nsNodes.map((node) => node.namespace)).toEqual(["ns1", "ns2"]);
+  });
+
+  it("returns override colors from namespaces and topics", () => {
+    const topicName = TOPIC_NAME;
+    const nsNodes = getNamespaceNodes({
+      ...sharedProps,
+      derivedCustomSettingsByKey: {
+        [`t:${topicName}`]: {
+          isDefaultSettings: false,
+          overrideColorByColumn: [{ r: 0.1, g: 0.1, b: 0.1, a: 0.1 }, { r: 0.2, g: 0.2, b: 0.2, a: 0.2 }],
+        },
+        [`ns:${topicName}:ns1`]: {
+          overrideColorByColumn: [{ r: 0.3, g: 0.3, b: 0.3, a: 0.3 }, { r: 0.4, g: 0.4, b: 0.4, a: 0.4 }],
+        },
+        [`ns:${topicName}:ns2`]: { overrideColorByColumn: [undefined, { r: 0.5, g: 0.5, b: 0.5, a: 0.5 }] },
+        [`ns:${topicName}:ns3`]: { overrideColorByColumn: [{ r: 0.6, g: 0.6, b: 0.6, a: 0.6 }, undefined] },
+      },
+      canEditNamespaceOverrideColor: true,
+      availableNamespacesByTopic: {
+        [topicName]: ["ns1", "ns2", "ns3"],
+      },
+      getIsNamespaceCheckedByDefault: getIsNamespaceCheckedByDefaultMock(topicName),
+      getIsTreeNodeVisibleInScene: getIsTreeNodeVisibleInSceneMock(topicName),
+      hasFeatureColumn: true,
+      node: {
+        type: "topic",
+        topicName,
+        key: `t:${topicName}`,
+        featureKey: `t:/webviz_source_2${topicName}`,
+        providerAvailable: true,
+        availableByColumn: [true, true],
+      },
+      showVisible: true,
+    });
+    expect(nsNodes.map(({ namespace, overrideColorByColumn }) => ({ namespace, overrideColorByColumn }))).toEqual([
+      {
+        namespace: "ns1",
+        overrideColorByColumn: [{ r: 0.3, g: 0.3, b: 0.3, a: 0.3 }, { r: 0.4, g: 0.4, b: 0.4, a: 0.4 }],
+      },
+      {
+        namespace: "ns2",
+        overrideColorByColumn: [{ r: 0.1, g: 0.1, b: 0.1, a: 0.1 }, { r: 0.5, g: 0.5, b: 0.5, a: 0.5 }],
+      },
+      {
+        namespace: "ns3",
+        overrideColorByColumn: [{ r: 0.6, g: 0.6, b: 0.6, a: 0.6 }, { r: 0.2, g: 0.2, b: 0.2, a: 0.2 }],
+      },
+    ]);
   });
 });

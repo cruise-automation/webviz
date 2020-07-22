@@ -10,9 +10,9 @@ import microMemoize from "micro-memoize";
 import { Time } from "rosbag";
 
 import { MESSAGES_STORE_NAME, getIdbCacheDataProviderDatabase, TIMESTAMP_INDEX } from "./IdbCacheDataProviderDatabase";
-import { type DataProvider, type InitializationResult, type DataProviderMessage } from "./types";
+import { type DataProvider, type InitializationResult } from "./types";
 import type { DataProviderDescriptor, ExtensionPoint, GetDataProvider } from "webviz-core/src/dataProviders/types";
-import type { Progress } from "webviz-core/src/players/types";
+import type { Message, Progress } from "webviz-core/src/players/types";
 import Database from "webviz-core/src/util/indexeddb/Database";
 import { type Range, deepIntersect, isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
 import { subtractTimes, toNanoSec } from "webviz-core/src/util/time";
@@ -67,7 +67,7 @@ export default class IdbCacheReaderDataProvider implements DataProvider {
     return result;
   }
 
-  async getMessages(startTime: Time, endTime: Time, topics: string[]): Promise<DataProviderMessage[]> {
+  async getMessages(startTime: Time, endTime: Time, topics: string[]): Promise<Message[]> {
     const range = {
       start: toNanoSec(subtractTimes(startTime, this._startTime)),
       end: toNanoSec(subtractTimes(endTime, this._startTime)) + 1, // `Range` is defined with `end` being exclusive.

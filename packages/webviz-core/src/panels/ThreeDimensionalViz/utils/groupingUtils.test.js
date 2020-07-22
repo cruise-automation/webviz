@@ -9,6 +9,7 @@
 import { groupLinesIntoInstancedLineLists } from "./groupingUtils";
 import type { Color, Point, LineStripMarker, LineListMarker } from "webviz-core/src/types/Messages";
 import { COLORS, MARKER_MSG_TYPES } from "webviz-core/src/util/globalConstants";
+import { emptyPose } from "webviz-core/src/util/Pose";
 
 function lineStrip({
   points,
@@ -85,8 +86,8 @@ describe("groupLineStripsIntoInstancedLineLists", () => {
         pose: { orientation: { w: 1, x: 0, y: 0, z: 0 }, position: { x: 0, y: 0, z: 0 } },
         poses: [{ orientation: { w: 1, x: 1, y: 1, z: 1 }, position: { x: 0, y: 0, z: 0 } }],
         scale: { x: 1, y: 1, z: 1 },
-        type: MARKER_MSG_TYPES.INSTANCED_LINE_LIST,
-        primitive: "lines",
+        type: MARKER_MSG_TYPES.LINE_STRIP,
+        primitive: "line strip",
       },
     ]);
   });
@@ -102,7 +103,7 @@ describe("groupLineStripsIntoInstancedLineLists", () => {
     expect(groupLinesIntoInstancedLineLists(markers)).toEqual([
       {
         action: 0,
-        colors: [COLORS.RED, COLORS.RED, COLORS.RED, COLORS.RED],
+        colors: [COLORS.RED, COLORS.RED, COLORS.RED],
         header: { frame_id: "quux", stamp: { nsec: 2, sec: 1 } },
         id: "ns:bar_type:4_scalex:1_scaley:1_scalez:1",
         metadataByIndex: [
@@ -132,15 +133,15 @@ describe("groupLineStripsIntoInstancedLineLists", () => {
           },
         ],
         ns: "bar",
-        points: [{ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }],
-        pose: { orientation: { w: 1, x: 0, y: 0, z: 0 }, position: { x: 0, y: 0, z: 0 } },
+        points: [{ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }],
+        pose: emptyPose(),
         poses: [
           { orientation: { w: 1, x: 1, y: 1, z: 1 }, position: { x: 0, y: 0, z: 0 } },
           { orientation: { w: 1, x: 1, y: 1, z: 1 }, position: { x: 0, y: 0, z: 0 } },
         ],
         scale: { x: 1, y: 1, z: 1 },
-        type: MARKER_MSG_TYPES.INSTANCED_LINE_LIST,
-        primitive: "lines",
+        type: MARKER_MSG_TYPES.LINE_STRIP,
+        primitive: "line strip",
       },
     ]);
   });
@@ -173,11 +174,11 @@ describe("groupLineStripsIntoInstancedLineLists", () => {
         ],
         ns: "bar",
         points: [{ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }],
-        pose: { orientation: { w: 1, x: 0, y: 0, z: 0 }, position: { x: 0, y: 0, z: 0 } },
+        pose: emptyPose(),
         poses: [{ orientation: { w: 1, x: 1, y: 1, z: 1 }, position: { x: 0, y: 0, z: 0 } }],
         scale: { x: 1, y: 1, z: 1 },
-        type: MARKER_MSG_TYPES.INSTANCED_LINE_LIST,
-        primitive: "lines",
+        type: MARKER_MSG_TYPES.LINE_STRIP,
+        primitive: "line strip",
       },
     ]);
   });
@@ -253,11 +254,11 @@ describe("groupLineStripsIntoInstancedLineLists", () => {
         ],
         ns: "bar",
         points: [{ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }],
-        pose: { orientation: { w: 1, x: 0, y: 0, z: 0 }, position: { x: 0, y: 0, z: 0 } },
+        pose: emptyPose(),
         poses: [{ orientation: { w: 1, x: 1, y: 1, z: 1 }, position: { x: 0, y: 0, z: 0 } }],
         scale: { x: 1, y: 1, z: 1 },
-        type: MARKER_MSG_TYPES.INSTANCED_LINE_LIST,
-        primitive: "lines",
+        type: MARKER_MSG_TYPES.LINE_STRIP,
+        primitive: "line strip",
       },
       {
         action: 0,

@@ -23,6 +23,6 @@ export default class MemoryStorage {
   }
 
   removeItem(key: string) {
-    delete this._items.key;
+    delete this._items[key];
   }
 }

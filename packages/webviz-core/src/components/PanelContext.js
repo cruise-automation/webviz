@@ -27,6 +27,7 @@ export type PanelContextType<T> = {|
   enterFullscreen: () => void,
 
   isHovered: boolean,
+  isFocused: boolean,
 |};
 // Context used for components to know which panel they are inside
 const PanelContext = React.createContext<?PanelContextType<PanelConfig>>();

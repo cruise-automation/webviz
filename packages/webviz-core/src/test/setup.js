@@ -38,12 +38,12 @@ if (typeof window !== "undefined") {
 // Disallow console.error and console.warn in tests. This should only be called
 // from libraries anyway, since for user-code we should be using `Logger`, which
 // automatically gets silenced on tests.
-// $FlowFixMe - Flow doens't like that we're overwriting this.
+// $FlowFixMe - Flow doesn't like that we're overwriting this.
 console.error = function(message) {
   // $FlowFixMe
   fail(message); // eslint-disable-line
 };
-// $FlowFixMe - Flow doens't like that we're overwriting this.
+// $FlowFixMe - Flow doesn't like that we're overwriting this.
 console.warn = function(message) {
   // We'll have to update these methods, but for now we just ignore their
   // warning messages.

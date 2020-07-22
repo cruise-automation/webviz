@@ -16,13 +16,11 @@ describe("useDataSourceInfo", () => {
   const topics = [{ name: "/foo", datatype: "Foo" }];
   const messages = [
     {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 1, nsec: 2 },
       message: {},
     },
     {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 5, nsec: 6 },
       message: {},

@@ -12,7 +12,7 @@ import cx from "classnames";
 import { last } from "lodash";
 import React, { useCallback, useMemo } from "react";
 
-import { plotableRosTypes, type PlotConfig } from "./index";
+import { plotableRosTypes, type PlotConfig, type PlotXAxisVal } from "./index";
 import styles from "./PlotLegend.module.scss";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
@@ -30,10 +30,26 @@ type PlotLegendProps = {|
   paths: PlotPath[],
   saveConfig: ($Shape<PlotConfig>) => void,
   showLegend: boolean,
-  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisVal: PlotXAxisVal,
   xAxisPath?: BasePlotPath,
   pathsWithMismatchedDataLengths: string[],
 |};
+
+const shortXAxisLabel = (path: PlotXAxisVal): string => {
+  switch (path) {
+    case "custom":
+      return "path (accum)";
+    case "index":
+      return "index";
+    case "currentCustom":
+      return "path (current)";
+    case "timestamp":
+      return "timestamp";
+    default:
+      (path: empty); // Assert the switch is exhaustive
+      throw new Error("Satisfy flow");
+  }
+};
 
 export default function PlotLegend(props: PlotLegendProps) {
   const { paths, saveConfig, showLegend, xAxisVal, xAxisPath, pathsWithMismatchedDataLengths } = props;
@@ -92,12 +108,14 @@ export default function PlotLegend(props: PlotLegendProps) {
           <Dropdown
             dataTest="plot-legend-x-axis-menu"
             value={xAxisVal}
+            text={shortXAxisLabel(xAxisVal)}
             btnStyle={{ backgroundColor: "transparent", padding: 3 }}
             onChange={(newXAxisVal) => saveConfig({ xAxisVal: newXAxisVal })}
             noPortal>
             <span value="timestamp">timestamp</span>
             <span value="index">index</span>
-            <span value="custom">custom</span>
+            <span value="currentCustom">msg path (current)</span>
+            <span value="custom">msg path (accumulated)</span>
           </Dropdown>
         </div>
         <div
@@ -105,11 +123,11 @@ export default function PlotLegend(props: PlotLegendProps) {
             [styles.itemInput]: true,
             [styles.itemInputDisabled]: !xAxisPath?.enabled,
           })}>
-          {xAxisVal === "custom" ? (
+          {xAxisVal === "custom" || xAxisVal === "currentCustom" ? (
             <MessagePathInput
               path={xAxisPath?.value || "/"}
-              onChange={(newXAxisVal) =>
-                saveConfig({ xAxisPath: { value: newXAxisVal, enabled: xAxisPath ? xAxisPath.enabled : true } })
+              onChange={(newXAxisPath) =>
+                saveConfig({ xAxisPath: { value: newXAxisPath, enabled: xAxisPath ? xAxisPath.enabled : true } })
               }
               validTypes={plotableRosTypes}
               placeholder="Enter a topic name or a number"

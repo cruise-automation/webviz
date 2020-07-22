@@ -8,15 +8,16 @@
 
 import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
+import { groupBy } from "lodash";
 import React, {
   type Node,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
-  useReducer,
-  useCallback,
-  useLayoutEffect,
-  useEffect,
 } from "react";
 import {
   PolygonBuilder,
@@ -27,11 +28,15 @@ import {
   type Polygon,
 } from "regl-worldview";
 import { type Time } from "rosbag";
+import { useDebouncedCallback } from "use-debounce";
 
 import useTopicTree from "./useTopicTree";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
+import Modal from "webviz-core/src/components/Modal";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
+import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
 import filterMap from "webviz-core/src/filterMap";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -47,9 +52,16 @@ import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutTool
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import { useSearchText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
 import {
-  getUpdatedGlobalVariablesBySelectedObject,
+  type MarkerMatcher,
+  ThreeDimensionalVizContext,
+} from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
+import {
   type TargetPose,
+  getInteractionData,
+  getObject,
+  getUpdatedGlobalVariablesBySelectedObject,
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
+import { ColorPickerSettingsPanel } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 import TopicSettingsModal from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicSettingsModal";
 import TopicTree from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
@@ -60,10 +72,11 @@ import World from "webviz-core/src/panels/ThreeDimensionalViz/World";
 import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import type { Color } from "webviz-core/src/types/Messages";
 import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
 import { videoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
-import { topicsByTopicName } from "webviz-core/src/util/selectors";
+import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
 
 type EventName = "onDoubleClick" | "onMouseMove" | "onMouseDown" | "onMouseUp";
 export type ClickedPosition = { clientX: number, clientY: number };
@@ -112,6 +125,15 @@ type SelectedObjectState = {
 
 export type EditTopicState = { tooltipPosX: number, topic: Topic };
 
+type GlobalVariableName = string;
+export type ColorOverrideSetting = {
+  color: Color,
+  active: boolean,
+};
+export type ColorOverridesByGlobalVariableName = {
+  [GlobalVariableName]: ColorOverrideSetting,
+};
+
 export default function Layout({
   cameraState,
   children,
@@ -131,12 +153,10 @@ export default function Layout({
   targetPose,
   transforms,
   setSubscriptions,
-  config,
   config: {
     autoTextBackgroundColor,
     checkedKeys,
     expandedKeys,
-    enableShortDisplayNames,
     flattenMarkers,
     modifiedNamespaceTopics,
     pinTopics,
@@ -159,6 +179,10 @@ export default function Layout({
     measurePoints: { start: undefined, end: undefined },
   });
   const [currentEditingTopic, setCurrentEditingTopic] = useState<?Topic>(undefined);
+  const [editingNamespace, setEditingNamespace] = useState<?{
+    namespaceKey: string,
+    namespaceColor: ?string,
+  }>();
 
   const searchTextProps = useSearchText();
   const { searchTextOpen, searchText, setSearchTextMatches, searchTextMatches, selectedMatchIndex } = searchTextProps;
@@ -167,7 +191,17 @@ export default function Layout({
   const measuringElRef = useRef<?MeasuringTool>(null);
   const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(undefined);
   const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(undefined);
-  const selectedObject = selectedObjectState && selectedObjectState.selectedObject;
+  const selectedObject = selectedObjectState?.selectedObject;
+
+  const [
+    colorOverridesByGlobalVariable,
+    setColorOverridesByGlobalVariable,
+  ] = useState<ColorOverridesByGlobalVariableName>({});
+
+  // Since the highlightedMarkerMatchers are updated by mouse events, we wait
+  // a short amount of time to prevent excessive re-rendering of the 3D panel
+  const [hoveredMarkerMatchers, setHoveredMarkerMatchers] = useState<MarkerMatcher[]>([]);
+  const [setHoveredMarkerMatchersDebounced] = useDebouncedCallback(setHoveredMarkerMatchers, 100);
 
   useLayoutEffect(
     () => {
@@ -201,6 +235,7 @@ export default function Layout({
   );
 
   const {
+    blacklistTopicsSet,
     topicTreeConfig,
     staticallyAvailableNamespacesByTopic,
     supportedMarkerDatatypesSet,
@@ -208,6 +243,7 @@ export default function Layout({
     uncategorizedGroupName,
   } = useMemo(
     () => ({
+      blacklistTopicsSet: new Set(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.BLACKLIST_TOPICS),
       supportedMarkerDatatypesSet: new Set(
         Object.values(getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_MARKER_DATATYPES)
       ),
@@ -233,11 +269,13 @@ export default function Layout({
 
   // Use deep compare so that we only regenerate rootTreeNode when topics change.
   const memoizedTopics = useShallowMemo(topics);
-
-  // Only show topics with supported datatype as available in topic tree.
+  // Only show topics with supported datatype and that are not blacklisted as available in topic tree.
   const topicTreeTopics = useMemo(
-    () => memoizedTopics.filter((topic) => supportedMarkerDatatypesSet.has(topic.datatype)),
-    [memoizedTopics, supportedMarkerDatatypesSet]
+    () =>
+      memoizedTopics.filter(
+        (topic) => supportedMarkerDatatypesSet.has(topic.datatype) && !blacklistTopicsSet.has(topic.name)
+      ),
+    [blacklistTopicsSet, memoizedTopics, supportedMarkerDatatypesSet]
   );
 
   const {
@@ -247,6 +285,7 @@ export default function Layout({
     getIsTreeNodeVisibleInScene,
     getIsTreeNodeVisibleInTree,
     hasFeatureColumn,
+    onNamespaceOverrideColorChange,
     rootTreeNode,
     sceneErrorsByKey,
     selectedNamespacesByTopic,
@@ -257,6 +296,7 @@ export default function Layout({
     toggleNamespaceChecked,
     toggleNodeChecked,
     toggleNodeExpanded,
+    visibleTopicsCountByKey,
   } = useTopicTree({
     availableNamespacesByTopic,
     checkedKeys,
@@ -273,8 +313,74 @@ export default function Layout({
     uncategorizedGroupName,
   });
 
+  const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("highlightGlobalVariableMatchingMarkers");
   useEffect(() => setSubscriptions(selectedTopicNames), [selectedTopicNames, setSubscriptions]);
   const { playerId } = useDataSourceInfo();
+
+  // If a user selects a marker or hovers over a TopicPicker row, highlight relevant markers
+  const highlightMarkerMatchers = useMemo(
+    () => {
+      if (!highlightMarkersThatMatchGlobalVariables) {
+        return [];
+      }
+      if (hoveredMarkerMatchers.length > 0) {
+        return hoveredMarkerMatchers;
+      }
+      if (selectedObject) {
+        const marker = getObject(selectedObject);
+        const topic = getInteractionData(selectedObject)?.topic;
+        return marker && topic
+          ? [
+              {
+                topic,
+                checks: [
+                  {
+                    markerKeyPath: ["id"],
+                    value: marker.id,
+                  },
+                  {
+                    markerKeyPath: ["ns"],
+                    value: marker.ns,
+                  },
+                ],
+              },
+            ]
+          : [];
+      }
+      return [];
+    },
+    [highlightMarkersThatMatchGlobalVariables, hoveredMarkerMatchers, selectedObject]
+  );
+
+  const colorOverrideMarkerMatchers = useMemo(
+    () => {
+      if (!highlightMarkersThatMatchGlobalVariables) {
+        return [];
+      }
+
+      // Transform linkedGlobalVariables and overridesByGlobalVariable into markerMatchers for SceneBuilder
+      const linkedGlobalVariablesByName = groupBy(linkedGlobalVariables, ({ name }) => name);
+      return Object.keys(colorOverridesByGlobalVariable).reduce((_activeColorOverrideMatchers, name) => {
+        const { color, active } = colorOverridesByGlobalVariable[name];
+        return active
+          ? [
+              ..._activeColorOverrideMatchers,
+              ...(linkedGlobalVariablesByName[name] || []).map(({ topic, markerKeyPath }) => ({
+                topic,
+                checks: [
+                  {
+                    markerKeyPath,
+                    value: globalVariables[name],
+                  },
+                ],
+                color,
+              })),
+            ]
+          : _activeColorOverrideMatchers;
+      }, []);
+    },
+    [colorOverridesByGlobalVariable, globalVariables, highlightMarkersThatMatchGlobalVariables, linkedGlobalVariables]
+  );
 
   const rootTf = useMemo(
     () => {
@@ -289,18 +395,19 @@ export default function Layout({
         followTf || getGlobalHooks().perPanelHooks().ThreeDimensionalViz.rootTransformFrame
       ).id;
 
+      // Toggle scene builder topics based on visible topic nodes in the tree
+      const topicsByTopicName = getTopicsByTopicName(topics);
+      const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByTopicName[name]);
+
       sceneBuilder.setPlayerId(playerId);
       sceneBuilder.setTransforms(transforms, rootTfID);
       sceneBuilder.setFlattenMarkers(!!flattenMarkers);
       sceneBuilder.setSelectedNamespacesByTopic(selectedNamespacesByTopic);
       sceneBuilder.setSettingsByKey(settingsByKey);
-
-      // toggle scene builder topics based on visible topic nodes in the tree
-      const topicsByName = topicsByTopicName(topics);
-      const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByName[name]);
       sceneBuilder.setTopics(selectedTopics);
-
-      sceneBuilder.setGlobalVariables(globalVariables);
+      sceneBuilder.setGlobalVariables({ globalVariables, linkedGlobalVariables });
+      sceneBuilder.setHighlightedMatchers(highlightMarkerMatchers);
+      sceneBuilder.setColorOverrideMatchers(colorOverrideMarkerMatchers);
       sceneBuilder.setFrame(frame);
       sceneBuilder.setCurrentTime(currentTime);
       sceneBuilder.render();
@@ -316,14 +423,17 @@ export default function Layout({
       frame,
       transforms,
       followTf,
+      topics,
+      selectedTopicNames,
       sceneBuilder,
       playerId,
       flattenMarkers,
       selectedNamespacesByTopic,
       settingsByKey,
-      topics,
-      selectedTopicNames,
       globalVariables,
+      linkedGlobalVariables,
+      highlightMarkerMatchers,
+      colorOverrideMarkerMatchers,
       currentTime,
       transformsBuilder,
     ]
@@ -429,7 +539,7 @@ export default function Layout({
           }
         },
         onDoubleClick: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onDoubleClick", ev, args),
-        onExitTopicTreeFocus: (ev) => {
+        onExitTopicTreeFocus: () => {
           if (containerRef.current) {
             containerRef.current.focus();
           }
@@ -477,17 +587,16 @@ export default function Layout({
           }
           setShowTopicTree((shown) => !shown);
         },
-      };
-
-      handlers.f = (e: KeyboardEvent) => {
-        if (e.ctrlKey || e.metaKey) {
-          e.preventDefault();
-          searchTextProps.toggleSearchTextOpen(true);
-          if (!searchTextProps.searchInputRef || !searchTextProps.searchInputRef.current) {
-            return;
+        f: (e: KeyboardEvent) => {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            searchTextProps.toggleSearchTextOpen(true);
+            if (!searchTextProps.searchInputRef || !searchTextProps.searchInputRef.current) {
+              return;
+            }
+            searchTextProps.searchInputRef.current.select();
           }
-          searchTextProps.searchInputRef.current.select();
-        }
+        },
       };
       return handlers;
     },
@@ -525,148 +634,177 @@ export default function Layout({
     [MapComponent, cameraState.perspective, debug, mapNamespaces, memoizedScene]
   );
 
+  // Memoize the threeDimensionalVizContextValue to avoid returning a new object every time
+  const threeDimensionalVizContextValue = useMemo(
+    () => ({ setHoveredMarkerMatchers: setHoveredMarkerMatchersDebounced }),
+    [setHoveredMarkerMatchersDebounced]
+  );
+
   return (
-    <div
-      ref={containerRef}
-      onClick={onControlsOverlayClick}
-      tabIndex={-1}
-      className={styles.container}
-      style={{ cursor: cursorType }}
-      data-test="3dviz-layout">
-      <KeyListener keyDownHandlers={keyDownHandlers} />
-      <PanelToolbar
-        floating
-        helpContent={helpContent}
-        menuContent={
-          <>
-            <Item
-              tooltip="Markers with 0 as z-value in pose or points are updated to have the z-value of the flattened base frame."
-              icon={flattenMarkers ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-              onClick={() => saveConfig({ flattenMarkers: !flattenMarkers })}>
-              Flatten markers
-            </Item>
-            <Item
-              tooltip="Automatically apply dark/light background color to text."
-              icon={autoTextBackgroundColor ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-              onClick={() => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor })}>
-              Auto Text Background
-            </Item>
-          </>
-        }
-      />
-      <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
-        {containerRef.current && (
-          <TopicTree
-            availableNamespacesByTopic={availableNamespacesByTopic}
-            checkedKeys={checkedKeys}
-            containerHeight={containerRef.current.clientHeight}
-            containerWidth={containerRef.current.clientWidth}
-            expandedKeys={expandedKeys}
-            getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
-            getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
-            getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
-            hasFeatureColumn={hasFeatureColumn}
-            onExitTopicTreeFocus={onExitTopicTreeFocus}
-            toggleCheckAllAncestors={toggleCheckAllAncestors}
-            toggleCheckAllDescendants={toggleCheckAllDescendants}
-            toggleNamespaceChecked={toggleNamespaceChecked}
-            toggleNodeChecked={toggleNodeChecked}
-            toggleNodeExpanded={toggleNodeExpanded}
-            topicDisplayMode={topicDisplayMode}
-            pinTopics={pinTopics}
-            rootTreeNode={rootTreeNode}
-            saveConfig={saveConfig}
-            derivedCustomSettingsByKey={derivedCustomSettingsByKey}
-            sceneErrorsByKey={sceneErrorsByKey}
-            setCurrentEditingTopic={setCurrentEditingTopic}
-            setShowTopicTree={setShowTopicTree}
-            showTopicTree={showTopicTree}
-            filterText={filterText}
-            setFilterText={setFilterText}
-            allKeys={allKeys}
-            shouldExpandAllKeys={shouldExpandAllKeys}
-          />
-        )}
-        {currentEditingTopic && (
-          <TopicSettingsModal
-            currentEditingTopic={currentEditingTopic}
-            hasFeatureColumn={hasFeatureColumn}
-            setCurrentEditingTopic={setCurrentEditingTopic}
-            sceneBuilderMessage={
-              sceneBuilder.collectors[currentEditingTopic.name] &&
-              sceneBuilder.collectors[currentEditingTopic.name].getMessages()[0]
-            }
-            saveConfig={saveConfig}
-            settingsByKey={settingsByKey}
-          />
-        )}
-      </div>
-      <div className={styles.world}>
-        <World
-          key={`${callbackInputsRef.current.autoSyncCameraState ? "synced" : "not-synced"}`}
-          autoTextBackgroundColor={!!autoTextBackgroundColor}
-          cameraState={cameraState}
-          isPlaying={!!isPlaying}
-          markerProviders={markerProviders}
-          onCameraStateChange={onCameraStateChange}
-          onClick={onClick}
-          onDoubleClick={onDoubleClick}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}
-          searchTextOpen={searchTextOpen}
-          searchText={searchText}
-          setSearchTextMatches={setSearchTextMatches}
-          searchTextMatches={searchTextMatches}
-          selectedMatchIndex={selectedMatchIndex}>
-          {mapElement}
-          {children}
-          <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
-          <div style={videoRecordingStyle}>
-            <LayoutToolbar
-              cameraState={cameraState}
-              debug={debug}
-              drawingTabType={drawingTabType}
-              isDrawing={isDrawing}
-              followOrientation={followOrientation}
-              followTf={followTf}
-              interactionData={selectedObject && selectedObject.object && selectedObject.object.interactionData}
-              isPlaying={isPlaying}
-              measureInfo={measureInfo}
-              measuringElRef={measuringElRef}
-              onAlignXYAxis={onAlignXYAxis}
-              onCameraStateChange={onCameraStateChange}
-              autoSyncCameraState={!!autoSyncCameraState}
-              onClearSelectedObject={onClearSelectedObject}
-              onFollowChange={onFollowChange}
-              onSetDrawingTabType={setDrawingTabType}
-              onSetPolygons={onSetPolygons}
-              onToggleCameraMode={toggleCameraMode}
-              onToggleDebug={toggleDebug}
-              polygonBuilder={polygonBuilder}
+    <ThreeDimensionalVizContext.Provider value={threeDimensionalVizContextValue}>
+      <div
+        ref={containerRef}
+        onClick={onControlsOverlayClick}
+        tabIndex={-1}
+        className={styles.container}
+        style={{ cursor: cursorType }}
+        data-test="3dviz-layout">
+        <KeyListener keyDownHandlers={keyDownHandlers} />
+        <PanelToolbar
+          floating
+          helpContent={helpContent}
+          menuContent={
+            <>
+              <Item
+                tooltip="Markers with 0 as z-value in pose or points are updated to have the z-value of the flattened base frame."
+                icon={flattenMarkers ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
+                onClick={() => saveConfig({ flattenMarkers: !flattenMarkers })}>
+                Flatten markers
+              </Item>
+              <Item
+                tooltip="Automatically apply dark/light background color to text."
+                icon={autoTextBackgroundColor ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
+                onClick={() => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor })}>
+                Auto Text Background
+              </Item>
+            </>
+          }
+        />
+        <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
+          {containerRef.current && (
+            <TopicTree
+              allKeys={allKeys}
+              availableNamespacesByTopic={availableNamespacesByTopic}
+              checkedKeys={checkedKeys}
+              containerHeight={containerRef.current.clientHeight}
+              containerWidth={containerRef.current.clientWidth}
+              derivedCustomSettingsByKey={derivedCustomSettingsByKey}
+              expandedKeys={expandedKeys}
+              filterText={filterText}
+              getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
+              getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
+              getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
+              hasFeatureColumn={hasFeatureColumn}
+              onExitTopicTreeFocus={onExitTopicTreeFocus}
+              onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
+              pinTopics={pinTopics}
+              rootTreeNode={rootTreeNode}
               saveConfig={saveConfig}
-              selectedObject={selectedObject}
-              selectedPolygonEditFormat={selectedPolygonEditFormat}
-              setMeasureInfo={setMeasureInfo}
-              showCrosshair={showCrosshair}
-              targetPose={targetPose}
-              transforms={transforms}
-              rootTf={rootTf}
-              {...searchTextProps}
+              sceneErrorsByKey={sceneErrorsByKey}
+              setCurrentEditingTopic={setCurrentEditingTopic}
+              setEditingNamespace={setEditingNamespace}
+              setFilterText={setFilterText}
+              setShowTopicTree={setShowTopicTree}
+              shouldExpandAllKeys={shouldExpandAllKeys}
+              showTopicTree={showTopicTree}
+              toggleCheckAllAncestors={toggleCheckAllAncestors}
+              toggleCheckAllDescendants={toggleCheckAllDescendants}
+              toggleNamespaceChecked={toggleNamespaceChecked}
+              toggleNodeChecked={toggleNodeChecked}
+              toggleNodeExpanded={toggleNodeExpanded}
+              topicDisplayMode={topicDisplayMode}
+              visibleTopicsCountByKey={visibleTopicsCountByKey}
             />
-          </div>
-          {selectedObjectState &&
-            selectedObjectState.selectedObjects.length > 1 &&
-            !selectedObjectState.selectedObject && (
-              <InteractionContextMenu
-                clickedPosition={selectedObjectState.clickedPosition}
-                onSelectObject={onSelectObject}
-                selectedObjects={selectedObjectState.selectedObjects}
+          )}
+          {currentEditingTopic && (
+            <TopicSettingsModal
+              currentEditingTopic={currentEditingTopic}
+              hasFeatureColumn={hasFeatureColumn}
+              setCurrentEditingTopic={setCurrentEditingTopic}
+              sceneBuilderMessage={
+                sceneBuilder.collectors[currentEditingTopic.name] &&
+                sceneBuilder.collectors[currentEditingTopic.name].getMessages()[0]
+              }
+              saveConfig={saveConfig}
+              settingsByKey={settingsByKey}
+            />
+          )}
+          {editingNamespace && (
+            <RenderToBodyComponent>
+              <Modal
+                onRequestClose={() => setEditingNamespace(undefined)}
+                contentStyle={{
+                  maxHeight: "calc(100vh - 200px)",
+                  maxWidth: 480,
+                  display: "flex",
+                  flexDirection: "column",
+                }}>
+                <ColorPickerSettingsPanel
+                  color={settingsByKey[editingNamespace.namespaceKey]?.overrideColor}
+                  onChange={(newColor) => onNamespaceOverrideColorChange(newColor, editingNamespace.namespaceKey)}
+                />
+              </Modal>
+            </RenderToBodyComponent>
+          )}
+        </div>
+        <div className={styles.world}>
+          <World
+            key={`${callbackInputsRef.current.autoSyncCameraState ? "synced" : "not-synced"}`}
+            autoTextBackgroundColor={!!autoTextBackgroundColor}
+            cameraState={cameraState}
+            isPlaying={!!isPlaying}
+            markerProviders={markerProviders}
+            onCameraStateChange={onCameraStateChange}
+            onClick={onClick}
+            onDoubleClick={onDoubleClick}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUp}
+            searchTextOpen={searchTextOpen}
+            searchText={searchText}
+            setSearchTextMatches={setSearchTextMatches}
+            searchTextMatches={searchTextMatches}
+            selectedMatchIndex={selectedMatchIndex}>
+            {mapElement}
+            {children}
+            <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
+            <div style={videoRecordingStyle}>
+              <LayoutToolbar
+                cameraState={cameraState}
+                debug={debug}
+                isDrawing={isDrawing}
+                followOrientation={followOrientation}
+                followTf={followTf}
+                colorOverridesByGlobalVariable={colorOverridesByGlobalVariable}
+                interactionData={selectedObject && selectedObject.object && selectedObject.object.interactionData}
+                isPlaying={isPlaying}
+                measureInfo={measureInfo}
+                measuringElRef={measuringElRef}
+                onAlignXYAxis={onAlignXYAxis}
+                onCameraStateChange={onCameraStateChange}
+                autoSyncCameraState={!!autoSyncCameraState}
+                onClearSelectedObject={onClearSelectedObject}
+                onFollowChange={onFollowChange}
+                onSetDrawingTabType={setDrawingTabType}
+                onSetPolygons={onSetPolygons}
+                onToggleCameraMode={toggleCameraMode}
+                onToggleDebug={toggleDebug}
+                polygonBuilder={polygonBuilder}
+                saveConfig={saveConfig}
+                selectedObject={selectedObject}
+                selectedPolygonEditFormat={selectedPolygonEditFormat}
+                setColorOverridesByGlobalVariable={setColorOverridesByGlobalVariable}
+                setMeasureInfo={setMeasureInfo}
+                showCrosshair={showCrosshair}
+                targetPose={targetPose}
+                transforms={transforms}
+                rootTf={rootTf}
+                {...searchTextProps}
               />
-            )}
-          {process.env.NODE_ENV !== "production" && !inScreenshotTests() && debug && <DebugStats />}
-        </World>
+            </div>
+            {selectedObjectState &&
+              selectedObjectState.selectedObjects.length > 1 &&
+              !selectedObjectState.selectedObject && (
+                <InteractionContextMenu
+                  clickedPosition={selectedObjectState.clickedPosition}
+                  onSelectObject={onSelectObject}
+                  selectedObjects={selectedObjectState.selectedObjects}
+                />
+              )}
+            {process.env.NODE_ENV !== "production" && !inScreenshotTests() && debug && <DebugStats />}
+          </World>
+        </div>
       </div>
-    </div>
+    </ThreeDimensionalVizContext.Provider>
   );
 }

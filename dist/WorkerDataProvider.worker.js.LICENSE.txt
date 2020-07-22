@@ -62,7 +62,11 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./../../webpack/node_modules/process/browser.js */
 
+/*! ./../node_modules/node-libs-browser/node_modules/buffer/index.js */
+
 /*! ./../node_modules/timers-browserify/main.js */
+
+/*! ./../node_modules/webpack/buildin/global.js */
 
 /*! ./../process/browser.js */
 
@@ -85,6 +89,8 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ./IdbCacheDataProviderDatabase */
 
 /*! ./MessageReader */
+
+/*! ./MessageWriter */
 
 /*! ./ReadResult */
 
@@ -244,6 +250,8 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! exports provided: Memo */
 
 /*! exports provided: MessageReader */
+
+/*! exports provided: MessageWriter */
 
 /*! exports provided: Record, BagHeader, Chunk, Connection, MessageData, IndexData, ChunkInfo */
 
@@ -471,6 +479,10 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!******************************!*\
   !*** ./src/MessageReader.js ***!
+  \******************************/
+
+/*!******************************!*\
+  !*** ./src/MessageWriter.js ***!
   \******************************/
 
 /*!***********************************!*\

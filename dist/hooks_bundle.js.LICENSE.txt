@@ -58,8 +58,6 @@
 
 /*! ./../../../../../../node_modules/timers-browserify/main.js */
 
-/*! ./../../../../../node_modules/buffer/index.js */
-
 /*! ./../../../../../node_modules/timers-browserify/main.js */
 
 /*! ./../../../../../node_modules/webpack/buildin/global.js */
@@ -104,6 +102,8 @@
 
 /*! ./GlobalVariableLink/index */
 
+/*! ./HoverBar */
+
 /*! ./ImageCanvas */
 
 /*! ./ImageCanvas.module.scss */
@@ -136,9 +136,9 @@
 
 /*! ./Metadata */
 
-/*! ./NodeName */
+/*! ./NamespaceMenu */
 
-/*! ./ObjectDetails */
+/*! ./NodeName */
 
 /*! ./OccupancyGrids */
 
@@ -192,7 +192,7 @@
 
 /*! ./TopicViewModeSelector */
 
-/*! ./TreeNodeDotMenu */
+/*! ./TreeNodeMenu */
 
 /*! ./TreeNodeRow */
 
@@ -252,6 +252,10 @@
 
 /*! ./renderTreeNodes */
 
+/*! ./textAtlas.json */
+
+/*! ./textureAtlasData.bin */
+
 /*! ./topicGroupsMigrations */
 
 /*! ./topicGroupsUtils */
@@ -271,6 +275,8 @@
 /*! ./util/globalConstants */
 
 /*! ./utils */
+
+/*! ./utils/glTextAtlasLoader */
 
 /*! ./utils/groupingUtils */
 
@@ -342,6 +348,8 @@
 
 /*! @mdi/svg/svg/dots-vertical.svg */
 
+/*! @mdi/svg/svg/earth.svg */
+
 /*! @mdi/svg/svg/expand-all-outline.svg */
 
 /*! @mdi/svg/svg/export-variant.svg */
@@ -402,6 +410,8 @@
 
 /*! @mdi/svg/svg/trash-can-outline.svg */
 
+/*! @mdi/svg/svg/undo-variant.svg */
+
 /*! @mdi/svg/svg/unfold-less-horizontal.svg */
 
 /*! @mdi/svg/svg/unfold-more-horizontal.svg */
@@ -415,8 +425,6 @@
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/Sidebar.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require) */
-
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Tab/EmptyDropTarget.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
 
@@ -436,6 +444,8 @@
 
 /*! earcut */
 
+/*! exports provided: charInfo, textureWidth, textureHeight, default */
+
 /*! exports provided: default */
 
 /*! gl-matrix */
@@ -453,8 +463,6 @@
 /*! lodash */
 
 /*! lodash/clamp */
-
-/*! lodash/cloneDeep */
 
 /*! lodash/difference */
 
@@ -497,6 +505,8 @@
 /*! normalize-wheel */
 
 /*! panzoom */
+
+/*! path */
 
 /*! prop-types */
 
@@ -570,15 +580,17 @@
 
 /*! webviz-core/src/PanelAPI */
 
+/*! webviz-core/src/PanelAPI/useBlocksByTopic */
+
 /*! webviz-core/src/PanelAPI/useDataSourceInfo */
+
+/*! webviz-core/src/actions/hoverValue */
 
 /*! webviz-core/src/actions/mosaic */
 
 /*! webviz-core/src/actions/panels */
 
 /*! webviz-core/src/actions/userNodes */
-
-/*! webviz-core/src/assets/emptyBox.svg */
 
 /*! webviz-core/src/components/AutoSizingCanvas */
 
@@ -657,6 +669,8 @@
 /*! webviz-core/src/components/Radio */
 
 /*! webviz-core/src/components/ReactChartjs */
+
+/*! webviz-core/src/components/ReactChartjs/zoomAndPanHelpers */
 
 /*! webviz-core/src/components/SegmentedControl */
 
@@ -794,9 +808,13 @@
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl */
 
+/*! webviz-core/src/panels/ThreeDimensionalViz/GlobalVariableStyles */
+
 /*! webviz-core/src/panels/ThreeDimensionalViz/Interactions */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions */
+
+/*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/ObjectDetails */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/interactionUtils */
 
@@ -818,6 +836,8 @@
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/SearchText */
 
+/*! webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext */
+
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils */
@@ -827,6 +847,8 @@
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PointCloudSettingsEditor */
+
+/*! webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/index */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout */
 
@@ -922,6 +944,8 @@
 
 /*! webviz-core/src/util/clipboard */
 
+/*! webviz-core/src/util/colorUtils */
+
 /*! webviz-core/src/util/debouncePromise */
 
 /*! webviz-core/src/util/entities */
@@ -959,6 +983,8 @@
 /*! webviz-core/src/util/toggle */
 
 /*! webviz-core/src/util/toolsColorScheme */
+
+/*! webviz-core/src/util/topicUtils */
 
 /*! webviz-core/src/util/yaml */
 
@@ -1011,12 +1037,16 @@
   \***************************************************/
 
 /*!*****************************************************!*\
+  !*** ./packages/webviz-core/src/util/colorUtils.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
   !*** ./packages/webviz-core/src/util/plotColors.js ***!
   \*****************************************************/
 
-/*!******************************************************!*\
-  !*** ./packages/webviz-core/src/assets/emptyBox.svg ***!
-  \******************************************************/
+/*!*****************************************************!*\
+  !*** ./packages/webviz-core/src/util/topicUtils.js ***!
+  \*****************************************************/
 
 /*!******************************************************!*\
   !*** ./packages/webviz-core/src/components/Panel.js ***!
@@ -1236,10 +1266,6 @@
 
 /*!****************************************************************!*\
   !*** ./packages/webviz-core/src/panels/RawMessages/getDiff.js ***!
-  \****************************************************************/
-
-/*!****************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/Tab/EmptyDropTarget.js ***!
   \****************************************************************/
 
 /*!*****************************************************************!*\
@@ -1511,10 +1537,6 @@
   \*******************************************************************************/
 
 /*!*******************************************************************************!*\
-  !*** ./packages/webviz-core/src/components/ReactChartjs/zoomAndPanHelpers.js ***!
-  \*******************************************************************************/
-
-/*!*******************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/RawMessages/getValueActionForValue.js ***!
   \*******************************************************************************/
 
@@ -1560,6 +1582,10 @@
 
 /*!**********************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/utils/textAtlas.json ***!
   \**********************************************************************************/
 
 /*!**********************************************************************************!*\
@@ -1627,6 +1653,10 @@
   \*************************************************************************************/
 
 /*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/GlobalVariableStyles.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/noMatches.svg ***!
   \*************************************************************************************/
 
@@ -1663,11 +1693,19 @@
   \***************************************************************************************/
 
 /*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeMenu.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree.js ***!
   \***************************************************************************************/
 
 /*!****************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js ***!
   \****************************************************************************************/
 
 /*!****************************************************************************************!*\
@@ -1680,6 +1718,14 @@
 
 /*!****************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/commands/OccupancyGrids.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/utils/glTextAtlasLoader.js ***!
+  \****************************************************************************************/
+
+/*!****************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/utils/textureAtlasData.bin ***!
   \****************************************************************************************/
 
 /*!*****************************************************************************************!*\
@@ -1703,10 +1749,6 @@
   \******************************************************************************************/
 
 /*!******************************************************************************************!*\
-  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeDotMenu.js ***!
-  \******************************************************************************************/
-
-/*!******************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderTreeNodes.js ***!
   \******************************************************************************************/
 
@@ -1724,6 +1766,10 @@
 
 /*!*******************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/ObjectDetails.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext.js ***!
   \*******************************************************************************************/
 
 /*!*******************************************************************************************!*\

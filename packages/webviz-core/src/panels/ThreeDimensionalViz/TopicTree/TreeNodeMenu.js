@@ -11,12 +11,14 @@ import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 
 import { ROW_HEIGHT } from "./TreeNodeRow";
-import type { SetCurrentEditingTopic, ToggleNodeByColumn } from "./types";
+import type { SetCurrentEditingTopic } from "./types";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
 import Menu, { Item } from "webviz-core/src/components/Menu";
+import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import clipboard from "webviz-core/src/util/clipboard";
+import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const DISABLED_STYLE = { cursor: "not-allowed", color: colors.TEXT_MUTED };
@@ -35,8 +37,6 @@ type Props = {|
   nodeKey: string,
   providerAvailable: boolean,
   setCurrentEditingTopic: SetCurrentEditingTopic,
-  toggleCheckAllAncestors: ToggleNodeByColumn,
-  toggleCheckAllDescendants: ToggleNodeByColumn,
   topicName: string,
 |};
 
@@ -50,15 +50,15 @@ export default function TreeNodeMenu({
   nodeKey,
   providerAvailable,
   setCurrentEditingTopic,
-  toggleCheckAllAncestors,
-  toggleCheckAllDescendants,
   topicName,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onToggle = useCallback(() => {
-    setIsOpen((prevIsOpen) => !prevIsOpen);
-  }, []);
+  const { toggleCheckAllAncestors, toggleCheckAllDescendants } = useGuaranteedContext(
+    TopicTreeContext,
+    "TopicTreeContext"
+  );
+  const onToggle = useCallback(() => setIsOpen((prevIsOpen) => !prevIsOpen), []);
 
   // Don't render the dot menu if the datasources are unavailable and the node is group node (topic node has option to copy topicName).
   if (!providerAvailable && !topicName) {

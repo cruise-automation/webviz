@@ -34,6 +34,7 @@ import type { State } from "webviz-core/src/reducers";
 import getGlobalStore from "webviz-core/src/store/getGlobalStore";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import { setReactHotLoaderConfig } from "webviz-core/src/util/dev";
+import inAutomatedRunMode from "webviz-core/src/util/inAutomatedRunMode";
 import { showHelpModalOpenSource } from "webviz-core/src/util/showHelpModalOpenSource";
 
 // Only used in dev.
@@ -101,8 +102,9 @@ class App extends React.PureComponent<Props> {
                     }}
                   </MessagePipelineConsumer>
                 </div>
+
                 <div className={styles.block} style={{ marginRight: 5 }}>
-                  <NotificationDisplay />
+                  {!inAutomatedRunMode() && <NotificationDisplay />}
                 </div>
                 <div className={styles.block}>
                   <Icon tooltip="Help" small fade onClick={showHelpModalOpenSource}>

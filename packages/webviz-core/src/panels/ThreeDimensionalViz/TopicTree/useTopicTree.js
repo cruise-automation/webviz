@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { difference, keyBy, uniq, mapValues, xor, isEqual, flatten, omit } from "lodash";
-import { useMemo, useCallback, useRef } from "react";
+import { useMemo, useCallback, useRef, createContext } from "react";
 import { useDebounce } from "use-debounce";
 
 import type { TreeNode, TopicTreeConfig, UseTreeInput, UseTreeOutput, DerivedCustomSettingsByKey } from "./types";
@@ -734,3 +734,5 @@ export default function useTree({
     visibleTopicsCountByKey,
   };
 }
+
+export const TopicTreeContext = createContext<UseTreeOutput | null>(null);

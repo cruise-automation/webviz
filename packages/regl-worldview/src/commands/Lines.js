@@ -9,7 +9,7 @@
 import flatten from "lodash/flatten";
 import * as React from "react";
 
-import type { Line, Vec4, Color, Pose } from "../types";
+import type { Line, Vec4, Color, Pose, DepthState, BlendState } from "../types";
 import {
   defaultBlend,
   withPose,
@@ -464,7 +464,7 @@ const lines = (regl: any) => {
   }
 
   // Disable depth for debug rendering (so lines stay visible)
-  const render = (props, commands) => {
+  const render = (props: { debug?: boolean, depth?: DepthState, blend?: BlendState }, commands: any) => {
     const { debug, depth = defaultReglDepth, blend = defaultReglBlend } = props;
     if (debug) {
       regl({ depth: { enable: false } })(commands);

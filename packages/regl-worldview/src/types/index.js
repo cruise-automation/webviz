@@ -207,6 +207,29 @@ export type MouseEventObject = {
   instanceIndex: ?number,
 };
 
+export type DepthState = {
+  enable?: boolean,
+  mask?: boolean,
+};
+
+export type BlendFuncValue = string | number;
+
+export type BlendState = {
+  enable?: boolean,
+  func?:
+    | BlendFuncValue
+    | {
+        src?: BlendFuncValue,
+        dst?: BlendFuncValue,
+        srcAlpha?: BlendFuncValue,
+        srcRGB?: BlendFuncValue,
+        dstRGB?: BlendFuncValue,
+        dstAlpha?: BlendFuncValue,
+      },
+  equation?: string | { rgb: string, alpha: string },
+  color?: Vec4,
+};
+
 export type ObjectHitmapId = number;
 /*
  * object: the object to pass to event callbacks when this object is interacted with.

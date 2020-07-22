@@ -13,9 +13,9 @@ import {
   type DataProviderDescriptor,
   type ExtensionPoint,
   type InitializationResult,
-  type DataProviderMessage,
   type DataProvider,
 } from "webviz-core/src/dataProviders/types";
+import type { Message } from "webviz-core/src/players/types";
 import Rpc from "webviz-core/src/util/Rpc";
 
 // Looks a bit like a regular `DataProvider`, but is not intended to be used directly in a
@@ -56,7 +56,7 @@ export default class RpcDataProvider implements DataProvider {
     return this._rpc.send("initialize", { childDescriptor: this._childDescriptor });
   }
 
-  async getMessages(start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> {
+  async getMessages(start: Time, end: Time, topics: string[]): Promise<Message[]> {
     return (await this._rpc.send("getMessages", { start, end, topics })).messages;
   }
 

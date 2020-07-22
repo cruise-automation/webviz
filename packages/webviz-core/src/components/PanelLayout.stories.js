@@ -24,7 +24,7 @@ storiesOf("<PanelLayout>", module)
     store.dispatch(changePanelLayout({ layout: "UnknownPanel!4co6n9d" }));
     return (
       <DndProvider backend={HTML5Backend}>
-        <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }} omitDragAndDrop>
+        <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }} store={store} omitDragAndDrop>
           <PanelLayout />
         </PanelSetup>
       </DndProvider>
@@ -43,7 +43,7 @@ storiesOf("<PanelLayout>", module)
     );
     return (
       <DndProvider backend={HTML5Backend}>
-        <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }} omitDragAndDrop>
+        <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }} store={store} omitDragAndDrop>
           <PanelLayout />
         </PanelSetup>
       </DndProvider>

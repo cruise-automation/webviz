@@ -6,18 +6,17 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { difference, keyBy, uniq, mapValues, xor, isEqual, flatten } from "lodash";
+import { difference, keyBy, uniq, mapValues, xor, isEqual, flatten, omit } from "lodash";
 import { useMemo, useCallback, useRef } from "react";
-import tinyColor from "tinycolor2";
 import { useDebounce } from "use-debounce";
 
 import type { TreeNode, TopicTreeConfig, UseTreeInput, UseTreeOutput, DerivedCustomSettingsByKey } from "./types";
 import filterMap from "webviz-core/src/filterMap";
-import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
 
+const DEFAULT_TOPICS_COUNT_BY_KEY = {};
 // TODO(Audrey): opaque type for node keys: https://flow.org/en/docs/types/opaque-types/
 export function generateNodeKey({
   topicName,
@@ -73,7 +72,7 @@ export function generateTreeNode(
   const providerAvailable = availableTopicsNamesSet.size > 0;
 
   if (topicName) {
-    const datatype = datatypesByTopic[topicName];
+    const datatype = datatypesByTopic[topicName] || datatypesByTopic[`${SECOND_SOURCE_PREFIX}${topicName}`];
     return {
       type: "topic",
       key,
@@ -186,7 +185,7 @@ export default function useTree({
     [hasFeatureColumn, providerTopics, topicTreeConfig, topicTreeTopics, uncategorizedGroupName]
   );
 
-  const nodesByKey = useMemo(
+  const nodesByKey: { [key: string]: TreeNode } = useMemo(
     () => {
       const flattenNodes = Array.from(flattenNode(rootTreeNode));
       return keyBy(flattenNodes, "key");
@@ -211,13 +210,16 @@ export default function useTree({
 
         const node = nodesByKey[baseKey];
         const featureKey = node?.featureKey || baseKey;
-
-        if (node) {
-          if (!isFeatureColumn && isSelectedMemo[baseKey] === undefined) {
-            isSelectedMemo[baseKey] = checkedKeysSet.has(baseKey) && isSelected(node.parentKey, isFeatureColumn);
-          } else if (isFeatureColumn && isSelectedMemo[featureKey] === undefined) {
-            isSelectedMemo[featureKey] = checkedKeysSet.has(featureKey) && isSelected(node.parentKey, isFeatureColumn);
-          }
+        if (!isFeatureColumn && isSelectedMemo[baseKey] === undefined) {
+          isSelectedMemo[baseKey] =
+            checkedKeysSet.has(baseKey) &&
+            (node ? isSelected(node.parentKey, isFeatureColumn) : checkedKeysSet.has(`name:${uncategorizedGroupName}`));
+        } else if (isFeatureColumn && isSelectedMemo[featureKey] === undefined) {
+          isSelectedMemo[featureKey] =
+            checkedKeysSet.has(featureKey) &&
+            (node
+              ? isSelected(node.parentKey, isFeatureColumn)
+              : checkedKeysSet.has(`name_2:${uncategorizedGroupName}`));
         }
         return isSelectedMemo[isFeatureColumn ? featureKey : baseKey];
       }
@@ -268,7 +270,10 @@ export default function useTree({
 
       // Returns whether a node/namespace is rendered in the 3d scene. Keep it inside useMemo since it needs to acces the same isSelectedMemo.
       // A node is visible if it's available, itself and all ancestor nodes are selected.
-      function getIsTreeNodeVisibleInScene(node: TreeNode, columnIndex: number, namespace?: string): boolean {
+      function getIsTreeNodeVisibleInScene(node: ?TreeNode, columnIndex: number, namespace?: string): boolean {
+        if (!node) {
+          return false;
+        }
         const baseKey = getBaseKey(node.key);
         const isFeatureColumn = columnIndex === 1;
         if (namespace && node.type === "topic") {
@@ -294,10 +299,40 @@ export default function useTree({
         getIsTreeNodeVisibleInScene,
       };
     },
-    [availableNamespacesByTopic, checkedKeys, modifiedNamespaceTopics, nodesByKey]
+    [availableNamespacesByTopic, checkedKeys, modifiedNamespaceTopics, nodesByKey, uncategorizedGroupName]
   );
 
   const { selectedTopicNames, selectedNamespacesByTopic, getIsTreeNodeVisibleInScene } = selections;
+
+  const visibleTopicsCountByKey = useMemo(
+    () => {
+      // No need to update if topics are unavailable.
+      if (!providerTopics.length) {
+        return DEFAULT_TOPICS_COUNT_BY_KEY;
+      }
+      const ret = {};
+
+      selectedTopicNames.forEach((topicName) => {
+        const isFeatureColumn = topicName.startsWith(SECOND_SOURCE_PREFIX);
+        const baseTopicName = isFeatureColumn ? topicName.substr(SECOND_SOURCE_PREFIX.length) : topicName;
+        const topicKey = generateNodeKey({ topicName: baseTopicName });
+        const node = nodesByKey[topicKey];
+        const isTopicNodeVisible = getIsTreeNodeVisibleInScene(node, isFeatureColumn ? 1 : 0);
+        if (!isTopicNodeVisible) {
+          return;
+        }
+        // The topic node is visible, now traverse up the tree and update all parent's visibleTopicsCount.
+        const parentKey = nodesByKey[topicKey]?.parentKey;
+        let parentNode = parentKey ? nodesByKey[parentKey] : undefined;
+        while (parentNode) {
+          ret[parentNode.key] = (ret[parentNode.key] || 0) + 1;
+          parentNode = parentNode.parentKey ? nodesByKey[parentNode.parentKey] : undefined;
+        }
+      });
+      return ret;
+    },
+    [getIsTreeNodeVisibleInScene, nodesByKey, providerTopics.length, selectedTopicNames]
+  );
 
   // Memoize topic names to prevent subscription update when expanding/collapsing nodes.
   const memoizedSelectedTopicNames = useShallowMemo(selectedTopicNames);
@@ -305,37 +340,61 @@ export default function useTree({
   const derivedCustomSettingsByKey = useMemo(
     (): DerivedCustomSettingsByKey => {
       const result = {};
-      for (const [topicOrNamespaceKey, settings] of Object.entries(settingsByKey)) {
-        // Only handle topic case now. The namespace case will be handled in the next PR.
-        const topicName = topicOrNamespaceKey.substr("t:".length);
-        const isFeatureTopic = topicName.startsWith(SECOND_SOURCE_PREFIX);
-        const columnIndex = isFeatureTopic ? 1 : 0;
-        const baseTopicName = isFeatureTopic ? topicName.replace(SECOND_SOURCE_PREFIX, "") : topicName;
-        const key = generateNodeKey({ topicName: baseTopicName });
+      for (const [topicKeyOrNamespaceKey, settings] of Object.entries(settingsByKey)) {
+        const isFeatureTopicOrNamespace = topicKeyOrNamespaceKey.includes(SECOND_SOURCE_PREFIX);
+        const columnIndex = isFeatureTopicOrNamespace ? 1 : 0;
+        let key;
+        if (topicKeyOrNamespaceKey.startsWith("ns:")) {
+          // Settings for namespace. Currently only handle overrideColor and there are no defaultTopicSettings for namespaces.
+          key = topicKeyOrNamespaceKey;
+          if (key.startsWith(`ns:${SECOND_SOURCE_PREFIX}`)) {
+            // Remove the feature prefix since we are going to store overrideColorByColumn under the base prefix.
+            key = key.replace(`ns:${SECOND_SOURCE_PREFIX}`, "ns:");
+          }
+          if (!result[key]) {
+            result[key] = {};
+          }
+        } else if (topicKeyOrNamespaceKey.startsWith("t:/")) {
+          // Settings for topic.
+          const topicName = topicKeyOrNamespaceKey.substr("t:".length);
+          const baseTopicName = isFeatureTopicOrNamespace ? topicName.substr(SECOND_SOURCE_PREFIX.length) : topicName;
+          key = generateNodeKey({ topicName: baseTopicName });
+          // If any topic has default settings, compare settings with default settings to determine if settings has changed.
+          const isDefaultSettings = defaultTopicSettings[topicName]
+            ? isEqual(settings, defaultTopicSettings[topicName])
+            : false;
 
-        let isDefaultSettings = false;
-        // If any topic has default settings, compare settings with default settings to determine if settings has changed.
-        if (defaultTopicSettings[topicName]) {
-          isDefaultSettings = isEqual(settings, defaultTopicSettings[topicName]);
+          result[key] = !result[key]
+            ? { isDefaultSettings }
+            : // Both base and feature have to be default settings for `isDefaultSettings` to be true.
+              { ...result[key], isDefaultSettings: isDefaultSettings && result[key].isDefaultSettings };
         }
-        if (!result[key]) {
-          result[key] = { isDefaultSettings };
-        } else {
-          // Both base and feature have to be default settings for `isDefaultSettings` to be true.
-          result[key] = { ...result[key], isDefaultSettings: isDefaultSettings && result[key].isDefaultSettings };
+        if (!key) {
+          console.error(`Key ${topicKeyOrNamespaceKey} in settingsByKey is not a valid key.`);
+          continue;
         }
+
         // $FlowFixMe some settings have overideColor field
         if (settings.overrideColor) {
-          const rgba = parseColorSetting(settings.overrideColor);
           if (!result[key].overrideColorByColumn) {
             result[key].overrideColorByColumn = [undefined, undefined];
           }
-          result[key].overrideColorByColumn[columnIndex] = tinyColor.fromRatio(rgba).toRgbString();
+          result[key].overrideColorByColumn[columnIndex] = settings.overrideColor;
         }
       }
       return result;
     },
     [defaultTopicSettings, settingsByKey]
+  );
+
+  const onNamespaceOverrideColorChange = useCallback(
+    (newColor: ?string, prefixedNamespaceKey: string) => {
+      const newSettingsByKey = newColor
+        ? { ...settingsByKey, [prefixedNamespaceKey]: { overrideColor: newColor } }
+        : omit(settingsByKey, prefixedNamespaceKey);
+      saveConfig({ settingsByKey: newSettingsByKey });
+    },
+    [saveConfig, settingsByKey]
   );
 
   const checkedNamespacesByTopicName = useMemo(
@@ -661,6 +720,7 @@ export default function useTree({
     getIsTreeNodeVisibleInTree,
     hasFeatureColumn,
     nodesByKey, // For testing.
+    onNamespaceOverrideColorChange,
     rootTreeNode,
     sceneErrorsByKey,
     selectedNamespacesByTopic,
@@ -671,5 +731,6 @@ export default function useTree({
     toggleNamespaceChecked,
     toggleNodeChecked,
     toggleNodeExpanded,
+    visibleTopicsCountByKey,
   };
 }

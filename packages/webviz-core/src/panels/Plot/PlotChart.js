@@ -13,8 +13,10 @@ import { createSelector } from "reselect";
 import { Time } from "rosbag";
 import uuid from "uuid";
 
+import type { PlotXAxisVal } from "./index";
 import styles from "./PlotChart.module.scss";
 import TimeBasedChart, {
+  type ChartDefaultView,
   type TimeBasedChartTooltipData,
   type TooltipItem,
 } from "webviz-core/src/components/TimeBasedChart";
@@ -53,13 +55,26 @@ export type PlotDataByPath = {
 
 const Y_AXIS_ID = "Y_AXIS_ID";
 
-function getXForPoint(xAxisVal, timestamp, innerIdx, xAxisRanges, xItem, xAxisPath, xAxisData): number {
-  if (xAxisVal === "custom" && xAxisPath) {
+const isCustomScale = (xAxisVal: PlotXAxisVal): boolean => xAxisVal === "custom" || xAxisVal === "currentCustom";
+
+function getXForPoint(
+  xAxisVal: PlotXAxisVal,
+  timestamp: number,
+  innerIdx: number,
+  xAxisRanges: ?$ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
+  xItem: ?TooltipItem,
+  xAxisPath: ?BasePlotPath
+): number {
+  if (isCustomScale(xAxisVal) && xAxisPath) {
     if (isReferenceLinePlotPathType(xAxisPath)) {
       return Number.parseFloat(xAxisPath.value);
     }
     if (xAxisRanges) {
-      return xItem ? Number(xItem.queriedData[innerIdx]?.value) : NaN;
+      if (!xItem) {
+        return NaN;
+      }
+      const value = xItem.queriedData[innerIdx]?.value;
+      return isTime(value) ? toSec((value: any)) : Number(value);
     }
   }
   return xAxisVal === "timestamp" ? timestamp : innerIdx;
@@ -75,7 +90,7 @@ function getPointsAndTooltipsForMessagePathItem(
   xItem: ?TooltipItem,
   startTime: Time,
   timestampMethod,
-  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisVal: PlotXAxisVal,
   xAxisPath?: BasePlotPath,
   xAxisRanges: ?$ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
   datasetKey: string
@@ -116,7 +131,8 @@ function getPointsAndTooltipsForMessagePathItem(
       tooltips.push(tooltip);
     }
   }
-  const hasMismatchedData = xAxisVal === "custom" && (!xItem || yItem.queriedData.length !== xItem.queriedData.length);
+  const hasMismatchedData =
+    isCustomScale(xAxisVal) && (!xItem || yItem.queriedData.length !== xItem.queriedData.length);
   return { points, tooltips, hasMismatchedData };
 }
 
@@ -125,7 +141,7 @@ function getDatasetAndTooltipsFromMessagePlotPath(
   yAxisRanges: $ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
   index: number,
   startTime: Time,
-  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisVal: PlotXAxisVal,
   xAxisRanges: ?$ReadOnlyArray<$ReadOnlyArray<TooltipItem>>,
   xAxisPath?: BasePlotPath
 ): { dataset: DataSet, tooltips: TimeBasedChartTooltipData[], hasMismatchedData: boolean, path: string } {
@@ -133,7 +149,7 @@ function getDatasetAndTooltipsFromMessagePlotPath(
   const datasetKey = index.toString();
 
   let hasMismatchedData =
-    xAxisVal === "custom" &&
+    isCustomScale(xAxisVal) &&
     xAxisRanges != null &&
     (yAxisRanges.length !== xAxisRanges.length ||
       xAxisRanges.every((range, rangeIndex) => range.length !== yAxisRanges[rangeIndex].length));
@@ -240,7 +256,7 @@ export function getDatasetsAndTooltips(
   paths: PlotPath[],
   itemsByPath: PlotDataByPath,
   startTime: Time,
-  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisVal: PlotXAxisVal,
   xAxisPath?: BasePlotPath
 ): { datasets: DataSet[], tooltips: TimeBasedChartTooltipData[], pathsWithMismatchedDataLengths: string[] } {
   const datasetsAndTooltips = filterMap(paths, (path: PlotPath, index: number) => {
@@ -302,14 +318,27 @@ type PlotChartProps = {|
   paths: PlotPath[],
   minYValue: number,
   maxYValue: number,
-  saveCurrentYs: (minY: number, maxY: number) => void,
+  saveCurrentView: (minY: number, maxY: number, width: ?number) => void,
   datasets: DataSet[],
   tooltips: TimeBasedChartTooltipData[],
-  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisVal: PlotXAxisVal,
   currentTime?: ?number,
+  defaultView: ChartDefaultView,
+  onClick?: ?(SyntheticMouseEvent<HTMLCanvasElement>, any, { [scaleId: string]: number }) => void,
 |};
 export default memo<PlotChartProps>(function PlotChart(props: PlotChartProps) {
-  const { paths, currentTime, minYValue, maxYValue, saveCurrentYs, datasets, tooltips, xAxisVal } = props;
+  const {
+    paths,
+    currentTime,
+    defaultView,
+    minYValue,
+    maxYValue,
+    saveCurrentView,
+    datasets,
+    onClick,
+    tooltips,
+    xAxisVal,
+  } = props;
   const annotations = getAnnotations(paths);
 
   return (
@@ -328,10 +357,12 @@ export default memo<PlotChartProps>(function PlotChart(props: PlotChartProps) {
             annotations={annotations}
             type="scatter"
             yAxes={yAxes({ minY: minYValue, maxY: maxYValue, scaleId: Y_AXIS_ID })}
-            saveCurrentYs={saveCurrentYs}
-            xAxisVal={xAxisVal}
+            saveCurrentView={saveCurrentView}
+            xAxisIsPlaybackTime={xAxisVal === "timestamp"}
             scaleOptions={scaleOptions}
             currentTime={currentTime}
+            defaultView={defaultView}
+            onClick={onClick}
           />
         )}
       </Dimensions>

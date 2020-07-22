@@ -154,9 +154,9 @@ export default function TextField({
 }
 
 TextField.defaultProps = {
-  validator: (value) => undefined,
-  onChange: (value) => {},
-  onBlur: (value) => {},
+  validator: () => undefined,
+  onChange: () => {},
+  onBlur: () => {},
   inputStyle: {},
   style: {},
 };

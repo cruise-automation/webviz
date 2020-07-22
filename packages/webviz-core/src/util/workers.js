@@ -10,6 +10,7 @@
 export const inWebWorker = () =>
   global.postMessage && typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
 
+// To debug shared workers, enter 'chrome://inspect/#workers' into the url bar.
 export const inSharedWorker = () =>
   typeof SharedWorkerGlobalScope !== "undefined" && self instanceof SharedWorkerGlobalScope;
 /* eslint-enable no-undef */

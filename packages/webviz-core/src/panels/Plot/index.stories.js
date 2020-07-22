@@ -8,7 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import type { Time } from "rosbag";
+import { type Time, MessageWriter, parseMessageDefinition } from "rosbag";
 
 import Plot from "webviz-core/src/panels/Plot";
 import PanelSetup, { triggerWheel } from "webviz-core/src/stories/PanelSetup";
@@ -23,15 +23,10 @@ uint32 seq
 time stamp
 string frame_id`;
 
+const writer = new MessageWriter(parseMessageDefinition(float64StampedDefinition));
+
 const serializeFloat64Stamped = ({ value, headerStamp: { sec, nsec } }: { value: number, headerStamp: Time }) => {
-  const buffer = new ArrayBuffer(/*header.seq*/ 4 + /*header.time*/ 8 + /*header.frame_id*/ 4 + /*value*/ 8);
-  const view = new DataView(buffer);
-  const littleEndian = true;
-  view.setUint32(/*offset=*/ 0, 0, littleEndian);
-  view.setUint32(/*offset=*/ 4, sec, littleEndian);
-  view.setUint32(/*offset=*/ 8, nsec, littleEndian);
-  view.setUint32(/*offset=*/ 12, 0, littleEndian);
-  view.setFloat64(/*offset=*/ 16, value, littleEndian);
+  const buffer = writer.writeMessage({ header: { seq: 0, stamp: { sec, nsec }, frame_id: "" }, data: value });
   return Buffer.from(buffer);
 };
 
@@ -77,21 +72,32 @@ const getPreloadedMessage = (seconds) => ({
   message: serializeFloat64Stamped({ value: Math.pow(seconds, 2), headerStamp: fromSec(seconds - 0.5) }),
 });
 
-const blocks = [
-  {
-    sizeInBytes: 0,
-    messagesByTopic: {
-      "/preloaded_topic": [0.6, 0.7, 0.8, 0.9, 1.0].map(getPreloadedMessage),
-    },
-  },
-  undefined,
-  {
-    sizeInBytes: 0,
-    messagesByTopic: {
-      "/preloaded_topic": [1.5, 1.6, 1.7, 1.8, 1.9].map(getPreloadedMessage),
-    },
-  },
-];
+const messageCache = {
+  blocks: [
+    ...[0.6, 0.7, 0.8, 0.9, 1.0].map((seconds) => ({
+      sizeInBytes: 0,
+      messagesByTopic: {
+        "/preloaded_topic": [getPreloadedMessage(seconds)],
+      },
+    })),
+    undefined, // 1.1
+    undefined, // 1.2
+    undefined, // 1.3
+    undefined, // 1.4
+    ...[1.5, 1.6, 1.7, 1.8, 1.9].map((seconds) => ({
+      sizeInBytes: 0,
+      messagesByTopic: {
+        "/preloaded_topic": [getPreloadedMessage(seconds)],
+      },
+    })),
+  ],
+  startTime: fromSec(0.6),
+};
+
+const withEndTime = (testFixture, endTime) => ({
+  ...testFixture,
+  activeData: { ...testFixture.activeData, endTime },
+});
 
 const fixture = {
   datatypes: {
@@ -157,7 +163,6 @@ const fixture = {
   },
   frame: {
     "/some_topic/location": locationMessages.map((message) => ({
-      datatype: "msgs/PoseDebug",
       topic: "/some_topic/location",
       receiveTime: message.header.stamp,
       message,
@@ -165,27 +170,24 @@ const fixture = {
     "/some_topic/location_subset": locationMessages
       .slice(locationMessages.length / 3, (locationMessages.length * 2) / 3)
       .map((message) => ({
-        datatype: "msgs/PoseDebug",
         topic: "/some_topic/location_subset",
         receiveTime: message.header.stamp,
         message,
       })),
     "/some_topic/state": otherStateMessages.map((message) => ({
-      datatype: "msgs/State",
       topic: "/some_topic/state",
       receiveTime: message.header.stamp,
       message,
     })),
     "/boolean_topic": [
       {
-        datatype: "std_msgs/Bool",
         topic: "/boolean_topic",
         receiveTime: { sec: 1, nsec: 0 },
         message: { data: true },
       },
     ],
   },
-  progress: { blocks },
+  progress: { messageCache },
 };
 
 const paths = [
@@ -440,7 +442,11 @@ storiesOf("<Plot>", module)
           config={{
             ...exampleConfig,
             xAxisVal: "index",
-            paths: [{ value: "/some_topic/state.items[:].speed", enabled: true, timestampMethod: "receiveTime" }],
+            paths: [
+              { value: "/some_topic/state.items[:].speed", enabled: true, timestampMethod: "receiveTime" },
+              // Should show up only in the legend: For now index plots always use playback data, and ignore preloaded data.
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+            ],
           }}
         />
       </PanelSetup>
@@ -453,6 +459,21 @@ storiesOf("<Plot>", module)
           config={{
             ...exampleConfig,
             xAxisVal: "custom",
+            paths: [{ value: "/some_topic/location.pose.acceleration", enabled: true, timestampMethod: "receiveTime" }],
+            xAxisPath: { value: "/some_topic/location.pose.velocity", enabled: true },
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("current custom x-axis topic", () => {
+    // As above, but just shows a single point instead of the whole line.
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            xAxisVal: "currentCustom",
             paths: [{ value: "/some_topic/location.pose.acceleration", enabled: true, timestampMethod: "receiveTime" }],
             xAxisPath: { value: "/some_topic/location.pose.velocity", enabled: true },
           }}
@@ -491,13 +512,11 @@ storiesOf("<Plot>", module)
           frame: {
             "/some_number": [
               {
-                datatype: "std_msgs/Float32",
                 topic: "/some_number",
                 receiveTime: { sec: 0, nsec: 0 },
                 message: { data: 1.8548483304974972 },
               },
               {
-                datatype: "std_msgs/Float32",
                 topic: "/some_number",
                 receiveTime: { sec: 1, nsec: 0 },
                 message: { data: 1.8548483304974974 },
@@ -514,10 +533,24 @@ storiesOf("<Plot>", module)
       </PanelSetup>
     );
   })
+  .add("time values", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            xAxisVal: "custom",
+            paths: [{ value: "/some_topic/location.pose.velocity", enabled: true, timestampMethod: "receiveTime" }],
+            xAxisPath: { value: "/some_topic/location.header.stamp", enabled: true },
+          }}
+        />
+      </PanelSetup>
+    );
+  })
   .add("preloaded data in binary blocks", () => {
     localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
     return (
-      <PanelSetup fixture={fixture}>
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
         <Plot
           config={{
             ...exampleConfig,
@@ -533,7 +566,7 @@ storiesOf("<Plot>", module)
   .add("mixed streamed and preloaded data", () => {
     localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
     return (
-      <PanelSetup fixture={fixture}>
+      <PanelSetup fixture={withEndTime(fixture, { sec: 3, nsec: 0 })}>
         <Plot
           config={{
             ...exampleConfig,
@@ -549,7 +582,7 @@ storiesOf("<Plot>", module)
   .add("preloaded data and its derivative", () => {
     localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
     return (
-      <PanelSetup fixture={fixture}>
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
         <Plot
           config={{
             ...exampleConfig,

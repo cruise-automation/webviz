@@ -14,9 +14,10 @@ import type {
   DataProviderDescriptor,
   ExtensionPoint,
   GetDataProvider,
+  GetMessagesExtra,
   InitializationResult,
-  DataProviderMessage,
 } from "webviz-core/src/dataProviders/types";
+import type { Message } from "webviz-core/src/players/types";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 
@@ -87,7 +88,7 @@ export default class ApiCheckerDataProvider implements DataProvider {
     return this._initializationResult;
   }
 
-  async getMessages(start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> {
+  async getMessages(start: Time, end: Time, topics: string[], extra?: ?GetMessagesExtra): Promise<Message[]> {
     const initRes = this._initializationResult;
     if (!initRes) {
       this._warn("getMessages was called before initialize finished");
@@ -118,9 +119,9 @@ export default class ApiCheckerDataProvider implements DataProvider {
       }
     }
 
-    const messages = await this._provider.getMessages(start, end, topics);
+    const messages = await this._provider.getMessages(start, end, topics, extra);
     let lastTime: ?Time;
-    for (const message: DataProviderMessage of messages) {
+    for (const message: Message of messages) {
       if (!topics.includes(message.topic)) {
         this._warn(`message.topic (${message.topic}) was never requested (${JSON.stringify(topics)})`);
       }

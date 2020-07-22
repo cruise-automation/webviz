@@ -12,7 +12,7 @@ class FakeRpc {
   proxiedWorker: FakeRpc;
   handlers: { [string]: (any) => any } = {};
 
-  async send<TResult>(topic: string, data: any, transfer?: any[]): Promise<TResult> {
+  async send<TResult>(topic: string, data: any, _transfer?: any[]): Promise<TResult> {
     return this.proxiedWorker.handlers[topic](data);
   }
 

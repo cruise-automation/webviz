@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { truncate } from "lodash";
+import { sortBy, truncate } from "lodash";
 import type { Time } from "rosbag";
 
 import { type DiagnosticsBuffer } from "webviz-core/src/panels/diagnostics/DiagnosticsHistory";
@@ -27,12 +27,11 @@ export const LEVEL_NAMES = {
   [3]: "stale",
 };
 
-opaque type _DiagnosticId = string;
 interface ToString {
   toString(): string;
 }
 
-export type DiagnosticId = _DiagnosticId & ToString;
+export type DiagnosticId = string & ToString;
 
 export type Level = $Values<typeof LEVELS>;
 
@@ -53,7 +52,7 @@ export type DiagnosticInfo = {|
   displayName: string,
 |};
 
-export type DiagnosticStatusArray = {|
+export type DiagnosticStatusArrayMsg = {|
   header: Header,
   status: DiagnosticStatusMessage[],
 |};
@@ -67,14 +66,14 @@ export function getDiagnosticId(status: DiagnosticStatusMessage): DiagnosticId {
   if (hardware_id.startsWith("/")) {
     hardware_id = hardware_id.substring(1);
   }
-  return `|${hardware_id}|${status.name}|`;
+  return status.name ? `|${hardware_id}|${status.name}|` : `|${hardware_id}|`;
 }
 
 export function getDisplayName(hardwareId: string, name: string) {
   if (name.indexOf(hardwareId) === 0) {
     return name;
   }
-  return `${hardwareId}: ${name}`;
+  return name ? `${hardwareId}: ${name}` : hardwareId;
 }
 
 // ensures the diagnostic status message's name consists of both the hardware id and the name
@@ -101,15 +100,21 @@ export function computeDiagnosticInfo(status: DiagnosticStatusMessage, stamp: Ti
   };
 }
 
-export function getNodesByLevel(buffer: DiagnosticsBuffer, hardwareIdFilter: string, level: any): DiagnosticInfo[] {
-  if (!hardwareIdFilter) {
-    return Array.from(buffer.diagnosticsByLevel[level].values());
-  }
-  const nodeArray = [];
-  buffer.diagnosticsByLevel[level].forEach((value) => {
-    if (value.displayName.startsWith(hardwareIdFilter)) {
-      nodeArray.push(value);
-    }
-  });
-  return nodeArray;
+export function getNodesByLevel(buffer: DiagnosticsBuffer, level: any): DiagnosticInfo[] {
+  return Array.from(buffer.diagnosticsByLevel[level].values());
 }
+
+export const getSortedNodes = (
+  nodes: DiagnosticInfo[],
+  hardwareIdFilter: string,
+  pinnedIds: DiagnosticId[]
+): DiagnosticInfo[] => {
+  return sortBy(
+    nodes.filter(
+      (info) =>
+        pinnedIds.indexOf(info.id) === -1 &&
+        (!hardwareIdFilter || (hardwareIdFilter && info.displayName.startsWith(hardwareIdFilter)))
+    ),
+    (info) => info.displayName.replace(/^\//, "")
+  );
+};

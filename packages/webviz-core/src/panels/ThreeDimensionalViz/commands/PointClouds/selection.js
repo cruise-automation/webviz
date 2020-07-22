@@ -7,10 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import { omit, difference, isEmpty, isNil } from "lodash";
-import { type MouseEventObject } from "regl-worldview";
+import { type MouseEventObject, toRGBA, type Color } from "regl-worldview";
 
 import { getVertexValues, getVertexValue, getFieldOffsetsAndReaders, getVertexCount } from "./buffers";
-import { getRgbaArray } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 import {
   DEFAULT_FLAT_COLOR,
   DEFAULT_MIN_COLOR,
@@ -24,6 +23,10 @@ export type ClickedInfo = {
   clickedPointColor?: number[],
   additionalFieldValues?: { [name: string]: ?number },
 };
+
+export function toRgba(rgba: Color): Color {
+  return toRGBA({ r: rgba.r * 255, g: rgba.g * 255, b: rgba.b * 255, a: rgba.a });
+}
 
 // extract clicked point's position, color and additional field values to display in the UI
 export function getClickedInfo(maybeFullyDecodedMarker: MouseEventObject, instanceIndex: ?number): ?ClickedInfo {
@@ -62,8 +65,8 @@ export function getClickedInfo(maybeFullyDecodedMarker: MouseEventObject, instan
       const colorFieldRange = maxColorValue - minColorValue || Infinity;
       const pct = Math.max(0, Math.min((colorFieldValue - minColorValue) / colorFieldRange, 1));
       const { minColor, maxColor } = colorMode;
-      const parsedMinColor = getRgbaArray(minColor || DEFAULT_MIN_COLOR);
-      const parsedMaxColor = getRgbaArray(maxColor || DEFAULT_MAX_COLOR);
+      const parsedMinColor = toRgba(minColor || DEFAULT_MIN_COLOR);
+      const parsedMaxColor = toRgba(maxColor || DEFAULT_MAX_COLOR);
       clickedPointColor = [
         lerp(pct, parsedMinColor[0], parsedMaxColor[0]), // R
         lerp(pct, parsedMinColor[1], parsedMaxColor[1]), // G
@@ -78,7 +81,7 @@ export function getClickedInfo(maybeFullyDecodedMarker: MouseEventObject, instan
       clickedPointColor = [0, 0, 0, 1];
       setRainbowColor(clickedPointColor, 0, pct);
     } else if (colorMode.mode === "flat") {
-      clickedPointColor = getRgbaArray(colorMode.flatColor || DEFAULT_FLAT_COLOR);
+      clickedPointColor = toRgba(colorMode.flatColor || DEFAULT_FLAT_COLOR);
     }
   }
 

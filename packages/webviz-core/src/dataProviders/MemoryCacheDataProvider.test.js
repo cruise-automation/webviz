@@ -18,15 +18,15 @@ import delay from "webviz-core/shared/delay";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
-import type { DataProviderMessage } from "webviz-core/src/dataProviders/types";
+import type { Message } from "webviz-core/src/players/types";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
-function sortMessages(messages: DataProviderMessage[]) {
+function sortMessages(messages: Message[]) {
   return messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime) || naturalSort()(a.topic, b.topic));
 }
 
-function generateMessages(): DataProviderMessage[] {
+function generateMessages(): Message[] {
   return sortMessages([
     { topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: new ArrayBuffer(10) },
     { topic: "/foo", receiveTime: { sec: 101, nsec: 0 }, message: new ArrayBuffer(10) },
@@ -37,7 +37,7 @@ function generateMessages(): DataProviderMessage[] {
   ]);
 }
 
-function generateLargeMessages(): DataProviderMessage[] {
+function generateLargeMessages(): Message[] {
   // The input is 201 blocks (20.1 seconds) long, with messages every two seconds.
   return sortMessages([
     { topic: "/foo", receiveTime: { sec: 0, nsec: 0 }, message: new ArrayBuffer(600) },
@@ -54,7 +54,7 @@ function generateLargeMessages(): DataProviderMessage[] {
   ]);
 }
 
-function getProvider(messages: DataProviderMessage[], unlimitedCache: boolean = false) {
+function getProvider(messages: Message[], unlimitedCache: boolean = false) {
   const memoryDataProvider = new MemoryDataProvider({ messages, unlimitedCache, providesParsedMessages: false });
   return {
     provider: new MemoryCacheDataProvider(
@@ -90,7 +90,10 @@ describe("MemoryCacheDataProvider", () => {
       [
         {
           fullyLoadedFractionRanges: [],
-          blocks: new Array(21),
+          messageCache: {
+            startTime: { sec: 100, nsec: 0 },
+            blocks: new Array(21),
+          },
         },
       ],
     ]);
@@ -108,7 +111,10 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
         fullyLoadedFractionRanges: [{ start: 0, end: 1 }],
-        blocks: expect.arrayContaining([]),
+        messageCache: {
+          startTime: { sec: 100, nsec: 0 },
+          blocks: expect.arrayContaining([]),
+        },
       },
     ]);
     expect(last(memoryDataProvider.getMessages.mock.calls)).toEqual([
@@ -132,7 +138,10 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
         fullyLoadedFractionRanges: [{ start: 0, end: 1 }],
-        blocks: expect.arrayContaining([]),
+        messageCache: {
+          startTime: { sec: 100, nsec: 0 },
+          blocks: expect.arrayContaining([]),
+        },
       },
     ]);
     // The first request is at/after the requested range.
@@ -165,7 +174,10 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
         fullyLoadedFractionRanges: [{ start: 0, end: 81 / 201 }],
-        blocks: expect.arrayContaining([]),
+        messageCache: {
+          startTime: { sec: 0, nsec: 0 },
+          blocks: expect.arrayContaining([]),
+        },
       },
     ]);
   });
@@ -181,7 +193,10 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
         fullyLoadedFractionRanges: [{ start: 0, end: 1 }],
-        blocks: expect.arrayContaining([]),
+        messageCache: {
+          startTime: { sec: 0, nsec: 0 },
+          blocks: expect.arrayContaining([]),
+        },
       },
     ]);
   });
@@ -205,7 +220,10 @@ describe("MemoryCacheDataProvider", () => {
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
         fullyLoadedFractionRanges: [{ start: 0, end: 10 / 201 }, { start: 100 / 201, end: 161 / 201 }],
-        blocks: expect.arrayContaining([]),
+        messageCache: {
+          startTime: { sec: 0, nsec: 0 },
+          blocks: expect.arrayContaining([]),
+        },
       },
     ]);
   });
@@ -258,7 +276,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 2, undefined, undefined, undefined],
           maxCacheSizeInBytes: 5,
-          badEvictionLocation: undefined,
+          badEvictionRange: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
     });
@@ -269,7 +287,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 0, 2, undefined, undefined],
           maxCacheSizeInBytes: 5,
-          badEvictionLocation: undefined,
+          badEvictionRange: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([2, 1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
     });
@@ -280,7 +298,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 2, 3, undefined, undefined],
           maxCacheSizeInBytes: 5,
-          badEvictionLocation: undefined,
+          badEvictionRange: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([2, 1, 0]), newRecentRanges: [{ start: 0, end: 5 }] });
     });
@@ -291,7 +309,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 2, 3, 4, undefined],
           maxCacheSizeInBytes: 5,
-          badEvictionLocation: undefined,
+          badEvictionRange: undefined,
         })
       ).toEqual({ blockIndexesToKeep: new Set([3, 2]), newRecentRanges: [{ start: 2, end: 5 }] });
     });
@@ -302,7 +320,7 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 1, 1, 1, 1],
           maxCacheSizeInBytes: 2,
-          badEvictionLocation: 5,
+          badEvictionRange: { start: 4, end: 5 },
         })
       ).toEqual({ blockIndexesToKeep: new Set([2, 3, 4]), newRecentRanges: [{ start: 2, end: 5 }] });
     });
@@ -313,9 +331,27 @@ describe("MemoryCacheDataProvider", () => {
           recentBlockRanges: [{ start: 0, end: 5 }],
           blockSizesInBytes: [1, 1, 1, 1, 1],
           maxCacheSizeInBytes: 2,
-          badEvictionLocation: 0,
+          badEvictionRange: { start: 0, end: 1 },
         })
       ).toEqual({ blockIndexesToKeep: new Set([0, 1, 2]), newRecentRanges: [{ start: 0, end: 3 }] });
+    });
+
+    it("keeps everything in the bad eviction range", () => {
+      expect(
+        getBlocksToKeep({
+          recentBlockRanges: [{ start: 0, end: 5 }],
+          blockSizesInBytes: [1, 1, 1, 1, 1, 1], // six elements
+          maxCacheSizeInBytes: 3,
+          badEvictionRange: { start: 2, end: 6 },
+        })
+      ).toEqual({
+        // Note: This isn't super -- we evict from the end furthest from the start of the bad
+        // eviction range, which is the end. It would be better to evict from the end furthest from
+        // _any part_ of the eviction range, but it's more complicated and this is an uncommon case.
+        // The eviction range is typically small relative to the loaded ranges.
+        blockIndexesToKeep: new Set([0, 2, 3, 4, 5]),
+        newRecentRanges: [{ start: 2, end: 6 }, { start: 0, end: 1 }],
+      });
     });
   });
 

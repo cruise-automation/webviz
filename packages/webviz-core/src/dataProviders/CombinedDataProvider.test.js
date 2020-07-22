@@ -15,7 +15,9 @@
 import CombinedDataProvider, { mergedBlocks } from "webviz-core/src/dataProviders/CombinedDataProvider";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
+import RenameDataProvider from "webviz-core/src/dataProviders/RenameDataProvider";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { fromMillis } from "webviz-core/src/util/time";
 
 // reusable providers
 function provider1(initiallyLoaded = false) {
@@ -69,9 +71,11 @@ function getCombinedDataProvider(data: any[]) {
   const providerInfos = [];
   const children = [];
   for (const item of data) {
-    const { provider, deleteTopics, prefix } = item;
-    providerInfos.push({ deleteTopics, prefix });
-    children.push({ name: "TestProvider", args: { provider }, children: [] });
+    const { provider, prefix } = item;
+    providerInfos.push({});
+    // $FlowFixMe: This is not how getProvider is meant to work.
+    const childProvider = prefix == null ? provider : new RenameDataProvider({ prefix }, [provider], (child) => child);
+    children.push({ name: "TestProvider", args: { provider: childProvider }, children: [] });
   }
   return new CombinedDataProvider({ providerInfos }, children, () => {
     throw new Error("Should never be called");
@@ -80,12 +84,6 @@ function getCombinedDataProvider(data: any[]) {
 
 describe("CombinedDataProvider", () => {
   describe("error handling", () => {
-    it("throws if a prefix does not have a leading forward slash", () => {
-      expect(() =>
-        getCombinedDataProvider([{ provider: provider1(), prefix: "foo" }, { provider: provider2() }])
-      ).toThrow();
-    });
-
     it("throws if two providers have the same topics without a prefix", async () => {
       const combinedProvider = getCombinedDataProvider([{ provider: provider1() }, { provider: provider1Duplicate() }]);
       await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
@@ -143,6 +141,52 @@ describe("CombinedDataProvider", () => {
       const combinedProvider = getCombinedDataProvider([{ provider: p1, prefix: "/some_prefix" }, { provider: p2 }]);
       await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
     });
+
+    it("should not allow overlapping topics in messageDefinitionsByTopic", async () => {
+      const datatypes = { some_datatype: { fields: [{ name: "value", type: "int32" }] } };
+      const p1 = new MemoryDataProvider({
+        messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        topics: [{ name: "/some_topic", datatype: "some_datatype" }],
+        messageDefinitionsByTopic: { "/some_topic": "int32 value" },
+        datatypes,
+        providesParsedMessages: true,
+      });
+
+      const p2 = new MemoryDataProvider({
+        messages: [{ topic: "/some_topic2", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        topics: [{ name: "/some_topic2", datatype: "some_datatype" }],
+        datatypes,
+        messageDefinitionsByTopic: { "/some_topic": "int32 value" },
+        providesParsedMessages: true,
+      });
+      const combinedProvider = getCombinedDataProvider([{ provider: p1 }, { provider: p2 }]);
+      await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow(
+        "Duplicate topic found"
+      );
+    });
+
+    it("should not mixed parsed and unparsed messaages", async () => {
+      const datatypes = { some_datatype: { fields: [{ name: "value", type: "int32" }] } };
+      const p1 = new MemoryDataProvider({
+        messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        topics: [{ name: "/some_topic", datatype: "some_datatype" }],
+        messageDefinitionsByTopic: { "/some_topic": "int32 value" },
+        datatypes,
+        providesParsedMessages: true,
+      });
+
+      const p2 = new MemoryDataProvider({
+        messages: [{ topic: "/some_topic2", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        topics: [{ name: "/some_topic2", datatype: "some_datatype" }],
+        datatypes,
+        messageDefinitionsByTopic: { "/some_topic2": "int32 value" },
+        providesParsedMessages: false,
+      });
+      const combinedProvider = getCombinedDataProvider([{ provider: p1 }, { provider: p2 }]);
+      await expect(combinedProvider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow(
+        "Data providers provide different message formats"
+      );
+    });
   });
 
   describe("features", () => {
@@ -156,91 +200,18 @@ describe("CombinedDataProvider", () => {
         start: { nsec: 0, sec: 100 },
         end: { nsec: 0, sec: 104 },
         topics: [
-          { datatype: "some_datatype", name: "/some_topic1" },
+          { datatype: "some_datatype", name: "/some_topic1", numMessages: undefined },
           { datatype: "some_datatype", name: `${SECOND_SOURCE_PREFIX}/some_topic3`, originalTopic: "/some_topic3" },
-          { datatype: "some_datatype", name: "/table_1/some_topic2", originalTopic: "/some_topic2" },
+          {
+            datatype: "some_datatype",
+            name: "/table_1/some_topic2",
+            originalTopic: "/some_topic2",
+            numMessages: undefined,
+          },
         ],
         datatypes: {},
         messageDefinitionsByTopic: {},
         providesParsedMessages: true,
-      });
-    });
-
-    describe("deleting topics", () => {
-      function providerWithTopicToDelete() {
-        return new MemoryDataProvider({
-          messages: [
-            { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
-            { topic: "/some_topic2", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
-          ],
-          topics: [
-            { name: "/some_topic1", datatype: "some_datatype" },
-            { name: "/some_topic2", datatype: "some_datatype" },
-          ],
-          datatypes: {},
-          providesParsedMessages: true,
-        });
-      }
-
-      it("deletes topics from providers without prefixes", async () => {
-        const combinedProvider = getCombinedDataProvider([
-          { provider: provider1() },
-          {
-            provider: providerWithTopicToDelete(),
-            deleteTopics: ["/some_topic1"],
-          },
-        ]);
-        expect(await combinedProvider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
-          start: { nsec: 0, sec: 101 },
-          end: { nsec: 0, sec: 103 },
-          topics: [
-            { datatype: "some_datatype", name: "/some_topic1" },
-            { datatype: "some_datatype", name: "/some_topic2" },
-          ],
-          datatypes: {},
-          messageDefinitionsByTopic: {},
-          providesParsedMessages: true,
-        });
-      });
-
-      it("deletes topics from providers with prefixes", async () => {
-        const combinedProvider = getCombinedDataProvider([
-          { provider: provider1() },
-          {
-            provider: providerWithTopicToDelete(),
-            prefix: "/table_1",
-            deleteTopics: ["/some_topic1"],
-          },
-        ]);
-        expect(await combinedProvider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
-          start: { nsec: 0, sec: 101 },
-          end: { nsec: 0, sec: 103 },
-          topics: [
-            { datatype: "some_datatype", name: "/some_topic1" },
-            { datatype: "some_datatype", name: "/table_1/some_topic2", originalTopic: "/some_topic2" },
-          ],
-          datatypes: {},
-          messageDefinitionsByTopic: {},
-          providesParsedMessages: true,
-        });
-      });
-
-      it("removes deleted topics from getMessages calls", async () => {
-        const p1 = provider1();
-        const p2 = providerWithTopicToDelete();
-        const combinedProvider = getCombinedDataProvider([
-          { provider: p1 },
-          { provider: p2, deleteTopics: ["/some_topic1"] },
-        ]);
-        await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
-        jest.spyOn(p1, "getMessages");
-        jest.spyOn(p2, "getMessages");
-        await combinedProvider.getMessages({ nsec: 0, sec: 101 }, { nsec: 0, sec: 103 }, [
-          "/some_topic1",
-          "/some_topic2",
-        ]);
-        expect(p1.getMessages.mock.calls[0][2]).toEqual(["/some_topic1"]);
-        expect(p2.getMessages.mock.calls[0][2]).toEqual(["/some_topic2"]);
       });
     });
 
@@ -261,24 +232,6 @@ describe("CombinedDataProvider", () => {
         { message: { value: 3 }, receiveTime: { nsec: 0, sec: 103 }, topic: "/some_topic1" },
         { message: { value: 3 }, receiveTime: { nsec: 0, sec: 103 }, topic: `${SECOND_SOURCE_PREFIX}/some_topic1` },
       ]);
-    });
-
-    it("allows customization of prefixes", async () => {
-      const combinedProvider = getCombinedDataProvider([
-        { provider: provider1(), prefix: "/table_1" },
-        { provider: provider2(), prefix: "/table_2" },
-      ]);
-      expect(await combinedProvider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
-        datatypes: {},
-        end: { nsec: 0, sec: 103 },
-        start: { nsec: 0, sec: 101 },
-        topics: [
-          { name: `/table_1/some_topic1`, originalTopic: "/some_topic1", datatype: "some_datatype" },
-          { name: `/table_2/some_topic2`, originalTopic: "/some_topic2", datatype: "some_datatype" },
-        ],
-        providesParsedMessages: true,
-        messageDefinitionsByTopic: {},
-      });
     });
 
     it("does not call getMessages with out of bound times", async () => {
@@ -386,6 +339,85 @@ describe("CombinedDataProvider", () => {
         calls = mockProgressCallback.mock.calls;
         expect(calls[calls.length - 1]).toEqual([{ fullyLoadedFractionRanges: [{ start: 0, end: 0.3 }] }]);
       });
+
+      it("merges blocks when start times line up", async () => {
+        const p1 = provider1();
+        const p2 = provider2();
+        const combinedProvider = getCombinedDataProvider([
+          { provider: p1, prefix: "/generic_topic" },
+          { provider: p2 },
+        ]);
+        const extensionPoint = mockExtensionPoint().extensionPoint;
+        const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
+        await combinedProvider.initialize(extensionPoint);
+
+        p1.extensionPoint.progressCallback({
+          fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }],
+          messageCache: {
+            startTime: { sec: 100, nsec: 0 },
+            blocks: [{ sizeInBytes: 99, messagesByTopic: { "/some_topic1": [] } }],
+          },
+        });
+        p2.extensionPoint.progressCallback({
+          fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }],
+          messageCache: {
+            startTime: { sec: 100, nsec: 0 },
+            blocks: [{ sizeInBytes: 9, messagesByTopic: { "/some_topic2": [] } }],
+          },
+        });
+        const calls = mockProgressCallback.mock.calls;
+        expect(calls[calls.length - 1][0].messageCache).toEqual({
+          startTime: { sec: 100, nsec: 0 },
+          blocks: [
+            {
+              sizeInBytes: 108,
+              messagesByTopic: {
+                "/generic_topic/some_topic1": [],
+                "/some_topic2": [],
+              },
+            },
+          ],
+        });
+      });
+
+      it("just returns the first provider's blocks when start times do not line up", async () => {
+        const p1 = provider1();
+        const p2 = provider2();
+        const combinedProvider = getCombinedDataProvider([
+          { provider: p1, prefix: "/generic_topic" },
+          { provider: p2 },
+        ]);
+        const extensionPoint = mockExtensionPoint().extensionPoint;
+        const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
+        await combinedProvider.initialize(extensionPoint);
+
+        p1.extensionPoint.progressCallback({
+          fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }],
+          messageCache: {
+            startTime: { sec: 100, nsec: 0 },
+            blocks: [{ sizeInBytes: 99, messagesByTopic: { "/some_topic1": [] } }],
+          },
+        });
+        p2.extensionPoint.progressCallback({
+          fullyLoadedFractionRanges: [{ start: 0, end: 0.5 }],
+          messageCache: {
+            startTime: { sec: 101, nsec: 0 },
+            blocks: [{ sizeInBytes: 9, messagesByTopic: { "/some_topic2": [] } }],
+          },
+        });
+        const calls = mockProgressCallback.mock.calls;
+        expect(calls[calls.length - 1][0].messageCache).toEqual({
+          startTime: { sec: 100, nsec: 0 },
+          blocks: [
+            {
+              sizeInBytes: 99,
+              messagesByTopic: {
+                "/generic_topic/some_topic1": [],
+              },
+            },
+          ],
+        });
+      });
     });
 
     describe("reportMetadataCallback", () => {
@@ -404,52 +436,84 @@ describe("CombinedDataProvider", () => {
 
 describe("mergedBlocks", () => {
   it("can 'merge' two empty blocks", () => {
-    expect(mergedBlocks([undefined], [undefined])).toEqual([undefined]);
+    expect(
+      mergedBlocks(
+        { startTime: { sec: 0, nsec: 0 }, blocks: [undefined] },
+        { startTime: { sec: 0, nsec: 0 }, blocks: [undefined] }
+      )
+    ).toEqual({ startTime: { sec: 0, nsec: 0 }, blocks: [undefined] });
+  });
+
+  it("incorrectly 'merges' non-overlapping blocks", () => {
+    expect(
+      mergedBlocks(
+        { startTime: { sec: 0, nsec: 0 }, blocks: [undefined] },
+        { startTime: fromMillis(100), blocks: [undefined] }
+      )
+    ).toEqual({ startTime: { sec: 0, nsec: 0 }, blocks: [undefined] });
   });
 
   it("can 'merge' an empty block with a real one", () => {
-    expect(mergedBlocks([undefined], [{ sizeInBytes: 0, messagesByTopic: {} }])).toEqual([
-      { sizeInBytes: 0, messagesByTopic: {} },
-    ]);
+    expect(
+      mergedBlocks(
+        { startTime: { sec: 0, nsec: 0 }, blocks: [undefined] },
+        { startTime: { sec: 0, nsec: 0 }, blocks: [{ sizeInBytes: 0, messagesByTopic: {} }] }
+      )
+    ).toEqual({
+      startTime: { sec: 0, nsec: 0 },
+      blocks: [{ sizeInBytes: 0, messagesByTopic: {} }],
+    });
   });
 
   it("can 'merge' a real block with an empty one", () => {
-    expect(mergedBlocks([{ sizeInBytes: 0, messagesByTopic: {} }], [undefined])).toEqual([
-      { sizeInBytes: 0, messagesByTopic: {} },
-    ]);
+    expect(
+      mergedBlocks(
+        { startTime: { sec: 0, nsec: 0 }, blocks: [{ sizeInBytes: 0, messagesByTopic: {} }] },
+        { startTime: { sec: 0, nsec: 0 }, blocks: [undefined] }
+      )
+    ).toEqual({ startTime: { sec: 0, nsec: 0 }, blocks: [{ sizeInBytes: 0, messagesByTopic: {} }] });
   });
 
   it("can merge two real blocks", () => {
     expect(
       mergedBlocks(
-        [{ sizeInBytes: 1, messagesByTopic: { "/foo": [] } }],
-        [{ sizeInBytes: 2, messagesByTopic: { "/bar": [] } }]
+        { startTime: { sec: 0, nsec: 0 }, blocks: [{ sizeInBytes: 1, messagesByTopic: { "/foo": [] } }] },
+        { startTime: { sec: 0, nsec: 0 }, blocks: [{ sizeInBytes: 2, messagesByTopic: { "/bar": [] } }] }
       )
-    ).toEqual([{ sizeInBytes: 3, messagesByTopic: { "/foo": [], "/bar": [] } }]);
+    ).toEqual({
+      startTime: { sec: 0, nsec: 0 },
+      blocks: [{ sizeInBytes: 3, messagesByTopic: { "/foo": [], "/bar": [] } }],
+    });
   });
 
   it("works when the first set of blocks is longer", () => {
     expect(
       mergedBlocks(
-        [undefined, { sizeInBytes: 1, messagesByTopic: { "/foo": [] } }],
-        [{ sizeInBytes: 2, messagesByTopic: { "/bar": [] } }]
+        { startTime: { sec: 0, nsec: 0 }, blocks: [undefined, { sizeInBytes: 1, messagesByTopic: { "/foo": [] } }] },
+        { startTime: { sec: 0, nsec: 0 }, blocks: [{ sizeInBytes: 2, messagesByTopic: { "/bar": [] } }] }
       )
-    ).toEqual([
-      { sizeInBytes: 2, messagesByTopic: { "/bar": [] } },
-      { sizeInBytes: 1, messagesByTopic: { "/foo": [] } },
-    ]);
+    ).toEqual({
+      startTime: { sec: 0, nsec: 0 },
+      blocks: [
+        { sizeInBytes: 2, messagesByTopic: { "/bar": [] } },
+        { sizeInBytes: 1, messagesByTopic: { "/foo": [] } },
+      ],
+    });
   });
 
   it("works when the second set of blocks is longer", () => {
     expect(
       mergedBlocks(
-        [{ sizeInBytes: 1, messagesByTopic: { "/foo": [] } }],
-        [undefined, { sizeInBytes: 2, messagesByTopic: { "/bar": [] } }]
+        { startTime: { sec: 0, nsec: 0 }, blocks: [{ sizeInBytes: 1, messagesByTopic: { "/foo": [] } }] },
+        { startTime: { sec: 0, nsec: 0 }, blocks: [undefined, { sizeInBytes: 2, messagesByTopic: { "/bar": [] } }] }
       )
-    ).toEqual([
-      { sizeInBytes: 1, messagesByTopic: { "/foo": [] } },
-      { sizeInBytes: 2, messagesByTopic: { "/bar": [] } },
-    ]);
+    ).toEqual({
+      startTime: { sec: 0, nsec: 0 },
+      blocks: [
+        { sizeInBytes: 1, messagesByTopic: { "/foo": [] } },
+        { sizeInBytes: 2, messagesByTopic: { "/bar": [] } },
+      ],
+    });
   });
 
   it("memoizes merges", () => {
@@ -463,17 +527,34 @@ describe("mergedBlocks", () => {
     // $FlowFixMe: Flow wants a "value", and we can't specify both "value" and "get".
     Object.defineProperty(rhs, "messagesByTopic", { get: rhsMessagesByTopic });
 
-    const mergedValue = mergedBlocks([lhs], [rhs]);
-    expect(mergedValue).toEqual([{ sizeInBytes: 3, messagesByTopic: { foo: [], bar: [] } }]);
+    const mergedValue = mergedBlocks(
+      { startTime: { sec: 0, nsec: 0 }, blocks: [lhs] },
+      { startTime: { sec: 0, nsec: 0 }, blocks: [rhs] }
+    );
+    if (mergedValue == null) {
+      throw new Error("satisfy flow");
+    }
+    const combinedBlocks = mergedValue.blocks;
+    expect(mergedValue).toEqual({
+      startTime: { sec: 0, nsec: 0 },
+      blocks: [{ sizeInBytes: 3, messagesByTopic: { foo: [], bar: [] } }],
+    });
     expect(lhsMessagesByTopic.mock.calls.length).toBe(1);
     expect(rhsMessagesByTopic.mock.calls.length).toBe(1);
 
     // Value unchanged.
-    expect(mergedBlocks([lhs], [rhs])).toEqual(mergedValue);
-    // Contents keep identity. $FlowFixMe flow dislikes indexing into "maybe undefined/null".
-    expect(mergedBlocks([lhs], [rhs])[0]).toBe(mergedValue[0]);
+    const newMergedValue = mergedBlocks(
+      { startTime: { sec: 0, nsec: 0 }, blocks: [lhs] },
+      { startTime: { sec: 0, nsec: 0 }, blocks: [rhs] }
+    );
+    if (newMergedValue == null) {
+      throw new Error("satisfy flow");
+    }
+    const newCombinedBlocks = newMergedValue.blocks;
+    expect(newMergedValue).toEqual(mergedValue);
+    expect(newCombinedBlocks[0]).toBe(combinedBlocks[0]);
     // Whole array does not keep identity. Not super important.
-    expect(mergedBlocks([lhs], [rhs])).not.toBe(mergedValue);
+    expect(newCombinedBlocks).not.toBe(combinedBlocks);
     // Have not looked at the data aagain, even though we've called mergedBlocks three more times.
     expect(lhsMessagesByTopic.mock.calls.length).toBe(1);
     expect(rhsMessagesByTopic.mock.calls.length).toBe(1);

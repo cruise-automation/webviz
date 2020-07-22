@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import Bzip2 from "compressjs/lib/Bzip2";
+import { debounce, isEqual } from "lodash";
 import Bag, { open, Time, BagReader, TimeUtil } from "rosbag";
 import decompress from "wasm-lz4";
 
@@ -17,13 +18,15 @@ import type {
   Connection,
   ExtensionPoint,
   InitializationResult,
-  DataProviderMessage,
+  PerformanceMetadata,
 } from "webviz-core/src/dataProviders/types";
+import type { Message } from "webviz-core/src/players/types";
 import { bagConnectionsToDatatypes, bagConnectionsToTopics } from "webviz-core/src/util/bagConnectionsHelper";
 import { getBagChunksOverlapCount } from "webviz-core/src/util/bags";
 import CachedFilelike from "webviz-core/src/util/CachedFilelike";
 import Logger from "webviz-core/src/util/Logger";
 import sendNotification from "webviz-core/src/util/sendNotification";
+import { fromMillis, subtractTimes } from "webviz-core/src/util/time";
 
 type BagPath = { type: "file", file: File | string } | { type: "remoteBagUrl", url: string };
 
@@ -42,12 +45,44 @@ function reportMalformedError(operation: string, error: Error): void {
   );
 }
 
+type TimedPerformanceMetadata = {|
+  startTime: Time,
+  endTime: Time,
+  data: PerformanceMetadata,
+|};
+export const statsAreAdjacent = (a: TimedPerformanceMetadata, b: TimedPerformanceMetadata): boolean => {
+  return (
+    isEqual(a.data.topics, b.data.topics) &&
+    a.data.inputSource === b.data.inputSource &&
+    a.data.inputType === b.data.inputType &&
+    isEqual(TimeUtil.add(a.endTime, { sec: 0, nsec: 1 }), b.startTime)
+  );
+};
+export const mergeStats = (a: TimedPerformanceMetadata, b: TimedPerformanceMetadata): TimedPerformanceMetadata => ({
+  startTime: a.startTime,
+  endTime: b.endTime,
+  data: {
+    // Don't spread here, we need to update this function if we add fields.
+    inputSource: a.data.inputSource,
+    inputType: a.data.inputType,
+    topics: a.data.topics,
+    type: a.data.type,
+    totalSizeOfMessages: a.data.totalSizeOfMessages + b.data.totalSizeOfMessages,
+    numberOfMessages: a.data.numberOfMessages + b.data.numberOfMessages,
+    receivedRangeDuration: TimeUtil.add(a.data.receivedRangeDuration, b.data.receivedRangeDuration),
+    requestedRangeDuration: TimeUtil.add(a.data.requestedRangeDuration, b.data.requestedRangeDuration),
+    totalTransferTime: TimeUtil.add(a.data.totalTransferTime, b.data.totalTransferTime),
+  },
+});
+
 // Read from a ROS Bag. `bagPath` can either represent a local file, or a remote bag. See
 // `BrowserHttpReader` for how to set up a remote server to be able to directly stream from it.
 // Returns raw messages that still need to be parsed by `ParseMessagesDataProvider`.
 export default class BagDataProvider implements DataProvider {
   _options: Options;
   _bag: Bag;
+  _lastPerformanceStatsToLog: ?TimedPerformanceMetadata;
+  _extensionPoint: ?ExtensionPoint;
 
   constructor(options: Options, children: DataProviderDescriptor[]) {
     if (children.length > 0) {
@@ -57,6 +92,7 @@ export default class BagDataProvider implements DataProvider {
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
+    this._extensionPoint = extensionPoint;
     const { bagPath, cacheSizeInBytes } = this._options;
     await decompress.isLoaded;
 
@@ -147,8 +183,37 @@ export default class BagDataProvider implements DataProvider {
     };
   }
 
-  async getMessages(start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> {
-    const messages: DataProviderMessage[] = [];
+  _logStats() {
+    if (this._extensionPoint == null || this._lastPerformanceStatsToLog == null) {
+      return;
+    }
+    this._extensionPoint.reportMetadataCallback(this._lastPerformanceStatsToLog.data);
+    this._lastPerformanceStatsToLog = undefined;
+  }
+
+  // Logs some stats if it has been more than a second since the last call.
+  _debouncedLogStats = debounce(this._logStats, 1000, { leading: false, trailing: true });
+
+  _queueStats(stats: TimedPerformanceMetadata) {
+    if (this._lastPerformanceStatsToLog != null && statsAreAdjacent(this._lastPerformanceStatsToLog, stats)) {
+      // The common case: The next bit of data will be next to the last one. For remote bags we'll
+      // reuse the connection.
+      this._lastPerformanceStatsToLog = mergeStats(this._lastPerformanceStatsToLog, stats);
+    } else {
+      // For the initial load, or after a seek, a fresh connectionwill be made for remote bags.
+      // Eagerly log any stats we know are "done".
+      this._logStats();
+      this._lastPerformanceStatsToLog = stats;
+    }
+    // Kick the can down the road whether it's new or existing.
+    this._debouncedLogStats();
+  }
+
+  async getMessages(start: Time, end: Time, topics: string[]): Promise<Message[]> {
+    const connectionStart = fromMillis(new Date().getTime());
+    let totalSizeOfMessages = 0;
+    let numberOfMessages = 0;
+    const messages: Message[] = [];
     const onMessage = (msg) => {
       const { data, topic, timestamp } = msg;
       messages.push({
@@ -156,6 +221,8 @@ export default class BagDataProvider implements DataProvider {
         receiveTime: timestamp,
         message: data.buffer.slice(data.byteOffset, data.byteOffset + data.length),
       });
+      totalSizeOfMessages += data.length;
+      numberOfMessages += 1;
     };
     const options = {
       topics,
@@ -188,6 +255,24 @@ export default class BagDataProvider implements DataProvider {
       throw error;
     }
     messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime));
+    // Range end is inclusive.
+    const duration = TimeUtil.add(subtractTimes(end, start), { sec: 0, nsec: 1 });
+    this._queueStats({
+      startTime: start,
+      endTime: end,
+      data: {
+        type: "performance",
+        inputSource: "other",
+        inputType: this._options.bagPath.type === "file" ? "bag" : "remoteBag",
+        totalSizeOfMessages,
+        numberOfMessages,
+        // Note: Requested durations are wrong by a nanosecond -- ranges are inclusive.
+        requestedRangeDuration: duration,
+        receivedRangeDuration: duration,
+        topics,
+        totalTransferTime: subtractTimes(fromMillis(new Date().getTime()), connectionStart),
+      },
+    });
     return messages;
   }
 

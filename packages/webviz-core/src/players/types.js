@@ -8,10 +8,15 @@
 
 import type { Time } from "rosbag";
 
-import type { MemoryCacheBlock } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
+import type { BlockCache } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
+import type { PerformanceMetadata } from "webviz-core/src/dataProviders/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import type { Range } from "webviz-core/src/util/ranges";
 import type { TimestampMethod } from "webviz-core/src/util/time";
+
+// TODO move this to rosbag.js
+export type RosMsgDefinition = any[];
+export type MessageDefinitionsByTopic = { [topic: string]: string | RosMsgDefinition };
 
 // A `Player` is a class that manages playback state. It manages subscriptions,
 // current time, which topics and datatypes are available, and so on.
@@ -86,6 +91,10 @@ export type PlayerState = {|
   activeData: ?PlayerStateActiveData,
 |};
 
+export type PlayerWarnings = $ReadOnly<{|
+  topicsWithoutHeaderStamps?: $ReadOnlyArray<string>,
+|}>;
+
 export type PlayerStateActiveData = {|
   // An array of (ROS-like) messages that should be rendered. Should be ordered by `receiveTime`,
   // and should be immediately following the previous array of messages that was emitted as part of
@@ -142,7 +151,10 @@ export type PlayerStateActiveData = {|
 
   // Used for late-parsing of binary messages. Required to cover any topic for which binary data is
   // given to panels. (May be empty for players that only provide messages parsed into objects.)
-  messageDefinitionsByTopic: { [topic: string]: string },
+  messageDefinitionsByTopic: MessageDefinitionsByTopic,
+
+  // Used for communicating potential issues that surface during playback.
+  playerWarnings: PlayerWarnings,
 |};
 
 // Represents a ROS topic, though the actual data does not need to come from a ROS system.
@@ -154,7 +166,7 @@ export type Topic = {|
   // Name of the datatype (see `type PlayerStateActiveData` for details).
   datatype: string,
   // The original topic name, if the topic name was at some point renamed, e.g. in
-  // CombinedDataProvider.
+  // RenameDataProvider.
   originalTopic?: string,
   // The number of messages present on the topic. Valid only for sources with a fixed number of
   // messages, such as bags.
@@ -162,11 +174,8 @@ export type Topic = {|
 |};
 
 // A ROS-like message.
-// TODO(JP): The `datatype` bit is redundant with the `topics` array in `PlayerStateActiveData`.
-// We should remove both and unify type with `DataProviderMessage`.
 export type TypedMessage<T> = $ReadOnly<{|
   topic: string,
-  datatype: string,
   receiveTime: Time,
 
   // The actual message format. This is currently not very tightly defined, but it's typically
@@ -176,8 +185,15 @@ export type TypedMessage<T> = $ReadOnly<{|
 |}>;
 export type Message = TypedMessage<any>;
 
+type RosSingularField = number | string | boolean | RosObject; // No time -- consider it a message.
+export type RosValue = RosSingularField | RosSingularField[] | Uint8Array | Int8Array | void;
+export type RosObject = { [property: string]: RosValue };
+
+export type ReflectiveMessage = TypedMessage<RosObject>;
+export const cast = <T>(message: $ReadOnly<RosObject>): T => ((message: any): T);
+
 // Contains different kinds of progress indications, mostly used in the playback bar.
-export type Progress = {
+export type Progress = $ReadOnly<{|
   // Used to show progress bar. Ranges are fractions, e.g. `{ start: 0, end: 0.5 }`.
   fullyLoadedFractionRanges?: Range[],
 
@@ -188,8 +204,8 @@ export type Progress = {
 
   // A raw view into the cached binary data stored by the MemoryCacheDataProvider. Only present when
   // using the RandomAccessPlayer.
-  blocks?: $ReadOnlyArray<?MemoryCacheBlock>,
-};
+  messageCache?: BlockCache,
+|}>;
 
 // TODO(JP): Deprecated; just inline this type wherever needed.
 export type Frame = {
@@ -212,6 +228,10 @@ export type SubscribePayload = {|
 
   // Optionally, where the request came from. Used in the "Internals" panel to improve debugging.
   requester?: {| type: "panel" | "node" | "other", name: string |},
+
+  // If all subscriptions for this topic have this flag set, and the topic is available in
+  // PlayerState#Progress#blocks, the message won't be included in PlayerStateActiveData#messages.
+  onlyLoadInBlocks?: boolean,
 |};
 
 // Represents a single topic publisher, for use in `setPublishers`.
@@ -253,5 +273,6 @@ export interface PlayerMetricsCollectorInterface {
   close(): void;
   recordBytesReceived(bytes: number): void;
   recordPlaybackTime(time: Time): void;
+  recordDataProviderPerformance(metadata: PerformanceMetadata): void;
   recordTimeToFirstMsgs(): void;
 }

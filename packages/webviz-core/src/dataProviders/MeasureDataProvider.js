@@ -15,9 +15,10 @@ import type {
   DataProviderMetadata,
   ExtensionPoint,
   GetDataProvider,
+  GetMessagesExtra,
   InitializationResult,
-  DataProviderMessage,
 } from "webviz-core/src/dataProviders/types";
+import type { Message } from "webviz-core/src/players/types";
 import Logger from "webviz-core/src/util/Logger";
 
 const log = new Logger(__filename);
@@ -58,10 +59,10 @@ export default class MeasureDataProvider implements DataProvider {
     return this._provider.initialize(extensionPoint);
   }
 
-  async getMessages(start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> {
+  async getMessages(start: Time, end: Time, topics: string[], extra?: ?GetMessagesExtra): Promise<Message[]> {
     const startMs = Date.now();
     const argsString = `${start.sec}.${start.nsec}, ${end.sec}.${end.nsec}`;
-    const result = await this._provider.getMessages(start, end, topics);
+    const result = await this._provider.getMessages(start, end, topics, extra);
     log.info(
       `MeasureDataProvider(${this._name}): ${Date.now() - startMs}ms for ${
         result.length

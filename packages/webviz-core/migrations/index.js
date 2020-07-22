@@ -30,6 +30,13 @@ const migrationsByVersion = {
     require("webviz-core/migrations/frozenMigrations/2020.06.03.13:56:52.migrate3DPanelTopicSettingsToSettingsByKey")
       .default,
   ],
+  "006": [],
+  "007": [],
+  "008": [require("webviz-core/migrations/frozenMigrations/2020.06.26.17:40:24.migrate3DPanelColorSettings").default],
+  "009": [
+    require("webviz-core/migrations/frozenMigrations/2020.07.07.11:17:28.prefixCollapsedSectionsWithDiagnosticName.js")
+      .default,
+  ],
 };
 
 export default function migratePanels(originalPanelsState: any): any {

@@ -6,12 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import ParseMessagesDataProvider, { CACHE_SIZE_BYTES } from "./ParseMessagesDataProvider";
+import { setExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import createGetDataProvider from "webviz-core/src/dataProviders/createGetDataProvider";
 import MemoryCacheDataProvider from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
-import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
+import ParseMessagesDataProvider from "webviz-core/src/dataProviders/ParseMessagesDataProvider";
 
 function getProvider() {
   return new ParseMessagesDataProvider(
@@ -39,6 +39,14 @@ const dummyExtensionPoint = {
 };
 
 describe("ParseMessagesDataProvider", () => {
+  beforeEach(() => {
+    setExperimentalFeature("preloading", "alwaysOn");
+  });
+
+  afterEach(() => {
+    setExperimentalFeature("preloading", "default");
+  });
+
   it("initializes", async () => {
     const provider = getProvider();
     const result = await provider.initialize(dummyExtensionPoint);
@@ -111,42 +119,14 @@ describe("ParseMessagesDataProvider", () => {
     });
   });
 
-  describe("caching", () => {
-    it("does some basic caching of messages", async () => {
-      const provider = getProvider();
-      await provider.initialize(dummyExtensionPoint);
-      const start = { sec: 1396293887, nsec: 844783943 };
-      const end = { sec: 1396293888, nsec: 60000000 };
-      const messages1 = await provider.getMessages(start, end, ["/tf"]);
-      const messages2 = await provider.getMessages(start, end, ["/tf"]);
-      expect(messages1[0]).toBe(messages2[0]);
-      expect(messages1[1]).toBe(messages2[1]);
-    });
-
-    it("evicts parsed messages based on original message size", async () => {
-      const messages = [
-        { topic: "/some_topic", receiveTime: { sec: 100, nsec: 0 }, message: new ArrayBuffer(10) },
-        { topic: "/some_topic", receiveTime: { sec: 105, nsec: 0 }, message: new ArrayBuffer(CACHE_SIZE_BYTES + 1) },
-      ];
-      const memoryDataProvider = new MemoryDataProvider({
-        messages,
-        topics: [{ name: "/some_topic", datatype: "some_datatype" }],
-        datatypes: { some_datatype: { fields: [] } },
-        messageDefinitionsByTopic: { "/some_topic": "dummy" },
-        providesParsedMessages: false,
-      });
-      const provider = new ParseMessagesDataProvider(
-        {},
-        [{ name: "MemoryDataProvider", args: {}, children: [] }],
-        () => memoryDataProvider
-      );
-      await provider.initialize(dummyExtensionPoint);
-      const messages1 = await provider.getMessages(messages[0].receiveTime, messages[0].receiveTime, ["/some_topic"]);
-      const messages2 = await provider.getMessages(messages[0].receiveTime, messages[0].receiveTime, ["/some_topic"]);
-      await provider.getMessages(messages[1].receiveTime, messages[1].receiveTime, ["/some_topic"]);
-      const messages3 = await provider.getMessages(messages[0].receiveTime, messages[0].receiveTime, ["/some_topic"]);
-      expect(messages1[0]).toBe(messages2[0]);
-      expect(messages1[0]).not.toBe(messages3[0]);
-    });
+  it("skips messages in topicsToOnlyLoadInBlocks", async () => {
+    const provider = getProvider();
+    await provider.initialize(dummyExtensionPoint);
+    const start = { sec: 1396293887, nsec: 844783943 };
+    const end = { sec: 1396293888, nsec: 60000000 };
+    const messages1 = await provider.getMessages(start, end, ["/tf"], { topicsToOnlyLoadInBlocks: new Set([]) });
+    expect(messages1).toHaveLength(2);
+    const messages2 = await provider.getMessages(start, end, ["/tf"], { topicsToOnlyLoadInBlocks: new Set(["/tf"]) });
+    expect(messages2).toHaveLength(0);
   });
 });

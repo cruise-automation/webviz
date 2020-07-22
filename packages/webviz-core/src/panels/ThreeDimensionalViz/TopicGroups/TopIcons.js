@@ -38,16 +38,9 @@ type Props = {|
   renderTopicGroups: boolean,
   saveConfig: Save3DConfig,
   setShowTopicGroups: (boolean | ((boolean) => boolean)) => void,
-  showTopicGroups: boolean,
 |};
 
-export default function TopIcons({
-  pinTopics,
-  renderTopicGroups,
-  saveConfig,
-  setShowTopicGroups,
-  showTopicGroups,
-}: Props) {
+export default function TopIcons({ pinTopics, renderTopicGroups, saveConfig, setShowTopicGroups }: Props) {
   const onClick = useCallback(() => setShowTopicGroups((shown) => !shown), [setShowTopicGroups]);
   return (
     <STopIcons>

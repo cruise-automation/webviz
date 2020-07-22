@@ -5,6 +5,8 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import { type Color } from "regl-worldview";
+
 import { type Save3DConfig } from "../index";
 import { type TopicDisplayMode as DisplayMode } from "./TopicViewModeSelector";
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/index";
@@ -26,6 +28,8 @@ export type TopicTreeConfig = {|
 |};
 
 export type NamespacesByTopic = { [topicName: string]: string[] };
+type EditingNamespace = {| namespaceKey: string, namespaceColor: ?string |};
+export type SetEditingNamespace = (?EditingNamespace) => void;
 
 export type TreeGroupNode = {|
   type: "group",
@@ -94,7 +98,8 @@ export type ToggleNamespaceChecked = ({| topicName: string, namespace: string, c
 export type GetIsNamespaceCheckedByDefault = (topicName: string, columnIndex: number) => boolean;
 export type DerivedCustomSettings = {| overrideColorByColumn?: (?string)[], isDefaultSettings: boolean |};
 export type DerivedCustomSettingsByKey = { [key: string]: DerivedCustomSettings };
-
+export type OnNamespaceOverrideColorChange = (newRbgaColor: ?Color, prefixedNamespaceKey: string) => void;
+export type VisibleTopicsCountByKey = { [nodeKey: string]: number };
 export type UseTreeOutput = {|
   // Instead of precomputing visible states for all nodes, pass the function down to the nodes
   // so that only rendered nodes' visibility is computed since we support virtualization in the tree.
@@ -104,6 +109,7 @@ export type UseTreeOutput = {|
   hasFeatureColumn: boolean,
   // For testing.
   nodesByKey: { [key: string]: TreeNode },
+  onNamespaceOverrideColorChange: OnNamespaceOverrideColorChange,
   toggleCheckAllAncestors: ToggleNodeByColumn,
   toggleCheckAllDescendants: ToggleNodeByColumn,
   toggleNamespaceChecked: ToggleNamespaceChecked,
@@ -116,6 +122,7 @@ export type UseTreeOutput = {|
   sceneErrorsByKey: SceneErrorsByKey,
   allKeys: string[],
   shouldExpandAllKeys: boolean,
+  visibleTopicsCountByKey: VisibleTopicsCountByKey,
 |};
 
 export type EditingTopic = {|

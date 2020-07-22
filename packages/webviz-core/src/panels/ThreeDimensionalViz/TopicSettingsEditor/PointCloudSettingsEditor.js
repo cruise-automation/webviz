@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { useCallback } from "react";
+import { type Color } from "regl-worldview";
 import styled from "styled-components";
 
 import { CommonPointSettings, CommonDecaySettings, type TopicSettingsEditorProps } from ".";
@@ -21,12 +22,12 @@ import type { PointCloud2 } from "webviz-core/src/types/Messages";
 
 export type ColorMode =
   | {| mode: "rgb" |}
-  | {| mode: "flat", flatColor: string |}
+  | {| mode: "flat", flatColor: Color |}
   | {|
       mode: "gradient",
       colorField: string,
-      minColor: string,
-      maxColor: string,
+      minColor: Color,
+      maxColor: Color,
       minValue?: number,
       maxValue?: number,
     |}
@@ -37,15 +38,14 @@ export type ColorMode =
       maxValue?: number,
     |};
 
-export const DEFAULT_FLAT_COLOR = "255,255,255,1";
-export const DEFAULT_MIN_COLOR = "0,0,255,1";
-export const DEFAULT_MAX_COLOR = "255,0,0,1";
+export const DEFAULT_FLAT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
+export const DEFAULT_MIN_COLOR = { r: 0, g: 0, b: 1, a: 1 };
+export const DEFAULT_MAX_COLOR = { r: 1, g: 0, b: 0, a: 1 };
 
 export type PointCloudSettings = {|
   pointSize?: ?number,
   pointShape?: ?string,
   decayTime?: ?number,
-
   colorMode: ?ColorMode,
 |};
 
@@ -53,6 +53,12 @@ const SValueRangeInput = styled(SInput).attrs({ type: "number", placeholder: "au
   width: 0px;
   margin-left: 8px;
   flex: 1 1 auto;
+`;
+
+const SegmentedControlWrapper = styled.div`
+  min-width: 152px;
+  display: flex;
+  align-items: center;
 `;
 
 const RainbowText = React.memo(function RainbowText({ children: text }: { children: string }) {
@@ -96,26 +102,27 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
 
       <SLabel>Color by</SLabel>
       <Flex row style={{ justifyContent: "space-between", marginBottom: "8px" }}>
-        <SegmentedControl
-          selectedId={colorMode.mode === "flat" ? "flat" : "data"}
-          onChange={(id) =>
-            onColorModeChange((newColorMode) =>
-              id === "flat"
-                ? {
+        <SegmentedControlWrapper>
+          <SegmentedControl
+            selectedId={colorMode.mode === "flat" ? "flat" : "data"}
+            onChange={(id) =>
+              onColorModeChange((newColorMode) => {
+                if (id === "flat") {
+                  return {
                     mode: "flat",
                     flatColor:
                       newColorMode && newColorMode.mode === "gradient" ? newColorMode.minColor : DEFAULT_FLAT_COLOR,
-                  }
-                : hasRGB
-                ? { mode: "rgb" }
-                : defaultColorField
-                ? { mode: "rainbow", colorField: defaultColorField }
-                : null
-            )
-          }
-          options={[{ id: "flat", label: "Flat" }, { id: "data", label: "Point data" }]}
-        />
-
+                  };
+                }
+                if (hasRGB) {
+                  return { mode: "rgb" };
+                }
+                return defaultColorField ? { mode: "rainbow", colorField: defaultColorField } : null;
+              })
+            }
+            options={[{ id: "flat", label: "Flat" }, { id: "data", label: "Point data" }]}
+          />
+        </SegmentedControlWrapper>
         <Flex row style={{ margin: "2px 0 2px 12px", alignItems: "center" }}>
           {colorMode.mode === "flat" ? (
             // For flat mode, pick a single color
@@ -217,7 +224,12 @@ export default function PointCloudSettingsEditor(props: TopicSettingsEditorProps
             minColor={colorMode.minColor || DEFAULT_MIN_COLOR}
             maxColor={colorMode.maxColor || DEFAULT_MAX_COLOR}
             onChange={({ minColor, maxColor }) =>
-              onColorModeChange((newColorMode) => ({ mode: "gradient", ...newColorMode, minColor, maxColor }))
+              onColorModeChange((newColorMode) => ({
+                mode: "gradient",
+                ...newColorMode,
+                minColor,
+                maxColor,
+              }))
             }
           />
         </div>

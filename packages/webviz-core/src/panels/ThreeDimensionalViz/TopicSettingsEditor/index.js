@@ -21,7 +21,12 @@ import Flex from "webviz-core/src/components/Flex";
 import { Select, Option } from "webviz-core/src/components/Select";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { Topic } from "webviz-core/src/players/types";
-import { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE, LASER_SCAN_DATATYPE } from "webviz-core/src/util/globalConstants";
+import {
+  POINT_CLOUD_DATATYPE,
+  POSE_STAMPED_DATATYPE,
+  LASER_SCAN_DATATYPE,
+  WEBVIZ_MARKER_DATATYPE,
+} from "webviz-core/src/util/globalConstants";
 
 export const LINED_CONVEX_HULL_RENDERING_SETTING = "LinedConvexHull";
 
@@ -118,6 +123,7 @@ export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType
     [POINT_CLOUD_DATATYPE]: PointCloudSettingsEditor,
     [POSE_STAMPED_DATATYPE]: PoseSettingsEditor,
     [LASER_SCAN_DATATYPE]: LaserScanSettingsEditor,
+    [WEBVIZ_MARKER_DATATYPE]: MarkerSettingsEditor,
     "visualization_msgs/Marker": MarkerSettingsEditor,
     "visualization_msgs/MarkerArray": MarkerSettingsEditor,
     ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topicSettingsEditors,

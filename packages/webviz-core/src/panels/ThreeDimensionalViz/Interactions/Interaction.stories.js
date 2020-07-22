@@ -64,6 +64,7 @@ const markerObject = {
     },
   },
 };
+
 const selectedObject = { object: markerObject, instanceIndex: null };
 
 const sharedProps = {
@@ -250,6 +251,24 @@ storiesOf("<Interaction>", module)
           <Interactions
             {...sharedProps}
             selectedObject={{ ...selectedObject, interactionData: { topic: "/foo/bar" } }}
+          />
+        </PanelSetupWithData>
+      </SWrapper>
+    );
+  })
+  .add("instanced interactionData", () => {
+    return (
+      <SWrapper>
+        <PanelSetupWithData title="With instanced interactionData">
+          <Interactions
+            interactionData={null}
+            isDrawing={false}
+            onClearSelectedObject={() => {}}
+            defaultSelectedTab={OBJECT_TAB_TYPE}
+            selectedObject={{
+              object: { metadataByIndex: [{ ...markerObject, interactionData: { topic: "/foo/bar" } }] },
+              instanceIndex: 0,
+            }}
           />
         </PanelSetupWithData>
       </SWrapper>

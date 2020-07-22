@@ -31,7 +31,7 @@ export const jumpSeek = (
     return;
   }
 
-  const timeMs = toMillis(player.activeData.currentTime, "round-up");
+  const timeMs = toMillis(player.activeData.currentTime);
   const deltaMs = modifierKeys?.altKey
     ? ARROW_SEEK_BIG_MS
     : modifierKeys?.shiftKey

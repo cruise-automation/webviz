@@ -36,6 +36,8 @@ export type PerformanceStats = {|
   // Higher is better for this metric.
   benchmarkPlaybackScore: number,
   playbackTimeMs: number,
+  // Players may not mark their preload times.
+  preloadTimeMs: ?number,
   averageRenderMs: number,
   averageFrameTimeMs: number,
   idb: IdbInfo,
@@ -74,6 +76,8 @@ class PerformanceMeasuringClient {
   startedMeasuringPerformance = false;
   frameRenderStart: ?number;
   frameRenderTimes: number[] = [];
+  preloadStart: ?number;
+  preloadTimeMs: ?number;
   totalFrameMs: ?number;
   totalFrameTimes: number[] = [];
 
@@ -101,6 +105,26 @@ class PerformanceMeasuringClient {
     }
     this.frameRenderTimes.push(round(performance.now() - frameRenderStart));
     this.frameRenderStart = null;
+  }
+
+  markPreloadStart() {
+    this.preloadStart = performance.now();
+    if (this.enablePerformanceMarks) {
+      performance.mark("PRELOAD_START");
+    }
+  }
+
+  markPreloadEnd() {
+    const { preloadStart } = this;
+    if (preloadStart == null) {
+      throw new Error("Called markPreloadEnd without calling markPreloadStart");
+    }
+    if (this.enablePerformanceMarks) {
+      performance.mark("PRELOAD_END");
+      performance.measure("PRELOAD", "PRELOAD_START", "PRELOAD_END");
+    }
+    this.preloadTimeMs = round(performance.now() - preloadStart);
+    this.preloadStart = null;
   }
 
   markTotalFrameStart() {
@@ -149,6 +173,7 @@ class PerformanceMeasuringClient {
   async finish() {
     const startTime = this.startTime;
     const bagLengthMs = this.bagLengthMs;
+    const preloadTimeMs = this.preloadTimeMs;
 
     if (startTime == null || bagLengthMs == null) {
       throw new Error("Cannot call finish() without calling start()");
@@ -176,6 +201,7 @@ class PerformanceMeasuringClient {
       averageRenderMs,
       averageFrameTimeMs,
       idb,
+      preloadTimeMs,
     };
 
     const event = new CustomEvent("playbackFinished", { detail });

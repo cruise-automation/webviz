@@ -9,10 +9,14 @@ import { max, min, flatten } from "lodash";
 import React, { memo, useEffect, useCallback, useState, useRef } from "react";
 import DocumentEvents from "react-document-events";
 import ReactDOM from "react-dom";
+import { useDispatch } from "react-redux";
 import type { Time } from "rosbag";
 import styled from "styled-components";
+import uuid from "uuid";
 
+import HoverBar from "./HoverBar";
 import TimeBasedChartTooltip from "./TimeBasedChartTooltip";
+import { clearHoverValue, setHoverValue } from "webviz-core/src/actions/hoverValue";
 import Button from "webviz-core/src/components/Button";
 import createSyncingComponent from "webviz-core/src/components/createSyncingComponent";
 import KeyListener from "webviz-core/src/components/KeyListener";
@@ -20,9 +24,13 @@ import type { MessageHistoryItem } from "webviz-core/src/components/MessageHisto
 import type { MessagePathDataItem } from "webviz-core/src/components/MessagePathSyntax/useCachedGetMessagePathDataItems";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import ChartComponent, { type HoveredElement, type ScaleOptions } from "webviz-core/src/components/ReactChartjs";
+import { getChartValue, inBounds, type ScaleBounds } from "webviz-core/src/components/ReactChartjs/zoomAndPanHelpers";
 import TimeBasedChartLegend from "webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend";
 import Tooltip from "webviz-core/src/components/Tooltip";
+import { cast } from "webviz-core/src/players/types";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
+import type { StampedMessage } from "webviz-core/src/types/Messages";
+import { useDeepChangeDetector } from "webviz-core/src/util/hooks";
 
 type Bounds = {| minX: ?number, maxX: ?number |};
 const SyncTimeAxis = createSyncingComponent<Bounds, Bounds>("SyncTimeAxis", (dataItems: Bounds[]) => ({
@@ -36,11 +44,13 @@ export type TooltipItem = {|
   headerStamp: ?Time,
 |};
 
-export const getTooltipItemForMessageHistoryItem = (item: MessageHistoryItem): TooltipItem => ({
-  queriedData: item.queriedData,
-  receiveTime: item.message.receiveTime,
-  headerStamp: item.message.message?.header?.stamp,
-});
+export const getTooltipItemForMessageHistoryItem = (item: MessageHistoryItem): TooltipItem => {
+  let headerStamp;
+  if (item.message.message?.header != null) {
+    headerStamp = cast<StampedMessage>(item.message.message).header.stamp;
+  }
+  return { queriedData: item.queriedData, receiveTime: item.message.receiveTime, headerStamp };
+};
 
 export type TimeBasedChartTooltipData = {|
   x: number,
@@ -70,19 +80,6 @@ const SResetZoom = styled.div`
   right: 10px;
 `;
 
-const SBar = styled.div`
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  margin-left: -1px;
-  background: yellow;
-  pointer-events: none;
-  opacity: 0.7;
-  display: none;
-  // "display" and "left" are set by JS, but outside of React.
-`;
-
 const SLegend = styled.div`
   display: flex;
   width: 10%;
@@ -94,18 +91,51 @@ const SLegend = styled.div`
   padding: 30px 0px 10px 0px;
 `;
 
+const SBar = styled.div.attrs(({ xAxisIsPlaybackTime }) => ({
+  style: {
+    background: xAxisIsPlaybackTime ? "#F7BE00 padding-box" : "#248EFF padding-box",
+    // Non-timestamp plot hover bars have no triangles (indicating click-to-seek) at top/bottom.
+    borderWidth: xAxisIsPlaybackTime ? "4px" : "0px 4px",
+  },
+}))`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  margin-left: -4.5px;
+  display: block;
+  border-style: solid;
+  border-color: #f7be00 transparent;
+`;
+
+// Sometimes a click gets fired at the end of a pan. Probably subtle touchpad stuff. Ignore "clicks"
+// that happen too soon after a pan.
+const PAN_CLICK_SUPPRESS_THRESHOLD_MS = 100;
+// Drag-pans and playback following sometimes fight. We suppress automatic following moves during
+// drag pans to avoid it.
+const FOLLOW_PLAYBACK_PAN_THRESHOLD_MS = 100;
+
 const MemoizedTooltips = memo<{}>(function Tooltips() {
   return (
     <React.Fragment>
-      <Tooltip contents={<div>Hold v to only scroll vertically</div>} delay={0}>
+      <Tooltip contents={<div>Hold v to zoom vertically, or b to zoom both axes</div>} delay={0}>
         <div style={{ position: "absolute", left: 0, top: 0, width: 30, bottom: 0 }} />
-      </Tooltip>
-      <Tooltip placement="top" contents={<div>Hold h to only scroll horizontally</div>} delay={0}>
-        <div style={{ position: "absolute", left: 0, right: 0, height: 30, bottom: 0 }} />
       </Tooltip>
     </React.Fragment>
   );
 });
+
+const STEP_SIZES = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60];
+const stepSize = ({ min: minValue, max: maxValue, minAlongAxis, maxAlongAxis }) => {
+  // Pick the smallest step size that gives lines greater than 50px apart
+  const secondsPer50Pixels = 50 * ((maxValue - minValue) / (maxAlongAxis - minAlongAxis));
+  return STEP_SIZES.find((step) => step > secondsPer50Pixels) || 60;
+};
+
+type FollowPlaybackState = $ReadOnly<{|
+  xOffsetMin: number, // -1 means the left edge of the plot is one second before the current time.
+  xOffsetMax: number, // 1 means the right edge of the plot is one second after the current time.
+|}>;
 
 type DataSet = $ReadOnly<{
   data: $ReadOnlyArray<$ReadOnly<{ x: number, y: number | string }>>,
@@ -113,6 +143,12 @@ type DataSet = $ReadOnly<{
   borderDash?: $ReadOnlyArray<number>,
   color?: string,
 }>;
+
+// Calculation mode for the "reset view" view.
+export type ChartDefaultView =
+  | void // Zoom to fit
+  | {| type: "fixed", minXValue: number, maxXValue: number |}
+  | {| type: "following", width: number |};
 
 type Props = {|
   type: "scatter" | "multicolorLine",
@@ -130,12 +166,15 @@ type Props = {|
   toggleLine?: (datasetId: string | typeof undefined, lineToHide: string) => void,
   linesToHide?: { [string]: boolean },
   datasetId?: string,
-  onClick?: (SyntheticMouseEvent<HTMLCanvasElement>, datalabel: ?any) => void,
-  saveCurrentYs?: (minY: number, maxY: number) => void,
-  xAxisVal?: "timestamp" | "index" | "custom",
+  onClick?: ?(SyntheticMouseEvent<HTMLCanvasElement>, datalabel: ?any, values: { [axis: string]: number }) => void,
+  saveCurrentView?: (minY: number, maxY: number, width: ?number) => void,
+  // If the x axis represents playback time ("timestamp"), the hover cursor will be synced.
+  // Note, this setting should not be used for other time values.
+  xAxisIsPlaybackTime: boolean,
   plugins?: any,
   scaleOptions?: ?ScaleOptions,
   currentTime?: ?number,
+  defaultView?: ChartDefaultView,
 |};
 
 // Create a chart with any y-axis but with an x-axis that shows time since the
@@ -146,9 +185,9 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   const chartComponent = useRef<?ChartComponent>(null);
   const tooltip = useRef<?HTMLDivElement>(null);
   const hasUnmounted = useRef<boolean>(false);
-  const bar = useRef<?HTMLDivElement>(null);
 
-  const [hasUserPanOrZoomed, setHasUserPannedOrZoomed] = useState(false);
+  const [hasUserPannedOrZoomed, setHasUserPannedOrZoomed] = useState<boolean>(false);
+  const [followPlaybackState, setFollowPlaybackState] = useState<?FollowPlaybackState>(null);
   const [, forceUpdate] = useState();
 
   const onVisibilityChange = useCallback(
@@ -190,25 +229,84 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
     [pauseFrame]
   );
 
-  const { saveCurrentYs, yAxes } = props;
-  const yAxisScaleId = yAxes[0]?.id;
+  const { saveCurrentView, yAxes } = props;
+  const scaleBounds = useRef<?$ReadOnlyArray<ScaleBounds>>();
+  const hoverBar = useRef<?HTMLElement>();
   const onScaleBoundsUpdate = useCallback(
     (scales) => {
-      const firstYScale = scales.find(({ id }) => id === yAxisScaleId);
-      if (firstYScale && saveCurrentYs && typeof firstYScale.min === "number" && typeof firstYScale.max === "number") {
-        saveCurrentYs(firstYScale.min, firstYScale.max);
+      scaleBounds.current = scales;
+      const firstYScale = scales.find(({ axes }) => axes === "yAxes");
+      const firstXScale = scales.find(({ axes }) => axes === "xAxes");
+      const width = firstXScale && firstXScale.max - firstXScale.min;
+      if (
+        firstYScale &&
+        saveCurrentView &&
+        typeof firstYScale.min === "number" &&
+        typeof firstYScale.max === "number"
+      ) {
+        saveCurrentView(firstYScale.min, firstYScale.max, width);
+      }
+      if (firstYScale != null && hoverBar.current != null) {
+        const { current } = hoverBar;
+        const topPx = Math.min(firstYScale.minAlongAxis, firstYScale.maxAlongAxis);
+        const bottomPx = Math.max(firstYScale.minAlongAxis, firstYScale.maxAlongAxis);
+        current.style.top = `${topPx}px`;
+        current.style.height = `${bottomPx - topPx}px`;
       }
     },
-    [yAxisScaleId, saveCurrentYs]
+    [saveCurrentView, scaleBounds]
   );
 
+  const { onClick } = props;
+  const lastPanTime = useRef<?Date>();
+
+  const onClickAddingValues = useCallback(
+    (ev: SyntheticMouseEvent<HTMLCanvasElement>, datalabel: ?any) => {
+      if (!onClick) {
+        return;
+      }
+      if (lastPanTime.current && new Date() - lastPanTime.current < PAN_CLICK_SUPPRESS_THRESHOLD_MS) {
+        // Ignore clicks that happen too soon after a pan. Sometimes clicks get fired at the end of
+        // drags on touchpads.
+        return;
+      }
+      const values = {};
+      (scaleBounds.current || []).forEach((bounds) => {
+        const chartPx =
+          bounds.axes === "xAxes"
+            ? // $FlowFixMe: getBoundingClientRect, ClientRect.x
+              ev.clientX - ev.target.getBoundingClientRect().x
+            : // $FlowFixMe: getBoundingClientRect, ClientRect.y
+              ev.clientY - ev.target.getBoundingClientRect().y;
+        const value = getChartValue(bounds, chartPx);
+        if (value == null) {
+          return;
+        }
+        values[bounds.id] = value;
+      });
+      return onClick(ev, datalabel, values);
+    },
+    [onClick, scaleBounds, lastPanTime]
+  );
+
+  // Keep a ref to props.currentTime so onPanZoom can have stable identity
+  const currentTimeRef = useRef<?number>();
+  currentTimeRef.current = props.currentTime;
   const onPanZoom = useCallback(
-    () => {
-      if (!hasUserPanOrZoomed) {
+    (newScaleBounds: ScaleBounds[]) => {
+      if (!hasUserPannedOrZoomed) {
         setHasUserPannedOrZoomed(true);
       }
+      // Preloaded plots follow playback at a fixed zoom and x-offset unless the user is in the
+      // initial "zoom to fit" state. Subsequent zooms/pans adjust the offsets.
+      const bounds = newScaleBounds.find(({ axes }) => axes === "xAxes");
+      if (bounds != null && bounds.min != null && bounds.max != null && currentTimeRef.current != null) {
+        const currentTime = currentTimeRef.current;
+        setFollowPlaybackState({ xOffsetMin: bounds.min - currentTime, xOffsetMax: bounds.max - currentTime });
+      }
+      lastPanTime.current = new Date();
     },
-    [hasUserPanOrZoomed, setHasUserPannedOrZoomed]
+    [hasUserPannedOrZoomed]
   );
 
   const onResetZoom = useCallback(
@@ -217,33 +315,42 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
         chartComponent.current.resetZoom();
         setHasUserPannedOrZoomed(false);
       }
+      setFollowPlaybackState(null);
     },
-    [setHasUserPannedOrZoomed]
+    [setHasUserPannedOrZoomed, setFollowPlaybackState]
   );
 
+  if (useDeepChangeDetector([props.defaultView], false)) {
+    // Reset the view to the default when the default changes.
+    if (hasUserPannedOrZoomed) {
+      setHasUserPannedOrZoomed(false);
+    }
+    if (followPlaybackState != null) {
+      setFollowPlaybackState(null);
+    }
+  }
+
   const [hasVerticalExclusiveZoom, setHasVerticalExclusiveZoom] = useState<boolean>(false);
-  const [hasHorizontalExclusiveZoom, setHasHorizontalExclusiveZoom] = useState<boolean>(false);
-  let zoomMode = "xy";
-  if (hasVerticalExclusiveZoom && hasHorizontalExclusiveZoom) {
-    zoomMode = "xy";
-  } else if (hasVerticalExclusiveZoom) {
+  const [hasBothAxesZoom, setHasBothAxesZoom] = useState<boolean>(false);
+  let zoomMode = "x";
+  if (hasVerticalExclusiveZoom) {
     zoomMode = "y";
-  } else if (hasHorizontalExclusiveZoom) {
-    zoomMode = "x";
+  } else if (hasBothAxesZoom) {
+    zoomMode = "xy";
   }
   const keyDownHandlers = React.useMemo(
     () => ({
       v: () => setHasVerticalExclusiveZoom(true),
-      h: () => setHasHorizontalExclusiveZoom(true),
+      b: () => setHasBothAxesZoom(true),
     }),
-    [setHasVerticalExclusiveZoom, setHasHorizontalExclusiveZoom]
+    [setHasVerticalExclusiveZoom, setHasBothAxesZoom]
   );
   const keyUphandlers = React.useMemo(
     () => ({
       v: () => setHasVerticalExclusiveZoom(false),
-      h: () => setHasHorizontalExclusiveZoom(false),
+      b: () => setHasBothAxesZoom(false),
     }),
-    [setHasVerticalExclusiveZoom, setHasHorizontalExclusiveZoom]
+    [setHasVerticalExclusiveZoom, setHasBothAxesZoom]
   );
 
   const removeTooltip = useCallback(() => {
@@ -298,7 +405,14 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
       if (tooltip.current) {
         ReactDOM.render(
           <TimeBasedChartTooltip tooltip={tooltipData}>
-            <div style={{ position: "absolute", left: tooltipItem.view.x, top: tooltipItem.view.y }} />
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                transform: `translate(${tooltipItem.view.x}px, ${tooltipItem.view.y}px)`,
+              }}
+            />
           </TimeBasedChartTooltip>,
           tooltip.current
         );
@@ -307,41 +421,51 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
     [removeTooltip, tooltips]
   );
 
+  const [hoverComponentId] = useState(() => uuid.v4());
+  const { xAxisIsPlaybackTime } = props;
+  const dispatch = useDispatch();
+  const clearGlobalHoverTime = useCallback(() => dispatch(clearHoverValue({ componentId: hoverComponentId })), [
+    dispatch,
+    hoverComponentId,
+  ]);
+  const setGlobalHoverTime = useCallback(
+    (value) =>
+      dispatch(
+        setHoverValue({
+          componentId: hoverComponentId,
+          value,
+          type: xAxisIsPlaybackTime ? "PLAYBACK_SECONDS" : "OTHER",
+        })
+      ),
+    [dispatch, hoverComponentId, xAxisIsPlaybackTime]
+  );
+
   const onMouseMove = useCallback(
     async (event: MouseEvent) => {
       const currentChartComponent = chartComponent.current;
       if (!currentChartComponent || !currentChartComponent.canvas) {
         removeTooltip();
-        if (bar.current && bar.current.style) {
-          bar.current.style.display = "none";
-        }
+        clearGlobalHoverTime();
         return;
       }
       const { canvas } = currentChartComponent;
       const canvasRect = canvas.getBoundingClientRect();
-      if (
-        event.pageX < canvasRect.left ||
-        event.pageX > canvasRect.right ||
-        event.pageY < canvasRect.top ||
-        event.pageY > canvasRect.bottom
-      ) {
-        removeTooltip();
-        if (bar.current && bar.current.style) {
-          bar.current.style.display = "none";
-        }
-        return;
-      }
-
+      const xBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "xAxes");
+      const yBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "yAxes");
       const xMousePosition = event.pageX - canvasRect.left;
-      if (bar.current && bar.current.style) {
-        bar.current.style.display = "block";
-        bar.current.style.left = `${xMousePosition}px`;
+      const yMousePosition = event.pageY - canvasRect.top;
+      const isTargetingCanvas = event.target === canvas;
+      if (!inBounds(xMousePosition, xBounds) || !inBounds(yMousePosition, yBounds) || !isTargetingCanvas) {
+        removeTooltip();
+        clearGlobalHoverTime();
+        return;
       }
 
-      const isTargetingCanvas = event.target === canvas;
-      if (!isTargetingCanvas) {
-        removeTooltip();
-        return;
+      const value = getChartValue(xBounds, xMousePosition);
+      if (value != null) {
+        setGlobalHoverTime(value);
+      } else {
+        clearGlobalHoverTime();
       }
 
       if (tooltips && tooltips.length) {
@@ -351,8 +475,14 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
         removeTooltip();
       }
     },
-    [updateTooltip, removeTooltip, tooltips]
+    [updateTooltip, removeTooltip, tooltips, clearGlobalHoverTime, setGlobalHoverTime, scaleBounds]
   );
+
+  // Normally we set the x axis step-size and display automatically, but we need consistency when
+  // scrolling with playback because the vertical lines can flicker, and x axis labels can have an
+  // inconsistent number of digits.
+  const xBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "xAxes");
+  const xScaleOptions = followPlaybackState && xBounds && stepSize(xBounds);
 
   const getChartjsOptions = (minX: ?number, maxX: ?number) => {
     const { currentTime } = props;
@@ -365,6 +495,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
       fontSize: 10,
       fontColor: "#eee",
       maxRotation: 0,
+      stepSize: xScaleOptions,
     };
     const defaultYTicksSettings = {
       fontFamily: mixins.monospaceFont,
@@ -423,7 +554,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
             ...yAxis.ticks,
           };
           // If the user is manually panning or zooming, don't constrain the y-axis
-          if (hasUserPanOrZoomed) {
+          if (hasUserPannedOrZoomed) {
             delete ticks.min;
             delete ticks.max;
           }
@@ -437,7 +568,19 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
       plugins,
       annotation: { annotations },
     };
-    if (!hasUserPanOrZoomed) {
+    if (followPlaybackState != null) {
+      // Follow playback, but don't force it if the user has recently panned or zoomed -- playback
+      // will fight with the user's action.
+      if (
+        currentTime != null &&
+        (lastPanTime.current == null || new Date() - lastPanTime.current > FOLLOW_PLAYBACK_PAN_THRESHOLD_MS)
+      ) {
+        // $FlowFixMe
+        options.scales.xAxes[0].ticks.min = currentTime + followPlaybackState.xOffsetMin;
+        // $FlowFixMe
+        options.scales.xAxes[0].ticks.max = currentTime + followPlaybackState.xOffsetMax;
+      }
+    } else if (!hasUserPannedOrZoomed) {
       // $FlowFixMe
       options.scales.xAxes[0].ticks.min = minX;
       // $FlowFixMe
@@ -447,6 +590,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   };
 
   const {
+    currentTime,
     datasetId,
     type,
     width,
@@ -456,13 +600,28 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
     toggleLine,
     data,
     isSynced,
-    onClick,
     linesToHide = {},
-    scaleOptions,
+    defaultView,
   } = props;
-  const xAxisVal = props.xAxisVal || "timestamp";
   const xVals = flatten(data.datasets.map(({ data: pts }) => (pts.length > 1 ? pts.map(({ x }) => x) : undefined)));
-  const [minX, maxX] = [min(xVals), max(xVals)];
+  let minX, maxX;
+  if (defaultView == null || (defaultView.type === "following" && currentTime == null)) {
+    // Zoom to fit if the view is "following" but there's no playback cursor. Unlikely.
+    minX = min(xVals);
+    maxX = max(xVals);
+  } else if (defaultView.type === "fixed") {
+    minX = defaultView.minXValue;
+    maxX = defaultView.maxXValue;
+  } else {
+    // Following with non-null currentTime.
+    if (currentTime == null) {
+      throw new Error("Flow doesn't know that currentTime != null");
+    }
+    minX = currentTime - defaultView.width / 2;
+    maxX = currentTime + defaultView.width / 2;
+  }
+
+  const scaleOptions = xScaleOptions != null ? { ...props.scaleOptions, xAxisTicks: "follow" } : props.scaleOptions;
 
   const chartProps = {
     type,
@@ -473,7 +632,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
     data: { ...data, datasets: data.datasets.filter((dataset) => !linesToHide[dataset.label]) },
     onScaleBoundsUpdate,
     onPanZoom,
-    onClick,
+    onClick: onClickAddingValues,
     zoomOptions: {
       ...ChartComponent.defaultProps.zoomOptions,
       enabled: props.zoom,
@@ -489,10 +648,12 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
     <div style={{ display: "flex", width: "100%" }}>
       <div style={{ display: "flex", width }}>
         <SRoot onDoubleClick={onResetZoom}>
-          <SBar ref={bar} />
+          <HoverBar componentId={hoverComponentId} isTimestampScale={xAxisIsPlaybackTime} scaleBounds={scaleBounds}>
+            <SBar xAxisIsPlaybackTime={xAxisIsPlaybackTime} ref={hoverBar} />
+          </HoverBar>
 
           {/* only sync when using x-axis timestamp and actually plotting data. */}
-          {isSynced && xAxisVal === "timestamp" && hasData ? (
+          {isSynced && currentTime == null && xAxisIsPlaybackTime && hasData ? (
             <SyncTimeAxis data={{ minX, maxX }}>
               {(syncedMinMax) => {
                 const syncedMinX = syncedMinMax.minX != null ? min([minX, syncedMinMax.minX]) : minX;
@@ -504,7 +665,7 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
             <ChartComponent {...chartProps} options={getChartjsOptions(minX, maxX)} />
           )}
 
-          {hasUserPanOrZoomed && (
+          {hasUserPannedOrZoomed && (
             <SResetZoom>
               <Button tooltip="(shortcut: double-click)" onClick={onResetZoom}>
                 reset view
@@ -513,7 +674,13 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
           )}
 
           {/* Handle tooltips while dragging by checking all document events. */}
-          <DocumentEvents capture onMouseDown={onMouseMove} onMouseUp={onMouseMove} onMouseMove={onMouseMove} />
+          <DocumentEvents
+            capture
+            onMouseDown={onMouseMove}
+            onMouseUp={onMouseMove}
+            onMouseMove={onMouseMove}
+            onMouseLeave={onMouseMove}
+          />
           <KeyListener global keyDownHandlers={keyDownHandlers} keyUpHandlers={keyUphandlers} />
         </SRoot>
       </div>

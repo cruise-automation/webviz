@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { MessageReader } from "rosbag";
+import { MessageReader, parseMessageDefinition } from "rosbag";
 
 import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
 
@@ -16,7 +16,7 @@ class ReaderItem {
 
   constructor(md5: string, messageDefinition: string) {
     this.md5 = md5;
-    this.reader = new MessageReader(messageDefinition, { freeze: FREEZE_MESSAGES });
+    this.reader = new MessageReader(parseMessageDefinition(messageDefinition), { freeze: FREEZE_MESSAGES });
   }
 }
 

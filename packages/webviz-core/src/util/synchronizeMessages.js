@@ -10,7 +10,15 @@ import { mapValues } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
 import type { MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistoryDEPRECATED";
-import type { Message } from "webviz-core/src/players/types";
+import { cast, type Message } from "webviz-core/src/players/types";
+import type { RosObject } from "webviz-core/src/players/types";
+import type { StampedMessage } from "webviz-core/src/types/Messages";
+
+const defaultGetHeaderStamp = (message: ?$ReadOnly<RosObject>): ?Time => {
+  if (message != null && message.header != null) {
+    return cast<StampedMessage>(message).header.stamp;
+  }
+};
 
 // Get all timestamps of all messages, newest first
 function allItemStampsNewestFirst(
@@ -20,7 +28,7 @@ function allItemStampsNewestFirst(
   const stamps = [];
   for (const path in itemsByPath) {
     for (const item of itemsByPath[path]) {
-      const stamp = getHeaderStamp ? getHeaderStamp(item.message) : item.message?.message?.header?.stamp;
+      const stamp = getHeaderStamp ? getHeaderStamp(item.message) : defaultGetHeaderStamp(item.message?.message);
       if (!stamp) {
         return [];
       }
@@ -33,7 +41,7 @@ function allMessageStampsNewestFirst(messagesByTopic: { [topic: string]: Message
   const stamps = [];
   for (const topic in messagesByTopic) {
     for (const { message } of messagesByTopic[topic]) {
-      const stamp = message?.header?.stamp;
+      const stamp = defaultGetHeaderStamp(message);
       if (stamp) {
         stamps.push(stamp);
       }
@@ -52,7 +60,7 @@ function itemsMatchingStamp(
   for (const path in itemsByPath) {
     let found = false;
     for (const item of itemsByPath[path]) {
-      const thisStamp = getHeaderStamp ? getHeaderStamp(item.message) : item.message?.message?.header?.stamp;
+      const thisStamp = getHeaderStamp ? getHeaderStamp(item.message) : defaultGetHeaderStamp(item.message?.message);
       if (thisStamp && TimeUtil.areSame(stamp, thisStamp)) {
         found = true;
         synchronizedItemsByPath[path] = [item];

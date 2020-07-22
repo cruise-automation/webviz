@@ -95,7 +95,7 @@ function getChangeCounts(data, startingCounts) {
   return startingCounts;
 }
 
-export const getItemStringForDiff = (type: string, data: any, itemType: string, itemString: string) => {
+export const getItemStringForDiff = (type: string, data: any, itemType: string) => {
   const { ADDED, DELETED, CHANGED, ID } = diffLabels;
   const id = data[ID.labelText];
   const idLabel = id

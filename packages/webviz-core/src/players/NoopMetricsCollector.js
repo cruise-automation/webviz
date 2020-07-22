@@ -11,12 +11,13 @@ import { type PlayerMetricsCollectorInterface } from "webviz-core/src/players/ty
 
 export default class NoopMetricsCollector implements PlayerMetricsCollectorInterface {
   initialized(): void {}
-  play(speed: number): void {}
-  seek(time: Time): void {}
-  setSpeed(speed: number): void {}
+  play(_speed: number): void {}
+  seek(_time: Time): void {}
+  setSpeed(_speed: number): void {}
   pause(): void {}
   close(): void {}
-  recordPlaybackTime(time: Time): void {}
-  recordBytesReceived(bytes: number): void {}
+  recordPlaybackTime(_time: Time): void {}
+  recordBytesReceived(_bytes: number): void {}
+  recordDataProviderPerformance(): void {}
   recordTimeToFirstMsgs(): void {}
 }

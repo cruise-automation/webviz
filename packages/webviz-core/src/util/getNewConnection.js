@@ -33,7 +33,6 @@ function getNewConnectionWithExistingReadRequest({
   currentRemainingRange,
   readRequestRange,
   downloadedRanges,
-  lastResolvedCallbackEnd,
   cacheSize,
   fileSize,
   continueDownloadingThreshold,

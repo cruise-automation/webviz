@@ -17,7 +17,7 @@ import {
 export default class FakePlayer implements Player {
   listener: (PlayerState) => Promise<void>;
   playerId: string = "test";
-  subscriptions: ?(SubscribePayload[]);
+  subscriptions: SubscribePayload[] = [];
   publishers: ?(AdvertisePayload[]);
   _capabilities: $Values<typeof PlayerCapabilities>[] = [];
 

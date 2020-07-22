@@ -38,6 +38,9 @@ const datatypes: RosDatatypes = {
       { name: "frame_id", type: "string", isArray: false },
     ],
   },
+  "msgs/Log": {
+    fields: [{ name: "id", type: "int32", isArray: false }, { name: "myJson", type: "json", isArray: false }],
+  },
 };
 
 describe("messagePathStructures", () => {
@@ -109,6 +112,14 @@ describe("messagePathStructures", () => {
         structureType: "message",
         datatype: "std_msgs/Header",
       },
+      "msgs/Log": {
+        nextByName: {
+          id: { primitiveType: "int32", structureType: "primitive", datatype: "msgs/Log" },
+          myJson: { structureType: "primitive", primitiveType: "json", datatype: "msgs/Log" },
+        },
+        structureType: "message",
+        datatype: "msgs/Log",
+      },
     });
   });
 
@@ -135,6 +146,7 @@ describe("messagePathsForDatatype", () => {
       ".some_pose.header.stamp",
       ".some_pose.x",
     ]);
+    expect(messagePathsForDatatype("msgs/Log", datatypes)).toEqual(["", ".id", ".myJson"]);
   });
 
   it("returns an array of possible message paths for the given `validTypes`", () => {
@@ -158,6 +170,7 @@ describe("validTerminatingStructureItem", () => {
   });
 
   it("works for structureType", () => {
+    expect(validTerminatingStructureItem({ structureType: "message", nextByName: {}, datatype: "" })).toEqual(true);
     expect(
       validTerminatingStructureItem({ structureType: "message", nextByName: {}, datatype: "" }, ["message"])
     ).toEqual(true);
@@ -179,6 +192,7 @@ describe("validTerminatingStructureItem", () => {
 describe("traverseStructure", () => {
   it("returns whether the path is valid for the structure, plus some metadata", () => {
     const structure = messagePathStructures(datatypes)["pose_msgs/PoseDebug"];
+    const structureJson = messagePathStructures(datatypes)["msgs/Log"];
 
     // Valid:
     expect(
@@ -224,6 +238,38 @@ describe("traverseStructure", () => {
       valid: true,
       msgPathPart: undefined,
       structureItem: structure.nextByName.some_pose,
+    });
+    expect(traverseStructure(structureJson, [{ type: "name", name: "myJson" }])).toEqual({
+      msgPathPart: undefined,
+      structureItem: { structureType: "primitive", primitiveType: "json", datatype: "msgs/Log" },
+      valid: true,
+    });
+
+    expect(
+      traverseStructure(structureJson, [{ type: "name", name: "myJson" }, { type: "name", name: "fieldInsideMyJson" }])
+    ).toEqual({
+      msgPathPart: undefined,
+      structureItem: { datatype: "msgs/Log", structureType: "primitive", primitiveType: "json" },
+      valid: true,
+    });
+
+    expect(
+      traverseStructure(structureJson, [
+        { type: "name", name: "myJson" },
+        { type: "filter", path: ["y"], value: 10, nameLoc: 123 },
+      ])
+    ).toEqual({
+      msgPathPart: undefined,
+      structureItem: { datatype: "msgs/Log", structureType: "primitive", primitiveType: "json" },
+      valid: true,
+    });
+
+    expect(
+      traverseStructure(structureJson, [{ type: "name", name: "myJson" }, { type: "slice", start: 50, end: 100 }])
+    ).toEqual({
+      msgPathPart: undefined,
+      structureItem: { datatype: "msgs/Log", structureType: "primitive", primitiveType: "json" },
+      valid: true,
     });
 
     // Invalid:

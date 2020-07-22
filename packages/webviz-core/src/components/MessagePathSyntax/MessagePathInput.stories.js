@@ -48,6 +48,13 @@ const fixture = {
         { name: "valid", type: "bool", isArray: false },
       ],
     },
+    "msgs/Log": {
+      fields: [
+        { name: "id", type: "int32", isArray: false },
+        { name: "myJson", type: "json", isArray: false },
+        { name: "severity", type: "float32", isArray: false },
+      ],
+    },
     "std_msgs/Header": {
       fields: [
         { name: "seq", type: "uint32", isArray: false },
@@ -68,6 +75,7 @@ const fixture = {
         "/very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_topic_name/state",
       datatype: "msgs/State",
     },
+    { name: "/some_logs_topic", datatype: "msgs/Log" },
   ],
   frame: {},
   globalVariables: { global_var_1: 42, global_var_2: 10 },
@@ -88,6 +96,7 @@ function MessagePathInputStory(props: {| path: string, prioritizedDatatype?: str
       <PanelSetup fixture={fixture} onMount={clickInput}>
         <Flex style={{ margin: "10px" }}>
           <MessagePathInput
+            autoSize
             path={path}
             prioritizedDatatype={props.prioritizedDatatype}
             onChange={(newPath) => setPath(newPath)}
@@ -138,4 +147,13 @@ storiesOf("<MessagePathInput>", module)
   })
   .add("autocomplete when prioritized datatype is available", () => {
     return <MessagePathInputStory path="/" prioritizedDatatype="msgs/State" />;
+  })
+  .add("autocomplete for message with json field", () => {
+    return <MessagePathInputStory path="/some_logs_topic." />;
+  })
+  .add("path for field inside json object", () => {
+    return <MessagePathInputStory path="/some_logs_topic.myJson" />;
+  })
+  .add("path for multiple levels of nested fields inside json object", () => {
+    return <MessagePathInputStory path="/some_logs_topic.myJson.a.b.c" />;
   });

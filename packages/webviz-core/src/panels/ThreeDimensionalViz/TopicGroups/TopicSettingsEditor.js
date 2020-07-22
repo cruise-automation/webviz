@@ -48,11 +48,10 @@ function MainEditor({
   objectPath,
   onTopicGroupsChange,
   sceneCollectorMsgForTopicSetting,
-  topicItem,
   topicItem: {
     topicName,
     settingsByColumn,
-    derivedFields: { displayName, datatype, prefixByColumn },
+    derivedFields: { datatype },
   },
 }: {|
   ...Props,

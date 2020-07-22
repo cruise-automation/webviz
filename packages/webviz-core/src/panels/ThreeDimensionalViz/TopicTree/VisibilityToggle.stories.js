@@ -8,6 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import React, { useState, useCallback, useRef } from "react";
+import { type Color } from "regl-worldview";
 
 import VisibilityToggle, { type Size, TOGGLE_SIZE_CONFIG } from "./VisibilityToggle";
 
@@ -23,7 +24,7 @@ function Example({
 }: {|
   available: boolean,
   checked?: boolean,
-  overrideColor?: string,
+  overrideColor?: Color,
   size?: Size,
   title: string,
   visibleInScene?: boolean,
@@ -86,21 +87,21 @@ storiesOf("<VisibilityToggle>", module)
           available
           checked
           visibleInScene
-          overrideColor="rgba(150,200,0,1)"
-          title="checked: true, visibleInScene: true, overrideColor: rgba(150,200,0,1)"
+          overrideColor={{ r: 0.58, g: 0.78, b: 0, a: 1 }}
+          title="checked: true, visibleInScene: true, overrideColor: { r: 0.58, g: 0.78, b: 0, a: 1 }"
         />
         <Example
           available
           visibleInScene
-          overrideColor="rgba(150,200,0,1)"
-          title="checked: false, visibleInScene: true, overrideColor: rgba(150,200,0,1)"
+          overrideColor={{ r: 0.58, g: 0.78, b: 0, a: 1 }}
+          title="checked: false, visibleInScene: true, overrideColor: { r: 0.58, g: 0.78, b: 0, a: 1 }"
         />
         <Example
           available
           checked
           visibleInScene={false}
-          overrideColor="rgba(150,200,0,1)"
-          title="checked: true, visibleInScene: false, overrideColor: rgba(150,200,0,1)"
+          overrideColor={{ r: 0.58, g: 0.78, b: 0, a: 1 }}
+          title="checked: true, visibleInScene: false, overrideColor: { r: 0.58, g: 0.78, b: 0, a: 1 }"
         />
         <Example
           available

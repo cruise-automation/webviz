@@ -18,7 +18,7 @@ import cx from "classnames";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
 import { useContext, useState, useCallback, useMemo } from "react"; // eslint-disable-line import/no-duplicates
 import Dimensions from "react-container-dimensions";
-import { createRemoveUpdate, updateTree, MosaicContext, MosaicWindowContext } from "react-mosaic-component";
+import { MosaicContext, MosaicWindowContext } from "react-mosaic-component";
 // $FlowFixMe - typedefs do not recognize the ReactReduxContext import
 import { useDispatch, useSelector, ReactReduxContext } from "react-redux";
 import { bindActionCreators } from "redux";
@@ -26,7 +26,7 @@ import { bindActionCreators } from "redux";
 import HelpButton from "./HelpButton";
 import styles from "./index.module.scss";
 import MosaicDragHandle from "./MosaicDragHandle";
-import { savePanelConfigs, changePanelLayout, splitPanel, swapPanel } from "webviz-core/src/actions/panels";
+import { savePanelConfigs, changePanelLayout, closePanel, splitPanel, swapPanel } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
@@ -38,7 +38,6 @@ import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import frameless from "webviz-core/src/util/frameless";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
-import { removePanelFromTabPanel } from "webviz-core/src/util/layout";
 
 type Props = {|
   children?: React.Node,
@@ -59,7 +58,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
   const savedProps = useSelector(({ panels }) => panels.savedProps);
   const dispatch = useDispatch();
   const actions = useMemo(
-    () => bindActionCreators({ savePanelConfigs, changePanelLayout, splitPanel, swapPanel }, dispatch),
+    () => bindActionCreators({ savePanelConfigs, changePanelLayout, closePanel, splitPanel, swapPanel }, dispatch),
     [dispatch]
   );
 
@@ -71,16 +70,9 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
   const close = useCallback(
     () => {
       window.ga("send", "event", "Panel", "Close", getPanelType());
-      if (tabId) {
-        const saveConfigsPayload = removePanelFromTabPanel(mosaicWindowActions.getPath(), savedProps[tabId], tabId);
-        actions.savePanelConfigs(saveConfigsPayload);
-      } else {
-        const update = createRemoveUpdate(mosaicActions.getRoot(), mosaicWindowActions.getPath());
-        const newLayout = updateTree(mosaicActions.getRoot(), [update]);
-        actions.changePanelLayout({ layout: newLayout });
-      }
+      actions.closePanel({ tabId, root: mosaicActions.getRoot(), path: mosaicWindowActions.getPath() });
     },
-    [actions, getPanelType, mosaicActions, mosaicWindowActions, savedProps, tabId]
+    [actions, getPanelType, mosaicActions, mosaicWindowActions, tabId]
   );
 
   const split = useCallback(
@@ -143,7 +135,6 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
     return null;
   }
 
-  const isOnlyPanel = mosaicWindowActions.getPath().length === 0;
   return (
     <ReactReduxContext.Consumer>
       {({ store }) => (
@@ -177,7 +168,6 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
               <Item
                 icon={<TrashCanOutlineIcon />}
                 onClick={close}
-                disabled={isOnlyPanel && !panelContext?.tabId /* Allow removing the last panel in a tab layout. */}
                 dataTest="panel-settings-remove"
                 tooltip="(shortcut: ` or ~)">
                 Remove panel

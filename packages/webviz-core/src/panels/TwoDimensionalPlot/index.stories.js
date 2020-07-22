@@ -9,10 +9,10 @@ import { storiesOf } from "@storybook/react";
 import React, { useState } from "react";
 
 import TwoDimensionalPlot from "./index";
-import PanelSetup from "webviz-core/src/stories/PanelSetup";
+import PanelSetup, { triggerWheel } from "webviz-core/src/stories/PanelSetup";
 
 const example0 = {
-  type: "webviz_msgs/2DPlotMsg",
+  type: "webviz_msgs/TwoDimensionalPlotMsg",
   title: "This is Plot A",
   xAxisLabel: "This is my X axis label",
   yAxisLabel: "This is my Y axis label",
@@ -46,7 +46,7 @@ const example0 = {
 };
 
 const example1 = {
-  type: "webviz_msgs/2DPlotMsg",
+  type: "webviz_msgs/TwoDimensionalPlotMsg",
   lines: [
     // This also has a solid-line, but with completely different dimensions. If we don't properly
     // clone these objects, Chart.js might mutate the object above because the label is the same.
@@ -66,7 +66,6 @@ const fixture = {
     "/plot_a": [
       {
         topic: "/plot_a",
-        datatype: "our_plot_type",
         receiveTime: { sec: 1532375120, nsec: 317760607 },
         message: {
           versions: [example0, example1],
@@ -75,6 +74,17 @@ const fixture = {
     ],
   },
 };
+
+function zoomOut() {
+  const canvasEl = document.querySelector("canvas");
+  // Zoom is a continuous event, so we need to simulate wheel multiple times
+  if (canvasEl) {
+    for (let i = 0; i < 5; i++) {
+      triggerWheel(canvasEl, 1);
+    }
+  }
+}
+
 storiesOf("<TwoDimensionalPlot>", module)
   .addParameters({
     screenshot: {
@@ -152,4 +162,28 @@ storiesOf("<TwoDimensionalPlot>", module)
         <Example />
       </PanelSetup>
     );
-  });
+  })
+  .add("zooms to show reset view button", () => (
+    <PanelSetup
+      fixture={fixture}
+      onMount={() => {
+        setTimeout(zoomOut, 200);
+      }}>
+      <TwoDimensionalPlot config={{ path: { value: "/plot_a.versions[0]" } }} />
+    </PanelSetup>
+  ))
+  .add("resets zoom", () => (
+    <PanelSetup
+      fixture={fixture}
+      onMount={(el) => {
+        setTimeout(zoomOut, 200);
+        setTimeout(() => {
+          const resetZoomBtn = el.querySelector("button");
+          if (resetZoomBtn) {
+            resetZoomBtn.click();
+          }
+        }, 400);
+      }}>
+      <TwoDimensionalPlot config={{ path: { value: "/plot_a.versions[0]" } }} />
+    </PanelSetup>
+  ));

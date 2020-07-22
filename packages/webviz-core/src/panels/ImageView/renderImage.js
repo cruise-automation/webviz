@@ -33,18 +33,18 @@ let hasLoggedCameraModelError: boolean = false;
 export async function renderImage({
   canvas,
   imageMessage,
+  imageMessageDatatype,
   rawMarkerData,
-  imageMarkerDatatypes,
 }: {
   canvas: ?(HTMLCanvasElement | OffscreenCanvas),
-  imageMessage: any,
+  imageMessage: ?Message,
+  imageMessageDatatype: ?string,
   rawMarkerData: RawMarkerData,
-  imageMarkerDatatypes: string[],
 }): Promise<?Dimensions> {
   if (!canvas) {
     return null;
   }
-  if (!imageMessage) {
+  if (!imageMessage || !imageMessageDatatype) {
     clearCanvas(canvas);
     return null;
   }
@@ -59,8 +59,8 @@ export async function renderImage({
   }
 
   try {
-    const bitmap = await decodeMessageToBitmap(imageMessage);
-    const dimensions = paintBitmap(canvas, bitmap, markerData, imageMarkerDatatypes);
+    const bitmap = await decodeMessageToBitmap(imageMessage, imageMessageDatatype);
+    const dimensions = paintBitmap(canvas, bitmap, markerData);
     bitmap.close();
     return dimensions;
   } catch (error) {
@@ -83,7 +83,7 @@ function maybeUnrectifyPoint(cameraModel: ?CameraModel, point: Point): $ReadOnly
   return point;
 }
 
-async function decodeMessageToBitmap(msg: any): Promise<ImageBitmap> {
+async function decodeMessageToBitmap(msg: Message, datatype: string): Promise<ImageBitmap> {
   let image: ImageData | Image | Blob;
   const { data: rawData, is_bigendian } = msg.message;
   if (!(rawData instanceof Uint8Array)) {
@@ -91,7 +91,7 @@ async function decodeMessageToBitmap(msg: any): Promise<ImageBitmap> {
   }
 
   // Binary message processing
-  if (msg.datatype === "sensor_msgs/Image") {
+  if (datatype === "sensor_msgs/Image") {
     const { width, height, encoding } = msg.message;
     image = new ImageData(width, height);
     // prettier-ignore
@@ -113,10 +113,10 @@ async function decodeMessageToBitmap(msg: any): Promise<ImageBitmap> {
       default:
         throw new Error(`Unsupported encoding ${encoding}`);
     }
-  } else if (msg.datatype === "sensor_msgs/CompressedImage") {
+  } else if (datatype === "sensor_msgs/CompressedImage") {
     image = new Blob([rawData], { type: `image/${msg.message.format}` });
   } else {
-    throw new Error(`Message datatype ${msg.datatype} not usable for rendering images.`);
+    throw new Error(`Message datatype ${datatype} not usable for rendering images.`);
   }
 
   return self.createImageBitmap(image);
@@ -128,12 +128,7 @@ function clearCanvas(canvas: ?HTMLCanvasElement) {
   }
 }
 
-function paintBitmap(
-  canvas: HTMLCanvasElement,
-  bitmap: ImageBitmap,
-  markerData: MarkerData,
-  imageMarkerDatatypes: string[]
-): ?Dimensions {
+function paintBitmap(canvas: HTMLCanvasElement, bitmap: ImageBitmap, markerData: MarkerData): ?Dimensions {
   let bitmapDimensions = { width: bitmap.width, height: bitmap.height };
   const ctx = canvas.getContext("2d");
   if (!markerData) {
@@ -160,7 +155,7 @@ function paintBitmap(
   ctx.restore();
   ctx.save();
   try {
-    paintMarkers(ctx, markers, cameraModel, imageMarkerDatatypes);
+    paintMarkers(ctx, markers, cameraModel);
   } catch (err) {
     console.warn("error painting markers:", err);
   } finally {
@@ -169,12 +164,7 @@ function paintBitmap(
   return bitmapDimensions;
 }
 
-function paintMarkers(
-  ctx: CanvasRenderingContext2D,
-  messages: Message[],
-  cameraModel: ?CameraModel,
-  imageMarkerDatatypes: string[]
-) {
+function paintMarkers(ctx: CanvasRenderingContext2D, messages: Message[], cameraModel: ?CameraModel) {
   for (const { message } of messages) {
     ctx.save();
     try {

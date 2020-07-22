@@ -8,7 +8,7 @@
 
 import MenuDownIcon from "@mdi/svg/svg/menu-down.svg";
 import cx from "classnames";
-import { flatten, partition } from "lodash";
+import { flatten, flatMap, partition } from "lodash";
 import * as React from "react";
 
 import type { RosPath, RosPrimitive } from "./constants";
@@ -26,10 +26,11 @@ import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import useGlobalVariables, { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { getTopicNames, topicsByTopicName } from "webviz-core/src/util/selectors";
+import { getTopicNames, getTopicsByTopicName } from "webviz-core/src/util/selectors";
 import type { TimestampMethod } from "webviz-core/src/util/time";
 
 // To show an input field with an autocomplete so the user can enter message paths, use:
@@ -63,28 +64,39 @@ function topicHasNoHeaderStamp(topic: Topic, datatypes: RosDatatypes): boolean {
   );
 }
 
-function getFirstInvalidVariableFromRosPath(
+export function tryToSetDefaultGlobalVar(variableName: string, setGlobalVariables: (GlobalVariables) => void): boolean {
+  const defaultGlobalVars = getGlobalHooks().getDefaultGlobalVariables();
+  if (Object.keys(defaultGlobalVars).includes(variableName)) {
+    setGlobalVariables({ [variableName]: defaultGlobalVars[variableName] });
+    return true;
+  }
+  return false;
+}
+
+export function getFirstInvalidVariableFromRosPath(
   rosPath: RosPath,
-  globalVariables: GlobalVariables
+  globalVariables: GlobalVariables,
+  setGlobalVariables: (GlobalVariables) => void
 ): ?{| variableName: string, loc: number |} {
   const { messagePath } = rosPath;
-  return messagePath
-    .map((path) => {
-      const globalVars = Object.keys(globalVariables);
-      if (path.type === "filter" && typeof path.value === "object" && !globalVars.includes(path.value.variableName)) {
-        return { variableName: path.value.variableName, loc: path.valueLoc };
+  const globalVars = Object.keys(globalVariables);
+  return flatMap(messagePath, (path) => {
+    const messagePathParts = [];
+    if (path.type === "filter" && typeof path.value === "object" && !globalVars.includes(path.value.variableName)) {
+      const [variableName, loc] = [path.value.variableName, path.valueLoc];
+      messagePathParts.push({ variableName, loc });
+    } else if (path.type === "slice") {
+      if (typeof path.start === "object" && !globalVars.includes(path.start.variableName)) {
+        const [variableName, loc] = [path.start.variableName, path.start.startLoc];
+        messagePathParts.push({ variableName, loc });
       }
-
-      if (path.type === "slice" && typeof path.start === "object" && !globalVars.includes(path.start.variableName)) {
-        return { variableName: path.start.variableName, loc: path.start.startLoc };
+      if (path.end != null && typeof path.end === "object" && !globalVars.includes(path.end.variableName)) {
+        const [variableName, loc] = [path.end.variableName, path.end.startLoc];
+        messagePathParts.push({ variableName, loc });
       }
-
-      if (path.type === "slice" && typeof path.end === "object" && !globalVars.includes(path.end.variableName)) {
-        return { variableName: path.end.variableName, loc: path.end.startLoc };
-      }
-      return undefined;
-    })
-    .find(Boolean);
+    }
+    return messagePathParts;
+  }).filter(({ variableName }) => !tryToSetDefaultGlobalVar(variableName, setGlobalVariables))[0];
 }
 
 function getExamplePrimitive(primitiveType: RosPrimitive) {
@@ -106,6 +118,7 @@ function getExamplePrimitive(primitiveType: RosPrimitive) {
       return "0";
     case "duration":
     case "time":
+    case "json":
       return "";
     default:
       (primitiveType: empty);
@@ -132,6 +145,7 @@ type MessagePathInputProps = MessagePathInputBaseProps & {
   datatypes: RosDatatypes,
   prioritizedDatatype?: ?string,
   globalVariables: GlobalVariables,
+  setGlobalVariables: (GlobalVariables) => void,
 };
 type MessagePathInputState = {| focused: boolean |};
 class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputProps, MessagePathInputState> {
@@ -205,6 +219,7 @@ class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputPr
       inputStyle,
       disableAutocomplete,
       globalVariables,
+      setGlobalVariables,
     } = this.props;
 
     const rosPath = parseRosPath(path);
@@ -295,7 +310,11 @@ class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputPr
         autocompleteFilterText = path.substr(topic.name.length).replace(/\{[^}]*\}/g, "");
       }
     } else if (rosPath) {
-      const invalidGlobalVariablesVariable = getFirstInvalidVariableFromRosPath(rosPath, globalVariables);
+      const invalidGlobalVariablesVariable = getFirstInvalidVariableFromRosPath(
+        rosPath,
+        globalVariables,
+        setGlobalVariables
+      );
 
       if (invalidGlobalVariablesVariable) {
         autocompleteType = "globalVariables";
@@ -311,7 +330,7 @@ class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputPr
     const noHeaderStamp = topic && topicHasNoHeaderStamp(topic, datatypes);
     const orderedAutocompleteItems = prioritizedDatatype
       ? flatten(
-          partition(autocompleteItems, (item) => topicsByTopicName(topics)[item]?.datatype === prioritizedDatatype)
+          partition(autocompleteItems, (item) => getTopicsByTopicName(topics)[item]?.datatype === prioritizedDatatype)
         )
       : autocompleteItems;
 
@@ -390,9 +409,15 @@ class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputPr
 }
 
 export default React.memo<MessagePathInputBaseProps>(function MessagePathInput(props: MessagePathInputBaseProps) {
-  const { globalVariables } = useGlobalVariables();
+  const { globalVariables, setGlobalVariables } = useGlobalVariables();
   const { datatypes, topics } = PanelAPI.useDataSourceInfo();
   return (
-    <MessagePathInputUnconnected {...props} topics={topics} datatypes={datatypes} globalVariables={globalVariables} />
+    <MessagePathInputUnconnected
+      {...props}
+      topics={topics}
+      datatypes={datatypes}
+      globalVariables={globalVariables}
+      setGlobalVariables={setGlobalVariables}
+    />
   );
 });

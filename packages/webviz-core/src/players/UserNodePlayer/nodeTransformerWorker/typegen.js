@@ -38,6 +38,17 @@ const createTimeInterfaceDeclaration = (name: string) =>
     ] /* members */
   );
 
+// Since rosbagjs treats json as a primitive, we have to shim it in.
+// TODO: Update json declaration in a smarter way.
+const jsonInterfaceDeclaration = ts.createInterfaceDeclaration(
+  undefined /* decorators */,
+  modifiers /* modifiers */,
+  "json" /* name */,
+  undefined /* typeParameters */,
+  undefined /* heritageClauses */,
+  [] /* members */
+);
+
 export const formatInterfaceName = (type: string) => type.replace(/\//g, "__");
 
 // http://wiki.ros.org/msg
@@ -78,7 +89,7 @@ export const generateTypeDefs = (datatypes: RosDatatypes): InterfaceDeclarations
     }
 
     const typeMembers = definition.fields
-      .map(({ name, type, isArray, isConstant, value }) => {
+      .map(({ name, type, isArray, isConstant }) => {
         let node;
         if (isConstant) {
           // TODO: Support ROS constants at some point.
@@ -134,7 +145,6 @@ const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: Ros
     undefined /* heritageClauses */,
     [
       createProperty("topic", ts.createTypeReferenceNode("T")),
-      createProperty("datatype", ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)),
       createProperty("receiveTime", ts.createTypeReferenceNode("Time")),
       createProperty("message", ts.createTypeReferenceNode("TopicsToMessageDefinition[T]")),
     ] /* members */
@@ -190,6 +200,7 @@ const generateRosLib = ({ topics, datatypes }: { topics: Topic[], datatypes: Ros
   // however adding inline comments this way was easier.
   const printer = ts.createPrinter();
   const result = `
+    ${printer.printNode(ts.EmitHint.Unspecified, jsonInterfaceDeclaration, sourceFile)}
     ${printer.printNode(ts.EmitHint.Unspecified, TopicsToMessageDefinition, sourceFile)}
     ${printer.printNode(ts.EmitHint.Unspecified, rosSpecialTypesToTypescriptMap.duration, sourceFile)}
     ${printer.printNode(ts.EmitHint.Unspecified, rosSpecialTypesToTypescriptMap.time, sourceFile)}

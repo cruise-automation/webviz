@@ -11,19 +11,16 @@ export const datatypes = {
 
 export const messages = [
   {
-    datatype: "some/datatype",
     topic: "/some/topic",
     receiveTime: { sec: 100, nsec: 0 },
     message: { index: 0 },
   },
   {
-    datatype: "some/datatype",
     topic: "/some/topic",
     receiveTime: { sec: 101, nsec: 0 },
     message: { index: 1 },
   },
   {
-    datatype: "some/datatype",
     topic: "/some/topic",
     receiveTime: { sec: 102, nsec: 0 },
     message: { index: 2 },

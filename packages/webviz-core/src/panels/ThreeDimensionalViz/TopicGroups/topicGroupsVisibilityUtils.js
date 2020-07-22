@@ -13,10 +13,10 @@ import type { TopicGroupType, TopicItem, VisibilityByColumn, NamespacesByColumn 
 export function toggleVisibility(visibilityByColumn: VisibilityByColumn): VisibilityByColumn {
   if (visibilityByColumn.some((val) => val)) {
     // If any are turned on, turn all off.
-    return visibilityByColumn.map((val) => false);
+    return visibilityByColumn.map(() => false);
   }
   // Otherwise, turn all on.
-  return visibilityByColumn.map((val) => true);
+  return visibilityByColumn.map(() => true);
 }
 
 export function toggleAllForGroupVisibility(topicGroup: TopicGroupType, columnIndex: number): TopicGroupType {

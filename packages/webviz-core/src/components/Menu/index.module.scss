@@ -42,14 +42,14 @@
 
   &.header {
     text-transform: uppercase;
-    background-color: $tooltip-background;
-    opacity: 0.5;
-    font-size: 10px;
+    opacity: 0.6;
+    font-size: 11px;
     letter-spacing: 1px;
+    padding-top: 16px;
 
     &:hover {
       cursor: default;
-      background-color: $tooltip-background;
+      background-color: inherit; // disable usual item hover color
       opacity: 0.5;
     }
   }

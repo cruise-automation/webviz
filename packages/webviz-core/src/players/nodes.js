@@ -10,6 +10,7 @@ import { flatten, uniq } from "lodash";
 import type { Message, SubscribePayload, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 type Callback<State> = ({| message: Message, state: State |}) => {| messages: Message[], state: State |};
 
@@ -27,10 +28,9 @@ export function isWebvizNodeTopic(topic: string) {
   return topic.startsWith(WEBVIZ_NODE_PREFIX) || topic.startsWith(`${SECOND_SOURCE_PREFIX}${WEBVIZ_NODE_PREFIX}`);
 }
 
-export const makeNodeMessage = (topic: string, datatype: string, message: any): Message => {
+export const makeNodeMessage = (topic: string, message: any): Message => {
   return {
     topic,
-    datatype,
     message,
     receiveTime: { sec: 0, nsec: 0 }, // Gets set in `applyNodeToMessage`.
   };
@@ -54,6 +54,16 @@ function getDependentNodeDefinitions(
   return dependentNodeDefs;
 }
 
+function validateDatatypes({ output, datatypes }: NodeDefinition<*>) {
+  for (const key of Object.keys(datatypes)) {
+    for (const { type, isComplex } of datatypes[key].fields) {
+      if (isComplex && !datatypes[type]) {
+        throw new Error(`The datatype "${type}" is not defined for node "${output.name}"`);
+      }
+    }
+  }
+}
+
 export function validateNodeDefinitions(nodeDefinitions: NodeDefinition<*>[]): void {
   for (const nodeDefinition of nodeDefinitions) {
     // Validate otuput topic names
@@ -72,6 +82,10 @@ export function validateNodeDefinitions(nodeDefinitions: NodeDefinition<*>[]): v
   if (topicNames.length !== uniq(topicNames).length) {
     throw new Error(`Duplicate output topic names in nodes: ${JSON.stringify(topicNames)}`);
   }
+
+  for (const def of nodeDefinitions) {
+    validateDatatypes(def);
+  }
 }
 
 function applyNodeToMessage<State>(
@@ -89,12 +103,6 @@ function applyNodeToMessage<State>(
       }
       if (message.topic !== output.name) {
         console.warn(`message.topic "${message.topic}" not output; message discarded`);
-        return false;
-      }
-      if (message.datatype !== output.datatype) {
-        console.warn(
-          `message.datatype "${message.datatype}" does not match topic.datatype "${output.datatype}"; message discarded`
-        );
         return false;
       }
       return true;
@@ -118,9 +126,24 @@ export function applyNodesToMessages(
   for (let i = 0; i < messages.length; i++) {
     nodeDefinitions.forEach((nodeDefinition, index) => {
       if (nodeDefinition.inputs.includes(messages[i].topic)) {
-        const { messages: newMessages, state } = applyNodeToMessage(nodeDefinition, messages[i], states[index]);
-        states[index] = state;
-        messages.splice(i + 1, 0, ...newMessages);
+        const previousState = states[index];
+        let nodeResult = {
+          messages: [],
+          state: previousState,
+        };
+        try {
+          nodeResult = applyNodeToMessage(nodeDefinition, messages[i], previousState);
+        } catch (error) {
+          sendNotification(
+            `Error running Webviz node: ${nodeDefinition.output.name}`,
+            `${error} ${error.stack}`,
+            "app",
+            "error"
+          );
+        }
+
+        states[index] = nodeResult.state;
+        messages.splice(i + 1, 0, ...nodeResult.messages);
       }
     });
   }

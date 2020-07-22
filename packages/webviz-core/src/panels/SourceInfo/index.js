@@ -59,7 +59,7 @@ const SHeaderItem = styled.div`
   white-space: nowrap;
 `;
 
-function SourceInfo(props: {}): Node {
+function SourceInfo(): Node {
   const { topics, startTime, endTime } = useMessagePipeline(
     useCallback(
       ({ playerState: { activeData } }) =>
@@ -87,7 +87,7 @@ function SourceInfo(props: {}): Node {
                 endTime={endTime}
                 currentTime={startTime}
                 pausePlayback={() => {}}
-                seekPlayback={(_) => {}}
+                seekPlayback={() => {}}
               />
             </SHeaderItem>
             <SHeaderItem>
@@ -97,7 +97,7 @@ function SourceInfo(props: {}): Node {
                 endTime={endTime}
                 currentTime={endTime}
                 pausePlayback={() => {}}
-                seekPlayback={(_) => {}}
+                seekPlayback={() => {}}
               />
             </SHeaderItem>
             <SHeaderItem>

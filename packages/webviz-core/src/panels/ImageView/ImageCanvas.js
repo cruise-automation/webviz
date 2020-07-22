@@ -26,8 +26,7 @@ import { checkOutOfBounds, type Dimensions } from "./util";
 import ContextMenu from "webviz-core/src/components/ContextMenu";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import Menu, { Item } from "webviz-core/src/components/Menu";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { Message } from "webviz-core/src/players/types";
+import type { Message, Topic } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import type { CameraInfo } from "webviz-core/src/types/Messages";
 import { downloadFiles } from "webviz-core/src/util";
@@ -39,7 +38,7 @@ import WebWorkerManager from "webviz-core/src/util/WebWorkerManager";
 
 type OnFinishRenderImage = () => void;
 type Props = {|
-  topic: string,
+  topic: Topic,
   image: ?Message,
   rawMarkerData: {|
     markers: Message[],
@@ -172,14 +171,14 @@ export default class ImageCanvas extends React.Component<Props, State> {
         minZoom: 0,
         zoomSpeed: 0.05,
         smoothScroll: false,
-        filterKey(e, dx, dy, dz) {
+        filterKey(_e, _dx, _dy, _dz) {
           // don't let panzoom handle keyboard event
           // because zoom in and out has the wrong offset change
           // left right up and down is different what we use in our daily life
           return true;
         },
       });
-      this.panZoomCanvas.on("zoom", (e) => {
+      this.panZoomCanvas.on("zoom", (_e) => {
         const { scale } = this.panZoomCanvas.getTransform();
         const minPercent = this.fitPercent() * 0.8;
         if (scale < minPercent / 100) {
@@ -187,7 +186,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
         }
         this.keepInBounds(div);
       });
-      this.panZoomCanvas.on("pan", (e) => this.keepInBounds(div));
+      this.panZoomCanvas.on("pan", (_e) => this.keepInBounds(div));
     }
   };
 
@@ -295,7 +294,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
       // note: the / characters in the file name will be replaced with _
       // by the browser
       // remove the leading / so the image name doesn't start with _
-      const topicName = topic.slice(1);
+      const topicName = topic.name.slice(1);
       const stamp = image.message.header ? image.message.header.stamp : { sec: 0, nsec: 0 };
       const fileName = `${topicName}-${stamp.sec}-${stamp.nsec}`;
       downloadFiles([{ blob, fileName }]);
@@ -349,10 +348,9 @@ export default class ImageCanvas extends React.Component<Props, State> {
   };
 
   renderCurrentImage = debouncePromise(async () => {
-    const { image, rawMarkerData, onStartRenderImage } = this.props;
+    const { image, topic, rawMarkerData, onStartRenderImage } = this.props;
     const onFinishImageRender = onStartRenderImage();
     try {
-      const { imageMarkerDatatypes } = getGlobalHooks().perPanelHooks().ImageView;
       let dimensions;
       const canvasRenderer = this._canvasRenderer;
       if (canvasRenderer.type === "rpc") {
@@ -360,15 +358,15 @@ export default class ImageCanvas extends React.Component<Props, State> {
         dimensions = await worker.send<?Dimensions>("renderImage", {
           id: this._id,
           imageMessage: image,
+          imageMessageDatatype: topic.datatype,
           rawMarkerData,
-          imageMarkerDatatypes,
         });
       } else {
         dimensions = await renderImage({
           canvas: this._canvasRef.current,
           imageMessage: image,
+          imageMessageDatatype: topic.datatype,
           rawMarkerData,
-          imageMarkerDatatypes,
         });
       }
 
@@ -380,8 +378,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
         this.setState({ error: undefined });
       }
     } catch (error) {
-      const topic = image ? image.topic : "";
-      sendNotification(`failed to decode image on ${topic}:`, "", "user", "error");
+      sendNotification(`failed to decode image on ${image?.topic || ""}:`, "", "user", "error");
       this.setState({ error });
     } finally {
       onFinishImageRender();

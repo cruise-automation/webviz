@@ -44,6 +44,7 @@ import type { CameraInfo } from "webviz-core/src/types/Messages";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import { useShallowMemo, useDeepMemo } from "webviz-core/src/util/hooks";
 import naturalSort from "webviz-core/src/util/naturalSort";
+import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
 import { getSynchronizingReducers } from "webviz-core/src/util/synchronizeMessages";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 import toggle from "webviz-core/src/util/toggle";
@@ -78,7 +79,6 @@ export type SaveImagePanelConfig = SaveConfig<Config>;
 type Props = {
   config: Config,
   saveConfig: SaveImagePanelConfig,
-  topics: Topic[],
 };
 
 const TopicTimestampSpan = styled.span`
@@ -190,7 +190,7 @@ function useOptionallySynchronizedMessages(
               messagesByTopic: previousValue ? previousValue.messagesByTopic : {},
               synchronizedMessages: null,
             }),
-            addMessage: ({ messagesByTopic, synchronizedMessages }, newMessage) => ({
+            addMessage: ({ messagesByTopic }, newMessage) => ({
               messagesByTopic: { ...messagesByTopic, [newMessage.topic]: [newMessage] },
               synchronizedMessages: null,
             }),
@@ -229,6 +229,7 @@ function ImageView(props: Props) {
     customMarkerTopicOptions = [],
   } = config;
   const { topics } = PanelAPI.useDataSourceInfo();
+  const cameraTopicFullObject = useMemo(() => getTopicsByTopicName(topics)[cameraTopic], [cameraTopic, topics]);
 
   const imageTopicsByNamespace = imageTopicsByNamespaceSelector(topics);
   // Represents marker topics based on the camera topic prefix (e.g. "/camera_front_medium")
@@ -487,7 +488,7 @@ function ImageView(props: Props) {
       {renderToolbar()}
       <ImageCanvas
         panelHooks={panelHooks}
-        topic={cameraTopic}
+        topic={cameraTopicFullObject}
         image={imageMessage}
         rawMarkerData={rawMarkerData}
         config={config}

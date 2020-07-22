@@ -10,14 +10,12 @@ import React, { type Node } from "react";
 import { Arrows, pointToVec3, vec3ToPoint, orientationToVec4, type Arrow } from "regl-worldview";
 
 import CarModel from "./CarModel";
-import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 
 type Props = {
   children: Arrow[],
 };
 
-// $FlowFixMe - flow doesn't have a definition for React.memo
-export default React.memo(function PoseMarkers({ children }: Props): Node[] {
+export default React.memo<Props>(function PoseMarkers({ children }: Props): Node[] {
   const models = [];
   const markers = [];
   children.forEach((marker, i) => {
@@ -26,8 +24,8 @@ export default React.memo(function PoseMarkers({ children }: Props): Node[] {
       models.push(<CarModel key={i}>{{ pose, alpha: settings.alpha || 1, interactionData }}</CarModel>);
     } else {
       const { settings } = marker;
-      if (settings && settings.color && typeof settings.color === "string") {
-        marker = { ...marker, color: parseColorSetting(settings.color) };
+      if (settings && settings.color) {
+        marker = { ...marker, color: settings.color };
       }
 
       if (settings && settings.size) {

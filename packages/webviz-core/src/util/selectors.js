@@ -31,7 +31,7 @@ export function getTopicPrefixes(topics: string[]): string[] {
   return topics.some((topic) => topic.startsWith(SECOND_SOURCE_PREFIX)) ? [SECOND_SOURCE_PREFIX] : [];
 }
 
-export const topicsByTopicName = createSelector<*, *, *, _>(
+export const getTopicsByTopicName = createSelector<*, *, *, _>(
   (topics: Topic[]) => topics,
   (topics: Topic[]): { [string]: Topic } => {
     return keyBy(topics, ({ name }) => name);

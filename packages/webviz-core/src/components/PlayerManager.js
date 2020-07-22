@@ -73,8 +73,15 @@ function buildPlayerFromFiles(files: File[]): ?PlayerDefinition {
       player: new RandomAccessPlayer(
         {
           name: CoreDataProviders.CombinedDataProvider,
-          args: { providerInfos: [{}, { prefix: SECOND_SOURCE_PREFIX }] },
-          children: [getLocalBagDescriptor(files[0]), getLocalBagDescriptor(files[1])],
+          args: {},
+          children: [
+            getLocalBagDescriptor(files[0]),
+            {
+              name: CoreDataProviders.RenameDataProvider,
+              args: { prefix: SECOND_SOURCE_PREFIX },
+              children: [getLocalBagDescriptor(files[1])],
+            },
+          ],
         },
         getPlayerOptions()
       ),

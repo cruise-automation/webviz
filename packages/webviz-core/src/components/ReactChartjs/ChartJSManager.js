@@ -21,6 +21,8 @@ import {
   getScaleBounds,
 } from "./zoomAndPanHelpers";
 
+type XAxisTicks = "follow" | "displayXAxesTicksInSeconds";
+
 // These are options that we pass our worker. We have to pass this as a separate object instead of as part of the
 // config because they can only be set using a callback function, which we can't pass across worker boundaries.
 export type ScaleOptions = {|
@@ -30,7 +32,7 @@ export type ScaleOptions = {|
   // points.
   yAxisTicks?: "show" | "hide" | "hideFirstAndLast",
   // Display the x-axes with a seconds unit, eg "1 s"
-  displayXAxesTicksInSeconds?: ?boolean,
+  xAxisTicks?: ?XAxisTicks,
 |};
 
 function hideAllTicksScaleCallback() {
@@ -279,7 +281,7 @@ export default class ChartJSManager {
     if (config && config.plugins.datalabels) {
       // This controls which datalabels are displayed. Only display labels for datapoints that include a "label"
       // property.
-      config.plugins.datalabels.formatter = (value: any, context: any) => {
+      config.plugins.datalabels.formatter = (value: any, _context: any) => {
         const label = value?.label;
         // We have to return "null" if we don't want this label to be displayed. Returning "undefined" falls back to the
         // default formatting.
@@ -310,8 +312,12 @@ export default class ChartJSManager {
 
       for (const scale of config.scales.xAxes) {
         scale.ticks = scale.ticks || {};
-        if (scaleOptions.displayXAxesTicksInSeconds) {
-          scale.ticks.callback = displayTicksInSecondsCallback;
+        if (scaleOptions.xAxisTicks) {
+          if (scaleOptions.xAxisTicks === "displayXAxesTicksInSeconds") {
+            scale.ticks.callback = displayTicksInSecondsCallback;
+          } else {
+            scale.ticks.callback = hideFirstAndLastTicksScaleCallback;
+          }
         }
       }
     }

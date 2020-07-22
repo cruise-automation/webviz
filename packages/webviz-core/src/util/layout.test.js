@@ -5,21 +5,21 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import { updateTree } from "react-mosaic-component";
 
 import {
   getPanelTypeFromId,
   getSaveConfigsPayloadForAddedPanel,
   removePanelFromTabPanel,
   getPanelIdsInsideTabPanels,
-  getTreeFromMovePanel,
+  createAddUpdates,
   addPanelToTab,
   replaceAndRemovePanels,
   updateTabPanelLayout,
-  selectPanelOutput,
-  onNewPanelDrop,
   validateTabPanelConfig,
+  moveTabBetweenTabPanels,
+  reorderTabWithinTabPanel,
 } from "./layout";
-import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 
 describe("layout", () => {
   describe("getSaveConfigsPayloadForAddedPanel", () => {
@@ -176,42 +176,31 @@ describe("layout", () => {
     });
   });
 
-  describe("getTreeFromMovePanel", () => {
+  describe("createAddUpdates", () => {
     it("no tabs", () => {
-      expect(getTreeFromMovePanel("DiagnosticSummary!30vin8", [], "bottom", "DiagnosticSummary!3v8mswd")).toEqual({
-        first: "DiagnosticSummary!3v8mswd",
-        second: "DiagnosticSummary!30vin8",
+      const layout = "Audio!a";
+      expect(updateTree(layout, createAddUpdates(layout, "Global!a", [], "bottom"))).toEqual({
+        first: layout,
+        second: "Global!a",
         direction: "column",
       });
     });
-    it("with tab panels", () => {
-      expect(
-        getTreeFromMovePanel("DiagnosticSummary!3v8mswd", ["second"], "left", {
-          first: "Tab!3u9ypnk",
-          second: "DiagnosticSummary!1c6n55t",
-          direction: "row",
-        })
-      ).toEqual({
-        first: "Tab!3u9ypnk",
-        second: { first: "DiagnosticSummary!3v8mswd", second: "DiagnosticSummary!1c6n55t", direction: "row" },
-        direction: "row",
+    it("with Tab panels", () => {
+      const layout = { first: "Tab!a", second: "Global!a", direction: "row" };
+      expect(updateTree(layout, createAddUpdates(layout, "Audio!a", ["second"], "left"))).toEqual({
+        ...layout,
+        second: { first: "Audio!a", second: layout.second, direction: "row" },
       });
     });
     it("nested paths", () => {
-      expect(
-        getTreeFromMovePanel("DiagnosticSummary!3v8mswd", ["second", "first"], "left", {
-          first: "Tab!3u9ypnk",
-          second: { first: "DiagnosticSummary!g24eyn", second: "DiagnosticSummary!1c6n55t", direction: "column" },
-          direction: "row",
-        })
-      ).toEqual({
-        first: "Tab!3u9ypnk",
-        second: {
-          first: { first: "DiagnosticSummary!3v8mswd", second: "DiagnosticSummary!g24eyn", direction: "row" },
-          second: "DiagnosticSummary!1c6n55t",
-          direction: "column",
-        },
+      const layout = {
+        first: "Tab!a",
+        second: { first: "Audio!a", second: "Global!a", direction: "column" },
         direction: "row",
+      };
+      expect(updateTree(layout, createAddUpdates(layout, "Plot!a", ["second", "first"], "left"))).toEqual({
+        ...layout,
+        second: { ...layout.second, first: { first: "Plot!a", second: layout.second.first, direction: "row" } },
       });
     });
   });
@@ -442,179 +431,40 @@ describe("layout", () => {
       });
     });
   });
+  describe("reorderTabWithinTabPanel", () => {
+    it("moves tab before and after other tabs", () => {
+      const source = { panelId: "Tab!a", tabIndex: 1 };
+      const target = { panelId: "Tab!a", tabIndex: 2 };
+      const savedProps = {
+        "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A" }, { title: "B" }, { title: "C" }] },
+      };
+      const resultConfig = { activeTabIdx: 0, tabs: [{ title: "A" }, { title: "C" }, { title: "B" }] };
+      const moveAfterConfigs = reorderTabWithinTabPanel({ source, target, savedProps }).configs;
+      expect(moveAfterConfigs.length).toEqual(1);
+      expect(moveAfterConfigs[0]).toEqual({ config: resultConfig, id: "Tab!a" });
 
-  describe("selectPanelOutput", () => {
-    it("with only config", () => {
-      const appLayout = "RosOut!xyz";
-      const config = { topicPath: "/abc" };
-      const panelToAdd = "RawMessages";
-      const { saveConfigsPayload, changePanelPayload } = selectPanelOutput(panelToAdd, appLayout, { config });
-
-      // Verify saveConfigsPayload
-      const { configs } = saveConfigsPayload;
-      expect(configs.length).toEqual(1);
-      const { id, config: firstConfig } = configs[0];
-
-      expect(getPanelTypeFromId(id)).toEqual(panelToAdd);
-      expect(firstConfig).toEqual(config);
-
-      // Verify changePanelPayload
-      const { layout } = changePanelPayload;
-      expect(getPanelTypeFromId(typeof layout.first === "string" ? layout.first : "")).toEqual(panelToAdd);
-      expect(typeof layout === "object" ? layout.second : "").toEqual(appLayout);
-    });
-
-    it("with both config & related configs", () => {
-      const appLayout = "RosOut!xyz";
-      const panelInsideTabPanel = "RawMessages";
-      const config = { tabs: [{ title: "A", layout: `${panelInsideTabPanel}!abc` }] };
-      const panelToAdd = TAB_PANEL_TYPE;
-      const { saveConfigsPayload, changePanelPayload } = selectPanelOutput(panelToAdd, appLayout, {
-        config,
-        relatedConfigs: { [`${panelInsideTabPanel}!abc`]: { topicPath: "/abc" } },
-      });
-
-      // Verify saveConfigsPayload
-      const { configs } = saveConfigsPayload;
-      expect(configs.length).toEqual(2);
-      const { id: firstId, config: firstConfig } = configs[0];
-      const { id: secondId, config: secondConfig } = configs[1];
-
-      expect(getPanelTypeFromId(firstId)).toEqual(panelInsideTabPanel);
-      expect(firstId).not.toEqual(`${panelInsideTabPanel}!abc`);
-      expect(firstConfig).toEqual({ topicPath: "/abc" });
-
-      expect(getPanelTypeFromId(secondId)).toEqual(panelToAdd);
-      expect(secondConfig?.tabs.length).toEqual(1);
-      expect(secondConfig?.tabs[0].title).toEqual("A");
-      expect(getPanelTypeFromId(secondConfig?.tabs[0].layout || "")).toEqual(panelInsideTabPanel);
-      expect(secondConfig?.tabs[0].layout).not.toEqual(`${panelInsideTabPanel}!abc`);
-
-      // Verify changePanelPayload
-      const { layout } = changePanelPayload;
-      expect(getPanelTypeFromId(typeof layout.first === "string" ? layout.first : "")).toEqual(panelToAdd);
-      expect(typeof layout === "object" ? layout.second : "").toEqual(appLayout);
+      const moveBeforeConfigs = reorderTabWithinTabPanel({ source: target, target: source, savedProps }).configs;
+      expect(moveBeforeConfigs.length).toEqual(1);
+      expect(moveBeforeConfigs[0]).toEqual({ config: resultConfig, id: "Tab!a" });
     });
   });
-  describe("onNewPanelDrop", () => {
-    it("adds panel to main layout via drop", () => {
-      expect(
-        onNewPanelDrop({
-          layout: "DiagnosticSummary!1nifzfo",
-          newPanelType: "DummyPanel",
-          destinationPath: [],
-          position: "left",
-          savedProps: { "DiagnosticSummary!1nifzfo": {} },
-          config: undefined,
-          relatedConfigs: undefined,
-          tabId: undefined,
-        })
-      ).toEqual({
-        saveConfigsPayload: { configs: [] },
-        layout: {
-          first: expect.stringContaining("DummyPanel!"),
-          second: "DiagnosticSummary!1nifzfo",
-          direction: "row",
-        },
+  describe("moveTabBetweenTabPanels", () => {
+    it("moves tab to another Tab panel", () => {
+      const source = { panelId: "Tab!a", tabIndex: 1 };
+      const target = { panelId: "Tab!b", tabIndex: 1 };
+      const savedProps = {
+        "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A" }, { title: "B" }, { title: "C" }] },
+        "Tab!b": { activeTabIdx: 0, tabs: [{ title: "D" }, { title: "E" }, { title: "F" }] },
+      };
+      const resultConfigs = moveTabBetweenTabPanels({ source, target, savedProps }).configs;
+      expect(resultConfigs.length).toEqual(2);
+      expect(resultConfigs[0]).toEqual({
+        config: { activeTabIdx: 0, tabs: [{ title: "A" }, { title: "C" }] },
+        id: "Tab!a",
       });
-    });
-    it("adds a tab panel preset into main layout", () => {
-      expect(
-        onNewPanelDrop({
-          layout: "DiagnosticSummary!1l1ar10",
-          newPanelType: "Tab",
-          destinationPath: [],
-          position: "left",
-          savedProps: {},
-          tabId: undefined,
-
-          config: {
-            tabs: [
-              {
-                title: "Preset",
-                layout: "Plot!1",
-              },
-            ],
-          },
-          relatedConfigs: {
-            "Plot!1": {},
-          },
-        })
-      ).toEqual({
-        saveConfigsPayload: {
-          configs: [
-            {
-              id: expect.stringContaining("Plot!"),
-              config: {},
-            },
-            {
-              id: expect.stringContaining("Tab!"),
-              config: {
-                tabs: [
-                  {
-                    title: "Preset",
-                    layout: expect.stringContaining("Plot!"),
-                  },
-                ],
-              },
-            },
-          ],
-        },
-        layout: { first: expect.stringContaining("Tab!"), second: "DiagnosticSummary!1l1ar10", direction: "row" },
-      });
-    });
-    it("adds a panel to an empty tab panel", () => {
-      expect(
-        onNewPanelDrop({
-          newPanelType: "DiagnosticSummary",
-          layout: "Tab!10j2f46",
-          savedProps: { "Tab!10j2f46": {} },
-          tabId: "Tab!10j2f46",
-          config: undefined,
-          relatedConfigs: undefined,
-          destinationPath: undefined,
-          position: undefined,
-        })
-      ).toEqual({
-        saveConfigsPayload: {
-          configs: [
-            {
-              id: "Tab!10j2f46",
-              config: {
-                activeTabIdx: 0,
-                tabs: [{ title: "1", layout: expect.stringContaining("DiagnosticSummary!") }],
-              },
-            },
-          ],
-        },
-        layout: "Tab!10j2f46",
-      });
-    });
-    it("to empty tab panel that has no savedProps", () => {
-      expect(
-        onNewPanelDrop({
-          newPanelType: "DiagnosticSummary",
-          layout: "Tab!10j2f46",
-          savedProps: {},
-          tabId: "Tab!10j2f46",
-          config: undefined,
-          relatedConfigs: undefined,
-          destinationPath: undefined,
-          position: undefined,
-        })
-      ).toEqual({
-        saveConfigsPayload: {
-          configs: [
-            {
-              id: "Tab!10j2f46",
-              config: {
-                activeTabIdx: 0,
-                tabs: [{ title: "1", layout: expect.stringContaining("DiagnosticSummary!") }],
-              },
-            },
-          ],
-        },
-        layout: "Tab!10j2f46",
+      expect(resultConfigs[1]).toEqual({
+        config: { activeTabIdx: 0, tabs: [{ title: "D" }, { title: "B" }, { title: "E" }, { title: "F" }] },
+        id: "Tab!b",
       });
     });
   });

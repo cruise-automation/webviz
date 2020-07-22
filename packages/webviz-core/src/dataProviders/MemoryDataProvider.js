@@ -9,21 +9,16 @@
 import { last } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
-import type {
-  ExtensionPoint,
-  InitializationResult,
-  DataProviderMessage,
-  DataProvider,
-} from "webviz-core/src/dataProviders/types";
-import type { Topic } from "webviz-core/src/players/types";
+import type { ExtensionPoint, InitializationResult, DataProvider } from "webviz-core/src/dataProviders/types";
+import type { Message, Topic, MessageDefinitionsByTopic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 // In-memory data provider, for in tests.
 export default class MemoryDataProvider implements DataProvider {
-  messages: DataProviderMessage[];
+  messages: Message[];
   topics: ?(Topic[]);
   datatypes: ?RosDatatypes;
-  messageDefinitionsByTopic: { [topic: string]: string };
+  messageDefinitionsByTopic: MessageDefinitionsByTopic;
   extensionPoint: ExtensionPoint;
   initiallyLoaded: boolean;
   providesParsedMessages: boolean;
@@ -36,10 +31,10 @@ export default class MemoryDataProvider implements DataProvider {
     messageDefinitionsByTopic,
     providesParsedMessages,
   }: {
-    messages: DataProviderMessage[],
+    messages: Message[],
     topics?: Topic[],
     datatypes?: RosDatatypes,
-    messageDefinitionsByTopic?: ?{ [topic: string]: string },
+    messageDefinitionsByTopic?: ?MessageDefinitionsByTopic,
     initiallyLoaded?: boolean,
     providesParsedMessages: boolean,
   }) {

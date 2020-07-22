@@ -8,11 +8,26 @@
 
 import { Time } from "rosbag";
 
-import { type DataProvider, type InitializationResult, type DataProviderMessage } from "./types";
+import { type DataProvider, type InitializationResult } from "./types";
 import RpcDataProvider from "webviz-core/src/dataProviders/RpcDataProvider";
 import type { DataProviderDescriptor, ExtensionPoint } from "webviz-core/src/dataProviders/types";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import type { Message } from "webviz-core/src/players/types";
 import Rpc from "webviz-core/src/util/Rpc";
+
+const params = new URLSearchParams(window.location.search);
+const secondSourceUrlParams = getGlobalHooks().getSecondSourceUrlParams();
+const hasSecondSource = secondSourceUrlParams.some((param) => params.has(param));
+
+const WorkerDataProviderWorker = getGlobalHooks().getWorkerDataProviderWorker();
+// We almost always use a WorkerDataProvider in Webviz. By initializing the first worker before we actually construct
+// the WorkerDataProvider we can potentially improve performance by loading while waiting for async requests.
+let preinitializedWorkers = [];
+if (process.env.NODE_ENV !== "test") {
+  preinitializedWorkers = hasSecondSource
+    ? [new WorkerDataProviderWorker(), new WorkerDataProviderWorker()]
+    : [new WorkerDataProviderWorker()];
+}
 
 // Wraps the underlying DataProviderDescriptor tree in a Web Worker, therefore allowing
 // `getMessages` calls to get resolved in parallel to the main thread.
@@ -29,13 +44,17 @@ export default class WorkerDataProvider implements DataProvider {
   }
 
   initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
-    const WorkerDataProviderWorker = getGlobalHooks().getWorkerDataProviderWorker();
-    this._worker = new WorkerDataProviderWorker();
+    if (preinitializedWorkers.length) {
+      this._worker = preinitializedWorkers.pop();
+    } else {
+      this._worker = new WorkerDataProviderWorker();
+    }
+
     this._provider = new RpcDataProvider(new Rpc(this._worker), [this._child]);
     return this._provider.initialize(extensionPoint);
   }
 
-  getMessages(start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> {
+  getMessages(start: Time, end: Time, topics: string[]): Promise<Message[]> {
     return this._provider.getMessages(start, end, topics);
   }
 

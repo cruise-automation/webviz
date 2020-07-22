@@ -81,7 +81,7 @@ describe("CachedFilelike", () => {
         };
       });
       const cachedFileReader = new CachedFilelike({ fileReader, logFn: () => {} });
-      cachedFileReader.read(1, 2, (error, data) => {
+      cachedFileReader.read(1, 2, (error, _data) => {
         expect(error).not.toEqual(undefined);
         expect(destroyed).toEqual(true);
         done();

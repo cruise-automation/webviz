@@ -8,7 +8,7 @@
 
 import { isEqual, sortBy } from "lodash";
 import * as React from "react";
-import { MessageReader, type Time } from "rosbag";
+import { MessageReader, type Time, parseMessageDefinition } from "rosbag";
 import uuid from "uuid";
 
 import renderToBody from "webviz-core/src/components/renderToBody";
@@ -22,12 +22,13 @@ import {
   type PublishPayload,
   type SubscribePayload,
   type Topic,
+  type MessageDefinitionsByTopic,
 } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { bagConnectionsToDatatypes } from "webviz-core/src/util/bagConnectionsHelper";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
-import { topicsByTopicName } from "webviz-core/src/util/selectors";
+import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromMillis, type TimestampMethod } from "webviz-core/src/util/time";
 
@@ -36,6 +37,7 @@ import "roslib/build/roslib";
 const ROSLIB = window.ROSLIB;
 
 const capabilities = [PlayerCapabilities.advertise];
+const NO_WARNINGS = Object.freeze({});
 
 // Connects to `rosbridge_server` instance using `roslibjs`. Currently doesn't support seeking or
 // showing simulated time, so current time from Date.now() is always used instead. Also doesn't yet
@@ -57,7 +59,7 @@ export default class RosbridgePlayer implements Player {
   _messageOrder: TimestampMethod = "receiveTime";
   _requestTopicsTimeout: ?TimeoutID; // setTimeout() handle for _requestTopics().
   _topicPublishers: { [topicName: string]: ROSLIB.Topic } = {};
-  _messageDefinitionsByTopic: { [topicName: string]: string } = {};
+  _messageDefinitionsByTopic: MessageDefinitionsByTopic = {};
 
   constructor(url: string) {
     this._url = url;
@@ -140,8 +142,10 @@ export default class RosbridgePlayer implements Player {
         }
         topics.push({ name: topicName, datatype: type });
         datatypeDescriptions.push({ type, messageDefinition });
+        const parsedMessageDefinition =
+          typeof messageDefinition === "string" ? parseMessageDefinition(messageDefinition) : messageDefinition;
         messageReaders[type] =
-          messageReaders[type] || new MessageReader(messageDefinition, { freeze: FREEZE_MESSAGES });
+          messageReaders[type] || new MessageReader(parsedMessageDefinition, { freeze: FREEZE_MESSAGES });
         this._messageDefinitionsByTopic[topicName] = messageDefinition;
       }
 
@@ -222,6 +226,7 @@ export default class RosbridgePlayer implements Player {
         topics: _providerTopics,
         datatypes: _providerDatatypes,
         messageDefinitionsByTopic: this._messageDefinitionsByTopic,
+        playerWarnings: NO_WARNINGS,
       },
     });
   });
@@ -246,7 +251,7 @@ export default class RosbridgePlayer implements Player {
     }
 
     // See what topics we actually can subscribe to.
-    const availableTopicsByTopicName = topicsByTopicName(this._providerTopics);
+    const availableTopicsByTopicName = getTopicsByTopicName(this._providerTopics);
     const topicNames = subscriptions
       .map(({ topic }) => topic)
       .filter((topicName) => availableTopicsByTopicName[topicName]);
@@ -267,7 +272,6 @@ export default class RosbridgePlayer implements Player {
           }
           this._messages.push({
             topic: topicName,
-            datatype,
             receiveTime: fromMillis(Date.now()),
             message: messageReader.readMessage(Buffer.from(message.bytes)),
           });
@@ -318,7 +322,7 @@ export default class RosbridgePlayer implements Player {
   // Bunch of unsupported stuff. Just don't do anything for these.
   startPlayback() {}
   pausePlayback() {}
-  seekPlayback(time: Time) {}
-  setPlaybackSpeed(speedFraction: number) {}
+  seekPlayback(_time: Time) {}
+  setPlaybackSpeed(_speedFraction: number) {}
   requestBackfill() {}
 }

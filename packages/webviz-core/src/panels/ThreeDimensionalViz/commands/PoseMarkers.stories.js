@@ -8,7 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { Worldview, DEFAULT_CAMERA_STATE } from "regl-worldview";
+import { Worldview, DEFAULT_CAMERA_STATE, type Color } from "regl-worldview";
 
 import PoseMarkers from "./PoseMarkers";
 
@@ -20,12 +20,12 @@ const MARKER_DATA = {
   },
   scale: { x: 1, y: 1, z: 1 },
   color: { r: 1, g: 1, b: 1, a: 0.5 },
-  settings: { color: "" },
+  settings: { color: undefined },
 };
 const targetPosition = MARKER_DATA.pose.position;
 const targetOffset = [targetPosition.x, targetPosition.y, targetPosition.z];
 
-function Example({ alpha = 0.3, color = "50,150,50,0.3" }: { alpha?: number, color?: string }) {
+function Example({ alpha = 0.3, color = { r: 0.2, g: 0.59, b: 0.2, a: 0.3 } }: { alpha?: number, color?: Color }) {
   const marker = MARKER_DATA;
   const markerWithoutColor = {
     ...MARKER_DATA,
@@ -73,13 +73,13 @@ function Example({ alpha = 0.3, color = "50,150,50,0.3" }: { alpha?: number, col
   );
 }
 
-storiesOf("<3DViz> - PoseMarkers", module)
+storiesOf("<3DViz> / PoseMarkers", module)
   .addParameters({
     screenshot: {
       delay: 3000,
     },
   })
   .add("alpha_0.3", () => <Example alpha={0.3} />)
-  .add("alpha_0.5, color_50,200,50,0.8", () => <Example alpha={0.5} color="50,200,50,0.8" />)
+  .add("alpha_0.5, color_50,200,50,0.8", () => <Example alpha={0.5} color={{ r: 0.2, g: 0.78, b: 0.2, a: 0.8 }} />)
   .add("alpha 0.8", () => <Example alpha={0.8} />)
   .add("alpha 1", () => <Example alpha={1} />);

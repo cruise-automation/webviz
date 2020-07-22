@@ -13,15 +13,15 @@ import { getIdbCacheDataProviderDatabase, MESSAGES_STORE_NAME, TIMESTAMP_INDEX }
 import IdbCacheWriterDataProvider, { BLOCK_SIZE_NS } from "./IdbCacheWriterDataProvider";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
-import type { DataProviderMessage } from "webviz-core/src/dataProviders/types";
+import type { Message } from "webviz-core/src/players/types";
 import { getDatabasesInTests } from "webviz-core/src/util/indexeddb/getDatabasesInTests";
 import naturalSort from "webviz-core/src/util/naturalSort";
 
-function sortMessages(messages: DataProviderMessage[]) {
+function sortMessages(messages: Message[]) {
   return messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime) || naturalSort()(a.topic, b.topic));
 }
 
-function generateMessages(topics: string[]): DataProviderMessage[] {
+function generateMessages(topics: string[]): Message[] {
   return sortMessages(
     flatten(
       topics.map((topic) => [

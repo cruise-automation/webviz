@@ -82,7 +82,7 @@ storiesOf("<Accordion>", module)
         <Accordion
           active
           onToggle={() => {}}
-          renderHeader={({ active, onToggle }) => (
+          renderHeader={({ onToggle }) => (
             <div>
               <button onClick={onToggle}>Click</button>
             </div>

@@ -12,7 +12,9 @@ import MagnifyIcon from "@mdi/svg/svg/magnify.svg";
 import LessIcon from "@mdi/svg/svg/unfold-less-horizontal.svg";
 import MoreIcon from "@mdi/svg/svg/unfold-more-horizontal.svg";
 import { Tree } from "antd";
+import { clamp } from "lodash";
 import React, { useMemo, useRef, useEffect } from "react";
+import Dimensions from "react-container-dimensions";
 import styled from "styled-components";
 
 import { type Save3DConfig } from "../index";
@@ -20,43 +22,52 @@ import NoMatchesSvg from "./noMatches.svg";
 import renderTreeNodes, { SWITCHER_WIDTH } from "./renderTreeNodes";
 import TopicTreeSwitcher, { SWITCHER_HEIGHT } from "./TopicTreeSwitcher";
 import TopicViewModeSelector from "./TopicViewModeSelector";
-import { DOT_MENU_WIDTH } from "./TreeNodeDotMenu";
-import { ROW_HEIGHT, ROW_CONTENT_HEIGHT } from "./TreeNodeRow";
+import { ROW_HEIGHT } from "./TreeNodeRow";
 import type {
   DerivedCustomSettingsByKey,
   GetIsNamespaceCheckedByDefault,
   GetIsTreeNodeVisibleInScene,
   GetIsTreeNodeVisibleInTree,
   NamespacesByTopic,
+  OnNamespaceOverrideColorChange,
   SceneErrorsByKey,
   SetCurrentEditingTopic,
+  SetEditingNamespace,
   ToggleNamespaceChecked,
   ToggleNode,
   ToggleNodeByColumn,
   TopicDisplayMode,
   TreeNode,
+  VisibleTopicsCountByKey,
 } from "./types";
-import { TOGGLE_WRAPPER_SIZE } from "./VisibilityToggle";
 import Icon from "webviz-core/src/components/Icon";
 import { useChangeDetector } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const CONTAINER_SPACING = 15;
 const DEFAULT_WIDTH = 360;
-const DEFAULT_XS_WIDTH = 200;
+const DEFAULT_XS_WIDTH = 240;
 const SEARCH_BAR_HEIGHT = 40;
 const SWITCHER_ICON_SIZE = 20;
 export const TREE_SPACING = 8;
 const MAX_CONTAINER_WIDTH_RATIO = 0.9;
 
-const MAX_DATA_SOURCE_TOGGLES_WIDTH = TOGGLE_WRAPPER_SIZE;
-
-const TopicTreeContainer = styled.div`
+const STopicTreeWrapper = styled.div`
   position: absolute;
   top: ${CONTAINER_SPACING}px;
   left: ${CONTAINER_SPACING}px;
   z-index: 102;
   max-width: ${MAX_CONTAINER_WIDTH_RATIO * 100}%;
+`;
+
+const STopicTree = styled.div`
+  position: relative;
+  color: ${colors.TEXTL1};
+  border-radius: 6px;
+  background-color: ${colors.TOOLBAR};
+  padding-bottom: 6px;
+  max-width: 100%;
+  overflow: auto;
   .ant-tree {
     li {
       ul {
@@ -89,16 +100,6 @@ const TopicTreeContainer = styled.div`
       }
     }
   }
-`;
-
-const STopicTree = styled.div`
-  position: relative;
-  color: ${colors.TEXTL1};
-  border-radius: 6px;
-  background-color: ${colors.TOOLBAR};
-  padding-bottom: 6px;
-  max-width: 100%;
-  overflow: auto;
 `;
 
 const STopicTreeHeader = styled.div`
@@ -138,7 +139,7 @@ const SInput = styled.input`
 
 const SSwitcherIcon = styled.span`
   width: ${SWITCHER_WIDTH}px;
-  height: ${ROW_CONTENT_HEIGHT}px;
+  height: ${ROW_HEIGHT}px;
   transition: transform 80ms ease-in-out;
   &.ant-tree-switcher-icon {
     display: inline-flex !important;
@@ -170,12 +171,10 @@ const SNoMatchesText = styled.div`
   line-height: 130%;
 `;
 
-type Props = {|
+type SharedProps = {|
   allKeys: string[],
   availableNamespacesByTopic: NamespacesByTopic,
   checkedKeys: string[],
-  containerHeight: number,
-  containerWidth: number,
   derivedCustomSettingsByKey: DerivedCustomSettingsByKey,
   expandedKeys: string[],
   filterText: string,
@@ -184,11 +183,13 @@ type Props = {|
   getIsTreeNodeVisibleInTree: GetIsTreeNodeVisibleInTree,
   hasFeatureColumn: boolean,
   onExitTopicTreeFocus: () => void,
+  onNamespaceOverrideColorChange: OnNamespaceOverrideColorChange,
   pinTopics: boolean,
   rootTreeNode: TreeNode,
   saveConfig: Save3DConfig,
   sceneErrorsByKey: SceneErrorsByKey,
   setCurrentEditingTopic: SetCurrentEditingTopic,
+  setEditingNamespace: SetEditingNamespace,
   setFilterText: (string) => void,
   setShowTopicTree: (boolean | ((boolean) => boolean)) => void,
   shouldExpandAllKeys: boolean,
@@ -199,14 +200,25 @@ type Props = {|
   toggleNodeChecked: ToggleNodeByColumn,
   toggleNodeExpanded: ToggleNode,
   topicDisplayMode: TopicDisplayMode,
+  visibleTopicsCountByKey: VisibleTopicsCountByKey,
+|};
+
+type Props = {|
+  ...SharedProps,
+  containerHeight: number,
+  containerWidth: number,
+|};
+
+type BaseProps = {|
+  ...SharedProps,
+  treeWidth: number,
+  treeHeight: number,
 |};
 
 function TopicTree({
   allKeys,
   availableNamespacesByTopic,
   checkedKeys,
-  containerHeight,
-  containerWidth,
   derivedCustomSettingsByKey,
   expandedKeys,
   filterText,
@@ -214,11 +226,13 @@ function TopicTree({
   getIsTreeNodeVisibleInScene,
   getIsTreeNodeVisibleInTree,
   hasFeatureColumn,
+  onNamespaceOverrideColorChange,
   pinTopics,
   rootTreeNode,
   saveConfig,
   sceneErrorsByKey,
   setCurrentEditingTopic,
+  setEditingNamespace,
   setFilterText,
   setShowTopicTree,
   shouldExpandAllKeys,
@@ -229,20 +243,13 @@ function TopicTree({
   toggleNodeChecked,
   toggleNodeExpanded,
   topicDisplayMode,
-}: Props) {
+  treeHeight,
+  treeWidth,
+  visibleTopicsCountByKey,
+}: BaseProps) {
   const renderTopicTree = pinTopics || showTopicTree;
   const scrollContainerRef = useRef<?HTMLDivElement>();
   const checkedKeysSet = useMemo(() => new Set(checkedKeys), [checkedKeys]);
-  const treeContainerHeight = containerHeight - CONTAINER_SPACING * 2;
-  const treeHeight = treeContainerHeight - SEARCH_BAR_HEIGHT - SWITCHER_HEIGHT;
-
-  const maxAvailableContainerWidth = Math.floor(containerWidth * MAX_CONTAINER_WIDTH_RATIO);
-  let treeWidth = Math.max(Math.min(maxAvailableContainerWidth, DEFAULT_WIDTH), DEFAULT_XS_WIDTH);
-  const isXSWidth = treeWidth >= maxAvailableContainerWidth;
-  const togglesWidth = hasFeatureColumn ? MAX_DATA_SOURCE_TOGGLES_WIDTH * 2 : MAX_DATA_SOURCE_TOGGLES_WIDTH;
-  if (!rootTreeNode.providerAvailable) {
-    treeWidth -= togglesWidth + DOT_MENU_WIDTH;
-  }
 
   const filterTextFieldRef = useRef();
 
@@ -273,23 +280,21 @@ function TopicTree({
   );
 
   const showNoMatchesState = !getIsTreeNodeVisibleInTree(rootTreeNode.key);
+
+  const isXSWidth = treeWidth < DEFAULT_XS_WIDTH;
   const headerRightIconStyle = { margin: `4px ${(isXSWidth ? 0 : TREE_SPACING) + 2}px 4px 8px` };
 
   return (
-    <TopicTreeContainer
-      isXSWidth={isXSWidth}
-      className="ant-component"
-      style={{ maxHeight: containerHeight - CONTAINER_SPACING * 3 }}>
+    <>
       <TopicTreeSwitcher
         showErrorBadge={!renderTopicTree && Object.keys(sceneErrorsByKey).length > 0}
         pinTopics={pinTopics}
         renderTopicTree={renderTopicTree}
         saveConfig={saveConfig}
         setShowTopicTree={setShowTopicTree}
-        showTopicTree={showTopicTree}
       />
       {renderTopicTree && (
-        <STopicTree onClick={(e) => e.stopPropagation()}>
+        <STopicTree onClick={(e) => e.stopPropagation()} isXSWidth={isXSWidth}>
           <div style={{ width: treeWidth }}>
             <STopicTreeHeader>
               <SFilter>
@@ -353,15 +358,18 @@ function TopicTree({
                     getIsNamespaceCheckedByDefault,
                     hasFeatureColumn,
                     isXSWidth,
+                    onNamespaceOverrideColorChange,
                     sceneErrorsByKey,
                     setCurrentEditingTopic,
                     derivedCustomSettingsByKey,
+                    setEditingNamespace,
                     toggleCheckAllAncestors,
                     toggleCheckAllDescendants,
                     toggleNamespaceChecked,
                     toggleNodeChecked,
                     toggleNodeExpanded,
                     topicDisplayMode,
+                    visibleTopicsCountByKey,
                     width: treeWidth,
                     filterText,
                   })}
@@ -392,8 +400,40 @@ function TopicTree({
           </div>
         </STopicTree>
       )}
-    </TopicTreeContainer>
+    </>
   );
 }
 
-export default React.memo<Props>(TopicTree);
+// A wrapper that can be resized horizontally, and it dynamically calculates the width of the base topic tree component.
+function TopicTreeWrapper({ containerWidth, containerHeight, pinTopics, showTopicTree, ...rest }: Props) {
+  const defaultTreeWidth = clamp(containerWidth, DEFAULT_XS_WIDTH, DEFAULT_WIDTH);
+  const renderTopicTree = pinTopics || showTopicTree;
+
+  return (
+    <STopicTreeWrapper style={{ maxHeight: containerHeight - CONTAINER_SPACING * 3 }} className="ant-component">
+      <Dimensions>
+        {({ width }) => (
+          <div
+            style={{
+              width: defaultTreeWidth,
+              resize: renderTopicTree ? "horizontal" : "none",
+              overflow: renderTopicTree ? "auto" : "hidden",
+              minWidth: DEFAULT_XS_WIDTH,
+              maxWidth: containerWidth - 100,
+            }}
+            onClick={(ev) => ev.stopPropagation()}>
+            <TopicTree
+              {...rest}
+              pinTopics={pinTopics}
+              showTopicTree={showTopicTree}
+              treeWidth={width}
+              treeHeight={containerHeight - SEARCH_BAR_HEIGHT - SWITCHER_HEIGHT - CONTAINER_SPACING * 2}
+            />
+          </div>
+        )}
+      </Dimensions>
+    </STopicTreeWrapper>
+  );
+}
+
+export default React.memo<Props>(TopicTreeWrapper);

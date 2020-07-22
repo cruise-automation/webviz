@@ -8,11 +8,13 @@
 
 import BlockHelperIcon from "@mdi/svg/svg/block-helper.svg";
 import React, { useCallback } from "react";
+import { type Color } from "regl-worldview";
 import styled from "styled-components";
 import tinyColor from "tinycolor2";
 
 import { ROW_HEIGHT } from "./TreeNodeRow";
 import Icon from "webviz-core/src/components/Icon";
+import { getHexFromColorSettingWithDefault } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export const TOPIC_ROW_PADDING = 3;
@@ -59,7 +61,9 @@ type Props = {|
   onAltToggle?: () => void,
   onShiftToggle?: () => void,
   onToggle: () => void,
-  overrideColor?: ?string,
+  onMouseEnter?: (MouseEvent) => void,
+  onMouseLeave?: (MouseEvent) => void,
+  overrideColor?: ?Color,
   size?: ?Size,
   unavailableTooltip?: string,
   visibleInScene: boolean,
@@ -73,17 +77,18 @@ function getStyles({
 }: {
   checked: boolean,
   visibleInScene: boolean,
-  overrideColor: ?string,
+  overrideColor: ?Color,
   size: ?Size,
 }): any {
   const sizeInNumber =
     size === TOGGLE_SIZE_CONFIG.SMALL.name ? TOGGLE_SIZE_CONFIG.SMALL.size : TOGGLE_SIZE_CONFIG.NORMAL.size;
   let styles = { width: sizeInNumber, height: sizeInNumber, borderRadius: sizeInNumber / 2 };
 
+  const overrideHexColor = getHexFromColorSettingWithDefault(overrideColor);
   const { enabledColor, disabledColor } = overrideColor
     ? {
-        enabledColor: overrideColor,
-        disabledColor: tinyColor(overrideColor)
+        enabledColor: overrideHexColor,
+        disabledColor: tinyColor(overrideHexColor)
           .setAlpha(0.5)
           .toRgbString(),
       }
@@ -111,6 +116,8 @@ export default function VisibilityToggle({
   size,
   unavailableTooltip,
   visibleInScene,
+  onMouseEnter,
+  onMouseLeave,
 }: Props) {
   // Handle shift + click/enter, option + click/enter, and click/enter.
   const onChange = useCallback(
@@ -125,6 +132,7 @@ export default function VisibilityToggle({
     },
     [onAltToggle, onShiftToggle, onToggle]
   );
+
   if (!available) {
     return (
       <Icon
@@ -157,8 +165,17 @@ export default function VisibilityToggle({
           onChange(e);
         }
       }}
-      onClick={(e: MouseEvent) => onChange(e)}>
-      <SSpan style={getStyles({ checked, visibleInScene, size, overrideColor })} />
+      onClick={onChange}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}>
+      <SSpan
+        style={getStyles({
+          checked,
+          visibleInScene,
+          size,
+          overrideColor,
+        })}
+      />
     </SToggle>
   );
 }

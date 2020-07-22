@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { getNewCameraStateOnFollowChange } from "./threeDimensionalVizUtils";
+import { getNewCameraStateOnFollowChange, getUpdatedGlobalVariablesBySelectedObject } from "./threeDimensionalVizUtils";
 
 describe("threeDimensionalVizUtils", () => {
   describe("getNewCameraStateOnFollowChange", () => {
@@ -39,6 +39,55 @@ describe("threeDimensionalVizUtils", () => {
         ...prevCameraState,
         target: [0, 0, 0],
         targetOffset: prevCameraState.target,
+      });
+    });
+  });
+
+  describe("getUpdatedGlobalVariablesBySelectedObject", () => {
+    const linkedGlobalVariables = [
+      {
+        topic: "/foo/bar",
+        markerKeyPath: ["name"],
+        name: "linkedName",
+      },
+      {
+        topic: "/bar/qux",
+        markerKeyPath: ["age"],
+        name: "linkedVarTwo",
+      },
+    ];
+
+    it("returns object values", () => {
+      const mouseEventObject = {
+        object: {
+          name: 123456,
+          interactionData: {
+            topic: "/foo/bar",
+          },
+        },
+      };
+      expect(getUpdatedGlobalVariablesBySelectedObject(mouseEventObject, linkedGlobalVariables)).toEqual({
+        linkedName: 123456,
+      });
+    });
+
+    it("returns values from instanced objects", () => {
+      const mouseEventObject = {
+        object: {
+          interactionData: {
+            topic: "/foo/bar",
+          },
+          metadataByIndex: [
+            {
+              name: 654321,
+            },
+          ],
+        },
+        instanceIndex: 0,
+      };
+
+      expect(getUpdatedGlobalVariablesBySelectedObject(mouseEventObject, linkedGlobalVariables)).toEqual({
+        linkedName: 654321,
       });
     });
   });

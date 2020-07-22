@@ -5,20 +5,21 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { partition } from "lodash";
+import { partition, uniq } from "lodash";
 import { type Time, TimeUtil } from "rosbag";
 
-import {
-  type AdvertisePayload,
-  type Message,
-  type PublishPayload,
-  type SubscribePayload,
-  type Player,
-  type PlayerState,
+import type {
+  AdvertisePayload,
+  Message,
+  PublishPayload,
+  SubscribePayload,
+  Player,
+  PlayerState,
+  PlayerWarnings,
 } from "webviz-core/src/players/types";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
 import type { UserNodes } from "webviz-core/src/types/panels";
-import { clampTime, type TimestampMethod } from "webviz-core/src/util/time";
+import { clampTime, isTime, type TimestampMethod } from "webviz-core/src/util/time";
 
 // As a compromise between playback buffering required and correctness (as well as our ability to
 // play near the ends of bags), we assume messages' headers are always between 0s and 1s earlier
@@ -35,6 +36,9 @@ export default class OrderedStampPlayer implements Player {
   _lastSeekId: ?number = undefined;
   // Our best guess of "now" in case we need to force a backfill.
   _currentTime: ?Time = undefined;
+  _previousUpstreamWarnings: ?PlayerWarnings = undefined;
+  _warnings: PlayerWarnings = Object.freeze({});
+  _topicsWithoutHeadersSinceSeek = new Set<string>();
 
   constructor(player: UserNodePlayer, messageOrder: TimestampMethod) {
     this._player = player;
@@ -57,14 +61,32 @@ export default class OrderedStampPlayer implements Player {
       if (activeData.lastSeekTime !== this._lastSeekId) {
         this._messageBuffer = [];
         this._lastSeekId = activeData.lastSeekTime;
+        this._topicsWithoutHeadersSinceSeek = new Set<string>();
       }
 
       // Only store messages with a header stamp.
       // TODO: don't expose topics as existing if they don't have a header.stamp
-      const extendedBuffer = [
-        ...this._messageBuffer,
-        ...activeData.messages.filter((message) => message.message.header?.stamp),
-      ];
+      const [newMessagesWithHeaders, newMessagesWithoutHeaders] = partition(activeData.messages, (message) =>
+        isTime(message.message.header?.stamp)
+      );
+      let newMissingTopic = false;
+      newMessagesWithoutHeaders.forEach((message) => {
+        if (!this._topicsWithoutHeadersSinceSeek.has(message.topic)) {
+          newMissingTopic = true;
+          this._topicsWithoutHeadersSinceSeek.add(message.topic);
+        }
+      });
+      if (newMissingTopic || activeData.playerWarnings !== this._previousUpstreamWarnings) {
+        this._warnings = {
+          ...activeData.playerWarnings,
+          topicsWithoutHeaderStamps: uniq([
+            ...(activeData.playerWarnings.topicsWithoutHeaderStamps || []),
+            ...this._topicsWithoutHeadersSinceSeek,
+          ]),
+        };
+      }
+
+      const extendedBuffer = [...this._messageBuffer, ...newMessagesWithHeaders];
       // output messages older than this threshold (ie, send all messages up until the threshold
       // time)
       const thresholdTime = {
@@ -91,6 +113,7 @@ export default class OrderedStampPlayer implements Player {
             activeData.startTime,
             activeData.endTime
           ),
+          playerWarnings: this._warnings,
         },
       });
     });
@@ -118,7 +141,18 @@ export default class OrderedStampPlayer implements Player {
     this._player.seekPlayback(seekLocation, { sec: BUFFER_DURATION_SECS, nsec: 0 });
   };
   requestBackfill() {
-    this._player.requestBackfill();
+    if (!this._currentTime || this._messageOrder === "receiveTime") {
+      return this._player.requestBackfill();
+    }
+
+    // If we are sorting messages by header stamps, let seekPlayback
+    // handle the backfill since it takes care of fetching extra messages.
+    // Note: This has the possibility to cause a seek during playback.
+    // Ideally we would only seek if the player is paused, but the OrderedStampPlayer
+    // does not have easy access to that state without tracking it itself.
+    // This shouldn't matter in practice because the next emit() will
+    // populate the panels regardless of requestBackfill() getting called.
+    this.seekPlayback(this._currentTime);
   }
   setUserNodes(nodes: UserNodes): Promise<void> {
     return this._player.setUserNodes(nodes);

@@ -43,14 +43,12 @@ describe("useMessagesByTopic", () => {
     const Test = createTest();
 
     const message1 = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 1 },
     };
 
     const message2 = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },
@@ -75,14 +73,12 @@ describe("useMessagesByTopic", () => {
     const Test = createTest();
 
     const message1 = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 1 },
     };
 
     const message2 = {
-      datatype: "Foo",
       topic: "/foo",
       receiveTime: { sec: 0, nsec: 0 },
       message: { value: 2 },

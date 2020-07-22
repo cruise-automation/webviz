@@ -6,8 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import ColorPicker from "rc-color-picker";
+import ColorPicker, { Panel as ColorPickerPanel } from "rc-color-picker";
 import React from "react";
+import { type Color } from "regl-worldview";
 import styled from "styled-components";
 import tinyColor from "tinycolor2";
 
@@ -18,12 +19,6 @@ export const PICKER_SIZE = {
 
 export type Size = $Keys<typeof PICKER_SIZE>;
 type Placement = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
-type Props = {|
-  color: ?string,
-  onChange: (newColor: string) => void,
-  placement?: Placement,
-  size?: ?Size,
-|};
 
 const SWrapper = styled.span`
   .rc-color-picker-trigger {
@@ -38,55 +33,57 @@ const SWrapper = styled.span`
 
 const DEFAULT_OVERRIDE_COLOR = "rgba(255,255,255,1)";
 
-// Parse color saved into topic settings into {r, g, b, a} form.
-export function parseColorSetting(rgba: ?string, divisor?: number = 255) {
-  const [r = 255, g = 255, b = 255, a = 1] = (rgba || "")
-    .split(",")
-    .map(parseFloat)
-    .map((x) => (isNaN(x) ? undefined : x));
-  return { r: r / divisor, g: g / divisor, b: b / divisor, a };
+export function getHexFromColorSettingWithDefault(color: ?Color): string {
+  return color ? tinyColor.fromRatio(color).toRgbString() : DEFAULT_OVERRIDE_COLOR;
 }
 
-export function getRgbaColor(maybeHexColor: string): string {
-  if (maybeHexColor && maybeHexColor.startsWith("#")) {
-    const rgbaObj = tinyColor(maybeHexColor).toRgb();
-    return `${rgbaObj.r},${rgbaObj.g},${rgbaObj.b},${rgbaObj.a}`;
-  }
-  return maybeHexColor;
-}
-export function getRgbaArray(maybeHexColor: string): number[] {
-  if (maybeHexColor && maybeHexColor.startsWith("#")) {
-    const rgbaObj = tinyColor(maybeHexColor).toRgb();
-    return [rgbaObj.r, rgbaObj.g, rgbaObj.b, rgbaObj.a];
-  }
-  const arr = maybeHexColor.split(",");
-  return [
-    isNaN(arr[0]) ? 255 : +arr[0],
-    isNaN(arr[1]) ? 255 : +arr[1],
-    isNaN(arr[2]) ? 255 : +arr[2],
-    isNaN(arr[3]) ? 1 : +arr[3],
-  ];
-}
+type Props = {|
+  color: ?Color,
+  onChange: (newColor: Color) => void,
+  placement?: Placement,
+  size?: ?Size,
+  useModal?: boolean,
+|};
+type ColorPickerSettingsPanelProps = {|
+  color: ?string,
+  onChange: (newColor: Color) => void,
+|};
 
-export function getHexFromColorSettingWithDefault(color: ?string): string {
-  const rgba = color ? parseColorSetting(color) : undefined;
-  return rgba ? tinyColor.fromRatio(rgba).toRgbString() : DEFAULT_OVERRIDE_COLOR;
+function getRGBAFromColor(color: { color: string, alpha: number }): Color {
+  const rgbaColor = tinyColor(color.color)
+    .setAlpha(color.alpha / 100)
+    .toRgb();
+  return {
+    r: rgbaColor.r / 255,
+    g: rgbaColor.g / 255,
+    b: rgbaColor.b / 255,
+    a: rgbaColor.a,
+  };
+}
+// A tiny wrapper to set up the default handling of color and onChange for ColorPickerPanel.
+export function ColorPickerSettingsPanel({ color, onChange }: ColorPickerSettingsPanelProps) {
+  const hexColor = getHexFromColorSettingWithDefault(color);
+  return (
+    <ColorPickerPanel
+      enableAlpha
+      color={hexColor}
+      onChange={(newColor: { color: string, alpha: number }) => onChange(getRGBAFromColor(newColor))}
+      mode="RGB"
+    />
+  );
 }
 
 export default function ColorPickerForTopicSettings({ color, placement, onChange, size }: Props) {
-  const isSmallSize = size && size === PICKER_SIZE.SMALL.name;
+  const isSmallSize = !!(size && size === PICKER_SIZE.SMALL.name);
+  const hexColor = getHexFromColorSettingWithDefault(color);
+
   return (
     <SWrapper isSmallSize={isSmallSize}>
       <ColorPicker
         animation="slide-up"
-        color={getHexFromColorSettingWithDefault(color)}
+        color={hexColor}
         placement={placement}
-        onChange={(newColor) => {
-          const newRgbaColor = tinyColor(newColor.color)
-            .setAlpha(newColor.alpha / 100)
-            .toRgb();
-          onChange(`${newRgbaColor.r},${newRgbaColor.g},${newRgbaColor.b},${newRgbaColor.a}`);
-        }}
+        onChange={(newColor: { color: string, alpha: number }) => onChange(getRGBAFromColor(newColor))}
       />
     </SWrapper>
   );

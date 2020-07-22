@@ -26,7 +26,7 @@ describe("Array toggle", () => {
   });
 
   it("adds item if predicate returns false for everything", () => {
-    const arr = toggle(items, { foo: "bar" }, (item) => false);
+    const arr = toggle(items, { foo: "bar" }, () => false);
     expect(arr).toEqual([{ foo: "bar" }, { foo: "baz" }, { foo: "bar" }]);
     expect(items).toBe(items);
     expect(arr).not.toBe(items);

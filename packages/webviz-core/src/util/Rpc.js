@@ -28,7 +28,8 @@ const ERROR = "$$ERROR";
 export function createLinkedChannels(): { local: Channel, remote: Channel } {
   const local: ChannelImpl = {
     onmessage: null,
-    postMessage(data: any, transfer?: Array<ArrayBuffer>) {
+
+    postMessage(data: any, _transfer?: Array<ArrayBuffer>) {
       const ev = new MessageEvent("message", { data });
       // eslint-disable-next-line no-use-before-define
       if (remote.onmessage) {
@@ -40,7 +41,8 @@ export function createLinkedChannels(): { local: Channel, remote: Channel } {
 
   const remote: ChannelImpl = {
     onmessage: null,
-    postMessage(data: any, transfer?: Array<ArrayBuffer>) {
+
+    postMessage(data: any, _transfer?: Array<ArrayBuffer>) {
       const ev = new MessageEvent("message", { data });
       if (local.onmessage) {
         local.onmessage(ev);
@@ -84,7 +86,7 @@ export default class Rpc {
       return;
     }
     // invoke the receive handler in a promise so if it throws synchronously we can reject
-    new Promise((resolve, reject) => {
+    new Promise((resolve) => {
       const handler = this._receivers.get(topic);
       if (!handler) {
         throw new Error(`no receiver registered for ${topic}`);

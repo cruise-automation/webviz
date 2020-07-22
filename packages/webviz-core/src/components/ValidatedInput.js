@@ -71,7 +71,7 @@ type Props = BaseProps & {
  * and validation error will trigger onError.
  */
 export function ValidatedInputBase({
-  dataValidator = (data) => {},
+  dataValidator = () => {},
   inputStyle = {},
   onChange,
   onError,

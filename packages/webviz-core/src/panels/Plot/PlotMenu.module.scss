@@ -6,14 +6,11 @@
 
 @import "~webviz-core/src/styles/colors.module.scss";
 
-.label {
-  display: inline-block;
-  width: 65px;
-}
-
 .input {
   width: 70px;
-  height: 22px;
+  height: 28px;
+  margin-top: -4px;
+  margin-bottom: -4px;
 }
 
 .inputError {

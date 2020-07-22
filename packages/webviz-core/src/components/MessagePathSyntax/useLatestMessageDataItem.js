@@ -10,8 +10,10 @@ import { useCallback, useMemo } from "react";
 
 import parseRosPath from "./parseRosPath";
 import { useCachedGetMessagePathDataItems, type MessagePathDataItem } from "./useCachedGetMessagePathDataItems";
+import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Message } from "webviz-core/src/players/types";
+import { useChangeDetector } from "webviz-core/src/util/hooks";
 
 type MessageAndData = {| message: Message, queriedData: MessagePathDataItem[] |};
 
@@ -47,6 +49,15 @@ export function useLatestMessageDataItem(path: string): ?MessageAndData {
     },
     [cachedGetMessagePathDataItems, path]
   );
+
+  // A backfill is not automatically requested when the above callbacks' identities change, so we
+  // need to do that manually.
+  const requestBackfill = useMessagePipeline(
+    useCallback(({ requestBackfill: pipelineRequestBackfill }) => pipelineRequestBackfill, [])
+  );
+  if (useChangeDetector([cachedGetMessagePathDataItems, path], false)) {
+    requestBackfill();
+  }
 
   const messageAndData = PanelAPI.useMessageReducer({ topics, addMessage, restore });
   return rosPath ? messageAndData : undefined;

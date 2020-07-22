@@ -17,7 +17,7 @@ import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-export const SWITCHER_HEIGHT = 28;
+export const SWITCHER_HEIGHT = 30;
 const STopicTreeSwitcher = styled.div`
   width: 56px;
   display: flex;
@@ -51,7 +51,6 @@ type Props = {|
   saveConfig: Save3DConfig,
   setShowTopicTree: (boolean | ((boolean) => boolean)) => void,
   showErrorBadge: boolean,
-  showTopicTree: boolean,
 |};
 
 export default function TopicTreeSwitcher({
@@ -60,7 +59,6 @@ export default function TopicTreeSwitcher({
   saveConfig,
   setShowTopicTree,
   showErrorBadge,
-  showTopicTree,
 }: Props) {
   const onClick = useCallback(() => setShowTopicTree((shown) => !shown), [setShowTopicTree]);
   return (

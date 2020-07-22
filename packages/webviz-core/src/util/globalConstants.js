@@ -36,6 +36,7 @@ export const SECOND_SOURCE_PREFIX = "/webviz_source_2";
 export const POINT_CLOUD_DATATYPE = "sensor_msgs/PointCloud2";
 export const POSE_STAMPED_DATATYPE = "geometry_msgs/PoseStamped";
 export const LASER_SCAN_DATATYPE = "sensor_msgs/LaserScan";
+export const WEBVIZ_MARKER_DATATYPE = "visualization_msgs/WebvizMarker";
 export const TF_DATATYPE = "tf2_msgs/TFMessage";
 
 export const USER_ERROR_PREFIX = "[WEBVIZ USER ERROR]";
@@ -60,6 +61,7 @@ export const COLORS = {
   LIGHT_RED: { r: 0.9, g: 0.1, b: 0.1, a: 1.0 },
   LIGHT_GREEN: { r: 0.4, g: 0.9, b: 0.4, a: 1.0 },
   LIGHT_BLUE: { r: 0.4, g: 0.4, b: 1, a: 1.0 },
+  CLEAR: { r: 0, g: 0, b: 0, a: 0 },
 };
 
 // http://docs.ros.org/melodic/api/visualization_msgs/html/msg/Marker.html

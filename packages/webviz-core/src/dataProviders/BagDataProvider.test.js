@@ -9,7 +9,7 @@
 import { TimeUtil } from "rosbag";
 
 import delay from "webviz-core/shared/delay";
-import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
+import BagDataProvider, { statsAreAdjacent } from "webviz-core/src/dataProviders/BagDataProvider";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 const dummyExtensionPoint = {
@@ -148,5 +148,109 @@ describe("BagDataProvider", () => {
       ["Cannot play invalid bag", "Bag is empty or corrupt.", "user", "error"],
     ]);
     sendNotification.expectCalledDuringTest();
+  });
+});
+
+describe("statsAreAdjacent", () => {
+  it("returns false when topics have changed", () => {
+    const a = {
+      startTime: { sec: 10, nsec: 500 },
+      endTime: { sec: 10, nsec: 599 },
+      data: {
+        type: "performance",
+        inputSource: "other",
+        inputType: "localBag",
+        topics: ["/topic1"],
+        totalSizeOfMessages: 10,
+        numberOfMessages: 1,
+        receivedRangeDuration: { sec: 0, nsec: 100 },
+        requestedRangeDuration: { sec: 0, nsec: 100 },
+        totalTransferTime: { sec: 0, nsec: 500 },
+      },
+    };
+    const b = {
+      startTime: { sec: 10, nsec: 600 },
+      endTime: { sec: 10, nsec: 699 },
+      data: {
+        type: "performance",
+        inputSource: "other",
+        inputType: "localBag",
+        topics: ["/topic1", "/topic2"],
+        totalSizeOfMessages: 10,
+        numberOfMessages: 1,
+        receivedRangeDuration: { sec: 0, nsec: 100 },
+        requestedRangeDuration: { sec: 0, nsec: 100 },
+        totalTransferTime: { sec: 0, nsec: 500 },
+      },
+    };
+    expect(statsAreAdjacent(a, b)).toBe(false);
+  });
+
+  it("returns false when requests are far away from each other", () => {
+    const a = {
+      startTime: { sec: 10, nsec: 500 },
+      endTime: { sec: 10, nsec: 599 },
+      data: {
+        type: "performance",
+        inputSource: "other",
+        inputType: "localBag",
+        topics: ["/topic1"],
+        totalSizeOfMessages: 10,
+        numberOfMessages: 1,
+        receivedRangeDuration: { sec: 0, nsec: 100 },
+        requestedRangeDuration: { sec: 0, nsec: 100 },
+        totalTransferTime: { sec: 0, nsec: 500 },
+      },
+    };
+    const b = {
+      startTime: { sec: 20, nsec: 600 },
+      endTime: { sec: 20, nsec: 699 },
+      data: {
+        type: "performance",
+        inputSource: "other",
+        inputType: "localBag",
+        topics: ["/topic1"],
+        totalSizeOfMessages: 10,
+        numberOfMessages: 1,
+        receivedRangeDuration: { sec: 0, nsec: 100 },
+        requestedRangeDuration: { sec: 0, nsec: 100 },
+        totalTransferTime: { sec: 0, nsec: 500 },
+      },
+    };
+    expect(statsAreAdjacent(a, b)).toBe(false);
+  });
+
+  it("returns true when stats are adjacent", () => {
+    const a = {
+      startTime: { sec: 10, nsec: 500 },
+      endTime: { sec: 10, nsec: 599 },
+      data: {
+        type: "performance",
+        inputSource: "other",
+        inputType: "localBag",
+        topics: ["/topic1"],
+        totalSizeOfMessages: 10,
+        numberOfMessages: 1,
+        receivedRangeDuration: { sec: 0, nsec: 100 },
+        requestedRangeDuration: { sec: 0, nsec: 100 },
+        totalTransferTime: { sec: 0, nsec: 500 },
+      },
+    };
+    const b = {
+      startTime: { sec: 10, nsec: 600 },
+      endTime: { sec: 10, nsec: 699 },
+      data: {
+        type: "performance",
+        inputSource: "other",
+        inputType: "localBag",
+        topics: ["/topic1"],
+        totalSizeOfMessages: 12,
+        numberOfMessages: 2,
+        receivedRangeDuration: { sec: 0, nsec: 100 },
+        requestedRangeDuration: { sec: 0, nsec: 100 },
+        totalTransferTime: { sec: 0, nsec: 500 },
+      },
+    };
+    expect(statsAreAdjacent(a, b)).toBe(true);
   });
 });

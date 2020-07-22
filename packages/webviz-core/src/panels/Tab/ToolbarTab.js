@@ -31,7 +31,7 @@ function measureText(text: string): number {
   return textWidth(text, { family: FONT_FAMILY, size: FONT_SIZE }) + 3;
 }
 
-const STab = styled.div.attrs(({ isActive, value, tabCount, isDragging, editingTitle, hidden, highlight }) => ({
+const STab = styled.div.attrs(({ isActive, value, tabCount, isDragging, hidden, highlight }) => ({
   style: {
     opacity: hidden ? 0 : 1,
     borderColor: isDragging || highlight ? colors.DARK6 : "transparent",

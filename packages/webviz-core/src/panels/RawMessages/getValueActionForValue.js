@@ -42,7 +42,10 @@ export function getValueActionForValue(
     if (structureItem == null || value == null) {
       break;
     } else if (structureItem.structureType === "message" && typeof value === "object" && typeof pathItem === "string") {
-      structureItem = structureItem.nextByName[pathItem];
+      structureItem =
+        structureItem.datatype === "json"
+          ? { structureType: "primitive", primitiveType: "json", datatype: "" }
+          : structureItem.nextByName[pathItem];
       value = value[pathItem];
       if (multiSlicePath.endsWith("[:]")) {
         // We're just inside a message that is inside an array, so we might want to pivot on this new value.

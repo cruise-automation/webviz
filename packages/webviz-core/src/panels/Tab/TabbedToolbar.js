@@ -9,10 +9,10 @@
 import PlusIcon from "@mdi/svg/svg/plus.svg";
 import React, { useContext, useEffect } from "react";
 import { type DropTargetMonitor, useDrop } from "react-dnd";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import styled from "styled-components";
 
-import { savePanelConfigs } from "webviz-core/src/actions/panels";
+import { moveTab, type MoveTabPayload } from "webviz-core/src/actions/panels";
 import Icon from "webviz-core/src/components/Icon";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { DraggableToolbarTab } from "webviz-core/src/panels/Tab/DraggableToolbarTab";
@@ -24,7 +24,6 @@ import {
   TabDndContext,
 } from "webviz-core/src/panels/Tab/TabDndContext";
 import type { TabConfig } from "webviz-core/src/types/layouts";
-import { getSaveConfigsPayloadForMoveTab } from "webviz-core/src/util/layout";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const STabbedToolbar = styled.div`
@@ -63,7 +62,6 @@ export function TabbedToolbar(props: Props) {
   const { panelId, actions, tabs, activeTabIdx, setDraggingTabState } = props;
 
   const dispatch = useDispatch();
-  const savedProps = useSelector(({ panels }) => panels.savedProps);
   const { preventTabDrop } = useContext(TabDndContext);
   const [{ isOver, item }, dropRef] = useDrop({
     accept: TAB_DRAG_TYPE,
@@ -81,11 +79,8 @@ export function TabbedToolbar(props: Props) {
         panelId: sourceItem.panelId,
         tabIndex: sourceItem.tabIndex,
       };
-      const target = {
-        panelId,
-      };
-      const saveConfigsPayload = getSaveConfigsPayloadForMoveTab(source, target, savedProps);
-      dispatch(savePanelConfigs(saveConfigsPayload));
+      const target = { panelId };
+      dispatch(moveTab(({ source, target }: MoveTabPayload)));
     },
   });
   useEffect(
@@ -118,7 +113,7 @@ export function TabbedToolbar(props: Props) {
             tooltip="Add tab"
             style={{
               flexShrink: 0,
-              margin: "4px 8px",
+              margin: "0 8px",
               transition: "opacity 0.2s",
             }}
             onClick={actions.addTab}>

@@ -10,7 +10,7 @@ import { compact, uniq } from "lodash";
 import memoizeWeak from "memoize-weak";
 import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import { hot } from "react-hot-loader/root";
-import type { Time } from "rosbag";
+import { type Time, TimeUtil } from "rosbag";
 
 import helpContent from "./index.help.md";
 import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
@@ -23,13 +23,14 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getTooltipItemForMessageHistoryItem, type TooltipItem } from "webviz-core/src/components/TimeBasedChart";
 import { useBlocksByTopic, useDataSourceInfo, useMessagesByTopic } from "webviz-core/src/PanelAPI";
+import { blockMessageCache } from "webviz-core/src/PanelAPI/useBlocksByTopic";
 import type { BasePlotPath, PlotPath } from "webviz-core/src/panels/Plot/internalTypes";
 import PlotChart, { getDatasetsAndTooltips, type PlotDataByPath } from "webviz-core/src/panels/Plot/PlotChart";
 import PlotLegend from "webviz-core/src/panels/Plot/PlotLegend";
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
-import { subtractTimes, toSec } from "webviz-core/src/util/time";
+import { fromSec, subtractTimes, toSec } from "webviz-core/src/util/time";
 
 export const plotableRosTypes = [
   "bool",
@@ -46,15 +47,24 @@ export const plotableRosTypes = [
   "time",
   "duration",
   "string",
+  "json",
 ];
+
+// X-axis values:
+export type PlotXAxisVal =
+  | "timestamp" // Message playback time. Preloaded.
+  | "index" // Message-path value index. One "current" message at playback time.
+  | "custom" // Message path data. Preloaded.
+  | "currentCustom"; // Message path data. One "current" message at playback time.
 
 export type PlotConfig = {
   paths: PlotPath[],
   minYValue: string,
   maxYValue: string,
   showLegend: boolean,
-  xAxisVal: "timestamp" | "index" | "custom",
+  xAxisVal: PlotXAxisVal,
   xAxisPath?: BasePlotPath,
+  followingViewWidth?: string,
 };
 
 export function openSiblingPlotPanel(
@@ -94,11 +104,7 @@ const getMessagePathItemsForBlock = memoizeWeak(
   (decodeMessagePathsForMessagesByTopic, binaryBlock, messageReadersByTopic): PlotDataByPath => {
     const parsedBlock = {};
     Object.keys(binaryBlock).forEach((topic) => {
-      const reader = messageReadersByTopic[topic];
-      parsedBlock[topic] = binaryBlock[topic].map((message) => ({
-        ...message,
-        message: reader.readMessage(Buffer.from(message.message)),
-      }));
+      parsedBlock[topic] = blockMessageCache.parseMessages(binaryBlock[topic], messageReadersByTopic);
     });
     return Object.freeze(getPlotDataByPath(decodeMessagePathsForMessagesByTopic(parsedBlock)));
   }
@@ -135,15 +141,25 @@ function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReader
 
 function Plot(props: Props) {
   const { saveConfig, config } = props;
-  const { paths: yAxisPaths, minYValue, maxYValue, showLegend, xAxisVal, xAxisPath } = config;
+  const { followingViewWidth, paths: yAxisPaths, minYValue, maxYValue, showLegend, xAxisVal, xAxisPath } = config;
   // Note that the below values are refs since they are only used in callbacks and are not rendered anywhere.
   const currentMinY = useRef(null);
   const currentMaxY = useRef(null);
+  const currentViewWidth = useRef(null);
 
-  const saveCurrentYs = useCallback((minY: number, maxY: number) => {
+  const saveCurrentView = useCallback((minY: number, maxY: number, width: ?number) => {
     currentMinY.current = minY;
     currentMaxY.current = maxY;
+    currentViewWidth.current = width;
   }, []);
+
+  const setWidth = useCallback(
+    () =>
+      saveConfig({
+        followingViewWidth: currentViewWidth.current != null ? currentViewWidth.current.toString() : "",
+      }),
+    [saveConfig]
+  );
 
   const setMinMax = useCallback(
     () =>
@@ -160,25 +176,30 @@ function Plot(props: Props) {
     }
   });
 
-  const historySize = xAxisVal === "index" ? 1 : Infinity;
+  const showSingleCurrentMessage = xAxisVal === "currentCustom" || xAxisVal === "index";
+  const historySize = showSingleCurrentMessage ? 1 : Infinity;
 
   const allPaths = yAxisPaths.map(({ value }) => value).concat(compact([xAxisPath?.value]));
   const memoizedPaths: string[] = useShallowMemo<string[]>(allPaths);
   const subscribeTopics = useMemo(() => getTopicsFromPaths(memoizedPaths), [memoizedPaths]);
-  const messagesByTopic = useMessagesByTopic({ topics: subscribeTopics, historySize });
+  // TODO: Maybe slice "current" playback data out of the blocks to avoid this subscription.
+  const messagesByTopic = useMessagesByTopic({
+    topics: subscribeTopics,
+    historySize,
+    onlyLoadInBlocks: !showSingleCurrentMessage,
+  });
 
   const decodeMessagePathsForMessagesByTopic = useDecodeMessagePathsForMessagesByTopic(memoizedPaths);
 
-  // NOTE: This does some unnecessary work: The items that are present in the blocks are stored by
-  // path here, and that data will just be ignored below as the block data overrides the streaming
-  // fallback. This repeated work won't happen when we have an appropriate subscription type.
   const streamedItemsByPath = useMemo(() => getPlotDataByPath(decodeMessagePathsForMessagesByTopic(messagesByTopic)), [
     decodeMessagePathsForMessagesByTopic,
     messagesByTopic,
   ]);
 
   const { messageReadersByTopic, blocks } = useBlocksByTopic(subscribeTopics);
-  const blockItemsByPath = getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks);
+  const blockItemsByPath = showSingleCurrentMessage
+    ? {}
+    : getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks);
   const { startTime } = useDataSourceInfo();
   // Don't filter out disabled paths when passing into getDatasetsAndTooltips, because we still want
   // easy access to the history when turning the disabled paths back on.
@@ -190,14 +211,50 @@ function Plot(props: Props) {
     xAxisPath
   );
 
-  const currentTime: ?Time = useMessagePipeline(
-    useCallback(({ playerState: { activeData } }) => activeData?.currentTime, [])
+  const { currentTime, endTime, seekPlayback: seek } = useMessagePipeline(
+    useCallback(
+      ({ seekPlayback, playerState: { activeData } }) => ({
+        currentTime: activeData?.currentTime,
+        endTime: activeData?.endTime,
+        seekPlayback,
+      }),
+      []
+    )
   );
-  // Only display the time with preloaded plots. For others it will always be the right edge.
-  const displayTime =
-    getExperimentalFeature("preloading") && xAxisVal === "timestamp" && currentTime && startTime
-      ? toSec(subtractTimes(currentTime, startTime))
-      : undefined;
+  const preloading = getExperimentalFeature("preloading");
+
+  // Min/max x-values and playback position indicator are only used for preloaded plots. In non-
+  // preloaded plots min x-value is always the last seek time, and the max x-value is the current
+  // playback time.
+  const timeToXValueForPreloading = (t: ?Time): ?number => {
+    if (preloading && xAxisVal === "timestamp" && t && startTime) {
+      return toSec(subtractTimes(t, startTime));
+    }
+  };
+  const preloadingDisplayTime = timeToXValueForPreloading(currentTime);
+  const preloadingStartTime = timeToXValueForPreloading(startTime); // zero or undefined
+  const preloadingEndTime = timeToXValueForPreloading(endTime);
+  let defaultView;
+  if (preloadingDisplayTime != null) {
+    if (followingViewWidth != null && parseFloat(followingViewWidth) > 0) {
+      // Will be ignored in TimeBasedChart for non-preloading plots and non-timestamp plots.
+      defaultView = { type: "following", width: parseFloat(followingViewWidth) };
+    } else if (preloadingStartTime != null && preloadingEndTime != null) {
+      defaultView = { type: "fixed", minXValue: preloadingStartTime, maxXValue: preloadingEndTime };
+    }
+  }
+
+  const onClick = useCallback(
+    (_, __, { X_AXIS_ID: seekSeconds }) => {
+      if (!preloading || !startTime || seekSeconds == null || !seek) {
+        return;
+      }
+      // The player validates and clamps the time.
+      const seekTime = TimeUtil.add(startTime, fromSec(seekSeconds));
+      seek(seekTime);
+    },
+    [preloading, seek, startTime]
+  );
 
   return (
     <Flex col clip center style={{ position: "relative" }}>
@@ -206,10 +263,12 @@ function Plot(props: Props) {
         floating
         menuContent={
           <PlotMenu
+            displayWidth={followingViewWidth || ""}
             minYValue={minYValue}
             maxYValue={maxYValue}
             saveConfig={saveConfig}
             setMinMax={setMinMax}
+            setWidth={setWidth}
             datasets={datasets}
             xAxisVal={xAxisVal}
             tooltips={tooltips}
@@ -220,11 +279,13 @@ function Plot(props: Props) {
         paths={yAxisPaths}
         minYValue={parseFloat(minYValue)}
         maxYValue={parseFloat(maxYValue)}
-        saveCurrentYs={saveCurrentYs}
+        saveCurrentView={saveCurrentView}
         datasets={datasets}
         tooltips={tooltips}
         xAxisVal={xAxisVal}
-        currentTime={displayTime}
+        currentTime={preloadingDisplayTime}
+        onClick={onClick}
+        defaultView={defaultView}
       />
       <PlotLegend
         paths={yAxisPaths}

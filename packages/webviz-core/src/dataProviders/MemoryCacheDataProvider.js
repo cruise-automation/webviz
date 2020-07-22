@@ -17,9 +17,9 @@ import type {
   ExtensionPoint,
   GetDataProvider,
   InitializationResult,
-  DataProviderMessage,
 } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
+import type { Message, TypedMessage } from "webviz-core/src/players/types";
 import { getNewConnection } from "webviz-core/src/util/getNewConnection";
 import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList, missingRanges } from "webviz-core/src/util/ranges";
 import sendNotification from "webviz-core/src/util/sendNotification";
@@ -36,9 +36,15 @@ export const MAX_BLOCK_SIZE_BYTES = 50e6; // Number of bytes in a block before w
 // For each memory block we store the actual messages (grouped by topic), and a total byte size of
 // the underlying ArrayBuffers.
 export type MemoryCacheBlock = $ReadOnly<{|
-  messagesByTopic: $ReadOnly<{ [topic: string]: $ReadOnlyArray<DataProviderMessage> }>,
+  messagesByTopic: $ReadOnly<{ [topic: string]: $ReadOnlyArray<TypedMessage<ArrayBuffer>> }>,
   sizeInBytes: number,
 |}>;
+
+export type BlockCache = {|
+  blocks: $ReadOnlyArray<?MemoryCacheBlock>,
+  startTime: Time,
+|};
+
 const EMPTY_BLOCK: MemoryCacheBlock = { messagesByTopic: {}, sizeInBytes: 0 };
 
 function getNormalizedTopics(topics: string[]): string[] {
@@ -53,7 +59,7 @@ export function getBlocksToKeep({
   recentBlockRanges,
   blockSizesInBytes,
   maxCacheSizeInBytes,
-  badEvictionLocation,
+  badEvictionRange,
 }: {|
   // The most recently requested block ranges, ordered from most recent to least recent.
   recentBlockRanges: Range[],
@@ -64,17 +70,29 @@ export function getBlocksToKeep({
   // The maximum cache size in bytes.
   maxCacheSizeInBytes: number,
   // A block index to avoid evicting blocks from near.
-  badEvictionLocation: ?number,
+  badEvictionRange: ?Range,
 |}): { blockIndexesToKeep: Set<number>, newRecentRanges: Range[] } {
   let cacheSizeInBytes = 0;
   const blockIndexesToKeep = new Set<number>();
+
+  // Always keep the badEvictionRange
+  if (badEvictionRange) {
+    for (let blockIndex = badEvictionRange.start; blockIndex < badEvictionRange.end; ++blockIndex) {
+      const sizeInBytes = blockSizesInBytes[blockIndex];
+      if (sizeInBytes != null && !blockIndexesToKeep.has(blockIndex)) {
+        blockIndexesToKeep.add(blockIndex);
+        cacheSizeInBytes += sizeInBytes;
+      }
+    }
+  }
+
   // Go through all the ranges, from most to least recent.
   for (let blockRangeIndex = 0; blockRangeIndex < recentBlockRanges.length; blockRangeIndex++) {
     const blockRange = recentBlockRanges[blockRangeIndex];
 
     // Work through blocks from highest priority to lowest. Break and discard low-priority blocks if
     // we exceed our memory budget.
-    const { startIndex, endIndex, increment } = getBlocksToKeepDirection(blockRange, badEvictionLocation);
+    const { startIndex, endIndex, increment } = getBlocksToKeepDirection(blockRange, badEvictionRange?.start);
     for (let blockIndex = startIndex; blockIndex !== endIndex; blockIndex += increment) {
       // If we don't have size, there are no blocks to keep!
       const sizeInBytes = blockSizesInBytes[blockIndex];
@@ -90,13 +108,18 @@ export function getBlocksToKeep({
 
       // Terminate if we have exceeded `maxCacheSizeInBytes`.
       if (cacheSizeInBytes > maxCacheSizeInBytes) {
+        const newRecentRangesExcludingBadEvictionRange = [
+          ...recentBlockRanges.slice(0, blockRangeIndex),
+          increment > 0 ? { start: 0, end: blockIndex + 1 } : { start: blockIndex, end: blockRange.end },
+        ];
+        const newRecentRanges =
+          badEvictionRange == null
+            ? newRecentRangesExcludingBadEvictionRange
+            : mergeNewRangeIntoUnsortedNonOverlappingList(badEvictionRange, newRecentRangesExcludingBadEvictionRange);
         return {
           blockIndexesToKeep,
           // Adjust the oldest `newRecentRanges`.
-          newRecentRanges: [
-            ...recentBlockRanges.slice(0, blockRangeIndex),
-            increment > 0 ? { start: 0, end: blockIndex + 1 } : { start: blockIndex, end: blockRange.end },
-          ],
+          newRecentRanges,
         };
       }
     }
@@ -106,6 +129,8 @@ export function getBlocksToKeep({
 
 // Helper to identify which end of a block range is most appropriate to evict when there is an open
 // read request.
+// Note: This function would work slightly better if it took a `badEvictionRange` instead of a
+// `badEvictionLocation`, but it's more complex and only manifests in quite uncommon use-cases.
 function getBlocksToKeepDirection(
   blockRange: Range,
   badEvictionLocation: ?number
@@ -170,7 +195,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     timeRange: Range, // Actual range of messages, in nanoseconds since `this._startTime`.
     blockRange: Range, // The range of blocks.
     topics: string[],
-    resolve: (DataProviderMessage[]) => void,
+    resolve: (Message[]) => void,
   |}[] = [];
 
   // Recently requested ranges of blocks, sorted by most recent to least recent. There should never
@@ -218,7 +243,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     return result;
   }
 
-  async getMessages(startTime: Time, endTime: Time, topics: string[]): Promise<DataProviderMessage[]> {
+  async getMessages(startTime: Time, endTime: Time, topics: string[]): Promise<Message[]> {
     // We might have a new set of topics.
     topics = getNormalizedTopics(topics);
     this._preloadTopics = topics;
@@ -517,19 +542,24 @@ export default class MemoryCacheDataProvider implements DataProvider {
       return;
     }
 
-    // If we have open read requests, we really don't want to evict blocks in or near the first one.
-    // If we don't have open read requests, try not to evict blocks near the last one we fetched
-    // (if any), because our next request will likely be nearby.
-    const badEvictionLocation = this._readRequests[0]
-      ? this._readRequests[0].blockRange.start
-      : this._lastResolvedCallbackEnd;
+    // If we have open read requests, we really don't want to evict blocks in the first one because
+    // we're actively trying to fill it.
+    // If we don't have open read requests, don't evict blocks in the read-ahead range (ahead of the
+    // playback cursor) because we'll automatically try to refetch that data immediately after.
+    let badEvictionRange = this._readRequests[0]?.blockRange;
+    if (!badEvictionRange && this._lastResolvedCallbackEnd != null) {
+      badEvictionRange = {
+        start: this._lastResolvedCallbackEnd,
+        end: this._lastResolvedCallbackEnd + READ_AHEAD_BLOCKS,
+      };
+    }
 
     // Call the getBlocksToKeep helper.
     const { blockIndexesToKeep, newRecentRanges } = getBlocksToKeep({
       recentBlockRanges: this._recentBlockRanges,
       blockSizesInBytes: this._blocks.map((block) => (block ? block.sizeInBytes : undefined)),
       maxCacheSizeInBytes: this._cacheSizeBytes,
-      badEvictionLocation,
+      badEvictionRange,
     });
 
     // Update our state.
@@ -550,7 +580,10 @@ export default class MemoryCacheDataProvider implements DataProvider {
         start: range.start / this._blocks.length,
         end: range.end / this._blocks.length,
       })),
-      blocks: this._blocks,
+      messageCache: {
+        blocks: this._blocks,
+        startTime: this._startTime,
+      },
     });
   }
 

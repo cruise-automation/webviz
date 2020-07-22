@@ -61,7 +61,7 @@ export default class TreeNode extends Component<Props> {
     }
   };
 
-  onExpandClick = (e: SyntheticEvent<HTMLElement>) => {
+  onExpandClick = (_e: SyntheticEvent<HTMLElement>) => {
     const { onToggleExpand, node } = this.props;
     // if the node has no children, have the entire container be a hitbox for toggling checked
     if (node.children && node.children.length) {

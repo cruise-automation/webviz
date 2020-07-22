@@ -8,6 +8,7 @@
 import transform from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/transformer";
 import generateRosLib from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typegen";
 import Rpc from "webviz-core/src/util/Rpc";
+import { setupSendReportNotificationHandler } from "webviz-core/src/util/RpcUtils";
 import { enforceFetchIsBlocked, inSharedWorker } from "webviz-core/src/util/workers";
 
 if (!inSharedWorker()) {
@@ -23,6 +24,8 @@ if (!inSharedWorker()) {
 global.onconnect = (e) => {
   const port = e.ports[0];
   const rpc = new Rpc(port);
+
+  setupSendReportNotificationHandler(rpc);
   // Shared workers need to be closed "from the inside" -- they have no terminate() method.
   rpc.receive("close", () => {
     global.close();

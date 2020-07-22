@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { validateNodeDefinitions, makeNodeMessage, applyNodesToMessages, type NodeDefinition } from "./nodes";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 const EmptyNode: $Shape<NodeDefinition<void>> = {
   inputs: [],
@@ -81,9 +82,78 @@ describe("nodes", () => {
       expect(() => validateNodeDefinitions([NodeA])).not.toThrow();
       expect(() => validateNodeDefinitions([NodeB])).not.toThrow();
     });
+
+    it("breaks when nodes refer to datatypes that they do not define", () => {
+      const NodeA: NodeDefinition<void> = {
+        ...EmptyNode,
+        inputs: ["/webviz/b"],
+        output: { name: "/webviz/a", datatype: "a" },
+        datatypes: {
+          "std_msgs/A": {
+            fields: [
+              {
+                isArray: true,
+                isComplex: true,
+                arrayLength: undefined,
+                name: "b",
+                type: "std_msgs/B",
+              },
+            ],
+          },
+        },
+      };
+      expect(() => validateNodeDefinitions([NodeA])).toThrow(new RegExp(/std_msgs\/B/));
+    });
+
+    it("validates correctly typed datatypes", () => {
+      const NodeA: NodeDefinition<void> = {
+        ...EmptyNode,
+        inputs: ["/webviz/b"],
+        output: { name: "/webviz/a", datatype: "a" },
+        datatypes: {
+          "std_msgs/B": {
+            fields: [
+              {
+                isArray: false,
+                isComplex: false,
+                arrayLength: undefined,
+                name: "c",
+                type: "string",
+              },
+            ],
+          },
+
+          "std_msgs/A": {
+            fields: [
+              {
+                isArray: true,
+                isComplex: true,
+                arrayLength: undefined,
+                name: "b",
+                type: "std_msgs/B",
+              },
+            ],
+          },
+        },
+      };
+      expect(() => validateNodeDefinitions([NodeA])).not.toThrow();
+    });
   });
 
   describe("applyNodesToMessages", () => {
+    const messages = [
+      {
+        topic: "/external",
+        receiveTime: { sec: 1, nsec: 0 },
+        message: { data: "first message" },
+      },
+      {
+        topic: "/external",
+        receiveTime: { sec: 2, nsec: 0 },
+        message: { data: "second message" },
+      },
+    ];
+
     it("runs all nodes on a set of messages, even recursively", () => {
       const NodeA: NodeDefinition<number> = {
         inputs: ["/external"],
@@ -93,7 +163,7 @@ describe("nodes", () => {
         callback({ message, state }) {
           return {
             messages: [
-              makeNodeMessage("/webviz/a/counter", "a/counter", {
+              makeNodeMessage("/webviz/a/counter", {
                 count: state,
                 data: message.message.data,
               }),
@@ -108,26 +178,11 @@ describe("nodes", () => {
         output: { name: "/webviz/b", datatype: "b" },
         callback({ message }) {
           return {
-            messages: [makeNodeMessage("/webviz/b", "b", { count: message.message.count })],
+            messages: [makeNodeMessage("/webviz/b", { count: message.message.count })],
             state: undefined,
           };
         },
       };
-
-      const messages = [
-        {
-          topic: "/external",
-          datatype: "anything",
-          receiveTime: { sec: 1, nsec: 0 },
-          message: { data: "first message" },
-        },
-        {
-          topic: "/external",
-          datatype: "anything",
-          receiveTime: { sec: 2, nsec: 0 },
-          message: { data: "second message" },
-        },
-      ];
 
       const output = applyNodesToMessages([NodeA, NodeB], messages);
 
@@ -135,34 +190,44 @@ describe("nodes", () => {
       expect(output).toEqual({
         messages: [
           {
-            datatype: "anything",
             message: { data: "first message" },
             receiveTime: { sec: 1, nsec: 0 },
             topic: "/external",
           },
           {
-            datatype: "a/counter",
             message: { count: 0, data: "first message" },
             receiveTime: { sec: 1, nsec: 0 },
             topic: "/webviz/a/counter",
           },
-          { datatype: "b", message: { count: 0 }, receiveTime: { sec: 1, nsec: 0 }, topic: "/webviz/b" },
+          { message: { count: 0 }, receiveTime: { sec: 1, nsec: 0 }, topic: "/webviz/b" },
           {
-            datatype: "anything",
             message: { data: "second message" },
             receiveTime: { sec: 2, nsec: 0 },
             topic: "/external",
           },
           {
-            datatype: "a/counter",
             message: { count: 1, data: "second message" },
             receiveTime: { sec: 2, nsec: 0 },
             topic: "/webviz/a/counter",
           },
-          { datatype: "b", message: { count: 1 }, receiveTime: { sec: 2, nsec: 0 }, topic: "/webviz/b" },
+          { message: { count: 1 }, receiveTime: { sec: 2, nsec: 0 }, topic: "/webviz/b" },
         ],
         states: [2, undefined],
       });
+    });
+
+    it("continues processing if a node throws an error", () => {
+      const NodeA: NodeDefinition<number> = {
+        inputs: ["/external"],
+        output: { name: "/webviz/a/counter", datatype: "a/counter" },
+        datatypes: {},
+        defaultState: 0,
+        callback() {
+          throw new Error("Node failed to run!");
+        },
+      };
+      expect(() => applyNodesToMessages([NodeA], messages)).not.toThrow();
+      sendNotification.expectCalledDuringTest();
     });
   });
 });

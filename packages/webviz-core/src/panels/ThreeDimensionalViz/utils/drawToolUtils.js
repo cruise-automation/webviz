@@ -44,7 +44,7 @@ export function getFormattedString(polygonPoints: Point2D[][], selectedPolygonEd
 
 // calculate the sum of the line distances
 export function getPolygonLineDistances(polygonPoints: Point2D[][]): number {
-  return polygonPoints.reduce((memo, polyPoints, idx) => {
+  return polygonPoints.reduce((memo, polyPoints) => {
     if (polyPoints.length > 1) {
       for (let i = 0; i < polyPoints.length - 1; i++) {
         memo += Math.hypot(polyPoints[i + 1].x - polyPoints[i].x, polyPoints[i + 1].y - polyPoints[i].y);

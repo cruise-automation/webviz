@@ -155,7 +155,7 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
   // Wait for a mouseup event, and check in the mouseup event if anything was actually selected, or
   // if it just was a click without a drag. In the latter case, select everything. This is very
   // similar to how, say, the browser bar in Chrome behaves.
-  _onMouseDown = (event: SyntheticMouseEvent<HTMLInputElement>) => {
+  _onMouseDown = (_event: SyntheticMouseEvent<HTMLInputElement>) => {
     if (this.props.disableAutoSelect) {
       return;
     }

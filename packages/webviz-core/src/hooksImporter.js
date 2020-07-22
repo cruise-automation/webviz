@@ -81,12 +81,18 @@ export function perPanelHooks() {
   const RobotIcon = require("@mdi/svg/svg/robot.svg").default;
   const LaserScanVert = require("webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert").default;
   const { defaultMapPalette } = require("webviz-core/src/panels/ThreeDimensionalViz/commands/utils");
-  const { POINT_CLOUD_DATATYPE, POSE_STAMPED_DATATYPE, TF_DATATYPE } = require("webviz-core/src/util/globalConstants");
+  const {
+    POINT_CLOUD_DATATYPE,
+    POSE_STAMPED_DATATYPE,
+    TF_DATATYPE,
+    WEBVIZ_MARKER_DATATYPE,
+  } = require("webviz-core/src/util/globalConstants");
 
   const SUPPORTED_MARKER_DATATYPES = {
     // generally supported datatypes
     VISUALIZATION_MSGS_MARKER_DATATYPE: "visualization_msgs/Marker",
     VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE: "visualization_msgs/MarkerArray",
+    WEBVIZ_MARKER_DATATYPE,
     POSE_STAMPED_DATATYPE,
     POINT_CLOUD_DATATYPE,
     SENSOR_MSGS_LASER_SCAN_DATATYPE: "sensor_msgs/LaserScan",
@@ -134,6 +140,7 @@ export function perPanelHooks() {
         autoSyncCameraState: false,
       },
       SUPPORTED_MARKER_DATATYPES,
+      BLACKLIST_TOPICS: [],
       allSupportedMarkers: [
         "arrow",
         "cube",
@@ -164,41 +171,37 @@ export function perPanelHooks() {
         "geometry_msgs/PolygonStamped": PentagonOutlineIcon,
         [POINT_CLOUD_DATATYPE]: BlurIcon,
         [POSE_STAMPED_DATATYPE]: RobotIcon,
+        [WEBVIZ_MARKER_DATATYPE]: HexagonIcon,
       },
       // TODO(Audrey): remove icons config after topic group release
       icons: {},
       AdditionalToolbarItems: () => null,
       LaserScanVert,
-      setGlobalVariablesInSceneBuilder: (globalVariables, selectionState, topicsToRender) => ({
-        selectionState,
-        topicsToRender,
-      }),
-      consumeMessage: (topic, msg, consumeMethods, { errors }) => {
+      getSelectionState: () => {},
+      getTopicsToRender: () => new Set(),
+      consumeMessage: (topic, datatype, msg, consumeMethods, { errors }) => {
         // TF messages are consumed by TransformBuilder, not SceneBuilder.
-        if (msg.datatype === SUPPORTED_MARKER_DATATYPES.TF_DATATYPE) {
+        if (datatype === SUPPORTED_MARKER_DATATYPES.TF_DATATYPE) {
           return;
         }
-        errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${msg.datatype}`);
+        errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${datatype}`);
       },
       getMessagePose: (msg) => msg.message.pose,
-      addMarkerToCollector(add, topic, marker, setTopicError) {
-        setTopicError(topic, `Unsupported marker type: ${marker.type}`);
-      },
+      addMarkerToCollector: () => false,
       getSyntheticArrowMarkerColor: () => ({ r: 0, g: 0, b: 1, a: 0.5 }),
       getFlattenedPose: () => undefined,
-      getOccupancyGridValues: (topic) => [0.5, "map"],
+      getOccupancyGridValues: (_topic) => [0.5, "map"],
       getMapPalette() {
         return defaultMapPalette;
       },
       consumePose: () => {},
       getMarkerColor: (topic, markerColor) => markerColor,
-      hasBlacklistTopics: () => false,
       ungroupedNodesCategory: "Topics",
       rootTransformFrame: "map",
       defaultFollowTransformFrame: null,
       skipTransformFrame: null,
     },
-    RawMessages: { docLinkFunction: () => undefined },
+    RawMessages: { docLinkFunction: (filename) => `https://www.google.com/search?q=${filename}` },
     installChartJs: () => {
       require("webviz-core/src/util/installChartjs").default();
     },

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useCallback, useState, forwardRef, type ElementRef } from "react";
+import React, { useCallback, useMemo, useState, forwardRef, type ElementRef } from "react";
 import { MosaicWithoutDragDropContext, MosaicWindow, MosaicDumbWindow } from "react-mosaic-component";
 import { useSelector, useDispatch } from "react-redux";
 import "react-mosaic-component/react-mosaic-component.css";
@@ -26,13 +26,14 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import SpinningLoadingIcon from "webviz-core/src/components/SpinningLoadingIcon";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList from "webviz-core/src/panels/PanelList";
+import { EmptyDropTarget } from "webviz-core/src/panels/Tab/EmptyDropTarget";
 import type { State } from "webviz-core/src/reducers";
 import type { MosaicNode, SaveConfigsPayload } from "webviz-core/src/types/panels";
 import { getPanelIdForType, getPanelTypeFromId } from "webviz-core/src/util/layout";
 import "./PanelLayout.scss";
 
 type Props = {
-  layout: MosaicNode,
+  layout: ?MosaicNode,
   onChange: (panels: any) => void,
   setMosaicId: (mosaicId: string) => void,
   savePanelConfigs: (SaveConfigsPayload) => Dispatcher<SAVE_PANEL_CONFIGS>,
@@ -120,9 +121,9 @@ export function UnconnectedPanelLayout(props: Props) {
     [createTile, tabId]
   );
 
-  return (
-    <ErrorBoundary ref={props.forwardedRef}>
-      {hooksImported ? (
+  const bodyToRender = useMemo(
+    () =>
+      layout ? (
         <MosaicRoot
           renderTile={renderTile}
           className="none"
@@ -133,6 +134,16 @@ export function UnconnectedPanelLayout(props: Props) {
           mosaicId={mosaicId}
           removeRootDropTarget={removeRootDropTarget}
         />
+      ) : (
+        <EmptyDropTarget tabId={tabId} mosaicId={mosaicId} />
+      ),
+    [layout, mosaicId, onChange, props.setMosaicId, removeRootDropTarget, renderTile, tabId]
+  );
+
+  return (
+    <ErrorBoundary ref={props.forwardedRef}>
+      {hooksImported ? (
+        bodyToRender
       ) : (
         <Flex center style={{ width: "100%", height: "100%" }}>
           <Icon large>

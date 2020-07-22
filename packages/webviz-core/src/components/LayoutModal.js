@@ -27,19 +27,13 @@ type Props = {|
 |};
 
 function UnconnectedLayoutModal({ onRequestClose, importPanelLayout: importLayout, panels }: Props) {
-  return (
-    <ShareJsonModal
-      onRequestClose={onRequestClose}
-      value={panels}
-      onChange={useCallback(
-        (layout: ImportPanelLayoutPayload) => {
-          importLayout(layout);
-        },
-        [importLayout]
-      )}
-      noun="layout"
-    />
+  const onChange = useCallback(
+    (layoutPayload: ImportPanelLayoutPayload) => {
+      importLayout(layoutPayload);
+    },
+    [importLayout]
   );
+  return <ShareJsonModal onRequestClose={onRequestClose} value={panels} onChange={onChange} noun="layout" />;
 }
 
 // TODO(JP): Use useSelector and useDispatch here, but unfortunately `importPanelLayout` needs

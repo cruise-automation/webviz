@@ -14,13 +14,12 @@ import { PlayerCapabilities, type PlayerState } from "webviz-core/src/players/ty
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
 import { fromSec, type TimestampMethod } from "webviz-core/src/util/time";
 
-function makeMessage(headerStamp: number, receiveTime: number) {
+function makeMessage(headerStamp: ?number, receiveTime: number) {
   return {
     topic: "/dummy_topic",
-    datatype: "dummy_datatype",
     message: {
       header: {
-        stamp: fromSec(headerStamp),
+        stamp: headerStamp == null ? undefined : fromSec(headerStamp),
       },
     },
     receiveTime: fromSec(receiveTime),
@@ -40,6 +39,7 @@ function getState() {
     topics: [],
     datatypes: {},
     messageDefinitionsByTopic: {},
+    playerWarnings: {},
   };
 }
 
@@ -87,6 +87,38 @@ describe("OrderedStampPlayer", () => {
           currentTime: fromSec(9),
           startTime: fromSec(0),
           endTime: fromSec(20 - BUFFER_DURATION_SECS),
+        }),
+      }),
+    ]);
+  });
+
+  it("does not emit messages without header stamps in headerStamp mode", async () => {
+    const { player, fakePlayer } = makePlayers("headerStamp");
+    const states = [];
+    player.setListener(async (playerState) => {
+      states.push(playerState);
+    });
+
+    // if this changes, this test must change as well
+    expect(BUFFER_DURATION_SECS).toEqual(1);
+
+    const upstreamMessages = [makeMessage(undefined, 9.5)];
+
+    await fakePlayer.emit({
+      ...getState(),
+      currentTime: fromSec(10),
+      messages: upstreamMessages,
+    });
+    expect(states).toEqual([
+      expect.objectContaining({
+        activeData: expect.objectContaining({
+          messages: [],
+          currentTime: fromSec(9),
+          startTime: fromSec(0),
+          endTime: fromSec(20 - BUFFER_DURATION_SECS),
+          playerWarnings: {
+            topicsWithoutHeaderStamps: ["/dummy_topic"],
+          },
         }),
       }),
     ]);
@@ -192,5 +224,25 @@ describe("OrderedStampPlayer", () => {
       messages: [makeMessage(12, 12), makeMessage(13, 13)],
     });
     expect(state?.activeData?.messages).toEqual([makeMessage(12, 12), makeMessage(13, 13)]);
+  });
+
+  it("backfills messages in headerStamp mode", async () => {
+    const { player, fakePlayer } = makePlayers("headerStamp");
+    jest.spyOn(fakePlayer, "seekPlayback");
+
+    const currentTime = fromSec(10);
+    player.setListener(async () => {});
+    await fakePlayer.emit({
+      ...getState(),
+      currentTime,
+      messages: [],
+    });
+
+    // The backfill request should seek the currentTime using BUFFER_DURATION_SECS as a backfillDuration
+    player.requestBackfill();
+    expect(fakePlayer.seekPlayback).toHaveBeenCalledWith(currentTime, {
+      sec: BUFFER_DURATION_SECS,
+      nsec: 0,
+    });
   });
 });

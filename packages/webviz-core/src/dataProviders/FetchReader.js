@@ -80,7 +80,10 @@ export default class FetchReader extends Readable {
           if (done) {
             return this.push(null);
           }
-          this.push(Buffer.from((value: any)));
+          // Flow doesn't know that value is only undefined when value done is true.
+          if (value != null) {
+            this.push(Buffer.from(value.buffer));
+          }
         })
         .catch((err) => {
           // canceling the xhr request causes the promise to reject

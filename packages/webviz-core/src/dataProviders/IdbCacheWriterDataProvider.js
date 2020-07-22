@@ -25,8 +25,8 @@ import type {
   ExtensionPoint,
   GetDataProvider,
   InitializationResult,
-  DataProviderMessage,
 } from "webviz-core/src/dataProviders/types";
+import type { Message } from "webviz-core/src/players/types";
 import { getNewConnection } from "webviz-core/src/util/getNewConnection";
 import Database from "webviz-core/src/util/indexeddb/Database";
 import Logger from "webviz-core/src/util/Logger";
@@ -74,7 +74,7 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
   _currentConnection: ?{| id: string, topics: string[], remainingRange: Range |};
 
   // The read requests we've received via `getMessages`.
-  _readRequests: {| range: Range, topics: string[], resolve: (DataProviderMessage[]) => void |}[] = [];
+  _readRequests: {| range: Range, topics: string[], resolve: (Message[]) => void |}[] = [];
 
   // The end time of the last callback that we've resolved. This is useful for preloading new data
   // around this time.
@@ -106,7 +106,7 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
     return result;
   }
 
-  async getMessages(startTime: Time, endTime: Time, topics: string[]): Promise<DataProviderMessage[]> {
+  async getMessages(startTime: Time, endTime: Time, topics: string[]): Promise<Message[]> {
     // We might have a new set of topics.
     topics = getNormalizedTopics(topics);
     this._preloadTopics = topics;

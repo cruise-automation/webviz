@@ -51,7 +51,7 @@ type Props = {|
   zoomOptions: ZoomOptions,
   panOptions: PanOptions,
   onScaleBoundsUpdate?: (ScaleBounds[]) => void,
-  onPanZoom?: () => void,
+  onPanZoom?: (ScaleBounds[]) => void,
   onClick?: (SyntheticMouseEvent<HTMLCanvasElement>, datalabel: ?any) => void,
   forceDisableWorkerRendering?: ?boolean,
   scaleOptions?: ?ScaleOptions,
@@ -248,7 +248,7 @@ class ChartComponent extends React.PureComponent<Props> {
           deltaX,
           deltaY,
         });
-        this._onPanZoom();
+        this._onPanZoom(scaleBoundsUpdate);
         this._onUpdateScaleBounds(scaleBoundsUpdate);
       }
     };
@@ -311,7 +311,7 @@ class ChartComponent extends React.PureComponent<Props> {
         focalPoint: center,
         whichAxesParam: xy,
       });
-      this._onPanZoom();
+      this._onPanZoom(scaleBoundsUpdate);
       this._onUpdateScaleBounds(scaleBoundsUpdate);
     };
 
@@ -339,13 +339,13 @@ class ChartComponent extends React.PureComponent<Props> {
       focalPoint,
       whichAxesParam: "xy",
     });
-    this._onPanZoom();
     this._onUpdateScaleBounds(scaleBoundsUpdate);
+    this._onPanZoom(scaleBoundsUpdate);
   };
 
-  _onPanZoom = () => {
+  _onPanZoom = (scaleBoundsUpdate: ScaleBounds[]) => {
     if (this.props.onPanZoom) {
-      this.props.onPanZoom();
+      this.props.onPanZoom(scaleBoundsUpdate);
     }
   };
 

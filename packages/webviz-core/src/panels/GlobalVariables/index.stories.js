@@ -10,13 +10,8 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 
 import GlobalVariables from "./index";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
-import { GLOBAL_STATE_STORAGE_KEY } from "webviz-core/src/reducers/panels";
 import PanelSetup, { triggerInputChange } from "webviz-core/src/stories/PanelSetup";
-import Storage from "webviz-core/src/util/Storage";
-
-const defaultGlobalState = getGlobalHooks().getDefaultGlobalStates();
 
 const exampleVariables = {
   someNum: 0,
@@ -55,26 +50,18 @@ const linkedGlobalVariables = [
   },
 ];
 
-function setStorage(globalVariables) {
-  const storage = new Storage();
-  storage.set(GLOBAL_STATE_STORAGE_KEY, { ...defaultGlobalState, globalVariables });
-}
-
 function PanelWithData({
   linkedGlobalVariables: linkedGlobalVars = [],
   ...rest
 }: {
   linkedGlobalVariables?: LinkedGlobalVariable[],
 }) {
-  if (linkedGlobalVars.length) {
-    setStorage(exampleDataWithLinkedVariables);
-  } else {
-    setStorage(exampleVariables);
-  }
+  const globalVariables = linkedGlobalVars.length ? exampleDataWithLinkedVariables : exampleVariables;
   const fixture = {
     topics: [],
     frame: {},
     linkedGlobalVariables: linkedGlobalVars,
+    globalVariables,
   };
 
   return (
@@ -153,7 +140,7 @@ storiesOf("<GlobalVariables>", module)
     return (
       <PanelWithData
         linkedGlobalVariables={linkedGlobalVariables}
-        onMount={(el) => {
+        onMount={() => {
           const allJsonInput = document.querySelectorAll("[data-test='json-input']");
           const lastJsonInput = allJsonInput[allJsonInput.length - 1];
           if (lastJsonInput) {

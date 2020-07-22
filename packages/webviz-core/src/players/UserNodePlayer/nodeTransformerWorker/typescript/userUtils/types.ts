@@ -69,6 +69,7 @@ export type TwoDimensionalPlotLine = {
   pointBorderWidth?: number;
   pointRadius?: number;
   pointStyle?: string;
+  lineTension?: number,
   data: { x: number; y: number }[];
 };
 /*
@@ -83,4 +84,5 @@ export type TwoDimensionalPlot = {
   title?: string;
   yAxisLabel?: string;
   xAxisLabel?: string;
+  gridColor?: string
 };

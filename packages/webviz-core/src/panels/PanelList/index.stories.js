@@ -26,14 +26,7 @@ storiesOf("<PanelList>", module)
   ))
   .add("panel list", () => (
     <div style={{ margin: 150 }}>
-      <PanelList
-        onPanelSelect={() => {}}
-        mosaicId=""
-        mosaicLayout=""
-        changePanelLayout={() => {}}
-        savePanelConfigs={() => {}}
-        savedProps={{}}
-      />
+      <PanelList onPanelSelect={() => {}} />
     </div>
   ))
   .add("filtered panel list", () => (
@@ -49,14 +42,7 @@ storiesOf("<PanelList>", module)
           }
         }
       }}>
-      <PanelList
-        onPanelSelect={() => {}}
-        mosaicId=""
-        mosaicLayout=""
-        changePanelLayout={() => {}}
-        savePanelConfigs={() => {}}
-        savedProps={{}}
-      />
+      <PanelList onPanelSelect={() => {}} />
     </div>
   ))
   .add("case-insensitive filtering and highlight submenu", () => (
@@ -72,13 +58,6 @@ storiesOf("<PanelList>", module)
           }
         }
       }}>
-      <PanelList
-        onPanelSelect={() => {}}
-        mosaicId=""
-        mosaicLayout=""
-        changePanelLayout={() => {}}
-        savePanelConfigs={() => {}}
-        savedProps={{}}
-      />
+      <PanelList onPanelSelect={() => {}} />
     </div>
   ));

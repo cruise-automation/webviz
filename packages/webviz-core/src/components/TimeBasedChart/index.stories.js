@@ -83,6 +83,7 @@ const props = {
       gridLines: { color: "rgba(255, 255, 255, 0.2)", zeroLineColor: "rgba(255, 255, 255, 0.2)" },
     },
   ],
+  xAxisIsPlaybackTime: true,
 };
 
 function CleansUpTooltipExample() {
@@ -213,7 +214,7 @@ function RemoveChartExample() {
 storiesOf("<TimeBasedChart>", module)
   .addParameters({
     screenshot: {
-      delay: 1000,
+      delay: 1500,
     },
   })
   .add("default", () => {

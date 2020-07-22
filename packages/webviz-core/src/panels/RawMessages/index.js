@@ -24,7 +24,7 @@ import helpContent from "./index.help.md";
 import styles from "./index.module.scss";
 import Metadata from "./Metadata";
 import RawMessagesIcons from "./RawMessagesIcons";
-import { DATA_ARRAY_PREVIEW_LIMIT, getMessageDocumentationLink, getItemString, getItemStringForDiff } from "./utils";
+import { DATA_ARRAY_PREVIEW_LIMIT, getItemString, getItemStringForDiff } from "./utils";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
@@ -210,7 +210,7 @@ function RawMessages(props: Props) {
           }
           return (
             <span>
-              <HighlightedValue itemLabel={itemLabel} keyPath={keyPath} />
+              <HighlightedValue itemLabel={itemLabel} />
               {smallNumberArrayStr && (
                 <>
                   {smallNumberArrayStr}
@@ -247,7 +247,7 @@ function RawMessages(props: Props) {
       if (expandAll !== null) {
         shouldExpandNode = () => expandAll;
       } else {
-        shouldExpandNode = (keypath, data, level) => {
+        shouldExpandNode = (keypath) => {
           return expandedFields.has(keypath.join("~"));
         };
       }
@@ -264,7 +264,6 @@ function RawMessages(props: Props) {
 
       const data = dataWithoutWrappingArray(baseItem.queriedData.map(({ value }) => (value: any)));
       const hideWrappingArray = baseItem.queriedData.length === 1 && typeof baseItem.queriedData[0].value === "object";
-      const link = getMessageDocumentationLink(baseItem.message.datatype);
       const shouldDisplaySingleVal =
         (data !== undefined && typeof data !== "object") ||
         (isSingleElemArray(data) && data[0] !== undefined && typeof data[0] !== "object");
@@ -281,7 +280,7 @@ function RawMessages(props: Props) {
             data={data}
             diffData={diffData}
             diff={diff}
-            link={link}
+            datatype={topic?.datatype}
             message={baseItem.message}
             diffMessage={diffItem?.message}
           />
@@ -333,7 +332,7 @@ function RawMessages(props: Props) {
                 theme={{
                   ...jsonTreeTheme,
                   tree: { margin: 0 },
-                  nestedNode: ({ style }, keyPath, nodeType, expanded) => {
+                  nestedNode: ({ style }, keyPath) => {
                     const baseStyle = {
                       ...style,
                       padding: "2px 0 2px 5px",
@@ -359,10 +358,10 @@ function RawMessages(props: Props) {
                       style: { ...baseStyle, backgroundColor, textDecoration: textDecoration || "inherit" },
                     };
                   },
-                  nestedNodeLabel: ({ style }, keyPath, nodeType, expanded) => ({
+                  nestedNodeLabel: ({ style }) => ({
                     style: { ...style, textDecoration: "inherit" },
                   }),
-                  nestedNodeChildren: ({ style }, nodeType, expanded) => ({
+                  nestedNodeChildren: ({ style }) => ({
                     style: { ...style, textDecoration: "inherit" },
                   }),
                   value: ({ style }, nodeType, keyPath) => {
@@ -403,6 +402,7 @@ function RawMessages(props: Props) {
       rootStructureItem,
       saveConfig,
       showFullMessageForDiff,
+      topic,
       topicPath,
       valueRenderer,
     ]

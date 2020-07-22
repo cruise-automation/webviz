@@ -82,6 +82,10 @@ class VideoRecordingClient {
 
   markFrameRenderEnd() {}
 
+  markPreloadStart() {}
+
+  markPreloadEnd() {}
+
   markTotalFrameStart() {}
 
   markTotalFrameEnd() {}

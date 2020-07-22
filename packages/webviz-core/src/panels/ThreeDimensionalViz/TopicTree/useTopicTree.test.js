@@ -148,6 +148,7 @@ describe("useTopicTree", () => {
         {
           availableByColumn: [false, true],
           featureKey: "t:/webviz_source_2/foo",
+          datatype: "visualization_msgs/MarkerArray",
           key: "t:/foo",
           providerAvailable: true,
           topicName: "/foo",
@@ -211,6 +212,59 @@ describe("useTopicTree", () => {
     });
   });
 
+  describe("visibleTopicsCount", () => {
+    it("defaults to empty", () => {
+      const Test = createTest();
+      mount(<Test {...sharedProps} providerTopics={makeTopics(["/bar", "/webviz_source_2/foo"])} />);
+      expect(Test.result.mock.calls[0][0].visibleTopicsCountByKey).toEqual({});
+    });
+
+    it("calculates visibleTopicsCount", () => {
+      const Test = createTest();
+      const root = mount(
+        <Test
+          {...sharedProps}
+          checkedKeys={[
+            "t:/bar",
+            "t:/foo",
+            "t:/webviz_source_2/foo",
+            "name:Group1",
+            "name_2:Group1",
+            "name:Group2",
+            "name:Nested Group",
+          ]}
+          providerTopics={makeTopics(["/bar", "/foo", "/webviz_source_2/foo"])}
+        />
+      );
+      expect(Test.result.mock.calls[0][0].visibleTopicsCountByKey).toEqual({
+        "name:Group1": 2,
+        "name:Group2": 1,
+        "name:Nested Group": 1,
+      });
+
+      root.setProps({
+        checkedKeys: [
+          "t:/bar",
+          "t:/bar1",
+          "t:/webviz_source_2/bar",
+          "t:/foo",
+          "t:/webviz_source_2/foo",
+          "name:Group1",
+          "name_2:Group2",
+          "name_2:Nested Group",
+          "name:(Uncategorized)",
+        ],
+        providerTopics: makeTopics(["/bar", "/webviz_source_2/bar", "/foo", "/webviz_source_2/foo", "/bar1"]),
+      });
+      expect(Test.result.mock.calls[1][0].visibleTopicsCountByKey).toEqual({
+        "name:(Uncategorized)": 1,
+        "name:Group1": 1,
+        "name:Group2": 1,
+        "name:Nested Group": 1,
+      });
+    });
+  });
+
   describe("checked state", () => {
     it("returns selectedTopicNames based on checkedKeys", () => {
       const Test = createTest();
@@ -225,6 +279,19 @@ describe("useTopicTree", () => {
         checkedKeys: ["name:Group1", "t:/foo", "t:/bar", "t:/webviz_source_2/foo", "name_2:Group1"],
       });
       expect(Test.result.mock.calls[2][0].selectedTopicNames).toEqual(["/foo", "/webviz_source_2/foo"]);
+    });
+
+    it("returns selectedTopicNames from the uncategorized list", () => {
+      const Test = createTest();
+      mount(
+        <Test
+          {...sharedProps}
+          checkedKeys={["name:(Uncategorized)", "t:/fiz", "name_2:(Uncategorized)", "t:/webviz_source_2/fiz"]}
+          providerTopics={[]}
+        />
+      );
+
+      expect(Test.result.mock.calls[0][0].selectedTopicNames).toEqual(["/fiz", "/webviz_source_2/fiz"]);
     });
 
     it("returns selectedNamespacesByTopic based on checkedKeys", () => {
@@ -281,15 +348,26 @@ describe("useTopicTree", () => {
       root.setProps({
         settingsByKey: {
           "t:/bar": { pointSize: 1 },
-          "t:/bar1": { someSetting1: "some value", overrideColor: "123,122,121,1" },
-          "t:/webviz_source_2/bar1": { someSetting1: "some value2", overrideColor: "123,100,100,1" },
-          "t:/webviz_source_2/foo": { overrideColor: "100,122,121,1" },
+          "t:/bar1": { someSetting1: "some value", overrideColor: { r: 0.48, g: 0.48, b: 0.48, a: 1 } },
+          "t:/webviz_source_2/bar1": {
+            someSetting1: "some value2",
+            overrideColor: { r: 0.48, g: 0.39, b: 0.39, a: 1 },
+          },
+          "t:/webviz_source_2/foo": {
+            overrideColor: { r: 0.39, g: 0.48, b: 0.47, a: 1 },
+          },
         },
       });
       expect(Test.result.mock.calls[2][0].derivedCustomSettingsByKey).toEqual({
         "t:/bar": { isDefaultSettings: false },
-        "t:/bar1": { isDefaultSettings: false, overrideColorByColumn: ["rgb(123, 122, 121)", "rgb(123, 100, 100)"] },
-        "t:/foo": { isDefaultSettings: false, overrideColorByColumn: [undefined, "rgb(100, 122, 121)"] },
+        "t:/bar1": {
+          isDefaultSettings: false,
+          overrideColorByColumn: [{ r: 0.48, g: 0.48, b: 0.48, a: 1 }, { r: 0.48, g: 0.39, b: 0.39, a: 1 }],
+        },
+        "t:/foo": {
+          isDefaultSettings: false,
+          overrideColorByColumn: [undefined, { r: 0.39, g: 0.48, b: 0.47, a: 1 }],
+        },
       });
     });
 
@@ -307,7 +385,7 @@ describe("useTopicTree", () => {
           settingsByKey={{
             "t:/bar": { pointSize: 1 },
             "t:/webviz_source_2/bar": { pointSize: 1 },
-            "t:/foo": { someSetting: 1, overrideColor: "255,1,1,0.9" },
+            "t:/foo": { someSetting: 1, overrideColor: { r: 1, g: 0, b: 0, a: 0.9 } },
             "t:/webviz_source_2/foo": { someSetting: 1 },
             "t:/foo1": { pointSize: 1 },
             "t:/webviz_source_2/foo1": { pointSize: 1 },
@@ -316,8 +394,85 @@ describe("useTopicTree", () => {
       );
       expect(Test.result.mock.calls[0][0].derivedCustomSettingsByKey).toEqual({
         "t:/bar": { isDefaultSettings: true },
-        "t:/foo": { isDefaultSettings: false, overrideColorByColumn: ["rgba(255, 1, 1, 0.9)", undefined] },
+        "t:/foo": {
+          isDefaultSettings: false,
+          overrideColorByColumn: [{ a: 0.9, b: 0, g: 0, r: 1 }, undefined],
+        },
         "t:/foo1": { isDefaultSettings: false },
+      });
+    });
+
+    it("handles namespace settings", () => {
+      const Test = createTest();
+      mount(
+        <Test
+          {...sharedProps}
+          settingsByKey={{
+            "t:/bar": { pointSize: 1 },
+            "t:/webviz_source_2/bar": { overrideColor: { r: 0.1, g: 0.1, b: 0.1, a: 0.1 } },
+            "ns:/foo:ns1": { overrideColor: { r: 0.2, g: 0.2, b: 0.2, a: 0.2 } },
+            "ns:/webviz_source_2/bar:ns2": { overrideColor: { r: 0.2, g: 0.2, b: 0.2, a: 0.2 } },
+          }}
+          providerTopics={makeTopics(["/foo", "/webviz_source_2/foo"])}
+        />
+      );
+      expect(Test.result.mock.calls[0][0].derivedCustomSettingsByKey).toEqual({
+        "ns:/bar:ns2": { overrideColorByColumn: [undefined, { r: 0.2, g: 0.2, b: 0.2, a: 0.2 }] },
+        "ns:/foo:ns1": { overrideColorByColumn: [{ r: 0.2, g: 0.2, b: 0.2, a: 0.2 }, undefined] },
+        "t:/bar": { isDefaultSettings: false, overrideColorByColumn: [undefined, { r: 0.1, g: 0.1, b: 0.1, a: 0.1 }] },
+      });
+    });
+  });
+
+  describe("onNamespaceOverrideColorChange", () => {
+    it("saves the new color to panelConfig ", async () => {
+      const Test = createTest();
+      const saveConfigMock = jest.fn();
+      mount(
+        <Test
+          {...sharedProps}
+          saveConfig={saveConfigMock}
+          settingsByKey={{
+            "t:/bar": { pointSize: 1 },
+            "ns:/foo:ns1": { overrideColor: { r: 0.2, g: 0.2, b: 0.2, a: 0.2 } },
+          }}
+          providerTopics={makeTopics(["/foo", "/webviz_source_2/foo"])}
+        />
+      );
+      Test.result.mock.calls[0][0].onNamespaceOverrideColorChange({ r: 0.1, g: 0.1, b: 0.1, a: 0.1 }, "ns:/foo:ns1");
+      expect(saveConfigMock.mock.calls[0][0]).toEqual({
+        settingsByKey: {
+          "t:/bar": { pointSize: 1 },
+          "ns:/foo:ns1": { overrideColor: { r: 0.1, g: 0.1, b: 0.1, a: 0.1 } },
+        },
+      });
+      Test.result.mock.calls[0][0].onNamespaceOverrideColorChange("3,3,3,3", "ns:/webviz_source/2/foo:ns1");
+      expect(saveConfigMock.mock.calls[1][0]).toEqual({
+        settingsByKey: {
+          "t:/bar": { pointSize: 1 },
+          "ns:/foo:ns1": { overrideColor: { r: 0.2, g: 0.2, b: 0.2, a: 0.2 } },
+          "ns:/webviz_source/2/foo:ns1": { overrideColor: "3,3,3,3" },
+        },
+      });
+    });
+
+    it("deletes the current overrideColor setting when the new color is undefined ", async () => {
+      const Test = createTest();
+      const saveConfigMock = jest.fn();
+      mount(
+        <Test
+          {...sharedProps}
+          saveConfig={saveConfigMock}
+          settingsByKey={{
+            "t:/bar": { pointSize: 1 },
+            "ns:/foo:ns1": { overrideColor: { r: 0.2, g: 0.2, b: 0.2, a: 0.2 } },
+          }}
+          providerTopics={makeTopics(["/foo", "/webviz_source_2/foo"])}
+        />
+      );
+      Test.result.mock.calls[0][0].onNamespaceOverrideColorChange(undefined, "ns:/foo:ns1");
+      expect(saveConfigMock.mock.calls[0][0]).toEqual({
+        settingsByKey: { "t:/bar": { pointSize: 1 } },
       });
     });
   });

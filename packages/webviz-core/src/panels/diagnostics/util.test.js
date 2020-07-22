@@ -10,6 +10,7 @@ import {
   getDiagnosticId,
   getDisplayName,
   getNodesByLevel,
+  getSortedNodes,
   computeDiagnosticInfo,
   LEVELS,
   MAX_STRING_LENGTH,
@@ -74,6 +75,7 @@ const buffer = {
     [LEVELS.STALE]: new Map(),
   },
   sortedAutocompleteEntries: [],
+  diagnosticsInOrderReceived: [],
 };
 
 describe("diagnostics", () => {
@@ -98,13 +100,29 @@ describe("diagnostics", () => {
 
   describe("getNodesByLevel", () => {
     it("removes leading slash from hardware_id if present", () => {
-      expect(getNodesByLevel(buffer, "", LEVELS.STALE)).toStrictEqual([]);
-      expect(getNodesByLevel(buffer, "", LEVELS.ERROR)).toStrictEqual([
+      expect(getNodesByLevel(buffer, LEVELS.STALE)).toStrictEqual([]);
+      expect(getNodesByLevel(buffer, LEVELS.ERROR)).toStrictEqual([
         errorMap.get("|usrr_rear_left_center/usrr_segmentation_node|status|"),
       ]);
-      expect(getNodesByLevel(buffer, "watchdog", LEVELS.OK)).toStrictEqual([okMap.get("|watchdog|status|")]);
-      expect(getNodesByLevel(buffer, "mctm", LEVELS.OK)).toStrictEqual([okMap.get("|mctm_logger|MCTM Logger|")]);
-      expect(getNodesByLevel(buffer, "watchdog", LEVELS.WARN)).toStrictEqual([]);
+      expect(getNodesByLevel(buffer, LEVELS.OK)).toStrictEqual([
+        okMap.get("|watchdog|status|"),
+        okMap.get("|mctm_logger|MCTM Logger|"),
+      ]);
+      expect(getNodesByLevel(buffer, LEVELS.WARN)).toStrictEqual([
+        warnMap.get("|camera_front_left_40/camera_ground_rendering|status|"),
+      ]);
+    });
+  });
+
+  describe("getSortedNodes", () => {
+    it("sorts nodes that match hardware ID, if present", () => {
+      const nodes = getNodesByLevel(buffer, LEVELS.OK);
+      expect(getSortedNodes(nodes, "", [])).toStrictEqual([
+        okMap.get("|mctm_logger|MCTM Logger|"),
+        okMap.get("|watchdog|status|"),
+      ]);
+      expect(getSortedNodes(nodes, "watchdog", [])).toStrictEqual([okMap.get("|watchdog|status|")]);
+      expect(getSortedNodes(nodes, "mctm_logger", [])).toStrictEqual([okMap.get("|mctm_logger|MCTM Logger|")]);
     });
   });
 

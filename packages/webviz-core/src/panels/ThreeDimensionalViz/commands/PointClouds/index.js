@@ -21,7 +21,7 @@ import { updateMarkerCache } from "./memoization";
 import type { MemoizedMarker, MemoizedVertexBuffer, VertexBuffer } from "./types";
 import VertexBufferCache from "./VertexBufferCache";
 import filterMap from "webviz-core/src/filterMap";
-import { getRgbaArray } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
+import { toRgba } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection";
 import {
   DEFAULT_FLAT_COLOR,
   DEFAULT_MIN_COLOR,
@@ -227,13 +227,13 @@ const pointCloud = (regl: Regl) => {
         return is_bigendian ? COLOR_MODE_RGB : COLOR_MODE_BGR;
       },
       flatColor: (context, props) => {
-        return getRgbaArray(props.settings.colorMode.flatColor || DEFAULT_FLAT_COLOR);
+        return toRgba(props.settings.colorMode.flatColor || DEFAULT_FLAT_COLOR);
       },
       minGradientColor: (context, props) => {
-        return getRgbaArray(props.settings.colorMode.minColor || DEFAULT_MIN_COLOR);
+        return toRgba(props.settings.colorMode.minColor || DEFAULT_MIN_COLOR);
       },
       maxGradientColor: (context, props) => {
-        return getRgbaArray(props.settings.colorMode.maxColor || DEFAULT_MAX_COLOR);
+        return toRgba(props.settings.colorMode.maxColor || DEFAULT_MAX_COLOR);
       },
       minColorFieldValue: (context, props) => {
         return props.minColorValue;

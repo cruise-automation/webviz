@@ -12,13 +12,12 @@ import { MosaicDragType } from "react-mosaic-component";
 import { useDispatch } from "react-redux";
 import styled from "styled-components";
 
-import { savePanelConfigs } from "webviz-core/src/actions/panels";
+import { addPanel } from "webviz-core/src/actions/panels";
 import EmptyBoxSvg from "webviz-core/src/assets/emptyBox.svg";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Menu from "webviz-core/src/components/Menu";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import cssColors from "webviz-core/src/styles/colors.module.scss";
-import { selectPanelOutput } from "webviz-core/src/util/layout";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SDropTarget = styled.div`
@@ -53,10 +52,9 @@ const SPickAPanelText = styled.div`
 type Props = {|
   mosaicId: ?string,
   tabId: ?string,
-  onChangeLayout: (string) => void,
 |};
 
-export const EmptyDropTarget = ({ mosaicId, tabId, onChangeLayout }: Props) => {
+export const EmptyDropTarget = ({ mosaicId, tabId }: Props) => {
   const dispatch = useDispatch();
   const [showPanelList, setShowPanelList] = useState(false);
   const toggleShowPanelList = useCallback(() => setShowPanelList((show) => !show), []);
@@ -65,30 +63,20 @@ export const EmptyDropTarget = ({ mosaicId, tabId, onChangeLayout }: Props) => {
     accept: MosaicDragType.WINDOW,
     drop: (item, monitor) => {
       if (monitor.getItem().mosaicId === mosaicId) {
-        return {
-          tabId,
-        };
+        return { tabId };
       }
     },
-    collect: (monitor, props) => ({
+    collect: (monitor, _props) => ({
       isOver: monitor.isOver(),
     }),
   });
 
   const onPanelSelect = useCallback(
     ({ type, config, relatedConfigs }: PanelSelection) => {
-      const { changePanelPayload, saveConfigsPayload } = selectPanelOutput(type, null, {
-        config,
-        relatedConfigs,
-      });
-      // i.e. there is only one panel in the layout.
-      if (typeof changePanelPayload.layout === "string") {
-        onChangeLayout(changePanelPayload.layout);
-        dispatch(savePanelConfigs(saveConfigsPayload));
-      }
+      dispatch(addPanel({ tabId, type, layout: null, config, relatedConfigs }));
       window.ga("send", "event", "Panel", "Select", type);
     },
-    [dispatch, onChangeLayout]
+    [dispatch, tabId]
   );
 
   return (

@@ -23,7 +23,6 @@ const node = {
       messages: [
         {
           topic: "/webviz/test",
-          datatype: "test",
           receiveTime: message.receiveTime,
           message: {
             ...message.message,
@@ -56,6 +55,7 @@ describe("NodePlayer", () => {
       topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
       datatypes: { foo: { fields: [] } },
       messageDefinitionsByTopic: {},
+      playerWarnings: {},
     });
     expect(messages).toHaveLength(1);
     const { activeData } = messages[0];
@@ -93,6 +93,7 @@ describe("NodePlayer", () => {
       topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
       datatypes: { foo: { fields: [] } },
       messageDefinitionsByTopic: {},
+      playerWarnings: {},
     });
     const { activeData } = messages[0];
     expect(activeData).not.toBeUndefined();
@@ -125,6 +126,7 @@ describe("NodePlayer", () => {
       topics: [{ name: "/input/foo", datatype: "foo" }, { name: "/input/bar", datatype: "bar" }],
       datatypes: { foo: { fields: [] } },
       messageDefinitionsByTopic: {},
+      playerWarnings: {},
     });
     const { activeData } = messages[0];
     expect(activeData).not.toBeUndefined();
@@ -226,7 +228,6 @@ describe("NodePlayer", () => {
   const upstreamMessages = [
     {
       topic: "/input/foo",
-      datatype: "foo",
       receiveTime: { sec: 0, nsec: 1 },
       message: {
         payload: "bar",
@@ -234,7 +235,6 @@ describe("NodePlayer", () => {
     },
     {
       topic: "/input/foo",
-      datatype: "foo",
       receiveTime: { sec: 0, nsec: 100 },
       message: {
         payload: "baz",
@@ -266,6 +266,7 @@ describe("NodePlayer", () => {
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
       messageDefinitionsByTopic: {},
+      playerWarnings: {},
     });
 
     await done;
@@ -275,7 +276,6 @@ describe("NodePlayer", () => {
       {
         topic: "/webviz/test",
         receiveTime: { sec: 0, nsec: 1 },
-        datatype: "test",
         message: {
           payload: "bar",
           callCount: 1,
@@ -285,7 +285,6 @@ describe("NodePlayer", () => {
       {
         topic: "/webviz/test",
         receiveTime: { sec: 0, nsec: 100 },
-        datatype: "test",
         message: {
           payload: "baz",
           callCount: 2,
@@ -318,6 +317,7 @@ describe("NodePlayer", () => {
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
       messageDefinitionsByTopic: {},
+      playerWarnings: {},
     });
 
     fakePlayer.emit({
@@ -333,6 +333,7 @@ describe("NodePlayer", () => {
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
       messageDefinitionsByTopic: {},
+      playerWarnings: {},
     });
     await done;
     expect(messages).toHaveLength(4);
@@ -340,7 +341,6 @@ describe("NodePlayer", () => {
     expect(messages[1]).toEqual({
       topic: "/webviz/test",
       receiveTime: { sec: 0, nsec: 1 },
-      datatype: "test",
       message: {
         payload: "bar",
         callCount: 1,
@@ -350,7 +350,6 @@ describe("NodePlayer", () => {
     expect(messages[3]).toEqual({
       topic: "/webviz/test",
       receiveTime: { sec: 0, nsec: 100 },
-      datatype: "test",
       message: {
         payload: "baz",
         callCount: 1,

@@ -25,14 +25,45 @@ There are 3 types of datasets supported by the 2D PLot panel API - `lines`, `poi
 - `pointStyle` - can be 'circle', 'cross', 'crossRot', 'dash', 'line', 'rect', 'rectRounded', 'rectRot', or 'star'
 - `data` - an array of coordinate objects, e.g. `[{x: 0, y: 1}, {x: 2, y: 5}]`
 
-Only `label` and `data` are required - all other options have reasonable default values.
+Only `label` and `data` are required - all other options have reasonable default values. For more info on these options, reference the [chart.js documentation](https://www.chartjs.org/docs/latest/charts/line.html#dataset-properties).
 
-Below is a basic example of a message that could be consumed by the 2D Plot panel:
+Below are the ROS message definitions needed for a 2D Plot message:
+
+```cpp
+# webviz_msgs/TwoDimensionalPlotMsg definition
+std_msgs/Header header
+string title
+string xAxisLabel
+string yAxisLabel
+string gridColor
+webviz_msgs/TwoDimensionalPlotDatapointMsg[] lines
+webviz_msgs/TwoDimensionalPlotDatapointMsg[] points
+webviz_msgs/TwoDimensionalPlotDatapointMsg[] polygons
+
+# webviz_msgs/TwoDimensionalPlotDatapointMsg definition
+uint8 order
+string label
+string backgroundColor
+string borderColor
+uint8[] borderDash
+uint8 borderWidth
+string pointBackgroundColor
+string pointBorderColor
+string pointBorderWidth
+string pointRadius
+# pointStyle can be 'circle', 'cross', 'crossRot', 'dash', 'line', 'rect', 'rectRounded', 'rectRot', or 'star'
+string pointStyle
+float32 lineTension
+# z field in geometry_msgs/Point is ignored
+geometry_msgs/Point[] data
+```
+
+Below is an example of an output message (in JavaScript) that could be consumed by the 2D Plot panel:
 
 ```js
 {
   topic: "/plot_a",
-  datatype: "webviz_msgs/2DPlotMsg",
+  datatype: "webviz_msgs/TwoDimensionalPlotMsg",
   receiveTime: { sec: 1532375120, nsec: 317760607 },
   message: {
     title: "This is Plot A",

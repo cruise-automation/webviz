@@ -34,20 +34,20 @@ export function format(stamp: Time) {
   return `${formatDate(stamp)} ${formatTime(stamp)}`;
 }
 
-export function formatDate(stamp: Time) {
+export function formatDate(stamp: Time, timezone?: ?string) {
   if (stamp.sec < 0 || stamp.nsec < 0) {
     console.error("Times are not allowed to be negative");
     return "(invalid negative time)";
   }
-  return moment.tz(toDate(stamp), moment.tz.guess()).format("YYYY-MM-DD");
+  return moment.tz(toDate(stamp), timezone || moment.tz.guess()).format("YYYY-MM-DD");
 }
 
-export function formatTime(stamp: Time) {
+export function formatTime(stamp: Time, timezone?: ?string) {
   if (stamp.sec < 0 || stamp.nsec < 0) {
     console.error("Times are not allowed to be negative");
     return "(invalid negative time)";
   }
-  return moment.tz(toDate(stamp), moment.tz.guess()).format("h:mm:ss.SSS A z");
+  return moment.tz(toDate(stamp), timezone || moment.tz.guess()).format("h:mm:ss.SSS A z");
 }
 
 export function formatTimeRaw(stamp: Time) {
@@ -148,10 +148,10 @@ export function fromNanoSec(nsec: number): Time {
   return { sec: Math.trunc(nsec / 1e9), nsec: nsec % 1e9 };
 }
 
-export function toMillis(time: Time, roundDirection: "round-up" | "round-down"): number {
+export function toMillis(time: Time, roundUp: boolean = true): number {
   const secondsMillis = time.sec * 1e3;
   const nsecMillis = time.nsec / 1e6;
-  return roundDirection === "round-up" ? secondsMillis + Math.ceil(nsecMillis) : secondsMillis + Math.floor(nsecMillis);
+  return roundUp ? secondsMillis + Math.ceil(nsecMillis) : secondsMillis + Math.floor(nsecMillis);
 }
 
 export function fromMillis(value: number): Time {

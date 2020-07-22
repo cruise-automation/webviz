@@ -22,6 +22,7 @@ export type MutablePoint = {|
   z: number,
 |};
 export type Point = $ReadOnly<MutablePoint>;
+export type Vector3 = Point;
 type Points = $ReadOnlyArray<Point>;
 
 export type Header = $ReadOnly<{|
@@ -106,16 +107,15 @@ export type BaseMarker = $ReadOnly<
     id: string,
     action: 0 | 1 | 2 | 3,
     pose: Pose,
-    name?: string,
     scale: Scale,
     color?: Color,
     colors?: Colors,
-    lifetime?: Time,
-    frameLocked?: boolean, // TODO: Do we need this?
+    lifetime?: Time, // TODO: required
+    frame_locked?: boolean, // TODO: required
     text?: string,
-    meshResource?: {}, // TODO Maybe make this a named resource?
+    mesh_resource?: string, // TODO: required
     primitive?: string,
-    customMetadata?: $ReadOnly<any>,
+    metadata?: $ReadOnly<any>,
   }
 >;
 
@@ -307,8 +307,6 @@ export type PointCloud2 = $ReadOnly<
     type: 102 | "PointCloud2",
     // this is appended by scene builder
     pose: ?Pose,
-    // this is appended by scene builder
-    name: ?string,
     colorField?: string,
     pointSize?: number,
     color?: string,

@@ -15,8 +15,14 @@ import {
   importPanelLayout,
   createTabPanel,
   setUserNodes,
+  closePanel,
   splitPanel,
   swapPanel,
+  addPanel,
+  dropPanel,
+  moveTab,
+  startDrag,
+  endDrag,
 } from "webviz-core/src/actions/panels";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import createRootReducer from "webviz-core/src/reducers";
@@ -115,7 +121,7 @@ describe("state.panels", () => {
     };
 
     store.dispatch(importPanelLayout(payload));
-    store.checkState((panels) => {
+    store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.globalVariables).toEqual({});
@@ -132,7 +138,7 @@ describe("state.panels", () => {
     };
 
     store.dispatch(importPanelLayout(payload));
-    store.checkState((panels) => {
+    store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.playbackConfig).toEqual({ messageOrder: "receiveTime", speed: 0.2 });
@@ -153,7 +159,7 @@ describe("state.panels", () => {
     };
 
     store.dispatch(importPanelLayout(payload));
-    store.checkState((panels) => {
+    store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.globalVariables).toEqual(globalVariables);
@@ -171,7 +177,7 @@ describe("state.panels", () => {
     };
 
     store.dispatch(importPanelLayout(payload));
-    store.checkState((panels) => {
+    store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.restrictedTopics).toEqual(payload.restrictedTopics);
@@ -183,7 +189,7 @@ describe("state.panels", () => {
     const globalVariables = { some_global_data_var: 1 };
     const payload = { globalData: globalVariables, layout: "foo!baz" };
     store.dispatch(importPanelLayout(payload, { isFromUrl: true }));
-    store.checkState((panels) => {
+    store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.globalVariables).toEqual(globalVariables);
@@ -195,7 +201,7 @@ describe("state.panels", () => {
     const globalVariables = { some_global_data_var: 1 };
     const payload = { globalData: { some_var: 2 }, globalVariables, layout: "foo!baz" };
     store.dispatch(importPanelLayout(payload, { isFromUrl: true }));
-    store.checkState((panels) => {
+    store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.globalData).toBe(undefined);
@@ -240,6 +246,243 @@ describe("state.panels", () => {
     return importPanelLayout({ layout: "foo!bar", savedProps: {} });
   });
 
+  describe("adds panel to a layout", () => {
+    it("adds panel to main app layout", () => {
+      const store = getStore();
+      const panelLayout = {
+        layout: "Tab!a",
+        savedProps: { "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A" }, { title: "B" }, { title: "C" }] } },
+      };
+      store.dispatch(importPanelLayout(panelLayout));
+      store.dispatch(addPanel({ type: "Audio", tabId: null, layout: panelLayout.layout, config: { foo: "bar" } }));
+      store.checkState((panels) => {
+        expect(panels.layout.direction).toEqual("row");
+        expect(getPanelTypeFromId(panels.layout.first)).toEqual("Audio");
+        expect(panels.layout.second).toEqual("Tab!a");
+
+        expect(panels.savedProps[panels.layout.first]).toEqual({ foo: "bar" });
+        expect(panels.savedProps[panels.layout.second]).toEqual(panelLayout.savedProps["Tab!a"]);
+      });
+    });
+    it("adds panel to empty Tab layout", () => {
+      const store = getStore();
+      const panelLayout = {
+        layout: "Tab!a",
+        savedProps: { "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A" }, { title: "B" }, { title: "C" }] } },
+      };
+      store.dispatch(importPanelLayout(panelLayout));
+      store.dispatch(addPanel({ type: "Audio", tabId: "Tab!a", layout: null, config: { foo: "bar" } }));
+      store.checkState(({ layout, savedProps }) => {
+        const tabs = savedProps["Tab!a"].tabs;
+        const newAudioId = tabs[0].layout;
+        expect(layout).toEqual("Tab!a");
+        expect(savedProps["Tab!a"].activeTabIdx).toEqual(0);
+        expect(tabs[0].title).toEqual("A");
+        expect(getPanelTypeFromId(newAudioId)).toEqual("Audio");
+        expect(tabs.length).toEqual(3);
+
+        expect(savedProps[newAudioId]).toEqual({ foo: "bar" });
+        expect(savedProps[layout]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "A", layout: newAudioId }, { title: "B" }, { title: "C" }],
+        });
+      });
+    });
+  });
+
+  describe("drops panel into a layout", () => {
+    it("drops panel into app layout", () => {
+      const store = getStore();
+      const panelLayout = {
+        layout: "Tab!a",
+        savedProps: { "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A" }, { title: "B" }, { title: "C" }] } },
+      };
+      store.dispatch(importPanelLayout(panelLayout));
+      store.dispatch(
+        dropPanel({
+          newPanelType: "Audio",
+          destinationPath: [],
+          position: "right",
+          config: { foo: "bar" },
+          relatedConfigs: null,
+        })
+      );
+      store.checkState(({ layout }) => {
+        expect(layout.direction).toEqual("row");
+        expect(layout.first).toEqual("Tab!a");
+        expect(getPanelTypeFromId(layout.second)).toEqual("Audio");
+      });
+    });
+    it("drops Tab panel into app layout", () => {
+      const store = getStore();
+      const panelLayout = { layout: "Audio!a", savedProps: { "Audio!a": { foo: "bar" } } };
+      store.dispatch(importPanelLayout(panelLayout));
+      store.dispatch(
+        dropPanel({
+          newPanelType: "Tab",
+          destinationPath: [],
+          position: "right",
+          config: { activeTabIdx: 0, tabs: [{ title: "A", layout: "Audio!b" }] },
+          relatedConfigs: { "Audio!b": { foo: "baz" } },
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout.direction).toEqual("row");
+        expect(layout.first).toEqual("Audio!a");
+        expect(getPanelTypeFromId(layout.second)).toEqual("Tab");
+
+        expect(savedProps["Audio!a"]).toEqual({ foo: "bar" });
+        const { activeTabIdx, tabs } = savedProps[layout.second];
+        expect(activeTabIdx).toEqual(0);
+        expect(tabs.length).toEqual(1);
+        expect(tabs[0].title).toEqual("A");
+
+        const newAudioId = tabs[0].layout;
+        expect(getPanelTypeFromId(newAudioId)).toEqual("Audio");
+        expect(savedProps[newAudioId]).toEqual({ foo: "baz" });
+      });
+    });
+    it("drops panel into empty Tab layout", () => {
+      const store = getStore();
+      const panelLayout = {
+        layout: "Tab!a",
+        savedProps: { "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A" }, { title: "B" }, { title: "C" }] } },
+      };
+      store.dispatch(importPanelLayout(panelLayout));
+      store.dispatch(
+        dropPanel({
+          newPanelType: "Audio",
+          destinationPath: [],
+          position: "right",
+          tabId: "Tab!a",
+          config: { foo: "bar" },
+          relatedConfigs: null,
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual("Tab!a");
+        const tabs = savedProps["Tab!a"].tabs;
+        expect(tabs[0].title).toEqual("A");
+        expect(getPanelTypeFromId(tabs[0].layout)).toEqual("Audio");
+        expect(tabs.length).toEqual(3);
+      });
+    });
+    it("drops panel into nested Tab layout", () => {
+      const store = getStore();
+      const panelLayout = {
+        layout: "Tab!a",
+        savedProps: {
+          "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A", layout: "Tab!b" }] },
+          "Tab!b": { activeTabIdx: 0, tabs: [{ title: "B", layout: "Plot!a" }] },
+        },
+      };
+      store.dispatch(importPanelLayout(panelLayout));
+      store.dispatch(
+        dropPanel({
+          newPanelType: "Audio",
+          destinationPath: [],
+          position: "right",
+          tabId: "Tab!b",
+          config: { foo: "bar" },
+          relatedConfigs: null,
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual("Tab!a");
+        expect(savedProps["Tab!a"]).toEqual(panelLayout.savedProps["Tab!a"]);
+        const tabBTabs = savedProps["Tab!b"].tabs;
+        expect(tabBTabs.length).toEqual(1);
+        expect(tabBTabs[0].layout.first).toEqual("Plot!a");
+        expect(getPanelTypeFromId(tabBTabs[0].layout.second)).toEqual("Audio");
+        expect(savedProps[tabBTabs[0].layout.second]).toEqual({ foo: "bar" });
+      });
+    });
+    it("drops nested Tab panel into main layout", () => {
+      const store = getStore();
+      const panelLayout = { layout: "Audio!a" };
+      store.dispatch(importPanelLayout(panelLayout));
+      store.dispatch(
+        dropPanel({
+          newPanelType: "Tab",
+          destinationPath: [],
+          position: "right",
+          config: { activeTabIdx: 0, tabs: [{ title: "A", layout: "Tab!b" }] },
+          relatedConfigs: { "Tab!b": { activeTabIdx: 0, tabs: [{ title: "B", layout: "Plot!a" }] } },
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout.first).toEqual("Audio!a");
+        expect(getPanelTypeFromId(layout.second)).toEqual("Tab");
+
+        const parentTabConfig = savedProps[layout.second];
+        expect(parentTabConfig.tabs.length).toEqual(1);
+        expect(parentTabConfig.tabs[0].title).toEqual("A");
+
+        const childTabId = parentTabConfig.tabs[0].layout;
+        expect(getPanelTypeFromId(childTabId)).toEqual("Tab");
+        const childTabProps = savedProps[childTabId];
+        expect(childTabProps.activeTabIdx).toEqual(0);
+        expect(childTabProps.tabs.length).toEqual(1);
+        expect(childTabProps.tabs[0].title).toEqual("B");
+        expect(getPanelTypeFromId(childTabProps.tabs[0].layout)).toEqual("Plot");
+      });
+    });
+  });
+
+  describe("moves tabs", () => {
+    it("reorders tabs within a Tab panel", () => {
+      const store = getStore();
+      const panelLayout = {
+        layout: "Tab!a",
+        savedProps: {
+          "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A" }, { title: "B" }, { title: "C" }] },
+        },
+      };
+      store.dispatch(importPanelLayout(panelLayout));
+      store.dispatch(
+        moveTab({
+          source: { panelId: "Tab!a", tabIndex: 0 },
+          target: { panelId: "Tab!a", tabIndex: 1 },
+        })
+      );
+      store.checkState((panels) => {
+        expect(panels.savedProps).toEqual({
+          "Tab!a": { activeTabIdx: 1, tabs: [{ title: "B" }, { title: "A" }, { title: "C" }] },
+        });
+      });
+    });
+
+    it("moves tabs between Tab panels", () => {
+      const store = getStore();
+      const panelLayout = {
+        layout: { first: "Tab!a", second: "Tab!b", direction: "row" },
+        savedProps: {
+          "Tab!a": {
+            activeTabIdx: 0,
+            tabs: [{ title: "A" }, { title: "B" }, { title: "C" }],
+          },
+          "Tab!b": {
+            activeTabIdx: 0,
+            tabs: [{ title: "D" }, { title: "E" }, { title: "F" }],
+          },
+        },
+      };
+      store.dispatch(importPanelLayout(panelLayout));
+      store.dispatch(
+        moveTab({
+          source: { panelId: "Tab!a", tabIndex: 0 },
+          target: { panelId: "Tab!b", tabIndex: 1 },
+        })
+      );
+      store.checkState((panels) => {
+        expect(panels.savedProps).toEqual({
+          "Tab!a": { activeTabIdx: 0, tabs: [{ title: "B" }, { title: "C" }] },
+          "Tab!b": { activeTabIdx: 0, tabs: [{ title: "D" }, { title: "A" }, { title: "E" }, { title: "F" }] },
+        });
+      });
+    });
+  });
+
   it("does not remove layout if layout is imported from url", () => {
     const store = getStore();
     store.push("/?layout=foo&name=bar");
@@ -252,16 +495,59 @@ describe("state.panels", () => {
     });
   });
 
+  it("closes a panel in single-panel layout", () => {
+    const store = getStore();
+    store.dispatch(importPanelLayout({ layout: "Audio!a", savedProps: { "Audio!a": { foo: "bar" } } }));
+    store.dispatch(closePanel({ root: "Audio!a", path: [] }));
+    store.checkState(({ layout, savedProps }) => {
+      expect(layout).toEqual(null);
+      expect(savedProps).toEqual({});
+    });
+  });
+
+  it("closes a panel in multi-panel layout", () => {
+    const store = getStore();
+    const panelLayout = {
+      layout: { first: "Audio!a", second: "Audio!b", direction: "row" },
+      savedProps: { "Audio!a": { foo: "bar" }, "Audio!b": { foo: "baz" } },
+    };
+    store.dispatch(importPanelLayout(panelLayout));
+    store.dispatch(closePanel({ root: panelLayout.layout, path: ["first"] }));
+    store.checkState((panels) => {
+      expect(panels.layout).toEqual("Audio!b");
+      expect(panels.savedProps).toEqual({ "Audio!b": { foo: "baz" } });
+    });
+  });
+
+  it("closes a panel nested inside a Tab panel", () => {
+    const store = getStore();
+    const panelLayout = {
+      layout: "Tab!a",
+      savedProps: {
+        "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A", layout: "Audio!a" }] },
+        "Audio!a": { foo: "bar" },
+      },
+    };
+    store.dispatch(importPanelLayout(panelLayout));
+    store.dispatch(closePanel({ root: "Audio!a", path: [], tabId: "Tab!a" }));
+    store.checkState((panels) => {
+      expect(panels.layout).toEqual("Tab!a");
+      expect(panels.savedProps).toEqual({ "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A", layout: null }] } });
+    });
+  });
+
   it("resets panels to a valid state when importing an empty layout", () => {
     const store = getStore();
     store.dispatch(importPanelLayout({ layout: undefined }));
-    expect(store.getState().panels).toEqual({
-      globalVariables: {},
-      layout: {},
-      linkedGlobalVariables: [],
-      playbackConfig: { messageOrder: "receiveTime", speed: 0.2 },
-      savedProps: {},
-      userNodes: {},
+    store.checkState((panels) => {
+      expect(panels).toEqual({
+        globalVariables: {},
+        layout: {},
+        linkedGlobalVariables: [],
+        playbackConfig: { messageOrder: "receiveTime", speed: 0.2 },
+        savedProps: {},
+        userNodes: {},
+      });
     });
   });
 
@@ -270,7 +556,7 @@ describe("state.panels", () => {
     const storage = new Storage();
 
     store.dispatch(importPanelLayout({ layout: "myNewLayout", savedProps: {} }, { isFromUrl: true }));
-    store.checkState((panels) => {
+    store.checkState(() => {
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.layout).toEqual("myNewLayout");
     });
@@ -720,6 +1006,326 @@ describe("state.panels", () => {
       store.dispatch(changePanelLayout({ layout: tabPanelState.layout, trimSavedProps: false }));
       store.checkState((panels) => {
         expect(panels.savedProps).toEqual({ "foo!bar": { foo: "baz" } });
+      });
+    });
+  });
+
+  describe("handles dragging panels", () => {
+    it("does not remove panel from single-panel layout when starting drag", () => {
+      const store = getStore();
+      store.dispatch(importPanelLayout({ layout: "Audio!a", savedProps: {} }));
+      store.dispatch(startDrag({ sourceTabId: null, path: [] }));
+      store.checkState(({ layout }) => {
+        expect(layout).toEqual("Audio!a");
+      });
+    });
+    it("hides panel from multi-panel layout when starting drag", () => {
+      const store = getStore();
+      store.dispatch(
+        importPanelLayout({
+          layout: { first: "Audio!a", second: "RawMessages!a", direction: "column" },
+          savedProps: {},
+        })
+      );
+      store.dispatch(startDrag({ sourceTabId: null, path: ["second"] }));
+      store.checkState(({ layout }) => {
+        expect(layout).toEqual({
+          first: "Audio!a",
+          second: "RawMessages!a",
+          direction: "column",
+          splitPercentage: 100,
+        });
+      });
+    });
+    it("removes non-Tab panel from single-panel tab layout when starting drag", () => {
+      const store = getStore();
+      store.dispatch(
+        importPanelLayout({
+          layout: { first: "Tab!a", second: "RawMessages!a", direction: "column" },
+          savedProps: {
+            "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A", layout: "Audio!a" }] },
+          },
+        })
+      );
+      store.dispatch(startDrag({ sourceTabId: "Tab!a", path: [] }));
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual({ first: "Tab!a", second: "RawMessages!a", direction: "column" });
+        expect(savedProps["Tab!a"]).toEqual({ activeTabIdx: 0, tabs: [{ title: "A", layout: null }] });
+      });
+    });
+    it("hides panel from multi-panel Tab layout when starting drag", () => {
+      const store = getStore();
+      store.dispatch(
+        importPanelLayout({
+          layout: { first: "Tab!a", second: "RawMessages!a", direction: "column" },
+          savedProps: {
+            "Tab!a": {
+              activeTabIdx: 0,
+              tabs: [{ title: "A", layout: { first: "Audio!a", second: "Plot!a", direction: "row" } }],
+            },
+          },
+        })
+      );
+      store.dispatch(startDrag({ sourceTabId: "Tab!a", path: ["first"] }));
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual({ first: "Tab!a", second: "RawMessages!a", direction: "column" });
+        expect(savedProps["Tab!a"]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "A", layout: { first: "Audio!a", second: "Plot!a", direction: "row", splitPercentage: 0 } }],
+        });
+      });
+    });
+    it("handles drags within the same tab", () => {
+      const store = getStore();
+      const originalSavedProps = {
+        "Tab!a": {
+          activeTabIdx: 0,
+          tabs: [{ title: "A", layout: { first: "Audio!a", second: "Plot!a", direction: "row" } }],
+        },
+      };
+      store.dispatch(importPanelLayout({ layout: "Tab!a", savedProps: originalSavedProps }));
+      store.dispatch(startDrag({ sourceTabId: "Tab!a", path: ["first"] }));
+      store.dispatch(
+        endDrag({
+          originalLayout: "Tab!a",
+          originalSavedProps,
+          panelId: "Audio!a",
+          sourceTabId: "Tab!a",
+          targetTabId: "Tab!a",
+          position: "right",
+          destinationPath: ["second"],
+          ownPath: ["first"],
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual("Tab!a");
+        expect(savedProps["Tab!a"]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "A", layout: { first: "Plot!a", second: "Audio!a", direction: "row" } }],
+        });
+      });
+    });
+    it("handles drags to main layout from Tab panel", () => {
+      const store = getStore();
+      const originalLayout = { first: "Tab!a", second: "RawMessages!a", direction: "column" };
+      const originalSavedProps = {
+        "Tab!a": {
+          activeTabIdx: 0,
+          tabs: [{ title: "A", layout: { first: "Audio!a", second: "Plot!a", direction: "row" } }],
+        },
+      };
+      store.dispatch(importPanelLayout({ layout: originalLayout, savedProps: originalSavedProps }));
+      store.dispatch(startDrag({ sourceTabId: "Tab!a", path: ["first"] }));
+      store.dispatch(
+        endDrag({
+          originalLayout,
+          originalSavedProps,
+          panelId: "Audio!a",
+          sourceTabId: "Tab!a",
+          targetTabId: undefined,
+          position: "right",
+          destinationPath: ["second"],
+          ownPath: ["first"],
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual({
+          first: "Tab!a",
+          second: { first: "RawMessages!a", second: "Audio!a", direction: "row" },
+          direction: "column",
+        });
+        expect(savedProps["Tab!a"]).toEqual({ activeTabIdx: 0, tabs: [{ title: "A", layout: "Plot!a" }] });
+      });
+    });
+    it("handles drags to Tab panel from main layout", () => {
+      const store = getStore();
+      const originalLayout = { first: "Tab!a", second: "RawMessages!a", direction: "column" };
+      const originalSavedProps = {
+        "Tab!a": {
+          activeTabIdx: 0,
+          tabs: [{ title: "A", layout: { first: "Audio!a", second: "Plot!a", direction: "row" } }],
+        },
+      };
+      store.dispatch(
+        importPanelLayout({
+          layout: originalLayout,
+          savedProps: originalSavedProps,
+        })
+      );
+      store.dispatch(startDrag({ sourceTabId: null, path: ["second"] }));
+      store.dispatch(
+        endDrag({
+          originalLayout,
+          originalSavedProps,
+          panelId: "RawMessages!a",
+          sourceTabId: undefined,
+          targetTabId: "Tab!a",
+          position: "right",
+          destinationPath: ["second"],
+          ownPath: ["second"],
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual("Tab!a");
+        expect(savedProps["Tab!a"]).toEqual({
+          activeTabIdx: 0,
+          tabs: [
+            {
+              title: "A",
+              layout: {
+                first: "Audio!a",
+                second: { first: "Plot!a", second: "RawMessages!a", direction: "row" },
+                direction: "row",
+              },
+            },
+          ],
+        });
+      });
+    });
+    it("handles dragging non-Tab panels between Tab panels", () => {
+      const store = getStore();
+      const originalLayout = { first: "Tab!a", second: "Tab!b", direction: "column" };
+      const originalSavedProps = {
+        "Tab!a": {
+          activeTabIdx: 0,
+          tabs: [{ title: "A", layout: { first: "Audio!a", second: "Plot!a", direction: "row" } }],
+        },
+        "Tab!b": {
+          activeTabIdx: 0,
+          tabs: [{ title: "B", layout: { first: "RawMessages!a", second: "Publish!a", direction: "row" } }],
+        },
+      };
+      store.dispatch(importPanelLayout({ layout: originalLayout, savedProps: originalSavedProps }));
+      store.dispatch(startDrag({ sourceTabId: "Tab!a", path: ["first"] }));
+      store.dispatch(
+        endDrag({
+          originalLayout,
+          originalSavedProps,
+          panelId: "Audio!a",
+          sourceTabId: "Tab!a",
+          targetTabId: "Tab!b",
+          position: "right",
+          destinationPath: ["first"],
+          ownPath: ["first"],
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual({ first: "Tab!a", second: "Tab!b", direction: "column" });
+        expect(savedProps["Tab!a"]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "A", layout: "Plot!a" }],
+        });
+        expect(savedProps["Tab!b"]).toEqual({
+          activeTabIdx: 0,
+          tabs: [
+            {
+              title: "B",
+              layout: {
+                first: { first: "RawMessages!a", second: "Audio!a", direction: "row" },
+                second: "Publish!a",
+                direction: "row",
+              },
+            },
+          ],
+        });
+      });
+    });
+    it("handles dragging Tab panels between Tab panels", () => {
+      const store = getStore();
+      const originalLayout = { first: "Tab!a", second: "Tab!b", direction: "column" };
+      const tabCConfig = { activeTabIdx: 0, tabs: [{ title: "C1", layout: "Plot!a" }, { title: "C2", layout: null }] };
+      const originalSavedProps = {
+        "Tab!a": {
+          activeTabIdx: 0,
+          tabs: [{ title: "A", layout: { first: "Tab!c", second: "Audio!a", direction: "row" } }],
+        },
+        "Tab!b": { activeTabIdx: 0, tabs: [{ title: "B" }] },
+        "Tab!c": tabCConfig,
+      };
+      store.dispatch(importPanelLayout({ layout: originalLayout, savedProps: originalSavedProps }));
+      store.dispatch(startDrag({ sourceTabId: "Tab!a", path: ["first"] }));
+      store.dispatch(
+        endDrag({
+          originalLayout,
+          originalSavedProps,
+          panelId: "Tab!c",
+          sourceTabId: "Tab!a",
+          targetTabId: "Tab!b",
+          position: null,
+          destinationPath: [],
+          ownPath: ["first"],
+        })
+      );
+      store.checkState(({ layout, savedProps }) => {
+        expect(layout).toEqual({ first: "Tab!a", second: "Tab!b", direction: "column" });
+        expect(savedProps["Tab!a"]).toEqual({
+          activeTabIdx: 0,
+          tabs: [{ title: "A", layout: "Audio!a" }],
+        });
+        expect(savedProps["Tab!b"]).toEqual({ activeTabIdx: 0, tabs: [{ title: "B", layout: "Tab!c" }] });
+        expect(savedProps["Tab!c"]).toEqual(tabCConfig);
+      });
+    });
+    it("handles drags in single-panel layouts", () => {
+      const store = getStore();
+      store.dispatch(importPanelLayout({ layout: "Audio!a" }));
+      store.dispatch(startDrag({ sourceTabId: null, path: [] }));
+      store.dispatch(
+        endDrag({
+          originalLayout: "Audio!a",
+          originalSavedProps: {},
+          panelId: "Audio!a",
+          sourceTabId: undefined,
+          targetTabId: undefined,
+          position: "right",
+          destinationPath: [],
+          ownPath: [],
+        })
+      );
+      store.checkState(({ layout }) => {
+        expect(layout).toEqual("Audio!a");
+      });
+    });
+    it("handles drags in multi-panel layouts", () => {
+      const store = getStore();
+      const originalLayout = { first: "Audio!a", second: "Plot!a", direction: "row" };
+      store.dispatch(importPanelLayout({ layout: originalLayout }));
+      store.dispatch(startDrag({ sourceTabId: null, path: ["first"] }));
+      store.dispatch(
+        endDrag({
+          originalLayout,
+          originalSavedProps: {},
+          panelId: "Audio!a",
+          sourceTabId: undefined,
+          targetTabId: undefined,
+          position: "right",
+          destinationPath: ["second"],
+          ownPath: ["first"],
+        })
+      );
+      store.checkState(({ layout }) => {
+        expect(layout).toEqual({ first: "Plot!a", second: "Audio!a", direction: "row" });
+      });
+    });
+    it("handles drags in multi-panel layouts - invalid position", () => {
+      const store = getStore();
+      const originalLayout = { first: "Audio!a", second: "Plot!a", direction: "row" };
+      store.dispatch(importPanelLayout({ layout: originalLayout }));
+      store.dispatch(startDrag({ sourceTabId: null, path: ["first"] }));
+      store.dispatch(
+        endDrag({
+          originalLayout,
+          originalSavedProps: {},
+          panelId: "Audio!a",
+          sourceTabId: undefined,
+          targetTabId: undefined,
+          position: null,
+          destinationPath: null,
+          ownPath: ["first"],
+        })
+      );
+      store.checkState(({ layout }) => {
+        expect(layout).toEqual({ first: "Audio!a", second: "Plot!a", direction: "row", splitPercentage: null });
       });
     });
   });

@@ -162,7 +162,7 @@ export class NotificationList extends React.PureComponent<NotificationListProps>
     const { notifications, onClick } = this.props;
     return (
       <Menu style={{ marginTop: 2 }}>
-        {notifications.map((er, index) => (
+        {notifications.map((er) => (
           <NotificationItem key={er.id} notification={er} onClick={() => onClick(er)} />
         ))}
       </Menu>

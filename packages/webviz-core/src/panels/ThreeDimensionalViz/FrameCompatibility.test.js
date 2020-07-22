@@ -18,13 +18,11 @@ import { MockMessagePipelineProvider } from "webviz-core/src/components/MessageP
 describe("FrameCompatibilityDEPRECATED", () => {
   it("passes in messages per frame", () => {
     const fooMsg1 = {
-      datatype: "foo_msgs/Foo",
       topic: "/foo",
       receiveTime: { sec: 100, nsec: 0 },
       message: { index: 0 },
     };
     const fooMsg2 = {
-      datatype: "foo_msgs/Foo",
       topic: "/foo",
       receiveTime: { sec: 101, nsec: 0 },
       message: { index: 0 },

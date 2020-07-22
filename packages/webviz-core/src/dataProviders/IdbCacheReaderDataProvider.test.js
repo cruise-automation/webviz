@@ -11,10 +11,10 @@ import IdbCacheWriterDataProvider from "./IdbCacheWriterDataProvider";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
-import type { DataProviderMessage } from "webviz-core/src/dataProviders/types";
+import type { Message } from "webviz-core/src/players/types";
 import { getDatabasesInTests } from "webviz-core/src/util/indexeddb/getDatabasesInTests";
 
-function generateMessages(): DataProviderMessage[] {
+function generateMessages(): Message[] {
   return [
     { topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: 0 },
     { topic: "/foo", receiveTime: { sec: 101, nsec: 0 }, message: 1 },

@@ -31,7 +31,7 @@ export const visitEachChild = (node: ?ts.Node, cb: (ts.Node) => void) => {
   if (!node) {
     throw new Error("Node not defined.");
   }
-  ts.forEachChild(node, (n) => {
+  ts.forEachChild(node, (_n) => {
     cb(node);
   });
 };

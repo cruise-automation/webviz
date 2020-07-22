@@ -43,7 +43,7 @@ export type EditHistoryOptions = "SUPPRESS_HISTORY_ENTRY";
 
 export type ConfigsPayload = {| id: string, override?: boolean, config: PanelConfig, defaultConfig?: PanelConfig |};
 export type ChangePanelLayoutPayload = {|
-  layout: MosaicNode,
+  layout: ?MosaicNode,
   trimSavedProps?: boolean,
   historyOptions?: EditHistoryOptions,
 |};

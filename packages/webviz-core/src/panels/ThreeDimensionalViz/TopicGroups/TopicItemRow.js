@@ -15,7 +15,6 @@ import { KeyboardContext } from "./TopicGroups";
 import { toggleNamespace } from "./topicGroupsVisibilityUtils";
 import TopicItemRowHeader from "./TopicItemRowHeader";
 import type { TopicItem, OnTopicGroupsChange } from "./types";
-import { parseColorSetting } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type StyleProps = {| available: boolean, visible: boolean |};
@@ -68,7 +67,7 @@ export default function TopicItemRow(props: Props) {
     (): (?string)[] =>
       settingsByColumn.map((settings) => {
         if (settings) {
-          const rgba = parseColorSetting(settings.overrideColor, 1);
+          const rgba = settings.overrideColor || { r: 1, g: 1, b: 1, a: 1 };
           return tinyColor.fromRatio(rgba).toRgbString();
         }
         return undefined;
@@ -104,7 +103,7 @@ export default function TopicItemRow(props: Props) {
           <>
             {(topicExpanded || namespacesMatchedSearch) && (
               <SNamespacesBySource>
-                {sortedNamespaceDisplayVisibilityByColumn.map((nsItem, index) => {
+                {sortedNamespaceDisplayVisibilityByColumn.map((nsItem) => {
                   return (
                     <Namespace
                       {...nsItem}

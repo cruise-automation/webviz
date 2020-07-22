@@ -16,13 +16,13 @@ import { isTypicalFilterName } from "webviz-core/src/components/MessagePathSynta
 import parseRosPath from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
 import useGlobalVariables, { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
-import type { Message, Topic } from "webviz-core/src/players/types";
+import type { ReflectiveMessage, RosValue, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { useChangeDetector, useDeepMemo, useShallowMemo } from "webviz-core/src/util/hooks";
-import { enumValuesByDatatypeAndField, topicsByTopicName } from "webviz-core/src/util/selectors";
+import { enumValuesByDatatypeAndField, getTopicsByTopicName } from "webviz-core/src/util/selectors";
 
 export type MessagePathDataItem = {|
-  value: mixed, // The actual value.
+  value: RosValue, // The actual value.
   // TODO(JP): Maybe this should just be a simple path without nice ids, and then have a separate function
   // to generate "nice ids". Because they might not always be reliable and we might want to use different
   // kinds of "nice ids" for different purposes, e.g. `[10]{id==5}{other_id=123}` for tooltips (more information)
@@ -36,7 +36,7 @@ export type MessagePathDataItem = {|
 // reference, as long as topics/datatypes/global variables haven't changed in the meantime.
 export function useCachedGetMessagePathDataItems(
   paths: string[]
-): (path: string, message: Message) => ?(MessagePathDataItem[]) {
+): (path: string, message: ReflectiveMessage) => ?(MessagePathDataItem[]) {
   const { topics: providerTopics, datatypes } = PanelAPI.useDataSourceInfo();
   const { globalVariables } = useGlobalVariables();
   const memoizedPaths: string[] = useShallowMemo<string[]>(paths);
@@ -62,7 +62,7 @@ export function useCachedGetMessagePathDataItems(
   // the topics or datatypes change, since that's what getMessagePathDataItems
   // depends on, outside of the message+path.
   const cachesByPath = useRef<{
-    [string]: {| filledInPath: RosPath, weakMap: WeakMap<Message, ?(MessagePathDataItem[])> |},
+    [string]: {| filledInPath: RosPath, weakMap: WeakMap<ReflectiveMessage, ?(MessagePathDataItem[])> |},
   }>({});
   if (useChangeDetector([providerTopics, datatypes], true)) {
     cachesByPath.current = {};
@@ -80,7 +80,7 @@ export function useCachedGetMessagePathDataItems(
   }
 
   return useCallback(
-    (path: string, message: Message): ?(MessagePathDataItem[]) => {
+    (path: string, message: ReflectiveMessage): ?(MessagePathDataItem[]) => {
       if (!memoizedPaths.includes(path)) {
         throw new Error(`path (${path}) was not in the list of cached paths`);
       }
@@ -157,16 +157,21 @@ export function fillInGlobalVariablesInPath(rosPath: RosPath, globalVariables: G
   };
 }
 
+const TIME_NEXT_BY_NAME = Object.freeze({
+  sec: { structureType: "primitive", primitiveType: "int32", datatype: "time" },
+  nsec: { structureType: "primitive", primitiveType: "int32", datatype: "time" },
+});
+
 // Get a new item that has `queriedData` set to the values and paths as queried by `rosPath`.
 // Exported just for tests.
 export function getMessagePathDataItems(
-  message: Message,
+  message: ReflectiveMessage,
   filledInPath: RosPath,
   providerTopics: $ReadOnlyArray<Topic>,
   datatypes: RosDatatypes
 ): ?(MessagePathDataItem[]) {
   const structures = messagePathStructures(datatypes);
-  const topic = topicsByTopicName(providerTopics)[filledInPath.topicName];
+  const topic = getTopicsByTopicName(providerTopics)[filledInPath.topicName];
 
   // We don't care about messages that don't match the topic we're looking for.
   if (!topic || message.topic !== filledInPath.topicName) {
@@ -194,6 +199,7 @@ export function getMessagePathDataItems(
     }
     const pathItem = filledInPath.messagePath[pathIndex];
     const nextPathItem = filledInPath.messagePath[pathIndex + 1];
+    const structureIsJson = structureItem.structureType === "primitive" && structureItem.primitiveType === "json";
     if (!pathItem) {
       // If we're at the end of the `messagePath`, we're done! Just store the point.
       let constantName: ?string;
@@ -208,20 +214,27 @@ export function getMessagePathDataItems(
       queriedData.push({ value, path, constantName });
     } else if (pathItem.type === "name" && structureItem.structureType === "message") {
       // If the `pathItem` is a name, we're traversing down using that name.
+      const next = structureItem.nextByName[pathItem.name];
+      const nextStructIsJson = next && next.structureType === "primitive" && next?.primitiveType === "json";
       traverse(
         value[pathItem.name],
         pathIndex + 1,
         `${path}.${pathItem.name}`,
-        structureItem.nextByName[pathItem.name]
+        !nextStructIsJson ? next : { structureType: "primitive", primitiveType: "json", datatype: "" }
       );
-    } else if (pathItem.type === "slice" && structureItem.structureType === "array") {
+    } else if (
+      pathItem.type === "name" &&
+      (structureItem.primitiveType === "time" || structureItem.primitiveType === "duration")
+    ) {
+      traverse(value[pathItem.name], pathIndex + 1, `${path}.${pathItem.name}`, TIME_NEXT_BY_NAME[pathItem.name]);
+    } else if (pathItem.type === "slice" && (structureItem.structureType === "array" || structureIsJson)) {
       const { start, end } = pathItem;
       if (typeof start === "object" || typeof end === "object") {
         throw new Error("getMessagePathDataItems  only works on paths where global variables have been filled in");
       }
       const startIdx: number = start;
       const endIdx: number = end;
-      if (isNaN(startIdx) || isNaN(endIdx)) {
+      if (typeof startIdx !== "number" || typeof endIdx !== "number") {
         return;
       }
 
@@ -251,12 +264,23 @@ export function getMessagePathDataItems(
             newPath = `${path}[${i}]`;
           }
         }
-        traverse(value[index], pathIndex + 1, newPath, structureItem.next);
+        traverse(
+          value[index],
+          pathIndex + 1,
+          newPath,
+          !structureIsJson && structureItem.structureType === "array" ? structureItem.next : structureItem // Structure is already JSON.
+        );
       }
     } else if (pathItem.type === "filter") {
       if (filterMatches(pathItem, value)) {
         traverse(value, pathIndex + 1, `${path}{${pathItem.repr}}`, structureItem);
       }
+    } else if (structureIsJson && pathItem.name) {
+      traverse(value[pathItem.name], pathIndex + 1, `${path}.${pathItem.name}`, {
+        structureType: "primitive",
+        primitiveType: "json",
+        datatype: "",
+      });
     } else {
       console.warn(`Unknown pathItem.type ${pathItem.type} for structureType: ${structureItem.structureType}`);
     }
@@ -271,7 +295,7 @@ export const useDecodeMessagePathsForMessagesByTopic = (paths: string[]) => {
   // Note: Let callers define their own memoization scheme for messagesByTopic. For regular playback
   // useMemo might be appropriate, but weakMemo will likely better for blocks.
   return useCallback(
-    (messagesByTopic: $ReadOnly<{ [topicName: string]: $ReadOnlyArray<Message> }>) => {
+    (messagesByTopic: $ReadOnly<{ [topicName: string]: $ReadOnlyArray<ReflectiveMessage> }>) => {
       const obj = {};
       for (const path of memoizedPaths) {
         // Create an array for invalid paths, and valid paths with entries in messagesByTopic

@@ -57,7 +57,6 @@ function LoadImageMessage({ children }) {
     }, imageFormat);
   }, []);
   const imageMessage = {
-    datatype: "sensor_msgs/CompressedImage",
     topic: "/foo",
     receiveTime: { sec: 0, nsec: 0 },
     message: { format: imageFormat, data: imageData },
@@ -73,7 +72,6 @@ function marker(type: number, props: {}) {
   return {
     topic: "/foo",
     receiveTime: { sec: 0, nsec: 0 },
-    datatype: "visualization_msgs/ImageMarker",
     message: { ...props, type },
   };
 }
@@ -207,7 +205,10 @@ const noMarkersMarkerData = {
   transformMarkers: false,
 };
 
-const topics = ["/camera_front_medium/image_rect_color_compressed", "/storybook_image"];
+const topics = [
+  { name: "/storybook_image", datatype: "sensor_msgs/Image" },
+  { name: "/storybook_compressed_image", datatype: "sensor_msgs/CompressedImage" },
+];
 const config = getGlobalHooks().perPanelHooks().ImageView.defaultConfig;
 
 function RGBStory({ encoding }: { encoding: string }) {
@@ -229,7 +230,6 @@ function RGBStory({ encoding }: { encoding: string }) {
     <ImageCanvas
       topic={topics[0]}
       image={{
-        datatype: "sensor_msgs/Image",
         topic: "/foo",
         receiveTime: { sec: 0, nsec: 0 },
         message: { data, width, height, encoding },
@@ -271,7 +271,6 @@ function BayerStory({ encoding }: { encoding: string }) {
     <ImageCanvas
       topic={topics[0]}
       image={{
-        datatype: "sensor_msgs/Image",
         topic: "/foo",
         receiveTime: { sec: 0, nsec: 0 },
         message: { data, width, height, encoding },
@@ -299,10 +298,9 @@ function Mono16Story({ bigEndian }: { bigEndian: boolean }) {
     <ImageCanvas
       topic={topics[0]}
       image={{
-        datatype: "sensor_msgs/Image",
         topic: "/foo",
         receiveTime: { sec: 0, nsec: 0 },
-        message: { data, width, height, encoding: "16UC1", is_bigendian: 0 },
+        message: { data, width, height, encoding: "16UC1", is_bigendian: bigEndian ? 1 : 0 },
       }}
       rawMarkerData={noMarkersMarkerData}
       config={config}
@@ -341,7 +339,7 @@ function ShouldCallOnRenderImage({ children }: { children: (() => () => void) =>
 storiesOf("<ImageCanvas>", module)
   .addParameters({
     screenshot: {
-      delay: 500,
+      delay: 2500,
     },
   })
   .add("markers", () => (
@@ -350,7 +348,7 @@ storiesOf("<ImageCanvas>", module)
         <div>
           <h2>original markers</h2>
           <ImageCanvas
-            topic={topics[0]}
+            topic={topics[1]}
             image={imageMessage}
             rawMarkerData={{
               markers,
@@ -401,7 +399,7 @@ storiesOf("<ImageCanvas>", module)
         <div>
           <h2>original markers</h2>
           <ImageCanvas
-            topic={topics[0]}
+            topic={topics[1]}
             image={imageMessage}
             rawMarkerData={{
               markers,
@@ -454,7 +452,6 @@ storiesOf("<ImageCanvas>", module)
       <ImageCanvas
         topic={topics[0]}
         image={{
-          datatype: "sensor_msgs/Image",
           topic: "/foo",
           receiveTime: { sec: 0, nsec: 0 },
           message: { data: new Uint8Array([]), width: 100, height: 50, encoding: "Foo" },
@@ -498,7 +495,6 @@ storiesOf("<ImageCanvas>", module)
           <ImageCanvas
             topic={topics[0]}
             image={{
-              datatype: "sensor_msgs/Image",
               topic: "/foo",
               receiveTime: { sec: 0, nsec: 0 },
               message: { data: new Uint8Array([]), width: 100, height: 50, encoding: "Foo" },

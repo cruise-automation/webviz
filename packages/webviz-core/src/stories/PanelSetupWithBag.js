@@ -77,7 +77,6 @@ const getFixtureFromBag = async (
       (result) => {
         const { message, topic } = result;
         tempFixture.frame[second ? `${SECOND_SOURCE_PREFIX}${topic}` : topic].push({
-          datatype: mapTopicToDatatype(topic),
           topic: second ? `${SECOND_SOURCE_PREFIX}${topic}` : topic,
           receiveTime: result.timestamp,
           message,

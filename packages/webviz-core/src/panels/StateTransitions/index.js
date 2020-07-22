@@ -336,6 +336,7 @@ class StateTransitions extends React.PureComponent<Props> {
                         height={height}
                         data={data}
                         type="multicolorLine"
+                        xAxisIsPlaybackTime
                         yAxes={yAxes}
                         plugins={plugins}
                         scaleOptions={scaleOptions}

@@ -98,6 +98,8 @@ describe("migratePanels", () => {
                   maxValue: 6,
                 },
               },
+              "/foo1": { color: "161,23,23,1" },
+              "/foo2": { overrideColor: "202,16,16,1" },
             },
           },
         },
@@ -121,25 +123,27 @@ describe("migratePanels", () => {
           "name:Topic",
           "name_2:Topic",
         ],
+        expandedKeys: [],
         settingsByKey: {
           "t:/bar": {
             colorMode: {
               colorField: "z",
-              maxColor: "255,0,142,1",
-              minColor: "102,226,152,0.5882352941176471",
-              mode: "gradient",
-              minValue: 0,
+              maxColor: { a: 1, b: 0.5568627450980392, g: 0, r: 1 },
               maxValue: 6,
+              minColor: { a: 0.5882352941176471, b: 0.596078431372549, g: 0.8862745098039215, r: 0.4 },
+              minValue: 0,
+              mode: "gradient",
             },
           },
           "t:/foo": {
             colorMode: {
-              flatColor: "197,29,29,1",
+              flatColor: { a: 1, b: 0.11372549019607843, g: 0.11372549019607843, r: 0.7725490196078432 },
               mode: "flat",
             },
           },
+          "t:/foo1": { overrideColor: { a: 1, b: 0.09019607843137255, g: 0.09019607843137255, r: 0.6313725490196078 } },
+          "t:/foo2": { overrideColor: { a: 1, b: 0.06274509803921569, g: 0.06274509803921569, r: 0.792156862745098 } },
         },
-        expandedKeys: [],
       },
     });
   });

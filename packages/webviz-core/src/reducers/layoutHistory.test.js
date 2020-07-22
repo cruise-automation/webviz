@@ -122,19 +122,19 @@ describe("state.layoutHistory", () => {
   it("suppresses history when not enough time passes", async () => {
     const store = getStore();
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory, panels) => {
+    store.checkState((layoutHistory) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // original state
     });
 
     // No time in between.
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory, panels) => {
+    store.checkState((layoutHistory) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // unchanged
     });
 
     await delay(NEVER_PUSH_LAYOUT_THRESHOLD_MS + 100);
     store.dispatch(changePanelLayout({ layout: "bar!5678" }));
-    store.checkState((layoutHistory, panels) => {
+    store.checkState((layoutHistory) => {
       expect(layoutHistory.undoStates.length).toEqual(2); // updated
     });
   });
@@ -142,13 +142,13 @@ describe("state.layoutHistory", () => {
   it("suppresses history entries when told to", async () => {
     const store = getStore();
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory, panels) => {
+    store.checkState((layoutHistory) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // original state
     });
 
     await delay(NEVER_PUSH_LAYOUT_THRESHOLD_MS + 100);
     store.dispatch(changePanelLayout({ layout: "bar!5678", historyOptions: "SUPPRESS_HISTORY_ENTRY" }));
-    store.checkState((layoutHistory, panels) => {
+    store.checkState((layoutHistory) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // unchanged
     });
   });
@@ -156,13 +156,13 @@ describe("state.layoutHistory", () => {
   it("suppresses history entries when nothing changed", async () => {
     const store = getStore();
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory, panels) => {
+    store.checkState((layoutHistory) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // original state
     });
 
     await delay(NEVER_PUSH_LAYOUT_THRESHOLD_MS + 100);
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory, panels) => {
+    store.checkState((layoutHistory) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // unchanged
     });
   });

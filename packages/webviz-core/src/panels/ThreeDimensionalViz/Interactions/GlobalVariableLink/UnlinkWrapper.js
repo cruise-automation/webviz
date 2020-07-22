@@ -59,7 +59,7 @@ type Props = {
   tooltip?: Node,
 };
 
-export default function UnlinkWrapper({ style, children, linkedGlobalVariable, tooltip }: Props) {
+export default function UnlinkWrapper({ children, linkedGlobalVariable, tooltip }: Props) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const onToggle = useCallback(() => setIsOpen((open) => !open), []);
   return (

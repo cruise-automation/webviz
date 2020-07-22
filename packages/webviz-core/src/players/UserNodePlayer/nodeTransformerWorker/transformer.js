@@ -40,13 +40,13 @@ const ts = require("typescript/lib/typescript");
 
 export const getInputTopics = (nodeData: NodeData): NodeData => {
   const { sourceFile, typeChecker } = nodeData;
-  if (!sourceFile || !typeChecker) {
-    throw new Error("Either the sourceFile or typeChecker is absent'. There is a problem with the `compile` step.");
+  // Do not attempt to run if there were any previous errors.
+  if (nodeData.diagnostics.find(({ severity }) => severity === DiagnosticSeverity.Error)) {
+    return nodeData;
   }
 
-  // Do not attempt to run if there were any compile time errors.
-  if (nodeData.diagnostics.find(({ source }) => source === Sources.Typescript)) {
-    return nodeData;
+  if (!sourceFile || !typeChecker) {
+    throw new Error("Either the sourceFile or typeChecker is absent'. There is a problem with the `compile` step.");
   }
 
   if (!sourceFile.symbol) {

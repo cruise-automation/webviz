@@ -33,6 +33,7 @@ type Props = {|
   disableFeatureColumn: boolean,
   hasFeatureColumn: boolean,
   nodeKey: string,
+  providerAvailable: boolean,
   setCurrentEditingTopic: SetCurrentEditingTopic,
   toggleCheckAllAncestors: ToggleNodeByColumn,
   toggleCheckAllDescendants: ToggleNodeByColumn,
@@ -41,12 +42,13 @@ type Props = {|
 
 export const DOT_MENU_WIDTH = 18; // The width of the small icon.
 
-export default function TreeNodeDotMenu({
+export default function TreeNodeMenu({
   datatype,
   disableBaseColumn,
   disableFeatureColumn,
   hasFeatureColumn,
   nodeKey,
+  providerAvailable,
   setCurrentEditingTopic,
   toggleCheckAllAncestors,
   toggleCheckAllDescendants,
@@ -54,10 +56,14 @@ export default function TreeNodeDotMenu({
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onToggle = useCallback((ev) => {
+  const onToggle = useCallback(() => {
     setIsOpen((prevIsOpen) => !prevIsOpen);
   }, []);
 
+  // Don't render the dot menu if the datasources are unavailable and the node is group node (topic node has option to copy topicName).
+  if (!providerAvailable && !topicName) {
+    return null;
+  }
   return (
     <ChildToggle position="below" isOpen={isOpen} onToggle={onToggle} dataTest={`topic-row-menu-${topicName}`}>
       <Icon
@@ -74,58 +80,62 @@ export default function TreeNodeDotMenu({
         <DotsVerticalIcon />
       </Icon>
       <Menu>
-        <Item
-          style={{ padding: "0 12px", ...(disableBaseColumn ? DISABLED_STYLE : undefined) }}
-          onClick={() => {
-            if (disableBaseColumn) {
-              return;
-            }
-            toggleCheckAllAncestors(nodeKey, 0);
-            setIsOpen(false);
-          }}>
-          <SItemContent>
-            <span style={{ paddingRight: 8 }}>Toggle ancestors</span>
-            <KeyboardShortcut keys={["Alt", "Enter"]} />
-          </SItemContent>
-        </Item>
-        <Item
-          style={{ padding: "0 12px", ...(disableBaseColumn ? DISABLED_STYLE : undefined) }}
-          onClick={() => {
-            if (disableBaseColumn) {
-              return;
-            }
-            toggleCheckAllDescendants(nodeKey, 0);
-            setIsOpen(false);
-          }}>
-          <SItemContent>
-            <span style={{ paddingRight: 8 }}>Toggle descendants</span>
-            <KeyboardShortcut keys={["Shift", "Enter"]} />
-          </SItemContent>
-        </Item>
-        {hasFeatureColumn && (
+        {providerAvailable && (
           <>
             <Item
-              style={disableFeatureColumn ? DISABLED_STYLE : {}}
+              style={{ padding: "0 12px", ...(disableBaseColumn ? DISABLED_STYLE : undefined) }}
               onClick={() => {
-                if (disableFeatureColumn) {
+                if (disableBaseColumn) {
                   return;
                 }
-                toggleCheckAllAncestors(nodeKey, 1);
+                toggleCheckAllAncestors(nodeKey, 0);
                 setIsOpen(false);
               }}>
-              Toggle feature ancestors
+              <SItemContent>
+                <span style={{ paddingRight: 8 }}>Toggle ancestors</span>
+                <KeyboardShortcut keys={["Alt", "Enter"]} />
+              </SItemContent>
             </Item>
             <Item
-              style={disableFeatureColumn ? DISABLED_STYLE : {}}
+              style={{ padding: "0 12px", ...(disableBaseColumn ? DISABLED_STYLE : undefined) }}
               onClick={() => {
-                if (disableFeatureColumn) {
+                if (disableBaseColumn) {
                   return;
                 }
-                toggleCheckAllDescendants(nodeKey, 1);
+                toggleCheckAllDescendants(nodeKey, 0);
                 setIsOpen(false);
               }}>
-              Toggle feature descendants
+              <SItemContent>
+                <span style={{ paddingRight: 8 }}>Toggle descendants</span>
+                <KeyboardShortcut keys={["Shift", "Enter"]} />
+              </SItemContent>
             </Item>
+            {hasFeatureColumn && (
+              <>
+                <Item
+                  style={disableFeatureColumn ? DISABLED_STYLE : {}}
+                  onClick={() => {
+                    if (disableFeatureColumn) {
+                      return;
+                    }
+                    toggleCheckAllAncestors(nodeKey, 1);
+                    setIsOpen(false);
+                  }}>
+                  Toggle feature ancestors
+                </Item>
+                <Item
+                  style={disableFeatureColumn ? DISABLED_STYLE : {}}
+                  onClick={() => {
+                    if (disableFeatureColumn) {
+                      return;
+                    }
+                    toggleCheckAllDescendants(nodeKey, 1);
+                    setIsOpen(false);
+                  }}>
+                  Toggle feature descendants
+                </Item>
+              </>
+            )}
           </>
         )}
         {topicName && (

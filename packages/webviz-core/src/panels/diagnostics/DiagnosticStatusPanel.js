@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { sortBy } from "lodash";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
 
@@ -28,6 +29,7 @@ export type Config = {
   selectedName?: ?string,
   splitFraction?: number,
   topicToRender: string,
+  collapsedSections: { name: string, section: string }[],
 };
 
 type Props = {
@@ -39,12 +41,16 @@ type Props = {
 // component to display a single diagnostic status from list
 class DiagnosticStatusPanel extends React.Component<Props> {
   static panelType = "DiagnosticStatusPanel";
-  static defaultConfig: Config = { topicToRender: DIAGNOSTIC_TOPIC };
+  static defaultConfig: Config = { topicToRender: DIAGNOSTIC_TOPIC, collapsedSections: [] };
 
   _onSelect = (value: string, entry: DiagnosticAutocompleteEntry, autocomplete: Autocomplete) => {
-    this.props.saveConfig({
+    const { saveConfig, config } = this.props;
+    const hasNewHardwareId = config.selectedHardwareId !== entry.hardware_id;
+    const hasNewName = config.selectedName !== entry.name;
+    saveConfig({
       selectedHardwareId: entry.hardware_id,
       selectedName: entry.name,
+      collapsedSections: hasNewHardwareId || hasNewName ? [] : config.collapsedSections,
     });
     autocomplete.blur();
   };
@@ -66,22 +72,41 @@ class DiagnosticStatusPanel extends React.Component<Props> {
   };
 
   render() {
-    const { openSiblingPanel, config } = this.props;
-    const { selectedHardwareId, selectedName, splitFraction, topicToRender } = config;
+    const { openSiblingPanel, config, saveConfig } = this.props;
+    const { selectedHardwareId, selectedName, splitFraction, topicToRender, collapsedSections = [] } = config;
 
     let hasSelection = false;
     let selectedId, selectedDisplayName;
-    if (selectedHardwareId != null && selectedName != null) {
+    if (selectedHardwareId != null) {
       hasSelection = true;
-      selectedId = getDiagnosticId({ hardware_id: selectedHardwareId, name: selectedName, level: 0, message: "" });
-      selectedDisplayName = hasSelection ? getDisplayName(selectedHardwareId, selectedName) : null;
+      selectedId = getDiagnosticId({
+        hardware_id: selectedHardwareId,
+        name: selectedName || "",
+        level: 0,
+        message: "",
+      });
+      selectedDisplayName = hasSelection ? getDisplayName(selectedHardwareId, selectedName || "") : null;
     }
-
     return (
       <Flex scroll scrollX col>
         <DiagnosticsHistory topic={topicToRender}>
           {(buffer) => {
-            const selectedItem = selectedId ? buffer.diagnosticsById.get(selectedId) : null;
+            const nestedKeys = [];
+            for (const key of buffer.diagnosticsById.keys()) {
+              if (key.startsWith(selectedId) && key !== selectedId) {
+                nestedKeys.push(key);
+              }
+            }
+            let selectedItems = null;
+            if (selectedId) {
+              selectedItems = nestedKeys.length
+                ? nestedKeys
+                    .reduce((acc, eachKey) => {
+                      return acc.concat([buffer.diagnosticsById.get(eachKey)]);
+                    }, [])
+                    .filter(Boolean)
+                : [buffer.diagnosticsById.get(selectedId)].filter(Boolean);
+            }
 
             return (
               <>
@@ -95,21 +120,28 @@ class DiagnosticStatusPanel extends React.Component<Props> {
                     getItemText={(entry) => entry.displayName}
                     getItemValue={(entry) => entry.id}
                     onSelect={this._onSelect}
-                    selectedItem={selectedItem}
+                    selectedItem={buffer.diagnosticsById.get(selectedId)}
                     inputStyle={{ height: "100%" }}
                   />
                 </PanelToolbar>
-                {selectedItem ? (
-                  <DiagnosticStatus
-                    info={selectedItem}
-                    splitFraction={splitFraction}
-                    onChangeSplitFraction={(newSplitFraction) =>
-                      this.props.saveConfig({ splitFraction: newSplitFraction })
-                    }
-                    topicToRender={topicToRender}
-                    openSiblingPanel={openSiblingPanel}
-                  />
-                ) : selectedId ? (
+                {selectedItems && selectedItems.length ? (
+                  <Flex col scroll>
+                    {sortBy(selectedItems, ({ status }) => status.name.toLowerCase()).map((selectedItem) => (
+                      <DiagnosticStatus
+                        key={selectedItem.id}
+                        info={selectedItem}
+                        splitFraction={splitFraction}
+                        onChangeSplitFraction={(newSplitFraction) =>
+                          this.props.saveConfig({ splitFraction: newSplitFraction })
+                        }
+                        topicToRender={topicToRender}
+                        openSiblingPanel={openSiblingPanel}
+                        saveConfig={saveConfig}
+                        collapsedSections={collapsedSections}
+                      />
+                    ))}
+                  </Flex>
+                ) : selectedDisplayName ? (
                   <EmptyState>
                     Waiting for diagnostics from <code>{selectedDisplayName}</code>
                   </EmptyState>

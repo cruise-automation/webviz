@@ -50,7 +50,7 @@ export function messagePathStructures(datatypes: RosDatatypes): { [string]: Mess
     const structureFor = memoize(
       (datatype: string): MessagePathStructureItemMessage => {
         const nextByName: { [string]: MessagePathStructureItem } = {};
-        const rosDatatype = datatypes[datatype];
+        const rosDatatype = datatype === "json" ? { fields: [] } : datatypes[datatype];
         if (!rosDatatype) {
           throw new Error(`datatype not found: "${datatype}"`);
         }
@@ -166,11 +166,23 @@ export const traverseStructure = memoizeWeak(
       if (!structureItem) {
         return { valid: false, msgPathPart, structureItem };
       }
-      if (msgPathPart.type === "name") {
+      if (structureItem.primitiveType === "json") {
+        // No need to continue validating if we're dealing with JSON. We
+        // essentially treat all nested values as valid.
+        continue;
+      } else if (msgPathPart.type === "name") {
         if (structureItem.structureType !== "message") {
           return { valid: false, msgPathPart, structureItem };
         }
-        structureItem = structureItem.nextByName[msgPathPart.name];
+        const next: ?MessagePathStructureItem = structureItem.nextByName[msgPathPart.name];
+        const nextStructureIsJson = next && next.structureType === "primitive" && next?.primitiveType === "json";
+        structureItem = !nextStructureIsJson
+          ? next
+          : {
+              structureType: "primitive",
+              primitiveType: "json",
+              datatype: next ? next.datatype : "",
+            };
       } else if (msgPathPart.type === "slice") {
         if (structureItem.structureType !== "array") {
           return { valid: false, msgPathPart, structureItem };

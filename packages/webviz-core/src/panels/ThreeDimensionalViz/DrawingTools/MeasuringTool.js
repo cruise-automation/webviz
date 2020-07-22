@@ -45,11 +45,11 @@ export default class MeasuringTool extends React.Component<Props> {
     });
   };
 
-  _canvasMouseDownHandler = (e: MouseEvent, clickInfo: ReglClickInfo) => {
+  _canvasMouseDownHandler = (e: MouseEvent, _clickInfo: ReglClickInfo) => {
     this.mouseDownCoords = [e.clientX, e.clientY];
   };
 
-  _canvasMouseUpHandler = (e: MouseEvent, clickInfo: ReglClickInfo) => {
+  _canvasMouseUpHandler = (e: MouseEvent, _clickInfo: ReglClickInfo) => {
     const mouseUpCoords = [e.clientX, e.clientY];
     const { measureState, measurePoints, onMeasureInfoChange } = this.props;
 

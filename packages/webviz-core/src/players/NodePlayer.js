@@ -112,7 +112,7 @@ export default class NodePlayer implements Player {
   seekPlayback = (time: Time, backfillDuration: ?Time) => this._player.seekPlayback(time, backfillDuration);
   requestBackfill = () => this._player.requestBackfill();
   // Will be deprecated once NodePlayer is merged into UserNodePlayer.
-  setUserNodes = (data: any) => {};
+  setUserNodes = (_data: any) => {};
   getUnderlyingPlayer() {
     if (process.env.NODE_ENV !== "test") {
       throw new Error("Only allowed to be used in tests.");

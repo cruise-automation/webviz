@@ -121,6 +121,26 @@ describe("getValueActionForValue", () => {
     };
     expect(getValueActionForValue({ sec: 0, nsec: 0 }, structureItem, ["sec"])).toEqual(undefined);
   });
+
+  it("returns slice paths for json", () => {
+    const structureItem = {
+      structureType: "message",
+      nextByName: {
+        some_id: {
+          structureType: "primitive",
+          primitiveType: "json",
+          datatype: "",
+        },
+      },
+      datatype: "",
+    };
+    expect(getValueActionForValue({ some_id: 123 }, structureItem, ["some_id"])).toEqual({
+      type: "primitive",
+      singleSlicePath: ".some_id",
+      multiSlicePath: ".some_id",
+      primitiveType: "json",
+    });
+  });
 });
 
 describe("getStructureItemForPath", () => {

@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2018-present, Cruise LLC
+//  Copyright (c) 2019-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -12,11 +12,7 @@ import uuid from "uuid";
 import delay from "webviz-core/shared/delay";
 import { MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import { rootGetDataProvider } from "webviz-core/src/dataProviders/rootGetDataProvider";
-import {
-  type DataProvider,
-  type DataProviderDescriptor,
-  type DataProviderMetadata,
-} from "webviz-core/src/dataProviders/types";
+import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
 import NoopMetricsCollector from "webviz-core/src/players/NoopMetricsCollector";
 import {
@@ -30,13 +26,16 @@ import {
   type PublishPayload,
   type SubscribePayload,
   type Topic,
+  type MessageDefinitionsByTopic,
 } from "webviz-core/src/players/types";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
+import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 import { getSanitizedTopics } from "webviz-core/src/util/selectors";
 import sendNotification, { type NotificationType } from "webviz-core/src/util/sendNotification";
 import {
+  toMillis,
   clampTime,
   fromMillis,
   fromNanoSec,
@@ -48,6 +47,7 @@ import {
 export const MISSING_CORS_ERROR_TITLE = "Often this is due to missing CORS headers on the requested URL";
 
 const LOOP_MIN_BAG_TIME_IN_SEC = 1;
+const NO_WARNINGS = Object.freeze({});
 
 // The number of nanoseconds to seek backwards to build context during a seek
 // operation larger values mean more opportunity to capture context before the
@@ -100,13 +100,14 @@ export default class RandomAccessPlayer implements Player {
   _lastSeekTime: number = Date.now();
   _cancelSeekBackfill: boolean = false;
   _subscribedTopics: Set<string> = new Set();
+  _topicsToOnlyLoadInBlocks: Set<string> = new Set();
   _providerTopics: Topic[] = [];
   _providerDatatypes: RosDatatypes = {};
   _metricsCollector: PlayerMetricsCollectorInterface;
   _initializing: boolean = true;
   _initialized: boolean = false;
   _reconnecting: boolean = false;
-  _progress: Progress = {};
+  _progress: Progress = Object.freeze({});
   _id: string = uuid.v4();
   _messages: Message[] = [];
   _messageOrder: TimestampMethod = "receiveTime";
@@ -114,7 +115,7 @@ export default class RandomAccessPlayer implements Player {
   _closed = false;
   _seekToTime: ?Time;
   _lastRangeMillis: ?number;
-  _messageDefinitionsByTopic: { [topic: string]: string };
+  _messageDefinitionsByTopic: MessageDefinitionsByTopic;
 
   constructor(
     providerDescriptor: DataProviderDescriptor,
@@ -170,6 +171,9 @@ export default class RandomAccessPlayer implements Player {
             case "updateReconnecting":
               this._reconnecting = metadata.reconnecting;
               this._emitState();
+              break;
+            case "performance":
+              this._metricsCollector.recordDataProviderPerformance(metadata);
               break;
             default:
               (metadata.type: empty);
@@ -239,6 +243,24 @@ export default class RandomAccessPlayer implements Player {
       // we'd be "traveling back in time".
       this._cancelSeekBackfill = true;
     }
+
+    // If we are paused at a certain time, update seek-to query param
+    if (this._currentTime && !this._isPlaying) {
+      const dataStart = clampTime(TimeUtil.add(this._start, fromNanoSec(SEEK_ON_START_NS)), this._start, this._end);
+      const atDataStart = TimeUtil.areSame(this._currentTime, dataStart);
+      const params = new URLSearchParams(location.search);
+
+      // If paused at the start of a datasource, remove seek-to param
+      if (atDataStart) {
+        params.delete(SEEK_TO_QUERY_KEY);
+      } else {
+        // Otherwise, update the seek-to param
+        params.set(SEEK_TO_QUERY_KEY, `${toMillis(this._currentTime)}`);
+      }
+      const newSearch = params.toString();
+      history.replaceState({}, window.title, `${location.pathname}${newSearch ? `?${newSearch}` : newSearch}`);
+    }
+
     const data = {
       isPresent: true,
       showSpinner: this._initializing || this._reconnecting,
@@ -260,8 +282,10 @@ export default class RandomAccessPlayer implements Player {
             topics: this._providerTopics,
             datatypes: this._providerDatatypes,
             messageDefinitionsByTopic: this._messageDefinitionsByTopic,
+            playerWarnings: NO_WARNINGS,
           },
     };
+
     return this._listener(data);
   });
 
@@ -353,7 +377,9 @@ export default class RandomAccessPlayer implements Player {
     if (topics.length === 0) {
       return [];
     }
-    const messages = await this._provider.getMessages(start, end, topics);
+    const messages = await this._provider.getMessages(start, end, topics, {
+      topicsToOnlyLoadInBlocks: this._topicsToOnlyLoadInBlocks,
+    });
 
     // It is very important that we record first emitted messages here, since
     // `_emitState` is awaited on `requestAnimationFrame`, which will not be
@@ -395,7 +421,6 @@ export default class RandomAccessPlayer implements Player {
 
       return {
         topic: message.topic,
-        datatype: topic.datatype,
         receiveTime: message.receiveTime,
         message: message.message,
       };
@@ -420,7 +445,7 @@ export default class RandomAccessPlayer implements Player {
     // clear out last tick millis so we don't read a huge chunk when we unpause
     this._lastTickMillis = undefined;
     this._isPlaying = false;
-    this._emitState();
+    this._emitState(true);
   }
 
   setPlaybackSpeed(speed: number): void {
@@ -480,18 +505,21 @@ export default class RandomAccessPlayer implements Player {
     if (!this._isPlaying) {
       throw new Error("Can only play from the very start when we're already playing.");
     }
-    // Have to start to a nanosecond before the start time, otherwise we don't get
-    // messages that are exactly at the start time.
-    this.seekPlayback(
-      TimeUtil.add(this._start, {
-        sec: 0,
-        nsec: -1,
-      })
-    );
+    // Start a nanosecond before start time to get messages exactly at start time.
+    this.seekPlayback(TimeUtil.add(this._start, { sec: 0, nsec: -1 }));
   }
 
   setSubscriptions(newSubscriptions: SubscribePayload[]): void {
-    this._subscribedTopics = new Set(newSubscriptions.map(({ topic }) => topic));
+    const subscribedTopics = new Set(newSubscriptions.map(({ topic }) => topic));
+    const topicsToOnlyLoadInBlocks = new Set(subscribedTopics);
+    for (const subscription of newSubscriptions) {
+      if (!subscription.onlyLoadInBlocks) {
+        topicsToOnlyLoadInBlocks.delete(subscription.topic);
+      }
+    }
+
+    this._subscribedTopics = subscribedTopics;
+    this._topicsToOnlyLoadInBlocks = topicsToOnlyLoadInBlocks;
   }
 
   requestBackfill() {
@@ -501,9 +529,9 @@ export default class RandomAccessPlayer implements Player {
     this.seekPlayback(this._currentTime);
   }
 
-  setPublishers(publishers: AdvertisePayload[]) {}
+  setPublishers(_publishers: AdvertisePayload[]) {}
 
-  publish(payload: PublishPayload) {
+  publish(_payload: PublishPayload) {
     console.warn("Publishing is not supported in RandomAccessPlayer");
   }
 

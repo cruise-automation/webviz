@@ -25,6 +25,14 @@ let messageHistoryRenderCount = 0;
 let messagePipelineRenderCount = 0;
 let useMessageReducerRenderCount = 0;
 
+// Exported for stories
+export const resetRenderCountsForTests = () => {
+  panelRenderCount = 0;
+  messageHistoryRenderCount = 0;
+  messagePipelineRenderCount = 0;
+  useMessageReducerRenderCount = 0;
+};
+
 window.getNumberOfRendersCountsForTests = function() {
   return {
     panelRenderCount,

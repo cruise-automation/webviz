@@ -130,7 +130,7 @@ function Tab({ config, saveConfig }: Props) {
             />
           </TabDndContext.Provider>
         ) : (
-          <EmptyDropTarget mosaicId={mosaicId} tabId={panelId} onChangeLayout={onChangeLayout} />
+          <EmptyDropTarget mosaicId={mosaicId} tabId={panelId} />
         )}
         {preventTabDrop && <SPanelCover />}
       </Flex>

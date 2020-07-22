@@ -7,9 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import MessageCollector from "./MessageCollector";
-import type { Marker } from "webviz-core/src/types/Messages";
+import type { CubeMarker } from "webviz-core/src/types/Messages";
 
-const makeMarker = (namespace: string, id: string): Marker => {
+const makeMarker = (namespace: string, id: string): CubeMarker => {
   const result = {
     header: {
       stamp: { sec: 100, nsec: 100 },
@@ -19,7 +19,6 @@ const makeMarker = (namespace: string, id: string): Marker => {
     id,
     action: 0,
     ns: namespace,
-    name: `${namespace}/${id}`,
     lifetime: { sec: 0, nsec: 0 },
     pose: {
       position: { x: 0, y: 0, z: 0 },
@@ -31,6 +30,8 @@ const makeMarker = (namespace: string, id: string): Marker => {
   return result;
 };
 
+const getName = (marker: CubeMarker): string => `${marker.ns}/${marker.id}`;
+
 describe("MessageCollector", () => {
   it("returns an empty array on initialization", () => {
     const collector = new MessageCollector();
@@ -40,10 +41,10 @@ describe("MessageCollector", () => {
   it("returns all collected messages", () => {
     const collector = new MessageCollector();
     const marker = makeMarker("ns", "foo");
-    collector.addMarker("/topic", marker);
+    collector.addMarker(marker, getName(marker));
     expect(collector.getMessages()).toHaveLength(1);
     expect(collector.getMessages()).toEqual([marker]);
-    collector.addMessage("/topic", { name: "baz", foo: "bar" });
+    collector.addNonMarker("/topic", { name: "baz", foo: "bar" });
     expect(collector.getMessages()).toHaveLength(2);
   });
 
@@ -51,7 +52,7 @@ describe("MessageCollector", () => {
     const collector = new MessageCollector();
     const marker = makeMarker("ns", "foo");
     collector.setClock({ sec: 100, nsec: 100 });
-    collector.addMarker("/topic", marker);
+    collector.addMarker(marker, getName(marker));
     expect(collector.getMessages()).toHaveLength(1);
     collector.setClock({ sec: 100, nsec: 200 });
     expect(collector.getMessages()).toHaveLength(1);
@@ -71,9 +72,9 @@ describe("MessageCollector", () => {
       lifetime: undefined,
     };
     collector.setClock({ sec: 100, nsec: 100 });
-    collector.addMarker("/topic", marker);
-    collector.addMarker("/topic2", lifetimeMarker);
-    collector.addMessage("/fooz", noLifetimeMarker);
+    collector.addMarker(marker, getName(marker));
+    collector.addMarker(lifetimeMarker, getName(lifetimeMarker));
+    collector.addNonMarker("/fooz", noLifetimeMarker);
     expect(collector.getMessages()).toHaveLength(3);
     collector.flush();
     expect(collector.getMessages()).toHaveLength(2);
@@ -91,7 +92,7 @@ describe("MessageCollector", () => {
     };
 
     collector.setClock({ sec: 100, nsec: 100 });
-    collector.addMarker("/topic", marker);
+    collector.addMarker(marker, getName(marker));
     expect(collector.getMessages()).toHaveLength(1);
 
     collector.setClock({ sec: 100, nsec: 100 + lifetimeNanos });
@@ -100,7 +101,7 @@ describe("MessageCollector", () => {
     collector.setClock({ sec: 100, nsec: 100 + lifetimeNanos + 1 });
     expect(collector.getMessages()).toHaveLength(0);
 
-    collector.addMarker("/topic", marker);
+    collector.addMarker(marker, getName(marker));
     collector.setClock({ sec: 10000000, nsec: 100 });
     expect(collector.getMessages()).toHaveLength(0);
   });
@@ -108,16 +109,16 @@ describe("MessageCollector", () => {
   it("flushes existing messages w/o lifetime when decayTime in Topic Settings starts coming in, expires them accordingly", () => {
     const collector = new MessageCollector();
     collector.setClock({ sec: 100, nsec: 10 });
-    collector.addMessage("/topic", { name: "foo", foo: "bar" });
+    collector.addNonMarker("/topic", { name: "foo", foo: "bar" });
     expect(collector.getMessages()).toHaveLength(1);
 
     collector.setClock({ sec: 100, nsec: 30 });
-    collector.addMessage("/topic", { name: "foo", foo: "baz", lifetime: { sec: 100, nsec: 10 } });
+    collector.addNonMarker("/topic", { name: "foo", foo: "baz" }, { sec: 100, nsec: 10 });
     expect(collector.getMessages()).toHaveLength(1);
 
-    const fooBatMsg = { name: "foo", foo: "bat", lifetime: { sec: 100, nsec: 20 } };
+    const fooBatMsg = { name: "foo", foo: "bat" };
     collector.setClock({ sec: 100, nsec: 31 });
-    collector.addMessage("/topic", fooBatMsg);
+    collector.addNonMarker("/topic", fooBatMsg, { sec: 100, nsec: 20 });
     expect(collector.getMessages()).toHaveLength(2);
 
     collector.setClock({ sec: 200, nsec: 41 });
@@ -131,16 +132,16 @@ describe("MessageCollector", () => {
   it("expires potential existing messages with decay times when decay time is reset to 0", () => {
     const collector = new MessageCollector();
     collector.setClock({ sec: 100, nsec: 10 });
-    collector.addMessage("/topic", { name: "foo", foo: "bar", lifetime: { sec: 100, nsec: 15 } });
+    collector.addNonMarker("/topic", { name: "foo", foo: "bar" }, { sec: 100, nsec: 15 });
     expect(collector.getMessages()).toHaveLength(1);
 
     collector.setClock({ sec: 100, nsec: 20 });
-    collector.addMessage("/topic", { name: "foo", foo: "baz", lifetime: { sec: 100, nsec: 20 } });
+    collector.addNonMarker("/topic", { name: "foo", foo: "baz" }, { sec: 100, nsec: 20 });
     expect(collector.getMessages()).toHaveLength(2);
 
     const fooBatMessage = { name: "foo", foo: "bat" };
     collector.setClock({ sec: 100, nsec: 30 });
-    collector.addMessage("/topic", fooBatMessage);
+    collector.addNonMarker("/topic", fooBatMessage);
     expect(collector.getMessages()).toHaveLength(1);
     expect(collector.getMessages()[0]).toEqual(fooBatMessage);
   });
@@ -148,19 +149,19 @@ describe("MessageCollector", () => {
   it("overwrites non-marker messages based on name", () => {
     const collector = new MessageCollector();
     const message = { name: "foo" };
-    collector.addMessage("/foo", message);
+    collector.addNonMarker("/foo", message);
     expect(collector.getMessages()).toEqual([{ name: "foo" }]);
-    collector.addMessage("/foo", message);
+    collector.addNonMarker("/foo", message);
     expect(collector.getMessages()).toEqual([{ name: "foo" }]);
   });
 
   it("allow multiple messages with the same timestamp", () => {
     const collector = new MessageCollector();
     // Set a lifetime value so the message collector creates a unique key
-    // See addMessage() implementation in MessageCollector
+    // See addNonMarker() implementation in MessageCollector
     const lifetime = { sec: 123, nsec: 456 };
-    collector.addMessage("/topic", { name: "foo", foo: "bar", lifetime });
-    collector.addMessage("/topic", { name: "foo", foo: "bar", lifetime });
+    collector.addNonMarker("/topic", { name: "foo", foo: "bar" }, lifetime);
+    collector.addNonMarker("/topic", { name: "foo", foo: "bar" }, lifetime);
     expect(collector.getMessages()).toHaveLength(2);
   });
 });

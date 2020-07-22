@@ -12,8 +12,8 @@ import { getClickedInfo, getAllPoints, decodeAdditionalFields } from "./selectio
 import type { PointCloud2 } from "webviz-core/src/types/Messages";
 
 describe("<PointClouds />", () => {
-  // $FlowFixMe - Flow doens't like that we're overwriting this.
-  console.info = (message) => {
+  // $FlowFixMe - Flow doesn't like that we're overwriting this.
+  console.info = () => {
     // decodeMarker() will log warnings in console whenever a buffer cannot be sent to GPU
   };
 
@@ -80,7 +80,12 @@ describe("<PointClouds />", () => {
       const input = {
         ...POINT_CLOUD_WITH_ADDITIONAL_FIELDS,
         settings: {
-          colorMode: { mode: "gradient", minColor: "255,0,0,1", maxColor: "0,0,255,1", colorField: "foo" },
+          colorMode: {
+            mode: "gradient",
+            minColor: { r: 1, g: 0, b: 0, a: 1 },
+            maxColor: { r: 0, g: 0, b: 1, a: 1 },
+            colorField: "foo",
+          },
         },
       };
       const marker = decodeMarker(input);

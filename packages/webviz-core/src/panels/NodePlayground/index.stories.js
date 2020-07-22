@@ -47,8 +47,6 @@ const userNodeRosLib = `
 
   export declare interface Input<T extends keyof TopicsToMessageDefinition> {
     topic: T;
-    datatype: string;
-    op: "message";
     receiveTime: Time;
     message: TopicsToMessageDefinition[T];
   }
@@ -61,12 +59,12 @@ const fixture = {
 };
 
 const sourceCodeWithLogs = `
-  import { Time, Input, Messages } from "ros";
+  import { Messages } from "ros";
 
   export const inputs = ["/my_topic"];
   export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
 
-  const publisher = (message: Input<"/my_topic">): Messages.std_msgs__ColorRGBA => {
+  const publisher = (): Messages.std_msgs__ColorRGBA => {
     log({ "someKey": { "nestedKey": "nestedValue" } });
     return { r: 1, b: 1, g: 1, a: 1 };
   };
@@ -109,7 +107,7 @@ const utilsSourceCode = `
 storiesOf("<NodePlayground>", module)
   .addParameters({
     screenshot: {
-      delay: 1000,
+      delay: 2500,
     },
   })
   .add("welcome screen", () => {
@@ -301,7 +299,7 @@ storiesOf("<NodePlayground>", module)
 storiesOf("NodePlayground - <BottomBar>", module)
   .addParameters({
     screenshot: {
-      delay: 1000,
+      delay: 2500,
     },
   })
   .add("no errors or logs - closed", () => (

@@ -50,6 +50,7 @@ import type { UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
+import { setupReceiveReportErrorHandler } from "webviz-core/src/util/RpcUtils";
 
 type UserNodeActions = {
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
@@ -61,7 +62,9 @@ type UserNodeActions = {
 const rpcFromNewSharedWorker = (worker) => {
   const port: MessagePort = worker.port;
   port.start();
-  return new Rpc(port);
+  const rpc = new Rpc(port);
+  setupReceiveReportErrorHandler(rpc);
+  return rpc;
 };
 
 // TODO: FUTURE - Performance tests
@@ -150,6 +153,7 @@ export default class UserNodePlayer implements Player {
     // TODO: Currently the below causes us to reset workers twice, since we are
     // forcing a 'seek' here.
     return this._resetWorkers(topics, datatypes).then(() => {
+      this.setSubscriptions(this._subscriptions);
       const currentTime = this._lastPlayerStateActiveData && this._lastPlayerStateActiveData.currentTime;
       const isPlaying = this._lastPlayerStateActiveData && this._lastPlayerStateActiveData.isPlaying;
       if (!currentTime || isPlaying) {
@@ -219,7 +223,6 @@ export default class UserNodePlayer implements Player {
         }
         return {
           topic: outputTopic,
-          datatype: nodeData.outputDatatype,
           receiveTime: message.receiveTime,
           message: result.message,
         };

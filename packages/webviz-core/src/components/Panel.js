@@ -14,7 +14,7 @@ import GridLargeIcon from "@mdi/svg/svg/grid-large.svg";
 import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
 import { last, without, xor } from "lodash";
-import React, { useState, useCallback, useContext, useMemo, type ComponentType } from "react";
+import React, { useState, useCallback, useContext, useMemo, useRef, type ComponentType } from "react";
 import DocumentEvents from "react-document-events";
 import {
   MosaicContext,
@@ -90,6 +90,8 @@ interface PanelStatics<Config> {
   defaultConfig: Config;
 }
 
+const EMPTY_CONFIG = Object.freeze({});
+
 // HOC that wraps panel in an error boundary and flex box.
 // Gives panel a `config` and `saveConfig`.
 //   export default Panel(MyPanelComponent)
@@ -122,11 +124,14 @@ export default function Panel<Config: PanelConfig>(
 
     const layout = useSelector(({ panels }) => panels.layout);
     const savedProps = useSelector(({ panels }) => panels.savedProps);
+    const stableSavedProps = useRef(savedProps);
+    stableSavedProps.current = savedProps;
     const selectedPanelIds = useSelector((state) => state.mosaic.selectedPanelIds);
     const isSelected = selectedPanelIds.includes(childId);
+    const isFocused = selectedPanelIds.length === 1 && selectedPanelIds[0] === childId; // the current panel is the only selected panel
 
     const isOnlyPanel = useMemo(() => (tabId ? false : !isParent(layout)), [layout, tabId]);
-    const config = savedProps[childId] || originalConfig || {};
+    const config = savedProps[childId] || originalConfig || EMPTY_CONFIG;
 
     const { topics, datatypes, capabilities } = PanelAPI.useDataSourceInfo();
     const dispatch = useDispatch();
@@ -200,7 +205,7 @@ export default function Panel<Config: PanelConfig>(
         const siblingPath = ownPath.slice(0, -1).concat(siblingPathEnd);
         const siblingId = getNodeAtPath(mosaicActions.getRoot(), siblingPath);
         if (typeof siblingId === "string" && getPanelTypeFromId(siblingId) === panelType) {
-          const siblingConfig: PanelConfig = { ...siblingDefaultConfig, ...savedProps[siblingId] };
+          const siblingConfig: PanelConfig = { ...siblingDefaultConfig, ...stableSavedProps.current[siblingId] };
           actions.savePanelConfigs({
             configs: [
               { id: siblingId, config: siblingConfigCreator(siblingConfig), defaultConfig: siblingDefaultConfig },
@@ -224,7 +229,7 @@ export default function Panel<Config: PanelConfig>(
           });
         });
       },
-      [actions, mosaicActions, mosaicWindowActions, savedProps]
+      [actions, mosaicActions, mosaicWindowActions]
     );
 
     const selectPanel = useCallback(
@@ -390,6 +395,21 @@ export default function Panel<Config: PanelConfig>(
       [exitFullScreen, onReleaseQuickActionsKey]
     );
 
+    const child = useMemo(
+      () => (
+        <PanelComponent
+          config={panelComponentConfig}
+          saveConfig={saveCompleteConfig}
+          openSiblingPanel={openSiblingPanel}
+          topics={[...topics]}
+          datatypes={datatypes}
+          capabilities={capabilities}
+          isHovered={isHovered}
+        />
+      ),
+      [panelComponentConfig, saveCompleteConfig, openSiblingPanel, topics, datatypes, capabilities, isHovered]
+    );
+
     return (
       // $FlowFixMe - bug prevents requiring panelType on PanelComponent: https://stackoverflow.com/q/52508434/23649
       <PanelContext.Provider
@@ -403,6 +423,7 @@ export default function Panel<Config: PanelConfig>(
           openSiblingPanel,
           enterFullscreen,
           isHovered,
+          isFocused,
           tabId,
         }}>
         {/* Ensure user exits full-screen mode when leaving window, even if key is still pressed down */}
@@ -463,17 +484,7 @@ export default function Panel<Config: PanelConfig>(
               <CloseIcon /> <span>Exit fullscreen</span>
             </button>
           ) : null}
-          <ErrorBoundary>
-            <PanelComponent
-              config={panelComponentConfig}
-              saveConfig={saveCompleteConfig}
-              openSiblingPanel={openSiblingPanel}
-              topics={[...topics]}
-              datatypes={datatypes}
-              capabilities={capabilities}
-              isHovered={isHovered}
-            />
-          </ErrorBoundary>
+          <ErrorBoundary>{child}</ErrorBoundary>
         </Flex>
       </PanelContext.Provider>
     );

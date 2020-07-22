@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { useCallback } from "react";
+import { type Color } from "regl-worldview";
 import styled from "styled-components";
 
 import AutoSizingCanvas from "webviz-core/src/components/AutoSizingCanvas";
@@ -50,14 +51,10 @@ export default function GradientPicker({
   minColor,
   maxColor,
   onChange,
-  minColorRefForTesting,
-  maxColorRefForTesting,
 }: {
-  minColor: string,
-  maxColor: string,
-  onChange: ({ minColor: string, maxColor: string }) => void,
-  maxColorRefForTesting?: any,
-  minColorRefForTesting?: any,
+  minColor: Color,
+  maxColor: Color,
+  onChange: ({ minColor: Color, maxColor: Color }) => void,
 }) {
   const hexMinColor = getHexFromColorSettingWithDefault(minColor);
   const hexMaxColor = getHexFromColorSettingWithDefault(maxColor);

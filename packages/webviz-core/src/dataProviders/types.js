@@ -8,7 +8,7 @@
 
 import { type Time } from "rosbag";
 
-import type { Progress, Topic } from "webviz-core/src/players/types";
+import type { Progress, Topic, Message, MessageDefinitionsByTopic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 // `DataProvider` describes a more specific kind of data ingesting than `Player`, namely ingesting
@@ -42,6 +42,8 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 // `_measureDataProviders` URL param, which causes every DataProvider to be wrapped in a
 // MeasureDataProvider.
 
+export type GetMessagesExtra = {| topicsToOnlyLoadInBlocks: Set<string> |};
+
 // We disable no-use-before-define so we can have the most important types at the top.
 /* eslint-disable no-use-before-define */
 export interface DataProvider {
@@ -69,21 +71,14 @@ export interface DataProvider {
   // `receiveTime`. May not return any messages outside the time range, or outside the requested
   // list of topics. Must always return the same messages for a given time range, including when
   // querying overlapping time ranges multiple times.
-  getMessages(start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]>;
+  // If `topicsToOnlyLoadInBlocks` is set, then messages from those topics are not expected to be
+  // returned by this function, but only separately through the `Progress#blocks`.
+  getMessages(start: Time, end: Time, topics: string[], extra?: ?GetMessagesExtra): Promise<Message[]>;
 
   // Close the provider (e.g. close any connections to a server). Must be called only after
   // `initialize` has finished.
   close(): Promise<void>;
 }
-
-// Message type used within DataProviders.
-// TODO(JP): Unify with `Message`; see TODO comment there.
-export type TypedDataProviderMessage<T> = {|
-  topic: string,
-  receiveTime: Time,
-  message: $ReadOnly<T>,
-|};
-export type DataProviderMessage = TypedDataProviderMessage<any>;
 
 export type InitializationResult = {|
   start: Time, // Inclusive (time of first message).
@@ -97,7 +92,7 @@ export type InitializationResult = {|
   // The ROS message definitions for each provided topic. Entries are required for topics that are
   // available through the data provider in binary format, either directly through getMessages calls
   // or indirectly through the player progress mechanism.
-  messageDefinitionsByTopic: { [topic: string]: string },
+  messageDefinitionsByTopic: MessageDefinitionsByTopic,
 |};
 
 export type ExtensionPoint = {|
@@ -110,10 +105,22 @@ export type ExtensionPoint = {|
   reportMetadataCallback: (DataProviderMetadata) => void,
 |};
 
+export type PerformanceMetadata = $ReadOnly<{|
+  type: "performance",
+  inputType: string,
+  inputSource: string,
+  totalSizeOfMessages: number, // bytes
+  numberOfMessages: number,
+  requestedRangeDuration: Time,
+  receivedRangeDuration: Time, // Connections could be canceled on seeks.
+  topics: $ReadOnlyArray<string>,
+  totalTransferTime: Time,
+|}>;
+
 export type DataProviderMetadata =
   // Report whether or not the DataProvider is reconnecting to some external server. Used to show a
   // loading indicator in the UI.
-  {| type: "updateReconnecting", reconnecting: boolean |};
+  $ReadOnly<{| type: "updateReconnecting", reconnecting: boolean |}> | PerformanceMetadata;
 
 // A ROS bag "connection", used for parsing messages.
 export type Connection = {|

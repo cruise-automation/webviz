@@ -33,7 +33,6 @@ const hardcodedNode = {
     messages: [
       {
         topic: "/webviz/test",
-        datatype: "test",
         receiveTime: message.receiveTime,
         message: message.message,
       },
@@ -101,6 +100,7 @@ describe("UserNodePlayer", () => {
         validateWorkerArgs(result);
         return result;
       },
+      receive: () => null,
     }));
   });
 
@@ -112,7 +112,7 @@ describe("UserNodePlayer", () => {
     it("subscribes to underlying topics when node topics are subscribed", () => {
       const fakePlayer = new FakePlayer();
       const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
-      userNodePlayer.setListener(async (playerState) => {});
+      userNodePlayer.setListener(async () => {});
       userNodePlayer.setSubscriptions([{ topic: "/webviz/test" }, { topic: "/input/baz" }]);
       expect(fakePlayer.subscriptions).toEqual([{ topic: "/webviz/test" }, { topic: "/input/baz" }]);
     });
@@ -184,7 +184,7 @@ describe("UserNodePlayer", () => {
       const fakePlayer = new FakePlayer();
       const nodePlayer = new NodePlayer(fakePlayer);
       const userNodePlayer = new UserNodePlayer(nodePlayer, defaultUserNodeActions);
-      userNodePlayer.setListener(async (playerState) => {});
+      userNodePlayer.setListener(async () => {});
       userNodePlayer.setSubscriptions([{ topic: "/input/foo" }, { topic: "/input/baz" }]);
       expect(fakePlayer.subscriptions).toEqual([{ topic: "/input/foo" }, { topic: "/input/baz" }]);
     });
@@ -214,7 +214,7 @@ describe("UserNodePlayer", () => {
       const fakePlayer = new FakePlayer();
       const nodePlayer = new NodePlayer(fakePlayer);
       const userNodePlayer = new UserNodePlayer(nodePlayer, defaultUserNodeActions);
-      userNodePlayer.setListener(async (playerState) => {});
+      userNodePlayer.setListener(async () => {});
       userNodePlayer.setSubscriptions([{ topic: "/webviz/foo" }, { topic: "/input/baz" }]);
       expect(fakePlayer.subscriptions).toEqual([{ topic: "/input/baz" }]);
     });
@@ -228,12 +228,11 @@ describe("UserNodePlayer", () => {
       speed: 0.2,
       lastSeekTime: 0,
       messageDefinitionsByTopic: {},
+      playerWarnings: {},
     };
     const upstreamMessages = [
       {
         topic: "/np_input",
-        datatype: "std_msgs/Header",
-
         receiveTime: { sec: 0, nsec: 1 },
         message: {
           payload: "bar",
@@ -241,8 +240,6 @@ describe("UserNodePlayer", () => {
       },
       {
         topic: "/np_input",
-        datatype: "std_msgs/Header",
-
         receiveTime: { sec: 0, nsec: 100 },
         message: {
           payload: "baz",
@@ -469,10 +466,9 @@ describe("UserNodePlayer", () => {
       expect(messages).toEqual([
         upstreamMessages[0],
         {
-          datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
           receiveTime: upstreamMessages[0].receiveTime,
           message: { custom_np_field: "abc", value: "bar" },
-          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
         },
       ]);
     });
@@ -533,10 +529,9 @@ describe("UserNodePlayer", () => {
       expect(messages).toEqual([
         upstreamMessages[0],
         {
-          datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
           receiveTime: upstreamMessages[0].receiveTime,
           message: { a: 1, b: 0.7483314773547883, g: 0.7483314773547883, r: 1 },
-          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
         },
       ]);
     });
@@ -591,10 +586,9 @@ describe("UserNodePlayer", () => {
       expect(nextResult.messages).toEqual([
         upstreamMessages[1],
         {
-          datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
           receiveTime: upstreamMessages[1].receiveTime,
           message: { custom_np_field: "abc", value: "baz" },
-          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
         },
       ]);
     });
@@ -641,16 +635,14 @@ describe("UserNodePlayer", () => {
       expect(messages).toEqual([
         upstreamMessages[0],
         {
-          datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
+          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
           receiveTime: upstreamMessages[0].receiveTime,
           message: { custom_np_field: "abc", value: "bar" },
-          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`,
         },
         {
-          datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}2`,
+          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}2`,
           receiveTime: upstreamMessages[0].receiveTime,
           message: { custom_np_field: "abc", value: "bar" },
-          topic: `${DEFAULT_WEBVIZ_NODE_PREFIX}2`,
         },
       ]);
     });
@@ -1105,6 +1097,8 @@ describe("UserNodePlayer", () => {
         await trustUserNode({ id, sourceCode });
         // Trigger workers to reset.
         await userNodePlayer.setUserNodes({ [id]: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode } });
+        // Expect that the underlying player has correctly received subscribe calls.
+        expect(fakePlayer?.subscriptions[0]?.topic).toEqual("/np_input");
 
         fakePlayer.emit({
           ...basicPlayerState,
@@ -1165,13 +1159,14 @@ describe("UserNodePlayer", () => {
           messageOrder: "receiveTime",
           currentTime: upstreamMessages[0].receiveTime,
           topics: [{ name: "/np_input", datatype: "std_msgs/Header" }],
-
           datatypes: { foo: { fields: [] }, "std_msgs/Header": { fields: [] } },
         });
 
-        const { messages } = await done;
-
-        expect(messages[messages.length - 1].datatype).toEqual(`${DEFAULT_WEBVIZ_NODE_PREFIX}state`);
+        const { topics } = await done;
+        expect(topics).toEqual([
+          { name: "/np_input", datatype: "std_msgs/Header" },
+          { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}state`, datatype: `${DEFAULT_WEBVIZ_NODE_PREFIX}state` },
+        ]);
       });
       it("uses dynamically generated type definitions", async () => {
         const sourceCode = `
@@ -1205,8 +1200,11 @@ describe("UserNodePlayer", () => {
           datatypes: exampleDatatypes,
         });
 
-        const { messages } = await done;
-        expect(messages[1].datatype).toEqual(`std_msgs/Header`);
+        const { topics } = await done;
+        expect(topics).toEqual([
+          { name: "/np_input", datatype: "std_msgs/Header" },
+          { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}state`, datatype: "std_msgs/Header" },
+        ]);
       });
     });
   });

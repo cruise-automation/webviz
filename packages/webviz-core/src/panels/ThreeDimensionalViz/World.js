@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import React, { useMemo, type Node } from "react";
+import React, { useMemo, useState, useEffect, type Node } from "react";
 import {
   Worldview,
   Arrows,
@@ -23,6 +23,7 @@ import {
   createInstancedGetChildrenForHitmap,
 } from "regl-worldview";
 
+import glTextAtlasLoader, { type TextAtlas } from "./utils/glTextAtlasLoader";
 import { groupLinesIntoInstancedLineLists } from "./utils/groupingUtils";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -83,13 +84,19 @@ const ALPHABET = (() => {
   return new Array(end - start + 1).fill().map((_, i) => String.fromCodePoint(start + i));
 })();
 
+const glTextAtlasPromise = glTextAtlasLoader();
+
+type GLTextAtlasStatus = {
+  status: "LOADING" | "LOADED",
+  glTextAtlas: ?TextAtlas,
+};
+
 export default function World({
   onClick,
   autoTextBackgroundColor,
   children,
   onCameraStateChange,
   cameraState,
-  cameraState: { perspective },
   isPlaying,
   markerProviders,
   onDoubleClick,
@@ -137,6 +144,18 @@ export default function World({
     searchTextMatches,
   });
 
+  // GLTextAtlas download is shared among all instances of World, but we should only load the GLText command once we
+  // have the pregenerated atlas available.
+  const [glTextAtlasInfo, setGlTextAtlasInfo] = useState<GLTextAtlasStatus>({
+    status: "LOADING",
+    glTextAtlas: undefined,
+  });
+  useEffect(() => {
+    glTextAtlasPromise.then((atlas) => {
+      setGlTextAtlasInfo({ status: "LOADED", glTextAtlas: atlas });
+    });
+  }, []);
+
   // If 'groupLines' is enabled, we group all line strips and line lists
   // into as few markers as possible. Otherwise, just render them as is.
   const groupLines = useExperimentalFeature("groupLines");
@@ -175,13 +194,16 @@ export default function World({
       <Cubes>{[...cube, ...cubeList]}</Cubes>
       <PoseMarkers>{poseMarker}</PoseMarkers>
       <LaserScans>{laserScan}</LaserScans>
-      <GLText
-        layerIndex={10}
-        alphabet={ALPHABET}
-        scaleInvariantFontSize={14}
-        autoBackgroundColor={autoTextBackgroundColor}>
-        {textMarkers}
-      </GLText>
+      {glTextAtlasInfo.status === "LOADED" && (
+        <GLText
+          layerIndex={10}
+          alphabet={ALPHABET}
+          scaleInvariantFontSize={14}
+          autoBackgroundColor={autoTextBackgroundColor}
+          textAtlas={glTextAtlasInfo.glTextAtlas}>
+          {textMarkers}
+        </GLText>
+      )}
       <FilledPolygons>{filledPolygon}</FilledPolygons>
       <Lines getChildrenForHitmap={getChildrenForHitmap}>{[...instancedLineList, ...groupedLines]}</Lines>
       <LinedConvexHulls>{linedConvexHull}</LinedConvexHulls>

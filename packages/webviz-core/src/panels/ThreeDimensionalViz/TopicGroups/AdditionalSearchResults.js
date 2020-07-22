@@ -110,7 +110,6 @@ export default function AdditionalSearchResults({
   filteredSearchResults,
   onTopicGroupsChange,
   displayNameByTopic,
-  namespacesByTopic,
   topicGroups,
   onAddGroup,
   areSearchResultsExpanded,

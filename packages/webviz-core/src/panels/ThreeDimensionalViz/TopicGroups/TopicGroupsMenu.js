@@ -17,8 +17,6 @@ import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
 import Menu from "webviz-core/src/components/Menu";
 import Item from "webviz-core/src/components/Menu/Item";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz/index";
-import type { SaveConfig } from "webviz-core/src/types/panels";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SIconWrapper = styled.div`
@@ -41,11 +39,10 @@ const SKeyboardShortcutsWrapper = styled.div`
   margin-top: 4px;
 `;
 type Props = {
-  saveConfig: SaveConfig<ThreeDimensionalVizConfig>,
   onImportSettings: () => void,
 };
 
-export default function TopicGroupsMenu({ saveConfig, onImportSettings }: Props) {
+export default function TopicGroupsMenu({ onImportSettings }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const onToggle = useCallback(() => setIsOpen((open) => !open), []);
   return (

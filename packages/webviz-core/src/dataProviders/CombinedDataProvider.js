@@ -6,41 +6,24 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { flatten, isEqual } from "lodash";
+import { assign, flatten, isEqual } from "lodash";
 import memoizeWeak from "memoize-weak";
 import { TimeUtil, type Time } from "rosbag";
 
-import type { MemoryCacheBlock } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
+import type { BlockCache } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import type {
   DataProviderDescriptor,
-  DataProviderMetadata,
   ExtensionPoint,
   GetDataProvider,
   InitializationResult,
-  DataProviderMessage,
   DataProvider,
 } from "webviz-core/src/dataProviders/types";
-import type { Progress, Topic } from "webviz-core/src/players/types";
+import type { Message, Progress } from "webviz-core/src/players/types";
 import type { RosMsgField } from "webviz-core/src/types/RosDatatypes";
-import naturalSort from "webviz-core/src/util/naturalSort";
 import { deepIntersect } from "webviz-core/src/util/ranges";
 import { clampTime } from "webviz-core/src/util/time";
 
-export type ProviderInfo = { prefix?: string, deleteTopics?: string[] };
-type InternalProviderInfo = { provider: DataProvider, prefix?: string, deleteTopics?: string[] };
-
 const sortTimes = (times: Time[]) => times.sort(TimeUtil.compare);
-
-const mapTopics = (topics: Topic[], { provider, prefix }: InternalProviderInfo): Topic[] => {
-  if (!prefix) {
-    return topics;
-  }
-  return topics.map((topic) => ({
-    ...topic,
-    name: `${prefix}${topic.name}`,
-    originalTopic: topic.name,
-  }));
-};
 
 const memoizedMergedBlock = memoizeWeak((block1, block2) => {
   if (block1 == null) {
@@ -56,24 +39,27 @@ const memoizedMergedBlock = memoizeWeak((block1, block2) => {
 });
 
 // Exported for tests
-export const mergedBlocks = (
-  blocks1: ?$ReadOnlyArray<?MemoryCacheBlock>,
-  blocks2: ?$ReadOnlyArray<?MemoryCacheBlock>
-): ?$ReadOnlyArray<?MemoryCacheBlock> => {
-  if (blocks1 == null) {
-    return blocks2;
+export const mergedBlocks = (cache1: ?BlockCache, cache2: ?BlockCache): ?BlockCache => {
+  if (cache1 == null) {
+    return cache2;
   }
-  if (blocks2 == null) {
-    return blocks1;
+  if (cache2 == null) {
+    return cache1;
   }
-  const ret = [];
-  for (let i = 0; i < blocks1.length || i < blocks2.length; ++i) {
-    ret.push(memoizedMergedBlock(blocks1[i], blocks2[i]));
+  if (!TimeUtil.areSame(cache1.startTime, cache2.startTime)) {
+    // TODO(JP): Actually support merging of blocks for different start times. Or not bother at all,
+    // and move the CombinedDataProvider to above the MemoryCacheDataProvider, so we don't have to do
+    // block merging at all.
+    return cache1;
   }
-  return ret;
+  const blocks = [];
+  for (let i = 0; i < cache1.blocks.length || i < cache2.blocks.length; ++i) {
+    blocks.push(memoizedMergedBlock(cache1.blocks[i], cache2.blocks[i]));
+  }
+  return { blocks, startTime: cache1.startTime };
 };
 
-const merge = (messages1: DataProviderMessage[], messages2: DataProviderMessage[]) => {
+const merge = (messages1: Message[], messages2: Message[]) => {
   const messages = [];
   let index1 = 0;
   let index2 = 0;
@@ -93,10 +79,10 @@ const merge = (messages1: DataProviderMessage[], messages2: DataProviderMessage[
   return messages;
 };
 
-const throwOnDuplicateTopics = (topics: Topic[]) => {
-  [...topics].sort(naturalSort("name")).forEach((topic, i, sortedTopics) => {
-    if (sortedTopics[i + 1] && topic.name === sortedTopics[i + 1].name) {
-      throw new Error(`Duplicate topic found: ${topic.name}`);
+const throwOnDuplicateTopics = (topics: string[]) => {
+  [...topics].sort().forEach((topicName, i, sortedTopics) => {
+    if (sortedTopics[i + 1] && topicName === sortedTopics[i + 1]) {
+      throw new Error(`Duplicate topic found: ${topicName}`);
     }
   });
 };
@@ -130,14 +116,14 @@ function intersectProgress(progresses: Progress[]): Progress {
     return { fullyLoadedFractionRanges: [] };
   }
 
-  let blocks: ?$ReadOnlyArray<?MemoryCacheBlock>;
+  let messageCache: ?BlockCache;
   for (const progress of progresses) {
-    blocks = mergedBlocks(blocks, progress.blocks);
+    messageCache = mergedBlocks(messageCache, progress.messageCache);
   }
 
   return {
     fullyLoadedFractionRanges: deepIntersect(progresses.map((p) => p.fullyLoadedFractionRanges).filter(Boolean)),
-    ...(blocks != null ? { blocks } : undefined),
+    ...(messageCache != null ? { messageCache } : undefined),
   };
 }
 function emptyProgress() {
@@ -150,55 +136,44 @@ function fullyLoadedProgress() {
 // A DataProvider that combines multiple underlying DataProviders, optionally adding topic prefixes
 // or removing certain topics.
 export default class CombinedDataProvider implements DataProvider {
-  _providers: InternalProviderInfo[];
+  _providers: DataProvider[];
   _initializationResultsPerProvider: { start: Time, end: Time, topicSet: Set<string> }[] = [];
   _progressPerProvider: (Progress | null)[];
   _extensionPoint: ExtensionPoint;
 
-  constructor(
-    { providerInfos }: {| providerInfos: ProviderInfo[] |},
-    children: DataProviderDescriptor[],
-    getDataProvider: GetDataProvider
-  ) {
-    if (providerInfos.length !== children.length) {
-      throw new Error(
-        `Number of providerInfos (${providerInfos.length}) does not match number of children (${children.length})`
-      );
-    }
-    const prefixes = providerInfos.filter(({ prefix }) => prefix).map(({ prefix }) => prefix);
-    if (prefixes.find((prefix) => prefix && !prefix.startsWith("/"))) {
-      throw new Error(`Each prefix must have a leading forward slash: ${JSON.stringify(prefixes)}`);
-    }
-
-    this._providers = providerInfos.map((providerInfo, index) => ({
-      ...providerInfo,
-      provider:
-        process.env.NODE_ENV === "test" && children[index].name === "TestProvider"
-          ? children[index].args.provider
-          : getDataProvider(children[index]),
-    }));
+  constructor(_: {}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
+    this._providers = children.map((descriptor) =>
+      process.env.NODE_ENV === "test" && descriptor.name === "TestProvider"
+        ? descriptor.args.provider
+        : getDataProvider(descriptor)
+    );
     // initialize progress to an empty range for each provider
-    this._progressPerProvider = providerInfos.map((_) => null);
+    this._progressPerProvider = children.map((__) => null);
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
     this._extensionPoint = extensionPoint;
     const results: InitializationResult[] = [];
+    this._initializationResultsPerProvider = [];
     // NOTE: Initialization is done serially instead of concurrently here as a
     // temporary workaround for a major IndexedDB bug that results in runaway
     // disk usage. See https://bugs.chromium.org/p/chromium/issues/detail?id=1035025
     for (let idx = 0; idx < this._providers.length; idx++) {
-      const { provider } = this._providers[idx];
+      const provider = this._providers[idx];
       const childExtensionPoint = {
         progressCallback: (progress: Progress) => {
           this._updateProgressForChild(idx, progress);
         },
-        reportMetadataCallback: (data: DataProviderMetadata) => {
-          extensionPoint.reportMetadataCallback(data);
-        },
+        reportMetadataCallback: extensionPoint.reportMetadataCallback,
       };
       const result = await provider.initialize(childExtensionPoint);
       results.push(result);
+
+      this._initializationResultsPerProvider.push({
+        start: result.start,
+        end: result.end,
+        topicSet: new Set(result.topics.map((t) => t.name)),
+      });
     }
 
     // Any providers that didn't report progress in `initialize` are assumed fully loaded
@@ -209,26 +184,12 @@ export default class CombinedDataProvider implements DataProvider {
     const start = sortTimes(results.map((result) => result.start)).shift();
     const end = sortTimes(results.map((result) => result.end)).pop();
 
-    this._initializationResultsPerProvider = [];
-    let topics: Topic[] = [];
-    const messageDefinitionsByTopic = {};
-    results.forEach((result, i) => {
-      const deleteTopics: string[] = this._providers[i].deleteTopics || [];
-      const filteredTopics: Topic[] = result.topics.filter(({ name }) => !deleteTopics.includes(name));
-      topics = [...topics, ...mapTopics(filteredTopics, this._providers[i])];
-
-      // Duplicate topics are forbidden elsewhere.
-      Object.assign(messageDefinitionsByTopic, result.messageDefinitionsByTopic);
-
-      this._initializationResultsPerProvider.push({
-        start: result.start,
-        end: result.end,
-        topicSet: new Set(filteredTopics.map((t) => t.name)),
-      });
-    });
-
     // Error handling
-    throwOnDuplicateTopics([...topics]);
+    const mergedTopics = flatten(results.map(({ topics }) => topics));
+    throwOnDuplicateTopics(mergedTopics.map(({ name }) => name));
+    throwOnDuplicateTopics(
+      flatten(results.map(({ messageDefinitionsByTopic }) => Object.keys(messageDefinitionsByTopic)))
+    );
     // $FlowFixMe - flow does not work with Object.entries :(
     throwOnUnequalDatatypes(flatten(results.map(({ datatypes }) => Object.entries(datatypes))));
     throwOnMixedParsedMessages(results.map(({ providesParsedMessages }) => providesParsedMessages));
@@ -236,38 +197,39 @@ export default class CombinedDataProvider implements DataProvider {
     return {
       start,
       end,
-      topics,
-      datatypes: results.reduce((prev, { datatypes }) => ({ ...prev, ...datatypes }), {}),
+      topics: mergedTopics,
+      datatypes: assign({}, ...results.map(({ datatypes }) => datatypes)),
       providesParsedMessages: results.length ? results[0].providesParsedMessages : true,
-      messageDefinitionsByTopic,
+      messageDefinitionsByTopic: assign(
+        {},
+        ...results.map(({ messageDefinitionsByTopic }) => messageDefinitionsByTopic)
+      ),
     };
   }
 
   async close(): Promise<void> {
-    await Promise.all(this._providers.map(({ provider }) => provider.close()));
+    await Promise.all(this._providers.map((provider) => provider.close()));
   }
 
-  async getMessages(start: Time, end: Time, topics: string[]): Promise<DataProviderMessage[]> {
+  async getMessages(start: Time, end: Time, topics: string[]): Promise<Message[]> {
     const messagesPerProvider = await Promise.all(
-      this._providers.map(async ({ provider, prefix }, index) => {
+      this._providers.map(async (provider, index) => {
         const initializationResult = this._initializationResultsPerProvider[index];
         const availableTopics = initializationResult.topicSet;
-        const filteredTopics = topics
-          .map((topic) => topic.slice((prefix || "").length))
-          .filter((topic) => availableTopics.has(topic));
+        const filteredTopics = topics.filter((topic) => availableTopics.has(topic));
         if (!filteredTopics.length) {
           // If we don't need any topics from this provider, we shouldn't call getMessages at all.  Therefore,
           // the provider doesn't know that we currently don't care about any of its topics, so it won't report
           // its progress as being fully loaded, so we'll have to do that here ourselves.
           this._updateProgressForChild(index, fullyLoadedProgress());
-          return Promise.resolve([]);
+          return [];
         }
         if (
           TimeUtil.isLessThan(end, initializationResult.start) ||
           TimeUtil.isLessThan(initializationResult.end, start)
         ) {
           // If we're totally out of bounds for this provider, we shouldn't call getMessages at all.
-          return Promise.resolve([]);
+          return [];
         }
         const clampedStart = clampTime(start, initializationResult.start, initializationResult.end);
         const clampedEnd = clampTime(end, initializationResult.start, initializationResult.end);
@@ -277,7 +239,7 @@ export default class CombinedDataProvider implements DataProvider {
             throw new Error(`Saw unexpected topic from provider ${index}: ${message.topic}`);
           }
         }
-        return Promise.resolve(messages.map((message) => ({ ...message, topic: `${prefix || ""}${message.topic}` })));
+        return messages;
       })
     );
 

@@ -113,7 +113,7 @@ export default function TopicToRenderMenu({
           <DatabaseIcon className={styles.icon} />
         </Icon>
       }>
-      {renderTopics.map((topic, idx) => (
+      {renderTopics.map((topic) => (
         <SDiv
           style={topicToRender === topic ? { backgroundColor: "rgba(59, 46, 118, 0.6)" } : {}}
           key={topic}

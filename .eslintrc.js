@@ -17,7 +17,6 @@ module.exports = {
     "import/external-packages": [
       "packages/@cruise-automation/button",
       "packages/@cruise-automation/hooks",
-      "packages/@cruise-automation/rpc",
       "packages/@cruise-automation/tooltip",
       "packages/react-key-listener",
       "packages/regl-worldview",

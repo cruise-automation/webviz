@@ -51,7 +51,6 @@
     "react-input-autosize": "2.2.2",
     "react-json-tree": "0.11.1",
     "react-markdown": "4.0.4",
-    "react-monaco-editor": "0.36.0",
     "react-mosaic-component": "troygibb/react-mosaic#860c8d70ba3c723be07bc6208f0d05e2c3f2915f",
     "react-outside-click-handler": "1.2.4",
     "react-redux": "7.1.0",

@@ -11,12 +11,22 @@ import shallowequal from "shallowequal";
 
 import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import { type InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import MessageCollector from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/MessageCollector";
 import type { MarkerMatcher } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
 import { getSceneErrorsByTopic } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsUtils";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
-import type { Topic, Frame, Message } from "webviz-core/src/players/types";
-import type { Marker, Namespace, OccupancyGridMessage, MutablePose, Pose } from "webviz-core/src/types/Messages";
+import { cast, type Topic, type Frame, type Message } from "webviz-core/src/players/types";
+import type {
+  LaserScan,
+  Marker,
+  Namespace,
+  NavMsgs$OccupancyGrid,
+  MutablePose,
+  PointCloud2,
+  Pose,
+  StampedMessage,
+} from "webviz-core/src/types/Messages";
 import type { MarkerProvider, MarkerCollector, Scene } from "webviz-core/src/types/Scene";
 import Bounds from "webviz-core/src/util/Bounds";
 import { POSE_MARKER_SCALE, LINED_CONVEX_HULL_RENDERING_SETTING } from "webviz-core/src/util/globalConstants";
@@ -34,7 +44,7 @@ export type TopicSettingsCollection = {
 
 // builds a syntehtic arrow marker from a geometry_msgs/PoseStamped
 // these pose sizes were manually configured in rviz; for now we hard-code them here
-export function buildSyntheticArrowMarker(msg: any, flattenedZHeightPose: ?Pose) {
+export function buildSyntheticArrowMarker(topic: string, msg: any, flattenedZHeightPose: ?Pose) {
   return {
     type: 103,
     header: msg.message.header,
@@ -45,6 +55,7 @@ export function buildSyntheticArrowMarker(msg: any, flattenedZHeightPose: ?Pose)
     color: getGlobalHooks()
       .perPanelHooks()
       .ThreeDimensionalViz.getSyntheticArrowMarkerColor(msg.topic),
+    interactionData: { topic, originalMessage: msg },
   };
 }
 
@@ -385,7 +396,8 @@ export default class SceneBuilder implements MarkerProvider {
       return;
     }
 
-    const marker = { ...message, pose };
+    const interactionData: InteractionData = { topic, originalMessage: message };
+    const marker = { ...message, interactionData, pose };
     const { points } = (marker: any);
     const { position } = pose;
 
@@ -454,7 +466,7 @@ export default class SceneBuilder implements MarkerProvider {
     this.collectors[topic].addMarker(marker, name);
   }
 
-  _consumeOccupancyGrid = (topic: string, message: OccupancyGridMessage): void => {
+  _consumeOccupancyGrid = (topic: string, message: NavMsgs$OccupancyGrid): void => {
     const { frame_id } = message.header;
 
     if (!frame_id) {
@@ -492,6 +504,7 @@ export default class SceneBuilder implements MarkerProvider {
       type,
       name,
       pose,
+      interactionData: { topic, originalMessage: message },
     };
 
     // if we neeed to flatten the ogrid clone the position and change the z to match the flattenedZHeightPose
@@ -509,7 +522,7 @@ export default class SceneBuilder implements MarkerProvider {
     this.collectors[topic].addNonMarker(topic, mappedMessage);
   };
 
-  _consumeNonMarkerMessage = (topic: string, message: any, type: number): void => {
+  _consumeNonMarkerMessage = (topic: string, message: StampedMessage, type: number): void => {
     const sourcePose = emptyPose();
     const pose = this.transforms.apply(sourcePose, sourcePose, message.header.frame_id, this.rootTransformID);
     if (!pose) {
@@ -522,6 +535,7 @@ export default class SceneBuilder implements MarkerProvider {
       ...message,
       type,
       pose,
+      interactionData: { topic, originalMessage: message },
     };
 
     // If a decay time is available, we assign a lifetime to this message
@@ -579,17 +593,17 @@ export default class SceneBuilder implements MarkerProvider {
         break;
       case SUPPORTED_MARKER_DATATYPES.POSE_STAMPED_DATATYPE:
         // make synthetic arrow marker from the stamped pose
-        this.collectors[topic].addNonMarker(topic, buildSyntheticArrowMarker(msg, this.flattenedZHeightPose));
+        this.collectors[topic].addNonMarker(topic, buildSyntheticArrowMarker(topic, msg, this.flattenedZHeightPose));
         break;
       case SUPPORTED_MARKER_DATATYPES.NAV_MSGS_OCCUPANCY_GRID_DATATYPE:
         // flatten btn: set empty z values to be at the same level as the flattenedZHeightPose
         this._consumeOccupancyGrid(topic, message);
         break;
       case SUPPORTED_MARKER_DATATYPES.POINT_CLOUD_DATATYPE:
-        this._consumeNonMarkerMessage(topic, message, 102);
+        this._consumeNonMarkerMessage(topic, cast<PointCloud2>(message), 102);
         break;
       case SUPPORTED_MARKER_DATATYPES.SENSOR_MSGS_LASER_SCAN_DATATYPE:
-        this._consumeNonMarkerMessage(topic, message, 104);
+        this._consumeNonMarkerMessage(topic, cast<LaserScan>(message), 104);
         break;
       case SUPPORTED_MARKER_DATATYPES.GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: {
         // convert Polygon to a line strip
@@ -692,7 +706,6 @@ export default class SceneBuilder implements MarkerProvider {
         marker = { ...marker, primitive: "lines" };
         break;
     }
-    marker = { ...marker, interactionData: { topic: topic.name } };
 
     // allow topic settings to override renderable marker command (see MarkerSettingsEditor.js)
     const { overrideCommand } = this._settingsByKey[`t:${topic.name}`] || {};

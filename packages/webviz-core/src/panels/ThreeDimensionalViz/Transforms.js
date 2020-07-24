@@ -27,15 +27,10 @@ export class Transform {
   id: string;
   matrix: Mat4 = mat4.create();
   parent: ?Transform;
-  valid = false;
+  _hasValidMatrix: boolean = false;
 
   constructor(id: string) {
     this.id = stripLeadingSlash(id);
-  }
-
-  reset() {
-    mat4.identity(this.matrix);
-    this.valid = true;
   }
 
   set(position: Point, orientation: Orientation) {
@@ -44,7 +39,11 @@ export class Transform {
       quat.set(tempOrient, orientation.x, orientation.y, orientation.z, orientation.w),
       vec3.set(tempPos, position.x, position.y, position.z)
     );
-    this.valid = true;
+    this._hasValidMatrix = true;
+  }
+
+  isValid(rootId: string) {
+    return this._hasValidMatrix || this.id === rootId;
   }
 
   isChildOfTransform(rootId: string): boolean {
@@ -64,6 +63,10 @@ export class Transform {
 
   apply(output: MutablePose, input: Pose, rootId: string): ?MutablePose {
     rootId = stripLeadingSlash(rootId);
+    if (!this.isValid(rootId)) {
+      return null;
+    }
+
     if (this.id === rootId) {
       output.position.x = input.position.x;
       output.position.y = input.position.y;
@@ -74,11 +77,9 @@ export class Transform {
       output.orientation.w = input.orientation.w;
       return output;
     }
-    if (!this.valid) {
-      return null;
-    }
+
+    // Can't apply if this transform doesn't map to the root transform.
     if (!this.isChildOfTransform(rootId)) {
-      // Can't apply if this transform doesn't map to the root transform.
       return null;
     }
 

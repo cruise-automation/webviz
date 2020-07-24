@@ -33,6 +33,7 @@ import {
 import type { DataProviderDescriptor } from "webviz-core/src/dataProviders/types";
 import useUserNodes from "webviz-core/src/hooks/useUserNodes";
 import AutomatedRunPlayer from "webviz-core/src/players/automatedRun/AutomatedRunPlayer";
+import PerformanceMeasuringClient from "webviz-core/src/players/automatedRun/performanceMeasuringClient";
 import videoRecordingClient from "webviz-core/src/players/automatedRun/videoRecordingClient";
 import OrderedStampPlayer from "webviz-core/src/players/OrderedStampPlayer";
 import RandomAccessPlayer from "webviz-core/src/players/RandomAccessPlayer";
@@ -51,13 +52,16 @@ import {
   ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY,
   SECOND_SOURCE_PREFIX,
 } from "webviz-core/src/util/globalConstants";
-import { videoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
+import { videoRecordingMode, performanceMeasuringMode } from "webviz-core/src/util/inAutomatedRunMode";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
 function buildPlayerFromDescriptor(descriptor: DataProviderDescriptor): Player {
   if (videoRecordingMode()) {
     return new AutomatedRunPlayer(rootGetDataProvider(descriptor), videoRecordingClient);
+  }
+  if (performanceMeasuringMode()) {
+    return new AutomatedRunPlayer(rootGetDataProvider(descriptor), new PerformanceMeasuringClient());
   }
   return new RandomAccessPlayer(descriptor, { metricsCollector: undefined, seekToTime: getSeekToTime() });
 }

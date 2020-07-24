@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 
 import styles from "./index.module.scss";
 import Flex from "webviz-core/src/components/Flex";
+import KeyListener from "webviz-core/src/components/KeyListener";
 
 type ContainsOpenProps = {|
   children: (containsOpen: boolean) => React.Node,
@@ -185,37 +186,47 @@ export default class ChildToggle extends React.Component<Props> {
 
   render() {
     const { style, children, onToggle, isOpen, dataTest } = this.props;
+    const keyDownHandlers = {
+      Escape: (_) => {
+        if (isOpen) {
+          onToggle();
+        }
+      },
+    };
     return (
-      <Consumer>
-        {(updateOpenNumber: (number) => void) => {
-          this._setContainsOpen = (open: boolean) => {
-            if (open !== this._lastOpen) {
-              updateOpenNumber(open ? 1 : -1);
-              this._lastOpen = open;
-            }
-          };
-          this._setContainsOpen(isOpen);
+      <>
+        <Consumer>
+          {(updateOpenNumber: (number) => void) => {
+            this._setContainsOpen = (open: boolean) => {
+              if (open !== this._lastOpen) {
+                updateOpenNumber(open ? 1 : -1);
+                this._lastOpen = open;
+              }
+            };
+            this._setContainsOpen(isOpen);
 
-          return (
-            <div
-              ref={(el) => (this.el = el)}
-              className={cx({ ["open"]: isOpen })}
-              style={style}
-              onClick={(event) => event.stopPropagation()}>
+            return (
               <div
-                onClick={(event) => {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  onToggle();
-                }}
-                data-test={dataTest}>
-                {children[0]}
+                ref={(el) => (this.el = el)}
+                className={cx({ ["open"]: isOpen })}
+                style={style}
+                onClick={(event) => event.stopPropagation()}>
+                <div
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    onToggle();
+                  }}
+                  data-test={dataTest}>
+                  {children[0]}
+                </div>
+                {this.renderFloating()}
               </div>
-              {this.renderFloating()}
-            </div>
-          );
-        }}
-      </Consumer>
+            );
+          }}
+        </Consumer>
+        <KeyListener global keyDownHandlers={keyDownHandlers} />
+      </>
     );
   }
 }

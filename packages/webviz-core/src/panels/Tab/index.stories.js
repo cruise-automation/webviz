@@ -10,7 +10,6 @@ import { storiesOf } from "@storybook/react";
 import { createBrowserHistory } from "history";
 import React from "react";
 import TestUtils from "react-dom/test-utils";
-import styled from "styled-components";
 
 import Tab from "./index";
 import tick from "webviz-core/shared/tick";
@@ -19,18 +18,10 @@ import nestedTabLayoutFixture from "webviz-core/src/panels/Tab/nestedTabLayoutFi
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
+import { SExpectedResult } from "webviz-core/src/stories/storyHelpers";
 import { dragAndDrop } from "webviz-core/src/test/dragAndDropHelper";
 
 const rootReducer = createRootReducer(createBrowserHistory());
-
-const SExpectedResult = styled.div`
-  position: fixed;
-  top: 25px;
-  left: 0;
-  color: lightgreen;
-  margin: 16px;
-  z-index: 1000;
-`;
 
 const fixture = { topics: [], datatypes: {}, frame: {}, layout: "Tab!a" };
 const manyTabs = new Array(25).fill(1).map((elem, idx) => ({ title: `Tab #${idx + 1}`, layout: null }));

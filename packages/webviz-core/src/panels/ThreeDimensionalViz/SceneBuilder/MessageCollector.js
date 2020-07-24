@@ -8,12 +8,16 @@
 import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
 
+import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import type { BaseMarker } from "webviz-core/src/types/Messages";
 
 const ZERO_TIME = { sec: 0, nsec: 0 };
 
+// Not a concrete type, just descriptive.
+type ObjectWithInteractionData = Interactive<any>;
+
 class MessageWithLifetime {
-  message: {};
+  message: ObjectWithInteractionData;
   receiveTime: Time;
   // If lifetime is present and non-zero, the marker expires when the collector clock is greater
   // than receiveTime + lifetime.
@@ -21,7 +25,7 @@ class MessageWithLifetime {
   // If absent, the marker is removed from the collector using explicit "flush" actions.
   lifetime: ?Time;
 
-  constructor(message: {}, receiveTime: Time, lifetime: ?Time) {
+  constructor(message: ObjectWithInteractionData, receiveTime: Time, lifetime: ?Time) {
     this.message = message;
     this.receiveTime = receiveTime;
     this.lifetime = lifetime;
@@ -30,7 +34,7 @@ class MessageWithLifetime {
   // support in place update w/ mutation to avoid allocating
   // a MarkerWithLifetime wrapper for every marker on every tick
   // only allocate on new markers
-  update(message: {}, receiveTime: Time, lifetime: ?Time) {
+  update(message: ObjectWithInteractionData, receiveTime: Time, lifetime: ?Time) {
     this.message = message;
     this.receiveTime = receiveTime;
     this.lifetime = lifetime;
@@ -95,7 +99,7 @@ export default class MessageCollector {
     });
   }
 
-  _addItem(key: string, item: any, lifetime: ?Time): void {
+  _addItem(key: string, item: ObjectWithInteractionData, lifetime: ?Time): void {
     const existing = this.markers.get(key);
     if (existing) {
       existing.update(item, this.clock, lifetime);
@@ -104,7 +108,7 @@ export default class MessageCollector {
     }
   }
 
-  addMarker(marker: BaseMarker, name: string) {
+  addMarker(marker: Interactive<BaseMarker>, name: string) {
     this._addItem(name, marker, marker.lifetime);
   }
 
@@ -119,7 +123,7 @@ export default class MessageCollector {
     this.markers.clear();
   }
 
-  addNonMarker(topic: string, message: any, lifetime: ?Time) {
+  addNonMarker(topic: string, message: ObjectWithInteractionData, lifetime: ?Time) {
     // Non-marker data is removed in two ways:
     //  - Messages with lifetimes expire only at the end of their lifetime. Multiple messages on the
     //    same topic are added and expired independently.
@@ -149,7 +153,7 @@ export default class MessageCollector {
     }
   }
 
-  getMessages(): any[] {
+  getMessages(): ObjectWithInteractionData[] {
     const result = [];
     this.markers.forEach((marker, key) => {
       // Check if the marker has a lifetime and should be deleted

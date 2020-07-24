@@ -13,7 +13,6 @@ import styled from "styled-components";
 
 import GlobalVariableLink from "./GlobalVariableLink/index";
 import type { InteractionData } from "./types";
-import { type LinkedGlobalVariables } from "./useLinkedGlobalVariables";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
@@ -22,24 +21,23 @@ const SObjectDetails = styled.div`
   padding: 12px 0 16px 0;
 `;
 
-type CommonProps = {
-  interactionData: ?InteractionData,
-  linkedGlobalVariables: LinkedGlobalVariables,
-};
+type CommonProps = $ReadOnly<{| interactionData: ?InteractionData |}>;
 
-type WrapperProps = CommonProps & {
-  selectedObject: MouseEventObject,
-};
+type WrapperProps = $ReadOnly<
+  CommonProps & {|
+    selectedObject: MouseEventObject,
+  |}
+>;
 
-type Props = CommonProps & {
-  objectToDisplay: any,
-};
+type Props = $ReadOnly<
+  CommonProps & {|
+    objectToDisplay: any,
+  |}
+>;
 
-function ObjectDetailsWrapper({
-  interactionData,
-  linkedGlobalVariables,
-  selectedObject: { object, instanceIndex },
-}: WrapperProps) {
+// Used for switching between views of individual and combined objects.
+// TODO(steel): Only show the combined object when the individual objects are semantically related.
+function ObjectDetailsWrapper({ interactionData, selectedObject: { object, instanceIndex } }: WrapperProps) {
   const [showInstance, setShowInstance] = React.useState(true);
   const instanceObject = getInstanceObj(object, instanceIndex);
   const dropdownText = {
@@ -47,28 +45,21 @@ function ObjectDetailsWrapper({
     full: "Show full object",
   };
 
-  return instanceObject ? (
+  const objectToDisplay = instanceObject && showInstance ? instanceObject : object;
+  return (
     <div>
-      <Dropdown
-        position="below"
-        value={showInstance}
-        text={showInstance ? dropdownText.instance : dropdownText.full}
-        onChange={setShowInstance}>
-        <span value={true}>{dropdownText.instance}</span>
-        <span value={false}>{dropdownText.full}</span>
-      </Dropdown>
-      <ObjectDetails
-        interactionData={interactionData}
-        linkedGlobalVariables={linkedGlobalVariables}
-        objectToDisplay={showInstance ? instanceObject : object}
-      />
+      {instanceObject && (
+        <Dropdown
+          position="below"
+          value={showInstance}
+          text={showInstance ? dropdownText.instance : dropdownText.full}
+          onChange={setShowInstance}>
+          <span value={true}>{dropdownText.instance}</span>
+          <span value={false}>{dropdownText.full}</span>
+        </Dropdown>
+      )}
+      <ObjectDetails interactionData={interactionData} objectToDisplay={objectToDisplay} />
     </div>
-  ) : (
-    <ObjectDetails
-      interactionData={interactionData}
-      linkedGlobalVariables={linkedGlobalVariables}
-      objectToDisplay={object}
-    />
   );
 }
 

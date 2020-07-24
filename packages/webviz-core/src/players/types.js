@@ -186,8 +186,8 @@ export type TypedMessage<T> = $ReadOnly<{|
 export type Message = TypedMessage<any>;
 
 type RosSingularField = number | string | boolean | RosObject; // No time -- consider it a message.
-export type RosValue = RosSingularField | RosSingularField[] | Uint8Array | Int8Array | void;
-export type RosObject = { [property: string]: RosValue };
+export type RosValue = RosSingularField | $ReadOnlyArray<RosSingularField> | Uint8Array | Int8Array | void;
+export type RosObject = $ReadOnly<{ [property: string]: RosValue }>;
 
 export type ReflectiveMessage = TypedMessage<RosObject>;
 export const cast = <T>(message: $ReadOnly<RosObject>): T => ((message: any): T);

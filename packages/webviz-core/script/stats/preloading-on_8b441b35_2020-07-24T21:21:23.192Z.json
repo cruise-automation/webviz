@@ -1,0 +1,130 @@
+{
+  "testName": "preloading-on",
+  "arguments": {
+    "bag": "/Users/jposma/Downloads/5G21A6P04L4100087_1578074629_1578074649.bag",
+    "layout": "/Users/jposma/webviz/script/performance/layouts/brian-pierce-rdi.json",
+    "framerate": 30,
+    "runs": 3,
+    "speed": 1,
+    "testName": "preloading-on",
+    "url": "http://localhost:3003"
+  },
+  "commit": "8b441b35",
+  "aggregatedStats": {
+    "bagLengthMs": 20000,
+    "speed": 1,
+    "msPerFrame": 33.333333333333336,
+    "frameRenderCount": 600,
+    "benchmarkPlaybackScore": 0.4266666666666667,
+    "playbackTimeMs": 46849,
+    "averageRenderMs": 72.48333333333333,
+    "averageFrameTimeMs": 78.06,
+    "preloadTimeMs": 34935.666666666664,
+    "bagLengthMs_stddev": 0,
+    "speed_stddev": 0,
+    "msPerFrame_stddev": 0,
+    "frameRenderCount_stddev": 0,
+    "benchmarkPlaybackScore_stddev": 0.00047140452079103207,
+    "playbackTimeMs_stddev": 33.53605025441527,
+    "averageRenderMs_stddev": 0.12256517540566704,
+    "averageFrameTimeMs_stddev": 0.057154760664939394,
+    "preloadTimeMs_stddev": 1181.3338036116447
+  },
+  "stats": [
+    {
+      "bagLengthMs": 20000,
+      "speed": 1,
+      "msPerFrame": 33.333333333333336,
+      "frameRenderCount": 600,
+      "benchmarkPlaybackScore": 0.426,
+      "playbackTimeMs": 46896,
+      "averageRenderMs": 72.33,
+      "averageFrameTimeMs": 78.14,
+      "idb": {
+        "dbs": [
+          {
+            "name": "lru-api-response",
+            "version": 1,
+            "objectStoreRowCounts": [
+              {
+                "name": "items",
+                "rowCount": 1
+              },
+              {
+                "name": "stamps",
+                "rowCount": 1
+              }
+            ]
+          }
+        ],
+        "diskUsageMb": 0
+      },
+      "preloadTimeMs": 36410
+    },
+    {
+      "bagLengthMs": 20000,
+      "speed": 1,
+      "msPerFrame": 33.333333333333336,
+      "frameRenderCount": 600,
+      "benchmarkPlaybackScore": 0.427,
+      "playbackTimeMs": 46820,
+      "averageRenderMs": 72.49,
+      "averageFrameTimeMs": 78.01,
+      "idb": {
+        "dbs": [
+          {
+            "name": "lru-api-response",
+            "version": 1,
+            "objectStoreRowCounts": [
+              {
+                "name": "items",
+                "rowCount": 1
+              },
+              {
+                "name": "stamps",
+                "rowCount": 1
+              }
+            ]
+          }
+        ],
+        "diskUsageMb": 0
+      },
+      "preloadTimeMs": 34879
+    },
+    {
+      "bagLengthMs": 20000,
+      "speed": 1,
+      "msPerFrame": 33.333333333333336,
+      "frameRenderCount": 600,
+      "benchmarkPlaybackScore": 0.427,
+      "playbackTimeMs": 46831,
+      "averageRenderMs": 72.63,
+      "averageFrameTimeMs": 78.03,
+      "idb": {
+        "dbs": [
+          {
+            "name": "lru-api-response",
+            "version": 1,
+            "objectStoreRowCounts": [
+              {
+                "name": "items",
+                "rowCount": 1
+              },
+              {
+                "name": "stamps",
+                "rowCount": 1
+              }
+            ]
+          }
+        ],
+        "diskUsageMb": 0
+      },
+      "preloadTimeMs": 33518
+    }
+  ],
+  "logFilePaths": [
+    "/Users/jposma/webviz/webviz-core/script/logs/preloading-on_8b441b35_2020-07-24T21:21:23.192Z_0.txt",
+    "/Users/jposma/webviz/webviz-core/script/logs/preloading-on_8b441b35_2020-07-24T21:21:23.192Z_1.txt",
+    "/Users/jposma/webviz/webviz-core/script/logs/preloading-on_8b441b35_2020-07-24T21:21:23.192Z_2.txt"
+  ]
+}

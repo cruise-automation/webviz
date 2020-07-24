@@ -66,6 +66,7 @@
     "redux": "4.0.4",
     "redux-thunk": "2.3.0",
     "reselect": "4.0.0",
+    "rmfr": "2.0.0",
     "rosbag": "^2.6.0",
     "roslib": "1.1.0",
     "sanitize-html": "1.20.0",
@@ -82,6 +83,7 @@
     "wasm-lz4": "1.0.0"
   },
   "devDependencies": {
+    "@babel/register": "7.0.0",
     "@testing-library/react-hooks": "1.1.0",
     "eslint-plugin-react-hooks": "^1.5.0",
     "fake-indexeddb": "2.0.4",

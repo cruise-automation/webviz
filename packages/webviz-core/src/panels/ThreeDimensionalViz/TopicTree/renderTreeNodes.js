@@ -22,9 +22,6 @@ import type {
   SceneErrorsByKey,
   SetCurrentEditingTopic,
   SetEditingNamespace,
-  ToggleNamespaceChecked,
-  ToggleNode,
-  ToggleNodeByColumn,
   TopicDisplayMode,
   TreeNode,
   TreeTopicNode,
@@ -94,11 +91,6 @@ type Props = {|
   sceneErrorsByKey: SceneErrorsByKey,
   setCurrentEditingTopic: SetCurrentEditingTopic,
   setEditingNamespace: SetEditingNamespace,
-  toggleCheckAllAncestors: ToggleNodeByColumn,
-  toggleCheckAllDescendants: ToggleNodeByColumn,
-  toggleNamespaceChecked: ToggleNamespaceChecked,
-  toggleNodeChecked: ToggleNodeByColumn,
-  toggleNodeExpanded: ToggleNode,
   topicDisplayMode: TopicDisplayMode,
   visibleTopicsCountByKey: VisibleTopicsCountByKey,
   width: number,
@@ -198,11 +190,6 @@ export default function renderTreeNodes({
   sceneErrorsByKey,
   setCurrentEditingTopic,
   setEditingNamespace,
-  toggleCheckAllAncestors,
-  toggleCheckAllDescendants,
-  toggleNamespaceChecked,
-  toggleNodeChecked,
-  toggleNodeExpanded,
   topicDisplayMode,
   visibleTopicsCountByKey,
   width,
@@ -287,10 +274,6 @@ export default function renderTreeNodes({
           nodeVisibleInScene={nodeVisibleInScene}
           sceneErrors={sceneErrorsByKey[item.key]}
           setCurrentEditingTopic={setCurrentEditingTopic}
-          toggleCheckAllAncestors={toggleCheckAllAncestors}
-          toggleCheckAllDescendants={toggleCheckAllDescendants}
-          toggleNodeChecked={toggleNodeChecked}
-          toggleNodeExpanded={toggleNodeExpanded}
           visibleByColumn={visibleByColumn}
           width={titleWidth}
           visibleTopicsCount={visibleTopicsCountByKey[item.key] || 0}
@@ -308,8 +291,6 @@ export default function renderTreeNodes({
             isXSWidth,
             onNamespaceOverrideColorChange,
             setEditingNamespace,
-            toggleCheckAllAncestors,
-            toggleNamespaceChecked,
             topicNode: item,
             width: titleWidth,
             filterText,
@@ -329,11 +310,6 @@ export default function renderTreeNodes({
             isXSWidth,
             onNamespaceOverrideColorChange,
             setEditingNamespace,
-            toggleCheckAllAncestors,
-            toggleCheckAllDescendants,
-            toggleNamespaceChecked,
-            toggleNodeChecked,
-            toggleNodeExpanded,
             topicDisplayMode,
             sceneErrorsByKey,
             setCurrentEditingTopic,

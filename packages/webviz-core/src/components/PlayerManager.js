@@ -25,11 +25,15 @@ import DropOverlay from "webviz-core/src/components/DropOverlay";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import { getRemoteBagGuid } from "webviz-core/src/dataProviders/getRemoteBagGuid";
+import { rootGetDataProvider } from "webviz-core/src/dataProviders/rootGetDataProvider";
 import {
   getLocalBagDescriptor,
   getRemoteBagDescriptor,
 } from "webviz-core/src/dataProviders/standardDataProviderDescriptors";
+import type { DataProviderDescriptor } from "webviz-core/src/dataProviders/types";
 import useUserNodes from "webviz-core/src/hooks/useUserNodes";
+import AutomatedRunPlayer from "webviz-core/src/players/automatedRun/AutomatedRunPlayer";
+import videoRecordingClient from "webviz-core/src/players/automatedRun/videoRecordingClient";
 import OrderedStampPlayer from "webviz-core/src/players/OrderedStampPlayer";
 import RandomAccessPlayer from "webviz-core/src/players/RandomAccessPlayer";
 import RosbridgePlayer from "webviz-core/src/players/RosbridgePlayer";
@@ -47,11 +51,15 @@ import {
   ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY,
   SECOND_SOURCE_PREFIX,
 } from "webviz-core/src/util/globalConstants";
+import { videoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
-function getPlayerOptions() {
-  return { metricsCollector: undefined, seekToTime: getSeekToTime() };
+function buildPlayerFromDescriptor(descriptor: DataProviderDescriptor): Player {
+  if (videoRecordingMode()) {
+    return new AutomatedRunPlayer(rootGetDataProvider(descriptor), videoRecordingClient);
+  }
+  return new RandomAccessPlayer(descriptor, { metricsCollector: undefined, seekToTime: getSeekToTime() });
 }
 
 type PlayerDefinition = {| player: Player, inputDescription: React.Node |};
@@ -61,7 +69,7 @@ function buildPlayerFromFiles(files: File[]): ?PlayerDefinition {
     return undefined;
   } else if (files.length === 1) {
     return {
-      player: new RandomAccessPlayer(getLocalBagDescriptor(files[0]), getPlayerOptions()),
+      player: buildPlayerFromDescriptor(getLocalBagDescriptor(files[0])),
       inputDescription: (
         <>
           Using local bag file <code>{files[0].name}</code>.
@@ -70,21 +78,18 @@ function buildPlayerFromFiles(files: File[]): ?PlayerDefinition {
     };
   } else if (files.length === 2) {
     return {
-      player: new RandomAccessPlayer(
-        {
-          name: CoreDataProviders.CombinedDataProvider,
-          args: {},
-          children: [
-            getLocalBagDescriptor(files[0]),
-            {
-              name: CoreDataProviders.RenameDataProvider,
-              args: { prefix: SECOND_SOURCE_PREFIX },
-              children: [getLocalBagDescriptor(files[1])],
-            },
-          ],
-        },
-        getPlayerOptions()
-      ),
+      player: buildPlayerFromDescriptor({
+        name: CoreDataProviders.CombinedDataProvider,
+        args: {},
+        children: [
+          getLocalBagDescriptor(files[0]),
+          {
+            name: CoreDataProviders.RenameDataProvider,
+            args: { prefix: SECOND_SOURCE_PREFIX },
+            children: [getLocalBagDescriptor(files[1])],
+          },
+        ],
+      }),
       inputDescription: (
         <>
           Using local bag files <code>{files[0].name}</code> and <code>{files[1].name}</code>.
@@ -102,7 +107,7 @@ async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition
     return undefined;
   } else if (urls.length === 1) {
     return {
-      player: new RandomAccessPlayer(getRemoteBagDescriptor(urls[0], guids[0]), getPlayerOptions()),
+      player: buildPlayerFromDescriptor(getRemoteBagDescriptor(urls[0], guids[0])),
       inputDescription: (
         <>
           Streaming bag from <code>{urls[0]}</code>.
@@ -111,14 +116,11 @@ async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition
     };
   } else if (urls.length === 2) {
     return {
-      player: new RandomAccessPlayer(
-        {
-          name: CoreDataProviders.CombinedDataProvider,
-          args: { providerInfos: [{}, { prefix: SECOND_SOURCE_PREFIX }] },
-          children: [getRemoteBagDescriptor(urls[0], guids[0]), getRemoteBagDescriptor(urls[1], guids[1])],
-        },
-        getPlayerOptions()
-      ),
+      player: buildPlayerFromDescriptor({
+        name: CoreDataProviders.CombinedDataProvider,
+        args: { providerInfos: [{}, { prefix: SECOND_SOURCE_PREFIX }] },
+        children: [getRemoteBagDescriptor(urls[0], guids[0]), getRemoteBagDescriptor(urls[1], guids[1])],
+      }),
       inputDescription: (
         <>
           Streaming bag from <code>{urls[0]}</code> and <code>{urls[1]}</code>.

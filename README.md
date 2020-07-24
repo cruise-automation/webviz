@@ -43,6 +43,22 @@ npm run build-static-webviz # generate static build in __static_webviz__
 npm run serve-static-webviz # serve static build on localhost:8080
 ```
 
+## Recording videos
+
+Prerequisites:
+- `npm run bootstrap` to install dependencies
+- Install [FFmpeg](https://ffmpeg.org/): `apt-get install ffmpeg` or `brew install ffmpeg` or so.
+- Download the ROS bag to your local machine, and also save the layout to a `.json` file.
+- Make sure that the bag+layout that you want to record actually work when you manually play it in Webviz.
+
+Now run the `packages/webviz-core/script/record-local-bag-video.js` script, usually something like this:
+
+```sh
+packages/webviz-core/script/record-local-bag-video.js --bag ~/my-bag.bag --layout ~/my-layout.json --mp3 ~/loud-dance-music.mp3 --out ~/my-video.mp4 --speed 1.5
+```
+
+By default it will use [webviz.io/app](https://webviz.io/app/) for the recording, but if you want to use a local instance of Webviz you can use the `--url` parameter. For full options run `packages/webviz-core/script/record-local-bag-video.js --help`.
+
 ## Developing
 
 - `npm run bootstrap` in the root directory to install dependencies.

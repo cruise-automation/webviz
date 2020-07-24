@@ -143,7 +143,7 @@
     "screenshot-proprietary-ci": "npm run screenshot-ci -- --parallel 4",
     "screenshot-local": "npm run screenshot -- --puppeteerLaunchConfig '{\"headless\": true, \"--args\":[\"--user-agent=PuppeteerTestingChrome/80.\"]}' --parallel 4",
     "screenshot-local-debug": "npm run screenshot-local -- --parallel 1 --debug",
-    "ci-commands-base": "npm run install-ci && NODE_ENV=production npm run build && npm run lint && npm run flow && npm test",
+    "ci-commands-base": "npm run install-ci && NODE_ENV=production npm run build && packages/webviz-core/script/record-local-bag-video.js --help && npm run lint && npm run flow && npm test && integration-tests/install-ffmpeg-in-docker.sh && integration-tests/record-video-and-extract-screenshot.sh",
     "ci-commands-for-cruise-open-source-repo": "npm run ci-commands-base && NODE_ENV=production npm run screenshot-ci",
     "ci-commands-for-cruise-proprietary-repo": "npm run ci-commands-base && NODE_ENV=production npm run screenshot-proprietary-ci",
     "ci": "npm run ci-commands-for-cruise-open-source-repo && reg-suit run --verbose"

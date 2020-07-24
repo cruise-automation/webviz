@@ -1,0 +1,43 @@
+{
+  "layout": "3D Panel!6s74sn",
+  "savedProps": {
+    "3D Panel!6s74sn": {
+      "checkedKeys": [
+        "name:TF",
+        "t:/tf",
+        "name:Topics"
+      ],
+      "expandedKeys": [
+        "name:Topics",
+        "t:/tf"
+      ],
+      "followTf": "world",
+      "cameraState": {
+        "distance": 17.989770066237085,
+        "perspective": false,
+        "phi": 0.7853981633974483,
+        "targetOffset": [
+          5.392211316953408,
+          7.124502748906792,
+          0
+        ],
+        "thetaOffset": 0,
+        "fovy": 0.7853981633974483,
+        "near": 0.01,
+        "far": 5000
+      },
+      "modifiedNamespaceTopics": [],
+      "pinTopics": false,
+      "settingsByKey": {},
+      "autoSyncCameraState": false
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "linkedGlobalVariables": [],
+  "playbackConfig": {
+    "speed": 5,
+    "messageOrder": "receiveTime"
+  },
+  "version": 9
+}

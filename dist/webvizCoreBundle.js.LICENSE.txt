@@ -483,6 +483,8 @@ and limitations under the License.
 
 /*! ./_baseSlice */
 
+/*! ./_baseSum */
+
 /*! ./_baseTimes */
 
 /*! ./_baseToString */
@@ -530,6 +532,8 @@ and limitations under the License.
 /*! ./_createBaseEach */
 
 /*! ./_createBaseFor */
+
+/*! ./_createRound */
 
 /*! ./_ctx */
 
@@ -1261,6 +1265,8 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
+
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/inheritsLoose.js (<- Module is not an ECMAScript module) */
@@ -1710,7 +1716,11 @@ and limitations under the License.
 
 /*! lodash/pickBy */
 
+/*! lodash/round */
+
 /*! lodash/set */
+
+/*! lodash/sum */
 
 /*! lodash/take */
 
@@ -2109,6 +2119,8 @@ and limitations under the License.
 /*! webviz-core/src/players/UserNodePlayer/types */
 
 /*! webviz-core/src/players/automatedRun/AutomatedRunPlayer */
+
+/*! webviz-core/src/players/automatedRun/performanceMeasuringClient */
 
 /*! webviz-core/src/players/automatedRun/videoRecordingClient */
 
@@ -2745,6 +2757,10 @@ and limitations under the License.
   \*********************************************************/
 
 /*!*********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/sum.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
   !*** ./packages/webviz-core/node_modules/trim/index.js ***!
   \*********************************************************/
 
@@ -2906,6 +2922,10 @@ and limitations under the License.
 
 /*!***********************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/isSet.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/round.js ***!
   \***********************************************************/
 
 /*!***********************************************************!*\
@@ -3158,6 +3178,10 @@ and limitations under the License.
 
 /*!**************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/_baseSet.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_baseSum.js ***!
   \**************************************************************/
 
 /*!**************************************************************!*\
@@ -3770,6 +3794,10 @@ and limitations under the License.
 
 /*!******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/_copySymbols.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/_createRound.js ***!
   \******************************************************************/
 
 /*!******************************************************************!*\
@@ -4982,6 +5010,10 @@ and limitations under the License.
 
 /*!*************************************************************************************!*\
   !*** ./packages/webviz-core/src/components/MessagePipeline/pauseFrameForPromise.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/automatedRun/performanceMeasuringClient.js ***!
   \*************************************************************************************/
 
 /*!**************************************************************************************!*\

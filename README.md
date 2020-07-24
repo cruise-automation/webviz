@@ -1,5 +1,7 @@
 # [Webviz](https://webviz.io/) [![CircleCI](https://circleci.com/gh/cruise-automation/webviz.svg?style=svg)](https://circleci.com/gh/cruise-automation/webviz)
 
+![webviz-os-demo](https://user-images.githubusercontent.com/177461/88328232-fa27b880-ccdc-11ea-9167-0d9339254729.gif)
+
 **Drag and drop your own bag files into [Webviz](https://webviz.io/app/?demo) to explore your robotics data, or connect to a live robot or simulation using the [rosbridge_server](http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge).**
 
 **Webviz** is a web-based application for playback and visualization of [ROS](http://www.ros.org/) [bag files](http://wiki.ros.org/Bags). This repository also contains some libraries that can be used independently to build web-based visualization tools.

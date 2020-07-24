@@ -860,6 +860,8 @@
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useSceneBuilderAndTransformsData */
 
+/*! webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree */
+
 /*! webviz-core/src/panels/ThreeDimensionalViz/Transforms */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/TransformsBuilder */

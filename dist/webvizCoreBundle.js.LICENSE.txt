@@ -931,6 +931,10 @@ and limitations under the License.
 
 /*! ./keysIn */
 
+/*! ./lib */
+
+/*! ./lib-cov */
+
 /*! ./lib/ReactPropTypesSecret */
 
 /*! ./lib/_stream_duplex.js */
@@ -1256,8 +1260,6 @@ and limitations under the License.
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
@@ -1748,6 +1750,8 @@ and limitations under the License.
 
 /*! process-nextick-args */
 
+/*! promise-queue */
+
 /*! prop-types */
 
 /*! react */
@@ -2103,6 +2107,10 @@ and limitations under the License.
 /*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros */
 
 /*! webviz-core/src/players/UserNodePlayer/types */
+
+/*! webviz-core/src/players/automatedRun/AutomatedRunPlayer */
+
+/*! webviz-core/src/players/automatedRun/videoRecordingClient */
 
 /*! webviz-core/src/players/types */
 
@@ -3809,6 +3817,10 @@ and limitations under the License.
   \******************************************************************/
 
 /*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/promise-queue/index.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/repeat-string/index.js ***!
   \******************************************************************/
 
@@ -4249,6 +4261,10 @@ and limitations under the License.
   \**********************************************************************/
 
 /*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/promise-queue/lib/index.js ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/remark-parse/lib/decode.js ***!
   \**********************************************************************/
 
@@ -4473,6 +4489,10 @@ and limitations under the License.
   \**************************************************************************/
 
 /*!**************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/promise-queue/lib-cov/index.js ***!
+  \**************************************************************************/
+
+/*!**************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-document-events/index.js ***!
   \**************************************************************************/
 
@@ -4613,6 +4633,10 @@ and limitations under the License.
   \*****************************************************************************/
 
 /*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/automatedRun/AutomatedRunPlayer.js ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
   !*** ./packages/webviz-core/src/styles/assets/latin-roboto-mono-bold.woff2 ***!
   \*****************************************************************************/
 
@@ -4726,6 +4750,10 @@ and limitations under the License.
 
 /*!*******************************************************************************!*\
   !*** ./packages/webviz-core/src/components/ReactChartjs/zoomAndPanHelpers.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./packages/webviz-core/src/players/automatedRun/videoRecordingClient.js ***!
   \*******************************************************************************/
 
 /*!*******************************************************************************!*\

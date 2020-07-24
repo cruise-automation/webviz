@@ -61,6 +61,10 @@ packages/webviz-core/script/record-local-bag-video.js --bag ~/my-bag.bag --layou
 
 By default it will use [webviz.io/app](https://webviz.io/app/) for the recording, but if you want to use a local instance of Webviz you can use the `--url` parameter. For full options run `packages/webviz-core/script/record-local-bag-video.js --help`.
 
+## Measuring performance
+
+Similarly to recording videos, we have a script to measure the performance of a given layout+bag combination. This is useful for determining if a new feature makes things slower or faster. Run `packages/webviz-core/script/measure-performance.js --help` to learn more.
+
 ## Developing
 
 - `npm run bootstrap` in the root directory to install dependencies.

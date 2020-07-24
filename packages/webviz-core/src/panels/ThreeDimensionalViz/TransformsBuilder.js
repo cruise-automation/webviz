@@ -135,23 +135,28 @@ const tempTranslation = [0, 0, 0];
 // So we don't create a lot of effectively unused vectors / quats.
 const throwawayQuat = { ...originOrientation };
 
-const getArrowToParentMarkers = (id: string, transform: Transform, rootTransformID: string): ArrowMarker[] => {
+// Exported for tests
+export const getArrowToParentMarkers = (id: string, transform: Transform, rootTransformID: string): ArrowMarker[] => {
   const { parent } = transform;
-  if (!parent || !parent.valid) {
+  if (!parent) {
     return [];
   }
 
+  // If the distance between the parent and child is 0, skip drawing an arrow between them.
   mat4.getTranslation(tempTranslation, transform.matrix);
   if (vec3.length(tempTranslation) <= 0) {
-    // If the parent's position is on the child, we don't need to draw an arrow between them.
     return [];
   }
 
-  const childPose: MutablePose = { position: { ...originPosition }, orientation: throwawayQuat };
-  transform.apply(childPose, childPose, rootTransformID);
+  let childPose = { position: { ...originPosition }, orientation: throwawayQuat };
+  childPose = transform.apply(childPose, childPose, rootTransformID);
 
-  const parentPose = { position: { ...originPosition }, orientation: throwawayQuat };
-  parent.apply(parentPose, parentPose, rootTransformID);
+  let parentPose = { position: { ...originPosition }, orientation: throwawayQuat };
+  parentPose = parent && parent.apply(parentPose, parentPose, rootTransformID);
+
+  if (!childPose || !parentPose) {
+    return [];
+  }
 
   return [
     {
@@ -217,7 +222,7 @@ export default class TransformsBuilder implements MarkerProvider {
     }
     for (const key of selections) {
       const transform = this.transforms.get(key);
-      if (!transform.valid) {
+      if (!transform.isValid(this.rootTransformID)) {
         // If a marker doesn't exist yet, skip rendering for now, we might get the
         // transform in a later message, so we still want to keep it in selections.
         continue;

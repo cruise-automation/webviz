@@ -103,7 +103,7 @@ async function main() {
   }
 
   console.log("Done!");
-  process.exit(0);
+  process.exit(0); // Sometimes NodeJS might still have open handlers for some reason; just quit.
 }
 
 main().catch((err) => {

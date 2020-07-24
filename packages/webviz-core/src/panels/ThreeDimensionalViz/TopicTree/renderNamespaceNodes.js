@@ -94,23 +94,7 @@ function NamespaceNodeRow({
   const nodeVisibleInScene = !!(visibleInSceneByColumn[0] || visibleInSceneByColumn[1]);
 
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
-
-  const onMouseEnter = useCallback(
-    () => {
-      if (nodeVisibleInScene) {
-        setHoveredMarkerMatchers([
-          { topic: topicName, checks: [{ markerKeyPath: ["ns"], value: namespace }] },
-          {
-            topic: joinTopics(SECOND_SOURCE_PREFIX, topicName),
-            checks: [{ markerKeyPath: ["ns"], value: namespace }],
-          },
-        ]);
-      }
-    },
-    [namespace, nodeVisibleInScene, setHoveredMarkerMatchers, topicName]
-  );
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
-
   const mouseEventHandlersByColumnIdx = useMemo(
     () => {
       const topicNameByColumnIdx = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)];
@@ -137,7 +121,7 @@ function NamespaceNodeRow({
         width: rowWidth,
         marginLeft: `-${OUTER_LEFT_MARGIN}px`,
       }}>
-      <SLeft data-test={`ns~${namespace}`} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <SLeft data-test={`ns~${namespace}`}>
         <NodeName
           isXSWidth={isXSWidth}
           maxWidth={maxNodeNameLen}

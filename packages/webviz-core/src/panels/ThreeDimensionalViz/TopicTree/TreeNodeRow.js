@@ -172,13 +172,6 @@ export default function TreeNodeRow({
   maxNodeNameWidth -= showVisibleTopicsCount ? VISIBLE_COUNT_WIDTH + VISIBLE_COUNT_MARGIN * 2 : 0;
 
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
-  const onMouseEnter = useCallback(
-    () =>
-      (nodeVisibleInScene &&
-        setHoveredMarkerMatchers([{ topic: topicName }, { topic: joinTopics(SECOND_SOURCE_PREFIX, topicName) }])) ||
-      undefined,
-    [nodeVisibleInScene, setHoveredMarkerMatchers, topicName]
-  );
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
   const mouseEventHandlersByColumnIdx = useMemo(
     () => {
@@ -202,8 +195,6 @@ export default function TreeNodeRow({
       <SLeft
         style={{ cursor: hasChildren && !filterText ? "pointer" : "default" }}
         data-test={`name~${key}`}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
         onClick={hasChildren ? () => toggleNodeExpanded(key) : undefined}>
         <NodeName
           isXSWidth={isXSWidth}

@@ -475,7 +475,7 @@ const lines = (regl: any) => {
 
   // Render one line list/strip
   function renderLine(props) {
-    const { debug, primitive = "lines", scaleInvariant = false } = props;
+    const { debug, primitive = "lines", scaleInvariant = false, depth, blend } = props;
     const numInputPoints = props.points.length;
 
     if (numInputPoints < 2) {
@@ -511,7 +511,7 @@ const lines = (regl: any) => {
       poseRotationBuffer({ data: rotationArray, usage: "dynamic" });
     }
 
-    render(props, () => {
+    render({ debug, depth, blend }, () => {
       // Use Object.assign because it's actually faster than babel's object spread polyfill.
       command(
         Object.assign({}, props, {

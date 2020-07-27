@@ -81,6 +81,7 @@ export type Polygon = $ReadOnly<{|
 |}>;
 
 export type LaserScan = $ReadOnly<{|
+  header: Header,
   angle_increment: number,
   angle_max: number,
   angle_min: number,
@@ -209,7 +210,7 @@ export type MeshMarker = $ReadOnly<
     }
 >;
 
-type OccupancyGridInfo = $ReadOnly<{|
+type NavMsgs$MapMetaData = $ReadOnly<{|
   map_load_time: Time,
   resolution: number,
   width: number,
@@ -217,14 +218,19 @@ type OccupancyGridInfo = $ReadOnly<{|
   origin: Pose,
 |}>;
 
-export type OccupancyGridMessage = $ReadOnly<{|
-  type: 101,
-  name: string,
+export type NavMsgs$OccupancyGrid = $ReadOnly<{|
   header: Header,
-  info: OccupancyGridInfo,
+  info: NavMsgs$MapMetaData,
   data: $ReadOnlyArray<number>,
+|}>;
+
+export type OccupancyGridMessage = $ReadOnly<{|
+  name: string,
+  type: 101,
   map: "map" | "costmap",
-  alpha?: number,
+  alpha: number,
+  info: NavMsgs$MapMetaData,
+  data: $ReadOnlyArray<number>,
 |}>;
 
 export type TriangleListMarker = $ReadOnly<
@@ -307,9 +313,6 @@ export type PointCloud2 = $ReadOnly<
     type: 102 | "PointCloud2",
     // this is appended by scene builder
     pose: ?Pose,
-    colorField?: string,
-    pointSize?: number,
-    color?: string,
   }
 >;
 

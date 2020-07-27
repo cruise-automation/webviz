@@ -1,5 +1,7 @@
 # [Webviz](https://webviz.io/) [![CircleCI](https://circleci.com/gh/cruise-automation/webviz.svg?style=svg)](https://circleci.com/gh/cruise-automation/webviz)
 
+![webviz-os-demo](https://user-images.githubusercontent.com/177461/88328232-fa27b880-ccdc-11ea-9167-0d9339254729.gif)
+
 **Drag and drop your own bag files into [Webviz](https://webviz.io/app/?demo) to explore your robotics data, or connect to a live robot or simulation using the [rosbridge_server](http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge).**
 
 **Webviz** is a web-based application for playback and visualization of [ROS](http://www.ros.org/) [bag files](http://wiki.ros.org/Bags). This repository also contains some libraries that can be used independently to build web-based visualization tools.
@@ -42,6 +44,26 @@ npm run build # build all packages
 npm run build-static-webviz # generate static build in __static_webviz__
 npm run serve-static-webviz # serve static build on localhost:8080
 ```
+
+## Recording videos
+
+Prerequisites:
+- `npm run bootstrap` to install dependencies
+- Install [FFmpeg](https://ffmpeg.org/): `apt-get install ffmpeg` or `brew install ffmpeg` or so.
+- Download the ROS bag to your local machine, and also save the layout to a `.json` file.
+- Make sure that the bag+layout that you want to record actually work when you manually play it in Webviz.
+
+Now run the `packages/webviz-core/script/record-local-bag-video.js` script, usually something like this:
+
+```sh
+packages/webviz-core/script/record-local-bag-video.js --bag ~/my-bag.bag --layout ~/my-layout.json --mp3 ~/loud-dance-music.mp3 --out ~/my-video.mp4 --speed 1.5
+```
+
+By default it will use [webviz.io/app](https://webviz.io/app/) for the recording, but if you want to use a local instance of Webviz you can use the `--url` parameter. For full options run `packages/webviz-core/script/record-local-bag-video.js --help`.
+
+## Measuring performance
+
+Similarly to recording videos, we have a script to measure the performance of a given layout+bag combination. This is useful for determining if a new feature makes things slower or faster. Run `packages/webviz-core/script/measure-performance.js --help` to learn more.
 
 ## Developing
 

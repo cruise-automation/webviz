@@ -30,7 +30,7 @@ import {
 import { type Time } from "rosbag";
 import { useDebouncedCallback } from "use-debounce";
 
-import useTopicTree from "./useTopicTree";
+import useTopicTree, { TopicTreeContext } from "./useTopicTree";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
@@ -278,26 +278,7 @@ export default function Layout({
     [blacklistTopicsSet, memoizedTopics, supportedMarkerDatatypesSet]
   );
 
-  const {
-    allKeys,
-    derivedCustomSettingsByKey,
-    getIsNamespaceCheckedByDefault,
-    getIsTreeNodeVisibleInScene,
-    getIsTreeNodeVisibleInTree,
-    hasFeatureColumn,
-    onNamespaceOverrideColorChange,
-    rootTreeNode,
-    sceneErrorsByKey,
-    selectedNamespacesByTopic,
-    selectedTopicNames,
-    shouldExpandAllKeys,
-    toggleCheckAllAncestors,
-    toggleCheckAllDescendants,
-    toggleNamespaceChecked,
-    toggleNodeChecked,
-    toggleNodeExpanded,
-    visibleTopicsCountByKey,
-  } = useTopicTree({
+  const topicTreeData = useTopicTree({
     availableNamespacesByTopic,
     checkedKeys,
     defaultTopicSettings,
@@ -312,6 +293,21 @@ export default function Layout({
     topicTreeConfig,
     uncategorizedGroupName,
   });
+  const {
+    allKeys,
+    derivedCustomSettingsByKey,
+    getIsNamespaceCheckedByDefault,
+    getIsTreeNodeVisibleInScene,
+    getIsTreeNodeVisibleInTree,
+    hasFeatureColumn,
+    onNamespaceOverrideColorChange,
+    rootTreeNode,
+    sceneErrorsByKey,
+    selectedNamespacesByTopic,
+    selectedTopicNames,
+    shouldExpandAllKeys,
+    visibleTopicsCountByKey,
+  } = topicTreeData;
 
   const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("highlightGlobalVariableMatchingMarkers");
   useEffect(() => setSubscriptions(selectedTopicNames), [selectedTopicNames, setSubscriptions]);
@@ -642,169 +638,166 @@ export default function Layout({
 
   return (
     <ThreeDimensionalVizContext.Provider value={threeDimensionalVizContextValue}>
-      <div
-        ref={containerRef}
-        onClick={onControlsOverlayClick}
-        tabIndex={-1}
-        className={styles.container}
-        style={{ cursor: cursorType }}
-        data-test="3dviz-layout">
-        <KeyListener keyDownHandlers={keyDownHandlers} />
-        <PanelToolbar
-          floating
-          helpContent={helpContent}
-          menuContent={
-            <>
-              <Item
-                tooltip="Markers with 0 as z-value in pose or points are updated to have the z-value of the flattened base frame."
-                icon={flattenMarkers ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-                onClick={() => saveConfig({ flattenMarkers: !flattenMarkers })}>
-                Flatten markers
-              </Item>
-              <Item
-                tooltip="Automatically apply dark/light background color to text."
-                icon={autoTextBackgroundColor ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-                onClick={() => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor })}>
-                Auto Text Background
-              </Item>
-            </>
-          }
-        />
-        <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
-          {containerRef.current && (
-            <TopicTree
-              allKeys={allKeys}
-              availableNamespacesByTopic={availableNamespacesByTopic}
-              checkedKeys={checkedKeys}
-              containerHeight={containerRef.current.clientHeight}
-              containerWidth={containerRef.current.clientWidth}
-              derivedCustomSettingsByKey={derivedCustomSettingsByKey}
-              expandedKeys={expandedKeys}
-              filterText={filterText}
-              getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
-              getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
-              getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
-              hasFeatureColumn={hasFeatureColumn}
-              onExitTopicTreeFocus={onExitTopicTreeFocus}
-              onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
-              pinTopics={pinTopics}
-              rootTreeNode={rootTreeNode}
-              saveConfig={saveConfig}
-              sceneErrorsByKey={sceneErrorsByKey}
-              setCurrentEditingTopic={setCurrentEditingTopic}
-              setEditingNamespace={setEditingNamespace}
-              setFilterText={setFilterText}
-              setShowTopicTree={setShowTopicTree}
-              shouldExpandAllKeys={shouldExpandAllKeys}
-              showTopicTree={showTopicTree}
-              toggleCheckAllAncestors={toggleCheckAllAncestors}
-              toggleCheckAllDescendants={toggleCheckAllDescendants}
-              toggleNamespaceChecked={toggleNamespaceChecked}
-              toggleNodeChecked={toggleNodeChecked}
-              toggleNodeExpanded={toggleNodeExpanded}
-              topicDisplayMode={topicDisplayMode}
-              visibleTopicsCountByKey={visibleTopicsCountByKey}
-            />
-          )}
-          {currentEditingTopic && (
-            <TopicSettingsModal
-              currentEditingTopic={currentEditingTopic}
-              hasFeatureColumn={hasFeatureColumn}
-              setCurrentEditingTopic={setCurrentEditingTopic}
-              sceneBuilderMessage={
-                sceneBuilder.collectors[currentEditingTopic.name] &&
-                sceneBuilder.collectors[currentEditingTopic.name].getMessages()[0]
-              }
-              saveConfig={saveConfig}
-              settingsByKey={settingsByKey}
-            />
-          )}
-          {editingNamespace && (
-            <RenderToBodyComponent>
-              <Modal
-                onRequestClose={() => setEditingNamespace(undefined)}
-                contentStyle={{
-                  maxHeight: "calc(100vh - 200px)",
-                  maxWidth: 480,
-                  display: "flex",
-                  flexDirection: "column",
-                }}>
-                <ColorPickerSettingsPanel
-                  color={settingsByKey[editingNamespace.namespaceKey]?.overrideColor}
-                  onChange={(newColor) => onNamespaceOverrideColorChange(newColor, editingNamespace.namespaceKey)}
-                />
-              </Modal>
-            </RenderToBodyComponent>
-          )}
-        </div>
-        <div className={styles.world}>
-          <World
-            key={`${callbackInputsRef.current.autoSyncCameraState ? "synced" : "not-synced"}`}
-            autoTextBackgroundColor={!!autoTextBackgroundColor}
-            cameraState={cameraState}
-            isPlaying={!!isPlaying}
-            markerProviders={markerProviders}
-            onCameraStateChange={onCameraStateChange}
-            onClick={onClick}
-            onDoubleClick={onDoubleClick}
-            onMouseDown={onMouseDown}
-            onMouseMove={onMouseMove}
-            onMouseUp={onMouseUp}
-            searchTextOpen={searchTextOpen}
-            searchText={searchText}
-            setSearchTextMatches={setSearchTextMatches}
-            searchTextMatches={searchTextMatches}
-            selectedMatchIndex={selectedMatchIndex}>
-            {mapElement}
-            {children}
-            <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
-            <div style={videoRecordingStyle}>
-              <LayoutToolbar
-                cameraState={cameraState}
-                debug={debug}
-                isDrawing={isDrawing}
-                followOrientation={followOrientation}
-                followTf={followTf}
-                colorOverridesByGlobalVariable={colorOverridesByGlobalVariable}
-                interactionData={selectedObject && selectedObject.object && selectedObject.object.interactionData}
-                isPlaying={isPlaying}
-                measureInfo={measureInfo}
-                measuringElRef={measuringElRef}
-                onAlignXYAxis={onAlignXYAxis}
-                onCameraStateChange={onCameraStateChange}
-                autoSyncCameraState={!!autoSyncCameraState}
-                onClearSelectedObject={onClearSelectedObject}
-                onFollowChange={onFollowChange}
-                onSetDrawingTabType={setDrawingTabType}
-                onSetPolygons={onSetPolygons}
-                onToggleCameraMode={toggleCameraMode}
-                onToggleDebug={toggleDebug}
-                polygonBuilder={polygonBuilder}
+      <TopicTreeContext.Provider value={topicTreeData}>
+        <div
+          ref={containerRef}
+          onClick={onControlsOverlayClick}
+          tabIndex={-1}
+          className={styles.container}
+          style={{ cursor: cursorType }}
+          data-test="3dviz-layout">
+          <KeyListener keyDownHandlers={keyDownHandlers} />
+          <PanelToolbar
+            floating
+            helpContent={helpContent}
+            menuContent={
+              <>
+                <Item
+                  tooltip="Markers with 0 as z-value in pose or points are updated to have the z-value of the flattened base frame."
+                  icon={flattenMarkers ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
+                  onClick={() => saveConfig({ flattenMarkers: !flattenMarkers })}>
+                  Flatten markers
+                </Item>
+                <Item
+                  tooltip="Automatically apply dark/light background color to text."
+                  icon={autoTextBackgroundColor ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
+                  onClick={() => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor })}>
+                  Auto Text Background
+                </Item>
+              </>
+            }
+          />
+          <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
+            {containerRef.current && (
+              <TopicTree
+                allKeys={allKeys}
+                availableNamespacesByTopic={availableNamespacesByTopic}
+                checkedKeys={checkedKeys}
+                containerHeight={containerRef.current.clientHeight}
+                containerWidth={containerRef.current.clientWidth}
+                derivedCustomSettingsByKey={derivedCustomSettingsByKey}
+                expandedKeys={expandedKeys}
+                filterText={filterText}
+                getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
+                getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
+                getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
+                hasFeatureColumn={hasFeatureColumn}
+                onExitTopicTreeFocus={onExitTopicTreeFocus}
+                onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
+                pinTopics={pinTopics}
+                rootTreeNode={rootTreeNode}
                 saveConfig={saveConfig}
-                selectedObject={selectedObject}
-                selectedPolygonEditFormat={selectedPolygonEditFormat}
-                setColorOverridesByGlobalVariable={setColorOverridesByGlobalVariable}
-                setMeasureInfo={setMeasureInfo}
-                showCrosshair={showCrosshair}
-                targetPose={targetPose}
-                transforms={transforms}
-                rootTf={rootTf}
-                {...searchTextProps}
+                sceneErrorsByKey={sceneErrorsByKey}
+                setCurrentEditingTopic={setCurrentEditingTopic}
+                setEditingNamespace={setEditingNamespace}
+                setFilterText={setFilterText}
+                setShowTopicTree={setShowTopicTree}
+                shouldExpandAllKeys={shouldExpandAllKeys}
+                showTopicTree={showTopicTree}
+                topicDisplayMode={topicDisplayMode}
+                visibleTopicsCountByKey={visibleTopicsCountByKey}
               />
-            </div>
-            {selectedObjectState &&
-              selectedObjectState.selectedObjects.length > 1 &&
-              !selectedObjectState.selectedObject && (
-                <InteractionContextMenu
-                  clickedPosition={selectedObjectState.clickedPosition}
-                  onSelectObject={onSelectObject}
-                  selectedObjects={selectedObjectState.selectedObjects}
+            )}
+            {currentEditingTopic && (
+              <TopicSettingsModal
+                currentEditingTopic={currentEditingTopic}
+                hasFeatureColumn={hasFeatureColumn}
+                setCurrentEditingTopic={setCurrentEditingTopic}
+                sceneBuilderMessage={
+                  sceneBuilder.collectors[currentEditingTopic.name] &&
+                  sceneBuilder.collectors[currentEditingTopic.name].getMessages()[0]
+                }
+                saveConfig={saveConfig}
+                settingsByKey={settingsByKey}
+              />
+            )}
+            {editingNamespace && (
+              <RenderToBodyComponent>
+                <Modal
+                  onRequestClose={() => setEditingNamespace(undefined)}
+                  contentStyle={{
+                    maxHeight: "calc(100vh - 200px)",
+                    maxWidth: 480,
+                    display: "flex",
+                    flexDirection: "column",
+                  }}>
+                  <ColorPickerSettingsPanel
+                    color={settingsByKey[editingNamespace.namespaceKey]?.overrideColor}
+                    onChange={(newColor) => onNamespaceOverrideColorChange(newColor, editingNamespace.namespaceKey)}
+                  />
+                </Modal>
+              </RenderToBodyComponent>
+            )}
+          </div>
+          <div className={styles.world}>
+            <World
+              key={`${callbackInputsRef.current.autoSyncCameraState ? "synced" : "not-synced"}`}
+              autoTextBackgroundColor={!!autoTextBackgroundColor}
+              cameraState={cameraState}
+              isPlaying={!!isPlaying}
+              markerProviders={markerProviders}
+              onCameraStateChange={onCameraStateChange}
+              onClick={onClick}
+              onDoubleClick={onDoubleClick}
+              onMouseDown={onMouseDown}
+              onMouseMove={onMouseMove}
+              onMouseUp={onMouseUp}
+              searchTextOpen={searchTextOpen}
+              searchText={searchText}
+              setSearchTextMatches={setSearchTextMatches}
+              searchTextMatches={searchTextMatches}
+              selectedMatchIndex={selectedMatchIndex}>
+              {mapElement}
+              {children}
+              <DrawPolygons>{polygonBuilder.polygons}</DrawPolygons>
+              <div style={videoRecordingStyle}>
+                <LayoutToolbar
+                  cameraState={cameraState}
+                  debug={debug}
+                  isDrawing={isDrawing}
+                  followOrientation={followOrientation}
+                  followTf={followTf}
+                  colorOverridesByGlobalVariable={colorOverridesByGlobalVariable}
+                  interactionData={selectedObject && selectedObject.object && selectedObject.object.interactionData}
+                  isPlaying={isPlaying}
+                  measureInfo={measureInfo}
+                  measuringElRef={measuringElRef}
+                  onAlignXYAxis={onAlignXYAxis}
+                  onCameraStateChange={onCameraStateChange}
+                  autoSyncCameraState={!!autoSyncCameraState}
+                  onClearSelectedObject={onClearSelectedObject}
+                  onFollowChange={onFollowChange}
+                  onSetDrawingTabType={setDrawingTabType}
+                  onSetPolygons={onSetPolygons}
+                  onToggleCameraMode={toggleCameraMode}
+                  onToggleDebug={toggleDebug}
+                  polygonBuilder={polygonBuilder}
+                  saveConfig={saveConfig}
+                  selectedObject={selectedObject}
+                  selectedPolygonEditFormat={selectedPolygonEditFormat}
+                  setColorOverridesByGlobalVariable={setColorOverridesByGlobalVariable}
+                  setMeasureInfo={setMeasureInfo}
+                  showCrosshair={showCrosshair}
+                  targetPose={targetPose}
+                  transforms={transforms}
+                  rootTf={rootTf}
+                  {...searchTextProps}
                 />
-              )}
-            {process.env.NODE_ENV !== "production" && !inScreenshotTests() && debug && <DebugStats />}
-          </World>
+              </div>
+              {selectedObjectState &&
+                selectedObjectState.selectedObjects.length > 1 &&
+                !selectedObjectState.selectedObject && (
+                  <InteractionContextMenu
+                    clickedPosition={selectedObjectState.clickedPosition}
+                    onSelectObject={onSelectObject}
+                    selectedObjects={selectedObjectState.selectedObjects}
+                  />
+                )}
+              {process.env.NODE_ENV !== "production" && !inScreenshotTests() && debug && <DebugStats />}
+            </World>
+          </div>
         </div>
-      </div>
+      </TopicTreeContext.Provider>
     </ThreeDimensionalVizContext.Provider>
   );
 }

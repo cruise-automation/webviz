@@ -130,11 +130,7 @@ const InteractionsBaseComponent = React.memo<PropsWithConfig>(function Interacti
               {isPointCloud && (
                 <PointCloudDetails selectedObject={maybeFullyDecodedObject} interactionData={selectedInteractionData} />
               )}
-              <ObjectDetails
-                linkedGlobalVariables={linkedGlobalVariables}
-                selectedObject={maybeFullyDecodedObject}
-                interactionData={selectedInteractionData}
-              />
+              <ObjectDetails selectedObject={maybeFullyDecodedObject} interactionData={selectedInteractionData} />
             </>
           ) : (
             <SEmptyState>Click an object in the 3D view to select it.</SEmptyState>

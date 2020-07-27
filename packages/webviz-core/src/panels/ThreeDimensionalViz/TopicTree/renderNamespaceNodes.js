@@ -17,13 +17,13 @@ import type {
   GetIsTreeNodeVisibleInTree,
   OnNamespaceOverrideColorChange,
   SetEditingNamespace,
-  ToggleNamespaceChecked,
-  ToggleNodeByColumn,
   TreeTopicNode,
 } from "./types";
 import VisibilityToggle, { TOGGLE_WRAPPER_SIZE } from "./VisibilityToggle";
 import { ThreeDimensionalVizContext } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
+import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import { SECOND_SOURCE_PREFIX, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
+import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
 
 const OUTER_LEFT_MARGIN = 12;
@@ -48,8 +48,6 @@ type Props = {|
   isXSWidth: boolean,
   onNamespaceOverrideColorChange: OnNamespaceOverrideColorChange,
   setEditingNamespace: SetEditingNamespace,
-  toggleCheckAllAncestors: ToggleNodeByColumn,
-  toggleNamespaceChecked: ToggleNamespaceChecked,
   topicNode: TreeTopicNode,
   width: number,
 |};
@@ -68,8 +66,6 @@ function NamespaceNodeRow({
   maxNodeNameLen,
   filterText,
   topicNodeAvailable,
-  toggleCheckAllAncestors,
-  toggleNamespaceChecked,
   unavailableTooltip,
   hasFeatureColumn,
   topicName,
@@ -90,8 +86,6 @@ function NamespaceNodeRow({
   filterText: string,
   topicNodeAvailable: boolean,
   setEditingNamespace: SetEditingNamespace,
-  toggleCheckAllAncestors: ToggleNodeByColumn,
-  toggleNamespaceChecked: ToggleNamespaceChecked,
   unavailableTooltip: string,
   hasFeatureColumn: boolean,
   topicName: string,
@@ -100,23 +94,7 @@ function NamespaceNodeRow({
   const nodeVisibleInScene = !!(visibleInSceneByColumn[0] || visibleInSceneByColumn[1]);
 
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
-
-  const onMouseEnter = useCallback(
-    () => {
-      if (nodeVisibleInScene) {
-        setHoveredMarkerMatchers([
-          { topic: topicName, checks: [{ markerKeyPath: ["ns"], value: namespace }] },
-          {
-            topic: joinTopics(SECOND_SOURCE_PREFIX, topicName),
-            checks: [{ markerKeyPath: ["ns"], value: namespace }],
-          },
-        ]);
-      }
-    },
-    [namespace, nodeVisibleInScene, setHoveredMarkerMatchers, topicName]
-  );
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
-
   const mouseEventHandlersByColumnIdx = useMemo(
     () => {
       const topicNameByColumnIdx = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)];
@@ -131,6 +109,10 @@ function NamespaceNodeRow({
     },
     [namespace, onMouseLeave, setHoveredMarkerMatchers, topicName, visibleInSceneByColumn]
   );
+  const { toggleCheckAllAncestors, toggleNamespaceChecked } = useGuaranteedContext(
+    TopicTreeContext,
+    "TopicTreeContext"
+  );
 
   return (
     <STreeNodeRow
@@ -139,7 +121,7 @@ function NamespaceNodeRow({
         width: rowWidth,
         marginLeft: `-${OUTER_LEFT_MARGIN}px`,
       }}>
-      <SLeft data-test={`ns~${namespace}`} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <SLeft data-test={`ns~${namespace}`}>
         <NodeName
           isXSWidth={isXSWidth}
           maxWidth={maxNodeNameLen}
@@ -194,7 +176,6 @@ function NamespaceNodeRow({
           overrideColorByColumn={overrideColorByColumn}
           providerAvailable={topicNodeAvailable}
           setEditingNamespace={setEditingNamespace}
-          toggleCheckAllAncestors={toggleCheckAllAncestors}
           topicName={topicName}
         />
       </SRightActions>
@@ -211,8 +192,6 @@ export default function renderNamespaceNodes({
   isXSWidth,
   onNamespaceOverrideColorChange,
   setEditingNamespace,
-  toggleCheckAllAncestors,
-  toggleNamespaceChecked,
   topicNode,
   width,
 }: Props): TreeUINode[] {
@@ -232,8 +211,6 @@ export default function renderNamespaceNodes({
     maxNodeNameLen,
     filterText,
     topicNodeAvailable,
-    toggleCheckAllAncestors,
-    toggleNamespaceChecked,
     onNamespaceOverrideColorChange,
     setEditingNamespace,
     unavailableTooltip,

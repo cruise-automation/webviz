@@ -14,13 +14,15 @@ import styled from "styled-components";
 import NodeName from "./NodeName";
 import { TREE_SPACING } from "./TopicTree";
 import TreeNodeMenu, { DOT_MENU_WIDTH } from "./TreeNodeMenu";
-import type { DerivedCustomSettings, SetCurrentEditingTopic, ToggleNode, ToggleNodeByColumn, TreeNode } from "./types";
+import type { DerivedCustomSettings, SetCurrentEditingTopic, TreeNode } from "./types";
 import VisibilityToggle, { TOGGLE_WRAPPER_SIZE, TOPIC_ROW_PADDING } from "./VisibilityToggle";
 import Icon from "webviz-core/src/components/Icon";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { ThreeDimensionalVizContext } from "webviz-core/src/panels/ThreeDimensionalViz/ThreeDimensionalVizContext";
 import { canEditDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
+import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 import { joinTopics } from "webviz-core/src/util/topicUtils";
 
@@ -104,10 +106,6 @@ type Props = {|
   node: TreeNode,
   nodeVisibleInScene: boolean,
   visibleByColumn: (?boolean)[],
-  toggleCheckAllAncestors: ToggleNodeByColumn,
-  toggleCheckAllDescendants: ToggleNodeByColumn,
-  toggleNodeChecked: ToggleNodeByColumn,
-  toggleNodeExpanded: ToggleNode,
   sceneErrors: ?(string[]),
   setCurrentEditingTopic: SetCurrentEditingTopic,
   derivedCustomSettings: ?DerivedCustomSettings,
@@ -129,10 +127,6 @@ export default function TreeNodeRow({
   nodeVisibleInScene,
   sceneErrors,
   setCurrentEditingTopic,
-  toggleCheckAllAncestors,
-  toggleCheckAllDescendants,
-  toggleNodeChecked,
-  toggleNodeExpanded,
   tooltips,
   visibleByColumn,
   visibleTopicsCount,
@@ -178,13 +172,6 @@ export default function TreeNodeRow({
   maxNodeNameWidth -= showVisibleTopicsCount ? VISIBLE_COUNT_WIDTH + VISIBLE_COUNT_MARGIN * 2 : 0;
 
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
-  const onMouseEnter = useCallback(
-    () =>
-      (nodeVisibleInScene &&
-        setHoveredMarkerMatchers([{ topic: topicName }, { topic: joinTopics(SECOND_SOURCE_PREFIX, topicName) }])) ||
-      undefined,
-    [nodeVisibleInScene, setHoveredMarkerMatchers, topicName]
-  );
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
   const mouseEventHandlersByColumnIdx = useMemo(
     () => {
@@ -196,14 +183,18 @@ export default function TreeNodeRow({
     },
     [onMouseLeave, setHoveredMarkerMatchers, topicName, visibleByColumn]
   );
+  const {
+    toggleCheckAllAncestors,
+    toggleNodeChecked,
+    toggleNodeExpanded,
+    toggleCheckAllDescendants,
+  } = useGuaranteedContext(TopicTreeContext, "TopicTreeContext");
 
   return (
     <STreeNodeRow visibleInScene={nodeVisibleInScene} style={{ width: rowWidth }}>
       <SLeft
         style={{ cursor: hasChildren && !filterText ? "pointer" : "default" }}
         data-test={`name~${key}`}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
         onClick={hasChildren ? () => toggleNodeExpanded(key) : undefined}>
         <NodeName
           isXSWidth={isXSWidth}
@@ -285,8 +276,6 @@ export default function TreeNodeRow({
           nodeKey={key}
           providerAvailable={providerAvailable}
           setCurrentEditingTopic={setCurrentEditingTopic}
-          toggleCheckAllAncestors={toggleCheckAllAncestors}
-          toggleCheckAllDescendants={toggleCheckAllDescendants}
           topicName={topicName}
         />
       </SRightActions>

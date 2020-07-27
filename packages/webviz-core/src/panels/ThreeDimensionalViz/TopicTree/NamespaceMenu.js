@@ -12,7 +12,7 @@ import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 
 import { ROW_HEIGHT } from "./TreeNodeRow";
-import type { ToggleNodeByColumn, OnNamespaceOverrideColorChange, SetEditingNamespace } from "./types";
+import type { OnNamespaceOverrideColorChange, SetEditingNamespace } from "./types";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import KeyboardShortcut from "webviz-core/src/components/KeyboardShortcut";
@@ -21,7 +21,9 @@ import {
   getHexFromColorSettingWithDefault,
   PICKER_SIZE,
 } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/ColorPickerForTopicSettings";
+import { TopicTreeContext } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/useTopicTree";
 import clipboard from "webviz-core/src/util/clipboard";
+import { useGuaranteedContext } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const DISABLED_STYLE = { cursor: "not-allowed", color: colors.TEXT_MUTED };
@@ -62,7 +64,6 @@ type Props = {|
   overrideColorByColumn: ?((?string)[]),
   providerAvailable: boolean,
   setEditingNamespace: SetEditingNamespace,
-  toggleCheckAllAncestors: ToggleNodeByColumn,
   topicName: string,
 |};
 
@@ -87,7 +88,6 @@ export default function NamespaceMenu({
   overrideColorByColumn,
   providerAvailable,
   setEditingNamespace,
-  toggleCheckAllAncestors,
   topicName,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
@@ -101,6 +101,7 @@ export default function NamespaceMenu({
     hasNamespaceOverrideColorChangedByColumn[0] || hasNamespaceOverrideColorChangedByColumn[1];
   const colorPickerWrapperStyle = showResetOverrideColor ? { width: COLOR_PICKER_AND_ICON_WIDTH } : {};
 
+  const { toggleCheckAllAncestors } = useGuaranteedContext(TopicTreeContext, "TopicTreeContext");
   // Don't render the dot menu if the datasources are unavailable.
   if (!providerAvailable) {
     return null;

@@ -10,6 +10,7 @@ import round from "lodash/round";
 import sum from "lodash/sum";
 
 import Database from "webviz-core/src/util/indexeddb/Database";
+import sendNotification from "webviz-core/src/util/sendNotification";
 
 type DbInfo = { name: string, version: number, objectStoreRowCounts: { name: string, rowCount: number }[] };
 type IdbInfo = {
@@ -82,6 +83,16 @@ class PerformanceMeasuringClient {
   totalFrameTimes: number[] = [];
 
   start({ bagLengthMs }: { bagLengthMs: number }) {
+    if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
+      sendNotification(
+        "In performance measuring mode, but NODE_ENV is not production!",
+        "Use `yarn performance-start` instead of `yarn start`.",
+        "user",
+        "error"
+      );
+      return;
+    }
+
     this.bagLengthMs = bagLengthMs;
     this.startTime = performance.now();
     this.startedMeasuringPerformance = true;

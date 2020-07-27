@@ -69,7 +69,7 @@ const selectedObject = { object: markerObject, instanceIndex: null };
 
 const sharedProps = {
   selectedObject,
-  interactionData: { topic: "/foo/bar" },
+  interactionData: { topic: "/foo/bar", originalMessage: markerObject },
   isDrawing: false,
   onClearSelectedObject: () => {},
   defaultSelectedTab: OBJECT_TAB_TYPE,
@@ -275,37 +275,23 @@ storiesOf("<Interaction>", module)
     );
   })
   .add("PointCloud", () => {
-    const result = decodeMarker(POINT_CLOUD_MESSAGE);
-    const resultWithAdditionalFields = decodeMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS);
+    const cloud1 = { ...selectedObject.object, ...decodeMarker(POINT_CLOUD_MESSAGE) };
+    const cloud2 = { ...selectedObject.object, ...decodeMarker(POINT_CLOUD_WITH_ADDITIONAL_FIELDS) };
 
     return (
       <SWrapper>
         <PanelSetupWithData title="default with point color">
           <Interactions
             {...sharedProps}
-            selectedObject={{
-              instanceIndex: 0,
-              object: {
-                ...selectedObject.object,
-                type: 102,
-                ...result,
-              },
-            }}
-            interactionData={{ topic: "/foo/bar", associatedTopics: ["/track/foo", "/track/bar"] }}
+            selectedObject={{ instanceIndex: 0, object: { ...cloud1, type: 102 } }}
+            interactionData={{ topic: "/foo/bar", originalMessage: selectedObject.object }}
           />
         </PanelSetupWithData>
         <PanelSetupWithData title="with additional fields">
           <Interactions
             {...sharedProps}
-            selectedObject={{
-              instanceIndex: 0,
-              object: {
-                ...selectedObject.object,
-                type: 102,
-                ...resultWithAdditionalFields,
-              },
-            }}
-            interactionData={{ topic: "/foo/bar", associatedTopics: ["/track/foo", "/track/bar"] }}
+            selectedObject={{ instanceIndex: 0, object: { ...cloud2, type: 102 } }}
+            interactionData={{ topic: "/foo/bar", originalMessage: selectedObject.object }}
           />
         </PanelSetupWithData>
       </SWrapper>

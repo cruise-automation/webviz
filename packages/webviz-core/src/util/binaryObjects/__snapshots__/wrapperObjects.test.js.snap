@@ -1,0 +1,91 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`printGetClassesForView returns the expected code 1`] = `
+"const $offset = Symbol();
+class std_msgs_Header {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  seq() {
+    return $view.getUint32(this[$offset], true);
+  }
+  stamp() {
+    return new time((this[$offset] + 4));
+  }
+  frame_id() {
+    return $bigString.slice($view.getInt32((this[$offset] + 12), true), $view.getInt32((this[$offset] + 16), true));
+  }
+}
+class fake_msgs_HasComplexAndArray {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  header() {
+    return new std_msgs_Header(this[$offset]);
+  }
+  stringArray() {
+    const from = $view.getInt32((this[$offset] + 20), true);
+    const to = $view.getInt32((this[$offset] + 24), true);
+    return new string$Array(from, to);
+  }
+}
+class fake_msgs_HasComplexArray {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  complexArray() {
+    const from = $view.getInt32(this[$offset], true);
+    const to = $view.getInt32((this[$offset] + 4), true);
+    return new fake_msgs_HasComplexAndArray$Array(from, to);
+  }
+}
+class fake_msgs_HasConstant {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  static const() {
+    return 1;
+  }
+}
+class fake_msgs_HasByteArray {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  byte_array() {
+    const from = $view.getInt32(this[$offset], true);
+    const to = $view.getInt32((this[$offset] + 4), true);
+    return new Uint8Array($view.buffer, from, to - from);
+  }
+}
+class time {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  sec() {
+    return $view.getInt32(this[$offset], true);
+  }
+  nsec() {
+    return $view.getInt32((this[$offset] + 4), true);
+  }
+}
+class duration {
+  constructor(offset) {
+    this[$offset] = offset;
+  }
+  sec() {
+    return $view.getInt32(this[$offset], true);
+  }
+  nsec() {
+    return $view.getInt32((this[$offset] + 4), true);
+  }
+}
+return {
+  \\"std_msgs/Header\\": std_msgs_Header,
+  \\"fake_msgs/HasComplexAndArray\\": fake_msgs_HasComplexAndArray,
+  \\"fake_msgs/HasComplexArray\\": fake_msgs_HasComplexArray,
+  \\"fake_msgs/HasConstant\\": fake_msgs_HasConstant,
+  \\"fake_msgs/HasByteArray\\": fake_msgs_HasByteArray,
+  \\"time\\": time,
+  \\"duration\\": duration,
+};"
+`;

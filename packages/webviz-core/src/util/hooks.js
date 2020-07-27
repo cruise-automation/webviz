@@ -89,6 +89,16 @@ export function useMustNotChange<T>(value: T, message: string): T {
   return value;
 }
 
+export function useGuaranteedContext<T>(contextType: Context<T>, debugContextName?: string): $NonMaybeType<T> {
+  const context = useContext(contextType);
+  if (context === null) {
+    throw new Error(
+      `useGuaranteedContext got null for contextType${debugContextName ? `: '${debugContextName}'` : ""}`
+    );
+  }
+  return context;
+}
+
 // Log a warning if the given value changes twice in a row.
 export function useShouldNotChangeOften<T>(value: T, warn: () => void): T {
   const prev = useRef(value);

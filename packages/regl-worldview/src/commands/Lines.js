@@ -479,7 +479,7 @@ const lines = (regl: any) => {
   const render = (props: { debug?: boolean, depth?: DepthState, blend?: BlendState }, commands: any) => {
     const { debug } = props;
     if (debug) {
-      memoizedRender({ depth: { enabled: false } })(commands);
+      memoizedRender({ depth: { enable: false } })(commands);
     } else {
       memoizedRender(props)(commands);
     }

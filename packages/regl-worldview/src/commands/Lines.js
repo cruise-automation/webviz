@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import flatten from "lodash/flatten";
+import memoize from "lodash/memoize";
 import * as React from "react";
 
 import type { Line, Vec4, Color, Pose, DepthState, BlendState } from "../types";
@@ -463,14 +464,23 @@ const lines = (regl: any) => {
     }
   }
 
+  // Create a new render function based on rendering settings
+  // Memoization is required in order to prevent creating too many functions
+  // that use the same arguments, potentially leading to memory leaks.
+  const memoizedRender = memoize(
+    (props: { debug?: boolean, depth?: DepthState, blend?: BlendState }) => {
+      const { debug, depth = defaultReglDepth, blend = defaultReglBlend } = props;
+      if (debug) {
+        return regl({ depth: { enable: false } });
+      }
+      return regl({ depth, blend });
+    },
+    (...args) => JSON.stringify(args)
+  );
+
   // Disable depth for debug rendering (so lines stay visible)
   const render = (props: { debug?: boolean, depth?: DepthState, blend?: BlendState }, commands: any) => {
-    const { debug, depth = defaultReglDepth, blend = defaultReglBlend } = props;
-    if (debug) {
-      regl({ depth: { enable: false } })(commands);
-    } else {
-      regl({ depth, blend })(commands);
-    }
+    return memoizedRender(props)(commands);
   };
 
   // Render one line list/strip

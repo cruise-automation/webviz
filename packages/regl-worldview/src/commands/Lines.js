@@ -468,11 +468,8 @@ const lines = (regl: any) => {
   // Memoization is required in order to prevent creating too many functions
   // that use the same arguments, potentially leading to memory leaks.
   const memoizedRender = memoize(
-    (props: { debug?: boolean, depth?: DepthState, blend?: BlendState }) => {
-      const { debug, depth = defaultReglDepth, blend = defaultReglBlend } = props;
-      if (debug) {
-        return regl({ depth: { enable: false } });
-      }
+    (props: { depth?: DepthState, blend?: BlendState }) => {
+      const { depth = defaultReglDepth, blend = defaultReglBlend } = props;
       return regl({ depth, blend });
     },
     (...args) => JSON.stringify(args)
@@ -480,7 +477,12 @@ const lines = (regl: any) => {
 
   // Disable depth for debug rendering (so lines stay visible)
   const render = (props: { debug?: boolean, depth?: DepthState, blend?: BlendState }, commands: any) => {
-    return memoizedRender(props)(commands);
+    const { debug } = props;
+    if (debug) {
+      memoizedRender({ depth: { enabled: false } })(commands);
+    } else {
+      memoizedRender(props)(commands);
+    }
   };
 
   // Render one line list/strip

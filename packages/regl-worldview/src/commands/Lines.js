@@ -7,10 +7,19 @@
 //  You may not use this file except in compliance with the License.
 
 import flatten from "lodash/flatten";
+import memoize from "lodash/memoize";
 import * as React from "react";
 
-import type { Line, Vec4, Color, Pose } from "../types";
-import { defaultBlend, withPose, toRGBA, shouldConvert, pointToVec3 } from "../utils/commandUtils";
+import type { Line, Vec4, Color, Pose, DepthState, BlendState } from "../types";
+import {
+  defaultBlend,
+  withPose,
+  toRGBA,
+  shouldConvert,
+  pointToVec3,
+  defaultReglDepth,
+  defaultReglBlend,
+} from "../utils/commandUtils";
 import { nonInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 
@@ -455,18 +464,30 @@ const lines = (regl: any) => {
     }
   }
 
+  // Create a new render function based on rendering settings
+  // Memoization is required in order to prevent creating too many functions
+  // that use the same arguments, potentially leading to memory leaks.
+  const memoizedRender = memoize(
+    (props: { depth?: DepthState, blend?: BlendState }) => {
+      const { depth = defaultReglDepth, blend = defaultReglBlend } = props;
+      return regl({ depth, blend });
+    },
+    (...args) => JSON.stringify(args)
+  );
+
   // Disable depth for debug rendering (so lines stay visible)
-  const render = (debug, commands) => {
+  const render = (props: { debug?: boolean, depth?: DepthState, blend?: BlendState }, commands: any) => {
+    const { debug } = props;
     if (debug) {
-      regl({ depth: { enable: false } })(commands);
+      memoizedRender({ depth: { enable: false } })(commands);
     } else {
-      commands();
+      memoizedRender(props)(commands);
     }
   };
 
   // Render one line list/strip
   function renderLine(props) {
-    const { debug, primitive = "lines", scaleInvariant = false } = props;
+    const { debug, primitive = "lines", scaleInvariant = false, depth, blend } = props;
     const numInputPoints = props.points.length;
 
     if (numInputPoints < 2) {
@@ -502,7 +523,7 @@ const lines = (regl: any) => {
       poseRotationBuffer({ data: rotationArray, usage: "dynamic" });
     }
 
-    render(debug, () => {
+    render({ debug, depth, blend }, () => {
       // Use Object.assign because it's actually faster than babel's object spread polyfill.
       command(
         Object.assign({}, props, {

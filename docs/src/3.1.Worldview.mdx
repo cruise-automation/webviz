@@ -30,6 +30,8 @@ See [MouseEvents](#/docs/api/mouse-events).
 
 ## Keyboard Controls
 
+The keyboard controls are only active if the `<Worldview>` HTMLElement has focus. In order to focus `<Worldview>` programatically, `<Worldview>` exposes a imperative `focus()` method, similar to `HTMLElement.focus()`.
+
 `keyMap` allows you to customize the keyboard controls for Worldview's camera. The `keyMap` is an optional object whose keys are [KeyboardEvent.code](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code) values, and whose values specify the action to perform when the corresponding key is pressed. To disable a key from the keyboard controls, simply provide a `null`/`false` value for that key. For example, the following would reverse all actions and disable tilting and zooming:
 
     <Worldview keyMap={{

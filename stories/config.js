@@ -11,6 +11,7 @@ import { withScreenshot } from "storycap";
 
 import "webviz-core/src/styles/global.scss";
 import prepareForScreenshots from "./prepareForScreenshots";
+import withStateReset from "./withStateReset";
 import storiesSetup from "webviz-core/src/stories/setup";
 import waitForFonts from "webviz-core/src/styles/waitForFonts";
 import installChartjs from "webviz-core/src/util/installChartjs";
@@ -29,6 +30,7 @@ addDecorator((storyFn) => {
   return React.createElement(storyFn);
 });
 
+addDecorator(withStateReset);
 addDecorator(withScreenshot);
 addParameters({
   screenshot: {

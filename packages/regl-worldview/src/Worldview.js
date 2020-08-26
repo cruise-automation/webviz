@@ -84,6 +84,7 @@ function handleWorldviewMouseInteraction(
 // takes in children that declaritively define what should be rendered
 export class WorldviewBase extends React.Component<BaseProps, State> {
   _canvas: { current: HTMLCanvasElement | null } = React.createRef();
+  _cameraListener: { current: CameraListener | null } = React.createRef();
   _tick: AnimationFrameID | void;
   _dragStartPos: ?{ x: number, y: number } = null;
 
@@ -180,6 +181,12 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
       worldviewContext.cameraStore.setCameraState(this.props.cameraState);
     }
     worldviewContext.onDirty();
+  }
+
+  focus() {
+    if (this._cameraListener.current) {
+      this._cameraListener.current.focus();
+    }
   }
 
   _onDoubleClick = (e: SyntheticMouseEvent<HTMLCanvasElement>) => {
@@ -334,7 +341,11 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         {isFixedCamera ? (
           canvasHtml
         ) : (
-          <CameraListener cameraStore={worldviewContext.cameraStore} keyMap={keyMap} shiftKeys={shiftKeys}>
+          <CameraListener
+            cameraStore={worldviewContext.cameraStore}
+            keyMap={keyMap}
+            shiftKeys={shiftKeys}
+            ref={(el) => (this._cameraListener.current = el)}>
             {canvasHtml}
           </CameraListener>
         )}
@@ -350,11 +361,13 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
 
 export type Props = $Diff<React.ElementConfig<typeof WorldviewBase>, Dimensions>;
 
-const Worldview = (props: Props) => (
+const Worldview = React.forwardRef<Props, _>((props: Props, ref) => (
   <ContainerDimensions>
-    {({ width, height, left, top }) => <WorldviewBase width={width} height={height} left={left} top={top} {...props} />}
+    {({ width, height, left, top }) => (
+      <WorldviewBase width={width} height={height} left={left} top={top} ref={ref} {...props} />
+    )}
   </ContainerDimensions>
-);
+));
 
 Worldview.displayName = "Worldview";
 

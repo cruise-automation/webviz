@@ -23,7 +23,7 @@
     "indent-string": "4.0.0",
     "inter-ui": "3.0.0",
     "intervals-fn": "3.0.3",
-    "js-yaml": "3.12.0",
+    "js-yaml": "3.13.1",
     "json-with-typed-arrays": "^1.0.0",
     "lodash": "4.17.11",
     "memoize-weak": "1.0.2",

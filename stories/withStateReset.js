@@ -10,7 +10,6 @@ const StoryWrapper = (props) => {
   useEffect(
     () => {
       // Remove leftover modals from the previous story
-      // TODO: [EP-26051] This can be removed when modals remove themselves
       document.querySelectorAll("[data-modalcontainer]").forEach((el) => el.remove());
       localStorage.clear();
 
@@ -25,9 +24,7 @@ const StoryWrapper = (props) => {
       const timer = setImmediate(() => {
         setShowStory(true);
       });
-      return () => {
-        clearTimeout(timer);
-      };
+      return () => clearTimeout(timer);
     },
     [props]
   );

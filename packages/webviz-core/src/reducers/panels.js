@@ -811,8 +811,8 @@ export default function panelsReducer(state: State, action: ActionTypes): State 
     const inScreenshot = inScreenshotTests();
     const params = new URLSearchParams(window.location.search);
     const enableShareableUrl = getExperimentalFeature("shareableUrl");
-    // TODO(Audrey): remove the screenshot env checking after release.
-    const shouldProcessPatch = enableShareableUrl || inScreenshot;
+    // TODO(Audrey): remove the screenshot env checking after release. Don't support patch in open source yet.
+    const shouldProcessPatch = getGlobalHooks().maybeUpdateURLToTrackLayout && (enableShareableUrl || inScreenshot);
     if (shouldProcessPatch) {
       getGlobalHooks().maybeUpdateURLToTrackLayout(oldState, newState);
     } else {

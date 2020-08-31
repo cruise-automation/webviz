@@ -20,6 +20,8 @@
 
 /*! webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig */
 
+/*! webviz-core/src/stories/inScreenshotTests */
+
 /*!******************************************************************!*\
   !*** ./packages/webviz-core/src/panels/NodePlayground/Editor.js ***!
   \******************************************************************/

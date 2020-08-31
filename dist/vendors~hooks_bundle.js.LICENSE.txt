@@ -353,8 +353,6 @@ object-assign
 
 /*! ./_baseDifference */
 
-/*! ./_baseEach */
-
 /*! ./_baseFindIndex */
 
 /*! ./_baseFlatten */
@@ -403,8 +401,6 @@ object-assign
 
 /*! ./_baseMatchesProperty */
 
-/*! ./_baseOrderBy */
-
 /*! ./_basePickBy */
 
 /*! ./_baseProperty */
@@ -420,8 +416,6 @@ object-assign
 /*! ./_baseSetToString */
 
 /*! ./_baseSlice */
-
-/*! ./_baseSortBy */
 
 /*! ./_baseTimes */
 
@@ -454,10 +448,6 @@ object-assign
 /*! ./_cloneTypedArray */
 
 /*! ./_cof */
-
-/*! ./_compareAscending */
-
-/*! ./_compareMultiple */
 
 /*! ./_copyArray */
 
@@ -580,8 +570,6 @@ object-assign
 /*! ./_isFlattenable */
 
 /*! ./_isIndex */
-
-/*! ./_isIterateeCall */
 
 /*! ./_isKey */
 
@@ -856,6 +844,8 @@ object-assign
 /*! ./detection-strategy/object.js */
 
 /*! ./detection-strategy/scroll.js */
+
+/*! ./dist/react-table.production.min.js */
 
 /*! ./dots */
 
@@ -1353,6 +1343,10 @@ object-assign
 
 /*! @ant-design/icons-svg/lib/asn/WarningFilled */
 
+/*! @babel/runtime/helpers/esm/extends */
+
+/*! @babel/runtime/helpers/esm/objectWithoutPropertiesLoose */
+
 /*! @babel/runtime/helpers/interopRequireDefault */
 
 /*! Hammer.JS - v2.0.7 - 2016-04-22
@@ -1621,13 +1615,15 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/RawMessages/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require), ./packages/webviz-core/src/panels/diagnostics/DiagnosticStatus.js (referenced with cjs require) */
 
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/Table/index.js (referenced with cjs require) */
+
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/CameraInfo/index.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/index.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/GlobalVariableStyles.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/GlobalVariableStyles.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderStyleExpressionNodes.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/GlobalVariableLink/LinkToGlobalVariable.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/LinkedGlobalVariableList.js (referenced with cjs require) */
 
@@ -1645,7 +1641,9 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeMenu.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderStyleExpressionNodes.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTreeSwitcher.js (referenced with cjs require) */
 
@@ -1804,6 +1802,8 @@ object-assign
 /*! exports provided: addEventListener */
 
 /*! exports provided: amp, apos, gt, lt, quot, default */
+
+/*! exports provided: apply, config, update, animated, a, interpolate, Globals, useSpring, useTrail, useTransition, useChain, useSprings */
 
 /*! exports provided: default */
 
@@ -2154,10 +2154,6 @@ object-assign
   \************************************************************/
 
 /*!************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/lodash/sortBy.js ***!
-  \************************************************************/
-
-/*!************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/uniqBy.js ***!
   \************************************************************/
 
@@ -2246,10 +2242,6 @@ object-assign
   \**************************************************************/
 
 /*!**************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/lodash/_baseMap.js ***!
-  \**************************************************************/
-
-/*!**************************************************************!*\
   !*** ./packages/webviz-core/node_modules/warning/warning.js ***!
   \**************************************************************/
 
@@ -2331,6 +2323,10 @@ object-assign
 
 /*!***************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/lib/rule.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-spring/web.js ***!
   \***************************************************************/
 
 /*!***************************************************************!*\
@@ -2439,6 +2435,10 @@ object-assign
 
 /*!****************************************************************!*\
   !*** ./packages/webviz-core/node_modules/postcss/lib/parse.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-table/index.js ***!
   \****************************************************************/
 
 /*!****************************************************************!*\
@@ -2563,10 +2563,6 @@ object-assign
 
 /*!*****************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash.curry/index.js ***!
-  \*****************************************************************/
-
-/*!*****************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/lodash/_baseSortBy.js ***!
   \*****************************************************************/
 
 /*!*****************************************************************!*\
@@ -2735,10 +2731,6 @@ object-assign
 
 /*!******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/_baseIndexOf.js ***!
-  \******************************************************************/
-
-/*!******************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/lodash/_baseOrderBy.js ***!
   \******************************************************************/
 
 /*!******************************************************************!*\
@@ -3234,10 +3226,6 @@ object-assign
   \*********************************************************************/
 
 /*!*********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/lodash/_isIterateeCall.js ***!
-  \*********************************************************************/
-
-/*!*********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/object.values/polyfill.js ***!
   \*********************************************************************/
 
@@ -3370,10 +3358,6 @@ object-assign
   \**********************************************************************/
 
 /*!**********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/lodash/_compareMultiple.js ***!
-  \**********************************************************************/
-
-/*!**********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/_customOmitClone.js ***!
   \**********************************************************************/
 
@@ -3479,10 +3463,6 @@ object-assign
 
 /*!***********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/es-abstract/GetIntrinsic.js ***!
-  \***********************************************************************/
-
-/*!***********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/lodash/_compareAscending.js ***!
   \***********************************************************************/
 
 /*!***********************************************************************!*\
@@ -3950,6 +3930,10 @@ object-assign
   \*****************************************************************************/
 
 /*!*****************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/plus-box-outline.svg ***!
+  \*****************************************************************************/
+
+/*!*****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/antd/node_modules/lodash/_Hash.js ***!
   \*****************************************************************************/
 
@@ -3999,6 +3983,10 @@ object-assign
 
 /*!******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@ant-design/icons/WarningFilled.js ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/minus-box-outline.svg ***!
   \******************************************************************************/
 
 /*!******************************************************************************!*\
@@ -5102,6 +5090,10 @@ object-assign
   \******************************************************************************************/
 
 /*!******************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/react-table/dist/react-table.production.min.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/sanitize-html/node_modules/domhandler/index.js ***!
   \******************************************************************************************/
 
@@ -5147,10 +5139,6 @@ object-assign
 
 /*!*******************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@babel/runtime/helpers/interopRequireDefault.js ***!
-  \*******************************************************************************************/
-
-/*!*******************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/checkbox-marked-circle-outline.svg ***!
   \*******************************************************************************************/
 
 /*!*******************************************************************************************!*\

@@ -5,7 +5,8 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { first, omit } from "lodash";
+
+import { first, omit, sortBy } from "lodash";
 import * as React from "react";
 import Tree from "react-json-tree";
 import { type MouseEventObject } from "regl-worldview";
@@ -16,6 +17,20 @@ import type { InteractionData } from "./types";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
+
+// Sort the keys of objects to make their presentation more predictable
+const PREFERRED_OBJECT_KEY_ORDER = [
+  "id",
+  "ns",
+  "type",
+  "action",
+  "header",
+  "lifetime",
+  "color",
+  "colors",
+  "pose",
+  "points",
+].reverse();
 
 const SObjectDetails = styled.div`
   padding: 12px 0 16px 0;
@@ -64,7 +79,7 @@ function ObjectDetailsWrapper({ interactionData, selectedObject: { object, insta
 }
 
 function ObjectDetails({ interactionData, objectToDisplay }: Props) {
-  const topic = (interactionData && interactionData.topic) || "";
+  const topic = interactionData?.topic ?? "";
   const originalObject = omit(objectToDisplay, "interactionData");
 
   if (!topic) {
@@ -82,11 +97,18 @@ function ObjectDetails({ interactionData, objectToDisplay }: Props) {
     );
   }
 
+  const sortedDataObject = Object.fromEntries(
+    sortBy(Object.keys(originalObject), (key) => -PREFERRED_OBJECT_KEY_ORDER.indexOf(key)).map((key) => [
+      key,
+      originalObject[key],
+    ])
+  );
+
   return (
     <SObjectDetails>
       <Tree
-        data={originalObject}
-        shouldExpandNode={(markerKeyPath, data, level) => level < 2}
+        data={sortedDataObject}
+        shouldExpandNode={false}
         invertTheme={false}
         theme={{ ...jsonTreeTheme, tree: { margin: 0 } }}
         hideRoot
@@ -97,7 +119,7 @@ function ObjectDetails({ interactionData, objectToDisplay }: Props) {
             return <span style={{ padding: "0 4px" }}>{label}</span>;
           }
 
-          let objectForPath = originalObject;
+          let objectForPath = sortedDataObject;
           for (let i = markerKeyPath.length - 1; i >= 0; i--) {
             objectForPath = objectForPath[markerKeyPath[i]];
             if (!objectForPath) {

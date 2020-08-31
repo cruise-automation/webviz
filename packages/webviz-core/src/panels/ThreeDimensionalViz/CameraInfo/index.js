@@ -12,6 +12,7 @@ import * as React from "react";
 import { type CameraState, cameraStateSelectors } from "regl-worldview";
 import styled from "styled-components";
 
+import { point2DValidator, cameraStateValidator } from "webviz-core/shared/validators";
 import Button from "webviz-core/src/components/Button";
 import ExpandingToolbar, { ToolGroup } from "webviz-core/src/components/ExpandingToolbar";
 import Flex from "webviz-core/src/components/Flex";
@@ -19,7 +20,6 @@ import Icon from "webviz-core/src/components/Icon";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { UncontrolledValidatedInput, YamlInput } from "webviz-core/src/components/ValidatedInput";
-import { point2DValidator, cameraStateValidator } from "webviz-core/src/components/validators";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { Renderer, type ThreeDimensionalVizConfig } from "webviz-core/src/panels/ThreeDimensionalViz";
 import { SValue, SLabel } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions";

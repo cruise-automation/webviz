@@ -151,6 +151,12 @@ storiesOf("<MessagePathInput>", module)
   .add("autocomplete for message with json field", () => {
     return <MessagePathInputStory path="/some_logs_topic." />;
   })
+  .add("autocomplete for path with existing filter", () => {
+    return <MessagePathInputStory path="/some_topic/state.items[:]{id==1}." />;
+  })
+  .add("autocomplete for path with existing filter using a global variable", () => {
+    return <MessagePathInputStory path="/some_topic/state.items[:]{id==$global_var_2}." />;
+  })
   .add("path for field inside json object", () => {
     return <MessagePathInputStory path="/some_logs_topic.myJson" />;
   })

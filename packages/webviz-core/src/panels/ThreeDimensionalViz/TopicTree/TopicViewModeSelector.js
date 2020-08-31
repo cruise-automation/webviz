@@ -68,7 +68,7 @@ export default function TopicViewModeSelector({
         position="below"
         value={topicDisplayMode}
         text={TOPIC_DISPLAY_MODES[topicDisplayMode].label}
-        onChange={(newValue) => saveConfig({ topicDisplayMode: newValue }, { keepLayoutInUrl: true })}>
+        onChange={(newValue) => saveConfig({ topicDisplayMode: newValue })}>
         {dropdownOptions.map(({ label, value }) => (
           <option value={value} key={value}>
             {label}

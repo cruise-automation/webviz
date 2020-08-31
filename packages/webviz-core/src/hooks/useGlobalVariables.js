@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { bindActionCreators } from "redux";
 
@@ -20,8 +21,8 @@ export default function useGlobalVariables(): {|
 |} {
   const globalVariables = useSelector((state) => state.panels.globalVariables);
   const dispatch = useDispatch();
-  return {
-    globalVariables,
-    ...bindActionCreators({ setGlobalVariables, overwriteGlobalVariables }, dispatch),
-  };
+  const actionCreators = useMemo(() => bindActionCreators({ setGlobalVariables, overwriteGlobalVariables }, dispatch), [
+    dispatch,
+  ]);
+  return { ...actionCreators, globalVariables };
 }

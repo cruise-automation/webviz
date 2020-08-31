@@ -113,6 +113,36 @@ describe("getValueActionForValue", () => {
     });
   });
 
+  it("returns value when looking inside a 'json' primitive", () => {
+    const structureItem = { structureType: "primitive", primitiveType: "json", datatype: "" };
+    expect(getValueActionForValue({ abc: 0, def: 0 }, structureItem, ["abc"])).toEqual({
+      multiSlicePath: ".abc",
+      primitiveType: "json",
+      singleSlicePath: ".abc",
+      type: "primitive",
+    });
+  });
+
+  it("returns single/multi slice paths when pointing at a value inside an array, nested inside a JSON field", () => {
+    const structureItem = {
+      structureType: "array",
+      next: {
+        structureType: "message",
+        nextByName: { outer_key: { structureType: "primitive", primitiveType: "json", datatype: "" } },
+        datatype: "",
+      },
+      datatype: "",
+    };
+    expect(
+      getValueActionForValue([{ outer_key: { nested_key: 456 } }], structureItem, [0, "outer_key", "nested_key"])
+    ).toEqual({
+      type: "primitive",
+      singleSlicePath: "[0].outer_key.nested_key",
+      multiSlicePath: "[:].outer_key.nested_key",
+      primitiveType: "json",
+    });
+  });
+
   it("returns undefined when trying to look inside a 'time'", () => {
     const structureItem = {
       structureType: "primitive",

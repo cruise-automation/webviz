@@ -5,16 +5,20 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import { partition, cloneDeep, uniqBy } from "lodash";
 import microMemoize from "micro-memoize";
 import type { Time } from "rosbag";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import {
   type NodeDefinition,
+  type NodeStates,
   applyNodesToMessages,
+  partitionMessagesBySubscription,
   isWebvizNodeTopic,
   getNodeSubscriptions,
   validateNodeDefinitions,
+  getDefaultNodeStates,
 } from "webviz-core/src/players/nodes";
 import type {
   AdvertisePayload,
@@ -28,16 +32,21 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 export default class NodePlayer implements Player {
   _player: Player;
-  _nodeDefinitions: NodeDefinition<any>[];
-  _nodeStates: any[];
-  _originalNodeStates: any[];
+  _nodeDefinitions: NodeDefinition<*>[];
+  _subscribedNodeDefinitions: NodeDefinition<*>[] = [];
+  _nodeSubscriptions: SubscribePayload[] = [];
+  _nodeStates: NodeStates = {};
+  _originalNodeStates: NodeStates;
   _lastSeekTime: number = 0;
 
   constructor(player: Player, nodeDefinitions: NodeDefinition<any>[] = getGlobalHooks().nodes()) {
     validateNodeDefinitions(nodeDefinitions);
     this._player = player;
     this._nodeDefinitions = nodeDefinitions;
-    this._nodeStates = this._originalNodeStates = this._nodeDefinitions.map((def) => def.defaultState);
+    const defaultNodeStates = getDefaultNodeStates(nodeDefinitions);
+
+    this._nodeStates = defaultNodeStates;
+    this._originalNodeStates = cloneDeep(defaultNodeStates);
   }
 
   _getTopics = microMemoize((availableTopics: Topic[]) => [
@@ -49,6 +58,7 @@ export default class NodePlayer implements Player {
     (datatypes: RosDatatypes, availableTopics: Topic[]): string[] => {
       let newDatatypes = { ...datatypes };
       for (const nodeDefinition of this._getFilteredNodeDefinitions(availableTopics)) {
+        // Note: We prefer the bag's definitions.
         newDatatypes = { ...nodeDefinition.datatypes, ...newDatatypes };
       }
       return newDatatypes;
@@ -72,11 +82,32 @@ export default class NodePlayer implements Player {
       }
 
       if (playerState.activeData) {
-        const { lastSeekTime, topics, datatypes, messages: playerStateMessages } = playerState.activeData;
+        const {
+          lastSeekTime,
+          topics,
+          datatypes: childDatatypes,
+          messages: playerStateMessages,
+          bobjects: playerStateBobjects,
+        } = playerState.activeData;
         // Don't use _getFilteredNodeDefinitions here, since the _nodeDefinitions array needs to match up
         // with the _nodeStates array, and we're only calling the nodes for available topics in applyNodesToMessages
         // anyway.
-        const { states, messages } = applyNodesToMessages(this._nodeDefinitions, playerStateMessages, this._nodeStates);
+        const datatypes = this._getDatatypes(childDatatypes, topics);
+
+        const { states, messages } = applyNodesToMessages({
+          nodeDefinitions: this._subscribedNodeDefinitions,
+          originalMessages: playerStateMessages,
+          originalBobjects: playerStateBobjects,
+          states: this._nodeStates,
+          datatypes,
+        });
+
+        const { parsedMessages, bobjects } = partitionMessagesBySubscription(
+          messages,
+          this._nodeSubscriptions,
+          this._nodeDefinitions,
+          datatypes
+        );
 
         this._nodeStates = states;
         this._lastSeekTime = lastSeekTime;
@@ -85,9 +116,10 @@ export default class NodePlayer implements Player {
           ...playerState,
           activeData: {
             ...playerState.activeData,
-            messages,
+            messages: parsedMessages,
+            bobjects,
             topics: this._getTopics(topics),
-            datatypes: this._getDatatypes(datatypes, topics),
+            datatypes,
           },
         });
       }
@@ -97,10 +129,20 @@ export default class NodePlayer implements Player {
   }
 
   setSubscriptions(subscriptions: SubscribePayload[]) {
-    const remoteSubscriptionsForNodes = getNodeSubscriptions(this._nodeDefinitions, subscriptions).filter(
-      ({ topic }) => !isWebvizNodeTopic(topic)
+    const [nodeSubscriptions, underlyingSubscriptions] = partition(subscriptions, ({ topic }) =>
+      isWebvizNodeTopic(topic)
     );
-    this._player.setSubscriptions(remoteSubscriptionsForNodes);
+    this._nodeSubscriptions = uniqBy(nodeSubscriptions, ({ topic, format }) => `${topic}${format}`);
+
+    this._subscribedNodeDefinitions = uniqBy(nodeSubscriptions, "topic")
+      .map((subscribePayload) => {
+        return this._nodeDefinitions.find((def) => subscribePayload.topic === def.output.name);
+      })
+      .filter(Boolean);
+
+    const underlyingSubscriptionsForNodes = getNodeSubscriptions(this._subscribedNodeDefinitions);
+
+    this._player.setSubscriptions([...underlyingSubscriptions, ...underlyingSubscriptionsForNodes]);
   }
 
   close = () => this._player.close();

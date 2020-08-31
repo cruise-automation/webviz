@@ -14,6 +14,7 @@ import { addPanel, type AddPanelPayload } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import type { State as ReduxState } from "webviz-core/src/reducers";
 
@@ -30,7 +31,8 @@ function AppMenu(props: Props) {
   const onPanelSelect = useCallback(
     ({ type, config, relatedConfigs }: PanelSelection) => {
       dispatch(addPanel(({ type, layout, config, relatedConfigs, tabId: null }: AddPanelPayload)));
-      window.ga("send", "event", "Panel", "Select", type);
+      const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
+      logger({ name: eventNames.PANEL_ADD, tags: { [eventTags.PANEL_TYPE]: type } });
     },
     [dispatch, layout]
   );

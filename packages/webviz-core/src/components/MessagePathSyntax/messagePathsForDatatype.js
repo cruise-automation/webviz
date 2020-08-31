@@ -104,8 +104,10 @@ export function messagePathsForDatatype(
   datatype: string,
   datatypes: RosDatatypes,
   validTypes: ?(string[]),
-  noMultiSlices: ?boolean
+  noMultiSlices: ?boolean,
+  messagePath?: MessagePathPart[] = []
 ): string[] {
+  let clonedMessagePath = [...messagePath];
   const messagePaths = [];
   function traverse(structureItem: MessagePathStructureItem, builtString: string) {
     if (validTerminatingStructureItem(structureItem, validTypes)) {
@@ -122,7 +124,25 @@ export function messagePathsForDatatype(
         // typical filter name, fall back to `/topic.object[0]`.
         const typicalFilterName = Object.keys(structureItem.next.nextByName).find((key) => isTypicalFilterName(key));
         if (typicalFilterName) {
-          traverse(structureItem.next, `${builtString}[:]{${typicalFilterName}==0}`);
+          // Find matching filter from clonedMessagePath
+          const matchingFilterPart = clonedMessagePath.find(
+            (pathPart) => pathPart.type === "filter" && pathPart.path[0] === typicalFilterName
+          );
+
+          // Remove the matching filter from clonedMessagePath, for future searches
+          clonedMessagePath = clonedMessagePath.filter((pathPart) => pathPart !== matchingFilterPart);
+
+          // Format the displayed filter value
+          const filterVal =
+            matchingFilterPart && matchingFilterPart.type === "filter" && matchingFilterPart.value
+              ? matchingFilterPart.value
+              : 0;
+          traverse(
+            structureItem.next,
+            `${builtString}[:]{${typicalFilterName}==${
+              typeof filterVal === "object" ? `$${filterVal.variableName}` : filterVal
+            }}`
+          );
         } else {
           traverse(structureItem.next, `${builtString}[0]`);
         }

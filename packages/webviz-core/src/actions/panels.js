@@ -1,15 +1,15 @@
 // @flow
 //
-//  Copyright (c) 2018-present, Cruise LLC
+//  Copyright (c) 2020-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
-import { push } from "connected-react-router";
 import type { MosaicDropTargetPosition, MosaicPath } from "react-mosaic-component";
 
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import { type PanelsState } from "webviz-core/src/reducers/panels";
 import type { TabLocation } from "webviz-core/src/types/layouts";
 import type {
   CreateTabPanelPayload,
@@ -24,7 +24,7 @@ import type {
   PanelConfig,
 } from "webviz-core/src/types/panels";
 import type { Dispatch, GetState } from "webviz-core/src/types/Store";
-import { LAYOUT_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { LAYOUT_URL_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
 const PANELS_ACTION_TYPES = {
   CHANGE_PANEL_LAYOUT: "CHANGE_PANEL_LAYOUT",
@@ -45,6 +45,8 @@ const PANELS_ACTION_TYPES = {
   DROP_PANEL: "DROP_PANEL",
   START_DRAG: "START_DRAG",
   END_DRAG: "END_DRAG",
+  SET_FETCHED_LAYOUT: "SET_FETCHED_LAYOUT",
+  LOAD_FETCHED_LAYOUT: "LOAD_FETCHED_LAYOUT",
 };
 
 export type SAVE_PANEL_CONFIGS = { type: "SAVE_PANEL_CONFIGS", payload: SaveConfigsPayload };
@@ -53,29 +55,7 @@ export type CREATE_TAB_PANEL = { type: "CREATE_TAB_PANEL", payload: CreateTabPan
 export type CHANGE_PANEL_LAYOUT = { type: "CHANGE_PANEL_LAYOUT", payload: ChangePanelLayoutPayload };
 export type Dispatcher<T> = (dispatch: Dispatch, getState: GetState) => T;
 
-function maybeStripLayoutId(dispatch: Dispatch, getState: GetState): void {
-  const state = getState();
-  const { location } = state.router;
-
-  if (location) {
-    const params = new URLSearchParams(location.search);
-    if (params.get(LAYOUT_QUERY_KEY)) {
-      params.delete(LAYOUT_QUERY_KEY);
-      const newSearch = params.toString();
-      const searchString = newSearch ? `?${newSearch}` : newSearch;
-      const newPath = `${location.pathname}${searchString}`;
-      dispatch(push(newPath));
-    }
-  }
-}
-
-export const savePanelConfigs = (payload: SaveConfigsPayload): Dispatcher<SAVE_PANEL_CONFIGS> => (
-  dispatch,
-  getState
-) => {
-  if (!payload.silent) {
-    maybeStripLayoutId(dispatch, getState);
-  }
+export const savePanelConfigs = (payload: SaveConfigsPayload): Dispatcher<SAVE_PANEL_CONFIGS> => (dispatch) => {
   return dispatch({ type: PANELS_ACTION_TYPES.SAVE_PANEL_CONFIGS, payload });
 };
 
@@ -93,26 +73,55 @@ export const createTabPanel = (payload: CreateTabPanelPayload): CREATE_TAB_PANEL
 type IMPORT_PANEL_LAYOUT = { type: "IMPORT_PANEL_LAYOUT", payload: ImportPanelLayoutPayload };
 export const importPanelLayout = (
   payload: ImportPanelLayoutPayload,
-  {
-    isFromUrl = false,
-    skipSettingLocalStorage = false,
-  }: { isFromUrl?: boolean, skipSettingLocalStorage?: boolean } = {}
-): Dispatcher<IMPORT_PANEL_LAYOUT> => (dispatch, getState) => {
-  if (!isFromUrl) {
-    maybeStripLayoutId(dispatch, getState);
-  }
+  { skipSettingLocalStorage = false }: { skipSettingLocalStorage?: boolean } = {}
+): Dispatcher<IMPORT_PANEL_LAYOUT> => (dispatch) => {
   return dispatch({
     type: PANELS_ACTION_TYPES.IMPORT_PANEL_LAYOUT,
     payload: skipSettingLocalStorage ? { ...payload, skipSettingLocalStorage } : payload,
   });
 };
 
-export const changePanelLayout = (payload: ChangePanelLayoutPayload): Dispatcher<CHANGE_PANEL_LAYOUT> => (
-  dispatch,
-  getState
-) => {
-  maybeStripLayoutId(dispatch, getState);
+export const changePanelLayout = (payload: ChangePanelLayoutPayload): Dispatcher<CHANGE_PANEL_LAYOUT> => (dispatch) => {
   return dispatch({ type: PANELS_ACTION_TYPES.CHANGE_PANEL_LAYOUT, payload });
+};
+
+type SET_FETCHED_LAYOUT = {
+  type: "SET_FETCHED_LAYOUT",
+  payload: {
+    isLoading: boolean,
+    data?: { content: PanelsState, name: string, savedBy: string, releasedVersion: number },
+  },
+};
+type LOAD_FETCHED_LAYOUT = { type: "LOAD_FETCHED_LAYOUT", payload: PanelsState };
+export const fetchLayout = (search: string): Dispatcher<SET_FETCHED_LAYOUT> => (dispatch) => {
+  const params = new URLSearchParams(search);
+  const hasLayoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
+  dispatch({ type: PANELS_ACTION_TYPES.SET_FETCHED_LAYOUT, payload: { isLoading: true } });
+  return getGlobalHooks()
+    .getLayoutFromUrl(search)
+    .then((layoutFetchResult) => {
+      dispatch({
+        type: PANELS_ACTION_TYPES.SET_FETCHED_LAYOUT,
+        payload: { isLoading: false, data: layoutFetchResult },
+      });
+      if (layoutFetchResult) {
+        if (hasLayoutUrl) {
+          dispatch({
+            type: PANELS_ACTION_TYPES.LOAD_FETCHED_LAYOUT,
+            payload: layoutFetchResult,
+          });
+        } else if (layoutFetchResult.content) {
+          dispatch({
+            type: PANELS_ACTION_TYPES.LOAD_FETCHED_LAYOUT,
+            payload: layoutFetchResult.content,
+          });
+        }
+      }
+    });
+};
+
+export const loadFetchedLayout = (payload: PanelsState): Dispatcher<LOAD_FETCHED_LAYOUT> => (dispatch) => {
+  return dispatch({ type: PANELS_ACTION_TYPES.LOAD_FETCHED_LAYOUT, payload });
 };
 
 type OVERWRITE_GLOBAL_DATA = { type: "OVERWRITE_GLOBAL_DATA", payload: { [key: string]: any } };
@@ -257,7 +266,9 @@ export type PanelsActions =
   | ADD_PANEL
   | DROP_PANEL
   | START_DRAG
-  | END_DRAG;
+  | END_DRAG
+  | SET_FETCHED_LAYOUT
+  | LOAD_FETCHED_LAYOUT;
 
 type PanelsActionTypes = $Values<typeof PANELS_ACTION_TYPES>;
 export const panelEditingActions = new Set<PanelsActionTypes>(Object.keys(PANELS_ACTION_TYPES));

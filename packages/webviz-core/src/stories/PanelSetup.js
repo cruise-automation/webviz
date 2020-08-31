@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { createMemoryHistory } from "history";
-import { flatten } from "lodash";
+import { flatten, partition } from "lodash";
 import * as React from "react";
 import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
@@ -21,12 +21,7 @@ import {
   setLinkedGlobalVariables,
   setUserNodes,
 } from "webviz-core/src/actions/panels";
-import {
-  setUserNodeDiagnostics,
-  addUserNodeLogs,
-  setUserNodeTrust,
-  setUserNodeRosLib,
-} from "webviz-core/src/actions/userNodes";
+import { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeRosLib } from "webviz-core/src/actions/userNodes";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
@@ -37,6 +32,7 @@ import Store from "webviz-core/src/store";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import type { MosaicNode, SavedProps, UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { isBobject } from "webviz-core/src/util/binaryObjects";
 
 export type Fixture = {|
   frame: Frame,
@@ -51,7 +47,7 @@ export type Fixture = {|
   linkedGlobalVariables?: LinkedGlobalVariables,
   userNodes?: UserNodes,
   userNodeDiagnostics?: UserNodeDiagnostics,
-  userNodeFlags?: { id: string, trusted: boolean },
+  userNodeFlags?: {| id: string |},
   userNodeLogs?: UserNodeLogs,
   userNodeRosLib?: string,
   savedProps?: SavedProps,
@@ -61,7 +57,7 @@ type Props = {|
   children: React.Node,
   fixture: Fixture,
   omitDragAndDrop?: boolean,
-  onMount?: (HTMLDivElement, store?: Store) => void,
+  onMount?: (HTMLDivElement, store: Store) => void,
   onFirstMount?: (HTMLDivElement) => void,
   store?: Store,
   style?: { [string]: any },
@@ -137,7 +133,6 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
       layout,
       linkedGlobalVariables,
       userNodeDiagnostics,
-      userNodeFlags,
       userNodeLogs,
       userNodeRosLib,
       savedProps,
@@ -159,9 +154,6 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
     }
     if (userNodeDiagnostics) {
       store.dispatch(setUserNodeDiagnostics(userNodeDiagnostics));
-    }
-    if (userNodeFlags) {
-      store.dispatch(setUserNodeTrust(userNodeFlags));
     }
     if (userNodeLogs) {
       store.dispatch(addUserNodeLogs(userNodeLogs));
@@ -189,7 +181,7 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
   }
 
   renderInner() {
-    const { frame, topics, datatypes, capabilities, activeData, progress } = this.props.fixture;
+    const { frame = {}, topics, datatypes, capabilities, activeData, progress } = this.props.fixture;
     let dTypes = datatypes;
     if (!dTypes) {
       const dummyDatatypes: RosDatatypes = {};
@@ -198,6 +190,8 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
       }
       dTypes = dummyDatatypes;
     }
+    const allData = flatten(Object.keys(frame).map((topic) => frame[topic]));
+    const [bobjects, messages] = partition(allData, ({ message }) => isBobject(message));
     return (
       <div
         style={{ width: "100%", height: "100%", display: "flex", ...this.props.style }}
@@ -211,12 +205,12 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
             onMount(el, this.state.store);
           }
         }}>
-        {/* $FlowFixMe - for some reason Flow doesn't like this :( */}
         <MockMessagePipelineProvider
           capabilities={capabilities}
           topics={topics}
           datatypes={dTypes}
-          messages={flatten(Object.values(frame || {}))}
+          messages={messages}
+          bobjects={bobjects}
           activeData={activeData}
           progress={progress}
           store={this.state.store}>

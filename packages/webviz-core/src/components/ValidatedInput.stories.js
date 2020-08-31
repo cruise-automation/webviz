@@ -11,8 +11,8 @@ import * as React from "react";
 import { DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 import ValidatedInput, { EDIT_FORMAT, type EditFormat } from "./ValidatedInput";
+import { createValidator, isNumber, type ValidationResult } from "webviz-core/shared/validators";
 import Flex from "webviz-core/src/components/Flex";
-import { createValidator, isNumber, type ValidationResult } from "webviz-core/src/components/validators";
 import { triggerInputChange, triggerInputBlur } from "webviz-core/src/stories/PanelSetup";
 
 const INPUT_OBJ = { id: 1, name: "foo" };

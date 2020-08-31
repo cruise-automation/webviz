@@ -17,6 +17,8 @@ import type {
   DataProviderDescriptor,
   Connection,
   ExtensionPoint,
+  GetMessagesResult,
+  GetMessagesTopics,
   InitializationResult,
   PerformanceMetadata,
 } from "webviz-core/src/dataProviders/types";
@@ -120,7 +122,12 @@ export default class BagDataProvider implements DataProvider {
       this._bag = new Bag(new BagReader(remoteReader));
       await this._bag.open();
     } else {
-      this._bag = await open(bagPath.file);
+      if (process.env.NODE_ENV === "test" && typeof bagPath.file !== "string") {
+        // Rosbag's `Bag.open` does not accept files in the "node" environment.
+        this._bag = await open(bagPath.file.name);
+      } else {
+        this._bag = await open(bagPath.file);
+      }
     }
 
     const { startTime, endTime, chunkInfos } = this._bag;
@@ -209,7 +216,8 @@ export default class BagDataProvider implements DataProvider {
     this._debouncedLogStats();
   }
 
-  async getMessages(start: Time, end: Time, topics: string[]): Promise<Message[]> {
+  async getMessages(start: Time, end: Time, subscriptions: GetMessagesTopics): Promise<GetMessagesResult> {
+    const topics = subscriptions.rosBinaryMessages || [];
     const connectionStart = fromMillis(new Date().getTime());
     let totalSizeOfMessages = 0;
     let numberOfMessages = 0;
@@ -225,7 +233,7 @@ export default class BagDataProvider implements DataProvider {
       numberOfMessages += 1;
     };
     const options = {
-      topics,
+      topics: topics.slice(), // copy because `topics` not readonly in rosbag
       startTime: start,
       endTime: end,
       noParse: true,
@@ -273,7 +281,7 @@ export default class BagDataProvider implements DataProvider {
         totalTransferTime: subtractTimes(fromMillis(new Date().getTime()), connectionStart),
       },
     });
-    return messages;
+    return { rosBinaryMessages: messages, parsedMessages: undefined, bobjects: undefined };
   }
 
   async close(): Promise<void> {}

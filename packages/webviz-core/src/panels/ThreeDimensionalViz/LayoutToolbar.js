@@ -10,34 +10,28 @@ import cx from "classnames";
 import React, { useMemo } from "react";
 import { PolygonBuilder, type MouseEventObject, type Polygon } from "regl-worldview";
 
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import CameraInfo from "webviz-core/src/panels/ThreeDimensionalViz/CameraInfo";
 import Crosshair from "webviz-core/src/panels/ThreeDimensionalViz/Crosshair";
 import DrawingTools, { type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
 import FollowTFControl from "webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl";
-import GlobalVariableStyles from "webviz-core/src/panels/ThreeDimensionalViz/GlobalVariableStyles";
 import Interactions, { type InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
+import type { TabType } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import MainToolbar from "webviz-core/src/panels/ThreeDimensionalViz/MainToolbar";
 import MeasureMarker from "webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker";
 import SearchText, { type SearchTextProps } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
-import {
-  type ColorOverridesByGlobalVariableName,
-  type LayoutToolbarSharedProps,
-} from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
+import { type LayoutToolbarSharedProps } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
 
 type Props = {|
   ...LayoutToolbarSharedProps,
   autoSyncCameraState: boolean,
   debug: boolean,
-  isDrawing: boolean,
   interactionData: ?InteractionData,
+  interactionsTabType: ?TabType,
   measureInfo: MeasureInfo,
   measuringElRef: { current: ?MeasuringTool },
-  onClearSelectedObject: () => void,
-  setMeasureInfo: (MeasureInfo) => void,
   onSetDrawingTabType: (?DrawingTabType) => void,
   onSetPolygons: (polygons: Polygon[]) => void,
   onToggleCameraMode: () => void,
@@ -46,9 +40,9 @@ type Props = {|
   rootTf: ?string,
   selectedObject: ?MouseEventObject,
   selectedPolygonEditFormat: "json" | "yaml",
+  setInteractionsTabType: (?TabType) => void,
+  setMeasureInfo: (MeasureInfo) => void,
   showCrosshair: ?boolean,
-  colorOverridesByGlobalVariable: ColorOverridesByGlobalVariableName,
-  setColorOverridesByGlobalVariable: (ColorOverridesByGlobalVariableName) => void,
   ...SearchTextProps,
 |};
 
@@ -56,18 +50,16 @@ function LayoutToolbar({
   autoSyncCameraState,
   cameraState,
   debug,
-  isDrawing,
   followOrientation,
   followTf,
   interactionData,
+  interactionsTabType,
   isPlaying,
   measureInfo,
   measuringElRef,
   onAlignXYAxis,
   onCameraStateChange,
-  onClearSelectedObject,
   onFollowChange,
-  setMeasureInfo,
   onSetDrawingTabType,
   onSetPolygons,
   onToggleCameraMode,
@@ -82,6 +74,8 @@ function LayoutToolbar({
   selectedMatchIndex,
   selectedObject,
   selectedPolygonEditFormat,
+  setInteractionsTabType,
+  setMeasureInfo,
   setSearchText,
   setSearchTextMatches,
   setSelectedMatchIndex,
@@ -89,8 +83,6 @@ function LayoutToolbar({
   targetPose,
   toggleSearchTextOpen,
   transforms,
-  colorOverridesByGlobalVariable,
-  setColorOverridesByGlobalVariable,
 }: Props) {
   const additionalToolbarItemsElem = useMemo(
     () => {
@@ -103,7 +95,6 @@ function LayoutToolbar({
     },
     [transforms]
   );
-  const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("highlightGlobalVariableMatchingMarkers");
 
   return (
     <>
@@ -149,17 +140,11 @@ function LayoutToolbar({
           onToggleDebug={onToggleDebug}
         />
         {measuringElRef.current && measuringElRef.current.measureDistance}
-        {highlightMarkersThatMatchGlobalVariables && (
-          <GlobalVariableStyles
-            colorOverridesByGlobalVariable={colorOverridesByGlobalVariable}
-            setColorOverridesByGlobalVariable={setColorOverridesByGlobalVariable}
-          />
-        )}
         <Interactions
-          isDrawing={isDrawing}
           interactionData={interactionData}
-          onClearSelectedObject={onClearSelectedObject}
           selectedObject={selectedObject}
+          interactionsTabType={interactionsTabType}
+          setInteractionsTabType={setInteractionsTabType}
         />
         <DrawingTools
           onSetPolygons={onSetPolygons}

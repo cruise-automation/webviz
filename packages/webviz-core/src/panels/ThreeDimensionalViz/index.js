@@ -24,8 +24,8 @@ import {
   useTransformedCameraState,
   getNewCameraStateOnFollowChange,
 } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
-import type { TopicGroupConfig } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/types";
 import Layout from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
+import type { ColorOverrideBySourceIdxByVariable } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout";
 import { type TopicDisplayMode } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import withTransforms from "webviz-core/src/panels/ThreeDimensionalViz/withTransforms";
@@ -53,9 +53,8 @@ export type ThreeDimensionalVizConfig = {
   checkedKeys: string[],
   settingsByKey: TopicSettingsCollection,
   autoSyncCameraState?: boolean,
-
-  // legacy props
-  topicGroups?: TopicGroupConfig[],
+  colorOverrideBySourceIdxByVariable?: ColorOverrideBySourceIdxByVariable,
+  disableAutoOpenClickedObject?: boolean,
 };
 export type Save3DConfig = SaveConfig<ThreeDimensionalVizConfig>;
 
@@ -164,10 +163,9 @@ const BaseRenderer = (props: Props, ref) => {
     [saveConfig]
   );
 
-  const saveCameraState = useCallback(
-    (newCameraStateObj) => saveConfig({ cameraState: newCameraStateObj }, { keepLayoutInUrl: true }),
-    [saveConfig]
-  );
+  const saveCameraState = useCallback((newCameraStateObj) => saveConfig({ cameraState: newCameraStateObj }), [
+    saveConfig,
+  ]);
   const saveCameraStateDebounced = useMemo(() => debounce(saveCameraState, CAMERA_STATE_UPDATE_DEBOUNCE_DELAY_MS), [
     saveCameraState,
   ]);

@@ -12,20 +12,27 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import delay from "webviz-core/shared/delay";
 import CombinedDataProvider, { mergedBlocks } from "webviz-core/src/dataProviders/CombinedDataProvider";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
 import RenameDataProvider from "webviz-core/src/dataProviders/RenameDataProvider";
+import { type Bobject, type BobjectMessage } from "webviz-core/src/players/types";
+import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { fromMillis } from "webviz-core/src/util/time";
 
 // reusable providers
 function provider1(initiallyLoaded = false) {
   return new MemoryDataProvider({
-    messages: [
-      { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
-      { topic: "/some_topic1", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
-    ],
+    messages: {
+      parsedMessages: [
+        { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
+        { topic: "/some_topic1", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
+      ],
+      bobjects: undefined,
+      rosBinaryMessages: undefined,
+    },
     topics: [{ name: "/some_topic1", datatype: "some_datatype" }],
     datatypes: {},
     initiallyLoaded,
@@ -35,10 +42,14 @@ function provider1(initiallyLoaded = false) {
 
 function provider1Duplicate() {
   return new MemoryDataProvider({
-    messages: [
-      { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
-      { topic: "/some_topic1", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
-    ],
+    messages: {
+      parsedMessages: [
+        { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
+        { topic: "/some_topic1", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
+      ],
+      bobjects: undefined,
+      rosBinaryMessages: undefined,
+    },
     topics: [{ name: "/some_topic1", datatype: "some_datatype" }],
     datatypes: {},
     providesParsedMessages: true,
@@ -47,7 +58,11 @@ function provider1Duplicate() {
 
 function provider2() {
   return new MemoryDataProvider({
-    messages: [{ topic: "/some_topic2", receiveTime: { sec: 102, nsec: 0 }, message: { value: 2 } }],
+    messages: {
+      parsedMessages: [{ topic: "/some_topic2", receiveTime: { sec: 102, nsec: 0 }, message: { value: 2 } }],
+      bobjects: undefined,
+      rosBinaryMessages: undefined,
+    },
     topics: [{ name: "/some_topic2", datatype: "some_datatype" }],
     datatypes: {},
     providesParsedMessages: true,
@@ -56,12 +71,34 @@ function provider2() {
 
 function provider3() {
   return new MemoryDataProvider({
-    messages: [
-      { topic: "/some_topic3", receiveTime: { sec: 100, nsec: 0 }, message: { value: 3 } },
-      { topic: "/some_topic3", receiveTime: { sec: 102, nsec: 0 }, message: { value: 3 } },
-      { topic: "/some_topic3", receiveTime: { sec: 104, nsec: 0 }, message: { value: 3 } },
-    ],
+    messages: {
+      parsedMessages: [
+        { topic: "/some_topic3", receiveTime: { sec: 100, nsec: 0 }, message: { value: 3 } },
+        { topic: "/some_topic3", receiveTime: { sec: 102, nsec: 0 }, message: { value: 3 } },
+        { topic: "/some_topic3", receiveTime: { sec: 104, nsec: 0 }, message: { value: 3 } },
+      ],
+      bobjects: undefined,
+      rosBinaryMessages: undefined,
+    },
     topics: [{ name: "/some_topic3", datatype: "some_datatype" }],
+    datatypes: {},
+    providesParsedMessages: true,
+  });
+}
+
+function provider4() {
+  const wrappedTime: Bobject = wrapJsObject({}, "time", { sec: 0, nsec: 0 });
+  return new MemoryDataProvider({
+    messages: {
+      parsedMessages: [{ topic: "/parsed", receiveTime: { sec: 102, nsec: 0 }, message: { value: 3 } }],
+      bobjects: [({ topic: "/bobject", receiveTime: { sec: 102, nsec: 0 }, message: wrappedTime }: BobjectMessage)],
+      rosBinaryMessages: [{ topic: "/rosbinary", receiveTime: { sec: 102, nsec: 0 }, message: new ArrayBuffer(1) }],
+    },
+    topics: [
+      { name: "/parsed", datatype: "some_datatype" },
+      { name: "/bobject", datatype: "time" },
+      { name: "/rosbinary", datatype: "asdf" },
+    ],
     datatypes: {},
     providesParsedMessages: true,
   });
@@ -91,13 +128,21 @@ describe("CombinedDataProvider", () => {
 
     it("should not allow duplicate topics", async () => {
       const p1 = new MemoryDataProvider({
-        messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        messages: {
+          parsedMessages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {},
         providesParsedMessages: true,
       });
       const p2 = new MemoryDataProvider({
-        messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        messages: {
+          parsedMessages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
         topics: [{ name: "/generic_topic/some_topic", datatype: "some_datatype" }],
         datatypes: {},
         providesParsedMessages: true,
@@ -108,7 +153,11 @@ describe("CombinedDataProvider", () => {
 
     it("should not allow conflicting datatypes", async () => {
       const p1 = new MemoryDataProvider({
-        messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        messages: {
+          parsedMessages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {
           some_datatype: {
@@ -124,7 +173,11 @@ describe("CombinedDataProvider", () => {
       });
 
       const p2 = new MemoryDataProvider({
-        messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        messages: {
+          parsedMessages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {
           some_datatype: {
@@ -145,7 +198,11 @@ describe("CombinedDataProvider", () => {
     it("should not allow overlapping topics in messageDefinitionsByTopic", async () => {
       const datatypes = { some_datatype: { fields: [{ name: "value", type: "int32" }] } };
       const p1 = new MemoryDataProvider({
-        messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        messages: {
+          parsedMessages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         messageDefinitionsByTopic: { "/some_topic": "int32 value" },
         datatypes,
@@ -153,7 +210,11 @@ describe("CombinedDataProvider", () => {
       });
 
       const p2 = new MemoryDataProvider({
-        messages: [{ topic: "/some_topic2", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        messages: {
+          parsedMessages: [{ topic: "/some_topic2", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
         topics: [{ name: "/some_topic2", datatype: "some_datatype" }],
         datatypes,
         messageDefinitionsByTopic: { "/some_topic": "int32 value" },
@@ -168,7 +229,11 @@ describe("CombinedDataProvider", () => {
     it("should not mixed parsed and unparsed messaages", async () => {
       const datatypes = { some_datatype: { fields: [{ name: "value", type: "int32" }] } };
       const p1 = new MemoryDataProvider({
-        messages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        messages: {
+          parsedMessages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         messageDefinitionsByTopic: { "/some_topic": "int32 value" },
         datatypes,
@@ -176,7 +241,11 @@ describe("CombinedDataProvider", () => {
       });
 
       const p2 = new MemoryDataProvider({
-        messages: [{ topic: "/some_topic2", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+        messages: {
+          parsedMessages: [{ topic: "/some_topic2", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
         topics: [{ name: "/some_topic2", datatype: "some_datatype" }],
         datatypes,
         messageDefinitionsByTopic: { "/some_topic2": "int32 value" },
@@ -215,18 +284,39 @@ describe("CombinedDataProvider", () => {
       });
     });
 
+    it("initializes providers in parallel", async () => {
+      const p1 = provider1();
+      const p2 = provider2();
+      const neverResolvedPromise = new Promise(() => {});
+      jest.spyOn(p1, "initialize").mockImplementation(() => neverResolvedPromise);
+      jest.spyOn(p2, "initialize").mockImplementation(() => neverResolvedPromise);
+
+      const combinedProvider = getCombinedDataProvider([
+        { provider: p1 },
+        { provider: p2, prefix: SECOND_SOURCE_PREFIX },
+      ]);
+
+      combinedProvider.initialize(mockExtensionPoint().extensionPoint);
+      await delay(1);
+
+      expect(p1.initialize).toHaveBeenCalled();
+      expect(p2.initialize).toHaveBeenCalled();
+    });
+
     it("combines messages", async () => {
       const combinedProvider = getCombinedDataProvider([
         { provider: provider1() },
         { provider: provider1Duplicate(), prefix: SECOND_SOURCE_PREFIX },
       ]);
       await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
-      expect(
-        await combinedProvider.getMessages({ sec: 101, nsec: 0 }, { sec: 103, nsec: 0 }, [
-          "/some_topic1",
-          `${SECOND_SOURCE_PREFIX}/some_topic1`,
-        ])
-      ).toEqual([
+      const result = await combinedProvider.getMessages(
+        { sec: 101, nsec: 0 },
+        { sec: 103, nsec: 0 },
+        { parsedMessages: ["/some_topic1", `${SECOND_SOURCE_PREFIX}/some_topic1`] }
+      );
+      expect(result.bobjects).toBe(undefined);
+      expect(result.rosBinaryMessages).toBe(undefined);
+      expect(result.parsedMessages).toEqual([
         { message: { value: 1 }, receiveTime: { nsec: 0, sec: 101 }, topic: "/some_topic1" },
         { message: { value: 1 }, receiveTime: { nsec: 0, sec: 101 }, topic: `${SECOND_SOURCE_PREFIX}/some_topic1` },
         { message: { value: 3 }, receiveTime: { nsec: 0, sec: 103 }, topic: "/some_topic1" },
@@ -236,20 +326,28 @@ describe("CombinedDataProvider", () => {
 
     it("does not call getMessages with out of bound times", async () => {
       const p1 = new MemoryDataProvider({
-        messages: [
-          { topic: "/some_topic", receiveTime: { sec: 100, nsec: 0 }, message: undefined },
-          { topic: "/some_topic", receiveTime: { sec: 130, nsec: 0 }, message: undefined },
-        ],
+        messages: {
+          parsedMessages: [
+            { topic: "/some_topic", receiveTime: { sec: 100, nsec: 0 }, message: undefined },
+            { topic: "/some_topic", receiveTime: { sec: 130, nsec: 0 }, message: undefined },
+          ],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
         topics: [{ name: "/some_topic", datatype: "some_datatype" }],
         datatypes: {},
         providesParsedMessages: true,
       });
       jest.spyOn(p1, "getMessages");
       const p2 = new MemoryDataProvider({
-        messages: [
-          { topic: "/some_topic2", receiveTime: { sec: 170, nsec: 0 }, message: undefined },
-          { topic: "/some_topic2", receiveTime: { sec: 200, nsec: 0 }, message: undefined },
-        ],
+        messages: {
+          parsedMessages: [
+            { topic: "/some_topic2", receiveTime: { sec: 170, nsec: 0 }, message: undefined },
+            { topic: "/some_topic2", receiveTime: { sec: 200, nsec: 0 }, message: undefined },
+          ],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
         topics: [{ name: "/some_topic2", datatype: "some_datatype" }],
         datatypes: {},
         providesParsedMessages: true,
@@ -262,13 +360,55 @@ describe("CombinedDataProvider", () => {
       expect(result.start).toEqual({ sec: 100, nsec: 0 });
       expect(result.end).toEqual({ sec: 200, nsec: 0 });
 
-      const messages = await combinedProvider.getMessages({ sec: 100, nsec: 0 }, { sec: 150, nsec: 0 }, [
-        "/some_topic",
-        "/some_topic2",
+      const messages = await combinedProvider.getMessages(
+        { sec: 100, nsec: 0 },
+        { sec: 150, nsec: 0 },
+        { parsedMessages: ["/some_topic", "/some_topic2"] }
+      );
+      expect(messages.parsedMessages?.length).toEqual(2);
+      expect(p1.getMessages.mock.calls[0]).toEqual([
+        { sec: 100, nsec: 0 },
+        { sec: 130, nsec: 0 },
+        { parsedMessages: ["/some_topic"] },
       ]);
-      expect(messages.length).toEqual(2);
-      expect(p1.getMessages.mock.calls[0]).toEqual([{ sec: 100, nsec: 0 }, { sec: 130, nsec: 0 }, ["/some_topic"]]);
       expect(p2.getMessages.mock.calls.length).toEqual(0);
+    });
+
+    it("merges messages of various types", async () => {
+      const combinedProvider = getCombinedDataProvider([
+        { provider: provider1(), prefix: "/p1" },
+        { provider: provider4(), prefix: "/p4_1" },
+        { provider: provider4(), prefix: "/p4_2" },
+      ]);
+      const result = await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
+      // Sanity check:
+      expect(result.start).toEqual({ sec: 101, nsec: 0 });
+      expect(result.end).toEqual({ sec: 103, nsec: 0 });
+      const messages = await combinedProvider.getMessages(
+        { sec: 100, nsec: 0 },
+        { sec: 150, nsec: 0 },
+        {
+          bobjects: ["/p4_1/bobject", "/p4_2/bobject"],
+          parsedMessages: ["/p1/some_topic1", "/p4_1/parsed", "/p4_2/parsed"],
+          rosBinaryMessages: ["/p4_1/rosbinary", "/p4_2/rosbinary"],
+        }
+      );
+      expect(messages).toEqual({
+        bobjects: [
+          expect.objectContaining({ topic: "/p4_1/bobject", receiveTime: { sec: 102, nsec: 0 } }),
+          expect.objectContaining({ topic: "/p4_2/bobject", receiveTime: { sec: 102, nsec: 0 } }),
+        ],
+        parsedMessages: [
+          expect.objectContaining({ topic: "/p1/some_topic1", receiveTime: { sec: 101, nsec: 0 } }),
+          expect.objectContaining({ topic: "/p4_1/parsed", receiveTime: { sec: 102, nsec: 0 } }),
+          expect.objectContaining({ topic: "/p4_2/parsed", receiveTime: { sec: 102, nsec: 0 } }),
+          expect.objectContaining({ topic: "/p1/some_topic1", receiveTime: { sec: 103, nsec: 0 } }),
+        ],
+        rosBinaryMessages: [
+          expect.objectContaining({ topic: "/p4_1/rosbinary", receiveTime: { sec: 102, nsec: 0 } }),
+          expect.objectContaining({ topic: "/p4_2/rosbinary", receiveTime: { sec: 102, nsec: 0 } }),
+        ],
+      });
     });
   });
 
@@ -334,7 +474,7 @@ describe("CombinedDataProvider", () => {
         let calls = mockProgressCallback.mock.calls;
         // Assume that p1 has no progress yet since it has not reported, so intersected range is empty
         expect(calls[calls.length - 1]).toEqual([{ fullyLoadedFractionRanges: [] }]);
-        combinedProvider.getMessages({ sec: 0, nsec: 0 }, { sec: 0.1, nsec: 0 }, ["/some_topic2"]);
+        combinedProvider.getMessages({ sec: 0, nsec: 0 }, { sec: 0.1, nsec: 0 }, { parsedMessages: ["/some_topic2"] });
         // Reflects progress of only p2, since no topics from p1 are being requested.
         calls = mockProgressCallback.mock.calls;
         expect(calls[calls.length - 1]).toEqual([{ fullyLoadedFractionRanges: [{ start: 0, end: 0.3 }] }]);

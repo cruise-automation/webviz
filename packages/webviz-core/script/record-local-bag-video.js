@@ -76,13 +76,13 @@ async function main() {
   }
 
   console.log("Recording video...");
-  const video = await recordVideo({
+  const { videoFile: video } = await recordVideo({
     bagPath: program.bag,
     url: `${program.url}?video-recording-mode${
       program.frameless ? "&frameless" : ""
     }&video-recording-speed=${program.speed || 1}&video-recording-framerate=${program.framerate || 30}`,
     puppeteerLaunchConfig: {
-      headless: true,
+      headless: !process.env.DEBUG_CI,
       defaultViewport: { width: program.width || 1920, height: program.height || 1080 },
     },
     panelLayout: program.layout ? JSON.parse(fs.readFileSync(program.layout).toString()) : defaultLayout,

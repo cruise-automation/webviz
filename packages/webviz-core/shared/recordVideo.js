@@ -25,8 +25,9 @@ const mkdir = util.promisify(fs.mkdir);
 const readFile = util.promisify(fs.readFile);
 const log = new ServerLogger(__filename);
 
-const perFrameTimeoutMs = 2 * 60000; // 2 minutes
-const waitForBrowserLoadTimeoutMs = 60000; // 1 minute
+const perFrameTimeoutMs = 3 * 60000; // 3 minutes
+const waitForBrowserLoadTimeoutMs = 3 * 60000; // 3 minutes
+const actionTimeDurationMs = 1000;
 
 async function recordVideo({
   bagPath,
@@ -40,7 +41,7 @@ async function recordVideo({
   puppeteerLaunchConfig?: any,
   panelLayout?: any,
   errorIsWhitelisted?: (string) => boolean,
-}): Promise<Buffer> {
+}): Promise<{ videoFile: Buffer, sampledImageFile: Buffer }> {
   if (!url.includes("video-recording-mode")) {
     throw new Error("`url` must contain video-recording-mode for `recordVideo` to work.");
   }
@@ -51,7 +52,7 @@ async function recordVideo({
   try {
     let msPerFrame;
     await runInBrowser({
-      bagPath,
+      filePaths: bagPath ? [bagPath] : undefined,
       url,
       puppeteerLaunchConfig,
       panelLayout,
@@ -79,8 +80,7 @@ async function recordVideo({
               // function, because if we don't then errors in `page` won't call the promise to either
               // resolve or reject!.
               const actionHandle = await page.waitForFunction(() => window.videoRecording.nextAction(), {
-                // TEMP(jacob): increased from 30s to debug timeouts in staging
-                timeout: perFrameTimeoutMs - 1000,
+                timeout: perFrameTimeoutMs - actionTimeDurationMs,
               });
               const actionObj: ?VideoRecordingAction = await actionHandle.jsonValue();
               if (!actionObj) {
@@ -99,7 +99,7 @@ async function recordVideo({
               } else if (actionObj.action === "screenshot") {
                 // Take a screenshot, and then tell the client that we're done taking a screenshot,
                 // so it can continue executing.
-                await page.screenshot({ path: `${screenshotsDir}/${i}.jpg` });
+                await page.screenshot({ path: `${screenshotsDir}/${i}.png` });
                 await page.evaluate(() => window.videoRecording.hasTakenScreenshot());
                 i++;
               } else {
@@ -116,13 +116,15 @@ async function recordVideo({
     if (msPerFrame == null) {
       throw new Error("msPerFrame was not set");
     }
+    const imageCount = fs.readdirSync(screenshotsDir).length;
+    const sampledImageFile = await readFile(`${screenshotsDir}/${imageCount - 1}.png`);
 
     // Once we're finished, we're going to stitch all the individual screenshots together
     // into a video, with the framerate specified by the client (via `msPerFrame`).
     const framerate = 1000 / msPerFrame;
     log.info(`Creating video with framerate ${framerate}fps (${msPerFrame}ms per frame)`);
     await exec(
-      `ffmpeg -y -framerate ${framerate} -i %d.jpg -c:v libx264 -preset faster -r ${framerate} -pix_fmt yuv420p out.mp4`,
+      `ffmpeg -y -framerate ${framerate} -i %d.png -c:v libx264 -preset faster -r ${framerate} -pix_fmt yuv420p out.mp4`,
       {
         cwd: screenshotsDir,
       }
@@ -133,7 +135,7 @@ async function recordVideo({
     const videoFile = await readFile(videoPath);
     await rmfr(videoPath);
 
-    return videoFile;
+    return { videoFile, sampledImageFile };
   } finally {
     log.info(`Removing ${screenshotsDir}`);
     await rmfr(screenshotsDir);

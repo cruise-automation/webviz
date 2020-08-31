@@ -40,13 +40,11 @@ describe("FrameCompatibilityDEPRECATED", () => {
       }
     }
     const MyComponentWithFrame = FrameCompatibilityDEPRECATED(MyComponent, ["/some/topic"]);
+    const topics = [{ name: "/some/topic", datatype: "some/topic" }, { name: "/foo", datatype: "foo_msgs/Foo" }];
     const ref = React.createRef();
     const provider = mount(
-      <MockMessagePipelineProvider
-        messages={[messages[0]]}
-        datatypes={datatypes}
-        topics={[{ name: "/some/topic", datatype: "some/topic" }, { name: "/foo", datatype: "foo_msgs/Foo" }]}>
-        <MyComponentWithFrame ref={ref} />
+      <MockMessagePipelineProvider messages={[messages[0]]} datatypes={datatypes} topics={topics}>
+        <MyComponentWithFrame ref={ref} topics={topics} />
       </MockMessagePipelineProvider>
     );
     expect(last(childFn.mock.calls)[0].frame).toEqual({ "/some/topic": [messages[0]] });

@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import type { Time } from "rosbag";
+import type { Time, RosMsgDefinition } from "rosbag";
 
 import type { BlockCache } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import type { PerformanceMetadata } from "webviz-core/src/dataProviders/types";
@@ -14,9 +14,7 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import type { Range } from "webviz-core/src/util/ranges";
 import type { TimestampMethod } from "webviz-core/src/util/time";
 
-// TODO move this to rosbag.js
-export type RosMsgDefinition = any[];
-export type MessageDefinitionsByTopic = { [topic: string]: string | RosMsgDefinition };
+export type MessageDefinitionsByTopic = { [topic: string]: string | RosMsgDefinition[] };
 
 // A `Player` is a class that manages playback state. It manages subscriptions,
 // current time, which topics and datatypes are available, and so on.
@@ -100,7 +98,8 @@ export type PlayerStateActiveData = {|
   // and should be immediately following the previous array of messages that was emitted as part of
   // this state. If there is a discontinuity in messages, `lastSeekTime` should be different than
   // the previous state. Panels collect these messages using the `PanelAPI`.
-  messages: Message[],
+  messages: $ReadOnlyArray<Message>,
+  bobjects: $ReadOnlyArray<BobjectMessage>,
 
   // The current playback position, which will be shown in the playback bar. This time should be
   // equal to or later than the latest `receiveTime` in `messages`. Why not just use
@@ -186,11 +185,19 @@ export type TypedMessage<T> = $ReadOnly<{|
 export type Message = TypedMessage<any>;
 
 type RosSingularField = number | string | boolean | RosObject; // No time -- consider it a message.
-export type RosValue = RosSingularField | $ReadOnlyArray<RosSingularField> | Uint8Array | Int8Array | void;
+export type RosValue = RosSingularField | $ReadOnlyArray<RosSingularField> | Uint8Array | Int8Array | void | null;
 export type RosObject = $ReadOnly<{ [property: string]: RosValue }>;
 
 export type ReflectiveMessage = TypedMessage<RosObject>;
-export const cast = <T>(message: $ReadOnly<RosObject>): T => ((message: any): T);
+export opaque type Bobject = {};
+
+// Split from `TypedMessage` because $ReadOnly<> disagrees with the opaque Bobject type.
+export type BobjectMessage = $ReadOnly<{|
+  topic: string,
+  receiveTime: Time,
+  message: Bobject,
+|}>;
+export const cast = <T>(message: $ReadOnly<RosObject> | Bobject): T => ((message: any): T);
 
 // Contains different kinds of progress indications, mostly used in the playback bar.
 export type Progress = $ReadOnly<{|
@@ -212,6 +219,8 @@ export type Frame = {
   [topic: string]: Message[],
 };
 
+export type MessageFormat = "parsedMessages" | "bobjects";
+
 // Represents a subscription to a single topic, for use in `setSubscriptions`.
 // TODO(JP): Pull this into two types, one for the Player (which does not care about the
 // `requester`) and one for the Internals panel (which does).
@@ -231,7 +240,11 @@ export type SubscribePayload = {|
 
   // If all subscriptions for this topic have this flag set, and the topic is available in
   // PlayerState#Progress#blocks, the message won't be included in PlayerStateActiveData#messages.
-  onlyLoadInBlocks?: boolean,
+  // This is used by parsed-message subscribers to avoid parsing the messages at playback time when
+  // possible. Note: If there are other subscriptions without this flag set, the messages may still
+  // be delivered to the fallback subscriber.
+  preloadingFallback?: boolean,
+  format: MessageFormat,
 |};
 
 // Represents a single topic publisher, for use in `setPublishers`.
@@ -265,12 +278,14 @@ export const PlayerCapabilities = {
 // A metrics collector is an interface passed into a `Player`, which will get called when certain
 // events happen, so we can track those events in some metrics system.
 export interface PlayerMetricsCollectorInterface {
+  playerConstructed(): void;
   initialized(): void;
   play(speed: number): void;
   seek(time: Time): void;
   setSpeed(speed: number): void;
   pause(): void;
   close(): void;
+  setSubscriptions(subscriptions: SubscribePayload[]): void;
   recordBytesReceived(bytes: number): void;
   recordPlaybackTime(time: Time): void;
   recordDataProviderPerformance(metadata: PerformanceMetadata): void;

@@ -50,6 +50,7 @@ import Icon from "webviz-core/src/components/Icon";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDragHandle";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import PanelList, { getPanelsByType } from "webviz-core/src/panels/PanelList";
 import type { Topic } from "webviz-core/src/players/types";
@@ -116,7 +117,7 @@ export default function Panel<Config: PanelConfig>(
     PanelStatics<Config>
   // TODO(JP): Add `& PanelStatics<Config>` to the return type when we have figured out
   // https://stackoverflow.com/questions/52508434/adding-static-variable-to-union-of-class-types
-): ComponentType<Props<Config>> {
+): ComponentType<Props<Config>> & PanelStatics<Config> {
   function ConnectedPanel(props: Props<Config>) {
     const { childId, config: originalConfig, saveConfig, tabId } = props;
     const { mosaicActions }: { mosaicActions: MosaicRootActions } = useContext(MosaicContext);
@@ -167,13 +168,12 @@ export default function Panel<Config: PanelConfig>(
 
     // Mix partial config with current config or `defaultConfig`
     const saveCompleteConfig = useCallback(
-      (configToSave: $Shape<Config>, options: ?{ keepLayoutInUrl?: boolean, historyOptions?: EditHistoryOptions }) => {
+      (configToSave: $Shape<Config>, options: ?{ historyOptions?: EditHistoryOptions }) => {
         if (saveConfig) {
           saveConfig(configToSave);
         }
         if (childId) {
           actions.savePanelConfigs({
-            silent: !!options?.keepLayoutInUrl,
             configs: [{ id: childId, config: configToSave, defaultConfig: PanelComponent.defaultConfig }],
             historyOptions: options?.historyOptions,
           });
@@ -309,6 +309,8 @@ export default function Panel<Config: PanelConfig>(
     const { closePanel, splitPanel } = useMemo(
       () => ({
         closePanel: () => {
+          const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
+          logger({ name: eventNames.PANEL_REMOVE, tags: { [eventTags.PANEL_TYPE]: type } });
           mosaicActions.remove(mosaicWindowActions.getPath());
         },
         splitPanel: () => {
@@ -324,9 +326,11 @@ export default function Panel<Config: PanelConfig>(
           } else {
             mosaicWindowActions.split({ type: PanelComponent.panelType });
           }
+          const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
+          logger({ name: eventNames.PANEL_SPLIT, tags: { [eventTags.PANEL_TYPE]: type } });
         },
       }),
-      [actions, childId, config, mosaicActions, mosaicWindowActions, savedProps, tabId]
+      [actions, childId, config, mosaicActions, mosaicWindowActions, savedProps, tabId, type]
     );
 
     const { onMouseEnter, onMouseLeave, onMouseMove, enterFullscreen, exitFullScreen } = useMemo(
@@ -491,10 +495,9 @@ export default function Panel<Config: PanelConfig>(
   }
   ConnectedPanel.displayName = `Panel(${PanelComponent.displayName || PanelComponent.name || ""})`;
 
-  const MemoizedConnectedPanel = React.memo(ConnectedPanel);
   // $FlowFixMe - doesn't know underlying memoized PanelComponent's interface
-  MemoizedConnectedPanel.defaultConfig = PanelComponent.defaultConfig;
-  // $FlowFixMe - doesn't know underlying memoized PanelComponent's interface
-  MemoizedConnectedPanel.panelType = PanelComponent.panelType;
-  return MemoizedConnectedPanel;
+  return Object.assign(React.memo(ConnectedPanel), {
+    defaultConfig: PanelComponent.defaultConfig,
+    panelType: PanelComponent.panelType,
+  });
 }

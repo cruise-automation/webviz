@@ -11,14 +11,14 @@ import IdbCacheWriterDataProvider from "./IdbCacheWriterDataProvider";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
-import type { Message } from "webviz-core/src/players/types";
+import type { TypedMessage } from "webviz-core/src/players/types";
 import { getDatabasesInTests } from "webviz-core/src/util/indexeddb/getDatabasesInTests";
 
-function generateMessages(): Message[] {
+function generateMessages(): TypedMessage<ArrayBuffer>[] {
   return [
-    { topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: 0 },
-    { topic: "/foo", receiveTime: { sec: 101, nsec: 0 }, message: 1 },
-    { topic: "/foo", receiveTime: { sec: 102, nsec: 0 }, message: 2 },
+    { topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: new ArrayBuffer(1) },
+    { topic: "/foo", receiveTime: { sec: 101, nsec: 0 }, message: new ArrayBuffer(2) },
+    { topic: "/foo", receiveTime: { sec: 102, nsec: 0 }, message: new ArrayBuffer(3) },
   ];
 }
 
@@ -30,7 +30,10 @@ function getProvider() {
       new IdbCacheWriterDataProvider(
         { id: "some-id" },
         [{ name: CoreDataProviders.MemoryCacheDataProvider, args: {}, children: [] }],
-        () => new MemoryDataProvider({ messages: generateMessages(), providesParsedMessages: true })
+        () =>
+          new MemoryDataProvider({
+            messages: { rosBinaryMessages: generateMessages(), bobjects: undefined, parsedMessages: undefined },
+          })
       )
   );
 }
@@ -48,14 +51,20 @@ describe("IdbCacheReaderDataProvider", () => {
       topics: [],
       datatypes: {},
       messageDefinitionsByTopic: {},
-      providesParsedMessages: true,
+      providesParsedMessages: false,
     });
   });
 
   it("returns messages", async () => {
     const provider = getProvider();
     await provider.initialize(mockExtensionPoint().extensionPoint);
-    const messages = await provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo"]);
-    expect(messages).toEqual(generateMessages());
+    const messages = await provider.getMessages(
+      { sec: 100, nsec: 0 },
+      { sec: 102, nsec: 0 },
+      { rosBinaryMessages: ["/foo"] }
+    );
+    expect(messages.bobjects).toBe(undefined);
+    expect(messages.parsedMessages).toBe(undefined);
+    expect(messages.rosBinaryMessages).toEqual(generateMessages());
   });
 });

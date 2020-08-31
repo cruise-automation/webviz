@@ -11,25 +11,33 @@ import * as React from "react";
 
 import * as PanelAPI from ".";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
+import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 
 describe("useMessageReducer", () => {
   // Create a helper component that exposes restore, addMessage, and the results of the hook for mocking
-  function createTest(_useAddMessage: boolean = true, useAddMessages: boolean = false) {
+  function createTest(useAddMessage: boolean = true, useAddMessages: boolean = false, useAddBobjects = false) {
     function Test({ topics, addMessagesOverride }: { topics: string[], addMessagesOverride?: any }) {
-      Test.result(
-        PanelAPI.useMessageReducer({
-          topics,
-          addMessage: useAddMessages ? undefined : Test.addMessage,
-          addMessages: useAddMessages ? addMessagesOverride || Test.addMessages : undefined,
-          restore: Test.restore,
-        })
-      );
+      try {
+        Test.result(
+          PanelAPI.useMessageReducer({
+            topics,
+            addMessage: useAddMessage ? Test.addMessage : undefined,
+            addMessages: useAddMessages ? addMessagesOverride || Test.addMessages : undefined,
+            addBobjects: useAddBobjects ? Test.addBobjects : undefined,
+            restore: Test.restore,
+          })
+        );
+      } catch (e) {
+        Test.error(e);
+      }
       return null;
     }
     Test.result = jest.fn();
+    Test.error = jest.fn();
     Test.restore = jest.fn();
     Test.addMessage = jest.fn();
     Test.addMessages = jest.fn();
+    Test.addBobjects = jest.fn();
     return Test;
   }
 
@@ -51,13 +59,33 @@ describe("useMessageReducer", () => {
     root.unmount();
   });
 
-  it("throws if no message callbacks are provided", async () => {
-    expect(createTest(false, false)).toThrow();
-  });
-
-  it("throws if both message callbacks are provided", async () => {
-    expect(createTest(true, true)).toThrow();
-  });
+  it.each([
+    [{ useAddMessage: false, useAddMessages: false, useAddBobjects: false, shouldThrow: true }],
+    [{ useAddMessage: false, useAddMessages: false, useAddBobjects: true, shouldThrow: false }],
+    [{ useAddMessage: false, useAddMessages: true, useAddBobjects: false, shouldThrow: false }],
+    [{ useAddMessage: false, useAddMessages: true, useAddBobjects: true, shouldThrow: true }],
+    [{ useAddMessage: true, useAddMessages: false, useAddBobjects: false, shouldThrow: false }],
+    [{ useAddMessage: true, useAddMessages: false, useAddBobjects: true, shouldThrow: true }],
+    [{ useAddMessage: true, useAddMessages: true, useAddBobjects: false, shouldThrow: true }],
+    [{ useAddMessage: true, useAddMessages: true, useAddBobjects: true, shouldThrow: true }],
+  ])(
+    "requires exactly one 'add' callback (%p)",
+    async ({ useAddMessage, useAddMessages, useAddBobjects, shouldThrow }) => {
+      const Test = createTest(useAddMessage, useAddMessages, useAddBobjects);
+      mount(
+        <MockMessagePipelineProvider>
+          <Test topics={["/foo"]} />
+        </MockMessagePipelineProvider>
+      );
+      if (shouldThrow) {
+        expect(Test.result.mock.calls).toHaveLength(0);
+        expect(Test.error.mock.calls).toHaveLength(1);
+      } else {
+        expect(Test.error.mock.calls).toHaveLength(0);
+        expect(Test.result.mock.calls).toHaveLength(1);
+      }
+    }
+  );
 
   it("calls restore to initialize and addMessage for initial messages", async () => {
     const Test = createTest();
@@ -107,6 +135,33 @@ describe("useMessageReducer", () => {
     expect(Test.addMessage.mock.calls).toEqual([]);
     expect(Test.addMessages.mock.calls).toEqual([[1, [message]]]);
     expect(Test.result.mock.calls).toEqual([[2]]);
+
+    root.unmount();
+  });
+
+  it("calls restore to initialize and addBobjects for initial bobjects", async () => {
+    const Test = createTest(false, false, true);
+
+    Test.restore.mockReturnValue(1);
+    Test.addBobjects.mockImplementation((_, msgs) => msgs[msgs.length - 1].message.sec());
+
+    const message = {
+      topic: "/foo",
+      receiveTime: { sec: 0, nsec: 0 },
+      message: wrapJsObject({}, "time", { sec: 1234, nsec: 5678 }),
+    };
+
+    const root = mount(
+      <MockMessagePipelineProvider bobjects={[message]}>
+        <Test topics={["/foo"]} />
+      </MockMessagePipelineProvider>
+    );
+
+    expect(Test.restore.mock.calls).toEqual([[undefined]]);
+    expect(Test.addMessage.mock.calls).toEqual([]);
+    expect(Test.addMessages.mock.calls).toEqual([]);
+    expect(Test.addBobjects.mock.calls).toEqual([[1, [message]]]);
+    expect(Test.result.mock.calls).toEqual([[1234]]);
 
     root.unmount();
   });
@@ -226,8 +281,14 @@ describe("useMessageReducer", () => {
     // And unsubscribes properly, too.
     root.unmount();
     expect(setSubscriptions.mock.calls).toEqual([
-      [expect.any(String), [{ topic: "/foo" }]],
-      [expect.any(String), [{ topic: "/foo" }, { topic: "/bar" }]],
+      [expect.any(String), [{ topic: "/foo", format: "parsedMessages", preloadingFallback: false }]],
+      [
+        expect.any(String),
+        [
+          { topic: "/foo", format: "parsedMessages", preloadingFallback: false },
+          { topic: "/bar", format: "parsedMessages", preloadingFallback: false },
+        ],
+      ],
       [expect.any(String), []],
     ]);
   });

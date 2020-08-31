@@ -10,10 +10,10 @@ import * as React from "react";
 import { PolygonBuilder, Polygon } from "regl-worldview";
 import styled from "styled-components";
 
+import { polygonPointsValidator } from "webviz-core/shared/validators";
 import Button from "webviz-core/src/components/Button";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import ValidatedInput, { type EditFormat } from "webviz-core/src/components/ValidatedInput";
-import { polygonPointsValidator } from "webviz-core/src/components/validators";
 import { SValue, SLabel } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions";
 import {
   polygonsToPoints,

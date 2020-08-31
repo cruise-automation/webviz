@@ -12,11 +12,15 @@ You can toggle between a 3D perspective camera and a top-down, 2D orthographic c
 
 `Mouse-wheel` controls the 'zoom' of the camera.  Wheeling "up" will zoom the camera closer in while wheeling "down" will zoom the camera farther away.
 
-In 3D camera mode, you can also use "shooter controls" (like those found in most popular desktop first-person shooter games) of `w` `a` `s` `d` to move the camera forward / left / backwards / right respective to the camera's position, and use `z` `x` to zoom in and out.  It's easy to get lost when using these controls as there is nothing anchoring the camera to the scene.
-
 Holding down `shift` in while performing any interaction with the camera will adjust values by 1/10th of their normal adjustments.  This allows precision movements and adjustments to the camera.
 
 _tip: If you get 'lost' in the scene and end up looking into infinite blank space and can't find your way back try clicking on 'follow' to snap the camera back to the default position._
+
+## Keyboard shortcuts
+
+In 3D camera mode, you can also use "shooter controls" (like those found in most popular desktop first-person shooter games) of `w` `a` `s` `d` to move the camera forward / left / backwards / right respective to the camera's position, and use `z` `x` to zoom in and out.  It's easy to get lost when using these controls as there is nothing anchoring the camera to the scene.
+
+You can use `t` to open the Topic Tree and `Esc` to close it again.
 
 ## Interacting with markers
 

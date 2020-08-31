@@ -9,13 +9,17 @@
 import NodePlayer from "./NodePlayer";
 import signal from "webviz-core/shared/signal";
 import FakePlayer from "webviz-core/src/components/MessagePipeline/FakePlayer";
+import type { SubscribePayload, Message, BobjectMessage } from "webviz-core/src/players/types";
+import { deepParse, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 
+const testMessageDefinition = { fields: [{ type: "string", name: "payload" }, { type: "int8", name: "callCount" }] };
 const node = {
   inputs: ["/input/foo", "/input/bar"],
   output: { name: "/webviz/test", datatype: "test" },
   datatypes: {
-    test: { fields: [{ type: "string", name: "foo" }] },
+    test: testMessageDefinition,
   },
+  format: "parsedMessages",
   defaultState: { callCount: 0 },
   callback: ({ message, state }) => {
     const callCount = state.callCount + 1;
@@ -35,6 +39,27 @@ const node = {
   },
 };
 
+const bobjectNode = {
+  inputs: ["/input/foo"],
+  output: { name: "/webviz/bobject_test", datatype: "test" },
+  datatypes: { test: testMessageDefinition },
+  format: "bobjects",
+  defaultState: { callCount: 0 },
+  callback: ({ message, state }) => {
+    const callCount = state.callCount + 1;
+    return {
+      messages: [
+        {
+          topic: "/webviz/bobject_test",
+          receiveTime: message.receiveTime,
+          message: { callCount, payload: message.message.payload() },
+        },
+      ],
+      state: { callCount },
+    };
+  },
+};
+
 describe("NodePlayer", () => {
   it("combines topics and datatypes with underlying player datatypes", () => {
     const fakePlayer = new FakePlayer();
@@ -45,6 +70,7 @@ describe("NodePlayer", () => {
     });
     fakePlayer.emit({
       messages: [],
+      bobjects: [],
       messageOrder: "receiveTime",
       currentTime: { sec: 0, nsec: 0 },
       startTime: { sec: 0, nsec: 0 },
@@ -64,7 +90,7 @@ describe("NodePlayer", () => {
       throw new Error("satisfy flow");
     }
     expect(activeData.datatypes).toEqual({
-      test: { fields: [{ type: "string", name: "foo" }] },
+      test: testMessageDefinition,
       foo: { fields: [] },
     });
     expect(activeData.topics).toEqual([
@@ -83,6 +109,7 @@ describe("NodePlayer", () => {
     });
     fakePlayer.emit({
       messages: [],
+      bobjects: [],
       messageOrder: "receiveTime",
       currentTime: { sec: 0, nsec: 0 },
       startTime: { sec: 0, nsec: 0 },
@@ -116,6 +143,7 @@ describe("NodePlayer", () => {
     });
     fakePlayer.emit({
       messages: [],
+      bobjects: [],
       messageOrder: "receiveTime",
       currentTime: { sec: 0, nsec: 0 },
       startTime: { sec: 0, nsec: 0 },
@@ -134,7 +162,7 @@ describe("NodePlayer", () => {
       throw new Error("satisfy flow");
     }
     expect(activeData.datatypes).toEqual({
-      test: { fields: [{ type: "string", name: "foo" }] },
+      test: testMessageDefinition,
       foo: { fields: [] },
     });
     expect(activeData.topics).toEqual([
@@ -152,13 +180,16 @@ describe("NodePlayer", () => {
     nodePlayer.setListener(async (playerState) => {
       messages.push(playerState);
     });
-    nodePlayer.setSubscriptions([{ topic: "/webviz/test" }, { topic: "/input/baz" }]);
+    nodePlayer.setSubscriptions([
+      { topic: "/webviz/test", format: "parsedMessages" },
+      { topic: "/input/baz", format: "parsedMessages" },
+    ]);
     expect(fakePlayer.setSubscriptions.mock.calls).toEqual([
       [
         [
-          { topic: "/input/baz" },
-          { requester: { name: "/webviz/test", type: "node" }, topic: "/input/foo" },
-          { requester: { name: "/webviz/test", type: "node" }, topic: "/input/bar" },
+          { topic: "/input/baz", format: "parsedMessages" },
+          { requester: { name: "/webviz/test", type: "node" }, topic: "/input/foo", format: "parsedMessages" },
+          { requester: { name: "/webviz/test", type: "node" }, topic: "/input/bar", format: "parsedMessages" },
         ],
       ],
     ]);
@@ -254,8 +285,11 @@ describe("NodePlayer", () => {
         done.resolve();
       }
     });
+    nodePlayer.setSubscriptions([{ topic: "/webviz/test", format: "parsedMessages" }]);
+
     fakePlayer.emit({
       messages: upstreamMessages,
+      bobjects: [],
       messageOrder: "receiveTime",
       currentTime: upstreamMessages[0].receiveTime,
       startTime: { sec: 0, nsec: 0 },
@@ -293,6 +327,40 @@ describe("NodePlayer", () => {
     ]);
   });
 
+  it("does not invoke nodes that have not been subscribed to", async () => {
+    const fakePlayer = new FakePlayer();
+    const nodePlayer = new NodePlayer(fakePlayer, [node]);
+    const messages = [];
+    const done = signal();
+    nodePlayer.setListener(async (playerState) => {
+      const incommingMessages = (playerState.activeData || {}).messages || [];
+      if (incommingMessages.length) {
+        messages.push(...incommingMessages);
+        done.resolve();
+      }
+    });
+
+    fakePlayer.emit({
+      messages: upstreamMessages,
+      bobjects: [],
+      messageOrder: "receiveTime",
+      currentTime: upstreamMessages[0].receiveTime,
+      startTime: { sec: 0, nsec: 0 },
+      endTime: { sec: 1, nsec: 0 },
+      isPlaying: true,
+      speed: 0.2,
+      lastSeekTime: 0,
+      topics: [{ name: "/input/foo", datatype: "foo" }],
+      datatypes: { foo: { fields: [] } },
+      messageDefinitionsByTopic: {},
+      playerWarnings: {},
+    });
+
+    await done;
+    expect(messages).toHaveLength(2);
+    expect(messages).toEqual([upstreamMessages[0], upstreamMessages[1]]);
+  });
+
   it("clears out states on seek", async () => {
     const fakePlayer = new FakePlayer();
     const nodePlayer = new NodePlayer(fakePlayer, [node]);
@@ -305,8 +373,10 @@ describe("NodePlayer", () => {
         done.resolve();
       }
     });
+    nodePlayer.setSubscriptions([{ topic: "/webviz/test", format: "parsedMessages" }]);
     fakePlayer.emit({
       messages: [upstreamMessages[0]],
+      bobjects: [],
       messageOrder: "receiveTime",
       currentTime: upstreamMessages[0].receiveTime,
       startTime: { sec: 0, nsec: 0 },
@@ -322,6 +392,7 @@ describe("NodePlayer", () => {
 
     fakePlayer.emit({
       messages: [upstreamMessages[1]],
+      bobjects: [],
       messageOrder: "receiveTime",
       currentTime: upstreamMessages[1].receiveTime,
       startTime: { sec: 0, nsec: 0 },
@@ -354,6 +425,150 @@ describe("NodePlayer", () => {
         payload: "baz",
         callCount: 1,
       },
+    });
+  });
+
+  describe("bobjects", () => {
+    const datatypes = { foo: { fields: [{ name: "payload", type: "string" }] } };
+    const subscribeAndEmitFromPlayer = async (
+      subscriptions: SubscribePayload[]
+    ): Promise<{ parsedMessages: $ReadOnlyArray<Message>, bobjects: $ReadOnlyArray<BobjectMessage> }> => {
+      const fakePlayer = new FakePlayer();
+      const nodePlayer = new NodePlayer(fakePlayer, [node, bobjectNode]);
+      const parsedMessages = [];
+      const bobjects = [];
+      const done = signal();
+      nodePlayer.setListener(async (playerState) => {
+        const incomingParsedMessages = playerState?.activeData?.messages;
+        const incomingBobjects = playerState?.activeData?.bobjects;
+        if (incomingParsedMessages?.length || incomingBobjects?.length) {
+          parsedMessages.push(...(incomingParsedMessages || []));
+          bobjects.push(...(incomingBobjects || []));
+          done.resolve();
+        }
+      });
+      nodePlayer.setSubscriptions(subscriptions);
+
+      const emittedBobjects: $ReadOnlyArray<BobjectMessage> = upstreamMessages.map((msg) => ({
+        topic: msg.topic,
+        receiveTime: msg.receiveTime,
+        message: wrapJsObject(datatypes, "foo", msg.message),
+      }));
+
+      fakePlayer.emit({
+        messages: upstreamMessages,
+        bobjects: emittedBobjects,
+        messageOrder: "receiveTime",
+        currentTime: upstreamMessages[0].receiveTime,
+        startTime: { sec: 0, nsec: 0 },
+        endTime: { sec: 1, nsec: 0 },
+        isPlaying: true,
+        speed: 0.2,
+        lastSeekTime: 0,
+        topics: [{ name: "/input/foo", datatype: "foo" }],
+        datatypes,
+        messageDefinitionsByTopic: {},
+        playerWarnings: {},
+      });
+
+      await done;
+
+      return { parsedMessages, bobjects };
+    };
+
+    it("emits bobjects when subscribed to", async () => {
+      const { parsedMessages, bobjects } = await subscribeAndEmitFromPlayer([
+        { topic: "/webviz/test", format: "bobjects" },
+      ]);
+      expect(parsedMessages).toHaveLength(2);
+      expect(bobjects).toHaveLength(4);
+      expect(deepParse(bobjects[0].message)).toEqual({
+        payload: "bar",
+        callCount: 1,
+      });
+
+      expect(deepParse(bobjects[2].message)).toEqual({
+        payload: "baz",
+        callCount: 2,
+      });
+    });
+
+    it("persists bobjects from underlying player", async () => {
+      const { parsedMessages, bobjects } = await subscribeAndEmitFromPlayer([
+        { topic: "/webviz/test", format: "bobjects" },
+      ]);
+      expect(parsedMessages).toHaveLength(2);
+      expect(bobjects).toHaveLength(4);
+      expect(bobjects.map((msg) => ({ ...msg, message: deepParse(msg.message) }))).toEqual([
+        {
+          topic: "/webviz/test",
+          receiveTime: {
+            sec: 0,
+            nsec: 1,
+          },
+          message: {
+            payload: "bar",
+            callCount: 1,
+          },
+        },
+        upstreamMessages[0],
+        {
+          topic: "/webviz/test",
+          receiveTime: {
+            sec: 0,
+            nsec: 100,
+          },
+          message: {
+            payload: "baz",
+            callCount: 2,
+          },
+        },
+        upstreamMessages[1],
+      ]);
+    });
+
+    it("emits bobjects and parsedMessages when subscribed to", async () => {
+      const { parsedMessages, bobjects } = await subscribeAndEmitFromPlayer([
+        { topic: "/webviz/test", format: "bobjects" },
+        { topic: "/webviz/test", format: "parsedMessages" },
+      ]);
+
+      expect(parsedMessages).toHaveLength(4);
+      expect(bobjects).toHaveLength(4);
+
+      [parsedMessages[1].message, deepParse(bobjects[0].message)].forEach((message) => {
+        expect(message).toEqual({
+          payload: "bar",
+          callCount: 1,
+        });
+      });
+      [parsedMessages[3].message, deepParse(bobjects[2].message)].forEach((message) => {
+        expect(message).toEqual({
+          payload: "baz",
+          callCount: 2,
+        });
+      });
+    });
+
+    it("does not emit twice the number of messages if subscribed to twice", async () => {
+      const { parsedMessages, bobjects } = await subscribeAndEmitFromPlayer([
+        { topic: "/webviz/test", format: "parsedMessages" },
+        { topic: "/webviz/test", format: "parsedMessages" },
+        { topic: "/webviz/test", format: "bobjects" },
+        { topic: "/webviz/test", format: "bobjects" },
+        { topic: "/webviz/bobject_test", format: "parsedMessages" },
+        { topic: "/webviz/bobject_test", format: "parsedMessages" },
+        { topic: "/webviz/bobject_test", format: "bobjects" },
+        { topic: "/webviz/bobject_test", format: "bobjects" },
+      ]);
+
+      // Two original messages in the right format, and two each from each node.
+      expect(parsedMessages).toHaveLength(6);
+      expect(bobjects).toHaveLength(6);
+      expect(parsedMessages.filter(({ topic }) => topic === "/webviz/test").length).toEqual(2);
+      expect(bobjects.filter(({ topic }) => topic === "/webviz/test").length).toEqual(2);
+      expect(parsedMessages.filter(({ topic }) => topic === "/webviz/bobject_test").length).toEqual(2);
+      expect(bobjects.filter(({ topic }) => topic === "/webviz/bobject_test").length).toEqual(2);
     });
   });
 });

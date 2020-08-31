@@ -9,29 +9,22 @@
 import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import type { DataProviderDescriptor } from "webviz-core/src/dataProviders/types";
+import { DISABLE_WORKERS_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+
+export const wrapInWorkerIfEnabled = (descriptor: DataProviderDescriptor): DataProviderDescriptor => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has(DISABLE_WORKERS_QUERY_KEY)) {
+    return descriptor;
+  }
+  return { name: CoreDataProviders.WorkerDataProvider, args: {}, children: [descriptor] };
+};
 
 export function getLocalBagDescriptor(file: File): DataProviderDescriptor {
-  const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
-
-  return {
-    name: CoreDataProviders.ParseMessagesDataProvider,
-    args: {},
-    children: [
-      {
-        name: CoreDataProviders.MemoryCacheDataProvider,
-        args: { unlimitedCache },
-        children: [
-          {
-            name: CoreDataProviders.WorkerDataProvider,
-            args: {},
-            children: [
-              { name: CoreDataProviders.BagDataProvider, args: { bagPath: { type: "file", file } }, children: [] },
-            ],
-          },
-        ],
-      },
-    ],
-  };
+  return wrapInWorkerIfEnabled({
+    name: CoreDataProviders.BagDataProvider,
+    args: { bagPath: { type: "file", file } },
+    children: [],
+  });
 }
 
 export function getRemoteBagDescriptor(url: string, guid: ?string) {
@@ -50,50 +43,15 @@ export function getRemoteBagDescriptor(url: string, guid: ?string) {
   // If not, then we don't have a cache key, so just read directly from the bag in memory.
   return guid && getExperimentalFeature("diskBagCaching")
     ? {
-        name: CoreDataProviders.ParseMessagesDataProvider,
-        args: {},
+        name: CoreDataProviders.IdbCacheReaderDataProvider,
+        args: { id: guid },
         children: [
-          {
-            name: CoreDataProviders.MemoryCacheDataProvider,
-            args: { unlimitedCache },
-            children: [
-              {
-                name: CoreDataProviders.IdbCacheReaderDataProvider,
-                args: { id: guid },
-
-                children: [
-                  {
-                    name: CoreDataProviders.WorkerDataProvider,
-                    args: {},
-                    children: [
-                      {
-                        name: CoreDataProviders.IdbCacheWriterDataProvider,
-                        args: { id: guid },
-                        children: [bagDataProvider],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
+          wrapInWorkerIfEnabled({
+            name: CoreDataProviders.IdbCacheWriterDataProvider,
+            args: { id: guid },
+            children: [bagDataProvider],
+          }),
         ],
       }
-    : {
-        name: CoreDataProviders.ParseMessagesDataProvider,
-        args: {},
-        children: [
-          {
-            name: CoreDataProviders.MemoryCacheDataProvider,
-            args: { unlimitedCache },
-            children: [
-              {
-                name: CoreDataProviders.WorkerDataProvider,
-                args: {},
-                children: [bagDataProvider],
-              },
-            ],
-          },
-        ],
-      };
+    : wrapInWorkerIfEnabled(bagDataProvider);
 }

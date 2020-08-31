@@ -24,9 +24,10 @@ import type {
   DataProviderDescriptor,
   ExtensionPoint,
   GetDataProvider,
+  GetMessagesResult,
+  GetMessagesTopics,
   InitializationResult,
 } from "webviz-core/src/dataProviders/types";
-import type { Message } from "webviz-core/src/players/types";
 import { getNewConnection } from "webviz-core/src/util/getNewConnection";
 import Database from "webviz-core/src/util/indexeddb/Database";
 import Logger from "webviz-core/src/util/Logger";
@@ -40,7 +41,7 @@ const BLOCK_SIZE_MILLISECONDS = 100;
 export const BLOCK_SIZE_NS = BLOCK_SIZE_MILLISECONDS * 1e6;
 const CONTINUE_DOWNLOADING_THRESHOLD = 3 * BLOCK_SIZE_NS;
 
-function getNormalizedTopics(topics: string[]): string[] {
+function getNormalizedTopics(topics: $ReadOnlyArray<string>): string[] {
   return uniq(topics).sort();
 }
 
@@ -74,7 +75,7 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
   _currentConnection: ?{| id: string, topics: string[], remainingRange: Range |};
 
   // The read requests we've received via `getMessages`.
-  _readRequests: {| range: Range, topics: string[], resolve: (Message[]) => void |}[] = [];
+  _readRequests: {| range: Range, topics: string[], resolve: (GetMessagesResult) => void |}[] = [];
 
   // The end time of the last callback that we've resolved. This is useful for preloading new data
   // around this time.
@@ -106,9 +107,9 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
     return result;
   }
 
-  async getMessages(startTime: Time, endTime: Time, topics: string[]): Promise<Message[]> {
+  async getMessages(startTime: Time, endTime: Time, subscriptions: GetMessagesTopics): Promise<GetMessagesResult> {
     // We might have a new set of topics.
-    topics = getNormalizedTopics(topics);
+    const topics = getNormalizedTopics(subscriptions.rosBinaryMessages || []);
     this._preloadTopics = topics;
 
     // Push a new entry to `this._readRequests`, and call `this._updateState()`.
@@ -142,14 +143,14 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
     // First, see if there are any read requests that we can resolve now.
     this._readRequests = this._readRequests.filter(({ range, topics, resolve }) => {
       if (topics.length === 0) {
-        resolve([]);
+        resolve({ rosBinaryMessages: undefined, parsedMessages: undefined, bobjects: undefined });
         return false;
       }
       const downloadedRanges: Range[] = this._getDownloadedRanges(topics);
       if (!isRangeCoveredByRanges(range, downloadedRanges)) {
         return true;
       }
-      resolve([]);
+      resolve({ rosBinaryMessages: undefined, parsedMessages: undefined, bobjects: undefined });
       this._lastResolvedCallbackEnd = range.end;
       return false;
     });
@@ -237,7 +238,13 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
       // Get messages from the underlying provider.
       const startTime = TimeUtil.add(this._startTime, fromNanoSec(currentRange.start));
       const endTime = TimeUtil.add(this._startTime, fromNanoSec(currentRange.end - 1)); // endTime is inclusive.
-      const messages = await this._provider.getMessages(startTime, endTime, topics);
+      const { bobjects, parsedMessages, rosBinaryMessages } = await this._provider.getMessages(startTime, endTime, {
+        rosBinaryMessages: topics,
+      });
+      if (bobjects != null || parsedMessages != null || rosBinaryMessages == null) {
+        sendNotification("IdbCacheWriter should only have ROS binary messages", "", "app", "error");
+        return;
+      }
 
       // If we're not current any more, discard the messages, because otherwise we might write
       // duplicate messages into IndexedDB.
@@ -254,9 +261,9 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
       this._rangesByTopic = newRangesByTopic;
       const tx = this._db.transaction([MESSAGES_STORE_NAME, TOPIC_RANGES_STORE_NAME], "readwrite");
       const messagesStore = tx.objectStore(MESSAGES_STORE_NAME);
-      for (let index = 0; index < messages.length; index++) {
-        const message = messages[index];
-        if (message.message instanceof ArrayBuffer && message.message.byteLength > 10000000) {
+      for (let index = 0; index < rosBinaryMessages.length; index++) {
+        const message = rosBinaryMessages[index];
+        if (message.message.byteLength > 10000000) {
           log.warn(`Message on ${message.topic} is suspiciously large (${message.message.byteLength} bytes)`);
         }
         const nsSinceStart = toNanoSec(subtractTimes(message.receiveTime, this._startTime));

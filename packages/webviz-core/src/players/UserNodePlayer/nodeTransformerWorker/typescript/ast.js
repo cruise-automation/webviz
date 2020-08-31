@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { without } from "lodash";
+import { type RosMsgField } from "rosbag";
 
 import baseDatatypes from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/baseDatatypes";
 import {
@@ -20,12 +21,13 @@ import {
   preferArrayLiteral,
   classError,
   noTypeOfError,
+  noMappedTypes,
   noTuples,
   limitedUnionsError,
   noNestedAny,
 } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/errors";
 import { DiagnosticSeverity, Sources, ErrorCodes, type Diagnostic } from "webviz-core/src/players/UserNodePlayer/types";
-import type { RosDatatypes, RosMsgField } from "webviz-core/src/types/RosDatatypes";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 // Typescript is required since the `import` syntax breaks VSCode, presumably
 // because VSCode has Typescript built in and our import is conflicting with
@@ -222,6 +224,9 @@ export const findReturnType = (
 
     case ts.SyntaxKind.TypeQuery:
       throw new DatatypeExtractionError(noTypeOfError);
+
+    case ts.SyntaxKind.MappedType:
+      throw new DatatypeExtractionError(noMappedTypes);
 
     case ts.SyntaxKind.AnyKeyword:
     case ts.SyntaxKind.LiteralType: {

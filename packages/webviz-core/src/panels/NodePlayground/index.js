@@ -7,10 +7,8 @@
 //  You may not use this file except in compliance with the License.
 import ArrowLeftIcon from "@mdi/svg/svg/arrow-left.svg";
 import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
-import CheckboxOutlineIcon from "@mdi/svg/svg/checkbox-marked-circle-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import PlusIcon from "@mdi/svg/svg/plus.svg";
-import { some } from "lodash";
 import * as React from "react";
 import Dimensions from "react-container-dimensions";
 import { hot } from "react-hot-loader/root";
@@ -31,8 +29,6 @@ import TextContent from "webviz-core/src/components/TextContent";
 import BottomBar from "webviz-core/src/panels/NodePlayground/BottomBar";
 import Playground from "webviz-core/src/panels/NodePlayground/playground-icon.svg";
 import Sidebar from "webviz-core/src/panels/NodePlayground/Sidebar";
-import { trustUserNode } from "webviz-core/src/players/UserNodePlayer/nodeSecurity";
-import type { UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
 import type { UserNodes } from "webviz-core/src/types/panels";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
@@ -88,42 +84,6 @@ export const NodePlaygroundSettings = ({ config, saveConfig }: Props) => (
     onClick={() => saveConfig({ vimMode: !config.vimMode })}>
     <span>Vim Mode</span>
   </Item>
-);
-
-const SecurityBarWrapper = styled.div`
-  width: 100%;
-  height: 40px;
-  background-color: ${colors.REDL1};
-  display: flex;
-  justify-content: space-between;
-  padding: 8px;
-  align-items: center;
-  font-weight: bold;
-`;
-
-const TrustButton = styled.button`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 75px;
-  padding: 4px 8px;
-  vertical-align: middle;
-  font-weight: bold;
-  border: 2px solid ${colors.LIGHT1};
-`;
-
-const SecurityBar = ({ onClick }: { onClick: () => void }) => (
-  <SecurityBarWrapper>
-    <p>
-      Warning: This panel will execute user-defined code that is coming from a remote source. Make sure you trust it.
-    </p>
-    <TrustButton data-test="trust-user-scripts" onClick={onClick}>
-      Trust
-      <Icon small>
-        <CheckboxOutlineIcon />
-      </Icon>
-    </TrustButton>
-  </SecurityBarWrapper>
 );
 
 const SWelcomeScreen = styled.div`
@@ -182,10 +142,6 @@ function NodePlayground(props: Props) {
   const userNodes = useSelector((state) => state.panels.userNodes);
   const userNodeDiagnostics = useSelector((state) => state.userNodes.userNodeDiagnostics);
   const rosLib = useSelector((state) => state.userNodes.rosLib);
-  const needsUserTrust = useSelector((state) => {
-    const nodes: UserNodeDiagnostics[] = (Object.values(state.userNodes.userNodeDiagnostics): any);
-    return some(nodes, ({ trusted }) => typeof trusted === "boolean" && !trusted);
-  });
 
   const dispatch = useDispatch();
   const setUserNodes = React.useCallback((payload: UserNodes) => dispatch(setUserNodesAction(payload)), [dispatch]);
@@ -225,45 +181,20 @@ function NodePlayground(props: Props) {
     [props.config.additionalBackStackItems, selectedNode]
   );
 
-  // UX nicety so that the user can see which nodes need to be verified.
-  React.useLayoutEffect(
-    () => {
-      if (needsUserTrust) {
-        updateExplorer("nodes");
-      }
-    },
-    [needsUserTrust]
-  );
-
   const addNewNode = React.useCallback(
     (_, code?: string) => {
       const newNodeId = uuid.v4();
       const sourceCode = code || skeletonBody;
       // TODO: Add integration test for this flow.
-      trustUserNode({ id: newNodeId, sourceCode }).then(() => {
-        setUserNodes({
-          [newNodeId]: {
-            sourceCode,
-            name: `${DEFAULT_WEBVIZ_NODE_PREFIX}${newNodeId.split("-")[0]}`,
-          },
-        });
-        saveConfig({ selectedNodeId: newNodeId });
+      setUserNodes({
+        [newNodeId]: {
+          sourceCode,
+          name: `${DEFAULT_WEBVIZ_NODE_PREFIX}${newNodeId.split("-")[0]}`,
+        },
       });
+      saveConfig({ selectedNodeId: newNodeId });
     },
     [saveConfig, setUserNodes]
-  );
-
-  const trustSelectedNode = React.useCallback(
-    () => {
-      if (!selectedNodeId || !selectedNode) {
-        return;
-      }
-      trustUserNode({ id: selectedNodeId, sourceCode: selectedNode.sourceCode }).then(() => {
-        // no-op in order to trigger the useUserNodes hook.
-        setUserNodes({});
-      });
-    },
-    [selectedNode, selectedNodeId, setUserNodes]
   );
 
   const saveNode = React.useCallback(
@@ -271,9 +202,7 @@ function NodePlayground(props: Props) {
       if (!selectedNodeId || !script) {
         return;
       }
-      trustUserNode({ id: selectedNodeId, sourceCode: script }).then(() => {
-        setUserNodes({ [selectedNodeId]: { ...selectedNode, sourceCode: script } });
-      });
+      setUserNodes({ [selectedNodeId]: { ...selectedNode, sourceCode: script } });
     },
     [selectedNode, selectedNodeId, setUserNodes]
   );
@@ -334,7 +263,6 @@ function NodePlayground(props: Props) {
               }}
               selectedNodeId={selectedNodeId}
               userNodes={userNodes}
-              needsUserTrust={needsUserTrust}
               userNodeDiagnostics={userNodeDiagnostics}
               script={currentScript}
               setScriptOverride={setScriptOverride}
@@ -383,9 +311,6 @@ function NodePlayground(props: Props) {
                 </Icon>
               </Flex>
 
-              {userNodeDiagnostics[selectedNodeId] &&
-                typeof userNodeDiagnostics[selectedNodeId].trusted === "boolean" &&
-                !userNodeDiagnostics[selectedNodeId].trusted && <SecurityBar onClick={trustSelectedNode} />}
               <Flex col style={{ flexGrow: 1, position: "relative" }}>
                 {!selectedNodeId && <WelcomeScreen addNewNode={addNewNode} updateExplorer={updateExplorer} />}
                 <div

@@ -9,6 +9,10 @@
 import type { RosObject } from "webviz-core/src/players/types";
 import type { Marker } from "webviz-core/src/types/Messages";
 
-export type InteractionData = $ReadOnly<{| topic: string, originalMessage: $ReadOnly<RosObject> |}>;
+export type InteractionData = $ReadOnly<{|
+  topic: string,
+  highlighted?: boolean,
+  originalMessage: $ReadOnly<RosObject>,
+|}>;
 export type Interactive<T> = T & { interactionData: InteractionData };
 export type SelectedObject = { object: Marker, instanceIndex: ?number };

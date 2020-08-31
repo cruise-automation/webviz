@@ -18,7 +18,8 @@ import delay from "webviz-core/shared/delay";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
-import type { Message } from "webviz-core/src/players/types";
+import type { Bobject, BobjectMessage, Message } from "webviz-core/src/players/types";
+import { getObject } from "webviz-core/src/util/binaryObjects";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
@@ -26,35 +27,38 @@ function sortMessages(messages: Message[]) {
   return messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime) || naturalSort()(a.topic, b.topic));
 }
 
-function generateMessages(): Message[] {
+const bobjectWithSize = (n: number): Bobject => getObject({}, "time", new ArrayBuffer(n), "");
+
+function generateMessages(): BobjectMessage[] {
   return sortMessages([
-    { topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: new ArrayBuffer(10) },
-    { topic: "/foo", receiveTime: { sec: 101, nsec: 0 }, message: new ArrayBuffer(10) },
-    { topic: "/foo", receiveTime: { sec: 102, nsec: 0 }, message: new ArrayBuffer(10) },
-    { topic: "/bar", receiveTime: { sec: 100, nsec: 0 }, message: new ArrayBuffer(10) },
-    { topic: "/bar", receiveTime: { sec: 101, nsec: 0 }, message: new ArrayBuffer(10) },
-    { topic: "/bar", receiveTime: { sec: 102, nsec: 0 }, message: new ArrayBuffer(10) },
+    { topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: bobjectWithSize(10) },
+    { topic: "/foo", receiveTime: { sec: 101, nsec: 0 }, message: bobjectWithSize(10) },
+    { topic: "/foo", receiveTime: { sec: 102, nsec: 0 }, message: bobjectWithSize(10) },
+    { topic: "/bar", receiveTime: { sec: 100, nsec: 0 }, message: bobjectWithSize(10) },
+    { topic: "/bar", receiveTime: { sec: 101, nsec: 0 }, message: bobjectWithSize(10) },
+    { topic: "/bar", receiveTime: { sec: 102, nsec: 0 }, message: bobjectWithSize(10) },
   ]);
 }
 
-function generateLargeMessages(): Message[] {
+function generateLargeMessages(): BobjectMessage[] {
   // The input is 201 blocks (20.1 seconds) long, with messages every two seconds.
   return sortMessages([
-    { topic: "/foo", receiveTime: { sec: 0, nsec: 0 }, message: new ArrayBuffer(600) },
-    { topic: "/foo", receiveTime: { sec: 2, nsec: 0 }, message: new ArrayBuffer(600) },
-    { topic: "/foo", receiveTime: { sec: 4, nsec: 0 }, message: new ArrayBuffer(600) },
-    { topic: "/foo", receiveTime: { sec: 6, nsec: 0 }, message: new ArrayBuffer(600) },
-    { topic: "/foo", receiveTime: { sec: 8, nsec: 0 }, message: new ArrayBuffer(600) },
-    { topic: "/foo", receiveTime: { sec: 10, nsec: 0 }, message: new ArrayBuffer(600) },
-    { topic: "/foo", receiveTime: { sec: 12, nsec: 0 }, message: new ArrayBuffer(600) },
-    { topic: "/foo", receiveTime: { sec: 14, nsec: 0 }, message: new ArrayBuffer(600) },
-    { topic: "/foo", receiveTime: { sec: 16, nsec: 0 }, message: new ArrayBuffer(600) },
-    { topic: "/foo", receiveTime: { sec: 18, nsec: 0 }, message: new ArrayBuffer(600) },
-    { topic: "/foo", receiveTime: { sec: 20, nsec: 0 }, message: new ArrayBuffer(600) },
+    { topic: "/foo", receiveTime: { sec: 0, nsec: 0 }, message: bobjectWithSize(600) },
+    { topic: "/foo", receiveTime: { sec: 2, nsec: 0 }, message: bobjectWithSize(600) },
+    { topic: "/foo", receiveTime: { sec: 4, nsec: 0 }, message: bobjectWithSize(600) },
+    { topic: "/foo", receiveTime: { sec: 6, nsec: 0 }, message: bobjectWithSize(600) },
+    { topic: "/foo", receiveTime: { sec: 8, nsec: 0 }, message: bobjectWithSize(600) },
+    { topic: "/foo", receiveTime: { sec: 10, nsec: 0 }, message: bobjectWithSize(600) },
+    { topic: "/foo", receiveTime: { sec: 12, nsec: 0 }, message: bobjectWithSize(600) },
+    { topic: "/foo", receiveTime: { sec: 14, nsec: 0 }, message: bobjectWithSize(600) },
+    { topic: "/foo", receiveTime: { sec: 16, nsec: 0 }, message: bobjectWithSize(600) },
+    { topic: "/foo", receiveTime: { sec: 18, nsec: 0 }, message: bobjectWithSize(600) },
+    { topic: "/foo", receiveTime: { sec: 20, nsec: 0 }, message: bobjectWithSize(600) },
   ]);
 }
 
-function getProvider(messages: Message[], unlimitedCache: boolean = false) {
+function getProvider(bobjects: BobjectMessage[], unlimitedCache: boolean = false) {
+  const messages = { parsedMessages: undefined, bobjects, rosBinaryMessages: undefined };
   const memoryDataProvider = new MemoryDataProvider({ messages, unlimitedCache, providesParsedMessages: false });
   return {
     provider: new MemoryCacheDataProvider(
@@ -106,7 +110,7 @@ describe("MemoryCacheDataProvider", () => {
     jest.spyOn(memoryDataProvider, "getMessages");
 
     await provider.initialize(extensionPoint);
-    await provider.getMessages({ sec: 100, nsec: 0 }, { sec: 100, nsec: 0 }, ["/foo"]);
+    await provider.getMessages({ sec: 100, nsec: 0 }, { sec: 100, nsec: 0 }, { bobjects: ["/foo"] });
     await delay(10);
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
@@ -122,7 +126,7 @@ describe("MemoryCacheDataProvider", () => {
       { sec: 102, nsec: 0 },
       { sec: 102, nsec: 0 },
       // Has the right topic:
-      ["/foo"],
+      { bobjects: ["/foo"] },
     ]);
   });
 
@@ -133,7 +137,7 @@ describe("MemoryCacheDataProvider", () => {
     jest.spyOn(memoryDataProvider, "getMessages");
 
     await provider.initialize(extensionPoint);
-    await provider.getMessages({ sec: 101, nsec: 0 }, { sec: 101, nsec: 0 }, ["/foo"]);
+    await provider.getMessages({ sec: 101, nsec: 0 }, { sec: 101, nsec: 0 }, { bobjects: ["/foo"] });
     await delay(10);
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
@@ -148,13 +152,13 @@ describe("MemoryCacheDataProvider", () => {
     expect(first(memoryDataProvider.getMessages.mock.calls)).toEqual([
       { sec: 101, nsec: 0 },
       { sec: 101, nsec: 0.1e9 - 1 },
-      ["/foo"],
+      { bobjects: ["/foo"] },
     ]);
     // The last request is up to the requested range from below.
     expect(last(memoryDataProvider.getMessages.mock.calls)).toEqual([
       { sec: 100, nsec: 0.9e9 },
       { sec: 100, nsec: 1e9 - 1 },
-      ["/foo"],
+      { bobjects: ["/foo"] },
     ]);
   });
 
@@ -167,7 +171,7 @@ describe("MemoryCacheDataProvider", () => {
     const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
 
     await provider.initialize(extensionPoint);
-    await provider.getMessages({ sec: 0, nsec: 0 }, { sec: 0, nsec: 0 }, ["/foo"]);
+    await provider.getMessages({ sec: 0, nsec: 0 }, { sec: 0, nsec: 0 }, { bobjects: ["/foo"] });
     await delay(10);
     // The input is 20.1 seconds long, or 201 blocks.
     // We read the five messages at 0s, 2s, 4s, 6s and 8s, holding the blocks from 0s to 8.1s.
@@ -188,7 +192,7 @@ describe("MemoryCacheDataProvider", () => {
     const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
 
     await provider.initialize(extensionPoint);
-    await provider.getMessages({ sec: 0, nsec: 0 }, { sec: 0, nsec: 0 }, ["/foo"]);
+    await provider.getMessages({ sec: 0, nsec: 0 }, { sec: 0, nsec: 0 }, { bobjects: ["/foo"] });
     await delay(10);
     expect(last(mockProgressCallback.mock.calls)).toEqual([
       {
@@ -210,8 +214,8 @@ describe("MemoryCacheDataProvider", () => {
     const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
 
     await provider.initialize(extensionPoint);
-    await provider.getMessages({ sec: 0, nsec: 0 }, { sec: 0, nsec: 1e9 - 1 }, ["/foo"]);
-    await provider.getMessages({ sec: 10, nsec: 0 }, { sec: 10, nsec: 0 }, ["/foo"]);
+    await provider.getMessages({ sec: 0, nsec: 0 }, { sec: 0, nsec: 1e9 - 1 }, { bobjects: ["/foo"] });
+    await provider.getMessages({ sec: 10, nsec: 0 }, { sec: 10, nsec: 0 }, { bobjects: ["/foo"] });
     await delay(10);
     // The input is 20.1 seconds long, or 201 blocks.
     // The initial read request loads from 0s to 1s, containing one message at 0s.
@@ -229,38 +233,28 @@ describe("MemoryCacheDataProvider", () => {
   });
 
   it("returns messages", async () => {
-    const { provider } = getProvider(generateMessages());
+    const inputMessages = generateMessages();
+    const { provider } = getProvider(inputMessages);
     await provider.initialize(mockExtensionPoint().extensionPoint);
     // Make a bunch of different calls in quick succession and out of order, and stitch them
     // together, to test a bit more thoroughly.
-    const messages = sortMessages(
-      flatten(
-        await Promise.all([
-          provider.getMessages({ sec: 102, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo"]),
-          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 100, nsec: 0 }, ["/foo", "/bar"]),
-          provider.getMessages({ sec: 100, nsec: 1 }, { sec: 101, nsec: 1e9 - 1 }, ["/foo"]),
-          provider.getMessages({ sec: 100, nsec: 1 }, { sec: 101, nsec: 1e9 - 1 }, ["/bar"]),
-          provider.getMessages({ sec: 102, nsec: 0 }, { sec: 102, nsec: 0 }, ["/bar"]),
-        ])
-      )
-    );
-    expect(messages).toEqual(generateMessages());
-  });
-
-  it("does not allow storing non-ArrayBuffer messages", async () => {
-    const { provider } = getProvider([{ topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: 0 }]);
-    await provider.initialize(mockExtensionPoint().extensionPoint);
-    provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo"]);
-    await delay(10);
-    sendNotification.expectCalledDuringTest();
+    const results = await Promise.all([
+      provider.getMessages({ sec: 102, nsec: 0 }, { sec: 102, nsec: 0 }, { bobjects: ["/foo"] }),
+      provider.getMessages({ sec: 100, nsec: 0 }, { sec: 100, nsec: 0 }, { bobjects: ["/foo", "/bar"] }),
+      provider.getMessages({ sec: 100, nsec: 1 }, { sec: 101, nsec: 1e9 - 1 }, { bobjects: ["/foo"] }),
+      provider.getMessages({ sec: 100, nsec: 1 }, { sec: 101, nsec: 1e9 - 1 }, { bobjects: ["/bar"] }),
+      provider.getMessages({ sec: 102, nsec: 0 }, { sec: 102, nsec: 0 }, { bobjects: ["/bar"] }),
+    ]);
+    const messages = sortMessages(flatten(results.map(({ bobjects }) => bobjects || [])));
+    expect(messages).toEqual(inputMessages);
   });
 
   it("shows an error when having a block that is very large", async () => {
     const { provider } = getProvider([
-      { topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: new ArrayBuffer(MAX_BLOCK_SIZE_BYTES + 10) },
+      { topic: "/foo", receiveTime: { sec: 100, nsec: 0 }, message: bobjectWithSize(MAX_BLOCK_SIZE_BYTES + 10) },
     ]);
     await provider.initialize(mockExtensionPoint().extensionPoint);
-    provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, ["/foo"]);
+    provider.getMessages({ sec: 100, nsec: 0 }, { sec: 102, nsec: 0 }, { bobjects: ["/foo"] });
     await delay(10);
     sendNotification.expectCalledDuringTest();
   });

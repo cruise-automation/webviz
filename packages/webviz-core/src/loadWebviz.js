@@ -17,6 +17,17 @@ let importedPerPanelHooks;
 const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
   getEventLogger: () => undefined,
+  getLayoutFromUrl: async (search) => {
+    const { LAYOUT_URL_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
+    const params = new URLSearchParams(search);
+    const layoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
+    return fetch(layoutUrl).then((result) => {
+      return result
+        .json()
+        .then((json) => json)
+        .catch(() => undefined);
+    });
+  },
   async importHooksAsync() {
     return new Promise((resolve, reject) => {
       if (importedPanelsByCategory && importedPerPanelHooks) {
@@ -147,9 +158,16 @@ const defaultHooks = {
         developmentDefault: false,
         productionDefault: false,
       },
-      highlightGlobalVariableMatchingMarkers: {
-        name: "Highlight markers matching linked global variables",
-        description: "Markers matching any linkedGlobalVariables will be automatically highlighted in the 3D panel",
+      globalVariableColorOverrides: {
+        name: "Global variable color overrides",
+        description: "Change the color of markers when they match a linkedGlobalVariable.",
+        developmentDefault: false,
+        productionDefault: false,
+      },
+      bobject3dPanel: {
+        name: "Use binary messages in the 3D panel instead of parsed messages",
+        description:
+          "Either use binary messages or _pretend_ to use binary messages in the 3D panel. Very broken, work in progress.",
         developmentDefault: false,
         productionDefault: false,
       },
@@ -160,6 +178,7 @@ const defaultHooks = {
     const { REMOTE_BAG_URL_2_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     return [REMOTE_BAG_URL_2_QUERY_KEY];
   },
+  maybeUpdateURLToTrackLayout: () => {},
 };
 
 let hooks = defaultHooks;
@@ -193,21 +212,30 @@ export function loadWebviz(hooksToSet) {
   overwriteFetch();
   window.clearIndexedDb = clearIndexedDbWithoutConfirmation; // For integration tests.
 
-  hooks.load();
+  const initializationResult = hooks.load();
 
   const waitForFonts = require("webviz-core/src/styles/waitForFonts").default;
   const Confirm = require("webviz-core/src/components/Confirm").default;
 
-  function render() {
+  // Importing from /webviz-core/shared/delay seems to not work for some reason (maybe a bundle issue)? Just duplicate
+  // it here.
+  async function delay(timeoutMs) {
+    return new Promise((resolve) => setTimeout(resolve, timeoutMs));
+  }
+
+  async function render() {
     const rootEl = document.getElementById("root");
     if (!rootEl) {
       // appease flow
       throw new Error("missing #root element");
     }
 
-    waitForFonts().then(() => {
-      ReactDOM.render(<hooks.Root history={history} />, rootEl);
-    });
+    await waitForFonts();
+    // Wait for any async load functions to start running while we are doing the initial render.
+    // The number isn't really important here, we just want to make sure that other async callbacks have a chance to
+    // run, because once we start the initial Webviz render we hold the main thread for ~500ms.
+    await delay(5);
+    ReactDOM.render(<hooks.Root history={history} initializationResult={initializationResult} />, rootEl);
   }
 
   // Render a warning message if the user has an old browser.

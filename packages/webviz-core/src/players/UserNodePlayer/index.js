@@ -15,12 +15,7 @@ import uuid from "uuid";
 // $FlowFixMe - flow does not like workers.
 import NodeDataWorker from "sharedworker-loader?name=nodeTransformerWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeTransformerWorker"; // eslint-disable-line
 import signal from "webviz-core/shared/signal";
-import type {
-  SetUserNodeDiagnostics,
-  AddUserNodeLogs,
-  SetUserNodeTrust,
-  SetUserNodeRosLib,
-} from "webviz-core/src/actions/userNodes";
+import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeRosLib } from "webviz-core/src/actions/userNodes";
 // $FlowFixMe - flow does not like workers.
 import UserNodePlayerWorker from "sharedworker-loader?name=nodeRuntimeWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
 
@@ -33,8 +28,8 @@ import type {
   SubscribePayload,
   PlayerStateActiveData,
   Topic,
+  BobjectMessage,
 } from "webviz-core/src/players/types";
-import { isUserNodeTrusted } from "webviz-core/src/players/UserNodePlayer/nodeSecurity";
 import {
   type Diagnostic,
   DiagnosticSeverity,
@@ -48,16 +43,17 @@ import {
 } from "webviz-core/src/players/UserNodePlayer/types";
 import type { UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupReceiveReportErrorHandler } from "webviz-core/src/util/RpcUtils";
 
-type UserNodeActions = {
+type UserNodeActions = {|
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
   addUserNodeLogs: AddUserNodeLogs,
-  setUserNodeTrust: SetUserNodeTrust,
   setUserNodeRosLib: SetUserNodeRosLib,
-};
+|};
 
 const rpcFromNewSharedWorker = (worker) => {
   const port: MessagePort = worker.port;
@@ -65,6 +61,22 @@ const rpcFromNewSharedWorker = (worker) => {
   const rpc = new Rpc(port);
   setupReceiveReportErrorHandler(rpc);
   return rpc;
+};
+
+const getBobjectMessage = async (
+  datatypes: RosDatatypes,
+  datatype: string,
+  messagePromise: Promise<?Message>
+): Promise<?BobjectMessage> => {
+  const msg = await messagePromise;
+  if (!msg) {
+    return null;
+  }
+  return {
+    topic: msg.topic,
+    receiveTime: msg.receiveTime,
+    message: wrapJsObject(datatypes, datatype, msg.message),
+  };
 };
 
 // TODO: FUTURE - Performance tests
@@ -75,6 +87,7 @@ export default class UserNodePlayer implements Player {
   _player: Player;
   _nodeRegistrations: NodeRegistration[] = [];
   _subscriptions: SubscribePayload[] = [];
+  _subscribedFormatByTopic: { [topic: string]: Set<"parsedMessages" | "bobjects"> } = {};
   _userNodes: UserNodes = {};
   // TODO: FUTURE - Terminate unused workers (some sort of timeout, for whole array or per rpc)
   // Not sure if there is perf issue with unused workers (may just go idle) - requires more research
@@ -82,17 +95,17 @@ export default class UserNodePlayer implements Player {
   _lastPlayerStateActiveData: ?PlayerStateActiveData;
   _setUserNodeDiagnostics: (nodeId: string, diagnostics: Diagnostic[]) => void;
   _addUserNodeLogs: (nodeId: string, logs: UserNodeLog[]) => void;
-  _setNodeTrust: (nodeId: string, trusted: boolean) => void;
   _setRosLib: (rosLib: string) => void;
   _nodeTransformRpc: ?Rpc = null;
-  _userDatatypes: RosDatatypes = {};
-  _bagDatatypes: RosDatatypes = {};
+  // Always start with a set of basic datatypes that we know how to render. These could be overwritten later by bag
+  // datatypes, but these datatype definitions are very stable.
+  _userDatatypes: RosDatatypes = { ...basicDatatypes };
   _rosLib: ?string;
   _pendingResetWorkers: ?Promise<void>;
 
   constructor(player: Player, userNodeActions: UserNodeActions) {
     this._player = player;
-    const { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeTrust, setUserNodeRosLib } = userNodeActions;
+    const { setUserNodeDiagnostics, addUserNodeLogs, setUserNodeRosLib } = userNodeActions;
 
     // TODO(troy): can we make the below action flow better? Might be better to
     // just add an id, and the thing you want to update? Instead of passing in
@@ -104,10 +117,6 @@ export default class UserNodePlayer implements Player {
       if (logs.length) {
         addUserNodeLogs({ [nodeId]: { logs } });
       }
-    };
-
-    this._setNodeTrust = (id: string, trusted: boolean) => {
-      setUserNodeTrust({ id, trusted });
     };
 
     this._setRosLib = (rosLib: string) => {
@@ -123,20 +132,41 @@ export default class UserNodePlayer implements Player {
   // When updating Webviz nodes while paused, we seek to the current time
   // (i.e. invoke _getMessages with an empty array) to refresh messages
   _getMessages = microMemoize(
-    async (messages: Message[]): Promise<Message[]> => {
-      const promises = [];
-      for (const message of messages) {
+    async (
+      parsedMessages: Message[],
+      bobjects: BobjectMessage[]
+    ): Promise<{ parsedMessages: $ReadOnlyArray<Message>, bobjects: $ReadOnlyArray<BobjectMessage> }> => {
+      const parsedMessagesPromises = [];
+      const bobjectPromises = [];
+      for (const message of parsedMessages) {
         for (const nodeRegistration of this._nodeRegistrations) {
-          if (
-            this._subscriptions.find(({ topic }) => topic === nodeRegistration.output.name) &&
-            nodeRegistration.inputs.includes(message.topic)
-          ) {
-            promises.push(nodeRegistration.processMessage(message));
+          const subscriptions = this._subscribedFormatByTopic[nodeRegistration.output.name];
+          if (subscriptions && nodeRegistration.inputs.includes(message.topic)) {
+            const messagePromise = nodeRegistration.processMessage(message);
+            // There should be at most 2 subscriptions.
+            for (const format of subscriptions.values()) {
+              if (format === "parsedMessages") {
+                parsedMessagesPromises.push(messagePromise);
+              } else {
+                bobjectPromises.push(
+                  getBobjectMessage(this._userDatatypes, nodeRegistration.output.datatype, messagePromise)
+                );
+              }
+            }
           }
         }
       }
-      const nodeMessages: Message[] = (await Promise.all(promises)).filter(Boolean);
-      return [...messages, ...nodeMessages].sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime));
+      const [nodeParsedMessages, nodeBobjects] = await Promise.all([
+        (await Promise.all(parsedMessagesPromises)).filter(Boolean),
+        (await Promise.all(bobjectPromises)).filter(Boolean),
+      ]);
+
+      return {
+        parsedMessages: parsedMessages
+          .concat(nodeParsedMessages)
+          .sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime)),
+        bobjects: bobjects.concat(nodeBobjects).sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime)),
+      };
     }
   );
 
@@ -277,22 +307,17 @@ export default class UserNodePlayer implements Player {
     const nodeRegistrations: NodeRegistration[] = [];
     for (const [nodeId, nodeObj] of Object.entries(this._userNodes)) {
       const node = ((nodeObj: any): { name: string, sourceCode: string });
-      const isTrusted = await isUserNodeTrusted({ id: nodeId, sourceCode: node.sourceCode });
-      if (!isTrusted) {
-        this._setNodeTrust(nodeId, false);
-        continue;
-      } else {
-        this._setNodeTrust(nodeId, true);
-      }
 
       const transformWorker = this._getTransformWorker();
       const nodeData = await transformWorker.send("transform", {
         name: node.name,
         sourceCode: node.sourceCode,
-        playerInfo: { topics, playerDatatypes: datatypes },
+        topics,
         priorRegisteredTopics: nodeRegistrations.map(({ output }) => output),
         rosLib,
-        datatypes: this._bagDatatypes,
+        // Pass all the nodes a set of basic datatypes that we know how to render. These could be overwritten later by
+        // bag datatypes, but these datatype definitions should be very stable.
+        datatypes: { ...basicDatatypes, ...datatypes },
       });
       const { diagnostics } = nodeData;
       this._setUserNodeDiagnostics(nodeId, diagnostics);
@@ -329,7 +354,7 @@ export default class UserNodePlayer implements Player {
     this._player.setListener(async (playerState: PlayerState) => {
       const { activeData } = playerState;
       if (activeData) {
-        const { messages, topics, datatypes } = activeData;
+        const { messages, topics, datatypes, bobjects } = activeData;
 
         // For resetting node state after seeking.
         // TODO: Make resetWorkers more efficient in this case since we don't
@@ -344,18 +369,20 @@ export default class UserNodePlayer implements Player {
         // player just spun up, meaning we should re-run our user nodes in case
         // they have inputs that now exist in the current player context.
         if (!this._lastPlayerStateActiveData) {
-          this._bagDatatypes = datatypes;
           this._lastPlayerStateActiveData = activeData;
           await this._resetWorkers(topics, datatypes);
           this.setSubscriptions(this._subscriptions);
           this.requestBackfill();
         }
 
+        const { parsedMessages, bobjects: augmentedBobjects } = await this._getMessages(messages, bobjects);
+
         const newPlayerState = {
           ...playerState,
           activeData: {
             ...activeData,
-            messages: await this._getMessages(messages),
+            messages: parsedMessages,
+            bobjects: augmentedBobjects,
             topics: this._getTopics(topics, this._nodeRegistrations.map((nodeRegistration) => nodeRegistration.output)),
             datatypes: this._getDatatypes(datatypes, this._userDatatypes),
           },
@@ -375,12 +402,15 @@ export default class UserNodePlayer implements Player {
 
     const mappedTopics: string[] = [];
     const realTopicSubscriptions: SubscribePayload[] = [];
+    const nodeSubscriptions: SubscribePayload[] = [];
     for (const subscription of subscriptions) {
       // For performance, only check topics that start with DEFAULT_WEBVIZ_NODE_PREFIX.
       if (!subscription.topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX)) {
         realTopicSubscriptions.push(subscription);
         continue;
       }
+
+      nodeSubscriptions.push(subscription);
 
       // When subscribing to the same node multiple times, only subscribe to the underlying
       // topics once. This is not strictly necessary, but it makes debugging a bit easier.
@@ -395,10 +425,19 @@ export default class UserNodePlayer implements Player {
           realTopicSubscriptions.push({
             topic: inputTopic,
             requester: { type: "node", name: nodeRegistration.output.name },
+            // User nodes won't understand bobjects.
+            format: "parsedMessages",
           });
         }
       }
     }
+
+    const subscribedFormatByTopic = {};
+    for (const { topic, format } of nodeSubscriptions) {
+      subscribedFormatByTopic[topic] = subscribedFormatByTopic[topic] || new Set();
+      subscribedFormatByTopic[topic].add(format);
+    }
+    this._subscribedFormatByTopic = subscribedFormatByTopic;
 
     this._player.setSubscriptions(realTopicSubscriptions);
   }

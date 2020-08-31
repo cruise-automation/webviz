@@ -50,7 +50,7 @@ function usePlaybackMessage<T>(topic: string): ?T {
     topics: [topic],
     restore: useCallback((prevState) => prevState || lastMessage.current, [lastMessage]),
     addMessage: useCallback((prevState, { message }) => prevState || message, []),
-    onlyLoadInBlocks: true,
+    preloadingFallback: true,
   });
   lastMessage.current = newMessage;
   return lastMessage.current;

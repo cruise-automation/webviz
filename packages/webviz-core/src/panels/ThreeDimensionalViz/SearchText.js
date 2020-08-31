@@ -17,6 +17,7 @@ import { type CameraState, cameraStateSelectors } from "regl-worldview";
 
 import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
+import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { TextMarker, Color } from "webviz-core/src/types/Messages";
 import { useDeepChangeDetector } from "webviz-core/src/util/hooks";
@@ -73,9 +74,9 @@ export const useGLText = ({
   searchTextMatches,
 }: {|
   ...WorldSearchTextProps,
-  text: TextMarker[],
-|}): GLTextMarker[] => {
-  const glText: GLTextMarker[] = React.useMemo(
+  text: Interactive<TextMarker>[],
+|}): Interactive<GLTextMarker>[] => {
+  const glText: Interactive<GLTextMarker>[] = React.useMemo(
     () => {
       let numMatches = 0;
       return text.map((marker) => {

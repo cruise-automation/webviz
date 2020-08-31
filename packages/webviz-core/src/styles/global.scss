@@ -249,9 +249,6 @@ hr {
 }
 
 button {
-  &:not(.disabled):not([disabled]) {
-    cursor: pointer;
-  }
   text-align: center;
 
   &.is-danger {
@@ -261,7 +258,8 @@ button {
     background-color: $background-control;
   }
 
-  &:not(.disabled):hover {
+  &:not(.disabled):not(:disabled):hover {
+    cursor: pointer;
     color: $text-control-hover;
   }
 
@@ -273,7 +271,8 @@ button {
     background-color: $background-control-selected;
     color: $text-normal;
   }
-  &.disabled {
+  &.disabled,
+  &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }

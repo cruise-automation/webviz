@@ -94,21 +94,13 @@ describe("BagDataProvider", () => {
     await provider.initialize(dummyExtensionPoint);
     const start = { sec: 1396293887, nsec: 844783943 };
     const end = { sec: 1396293888, nsec: 60000000 };
-    const messages = await provider.getMessages(start, end, ["/tf"]);
-    expect(messages).toHaveLength(2);
-    expect(messages[0]).toEqual({
-      topic: "/tf",
-      receiveTime: {
-        sec: 1396293888,
-        nsec: 56251251,
-      },
-      message: expect.any(ArrayBuffer),
-    });
-    expect(messages[1]).toEqual({
-      topic: "/tf",
-      receiveTime: { nsec: 56262848, sec: 1396293888 },
-      message: expect.any(ArrayBuffer),
-    });
+    const messages = await provider.getMessages(start, end, { rosBinaryMessages: ["/tf"] });
+    expect(messages.bobjects).toBe(undefined);
+    expect(messages.parsedMessages).toBe(undefined);
+    expect(messages.rosBinaryMessages).toEqual([
+      { topic: "/tf", receiveTime: { sec: 1396293888, nsec: 56251251 }, message: expect.any(ArrayBuffer) },
+      { topic: "/tf", receiveTime: { nsec: 56262848, sec: 1396293888 }, message: expect.any(ArrayBuffer) },
+    ]);
   });
 
   it("sorts shuffled messages (and reports an error)", async () => {
@@ -119,8 +111,15 @@ describe("BagDataProvider", () => {
     await provider.initialize(dummyExtensionPoint);
     const start = { sec: 1490148912, nsec: 0 };
     const end = { sec: 1490148913, nsec: 0 };
-    const messages = await provider.getMessages(start, end, ["/tf"]);
-    const timestamps = messages.map(({ receiveTime }) => receiveTime);
+    const { bobjects, parsedMessages, rosBinaryMessages } = await provider.getMessages(start, end, {
+      rosBinaryMessages: ["/tf"],
+    });
+    expect(bobjects).toBe(undefined);
+    expect(parsedMessages).toBe(undefined);
+    if (rosBinaryMessages == null) {
+      throw new Error("Satisfy flow");
+    }
+    const timestamps = rosBinaryMessages.map(({ receiveTime }) => receiveTime);
     const sortedTimestamps = [...timestamps];
     sortedTimestamps.sort(TimeUtil.compare);
     expect(timestamps).toEqual(sortedTimestamps);

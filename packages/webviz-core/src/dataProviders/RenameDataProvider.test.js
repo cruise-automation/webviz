@@ -15,15 +15,21 @@
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
 import RenameDataProvider from "webviz-core/src/dataProviders/RenameDataProvider";
+import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 
 // reusable providers
 function getProvider() {
-  return new MemoryDataProvider({
-    messages: [
+  const messages = {
+    parsedMessages: [
       { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } },
       { topic: "/some_topic1", receiveTime: { sec: 103, nsec: 0 }, message: { value: 3 } },
     ],
+    rosBinaryMessages: undefined,
+    bobjects: undefined,
+  };
+  return new MemoryDataProvider({
+    messages,
     topics: [{ name: "/some_topic1", datatype: "some_datatype" }],
     datatypes: {},
     providesParsedMessages: true,
@@ -62,11 +68,14 @@ describe("RenameDataProvider", () => {
     it("adds the prefix to streamed message topics", async () => {
       const provider = getRenameDataProvider(getProvider(), SECOND_SOURCE_PREFIX);
       await provider.initialize(mockExtensionPoint().extensionPoint);
-      expect(
-        await provider.getMessages({ sec: 101, nsec: 0 }, { sec: 103, nsec: 0 }, [
-          `${SECOND_SOURCE_PREFIX}/some_topic1`,
-        ])
-      ).toEqual([
+      const result = await provider.getMessages(
+        { sec: 101, nsec: 0 },
+        { sec: 103, nsec: 0 },
+        { parsedMessages: [`${SECOND_SOURCE_PREFIX}/some_topic1`] }
+      );
+      expect(result.bobjects).toBe(undefined);
+      expect(result.rosBinaryMessages).toBe(undefined);
+      expect(result.parsedMessages).toEqual([
         { message: { value: 1 }, receiveTime: { nsec: 0, sec: 101 }, topic: `${SECOND_SOURCE_PREFIX}/some_topic1` },
         { message: { value: 3 }, receiveTime: { nsec: 0, sec: 103 }, topic: `${SECOND_SOURCE_PREFIX}/some_topic1` },
       ]);
@@ -91,7 +100,11 @@ describe("RenameDataProvider", () => {
                 sizeInBytes: 99,
                 messagesByTopic: {
                   "/some_topic1": [
-                    { topic: "/some_topic1", receiveTime: { sec: 101, nsec: 0 }, message: new ArrayBuffer(0) },
+                    {
+                      topic: "/some_topic1",
+                      receiveTime: { sec: 101, nsec: 0 },
+                      message: wrapJsObject({}, "time", { sec: 0, nsec: 0 }),
+                    },
                   ],
                 },
               },
@@ -110,11 +123,10 @@ describe("RenameDataProvider", () => {
                   sizeInBytes: 99,
                   messagesByTopic: {
                     "/generic_topic/some_topic1": [
-                      {
+                      expect.objectContaining({
                         receiveTime: { sec: 101, nsec: 0 },
                         topic: "/generic_topic/some_topic1",
-                        message: new ArrayBuffer(0),
-                      },
+                      }),
                     ],
                   },
                 },

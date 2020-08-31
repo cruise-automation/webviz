@@ -51,6 +51,4 @@ export default class BrowserHttpReader implements FileReader {
     // $FlowFixMe - Flow doesn't understand that this *does* have the right type.
     return new FetchReader(this._url, { headers });
   }
-
-  recordBytesPerSecond(_bytesPerSecond: number): void {}
 }

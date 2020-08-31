@@ -14,9 +14,11 @@ import {
   type CommonCommandProps,
   type AssignNextColorsFn,
   type MouseEventObject,
+  vec4ToRGBA,
 } from "regl-worldview";
 
 import { FLOAT_SIZE } from "./buffers";
+import { decodeMarker } from "./decodeMarker";
 import { updateMarkerCache } from "./memoization";
 import type { MemoizedMarker, MemoizedVertexBuffer, VertexBuffer } from "./types";
 import VertexBufferCache from "./VertexBufferCache";
@@ -183,7 +185,7 @@ const pointCloud = (regl: Regl) => {
         return getCachedBuffer(positionBufferCache, props.positionBuffer);
       },
       color: (context, props) => {
-        const { hitmapColors, settings } = props;
+        const { hitmapColors, settings, blend } = props;
         const { colorMode } = settings;
         if (hitmapColors) {
           // If colors are provided, we use those instead what is indicated by colorMode
@@ -191,6 +193,12 @@ const pointCloud = (regl: Regl) => {
           // Unfortunately, we cannot memoize hitmap colors since new objects can be added
           // to the scene hierarchy at any time.
           return hitmapColors;
+        }
+
+        if (blend?.color) {
+          // If a constant color is provided for blending, ignore point colors. Send positions
+          // instead (see comments below).
+          return props.positionBuffer;
         }
 
         // If we're using "flat" color mode, we pass the actual color in a uniform (see uniforms below)
@@ -211,11 +219,17 @@ const pointCloud = (regl: Regl) => {
         return props.settings?.pointShape ? props.settings?.pointShape === "circle" : true;
       },
       colorMode: (context, props) => {
-        const { settings, is_bigendian, hitmapColors } = props;
+        const { settings, is_bigendian, hitmapColors, blend } = props;
         if (hitmapColors) {
           // We're providing a colors array in RGB format
           return COLOR_MODE_RGB;
         }
+
+        if (blend?.color) {
+          // Force to `flat` mode if constant color is required for blending.
+          return COLOR_MODE_FLAT;
+        }
+
         const { colorMode } = settings;
         if (colorMode.mode === "flat") {
           return COLOR_MODE_FLAT;
@@ -227,6 +241,10 @@ const pointCloud = (regl: Regl) => {
         return is_bigendian ? COLOR_MODE_RGB : COLOR_MODE_BGR;
       },
       flatColor: (context, props) => {
+        if (props.blend && props.blend.color) {
+          // Use constant color for blending.
+          return toRgba(vec4ToRGBA(props.blend.color));
+        }
         return toRgba(props.settings.colorMode.flatColor || DEFAULT_FLAT_COLOR);
       },
       minGradientColor: (context, props) => {
@@ -255,8 +273,22 @@ const pointCloud = (regl: Regl) => {
     positionBufferCache.onPreRender();
     colorBufferCache.onPreRender();
 
-    // Execute command
-    command(props);
+    if (props.length > 0) {
+      const { depth, blend } = props[0];
+      if (depth || blend) {
+        // If there are custom rendering states, we create a new command
+        // with those values to render the markers. NOTE: This assumes that all
+        // markers will be rendered with the same overrides, which might not
+        // be the case in the future.
+        regl({
+          ...pointCloudCommand,
+          depth,
+          blend,
+        })(props);
+      } else {
+        command(props);
+      }
+    }
 
     // Call 'onPostRender' for both caches after rendering a frame
     // This will delete any unused GPU buffer and prevent memory leaks.
@@ -306,12 +338,14 @@ function instancedGetChildrenForHitmap<
   });
 }
 
-type Props = { ...CommonCommandProps, children: PointCloud[] };
+type Props = { ...CommonCommandProps, children: PointCloud[], clearCachedMarkers?: boolean };
 
-export default function PointClouds({ children, ...rest }: Props) {
+export default function PointClouds({ children, clearCachedMarkers, ...rest }: Props) {
   const markerCache = useRef(new Map<Uint8Array, MemoizedMarker>());
   markerCache.current = updateMarkerCache(markerCache.current, children);
-  const decodedMarkers = [...markerCache.current.values()].map((decoded) => decoded.marker);
+  const decodedMarkers = !clearCachedMarkers
+    ? [...markerCache.current.values()].map((decoded) => decoded.marker)
+    : children.map((m) => decodeMarker(m));
   return (
     <Command getChildrenForHitmap={instancedGetChildrenForHitmap} {...rest} reglCommand={pointCloud}>
       {decodedMarkers}

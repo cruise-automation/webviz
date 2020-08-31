@@ -5,10 +5,11 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
+import fetchMock from "fetch-mock";
 import { createMemoryHistory } from "history";
 import { getLeaves } from "react-mosaic-component";
 
+import delay from "webviz-core/shared/delay";
 import {
   changePanelLayout,
   savePanelConfigs,
@@ -23,6 +24,7 @@ import {
   moveTab,
   startDrag,
   endDrag,
+  fetchLayout,
 } from "webviz-core/src/actions/panels";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import createRootReducer from "webviz-core/src/reducers";
@@ -35,7 +37,7 @@ import Storage from "webviz-core/src/util/Storage";
 const getStore = () => {
   const history = createMemoryHistory();
   const store = configureStore(createRootReducer(history), [], history);
-  store.checkState = (fn) => fn(store.getState().panels, store.getState().router);
+  store.checkState = (fn) => fn(store.getState().panels, store.getState().router, store.getState().fetchedLayout);
   // attach a helper method to the test store
   store.push = (path) => history.push(path);
   return store;
@@ -208,7 +210,7 @@ describe("state.panels", () => {
     });
   });
 
-  const testUrlCleanup = (desc, actionCreator) => {
+  const testLayoutKeptInUrl = (desc, actionCreator) => {
     it(desc, () => {
       const store = getStore();
       store.push("/?layout=foo");
@@ -217,32 +219,32 @@ describe("state.panels", () => {
       });
       store.dispatch(actionCreator());
       store.checkState((panels, router) => {
-        expect(router.location.search).toEqual("");
+        expect(router.location.search).toEqual("?layout=foo");
       });
 
       store.push("/?layout=foo&name=bar");
       store.dispatch(actionCreator());
       store.checkState((panels, router) => {
-        expect(router.location.search).toEqual("?name=bar");
+        expect(router.location.search).toEqual("?layout=foo&name=bar");
       });
 
       store.push("/?laYOut=zug&layout=foo&name=bar");
       store.dispatch(actionCreator());
       store.checkState((panels, router) => {
-        expect(router.location.search).toEqual("?laYOut=zug&name=bar");
+        expect(router.location.search).toEqual("?laYOut=zug&layout=foo&name=bar");
       });
     });
   };
 
-  testUrlCleanup("removes layout when config changes", () => {
+  testLayoutKeptInUrl("keeps layout in URL when config changes", () => {
     return savePanelConfigs({ configs: [{ id: "bar", config: { baz: true } }] });
   });
 
-  testUrlCleanup("removes layout when layout changes", () => {
+  testLayoutKeptInUrl("keeps layout in URL when layout changes", () => {
     return changePanelLayout({ layout: "foo!bar" });
   });
 
-  testUrlCleanup("removes layout when layout is imported", () => {
+  testLayoutKeptInUrl("keeps layout in URL when layout is imported", () => {
     return importPanelLayout({ layout: "foo!bar", savedProps: {} });
   });
 
@@ -536,6 +538,54 @@ describe("state.panels", () => {
     });
   });
 
+  it("updates fetchedLayout data and loading state, when fetching from layout-url param", async () => {
+    const store = getStore();
+    fetchMock.get("https://www.foo.com", { status: 200, body: { layout: { foo: "bar" } } });
+    store.dispatch(fetchLayout("?layout-url=https://www.foo.com"));
+    // Before fetch returns, fetchedLayout should be loading, but not yet have data.
+    store.checkState((panels, router, fetchedLayout) => {
+      expect(fetchedLayout).toEqual({ isLoading: true });
+    });
+    await delay(500);
+    store.checkState((panels, router, fetchedLayout) => {
+      expect(panels.layout).toEqual({ foo: "bar" });
+      expect(fetchedLayout.data).toEqual({ layout: { foo: "bar" } });
+      expect(fetchedLayout.isLoading).toEqual(false);
+    });
+    store.dispatch(fetchLayout("?layout-url=https://www.foo.com"));
+    // Before fetch returns, fetchedLayout should again be loading, but have cleared previously fetched data.
+    store.checkState((panels, router, fetchedLayout) => {
+      expect(fetchedLayout).toEqual({ isLoading: true });
+    });
+  });
+
+  it("updates fetchedLayout data and loading state, when fetching from layout-url param is unsuccessful", async () => {
+    const store = getStore();
+    fetchMock.get("https://www.bar.com", { status: 400 });
+    store.dispatch(fetchLayout("?layout-url=https://www.bar.com"));
+    // Before fetch returns, fetchedLayout should be loading, but not yet have data.
+    store.checkState((panels, router, fetchedLayout) => {
+      expect(fetchedLayout).toEqual({ isLoading: true });
+    });
+    await delay(500);
+    store.checkState((panels, router, fetchedLayout) => {
+      // Panels state should not have changed.
+      expect(panels.layout).toEqual(defaultGlobalState.layout);
+
+      // fetchedLayout should be down loading, but have no data.
+      expect(fetchedLayout).toEqual({ isLoading: false });
+    });
+    store.dispatch(fetchLayout("?layout-url=https://www.bar.com"));
+  });
+
+  it("loads a layout", () => {
+    const store = getStore();
+    store.dispatch({ type: "LOAD_FETCHED_LAYOUT", payload: { layout: { foo: "baz" } } });
+    store.checkState((panels) => {
+      expect(panels.layout).toEqual({ foo: "baz" });
+    });
+  });
+
   it("resets panels to a valid state when importing an empty layout", () => {
     const store = getStore();
     store.dispatch(importPanelLayout({ layout: undefined }));
@@ -547,6 +597,7 @@ describe("state.panels", () => {
         playbackConfig: { messageOrder: "receiveTime", speed: 0.2 },
         savedProps: {},
         userNodes: {},
+        fetchedLayout: { isLoading: false },
       });
     });
   });
@@ -691,14 +742,7 @@ describe("state.panels", () => {
     });
     store.dispatch(
       savePanelConfigs({
-        silent: true,
-        configs: [
-          {
-            id: "foo",
-            config: { bar: true },
-            defaultConfig: { bar: false },
-          },
-        ],
+        configs: [{ id: "foo", config: { bar: true }, defaultConfig: { bar: false } }],
       })
     );
     store.checkState((panels, router) => {

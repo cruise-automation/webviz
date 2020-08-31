@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import * as Sentry from "@sentry/browser";
 import { compact, flatMap, xor, uniq } from "lodash";
+import LZString from "lz-string";
 import {
   createRemoveUpdate,
   getLeaves,
@@ -16,6 +17,7 @@ import {
   type MosaicUpdate,
 } from "react-mosaic-component";
 
+import { type PanelsState } from "webviz-core/src/reducers/panels";
 import type { TabLocation, TabPanelConfig } from "webviz-core/src/types/layouts";
 import type {
   ConfigsPayload,
@@ -26,7 +28,14 @@ import type {
   MosaicDropTargetPosition,
   SavedProps,
 } from "webviz-core/src/types/panels";
-import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
+import {
+  TAB_PANEL_TYPE,
+  LAYOUT_QUERY_KEY,
+  LAYOUT_URL_QUERY_KEY,
+  PATCH_QUERY_KEY,
+} from "webviz-core/src/util/globalConstants";
+
+const jsondiffpatch = require("jsondiffpatch").create({});
 
 // given a panel type, create a unique id for a panel
 // with the type embedded within the id
@@ -432,4 +441,32 @@ export function getConfigsForNestedPanelsInsideTab(
     }
   });
   return configs;
+}
+
+export function getLayoutPatch(baseState: ?PanelsState, newState: ?PanelsState): string {
+  const delta = jsondiffpatch.diff(baseState, newState);
+  return delta ? JSON.stringify(delta) : "";
+}
+
+export function getUpdatedURLWithDecodedLayout(params: URLSearchParams): string {
+  const hasLayoutUrl = params.has(LAYOUT_URL_QUERY_KEY);
+  const layoutId = params.get(LAYOUT_QUERY_KEY) || params.get(LAYOUT_URL_QUERY_KEY) || "";
+  params.delete(LAYOUT_QUERY_KEY);
+  params.delete(LAYOUT_URL_QUERY_KEY);
+  return `?${hasLayoutUrl ? LAYOUT_URL_QUERY_KEY : LAYOUT_QUERY_KEY}=${decodeURIComponent(
+    layoutId
+  )}&${params.toString()}`;
+}
+
+export function getUpdatedURLWithPatch(diff: string): string {
+  const params = new URLSearchParams(window.location.search);
+  params.set(PATCH_QUERY_KEY, LZString.compressToEncodedURIComponent(diff));
+  return getUpdatedURLWithDecodedLayout(params);
+}
+
+export function getUpdatedURLWithNewVersion(name: string, version?: string): string {
+  const params = new URLSearchParams(window.location.search);
+  params.set(LAYOUT_QUERY_KEY, `${name}${version ? `@${version}` : ""}`);
+  params.delete(PATCH_QUERY_KEY);
+  return getUpdatedURLWithDecodedLayout(params);
 }

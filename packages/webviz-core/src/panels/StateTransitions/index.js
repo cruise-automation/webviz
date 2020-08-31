@@ -46,6 +46,7 @@ export const transitionableRosTypes = [
   "int64",
   "uint64",
   "string",
+  "json",
 ];
 
 const fontFamily = "'Inter UI', -apple-system, sans-serif";

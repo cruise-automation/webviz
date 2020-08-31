@@ -24,7 +24,7 @@ const log = new Logger(__filename);
 //
 // This is to ensure that other mechanisms that we have in place for either discarding old messages
 // or forcing an update of `player.lastSeekTime` are working properly.
-let lastMessages: ?(Message[]);
+let lastMessages: ?$ReadOnlyArray<Message>;
 let lastCurrentTime: ?Time;
 let lastMessageTime: ?Time;
 let lastMessageTopic: ?string;

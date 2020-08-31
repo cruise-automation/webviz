@@ -7,17 +7,23 @@
 //  You may not use this file except in compliance with the License.
 
 import { addTimeTypes, friendlyTypeName, typeSize } from "./messageDefinitionUtils";
+import type { RosValue } from "webviz-core/src/players/types";
+import type { BinaryHeader } from "webviz-core/src/types/BinaryMessages";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import type { ArrayView } from "webviz-core/src/util/binaryObjects";
 
 export const definitions: RosDatatypes = {
   "std_msgs/Header": {
     fields: [{ type: "uint32", name: "seq" }, { type: "time", name: "stamp" }, { type: "string", name: "frame_id" }],
   },
   "fake_msgs/HasComplexAndArray": {
-    fields: [{ type: "std_msgs/Header", name: "header" }, { type: "string", isArray: true, name: "stringArray" }],
+    fields: [
+      { type: "std_msgs/Header", name: "header", isComplex: true },
+      { type: "string", isArray: true, name: "stringArray" },
+    ],
   },
   "fake_msgs/HasComplexArray": {
-    fields: [{ type: "fake_msgs/HasComplexAndArray", name: "complexArray", isArray: true }],
+    fields: [{ type: "fake_msgs/HasComplexAndArray", name: "complexArray", isArray: true, isComplex: true }],
   },
   "fake_msgs/HasConstant": {
     fields: [{ type: "uint8", name: "const", isConstant: true, value: 1 }],
@@ -25,12 +31,80 @@ export const definitions: RosDatatypes = {
   "fake_msgs/HasByteArray": {
     fields: [{ type: "uint8", name: "byte_array", isArray: true }],
   },
+  "fake_msgs/HasJson": {
+    fields: [{ type: "json", name: "jsonField" }],
+  },
+  "fake_msgs/HasInt64s": {
+    fields: [{ type: "int64", name: "i64" }, { type: "uint64", name: "u64" }],
+  },
+  "fake_msgs/HasArrayOfEmpties": {
+    fields: [{ type: "fake_msgs/HasConstant", name: "arr", isComplex: true, isArray: true }],
+  },
+  "fake_msgs/ContainsEverything": {
+    fields: [
+      { type: "std_msgs/Header", name: "first", isComplex: true },
+      { type: "fake_msgs/HasComplexAndArray", name: "second", isComplex: true },
+      { type: "fake_msgs/HasComplexArray", name: "third", isComplex: true },
+      { type: "fake_msgs/HasConstant", name: "fourth", isComplex: true },
+      { type: "fake_msgs/HasByteArray", name: "fifth", isComplex: true },
+      { type: "fake_msgs/HasJson", name: "sixth", isComplex: true },
+      { type: "fake_msgs/HasInt64s", name: "seventh", isComplex: true },
+      { type: "fake_msgs/HasArrayOfEmpties", name: "eighth", isComplex: true },
+    ],
+  },
 };
 
+export type HasComplexAndArray = $ReadOnly<{|
+  header(): BinaryHeader,
+  stringArray(): ArrayView<string>,
+|}>;
+
+export type HasComplexArray = $ReadOnly<{|
+  complexArray(): ArrayView<HasComplexAndArray>,
+|}>;
+
+export type HasConstant = $ReadOnly<{|
+  const(): number,
+|}>;
+
+export type HasByteArray = $ReadOnly<{|
+  byte_array(): Uint8Array,
+|}>;
+
+export type HasJson = $ReadOnly<{|
+  jsonField(): RosValue,
+|}>;
+
+export type HasInt64s = $ReadOnly<{|
+  i64(): number,
+  u64(): number,
+|}>;
+
+export type HasArrayOfEmpties = $ReadOnly<{|
+  arr(): ArrayView<HasConstant>,
+|}>;
+
+export type ContainsEverything = $ReadOnly<{|
+  first(): BinaryHeader,
+  second(): HasComplexAndArray,
+  third(): HasComplexArray,
+  fourth(): HasConstant,
+  fifth(): HasByteArray,
+  sixth(): HasJson,
+  seventh(): HasInt64s,
+  eighth(): HasArrayOfEmpties,
+|}>;
+
 describe("friendlyTypeName", () => {
-  it("handles removes slashes from primitives and message types", () => {
+  it("removes slashes from primitives and message types", () => {
     expect(friendlyTypeName("time")).toBe("time");
     expect(friendlyTypeName("std_msgs/Header")).toBe("std_msgs_Header");
+  });
+
+  it("removes more than one slash when several are present", () => {
+    expect(friendlyTypeName("webviz_msgs/traffic_light_lane_state/directive_state")).toBe(
+      "webviz_msgs_traffic_light_lane_state_directive_state"
+    );
   });
 });
 

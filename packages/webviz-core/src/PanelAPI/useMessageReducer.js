@@ -29,13 +29,14 @@ function useReducedValue<T>(
   restore: (?T) => T,
   addMessage?: MessageReducer<T>,
   addMessages?: MessagesReducer<T>,
+  addBobjects?: MessagesReducer<T>,
   lastSeekTime: number,
   messages: Message[]
 ): T {
   const reducedValueRef = useRef<?T>();
 
   const shouldClear = useChangeDetector([lastSeekTime], false);
-  const reducersChanged = useChangeDetector([restore, addMessage, addMessages], false);
+  const reducersChanged = useChangeDetector([restore, addBobjects, addMessage, addMessages], false);
   const messagesChanged = useChangeDetector([messages], true);
 
   if (!reducedValueRef.current || shouldClear) {
@@ -48,7 +49,11 @@ function useReducedValue<T>(
 
   // Use the addMessage reducer to process new messages.
   if (messagesChanged) {
-    if (addMessages) {
+    if (addBobjects) {
+      if (messages.length > 0) {
+        reducedValueRef.current = addBobjects(reducedValueRef.current, messages);
+      }
+    } else if (addMessages) {
       if (messages.length > 0) {
         reducedValueRef.current = addMessages(reducedValueRef.current, messages);
       }
@@ -66,21 +71,24 @@ function useReducedValue<T>(
 }
 
 // Compute the subscriptions to be requested from the player.
-function useSubscriptions(options: {|
+function useSubscriptions({
+  requestedTopics,
+  panelType,
+  preloadingFallback,
+  format,
+}: {|
   requestedTopics: $ReadOnlyArray<RequestedTopic>,
   panelType: ?string,
-  onlyLoadInBlocks: ?boolean,
+  preloadingFallback: boolean,
+  format: "parsedMessages" | "bobjects",
 |}): SubscribePayload[] {
   return useMemo(
     () => {
-      const commonFields = {};
-      if (options.panelType) {
-        commonFields.requester = { type: "panel", name: options.panelType };
+      const commonFields: $Shape<SubscribePayload> = { preloadingFallback, format };
+      if (panelType) {
+        commonFields.requester = { type: "panel", name: panelType };
       }
-      if (options.onlyLoadInBlocks) {
-        commonFields.onlyLoadInBlocks = options.onlyLoadInBlocks;
-      }
-      return options.requestedTopics.map((request) => {
+      return requestedTopics.map((request) => {
         if (typeof request === "object") {
           // We might be able to remove the `encoding` field from the protocol entirely, and only
           // use scale. Or we can deal with scaling down in a different way altogether, such as having
@@ -92,7 +100,7 @@ function useSubscriptions(options: {|
         return { ...commonFields, topic: request };
       });
     },
-    [options.panelType, options.onlyLoadInBlocks, options.requestedTopics]
+    [preloadingFallback, format, panelType, requestedTopics]
   );
 }
 
@@ -107,13 +115,15 @@ type Props<T> = {|
   restore: (?T) => T,
   addMessage?: MessageReducer<T>,
   addMessages?: MessagesReducer<T>,
+  addBobjects?: MessagesReducer<T>,
 
-  // If we should only load these topics in blocks, set this variable. This means that addMessage
-  // won't receive these messages if they're instead available in `useBlocksByTopic`.
-  // TODO(JP): Eventually we should deprecate these multiple ways of getting data, and we should
+  // If the messages are in blocks and _all_ subscribers set `preloadingFallback`, addMessage
+  // won't receive these messages. This is a useful optimization for "preloading fallback"
+  // subscribers.
+  // TODO(steel): Eventually we should deprecate these multiple ways of getting data, and we should
   // always have blocks available. Then `useMessageReducer` should just become a wrapper around
   // `useBlocksByTopic` for backwards compatibility.
-  onlyLoadInBlocks?: ?boolean,
+  preloadingFallback?: ?boolean,
 |};
 
 export function useMessageReducer<T>(props: Props<T>): T {
@@ -121,8 +131,8 @@ export function useMessageReducer<T>(props: Props<T>): T {
   const { type: panelType = undefined } = useContext(PanelContext) || {};
 
   // only one of the add message callbacks should be provided
-  if (props.addMessages ? props.addMessage : !props.addMessage) {
-    throw new Error("useMessageReducer must be provided with either addMessages or addMessage and not both");
+  if ([props.addMessage, props.addMessages, props.addBobjects].filter(Boolean).length !== 1) {
+    throw new Error("useMessageReducer must be provided with exactly one of addMessage, addMessages or addBobjects");
   }
 
   useShouldNotChangeOften(props.restore, () =>
@@ -152,7 +162,13 @@ export function useMessageReducer<T>(props: Props<T>): T {
     () => new Set(requestedTopics.map((req) => (typeof req === "object" ? req.topic : req))),
     [requestedTopics]
   );
-  const subscriptions = useSubscriptions({ requestedTopics, panelType, onlyLoadInBlocks: props.onlyLoadInBlocks });
+  const format = props.addBobjects != null ? "bobjects" : "parsedMessages";
+  const subscriptions = useSubscriptions({
+    requestedTopics,
+    panelType,
+    preloadingFallback: !!props.preloadingFallback,
+    format,
+  });
   const setSubscriptions = useMessagePipeline(
     useCallback(({ setSubscriptions: pipelineSetSubscriptions }) => pipelineSetSubscriptions, [])
   );
@@ -167,30 +183,41 @@ export function useMessageReducer<T>(props: Props<T>): T {
 
   // Keep a reference to the last messages we processed to ensure we never process them more than once.
   // If the topics we care about change, the player should send us new messages soon anyway (via backfill if paused).
-  const lastProcessedMessagesRef = useRef<?(Message[])>();
+  const lastProcessedMessagesRef = useRef<?$ReadOnlyArray<Message>>();
   // Keep a ref to the latest requested topics we were rendered with, because the useMessagePipeline
   // selector's dependencies aren't allowed to change.
   const latestRequestedTopicsRef = useRef(requestedTopicsSet);
   latestRequestedTopicsRef.current = requestedTopicsSet;
   const messages = useMessagePipeline<Message[]>(
-    useCallback(({ playerState: { activeData } }) => {
-      if (!activeData) {
-        return NO_MESSAGES; // identity must not change to avoid unnecessary re-renders
-      }
-      if (lastProcessedMessagesRef.current === activeData.messages) {
-        return useContextSelector.BAILOUT;
-      }
-      const filteredMessages = activeData.messages.filter(({ topic }) => latestRequestedTopicsRef.current.has(topic));
-      // Bail out if we didn't want any of these messages, but not if this is our first render
-      const shouldBail = lastProcessedMessagesRef.current && filteredMessages.length === 0;
-      lastProcessedMessagesRef.current = activeData.messages;
-      return shouldBail ? useContextSelector.BAILOUT : filteredMessages;
-    }, [])
+    useCallback(
+      ({ playerState: { activeData } }) => {
+        if (!activeData) {
+          return NO_MESSAGES; // identity must not change to avoid unnecessary re-renders
+        }
+        const messageData = format === "bobjects" ? activeData.bobjects : activeData.messages;
+        if (lastProcessedMessagesRef.current === messageData) {
+          return useContextSelector.BAILOUT;
+        }
+        const filteredMessages = messageData.filter(({ topic }) => latestRequestedTopicsRef.current.has(topic));
+        // Bail out if we didn't want any of these messages, but not if this is our first render
+        const shouldBail = lastProcessedMessagesRef.current && filteredMessages.length === 0;
+        lastProcessedMessagesRef.current = messageData;
+        return shouldBail ? useContextSelector.BAILOUT : filteredMessages;
+      },
+      [format]
+    )
   );
 
   const lastSeekTime = useMessagePipeline(
     useCallback(({ playerState: { activeData } }) => (activeData ? activeData.lastSeekTime : 0), [])
   );
 
-  return useReducedValue<T>(props.restore, props.addMessage, props.addMessages, lastSeekTime, messages);
+  return useReducedValue<T>(
+    props.restore,
+    props.addMessage,
+    props.addMessages,
+    props.addBobjects,
+    lastSeekTime,
+    messages
+  );
 }

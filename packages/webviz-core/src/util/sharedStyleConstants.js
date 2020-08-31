@@ -70,11 +70,13 @@ export const colors = {
   PRIMARY: baseColors.PURPLE,
   TEXT_MUTED: baseColors.GRAY,
   HIGHLIGHT: baseColors.BLUE,
+  HIGHLIGHT_MUTED: tinyColor(baseColors.BLUE)
+    .setAlpha(0.3)
+    .toRgbString(),
   // TODO:(Audrey): !!! need design review. Don't use these colors until TopicGrouping feature is finished.
   HOVER_BACKGROUND_COLOR: tinyColor(baseColors.PURPLE)
     .setAlpha(0.2)
     .toRgbString(),
-
   DISABLED: baseColors.DARK9,
   TEXTL1: baseColors.LIGHT2,
   ACTION: baseColors.BLUE,
@@ -82,6 +84,9 @@ export const colors = {
   TOOLBAR: baseColors.DARK2,
   TOOLBARL1: baseColors.DARK4,
   BRIGHT_YELLOW: "#f6ff00",
+  BORDER_LIGHT: tinyColor(baseColors.LIGHT)
+    .setAlpha(0.1)
+    .toRgbString(),
 };
 
 export const textSize = {

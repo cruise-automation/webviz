@@ -10,9 +10,13 @@ import { Time } from "rosbag";
 
 import { type DataProvider, type InitializationResult } from "./types";
 import RpcDataProvider from "webviz-core/src/dataProviders/RpcDataProvider";
-import type { DataProviderDescriptor, ExtensionPoint } from "webviz-core/src/dataProviders/types";
+import type {
+  DataProviderDescriptor,
+  ExtensionPoint,
+  GetMessagesResult,
+  GetMessagesTopics,
+} from "webviz-core/src/dataProviders/types";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { Message } from "webviz-core/src/players/types";
 import Rpc from "webviz-core/src/util/Rpc";
 
 const params = new URLSearchParams(window.location.search);
@@ -54,7 +58,7 @@ export default class WorkerDataProvider implements DataProvider {
     return this._provider.initialize(extensionPoint);
   }
 
-  getMessages(start: Time, end: Time, topics: string[]): Promise<Message[]> {
+  getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> {
     return this._provider.getMessages(start, end, topics);
   }
 

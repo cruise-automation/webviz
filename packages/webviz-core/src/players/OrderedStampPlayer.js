@@ -8,18 +8,28 @@
 import { partition, uniq } from "lodash";
 import { type Time, TimeUtil } from "rosbag";
 
-import type {
-  AdvertisePayload,
-  Message,
-  PublishPayload,
-  SubscribePayload,
-  Player,
-  PlayerState,
-  PlayerWarnings,
+import {
+  cast,
+  type AdvertisePayload,
+  type BobjectMessage,
+  type Message,
+  type PublishPayload,
+  type SubscribePayload,
+  type Player,
+  type PlayerState,
+  type PlayerWarnings,
 } from "webviz-core/src/players/types";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
+import type { BinaryStampedMessage } from "webviz-core/src/types/BinaryMessages";
 import type { UserNodes } from "webviz-core/src/types/panels";
-import { clampTime, isTime, type TimestampMethod } from "webviz-core/src/util/time";
+import { deepParse } from "webviz-core/src/util/binaryObjects";
+import {
+  clampTime,
+  compareBinaryTimes,
+  isTime,
+  maybeGetBobjectHeaderStamp,
+  type TimestampMethod,
+} from "webviz-core/src/util/time";
 
 // As a compromise between playback buffering required and correctness (as well as our ability to
 // play near the ends of bags), we assume messages' headers are always between 0s and 1s earlier
@@ -32,6 +42,7 @@ export default class OrderedStampPlayer implements Player {
   // When messageOrder is "headerStamp", contains buffered, unsorted messages with receiveTime "in
   // the near future". Only messages with headers are stored.
   _messageBuffer: Message[] = [];
+  _bobjectBuffer: BobjectMessage[] = [];
   // Used to invalidate the cache. (Also signals subscription changes etc).
   _lastSeekId: ?number = undefined;
   // Our best guess of "now" in case we need to force a backfill.
@@ -59,6 +70,7 @@ export default class OrderedStampPlayer implements Player {
       }
 
       if (activeData.lastSeekTime !== this._lastSeekId) {
+        this._bobjectBuffer = [];
         this._messageBuffer = [];
         this._lastSeekId = activeData.lastSeekTime;
         this._topicsWithoutHeadersSinceSeek = new Set<string>();
@@ -69,11 +81,14 @@ export default class OrderedStampPlayer implements Player {
       const [newMessagesWithHeaders, newMessagesWithoutHeaders] = partition(activeData.messages, (message) =>
         isTime(message.message.header?.stamp)
       );
+      const [newBobjectsWithHeaders, newBobjectsWithoutHeaders] = partition(activeData.bobjects, ({ message }) =>
+        maybeGetBobjectHeaderStamp(message)
+      );
       let newMissingTopic = false;
-      newMessagesWithoutHeaders.forEach((message) => {
-        if (!this._topicsWithoutHeadersSinceSeek.has(message.topic)) {
+      newMessagesWithoutHeaders.concat(newBobjectsWithoutHeaders).forEach(({ topic }) => {
+        if (!this._topicsWithoutHeadersSinceSeek.has(topic)) {
           newMissingTopic = true;
-          this._topicsWithoutHeadersSinceSeek.add(message.topic);
+          this._topicsWithoutHeadersSinceSeek.add(topic);
         }
       });
       if (newMissingTopic || activeData.playerWarnings !== this._previousUpstreamWarnings) {
@@ -86,19 +101,30 @@ export default class OrderedStampPlayer implements Player {
         };
       }
 
-      const extendedBuffer = [...this._messageBuffer, ...newMessagesWithHeaders];
+      const extendedMessageBuffer = this._messageBuffer.concat(newMessagesWithHeaders);
+      const extendedBobjectBuffer = this._bobjectBuffer.concat(newBobjectsWithHeaders);
       // output messages older than this threshold (ie, send all messages up until the threshold
       // time)
       const thresholdTime = {
         sec: activeData.currentTime.sec - BUFFER_DURATION_SECS,
         nsec: activeData.currentTime.nsec,
       };
-      const [messages, newBuffer] = partition(extendedBuffer, (message) =>
+      const [messages, newMessageBuffer] = partition(extendedMessageBuffer, (message) =>
         TimeUtil.isLessThan(message.message.header.stamp, thresholdTime)
       );
-      this._messageBuffer = newBuffer;
+      const [bobjects, newBobjectBuffer] = partition(extendedBobjectBuffer, (message) => {
+        const stampedMessage = cast<BinaryStampedMessage>(message.message);
+        return TimeUtil.isLessThan(deepParse(stampedMessage.header().stamp()), thresholdTime);
+      });
+      this._messageBuffer = newMessageBuffer;
+      this._bobjectBuffer = newBobjectBuffer;
 
       messages.sort((a, b) => TimeUtil.compare(a.message.header.stamp, b.message.header.stamp));
+      bobjects.sort((a, b) => {
+        const stampedA = cast<BinaryStampedMessage>(a.message);
+        const stampedB = cast<BinaryStampedMessage>(b.message);
+        return compareBinaryTimes(stampedA.header().stamp(), stampedB.header().stamp());
+      });
       const currentTime = clampTime(thresholdTime, activeData.startTime, activeData.endTime);
       this._currentTime = currentTime;
       return listener({
@@ -106,6 +132,7 @@ export default class OrderedStampPlayer implements Player {
         activeData: {
           ...activeData,
           messages,
+          bobjects,
           messageOrder: "headerStamp",
           currentTime,
           endTime: clampTime(

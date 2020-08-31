@@ -45,7 +45,7 @@ type Props = {|
   useModal?: boolean,
 |};
 type ColorPickerSettingsPanelProps = {|
-  color: ?string,
+  color: ?Color,
   onChange: (newColor: Color) => void,
 |};
 

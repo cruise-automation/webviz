@@ -97,3 +97,10 @@ export const noNestedAny = {
   source: Sources.DatatypeExtraction,
   code: ErrorCodes.DatatypeExtraction.NO_NESTED_ANY,
 };
+
+export const noMappedTypes = {
+  severity: DiagnosticSeverity.Error,
+  message: "MappedTypes such as Record<Keys,Type> are not supported.",
+  source: Sources.DatatypeExtraction,
+  code: ErrorCodes.DatatypeExtraction.NO_MAPPED_TYPES,
+};

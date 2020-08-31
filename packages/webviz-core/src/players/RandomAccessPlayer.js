@@ -5,11 +5,12 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { isEqual } from "lodash";
+import { isEqual, partition } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
 
 import delay from "webviz-core/shared/delay";
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import { rootGetDataProvider } from "webviz-core/src/dataProviders/rootGetDataProvider";
 import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
@@ -17,6 +18,7 @@ import filterMap from "webviz-core/src/filterMap";
 import NoopMetricsCollector from "webviz-core/src/players/NoopMetricsCollector";
 import {
   type AdvertisePayload,
+  type BobjectMessage,
   type Message,
   type Player,
   PlayerCapabilities,
@@ -97,10 +99,17 @@ export default class RandomAccessPlayer implements Player {
   // In other words, we may emit messages that <= currentTime, but not after currentTime.
   _currentTime: Time;
   _lastTickMillis: ?number;
-  _lastSeekTime: number = Date.now();
+  // The last time a "seek" was started. This is used to cancel async operations, such as seeks or ticks, when a seek
+  // happens while they are ocurring.
+  _lastSeekStartTime: number = Date.now();
+  // This is the "lastSeekTime" emitted in the playerState. It is not the same as the _lastSeekStartTime because we can
+  // start a seek and not end up emitting it, or emit something else while we are requesting messages for the seek. The
+  // DataProvider's `progressCallback` can cause an emit at any time, for example.
+  // We only want to set the "lastSeekTime" exactly when we emit the messages coming from the seek.
+  _lastSeekEmitTime: number = this._lastSeekStartTime;
   _cancelSeekBackfill: boolean = false;
-  _subscribedTopics: Set<string> = new Set();
-  _topicsToOnlyLoadInBlocks: Set<string> = new Set();
+  _parsedSubscribedTopics: Set<string> = new Set();
+  _bobjectSubscribedTopics: Set<string> = new Set();
   _providerTopics: Topic[] = [];
   _providerDatatypes: RosDatatypes = {};
   _metricsCollector: PlayerMetricsCollectorInterface;
@@ -110,12 +119,15 @@ export default class RandomAccessPlayer implements Player {
   _progress: Progress = Object.freeze({});
   _id: string = uuid.v4();
   _messages: Message[] = [];
+  _bobjects: $ReadOnlyArray<BobjectMessage> = [];
   _messageOrder: TimestampMethod = "receiveTime";
   _hasError = false;
   _closed = false;
   _seekToTime: ?Time;
   _lastRangeMillis: ?number;
   _messageDefinitionsByTopic: MessageDefinitionsByTopic;
+  _preloadingEnabled: boolean;
+  _bobjectsEnabled: boolean;
 
   constructor(
     providerDescriptor: DataProviderDescriptor,
@@ -128,6 +140,9 @@ export default class RandomAccessPlayer implements Player {
     }
     this._metricsCollector = metricsCollector || new NoopMetricsCollector();
     this._seekToTime = seekToTime;
+    this._preloadingEnabled = getExperimentalFeature("preloading");
+    this._bobjectsEnabled = getExperimentalFeature("bobject3dPanel");
+    this._metricsCollector.playerConstructed();
 
     document.addEventListener("visibilitychange", this._handleDocumentVisibilityChange, false);
   }
@@ -164,7 +179,11 @@ export default class RandomAccessPlayer implements Player {
       .initialize({
         progressCallback: (progress: Progress) => {
           this._progress = progress;
-          this._emitState();
+          // Don't emit progress when we are playing, because we will emit whenever we get new messages anyways and
+          // emitting unnecessarily will reduce playback performance.
+          if (!this._isPlaying) {
+            this._emitState();
+          }
         },
         reportMetadataCallback: (metadata: DataProviderMetadata) => {
           switch (metadata.type) {
@@ -237,8 +256,10 @@ export default class RandomAccessPlayer implements Player {
     }
 
     const messages = this._messages;
+    const bobjects = this._bobjects;
     this._messages = [];
-    if (messages.length > 0) {
+    this._bobjects = [];
+    if (messages.length > 0 || bobjects.length > 0) {
       // If we're outputting any messages, we need to cancel any in-progress backfills. Otherwise
       // we'd be "traveling back in time".
       this._cancelSeekBackfill = true;
@@ -272,13 +293,14 @@ export default class RandomAccessPlayer implements Player {
         ? undefined
         : {
             messages,
+            bobjects,
             messageOrder: this._messageOrder,
             currentTime: clampTime(this._currentTime, this._start, this._end),
             startTime: this._start,
             endTime: this._end,
             isPlaying: this._isPlaying,
             speed: this._speed,
-            lastSeekTime: this._lastSeekTime,
+            lastSeekTime: this._lastSeekEmitTime,
             topics: this._providerTopics,
             datatypes: this._providerDatatypes,
             messageDefinitionsByTopic: this._messageDefinitionsByTopic,
@@ -330,15 +352,15 @@ export default class RandomAccessPlayer implements Player {
       return;
     }
 
-    const seekTime = this._lastSeekTime;
+    const seekTime = this._lastSeekStartTime;
     const start: Time = clampTime(TimeUtil.add(this._currentTime, { sec: 0, nsec: 1 }), this._start, this._end);
     const end: Time = clampTime(TimeUtil.add(this._currentTime, fromMillis(rangeMillis)), this._start, this._end);
-    const messages = await this._getMessages(start, end);
+    const { parsedMessages: messages, bobjects } = await this._getMessages(start, end);
     await this._emitState.currentPromise;
 
-    // if we seeked while reading the do not emit messages
+    // if we seeked while reading then do not emit messages
     // just start reading again from the new seek position
-    if (this._lastSeekTime !== seekTime) {
+    if (this._lastSeekStartTime !== seekTime) {
       return;
     }
 
@@ -352,6 +374,7 @@ export default class RandomAccessPlayer implements Player {
     }
 
     this._messages = this._messages.concat(messages);
+    this._bobjects = this._bobjects.concat(bobjects);
     this._emitState();
   }
 
@@ -372,59 +395,85 @@ export default class RandomAccessPlayer implements Player {
     }
   });
 
-  async _getMessages(start: Time, end: Time): Promise<Message[]> {
-    const topics = getSanitizedTopics(this._subscribedTopics, this._providerTopics);
-    if (topics.length === 0) {
-      return [];
+  async _getMessages(
+    start: Time,
+    end: Time
+  ): Promise<{| parsedMessages: Message[], bobjects: $ReadOnlyArray<BobjectMessage> |}> {
+    const parsedTopics = getSanitizedTopics(this._parsedSubscribedTopics, this._providerTopics);
+    const bobjectTopics = getSanitizedTopics(this._bobjectSubscribedTopics, this._providerTopics);
+    if (parsedTopics.length + bobjectTopics.length === 0) {
+      return { parsedMessages: [], bobjects: [] };
     }
-    const messages = await this._provider.getMessages(start, end, topics, {
-      topicsToOnlyLoadInBlocks: this._topicsToOnlyLoadInBlocks,
+    const messages = await this._provider.getMessages(start, end, {
+      bobjects: bobjectTopics,
+      parsedMessages: parsedTopics,
     });
+    const { parsedMessages, bobjects } = messages;
+    if (parsedMessages == null || bobjects == null) {
+      const messageTypes = Object.keys(messages)
+        .filter((type) => messages[type] != null)
+        .join("\n");
+      sendNotification(
+        "Bad set of message types in RandomAccessPlayer",
+        `Message types: ${messageTypes}`,
+        "app",
+        "error"
+      );
+      return { parsedMessages: [], bobjects: [] };
+    }
 
     // It is very important that we record first emitted messages here, since
     // `_emitState` is awaited on `requestAnimationFrame`, which will not be
     // invoked unless a user's browser is focused on the current session's tab.
     // Moreover, there is a disproportionally small amount of time between when we procure
     // messages here and when they are set to playerState.
-    if (messages.length) {
+    if (parsedMessages.length || bobjects.length) {
       this._metricsCollector.recordTimeToFirstMsgs();
     }
-    return filterMap(messages, (message) => {
-      if (!topics.includes(message.topic)) {
-        sendNotification(
-          `Unexpected topic encountered: ${message.topic}; skipped message`,
-          `Full message details: ${JSON.stringify(message)}`,
-          "app",
-          "warn"
-        );
-        return undefined;
-      }
-      const topic: ?Topic = this._providerTopics.find((t) => t.name === message.topic);
-      if (!topic) {
-        sendNotification(
-          `Could not find topic for message ${message.topic}; skipped message`,
-          `Full message details: ${JSON.stringify(message)}`,
-          "app",
-          "warn"
-        );
-        return undefined;
-      }
-      if (!topic.datatype) {
-        sendNotification(
-          `Missing datatype for topic: ${message.topic}; skipped message`,
-          `Full message details: ${JSON.stringify(message)}`,
-          "app",
-          "warn"
-        );
-        return undefined;
-      }
+    const filterMessages = (msgs, topics) =>
+      filterMap(msgs, (message) => {
+        if (!topics.includes(message.topic)) {
+          sendNotification(
+            `Unexpected topic encountered: ${message.topic}; skipped message`,
+            `Full message details: ${JSON.stringify(message)}`,
+            "app",
+            "warn"
+          );
+          return undefined;
+        }
+        const topic: ?Topic = this._providerTopics.find((t) => t.name === message.topic);
+        if (!topic) {
+          sendNotification(
+            `Could not find topic for message ${message.topic}; skipped message`,
+            `Full message details: ${JSON.stringify(message)}`,
+            "app",
+            "warn"
+          );
+          return undefined;
+        }
+        if (!topic.datatype) {
+          sendNotification(
+            `Missing datatype for topic: ${message.topic}; skipped message`,
+            `Full message details: ${JSON.stringify(message)}`,
+            "app",
+            "warn"
+          );
+          return undefined;
+        }
 
-      return {
-        topic: message.topic,
-        receiveTime: message.receiveTime,
-        message: message.message,
-      };
-    });
+        return {
+          topic: message.topic,
+          receiveTime: message.receiveTime,
+          message: message.message,
+        };
+      });
+    return {
+      parsedMessages: filterMessages(parsedMessages, parsedTopics),
+      // The data providers send ROS binary messages in place of bobjects when the flag is off. This
+      // is useful for some tests, but causes some havoc in practice when people assume `!isBobject`
+      // means "is parsed" in panels and nodes.
+      bobjects: this._bobjectsEnabled ? filterMessages(bobjects, bobjectTopics) : [],
+    };
   }
 
   startPlayback(): void {
@@ -470,10 +519,11 @@ export default class RandomAccessPlayer implements Player {
 
   _seekPlaybackInternal = debouncePromise(async (backfillDuration: ?Time) => {
     const seekTime = Date.now();
-    this._lastSeekTime = seekTime;
+    this._lastSeekStartTime = seekTime;
     this._cancelSeekBackfill = false;
     // cancel any queued _emitState that might later emit messages from before we seeked
     this._messages = [];
+    this._bobjects = [];
 
     // Backfill a few hundred milliseconds of data if we're paused so panels have something to show.
     // If we're playing, we'll give the panels some data soon anyway.
@@ -483,15 +533,20 @@ export default class RandomAccessPlayer implements Player {
     const backfillStart = clampTime(subtractTimes(this._currentTime, totalBackfillDuration), this._start, this._end);
     // Only getMessages if we have some messages to get.
     if (backfillDuration || !this._isPlaying) {
-      const messages = await this._getMessages(backfillStart, this._currentTime);
+      const { parsedMessages: messages, bobjects } = await this._getMessages(backfillStart, this._currentTime);
       // Only emit the messages if we haven't seeked again / emitted messages since we
       // started loading them. Note that for the latter part just checking for `isPlaying`
       // is not enough because the user might have started playback and then paused again!
       // Therefore we really need something like `this._cancelSeekBackfill`.
-      if (this._lastSeekTime === seekTime && !this._cancelSeekBackfill) {
+      if (this._lastSeekStartTime === seekTime && !this._cancelSeekBackfill) {
         this._messages = messages;
+        this._bobjects = bobjects;
+        this._lastSeekEmitTime = seekTime;
         await this._emitState();
       }
+    } else {
+      // If we are playing, make sure we set this emit time so that consumers will know that we seeked.
+      this._lastSeekEmitTime = seekTime;
     }
   });
 
@@ -510,16 +565,17 @@ export default class RandomAccessPlayer implements Player {
   }
 
   setSubscriptions(newSubscriptions: SubscribePayload[]): void {
-    const subscribedTopics = new Set(newSubscriptions.map(({ topic }) => topic));
-    const topicsToOnlyLoadInBlocks = new Set(subscribedTopics);
-    for (const subscription of newSubscriptions) {
-      if (!subscription.onlyLoadInBlocks) {
-        topicsToOnlyLoadInBlocks.delete(subscription.topic);
-      }
-    }
+    const [bobjectSubscriptions, parsedSubscriptions] = partition(
+      // Anything we can get from the data providers will be in the blocks. Subscriptions for
+      // preloading-fallback codepaths are only needed when preloading is disabled, or for other
+      // data sources without blocks (like nodes and websocket.)
+      newSubscriptions.filter(({ preloadingFallback }) => !this._preloadingEnabled || !preloadingFallback),
+      ({ format }) => format === "bobjects"
+    );
+    this._parsedSubscribedTopics = new Set(parsedSubscriptions.map(({ topic }) => topic));
+    this._bobjectSubscribedTopics = new Set(bobjectSubscriptions.map(({ topic }) => topic));
 
-    this._subscribedTopics = subscribedTopics;
-    this._topicsToOnlyLoadInBlocks = topicsToOnlyLoadInBlocks;
+    this._metricsCollector.setSubscriptions(newSubscriptions);
   }
 
   requestBackfill() {

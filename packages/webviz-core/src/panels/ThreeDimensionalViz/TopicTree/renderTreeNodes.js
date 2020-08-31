@@ -11,6 +11,7 @@ import React, { type Node } from "react";
 import styled from "styled-components";
 
 import renderNamespaceNodes, { type NamespaceNode } from "./renderNamespaceNodes";
+import { renderStyleExpressionNodes } from "./renderStyleExpressionNodes";
 import TreeNodeRow from "./TreeNodeRow";
 import type {
   DerivedCustomSettingsByKey,
@@ -29,6 +30,7 @@ import type {
 } from "./types";
 import { generateNodeKey } from "./useTopicTree";
 import filterMap from "webviz-core/src/filterMap";
+import type { LinkedGlobalVariable } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { canEditNamespaceOverrideColorDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/index";
 import { TOPIC_DISPLAY_MODES } from "webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicViewModeSelector";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
@@ -94,6 +96,7 @@ type Props = {|
   topicDisplayMode: TopicDisplayMode,
   visibleTopicsCountByKey: VisibleTopicsCountByKey,
   width: number,
+  linkedGlobalVariablesByTopic: { [string]: LinkedGlobalVariable[] },
 |};
 
 export type TreeUINode = {| title: Node, key: string, children?: TreeUINode[], disabled?: boolean |};
@@ -193,6 +196,7 @@ export default function renderTreeNodes({
   topicDisplayMode,
   visibleTopicsCountByKey,
   width,
+  linkedGlobalVariablesByTopic,
 }: Props): TreeUINode[] {
   const titleWidth = width - SWITCHER_WIDTH;
   return children
@@ -282,7 +286,17 @@ export default function renderTreeNodes({
       );
 
       const childrenNodes = [];
-      if (item.type === "topic" && namespaceNodes.length > 0) {
+      if (item.type === "topic") {
+        childrenNodes.push(
+          ...renderStyleExpressionNodes({
+            isXSWidth,
+            topicName,
+            hasFeatureColumn,
+            linkedGlobalVariablesByTopic,
+            width: titleWidth,
+          })
+        );
+
         childrenNodes.push(
           ...renderNamespaceNodes({
             children: namespaceNodes.sort(naturalSort("namespace")),
@@ -317,6 +331,7 @@ export default function renderTreeNodes({
             visibleTopicsCountByKey,
             width: titleWidth,
             filterText,
+            linkedGlobalVariablesByTopic,
           })
         );
       }

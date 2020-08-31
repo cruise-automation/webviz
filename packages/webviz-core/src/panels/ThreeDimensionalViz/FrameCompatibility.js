@@ -7,12 +7,52 @@
 //  You may not use this file except in compliance with the License.
 
 import hoistNonReactStatics from "hoist-non-react-statics";
-import { uniq } from "lodash";
+import { partition, uniq } from "lodash";
 import * as React from "react";
 
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Message, Topic } from "webviz-core/src/players/types";
-import { useChangeDetector } from "webviz-core/src/util/hooks";
+import { useChangeDetector, useDeepMemo } from "webviz-core/src/util/hooks";
+import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
+
+const NO_SUPPORTED_TYPES = new Set<string>([]);
+
+const useFrame = (
+  topics: string[],
+  callbackKey: "addMessages" | "addBobjects"
+): {| cleared: boolean, frame: { [topic: string]: $ReadOnlyArray<Message> } |} => {
+  // NOTE(JP): This is a huge abuse of the `useMessageReducer` API. Never use `useMessageReducer`
+  // in this way yourself!! `restore` and `addMessage` should be pure functions and not have
+  // side effects!
+  const frame = React.useRef({});
+  const lastClearTime = PanelAPI.useMessageReducer({
+    topics,
+    restore: React.useCallback(
+      () => {
+        frame.current = {};
+        return Date.now();
+      },
+      [frame]
+    ),
+    [callbackKey]: React.useCallback(
+      (time, messages: $ReadOnlyArray<Message>) => {
+        for (const message of messages) {
+          frame.current[message.topic] = frame.current[message.topic] || [];
+          frame.current[message.topic].push(message);
+        }
+        return time;
+      },
+      [frame]
+    ),
+  });
+
+  const cleared = useChangeDetector([lastClearTime], false);
+  const latestFrame = frame.current;
+  frame.current = {};
+  return { cleared, frame: latestFrame };
+};
 
 // This higher-order component provides compatibility between the old way of Panels receiving
 // messages, using "frames" and keeping state themselves, and the new `useMessageReducer` API which
@@ -28,38 +68,25 @@ export function FrameCompatibilityDEPRECATED<Props>(ChildComponent: React.Compon
       setTopics(uniq(newTopics.concat(baseTopics || [])));
     }, []);
 
-    // NOTE(JP): This is a huge abuse of the `useMessageReducer` API. Never use `useMessageReducer`
-    // in this way yourself!! `restore` and `addMessage` should be pure functions and not have
-    // side effects!
-    const frame = React.useRef({});
-    const lastClearTime = PanelAPI.useMessageReducer({
+    const supportedBobjectTypes = useExperimentalFeature("bobject3dPanel")
+      ? getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_BOBJECT_MARKER_DATATYPES
+      : NO_SUPPORTED_TYPES;
+    const stableTopics = useDeepMemo(props.topics);
+    const topicsByName = React.useMemo(() => getTopicsByTopicName(stableTopics), [stableTopics]);
+    const [bobjectTopics, messageTopics] = partition(
       topics,
-      restore: React.useCallback(
-        () => {
-          frame.current = {};
-          return Date.now();
-        },
-        [frame]
-      ),
-      addMessage: React.useCallback(
-        (time, message: Message) => {
-          frame.current[message.topic] = frame.current[message.topic] || [];
-          frame.current[message.topic].push(message);
-          return time;
-        },
-        [frame]
-      ),
-    });
-
-    const cleared = useChangeDetector([lastClearTime], false);
-    const latestFrame = frame.current;
-    frame.current = {};
+      (topic) =>
+        // It's possible the subscribed topic isn't in the bag.
+        topicsByName[topic] && supportedBobjectTypes.has(topicsByName[topic].datatype)
+    );
+    const { frame: messageFrame, cleared } = useFrame(messageTopics, "addMessages");
+    const { frame: bobjectFrame } = useFrame(bobjectTopics, "addBobjects");
 
     return (
       <ChildComponent
         {...childProps}
         ref={forwardedRef}
-        frame={latestFrame}
+        frame={{ ...messageFrame, ...bobjectFrame }}
         setSubscriptions={componentSetSubscriptions}
         cleared={cleared}
       />

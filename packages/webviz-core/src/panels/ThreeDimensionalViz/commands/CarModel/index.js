@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { vec3 } from "gl-matrix";
 import React from "react";
-import { GLTFScene, parseGLB, type Pose, type Scale } from "regl-worldview";
+import { GLTFScene, parseGLB, type Pose, type Scale, type CommonCommandProps } from "regl-worldview";
 
 import carModelURL from "webviz-core/src/panels/ThreeDimensionalViz/commands/CarModel/carModel.glb";
 import { type InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
@@ -50,11 +50,17 @@ type Props = {|
     alpha?: number,
     interactionData?: InteractionData,
   |},
+  ...CommonCommandProps,
 |};
 
 // default scale is 0.01 because the model's units are centimeters
 export default function CarModel({
   children: { pose, alpha = 1, scale = { x: 0.01, y: 0.01, z: 0.01 }, interactionData },
+  layerIndex,
 }: Props) {
-  return <GLTFScene model={loadCarModel}>{{ pose, alpha, scale, interactionData }}</GLTFScene>;
+  return (
+    <GLTFScene layerIndex={layerIndex} model={loadCarModel}>
+      {{ pose, alpha, scale, interactionData }}
+    </GLTFScene>
+  );
 }

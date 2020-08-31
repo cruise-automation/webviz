@@ -12,10 +12,14 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 
 function getProvider() {
   const memoryDataProvider = new MemoryDataProvider({
-    messages: [
-      { topic: "/some_topic", receiveTime: { sec: 100, nsec: 0 }, message: 0 },
-      { topic: "/some_topic", receiveTime: { sec: 105, nsec: 0 }, message: 1 },
-    ],
+    messages: {
+      parsedMessages: [
+        { topic: "/some_topic", receiveTime: { sec: 100, nsec: 0 }, message: 0 },
+        { topic: "/some_topic", receiveTime: { sec: 105, nsec: 0 }, message: 1 },
+      ],
+      bobjects: undefined,
+      rosBinaryMessages: undefined,
+    },
     topics: [
       { name: "/some_topic", datatype: "some_datatype" },
       { name: "/some_other_topic", datatype: "some_datatype" },
@@ -96,8 +100,14 @@ describe("ApiCheckerDataProvider", () => {
     it("works in the normal case", async () => {
       const { provider } = getProvider();
       await provider.initialize(mockExtensionPoint().extensionPoint);
-      const messages = await provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, ["/some_topic"]);
-      expect(messages).toEqual([
+      const result = await provider.getMessages(
+        { sec: 100, nsec: 0 },
+        { sec: 105, nsec: 0 },
+        { parsedMessages: ["/some_topic"] }
+      );
+      expect(result.bobjects).toBe(undefined);
+      expect(result.rosBinaryMessages).toBe(undefined);
+      expect(result.parsedMessages).toEqual([
         { message: 0, receiveTime: { nsec: 0, sec: 100 }, topic: "/some_topic" },
         { message: 1, receiveTime: { nsec: 0, sec: 105 }, topic: "/some_topic" },
       ]);
@@ -110,7 +120,7 @@ describe("ApiCheckerDataProvider", () => {
       it("throws when calling getMessages before initialize", async () => {
         const { provider } = getProvider();
         await expect(
-          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, ["/some_topic"])
+          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, { parsedMessages: ["/some_topic"] })
         ).rejects.toThrow();
       });
 
@@ -118,22 +128,24 @@ describe("ApiCheckerDataProvider", () => {
         const { provider } = getProvider();
         await provider.initialize(mockExtensionPoint().extensionPoint);
         await expect(
-          provider.getMessages({ sec: 90, nsec: 0 }, { sec: 95, nsec: 0 }, ["/some_topic"])
+          provider.getMessages({ sec: 90, nsec: 0 }, { sec: 95, nsec: 0 }, { parsedMessages: ["/some_topic"] })
         ).rejects.toThrow();
         await expect(
-          provider.getMessages({ sec: 110, nsec: 0 }, { sec: 115, nsec: 0 }, ["/some_topic"])
+          provider.getMessages({ sec: 110, nsec: 0 }, { sec: 115, nsec: 0 }, { parsedMessages: ["/some_topic"] })
         ).rejects.toThrow();
         await expect(
-          provider.getMessages({ sec: 105, nsec: 0 }, { sec: 100, nsec: 0 }, ["/some_topic"])
+          provider.getMessages({ sec: 105, nsec: 0 }, { sec: 100, nsec: 0 }, { parsedMessages: ["/some_topic"] })
         ).rejects.toThrow();
       });
 
       it("throws when calling getMessages with invalid topics", async () => {
         const { provider } = getProvider();
         await provider.initialize(mockExtensionPoint().extensionPoint);
-        await expect(provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, [])).rejects.toThrow();
         await expect(
-          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, ["/invalid_topic"])
+          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, { parsedMessages: [] })
+        ).rejects.toThrow();
+        await expect(
+          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, { parsedMessages: ["/invalid_topic"] })
         ).rejects.toThrow();
       });
 
@@ -142,17 +154,21 @@ describe("ApiCheckerDataProvider", () => {
         await provider.initialize(mockExtensionPoint().extensionPoint);
 
         let returnMessages = [];
-        jest.spyOn(memoryDataProvider, "getMessages").mockImplementation(() => returnMessages);
+        jest.spyOn(memoryDataProvider, "getMessages").mockImplementation(() => ({
+          parsedMessages: returnMessages,
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        }));
 
         // Return messages that are still within the global range, but outside of the requested range.
         returnMessages = [{ topic: "/some_topic", receiveTime: { sec: 100, nsec: 0 }, message: 0 }];
         await expect(
-          provider.getMessages({ sec: 102, nsec: 0 }, { sec: 103, nsec: 0 }, ["/some_topic"])
+          provider.getMessages({ sec: 102, nsec: 0 }, { sec: 103, nsec: 0 }, { parsedMessages: ["/some_topic"] })
         ).rejects.toThrow();
 
         returnMessages = [{ topic: "/some_topic", receiveTime: { sec: 104, nsec: 0 }, message: 0 }];
         await expect(
-          provider.getMessages({ sec: 102, nsec: 0 }, { sec: 103, nsec: 0 }, ["/some_topic"])
+          provider.getMessages({ sec: 102, nsec: 0 }, { sec: 103, nsec: 0 }, { parsedMessages: ["/some_topic"] })
         ).rejects.toThrow();
 
         // Incorrect order.
@@ -161,13 +177,13 @@ describe("ApiCheckerDataProvider", () => {
           { topic: "/some_topic", receiveTime: { sec: 100, nsec: 0 }, message: 0 },
         ];
         await expect(
-          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, ["/some_topic"])
+          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, { parsedMessages: ["/some_topic"] })
         ).rejects.toThrow();
 
         // Valid topic, but not requested
         returnMessages = [{ topic: "/some_other_topic", receiveTime: { sec: 100, nsec: 0 }, message: 0 }];
         await expect(
-          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, ["/some_topic"])
+          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0 }, { parsedMessages: ["/some_topic"] })
         ).rejects.toThrow();
       });
     });

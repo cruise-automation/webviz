@@ -5,6 +5,8 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+
+import type { PanelsState } from "webviz-core/src/reducers/panels";
 import type { MosaicNode } from "webviz-core/src/types/panels";
 
 export type LayoutDescription = {
@@ -13,14 +15,13 @@ export type LayoutDescription = {
   folderId: string,
   private: boolean,
 };
-
-export type SaveLayoutPayload = {
+export type SaveLayoutPayload = {|
   name: string,
   folderId: string,
-  private: boolean,
-  // the layout description
-  layout: MosaicNode,
-};
+  layout: PanelsState,
+  fileSuffix?: string,
+  isAutosaved?: boolean,
+|};
 
 export type TabConfig = {| title: string, layout: ?MosaicNode |};
 

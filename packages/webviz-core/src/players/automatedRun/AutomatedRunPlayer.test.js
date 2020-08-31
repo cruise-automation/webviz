@@ -42,13 +42,15 @@ class TestRunClient implements AutomatedRunClient {
   }
 }
 
+const getMessagesResult = { parsedMessages: [], rosBinaryMessages: undefined, bobjects: [] };
+
 /* eslint-disable no-underscore-dangle */
 describe("AutomatedRunPlayer", () => {
   it("waits to start playing until all frames are loaded when shouldLoadDataBeforePlaying=true", async () => {
-    const provider = new TestProvider({ getMessages: async () => [] });
+    const provider = new TestProvider({ getMessages: async () => getMessagesResult });
     const client = new TestRunClient({ shouldLoadDataBeforePlaying: true });
     const player = new AutomatedRunPlayer(provider, client);
-    player.setSubscriptions([{ topic: "/foo/bar" }]);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
     await delay(AUTOMATED_RUN_START_DELAY + 10);
     expect(player._initialized).toEqual(true);
     expect(player._isPlaying).toEqual(false);
@@ -63,7 +65,7 @@ describe("AutomatedRunPlayer", () => {
   });
 
   it("measures preloading performance", async () => {
-    const provider = new TestProvider({ getMessages: async () => [] });
+    const provider = new TestProvider({ getMessages: async () => getMessagesResult });
     const client = new TestRunClient({ shouldLoadDataBeforePlaying: true });
     const player = new AutomatedRunPlayer(provider, client);
     let emitStateCalls = 0;
@@ -75,7 +77,7 @@ describe("AutomatedRunPlayer", () => {
     expect(client.markPreloadEnd.mock.calls.length).toBe(0);
     expect(emitStateCalls).toBe(0);
 
-    player.setSubscriptions([{ topic: "/foo/bar" }]);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
     await delay(AUTOMATED_RUN_START_DELAY + 10);
 
     // Preloading has started but not finished.
@@ -112,13 +114,13 @@ describe("AutomatedRunPlayer", () => {
     const provider = new TestProvider({
       getMessages: async (startTime, endTime) => {
         frames.push({ startTime, endTime });
-        return [];
+        return getMessagesResult;
       },
     });
     const client = new TestRunClient();
 
     const player = new AutomatedRunPlayer(provider, client);
-    player.setSubscriptions([{ topic: "/foo/bar" }]);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
     await delay(AUTOMATED_RUN_START_DELAY + 10);
     expect(player._initialized).toEqual(true);
     expect(player._isPlaying).toEqual(true);
@@ -155,7 +157,7 @@ describe("AutomatedRunPlayer", () => {
     function resolveNextGetMessages() {
       const previousGetMessagesSignal = getMessagesSignal.signal;
       getMessagesSignal.signal = signal();
-      previousGetMessagesSignal.resolve([]);
+      previousGetMessagesSignal.resolve(getMessagesResult);
     }
 
     const listener = { signal: signal() };
@@ -167,7 +169,7 @@ describe("AutomatedRunPlayer", () => {
 
     const client = new TestRunClient();
     const player = new AutomatedRunPlayer(provider, client);
-    player.setSubscriptions([{ topic: "/foo/bar" }]);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
     await delay(AUTOMATED_RUN_START_DELAY + 10);
     player.setListener(() => listener.signal);
 

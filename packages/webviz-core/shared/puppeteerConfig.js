@@ -10,7 +10,7 @@ if (process.env.WEBVIZ_IN_DOCKER) {
   module.exports = {
     launch: {
       executablePath: "/usr/bin/google-chrome",
-      headless: false,
+      headless: !process.env.DEBUG_CI,
       args: [
         "--use-gl=swiftshader",
         "--no-sandbox",
@@ -24,5 +24,5 @@ if (process.env.WEBVIZ_IN_DOCKER) {
     },
   };
 } else {
-  module.exports = { launch: { headless: false } };
+  module.exports = { launch: { headless: !process.env.DEBUG_CI } };
 }

@@ -29,6 +29,7 @@ type ItemProps = {
   direction?: "left" | "right",
   dataTest?: string,
   style?: { [attr: string]: string | number },
+  hoverForScreenshots?: boolean,
 };
 
 const Item = (props: ItemProps) => {
@@ -45,12 +46,14 @@ const Item = (props: ItemProps) => {
     tooltip,
     dataTest,
     style,
+    hoverForScreenshots,
   } = props;
   const classes = cx(styles.item, className, {
     [styles.active]: checked && !disabled,
     [styles.disabled]: disabled,
     disabled,
     [styles.header]: isHeader,
+    [styles.hoverForScreenshot]: hoverForScreenshots,
   });
 
   const item = (

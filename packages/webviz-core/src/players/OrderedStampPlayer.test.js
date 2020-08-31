@@ -12,6 +12,8 @@ import OrderedStampPlayer, { BUFFER_DURATION_SECS } from "./OrderedStampPlayer";
 import FakePlayer from "webviz-core/src/components/MessagePipeline/FakePlayer";
 import { PlayerCapabilities, type PlayerState } from "webviz-core/src/players/types";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
+import { deepParse, wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import { fromSec, type TimestampMethod } from "webviz-core/src/util/time";
 
 function makeMessage(headerStamp: ?number, receiveTime: number) {
@@ -26,9 +28,23 @@ function makeMessage(headerStamp: ?number, receiveTime: number) {
   };
 }
 
+function makeBobject(headerStamp: ?number, receiveTime: number) {
+  return {
+    topic: "/dummy_topic",
+    receiveTime: fromSec(receiveTime),
+    message: wrapJsObject(basicDatatypes, "geometry_msgs/PoseStamped", {
+      header: {
+        stamp: headerStamp == null ? undefined : fromSec(headerStamp),
+      },
+      pose: { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 0 } },
+    }),
+  };
+}
+
 function getState() {
   return {
     messages: [],
+    bobjects: [],
     messageOrder: "receiveTime",
     currentTime: fromSec(10),
     startTime: fromSec(0),
@@ -37,7 +53,7 @@ function getState() {
     speed: 0.2,
     lastSeekTime: 0,
     topics: [],
-    datatypes: {},
+    datatypes: { ...basicDatatypes },
     messageDefinitionsByTopic: {},
     playerWarnings: {},
   };
@@ -53,7 +69,6 @@ function makePlayers(initialOrder: TimestampMethod): { player: OrderedStampPlaye
       new UserNodePlayer(fakePlayer, {
         setUserNodeDiagnostics: jest.fn(),
         addUserNodeLogs: jest.fn(),
-        setUserNodeTrust: jest.fn(),
         setUserNodeRosLib: jest.fn(),
       }),
       initialOrder
@@ -89,6 +104,44 @@ describe("OrderedStampPlayer", () => {
           endTime: fromSec(20 - BUFFER_DURATION_SECS),
         }),
       }),
+    ]);
+  });
+
+  it("filters and reorders bobjects by header stamp", async () => {
+    const { player, fakePlayer } = makePlayers("headerStamp");
+    const states = [];
+    player.setListener(async (playerState) => {
+      states.push(playerState);
+    });
+
+    const upstreamBobjects = [makeBobject(8.9, 9.5), makeBobject(8, 10), makeBobject(9.5, 10)];
+
+    expect(BUFFER_DURATION_SECS).toEqual(1);
+    await fakePlayer.emit({
+      ...getState(),
+      // Reordering buffer is one second long, so data before header-stamp=9 will be emitted.
+      currentTime: fromSec(10),
+      bobjects: upstreamBobjects,
+    });
+    const bobjects = states[0].activeData?.bobjects;
+    if (bobjects == null) {
+      throw new Error("Satisfy flow.");
+    }
+    expect(bobjects.map(({ receiveTime, message }) => ({ receiveTime, message: deepParse(message) }))).toEqual([
+      {
+        receiveTime: { sec: 10, nsec: 0 },
+        message: {
+          header: { stamp: { sec: 8, nsec: 0 } },
+          pose: { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 0 } },
+        },
+      },
+      {
+        receiveTime: { sec: 9, nsec: 500000000 },
+        message: {
+          header: { stamp: { sec: 8, nsec: 900000000 } },
+          pose: { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 0 } },
+        },
+      },
     ]);
   });
 

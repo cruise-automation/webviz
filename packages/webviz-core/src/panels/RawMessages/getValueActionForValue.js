@@ -41,12 +41,15 @@ export function getValueActionForValue(
   for (const pathItem: number | string of keyPath) {
     if (structureItem == null || value == null) {
       break;
-    } else if (structureItem.structureType === "message" && typeof value === "object" && typeof pathItem === "string") {
+    } else if (
+      (structureItem.structureType === "message" && typeof value === "object" && typeof pathItem === "string") ||
+      (structureItem.structureType === "primitive" && structureItem.primitiveType === "json")
+    ) {
       structureItem =
-        structureItem.datatype === "json"
-          ? { structureType: "primitive", primitiveType: "json", datatype: "" }
-          : structureItem.nextByName[pathItem];
-      value = value[pathItem];
+        structureItem.structureType === "message" && typeof pathItem === "string"
+          ? structureItem.nextByName[pathItem]
+          : { structureType: "primitive", primitiveType: "json", datatype: "" };
+      value = (value: any)[pathItem];
       if (multiSlicePath.endsWith("[:]")) {
         // We're just inside a message that is inside an array, so we might want to pivot on this new value.
         pivotPath = `${multiSlicePath}{${pathItem}==${JSON.stringify(value) || ""}}`;
@@ -74,8 +77,8 @@ export function getValueActionForValue(
         singleSlicePath += `[${pathItem}]`;
       }
     } else if (structureItem.structureType === "primitive") {
-      // ROS has some primitives that contain nested data (time+duration). We currently don't
-      // support looking inside them.
+      // ROS has primitives with nested data (time, duration).
+      // We currently don't support looking inside them.
       return;
     } else {
       throw new Error(`Invalid structureType: ${structureItem.structureType} for value/pathItem.`);

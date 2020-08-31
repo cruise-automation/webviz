@@ -96,6 +96,10 @@ const mergeFixtures = microMemoize((fixture1: Fixture, fixture2: Fixture) => ({
     ...fixture1.frame,
     ...fixture2.frame,
   },
+  activeData: {
+    ...fixture1.activeData,
+    ...fixture2.activeData,
+  },
 }));
 
 async function loadBag(

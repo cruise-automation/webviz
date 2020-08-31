@@ -10,9 +10,9 @@ import { isEqual } from "lodash";
 import * as React from "react";
 import styled from "styled-components";
 
+import { validationErrorToString, type ValidationResult } from "webviz-core/shared/validators";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Flex from "webviz-core/src/components/Flex";
-import { validationErrorToString, type ValidationResult } from "webviz-core/src/components/validators";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import YAML from "webviz-core/src/util/yaml";
 

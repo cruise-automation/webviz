@@ -85,14 +85,17 @@ function maybeUnrectifyPoint(cameraModel: ?CameraModel, point: Point): $ReadOnly
 
 async function decodeMessageToBitmap(msg: Message, datatype: string): Promise<ImageBitmap> {
   let image: ImageData | Image | Blob;
-  const { data: rawData, is_bigendian } = msg.message;
+  const { data: rawData, is_bigendian, width, height, encoding } = msg.message;
   if (!(rawData instanceof Uint8Array)) {
     throw new Error("Message must have data of type Uint8Array");
   }
 
-  // Binary message processing
-  if (datatype === "sensor_msgs/Image") {
-    const { width, height, encoding } = msg.message;
+  // In a Websocket context, we don't know whether the message is compressed or
+  // raw. Our subscription interface for the WebsocketPlayer can request
+  // compressed verisons of topics, in which case the message datatype can
+  // differ from the one recorded during initialization. So here we just check
+  // for properties consistent with either datatype, and render accordingly.
+  if (datatype === "sensor_msgs/Image" && encoding) {
     image = new ImageData(width, height);
     // prettier-ignore
     switch (encoding) {
@@ -113,10 +116,10 @@ async function decodeMessageToBitmap(msg: Message, datatype: string): Promise<Im
       default:
         throw new Error(`Unsupported encoding ${encoding}`);
     }
-  } else if (datatype === "sensor_msgs/CompressedImage") {
+  } else if (["sensor_msgs/CompressedImage", "sensor_msgs/Image"].includes(datatype) || msg.message.format) {
     image = new Blob([rawData], { type: `image/${msg.message.format}` });
   } else {
-    throw new Error(`Message datatype ${datatype} not usable for rendering images.`);
+    throw new Error(`Message type is not usable for rendering images.`);
   }
 
   return self.createImageBitmap(image);

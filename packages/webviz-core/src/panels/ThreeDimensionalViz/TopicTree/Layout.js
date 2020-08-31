@@ -9,17 +9,9 @@
 import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import { groupBy } from "lodash";
-import React, {
-  type Node,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import React, { type Node, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
+  Worldview,
   PolygonBuilder,
   DrawPolygons,
   type CameraState,
@@ -45,7 +37,7 @@ import { type Save3DConfig, type ThreeDimensionalVizConfig } from "webviz-core/s
 import DebugStats from "webviz-core/src/panels/ThreeDimensionalViz/DebugStats";
 import { POLYGON_TAB_TYPE, type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
-import { InteractionContextMenu } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
+import { InteractionContextMenu, OBJECT_TAB_TYPE } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutToolbar";
@@ -73,10 +65,11 @@ import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { Color } from "webviz-core/src/types/Messages";
-import { TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
+import { SECOND_SOURCE_PREFIX, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
-import { videoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
+import { inVideoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
+import { joinTopics } from "webviz-core/src/util/topicUtils";
 
 type EventName = "onDoubleClick" | "onMouseMove" | "onMouseDown" | "onMouseUp";
 export type ClickedPosition = { clientX: number, clientY: number };
@@ -117,21 +110,24 @@ type Props = {|
   transforms: Transforms,
 |};
 
-type SelectedObjectState = {
+export type UserSelectionState = {
+  // These objects are shown in the context menu
+  clickedObjects: MouseEventObject[],
+  // The x,y position used to position the context menu
   clickedPosition: ClickedPosition,
-  selectedObject: ?MouseEventObject, // to be set when clicked a single object or selected one of the clicked topics from the context menu
-  selectedObjects: MouseEventObject[],
+  // The object shown in the Interactions menu; also used to update global variables
+  selectedObject: MouseEventObject | null,
 };
 
 export type EditTopicState = { tooltipPosX: number, topic: Topic };
 
 type GlobalVariableName = string;
-export type ColorOverrideSetting = {
+export type ColorOverride = {
   color: Color,
   active: boolean,
 };
-export type ColorOverridesByGlobalVariableName = {
-  [GlobalVariableName]: ColorOverrideSetting,
+export type ColorOverrideBySourceIdxByVariable = {
+  [GlobalVariableName]: ColorOverride[],
 };
 
 export default function Layout({
@@ -165,6 +161,8 @@ export default function Layout({
     autoSyncCameraState,
     topicDisplayMode = TOPIC_DISPLAY_MODES.SHOW_ALL.value,
     settingsByKey,
+    colorOverrideBySourceIdxByVariable,
+    disableAutoOpenClickedObject,
   },
 }: Props) {
   const [filterText, setFilterText] = useState(""); // Topic tree text for filtering to see certain topics.
@@ -190,32 +188,24 @@ export default function Layout({
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
   const measuringElRef = useRef<?MeasuringTool>(null);
   const [drawingTabType, setDrawingTabType] = useState<?DrawingTabType>(undefined);
-  const [selectedObjectState, setSelectedObjectState] = useState<?SelectedObjectState>(undefined);
-  const selectedObject = selectedObjectState?.selectedObject;
+  const [interactionsTabType, setInteractionsTabType] = useState<?DrawingTabType>(undefined);
 
-  const [
-    colorOverridesByGlobalVariable,
-    setColorOverridesByGlobalVariable,
-  ] = useState<ColorOverridesByGlobalVariableName>({});
+  const [selectionState, setSelectionState] = useState<UserSelectionState>({
+    clickedObjects: [],
+    clickedPosition: { clientX: 0, clientY: 0 },
+    selectedObject: null,
+  });
+  const { selectedObject, clickedObjects, clickedPosition } = selectionState;
 
   // Since the highlightedMarkerMatchers are updated by mouse events, we wait
   // a short amount of time to prevent excessive re-rendering of the 3D panel
   const [hoveredMarkerMatchers, setHoveredMarkerMatchers] = useState<MarkerMatcher[]>([]);
   const [setHoveredMarkerMatchersDebounced] = useDebouncedCallback(setHoveredMarkerMatchers, 100);
 
-  useLayoutEffect(
-    () => {
-      if (!selectedObject) {
-        return;
-      }
-      const newGlobalVariables = getUpdatedGlobalVariablesBySelectedObject(selectedObject, linkedGlobalVariables);
-      if (newGlobalVariables) {
-        setGlobalVariables(newGlobalVariables);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps, only update global variables when selectedObject changes
-    [selectedObject]
-  );
+  const isDrawing = useMemo(() => measureInfo.measureState !== "idle" || drawingTabType === POLYGON_TAB_TYPE, [
+    drawingTabType,
+    measureInfo.measureState,
+  ]);
 
   // initialize the SceneBuilder and TransformsBuilder
   const { sceneBuilder, transformsBuilder } = useMemo(
@@ -309,20 +299,21 @@ export default function Layout({
     visibleTopicsCountByKey,
   } = topicTreeData;
 
-  const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("highlightGlobalVariableMatchingMarkers");
+  const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("globalVariableColorOverrides");
   useEffect(() => setSubscriptions(selectedTopicNames), [selectedTopicNames, setSubscriptions]);
   const { playerId } = useDataSourceInfo();
 
   // If a user selects a marker or hovers over a TopicPicker row, highlight relevant markers
   const highlightMarkerMatchers = useMemo(
     () => {
-      if (!highlightMarkersThatMatchGlobalVariables) {
+      if (isDrawing) {
         return [];
       }
       if (hoveredMarkerMatchers.length > 0) {
         return hoveredMarkerMatchers;
       }
-      if (selectedObject) {
+      // Highlight the selected object if the interactionsTab popout is open
+      if (selectedObject && !!interactionsTabType) {
         const marker = getObject(selectedObject);
         const topic = getInteractionData(selectedObject)?.topic;
         return marker && topic
@@ -345,7 +336,7 @@ export default function Layout({
       }
       return [];
     },
-    [highlightMarkersThatMatchGlobalVariables, hoveredMarkerMatchers, selectedObject]
+    [hoveredMarkerMatchers, interactionsTabType, isDrawing, selectedObject]
   );
 
   const colorOverrideMarkerMatchers = useMemo(
@@ -356,47 +347,60 @@ export default function Layout({
 
       // Transform linkedGlobalVariables and overridesByGlobalVariable into markerMatchers for SceneBuilder
       const linkedGlobalVariablesByName = groupBy(linkedGlobalVariables, ({ name }) => name);
-      return Object.keys(colorOverridesByGlobalVariable).reduce((_activeColorOverrideMatchers, name) => {
-        const { color, active } = colorOverridesByGlobalVariable[name];
-        return active
-          ? [
-              ..._activeColorOverrideMatchers,
-              ...(linkedGlobalVariablesByName[name] || []).map(({ topic, markerKeyPath }) => ({
-                topic,
-                checks: [
-                  {
-                    markerKeyPath,
-                    value: globalVariables[name],
-                  },
-                ],
-                color,
-              })),
-            ]
-          : _activeColorOverrideMatchers;
+      return Object.keys(colorOverrideBySourceIdxByVariable || {}).reduce((_activeColorOverrideMatchers, name) => {
+        return (colorOverrideBySourceIdxByVariable?.[name] || []).flatMap((override, i) =>
+          override?.active
+            ? [
+                ..._activeColorOverrideMatchers,
+                ...(linkedGlobalVariablesByName[name] || []).map(({ topic, markerKeyPath }) => {
+                  const baseTopic = topic.replace(SECOND_SOURCE_PREFIX, "");
+                  return {
+                    topic: i === 0 ? baseTopic : joinTopics(SECOND_SOURCE_PREFIX, baseTopic),
+                    checks: [
+                      {
+                        markerKeyPath,
+                        value: globalVariables[name],
+                      },
+                    ],
+                    color: override.color,
+                  };
+                }),
+              ]
+            : _activeColorOverrideMatchers
+        );
       }, []);
     },
-    [colorOverridesByGlobalVariable, globalVariables, highlightMarkersThatMatchGlobalVariables, linkedGlobalVariables]
+    [
+      colorOverrideBySourceIdxByVariable,
+      globalVariables,
+      highlightMarkersThatMatchGlobalVariables,
+      linkedGlobalVariables,
+    ]
   );
 
   const rootTf = useMemo(
+    () =>
+      frame &&
+      transforms.rootOfTransform(followTf || getGlobalHooks().perPanelHooks().ThreeDimensionalViz.rootTransformFrame)
+        .id,
+    [frame, transforms, followTf]
+  );
+
+  useMemo(
     () => {
       // TODO(Audrey): add tests for the clearing behavior
       if (cleared) {
         sceneBuilder.clear();
       }
-      if (!frame) {
+      if (!frame || !rootTf) {
         return;
       }
-      const rootTfID = transforms.rootOfTransform(
-        followTf || getGlobalHooks().perPanelHooks().ThreeDimensionalViz.rootTransformFrame
-      ).id;
-
       // Toggle scene builder topics based on visible topic nodes in the tree
       const topicsByTopicName = getTopicsByTopicName(topics);
       const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByTopicName[name]);
 
       sceneBuilder.setPlayerId(playerId);
-      sceneBuilder.setTransforms(transforms, rootTfID);
+      sceneBuilder.setTransforms(transforms, rootTf);
       sceneBuilder.setFlattenMarkers(!!flattenMarkers);
       sceneBuilder.setSelectedNamespacesByTopic(selectedNamespacesByTopic);
       sceneBuilder.setSettingsByKey(settingsByKey);
@@ -409,20 +413,18 @@ export default function Layout({
       sceneBuilder.render();
 
       // update the transforms and set the selected ones to render
-      transformsBuilder.setTransforms(transforms, rootTfID);
+      transformsBuilder.setTransforms(transforms, rootTf);
       transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic[TRANSFORM_TOPIC] || []);
-
-      return rootTfID;
     },
     [
       cleared,
       frame,
-      transforms,
-      followTf,
       topics,
       selectedTopicNames,
       sceneBuilder,
       playerId,
+      transforms,
+      rootTf,
       flattenMarkers,
       selectedNamespacesByTopic,
       settingsByKey,
@@ -443,10 +445,6 @@ export default function Layout({
     [polygonBuilder]
   );
 
-  const isDrawing = useMemo(() => measureInfo.measureState !== "idle" || drawingTabType === POLYGON_TAB_TYPE, [
-    drawingTabType,
-    measureInfo.measureState,
-  ]);
   // use callbackInputsRef to prevent unnecessary callback changes
   const callbackInputsRef = useRef({
     cameraState,
@@ -455,7 +453,7 @@ export default function Layout({
     handleDrawPolygons,
     showTopicTree,
     saveConfig,
-    selectedObjectState,
+    selectionState,
     topics,
     autoSyncCameraState: !!autoSyncCameraState,
     isDrawing,
@@ -467,11 +465,15 @@ export default function Layout({
     handleDrawPolygons,
     showTopicTree,
     saveConfig,
-    selectedObjectState,
+    selectionState,
     topics,
     autoSyncCameraState: !!autoSyncCameraState,
     isDrawing,
   };
+
+  const setColorOverrideBySourceIdxByVariable = useCallback((_colorOverrideBySourceIdxByVariable) => {
+    callbackInputsRef.current.saveConfig({ colorOverrideBySourceIdxByVariable: _colorOverrideBySourceIdxByVariable });
+  }, []);
 
   const handleEvent = useCallback((eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
     if (!args) {
@@ -491,6 +493,37 @@ export default function Layout({
     }
   }, []);
 
+  const updateGlobalVariablesFromSelection = useCallback(
+    (newSelectedObject: MouseEventObject) => {
+      const newGlobalVariables = getUpdatedGlobalVariablesBySelectedObject(newSelectedObject, linkedGlobalVariables);
+      if (newGlobalVariables) {
+        setGlobalVariables(newGlobalVariables);
+      }
+    },
+    [linkedGlobalVariables, setGlobalVariables]
+  );
+
+  // Auto open/close the tab when the selectedObject changes as long as
+  // we aren't drawing or the disableAutoOpenClickedObject setting is enabled.
+  const updateInteractionsTabVisibility = useCallback(
+    (newSelectedObject: ?MouseEventObject) => {
+      if (!isDrawing) {
+        const shouldBeOpen = newSelectedObject && !disableAutoOpenClickedObject;
+        setInteractionsTabType(shouldBeOpen ? OBJECT_TAB_TYPE : null);
+      }
+    },
+    [disableAutoOpenClickedObject, isDrawing]
+  );
+
+  const selectObject = useCallback(
+    (newSelectedObject: ?MouseEventObject) => {
+      setSelectionState({ ...callbackInputsRef.current.selectionState, selectedObject: newSelectedObject });
+      updateInteractionsTabVisibility(newSelectedObject);
+      updateGlobalVariablesFromSelection(newSelectedObject);
+    },
+    [updateInteractionsTabVisibility, updateGlobalVariablesFromSelection]
+  );
+
   const {
     onClick,
     onControlsOverlayClick,
@@ -499,8 +532,6 @@ export default function Layout({
     onMouseDown,
     onMouseMove,
     onMouseUp,
-    onClearSelectedObject,
-    onSelectObject,
     onSetPolygons,
     toggleCameraMode,
     toggleDebug,
@@ -512,17 +543,17 @@ export default function Layout({
           if (callbackInputsRef.current.isDrawing) {
             return;
           }
-          const selectedObjects = (args && args.objects) || [];
-          const clickedPosition = { clientX: ev.clientX, clientY: ev.clientY };
-          if (selectedObjects.length === 0) {
-            setSelectedObjectState(undefined);
-          } else if (selectedObjects.length === 1) {
-            // select the object directly if there is only one
-            setSelectedObjectState({ selectedObject: selectedObjects[0], selectedObjects, clickedPosition });
-          } else {
-            // open up context menu to select one object to show details
-            setSelectedObjectState({ selectedObject: undefined, selectedObjects, clickedPosition });
-          }
+          const newClickedObjects = (args && args.objects) || [];
+          const newClickedPosition = { clientX: ev.clientX, clientY: ev.clientY };
+          const newSelectedObject = newClickedObjects.length === 1 ? newClickedObjects[0] : null;
+
+          // Select the object directly if there is only one or open up context menu if there are many.
+          setSelectionState({
+            ...callbackInputsRef.current.selectionState,
+            clickedObjects: newClickedObjects,
+            clickedPosition: newClickedPosition,
+          });
+          selectObject(newSelectedObject);
         },
         onControlsOverlayClick: (ev: SyntheticMouseEvent<HTMLDivElement>) => {
           if (!containerRef.current) {
@@ -543,9 +574,6 @@ export default function Layout({
         onMouseDown: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseDown", ev, args),
         onMouseMove: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseMove", ev, args),
         onMouseUp: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseUp", ev, args),
-        onClearSelectedObject: () => setSelectedObjectState(undefined),
-        onSelectObject: (selectedObj: MouseEventObject) =>
-          setSelectedObjectState({ ...callbackInputsRef.current.selectedObjectState, selectedObject: selectedObj }),
         onSetPolygons: (polygons: Polygon[]) => setPolygonBuilder(new PolygonBuilder(polygons)),
         toggleDebug: () => setDebug(!callbackInputsRef.current.debug),
         toggleCameraMode: () => {
@@ -557,7 +585,18 @@ export default function Layout({
         },
       };
     },
-    [handleEvent]
+    [handleEvent, selectObject]
+  );
+
+  // When the TopicTree is hidden, focus the <World> again so keyboard controls continue to work
+  const worldRef = useRef<?typeof Worldview>(null);
+  useEffect(
+    () => {
+      if (!showTopicTree && worldRef.current) {
+        worldRef.current.focus();
+      }
+    },
+    [showTopicTree]
   );
 
   const keyDownHandlers = useMemo(
@@ -568,6 +607,7 @@ export default function Layout({
         },
         Escape: (e) => {
           e.preventDefault();
+          setShowTopicTree(false);
           setDrawingTabType(null);
           searchTextProps.toggleSearchTextOpen(false);
           if (document.activeElement && document.activeElement === containerRef.current) {
@@ -578,7 +618,7 @@ export default function Layout({
           e.preventDefault();
           // Unpin before enabling keyboard toggle open/close.
           if (pinTopics) {
-            saveConfig({ pinTopics: false }, { keepLayoutInUrl: true });
+            saveConfig({ pinTopics: false });
             return;
           }
           setShowTopicTree((shown) => !shown);
@@ -610,7 +650,7 @@ export default function Layout({
   const { MapComponent, videoRecordingStyle } = useMemo(
     () => ({
       MapComponent: getGlobalHooks().perPanelHooks().ThreeDimensionalViz.MapComponent,
-      videoRecordingStyle: { visibility: videoRecordingMode() ? "hidden" : "visible" },
+      videoRecordingStyle: { visibility: inVideoRecordingMode() ? "hidden" : "visible" },
     }),
     []
   );
@@ -632,8 +672,12 @@ export default function Layout({
 
   // Memoize the threeDimensionalVizContextValue to avoid returning a new object every time
   const threeDimensionalVizContextValue = useMemo(
-    () => ({ setHoveredMarkerMatchers: setHoveredMarkerMatchersDebounced }),
-    [setHoveredMarkerMatchersDebounced]
+    () => ({
+      setColorOverrideBySourceIdxByVariable,
+      setHoveredMarkerMatchers: setHoveredMarkerMatchersDebounced,
+      colorOverrideBySourceIdxByVariable: colorOverrideBySourceIdxByVariable || {},
+    }),
+    [colorOverrideBySourceIdxByVariable, setColorOverrideBySourceIdxByVariable, setHoveredMarkerMatchersDebounced]
   );
 
   return (
@@ -682,6 +726,7 @@ export default function Layout({
                 getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
                 getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
                 hasFeatureColumn={hasFeatureColumn}
+                isPlaying={isPlaying}
                 onExitTopicTreeFocus={onExitTopicTreeFocus}
                 onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
                 pinTopics={pinTopics}
@@ -753,11 +798,11 @@ export default function Layout({
               <div style={videoRecordingStyle}>
                 <LayoutToolbar
                   cameraState={cameraState}
+                  interactionsTabType={interactionsTabType}
+                  setInteractionsTabType={setInteractionsTabType}
                   debug={debug}
-                  isDrawing={isDrawing}
                   followOrientation={followOrientation}
                   followTf={followTf}
-                  colorOverridesByGlobalVariable={colorOverridesByGlobalVariable}
                   interactionData={selectedObject && selectedObject.object && selectedObject.object.interactionData}
                   isPlaying={isPlaying}
                   measureInfo={measureInfo}
@@ -765,7 +810,6 @@ export default function Layout({
                   onAlignXYAxis={onAlignXYAxis}
                   onCameraStateChange={onCameraStateChange}
                   autoSyncCameraState={!!autoSyncCameraState}
-                  onClearSelectedObject={onClearSelectedObject}
                   onFollowChange={onFollowChange}
                   onSetDrawingTabType={setDrawingTabType}
                   onSetPolygons={onSetPolygons}
@@ -775,7 +819,6 @@ export default function Layout({
                   saveConfig={saveConfig}
                   selectedObject={selectedObject}
                   selectedPolygonEditFormat={selectedPolygonEditFormat}
-                  setColorOverridesByGlobalVariable={setColorOverridesByGlobalVariable}
                   setMeasureInfo={setMeasureInfo}
                   showCrosshair={showCrosshair}
                   targetPose={targetPose}
@@ -784,15 +827,13 @@ export default function Layout({
                   {...searchTextProps}
                 />
               </div>
-              {selectedObjectState &&
-                selectedObjectState.selectedObjects.length > 1 &&
-                !selectedObjectState.selectedObject && (
-                  <InteractionContextMenu
-                    clickedPosition={selectedObjectState.clickedPosition}
-                    onSelectObject={onSelectObject}
-                    selectedObjects={selectedObjectState.selectedObjects}
-                  />
-                )}
+              {clickedObjects.length > 1 && !selectedObject && (
+                <InteractionContextMenu
+                  clickedPosition={clickedPosition}
+                  clickedObjects={clickedObjects}
+                  selectObject={selectObject}
+                />
+              )}
               {process.env.NODE_ENV !== "production" && !inScreenshotTests() && debug && <DebugStats />}
             </World>
           </div>

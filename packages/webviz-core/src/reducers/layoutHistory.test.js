@@ -37,9 +37,11 @@ describe("state.layoutHistory", () => {
   });
 
   it("can undo and redo layout changes", async () => {
+    const baseUrl = "http://localhost/";
     const storage = new Storage();
     const store = getStore();
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
+    history.replaceState(null, document.title, `${baseUrl}?layout=foo!1234`);
     store.checkState((layoutHistory, panels) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // original state
       expect(panels.layout).toEqual("foo!1234");
@@ -48,8 +50,10 @@ describe("state.layoutHistory", () => {
 
     await delay(NEVER_PUSH_LAYOUT_THRESHOLD_MS + 100);
     store.dispatch(changePanelLayout({ layout: "bar!5678" }));
+    history.replaceState(null, document.title, `${baseUrl}?layout=bar!5678`);
     store.checkState((layoutHistory, panels) => {
       expect(layoutHistory.undoStates.length).toEqual(2); // original and foo!1234
+      expect(layoutHistory.undoStates.map(({ url }) => url)).toEqual([baseUrl, `${baseUrl}?layout=foo!1234`]);
       expect(panels.layout).toEqual("bar!5678");
       expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(panels);
     });
@@ -66,6 +70,7 @@ describe("state.layoutHistory", () => {
       expect(layoutHistory.undoStates.length).toEqual(1); // original state
       expect(layoutHistory.redoStates.length).toEqual(1); // bar!5678
       expect(panels.layout).toEqual("foo!1234");
+      expect(window.location.href).toEqual(`${baseUrl}?layout=foo!1234`);
       expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(panels);
     });
 
@@ -74,6 +79,7 @@ describe("state.layoutHistory", () => {
       expect(layoutHistory.undoStates.length).toEqual(2); // original and foo!1234
       expect(layoutHistory.redoStates.length).toEqual(0);
       expect(panels.layout).toEqual("bar!5678");
+      expect(window.location.href).toEqual(`${baseUrl}?layout=bar!5678`);
       expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(panels);
     });
   });

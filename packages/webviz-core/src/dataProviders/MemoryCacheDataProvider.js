@@ -16,10 +16,13 @@ import type {
   DataProviderDescriptor,
   ExtensionPoint,
   GetDataProvider,
+  GetMessagesResult,
+  GetMessagesTopics,
   InitializationResult,
 } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
-import type { Message, TypedMessage } from "webviz-core/src/players/types";
+import type { BobjectMessage } from "webviz-core/src/players/types";
+import { inaccurateByteSize } from "webviz-core/src/util/binaryObjects";
 import { getNewConnection } from "webviz-core/src/util/getNewConnection";
 import { type Range, mergeNewRangeIntoUnsortedNonOverlappingList, missingRanges } from "webviz-core/src/util/ranges";
 import sendNotification from "webviz-core/src/util/sendNotification";
@@ -36,7 +39,7 @@ export const MAX_BLOCK_SIZE_BYTES = 50e6; // Number of bytes in a block before w
 // For each memory block we store the actual messages (grouped by topic), and a total byte size of
 // the underlying ArrayBuffers.
 export type MemoryCacheBlock = $ReadOnly<{|
-  messagesByTopic: $ReadOnly<{ [topic: string]: $ReadOnlyArray<TypedMessage<ArrayBuffer>> }>,
+  messagesByTopic: $ReadOnly<{ [topic: string]: $ReadOnlyArray<BobjectMessage> }>,
   sizeInBytes: number,
 |}>;
 
@@ -47,7 +50,7 @@ export type BlockCache = {|
 
 const EMPTY_BLOCK: MemoryCacheBlock = { messagesByTopic: {}, sizeInBytes: 0 };
 
-function getNormalizedTopics(topics: string[]): string[] {
+function getNormalizedTopics(topics: $ReadOnlyArray<string>): string[] {
   return uniq(topics).sort();
 }
 
@@ -195,7 +198,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     timeRange: Range, // Actual range of messages, in nanoseconds since `this._startTime`.
     blockRange: Range, // The range of blocks.
     topics: string[],
-    resolve: (Message[]) => void,
+    resolve: (GetMessagesResult) => void,
   |}[] = [];
 
   // Recently requested ranges of blocks, sorted by most recent to least recent. There should never
@@ -243,9 +246,9 @@ export default class MemoryCacheDataProvider implements DataProvider {
     return result;
   }
 
-  async getMessages(startTime: Time, endTime: Time, topics: string[]): Promise<Message[]> {
+  async getMessages(startTime: Time, endTime: Time, subscriptions: GetMessagesTopics): Promise<GetMessagesResult> {
     // We might have a new set of topics.
-    topics = getNormalizedTopics(topics);
+    const topics = getNormalizedTopics(subscriptions.bobjects || []);
     this._preloadTopics = topics;
 
     // Push a new entry to `this._readRequests`, and call `this._updateState()`.
@@ -280,7 +283,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
   _resolveFinishedReadRequests() {
     this._readRequests = this._readRequests.filter(({ timeRange, blockRange, topics, resolve }) => {
       if (topics.length === 0) {
-        resolve([]);
+        resolve({ bobjects: [], parsedMessages: undefined, rosBinaryMessages: undefined });
         return false;
       }
 
@@ -318,7 +321,11 @@ export default class MemoryCacheDataProvider implements DataProvider {
           }
         }
       }
-      resolve(messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime)));
+      resolve({
+        bobjects: messages.sort((a, b) => TimeUtil.compare(a.receiveTime, b.receiveTime)),
+        parsedMessages: undefined,
+        rosBinaryMessages: undefined,
+      });
       this._lastResolvedCallbackEnd = blockRange.end;
 
       return false;
@@ -440,7 +447,18 @@ export default class MemoryCacheDataProvider implements DataProvider {
         this._startTime,
         fromNanoSec(Math.min(this._totalNs, (currentBlockIndex + 1) * MEM_CACHE_BLOCK_SIZE_NS) - 1) // endTime is inclusive.
       );
-      const messages = topics.length ? await this._provider.getMessages(startTime, endTime, topics) : [];
+      const messages = topics.length
+        ? await this._provider.getMessages(startTime, endTime, { bobjects: topics })
+        : { rosBinaryMessages: undefined, bobjects: [], parsedMessages: undefined };
+      const { bobjects, rosBinaryMessages, parsedMessages } = messages;
+      if (rosBinaryMessages != null || parsedMessages != null) {
+        const types = Object.keys(messages)
+          .filter((type) => messages[type] != null)
+          .join("\n");
+        sendNotification("MemoryCacheDataProvider got bad message types", types, "app", "error");
+        // Do not retry.
+        return false;
+      }
 
       // If we're not current any more, discard the messages, because otherwise we might write duplicate messages.
       if (!isCurrent()) {
@@ -454,14 +472,10 @@ export default class MemoryCacheDataProvider implements DataProvider {
       for (const topic of topics) {
         messagesByTopic[topic] = [];
       }
-      for (const message of messages) {
-        if (!(message.message instanceof ArrayBuffer)) {
-          sendNotification("MemoryCacheDataProvider can only be used with unparsed ROS messages", "", "app", "error");
-          // Do not retry.
-          return false;
-        }
-        messagesByTopic[message.topic].push(message);
-        sizeInBytes += message.message.byteLength;
+      for (const bobjectMessage of bobjects || []) {
+        messagesByTopic[bobjectMessage.topic].push(bobjectMessage);
+        const { message } = bobjectMessage;
+        sizeInBytes += message instanceof ArrayBuffer ? message.byteLength : inaccurateByteSize(message);
       }
 
       if (sizeInBytes > MAX_BLOCK_SIZE_BYTES && !this._loggedTooLargeError) {
@@ -469,8 +483,9 @@ export default class MemoryCacheDataProvider implements DataProvider {
         const sizes = [];
         for (const topic of Object.keys(messagesByTopic)) {
           let size = 0;
-          for (const message of messagesByTopic[topic]) {
-            size += message.message.byteLength;
+          for (const bobjectMessage of messagesByTopic[topic]) {
+            const { message } = bobjectMessage;
+            size += message instanceof ArrayBuffer ? message.byteLength : inaccurateByteSize(message);
           }
           const roundedSize = Math.round(size / 1e6);
           if (roundedSize > 0) {

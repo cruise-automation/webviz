@@ -26,6 +26,7 @@ describe("withSecondSourceSupport", () => {
       inputs: ["/foo", "/bar"],
       output: { name: "/baz", datatype: "datatype" },
       datatypes: {},
+      format: "parsedMessages",
     };
 
     const secondSourceNodeDefinition = withSecondSourceSupport(nodeDefinition);

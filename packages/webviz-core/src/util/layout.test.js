@@ -5,6 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import LZString from "lz-string";
 import { updateTree } from "react-mosaic-component";
 
 import {
@@ -19,7 +20,19 @@ import {
   validateTabPanelConfig,
   moveTabBetweenTabPanels,
   reorderTabWithinTabPanel,
+  getLayoutPatch,
+  getUpdatedURLWithDecodedLayout,
+  getUpdatedURLWithPatch,
+  getUpdatedURLWithNewVersion,
 } from "./layout";
+
+export function setWindowURLForTest(queryString: string): void {
+  global.window = Object.create(window);
+  const url = `localhost:3000/${queryString}`;
+  Object.defineProperty(window, "location", {
+    value: { pathname: "localhost:3000/", href: url, search: queryString },
+  });
+}
 
 describe("layout", () => {
   describe("getSaveConfigsPayloadForAddedPanel", () => {
@@ -431,6 +444,7 @@ describe("layout", () => {
       });
     });
   });
+
   describe("reorderTabWithinTabPanel", () => {
     it("moves tab before and after other tabs", () => {
       const source = { panelId: "Tab!a", tabIndex: 1 };
@@ -448,6 +462,7 @@ describe("layout", () => {
       expect(moveBeforeConfigs[0]).toEqual({ config: resultConfig, id: "Tab!a" });
     });
   });
+
   describe("moveTabBetweenTabPanels", () => {
     it("moves tab to another Tab panel", () => {
       const source = { panelId: "Tab!a", tabIndex: 1 };
@@ -468,6 +483,7 @@ describe("layout", () => {
       });
     });
   });
+
   describe("validateTabPanelConfig", () => {
     it("verifies whether a tab panel config is valid", () => {
       const tabs = [{ title: "First Tab", layout: "RawMessages!a" }];
@@ -475,6 +491,64 @@ describe("layout", () => {
       expect(validateTabPanelConfig({ tabs, activeTabIdx: 1 })).toEqual(false);
       expect(validateTabPanelConfig({ activeTabIdx: 1 })).toEqual(false);
       expect(validateTabPanelConfig({ tabs, activeTabIdx: 0 })).toEqual(true);
+    });
+  });
+
+  describe("getLayoutPatch", () => {
+    it("gets the diff between 2 panel states", () => {
+      expect(
+        getLayoutPatch(
+          {
+            layout: "abc",
+            globalVariables: { globalVar1: 1, globalVar2: 2 },
+            linkedGlobalVariables: [],
+            playbackConfig: { speed: 0.2, messageOrder: "receiveTime" },
+            userNodes: {},
+            savedProps: {},
+          },
+          {
+            layout: "def",
+            globalVariables: { globalVar1: 1, globalVar3: 3 },
+            linkedGlobalVariables: [],
+            playbackConfig: { speed: 0.5, messageOrder: "receiveTime" },
+            userNodes: {},
+            savedProps: {},
+          }
+        )
+      ).toEqual(
+        '{"layout":["abc","def"],"globalVariables":{"globalVar2":[2,0,0],"globalVar3":[3]},"playbackConfig":{"speed":[0.2,0.5]}}'
+      );
+    });
+  });
+
+  describe("getUpdatedURLWithDecodedLayout", () => {
+    const layoutParams = "?layout=foo%401500000000&randomKey=randomValue";
+    const layoutParamsDecoded = "?layout=foo@1500000000&randomKey=randomValue";
+    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutParams))).toMatch(layoutParamsDecoded);
+    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutParamsDecoded))).toMatch(layoutParamsDecoded);
+
+    const layoutUrlParams = "?layout-url=https%3A%2F%2Ffoo%40bar.com&randomKey=randomValue";
+    const layoutUrlParamsDecoded = "?layout-url=https://foo@bar.com&randomKey=randomValue";
+    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutUrlParams))).toMatch(layoutUrlParamsDecoded);
+    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutUrlParamsDecoded))).toMatch(layoutUrlParamsDecoded);
+  });
+
+  describe("getUpdatedURLWithPatch", () => {
+    it("returns a new URL with the patch attached", () => {
+      const compressedPatch = LZString.compressToEncodedURIComponent("somePatch");
+      setWindowURLForTest("?layout=foo&someKey=someVal");
+      expect(getUpdatedURLWithPatch("somePatch")).toMatch(`?layout=foo&someKey=someVal&patch=${compressedPatch}`);
+    });
+  });
+
+  describe("getUpdatedURLWithNewVersion", () => {
+    it("returns a new URL with the patch attached", () => {
+      setWindowURLForTest("?layout=foo&patch=somePatch");
+      const timestampAndPatchHash =
+        "1596745459_9c4a1b372d257004f40918022d87d3ae0fa3bf871116516ec0cbc010bd67ce83&patch=N4IgNghgng9grgFxALgNogMwBEAEAFCAOwFMwBCAcwzgEYAzADxABpQATASwCdiBjBDjEIoQXGAHcWIOtwDOSZCAAq4mFg4BbYoVmDCEMHjAwEZDAAYAblzYYMU2XyFsR2fEVKVq9JgF8Aur5AA";
+      expect(getUpdatedURLWithNewVersion("bar", timestampAndPatchHash)).toMatch(
+        `?layout=bar@${timestampAndPatchHash}&someKey=someVal`
+      );
     });
   });
 });

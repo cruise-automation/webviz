@@ -11,6 +11,7 @@ import { MessageReader } from "rosbag";
 
 import filterMap from "webviz-core/src/filterMap";
 import type { Message } from "webviz-core/src/players/types";
+import { deepParse, inaccurateByteSize, isBobject } from "webviz-core/src/util/binaryObjects";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { toSec } from "webviz-core/src/util/time";
 
@@ -18,7 +19,10 @@ import { toSec } from "webviz-core/src/util/time";
 // Exported for tests.
 export const CACHE_SIZE_BYTES = 200e6;
 
-function readMessage(message: Message, readersByTopic: { [topic: string]: MessageReader }): ?Message {
+function readMessage(message: Message, readersByTopic: $ReadOnly<{ [topic: string]: MessageReader }>): ?Message {
+  if (isBobject(message.message)) {
+    return { ...message, message: deepParse(message.message) };
+  }
   const reader = readersByTopic[message.topic];
   if (!reader) {
     throw new Error(`Could not find message reader for topic ${message.topic}`);
@@ -47,7 +51,10 @@ export default class ParsedMessageCache {
   // Total size in bytes from all the _cachesByDeciSecond.
   _cacheSizeInBytes: number = 0;
 
-  parseMessages(messages: Message[], readersByTopic: { [topic: string]: MessageReader }): Message[] {
+  parseMessages(
+    messages: $ReadOnlyArray<Message>,
+    readersByTopic: $ReadOnly<{ [topic: string]: MessageReader }>
+  ): Message[] {
     const outputMessages: Message[] = filterMap(messages, (message) => {
       // Use strings like "123.4" as the cache keys.
       const deciSecond = Math.trunc(toSec(message.receiveTime) * 10);
@@ -67,8 +74,11 @@ export default class ParsedMessageCache {
         outputMessage = readMessage(message, readersByTopic);
         if (outputMessage) {
           cache.map.set(message, outputMessage);
-          cache.sizeInBytes += message.message.byteLength;
-          this._cacheSizeInBytes += message.message.byteLength;
+          const messageSize = isBobject(message.message)
+            ? inaccurateByteSize(message.message)
+            : message.message.byteLength;
+          cache.sizeInBytes += messageSize;
+          this._cacheSizeInBytes += messageSize;
         }
       }
 

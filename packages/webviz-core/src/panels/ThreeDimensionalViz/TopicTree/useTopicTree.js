@@ -563,7 +563,7 @@ export default function useTree({
     (nodeKey: string) => {
       // Don't allow any toggling expansion when filtering because we automatically expand all nodes.
       if (!filterTextRef.current) {
-        saveConfig({ expandedKeys: xor(expandedKeys, [nodeKey]) }, { keepLayoutInUrl: true });
+        saveConfig({ expandedKeys: xor(expandedKeys, [nodeKey]) });
       }
     },
     [expandedKeys, saveConfig]

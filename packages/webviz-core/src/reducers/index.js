@@ -19,12 +19,12 @@ import type { Auth as AuthState } from "webviz-core/src/types/Auth";
 import type { HoverValue } from "webviz-core/src/types/hoverValue";
 
 const getReducers = (history: any) => [
+  (state) => ({ ...state, router: connectRouter(history)() }),
   panels,
   mosaic,
   extensions,
   hoverValue,
   userNodes,
-  (state) => ({ ...state, router: connectRouter(history)() }),
   layoutHistory,
 ];
 
@@ -37,6 +37,10 @@ export type State = {
   userNodes: { userNodeDiagnostics: UserNodeDiagnostics, rosLib: string },
   router: { location: { pathname: string, search: string } },
   layoutHistory: LayoutHistory,
+  fetchedLayout: {
+    isLoading: boolean,
+    data?: { content: PanelsState, name: string, savedBy: string, releasedVersion: number },
+  },
 };
 
 export default function createRootReducer(history: any) {
@@ -49,6 +53,7 @@ export default function createRootReducer(history: any) {
     userNodes: { userNodeDiagnostics: {}, rosLib: ros_lib_dts },
     router: connectRouter(history)(),
     layoutHistory: initialLayoutHistoryState,
+    fetchedLayout: { isLoading: false },
   };
   return (state: State, action: ActionTypes): State => {
     const oldPanelsState: ?PanelsState = state?.panels;

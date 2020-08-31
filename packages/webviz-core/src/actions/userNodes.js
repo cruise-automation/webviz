@@ -23,11 +23,6 @@ type CLEAR_USER_NODE_LOGS = {
   payload: string,
 };
 
-type SET_USER_NODE_TRUST = {
-  type: "SET_USER_NODE_TRUST",
-  payload: { id: string, trusted: boolean },
-};
-
 type SET_USER_NODE_ROS_LIB = {
   type: "SET_USER_NODE_ROS_LIB",
   payload: string,
@@ -48,11 +43,6 @@ export const clearUserNodeLogs = (payload: string) => ({
   payload,
 });
 
-export const setUserNodeTrust = (payload: { id: string, trusted: boolean }) => ({
-  type: "SET_USER_NODE_TRUST",
-  payload,
-});
-
 export const setUserNodeRosLib = (payload: string) => ({
   type: "SET_USER_NODE_ROS_LIB",
   payload,
@@ -61,12 +51,10 @@ export const setUserNodeRosLib = (payload: string) => ({
 export type AddUserNodeLogs = typeof addUserNodeLogs;
 export type ClearUserNodeLogs = typeof clearUserNodeLogs;
 export type SetUserNodeDiagnostics = typeof setUserNodeDiagnostics;
-export type SetUserNodeTrust = typeof setUserNodeTrust;
 export type SetUserNodeRosLib = typeof setUserNodeRosLib;
 
 export type UserNodesActions =
   | ADD_USER_NODE_LOGS
   | CLEAR_USER_NODE_LOGS
   | SET_USER_NODE_DIAGNOSTICS
-  | SET_USER_NODE_TRUST
   | SET_USER_NODE_ROS_LIB;

@@ -12,6 +12,7 @@ import * as React from "react";
 import { getGlobalHooks } from "../../loadWebviz";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import type { Frame } from "webviz-core/src/players/types";
+import { isBobject, deepParse } from "webviz-core/src/util/binaryObjects";
 import { TRANSFORM_STATIC_TOPIC, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 
 type State = {| transforms: Transforms |};
@@ -36,9 +37,10 @@ function withTransforms<Props: *>(ChildComponent: React.ComponentType<Props>) {
 
       const tfs = frame[TRANSFORM_TOPIC];
       if (tfs) {
-        for (const msg of tfs) {
-          for (const tf of msg.message.transforms) {
-            if (tf.child_frame_id !== getGlobalHooks().perPanelHooks().ThreeDimensionalViz.skipTranformFrame) {
+        for (const { message } of tfs) {
+          const parsedMessage = isBobject(message) ? deepParse(message) : message;
+          for (const tf of parsedMessage.transforms) {
+            if (tf.child_frame_id !== getGlobalHooks().perPanelHooks().ThreeDimensionalViz.skipTransformFrame) {
               transforms.consume(tf);
             }
           }
@@ -46,8 +48,9 @@ function withTransforms<Props: *>(ChildComponent: React.ComponentType<Props>) {
       }
       const tfs_static = frame[TRANSFORM_STATIC_TOPIC];
       if (tfs_static) {
-        for (const msg of tfs_static) {
-          for (const tf of msg.message.transforms) {
+        for (const { message } of tfs_static) {
+          const parsedMessage = isBobject(message) ? deepParse(message) : message;
+          for (const tf of parsedMessage.transforms) {
             transforms.consume(tf);
           }
         }

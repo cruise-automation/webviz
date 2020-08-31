@@ -31,7 +31,6 @@ export default function TopicLink({ topic }: Props) {
         return;
       }
       openSiblingPanel(
-        // $FlowFixMe: https://stackoverflow.com/questions/52508434/adding-static-variable-to-union-of-class-types
         RawMessages.panelType,
         // $FlowFixMe
         (config: RawMessagesConfig) => ({ ...config, topicPath: topic }: RawMessagesConfig)

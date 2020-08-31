@@ -40,6 +40,7 @@ const playerStateWithMessages = (messages, messageOrder) => ({
     endTime: { sec: 2, nsec: 0 },
     isPlaying: false,
     messages,
+    bobjects: [],
     messageOrder,
     playerWarnings: {},
   },

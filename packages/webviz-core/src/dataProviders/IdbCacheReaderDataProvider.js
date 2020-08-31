@@ -11,8 +11,14 @@ import { Time } from "rosbag";
 
 import { MESSAGES_STORE_NAME, getIdbCacheDataProviderDatabase, TIMESTAMP_INDEX } from "./IdbCacheDataProviderDatabase";
 import { type DataProvider, type InitializationResult } from "./types";
-import type { DataProviderDescriptor, ExtensionPoint, GetDataProvider } from "webviz-core/src/dataProviders/types";
-import type { Message, Progress } from "webviz-core/src/players/types";
+import type {
+  DataProviderDescriptor,
+  ExtensionPoint,
+  GetDataProvider,
+  GetMessagesResult,
+  GetMessagesTopics,
+} from "webviz-core/src/dataProviders/types";
+import type { Progress } from "webviz-core/src/players/types";
 import Database from "webviz-core/src/util/indexeddb/Database";
 import { type Range, deepIntersect, isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
 import { subtractTimes, toNanoSec } from "webviz-core/src/util/time";
@@ -67,7 +73,8 @@ export default class IdbCacheReaderDataProvider implements DataProvider {
     return result;
   }
 
-  async getMessages(startTime: Time, endTime: Time, topics: string[]): Promise<Message[]> {
+  async getMessages(startTime: Time, endTime: Time, subscriptions: GetMessagesTopics): Promise<GetMessagesResult> {
+    const topics = subscriptions.rosBinaryMessages || [];
     const range = {
       start: toNanoSec(subtractTimes(startTime, this._startTime)),
       end: toNanoSec(subtractTimes(endTime, this._startTime)) + 1, // `Range` is defined with `end` being exclusive.
@@ -75,8 +82,10 @@ export default class IdbCacheReaderDataProvider implements DataProvider {
     if (!isRangeCoveredByRanges(range, deeplyIntersectedTopics(topics, this._rangesByTopic))) {
       // We use the child's `getMessages` promise to signal that the data is available in the database,
       // but we don't expect it to return actual messages.
-      const getMessagesResult = await this._provider.getMessages(startTime, endTime, topics);
-      if (getMessagesResult.length) {
+      const { parsedMessages, rosBinaryMessages, bobjects } = await this._provider.getMessages(startTime, endTime, {
+        rosBinaryMessages: topics,
+      });
+      if (parsedMessages || rosBinaryMessages || bobjects) {
         throw new Error(
           "IdbCacheReaderDataProvider should not be receiving messages from child; be sure to use a IdbCacheWriterDataProvider below"
         );
@@ -85,7 +94,7 @@ export default class IdbCacheReaderDataProvider implements DataProvider {
       // If we did find the range, *still* call `getMessages` so we signal to the `IdbCacheWriterDataProvider`
       // which part of the bag we care about. (Specifically this is for if you subscribe to a new topic while playback
       // is paused, the writer needs to know where we have last been reading in order to start buffering there.)
-      this._provider.getMessages(startTime, endTime, topics);
+      this._provider.getMessages(startTime, endTime, { rosBinaryMessages: topics });
     }
 
     const tx = this._db.transaction(MESSAGES_STORE_NAME);
@@ -106,7 +115,11 @@ export default class IdbCacheReaderDataProvider implements DataProvider {
     });
     await tx.complete;
     // messagePromises will only be filled after `tx.complete`, so await for `tx.complete` first.
-    return (await Promise.all(messagePromises)).map(({ message }) => message);
+    return {
+      rosBinaryMessages: (await Promise.all(messagePromises)).map(({ message }) => message),
+      parsedMessages: undefined,
+      bobjects: undefined,
+    };
   }
 
   close(): Promise<void> {

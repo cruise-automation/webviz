@@ -48,9 +48,6 @@ export type ChangePanelLayoutPayload = {|
   historyOptions?: EditHistoryOptions,
 |};
 export type SaveConfigsPayload = {|
-  // if you set silent to true, the url will not be stripped of a layout id
-  // after the props are saved - useful for minor or background UI operations modifying insignificant panel props
-  silent?: boolean,
   // if you set override to true, existing config will be completely overriden by new passed in config
   configs: ConfigsPayload[],
   historyOptions?: EditHistoryOptions,
@@ -81,10 +78,7 @@ export type ImportPanelLayoutPayload = {
   skipSettingLocalStorage?: boolean,
 };
 
-export type SaveConfig<Config> = (
-  $Shape<Config>,
-  ?{| keepLayoutInUrl?: boolean, historyOptions?: EditHistoryOptions |}
-) => void;
+export type SaveConfig<Config> = ($Shape<Config>, ?{| historyOptions?: EditHistoryOptions |}) => void;
 
 export type UpdatePanelConfig<Config> = (
   panelType: string,

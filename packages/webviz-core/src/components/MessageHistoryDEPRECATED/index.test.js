@@ -47,8 +47,14 @@ describe("<MessageHistoryDEPRECATED />", () => {
     provider.unmount();
 
     expect(setSubscriptions.mock.calls).toEqual([
-      [expect.any(String), [{ topic: "/some/topic" }, { topic: "/some/other/topic" }]],
-      [expect.any(String), [{ topic: "/some/topic" }]],
+      [
+        expect.any(String),
+        [
+          { topic: "/some/topic", format: "parsedMessages", preloadingFallback: false },
+          { topic: "/some/other/topic", format: "parsedMessages", preloadingFallback: false },
+        ],
+      ],
+      [expect.any(String), [{ topic: "/some/topic", format: "parsedMessages", preloadingFallback: false }]],
       [expect.any(String), []],
     ]);
   });
@@ -72,8 +78,14 @@ describe("<MessageHistoryDEPRECATED />", () => {
     // And unsubscribes properly, too.
     provider.unmount();
     expect(setSubscriptions.mock.calls).toEqual([
-      [expect.any(String), [{ topic: "/some/topic" }]],
-      [expect.any(String), [{ topic: "/some/topic" }, { topic: "/some/other/topic" }]],
+      [expect.any(String), [{ topic: "/some/topic", format: "parsedMessages", preloadingFallback: false }]],
+      [
+        expect.any(String),
+        [
+          { topic: "/some/topic", format: "parsedMessages", preloadingFallback: false },
+          { topic: "/some/other/topic", format: "parsedMessages", preloadingFallback: false },
+        ],
+      ],
       [expect.any(String), []],
     ]);
   });

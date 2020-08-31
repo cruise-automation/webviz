@@ -25,7 +25,6 @@ import {
   ErrorCodes,
   type NodeData,
   type Diagnostic,
-  type PlayerInfo,
   type NodeDataTransformer,
 } from "webviz-core/src/players/UserNodePlayer/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
@@ -138,7 +137,7 @@ export const getOutputTopic = (nodeData: NodeData): NodeData => {
   };
 };
 
-export const validateInputTopics = (nodeData: NodeData, playerStateActiveData: ?$ReadOnly<PlayerInfo>): NodeData => {
+export const validateInputTopics = (nodeData: NodeData, topics: Topic[]): NodeData => {
   const badInputTopic = nodeData.inputTopics.find((topic) => topic.startsWith(DEFAULT_WEBVIZ_NODE_PREFIX));
   if (badInputTopic) {
     const error = {
@@ -155,7 +154,7 @@ export const validateInputTopics = (nodeData: NodeData, playerStateActiveData: ?
   }
 
   const { inputTopics } = nodeData;
-  const activeTopics = ((playerStateActiveData && playerStateActiveData.topics) || []).map(({ name }) => name);
+  const activeTopics = topics.map(({ name }) => name);
   const diagnostics = [];
   for (const inputTopic of inputTopics) {
     if (!activeTopics.includes(inputTopic)) {
@@ -176,7 +175,7 @@ export const validateInputTopics = (nodeData: NodeData, playerStateActiveData: ?
 
 export const validateOutputTopic = (
   nodeData: NodeData,
-  playerStateActiveData: ?$ReadOnly<PlayerInfo>,
+  topics: Topic[],
   priorRegisteredTopics: $ReadOnlyArray<Topic>
 ): NodeData => {
   const { outputTopic } = nodeData;
@@ -379,11 +378,11 @@ TODO:
   - what happens when the `register` portion of the node pipeline fails to instantiate the code? can we get the stack trace?
 */
 export const compose = (...transformers: NodeDataTransformer[]): NodeDataTransformer => {
-  return (nodeData: NodeData, playerState: ?$ReadOnly<PlayerInfo>, priorRegisteredTopics: $ReadOnlyArray<Topic>) => {
+  return (nodeData: NodeData, topics: Topic[], priorRegisteredTopics: $ReadOnlyArray<Topic>) => {
     let newNodeData = nodeData;
     // TODO: try/catch here?
     for (const transformer of transformers) {
-      newNodeData = transformer(newNodeData, playerState, priorRegisteredTopics);
+      newNodeData = transformer(newNodeData, topics, priorRegisteredTopics);
     }
     return newNodeData;
   };
@@ -404,14 +403,14 @@ export const compose = (...transformers: NodeDataTransformer[]): NodeDataTransfo
 const transform = ({
   name,
   sourceCode,
-  playerInfo,
+  topics,
   priorRegisteredTopics,
   rosLib,
   datatypes,
 }: {
   name: string,
   sourceCode: string,
-  playerInfo: ?$ReadOnly<PlayerInfo>,
+  topics: Topic[],
   priorRegisteredTopics: $ReadOnlyArray<Topic>,
   rosLib: string,
   datatypes: RosDatatypes,
@@ -440,7 +439,7 @@ const transform = ({
       sourceFile: undefined,
       typeChecker: undefined,
     },
-    playerInfo,
+    topics,
     priorRegisteredTopics
   );
   return { ...result, sourceFile: null, typeChecker: null };

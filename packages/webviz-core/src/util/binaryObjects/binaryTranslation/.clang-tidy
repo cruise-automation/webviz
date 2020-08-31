@@ -1,0 +1,47 @@
+# Lists of available checks:
+# - http://releases.llvm.org/6.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/list.html
+# - Clang analyzer checks: https://clang-analyzer.llvm.org/available_checks.html (prefix their names with "clang-analyzer-")
+# Enabled checks:
+# Explicitly disable clang-analyzer checks, as cruise-tidy > 3.9 doesn't match them with *
+Checks: '-*,-clang-analyzer-*,google-explicit-constructor'
+
+CheckOptions:
+  # List of identifier types for IdentifierNamingCheck:
+  # https://github.com/llvm-mirror/clang-tools-extra/blob/release_60/clang-tidy/readability/IdentifierNamingCheck.cpp#L67
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+
+  - key: readability-identifier-naming.MemberCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: _
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: _
+
+  - key: readability-identifier-naming.GlobalVariablePrefix
+    value: g
+
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+
+  - key: readability-identifier-naming.ClassMethodCase
+    value: CamelCase

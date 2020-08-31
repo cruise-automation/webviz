@@ -128,15 +128,18 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
               // update the subscriptions immediately after render, not during
               // calling this on the same tick as render causes an error because we're setting state during render loop
               setImmediate(() => {
-                act(() => context.setSubscriptions("test", [{ topic: "/webviz/test" }]));
-                act(() => context.setSubscriptions("bar", [{ topic: "/webviz/test2" }]));
+                act(() => context.setSubscriptions("test", [{ topic: "/webviz/test", format: "parsedMessages" }]));
+                act(() => context.setSubscriptions("bar", [{ topic: "/webviz/test2", format: "parsedMessages" }]));
               });
             }
             if (callCount === 2) {
-              expect(context.subscriptions).toEqual([{ topic: "/webviz/test" }]);
+              expect(context.subscriptions).toEqual([{ topic: "/webviz/test", format: "parsedMessages" }]);
             }
             if (callCount === 3) {
-              expect(context.subscriptions).toEqual([{ topic: "/webviz/test" }, { topic: "/webviz/test2" }]);
+              expect(context.subscriptions).toEqual([
+                { topic: "/webviz/test", format: "parsedMessages" },
+                { topic: "/webviz/test2", format: "parsedMessages" },
+              ]);
               // cause the player to emit a frame outside the render loop to trigger another render
               setImmediate(() => {
                 act(() => {
@@ -386,8 +389,8 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
               // update the subscriptions immediately after render, not during
               // calling this on the same tick as render causes an error because we're setting state during render loop
               setImmediate(() => {
-                act(() => context.setSubscriptions("test", [{ topic: "/webviz/test" }]));
-                act(() => context.setSubscriptions("bar", [{ topic: "/webviz/test2" }]));
+                act(() => context.setSubscriptions("test", [{ topic: "/webviz/test", format: "parsedMessages" }]));
+                act(() => context.setSubscriptions("bar", [{ topic: "/webviz/test2", format: "parsedMessages" }]));
                 act(() => context.setPublishers("test", [{ topic: "/webviz/test", datatype: "test" }]));
                 wait.resolve();
               });
@@ -400,7 +403,10 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     await wait;
     const player2 = new FakePlayer();
     act(() => el.setProps({ player: player2 }) && undefined);
-    expect(player2.subscriptions).toEqual([{ topic: "/webviz/test" }, { topic: "/webviz/test2" }]);
+    expect(player2.subscriptions).toEqual([
+      { topic: "/webviz/test", format: "parsedMessages" },
+      { topic: "/webviz/test2", format: "parsedMessages" },
+    ]);
     expect(player2.publishers).toEqual([{ topic: "/webviz/test", datatype: "test" }]);
   });
 
@@ -414,6 +420,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     );
     const activeData = {
       messages: [],
+      bobjects: [],
       messageOrder: "receiveTime",
       currentTime: { sec: 0, nsec: 0 },
       startTime: { sec: 0, nsec: 0 },
@@ -452,13 +459,14 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       </MessagePipelineProvider>
     );
     expect(fn).toHaveBeenCalledTimes(1);
-    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test" }]));
+    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test", format: "parsedMessages" }]));
     expect(fn).toHaveBeenCalledTimes(2);
     expect(console.warn).toHaveBeenCalledTimes(0);
 
     // Emit activeData.
     const activeData = {
       messages: [],
+      bobjects: [],
       messageOrder: "receiveTime",
       currentTime: { sec: 0, nsec: 0 },
       startTime: { sec: 0, nsec: 0 },
@@ -475,7 +483,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     expect(fn).toHaveBeenCalledTimes(3);
 
     // Calling setSubscriptions right after activeData is emitted results in a warning.
-    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test" }]));
+    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test", format: "parsedMessages" }]));
     // $FlowFixMe - Flow doesn't understand `console.warn.mock`
     expect(console.warn.mock.calls).toEqual([
       [
@@ -485,7 +493,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
 
     // If we wait a little bit, we shouldn't get any additional warnings.
     await delay(WARN_ON_SUBSCRIPTIONS_WITHIN_TIME_MS + 200);
-    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test" }]));
+    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test", format: "parsedMessages" }]));
     // $FlowFixMe - Flow doesn't understand `console.warn.mock`
     expect(console.warn.mock.calls.length).toEqual(1);
   });

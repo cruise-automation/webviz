@@ -7,21 +7,33 @@
 //  You may not use this file except in compliance with the License.
 import { vec3 } from "gl-matrix";
 import React, { type Node } from "react";
-import { Arrows, pointToVec3, vec3ToPoint, orientationToVec4, type Arrow } from "regl-worldview";
+import {
+  Arrows,
+  pointToVec3,
+  vec3ToPoint,
+  orientationToVec4,
+  type Arrow,
+  type CommonCommandProps,
+} from "regl-worldview";
 
 import CarModel from "./CarModel";
 
 type Props = {
   children: Arrow[],
+  ...CommonCommandProps,
 };
 
-export default React.memo<Props>(function PoseMarkers({ children }: Props): Node[] {
+export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: Props): Node[] {
   const models = [];
   const markers = [];
   children.forEach((marker, i) => {
     if (marker.settings && marker.settings.useCarModel) {
       const { pose, settings, interactionData } = marker;
-      models.push(<CarModel key={i}>{{ pose, alpha: settings.alpha || 1, interactionData }}</CarModel>);
+      models.push(
+        <CarModel layerIndex={layerIndex} key={i}>
+          {{ pose, alpha: settings.alpha || 1, interactionData }}
+        </CarModel>
+      );
     } else {
       const { settings } = marker;
       if (settings && settings.color) {
@@ -49,5 +61,9 @@ export default React.memo<Props>(function PoseMarkers({ children }: Props): Node
     }
   });
 
-  return models.concat(<Arrows key="arrows">{markers}</Arrows>);
+  return models.concat(
+    <Arrows layerIndex={layerIndex} key="arrows">
+      {markers}
+    </Arrows>
+  );
 });

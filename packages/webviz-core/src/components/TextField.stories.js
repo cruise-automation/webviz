@@ -10,8 +10,8 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 
 import TextField from "./TextField";
+import { createPrimitiveValidator, hasLen } from "webviz-core/shared/validators";
 import Flex from "webviz-core/src/components/Flex";
-import { createPrimitiveValidator, hasLen } from "webviz-core/src/components/validators";
 import { triggerInputChange, triggerInputBlur } from "webviz-core/src/stories/PanelSetup";
 
 const validator = createPrimitiveValidator([hasLen(4)]);

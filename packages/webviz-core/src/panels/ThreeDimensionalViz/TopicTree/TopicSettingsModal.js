@@ -16,7 +16,7 @@ import Button from "webviz-core/src/components/Button";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Modal from "webviz-core/src/components/Modal";
 import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
-import { getSettingsByColumnWithDefaults } from "webviz-core/src/panels/ThreeDimensionalViz/TopicGroups/topicGroupsMigrations";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { topicSettingsEditorForDatatype } from "webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor";
 import type { Topic } from "webviz-core/src/players/types";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
@@ -43,6 +43,24 @@ const SEditorWrapper = styled.div`
   color: ${colors.TEXT};
   width: 400px;
 `;
+
+function getSettingsByColumnWithDefaults(topicName: string, settingsByColumn: ?(any[])): ?{ settingsByColumn: any[] } {
+  const defaultTopicSettingsByColumn = getGlobalHooks()
+    .startupPerPanelHooks()
+    .ThreeDimensionalViz.getDefaultTopicSettingsByColumn(topicName);
+
+  if (defaultTopicSettingsByColumn) {
+    const newSettingsByColumn = settingsByColumn || [undefined, undefined];
+    newSettingsByColumn.forEach((settings, columnIndex) => {
+      if (settings === undefined) {
+        // Only apply default settings if there are no settings present.
+        newSettingsByColumn[columnIndex] = defaultTopicSettingsByColumn[columnIndex];
+      }
+    });
+    return { settingsByColumn: newSettingsByColumn };
+  }
+  return settingsByColumn ? { settingsByColumn } : undefined;
+}
 
 function MainEditor({
   datatype,

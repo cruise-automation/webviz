@@ -11,7 +11,9 @@ import momentDurationFormatSetup from "moment-duration-format";
 import moment from "moment-timezone";
 import { type Time, TimeUtil } from "rosbag";
 
-import type { Message } from "webviz-core/src/players/types";
+import { cast, type Bobject, type Message } from "webviz-core/src/players/types";
+import type { BinaryTime } from "webviz-core/src/types/BinaryMessages";
+import { deepParse } from "webviz-core/src/util/binaryObjects";
 import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
 type BatchTimestamp = {
@@ -101,7 +103,7 @@ function fixTime(t: Time): Time {
   // Equivalent to fromNanoSec(toNanoSec(t)), but no chance of precision loss.
   // nsec should be non-negative, and less than 1e9.
   let { sec, nsec } = t;
-  while (nsec > 1e9) {
+  while (nsec >= 1e9) {
     nsec -= 1e9;
     sec += 1;
   }
@@ -244,16 +246,23 @@ export function clampTime(time: Time, start: Time, end: Time): Time {
 
 export function parseRosTimeStr(str: string): ?Time {
   if (/^\d+\.?$/.test(str)) {
+    // Whole number with optional "." at the end.
     return { sec: parseInt(str, 10) || 0, nsec: 0 };
   }
   if (!/^\d+\.\d+$/.test(str)) {
+    // Not digits.digits -- invalid.
     return null;
   }
   const partials = str.split(".");
   if (partials.length === 0) {
     return null;
   }
-  return { sec: parseInt(partials[0], 10) || 0, nsec: parseInt(partials[1], 10) || 0 };
+  // There can be 9 digits of nanoseconds. If the fractional part is "1", we need to add eight
+  // zeros. Also, make sure we round to an integer if we need to _remove_ digits.
+  const digitsShort = 9 - partials[1].length;
+  const nsec = Math.round(parseInt(partials[1], 10) * 10 ** digitsShort);
+  // It's possible we rounded to { sec: 1, nsec: 1e9 }, which is invalid, so fixTime.
+  return fixTime({ sec: parseInt(partials[0], 10) || 0, nsec });
 }
 
 export function parseTimeStr(str: string): ?Time {
@@ -282,3 +291,24 @@ export function getTimestampForMessage(message: Message, timestampMethod?: Times
   }
   return message.receiveTime;
 }
+
+export const compareBinaryTimes = (a: BinaryTime, b: BinaryTime) => {
+  return a.sec() - b.sec() || a.nsec() - b.nsec();
+};
+
+// Descriptive -- not a real type
+type MaybeStampedBobject = $ReadOnly<{|
+  header?: () => $ReadOnly<{| stamp?: () => mixed |}>,
+|}>;
+
+export const maybeGetBobjectHeaderStamp = (message: ?Bobject): ?Time => {
+  if (message == null) {
+    return;
+  }
+  const maybeStamped = cast<MaybeStampedBobject>(message);
+  const header = maybeStamped.header && maybeStamped.header();
+  const stamp = header && header.stamp && deepParse(header.stamp());
+  if (isTime(stamp)) {
+    return stamp;
+  }
+};

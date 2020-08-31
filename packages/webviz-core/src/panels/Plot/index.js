@@ -13,7 +13,7 @@ import { hot } from "react-hot-loader/root";
 import { type Time, TimeUtil } from "rosbag";
 
 import helpContent from "./index.help.md";
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import { type MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import { getTopicsFromPaths } from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
@@ -182,11 +182,13 @@ function Plot(props: Props) {
   const allPaths = yAxisPaths.map(({ value }) => value).concat(compact([xAxisPath?.value]));
   const memoizedPaths: string[] = useShallowMemo<string[]>(allPaths);
   const subscribeTopics = useMemo(() => getTopicsFromPaths(memoizedPaths), [memoizedPaths]);
-  // TODO: Maybe slice "current" playback data out of the blocks to avoid this subscription.
   const messagesByTopic = useMessagesByTopic({
     topics: subscribeTopics,
     historySize,
-    onlyLoadInBlocks: !showSingleCurrentMessage,
+    // This subscription is used for two purposes:
+    //  1. A fallback for preloading when blocks are not available (nodes, websocket.)
+    //  2. Playback-synced plotting of index/custom data.
+    preloadingFallback: !showSingleCurrentMessage,
   });
 
   const decodeMessagePathsForMessagesByTopic = useDecodeMessagePathsForMessagesByTopic(memoizedPaths);
@@ -221,7 +223,7 @@ function Plot(props: Props) {
       []
     )
   );
-  const preloading = getExperimentalFeature("preloading");
+  const preloading = useExperimentalFeature("preloading");
 
   // Min/max x-values and playback position indicator are only used for preloaded plots. In non-
   // preloaded plots min x-value is always the last seek time, and the max x-value is the current

@@ -8,10 +8,10 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { type Time, MessageWriter, parseMessageDefinition } from "rosbag";
 
 import Plot from "webviz-core/src/panels/Plot";
 import PanelSetup, { triggerWheel } from "webviz-core/src/stories/PanelSetup";
+import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { fromSec } from "webviz-core/src/util/time";
 
 const float64StampedDefinition = `std_msgs/Header header
@@ -22,13 +22,6 @@ MSG: std_msgs/Header
 uint32 seq
 time stamp
 string frame_id`;
-
-const writer = new MessageWriter(parseMessageDefinition(float64StampedDefinition));
-
-const serializeFloat64Stamped = ({ value, headerStamp: { sec, nsec } }: { value: number, headerStamp: Time }) => {
-  const buffer = writer.writeMessage({ header: { seq: 0, stamp: { sec, nsec }, frame_id: "" }, data: value });
-  return Buffer.from(buffer);
-};
 
 const locationMessages = [
   { header: { stamp: { sec: 0, nsec: 574635076 } }, pose: { acceleration: -0.00116662939, velocity: 1.184182664 } },
@@ -66,10 +59,65 @@ const otherStateMessages = [
   { header: { stamp: { sec: 2, nsec: 578787057 } }, items: [{ id: 10, speed: 1.63 }, { id: 42, speed: 0.06 }] },
 ];
 
+const withEndTime = (testFixture, endTime) => ({
+  ...testFixture,
+  activeData: { ...testFixture.activeData, endTime },
+});
+
+const datatypes = {
+  "msgs/PoseDebug": {
+    fields: [
+      { name: "header", type: "std_msgs/Header", isArray: false },
+      { name: "pose", type: "msgs/Pose", isArray: false },
+    ],
+  },
+  "msgs/Pose": {
+    fields: [
+      { name: "header", type: "std_msgs/Header", isArray: false },
+      { name: "x", type: "float64", isArray: false },
+      { name: "y", type: "float64", isArray: false },
+      { name: "travel", type: "float64", isArray: false },
+      { name: "velocity", type: "float64", isArray: false },
+      { name: "acceleration", type: "float64", isArray: false },
+      { name: "heading", type: "float64", isArray: false },
+    ],
+  },
+  "msgs/State": {
+    fields: [
+      { name: "header", type: "std_msgs/Header", isArray: false },
+      { name: "items", type: "msgs/OtherState", isArray: true },
+    ],
+  },
+  "msgs/OtherState": {
+    fields: [{ name: "id", type: "int32", isArray: false }, { name: "speed", type: "float32", isArray: false }],
+  },
+  "std_msgs/Header": {
+    fields: [
+      { name: "seq", type: "uint32", isArray: false },
+      {
+        name: "stamp",
+        type: "time",
+        isArray: false,
+      },
+      { name: "frame_id", type: "string", isArray: false },
+    ],
+  },
+  "std_msgs/Bool": { fields: [{ name: "data", type: "bool", isArray: false }] },
+  "nonstd_msgs/Float64Stamped": {
+    fields: [
+      { name: "header", type: "std_msgs/Header", isArray: false },
+      { name: "data", type: "float64", isArray: false },
+    ],
+  },
+};
+
 const getPreloadedMessage = (seconds) => ({
   topic: "/preloaded_topic",
   receiveTime: fromSec(seconds),
-  message: serializeFloat64Stamped({ value: Math.pow(seconds, 2), headerStamp: fromSec(seconds - 0.5) }),
+  message: wrapJsObject(datatypes, "nonstd_msgs/Float64Stamped", {
+    data: Math.pow(seconds, 2),
+    header: { stamp: fromSec(seconds - 0.5), frame_id: "", seq: 0 },
+  }),
 });
 
 const messageCache = {
@@ -94,58 +142,8 @@ const messageCache = {
   startTime: fromSec(0.6),
 };
 
-const withEndTime = (testFixture, endTime) => ({
-  ...testFixture,
-  activeData: { ...testFixture.activeData, endTime },
-});
-
 const fixture = {
-  datatypes: {
-    "msgs/PoseDebug": {
-      fields: [
-        { name: "header", type: "std_msgs/Header", isArray: false },
-        { name: "pose", type: "msgs/Pose", isArray: false },
-      ],
-    },
-    "msgs/Pose": {
-      fields: [
-        { name: "header", type: "std_msgs/Header", isArray: false },
-        { name: "x", type: "float64", isArray: false },
-        { name: "y", type: "float64", isArray: false },
-        { name: "travel", type: "float64", isArray: false },
-        { name: "velocity", type: "float64", isArray: false },
-        { name: "acceleration", type: "float64", isArray: false },
-        { name: "heading", type: "float64", isArray: false },
-      ],
-    },
-    "msgs/State": {
-      fields: [
-        { name: "header", type: "std_msgs/Header", isArray: false },
-        { name: "items", type: "msgs/OtherState", isArray: true },
-      ],
-    },
-    "msgs/OtherState": {
-      fields: [{ name: "id", type: "int32", isArray: false }, { name: "speed", type: "float32", isArray: false }],
-    },
-    "std_msgs/Header": {
-      fields: [
-        { name: "seq", type: "uint32", isArray: false },
-        {
-          name: "stamp",
-          type: "time",
-          isArray: false,
-        },
-        { name: "frame_id", type: "string", isArray: false },
-      ],
-    },
-    "std_msgs/Bool": { fields: [{ name: "data", type: "bool", isArray: false }] },
-    "nonstd_msgs/Float64Stamped": {
-      fields: [
-        { name: "header", type: "std_msgs/Header", isArray: false },
-        { name: "data", type: "float64", isArray: false },
-      ],
-    },
-  },
+  datatypes,
   topics: [
     { name: "/some_topic/location", datatype: "msgs/PoseDebug" },
     { name: "/some_topic/location_subset", datatype: "msgs/PoseDebug" },

@@ -6,10 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { createMemoryHistory } from "history";
 import { debounce, flatten, groupBy } from "lodash";
 import * as React from "react";
-import { Provider } from "react-redux";
 import { type Time, TimeUtil } from "rosbag";
 
 import { pauseFrameForPromises, type FramePromise } from "./pauseFrameForPromise";
@@ -27,8 +25,7 @@ import type {
   SubscribePayload,
   Topic,
 } from "webviz-core/src/players/types";
-import createRootReducer from "webviz-core/src/reducers";
-import configureStore from "webviz-core/src/store/configureStore";
+import StoreSetup from "webviz-core/src/stories/StoreSetup";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { hideLoadingLogo } from "webviz-core/src/util/hideLoadingLogo";
 import {
@@ -227,7 +224,7 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
     );
   });
 
-  const messages: ?(Message[]) = playerState.activeData?.messages;
+  const messages: ?$ReadOnlyArray<Message> = playerState.activeData?.messages;
   const frame = useMemo(() => groupBy(messages || [], "topic"), [messages]);
   const sortedTopics = useMemo(() => (topics || []).sort(), [topics]);
   const datatypes: RosDatatypes = useMemo(() => unmemoizedDatatypes ?? {}, [unmemoizedDatatypes]);
@@ -305,6 +302,9 @@ export function MessagePipelineConsumer({ children }: ConsumerProps) {
   return children(value);
 }
 
+const NO_DATATYPES = Object.freeze({});
+const NO_BOBJECTS = Object.freeze([]);
+
 // TODO(Audrey): put messages under activeData, add ability to mock seeking
 export function MockMessagePipelineProvider(props: {|
   children: React.Node,
@@ -312,6 +312,7 @@ export function MockMessagePipelineProvider(props: {|
   topics?: Topic[],
   datatypes?: RosDatatypes,
   messages?: Message[],
+  bobjects?: Message[],
   setSubscriptions?: (string, SubscribePayload[]) => void,
   noActiveData?: boolean,
   showInitializing?: boolean,
@@ -330,7 +331,6 @@ export function MockMessagePipelineProvider(props: {|
   requestBackfill?: () => void,
   progress?: Progress,
 |}) {
-  const storeRef = useRef(props.store || configureStore(createRootReducer(createMemoryHistory())));
   const startTime = useRef();
   let currentTime = props.currentTime;
   if (!currentTime) {
@@ -369,8 +369,9 @@ export function MockMessagePipelineProvider(props: {|
         ? undefined
         : {
             messages: props.messages || [],
+            bobjects: props.bobjects || NO_BOBJECTS,
             topics: props.topics || [],
-            datatypes: props.datatypes || {},
+            datatypes: props.datatypes || NO_DATATYPES,
             startTime: props.startTime || startTime.current || { sec: 100, nsec: 0 },
             currentTime: currentTime || { sec: 100, nsec: 0 },
             endTime: props.endTime || currentTime || { sec: 100, nsec: 0 },
@@ -387,6 +388,7 @@ export function MockMessagePipelineProvider(props: {|
       props.showInitializing,
       props.noActiveData,
       props.messages,
+      props.bobjects,
       props.topics,
       props.datatypes,
       props.startTime,
@@ -399,13 +401,13 @@ export function MockMessagePipelineProvider(props: {|
   );
 
   return (
-    <Provider store={storeRef.current}>
+    <StoreSetup store={props.store}>
       <Context.Provider
         value={{
           playerState,
           frame: groupBy(props.messages || [], "topic"),
           sortedTopics: (props.topics || []).sort(naturalSort("name")),
-          datatypes: props.datatypes || {},
+          datatypes: props.datatypes || NO_DATATYPES,
           subscriptions: flattenedSubscriptions,
           publishers: [],
           setSubscriptions: props.setSubscriptions || setSubscriptions,
@@ -420,6 +422,6 @@ export function MockMessagePipelineProvider(props: {|
         }}>
         {props.children}
       </Context.Provider>
-    </Provider>
+    </StoreSetup>
   );
 }

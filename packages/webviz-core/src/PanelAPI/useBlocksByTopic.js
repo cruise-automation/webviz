@@ -11,7 +11,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { MessageReader, parseMessageDefinition } from "rosbag";
 import uuid from "uuid";
 
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import type { MemoryCacheBlock } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
@@ -75,7 +75,7 @@ const useSubscribeToTopicsForBlocks = (topics: $ReadOnlyArray<string>) => {
   const subscriptions: SubscribePayload[] = useMemo(
     () => {
       const requester = panelType ? { type: "panel", name: panelType } : undefined;
-      return topics.map((topic) => ({ topic, requester, onlyLoadInBlocks: true }));
+      return topics.map((topic) => ({ topic, requester, format: "bobjects" }));
     },
     [panelType, topics]
   );
@@ -107,7 +107,7 @@ export function useBlocksByTopic(topics: $ReadOnlyArray<string>): BlocksForTopic
   // Get blocks for the topics
   const allBlocks = useMessagePipeline<?$ReadOnlyArray<?MemoryCacheBlock>>(getBlocksFromPlayerState);
 
-  const exposeBlockData = !!allBlocks && getExperimentalFeature("preloading");
+  const exposeBlockData = useExperimentalFeature("preloading") && !!allBlocks;
 
   const messageReadersByTopic = useMemo(
     () => {

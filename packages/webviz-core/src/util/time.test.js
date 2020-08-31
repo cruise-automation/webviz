@@ -7,6 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import * as time from "./time";
+import { cast } from "webviz-core/src/players/types";
+import type { BinaryTime } from "webviz-core/src/types/BinaryMessages";
+import { deepParse, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 
 const { fromSecondStamp } = time;
 describe("time.toDate & time.fromDate", () => {
@@ -252,9 +255,15 @@ describe("time.parseRosTimeStr", () => {
     expect(time.parseRosTimeStr("12121.")).toEqual({ sec: 12121, nsec: 0 });
     expect(time.parseRosTimeStr("1")).toEqual({ sec: 1, nsec: 0 });
     expect(time.parseRosTimeStr("1.")).toEqual({ sec: 1, nsec: 0 });
-    expect(time.parseRosTimeStr("1.12")).toEqual({ sec: 1, nsec: 12 });
-    expect(time.parseRosTimeStr("100.100")).toEqual({ sec: 100, nsec: 100 });
+    expect(time.parseRosTimeStr("1.12")).toEqual({ sec: 1, nsec: 0.12e9 });
+    expect(time.parseRosTimeStr("100.100")).toEqual({ sec: 100, nsec: 0.1e9 });
     expect(time.parseRosTimeStr("100")).toEqual({ sec: 100, nsec: 0 });
+    // Full nanosecond timestamp
+    expect(time.parseRosTimeStr("1.123456789")).toEqual({ sec: 1, nsec: 0.123456789e9 });
+    // Too much precision
+    expect(time.parseRosTimeStr("1.0123456789")).toEqual({ sec: 1, nsec: 0.012345679e9 });
+    // Too much precision, round seconds up.
+    expect(time.parseRosTimeStr("1.999999999999")).toEqual({ sec: 2, nsec: 0 });
   });
 });
 
@@ -303,5 +312,18 @@ describe("time.getTimestampForMessage", () => {
       time.getTimestampForMessage({ ...messageBase, message: { header: { stamp: { sec: 123 } } } }, "headerStamp")
     ).toEqual(undefined);
     expect(time.getTimestampForMessage({ ...messageBase, message: { header: {} } }, "headerStamp")).toEqual(undefined);
+  });
+});
+
+describe("time.compareBinaryTimes", () => {
+  it("properly orders a list of times", () => {
+    const times = [{ sec: 1, nsec: 1 }, { sec: 0, nsec: 0 }, { sec: 1, nsec: 0 }, { sec: 0, nsec: 1 }];
+    const binaryTimes = times.map((t) => cast<BinaryTime>(wrapJsObject({}, "time", t)));
+    expect(binaryTimes.sort(time.compareBinaryTimes).map(deepParse)).toEqual([
+      { sec: 0, nsec: 0 },
+      { sec: 0, nsec: 1 },
+      { sec: 1, nsec: 0 },
+      { sec: 1, nsec: 1 },
+    ]);
   });
 });

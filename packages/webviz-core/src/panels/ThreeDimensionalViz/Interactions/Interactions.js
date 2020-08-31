@@ -11,7 +11,6 @@ import * as React from "react";
 import { type MouseEventObject } from "regl-worldview";
 import styled from "styled-components";
 
-import GeneralInfo from "./GeneralInfo";
 import LinkedGlobalVariableList from "./LinkedGlobalVariableList";
 import PointCloudDetails from "./PointCloudDetails";
 import type { InteractionData } from "./types";
@@ -22,10 +21,10 @@ import Icon from "webviz-core/src/components/Icon";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import { decodeAdditionalFields } from "webviz-core/src/panels/ThreeDimensionalViz/commands/PointClouds/selection";
 import ObjectDetails from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/ObjectDetails";
+import TopicLink from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/TopicLink";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import type { SaveConfig, PanelConfig } from "webviz-core/src/types/panels";
-import { useChangeDetector } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 export const SRow = styled.div`
@@ -49,15 +48,14 @@ export const SEmptyState = styled.div`
   margin-bottom: 8px;
 `;
 
-export const OBJECT_TAB_TYPE = "Clicked object";
+export const OBJECT_TAB_TYPE = "Selected object";
 export const LINKED_VARIABLES_TAB_TYPE = "Linked variables";
 export type TabType = typeof OBJECT_TAB_TYPE | typeof LINKED_VARIABLES_TAB_TYPE;
 
 type Props = {
-  defaultSelectedTab?: ?TabType, // for UI testing
+  interactionsTabType: ?TabType,
+  setInteractionsTabType: (?TabType) => void,
   interactionData: ?InteractionData,
-  isDrawing: boolean,
-  onClearSelectedObject: () => void,
   selectedObject: ?MouseEventObject,
 };
 
@@ -69,29 +67,11 @@ type PropsWithConfig = Props & {
 const InteractionsBaseComponent = React.memo<PropsWithConfig>(function InteractionsBaseComponent({
   selectedObject,
   interactionData,
-  isDrawing,
-  onClearSelectedObject,
-  defaultSelectedTab,
+  interactionsTabType,
+  setInteractionsTabType,
   disableAutoOpenClickedObject,
   saveConfig,
 }: PropsWithConfig) {
-  const [selectedTab, setSelectedTab] = React.useState<?TabType>(defaultSelectedTab);
-  const selectedObjectChanged = useChangeDetector([selectedObject], !!selectedObject);
-  React.useEffect(
-    () => {
-      if (!disableAutoOpenClickedObject && !isDrawing) {
-        // auto open Object tab if the object changed, the tab is not already open, and the user is not drawing
-        if (selectedObjectChanged && selectedTab !== OBJECT_TAB_TYPE) {
-          setSelectedTab(OBJECT_TAB_TYPE);
-        } else if (!selectedObject && selectedTab === OBJECT_TAB_TYPE) {
-          // auto collapse the Object pane when there is no object and auto open is enabled
-          setSelectedTab(null);
-        }
-      }
-    },
-    [disableAutoOpenClickedObject, selectedObjectChanged, selectedTab, selectedObject, isDrawing]
-  );
-
   const { object } = selectedObject || {};
   const isPointCloud = object && object.type === 102;
   const maybeFullyDecodedObject = React.useMemo(
@@ -105,27 +85,25 @@ const InteractionsBaseComponent = React.memo<PropsWithConfig>(function Interacti
 
   return (
     <ExpandingToolbar
-      tooltip="Clicked objects and linked variables"
+      tooltip="Inspect Objects"
       icon={
         <Icon style={{ color: "white" }}>
           <CursorDefault />
         </Icon>
       }
       className={styles.buttons}
-      selectedTab={selectedTab}
-      onSelectTab={(newSelectedTab) => {
-        if (disableAutoOpenClickedObject && object && !newSelectedTab) {
-          // automatically unselect object if the user force close the tab when disableAutoOpenClickedObject is enabled
-          onClearSelectedObject();
-        }
-        setSelectedTab(newSelectedTab);
-      }}>
+      selectedTab={interactionsTabType}
+      onSelectTab={(newSelectedTab) => setInteractionsTabType(newSelectedTab)}>
       <ToolGroup name={OBJECT_TAB_TYPE}>
         <ToolGroupFixedSizePane>
           {selectedObject ? (
             <>
-              {selectedInteractionData && (
-                <GeneralInfo selectedObject={selectedObject} interactionData={selectedInteractionData} />
+              {interactionData && (
+                <SRow>
+                  <SValue>
+                    <TopicLink topic={interactionData.topic} />
+                  </SValue>
+                </SRow>
               )}
               {isPointCloud && (
                 <PointCloudDetails selectedObject={maybeFullyDecodedObject} interactionData={selectedInteractionData} />

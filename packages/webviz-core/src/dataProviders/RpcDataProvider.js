@@ -9,13 +9,14 @@
 import { Time } from "rosbag";
 
 import { setupReceiveReportErrorHandler } from "webviz-core/src//util/RpcUtils";
-import {
-  type DataProviderDescriptor,
-  type ExtensionPoint,
-  type InitializationResult,
-  type DataProvider,
+import type {
+  DataProviderDescriptor,
+  ExtensionPoint,
+  GetMessagesResult,
+  GetMessagesTopics,
+  InitializationResult,
+  DataProvider,
 } from "webviz-core/src/dataProviders/types";
-import type { Message } from "webviz-core/src/players/types";
 import Rpc from "webviz-core/src/util/Rpc";
 
 // Looks a bit like a regular `DataProvider`, but is not intended to be used directly in a
@@ -56,8 +57,16 @@ export default class RpcDataProvider implements DataProvider {
     return this._rpc.send("initialize", { childDescriptor: this._childDescriptor });
   }
 
-  async getMessages(start: Time, end: Time, topics: string[]): Promise<Message[]> {
-    return (await this._rpc.send("getMessages", { start, end, topics })).messages;
+  async getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> {
+    if (topics.bobjects || topics.parsedMessages) {
+      throw new Error("RpcDataProvider only supports rosBinaryMessages");
+    }
+    return {
+      rosBinaryMessages: (await this._rpc.send("getMessages", { start, end, topics: topics.rosBinaryMessages }))
+        .messages,
+      bobjects: undefined,
+      parsedMessages: undefined,
+    };
   }
 
   close(): Promise<void> {

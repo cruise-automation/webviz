@@ -10,6 +10,7 @@ import { mount } from "enzyme";
 import * as React from "react";
 import { type CameraState } from "regl-worldview";
 
+import type { Interactive } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import {
   type GLTextMarker,
   useGLText,
@@ -39,8 +40,12 @@ export const header = {
   stamp: { sec: 0, nsec: 0 },
 };
 
-const createMarker = (text: string): TextMarker | GLTextMarker => {
-  return {
+function makeInteractive<T>(message: T): Interactive<T> {
+  return { ...message, interactionData: { topic: "/topic", originalMessage: message } };
+}
+
+const createMarker = (text: string): Interactive<TextMarker> | Interactive<GLTextMarker> => {
+  return makeInteractive({
     header,
     ns: "base",
     action: 0,
@@ -53,17 +58,17 @@ const createMarker = (text: string): TextMarker | GLTextMarker => {
     },
     type: MARKER_MSG_TYPES.TEXT_VIEW_FACING,
     text,
-  };
+  });
 };
 
 const runUseGLTextTest = async (
-  text: TextMarker[],
+  text: Interactive<TextMarker>[],
   searchText: string,
-  searchTextMatches: GLTextMarker[],
-  setSearchTextMatches: (marker: GLTextMarker[]) => void = jest.fn(),
+  searchTextMatches: Interactive<GLTextMarker>[],
+  setSearchTextMatches: (marker: Interactive<GLTextMarker>[]) => void = jest.fn(),
   selectedMatchIndex: number = 0
 ) => {
-  const originalMarkers: TextMarker[] = text;
+  const originalMarkers: Interactive<TextMarker>[] = text;
   let glTextMarkers = [];
   const Wrapper = () => {
     glTextMarkers = useGLText({
@@ -123,7 +128,7 @@ describe("<SearchText />", () => {
     });
     it("does update the markers if search text has changed", async () => {
       const marker = createMarker("hello");
-      const originalMarkers: TextMarker[] = [marker];
+      const originalMarkers: Interactive<TextMarker>[] = [marker];
       let glTextMarkers = [];
       const Wrapper = ({ searchText }: { searchText: string }) => {
         glTextMarkers = useGLText({
@@ -146,7 +151,7 @@ describe("<SearchText />", () => {
 
     it("does not update the markers if nothing has changed", async () => {
       const marker = createMarker("hello");
-      const originalMarkers: TextMarker[] = [marker];
+      const originalMarkers: Interactive<TextMarker>[] = [marker];
       let glTextMarkers = [];
       const Wrapper = ({ randomNum }: { randomNum: number }) => {
         glTextMarkers = useGLText({

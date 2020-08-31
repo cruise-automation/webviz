@@ -8,22 +8,24 @@
 
 import { assign, flatten, isEqual } from "lodash";
 import memoizeWeak from "memoize-weak";
-import { TimeUtil, type Time } from "rosbag";
+import { TimeUtil, type Time, type RosMsgField } from "rosbag";
 
 import type { BlockCache } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import type {
   DataProviderDescriptor,
   ExtensionPoint,
   GetDataProvider,
+  GetMessagesResult,
+  GetMessagesTopics,
   InitializationResult,
   DataProvider,
 } from "webviz-core/src/dataProviders/types";
 import type { Message, Progress } from "webviz-core/src/players/types";
-import type { RosMsgField } from "webviz-core/src/types/RosDatatypes";
 import { deepIntersect } from "webviz-core/src/util/ranges";
 import { clampTime } from "webviz-core/src/util/time";
 
 const sortTimes = (times: Time[]) => times.sort(TimeUtil.compare);
+const emptyGetMessagesResult = { rosBinaryMessages: undefined, bobjects: undefined, parsedMessages: undefined };
 
 const memoizedMergedBlock = memoizeWeak((block1, block2) => {
   if (block1 == null) {
@@ -59,7 +61,13 @@ export const mergedBlocks = (cache1: ?BlockCache, cache2: ?BlockCache): ?BlockCa
   return { blocks, startTime: cache1.startTime };
 };
 
-const merge = (messages1: Message[], messages2: Message[]) => {
+const merge = (messages1: ?$ReadOnlyArray<Message>, messages2: ?$ReadOnlyArray<Message>) => {
+  if (messages1 == null) {
+    return messages2;
+  }
+  if (messages2 == null) {
+    return messages1;
+  }
   const messages = [];
   let index1 = 0;
   let index2 = 0;
@@ -78,6 +86,12 @@ const merge = (messages1: Message[], messages2: Message[]) => {
   }
   return messages;
 };
+
+const mergeAllMessageTypes = (result1: GetMessagesResult, result2: GetMessagesResult): GetMessagesResult => ({
+  bobjects: merge(result1.bobjects, result2.bobjects),
+  parsedMessages: merge(result1.parsedMessages, result2.parsedMessages),
+  rosBinaryMessages: merge(result1.rosBinaryMessages, result2.rosBinaryMessages),
+});
 
 const throwOnDuplicateTopics = (topics: string[]) => {
   [...topics].sort().forEach((topicName, i, sortedTopics) => {
@@ -153,28 +167,22 @@ export default class CombinedDataProvider implements DataProvider {
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
     this._extensionPoint = extensionPoint;
-    const results: InitializationResult[] = [];
-    this._initializationResultsPerProvider = [];
-    // NOTE: Initialization is done serially instead of concurrently here as a
-    // temporary workaround for a major IndexedDB bug that results in runaway
-    // disk usage. See https://bugs.chromium.org/p/chromium/issues/detail?id=1035025
-    for (let idx = 0; idx < this._providers.length; idx++) {
-      const provider = this._providers[idx];
+
+    const providerInitializePromises = this._providers.map(async (provider, idx) => {
       const childExtensionPoint = {
         progressCallback: (progress: Progress) => {
           this._updateProgressForChild(idx, progress);
         },
         reportMetadataCallback: extensionPoint.reportMetadataCallback,
       };
-      const result = await provider.initialize(childExtensionPoint);
-      results.push(result);
-
-      this._initializationResultsPerProvider.push({
-        start: result.start,
-        end: result.end,
-        topicSet: new Set(result.topics.map((t) => t.name)),
-      });
-    }
+      return provider.initialize(childExtensionPoint);
+    });
+    const results: InitializationResult[] = await Promise.all(providerInitializePromises);
+    this._initializationResultsPerProvider = results.map((result) => ({
+      start: result.start,
+      end: result.end,
+      topicSet: new Set(result.topics.map((t) => t.name)),
+    }));
 
     // Any providers that didn't report progress in `initialize` are assumed fully loaded
     this._progressPerProvider.forEach((p, i) => {
@@ -199,7 +207,7 @@ export default class CombinedDataProvider implements DataProvider {
       end,
       topics: mergedTopics,
       datatypes: assign({}, ...results.map(({ datatypes }) => datatypes)),
-      providesParsedMessages: results.length ? results[0].providesParsedMessages : true,
+      providesParsedMessages: results.length ? results[0].providesParsedMessages : false,
       messageDefinitionsByTopic: assign(
         {},
         ...results.map(({ messageDefinitionsByTopic }) => messageDefinitionsByTopic)
@@ -211,41 +219,53 @@ export default class CombinedDataProvider implements DataProvider {
     await Promise.all(this._providers.map((provider) => provider.close()));
   }
 
-  async getMessages(start: Time, end: Time, topics: string[]): Promise<Message[]> {
+  async getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> {
     const messagesPerProvider = await Promise.all(
       this._providers.map(async (provider, index) => {
         const initializationResult = this._initializationResultsPerProvider[index];
         const availableTopics = initializationResult.topicSet;
-        const filteredTopics = topics.filter((topic) => availableTopics.has(topic));
-        if (!filteredTopics.length) {
+        const filterTopics = (maybeTopics) => maybeTopics && maybeTopics.filter((topic) => availableTopics.has(topic));
+        const filteredTopicsByFormat = {
+          bobjects: filterTopics(topics.bobjects),
+          parsedMessages: filterTopics(topics.parsedMessages),
+          rosBinaryMessages: filterTopics(topics.rosBinaryMessages),
+        };
+        const hasSubscriptions = Object.keys(filteredTopicsByFormat).some((key) => filteredTopicsByFormat[key]?.length);
+        if (!hasSubscriptions) {
           // If we don't need any topics from this provider, we shouldn't call getMessages at all.  Therefore,
           // the provider doesn't know that we currently don't care about any of its topics, so it won't report
           // its progress as being fully loaded, so we'll have to do that here ourselves.
           this._updateProgressForChild(index, fullyLoadedProgress());
-          return [];
+          return emptyGetMessagesResult;
         }
         if (
           TimeUtil.isLessThan(end, initializationResult.start) ||
           TimeUtil.isLessThan(initializationResult.end, start)
         ) {
           // If we're totally out of bounds for this provider, we shouldn't call getMessages at all.
-          return [];
+          return emptyGetMessagesResult;
         }
         const clampedStart = clampTime(start, initializationResult.start, initializationResult.end);
         const clampedEnd = clampTime(end, initializationResult.start, initializationResult.end);
-        const messages = await provider.getMessages(clampedStart, clampedEnd, filteredTopics);
-        for (const message of messages) {
-          if (!availableTopics.has(message.topic)) {
-            throw new Error(`Saw unexpected topic from provider ${index}: ${message.topic}`);
+        const providerResult = await provider.getMessages(clampedStart, clampedEnd, filteredTopicsByFormat);
+        for (const messageType of Object.keys(providerResult)) {
+          const messages = providerResult[messageType];
+          if (messages == null) {
+            continue;
+          }
+          for (const message of messages) {
+            if (!availableTopics.has(message.topic)) {
+              throw new Error(`Saw unexpected topic from provider ${index}: ${message.topic}`);
+            }
           }
         }
-        return messages;
+        return providerResult;
       })
     );
 
-    let mergedMessages = [];
+    let mergedMessages = emptyGetMessagesResult;
     for (const messages of messagesPerProvider) {
-      mergedMessages = merge(mergedMessages, messages);
+      mergedMessages = mergeAllMessageTypes(mergedMessages, messages);
     }
     return mergedMessages;
   }

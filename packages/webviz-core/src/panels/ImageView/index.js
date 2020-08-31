@@ -87,6 +87,17 @@ const TopicTimestampSpan = styled.span`
   font-style: italic;
 `;
 
+const SEmptyStateWrapper = styled.div`
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 200;
+  background: ${colors.panelBackground};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const TopicTimestamp = ({ text, style: styleObj }: { text: string, style?: { [string]: string } }) =>
   text === "" ? null : <TopicTimestampSpan style={styleObj}>{text}</TopicTimestampSpan>;
 
@@ -136,41 +147,43 @@ function renderEmptyState(
   messagesByTopic: { [topic: string]: Message[] }
 ) {
   return (
-    <EmptyState>
-      Waiting for images {markerTopics.length > 0 && "and markers"} on:
-      <ul>
-        <li>
-          <code>{cameraTopic}</code>
-        </li>
-        {markerTopics.sort().map((m) => (
-          <li key={m}>
-            <code>{m}</code>
+    <SEmptyStateWrapper>
+      <EmptyState>
+        Waiting for images {markerTopics.length > 0 && "and markers"} on:
+        <ul>
+          <li>
+            <code>{cameraTopic}</code>
           </li>
-        ))}
-      </ul>
-      {shouldSynchronize && (
-        <>
-          <p>
-            Synchronization is enabled, so all messages with <code>header.stamp</code>s must match exactly.
-          </p>
-          <ul>
-            {Object.keys(messagesByTopic).map((topic) => (
-              <li key={topic}>
-                <code>{topic}</code>:{" "}
-                {messagesByTopic[topic] && messagesByTopic[topic].length
-                  ? messagesByTopic[topic]
-                      .map(({ message }) =>
-                        // In some cases, a user may have subscribed to a topic that does not include a header stamp.
-                        message?.header?.stamp ? formatTimeRaw(message.header.stamp) : "[ unknown ]"
-                      )
-                      .join(", ")
-                  : "no messages"}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </EmptyState>
+          {markerTopics.sort().map((m) => (
+            <li key={m}>
+              <code>{m}</code>
+            </li>
+          ))}
+        </ul>
+        {shouldSynchronize && (
+          <>
+            <p>
+              Synchronization is enabled, so all messages with <code>header.stamp</code>s must match exactly.
+            </p>
+            <ul>
+              {Object.keys(messagesByTopic).map((topic) => (
+                <li key={topic}>
+                  <code>{topic}</code>:{" "}
+                  {messagesByTopic[topic] && messagesByTopic[topic].length
+                    ? messagesByTopic[topic]
+                        .map(({ message }) =>
+                          // In some cases, a user may have subscribed to a topic that does not include a header stamp.
+                          message?.header?.stamp ? formatTimeRaw(message.header.stamp) : "[ unknown ]"
+                        )
+                        .join(", ")
+                    : "no messages"}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </EmptyState>
+    </SEmptyStateWrapper>
   );
 }
 
@@ -421,6 +434,13 @@ function ImageView(props: Props) {
     imageAndMarkerTopics
   );
   const imageMessage = messagesByTopic?.[cameraTopic]?.[0];
+  const lastImageMessageRef = React.useRef(imageMessage);
+  if (imageMessage) {
+    lastImageMessageRef.current = imageMessage;
+  }
+  // Keep the last image message, if it exists, to render on the ImageCanvas.
+  // Improve perf by hiding the ImageCanvas while seeking, instead of unmounting and remounting it.
+  const imageMessageToRender = imageMessage || lastImageMessageRef.current;
 
   const markersToRender: Message[] = useMemo(
     () =>
@@ -474,27 +494,8 @@ function ImageView(props: Props) {
     );
   };
 
-  if (!imageMessage || (shouldSynchronize && !synchronizedMessages)) {
+  const renderBottomBar = () => {
     return (
-      <Flex col clip>
-        {renderToolbar()}
-        {renderEmptyState(cameraTopic, enabledMarkerTopics, shouldSynchronize, messagesByTopic)}
-      </Flex>
-    );
-  }
-
-  return (
-    <Flex col clip>
-      {renderToolbar()}
-      <ImageCanvas
-        panelHooks={panelHooks}
-        topic={cameraTopicFullObject}
-        image={imageMessage}
-        rawMarkerData={rawMarkerData}
-        config={config}
-        saveConfig={saveConfig}
-        onStartRenderImage={onStartRenderImage}
-      />
       <ChildToggle.ContainsOpen>
         {(containsOpen) => {
           const canTransformMarkers = getGlobalHooks()
@@ -530,6 +531,29 @@ function ImageView(props: Props) {
           );
         }}
       </ChildToggle.ContainsOpen>
+    );
+  };
+
+  const showEmptyState = !imageMessage || (shouldSynchronize && !synchronizedMessages);
+
+  return (
+    <Flex col clip>
+      {renderToolbar()}
+      {/* If rendered, EmptyState will hide the always-present ImageCanvas */}
+      {showEmptyState && renderEmptyState(cameraTopic, enabledMarkerTopics, shouldSynchronize, messagesByTopic)}
+      {/* Always render the ImageCanvas because it's expensive to unmount and start up. */}
+      {imageMessageToRender && (
+        <ImageCanvas
+          panelHooks={panelHooks}
+          topic={cameraTopicFullObject}
+          image={imageMessageToRender}
+          rawMarkerData={rawMarkerData}
+          config={config}
+          saveConfig={saveConfig}
+          onStartRenderImage={onStartRenderImage}
+        />
+      )}
+      {!showEmptyState && renderBottomBar()}
     </Flex>
   );
 }

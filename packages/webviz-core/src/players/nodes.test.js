@@ -6,13 +6,20 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { validateNodeDefinitions, makeNodeMessage, applyNodesToMessages, type NodeDefinition } from "./nodes";
+import {
+  validateNodeDefinitions,
+  makeNodeMessage,
+  applyNodesToMessages,
+  getDefaultNodeStates,
+  type NodeDefinition,
+} from "./nodes";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 const EmptyNode: $Shape<NodeDefinition<void>> = {
   inputs: [],
   output: { name: "", datatype: "" },
   datatypes: {},
+  format: "parsedMessages",
   defaultState: undefined,
   callback() {
     return {
@@ -159,6 +166,7 @@ describe("nodes", () => {
         inputs: ["/external"],
         output: { name: "/webviz/a/counter", datatype: "a/counter" },
         datatypes: {},
+        format: "parsedMessages",
         defaultState: 0,
         callback({ message, state }) {
           return {
@@ -184,7 +192,13 @@ describe("nodes", () => {
         },
       };
 
-      const output = applyNodesToMessages([NodeA, NodeB], messages);
+      const output = applyNodesToMessages({
+        nodeDefinitions: [NodeA, NodeB],
+        originalMessages: messages,
+        originalBobjects: [],
+        states: getDefaultNodeStates([NodeA, NodeB]),
+        datatypes: {},
+      });
 
       // Note that the output remains sorted by `receiveTime`.
       expect(output).toEqual({
@@ -212,7 +226,10 @@ describe("nodes", () => {
           },
           { message: { count: 1 }, receiveTime: { sec: 2, nsec: 0 }, topic: "/webviz/b" },
         ],
-        states: [2, undefined],
+        states: {
+          "/webviz/a/counter": 2,
+          "/webviz/b": undefined,
+        },
       });
     });
 
@@ -221,12 +238,21 @@ describe("nodes", () => {
         inputs: ["/external"],
         output: { name: "/webviz/a/counter", datatype: "a/counter" },
         datatypes: {},
+        format: "parsedMessages",
         defaultState: 0,
         callback() {
           throw new Error("Node failed to run!");
         },
       };
-      expect(() => applyNodesToMessages([NodeA], messages)).not.toThrow();
+      expect(() =>
+        applyNodesToMessages({
+          nodeDefinitions: [NodeA],
+          originalMessages: messages,
+          originalBobjects: [],
+          states: {},
+          datatypes: {},
+        })
+      ).not.toThrow();
       sendNotification.expectCalledDuringTest();
     });
   });

@@ -15,6 +15,7 @@ import renderToBody from "webviz-core/src/components/renderToBody";
 import WssErrorModal from "webviz-core/src/components/WssErrorModal";
 import {
   type AdvertisePayload,
+  type BobjectMessage,
   type Message,
   type Player,
   PlayerCapabilities,
@@ -56,6 +57,7 @@ export default class RosbridgePlayer implements Player {
   _topicSubscriptions: { [topicName: string]: ROSLIB.Topic } = {}; // Active subscriptions.
   _requestedSubscriptions: SubscribePayload[] = []; // Requested subscriptions by setSubscriptions()
   _messages: Message[] = []; // Queue of messages that we'll send in next _emitState() call.
+  _bobjects: BobjectMessage[] = []; // Queue of bobjects that we'll send in next _emitState() call.
   _messageOrder: TimestampMethod = "receiveTime";
   _requestTopicsTimeout: ?TimeoutID; // setTimeout() handle for _requestTopics().
   _topicPublishers: { [topicName: string]: ROSLIB.Topic } = {};
@@ -204,6 +206,8 @@ export default class RosbridgePlayer implements Player {
     const currentTime = fromMillis(Date.now());
     const messages = this._messages;
     this._messages = [];
+    const bobjects = this._bobjects;
+    this._bobjects = [];
     return this._listener({
       isPresent: true,
       showSpinner: !this._rosClient,
@@ -214,6 +218,7 @@ export default class RosbridgePlayer implements Player {
 
       activeData: {
         messages,
+        bobjects,
         messageOrder: this._messageOrder,
         startTime: _start,
         endTime: currentTime,

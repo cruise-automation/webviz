@@ -43,8 +43,8 @@ const selectedObject = {
   },
 };
 const sharedProps = {
-  onSelectObject: () => {},
-  selectedObjects: [
+  selectObject: () => {},
+  clickedObjects: [
     { object: { ...selectedObject, interactionData: { topic: "/foo/bar" } }, instanceIndex: undefined },
     { object: { ...selectedObject, interactionData: { topic: "/foo1/bar" }, id: null }, instanceIndex: undefined },
     { object: { ...selectedObject, interactionData: { topic: "/abc/xyz" } }, instanceIndex: 10 },

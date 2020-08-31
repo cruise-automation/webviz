@@ -9,11 +9,12 @@
 import { storiesOf } from "@storybook/react";
 import React from "react";
 
-import NodePlayground, { NodePlaygroundSettings } from "webviz-core/src/panels/NodePlayground";
-import type { Explorer } from "webviz-core/src/panels/NodePlayground";
+import { setUserNodes } from "webviz-core/src/actions/panels";
+import NodePlayground, { type Explorer, NodePlaygroundSettings } from "webviz-core/src/panels/NodePlayground";
 import testDocs from "webviz-core/src/panels/NodePlayground/index.test.md";
 import Sidebar from "webviz-core/src/panels/NodePlayground/Sidebar";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
+import { SExpectedResult } from "webviz-core/src/stories/storyHelpers";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 
 const userNodes = {
@@ -131,6 +132,37 @@ storiesOf("<NodePlayground>", module)
         userNodeLogs: { nodeId1: { logs: [] } },
       }}>
       <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+    </PanelSetup>
+  ))
+  .add("Editor shows new code when userNodes change", () => (
+    <PanelSetup
+      fixture={{
+        ...fixture,
+        userNodes: {
+          nodeId1: {
+            name: "/webviz_node/node",
+            sourceCode: sourceCodeWithUtils,
+          },
+        },
+        userNodeDiagnostics: { nodeId1: { diagnostics: [] } },
+        userNodeLogs: { nodeId1: { logs: [] } },
+      }}
+      onMount={(el, store) => {
+        setImmediate(() => {
+          // Change the userNodes to confirm the code in the Editor updates
+          store.dispatch(
+            setUserNodes({
+              nodeId1: {
+                name: "/webviz_node/node",
+                sourceCode: utilsSourceCode,
+              },
+            })
+          );
+          el.querySelectorAll("[data-test=node-explorer]")[0].click();
+        });
+      }}>
+      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
+      <SExpectedResult style={{ left: "375px", top: "150px" }}>Should show function norm() code</SExpectedResult>
     </PanelSetup>
   ))
   .add("editor goto definition", () => (
@@ -267,7 +299,6 @@ storiesOf("<NodePlayground>", module)
       return (
         <PanelSetup fixture={{ ...fixture, userNodes }}>
           <Sidebar
-            needsUserTrust={false}
             userNodeDiagnostics={{}}
             explorer={explorer}
             updateExplorer={updateExplorer}
@@ -506,11 +537,6 @@ storiesOf("NodePlayground - <BottomBar>", module)
           }
         });
       }}>
-      <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
-    </PanelSetup>
-  ))
-  .add("security pop up", () => (
-    <PanelSetup fixture={{ ...fixture, userNodes, userNodeFlags: { id: "nodeId1", trusted: false } }}>
       <NodePlayground config={{ selectedNodeId: "nodeId1", vimMode: false }} />
     </PanelSetup>
   ));

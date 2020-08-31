@@ -50,6 +50,7 @@ const fixture = {
         { type: "int8", name: "BOOTING", isConstant: true, value: 2 },
         { type: "int8", name: "ACTIVE", isConstant: true, value: 3 },
         { type: "int8", name: "state", isArray: false },
+        { type: "json", name: "data", isArray: false },
       ],
     },
     "std_msgs/Header": {
@@ -72,10 +73,10 @@ const fixture = {
     speed: 0.2,
   },
   frame: {
-    "/some/topic/with/state": systemStateMessages.map((message) => ({
+    "/some/topic/with/state": systemStateMessages.map((message, idx) => ({
       topic: "/some/topic/with/state",
       receiveTime: message.header.stamp,
-      message,
+      message: { ...message, data: { value: idx } },
     })),
   },
 };
@@ -123,6 +124,15 @@ storiesOf("<StateTransitions>", module)
       <PanelSetup fixture={fixture} style={{ maxWidth: 100 }}>
         <StateTransitions
           config={{ paths: [{ value: "/some/topic/with/state.state", timestampMethod: "receiveTime" }] }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("json path", () => {
+    return (
+      <PanelSetup fixture={fixture}>
+        <StateTransitions
+          config={{ paths: [{ value: "/some/topic/with/state.data.value", timestampMethod: "receiveTime" }] }}
         />
       </PanelSetup>
     );

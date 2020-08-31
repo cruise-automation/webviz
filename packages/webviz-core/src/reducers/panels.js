@@ -5,7 +5,6 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
 import { isEmpty, isEqual, dropRight, pick, cloneDeep } from "lodash";
 import {
   getLeaves,
@@ -21,10 +20,12 @@ import {
 
 import type { ActionTypes } from "webviz-core/src/actions";
 import type { StartDragPayload, EndDragPayload } from "webviz-core/src/actions/panels";
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type { State } from "webviz-core/src/reducers";
+import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type {
   PanelConfig,
   ConfigsPayload,
@@ -38,7 +39,7 @@ import type {
   UserNodes,
   PlaybackConfig,
 } from "webviz-core/src/types/panels";
-import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
+import { TAB_PANEL_TYPE, LAYOUT_QUERY_KEY, LAYOUT_URL_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 import {
   updateTabPanelLayout,
   replaceAndRemovePanels,
@@ -55,6 +56,7 @@ import {
   moveTabBetweenTabPanels,
   createAddUpdates,
   removePanelFromTabPanel,
+  getLayoutPatch,
 } from "webviz-core/src/util/layout";
 import Storage from "webviz-core/src/util/Storage";
 
@@ -351,6 +353,7 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
     linkedGlobalVariables: migratedPayload.linkedGlobalVariables || [],
     playbackConfig: migratedPayload.playbackConfig || defaultPlaybackConfig,
     ...(migratedPayload.restrictedTopics ? { restrictedTopics: migratedPayload.restrictedTopics } : undefined),
+    fetchedLayout: migratedPayload.fetchedLayout || { isLoading: false },
   };
 
   return newPanelsState;
@@ -696,6 +699,7 @@ const endDrag = (panelsState: PanelsState, dragPayload: EndDragPayload): PanelsS
 
 export default function panelsReducer(state: State, action: ActionTypes): State {
   let newState = { ...state, panels: { ...getInitialPanelsState(), ...state.panels } };
+  const oldState = { ...newState };
   switch (action.type) {
     case "CHANGE_PANEL_LAYOUT":
       // don't allow the last panel to be removed
@@ -786,8 +790,48 @@ export default function panelsReducer(state: State, action: ActionTypes): State 
       newState.panels = endDrag(newState.panels, action.payload);
       break;
 
+    case "SET_FETCHED_LAYOUT":
+      newState.fetchedLayout = action.payload;
+      break;
+
+    case "LOAD_FETCHED_LAYOUT":
+      // Dispatched when loading the page with a layout query param, or when manually selecting a different layout.
+      // Do not update URL based on ensuing migration changes.
+      // $FlowFixMe - TODO: Refactor ImportPanelLayoutPayload to be superset of PanelsState
+      newState.panels = importPanelLayout(newState.panels, action.payload);
+      break;
+
     default:
       break;
+  }
+
+  // Don't track layout changes in URL when fetching / loading a layout, or clearing a fetched layout;
+  // CLEAR_HOVER_VALUE does not change layout, and triggers frequently enough to affect performance.
+  if (!["SET_FETCHED_LAYOUT", "LOAD_FETCHED_LAYOUT", "CLEAR_HOVER_VALUE"].includes(action.type)) {
+    const inScreenshot = inScreenshotTests();
+    const params = new URLSearchParams(window.location.search);
+    const enableShareableUrl = getExperimentalFeature("shareableUrl");
+    // TODO(Audrey): remove the screenshot env checking after release.
+    const shouldProcessPatch = enableShareableUrl || inScreenshot;
+    if (shouldProcessPatch) {
+      getGlobalHooks().maybeUpdateURLToTrackLayout(oldState, newState);
+    } else {
+      // TODO(Esther) - Remove when Shareable Layout work is made public
+      const hasLayoutParam = params.get(LAYOUT_QUERY_KEY) || params.get(LAYOUT_URL_QUERY_KEY);
+      if (hasLayoutParam) {
+        // Calculate diff between old vs. new panels state - if it exists, remove layout param.
+        const layoutPatch = getLayoutPatch(oldState.panels, newState.panels);
+        if (layoutPatch) {
+          params.delete(LAYOUT_QUERY_KEY);
+          params.delete(LAYOUT_URL_QUERY_KEY);
+          const queryString = params.toString();
+          newState.router.location = {
+            pathname: location.pathname,
+            search: queryString ? `?${queryString}` : queryString,
+          };
+        }
+      }
+    }
   }
 
   if (action.payload && action.payload.skipSettingLocalStorage) {

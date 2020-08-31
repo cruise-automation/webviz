@@ -16,7 +16,8 @@ import history from "webviz-core/src/util/history";
 
 type RenderedToBodyHandle = {| update: (React.Element<*>) => void, remove: () => void |};
 
-export default function renderToBody(element: React.Element<*>): RenderedToBodyHandle {
+// TODO(Audrey): change the `any` time to React.Element<*> and flow errors.
+export default function renderToBody(element: any): RenderedToBodyHandle {
   const container = document.createElement("div");
   container.dataset.modalcontainer = "true";
   if (!document.body) {

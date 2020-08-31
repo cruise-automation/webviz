@@ -105,13 +105,13 @@ type Colors = $ReadOnlyArray<Color>;
 export type BaseMarker = $ReadOnly<
   StampedMessage & {
     ns: string,
-    id: string,
+    id: string | number, // TODO: Actually just a number
     action: 0 | 1 | 2 | 3,
     pose: Pose,
     scale: Scale,
     color?: Color,
     colors?: Colors,
-    lifetime?: Time, // TODO: required
+    lifetime?: ?Time,
     frame_locked?: boolean, // TODO: required
     text?: string,
     mesh_resource?: string, // TODO: required

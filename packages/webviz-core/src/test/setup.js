@@ -67,9 +67,6 @@ global.IDBKeyRange = require("fake-indexeddb/lib/FDBKeyRange");
 // monkey-patch global websocket
 global.WebSocket = global.WebSocket || ws;
 
-// Patch in a node implementation of the crypto API.
-global.crypto = require("@trust/webcrypto");
-
 // $FlowFixMe - Flow does not recognize that `TextEncoder` has been in the util module since v8.3.0.
 global.TextEncoder = util.TextEncoder;
 

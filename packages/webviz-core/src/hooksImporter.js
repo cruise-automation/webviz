@@ -38,6 +38,7 @@ export function panelsByCategory() {
   const TwoDimensionalPlot = require("webviz-core/src/panels/TwoDimensionalPlot").default;
   const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
   const { ndash } = require("webviz-core/src/util/entities");
+  const Table = require("webviz-core/src/panels/Table").default;
 
   const ros = [
     { title: "2D Plot", component: TwoDimensionalPlot },
@@ -50,6 +51,7 @@ export function panelsByCategory() {
     { title: "Raw Messages", component: RawMessages },
     { title: "rosout", component: Rosout },
     { title: "State Transitions", component: StateTransitions },
+    { title: "Table", component: Table },
   ];
 
   const utilities = [
@@ -86,6 +88,7 @@ export function perPanelHooks() {
     POSE_STAMPED_DATATYPE,
     TF_DATATYPE,
     WEBVIZ_MARKER_DATATYPE,
+    WEBVIZ_MARKER_ARRAY_DATATYPE,
   } = require("webviz-core/src/util/globalConstants");
 
   const SUPPORTED_MARKER_DATATYPES = {
@@ -93,6 +96,7 @@ export function perPanelHooks() {
     VISUALIZATION_MSGS_MARKER_DATATYPE: "visualization_msgs/Marker",
     VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE: "visualization_msgs/MarkerArray",
     WEBVIZ_MARKER_DATATYPE,
+    WEBVIZ_MARKER_ARRAY_DATATYPE,
     POSE_STAMPED_DATATYPE,
     POINT_CLOUD_DATATYPE,
     SENSOR_MSGS_LASER_SCAN_DATATYPE: "sensor_msgs/LaserScan",
@@ -100,6 +104,14 @@ export function perPanelHooks() {
     GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: "geometry_msgs/PolygonStamped",
     TF_DATATYPE,
   };
+  const SUPPORTED_BOBJECT_MARKER_DATATYPES = new Set([
+    SUPPORTED_MARKER_DATATYPES.VISUALIZATION_MSGS_MARKER_DATATYPE,
+    SUPPORTED_MARKER_DATATYPES.VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
+    WEBVIZ_MARKER_DATATYPE,
+    WEBVIZ_MARKER_ARRAY_DATATYPE,
+    POSE_STAMPED_DATATYPE,
+    POINT_CLOUD_DATATYPE,
+  ]);
 
   return {
     DiagnosticSummary: {
@@ -138,7 +150,9 @@ export function perPanelHooks() {
         pinTopics: false,
         settingsByKey: {},
         autoSyncCameraState: false,
+        autoTextBackgroundColor: true,
       },
+      SUPPORTED_BOBJECT_MARKER_DATATYPES,
       SUPPORTED_MARKER_DATATYPES,
       BLACKLIST_TOPICS: [],
       allSupportedMarkers: [
@@ -172,6 +186,7 @@ export function perPanelHooks() {
         [POINT_CLOUD_DATATYPE]: BlurIcon,
         [POSE_STAMPED_DATATYPE]: RobotIcon,
         [WEBVIZ_MARKER_DATATYPE]: HexagonIcon,
+        [WEBVIZ_MARKER_ARRAY_DATATYPE]: HexagonMultipleIcon,
       },
       // TODO(Audrey): remove icons config after topic group release
       icons: {},
@@ -186,7 +201,13 @@ export function perPanelHooks() {
         }
         errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${datatype}`);
       },
-      getMessagePose: (msg) => msg.message.pose,
+      consumeBobject: (topic, datatype, msg, consumeMethods, { errors }) => {
+        // TF messages are consumed by TransformBuilder, not SceneBuilder.
+        if (datatype === SUPPORTED_MARKER_DATATYPES.TF_DATATYPE) {
+          return;
+        }
+        errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${datatype}`);
+      },
       addMarkerToCollector: () => false,
       getSyntheticArrowMarkerColor: () => ({ r: 0, g: 0, b: 1, a: 0.5 }),
       getFlattenedPose: () => undefined,

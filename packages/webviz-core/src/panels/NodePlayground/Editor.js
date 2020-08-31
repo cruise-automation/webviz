@@ -15,6 +15,7 @@ import MonacoEditor from "react-monaco-editor";
 import type { Script, EditorSelection } from "webviz-core/src/panels/NodePlayground/script";
 import vsWebvizTheme from "webviz-core/src/panels/NodePlayground/theme/vs-webviz.json";
 import { getNodeProjectConfig } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig";
+import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 
 const VS_WEBVIZ_THEME = "vs-webviz";
 
@@ -122,8 +123,13 @@ const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOver
       const model =
         monacoApi.editor.getModel(filePath) || monacoApi.editor.createModel(script.code, "typescript", filePath);
 
-      editor.setModel(model);
+      // Update the model's code if it was updated outside the Editor.
+      // Without this, monaco can continue to show old code if the userScripts are changed outside of the Editor
+      if (model.getValue() !== script.code) {
+        model.setValue(script.code);
+      }
 
+      editor.setModel(model);
       gotoSelection(editor, script.selection);
     },
     [script]
@@ -151,6 +157,14 @@ const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOver
       // Set eager model sync to enable intellisense between the user code and utility files
       monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
       monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true);
+
+      // Disable validation in screenshots to avoid flaky tests
+      if (inScreenshotTests()) {
+        monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+          noSyntaxValidation: true,
+          noSemanticValidation: true,
+        });
+      }
 
       // Load declarations and additional utility files from project config
 

@@ -8,10 +8,12 @@
 
 import { sum } from "lodash";
 import memoize from "memoize-weak";
+import { type RosMsgField } from "rosbag";
 
-import type { RosMsgField, RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 const primitiveSizes = {
+  json: 8,
   string: 8,
   bool: 1,
   int8: 1,
@@ -27,6 +29,8 @@ const primitiveSizes = {
   time: 8,
   duration: 8,
 };
+
+export const primitiveList: Set<string> = new Set(Object.keys(primitiveSizes));
 
 export const typeSize = memoize(
   (typesByName: RosDatatypes, typeName: string): number => {
@@ -66,4 +70,12 @@ export const addTimeTypes = (typesByName: RosDatatypes): RosDatatypes => ({
   duration: { fields: [{ name: "sec", type: "int32" }, { name: "nsec", type: "int32" }] },
 });
 
-export const friendlyTypeName = (name: string): string => name.replace("/", "_");
+// String.prototype.replaceAll is not implemented in Chrome.
+const allSlashes = new RegExp("/", "g");
+export const friendlyTypeName = (name: string): string => name.replace(allSlashes, "_");
+export const deepParseSymbol = Symbol("deepParse");
+export const classDatatypes = new WeakMap<any, [RosDatatypes, string]>();
+export const associateDatatypes = (cls: any, datatypes: [RosDatatypes, string]): void => {
+  classDatatypes.set(cls, datatypes);
+};
+export const getDatatypes = (cls: any): ?[RosDatatypes, string] => classDatatypes.get(cls);

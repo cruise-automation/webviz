@@ -73,7 +73,7 @@ describe("pipeline", () => {
       const { inputTopics } = compose(
         compile,
         getInputTopics
-      )({ ...baseNodeData, sourceCode }, undefined, []);
+      )({ ...baseNodeData, sourceCode }, [], []);
 
       expect(inputTopics).toEqual(expectedTopics);
     });
@@ -87,7 +87,7 @@ describe("pipeline", () => {
           ...baseNodeData,
           sourceCode: "const x: string = 41",
         },
-        undefined,
+        [],
         []
       );
       expect(nodeData.diagnostics.map(({ source }) => source)).toEqual([Sources.Typescript]);
@@ -111,7 +111,7 @@ describe("pipeline", () => {
       const { diagnostics } = compose(
         compile,
         getInputTopics
-      )({ ...baseNodeData, sourceCode }, undefined, []);
+      )({ ...baseNodeData, sourceCode }, [], []);
       expect(diagnostics.length).toEqual(1);
       expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
       expect(diagnostics[0].code).toEqual(errorCategory);
@@ -142,13 +142,13 @@ describe("pipeline", () => {
         priorRegisteredTopics: [{ name: `${DEFAULT_WEBVIZ_NODE_PREFIX}my_topic`, datatype: "std_msgs/Header" }],
       },
     ])("errs duplicate declarations", ({ outputTopic, priorRegisteredTopics }) => {
-      const { diagnostics } = validateOutputTopic({ ...baseNodeData, outputTopic }, undefined, priorRegisteredTopics);
+      const { diagnostics } = validateOutputTopic({ ...baseNodeData, outputTopic }, [], priorRegisteredTopics);
       expect(diagnostics.length).toEqual(1);
       expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
       expect(diagnostics[0].code).toEqual(ErrorCodes.OutputTopicChecker.NOT_UNIQUE);
     });
     it.each(["/bad_prefix"])("errs on bad topic prefixes", (outputTopic) => {
-      const { diagnostics } = validateOutputTopic({ ...baseNodeData, outputTopic }, undefined, []);
+      const { diagnostics } = validateOutputTopic({ ...baseNodeData, outputTopic }, [], []);
       expect(diagnostics.length).toEqual(1);
       expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
       expect(diagnostics[0].code).toEqual(ErrorCodes.OutputTopicChecker.BAD_PREFIX);
@@ -160,7 +160,7 @@ describe("pipeline", () => {
       (inputTopics, topics) => {
         const { diagnostics } = validateInputTopics(
           { ...baseNodeData, inputTopics },
-          { topics: topics.map((name) => ({ name, datatype: "" })), datatypes: {} }
+          topics.map((name) => ({ name, datatype: "" }))
         );
         expect(diagnostics.length).toEqual(1);
         expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
@@ -170,7 +170,7 @@ describe("pipeline", () => {
     it("errs when a node tries to input another user node", () => {
       const { diagnostics } = validateInputTopics(
         { ...baseNodeData, inputTopics: [`${DEFAULT_WEBVIZ_NODE_PREFIX}my_topic`] },
-        undefined
+        []
       );
       expect(diagnostics.length).toEqual(1);
       expect(diagnostics[0].severity).toEqual(DiagnosticSeverity.Error);
@@ -183,7 +183,7 @@ describe("pipeline", () => {
       const { diagnostics } = compose(
         compile,
         getInputTopics
-      )({ ...baseNodeData, name: "/bad_name" }, undefined, []);
+      )({ ...baseNodeData, name: "/bad_name" }, [], []);
       expect(diagnostics[0].code).toEqual(ErrorCodes.Other.FILENAME);
     });
     it.each(["const x: string = 'hello webviz'", "const num: number = 1222"])("can compile", (sourceCode) => {
@@ -357,7 +357,7 @@ describe("pipeline", () => {
           ...baseNodeData,
           sourceCode: "const x: string = 41",
         },
-        undefined,
+        [],
         []
       );
       expect(nodeData.diagnostics.map(({ source }) => source)).toEqual([Sources.Typescript]);
@@ -1143,6 +1143,28 @@ describe("pipeline", () => {
         error: ErrorCodes.DatatypeExtraction.NO_NESTED_ANY,
       },
       {
+        description: "Exporting a Record type",
+        sourceCode: `
+          type RecordType = Record<string, any>;
+          export default (msg: any): RecordType => {
+            return { foo: "bar" };
+          };`,
+        error: ErrorCodes.DatatypeExtraction.NO_MAPPED_TYPES,
+      },
+      {
+        description: "Exporting a mapped type",
+        sourceCode: `
+          type Readonly<T> = {
+            readonly [P in keyof T]: T[P];
+          };
+          type SomeType = Record<string, any>;
+          type MappedType = Readonly<SomeType>;
+          export default (msg: any): MappedType => {
+            return { foo: "bar" };
+          };`,
+        error: ErrorCodes.DatatypeExtraction.NO_MAPPED_TYPES,
+      },
+      {
         description: "Exporting a publisher function with a return type 'void'",
         sourceCode: `
           export default (): void => {};`,
@@ -1367,7 +1389,7 @@ describe("pipeline", () => {
       filteredTestCases.forEach(({ description, sourceCode, datatypes = {}, error, outputDatatype, rosLib }) => {
         it(`${error ? "Expected Error: " : ""}${description}`, () => {
           const inputNodeData = { ...baseNodeData, datatypes, sourceCode, ...(rosLib ? { rosLib } : {}) };
-          const nodeData = extract(inputNodeData, undefined, []);
+          const nodeData = extract(inputNodeData, [], []);
           if (!error) {
             expect(nodeData.diagnostics).toEqual([]);
             expect(nodeData.outputDatatype).toEqual(outputDatatype || nodeData.name);

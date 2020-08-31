@@ -8,7 +8,7 @@
 
 // $FlowFixMe - https://github.com/flow-typed/flow-typed/issues/3538
 import puppeteer from "puppeteer";
-import type { Page } from "puppeteer";
+import type { Page, Browser } from "puppeteer";
 
 import type { MosaicNode } from "../src/types/panels";
 import delay from "./delay";
@@ -18,11 +18,14 @@ import ServerLogger from "./ServerLogger";
 
 const log = new ServerLogger(__filename);
 
+type PageOptions = { captureLogs?: boolean, onLog: (string) => void, onError: (string) => void };
+type LayoutOptions = { panelLayout: ?MosaicNode, experimentalFeatureSettings?: ?string, filePaths: ?(string[]) };
+
 // Starts a puppeteer browser pointing at the URL. Sets the panel layout, dimensions, and drops in the bag if specified.
 // Takes an `onLoad` function that runs once the browser has initialized.
 // Automatically cleans up the browser after finishing.
 export default async function runInBrowser<T>({
-  bagPath,
+  filePaths,
   url,
   puppeteerLaunchConfig,
   panelLayout,
@@ -33,7 +36,7 @@ export default async function runInBrowser<T>({
   beforeLoad,
   captureLogs,
 }: {
-  bagPath?: string,
+  filePaths: ?(string[]),
   url: string,
   puppeteerLaunchConfig: any,
   panelLayout: ?MosaicNode,
@@ -44,97 +47,82 @@ export default async function runInBrowser<T>({
   onLoad: ({ page: Page, errors: Array<string>, logs: Array<string> }) => Promise<T>,
   captureLogs?: boolean,
 }): Promise<T> {
-  let browser, page;
   const errors = [];
   const logs: string[] = [];
+  const onLog = (text) => {
+    logs.push(text);
+  };
+  const onError = (text) => {
+    errors.push(text);
+  };
+
   try {
-    log.info("Starting Puppeteer...");
-    await promiseTimeout(
-      (async () => {
-        browser = await puppeteer.launch({
-          ...puppeteerConfig.launch,
-          defaultViewport: dimensions,
-          ...puppeteerLaunchConfig,
-        });
-        page = await browser.newPage();
-        if (beforeLoad) {
-          await beforeLoad({ page });
-        }
-
-        await delay(1000); // Occasionally things crash otherwise. See https://github.com/GoogleChrome/puppeteer/issues?q=target+closed
-
-        log.info(`Navigating to URL: ${url}`);
-        await page.goto(url, { waitUntil: "networkidle2", timeout: loadBrowserTimeout - 1000 });
-
-        // Pass through console from the page.
-        page.on("console", (msg) => {
-          getArgStrings(msg).then((args) => {
-            const text = `${msg.text()} --- ${JSON.stringify(args)}`;
-            log.info(`[runInBrowser page ${msg.type()}] ${text}`);
-            if (msg.type() === "error") {
-              errors.push(text);
-            }
-            if (captureLogs) {
-              logs.push(text);
-            }
-          });
-        });
-        page.on("error", (error) => {
-          const errorMessage = `${error.toString()} (stack trace: ${error.stack})`;
-          log.error(`[runInBrowser error] ${errorMessage}`);
-          errors.push(errorMessage);
-        });
-        await page.evaluate(() => {
-          window.addEventListener("error", (error) => {
-            console.error(error);
-          });
-          window.addEventListener("unhandledrejection", (event) => {
-            console.error("Unhandled promise rejection.", event.reason);
-          });
-        });
-
-        if (panelLayout) {
-          await page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
-        }
-
-        if (experimentalFeatureSettings) {
-          await page.evaluate(
-            (settings) => localStorage.setItem("experimentalFeaturesSettings", settings),
-            experimentalFeatureSettings
-          );
-        }
-
-        if (bagPath) {
-          // Use the hidden input field to simulate dragging in a bag.
-          const fileUpload = await page.$("input[data-puppeteer-file-upload]");
-          if (!fileUpload) {
-            throw new Error("Could not find file input");
+    return withBrowser(
+      async (browser: Browser) => {
+        return runInPage(
+          (page) => {
+            return onLoad({ page, errors, logs });
+          },
+          {
+            browser,
+            beforeLoad,
+            pageLoadTimeout: loadBrowserTimeout,
+            layoutOptions: { panelLayout, filePaths, experimentalFeatureSettings },
+            pageOptions: { onLog, onError, captureLogs },
+            url,
           }
-          await fileUpload.uploadFile(bagPath);
-        }
-      })(),
-      loadBrowserTimeout,
-      "Initializing browser"
+        );
+      },
+      {
+        dimensions,
+        loadBrowserTimeout,
+        puppeteerLaunchConfig,
+      }
     );
-    log.info("Initialized browser");
-
-    if (!page) {
-      throw new Error("Page has not been set.");
-    }
-
-    return await onLoad({ page, errors, logs });
   } catch (error) {
     if (error.name === "TimeoutError" && errors.length > 0) {
       throw new Error(`TimeoutError with errors detected (${errors.length}): ${errors.join(" ||| ")}`);
     } else {
       throw error;
     }
+  }
+}
+
+export async function runInPage<T>(
+  onPageLoaded: (page: Page) => Promise<T>,
+  options: {
+    browser: Browser,
+    beforeLoad?: ({| page: Page |}) => Promise<void>,
+    pageLoadTimeout: number,
+    layoutOptions: LayoutOptions,
+    pageOptions: PageOptions,
+    url: string,
+  }
+): Promise<T> {
+  const { browser, beforeLoad, url, pageOptions, layoutOptions, pageLoadTimeout } = options;
+
+  let page: ?Page;
+  try {
+    page = await browser.newPage();
+    if (!page) {
+      throw new Error("Page has not been set.");
+    }
+    if (beforeLoad) {
+      await beforeLoad({ page });
+    }
+    await delay(250); // Occasionally things crash otherwise. See https://github.com/GoogleChrome/puppeteer/issues?q=target+closed
+
+    log.info(`Navigating to URL: ${url}`);
+    await page.goto(url, { waitUntil: "networkidle2", timeout: pageLoadTimeout });
+
+    await setupPageLogging(page, pageOptions);
+    await setupWebvizLayout(page, layoutOptions);
+    return await onPageLoaded(page);
+  } catch (error) {
+    throw error;
   } finally {
     if (page) {
       await page.close();
-    }
-    if (browser) {
-      await browser.close();
     }
   }
 }
@@ -154,5 +142,104 @@ async function getArgStrings(msg: puppeteer.ConsoleMessage): Promise<string[]> {
     );
   } catch (e) {
     return [`(unknown arg, error while getting argument: ${e})`];
+  }
+}
+
+export async function withBrowser<T>(
+  callback: (browser: Browser) => Promise<T>,
+  {
+    dimensions,
+    loadBrowserTimeout,
+    puppeteerLaunchConfig,
+  }: {
+    puppeteerLaunchConfig: any,
+    dimensions: { width: number, height: number },
+    loadBrowserTimeout: number,
+  }
+): Promise<T> {
+  let browser;
+  try {
+    log.info("Starting Puppeteer...");
+    await promiseTimeout(
+      (async () => {
+        browser = await puppeteer.launch({
+          ...puppeteerConfig.launch,
+          defaultViewport: dimensions,
+          ...puppeteerLaunchConfig,
+        });
+      })(),
+      loadBrowserTimeout,
+      "Starting Puppeteer"
+    );
+
+    if (browser) {
+      log.info("Puppeteer started");
+      return await callback(browser);
+    }
+    return Promise.reject();
+  } catch (error) {
+    console.error(error);
+    throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
+export async function setupPageLogging(page: Page, options: PageOptions) {
+  const { captureLogs, onLog, onError } = options;
+
+  // Pass through console from the page.
+  page.on("console", (msg) => {
+    getArgStrings(msg).then((args) => {
+      const text = `${msg.text()} --- ${JSON.stringify(args)}`;
+      if (msg.type() === "error") {
+        onError(text);
+      }
+      if (captureLogs) {
+        onLog(text);
+      }
+    });
+  });
+
+  page.on("error", (error) => {
+    const errorMessage = `${error.toString()} (stack trace: ${error.stack})`;
+    log.error(`[runInBrowser error] ${errorMessage}`);
+    onError(errorMessage);
+  });
+
+  await page.evaluate(() => {
+    window.addEventListener("error", (error) => {
+      console.error(error);
+    });
+    window.addEventListener("unhandledrejection", (event) => {
+      console.error("Unhandled promise rejection.", event.reason);
+    });
+  });
+}
+
+// Sets the layout, experimental features, and triggers the bag drag-and-drop behavior
+export async function setupWebvizLayout(page: Page, options: LayoutOptions) {
+  const { panelLayout, experimentalFeatureSettings, filePaths } = options;
+
+  if (panelLayout) {
+    await page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
+  }
+
+  if (experimentalFeatureSettings) {
+    await page.evaluate(
+      (settings: any) => localStorage.setItem("experimentalFeaturesSettings", (settings: string)),
+      experimentalFeatureSettings
+    );
+  }
+
+  if (filePaths && filePaths.length) {
+    // Use the hidden input field to simulate dragging in a bag.
+    const fileUpload = await page.$("input[data-puppeteer-file-upload]");
+    if (!fileUpload) {
+      throw new Error("Could not find file input");
+    }
+    await fileUpload.uploadFile(...filePaths);
   }
 }

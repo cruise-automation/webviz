@@ -9,11 +9,14 @@
 import memoizeWeak from "memoize-weak";
 import { type Time } from "rosbag";
 
+import { MESSAGE_FORMATS } from "webviz-core/src/dataProviders/constants";
 import type { BlockCache, MemoryCacheBlock } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import type {
   DataProviderDescriptor,
   ExtensionPoint,
   GetDataProvider,
+  GetMessagesResult,
+  GetMessagesTopics,
   InitializationResult,
   DataProvider,
 } from "webviz-core/src/dataProviders/types";
@@ -80,24 +83,33 @@ export default class RenameDataProvider implements DataProvider {
     message: message.message,
   });
 
-  async getMessages(start: Time, end: Time, topics: string[]): Promise<Message[]> {
-    const messages = await this._provider.getMessages(
-      start,
-      end,
-      topics.map((topic) => {
-        if (!topic.startsWith(this._prefix)) {
-          throw new Error("RenameDataProvider#getMessages called with topic that doesn't match prefix");
-        }
-        return topic.slice(this._prefix.length);
-      })
-    );
+  async getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> {
+    const childTopics = {};
+    for (const type of MESSAGE_FORMATS) {
+      if (topics[type]) {
+        childTopics[type] = topics[type].map((topic) => {
+          if (!topic.startsWith(this._prefix)) {
+            throw new Error("RenameDataProvider#getMessages called with topic that doesn't match prefix");
+          }
+          return topic.slice(this._prefix.length);
+        });
+      }
+    }
+    const messages = await this._provider.getMessages(start, end, childTopics);
+    const { parsedMessages, rosBinaryMessages, bobjects } = messages;
 
-    return messages.map(this._mapMessage);
+    return {
+      parsedMessages: parsedMessages && parsedMessages.map(this._mapMessage),
+      rosBinaryMessages: rosBinaryMessages && rosBinaryMessages.map(this._mapMessage),
+      bobjects: bobjects && bobjects.map(this._mapMessage),
+    };
   }
 
   _mapMessageCache = memoizeWeak(
     (messageCache: BlockCache): BlockCache => ({
-      blocks: messageCache.blocks.map(this._mapBlock),
+      // Note: don't just map(this._mapBlock) because map also passes the array and defeats the
+      // memoization.
+      blocks: messageCache.blocks.map((block) => this._mapBlock(block)),
       startTime: messageCache.startTime,
     })
   );

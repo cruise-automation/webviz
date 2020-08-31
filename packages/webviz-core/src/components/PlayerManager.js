@@ -9,19 +9,18 @@
 import * as React from "react";
 import { connect } from "react-redux";
 
-import { importPanelLayout, setGlobalVariables } from "webviz-core/src/actions/panels";
+import { loadFetchedLayout, setGlobalVariables } from "webviz-core/src/actions/panels";
 import {
   setUserNodeDiagnostics,
   addUserNodeLogs,
-  setUserNodeTrust,
   setUserNodeRosLib,
   type SetUserNodeDiagnostics,
   type AddUserNodeLogs,
-  type SetUserNodeTrust,
   type SetUserNodeRosLib,
 } from "webviz-core/src/actions/userNodes";
 import DocumentDropListener from "webviz-core/src/components/DocumentDropListener";
 import DropOverlay from "webviz-core/src/components/DropOverlay";
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { MessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import { getRemoteBagGuid } from "webviz-core/src/dataProviders/getRemoteBagGuid";
@@ -52,18 +51,38 @@ import {
   ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY,
   SECOND_SOURCE_PREFIX,
 } from "webviz-core/src/util/globalConstants";
-import { videoRecordingMode, performanceMeasuringMode } from "webviz-core/src/util/inAutomatedRunMode";
+import { inVideoRecordingMode, inPlaybackPerformanceMeasuringMode } from "webviz-core/src/util/inAutomatedRunMode";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
-function buildPlayerFromDescriptor(descriptor: DataProviderDescriptor): Player {
-  if (videoRecordingMode()) {
-    return new AutomatedRunPlayer(rootGetDataProvider(descriptor), videoRecordingClient);
+function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Player {
+  const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
+  const useBinaryObjects = !!getExperimentalFeature("bobject3dPanel");
+  const rootDescriptor = {
+    name: CoreDataProviders.ParseMessagesDataProvider,
+    args: {},
+    children: [
+      {
+        name: CoreDataProviders.MemoryCacheDataProvider,
+        args: { unlimitedCache },
+        children: [
+          {
+            name: CoreDataProviders.RewriteBinaryDataProvider,
+            args: { useBinaryObjects },
+            children: [childDescriptor],
+          },
+        ],
+      },
+    ],
+  };
+
+  if (inVideoRecordingMode()) {
+    return new AutomatedRunPlayer(rootGetDataProvider(rootDescriptor), videoRecordingClient);
   }
-  if (performanceMeasuringMode()) {
-    return new AutomatedRunPlayer(rootGetDataProvider(descriptor), new PerformanceMeasuringClient());
+  if (inPlaybackPerformanceMeasuringMode()) {
+    return new AutomatedRunPlayer(rootGetDataProvider(rootDescriptor), new PerformanceMeasuringClient());
   }
-  return new RandomAccessPlayer(descriptor, { metricsCollector: undefined, seekToTime: getSeekToTime() });
+  return new RandomAccessPlayer(rootDescriptor, { metricsCollector: undefined, seekToTime: getSeekToTime() });
 }
 
 type PlayerDefinition = {| player: Player, inputDescription: React.Node |};
@@ -138,24 +157,22 @@ async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition
 type OwnProps = { children: ({ inputDescription: React.Node }) => React.Node };
 
 type Props = OwnProps & {
-  importPanelLayout: typeof importPanelLayout,
+  loadFetchedLayout: typeof loadFetchedLayout,
   messageOrder: TimestampMethod,
   userNodes: UserNodes,
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
   addUserNodeLogs: AddUserNodeLogs,
-  setUserNodeTrust: SetUserNodeTrust,
   setUserNodeRosLib: SetUserNodeRosLib,
   setGlobalVariables: typeof setGlobalVariables,
 };
 
 function PlayerManager({
-  importPanelLayout: importLayout,
+  loadFetchedLayout: loadLayout,
   children,
   messageOrder,
   userNodes,
   setUserNodeDiagnostics: setDiagnostics,
   addUserNodeLogs: setLogs,
-  setUserNodeTrust: setTrust,
   setUserNodeRosLib: setRosLib,
   setGlobalVariables: setVariables,
 }: Props) {
@@ -178,13 +195,12 @@ function PlayerManager({
       const userNodePlayer = new UserNodePlayer(playerDefinition.player, {
         setUserNodeDiagnostics: setDiagnostics,
         addUserNodeLogs: setLogs,
-        setUserNodeTrust: setTrust,
         setUserNodeRosLib: setRosLib,
       });
       const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, initialMessageOrder);
       setPlayerInternal(headerStampPlayer);
     },
-    [setDiagnostics, setLogs, setTrust, initialMessageOrder, setRosLib]
+    [setDiagnostics, setLogs, initialMessageOrder, setRosLib]
   );
 
   React.useEffect(
@@ -200,9 +216,11 @@ function PlayerManager({
       const layoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
       if (layoutUrl) {
         fetch(layoutUrl)
-          .then((response) => response.json())
+          .then((response) => (response ? response.json() : undefined))
           .then((json) => {
-            importLayout(json, { isFromUrl: true, skipSettingLocalStorage: false });
+            if (json) {
+              loadLayout({ ...json, skipSettingLocalStorage: false });
+            }
           })
           .catch((error) => {
             sendNotification(
@@ -213,7 +231,7 @@ function PlayerManager({
             );
           });
       } else if (params.has(DEMO_QUERY_KEY)) {
-        importLayout(demoLayoutJson, { isFromUrl: false, skipSettingLocalStorage: true });
+        loadLayout({ ...demoLayoutJson, isFromUrl: false, skipSettingLocalStorage: true });
       }
 
       const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
@@ -246,7 +264,7 @@ function PlayerManager({
         });
       }
     },
-    [importLayout, setPlayer, setVariables]
+    [loadLayout, setPlayer, setVariables]
   );
 
   React.useEffect(
@@ -292,10 +310,9 @@ export default connect<Props, OwnProps, _, _, _, _>(
     userNodes: state.panels.userNodes,
   }),
   {
-    importPanelLayout,
+    loadFetchedLayout,
     setUserNodeDiagnostics,
     addUserNodeLogs,
-    setUserNodeTrust,
     setUserNodeRosLib,
     setGlobalVariables,
   }

@@ -8,7 +8,14 @@
 
 import { type Time } from "rosbag";
 
-import type { Progress, Topic, Message, MessageDefinitionsByTopic } from "webviz-core/src/players/types";
+import type {
+  BobjectMessage,
+  Progress,
+  Topic,
+  Message,
+  MessageDefinitionsByTopic,
+  TypedMessage,
+} from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 // `DataProvider` describes a more specific kind of data ingesting than `Player`, namely ingesting
@@ -42,7 +49,17 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 // `_measureDataProviders` URL param, which causes every DataProvider to be wrapped in a
 // MeasureDataProvider.
 
-export type GetMessagesExtra = {| topicsToOnlyLoadInBlocks: Set<string> |};
+export type GetMessagesTopics = $ReadOnly<{|
+  parsedMessages?: ?$ReadOnlyArray<string>,
+  rosBinaryMessages?: ?$ReadOnlyArray<string>,
+  bobjects?: ?$ReadOnlyArray<string>,
+|}>;
+
+export type GetMessagesResult = $ReadOnly<{|
+  parsedMessages: ?$ReadOnlyArray<Message>,
+  rosBinaryMessages: ?$ReadOnlyArray<TypedMessage<ArrayBuffer>>,
+  bobjects: ?$ReadOnlyArray<BobjectMessage>,
+|}>;
 
 // We disable no-use-before-define so we can have the most important types at the top.
 /* eslint-disable no-use-before-define */
@@ -71,9 +88,7 @@ export interface DataProvider {
   // `receiveTime`. May not return any messages outside the time range, or outside the requested
   // list of topics. Must always return the same messages for a given time range, including when
   // querying overlapping time ranges multiple times.
-  // If `topicsToOnlyLoadInBlocks` is set, then messages from those topics are not expected to be
-  // returned by this function, but only separately through the `Progress#blocks`.
-  getMessages(start: Time, end: Time, topics: string[], extra?: ?GetMessagesExtra): Promise<Message[]>;
+  getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult>;
 
   // Close the provider (e.g. close any connections to a server). Must be called only after
   // `initialize` has finished.
@@ -88,6 +103,8 @@ export type InitializationResult = {|
 
   // Signals whether the messages returned from calls to getMessages are parsed into Javascript
   // objects or are returned in ROS binary format.
+  // TODO(steel/hernan): Replace topics and providesParsedMessages with a GetMessagesResult, and
+  // update the ApiCheckerDataProvider to enforce it.
   providesParsedMessages: boolean,
   // The ROS message definitions for each provided topic. Entries are required for topics that are
   // available through the data provider in binary format, either directly through getMessages calls

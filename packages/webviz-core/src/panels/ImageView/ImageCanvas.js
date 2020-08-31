@@ -156,7 +156,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
       (this.bitmapDimensions.width * updatedPercentage) / 100,
       (this.bitmapDimensions.height * updatedPercentage) / 100
     );
-    this.props.saveConfig({ mode: "other", offset, zoomPercentage: updatedPercentage }, { keepLayoutInUrl: true });
+    this.props.saveConfig({ mode: "other", offset, zoomPercentage: updatedPercentage });
     if (offset[0] !== x || offset[1] !== y) {
       this.panZoomCanvas.moveTo(offset[0], offset[1]);
     }
@@ -316,18 +316,18 @@ export default class ImageCanvas extends React.Component<Props, State> {
   clickMagnify = () => {
     this.setState((state) => ({ openZoomChart: !state.openZoomChart }));
   };
-  onZoomFit = (keepLayoutInUrl?: boolean) => {
+  onZoomFit = () => {
     const fitPercent = this.fitPercent();
     this.panZoomCanvas.zoomAbs(0, 0, fitPercent / 100);
     this.moveToCenter();
-    this.props.saveConfig({ mode: "fit", zoomPercentage: fitPercent }, { keepLayoutInUrl });
+    this.props.saveConfig({ mode: "fit", zoomPercentage: fitPercent });
   };
 
-  onZoomFill = (keepLayoutInUrl?: boolean) => {
+  onZoomFill = () => {
     const fillPercent = this.fillPercent();
     this.panZoomCanvas.zoomAbs(0, 0, fillPercent / 100);
     this.moveToCenter();
-    this.props.saveConfig({ mode: "fill", zoomPercentage: fillPercent }, { keepLayoutInUrl });
+    this.props.saveConfig({ mode: "fill", zoomPercentage: fillPercent });
   };
 
   goToTargetPercentage = (targetPercentage: number) => {
@@ -424,9 +424,9 @@ export default class ImageCanvas extends React.Component<Props, State> {
 
     const { mode, zoomPercentage, offset } = this.props.config;
     if (!mode || mode === "fit") {
-      this.onZoomFit(true);
+      this.onZoomFit();
     } else if (mode === "fill") {
-      this.onZoomFill(true);
+      this.onZoomFill();
     } else if (mode === "other") {
       // Go to prevPercentage
       this.goToTargetPercentage(zoomPercentage || 100);

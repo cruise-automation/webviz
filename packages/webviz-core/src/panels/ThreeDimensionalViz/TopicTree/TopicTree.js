@@ -12,9 +12,10 @@ import MagnifyIcon from "@mdi/svg/svg/magnify.svg";
 import LessIcon from "@mdi/svg/svg/unfold-less-horizontal.svg";
 import MoreIcon from "@mdi/svg/svg/unfold-more-horizontal.svg";
 import { Tree } from "antd";
-import { clamp } from "lodash";
-import React, { useMemo, useRef, useEffect } from "react";
+import { clamp, groupBy } from "lodash";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import Dimensions from "react-container-dimensions";
+import { useSpring, animated } from "react-spring";
 import styled from "styled-components";
 
 import { type Save3DConfig } from "../index";
@@ -37,7 +38,9 @@ import type {
   TreeNode,
   VisibleTopicsCountByKey,
 } from "./types";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Icon from "webviz-core/src/components/Icon";
+import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { useChangeDetector } from "webviz-core/src/util/hooks";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
@@ -55,9 +58,12 @@ const STopicTreeWrapper = styled.div`
   left: ${CONTAINER_SPACING}px;
   z-index: 102;
   max-width: ${MAX_CONTAINER_WIDTH_RATIO * 100}%;
+
+  // Allow clicks right above the TopicTree to close it
+  pointer-events: none;
 `;
 
-const STopicTree = styled.div`
+const STopicTree = styled(animated.div)`
   position: relative;
   color: ${colors.TEXTL1};
   border-radius: 6px;
@@ -65,6 +71,10 @@ const STopicTree = styled.div`
   padding-bottom: 6px;
   max-width: 100%;
   overflow: auto;
+  pointer-events: auto;
+`;
+
+const STopicTreeInner = styled.div`
   .ant-tree {
     li {
       ul {
@@ -179,6 +189,7 @@ type SharedProps = {|
   getIsTreeNodeVisibleInScene: GetIsTreeNodeVisibleInScene,
   getIsTreeNodeVisibleInTree: GetIsTreeNodeVisibleInTree,
   hasFeatureColumn: boolean,
+  isPlaying?: boolean,
   onExitTopicTreeFocus: () => void,
   onNamespaceOverrideColorChange: OnNamespaceOverrideColorChange,
   pinTopics: boolean,
@@ -218,6 +229,7 @@ function TopicTree({
   getIsTreeNodeVisibleInScene,
   getIsTreeNodeVisibleInTree,
   hasFeatureColumn,
+  isPlaying,
   onNamespaceOverrideColorChange,
   pinTopics,
   rootTreeNode,
@@ -238,7 +250,7 @@ function TopicTree({
   const scrollContainerRef = useRef<?HTMLDivElement>();
   const checkedKeysSet = useMemo(() => new Set(checkedKeys), [checkedKeys]);
 
-  const filterTextFieldRef = useRef();
+  const filterTextFieldRef = useRef<?HTMLInputElement>();
 
   // HACK: Ant Tree does not auto expand dynamic tree nodes. Create a copy of expandedNodes
   // to ensure newly added nodes such as `uncategorized` are properly expanded:
@@ -251,7 +263,9 @@ function TopicTree({
     () => {
       // auto focus whenever first rendering the topic tree
       if (renderTopicTree && filterTextFieldRef.current) {
-        filterTextFieldRef.current.focus();
+        const filterTextFieldEl: HTMLInputElement = filterTextFieldRef.current;
+        filterTextFieldEl.focus();
+        filterTextFieldEl.select();
       }
     },
     [renderTopicTree]
@@ -271,6 +285,33 @@ function TopicTree({
   const isXSWidth = treeWidth < DEFAULT_XS_WIDTH;
   const headerRightIconStyle = { margin: `4px ${(isXSWidth ? 0 : TREE_SPACING) + 2}px 4px 8px` };
 
+  const springProps = useSpring({
+    native: true,
+    unique: true,
+    precision: 0.1,
+    // Skip the animation if we are playing because it looks nicer than having the animation lag
+    immediate: isPlaying,
+    to: { opacity: renderTopicTree ? 1 : 0, transformX: renderTopicTree ? 0 : -20 },
+    config: { tension: 340, friction: 26, clamp: true },
+  });
+
+  const { linkedGlobalVariables } = useLinkedGlobalVariables();
+  const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("globalVariableColorOverrides");
+  const linkedGlobalVariablesByTopic = highlightMarkersThatMatchGlobalVariables
+    ? groupBy(linkedGlobalVariables, ({ topic }) => topic)
+    : {};
+
+  // Close the TopicTree if the user hits the "Escape" key
+  const onKeyDown = useCallback(
+    (event: SyntheticKeyboardEvent<HTMLInputElement>) => {
+      if (event.key === "Escape" && document.activeElement) {
+        document.activeElement.blur();
+        setShowTopicTree(false);
+      }
+    },
+    [setShowTopicTree]
+  );
+
   return (
     <>
       <TopicTreeSwitcher
@@ -280,108 +321,114 @@ function TopicTree({
         saveConfig={saveConfig}
         setShowTopicTree={setShowTopicTree}
       />
-      {renderTopicTree && (
-        <STopicTree onClick={(e) => e.stopPropagation()} isXSWidth={isXSWidth}>
-          <div style={{ width: treeWidth }}>
-            <STopicTreeHeader>
-              <SFilter>
-                <Icon style={{ color: "rgba(255,255,255, 0.3)" }}>
-                  <MagnifyIcon style={{ width: 16, height: 16 }} />
-                </Icon>
-                <SInput
-                  size={3}
-                  data-test="topic-tree-filter-input"
-                  value={filterText}
-                  placeholder="Type to filter"
-                  onChange={(event) => setFilterText(event.target.value)}
-                  ref={filterTextFieldRef}
-                />
-              </SFilter>
-              {rootTreeNode.providerAvailable && (
-                <TopicViewModeSelector
-                  isXSWidth={isXSWidth}
-                  saveConfig={saveConfig}
-                  topicDisplayMode={topicDisplayMode}
-                />
-              )}
-              {!filterText && (
-                <Icon
-                  dataTest="expand-all-icon"
-                  tooltip={topLevelNodesCollapsed ? "Expand all" : "Collapse all"}
-                  small
-                  fade
-                  onClick={() => {
-                    saveConfig({ expandedKeys: topLevelNodesCollapsed ? allKeys : [] }, { keepLayoutInUrl: true });
-                  }}
-                  style={headerRightIconStyle}>
-                  {topLevelNodesCollapsed ? <MoreIcon /> : <LessIcon />}
-                </Icon>
-              )}
-              {filterText && (
-                <Icon
-                  dataTest="clear-filter-icon"
-                  small
-                  fade
-                  style={headerRightIconStyle}
-                  onClick={() => setFilterText("")}>
-                  <CloseIcon />
-                </Icon>
-              )}
-            </STopicTreeHeader>
-            <div ref={scrollContainerRef} style={{ overflow: "auto", width: treeWidth }}>
-              {showNoMatchesState ? (
-                <SNoMatches>
-                  <NoMatchesSvg />
-                  <SNoMatchesText>No results found. Try searching a different term.</SNoMatchesText>
-                </SNoMatches>
-              ) : (
-                <Tree
-                  treeData={renderTreeNodes({
-                    availableNamespacesByTopic,
-                    checkedKeysSet,
-                    children: rootTreeNode.children || [],
-                    getIsTreeNodeVisibleInScene,
-                    getIsTreeNodeVisibleInTree,
-                    getIsNamespaceCheckedByDefault,
-                    hasFeatureColumn,
-                    isXSWidth,
-                    onNamespaceOverrideColorChange,
-                    sceneErrorsByKey,
-                    setCurrentEditingTopic,
-                    derivedCustomSettingsByKey,
-                    setEditingNamespace,
-                    topicDisplayMode,
-                    visibleTopicsCountByKey,
-                    width: treeWidth,
-                    filterText,
-                  })}
-                  height={treeHeight}
-                  itemHeight={ROW_HEIGHT}
-                  // Disable motion because it seems to cause a bug in the `rc-tree` (used under the hood by `antd` for
-                  // the tree). This bug would result in nodes no longer being rendered after a search.
-                  motion={null}
-                  selectable={false}
-                  onExpand={(newExpandedKeys) => {
-                    if (!shouldExpandAllKeys) {
-                      saveConfig({ expandedKeys: newExpandedKeys }, { keepLayoutInUrl: true });
-                    }
-                  }}
-                  expandedKeys={shouldExpandAllKeys ? allKeys : expandedKeysRef.current}
-                  autoExpandParent={false /* Set autoExpandParent to true when filtering */}
-                  switcherIcon={
-                    <SSwitcherIcon style={filterText ? { width: 0, height: 0, overflow: "hidden" } : {}}>
-                      <ChevronDownIcon
-                        fill="currentColor"
-                        style={{ width: SWITCHER_ICON_SIZE, height: SWITCHER_ICON_SIZE }}
-                      />
-                    </SSwitcherIcon>
+      <STopicTree
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          pointerEvents: renderTopicTree ? "auto" : "none",
+          opacity: springProps.opacity,
+          transform: springProps.transformX.interpolate((x) => (x === 0 ? "none" : `translate3d(${x}px, 0px, 0px)`)),
+        }}>
+        <STopicTreeInner style={{ width: treeWidth }} isXSWidth={isXSWidth}>
+          <STopicTreeHeader>
+            <SFilter>
+              <Icon style={{ color: "rgba(255,255,255, 0.3)" }}>
+                <MagnifyIcon style={{ width: 16, height: 16 }} />
+              </Icon>
+              <SInput
+                size={3}
+                data-test="topic-tree-filter-input"
+                value={filterText}
+                placeholder="Type to filter"
+                onChange={(event) => setFilterText(event.target.value)}
+                onKeyDown={onKeyDown}
+                ref={filterTextFieldRef}
+              />
+            </SFilter>
+            {rootTreeNode.providerAvailable && (
+              <TopicViewModeSelector
+                isXSWidth={isXSWidth}
+                saveConfig={saveConfig}
+                topicDisplayMode={topicDisplayMode}
+              />
+            )}
+            {!filterText && (
+              <Icon
+                dataTest="expand-all-icon"
+                tooltip={topLevelNodesCollapsed ? "Expand all" : "Collapse all"}
+                small
+                fade
+                onClick={() => {
+                  saveConfig({ expandedKeys: topLevelNodesCollapsed ? allKeys : [] });
+                }}
+                style={headerRightIconStyle}>
+                {topLevelNodesCollapsed ? <MoreIcon /> : <LessIcon />}
+              </Icon>
+            )}
+            {filterText && (
+              <Icon
+                dataTest="clear-filter-icon"
+                small
+                fade
+                style={headerRightIconStyle}
+                onClick={() => setFilterText("")}>
+                <CloseIcon />
+              </Icon>
+            )}
+          </STopicTreeHeader>
+          <div ref={scrollContainerRef} style={{ overflow: "auto", width: treeWidth }}>
+            {showNoMatchesState ? (
+              <SNoMatches>
+                <NoMatchesSvg />
+                <SNoMatchesText>No results found. Try searching a different term.</SNoMatchesText>
+              </SNoMatches>
+            ) : (
+              <Tree
+                treeData={renderTreeNodes({
+                  availableNamespacesByTopic,
+                  checkedKeysSet,
+                  children: rootTreeNode.children || [],
+                  getIsTreeNodeVisibleInScene,
+                  getIsTreeNodeVisibleInTree,
+                  getIsNamespaceCheckedByDefault,
+                  hasFeatureColumn,
+                  isXSWidth,
+                  onNamespaceOverrideColorChange,
+                  sceneErrorsByKey,
+                  setCurrentEditingTopic,
+                  derivedCustomSettingsByKey,
+                  setEditingNamespace,
+                  topicDisplayMode,
+                  visibleTopicsCountByKey,
+                  width: treeWidth,
+                  filterText,
+                  linkedGlobalVariablesByTopic,
+                })}
+                height={treeHeight}
+                itemHeight={ROW_HEIGHT}
+                // Disable motion because it seems to cause a bug in the `rc-tree` (used under the hood by `antd` for
+                // the tree). This bug would result in nodes no longer being rendered after a search.
+                motion={null}
+                selectable={false}
+                onExpand={(newExpandedKeys) => {
+                  if (!shouldExpandAllKeys) {
+                    saveConfig({ expandedKeys: newExpandedKeys });
                   }
-                />
-              )}
-            </div>
+                }}
+                expandedKeys={shouldExpandAllKeys ? allKeys : expandedKeysRef.current}
+                autoExpandParent={false /* Set autoExpandParent to true when filtering */}
+                switcherIcon={
+                  <SSwitcherIcon style={filterText ? { width: 0, height: 0, overflow: "hidden" } : {}}>
+                    <ChevronDownIcon
+                      fill="currentColor"
+                      style={{ width: SWITCHER_ICON_SIZE, height: SWITCHER_ICON_SIZE }}
+                    />
+                  </SSwitcherIcon>
+                }
+              />
+            )}
           </div>
-        </STopicTree>
-      )}
+        </STopicTreeInner>
+      </STopicTree>
     </>
   );
 }
@@ -399,7 +446,7 @@ function TopicTreeWrapper({ containerWidth, containerHeight, pinTopics, showTopi
             style={{
               width: defaultTreeWidth,
               resize: renderTopicTree ? "horizontal" : "none",
-              overflow: renderTopicTree ? "auto" : "hidden",
+              overflow: renderTopicTree ? "hidden auto" : "visible",
               minWidth: DEFAULT_XS_WIDTH,
               maxWidth: containerWidth - 100,
             }}

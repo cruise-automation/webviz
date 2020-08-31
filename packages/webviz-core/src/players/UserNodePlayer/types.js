@@ -43,6 +43,7 @@ export const ErrorCodes = {
     STRICT_MARKERS_RETURN_TYPE: 14,
     LIMITED_UNIONS: 15,
     NO_NESTED_ANY: 16,
+    NO_MAPPED_TYPES: 17,
   },
   InputTopicsChecker: {
     NO_TOPIC_AVAIL: 1,
@@ -95,14 +96,9 @@ export type NodeData = {|
   rosLib: string,
 |};
 
-export type PlayerInfo = $ReadOnly<{|
-  topics: Topic[],
-  datatypes: RosDatatypes,
-|}>;
-
 export type NodeDataTransformer = (
   nodeData: NodeData,
-  playerStateActiveData: ?PlayerInfo,
+  topics: Topic[],
   priorRegistrations: $ReadOnlyArray<Topic>
 ) => NodeData;
 

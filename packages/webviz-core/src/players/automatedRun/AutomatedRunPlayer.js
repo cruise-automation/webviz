@@ -6,13 +6,16 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { partition } from "lodash";
 import Queue from "promise-queue";
 import { type Time, TimeUtil } from "rosbag";
 import uuid from "uuid";
 
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import type { DataProvider, DataProviderMetadata, InitializationResult } from "webviz-core/src/dataProviders/types";
 import type {
   AdvertisePayload,
+  BobjectMessage,
   Message,
   Player,
   PlayerState,
@@ -60,7 +63,8 @@ export default class AutomatedRunPlayer implements Player {
   _provider: DataProvider;
   _providerResult: InitializationResult;
   _progress: Progress;
-  _topics: Set<string> = new Set();
+  _bobjectTopics: Set<string> = new Set();
+  _parsedTopics: Set<string> = new Set();
   _listener: (PlayerState) => Promise<void>;
   _initializeTimeout: TimeoutID;
   _initialized: boolean = false;
@@ -74,12 +78,14 @@ export default class AutomatedRunPlayer implements Player {
   // Calls to this._listener must not happen concurrently, and we want them to happen
   // deterministically so we put them in a FIFO queue.
   _emitStateQueue: Queue = new Queue(1);
+  _bobjectsEnabled: boolean;
 
   constructor(provider: DataProvider, client: AutomatedRunClient) {
     this._provider = provider;
     this._speed = client.speed;
     this._msPerFrame = client.msPerFrame;
     this._client = client;
+    this._bobjectsEnabled = getExperimentalFeature("bobject3dPanel");
     // Report errors from sendNotification and those thrown on the window object to the client.
     setNotificationHandler(
       (message: string, details: DetailsType, type: NotificationType, severity: NotificationSeverity) => {
@@ -106,33 +112,56 @@ export default class AutomatedRunPlayer implements Player {
     });
   }
 
-  async _getMessages(start: Time, end: Time): Promise<Message[]> {
-    const topics = getSanitizedTopics(this._topics, this._providerResult.topics);
-    if (topics.length === 0) {
-      return [];
+  async _getMessages(
+    start: Time,
+    end: Time
+  ): Promise<{ parsedMessages: $ReadOnlyArray<Message>, bobjects: $ReadOnlyArray<BobjectMessage> }> {
+    const parsedTopics = getSanitizedTopics(this._parsedTopics, this._providerResult.topics);
+    const bobjectTopics = getSanitizedTopics(this._bobjectTopics, this._providerResult.topics);
+    if (parsedTopics.length === 0 && bobjectTopics.length === 0) {
+      return { parsedMessages: [], bobjects: [] };
     }
     start = clampTime(start, this._providerResult.start, this._providerResult.end);
     end = clampTime(end, this._providerResult.start, this._providerResult.end);
-    const messages = await this._provider.getMessages(start, end, topics);
-    return messages.map((message) => {
-      const topic: ?Topic = this._providerResult.topics.find((t) => t.name === message.topic);
-      if (!topic) {
-        throw new Error(`Could not find topic for message ${message.topic}`);
-      }
-
-      if (!topic.datatype) {
-        throw new Error(`Missing datatype for topic: ${message.topic}`);
-      }
-
-      return {
-        topic: message.topic,
-        receiveTime: message.receiveTime,
-        message: message.message,
-      };
+    const messages = await this._provider.getMessages(start, end, {
+      parsedMessages: parsedTopics,
+      bobjects: bobjectTopics,
     });
+    const { parsedMessages, rosBinaryMessages, bobjects } = messages;
+    if (rosBinaryMessages?.length || bobjects == null || parsedMessages == null) {
+      const messageTypes = Object.keys(messages)
+        .filter((kind) => messages[kind]?.length)
+        .join(",");
+      throw new Error(`Invalid message types: ${messageTypes}`);
+    }
+
+    const filterMessages = (msgs) =>
+      msgs.map((message) => {
+        const topic: ?Topic = this._providerResult.topics.find((t) => t.name === message.topic);
+        if (!topic) {
+          throw new Error(`Could not find topic for message ${message.topic}`);
+        }
+
+        if (!topic.datatype) {
+          throw new Error(`Missing datatype for topic: ${message.topic}`);
+        }
+        return {
+          topic: message.topic,
+          receiveTime: message.receiveTime,
+          message: message.message,
+        };
+      });
+    const filteredParsedMessages = filterMessages(parsedMessages);
+    const filteredBobjects = this._bobjectsEnabled ? filterMessages(bobjects) : [];
+
+    return { parsedMessages: filteredParsedMessages, bobjects: filteredBobjects };
   }
 
-  _emitState(messages: Message[], currentTime: Time): Promise<void> {
+  _emitState(
+    messages: $ReadOnlyArray<Message>,
+    bobjects: $ReadOnlyArray<BobjectMessage>,
+    currentTime: Time
+  ): Promise<void> {
     return this._emitStateQueue.add(async () => {
       if (!this._listener) {
         return;
@@ -146,6 +175,7 @@ export default class AutomatedRunPlayer implements Player {
         playerId: this._id,
         activeData: {
           messages,
+          bobjects,
           currentTime,
           startTime: this._providerResult.start,
           endTime: this._providerResult.end,
@@ -167,7 +197,9 @@ export default class AutomatedRunPlayer implements Player {
   }
 
   setSubscriptions(subscriptions: SubscribePayload[]): void {
-    this._topics = new Set(subscriptions.map(({ topic }) => topic));
+    const [bobjectSubscriptions, parsedSubscriptions] = partition(subscriptions, ({ format }) => format === "bobjects");
+    this._bobjectTopics = new Set(bobjectSubscriptions.map(({ topic }) => topic));
+    this._parsedTopics = new Set(parsedSubscriptions.map(({ topic }) => topic));
 
     // Wait with running until we've subscribed to a bunch of topics.
     clearTimeout(this._initializeTimeout);
@@ -210,8 +242,11 @@ export default class AutomatedRunPlayer implements Player {
 
   async _start() {
     // Call _getMessages to start data loading and rendering for the first frame.
-    const messages = await this._getMessages(this._providerResult.start, this._providerResult.start);
-    await this._emitState(messages, this._providerResult.start);
+    const { parsedMessages, bobjects } = await this._getMessages(
+      this._providerResult.start,
+      this._providerResult.start
+    );
+    await this._emitState(parsedMessages, bobjects, this._providerResult.start);
     if (!this._startCalled) {
       this._client.markPreloadStart();
     }
@@ -223,7 +258,7 @@ export default class AutomatedRunPlayer implements Player {
   async _onUpdateProgress() {
     if (this._client.shouldLoadDataBeforePlaying && this._providerResult != null) {
       // Update the view and do preloading calculations. Not necessary if we're already playing.
-      this._emitState([], this._providerResult.start);
+      this._emitState([], [], this._providerResult.start);
     }
     this._maybeStartPlayback();
   }
@@ -257,7 +292,7 @@ export default class AutomatedRunPlayer implements Player {
     this._isPlaying = true;
     this._client.markPreloadEnd();
     logger.info("AutomatedRunPlayer._run()");
-    await this._emitState([], this._providerResult.start);
+    await this._emitState([], [], this._providerResult.start);
 
     let currentTime = this._providerResult.start;
     this._client.start({
@@ -273,11 +308,11 @@ export default class AutomatedRunPlayer implements Player {
       }
       const end = TimeUtil.add(currentTime, { sec: 0, nsec: nsBagTimePerFrame });
       this._client.markTotalFrameStart();
-      const messages = await this._getMessages(currentTime, end);
+      const { parsedMessages, bobjects } = await this._getMessages(currentTime, end);
 
       this._client.markFrameRenderStart();
       // Wait for the frame render to finish.
-      await this._emitState(messages, end);
+      await this._emitState(parsedMessages, bobjects, end);
       this._client.markTotalFrameEnd();
       this._client.markFrameRenderEnd();
 

@@ -6,13 +6,18 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { uniq } from "lodash";
 import { type Time, MessageReader, parseMessageDefinition } from "rosbag";
 
 import { type DataProvider, type InitializationResult, type ExtensionPoint } from "./types";
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import ParsedMessageCache from "webviz-core/src/dataProviders/ParsedMessageCache";
-import type { DataProviderDescriptor, GetDataProvider, GetMessagesExtra } from "webviz-core/src/dataProviders/types";
-import type { Message, MessageDefinitionsByTopic } from "webviz-core/src/players/types";
+import type {
+  DataProviderDescriptor,
+  GetDataProvider,
+  GetMessagesResult,
+  GetMessagesTopics,
+} from "webviz-core/src/dataProviders/types";
+import type { MessageDefinitionsByTopic } from "webviz-core/src/players/types";
 import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
 
 // Parses raw messages as returned by `BagDataProvider`. To make it fast to seek back and forth, we keep
@@ -70,19 +75,34 @@ export default class ParseMessagesDataProvider implements DataProvider {
     }
   }
 
-  async getMessages(start: Time, end: Time, topics: string[], extra?: ?GetMessagesExtra): Promise<Message[]> {
+  async getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> {
+    const requestedParsedTopics = new Set(topics.parsedMessages);
+    const requestedBinaryTopics = new Set(topics.bobjects);
+    // TODO(steel/hernan): Add bobject support.
+    // For now we always request ROS binary messages and return no bobjects.
+    const childTopics = {
+      bobjects: uniq([...requestedParsedTopics, ...requestedBinaryTopics]),
+    };
     // Kick off the request to the data provder to get the messages.
-    const allMessagesPromise = this._provider.getMessages(start, end, topics);
+    const getMessagesPromise = this._provider.getMessages(start, end, childTopics);
     // Make sure that all messages are here and all readers are initialized before doing any parsing.
     if (!this._calledInitializeReaders) {
       const readersInitializedPromise = this._initializeReaders();
-      await Promise.all([allMessagesPromise, readersInitializedPromise]);
+      await Promise.all([getMessagesPromise, readersInitializedPromise]);
     }
-    let allMessages = await allMessagesPromise;
-    if (getExperimentalFeature("preloading") && extra) {
-      allMessages = allMessages.filter((message) => !extra.topicsToOnlyLoadInBlocks.has(message.topic));
+    const { bobjects } = await getMessagesPromise;
+    if (bobjects == null) {
+      throw new Error("Child of ParseMessagesProvider must provide binary messages");
     }
-    return this._messageCache.parseMessages(allMessages, this._readersByTopic);
+    const messagesToParse = bobjects.filter(({ topic }) => requestedParsedTopics.has(topic));
+
+    // We need the RewriteMessagesDataProvider to return real bobjects. For the moment, returning
+    // the ROS binary messages helps make tests slightly more useful.
+    return {
+      parsedMessages: this._messageCache.parseMessages(messagesToParse, this._readersByTopic),
+      bobjects: bobjects.filter(({ topic }) => requestedBinaryTopics.has(topic)),
+      rosBinaryMessages: undefined,
+    };
   }
 
   close(): Promise<void> {

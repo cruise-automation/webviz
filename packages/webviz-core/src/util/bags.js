@@ -5,15 +5,22 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { uniqWith } from "lodash";
-import Bag, { TimeUtil } from "rosbag";
+import { type Time, TimeUtil } from "rosbag";
 
-export function getBagChunksOverlapCount(chunkInfos: typeof Bag.prototype.chunkInfos) {
+export function getBagChunksOverlapCount(chunkInfos: $ReadOnlyArray<{ startTime: Time, endTime: Time }>) {
   if (!chunkInfos) {
     return 0;
   }
-  const uniq = uniqWith(chunkInfos, (left, right) => {
-    return TimeUtil.compare(left.startTime, right.endTime) < 0 && TimeUtil.compare(left.endTime, right.startTime) > 0;
+  const sorted = chunkInfos.slice().sort((left, right) => TimeUtil.compare(left.startTime, right.startTime));
+  let maxEndTime = { sec: -Infinity, nsec: 0 };
+  let overlaps = 0;
+  sorted.forEach(({ startTime, endTime }) => {
+    if (TimeUtil.isLessThan(startTime, maxEndTime)) {
+      overlaps += 1;
+    }
+    if (TimeUtil.isGreaterThan(endTime, maxEndTime)) {
+      maxEndTime = endTime;
+    }
   });
-  return chunkInfos.length - uniq.length;
+  return overlaps;
 }

@@ -53,6 +53,10 @@
       opacity: 0.5;
     }
   }
+
+  &.hoverForScreenshot {
+    @extend %menu-item-hover;
+  }
 }
 
 .submenuIconLeft,

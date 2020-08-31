@@ -55,7 +55,6 @@ const ListItem = styled.li`
   justify-content: space-between;
   word-break: break-all;
   align-items: center;
-  color: ${({ trusted }) => (!trusted ? colors.REDL1 : "inherit")};
   background-color: ${({ selected }: { selected: boolean }) => (selected ? colors.DARK9 : "transparent")};
   > span {
     opacity: 0;
@@ -96,7 +95,7 @@ const SFlex = styled.div`
   }
 `;
 
-type NodesListProps = {
+type NodesListProps = {|
   nodes: UserNodes,
   selectNode: (id: string) => void,
   deleteNode: (id: string) => void,
@@ -105,27 +104,15 @@ type NodesListProps = {
   userNodeDiagnostics: {
     [guid: string]: UserNodeDiagnostics,
   },
-};
+|};
 
-const NodesList = ({
-  nodes,
-  selectNode,
-  deleteNode,
-  collapse,
-  selectedNodeId,
-  userNodeDiagnostics,
-}: NodesListProps) => {
+const NodesList = ({ nodes, selectNode, deleteNode, collapse, selectedNodeId }: NodesListProps) => {
   return (
     <Flex col>
       <SidebarTitle title={"nodes"} collapse={collapse} />
       {Object.keys(nodes).map((nodeId) => {
-        const trusted = userNodeDiagnostics[nodeId] ? userNodeDiagnostics[nodeId].trusted : true;
         return (
-          <ListItem
-            key={nodeId}
-            selected={selectedNodeId === nodeId}
-            onClick={() => selectNode(nodeId)}
-            trusted={trusted}>
+          <ListItem key={nodeId} selected={selectedNodeId === nodeId} onClick={() => selectNode(nodeId)}>
             {nodes[nodeId].name}
             <Icon onClick={() => deleteNode(nodeId)} medium>
               <DeleteIcon />
@@ -143,7 +130,6 @@ type Props = {|
   userNodes: UserNodes,
   selectedNodeId: ?string,
   otherMarkdownDocsForTest?: string,
-  needsUserTrust: boolean,
   userNodeDiagnostics: {
     [guid: string]: UserNodeDiagnostics,
   },
@@ -153,16 +139,6 @@ type Props = {|
   script: Script | null,
   addNewNode: (_: any, sourceCode?: string) => void,
 |};
-
-const RedDot = styled.div`
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: ${colors.REDL1};
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-`;
 
 const { utilityFiles } = getNodeProjectConfig();
 
@@ -188,7 +164,6 @@ const Sidebar = ({
   deleteNode,
   selectedNodeId,
   otherMarkdownDocsForTest,
-  needsUserTrust,
   userNodeDiagnostics,
   explorer,
   updateExplorer,
@@ -259,7 +234,6 @@ const Sidebar = ({
             <ListItem
               key={filePath}
               onClick={gotoUtils.bind(null, filePath)}
-              trusted
               selected={script && filePath === script.filePath}>
               {fileName}
             </ListItem>
@@ -307,7 +281,6 @@ const Sidebar = ({
           tooltip={"nodes"}
           style={{ color: nodesSelected ? "inherit" : colors.DARK9, position: "relative" }}>
           <FileMultipleIcon />
-          {needsUserTrust && <RedDot />}
         </Icon>
         <Icon
           dataTest="utils-explorer"

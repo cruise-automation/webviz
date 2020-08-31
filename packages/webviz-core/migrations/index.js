@@ -37,6 +37,7 @@ const migrationsByVersion = {
     require("webviz-core/migrations/frozenMigrations/2020.07.07.11:17:28.prefixCollapsedSectionsWithDiagnosticName.js")
       .default,
   ],
+  "010": [],
 };
 
 export default function migratePanels(originalPanelsState: any): any {

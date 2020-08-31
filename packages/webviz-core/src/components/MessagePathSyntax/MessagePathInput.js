@@ -285,7 +285,13 @@ class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputPr
           end: msgPathPart.nameLoc + autocompleteFilterText.length,
         };
       } else {
-        autocompleteItems = messagePathsForDatatype(topic.datatype, datatypes, validTypes, noMultiSlices).filter(
+        autocompleteItems = messagePathsForDatatype(
+          topic.datatype,
+          datatypes,
+          validTypes,
+          noMultiSlices,
+          rosPath.messagePath
+        ).filter(
           // .header.seq is pretty useless but shows up everryyywhere.
           (msgPath) => msgPath !== "" && !msgPath.endsWith(".header.seq")
         );

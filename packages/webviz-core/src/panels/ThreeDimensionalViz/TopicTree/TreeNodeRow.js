@@ -172,16 +172,25 @@ export default function TreeNodeRow({
   maxNodeNameWidth -= showVisibleTopicsCount ? VISIBLE_COUNT_WIDTH + VISIBLE_COUNT_MARGIN * 2 : 0;
 
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
+  const updateHoveredMarkerMatchers = useCallback(
+    (columnIndex, visible) => {
+      if (visible) {
+        const topic = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)][columnIndex];
+        setHoveredMarkerMatchers([{ topic }]);
+      }
+    },
+    [setHoveredMarkerMatchers, topicName]
+  );
+
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
   const mouseEventHandlersByColumnIdx = useMemo(
     () => {
-      const topicNameByColumnIdx = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)];
-      return topicNameByColumnIdx.map((topic, columnIndex) => ({
-        onMouseEnter: () => (visibleByColumn[columnIndex] && setHoveredMarkerMatchers([{ topic }])) || undefined, // Satisfy Flow
+      return new Array(2).fill().map((_, columnIndex) => ({
+        onMouseEnter: () => updateHoveredMarkerMatchers(columnIndex, true),
         onMouseLeave,
       }));
     },
-    [onMouseLeave, setHoveredMarkerMatchers, topicName, visibleByColumn]
+    [onMouseLeave, updateHoveredMarkerMatchers]
   );
   const {
     toggleCheckAllAncestors,
@@ -248,24 +257,36 @@ export default function TreeNodeRow({
       <SRightActions>
         {providerAvailable && (
           <SToggles>
-            {availableByColumn.map((available, columnIdx) => (
-              <VisibilityToggle
-                available={available}
-                dataTest={`visibility-toggle~${key}~column${columnIdx}`}
-                key={columnIdx}
-                size={node.type === "topic" ? "SMALL" : "NORMAL"}
-                overrideColor={(derivedCustomSettings?.overrideColorByColumn || [])[columnIdx]}
-                checked={checkedKeysSet.has(columnIdx === 1 ? featureKey : key)}
-                onToggle={() => toggleNodeChecked(key, columnIdx)}
-                onShiftToggle={() => toggleCheckAllDescendants(key, columnIdx)}
-                onAltToggle={() => toggleCheckAllAncestors(key, columnIdx)}
-                unavailableTooltip={
-                  node.type === "group" ? "None of the topics in this group are currently available" : "Unavailable"
-                }
-                visibleInScene={!!visibleByColumn[columnIdx]}
-                {...mouseEventHandlersByColumnIdx[columnIdx]}
-              />
-            ))}
+            {availableByColumn.map((available, columnIdx) => {
+              const checked = checkedKeysSet.has(columnIdx === 1 ? featureKey : key);
+              return (
+                <VisibilityToggle
+                  available={available}
+                  dataTest={`visibility-toggle~${key}~column${columnIdx}`}
+                  key={columnIdx}
+                  size={node.type === "topic" ? "SMALL" : "NORMAL"}
+                  overrideColor={(derivedCustomSettings?.overrideColorByColumn || [])[columnIdx]}
+                  checked={checked}
+                  onToggle={() => {
+                    toggleNodeChecked(key, columnIdx);
+                    updateHoveredMarkerMatchers(columnIdx, !checked);
+                  }}
+                  onShiftToggle={() => {
+                    toggleCheckAllDescendants(key, columnIdx);
+                    updateHoveredMarkerMatchers(columnIdx, !checked);
+                  }}
+                  onAltToggle={() => {
+                    toggleCheckAllAncestors(key, columnIdx);
+                    updateHoveredMarkerMatchers(columnIdx, !checked);
+                  }}
+                  unavailableTooltip={
+                    node.type === "group" ? "None of the topics in this group are currently available" : "Unavailable"
+                  }
+                  visibleInScene={!!visibleByColumn[columnIdx]}
+                  {...mouseEventHandlersByColumnIdx[columnIdx]}
+                />
+              );
+            })}
           </SToggles>
         )}
         <TreeNodeMenu

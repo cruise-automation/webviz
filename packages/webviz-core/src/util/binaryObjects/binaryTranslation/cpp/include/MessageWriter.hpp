@@ -35,11 +35,6 @@ struct DataWriter {
         next += size;
         return true;
     }
-
-    inline bool writeOffsets(uint32_t count, uint32_t begin) noexcept {
-        uint32_t tmp[2] = {count, begin};
-        return write(reinterpret_cast<uint8_t*>(tmp), 2 * sizeof(uint32_t));
-    }
 };
 
 class DataReader {
@@ -100,7 +95,9 @@ public:
 #endif
 
 private:
-    DataWriter allocate(Buffer* data, size_t size) noexcept;
+    void writeOffsets(uint32_t begin, uint32_t end, DataWriter* dst) noexcept;
+
+    size_t allocate(Buffer* data, size_t size) noexcept;
 
     inline bool readDynamicData(
             DataReader* src,

@@ -597,7 +597,6 @@ describe("state.panels", () => {
         playbackConfig: { messageOrder: "receiveTime", speed: 0.2 },
         savedProps: {},
         userNodes: {},
-        fetchedLayout: { isLoading: false },
       });
     });
   });

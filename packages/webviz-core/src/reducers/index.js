@@ -39,13 +39,13 @@ export type State = {
   layoutHistory: LayoutHistory,
   fetchedLayout: {
     isLoading: boolean,
-    data?: { content: PanelsState, name: string, savedBy: string, releasedVersion: number },
+    data?: PanelsState | {| content: PanelsState, name: string, savedBy: string, releasedVersion: number |},
   },
 };
 
 export default function createRootReducer(history: any) {
   const initialState: State = {
-    panels: {},
+    panels: ({}: any),
     mosaic: { mosaicId: "", selectedPanelIds: [] },
     auth: Object.freeze({ username: undefined }),
     extensions: Object.freeze({ markerProviders: [], auxiliaryData: {} }),

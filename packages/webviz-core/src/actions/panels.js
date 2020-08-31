@@ -89,7 +89,7 @@ type SET_FETCHED_LAYOUT = {
   type: "SET_FETCHED_LAYOUT",
   payload: {
     isLoading: boolean,
-    data?: { content: PanelsState, name: string, savedBy: string, releasedVersion: number },
+    data?: PanelsState | {| content: PanelsState, name: string, savedBy: string, releasedVersion: number |},
   },
 };
 type LOAD_FETCHED_LAYOUT = { type: "LOAD_FETCHED_LAYOUT", payload: PanelsState };

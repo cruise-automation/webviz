@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import { routerMiddleware } from "connected-react-router";
 
+import updateUrlMiddleware from "webviz-core/src/middleware/updateUrl";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store";
 import history from "webviz-core/src/util/history";
@@ -16,7 +17,7 @@ let store;
 // after Cruise/open-source specific "hooks" have been initialized.
 function getGlobalStore() {
   if (!store) {
-    store = configureStore(createRootReducer(history), [routerMiddleware(history)]);
+    store = configureStore(createRootReducer(history), [routerMiddleware(history), updateUrlMiddleware]);
   }
   return store;
 }

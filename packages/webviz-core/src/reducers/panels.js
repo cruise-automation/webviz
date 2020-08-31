@@ -5,6 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import { LOCATION_CHANGE } from "connected-react-router";
 import { isEmpty, isEqual, dropRight, pick, cloneDeep } from "lodash";
 import {
   getLeaves,
@@ -20,12 +21,10 @@ import {
 
 import type { ActionTypes } from "webviz-core/src/actions";
 import type { StartDragPayload, EndDragPayload } from "webviz-core/src/actions/panels";
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import type { State } from "webviz-core/src/reducers";
-import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type {
   PanelConfig,
   ConfigsPayload,
@@ -57,6 +56,7 @@ import {
   createAddUpdates,
   removePanelFromTabPanel,
   getLayoutPatch,
+  getShouldProcessPatch,
 } from "webviz-core/src/util/layout";
 import Storage from "webviz-core/src/util/Storage";
 
@@ -78,7 +78,7 @@ const OLD_KEYS = {
   linkedGlobalVariables: "panels.linkedGlobalVariables",
 };
 
-export type PanelsState = {
+export type PanelsState = {|
   layout: ?MosaicNode,
   // We store config for each panel in a hash keyed by the panel id.
   // This should at some point be renamed to `config` or `configById` or so,
@@ -92,7 +92,7 @@ export type PanelsState = {
   playbackConfig: PlaybackConfig,
   restrictedTopics?: string[],
   version?: number,
-};
+|};
 
 export const setStoredLayout = (layout: PanelsState) => {
   storage.set(GLOBAL_STATE_STORAGE_KEY, layout);
@@ -353,7 +353,6 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
     linkedGlobalVariables: migratedPayload.linkedGlobalVariables || [],
     playbackConfig: migratedPayload.playbackConfig || defaultPlaybackConfig,
     ...(migratedPayload.restrictedTopics ? { restrictedTopics: migratedPayload.restrictedTopics } : undefined),
-    fetchedLayout: migratedPayload.fetchedLayout || { isLoading: false },
   };
 
   return newPanelsState;
@@ -697,9 +696,11 @@ const endDrag = (panelsState: PanelsState, dragPayload: EndDragPayload): PanelsS
   return changePanelLayout(panelsState, { layout: newLayout, trimSavedProps: false });
 };
 
-export default function panelsReducer(state: State, action: ActionTypes): State {
+const panelsReducer = function(state: State, action: ActionTypes): State {
   let newState = { ...state, panels: { ...getInitialPanelsState(), ...state.panels } };
   const oldState = { ...newState };
+
+  // Any action that changes panels state should potentially trigger a URL update in updateUrlMiddlewareDebounced.
   switch (action.type) {
     case "CHANGE_PANEL_LAYOUT":
       // don't allow the last panel to be removed
@@ -805,17 +806,11 @@ export default function panelsReducer(state: State, action: ActionTypes): State 
       break;
   }
 
-  // Don't track layout changes in URL when fetching / loading a layout, or clearing a fetched layout;
-  // CLEAR_HOVER_VALUE does not change layout, and triggers frequently enough to affect performance.
-  if (!["SET_FETCHED_LAYOUT", "LOAD_FETCHED_LAYOUT", "CLEAR_HOVER_VALUE"].includes(action.type)) {
-    const inScreenshot = inScreenshotTests();
-    const params = new URLSearchParams(window.location.search);
-    const enableShareableUrl = getExperimentalFeature("shareableUrl");
-    // TODO(Audrey): remove the screenshot env checking after release.
-    const shouldProcessPatch = enableShareableUrl || inScreenshot;
-    if (shouldProcessPatch) {
-      getGlobalHooks().maybeUpdateURLToTrackLayout(oldState, newState);
-    } else {
+  // Reset layout entirely (without patch) when importing a different layout or routing via Redux
+  if (!["SET_FETCHED_LAYOUT", "LOAD_FETCHED_LAYOUT", "CLEAR_HOVER_VALUE", LOCATION_CHANGE].includes(action.type)) {
+    const shouldProcessPatch = getShouldProcessPatch();
+    if (!shouldProcessPatch) {
+      const params = new URLSearchParams(window.location.search);
       // TODO(Esther) - Remove when Shareable Layout work is made public
       const hasLayoutParam = params.get(LAYOUT_QUERY_KEY) || params.get(LAYOUT_URL_QUERY_KEY);
       if (hasLayoutParam) {
@@ -839,4 +834,6 @@ export default function panelsReducer(state: State, action: ActionTypes): State 
   }
   setStoredLayout(newState.panels);
   return newState;
-}
+};
+
+export default panelsReducer;

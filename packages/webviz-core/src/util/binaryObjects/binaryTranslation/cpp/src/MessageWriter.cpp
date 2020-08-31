@@ -8,7 +8,6 @@
 
 #include <iostream>
 
-using cruise::DataWriter;
 using cruise::MessageWriter;
 
 bool MessageWriter::reserve(
@@ -77,9 +76,16 @@ bool MessageWriter::dispatchCommands(
         case Definition::Command::Type::CONSTANT_ARRAY: {
             auto length = cmd.length;
             auto size = cmd.size;
-            auto writer = allocate(&_dataBuffer, length * size);
-            dst->writeOffsets(length, writer.next);
+            auto begin = allocate(&_dataBuffer, length * size);
+            writeOffsets(begin, length, dst);
+
             if (length > 0) {
+                auto writer = DataWriter{
+                        .buffer = &_dataBuffer,
+                        .next = begin,
+                        .end = begin + length * size,
+                };
+
                 if (!dispatchCommands(cmd.subcommands, src, &writer)) {
                     return false;
                 }
@@ -94,9 +100,15 @@ bool MessageWriter::dispatchCommands(
                 return false;
             }
             auto size = cmd.size;
-            auto writer = allocate(&_dataBuffer, length * size);
-            dst->writeOffsets(length, writer.next);
+            auto begin = allocate(&_dataBuffer, length * size);
+            writeOffsets(begin, length, dst);
+
             if (length > 0) {
+                auto writer = DataWriter{
+                        .buffer = &_dataBuffer,
+                        .next = begin,
+                        .end = begin + length * size,
+                };
                 for (auto i = 0l; i < length; ++i) {
                     if (!dispatchCommands(cmd.subcommands, src, &writer)) {
                         return false;
@@ -124,9 +136,15 @@ bool MessageWriter::readDynamicData(
         return false;
     }
 
-    auto writer = allocate(buffer, length * size);
-    dst->writeOffsets(length, writer.next);
+    auto begin = allocate(buffer, length * size);
+    writeOffsets(begin, length, dst);
+
     if (length > 0) {
+        auto writer = DataWriter{
+                .buffer = buffer,
+                .next = begin,
+                .end = begin + length * size,
+        };
         if (!src->read(length * size, &writer)) {
             std::cerr << "Failed to read dynamic data with label " << label << ", size " << size
                       << " and length " << length << std::endl;
@@ -147,7 +165,9 @@ int32_t MessageWriter::write(Definition* definition, uintptr_t data, size_t size
     auto inPtr = reinterpret_cast<uint8_t*>(data);
 
     DataReader src(inPtr, size);
-    DataWriter dst = allocate(&_dataBuffer, definition->getSize());
+
+    auto begin = allocate(&_dataBuffer, definition->getSize());
+    DataWriter dst{.buffer = &_dataBuffer, .next = begin, .end = begin + definition->getSize()};
 
     const auto& cmds = definition->getCommands();
     if (!dispatchCommands(cmds, &src, &dst)) {
@@ -171,15 +191,15 @@ emscripten::val MessageWriter::getStringBufferJS() noexcept {
 
 #endif
 
-DataWriter MessageWriter::allocate(Buffer* buffer, size_t size) noexcept {
-    auto begin = buffer->size();
-    if (size != 0) {
-        buffer->resize(begin + size);
-    }
+void MessageWriter::writeOffsets(uint32_t begin, uint32_t count, DataWriter* dst) noexcept {
+    uint32_t tmp[2] = {count, begin};
+    dst->write(reinterpret_cast<uint8_t*>(tmp), 2 * sizeof(uint32_t));
+}
 
-    return DataWriter{
-            .buffer = buffer,
-            .next = begin,
-            .end = begin + size,
-    };
+size_t MessageWriter::allocate(Buffer* data, size_t size) noexcept {
+    auto begin = data->size();
+    if (size != 0) {
+        data->resize(begin + size);
+    }
+    return begin;
 }

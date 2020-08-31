@@ -26,14 +26,6 @@ import {
   getUpdatedURLWithNewVersion,
 } from "./layout";
 
-export function setWindowURLForTest(queryString: string): void {
-  global.window = Object.create(window);
-  const url = `localhost:3000/${queryString}`;
-  Object.defineProperty(window, "location", {
-    value: { pathname: "localhost:3000/", href: url, search: queryString },
-  });
-}
-
 describe("layout", () => {
   describe("getSaveConfigsPayloadForAddedPanel", () => {
     it("properly map template panel IDs to new IDs when adding a Tab panel", () => {
@@ -536,18 +528,18 @@ describe("layout", () => {
   describe("getUpdatedURLWithPatch", () => {
     it("returns a new URL with the patch attached", () => {
       const compressedPatch = LZString.compressToEncodedURIComponent("somePatch");
-      setWindowURLForTest("?layout=foo&someKey=someVal");
-      expect(getUpdatedURLWithPatch("somePatch")).toMatch(`?layout=foo&someKey=someVal&patch=${compressedPatch}`);
+      expect(getUpdatedURLWithPatch("?layout=foo&someKey=someVal", "somePatch")).toMatch(
+        `?layout=foo&someKey=someVal&patch=${compressedPatch}`
+      );
     });
   });
 
   describe("getUpdatedURLWithNewVersion", () => {
-    it("returns a new URL with the patch attached", () => {
-      setWindowURLForTest("?layout=foo&patch=somePatch");
+    it("returns a new URL with the version attached", () => {
       const timestampAndPatchHash =
         "1596745459_9c4a1b372d257004f40918022d87d3ae0fa3bf871116516ec0cbc010bd67ce83&patch=N4IgNghgng9grgFxALgNogMwBEAEAFCAOwFMwBCAcwzgEYAzADxABpQATASwCdiBjBDjEIoQXGAHcWIOtwDOSZCAAq4mFg4BbYoVmDCEMHjAwEZDAAYAblzYYMU2XyFsR2fEVKVq9JgF8Aur5AA";
-      expect(getUpdatedURLWithNewVersion("bar", timestampAndPatchHash)).toMatch(
-        `?layout=bar@${timestampAndPatchHash}&someKey=someVal`
+      expect(getUpdatedURLWithNewVersion("?layout=foo&patch=somePatch", "bar", timestampAndPatchHash)).toMatch(
+        `?layout=bar@${timestampAndPatchHash}`
       );
     });
   });

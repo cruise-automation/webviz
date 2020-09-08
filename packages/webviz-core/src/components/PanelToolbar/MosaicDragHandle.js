@@ -24,8 +24,8 @@ function MosaicDragHandle(props: { children: Node, tabId?: string, onDragStart?:
 
   const dispatch = useDispatch();
   const mosaicId = useSelector(({ mosaic }) => mosaic.mosaicId);
-  const originalLayout = useSelector(({ panels }) => panels.layout);
-  const originalSavedProps = useSelector(({ panels }) => panels.savedProps);
+  const originalLayout = useSelector((state) => state.persistedState.panels.layout);
+  const originalSavedProps = useSelector((state) => state.persistedState.panels.savedProps);
   const actions = React.useMemo(() => bindActionCreators({ startDrag, endDrag }, dispatch), [dispatch]);
 
   const [__, drag] = useDrag({

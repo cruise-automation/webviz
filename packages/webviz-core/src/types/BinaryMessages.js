@@ -91,7 +91,7 @@ export type InstancedLineListMarker = $ReadOnly<{|
   // Fields not provided from marker: frame_locked, text, mesh_resource, mesh_use_embedded_materials
   // Fields not present in marker:
   poses(): ArrayView<BinaryPose>,
-  metadataByIndex(): ArrayView<any>,
+  metadataByIndex(): $ReadOnlyArray<any>,
   closed(): boolean,
 |}>;
 

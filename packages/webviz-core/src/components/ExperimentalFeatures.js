@@ -20,7 +20,7 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import Storage from "webviz-core/src/util/Storage";
 
-const { logger, eventNames } = getGlobalHooks().getEventLogger() || {};
+const { logger, eventNames } = getGlobalHooks().getEventLogger();
 // All these are exported for tests; please don't use them directly in your code.
 export type FeatureDescriptions = {
   [id: string]: {|

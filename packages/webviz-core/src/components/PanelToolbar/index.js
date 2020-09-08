@@ -56,7 +56,7 @@ type Props = {|
 function StandardMenuItems({ tabId }: { tabId?: string }) {
   const { mosaicActions } = useContext(MosaicContext);
   const { mosaicWindowActions } = useContext(MosaicWindowContext);
-  const savedProps = useSelector(({ panels }) => panels.savedProps);
+  const savedProps = useSelector((state) => state.persistedState.panels.savedProps);
   const dispatch = useDispatch();
   const actions = useMemo(
     () => bindActionCreators({ savePanelConfigs, changePanelLayout, closePanel, splitPanel, swapPanel }, dispatch),
@@ -71,7 +71,9 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
   const close = useCallback(
     () => {
       const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-      logger({ name: eventNames.PANEL_REMOVE, tags: { [eventTags.PANEL_TYPE]: getPanelType() } });
+      if (logger && eventNames?.PANEL_REMOVE && eventTags?.PANEL_TYPE) {
+        logger({ name: eventNames.PANEL_REMOVE, tags: { [eventTags.PANEL_TYPE]: getPanelType() } });
+      }
       actions.closePanel({ tabId, root: mosaicActions.getRoot(), path: mosaicWindowActions.getPath() });
     },
     [actions, getPanelType, mosaicActions, mosaicWindowActions, tabId]
@@ -84,7 +86,9 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
         throw new Error("Trying to split unknown panel!");
       }
       const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-      logger({ name: eventNames.PANEL_SPLIT, tags: { [eventTags.PANEL_TYPE]: getPanelType() } });
+      if (logger && eventNames?.PANEL_SPLIT && eventTags?.PANEL_TYPE) {
+        logger({ name: eventNames.PANEL_SPLIT, tags: { [eventTags.PANEL_TYPE]: getPanelType() } });
+      }
 
       const config = savedProps[id];
       actions.splitPanel({
@@ -111,7 +115,9 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
         relatedConfigs,
       });
       const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-      logger({ name: eventNames.PANEL_SWAP, tags: { [eventTags.PANEL_TYPE]: type } });
+      if (logger && eventNames?.PANEL_SWAP && eventTags?.PANEL_TYPE) {
+        logger({ name: eventNames.PANEL_SWAP, tags: { [eventTags.PANEL_TYPE]: type } });
+      }
     },
     [actions, mosaicActions, mosaicWindowActions, tabId]
   );
@@ -121,7 +127,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
       if (!id) {
         return;
       }
-      const panelConfigById = store.getState().panels.savedProps;
+      const panelConfigById = store.getState().persistedState.panels.savedProps;
       const modal = renderToBody(
         <ShareJsonModal
           onRequestClose={() => modal.remove()}

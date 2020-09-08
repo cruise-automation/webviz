@@ -76,7 +76,9 @@ export const EmptyDropTarget = ({ mosaicId, tabId }: Props) => {
     ({ type, config, relatedConfigs }: PanelSelection) => {
       dispatch(addPanel({ tabId, type, layout: null, config, relatedConfigs }));
       const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-      logger({ name: eventNames.PANEL_ADD, tags: { [eventTags.PANEL_TYPE]: type } });
+      if (logger && eventNames?.PANEL_ADD && eventTags?.PANEL_TYPE) {
+        logger({ name: eventNames.PANEL_ADD, tags: { [eventTags.PANEL_TYPE]: type } });
+      }
     },
     [dispatch, tabId]
   );

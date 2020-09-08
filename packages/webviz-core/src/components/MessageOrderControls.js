@@ -26,7 +26,7 @@ const messageOrderLabel = {
 };
 
 export default function MessageOrderControls() {
-  const messageOrder = useSelector((state) => state.panels.playbackConfig.messageOrder);
+  const messageOrder = useSelector((state) => state.persistedState.panels.playbackConfig.messageOrder);
   const dispatch = useDispatch();
   const setMessageOrder = useCallback(
     (newMessageOrder) => {

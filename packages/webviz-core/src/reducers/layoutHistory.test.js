@@ -20,7 +20,8 @@ import Storage from "webviz-core/src/util/Storage";
 const getStore = () => {
   const history = createMemoryHistory();
   const store = configureStore(createRootReducer(history), [], history);
-  store.checkState = (fn) => fn(store.getState().layoutHistory, store.getState().panels);
+  store.checkState = (fn) =>
+    fn({ layoutHistory: store.getState().layoutHistory, persistedState: store.getState().persistedState });
   return store;
 };
 
@@ -31,7 +32,7 @@ describe("state.layoutHistory", () => {
 
   it("stores initial empty history", () => {
     const store = getStore();
-    store.checkState((layoutHistory) => {
+    store.checkState(({ layoutHistory }) => {
       expect(layoutHistory).toEqual({ lastTimestamp: 0, redoStates: [], undoStates: [] });
     });
   });
@@ -42,45 +43,45 @@ describe("state.layoutHistory", () => {
     const store = getStore();
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
     history.replaceState(null, document.title, `${baseUrl}?layout=foo!1234`);
-    store.checkState((layoutHistory, panels) => {
+    store.checkState(({ layoutHistory, persistedState }) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // original state
-      expect(panels.layout).toEqual("foo!1234");
-      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(panels);
+      expect(persistedState.panels.layout).toEqual("foo!1234");
+      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(persistedState);
     });
 
     await delay(NEVER_PUSH_LAYOUT_THRESHOLD_MS + 100);
     store.dispatch(changePanelLayout({ layout: "bar!5678" }));
     history.replaceState(null, document.title, `${baseUrl}?layout=bar!5678`);
-    store.checkState((layoutHistory, panels) => {
+    store.checkState(({ layoutHistory, persistedState }) => {
       expect(layoutHistory.undoStates.length).toEqual(2); // original and foo!1234
       expect(layoutHistory.undoStates.map(({ url }) => url)).toEqual([baseUrl, `${baseUrl}?layout=foo!1234`]);
-      expect(panels.layout).toEqual("bar!5678");
-      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(panels);
+      expect(persistedState.panels.layout).toEqual("bar!5678");
+      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(persistedState);
     });
 
     store.dispatch(redoLayoutChange()); // no change from before
-    store.checkState((layoutHistory, panels) => {
+    store.checkState(({ layoutHistory, persistedState }) => {
       expect(layoutHistory.undoStates.length).toEqual(2); // original and foo!1234
-      expect(panels.layout).toEqual("bar!5678");
-      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(panels);
+      expect(persistedState.panels.layout).toEqual("bar!5678");
+      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(persistedState);
     });
 
     store.dispatch(undoLayoutChange()); // no change from before
-    store.checkState((layoutHistory, panels) => {
+    store.checkState(({ layoutHistory, persistedState }) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // original state
       expect(layoutHistory.redoStates.length).toEqual(1); // bar!5678
-      expect(panels.layout).toEqual("foo!1234");
+      expect(persistedState.panels.layout).toEqual("foo!1234");
       expect(window.location.href).toEqual(`${baseUrl}?layout=foo!1234`);
-      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(panels);
+      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(persistedState);
     });
 
     store.dispatch(redoLayoutChange()); // no change from before
-    store.checkState((layoutHistory, panels) => {
+    store.checkState(({ layoutHistory, persistedState }) => {
       expect(layoutHistory.undoStates.length).toEqual(2); // original and foo!1234
       expect(layoutHistory.redoStates.length).toEqual(0);
-      expect(panels.layout).toEqual("bar!5678");
+      expect(persistedState.panels.layout).toEqual("bar!5678");
       expect(window.location.href).toEqual(`${baseUrl}?layout=bar!5678`);
-      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(panels);
+      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(persistedState);
     });
   });
 
@@ -91,8 +92,8 @@ describe("state.layoutHistory", () => {
     jest.spyOn(Date, "now").mockImplementation(() => timeMs);
 
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory, panels) => {
-      expect(panels.savedProps).toEqual({});
+    store.checkState(({ persistedState }) => {
+      expect(persistedState.panels.savedProps).toEqual({});
     });
 
     // Make some changes slowly.
@@ -102,45 +103,45 @@ describe("state.layoutHistory", () => {
     timeMs += 6000;
     store.dispatch(savePanelConfigs({ configs: [{ id: "a!1", config: { value: 3 } }] }));
 
-    store.checkState((layoutHistory, panels) => {
-      expect(panels.savedProps).toEqual({ "a!1": { value: 3 } });
+    store.checkState(({ persistedState }) => {
+      expect(persistedState.panels.savedProps).toEqual({ "a!1": { value: 3 } });
     });
 
     // Do not skip over value=2
     store.dispatch(undoLayoutChange());
-    store.checkState((layoutHistory, panels) => {
-      expect(panels.savedProps).toEqual({ "a!1": { value: 2 } });
+    store.checkState(({ persistedState }) => {
+      expect(persistedState.panels.savedProps).toEqual({ "a!1": { value: 2 } });
     });
 
     // Do not skip over value=1
     store.dispatch(undoLayoutChange());
-    store.checkState((layoutHistory, panels) => {
-      expect(panels.savedProps).toEqual({ "a!1": { value: 1 } });
+    store.checkState(({ persistedState }) => {
+      expect(persistedState.panels.savedProps).toEqual({ "a!1": { value: 1 } });
     });
 
     // Back to the original state.
     store.dispatch(undoLayoutChange());
-    store.checkState((layoutHistory, panels) => {
-      expect(panels.savedProps).toEqual({});
+    store.checkState(({ persistedState }) => {
+      expect(persistedState.panels.savedProps).toEqual({});
     });
   });
 
   it("suppresses history when not enough time passes", async () => {
     const store = getStore();
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory) => {
+    store.checkState(({ layoutHistory }) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // original state
     });
 
     // No time in between.
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory) => {
+    store.checkState(({ layoutHistory }) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // unchanged
     });
 
     await delay(NEVER_PUSH_LAYOUT_THRESHOLD_MS + 100);
     store.dispatch(changePanelLayout({ layout: "bar!5678" }));
-    store.checkState((layoutHistory) => {
+    store.checkState(({ layoutHistory }) => {
       expect(layoutHistory.undoStates.length).toEqual(2); // updated
     });
   });
@@ -148,13 +149,13 @@ describe("state.layoutHistory", () => {
   it("suppresses history entries when told to", async () => {
     const store = getStore();
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory) => {
+    store.checkState(({ layoutHistory }) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // original state
     });
 
     await delay(NEVER_PUSH_LAYOUT_THRESHOLD_MS + 100);
     store.dispatch(changePanelLayout({ layout: "bar!5678", historyOptions: "SUPPRESS_HISTORY_ENTRY" }));
-    store.checkState((layoutHistory) => {
+    store.checkState(({ layoutHistory }) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // unchanged
     });
   });
@@ -162,13 +163,13 @@ describe("state.layoutHistory", () => {
   it("suppresses history entries when nothing changed", async () => {
     const store = getStore();
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory) => {
+    store.checkState(({ layoutHistory }) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // original state
     });
 
     await delay(NEVER_PUSH_LAYOUT_THRESHOLD_MS + 100);
     store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-    store.checkState((layoutHistory) => {
+    store.checkState(({ layoutHistory }) => {
       expect(layoutHistory.undoStates.length).toEqual(1); // unchanged
     });
   });

@@ -25,7 +25,6 @@ import type {
   Topic,
 } from "webviz-core/src/players/types";
 import { USER_ERROR_PREFIX } from "webviz-core/src/util/globalConstants";
-import Logger from "webviz-core/src/util/Logger";
 import { getSanitizedTopics } from "webviz-core/src/util/selectors";
 import sendNotification, {
   type NotificationType,
@@ -45,9 +44,9 @@ export interface AutomatedRunClient {
   markTotalFrameStart(): void;
   markTotalFrameEnd(): void;
   markFrameRenderStart(): void;
-  markFrameRenderEnd(): void;
+  markFrameRenderEnd(): number;
   markPreloadStart(): void;
-  markPreloadEnd(): void;
+  markPreloadEnd(): number;
   onFrameFinished(frameIndex: number): Promise<void>;
   finish(): any;
 }
@@ -55,7 +54,11 @@ export interface AutomatedRunClient {
 export const AUTOMATED_RUN_START_DELAY = process.env.NODE_ENV === "test" ? 10 : 2000;
 const NO_WARNINGS = Object.freeze({});
 
-const logger = new Logger(__filename);
+function formatSeconds(sec: number): string {
+  const date = new Date(0);
+  date.setSeconds(sec);
+  return date.toISOString().substr(11, 8);
+}
 
 export default class AutomatedRunPlayer implements Player {
   static className = "AutomatedRunPlayer";
@@ -85,7 +88,7 @@ export default class AutomatedRunPlayer implements Player {
     this._speed = client.speed;
     this._msPerFrame = client.msPerFrame;
     this._client = client;
-    this._bobjectsEnabled = getExperimentalFeature("bobject3dPanel");
+    this._bobjectsEnabled = getExperimentalFeature("useBinaryTranslation");
     // Report errors from sendNotification and those thrown on the window object to the client.
     setNotificationHandler(
       (message: string, details: DetailsType, type: NotificationType, severity: NotificationSeverity) => {
@@ -211,7 +214,6 @@ export default class AutomatedRunPlayer implements Player {
       return; // Prevent double loads.
     }
     this._initialized = true;
-    logger.info(`AutomatedRunPlayer._initialize()`);
 
     this._providerResult = await this._provider.initialize({
       progressCallback: (progress: Progress) => {
@@ -230,6 +232,8 @@ export default class AutomatedRunPlayer implements Player {
             break;
           case "performance":
             // Don't need analytics for data provider callbacks in video generation.
+            break;
+          case "initializationPerformance":
             break;
           default:
             (metadata.type: empty);
@@ -291,15 +295,15 @@ export default class AutomatedRunPlayer implements Player {
     }
     this._isPlaying = true;
     this._client.markPreloadEnd();
-    logger.info("AutomatedRunPlayer._run()");
+    console.log("AutomatedRunPlayer._run()");
     await this._emitState([], [], this._providerResult.start);
 
     let currentTime = this._providerResult.start;
-    this._client.start({
-      bagLengthMs: toMillis(subtractTimes(this._providerResult.end, this._providerResult.start)),
-    });
+    const bagLengthMs = toMillis(subtractTimes(this._providerResult.end, this._providerResult.start));
+    this._client.start({ bagLengthMs });
 
     const nsBagTimePerFrame = Math.round(this._msPerFrame * this._speed * 1000000);
+    const startEpoch = Date.now();
 
     let frameCount = 0;
     while (TimeUtil.isLessThan(currentTime, this._providerResult.end)) {
@@ -307,14 +311,26 @@ export default class AutomatedRunPlayer implements Player {
         await this._waitToReportErrorPromise;
       }
       const end = TimeUtil.add(currentTime, { sec: 0, nsec: nsBagTimePerFrame });
-      this._client.markTotalFrameStart();
-      const { parsedMessages, bobjects } = await this._getMessages(currentTime, end);
 
+      this._client.markTotalFrameStart();
+
+      const { parsedMessages, bobjects } = await this._getMessages(currentTime, end);
       this._client.markFrameRenderStart();
+
       // Wait for the frame render to finish.
       await this._emitState(parsedMessages, bobjects, end);
+
       this._client.markTotalFrameEnd();
-      this._client.markFrameRenderEnd();
+      const frameRenderDurationMs = this._client.markFrameRenderEnd();
+
+      const bagTimeSinceStartMs = toMillis(subtractTimes(currentTime, this._providerResult.start));
+      const percentComplete = bagTimeSinceStartMs / bagLengthMs;
+      const msPerPercent = (Date.now() - startEpoch) / percentComplete;
+      const estimatedSecondsRemaining = Math.round(((1 - percentComplete) * msPerPercent) / 1000);
+      const eta = formatSeconds(Math.min(estimatedSecondsRemaining || 0, 24 * 60 * 60 /* 24 hours */));
+      console.log(
+        `Recording ${(percentComplete * 100).toFixed(1)}% done. ETA: ${eta}. Frame took ${frameRenderDurationMs}ms`
+      );
 
       await this._client.onFrameFinished(frameCount);
 
@@ -323,7 +339,8 @@ export default class AutomatedRunPlayer implements Player {
     }
 
     await this._client.finish();
-    logger.info("AutomatedRunPlayer._run() finished");
+    const totalDuration = (Date.now() - startEpoch) / 1000;
+    console.log(`AutomatedRunPlayer finished in ${formatSeconds(totalDuration)}`);
   }
 
   /* Public API shared functions */

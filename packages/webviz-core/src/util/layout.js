@@ -17,7 +17,9 @@ import {
   type MosaicUpdate,
 } from "react-mosaic-component";
 
+import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { type PanelsState } from "webviz-core/src/reducers/panels";
+import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { TabLocation, TabPanelConfig } from "webviz-core/src/types/layouts";
 import type {
   ConfigsPayload,
@@ -453,20 +455,28 @@ export function getUpdatedURLWithDecodedLayout(params: URLSearchParams): string 
   const layoutId = params.get(LAYOUT_QUERY_KEY) || params.get(LAYOUT_URL_QUERY_KEY) || "";
   params.delete(LAYOUT_QUERY_KEY);
   params.delete(LAYOUT_URL_QUERY_KEY);
-  return `?${hasLayoutUrl ? LAYOUT_URL_QUERY_KEY : LAYOUT_QUERY_KEY}=${decodeURIComponent(
-    layoutId
-  )}&${params.toString()}`;
+  const otherParams = params.toString();
+  return `?${hasLayoutUrl ? LAYOUT_URL_QUERY_KEY : LAYOUT_QUERY_KEY}=${decodeURIComponent(layoutId)}${
+    otherParams ? `&${otherParams}` : otherParams
+  }`;
 }
 
-export function getUpdatedURLWithPatch(diff: string): string {
-  const params = new URLSearchParams(window.location.search);
+export function getUpdatedURLWithPatch(search: string, diff: string): string {
+  const params = new URLSearchParams(search);
   params.set(PATCH_QUERY_KEY, LZString.compressToEncodedURIComponent(diff));
   return getUpdatedURLWithDecodedLayout(params);
 }
 
-export function getUpdatedURLWithNewVersion(name: string, version?: string): string {
-  const params = new URLSearchParams(window.location.search);
+export function getUpdatedURLWithNewVersion(search: string, name: string, version?: string): string {
+  const params = new URLSearchParams(search);
   params.set(LAYOUT_QUERY_KEY, `${name}${version ? `@${version}` : ""}`);
   params.delete(PATCH_QUERY_KEY);
   return getUpdatedURLWithDecodedLayout(params);
+}
+
+// TODO(Audrey): remove the screenshot env checking after release.
+export function getShouldProcessPatch() {
+  const inScreenshot = inScreenshotTests();
+  const enableShareableUrl = getExperimentalFeature("shareableUrl");
+  return inScreenshot || (!inScreenshot && enableShareableUrl);
 }

@@ -28,7 +28,7 @@ import {
 } from "webviz-core/src/actions/panels";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import createRootReducer from "webviz-core/src/reducers";
-import { GLOBAL_STATE_STORAGE_KEY } from "webviz-core/src/reducers/panels";
+import { GLOBAL_STATE_STORAGE_KEY, resetInitialPersistedState } from "webviz-core/src/reducers/panels";
 import configureStore from "webviz-core/src/store";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 import { getPanelTypeFromId } from "webviz-core/src/util/layout";
@@ -37,35 +37,36 @@ import Storage from "webviz-core/src/util/Storage";
 const getStore = () => {
   const history = createMemoryHistory();
   const store = configureStore(createRootReducer(history), [], history);
-  store.checkState = (fn) => fn(store.getState().panels, store.getState().router, store.getState().fetchedLayout);
+  store.checkState = (fn) => fn({ persistedState: store.getState().persistedState, router: store.getState().router });
   // attach a helper method to the test store
   store.push = (path) => history.push(path);
   return store;
 };
 
-const defaultGlobalState = getGlobalHooks().getDefaultGlobalStates();
+const defaultPersistedState = getGlobalHooks().getDefaultPersistedState();
 
-describe("state.panels", () => {
+describe("state.persistedState", () => {
   beforeEach(() => {
+    resetInitialPersistedState();
     window.localStorage.clear();
   });
 
   it("stores initial panel layout in local storage", () => {
     const store = getStore();
-    store.checkState((panels) => {
+    store.checkState(({ persistedState }) => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.layout).toEqual(panels.layout);
+      expect(globalState).toEqual(persistedState);
     });
   });
 
   it("stores default settings in local storage", () => {
     const store = getStore();
-    store.checkState((panels) => {
-      expect(panels.layout).toEqual(defaultGlobalState.layout);
+    store.checkState(({ persistedState: { panels } }) => {
+      expect(panels.layout).toEqual(defaultPersistedState.panels.layout);
       expect(panels.savedProps).toEqual({});
       const storage = new Storage();
-      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(defaultGlobalState);
+      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(defaultPersistedState);
     });
   });
 
@@ -76,42 +77,42 @@ describe("state.panels", () => {
       savedProps: { "foo!bar": { test: true } },
     };
 
-    store.checkState((panels, router) => {
+    store.checkState(({ persistedState: { panels }, router }) => {
       expect(router.location.pathname).toEqual("/");
       expect(panels.layout).not.toEqual("foo!bar");
       expect(panels.savedProps).toEqual({});
     });
 
     store.dispatch(importPanelLayout(payload));
-    store.checkState((panels) => {
+    store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ "foo!bar": { test: true } });
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.layout).toEqual(panels.layout);
-      expect(globalState.savedProps).toEqual(panels.savedProps);
+      expect(globalState.panels.layout).toEqual(panels.layout);
+      expect(globalState.panels.savedProps).toEqual(panels.savedProps);
     });
 
     store.dispatch(changePanelLayout({ layout: "foo!bar" }));
-    store.checkState((panels) => {
+    store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ "foo!bar": { test: true } });
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.layout).toEqual(panels.layout);
-      expect(globalState.savedProps).toEqual(panels.savedProps);
+      expect(globalState.panels.layout).toEqual(panels.layout);
+      expect(globalState.panels.savedProps).toEqual(panels.savedProps);
     });
 
     store.dispatch(
       savePanelConfigs({ configs: [{ id: "foo!bar", config: { testing: true }, defaultConfig: { testing: false } }] })
     );
-    store.checkState((panels) => {
+    store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ "foo!bar": { test: true, testing: true } });
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.layout).toEqual(panels.layout);
-      expect(globalState.savedProps).toEqual(panels.savedProps);
+      expect(globalState.panels.layout).toEqual(panels.layout);
+      expect(globalState.panels.savedProps).toEqual(panels.savedProps);
     });
   });
 
@@ -126,9 +127,9 @@ describe("state.panels", () => {
     store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.globalVariables).toEqual({});
-      expect(globalState.userNodes).toEqual({});
-      expect(globalState.linkedGlobalVariables).toEqual([]);
+      expect(globalState.panels.globalVariables).toEqual({});
+      expect(globalState.panels.userNodes).toEqual({});
+      expect(globalState.panels.linkedGlobalVariables).toEqual([]);
     });
   });
 
@@ -143,7 +144,7 @@ describe("state.panels", () => {
     store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.playbackConfig).toEqual({ messageOrder: "receiveTime", speed: 0.2 });
+      expect(globalState.panels.playbackConfig).toEqual({ messageOrder: "receiveTime", speed: 0.2 });
     });
   });
 
@@ -164,9 +165,9 @@ describe("state.panels", () => {
     store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.globalVariables).toEqual(globalVariables);
-      expect(globalState.userNodes).toEqual(userNodes);
-      expect(globalState.linkedGlobalVariables).toEqual(linkedGlobalVariables);
+      expect(globalState.panels.globalVariables).toEqual(globalVariables);
+      expect(globalState.panels.userNodes).toEqual(userNodes);
+      expect(globalState.panels.linkedGlobalVariables).toEqual(linkedGlobalVariables);
     });
   });
 
@@ -182,7 +183,7 @@ describe("state.panels", () => {
     store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.restrictedTopics).toEqual(payload.restrictedTopics);
+      expect(globalState.panels.restrictedTopics).toEqual(payload.restrictedTopics);
     });
   });
 
@@ -194,7 +195,7 @@ describe("state.panels", () => {
     store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.globalVariables).toEqual(globalVariables);
+      expect(globalState.panels.globalVariables).toEqual(globalVariables);
     });
   });
 
@@ -206,7 +207,7 @@ describe("state.panels", () => {
     store.checkState(() => {
       const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.globalData).toBe(undefined);
+      expect(globalState.panels.globalData).toBe(undefined);
     });
   });
 
@@ -214,23 +215,23 @@ describe("state.panels", () => {
     it(desc, () => {
       const store = getStore();
       store.push("/?layout=foo");
-      store.checkState((panels, router) => {
+      store.checkState(({ router }) => {
         expect(router.location.search).toEqual("?layout=foo");
       });
       store.dispatch(actionCreator());
-      store.checkState((panels, router) => {
+      store.checkState(({ router }) => {
         expect(router.location.search).toEqual("?layout=foo");
       });
 
       store.push("/?layout=foo&name=bar");
       store.dispatch(actionCreator());
-      store.checkState((panels, router) => {
+      store.checkState(({ router }) => {
         expect(router.location.search).toEqual("?layout=foo&name=bar");
       });
 
       store.push("/?laYOut=zug&layout=foo&name=bar");
       store.dispatch(actionCreator());
-      store.checkState((panels, router) => {
+      store.checkState(({ router }) => {
         expect(router.location.search).toEqual("?laYOut=zug&layout=foo&name=bar");
       });
     });
@@ -257,7 +258,7 @@ describe("state.panels", () => {
       };
       store.dispatch(importPanelLayout(panelLayout));
       store.dispatch(addPanel({ type: "Audio", tabId: null, layout: panelLayout.layout, config: { foo: "bar" } }));
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.layout.direction).toEqual("row");
         expect(getPanelTypeFromId(panels.layout.first)).toEqual("Audio");
         expect(panels.layout.second).toEqual("Tab!a");
@@ -274,7 +275,7 @@ describe("state.panels", () => {
       };
       store.dispatch(importPanelLayout(panelLayout));
       store.dispatch(addPanel({ type: "Audio", tabId: "Tab!a", layout: null, config: { foo: "bar" } }));
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         const tabs = savedProps["Tab!a"].tabs;
         const newAudioId = tabs[0].layout;
         expect(layout).toEqual("Tab!a");
@@ -309,7 +310,7 @@ describe("state.panels", () => {
           relatedConfigs: null,
         })
       );
-      store.checkState(({ layout }) => {
+      store.checkState(({ persistedState: { panels: { layout } } }) => {
         expect(layout.direction).toEqual("row");
         expect(layout.first).toEqual("Tab!a");
         expect(getPanelTypeFromId(layout.second)).toEqual("Audio");
@@ -328,7 +329,7 @@ describe("state.panels", () => {
           relatedConfigs: { "Audio!b": { foo: "baz" } },
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout.direction).toEqual("row");
         expect(layout.first).toEqual("Audio!a");
         expect(getPanelTypeFromId(layout.second)).toEqual("Tab");
@@ -361,7 +362,7 @@ describe("state.panels", () => {
           relatedConfigs: null,
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual("Tab!a");
         const tabs = savedProps["Tab!a"].tabs;
         expect(tabs[0].title).toEqual("A");
@@ -389,7 +390,7 @@ describe("state.panels", () => {
           relatedConfigs: null,
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual("Tab!a");
         expect(savedProps["Tab!a"]).toEqual(panelLayout.savedProps["Tab!a"]);
         const tabBTabs = savedProps["Tab!b"].tabs;
@@ -412,7 +413,7 @@ describe("state.panels", () => {
           relatedConfigs: { "Tab!b": { activeTabIdx: 0, tabs: [{ title: "B", layout: "Plot!a" }] } },
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout.first).toEqual("Audio!a");
         expect(getPanelTypeFromId(layout.second)).toEqual("Tab");
 
@@ -447,7 +448,7 @@ describe("state.panels", () => {
           target: { panelId: "Tab!a", tabIndex: 1 },
         })
       );
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({
           "Tab!a": { activeTabIdx: 1, tabs: [{ title: "B" }, { title: "A" }, { title: "C" }] },
         });
@@ -476,7 +477,7 @@ describe("state.panels", () => {
           target: { panelId: "Tab!b", tabIndex: 1 },
         })
       );
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({
           "Tab!a": { activeTabIdx: 0, tabs: [{ title: "B" }, { title: "C" }] },
           "Tab!b": { activeTabIdx: 0, tabs: [{ title: "D" }, { title: "A" }, { title: "E" }, { title: "F" }] },
@@ -488,11 +489,11 @@ describe("state.panels", () => {
   it("does not remove layout if layout is imported from url", () => {
     const store = getStore();
     store.push("/?layout=foo&name=bar");
-    store.checkState((panels, router) => {
+    store.checkState(({ router }) => {
       expect(router.location.search).toEqual("?layout=foo&name=bar");
     });
     store.dispatch(importPanelLayout({ layout: null, savedProps: {} }, { isFromUrl: true }));
-    store.checkState((panels, router) => {
+    store.checkState(({ router }) => {
       expect(router.location.search).toEqual("?layout=foo&name=bar");
     });
   });
@@ -501,7 +502,7 @@ describe("state.panels", () => {
     const store = getStore();
     store.dispatch(importPanelLayout({ layout: "Audio!a", savedProps: { "Audio!a": { foo: "bar" } } }));
     store.dispatch(closePanel({ root: "Audio!a", path: [] }));
-    store.checkState(({ layout, savedProps }) => {
+    store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
       expect(layout).toEqual(null);
       expect(savedProps).toEqual({});
     });
@@ -515,7 +516,7 @@ describe("state.panels", () => {
     };
     store.dispatch(importPanelLayout(panelLayout));
     store.dispatch(closePanel({ root: panelLayout.layout, path: ["first"] }));
-    store.checkState((panels) => {
+    store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual("Audio!b");
       expect(panels.savedProps).toEqual({ "Audio!b": { foo: "baz" } });
     });
@@ -532,7 +533,7 @@ describe("state.panels", () => {
     };
     store.dispatch(importPanelLayout(panelLayout));
     store.dispatch(closePanel({ root: "Audio!a", path: [], tabId: "Tab!a" }));
-    store.checkState((panels) => {
+    store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual("Tab!a");
       expect(panels.savedProps).toEqual({ "Tab!a": { activeTabIdx: 0, tabs: [{ title: "A", layout: null }] } });
     });
@@ -543,18 +544,18 @@ describe("state.panels", () => {
     fetchMock.get("https://www.foo.com", { status: 200, body: { layout: { foo: "bar" } } });
     store.dispatch(fetchLayout("?layout-url=https://www.foo.com"));
     // Before fetch returns, fetchedLayout should be loading, but not yet have data.
-    store.checkState((panels, router, fetchedLayout) => {
+    store.checkState(({ persistedState: { fetchedLayout } }) => {
       expect(fetchedLayout).toEqual({ isLoading: true });
     });
     await delay(500);
-    store.checkState((panels, router, fetchedLayout) => {
+    store.checkState(({ persistedState: { panels, fetchedLayout } }) => {
       expect(panels.layout).toEqual({ foo: "bar" });
       expect(fetchedLayout.data).toEqual({ layout: { foo: "bar" } });
       expect(fetchedLayout.isLoading).toEqual(false);
     });
     store.dispatch(fetchLayout("?layout-url=https://www.foo.com"));
     // Before fetch returns, fetchedLayout should again be loading, but have cleared previously fetched data.
-    store.checkState((panels, router, fetchedLayout) => {
+    store.checkState(({ persistedState: { fetchedLayout } }) => {
       expect(fetchedLayout).toEqual({ isLoading: true });
     });
   });
@@ -562,26 +563,28 @@ describe("state.panels", () => {
   it("updates fetchedLayout data and loading state, when fetching from layout-url param is unsuccessful", async () => {
     const store = getStore();
     fetchMock.get("https://www.bar.com", { status: 400 });
-    store.dispatch(fetchLayout("?layout-url=https://www.bar.com"));
-    // Before fetch returns, fetchedLayout should be loading, but not yet have data.
-    store.checkState((panels, router, fetchedLayout) => {
-      expect(fetchedLayout).toEqual({ isLoading: true });
-    });
-    await delay(500);
-    store.checkState((panels, router, fetchedLayout) => {
-      // Panels state should not have changed.
-      expect(panels.layout).toEqual(defaultGlobalState.layout);
-
-      // fetchedLayout should be down loading, but have no data.
+    store.checkState(({ persistedState: { fetchedLayout } }) => {
       expect(fetchedLayout).toEqual({ isLoading: false });
     });
     store.dispatch(fetchLayout("?layout-url=https://www.bar.com"));
+    // Before fetch returns, fetchedLayout should be loading, but not yet have data.
+    store.checkState(({ persistedState: { fetchedLayout } }) => {
+      expect(fetchedLayout).toEqual({ isLoading: true });
+    });
+    await delay(500);
+    store.checkState(({ persistedState: { panels, fetchedLayout } }) => {
+      // Panels state should not have changed.
+      expect(panels.layout).toEqual(defaultPersistedState.panels.layout);
+      // fetchedLayout should be down loading, but have no data.
+      expect(fetchedLayout.isLoading).toBe(false);
+      expect(fetchedLayout.error.message).toMatch("Failed to fetch layout from URL");
+    });
   });
 
   it("loads a layout", () => {
     const store = getStore();
-    store.dispatch({ type: "LOAD_FETCHED_LAYOUT", payload: { layout: { foo: "baz" } } });
-    store.checkState((panels) => {
+    store.dispatch({ type: "LOAD_LAYOUT", payload: { layout: { foo: "baz" } } });
+    store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual({ foo: "baz" });
     });
   });
@@ -589,7 +592,7 @@ describe("state.panels", () => {
   it("resets panels to a valid state when importing an empty layout", () => {
     const store = getStore();
     store.dispatch(importPanelLayout({ layout: undefined }));
-    store.checkState((panels) => {
+    store.checkState(({ persistedState: { panels } }) => {
       expect(panels).toEqual({
         globalVariables: {},
         layout: {},
@@ -597,7 +600,6 @@ describe("state.panels", () => {
         playbackConfig: { messageOrder: "receiveTime", speed: 0.2 },
         savedProps: {},
         userNodes: {},
-        fetchedLayout: { isLoading: false },
       });
     });
   });
@@ -609,7 +611,7 @@ describe("state.panels", () => {
     store.dispatch(importPanelLayout({ layout: "myNewLayout", savedProps: {} }, { isFromUrl: true }));
     store.checkState(() => {
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.layout).toEqual("myNewLayout");
+      expect(globalState.panels.layout).toEqual("myNewLayout");
     });
   });
 
@@ -620,9 +622,9 @@ describe("state.panels", () => {
     store.dispatch(
       importPanelLayout({ layout: null, savedProps: {} }, { isFromUrl: true, skipSettingLocalStorage: true })
     );
-    store.checkState((panels) => {
+    store.checkState(({ persistedState: { panels } }) => {
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
-      expect(globalState.layout).not.toEqual(panels.layout);
+      expect(globalState.panels.layout).not.toEqual(panels.layout);
     });
   });
 
@@ -670,7 +672,7 @@ describe("state.panels", () => {
       store.dispatch(importPanelLayout(regularLayoutPayload, { isFromUrl: true, skipSettingLocalStorage: true }));
       store.dispatch(createTabPanel({ ...createTabPanelPayload, singleTab: true }));
 
-      store.checkState(({ savedProps, layout }) => {
+      store.checkState(({ persistedState: { panels: { savedProps, layout } } }) => {
         expect(getPanelTypeFromId(layout.first)).toEqual(TAB_PANEL_TYPE);
         expect(getPanelTypeFromId(layout.second)).toEqual("Audio");
         expect(savedProps[layout.first]).toEqual({
@@ -685,7 +687,7 @@ describe("state.panels", () => {
       store.dispatch(importPanelLayout(nestedLayoutPayload, { isFromUrl: true, skipSettingLocalStorage: true }));
       store.dispatch(createTabPanel({ ...nestedCreateTabPanelPayload, singleTab: true }));
 
-      store.checkState(({ savedProps, layout }) => {
+      store.checkState(({ persistedState: { panels: { savedProps, layout } } }) => {
         expect(getPanelTypeFromId(layout.first)).toEqual(TAB_PANEL_TYPE);
         expect(getPanelTypeFromId(layout.second)).toEqual(TAB_PANEL_TYPE);
         expect(savedProps[layout.first]).toEqual({
@@ -703,7 +705,7 @@ describe("state.panels", () => {
       store.dispatch(importPanelLayout(regularLayoutPayload, { isFromUrl: true, skipSettingLocalStorage: true }));
       store.dispatch(createTabPanel({ ...createTabPanelPayload, singleTab: false }));
 
-      store.checkState(({ savedProps, layout }) => {
+      store.checkState(({ persistedState: { panels: { savedProps, layout } } }) => {
         expect(getPanelTypeFromId(layout.first)).toEqual(TAB_PANEL_TYPE);
         expect(getPanelTypeFromId(layout.second)).toEqual("Audio");
         expect(savedProps[layout.first]).toEqual({
@@ -718,7 +720,7 @@ describe("state.panels", () => {
       store.dispatch(importPanelLayout(nestedLayoutPayload, { isFromUrl: true, skipSettingLocalStorage: true }));
       store.dispatch(createTabPanel({ ...nestedCreateTabPanelPayload, singleTab: false }));
 
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(getPanelTypeFromId(layout.first)).toEqual(TAB_PANEL_TYPE);
         expect(getPanelTypeFromId(layout.second)).toEqual(TAB_PANEL_TYPE);
         expect(savedProps[layout.first]).toEqual({
@@ -737,7 +739,7 @@ describe("state.panels", () => {
     const store = getStore();
     store.dispatch(changePanelLayout({ layout: "foo" }));
     store.push("/?layout=foo&name=bar");
-    store.checkState((panels, router) => {
+    store.checkState(({ router }) => {
       expect(router.location.search).toEqual("?layout=foo&name=bar");
     });
     store.dispatch(
@@ -745,7 +747,7 @@ describe("state.panels", () => {
         configs: [{ id: "foo", config: { bar: true }, defaultConfig: { bar: false } }],
       })
     );
-    store.checkState((panels, router) => {
+    store.checkState(({ router }) => {
       expect(router.location.search).toEqual("?layout=foo&name=bar");
     });
   });
@@ -756,13 +758,13 @@ describe("state.panels", () => {
     const secondPayload = { bar: { name: "bar", sourceCode: "baz" } };
 
     store.dispatch(setUserNodes(firstPayload));
-    store.checkState((panelState) => {
-      expect(panelState.userNodes).toEqual(firstPayload);
+    store.checkState(({ persistedState: { panels } }) => {
+      expect(panels.userNodes).toEqual(firstPayload);
     });
 
     store.dispatch(setUserNodes(secondPayload));
-    store.checkState((panelState) => {
-      expect(panelState.userNodes).toEqual({ ...firstPayload, ...secondPayload });
+    store.checkState(({ persistedState: { panels } }) => {
+      expect(panels.userNodes).toEqual({ ...firstPayload, ...secondPayload });
     });
   });
 
@@ -775,7 +777,7 @@ describe("state.panels", () => {
       store.dispatch(savePanelConfigs({ configs: [{ id: "Audio!a", config: audioConfig }] }));
 
       store.dispatch(splitPanel({ id: "Audio!a", config: audioConfig, direction: "row", path: [], root: "Audio!a" }));
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout.first).toEqual("Audio!a");
         expect(getPanelTypeFromId(layout.second)).toEqual("Audio");
         expect(layout.direction).toEqual("row");
@@ -797,7 +799,7 @@ describe("state.panels", () => {
       );
 
       store.dispatch(splitPanel({ id: "Tab!a", config: tabConfig, direction: "row", path: [], root: "Tab!a" }));
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout.first).toEqual("Tab!a");
         expect(getPanelTypeFromId(layout.second)).toEqual("Tab");
         expect(layout.direction).toEqual("row");
@@ -822,7 +824,7 @@ describe("state.panels", () => {
       store.dispatch(
         splitPanel({ id: "Audio!a", tabId: "Tab!a", config: audioConfig, direction: "row", path: [], root: "Audio!a" })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual("Tab!a");
         const tabLayout = savedProps["Tab!a"].tabs[0].layout;
         expect(tabLayout.first).toEqual("Audio!a");
@@ -850,7 +852,7 @@ describe("state.panels", () => {
           root: "Audio!a",
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(getPanelTypeFromId(layout)).toEqual("RawMessages");
         expect(savedProps["Audio!a"]).toEqual(undefined);
         expect(savedProps[layout]).toEqual(rawMessagesConfig);
@@ -876,7 +878,7 @@ describe("state.panels", () => {
           root: "Audio!a",
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(getPanelTypeFromId(layout)).toEqual("Tab");
         const tabLayout = savedProps[layout].tabs[0].layout;
         expect(getPanelTypeFromId(tabLayout)).toEqual("RawMessages");
@@ -906,7 +908,7 @@ describe("state.panels", () => {
           root: "Audio!a",
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual("Tab!a");
         const tabLayout = savedProps["Tab!a"].tabs[0].layout;
         expect(getPanelTypeFromId(tabLayout)).toEqual("RawMessages");
@@ -944,7 +946,7 @@ describe("state.panels", () => {
     it("removes a panel's savedProps when it is removed from the layout", () => {
       const store = getStore();
       store.dispatch(changePanelLayout({ layout: panelState.layout }));
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         const leaves = getLeaves(panelState.layout);
         expect(leaves).toHaveLength(4);
         expect(leaves).toContain("FirstPanel!34otwwt");
@@ -960,7 +962,7 @@ describe("state.panels", () => {
           configs: [panelConfig, { id: "FirstPanel!34otwwt", config: { baz: true }, defaultConfig: { baz: false } }],
         })
       );
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({
           "SecondPanel!2wydzut": { foo: "bar" },
           "FirstPanel!34otwwt": { baz: true },
@@ -969,7 +971,7 @@ describe("state.panels", () => {
       store.dispatch(
         changePanelLayout({ layout: { direction: "row", first: "FirstPanel!34otwwt", second: "SecondPanel!2wydzut" } })
       );
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({
           "SecondPanel!2wydzut": { foo: "bar" },
           "FirstPanel!34otwwt": { baz: true },
@@ -978,19 +980,19 @@ describe("state.panels", () => {
       store.dispatch(
         changePanelLayout({ layout: { direction: "row", first: "FirstPanel!34otwwt", second: "ThirdPanel!ye6m1m" } })
       );
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({
           "FirstPanel!34otwwt": { baz: true },
         });
       });
       store.dispatch(changePanelLayout({ layout: "foo!1234" }));
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({});
       });
       store.dispatch(
         savePanelConfigs({ configs: [{ id: "foo!1234", config: { okay: true }, defaultConfig: { okay: false } }] })
       );
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({
           "foo!1234": { okay: true },
         });
@@ -1000,7 +1002,7 @@ describe("state.panels", () => {
     it("removes a panel's savedProps when it is removed from Tab panel", () => {
       const store = getStore();
       store.dispatch(changePanelLayout({ layout: tabPanelState.layout }));
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         const leaves = getLeaves(tabPanelState.layout);
         expect(leaves).toHaveLength(4);
         expect(leaves).toContain("FirstPanel!34otwwt");
@@ -1015,13 +1017,13 @@ describe("state.panels", () => {
         config: { tabs: [{ title: "Tab A", layout: "NestedPanel!xyz" }], activeTabIdx: 0 },
       };
       store.dispatch(savePanelConfigs({ configs: [baseTabConfig] }));
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({ "Tab!abc": baseTabConfig.config });
       });
 
       const nestedPanelConfig = { id: "NestedPanel!xyz", config: { foo: "bar" } };
       store.dispatch(savePanelConfigs({ configs: [nestedPanelConfig] }));
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({
           "Tab!abc": baseTabConfig.config,
           "NestedPanel!xyz": nestedPanelConfig.config,
@@ -1030,7 +1032,7 @@ describe("state.panels", () => {
 
       const emptyTabConfig = { id: "Tab!abc", config: { tabs: [{ title: "Tab A", layout: null }], activeTabIdx: 0 } };
       store.dispatch(savePanelConfigs({ configs: [emptyTabConfig] }));
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         // "NestedPanel!xyz" key in savedProps should be gone
         expect(panels.savedProps).toEqual({ "Tab!abc": emptyTabConfig.config });
       });
@@ -1041,14 +1043,14 @@ describe("state.panels", () => {
       store.dispatch(changePanelLayout({ layout: "foo!bar" }));
       store.dispatch(savePanelConfigs({ configs: [{ id: "foo!bar", config: { foo: "baz" } }] }));
       store.dispatch(changePanelLayout({ layout: tabPanelState.layout }));
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({});
       });
 
       store.dispatch(changePanelLayout({ layout: "foo!bar" }));
       store.dispatch(savePanelConfigs({ configs: [{ id: "foo!bar", config: { foo: "baz" } }] }));
       store.dispatch(changePanelLayout({ layout: tabPanelState.layout, trimSavedProps: false }));
-      store.checkState((panels) => {
+      store.checkState(({ persistedState: { panels } }) => {
         expect(panels.savedProps).toEqual({ "foo!bar": { foo: "baz" } });
       });
     });
@@ -1059,7 +1061,7 @@ describe("state.panels", () => {
       const store = getStore();
       store.dispatch(importPanelLayout({ layout: "Audio!a", savedProps: {} }));
       store.dispatch(startDrag({ sourceTabId: null, path: [] }));
-      store.checkState(({ layout }) => {
+      store.checkState(({ persistedState: { panels: { layout } } }) => {
         expect(layout).toEqual("Audio!a");
       });
     });
@@ -1072,7 +1074,7 @@ describe("state.panels", () => {
         })
       );
       store.dispatch(startDrag({ sourceTabId: null, path: ["second"] }));
-      store.checkState(({ layout }) => {
+      store.checkState(({ persistedState: { panels: { layout } } }) => {
         expect(layout).toEqual({
           first: "Audio!a",
           second: "RawMessages!a",
@@ -1092,7 +1094,7 @@ describe("state.panels", () => {
         })
       );
       store.dispatch(startDrag({ sourceTabId: "Tab!a", path: [] }));
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual({ first: "Tab!a", second: "RawMessages!a", direction: "column" });
         expect(savedProps["Tab!a"]).toEqual({ activeTabIdx: 0, tabs: [{ title: "A", layout: null }] });
       });
@@ -1111,7 +1113,7 @@ describe("state.panels", () => {
         })
       );
       store.dispatch(startDrag({ sourceTabId: "Tab!a", path: ["first"] }));
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual({ first: "Tab!a", second: "RawMessages!a", direction: "column" });
         expect(savedProps["Tab!a"]).toEqual({
           activeTabIdx: 0,
@@ -1141,7 +1143,7 @@ describe("state.panels", () => {
           ownPath: ["first"],
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual("Tab!a");
         expect(savedProps["Tab!a"]).toEqual({
           activeTabIdx: 0,
@@ -1172,7 +1174,7 @@ describe("state.panels", () => {
           ownPath: ["first"],
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual({
           first: "Tab!a",
           second: { first: "RawMessages!a", second: "Audio!a", direction: "row" },
@@ -1209,7 +1211,7 @@ describe("state.panels", () => {
           ownPath: ["second"],
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual("Tab!a");
         expect(savedProps["Tab!a"]).toEqual({
           activeTabIdx: 0,
@@ -1253,7 +1255,7 @@ describe("state.panels", () => {
           ownPath: ["first"],
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual({ first: "Tab!a", second: "Tab!b", direction: "column" });
         expect(savedProps["Tab!a"]).toEqual({
           activeTabIdx: 0,
@@ -1300,7 +1302,7 @@ describe("state.panels", () => {
           ownPath: ["first"],
         })
       );
-      store.checkState(({ layout, savedProps }) => {
+      store.checkState(({ persistedState: { panels: { layout, savedProps } } }) => {
         expect(layout).toEqual({ first: "Tab!a", second: "Tab!b", direction: "column" });
         expect(savedProps["Tab!a"]).toEqual({
           activeTabIdx: 0,
@@ -1326,7 +1328,7 @@ describe("state.panels", () => {
           ownPath: [],
         })
       );
-      store.checkState(({ layout }) => {
+      store.checkState(({ persistedState: { panels: { layout } } }) => {
         expect(layout).toEqual("Audio!a");
       });
     });
@@ -1347,7 +1349,7 @@ describe("state.panels", () => {
           ownPath: ["first"],
         })
       );
-      store.checkState(({ layout }) => {
+      store.checkState(({ persistedState: { panels: { layout } } }) => {
         expect(layout).toEqual({ first: "Plot!a", second: "Audio!a", direction: "row" });
       });
     });
@@ -1368,7 +1370,7 @@ describe("state.panels", () => {
           ownPath: ["first"],
         })
       );
-      store.checkState(({ layout }) => {
+      store.checkState(({ persistedState: { panels: { layout } } }) => {
         expect(layout).toEqual({ first: "Audio!a", second: "Plot!a", direction: "row", splitPercentage: null });
       });
     });

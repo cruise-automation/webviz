@@ -22,6 +22,7 @@ import type {
   MosaicNode,
   SavedProps,
   PanelConfig,
+  SetFetchedLayoutPayload,
 } from "webviz-core/src/types/panels";
 import type { Dispatch, GetState } from "webviz-core/src/types/Store";
 import { LAYOUT_URL_QUERY_KEY } from "webviz-core/src/util/globalConstants";
@@ -46,7 +47,8 @@ const PANELS_ACTION_TYPES = {
   START_DRAG: "START_DRAG",
   END_DRAG: "END_DRAG",
   SET_FETCHED_LAYOUT: "SET_FETCHED_LAYOUT",
-  LOAD_FETCHED_LAYOUT: "LOAD_FETCHED_LAYOUT",
+  SET_FETCH_LAYOUT_FAILED: "SET_FETCH_LAYOUT_FAILED",
+  LOAD_LAYOUT: "LOAD_LAYOUT",
 };
 
 export type SAVE_PANEL_CONFIGS = { type: "SAVE_PANEL_CONFIGS", payload: SaveConfigsPayload };
@@ -85,14 +87,14 @@ export const changePanelLayout = (payload: ChangePanelLayoutPayload): Dispatcher
   return dispatch({ type: PANELS_ACTION_TYPES.CHANGE_PANEL_LAYOUT, payload });
 };
 
-type SET_FETCHED_LAYOUT = {
-  type: "SET_FETCHED_LAYOUT",
-  payload: {
-    isLoading: boolean,
-    data?: { content: PanelsState, name: string, savedBy: string, releasedVersion: number },
-  },
+type LOAD_LAYOUT = { type: "LOAD_LAYOUT", payload: PanelsState };
+export const loadLayout = (payload: PanelsState): Dispatcher<LOAD_LAYOUT> => (dispatch) => {
+  return dispatch({ type: PANELS_ACTION_TYPES.LOAD_LAYOUT, payload });
 };
-type LOAD_FETCHED_LAYOUT = { type: "LOAD_FETCHED_LAYOUT", payload: PanelsState };
+
+type SET_FETCHED_LAYOUT = { type: "SET_FETCHED_LAYOUT", payload: SetFetchedLayoutPayload };
+type SET_FETCH_LAYOUT_FAILED = { type: "SET_FETCH_LAYOUT_FAILED", payload: Error };
+
 export const fetchLayout = (search: string): Dispatcher<SET_FETCHED_LAYOUT> => (dispatch) => {
   const params = new URLSearchParams(search);
   const hasLayoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
@@ -107,21 +109,20 @@ export const fetchLayout = (search: string): Dispatcher<SET_FETCHED_LAYOUT> => (
       if (layoutFetchResult) {
         if (hasLayoutUrl) {
           dispatch({
-            type: PANELS_ACTION_TYPES.LOAD_FETCHED_LAYOUT,
+            type: PANELS_ACTION_TYPES.LOAD_LAYOUT,
             payload: layoutFetchResult,
           });
         } else if (layoutFetchResult.content) {
           dispatch({
-            type: PANELS_ACTION_TYPES.LOAD_FETCHED_LAYOUT,
+            type: PANELS_ACTION_TYPES.LOAD_LAYOUT,
             payload: layoutFetchResult.content,
           });
         }
       }
+    })
+    .catch((e) => {
+      dispatch({ type: PANELS_ACTION_TYPES.SET_FETCH_LAYOUT_FAILED, payload: e });
     });
-};
-
-export const loadFetchedLayout = (payload: PanelsState): Dispatcher<LOAD_FETCHED_LAYOUT> => (dispatch) => {
-  return dispatch({ type: PANELS_ACTION_TYPES.LOAD_FETCHED_LAYOUT, payload });
 };
 
 type OVERWRITE_GLOBAL_DATA = { type: "OVERWRITE_GLOBAL_DATA", payload: { [key: string]: any } };
@@ -268,7 +269,8 @@ export type PanelsActions =
   | START_DRAG
   | END_DRAG
   | SET_FETCHED_LAYOUT
-  | LOAD_FETCHED_LAYOUT;
+  | SET_FETCH_LAYOUT_FAILED
+  | LOAD_LAYOUT;
 
 type PanelsActionTypes = $Values<typeof PANELS_ACTION_TYPES>;
 export const panelEditingActions = new Set<PanelsActionTypes>(Object.keys(PANELS_ACTION_TYPES));

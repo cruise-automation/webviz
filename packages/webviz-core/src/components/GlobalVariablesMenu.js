@@ -91,14 +91,16 @@ function GlobalVariablesMenu(props: Props) {
   }, []);
 
   const dispatch = useDispatch();
-  const layout = useSelector((state) => state.panels.layout);
+  const layout = useSelector((state) => state.persistedState.panels.layout);
   const addPanelToLayout = useCallback(
     () => {
       setIsOpen((open) => !open);
       dispatch(addPanel(({ type: GlobalVariables.panelType, layout, tabId: null }: AddPanelPayload)));
 
       const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-      logger({ name: eventNames.PANEL_ADD, tags: { [eventTags.PANEL_TYPE]: GlobalVariables.panelType } });
+      if (logger && eventNames?.PANEL_ADD && eventTags?.PANEL_TYPE) {
+        logger({ name: eventNames.PANEL_ADD, tags: { [eventTags.PANEL_TYPE]: GlobalVariables.panelType } });
+      }
     },
     [dispatch, layout]
   );

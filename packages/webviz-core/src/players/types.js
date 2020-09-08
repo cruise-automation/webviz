@@ -9,7 +9,7 @@
 import type { Time, RosMsgDefinition } from "rosbag";
 
 import type { BlockCache } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
-import type { PerformanceMetadata } from "webviz-core/src/dataProviders/types";
+import type { PerformanceMetadata, InitializationPerformanceMetadata } from "webviz-core/src/dataProviders/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import type { Range } from "webviz-core/src/util/ranges";
 import type { TimestampMethod } from "webviz-core/src/util/time";
@@ -290,4 +290,5 @@ export interface PlayerMetricsCollectorInterface {
   recordPlaybackTime(time: Time): void;
   recordDataProviderPerformance(metadata: PerformanceMetadata): void;
   recordTimeToFirstMsgs(): void;
+  recordDataProviderInitializePerformance(metadata: InitializationPerformanceMetadata): void;
 }

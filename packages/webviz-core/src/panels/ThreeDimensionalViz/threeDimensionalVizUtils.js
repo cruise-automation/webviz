@@ -22,6 +22,7 @@ import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type { InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/types";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
+import { isBobject } from "webviz-core/src/util/binaryObjects";
 import { emptyPose } from "webviz-core/src/util/Pose";
 
 export type TargetPose = { target: Vec3, targetOrientation: Vec4 };
@@ -98,7 +99,18 @@ export function useTransformedCameraState({
   return { transformedCameraState, targetPose: targetPose || lastTargetPose };
 }
 
-export const getInstanceObj = (marker: any, idx: number) => marker?.metadataByIndex?.[idx];
+export const getInstanceObj = (marker: any, idx: number): any => {
+  if (!marker) {
+    return;
+  }
+  if (!isBobject(marker)) {
+    return marker?.metadataByIndex?.[idx];
+  }
+  if (!marker.metadataByIndex) {
+    return;
+  }
+  return marker.metadataByIndex()?.[idx];
+};
 export const getObject = (selectedObject: MouseEventObject) =>
   (selectedObject.instanceIndex !== undefined &&
     selectedObject.object.metadataByIndex !== undefined &&

@@ -23,7 +23,7 @@ export default function useLinkedGlobalVariables(): {|
   linkedGlobalVariables: LinkedGlobalVariables,
   setLinkedGlobalVariables: (LinkedGlobalVariables) => void,
 |} {
-  const linkedGlobalVariables = useSelector((state) => state.panels.linkedGlobalVariables);
+  const linkedGlobalVariables = useSelector((state) => state.persistedState.panels.linkedGlobalVariables);
   const dispatch = useDispatch();
   return {
     linkedGlobalVariables,

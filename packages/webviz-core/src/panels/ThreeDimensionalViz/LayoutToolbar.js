@@ -16,7 +16,7 @@ import Crosshair from "webviz-core/src/panels/ThreeDimensionalViz/Crosshair";
 import DrawingTools, { type DrawingTabType } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools";
 import MeasuringTool, { type MeasureInfo } from "webviz-core/src/panels/ThreeDimensionalViz/DrawingTools/MeasuringTool";
 import FollowTFControl from "webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl";
-import Interactions, { type InteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
+import Interactions from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
 import type { TabType } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import MainToolbar from "webviz-core/src/panels/ThreeDimensionalViz/MainToolbar";
@@ -28,7 +28,6 @@ type Props = {|
   ...LayoutToolbarSharedProps,
   autoSyncCameraState: boolean,
   debug: boolean,
-  interactionData: ?InteractionData,
   interactionsTabType: ?TabType,
   measureInfo: MeasureInfo,
   measuringElRef: { current: ?MeasuringTool },
@@ -52,7 +51,6 @@ function LayoutToolbar({
   debug,
   followOrientation,
   followTf,
-  interactionData,
   interactionsTabType,
   isPlaying,
   measureInfo,
@@ -141,7 +139,6 @@ function LayoutToolbar({
         />
         {measuringElRef.current && measuringElRef.current.measureDistance}
         <Interactions
-          interactionData={interactionData}
           selectedObject={selectedObject}
           interactionsTabType={interactionsTabType}
           setInteractionsTabType={setInteractionsTabType}

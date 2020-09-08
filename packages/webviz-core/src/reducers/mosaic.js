@@ -34,7 +34,7 @@ export default function mosaicReducer(state: State, action: ActionTypes): State 
     case "SET_SELECTED_PANEL_IDS":
       return { ...state, mosaic: { ...state.mosaic, selectedPanelIds: action.payload } };
     case "SELECT_ALL_PANELS":
-      return { ...state, mosaic: { ...state.mosaic, selectedPanelIds: getLeaves(state.panels.layout) } };
+      return { ...state, mosaic: { ...state.mosaic, selectedPanelIds: getLeaves(state.persistedState.panels.layout) } };
     default:
       return { ...state, mosaic: state.mosaic };
   }

@@ -10,7 +10,7 @@ import type { RosPath } from "./constants";
 import { tryToSetDefaultGlobalVar, getFirstInvalidVariableFromRosPath } from "./MessagePathInput";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 
-const defaultGlobalVars = getGlobalHooks().getDefaultGlobalVariables();
+const defaultGlobalVars = getGlobalHooks().getDefaultPersistedState().panels.globalVariables;
 
 describe("tryToSetDefaultGlobalVar", () => {
   it("correctly returns true/false depending on whether a global variable has a default", () => {

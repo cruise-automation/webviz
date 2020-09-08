@@ -123,8 +123,8 @@ export default function Panel<Config: PanelConfig>(
     const { mosaicActions }: { mosaicActions: MosaicRootActions } = useContext(MosaicContext);
     const { mosaicWindowActions }: { mosaicWindowActions: MosaicWindowActions } = useContext(MosaicWindowContext);
 
-    const layout = useSelector(({ panels }) => panels.layout);
-    const savedProps = useSelector(({ panels }) => panels.savedProps);
+    const layout = useSelector((state) => state.persistedState.panels.layout);
+    const savedProps = useSelector((state) => state.persistedState.panels.savedProps);
     const stableSavedProps = useRef(savedProps);
     stableSavedProps.current = savedProps;
     const selectedPanelIds = useSelector((state) => state.mosaic.selectedPanelIds);
@@ -310,7 +310,9 @@ export default function Panel<Config: PanelConfig>(
       () => ({
         closePanel: () => {
           const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-          logger({ name: eventNames.PANEL_REMOVE, tags: { [eventTags.PANEL_TYPE]: type } });
+          if (logger && eventNames?.PANEL_REMOVE && eventTags?.PANEL_TYPE) {
+            logger({ name: eventNames.PANEL_REMOVE, tags: { [eventTags.PANEL_TYPE]: type } });
+          }
           mosaicActions.remove(mosaicWindowActions.getPath());
         },
         splitPanel: () => {
@@ -327,7 +329,9 @@ export default function Panel<Config: PanelConfig>(
             mosaicWindowActions.split({ type: PanelComponent.panelType });
           }
           const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-          logger({ name: eventNames.PANEL_SPLIT, tags: { [eventTags.PANEL_TYPE]: type } });
+          if (logger && eventNames?.PANEL_SPLIT && eventTags?.PANEL_TYPE) {
+            logger({ name: eventNames.PANEL_SPLIT, tags: { [eventTags.PANEL_TYPE]: type } });
+          }
         },
       }),
       [actions, childId, config, mosaicActions, mosaicWindowActions, savedProps, tabId, type]

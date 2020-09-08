@@ -18,8 +18,7 @@ const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
   getEventLogger: () => {
     return {
-      // tag type: string | boolean | number | string[] | number[]
-      logger: ({ name: _name, tags: _tags }) => undefined,
+      logger: (_args) => undefined,
       eventNames: {},
       eventTags: {},
     };

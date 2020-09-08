@@ -822,6 +822,8 @@
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/Interactions */
 
+/*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/GlobalVariableLink */
+
 /*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/Interactions */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/Interactions/ObjectDetails */

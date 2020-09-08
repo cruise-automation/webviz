@@ -27,7 +27,7 @@ function AppMenu(props: Props) {
   const onToggle = useCallback(() => setIsOpen((open) => !open), []);
   const dispatch = useDispatch();
 
-  const layout = useSelector((state: ReduxState) => state.panels.layout);
+  const layout = useSelector((state: ReduxState) => state.persistedState.panels.layout);
   const onPanelSelect = useCallback(
     ({ type, config, relatedConfigs }: PanelSelection) => {
       dispatch(addPanel(({ type, layout, config, relatedConfigs, tabId: null }: AddPanelPayload)));

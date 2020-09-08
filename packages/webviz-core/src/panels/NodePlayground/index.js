@@ -139,7 +139,7 @@ function NodePlayground(props: Props) {
 
   const [explorer, updateExplorer] = React.useState<Explorer>(null);
 
-  const userNodes = useSelector((state) => state.panels.userNodes);
+  const userNodes = useSelector((state) => state.persistedState.panels.userNodes);
   const userNodeDiagnostics = useSelector((state) => state.userNodes.userNodeDiagnostics);
   const rosLib = useSelector((state) => state.userNodes.rosLib);
 

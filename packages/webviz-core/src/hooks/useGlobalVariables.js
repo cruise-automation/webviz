@@ -19,7 +19,7 @@ export default function useGlobalVariables(): {|
   setGlobalVariables: (GlobalVariables) => void,
   overwriteGlobalVariables: (GlobalVariables) => void,
 |} {
-  const globalVariables = useSelector((state) => state.panels.globalVariables);
+  const globalVariables = useSelector((state) => state.persistedState.panels.globalVariables);
   const dispatch = useDispatch();
   const actionCreators = useMemo(() => bindActionCreators({ setGlobalVariables, overwriteGlobalVariables }, dispatch), [
     dispatch,

@@ -123,8 +123,8 @@ export default function Panel<Config: PanelConfig>(
     const { mosaicActions }: { mosaicActions: MosaicRootActions } = useContext(MosaicContext);
     const { mosaicWindowActions }: { mosaicWindowActions: MosaicWindowActions } = useContext(MosaicWindowContext);
 
-    const layout = useSelector(({ panels }) => panels.layout);
-    const savedProps = useSelector(({ panels }) => panels.savedProps);
+    const layout = useSelector((state) => state.persistedState.panels.layout);
+    const savedProps = useSelector((state) => state.persistedState.panels.savedProps);
     const stableSavedProps = useRef(savedProps);
     stableSavedProps.current = savedProps;
     const selectedPanelIds = useSelector((state) => state.mosaic.selectedPanelIds);

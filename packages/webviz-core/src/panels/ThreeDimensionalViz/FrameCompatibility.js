@@ -68,7 +68,7 @@ export function FrameCompatibilityDEPRECATED<Props>(ChildComponent: React.Compon
       setTopics(uniq(newTopics.concat(baseTopics || [])));
     }, []);
 
-    const supportedBobjectTypes = useExperimentalFeature("bobject3dPanel")
+    const supportedBobjectTypes = useExperimentalFeature("useBinaryTranslation")
       ? getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_BOBJECT_MARKER_DATATYPES
       : NO_SUPPORTED_TYPES;
     const stableTopics = useDeepMemo(props.topics);

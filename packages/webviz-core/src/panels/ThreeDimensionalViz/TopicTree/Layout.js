@@ -65,6 +65,7 @@ import type { Frame, Topic } from "webviz-core/src/players/types";
 import type { Extensions } from "webviz-core/src/reducers/extensions";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { Color } from "webviz-core/src/types/Messages";
+import { getField } from "webviz-core/src/util/binaryObjects";
 import { SECOND_SOURCE_PREFIX, TRANSFORM_TOPIC } from "webviz-core/src/util/globalConstants";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
 import { inVideoRecordingMode } from "webviz-core/src/util/inAutomatedRunMode";
@@ -323,11 +324,11 @@ export default function Layout({
                 checks: [
                   {
                     markerKeyPath: ["id"],
-                    value: marker.id,
+                    value: getField(marker, "id"),
                   },
                   {
                     markerKeyPath: ["ns"],
-                    value: marker.ns,
+                    value: getField(marker, "ns"),
                   },
                 ],
               },
@@ -803,7 +804,6 @@ export default function Layout({
                   debug={debug}
                   followOrientation={followOrientation}
                   followTf={followTf}
-                  interactionData={selectedObject && selectedObject.object && selectedObject.object.interactionData}
                   isPlaying={isPlaying}
                   measureInfo={measureInfo}
                   measuringElRef={measuringElRef}

@@ -119,8 +119,10 @@ class PerformanceMeasuringClient {
       performance.mark("FRAME_RENDER_END");
       performance.measure("FRAME_RENDER", "FRAME_RENDER_START", "FRAME_RENDER_END");
     }
-    this.frameRenderTimes.push(round(performance.now() - frameRenderStart));
+    const frameTimeMs = performance.now() - frameRenderStart;
+    this.frameRenderTimes.push(round(frameTimeMs));
     this.frameRenderStart = null;
+    return frameTimeMs;
   }
 
   markPreloadStart() {
@@ -139,8 +141,10 @@ class PerformanceMeasuringClient {
       performance.mark("PRELOAD_END");
       performance.measure("PRELOAD", "PRELOAD_START", "PRELOAD_END");
     }
+    const preloadTimeMs = performance.now() - preloadStart;
     this.preloadTimeMs = round(performance.now() - preloadStart);
     this.preloadStart = null;
+    return preloadTimeMs;
   }
 
   markTotalFrameStart() {

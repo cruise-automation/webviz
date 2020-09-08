@@ -15,7 +15,7 @@ import Flex from "webviz-core/src/components/Flex";
 import { JSONInput } from "webviz-core/src/components/input/JSONInput";
 import { ValidatedResizingInput } from "webviz-core/src/components/input/ValidatedResizingInput";
 import useGlobalVariables, { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
-import { UnlinkGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions";
+import { UnlinkGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/GlobalVariableLink";
 import { memoizedGetLinkedGlobalVariablesKeyByName } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/interactionUtils";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";

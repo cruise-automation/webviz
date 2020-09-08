@@ -67,7 +67,7 @@ async function measurePlaybackPerformance({
     url,
     puppeteerLaunchConfig: {
       userDataDir,
-      headless: false,
+      headless: !process.env.DEBUG_CI,
     },
     panelLayout,
     experimentalFeatureSettings,

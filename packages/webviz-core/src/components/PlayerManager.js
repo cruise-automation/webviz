@@ -9,7 +9,7 @@
 import * as React from "react";
 import { connect } from "react-redux";
 
-import { loadFetchedLayout, setGlobalVariables } from "webviz-core/src/actions/panels";
+import { loadLayout, setGlobalVariables } from "webviz-core/src/actions/panels";
 import {
   setUserNodeDiagnostics,
   addUserNodeLogs,
@@ -57,7 +57,7 @@ import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
 function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Player {
   const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
-  const useBinaryObjects = !!getExperimentalFeature("bobject3dPanel");
+  const useBinaryObjects = !!getExperimentalFeature("useBinaryTranslation");
   const rootDescriptor = {
     name: CoreDataProviders.ParseMessagesDataProvider,
     args: {},
@@ -157,7 +157,7 @@ async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition
 type OwnProps = { children: ({ inputDescription: React.Node }) => React.Node };
 
 type Props = OwnProps & {
-  loadFetchedLayout: typeof loadFetchedLayout,
+  loadLayout: typeof loadLayout,
   messageOrder: TimestampMethod,
   userNodes: UserNodes,
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
@@ -167,7 +167,7 @@ type Props = OwnProps & {
 };
 
 function PlayerManager({
-  loadFetchedLayout: loadLayout,
+  loadLayout: loadFetchedLayout,
   children,
   messageOrder,
   userNodes,
@@ -219,7 +219,7 @@ function PlayerManager({
           .then((response) => (response ? response.json() : undefined))
           .then((json) => {
             if (json) {
-              loadLayout({ ...json, skipSettingLocalStorage: false });
+              loadFetchedLayout({ ...json, skipSettingLocalStorage: false });
             }
           })
           .catch((error) => {
@@ -264,7 +264,7 @@ function PlayerManager({
         });
       }
     },
-    [loadLayout, setPlayer, setVariables]
+    [loadFetchedLayout, setPlayer, setVariables]
   );
 
   React.useEffect(
@@ -306,11 +306,11 @@ function PlayerManager({
 
 export default connect<Props, OwnProps, _, _, _, _>(
   (state) => ({
-    messageOrder: state.panels.playbackConfig.messageOrder,
-    userNodes: state.panels.userNodes,
+    messageOrder: state.persistedState.panels.playbackConfig.messageOrder,
+    userNodes: state.persistedState.panels.userNodes,
   }),
   {
-    loadFetchedLayout,
+    loadLayout,
     setUserNodeDiagnostics,
     addUserNodeLogs,
     setUserNodeRosLib,

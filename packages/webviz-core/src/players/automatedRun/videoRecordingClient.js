@@ -73,18 +73,31 @@ class VideoRecordingClient {
   msPerFrame = msPerFrame;
   speed = speed;
   shouldLoadDataBeforePlaying = false;
+  lastFrameStart = 0;
+  preloadStart = 0;
 
-  start() {
-    console.log("videoRecordingClient.start()");
+  start({ bagLengthMs }: { bagLengthMs: number }) {
+    console.log("videoRecordingClient.start()", bagLengthMs);
   }
 
-  markFrameRenderStart() {}
+  markFrameRenderStart() {
+    this.lastFrameStart = performance.now();
+  }
 
-  markFrameRenderEnd() {}
+  markFrameRenderEnd() {
+    return Math.round(performance.now() - this.lastFrameStart);
+  }
 
-  markPreloadStart() {}
+  markPreloadStart() {
+    this.preloadStart = performance.now();
+  }
 
-  markPreloadEnd() {}
+  markPreloadEnd() {
+    const preloadDurationMs = performance.now() - this.preloadStart;
+    const preloadTimeSec = (preloadDurationMs / 1000).toFixed(1);
+    console.log(`[VideoRecordingClient] Preload duration: ${preloadTimeSec}s`);
+    return preloadDurationMs;
+  }
 
   markTotalFrameStart() {}
 

@@ -558,7 +558,7 @@ export default class SceneBuilder implements MarkerProvider {
   }
 
   _consumeBobjectMarker(topic: string, message: BinaryMarker | InstancedLineListMarker): void {
-    // TODO(bobject3dPanel): Convert this to bobject-logic
+    // TODO(useBinaryTranslation): Convert this to bobject-logic
     const namespace = message.ns();
     if (namespace) {
       // Consume namespaces even if the message is later discarded
@@ -668,7 +668,7 @@ export default class SceneBuilder implements MarkerProvider {
       colors: overrideColor ? [] : deepParse(message.colors()),
       points: parsedPoints,
       // These fields are probably unused, but Flow asks for them.
-      // TODO(bobject3dPanel): Loosen the flow-type here?
+      // TODO(useBinaryTranslation): Loosen the flow-type here?
       id: message.id(),
       ns: message.ns(),
       header: deepParse(message.header()),
@@ -678,11 +678,11 @@ export default class SceneBuilder implements MarkerProvider {
     if (message.text != null) {
       marker.text = message.text();
     }
-    // InstancedLineList fields
-    if (message.poses) {
-      marker.poses = message.poses();
+    // InstancedLineList fields. Check some fields, some fixtures do not include them all.
+    if (message.metadataByIndex) {
+      marker.poses = message.poses && message.poses();
       marker.metadataByIndex = message.metadataByIndex();
-      marker.closed = message.closed();
+      marker.closed = message.closed && message.closed();
     }
     this.collectors[topic].addMarker(marker, name);
   }
@@ -744,7 +744,7 @@ export default class SceneBuilder implements MarkerProvider {
   };
 
   _consumeBobjectOccupancyGrid = (topic: string, message: BinaryOccupancyGrid): void => {
-    // TODO(bobject3dPanel): Convert this to bobject-logic
+    // TODO(useBinaryTranslation): Convert this to bobject-logic
     const frameId = message.header().frame_id();
 
     if (!frameId) {
@@ -944,11 +944,11 @@ export default class SceneBuilder implements MarkerProvider {
         this._consumeBobjectOccupancyGrid(topic, cast<BinaryOccupancyGrid>(message));
         break;
       case SUPPORTED_MARKER_DATATYPES.POINT_CLOUD_DATATYPE:
-        // TODO(bobject3dPanel): Check performance is acceptable.
+        // TODO(useBinaryTranslation): Check performance is acceptable.
         this._consumeNonMarkerMessage(topic, deepParse(message), 102);
         break;
       case SUPPORTED_MARKER_DATATYPES.SENSOR_MSGS_LASER_SCAN_DATATYPE:
-        // TODO(bobject3dPanel): Check performance is acceptable.
+        // TODO(useBinaryTranslation): Check performance is acceptable.
         this._consumeNonMarkerMessage(topic, deepParse(message), 104);
         break;
       case SUPPORTED_MARKER_DATATYPES.GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: {

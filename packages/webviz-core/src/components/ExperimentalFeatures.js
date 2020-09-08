@@ -20,7 +20,7 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import Storage from "webviz-core/src/util/Storage";
 
-const { logger, eventNames } = getGlobalHooks().getEventLogger() || {};
+const { logger, eventNames } = getGlobalHooks().getEventLogger();
 // All these are exported for tests; please don't use them directly in your code.
 export type FeatureDescriptions = {
   [id: string]: {|
@@ -95,9 +95,8 @@ export function getExperimentalFeature(id: string): boolean {
 export function setExperimentalFeature(id: string, value: "default" | "alwaysOn" | "alwaysOff"): void {
   const storage = new Storage();
   const newSettings = { ...storage.get(EXPERIMENTAL_FEATURES_STORAGE_KEY) };
-  if (logger && eventNames?.CHANGE_EXPERIMENTAL_FEATURE) {
-    logger({ name: eventNames.CHANGE_EXPERIMENTAL_FEATURE, tags: { feature: id, value } });
-  }
+  logger({ name: eventNames.CHANGE_EXPERIMENTAL_FEATURE, tags: { feature: id, value } });
+
   if (value === "default") {
     delete newSettings[id];
   } else {

@@ -141,7 +141,7 @@ export default class RandomAccessPlayer implements Player {
     this._metricsCollector = metricsCollector || new NoopMetricsCollector();
     this._seekToTime = seekToTime;
     this._preloadingEnabled = getExperimentalFeature("preloading");
-    this._bobjectsEnabled = getExperimentalFeature("bobject3dPanel");
+    this._bobjectsEnabled = getExperimentalFeature("useBinaryTranslation");
     this._metricsCollector.playerConstructed();
 
     document.addEventListener("visibilitychange", this._handleDocumentVisibilityChange, false);
@@ -193,6 +193,9 @@ export default class RandomAccessPlayer implements Player {
               break;
             case "performance":
               this._metricsCollector.recordDataProviderPerformance(metadata);
+              break;
+            case "initializationPerformance":
+              this._metricsCollector.recordDataProviderInitializePerformance(metadata);
               break;
             default:
               (metadata.type: empty);

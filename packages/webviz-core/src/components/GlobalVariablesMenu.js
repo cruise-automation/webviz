@@ -91,7 +91,7 @@ function GlobalVariablesMenu(props: Props) {
   }, []);
 
   const dispatch = useDispatch();
-  const layout = useSelector((state) => state.panels.layout);
+  const layout = useSelector((state) => state.persistedState.panels.layout);
   const addPanelToLayout = useCallback(
     () => {
       setIsOpen((open) => !open);

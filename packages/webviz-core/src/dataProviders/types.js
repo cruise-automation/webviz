@@ -122,6 +122,12 @@ export type ExtensionPoint = {|
   reportMetadataCallback: (DataProviderMetadata) => void,
 |};
 
+export type InitializationPerformanceMetadata = $ReadOnly<{|
+  type: "initializationPerformance",
+  dataProviderType: string,
+  metrics: { [metricName: string]: string | number },
+|}>;
+
 export type PerformanceMetadata = $ReadOnly<{|
   type: "performance",
   inputType: string,
@@ -137,7 +143,9 @@ export type PerformanceMetadata = $ReadOnly<{|
 export type DataProviderMetadata =
   // Report whether or not the DataProvider is reconnecting to some external server. Used to show a
   // loading indicator in the UI.
-  $ReadOnly<{| type: "updateReconnecting", reconnecting: boolean |}> | PerformanceMetadata;
+  | $ReadOnly<{| type: "updateReconnecting", reconnecting: boolean |}>
+  | PerformanceMetadata
+  | InitializationPerformanceMetadata;
 
 // A ROS bag "connection", used for parsing messages.
 export type Connection = {|

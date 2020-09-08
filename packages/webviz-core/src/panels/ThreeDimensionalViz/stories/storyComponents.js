@@ -18,9 +18,8 @@ import type { Frame, Topic } from "webviz-core/src/players/types";
 import Store from "webviz-core/src/store";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
-import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { createRosDatatypesFromFrame } from "webviz-core/src/test/datatypes";
 import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
-import { basicDatatypes } from "webviz-core/src/util/datatypes";
 
 export type FixtureExampleData = {
   topics: { [topicName: string]: Topic },
@@ -28,12 +27,14 @@ export type FixtureExampleData = {
   globalVariables?: { [name: string]: string | number },
 };
 
-function bobjectify(fixture: FixtureExampleData, datatypes: RosDatatypes = basicDatatypes): FixtureExampleData {
+function bobjectify(fixture: FixtureExampleData): FixtureExampleData {
   const { SUPPORTED_BOBJECT_MARKER_DATATYPES } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
   const { topics, frame } = fixture;
   const newFrame = {};
   // The topics are sometimes arrays, sometimes objects :-(
   const topicsArray = topics instanceof Array ? topics : Object.keys(topics).map((name) => topics[name]);
+
+  const datatypes = createRosDatatypesFromFrame(topicsArray, frame);
   topicsArray.forEach(({ name: topicName, datatype }) => {
     if (frame[topicName]) {
       newFrame[topicName] = frame[topicName].map((msg) => {
@@ -54,7 +55,6 @@ type FixtureExampleProps = {|
   futureTime?: boolean,
   onMount?: (?HTMLDivElement, store?: Store) => void,
   bobjects?: boolean,
-  datatypes?: RosDatatypes,
 |};
 
 type FixtureExampleState = {| fixture: ?any, config: $Shape<ThreeDimensionalVizConfig> |};
@@ -103,9 +103,9 @@ export class FixtureExample extends React.Component<FixtureExampleProps, Fixture
         // Additional delay to allow the 3D panel's dynamic setSubscriptions to take effect
         // *before* the fixture changes, not in the same update cycle.
         setImmediate(() => {
-          const bobjects = getExperimentalFeature("bobject3dPanel");
+          const bobjects = getExperimentalFeature("useBinaryTranslation");
           this.setState((state) => ({
-            fixture: { ...state.fixture, frame: bobjects ? bobjectify(data, this.props.datatypes).frame : frame },
+            fixture: { ...state.fixture, frame: bobjects ? bobjectify(data).frame : frame },
           }));
           // Additional delay to trigger updating available namespaces after consuming
           // the messages in SceneBuilder.

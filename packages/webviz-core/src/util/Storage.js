@@ -28,7 +28,7 @@ export default class Storage {
       // suppress logging during tests - otherwise it prints out a stack trace
       // which makes it look like a test is failing
       if (process.env.NODE_ENV !== "test") {
-        console.error("Unable to retreive key", key, "from storage", e);
+        console.error("Unable to retrieve key", key, "from storage", e);
       }
       return undefined;
     }

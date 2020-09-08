@@ -156,7 +156,7 @@ export function UnconnectedPanelLayout(props: Props) {
 }
 
 const ConnectedPanelLayout = ({ importHooks = true }: { importHooks?: boolean }, ref) => {
-  const layout = useSelector((state: State) => state.panels.layout);
+  const layout = useSelector((state: State) => state.persistedState.panels.layout);
   const dispatch = useDispatch();
   const actions = React.useMemo(
     () => bindActionCreators({ changePanelLayout, savePanelConfigs, setMosaicId }, dispatch),

@@ -13,7 +13,6 @@ import styled from "styled-components";
 
 import LinkedGlobalVariableList from "./LinkedGlobalVariableList";
 import PointCloudDetails from "./PointCloudDetails";
-import type { InteractionData } from "./types";
 import useLinkedGlobalVariables from "./useLinkedGlobalVariables";
 import Checkbox from "webviz-core/src/components/Checkbox";
 import ExpandingToolbar, { ToolGroup, ToolGroupFixedSizePane } from "webviz-core/src/components/ExpandingToolbar";
@@ -23,7 +22,7 @@ import { decodeAdditionalFields } from "webviz-core/src/panels/ThreeDimensionalV
 import ObjectDetails from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/ObjectDetails";
 import TopicLink from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/TopicLink";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
-import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
+import { getInteractionData } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import type { SaveConfig, PanelConfig } from "webviz-core/src/types/panels";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
@@ -52,21 +51,20 @@ export const OBJECT_TAB_TYPE = "Selected object";
 export const LINKED_VARIABLES_TAB_TYPE = "Linked variables";
 export type TabType = typeof OBJECT_TAB_TYPE | typeof LINKED_VARIABLES_TAB_TYPE;
 
-type Props = {
+type Props = {|
   interactionsTabType: ?TabType,
   setInteractionsTabType: (?TabType) => void,
-  interactionData: ?InteractionData,
   selectedObject: ?MouseEventObject,
-};
+|};
 
-type PropsWithConfig = Props & {
+type PropsWithConfig = {|
+  ...Props,
   disableAutoOpenClickedObject: boolean,
   saveConfig: SaveConfig<PanelConfig>,
-};
+|};
 
 const InteractionsBaseComponent = React.memo<PropsWithConfig>(function InteractionsBaseComponent({
   selectedObject,
-  interactionData,
   interactionsTabType,
   setInteractionsTabType,
   disableAutoOpenClickedObject,
@@ -80,8 +78,7 @@ const InteractionsBaseComponent = React.memo<PropsWithConfig>(function Interacti
   );
 
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
-  const instanceObject = selectedObject && getInstanceObj(object, selectedObject.instanceIndex);
-  const selectedInteractionData = instanceObject?.interactionData || interactionData;
+  const selectedInteractionData = selectedObject && getInteractionData(selectedObject);
 
   return (
     <ExpandingToolbar
@@ -98,10 +95,10 @@ const InteractionsBaseComponent = React.memo<PropsWithConfig>(function Interacti
         <ToolGroupFixedSizePane>
           {selectedObject ? (
             <>
-              {interactionData && (
+              {selectedInteractionData && (
                 <SRow>
                   <SValue>
-                    <TopicLink topic={interactionData.topic} />
+                    <TopicLink topic={selectedInteractionData.topic} />
                   </SValue>
                 </SRow>
               )}

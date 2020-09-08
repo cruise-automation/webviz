@@ -193,12 +193,13 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
   // Pass through console from the page.
   page.on("console", (msg) => {
     getArgStrings(msg).then((args) => {
-      const text = `${msg.text()} --- ${JSON.stringify(args)}`;
+      const text = `${msg.text()} ${args.length > 1 ? `--- ${JSON.stringify(args.slice(1))}` : ""}`;
       if (msg.type() === "error") {
         onError(text);
       }
       if (captureLogs) {
         onLog(text);
+        console.log(text);
       }
     });
   });

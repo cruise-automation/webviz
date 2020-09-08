@@ -1177,6 +1177,7 @@ describe("RandomAccessPlayer", () => {
         };
       }
       recordTimeToFirstMsgs(): void {}
+      recordDataProviderInitializePerformance() {}
     }
 
     it("delegates to metricsCollector on actions", async () => {

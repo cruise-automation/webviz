@@ -122,3 +122,14 @@ export const merge = (bobject: any, overrides: $ReadOnly<{ [field: string]: any 
   }
   return wrapJsObject(datatypes[0], datatypes[1], { ...shallow, ...overrides });
 };
+
+// For accessing fields that might be in bobjects and might be in JS objects.
+export const getField = (obj: ?any, field: string): any => {
+  if (!obj) {
+    return;
+  }
+  if (isBobject(obj)) {
+    return obj[field] && obj[field]();
+  }
+  return obj[field];
+};

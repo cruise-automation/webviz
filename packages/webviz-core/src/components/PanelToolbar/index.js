@@ -56,7 +56,7 @@ type Props = {|
 function StandardMenuItems({ tabId }: { tabId?: string }) {
   const { mosaicActions } = useContext(MosaicContext);
   const { mosaicWindowActions } = useContext(MosaicWindowContext);
-  const savedProps = useSelector(({ panels }) => panels.savedProps);
+  const savedProps = useSelector((state) => state.persistedState.panels.savedProps);
   const dispatch = useDispatch();
   const actions = useMemo(
     () => bindActionCreators({ savePanelConfigs, changePanelLayout, closePanel, splitPanel, swapPanel }, dispatch),
@@ -121,7 +121,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
       if (!id) {
         return;
       }
-      const panelConfigById = store.getState().panels.savedProps;
+      const panelConfigById = store.getState().persistedState.panels.savedProps;
       const modal = renderToBody(
         <ShareJsonModal
           onRequestClose={() => modal.remove()}

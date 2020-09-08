@@ -56,6 +56,7 @@ async function recordVideo({
       url,
       puppeteerLaunchConfig,
       panelLayout,
+      captureLogs: true,
       dimensions: { width: 2560, height: 1424 },
       loadBrowserTimeout: waitForBrowserLoadTimeoutMs,
       onLoad: async ({ page, errors }: { page: Page, errors: Array<string> }) => {
@@ -99,8 +100,10 @@ async function recordVideo({
               } else if (actionObj.action === "screenshot") {
                 // Take a screenshot, and then tell the client that we're done taking a screenshot,
                 // so it can continue executing.
+                const screenshotStartEpoch = Date.now();
                 await page.screenshot({ path: `${screenshotsDir}/${i}.png` });
                 await page.evaluate(() => window.videoRecording.hasTakenScreenshot());
+                log.info(`Screenshot ${i} took ${Date.now() - screenshotStartEpoch}ms`);
                 i++;
               } else {
                 throw new Error(`Unknown action: ${actionObj.action}`);

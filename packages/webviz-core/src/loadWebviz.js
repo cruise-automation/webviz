@@ -16,17 +16,29 @@ let importedPanelsByCategory;
 let importedPerPanelHooks;
 const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
-  getEventLogger: () => undefined,
+  getEventLogger: () => {
+    return {
+      // tag type: string | boolean | number | string[] | number[]
+      logger: ({ name: _name, tags: _tags }) => undefined,
+      eventNames: {},
+      eventTags: {},
+    };
+  },
   getLayoutFromUrl: async (search) => {
     const { LAYOUT_URL_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     const params = new URLSearchParams(search);
     const layoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
-    return fetch(layoutUrl).then((result) => {
-      return result
-        .json()
-        .then((json) => json)
-        .catch(() => undefined);
-    });
+    return fetch(layoutUrl)
+      .then((result) => {
+        try {
+          return result.json();
+        } catch (e) {
+          throw new Error(`Failed to parse JSON layout: ${e.message}`);
+        }
+      })
+      .catch((e) => {
+        throw new Error(`Failed to fetch layout from URL: ${e.message}`);
+      });
   },
   async importHooksAsync() {
     return new Promise((resolve, reject) => {
@@ -46,31 +58,34 @@ const defaultHooks = {
     });
   },
   nodes: () => [],
-  getDefaultGlobalStates() {
+  getDefaultPersistedState() {
     const { defaultPlaybackConfig } = require("webviz-core/src/reducers/panels");
     /* eslint-disable no-restricted-modules */
     const { CURRENT_LAYOUT_VERSION } = require("webviz-core/migrations/constants");
+    // All panel fields have to be present.
     return {
-      layout: {
-        direction: "row",
-        first: "DiagnosticSummary!3edblo1",
-        second: {
+      fetchedLayout: { isLoading: false, data: undefined },
+      panels: {
+        layout: {
           direction: "row",
-          first: "RosOut!1f38b3d",
-          second: "3D Panel!1my2ydk",
-          splitPercentage: 50,
+          first: "DiagnosticSummary!3edblo1",
+          second: {
+            direction: "row",
+            first: "RosOut!1f38b3d",
+            second: "3D Panel!1my2ydk",
+            splitPercentage: 50,
+          },
+          splitPercentage: 33.3333333333,
         },
-        splitPercentage: 33.3333333333,
+        savedProps: {},
+        globalVariables: {},
+        userNodes: {},
+        linkedGlobalVariables: [],
+        playbackConfig: defaultPlaybackConfig,
+        version: CURRENT_LAYOUT_VERSION,
       },
-      savedProps: {},
-      globalVariables: {},
-      userNodes: {},
-      linkedGlobalVariables: [],
-      playbackConfig: defaultPlaybackConfig,
-      version: CURRENT_LAYOUT_VERSION,
     };
   },
-  getDefaultGlobalVariables: () => ({}),
   migratePanels(panels) {
     const migratePanels = require("webviz-core/migrations").default;
     return migratePanels(panels);
@@ -164,7 +179,7 @@ const defaultHooks = {
         developmentDefault: false,
         productionDefault: false,
       },
-      bobject3dPanel: {
+      useBinaryTranslation: {
         name: "Use binary messages in the 3D panel instead of parsed messages",
         description:
           "Either use binary messages or _pretend_ to use binary messages in the 3D panel. Very broken, work in progress.",
@@ -178,7 +193,10 @@ const defaultHooks = {
     const { REMOTE_BAG_URL_2_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     return [REMOTE_BAG_URL_2_QUERY_KEY];
   },
-  maybeUpdateURLToTrackLayout: () => {},
+  getUpdatedUrlToTrackLayout: async ({ search, _state, _skipPatch }) => {
+    await Promise.resolve();
+    return search;
+  },
 };
 
 let hooks = defaultHooks;

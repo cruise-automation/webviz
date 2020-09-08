@@ -25,7 +25,7 @@ const BUTTON_STYLE = {
 };
 
 export default function PlaybackSpeedControls() {
-  const configSpeed = useSelector((state) => state.panels.playbackConfig.speed);
+  const configSpeed = useSelector((state) => state.persistedState.panels.playbackConfig.speed);
   const speed = useMessagePipeline(
     useCallback(({ playerState }) => playerState.activeData && playerState.activeData.speed, [])
   );

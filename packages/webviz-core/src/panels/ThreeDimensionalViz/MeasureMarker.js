@@ -57,8 +57,8 @@ export default function MeasureMarker({ measurePoints: { start, end } }: Props) 
 
   return (
     <>
-      {lines.length && <Lines>{lines}</Lines>}
-      {spheres.length && <Spheres>{spheres}</Spheres>}
+      {lines.length > 0 && <Lines>{lines}</Lines>}
+      {spheres.length > 0 && <Spheres>{spheres}</Spheres>}
     </>
   );
 }

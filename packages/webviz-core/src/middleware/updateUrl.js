@@ -51,12 +51,20 @@ const updateUrlMiddlewareDebounced = (store: ThunkAction) => (next: (Action) => 
       if (!shouldProcessPatch) {
         return result;
       }
-      const newQueryString = await getGlobalHooks().getUpdatedUrlToTrackLayout({
+      const {
+        search: newSearch,
+        setFetchedLayoutPayload: newFetchedLayoutPayload,
+      } = await getGlobalHooks().getUpdatedUrlAndFetchLayout({
         search,
         state: store.getState(),
         skipPatch: action.type === "LOAD_LAYOUT",
       });
-      const newParams = new URLSearchParams(newQueryString);
+
+      if (newFetchedLayoutPayload) {
+        store.dispatch({ type: "SET_FETCHED_LAYOUT", payload: newFetchedLayoutPayload });
+      }
+
+      const newParams = new URLSearchParams(newSearch);
       const newLayoutParam = newParams.get(LAYOUT_QUERY_KEY) || "";
       const savedBy = store.getState().auth.username || "";
 
@@ -74,8 +82,8 @@ const updateUrlMiddlewareDebounced = (store: ThunkAction) => (next: (Action) => 
           },
         });
       }
-      if (newQueryString !== search) {
-        store.dispatch(replace(`/${newQueryString}`));
+      if (newSearch !== search) {
+        store.dispatch(replace(`/${newSearch}`));
       }
       return result;
     }, 500);

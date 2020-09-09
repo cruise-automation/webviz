@@ -104,7 +104,7 @@ export const fetchLayout = (search: string): Dispatcher<SET_FETCHED_LAYOUT> => (
     .then((layoutFetchResult) => {
       dispatch({
         type: PANELS_ACTION_TYPES.SET_FETCHED_LAYOUT,
-        payload: { isLoading: false, data: layoutFetchResult },
+        payload: { isLoading: false, data: layoutFetchResult, isFromLayoutUrlParam: !!hasLayoutUrl },
       });
       if (layoutFetchResult) {
         if (hasLayoutUrl) {

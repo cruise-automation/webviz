@@ -203,7 +203,8 @@ const printClassDefinition = (typesByName: RosDatatypes, typeName: string): stri
 ${fieldDefinitions.join("\n")}
 ${indent(printDeepParseMethod(typeName), 2)}
 }
-${printDeepParseFunction(typesByName, typeName)}`;
+${printDeepParseFunction(typesByName, typeName)}
+$context.associateDatatypes(${friendlyTypeName(typeName)}, [$typesByName, ${JSON.stringify(typeName)}])`;
 };
 
 // Things we need to include in the source:
@@ -274,7 +275,7 @@ return ${friendlyTypeName(topLevelTypeName)};`;
 const getGetClassForView = memoize((typesByName: RosDatatypes, typeName: string) => {
   /* eslint-disable no-new-func */
   // $FlowFixMe
-  return Function("$context", "$view", "$bigString", printGetClassForView(typesByName, typeName));
+  return Function("$context", "$view", "$bigString", "$typesByName", printGetClassForView(typesByName, typeName));
   /* eslint-enable no-new-func */
 });
 

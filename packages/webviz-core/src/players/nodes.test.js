@@ -11,6 +11,7 @@ import {
   makeNodeMessage,
   applyNodesToMessages,
   getDefaultNodeStates,
+  getNodeSubscriptions,
   type NodeDefinition,
 } from "./nodes";
 import sendNotification from "webviz-core/src/util/sendNotification";
@@ -254,6 +255,44 @@ describe("nodes", () => {
         })
       ).not.toThrow();
       sendNotification.expectCalledDuringTest();
+    });
+  });
+
+  describe("getNodeSubscriptions", () => {
+    it("generates parsed subscriptions for parsedMessages nodes", () => {
+      const subscriptions = getNodeSubscriptions([
+        {
+          ...EmptyNode,
+          inputs: ["/in_topic"],
+          format: "parsedMessages",
+          output: { name: "/out_topic", datatype: "" },
+        },
+      ]);
+      expect(subscriptions).toEqual([
+        {
+          topic: "/in_topic",
+          format: "parsedMessages",
+          requester: { type: "node", name: "/out_topic" },
+        },
+      ]);
+    });
+
+    it("generates bobject subscriptions for bobject nodes", () => {
+      const subscriptions = getNodeSubscriptions([
+        {
+          ...EmptyNode,
+          inputs: ["/in_topic"],
+          format: "bobjects",
+          output: { name: "/out_topic", datatype: "" },
+        },
+      ]);
+      expect(subscriptions).toEqual([
+        {
+          topic: "/in_topic",
+          format: "bobjects",
+          requester: { type: "node", name: "/out_topic" },
+        },
+      ]);
     });
   });
 });

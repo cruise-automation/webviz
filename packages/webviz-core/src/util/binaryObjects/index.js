@@ -20,7 +20,7 @@ import {
   primitiveList,
 } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 
-const context = { Buffer, getArrayView, deepParse: deepParseSymbol, int53 };
+const context = { Buffer, getArrayView, deepParse: deepParseSymbol, int53, associateDatatypes };
 
 const bobjectSizes = new WeakMap<any, number>();
 const reverseWrappedBobjects = new WeakSet<any>();
@@ -38,8 +38,13 @@ export const getObject = (
   buffer: ArrayBuffer,
   bigString: string
 ): Bobject => {
-  const Class = getGetClassForView(typesByName, datatype)(context, new DataView(buffer), bigString);
-  associateDatatypes(Class, [typesByName, datatype]);
+  const Class = getGetClassForView(typesByName, datatype)(
+    context,
+    new DataView(buffer),
+    bigString,
+    typesByName,
+    datatype
+  );
   const ret = new Class(0);
   bobjectSizes.set(ret, buffer.byteLength + bigString.length);
   return ret;
@@ -52,8 +57,13 @@ export const getObjects = (
   bigString: string,
   offsets: $ReadOnlyArray<number>
 ): $ReadOnlyArray<Bobject> => {
-  const Class = getGetClassForView(typesByName, datatype)(context, new DataView(buffer), bigString);
-  associateDatatypes(Class, [typesByName, datatype]);
+  const Class = getGetClassForView(typesByName, datatype)(
+    context,
+    new DataView(buffer),
+    bigString,
+    typesByName,
+    datatype
+  );
   const ret = offsets.map((offset) => new Class(offset));
   ret.forEach((bobject) => {
     // Super dumb heuristic: assume all of the bobjects have the same size. We can do better because

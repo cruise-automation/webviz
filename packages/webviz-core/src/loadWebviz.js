@@ -192,9 +192,9 @@ const defaultHooks = {
     const { REMOTE_BAG_URL_2_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     return [REMOTE_BAG_URL_2_QUERY_KEY];
   },
-  getUpdatedUrlToTrackLayout: async ({ search, _state, _skipPatch }) => {
+  getUpdatedUrlAndFetchLayout: async ({ search, _state, _skipPatch }) => {
     await Promise.resolve();
-    return search;
+    return { search, setFetchedLayoutPayload: () => {} };
   },
 };
 

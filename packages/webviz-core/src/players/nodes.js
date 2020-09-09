@@ -266,14 +266,8 @@ export function getNodeSubscriptions(nodeDefinitions: NodeDefinition<*>[]): Subs
     flatten(nodeDefinitions.map((rootNode) => getDependentNodeDefinitions(nodeDefinitions.map((def) => def), rootNode)))
   );
   return flatten(
-    allActiveNodes.map((node) =>
-      node.inputs.map((topic) => ({
-        topic,
-        // Webviz nodes require parsed messages for now. In the future we might try to migrate
-        // them one-by-one to use bobjects, though.
-        format: "parsedMessages",
-        requester: { type: "node", name: node.output.name },
-      }))
+    allActiveNodes.map(({ format, inputs, output: { name } }) =>
+      inputs.map((topic) => ({ topic, format, requester: { type: "node", name } }))
     )
   );
 }

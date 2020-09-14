@@ -10,6 +10,7 @@ import { TimeUtil } from "rosbag";
 
 import type { Message, SubscribePayload, Topic, BobjectMessage } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { objectValues } from "webviz-core/src/util";
 import { deepParse, isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
@@ -64,8 +65,8 @@ function getDependentNodeDefinitions(
 }
 
 function validateDatatypes({ output, datatypes }: NodeDefinition<*>) {
-  for (const key of Object.keys(datatypes)) {
-    for (const { type, isComplex } of datatypes[key].fields) {
+  for (const datatype of objectValues(datatypes)) {
+    for (const { type, isComplex } of datatype.fields) {
       if (isComplex && !datatypes[type]) {
         throw new Error(`The datatype "${type}" is not defined for node "${output.name}"`);
       }
@@ -182,13 +183,13 @@ export function applyNodesToMessages({
           );
         }
         states[nodeDefinition.output.name] = nodeResult.state;
-        // Nodes don't have access to their whole set of datatypes, and we can assume they will all
-        // want to wrap their output objects, so we might as well do it for them.
+        // Nodes often construct messages (instead of simply extracting submessages). We can wrap
+        // their outputs if they haven't to make life easier for node writers.
         const messagesToAdd =
           nodeDefinition.format === "parsedMessages"
             ? nodeResult.messages
             : nodeResult.messages.map((nodeMessage) => {
-                if (isBobject(nodeMessage)) {
+                if (isBobject(nodeMessage.message)) {
                   return nodeMessage;
                 }
                 return {
@@ -266,14 +267,8 @@ export function getNodeSubscriptions(nodeDefinitions: NodeDefinition<*>[]): Subs
     flatten(nodeDefinitions.map((rootNode) => getDependentNodeDefinitions(nodeDefinitions.map((def) => def), rootNode)))
   );
   return flatten(
-    allActiveNodes.map((node) =>
-      node.inputs.map((topic) => ({
-        topic,
-        // Webviz nodes require parsed messages for now. In the future we might try to migrate
-        // them one-by-one to use bobjects, though.
-        format: "parsedMessages",
-        requester: { type: "node", name: node.output.name },
-      }))
+    allActiveNodes.map(({ format, inputs, output: { name } }) =>
+      inputs.map((topic) => ({ topic, format, requester: { type: "node", name } }))
     )
   );
 }

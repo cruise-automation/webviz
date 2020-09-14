@@ -39,6 +39,8 @@ import {
 
 const jsondiffpatch = require("jsondiffpatch").create({});
 
+const PARAMS_TO_DECODE = new Set([LAYOUT_QUERY_KEY, LAYOUT_URL_QUERY_KEY, "segment"]);
+
 // given a panel type, create a unique id for a panel
 // with the type embedded within the id
 // we need this because react-mosaic
@@ -450,28 +452,29 @@ export function getLayoutPatch(baseState: ?PanelsState, newState: ?PanelsState):
   return delta ? JSON.stringify(delta) : "";
 }
 
-export function getUpdatedURLWithDecodedLayout(params: URLSearchParams): string {
-  const hasLayoutUrl = params.has(LAYOUT_URL_QUERY_KEY);
-  const layoutId = params.get(LAYOUT_QUERY_KEY) || params.get(LAYOUT_URL_QUERY_KEY) || "";
-  params.delete(LAYOUT_QUERY_KEY);
-  params.delete(LAYOUT_URL_QUERY_KEY);
-  const otherParams = params.toString();
-  return `?${hasLayoutUrl ? LAYOUT_URL_QUERY_KEY : LAYOUT_QUERY_KEY}=${decodeURIComponent(layoutId)}${
-    otherParams ? `&${otherParams}` : otherParams
-  }`;
+export function stringifyParams(params: URLSearchParams): string {
+  const stringifiedParams = [];
+  for (const [key, value] of params) {
+    if (PARAMS_TO_DECODE.has(key)) {
+      stringifiedParams.push(`${key}=${decodeURIComponent(value)}`);
+    } else {
+      stringifiedParams.push(`${key}=${encodeURIComponent(value)}`);
+    }
+  }
+  return stringifiedParams.length ? `?${stringifiedParams.join("&")}` : "";
 }
 
 export function getUpdatedURLWithPatch(search: string, diff: string): string {
   const params = new URLSearchParams(search);
   params.set(PATCH_QUERY_KEY, LZString.compressToEncodedURIComponent(diff));
-  return getUpdatedURLWithDecodedLayout(params);
+  return stringifyParams(params);
 }
 
 export function getUpdatedURLWithNewVersion(search: string, name: string, version?: string): string {
   const params = new URLSearchParams(search);
   params.set(LAYOUT_QUERY_KEY, `${name}${version ? `@${version}` : ""}`);
   params.delete(PATCH_QUERY_KEY);
-  return getUpdatedURLWithDecodedLayout(params);
+  return stringifyParams(params);
 }
 
 // TODO(Audrey): remove the screenshot env checking after release.

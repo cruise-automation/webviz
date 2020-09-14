@@ -21,6 +21,7 @@ import type {
   DataProvider,
 } from "webviz-core/src/dataProviders/types";
 import type { Message, Progress } from "webviz-core/src/players/types";
+import { objectValues } from "webviz-core/src/util";
 import { deepIntersect } from "webviz-core/src/util/ranges";
 import { clampTime } from "webviz-core/src/util/time";
 
@@ -230,7 +231,7 @@ export default class CombinedDataProvider implements DataProvider {
           parsedMessages: filterTopics(topics.parsedMessages),
           rosBinaryMessages: filterTopics(topics.rosBinaryMessages),
         };
-        const hasSubscriptions = Object.keys(filteredTopicsByFormat).some((key) => filteredTopicsByFormat[key]?.length);
+        const hasSubscriptions = objectValues(filteredTopicsByFormat).some((formatTopics) => formatTopics?.length);
         if (!hasSubscriptions) {
           // If we don't need any topics from this provider, we shouldn't call getMessages at all.  Therefore,
           // the provider doesn't know that we currently don't care about any of its topics, so it won't report
@@ -248,8 +249,7 @@ export default class CombinedDataProvider implements DataProvider {
         const clampedStart = clampTime(start, initializationResult.start, initializationResult.end);
         const clampedEnd = clampTime(end, initializationResult.start, initializationResult.end);
         const providerResult = await provider.getMessages(clampedStart, clampedEnd, filteredTopicsByFormat);
-        for (const messageType of Object.keys(providerResult)) {
-          const messages = providerResult[messageType];
+        for (const messages of objectValues(providerResult)) {
           if (messages == null) {
             continue;
           }

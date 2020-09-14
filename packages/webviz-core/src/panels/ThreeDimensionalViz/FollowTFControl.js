@@ -21,6 +21,7 @@ import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import colors from "webviz-core/src/styles/colors.module.scss";
+import { objectValues } from "webviz-core/src/util";
 
 type TfTreeNode = {
   tf: Transform,
@@ -62,10 +63,8 @@ const buildTfTree = (transforms: Transform[]): TfTree => {
     }
   }
 
-  // Cast the list to satisfy flow (because Object.values returns array of mixed).
-  const allNodes = ((Object.values(tree.nodes): any): TfTreeNode[]);
   // Do a final pass sorting all the children lists.
-  for (const node of allNodes) {
+  for (const node of objectValues(tree.nodes)) {
     node.children = sortBy(node.children, treeNodeToTfId);
   }
   tree.roots = sortBy(tree.roots, treeNodeToTfId);

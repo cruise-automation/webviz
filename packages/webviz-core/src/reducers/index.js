@@ -17,10 +17,12 @@ import panels, {
   type PanelsState,
   getInitialPersistedStateAndSetStorageIfNeeded,
 } from "webviz-core/src/reducers/panels";
+import tests from "webviz-core/src/reducers/tests";
 import userNodes, { type UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
 import type { Auth as AuthState } from "webviz-core/src/types/Auth";
 import type { HoverValue } from "webviz-core/src/types/hoverValue";
 import type { SetFetchedLayoutPayload } from "webviz-core/src/types/panels";
+import type { Dispatch, GetState } from "webviz-core/src/types/Store";
 
 const getReducers = (history: any) => [
   (state) => ({ ...state, router: connectRouter(history)() }),
@@ -30,12 +32,15 @@ const getReducers = (history: any) => [
   hoverValue,
   userNodes,
   layoutHistory,
+  ...(process.env.NODE_ENV === "test" ? [tests] : []),
 ];
 
 export type PersistedState = {|
   panels: PanelsState,
   fetchedLayout: SetFetchedLayoutPayload,
 |};
+
+export type Dispatcher<T> = (dispatch: Dispatch, getState: GetState) => T;
 
 export type State = {
   persistedState: PersistedState,
@@ -47,6 +52,8 @@ export type State = {
   router: { location: { pathname: string, search: string } },
   layoutHistory: LayoutHistory,
 };
+
+export type Store = { dispatch: Dispatch, getState: () => State };
 
 export default function createRootReducer(history: any) {
   const initialState: State = {

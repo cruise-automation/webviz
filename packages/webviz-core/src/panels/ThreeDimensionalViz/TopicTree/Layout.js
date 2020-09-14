@@ -10,6 +10,7 @@ import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import { groupBy } from "lodash";
 import React, { type Node, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import Dimensions from "react-container-dimensions";
 import {
   Worldview,
   PolygonBuilder,
@@ -713,37 +714,39 @@ export default function Layout({
             }
           />
           <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
-            {containerRef.current && (
-              <TopicTree
-                allKeys={allKeys}
-                availableNamespacesByTopic={availableNamespacesByTopic}
-                checkedKeys={checkedKeys}
-                containerHeight={containerRef.current.clientHeight}
-                containerWidth={containerRef.current.clientWidth}
-                derivedCustomSettingsByKey={derivedCustomSettingsByKey}
-                expandedKeys={expandedKeys}
-                filterText={filterText}
-                getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
-                getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
-                getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
-                hasFeatureColumn={hasFeatureColumn}
-                isPlaying={isPlaying}
-                onExitTopicTreeFocus={onExitTopicTreeFocus}
-                onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
-                pinTopics={pinTopics}
-                rootTreeNode={rootTreeNode}
-                saveConfig={saveConfig}
-                sceneErrorsByKey={sceneErrorsByKey}
-                setCurrentEditingTopic={setCurrentEditingTopic}
-                setEditingNamespace={setEditingNamespace}
-                setFilterText={setFilterText}
-                setShowTopicTree={setShowTopicTree}
-                shouldExpandAllKeys={shouldExpandAllKeys}
-                showTopicTree={showTopicTree}
-                topicDisplayMode={topicDisplayMode}
-                visibleTopicsCountByKey={visibleTopicsCountByKey}
-              />
-            )}
+            <Dimensions>
+              {({ width: containerWidth, height: containerHeight }) => (
+                <TopicTree
+                  allKeys={allKeys}
+                  availableNamespacesByTopic={availableNamespacesByTopic}
+                  checkedKeys={checkedKeys}
+                  containerHeight={containerHeight}
+                  containerWidth={containerWidth}
+                  derivedCustomSettingsByKey={derivedCustomSettingsByKey}
+                  expandedKeys={expandedKeys}
+                  filterText={filterText}
+                  getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
+                  getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
+                  getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
+                  hasFeatureColumn={hasFeatureColumn}
+                  isPlaying={isPlaying}
+                  onExitTopicTreeFocus={onExitTopicTreeFocus}
+                  onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
+                  pinTopics={pinTopics}
+                  rootTreeNode={rootTreeNode}
+                  saveConfig={saveConfig}
+                  sceneErrorsByKey={sceneErrorsByKey}
+                  setCurrentEditingTopic={setCurrentEditingTopic}
+                  setEditingNamespace={setEditingNamespace}
+                  setFilterText={setFilterText}
+                  setShowTopicTree={setShowTopicTree}
+                  shouldExpandAllKeys={shouldExpandAllKeys}
+                  showTopicTree={showTopicTree}
+                  topicDisplayMode={topicDisplayMode}
+                  visibleTopicsCountByKey={visibleTopicsCountByKey}
+                />
+              )}
+            </Dimensions>
             {currentEditingTopic && (
               <TopicSettingsModal
                 currentEditingTopic={currentEditingTopic}

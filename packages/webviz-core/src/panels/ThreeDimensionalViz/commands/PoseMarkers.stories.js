@@ -58,7 +58,7 @@ function Example({ alpha = 0.3, color = { r: 0.2, g: 0.59, b: 0.2, a: 0.3 } }: {
       orientation: { x: 0, y: 0, z: -0.9928242172830276, w: 0.11958291506876588 },
     },
     settings: {
-      useCarModel: true,
+      modelType: "car-model",
       alpha,
     },
   };

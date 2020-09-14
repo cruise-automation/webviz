@@ -64,6 +64,9 @@ window.videoRecording = {
 };
 
 const params = new URLSearchParams(location.search);
+const [workerIndex = 0, workerTotal = 1] = (params.get("video-recording-worker") || "0/1")
+  .split("/")
+  .map((n) => parseInt(n));
 const msPerFrame = params.has("video-recording-framerate")
   ? 1000 / parseFloat(params.get("video-recording-framerate"))
   : 200;
@@ -71,6 +74,8 @@ const speed = params.has("video-recording-speed") ? parseFloat(params.get("video
 
 class VideoRecordingClient {
   msPerFrame = msPerFrame;
+  workerIndex = workerIndex;
+  workerTotal = workerTotal;
   speed = speed;
   shouldLoadDataBeforePlaying = false;
   lastFrameStart = 0;
@@ -112,12 +117,9 @@ class VideoRecordingClient {
   }
 
   async onFrameFinished(frameCount: number) {
-    // Don't take screenshots of the first few frames, and then wait a bit,
-    // to allow for the camera to get in position and images to load.
-    if (frameCount < 5) {
-      return;
-    } else if (frameCount === 5) {
-      await delay(3000);
+    // Wait a bit to allow for the camera to get in position and images to load.
+    if (frameCount === 0) {
+      await delay(5000);
       return;
     }
 

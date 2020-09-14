@@ -17,6 +17,7 @@ import Modal from "webviz-core/src/components/Modal";
 import { downloadTextFile } from "webviz-core/src/util";
 import clipboard from "webviz-core/src/util/clipboard";
 import { LAYOUT_QUERY_KEY, LAYOUT_URL_QUERY_KEY, PATCH_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { stringifyParams } from "webviz-core/src/util/layout";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 type Props = {
@@ -80,8 +81,7 @@ export default class ShareJsonModal extends Component<Props, State> {
         params.delete(LAYOUT_QUERY_KEY);
         params.delete(LAYOUT_URL_QUERY_KEY);
         params.delete(PATCH_QUERY_KEY);
-        const stringParams = params.toString();
-        const query = stringParams ? `?${stringParams}` : stringParams;
+        const query = stringifyParams(params);
         history.push(`${location.pathname}${query}`);
       }
     } catch (e) {

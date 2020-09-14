@@ -88,6 +88,7 @@ export type SetFetchedLayoutPayload = {
   isLoading: boolean,
   error?: Error,
   data?: LayoutFetchResult,
+  isFromLayoutUrlParam?: boolean,
 };
 
 export type SaveConfig<Config> = ($Shape<Config>, ?{| historyOptions?: EditHistoryOptions |}) => void;

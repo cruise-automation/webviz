@@ -11,6 +11,8 @@ import * as React from "react";
 import shallowequal from "shallowequal";
 import uuid from "uuid";
 
+import { objectValues } from "webviz-core/src/util";
+
 // Creates a new component class that tries to keep various instances
 // of itself synchronized with each other.
 //
@@ -80,7 +82,7 @@ export default function createSyncingComponent<ComponentData, ReducerOutput>(
     }
 
     _recompute() {
-      const newReducedData: ReducerOutput = reducer(Object.keys(dataById).map((id) => dataById[id]));
+      const newReducedData: ReducerOutput = reducer(objectValues(dataById));
       if (!shallowequal(reducedData, newReducedData)) {
         reducedData = newReducedData;
         hasRenderedIds = new Set();

@@ -9,7 +9,7 @@
 import * as React from "react";
 import { connect } from "react-redux";
 
-import { loadLayout, setGlobalVariables } from "webviz-core/src/actions/panels";
+import { loadLayout as loadLayoutAction, setGlobalVariables } from "webviz-core/src/actions/panels";
 import {
   setUserNodeDiagnostics,
   addUserNodeLogs,
@@ -157,7 +157,7 @@ async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition
 type OwnProps = { children: ({ inputDescription: React.Node }) => React.Node };
 
 type Props = OwnProps & {
-  loadLayout: typeof loadLayout,
+  loadLayout: typeof loadLayoutAction,
   messageOrder: TimestampMethod,
   userNodes: UserNodes,
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
@@ -167,7 +167,7 @@ type Props = OwnProps & {
 };
 
 function PlayerManager({
-  loadLayout: loadFetchedLayout,
+  loadLayout,
   children,
   messageOrder,
   userNodes,
@@ -219,7 +219,7 @@ function PlayerManager({
           .then((response) => (response ? response.json() : undefined))
           .then((json) => {
             if (json) {
-              loadFetchedLayout({ ...json, skipSettingLocalStorage: false });
+              loadLayout({ ...json, skipSettingLocalStorage: false });
             }
           })
           .catch((error) => {
@@ -264,7 +264,7 @@ function PlayerManager({
         });
       }
     },
-    [loadFetchedLayout, setPlayer, setVariables]
+    [loadLayout, setPlayer, setVariables]
   );
 
   React.useEffect(
@@ -310,7 +310,7 @@ export default connect<Props, OwnProps, _, _, _, _>(
     userNodes: state.persistedState.panels.userNodes,
   }),
   {
-    loadLayout,
+    loadLayout: loadLayoutAction,
     setUserNodeDiagnostics,
     addUserNodeLogs,
     setUserNodeRosLib,

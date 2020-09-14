@@ -21,6 +21,7 @@ import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import clipboard from "webviz-core/src/util/clipboard";
 import { GLOBAL_VARIABLES_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { stringifyParams } from "webviz-core/src/util/layout";
 import { colors as sharedStyleConstants } from "webviz-core/src/util/sharedStyleConstants";
 
 // The minimum amount of time to wait between showing the global variable update animation again
@@ -148,10 +149,11 @@ function GlobalVariablesTable(): Node {
     () => {
       const queryParams = new URLSearchParams(window.location.search);
       queryParams.set(GLOBAL_VARIABLES_QUERY_KEY, JSON.stringify(globalVariables));
+      const queryString = stringifyParams(queryParams);
       if (inScreenshotTests()) {
-        return `http://localhost:3000/?${queryParams.toString()}`;
+        return `http://localhost:3000/${queryString}`;
       }
-      return `${window.location.host}/?${queryParams.toString()}`;
+      return `${window.location.host}/${queryString}`;
     },
     [globalVariables]
   );

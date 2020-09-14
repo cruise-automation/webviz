@@ -70,8 +70,6 @@ type ChartInstance = any;
 // This type is not yet in Flow, so temporarily type it this way.
 type OffscreenCanvas = HTMLCanvasElement;
 
-export { Chart };
-
 export default class ChartJSManager {
   id: string;
   _node: OffscreenCanvas;

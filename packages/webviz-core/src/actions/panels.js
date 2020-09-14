@@ -9,6 +9,7 @@ import type { MosaicDropTargetPosition, MosaicPath } from "react-mosaic-componen
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type LinkedGlobalVariables } from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
+import type { Dispatcher } from "webviz-core/src/reducers";
 import { type PanelsState } from "webviz-core/src/reducers/panels";
 import type { TabLocation } from "webviz-core/src/types/layouts";
 import type {
@@ -24,10 +25,9 @@ import type {
   PanelConfig,
   SetFetchedLayoutPayload,
 } from "webviz-core/src/types/panels";
-import type { Dispatch, GetState } from "webviz-core/src/types/Store";
 import { LAYOUT_URL_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 
-const PANELS_ACTION_TYPES = {
+export const PANELS_ACTION_TYPES = {
   CHANGE_PANEL_LAYOUT: "CHANGE_PANEL_LAYOUT",
   IMPORT_PANEL_LAYOUT: "IMPORT_PANEL_LAYOUT",
   SAVE_PANEL_CONFIGS: "SAVE_PANEL_CONFIGS",
@@ -55,7 +55,13 @@ export type SAVE_PANEL_CONFIGS = { type: "SAVE_PANEL_CONFIGS", payload: SaveConf
 export type SAVE_FULL_PANEL_CONFIG = { type: "SAVE_FULL_PANEL_CONFIG", payload: SaveFullConfigPayload };
 export type CREATE_TAB_PANEL = { type: "CREATE_TAB_PANEL", payload: CreateTabPanelPayload };
 export type CHANGE_PANEL_LAYOUT = { type: "CHANGE_PANEL_LAYOUT", payload: ChangePanelLayoutPayload };
-export type Dispatcher<T> = (dispatch: Dispatch, getState: GetState) => T;
+type LOAD_LAYOUT = { type: "LOAD_LAYOUT", payload: PanelsState };
+
+type SET_FETCHED_LAYOUT = { type: "SET_FETCHED_LAYOUT", payload: SetFetchedLayoutPayload };
+type SET_FETCH_LAYOUT_FAILED = { type: "SET_FETCH_LAYOUT_FAILED", payload: Error };
+export const setFetchedLayout = (payload: SetFetchedLayoutPayload): Dispatcher<SET_FETCHED_LAYOUT> => (dispatch) => {
+  return dispatch({ type: PANELS_ACTION_TYPES.SET_FETCHED_LAYOUT, payload });
+};
 
 export const savePanelConfigs = (payload: SaveConfigsPayload): Dispatcher<SAVE_PANEL_CONFIGS> => (dispatch) => {
   return dispatch({ type: PANELS_ACTION_TYPES.SAVE_PANEL_CONFIGS, payload });
@@ -87,13 +93,9 @@ export const changePanelLayout = (payload: ChangePanelLayoutPayload): Dispatcher
   return dispatch({ type: PANELS_ACTION_TYPES.CHANGE_PANEL_LAYOUT, payload });
 };
 
-type LOAD_LAYOUT = { type: "LOAD_LAYOUT", payload: PanelsState };
 export const loadLayout = (payload: PanelsState): Dispatcher<LOAD_LAYOUT> => (dispatch) => {
   return dispatch({ type: PANELS_ACTION_TYPES.LOAD_LAYOUT, payload });
 };
-
-type SET_FETCHED_LAYOUT = { type: "SET_FETCHED_LAYOUT", payload: SetFetchedLayoutPayload };
-type SET_FETCH_LAYOUT_FAILED = { type: "SET_FETCH_LAYOUT_FAILED", payload: Error };
 
 export const fetchLayout = (search: string): Dispatcher<SET_FETCHED_LAYOUT> => (dispatch) => {
   const params = new URLSearchParams(search);
@@ -104,7 +106,7 @@ export const fetchLayout = (search: string): Dispatcher<SET_FETCHED_LAYOUT> => (
     .then((layoutFetchResult) => {
       dispatch({
         type: PANELS_ACTION_TYPES.SET_FETCHED_LAYOUT,
-        payload: { isLoading: false, data: layoutFetchResult },
+        payload: { isLoading: false, data: layoutFetchResult, isFromLayoutUrlParam: !!hasLayoutUrl },
       });
       if (layoutFetchResult) {
         if (hasLayoutUrl) {

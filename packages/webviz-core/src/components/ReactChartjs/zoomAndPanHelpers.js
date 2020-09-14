@@ -24,6 +24,8 @@
 
 import cloneDeep from "lodash/cloneDeep";
 
+import { objectValues } from "webviz-core/src/util";
+
 export type ZoomOptions = $ReadOnly<{
   mode: "xy" | "x" | "y",
   enabled: boolean,
@@ -142,10 +144,9 @@ const originalOptionsByChartId = {};
 
 function storeOriginalOptions(chartId: string, chart: ChartInstance) {
   originalOptionsByChartId[chartId] = originalOptionsByChartId[chartId] || {};
-  Object.keys(chart.scales).forEach((scaleKey) => {
-    const scale = chart.scales[scaleKey];
-    if (!originalOptionsByChartId[chartId][scale.id]) {
-      originalOptionsByChartId[chartId][scale.id] = cloneDeep(scale.options);
+  objectValues(chart.scales).forEach(({ id, options }) => {
+    if (!originalOptionsByChartId[chartId][id]) {
+      originalOptionsByChartId[chartId][id] = cloneDeep(options);
     }
   });
   Object.keys(originalOptionsByChartId[chartId]).forEach((key) => {

@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { Tabs } from "antd";
 import { isEmpty, omit } from "lodash";
+import Tabs, { TabPane } from "rc-tabs";
 import React, { useCallback } from "react";
 import styled from "styled-components";
 
@@ -42,6 +42,26 @@ const SDatatype = styled.p`
 const SEditorWrapper = styled.div`
   color: ${colors.TEXT};
   width: 400px;
+`;
+
+const STabWrapper = styled.div`
+  .rc-tabs-nav-list {
+    display: flex;
+  }
+  .rc-tabs-tab {
+    margin-right: 16px;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    color: ${colors.TEXT};
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .rc-tabs-tab-active {
+    border-bottom: 2px solid ${colors.BLUEL1};
+  }
+  .rc-tabs-nav-operations {
+    display: none;
+  }
 `;
 
 function getSettingsByColumnWithDefaults(topicName: string, settingsByColumn: ?(any[])): ?{ settingsByColumn: any[] } {
@@ -179,7 +199,7 @@ function TopicSettingsModal({
           <STitle>{currentEditingTopic.name}</STitle>
           <SDatatype>{currentEditingTopic.datatype}</SDatatype>
           {hasFeatureColumn ? (
-            <div className="ant-component">
+            <STabWrapper>
               <Tabs
                 activeKey={`${columnIndex}`}
                 onChange={(newKey) => {
@@ -187,14 +207,14 @@ function TopicSettingsModal({
                     newKey === "0" ? nonPrefixedTopic : `${SECOND_SOURCE_PREFIX}${nonPrefixedTopic}`;
                   setCurrentEditingTopic({ datatype, name: newEditingTopicName });
                 }}>
-                <Tabs.TabPane tab={"base"} key={"0"}>
+                <TabPane tab={"base"} key={"0"}>
                   {editorElem}
-                </Tabs.TabPane>
-                <Tabs.TabPane tab={SECOND_SOURCE_PREFIX} key={"1"}>
+                </TabPane>
+                <TabPane tab={SECOND_SOURCE_PREFIX} key={"1"}>
                   {editorElem}
-                </Tabs.TabPane>
+                </TabPane>
               </Tabs>
-            </div>
+            </STabWrapper>
           ) : (
             editorElem
           )}

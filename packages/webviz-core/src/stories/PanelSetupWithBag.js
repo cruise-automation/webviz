@@ -14,6 +14,8 @@ import decompress from "wasm-lz4";
 
 import { SECOND_SOURCE_PREFIX } from "../util/globalConstants";
 import PanelSetup, { type Fixture } from "webviz-core/src/stories/PanelSetup";
+import { objectValues } from "webviz-core/src/util";
+import { bagConnectionsToTopics } from "webviz-core/src/util/bagConnectionsHelper";
 import Logger from "webviz-core/src/util/Logger";
 
 const log = new Logger(__filename);
@@ -55,10 +57,16 @@ const getFixtureFromBag = async (
   }
 
   // build the basic shape for fixture
+  const bagTopics = bagConnectionsToTopics(objectValues(bag.connections), bag.chunkInfos);
+  const numMessagesByTopic = {};
+  bagTopics.forEach((topic) => {
+    numMessagesByTopic[topic.name] = topic.numMessages;
+  });
   const tempFixture = {
     topics: topics.map((topic) => ({
       name: second ? `${SECOND_SOURCE_PREFIX}${topic}` : topic,
       datatype: mapTopicToDatatype(topic),
+      numMessages: numMessagesByTopic[topic],
     })),
     frame: topics.reduce((memo, topic) => {
       memo[second ? `${SECOND_SOURCE_PREFIX}${topic}` : topic] = [];

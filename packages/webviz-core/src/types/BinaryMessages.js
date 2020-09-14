@@ -75,7 +75,7 @@ export type BinaryMarker = $ReadOnly<{|
   mesh_use_embedded_materials(): boolean,
 |}>;
 
-export type InstancedLineListMarker = $ReadOnly<{|
+export type BinaryInstancedMarker = $ReadOnly<{|
   header(): BinaryHeader,
   ns(): string,
   id(): number,

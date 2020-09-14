@@ -11,8 +11,11 @@ import {
   makeNodeMessage,
   applyNodesToMessages,
   getDefaultNodeStates,
+  getNodeSubscriptions,
   type NodeDefinition,
 } from "./nodes";
+import { deepParse, wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 const EmptyNode: $Shape<NodeDefinition<void>> = {
@@ -254,6 +257,86 @@ describe("nodes", () => {
         })
       ).not.toThrow();
       sendNotification.expectCalledDuringTest();
+    });
+
+    it("returns properly wrapped bobjects irrespective of how the node returns them", () => {
+      const originalBobjects = [
+        {
+          receiveTime: { sec: 0, nsec: 0 },
+          topic: "/external",
+          message: wrapJsObject(basicDatatypes, "time", { sec: 0, nsec: 0 }),
+        },
+      ];
+      const rawReturnedBobject1 = { seq: 1, frame_id: "2", stamp: { sec: 3, nsec: 4 } };
+      const rawReturnedBobject2 = { seq: 5, frame_id: "5", stamp: { sec: 7, nsec: 8 } };
+
+      const node: NodeDefinition<void> = {
+        ...EmptyNode,
+        inputs: ["/external"],
+        output: { name: "/webviz/foo", datatype: "std_msgs/Header" },
+        datatypes: basicDatatypes,
+        format: "bobjects",
+        callback() {
+          return {
+            state: undefined,
+            messages: [
+              // Returns a plain JS object
+              makeNodeMessage("/webviz/foo", rawReturnedBobject1),
+              // Returns a bobject
+              makeNodeMessage("/webviz/foo", wrapJsObject(basicDatatypes, "std_msgs/Header", rawReturnedBobject2)),
+            ],
+          };
+        },
+      };
+      const output = applyNodesToMessages({
+        nodeDefinitions: [node],
+        originalMessages: [],
+        originalBobjects,
+        states: getDefaultNodeStates([node]),
+        datatypes: basicDatatypes,
+      });
+
+      expect(
+        output.messages.filter(({ topic }) => topic === "/webviz/foo").map(({ message }) => deepParse(message))
+      ).toEqual([rawReturnedBobject1, rawReturnedBobject2]);
+    });
+  });
+
+  describe("getNodeSubscriptions", () => {
+    it("generates parsed subscriptions for parsedMessages nodes", () => {
+      const subscriptions = getNodeSubscriptions([
+        {
+          ...EmptyNode,
+          inputs: ["/in_topic"],
+          format: "parsedMessages",
+          output: { name: "/out_topic", datatype: "" },
+        },
+      ]);
+      expect(subscriptions).toEqual([
+        {
+          topic: "/in_topic",
+          format: "parsedMessages",
+          requester: { type: "node", name: "/out_topic" },
+        },
+      ]);
+    });
+
+    it("generates bobject subscriptions for bobject nodes", () => {
+      const subscriptions = getNodeSubscriptions([
+        {
+          ...EmptyNode,
+          inputs: ["/in_topic"],
+          format: "bobjects",
+          output: { name: "/out_topic", datatype: "" },
+        },
+      ]);
+      expect(subscriptions).toEqual([
+        {
+          topic: "/in_topic",
+          format: "bobjects",
+          requester: { type: "node", name: "/out_topic" },
+        },
+      ]);
     });
   });
 });

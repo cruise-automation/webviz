@@ -9,6 +9,7 @@ import { vec3 } from "gl-matrix";
 import React, { type Node } from "react";
 import {
   Arrows,
+  FilledPolygons,
   pointToVec3,
   vec3ToPoint,
   orientationToVec4,
@@ -17,53 +18,122 @@ import {
 } from "regl-worldview";
 
 import CarModel from "./CarModel";
+import carOutlinePoints from "./CarModel/carOutline.json";
 
 type Props = {
   children: Arrow[],
   ...CommonCommandProps,
 };
 
+const X_SCALING_FACTOR = 1.111;
+const Y_SCALING_FACTOR = 1.121;
+
+const scaledCarOutlineBufferPoints = (() => {
+  const vectorSum = carOutlinePoints.reduce(
+    (prev, curr) => {
+      prev.x += curr.x;
+      prev.y += curr.y;
+      prev.z += curr.z;
+      return prev;
+    },
+    { x: 0, y: 0, z: 0 }
+  );
+
+  const vectorAverage = { x: vectorSum.x / carOutlinePoints.length, y: vectorSum.y / carOutlinePoints.length, z: 0 };
+  const scaledVectorAverage = { x: vectorAverage.x * X_SCALING_FACTOR, y: vectorAverage.y * Y_SCALING_FACTOR, z: 0 };
+
+  const transform_x = scaledVectorAverage.x - vectorAverage.x;
+  const transform_y = scaledVectorAverage.y - vectorAverage.y;
+
+  const scaledAndTransformedPoints = carOutlinePoints.map(({ x, y, z }) => ({
+    x: x * X_SCALING_FACTOR - transform_x,
+    y: y * Y_SCALING_FACTOR - transform_y,
+    z,
+  }));
+
+  return scaledAndTransformedPoints;
+})();
+
 export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: Props): Node[] {
   const models = [];
-  const markers = [];
+  const otherMarkers = [];
+  const arrowMarkers = [];
   children.forEach((marker, i) => {
-    if (marker.settings && marker.settings.useCarModel) {
-      const { pose, settings, interactionData } = marker;
-      models.push(
-        <CarModel layerIndex={layerIndex} key={i}>
-          {{ pose, alpha: settings.alpha || 1, interactionData }}
-        </CarModel>
+    const { pose, settings, interactionData } = marker;
+    if (settings?.addCarOutlineBuffer) {
+      otherMarkers.push(
+        <FilledPolygons layerIndex={layerIndex} key={`cruise-pose-${i}`}>
+          {[
+            {
+              pose,
+              interactionData,
+              points: scaledCarOutlineBufferPoints,
+              color: { r: 0.6666, g: 0.6666, b: 0.6666, a: 1 },
+            },
+          ]}
+        </FilledPolygons>
       );
-    } else {
-      const { settings } = marker;
-      if (settings && settings.color) {
-        marker = { ...marker, color: settings.color };
-      }
+    }
 
-      if (settings && settings.size) {
-        marker = {
-          ...marker,
-          scale: {
-            x: settings.size.shaftWidth || marker.scale.x,
-            y: settings.size.headWidth || marker.scale.y,
-            z: settings.size.headLength || marker.scale.z,
-          },
-        };
+    switch (settings?.modelType) {
+      case "car-outline": {
+        otherMarkers.push(
+          <FilledPolygons layerIndex={layerIndex} key={`cruise-pose-${i}`}>
+            {[
+              {
+                pose,
+                interactionData,
+                points: carOutlinePoints,
+                color: { r: 0.3313, g: 0.3313, b: 0.3375, a: 1 },
+              },
+            ]}
+          </FilledPolygons>
+        );
+        break;
       }
+      case "car-model": {
+        models.push(
+          <CarModel layerIndex={layerIndex} key={i}>
+            {{ pose, alpha: settings.alpha || 1, interactionData }}
+          </CarModel>
+        );
+        break;
+      }
+      case "arrow":
+      default: {
+        if (settings && settings.color) {
+          marker = { ...marker, color: settings.color };
+        }
 
-      const pos = pointToVec3(marker.pose.position);
-      const orientation = orientationToVec4(marker.pose.orientation);
-      const dir = vec3.transformQuat([0, 0, 0], [1, 0, 0], orientation);
-      // the total length of the arrow is 4.7, we move the tail backwards by 0.88 (prev implementation)
-      const tipPoint = vec3.scaleAndAdd([0, 0, 0], pos, dir, 3.82);
-      const tailPoint = vec3.scaleAndAdd([0, 0, 0], pos, dir, -0.88);
-      markers.push({ ...marker, points: [vec3ToPoint(tailPoint), vec3ToPoint(tipPoint)] });
+        if (settings && settings.size) {
+          marker = {
+            ...marker,
+            scale: {
+              x: settings.size.shaftWidth || marker.scale.x,
+              y: settings.size.headWidth || marker.scale.y,
+              z: settings.size.headLength || marker.scale.z,
+            },
+          };
+        }
+
+        const pos = pointToVec3(marker.pose.position);
+        const orientation = orientationToVec4(marker.pose.orientation);
+        const dir = vec3.transformQuat([0, 0, 0], [1, 0, 0], orientation);
+        // the total length of the arrow is 4.7, we move the tail backwards by 0.88 (prev implementation)
+        const tipPoint = vec3.scaleAndAdd([0, 0, 0], pos, dir, 3.82);
+        const tailPoint = vec3.scaleAndAdd([0, 0, 0], pos, dir, -0.88);
+        arrowMarkers.push({ ...marker, points: [vec3ToPoint(tailPoint), vec3ToPoint(tipPoint)] });
+
+        break;
+      }
     }
   });
 
-  return models.concat(
+  return [
+    ...models,
+    ...otherMarkers,
     <Arrows layerIndex={layerIndex} key="arrows">
-      {markers}
-    </Arrows>
-  );
+      {arrowMarkers}
+    </Arrows>,
+  ];
 });

@@ -14,12 +14,7 @@ import { bindActionCreators } from "redux";
 
 import ErrorBoundary from "./ErrorBoundary";
 import { setMosaicId } from "webviz-core/src/actions/mosaic";
-import {
-  changePanelLayout,
-  savePanelConfigs,
-  type Dispatcher,
-  type SAVE_PANEL_CONFIGS,
-} from "webviz-core/src/actions/panels";
+import { changePanelLayout, savePanelConfigs, type SAVE_PANEL_CONFIGS } from "webviz-core/src/actions/panels";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
@@ -27,7 +22,7 @@ import SpinningLoadingIcon from "webviz-core/src/components/SpinningLoadingIcon"
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList from "webviz-core/src/panels/PanelList";
 import { EmptyDropTarget } from "webviz-core/src/panels/Tab/EmptyDropTarget";
-import type { State } from "webviz-core/src/reducers";
+import type { State, Dispatcher } from "webviz-core/src/reducers";
 import type { MosaicNode, SaveConfigsPayload } from "webviz-core/src/types/panels";
 import { getPanelIdForType, getPanelTypeFromId } from "webviz-core/src/util/layout";
 import "./PanelLayout.scss";
@@ -69,7 +64,6 @@ export function UnconnectedPanelLayout(props: Props) {
     globalHooks
       .importHooksAsync()
       .then(() => {
-        globalHooks.perPanelHooks().installChartJs();
         setHooksImported({ hooksImported: true });
       })
       .catch((reason) => {

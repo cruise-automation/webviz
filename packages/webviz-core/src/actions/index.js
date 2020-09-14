@@ -11,9 +11,11 @@ import type { HoverValueActions } from "./hoverValue";
 import type { LayoutHistoryActions } from "./layoutHistory";
 import type { MosaicActions } from "./mosaic";
 import type { PanelsActions } from "./panels";
+import type { TestsActions } from "./tests";
 import type { UserNodesActions } from "./userNodes";
 
 export type ActionTypes =
+  | TestsActions
   | ExtensionsActions
   | HoverValueActions
   | LayoutHistoryActions

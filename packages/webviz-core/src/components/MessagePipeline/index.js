@@ -27,6 +27,7 @@ import type {
 } from "webviz-core/src/players/types";
 import StoreSetup from "webviz-core/src/stories/StoreSetup";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { objectValues } from "webviz-core/src/util";
 import { hideLoadingLogo } from "webviz-core/src/util/hideLoadingLogo";
 import {
   type BailoutToken,
@@ -98,14 +99,10 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
     waitingForPromises: boolean,
   |}>({ resolveFn: undefined, promisesToWaitFor: [], waitingForPromises: false });
 
-  const subscriptions: SubscribePayload[] = useMemo(
-    () => flatten(Object.keys(subscriptionsById).map((k) => subscriptionsById[k])),
-    [subscriptionsById]
-  );
-  const publishers: AdvertisePayload[] = useMemo(
-    () => flatten(Object.keys(publishersById).map((k) => publishersById[k])),
-    [publishersById]
-  );
+  const subscriptions: SubscribePayload[] = useMemo(() => flatten(objectValues(subscriptionsById)), [
+    subscriptionsById,
+  ]);
+  const publishers: AdvertisePayload[] = useMemo(() => flatten(objectValues(publishersById)), [publishersById]);
   useEffect(() => (player ? player.setSubscriptions(subscriptions) : undefined), [player, subscriptions]);
   useEffect(() => (player ? player.setPublishers(publishers) : undefined), [player, publishers]);
 
@@ -345,10 +342,9 @@ export function MockMessagePipelineProvider(props: {|
   }
 
   const [allSubscriptions, setAllSubscriptions] = useState<{ [string]: SubscribePayload[] }>({});
-  const flattenedSubscriptions: SubscribePayload[] = useMemo(
-    () => flatten(Object.keys(allSubscriptions).map((k) => allSubscriptions[k])),
-    [allSubscriptions]
-  );
+  const flattenedSubscriptions: SubscribePayload[] = useMemo(() => flatten(objectValues(allSubscriptions)), [
+    allSubscriptions,
+  ]);
   const setSubscriptions = useCallback((id, subs) => setAllSubscriptions((s) => ({ ...s, [id]: subs })), [
     setAllSubscriptions,
   ]);

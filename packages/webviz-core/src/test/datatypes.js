@@ -6,10 +6,12 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { groupBy } from "lodash";
 import type { RosMsgField } from "rosbag";
 
-import type { Frame, Topic } from "webviz-core/src/players/types";
+import type { BobjectMessage, Frame, Message, Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 
 // eslint-disable-next-line no-use-before-define
 type InferredObject = { [field: string]: FieldType };
@@ -133,3 +135,16 @@ export const createRosDatatypesFromFrame = (topics: $ReadOnlyArray<Topic>, frame
   });
   return ret;
 };
+
+export const wrapMessages = (messages: $ReadOnlyArray<Message>): BobjectMessage[] => {
+  const frame = groupBy(messages, "topic");
+  const topics = Object.keys(frame).map((topic) => ({ name: topic, datatype: topic }));
+  const datatypes = createRosDatatypesFromFrame(topics, frame);
+  return messages.map(({ topic, receiveTime, message }) => ({
+    topic,
+    receiveTime,
+    message: wrapJsObject(datatypes, topic, message),
+  }));
+};
+
+export const wrapMessage = (message: Message): BobjectMessage => wrapMessages([message])[0];

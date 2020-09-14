@@ -12,6 +12,8 @@ type Rules = {
   [name: string]: ((value: any) => ?string)[],
 };
 
+const layoutNameRegex = /[@%\s]/; // Don't allow these characters in layoutName.
+
 function isEmpty(value: any) {
   return value == null;
 }
@@ -90,10 +92,13 @@ export const isNotPrivate = (value: any): ?string =>
 // return the first error
 const join = (rules) => (value) => rules.map((rule) => rule(value)).filter((error) => !!error)[0];
 
+export const getWebsocketUrlError = (websocketUrl: string) => {
+  return `"${websocketUrl}" is an invalid WebSocket URL`;
+};
 export const isWebsocketUrl = (value: string): ?string => {
   const pattern = new RegExp(`wss?://[a-z.-_\\d]+(:(d+))?`, "gi");
   if (!pattern.test(value)) {
-    return `${value} is not a valid WebSocket URL`;
+    return getWebsocketUrlError(value);
   }
 };
 
@@ -199,3 +204,15 @@ export const point2DValidator = (jsonData: any): ?ValidationResult => {
   const result = validator(data);
   return Object.keys(result).length === 0 ? undefined : result;
 };
+
+export const getLayoutNameError = (layoutName: string) => {
+  return `"${layoutName}" is an invalid layout name. Layout name cannot contain @, %, or spaces`;
+};
+const isLayoutName = (value: string): ?string => {
+  const pattern = new RegExp(layoutNameRegex);
+  if (pattern.test(value)) {
+    return getLayoutNameError(value);
+  }
+};
+
+export const layoutNameValidator = createPrimitiveValidator([minLen(3), isLayoutName]);

@@ -21,6 +21,7 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type TabPanelConfig } from "webviz-core/src/types/layouts";
 import type { PanelConfig, MosaicPath, MosaicDropTargetPosition, SavedProps } from "webviz-core/src/types/panels";
+import { objectValues } from "webviz-core/src/util";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SearchInput = styled.input`
@@ -246,7 +247,7 @@ function PanelList(props: Props) {
 
 PanelList.getComponentForType = (type: string): any | void => {
   const panelsByCategory = getPanelsByCategory();
-  const allPanels = flatten(Object.keys(panelsByCategory).map((category) => panelsByCategory[category]));
+  const allPanels = flatten(objectValues(panelsByCategory));
   // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
   const panel = allPanels.find((item) => item.component.panelType === type);
   return panel?.component;

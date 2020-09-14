@@ -38,6 +38,8 @@ import { clampTime, subtractTimes, toMillis } from "webviz-core/src/util/time";
 export interface AutomatedRunClient {
   speed: number;
   msPerFrame: number;
+  workerIndex?: number;
+  workerTotal?: number;
   shouldLoadDataBeforePlaying: boolean;
   onError(any): Promise<void>;
   start({ bagLengthMs: number }): void;
@@ -299,21 +301,28 @@ export default class AutomatedRunPlayer implements Player {
     await this._emitState([], [], this._providerResult.start);
 
     let currentTime = this._providerResult.start;
+    const workerIndex = this._client.workerIndex ?? 0;
+    const workerCount = this._client.workerTotal ?? 1;
+
     const bagLengthMs = toMillis(subtractTimes(this._providerResult.end, this._providerResult.start));
     this._client.start({ bagLengthMs });
 
-    const nsBagTimePerFrame = Math.round(this._msPerFrame * this._speed * 1000000);
     const startEpoch = Date.now();
+    const nsBagTimePerFrame = Math.round(this._msPerFrame * this._speed * 1000000);
+
+    // We split up the frames between the workers,
+    // so we need to advance time based on the number of workers
+    const nsFrameTimePerWorker = nsBagTimePerFrame * workerCount;
+    currentTime = TimeUtil.add(currentTime, { sec: 0, nsec: nsBagTimePerFrame * workerIndex });
 
     let frameCount = 0;
     while (TimeUtil.isLessThan(currentTime, this._providerResult.end)) {
       if (this._waitToReportErrorPromise) {
         await this._waitToReportErrorPromise;
       }
-      const end = TimeUtil.add(currentTime, { sec: 0, nsec: nsBagTimePerFrame });
+      const end = TimeUtil.add(currentTime, { sec: 0, nsec: nsFrameTimePerWorker });
 
       this._client.markTotalFrameStart();
-
       const { parsedMessages, bobjects } = await this._getMessages(currentTime, end);
       this._client.markFrameRenderStart();
 
@@ -329,7 +338,9 @@ export default class AutomatedRunPlayer implements Player {
       const estimatedSecondsRemaining = Math.round(((1 - percentComplete) * msPerPercent) / 1000);
       const eta = formatSeconds(Math.min(estimatedSecondsRemaining || 0, 24 * 60 * 60 /* 24 hours */));
       console.log(
-        `Recording ${(percentComplete * 100).toFixed(1)}% done. ETA: ${eta}. Frame took ${frameRenderDurationMs}ms`
+        `[${workerIndex}/${workerCount}] Recording ${(percentComplete * 100).toFixed(
+          1
+        )}% done. ETA: ${eta}. Frame took ${frameRenderDurationMs}ms`
       );
 
       await this._client.onFrameFinished(frameCount);

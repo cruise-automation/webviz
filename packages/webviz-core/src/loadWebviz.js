@@ -16,13 +16,7 @@ let importedPanelsByCategory;
 let importedPerPanelHooks;
 const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
-  getEventLogger: () => {
-    return {
-      logger: (_args) => undefined,
-      eventNames: {},
-      eventTags: {},
-    };
-  },
+  getEventLogger: () => ({ logger: (_args) => undefined, eventNames: {}, eventTags: {} }),
   getLayoutFromUrl: async (search) => {
     const { LAYOUT_URL_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     const params = new URLSearchParams(search);
@@ -192,9 +186,9 @@ const defaultHooks = {
     const { REMOTE_BAG_URL_2_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     return [REMOTE_BAG_URL_2_QUERY_KEY];
   },
-  getUpdatedUrlToTrackLayout: async ({ search, _state, _skipPatch }) => {
+  updateUrlToTrackLayoutChanges: async ({ _store, _skipPatch }) => {
+    // Persist the layout state in URL or remote storage if needed.
     await Promise.resolve();
-    return search;
   },
 };
 

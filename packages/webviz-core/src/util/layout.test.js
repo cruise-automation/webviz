@@ -21,9 +21,9 @@ import {
   moveTabBetweenTabPanels,
   reorderTabWithinTabPanel,
   getLayoutPatch,
-  getUpdatedURLWithDecodedLayout,
   getUpdatedURLWithPatch,
   getUpdatedURLWithNewVersion,
+  stringifyParams,
 } from "./layout";
 
 describe("layout", () => {
@@ -513,16 +513,21 @@ describe("layout", () => {
     });
   });
 
-  describe("getUpdatedURLWithDecodedLayout", () => {
+  describe("stringifyParams", () => {
     const layoutParams = "?layout=foo%401500000000&randomKey=randomValue";
     const layoutParamsDecoded = "?layout=foo@1500000000&randomKey=randomValue";
-    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutParams))).toMatch(layoutParamsDecoded);
-    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutParamsDecoded))).toMatch(layoutParamsDecoded);
+    expect(stringifyParams(new URLSearchParams(layoutParams))).toMatch(layoutParamsDecoded);
+    expect(stringifyParams(new URLSearchParams(layoutParamsDecoded))).toMatch(layoutParamsDecoded);
 
     const layoutUrlParams = "?layout-url=https%3A%2F%2Ffoo%40bar.com&randomKey=randomValue";
     const layoutUrlParamsDecoded = "?layout-url=https://foo@bar.com&randomKey=randomValue";
-    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutUrlParams))).toMatch(layoutUrlParamsDecoded);
-    expect(getUpdatedURLWithDecodedLayout(new URLSearchParams(layoutUrlParamsDecoded))).toMatch(layoutUrlParamsDecoded);
+    expect(stringifyParams(new URLSearchParams(layoutUrlParams))).toMatch(layoutUrlParamsDecoded);
+    expect(stringifyParams(new URLSearchParams(layoutUrlParamsDecoded))).toMatch(layoutUrlParamsDecoded);
+
+    const segmentParams = "?segment=5G21A6P02L4100136%3A1582075103%3A1582075123";
+    const segmentParamsDecoded = "?segment=5G21A6P02L4100136:1582075103:1582075123";
+    expect(stringifyParams(new URLSearchParams(segmentParams))).toMatch(segmentParamsDecoded);
+    expect(stringifyParams(new URLSearchParams(segmentParamsDecoded))).toMatch(segmentParamsDecoded);
   });
 
   describe("getUpdatedURLWithPatch", () => {

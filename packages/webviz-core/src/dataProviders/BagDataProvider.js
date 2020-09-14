@@ -23,6 +23,7 @@ import type {
   PerformanceMetadata,
 } from "webviz-core/src/dataProviders/types";
 import type { Message } from "webviz-core/src/players/types";
+import { objectValues } from "webviz-core/src/util";
 import { bagConnectionsToDatatypes, bagConnectionsToTopics } from "webviz-core/src/util/bagConnectionsHelper";
 import { getBagChunksOverlapCount } from "webviz-core/src/util/bags";
 import CachedFilelike from "webviz-core/src/util/CachedFilelike";
@@ -133,7 +134,7 @@ export default class BagDataProvider implements DataProvider {
     const { startTime, endTime, chunkInfos } = this._bag;
     const connections: Connection[] = [];
     const emptyConnections: any[] = [];
-    for (const connection: any of Object.values(this._bag.connections)) {
+    for (const connection of objectValues(this._bag.connections)) {
       const { messageDefinition, md5sum, topic, type } = connection;
       if (messageDefinition && md5sum && topic && type) {
         connections.push({ messageDefinition, md5sum, topic, type });

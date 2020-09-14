@@ -48,6 +48,7 @@ import { useDataSourceInfo, useMessagesByTopic } from "webviz-core/src/PanelAPI"
 import getDiff, { diffLabels, diffLabelsByLabelText } from "webviz-core/src/panels/RawMessages/getDiff";
 import type { Topic } from "webviz-core/src/players/types";
 import type { PanelConfig } from "webviz-core/src/types/panels";
+import { objectValues } from "webviz-core/src/util";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
 import { enumValuesByDatatypeAndField } from "webviz-core/src/util/selectors";
 
@@ -271,7 +272,7 @@ function RawMessages(props: Props) {
 
       const diffData = diffItem && dataWithoutWrappingArray(diffItem.queriedData.map(({ value }) => (value: any)));
       const diff = diffEnabled && getDiff(data, diffData, null, showFullMessageForDiff);
-      const diffLabelTexts = Object.keys(diffLabels).map((key) => diffLabels[key].labelText);
+      const diffLabelTexts = objectValues(diffLabels).map(({ labelText }) => labelText);
 
       const CheckboxComponent = showFullMessageForDiff ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
       return (
@@ -324,7 +325,7 @@ function RawMessages(props: Props) {
                     diffLabelTexts.includes(Object.keys(val)[0])
                   ) {
                     if (Object.keys(val)[0] !== diffLabels.ID.labelText) {
-                      return val[Object.keys(val)[0]];
+                      return objectValues(val)[0];
                     }
                   }
                   return val;

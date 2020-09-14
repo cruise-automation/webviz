@@ -11,6 +11,7 @@ import Bag, { parseMessageDefinition } from "rosbag";
 import type { Connection } from "webviz-core/src/dataProviders/types";
 import type { Topic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { objectValues } from "webviz-core/src/util";
 
 // TODO(JP): Move all this stuff into rosbag.
 
@@ -62,6 +63,5 @@ export function bagConnectionsToTopics(
       numMessages: numMessagesByConnectionIndex[index],
     };
   });
-  // Satisfy flow by using `Object.keys` instead of `Object.values`
-  return Object.keys(topics).map((topic) => topics[topic]);
+  return objectValues(topics);
 }

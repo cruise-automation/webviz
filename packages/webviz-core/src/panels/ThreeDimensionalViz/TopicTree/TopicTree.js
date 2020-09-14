@@ -11,8 +11,8 @@ import CloseIcon from "@mdi/svg/svg/close.svg";
 import MagnifyIcon from "@mdi/svg/svg/magnify.svg";
 import LessIcon from "@mdi/svg/svg/unfold-less-horizontal.svg";
 import MoreIcon from "@mdi/svg/svg/unfold-more-horizontal.svg";
-import { Tree } from "antd";
 import { clamp, groupBy } from "lodash";
+import Tree from "rc-tree";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import Dimensions from "react-container-dimensions";
 import { useSpring, animated } from "react-spring";
@@ -65,7 +65,7 @@ const STopicTreeWrapper = styled.div`
 
 const STopicTree = styled(animated.div)`
   position: relative;
-  color: ${colors.TEXTL1};
+  color: ${colors.TEXT};
   border-radius: 6px;
   background-color: ${colors.TOOLBAR};
   padding-bottom: 6px;
@@ -75,34 +75,53 @@ const STopicTree = styled(animated.div)`
 `;
 
 const STopicTreeInner = styled.div`
-  .ant-tree {
+  .rc-tree {
     li {
       ul {
         padding: 0 0 0 ${SWITCHER_WIDTH}px;
       }
     }
-    .ant-tree-node-content-wrapper {
+    .rc-tree-node-content-wrapper {
       cursor: unset;
     }
-    .ant-tree-switcher {
+    /* Make the chevron icon transition nicely between pointing down and right. */
+    .rc-tree-switcher {
       height: ${ROW_HEIGHT}px;
+      transition: transform 80ms ease-in-out;
     }
-    .ant-tree-treenode {
+    .rc-tree-switcher_close {
+      transform: rotate(-90deg);
+    }
+    .rc-tree-switcher_open {
+      transform: rotate(0deg);
+    }
+    /* Hide the chevron switcher icon when it's not usable. */
+    .rc-tree-switcher-noop {
+      visibility: hidden;
+    }
+    .rc-tree-treenode {
+      display: flex;
       padding: 0 ${({ isXSWidth }) => (isXSWidth ? 0 : TREE_SPACING)}px;
       &:hover {
         background: ${colors.DARK4};
       }
-      &.ant-tree-treenode-disabled {
+      &.rc-tree-treenode-disabled {
         color: ${colors.TEXT_MUTED};
         cursor: unset;
-        .ant-tree-node-content-wrapper {
+        .rc-tree-node-content-wrapper {
           cursor: unset;
         }
       }
     }
-    .ant-tree-treenode-switcher-close,
-    .ant-tree-treenode-switcher-open {
-      .ant-tree-node-content-wrapper {
+    .rc-tree-indent {
+      width: 100%;
+    }
+    .rc-tree-indent-unit {
+      width: 24px;
+    }
+    .rc-tree-treenode-switcher-close,
+    .rc-tree-treenode-switcher-open {
+      .rc-tree-node-content-wrapper {
         padding: 0;
       }
     }
@@ -129,10 +148,11 @@ const SFilter = styled.div`
 `;
 
 const SInput = styled.input`
+  height: 24px;
   background: transparent;
   flex: 1;
   overflow: auto;
-  font-size: 14px;
+  font-size: 12px;
   margin-left: 4px;
   padding: 4px 8px;
   min-width: 80px;
@@ -144,21 +164,13 @@ const SInput = styled.input`
   }
 `;
 
-const SSwitcherIcon = styled.span`
+const SSwitcherIcon = styled.div`
   width: ${SWITCHER_WIDTH}px;
   height: ${ROW_HEIGHT}px;
-  transition: transform 80ms ease-in-out;
-  &.ant-tree-switcher-icon {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-  }
-  & .ant-tree-switcher_close {
-    transform: rotate(-90deg);
-  }
-  & .ant-tree-switcher_open {
-    transform: rotate(0deg);
-  }
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const SNoMatches = styled.div`
@@ -252,7 +264,7 @@ function TopicTree({
 
   const filterTextFieldRef = useRef<?HTMLInputElement>();
 
-  // HACK: Ant Tree does not auto expand dynamic tree nodes. Create a copy of expandedNodes
+  // HACK: rc-tree does not auto expand dynamic tree nodes. Create a copy of expandedNodes
   // to ensure newly added nodes such as `uncategorized` are properly expanded:
   // https://github.com/ant-design/ant-design/issues/18012
   const expandedKeysRef = useRef(expandedKeys);
@@ -417,7 +429,7 @@ function TopicTree({
                 expandedKeys={shouldExpandAllKeys ? allKeys : expandedKeysRef.current}
                 autoExpandParent={false /* Set autoExpandParent to true when filtering */}
                 switcherIcon={
-                  <SSwitcherIcon style={filterText ? { width: 0, height: 0, overflow: "hidden" } : {}}>
+                  <SSwitcherIcon style={filterText ? { visibility: "hidden" } : {}}>
                     <ChevronDownIcon
                       fill="currentColor"
                       style={{ width: SWITCHER_ICON_SIZE, height: SWITCHER_ICON_SIZE }}
@@ -439,7 +451,7 @@ function TopicTreeWrapper({ containerWidth, containerHeight, pinTopics, showTopi
   const renderTopicTree = pinTopics || showTopicTree;
 
   return (
-    <STopicTreeWrapper style={{ maxHeight: containerHeight - CONTAINER_SPACING * 3 }} className="ant-component">
+    <STopicTreeWrapper style={{ height: containerHeight - CONTAINER_SPACING * 3 }} className="ant-component">
       <Dimensions>
         {({ width }) => (
           <div

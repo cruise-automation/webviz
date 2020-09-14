@@ -32,6 +32,7 @@ import Store from "webviz-core/src/store";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import type { MosaicNode, SavedProps, UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { objectValues } from "webviz-core/src/util";
 import { isBobject } from "webviz-core/src/util/binaryObjects";
 
 export type Fixture = {|
@@ -190,7 +191,7 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
       }
       dTypes = dummyDatatypes;
     }
-    const allData = flatten(Object.keys(frame).map((topic) => frame[topic]));
+    const allData = flatten(objectValues(frame));
     const [bobjects, messages] = partition(allData, ({ message }) => isBobject(message));
     return (
       <div

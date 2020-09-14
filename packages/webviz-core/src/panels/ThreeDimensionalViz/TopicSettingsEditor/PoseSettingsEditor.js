@@ -25,7 +25,8 @@ type PoseSettings = {|
     headWidth: number,
     shaftWidth: number,
   },
-  useCarModel?: boolean,
+  modelType?: "car-model" | "arrow" | "car-outline",
+  addCarOutlineBuffer?: boolean,
 |};
 
 export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseStamped, PoseSettings>) {
@@ -90,7 +91,8 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
     </Flex>
   );
 
-  const CheckboxComponent = settings.useCarModel ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
+  const CheckboxComponent = settings.addCarOutlineBuffer ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
+
   const iconProps = {
     width: 16,
     height: 16,
@@ -103,14 +105,28 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
 
   return (
     <Flex col>
+      <SLabel>Model type</SLabel>
+      <div
+        style={{ display: "flex", margin: "4px" }}
+        onChange={(e) => {
+          onSettingsChange({ ...settings, modelType: e.target.value, alpha: undefined });
+        }}>
+        <input type="radio" value="car-model" checked={settings.modelType === "car-model"} />
+        Car Model
+        <input type="radio" value="car-outline" checked={settings.modelType === "car-outline"} />
+        Car Outline
+        <input type="radio" value="arrow" checked={settings.modelType === "arrow"} />
+        Arrow
+      </div>
+
       <Flex style={{ marginBottom: "5px", cursor: "pointer" }}>
         <CheckboxComponent
           {...iconProps}
-          onClick={() => onSettingsChange({ ...settings, useCarModel: !settings.useCarModel, alpha: undefined })}
+          onClick={() => onSettingsChange({ ...settings, addCarOutlineBuffer: !settings.addCarOutlineBuffer })}
         />
-        <SLabel>Use 3D model</SLabel>
+        <SLabel>Add outline buffer</SLabel>
       </Flex>
-      {settings.useCarModel ? alphaField : colorInputFields}
+      {settings.modelType === "arrow" ? colorInputFields : settings.modelType === "car-model" ? alphaField : null}
     </Flex>
   );
 }

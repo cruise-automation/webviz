@@ -10,6 +10,7 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 
 import SegmentedControl, { type Option } from "webviz-core/src/components/SegmentedControl";
+import { objectValues } from "webviz-core/src/util";
 
 const OPTIONS = {
   first: {
@@ -49,8 +50,7 @@ function Box({
   );
 }
 
-// $FlowFixMe
-const optionArr: Option[] = Object.values(OPTIONS);
+const optionArr: Option[] = objectValues(OPTIONS);
 
 function ControlledExample() {
   const [selectedId, setSelectedId] = React.useState(OPTIONS.first.id);

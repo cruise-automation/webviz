@@ -57,6 +57,7 @@ import {
   removePanelFromTabPanel,
   getLayoutPatch,
   getShouldProcessPatch,
+  stringifyParams,
 } from "webviz-core/src/util/layout";
 import Storage from "webviz-core/src/util/Storage";
 
@@ -821,10 +822,9 @@ const panelsReducer = function(state: State, action: ActionTypes): State {
         if (layoutPatch) {
           params.delete(LAYOUT_QUERY_KEY);
           params.delete(LAYOUT_URL_QUERY_KEY);
-          const queryString = params.toString();
           newState.router.location = {
             pathname: location.pathname,
-            search: queryString ? `?${queryString}` : queryString,
+            search: stringifyParams(params),
           };
         }
       }

@@ -10,6 +10,7 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 
 import Radio, { type RadioOption } from "webviz-core/src/components/Radio";
+import { objectValues } from "webviz-core/src/util";
 
 const OPTIONS = {
   first: {
@@ -52,8 +53,7 @@ function Box({
   );
 }
 
-// $FlowFixMe
-const optionArr: RadioOption[] = Object.values(OPTIONS);
+const optionArr: RadioOption[] = objectValues(OPTIONS);
 
 function ControlledExample() {
   const [selectedId, setSelectedId] = React.useState(OPTIONS.first.id);

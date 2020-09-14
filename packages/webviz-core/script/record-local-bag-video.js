@@ -51,6 +51,7 @@ program
   .option("--framerate <number>", "Framerate", parseNumber)
   .option("--width <number>", "Width", parseNumber)
   .option("--height <number>", "Height", parseNumber)
+  .option("--parallel <number>", "Number of simultaneous browsers to use", parseNumber)
   .option("--frameless", "Hide Webviz 'chrome' around the panels")
   .option("--url <url>", "Base URL", "https://webviz.io/app")
   .parse(process.argv);
@@ -76,11 +77,14 @@ async function main() {
   }
 
   console.log("Recording video...");
+  const parallelCount = program.parallel || 1;
+  const parallelFrameRate = program.framerate || 30;
   const { videoFile: video } = await recordVideo({
+    parallel: parallelCount,
     bagPath: program.bag,
     url: `${program.url}?video-recording-mode${
       program.frameless ? "&frameless" : ""
-    }&video-recording-speed=${program.speed || 1}&video-recording-framerate=${program.framerate || 30}`,
+    }&video-recording-speed=${program.speed || 1}&video-recording-framerate=${parallelFrameRate}`,
     puppeteerLaunchConfig: {
       headless: !process.env.DEBUG_CI,
       defaultViewport: { width: program.width || 1920, height: program.height || 1080 },

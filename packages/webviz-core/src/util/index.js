@@ -76,3 +76,8 @@ export function downloadFiles(files: { blob: Blob, fileName: string }[]) {
 export function positiveModulo(number: number, modulus: number): number {
   return ((number % modulus) + modulus) % modulus;
 }
+
+// Object.values returns mixed[], which is difficult to get Flow to accept.
+export function objectValues<K, V>(o: $ReadOnly<{ [keys: K]: V }>): V[] {
+  return (Object.values(o): any);
+}

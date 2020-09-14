@@ -19,6 +19,7 @@ import Store from "webviz-core/src/store";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 import { createRosDatatypesFromFrame } from "webviz-core/src/test/datatypes";
+import { objectValues } from "webviz-core/src/util";
 import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 
 export type FixtureExampleData = {
@@ -32,7 +33,7 @@ function bobjectify(fixture: FixtureExampleData): FixtureExampleData {
   const { topics, frame } = fixture;
   const newFrame = {};
   // The topics are sometimes arrays, sometimes objects :-(
-  const topicsArray = topics instanceof Array ? topics : Object.keys(topics).map((name) => topics[name]);
+  const topicsArray = topics instanceof Array ? topics : objectValues(topics);
 
   const datatypes = createRosDatatypesFromFrame(topicsArray, frame);
   topicsArray.forEach(({ name: topicName, datatype }) => {

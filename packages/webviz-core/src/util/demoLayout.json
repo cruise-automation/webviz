@@ -1,11 +1,7 @@
 {
   "layout": {
     "direction": "row",
-    "first": {
-      "direction": "column",
-      "second": "3D Panel!1bkpp87",
-      "first": "3D Panel!309p5r8"
-    },
+    "first": "3D Panel!2ccsjwx",
     "second": {
       "direction": "column",
       "second": {
@@ -23,125 +19,52 @@
           "splitPercentage": 36.61757237176232
         },
         "direction": "column",
-        "splitPercentage": 50.889679715302485
+        "splitPercentage": 55.16014234875445
       },
       "splitPercentage": 67.01112877583466
     },
-    "splitPercentage": 51.091924834941594
+    "splitPercentage": 43.83358098068351
   },
   "savedProps": {
-    "3D Panel!309p5r8": {
-      "checkedKeys": [
-        "/cloud_nodelet/parameter_descriptions",
-        "/cloud_nodelet/parameter_updates",
-        "/diagnostics",
-        "/diagnostics_agg",
-        "/diagnostics_toplevel_state",
-        "/gps/fix",
-        "/gps/rtkfix",
-        "/gps/time",
-        "/image_raw",
-        "/obs1/gps/fix",
-        "/obs1/gps/rtkfix",
-        "/obs1/gps/time",
-        "/radar/range",
-        "/radar/tracks",
-        "/rosout",
-        "/tf",
-        "/velodyne_nodelet_manager/bond",
-        "/velodyne_packets",
-        "/velodyne_points",
-        "name:Topics"
-      ],
-      "expandedKeys": [],
+    "3D Panel!2ccsjwx": {
+      "checkedKeys": ["name:Topics", "t:/velodyne_points"],
+      "expandedKeys": ["name:root", "name:Topics", "t:/velodyne_points", "t:/radar/points"],
       "followTf": "velodyne",
       "cameraState": {
-        "targetOffset": [0.09330692712710864, 0.04332363563045752, 0],
-        "distance": 64.9136785575918,
+        "targetOffset": [0, 8, 0],
+        "distance": 75,
         "perspective": true,
-        "phi": 0,
-        "thetaOffset": 1.136103520496095,
+        "phi": 0.5977515644920507,
+        "thetaOffset": -0.05828360533946886,
         "fovy": 0.7853981633974483,
         "near": 0.01,
         "far": 5000
       },
       "modifiedNamespaceTopics": [],
       "pinTopics": false,
-      "topicSettings": {
-        "/velodyne_points": {
-          "colorField": "ring",
-          "pointShape": "circle",
+      "settingsByKey": {
+        "t:/velodyne_points": {
           "colorMode": {
             "mode": "rainbow",
             "colorField": "ring"
-          },
-          "pointSize": 2
-        }
-      },
-      "followOrientation": false
-    },
-    "3D Panel!1bkpp87": {
-      "checkedKeys": [
-        "/cloud_nodelet/parameter_descriptions",
-        "/cloud_nodelet/parameter_updates",
-        "/diagnostics",
-        "/diagnostics_agg",
-        "/diagnostics_toplevel_state",
-        "/gps/fix",
-        "/gps/rtkfix",
-        "/gps/time",
-        "/image_raw",
-        "/obs1/gps/fix",
-        "/obs1/gps/rtkfix",
-        "/obs1/gps/time",
-        "/radar/range",
-        "/radar/tracks",
-        "/rosout",
-        "/tf",
-        "/velodyne_nodelet_manager/bond",
-        "/velodyne_packets",
-        "/velodyne_points",
-        "name:Topics"
-      ],
-      "expandedKeys": ["name:Topics"],
-      "followTf": "velodyne",
-      "cameraState": {
-        "targetOffset": [2.460426157758374, 0.24321332222014067, 0],
-        "distance": 4.224236212354354,
-        "perspective": true,
-        "phi": 1.2286699312074771,
-        "thetaOffset": 1.477398015435503,
-        "fovy": 0.7853981633974483,
-        "near": 0.01,
-        "far": 5000
-      },
-      "modifiedNamespaceTopics": [],
-      "pinTopics": false,
-      "topicSettings": {
-        "/velodyne_points": {
-          "colorField": "ring",
-          "pointSize": 4,
-          "pointShape": "square",
-          "colorMode": {
-            "mode": "gradient",
-            "colorField": "intensity",
-            "minValue": 0,
-            "maxValue": 6,
-            "minColor": "#FF0000",
-            "maxColor": "#A8AEEE"
           }
         }
-      }
+      },
+      "autoSyncCameraState": false,
+      "autoTextBackgroundColor": true,
+      "followOrientation": false
     },
     "ImageViewPanel!vn68db": {
       "cameraTopic": "/image_raw",
-      "enabledMarkerNames": [],
+      "enabledMarkerTopics": [],
+      "customMarkerTopicOptions": [],
       "scale": 0.2,
       "transformMarkers": true,
       "synchronize": false,
       "mode": "fit",
-      "zoomPercentage": 50.78125,
-      "offset": [47.53125, -0.484375]
+      "zoomPercentage": 53.714285714285715,
+      "offset": [0, 92.99142857142857],
+      "enabledMarkerNames": []
     },
     "DiagnosticStatusPanel!49o9wd0": {
       "topicToRender": "/diagnostics",
@@ -149,6 +72,11 @@
       "selectedName": "velodyne_nodelet_manager: velodyne_packets topic status"
     },
     "RawMessages!48wvnv5": {
+      "topicPath": "/velodyne_points",
+      "diffTopicPath": "",
+      "diffMethod": "custom",
+      "diffEnabled": false,
+      "showFullMessageForDiff": false,
       "topicName": "/radar/tracks",
       "diffTopicName": ""
     },
@@ -175,6 +103,8 @@
   "userNodes": {},
   "linkedGlobalVariables": [],
   "playbackConfig": {
-    "speed": 1
-  }
+    "speed": 1,
+    "messageOrder": "receiveTime"
+  },
+  "version": 10
 }

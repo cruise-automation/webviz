@@ -223,9 +223,6 @@ export function perPanelHooks() {
       skipTransformFrame: null,
     },
     RawMessages: { docLinkFunction: (filename) => `https://www.google.com/search?q=${filename}` },
-    installChartJs: () => {
-      require("webviz-core/src/util/installChartjs").default();
-    },
   };
 }
 

@@ -34,6 +34,7 @@ import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { stringifyParams } from "webviz-core/src/util/layout";
 import { getSanitizedTopics } from "webviz-core/src/util/selectors";
 import sendNotification, { type NotificationType } from "webviz-core/src/util/sendNotification";
 import {
@@ -281,8 +282,7 @@ export default class RandomAccessPlayer implements Player {
         // Otherwise, update the seek-to param
         params.set(SEEK_TO_QUERY_KEY, `${toMillis(this._currentTime)}`);
       }
-      const newSearch = params.toString();
-      history.replaceState({}, window.title, `${location.pathname}${newSearch ? `?${newSearch}` : newSearch}`);
+      history.replaceState({}, window.title, `${location.pathname}${stringifyParams(params)}`);
     }
 
     const data = {

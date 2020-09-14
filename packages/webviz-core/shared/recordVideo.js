@@ -30,6 +30,7 @@ const waitForBrowserLoadTimeoutMs = 3 * 60000; // 3 minutes
 const actionTimeDurationMs = 1000;
 
 async function recordVideo({
+  parallel,
   bagPath,
   url,
   puppeteerLaunchConfig,
@@ -40,6 +41,7 @@ async function recordVideo({
   url: string,
   puppeteerLaunchConfig?: any,
   panelLayout?: any,
+  parallel?: number,
   errorIsWhitelisted?: (string) => boolean,
 }): Promise<{ videoFile: Buffer, sampledImageFile: Buffer }> {
   if (!url.includes("video-recording-mode")) {
@@ -51,83 +53,96 @@ async function recordVideo({
 
   try {
     let msPerFrame;
-    await runInBrowser({
-      filePaths: bagPath ? [bagPath] : undefined,
-      url,
-      puppeteerLaunchConfig,
-      panelLayout,
-      captureLogs: true,
-      dimensions: { width: 2560, height: 1424 },
-      loadBrowserTimeout: waitForBrowserLoadTimeoutMs,
-      onLoad: async ({ page, errors }: { page: Page, errors: Array<string> }) => {
-        // From this point forward, the client controls the flow. We just call
-        // `window.videoRecording.nextAction()` which returns `false` (no action for us to take),
-        // or some action for us to take (throw an error, finish up the video, etc).
-        let i = 0;
-        let isRunning = true;
-        while (isRunning) {
-          await promiseTimeout(
-            (async () => {
-              for (const error of errors) {
-                if (errorIsWhitelisted && errorIsWhitelisted(error)) {
-                  log.info(`Encountered whitelisted error: ${error}`);
-                } else {
-                  throw new Error(error);
+    const parallelTotal = parallel || 2;
+    const promises = new Array(parallelTotal).fill().map(async (_, parallelIndex) => {
+      const workerUrl = `${url}&video-recording-worker=${parallelIndex}/${parallelTotal}`;
+      return runInBrowser({
+        filePaths: bagPath ? [bagPath] : undefined,
+        url: workerUrl,
+        puppeteerLaunchConfig,
+        panelLayout,
+        captureLogs: true,
+        dimensions: { width: 2560, height: 1424 },
+        loadBrowserTimeout: waitForBrowserLoadTimeoutMs,
+        onLoad: async ({ page, errors }: { page: Page, errors: Array<string> }) => {
+          // From this point forward, the client controls the flow. We just call
+          // `window.videoRecording.nextAction()` which returns `false` (no action for us to take),
+          // or some action for us to take (throw an error, finish up the video, etc).
+          let i = 0;
+          let isRunning = true;
+          while (isRunning) {
+            await promiseTimeout(
+              (async () => {
+                for (const error of errors) {
+                  if (errorIsWhitelisted && errorIsWhitelisted(error)) {
+                    log.info(`Encountered whitelisted error: ${error}`);
+                  } else {
+                    throw new Error(error);
+                  }
                 }
-              }
 
-              // `waitForFunction` waits until the return value is truthy, so we won't continue until
-              // the client is ready with a new action. We still have to wrap it in a `promiseTimeout`
-              // function, because if we don't then errors in `page` won't call the promise to either
-              // resolve or reject!.
-              const actionHandle = await page.waitForFunction(() => window.videoRecording.nextAction(), {
-                timeout: perFrameTimeoutMs - actionTimeDurationMs,
-              });
-              const actionObj: ?VideoRecordingAction = await actionHandle.jsonValue();
-              if (!actionObj) {
-                return;
-              }
-              if (actionObj.action === "error" && actionObj.error) {
-                if (errorIsWhitelisted && errorIsWhitelisted(actionObj.error)) {
-                  log.info(`Encountered whitelisted error: ${actionObj.error}`);
-                } else {
-                  throw new Error(actionObj.error);
+                // `waitForFunction` waits until the return value is truthy, so we won't continue until
+                // the client is ready with a new action. We still have to wrap it in a `promiseTimeout`
+                // function, because if we don't then errors in `page` won't call the promise to either
+                // resolve or reject!.
+                const actionHandle = await page.waitForFunction(() => window.videoRecording.nextAction(), {
+                  timeout: perFrameTimeoutMs - actionTimeDurationMs,
+                });
+                const actionObj: ?VideoRecordingAction = await actionHandle.jsonValue();
+                if (!actionObj) {
+                  return;
                 }
-              } else if (actionObj.action === "finish") {
-                log.info("Finished!");
-                isRunning = false;
-                msPerFrame = actionObj.msPerFrame;
-              } else if (actionObj.action === "screenshot") {
-                // Take a screenshot, and then tell the client that we're done taking a screenshot,
-                // so it can continue executing.
-                const screenshotStartEpoch = Date.now();
-                await page.screenshot({ path: `${screenshotsDir}/${i}.png` });
-                await page.evaluate(() => window.videoRecording.hasTakenScreenshot());
-                log.info(`Screenshot ${i} took ${Date.now() - screenshotStartEpoch}ms`);
-                i++;
-              } else {
-                throw new Error(`Unknown action: ${actionObj.action}`);
-              }
-            })(),
-            perFrameTimeoutMs,
-            "Taking a screenshot"
-          );
-        }
-      },
+                if (actionObj.action === "error" && actionObj.error) {
+                  if (errorIsWhitelisted && errorIsWhitelisted(actionObj.error)) {
+                    log.info(`Encountered whitelisted error: ${actionObj.error}`);
+                  } else {
+                    throw new Error(actionObj.error);
+                  }
+                } else if (actionObj.action === "finish") {
+                  log.info("Finished!");
+                  isRunning = false;
+                  msPerFrame = actionObj.msPerFrame;
+                } else if (actionObj.action === "screenshot") {
+                  // Take a screenshot, and then tell the client that we're done taking a screenshot,
+                  // so it can continue executing.
+                  const screenshotStartEpoch = Date.now();
+                  const screenshotIndex = i * parallelTotal + parallelIndex;
+                  await page.screenshot({
+                    path: `${screenshotsDir}/${screenshotIndex}.jpg`,
+                    quality: 85,
+                  });
+                  await page.evaluate(() => window.videoRecording.hasTakenScreenshot());
+                  log.info(
+                    `[${parallelIndex}/${parallelTotal}] Screenshot ${screenshotIndex} took ${Date.now() -
+                      screenshotStartEpoch}ms`
+                  );
+                  i++;
+                } else {
+                  throw new Error(`Unknown action: ${actionObj.action}`);
+                }
+              })(),
+              perFrameTimeoutMs,
+              "Taking a screenshot"
+            );
+          }
+        },
+      });
     });
+
+    await Promise.all(promises);
 
     if (msPerFrame == null) {
       throw new Error("msPerFrame was not set");
     }
     const imageCount = fs.readdirSync(screenshotsDir).length;
-    const sampledImageFile = await readFile(`${screenshotsDir}/${imageCount - 1}.png`);
+    const sampledImageFile = await readFile(`${screenshotsDir}/${imageCount - 1}.jpg`);
 
     // Once we're finished, we're going to stitch all the individual screenshots together
     // into a video, with the framerate specified by the client (via `msPerFrame`).
     const framerate = 1000 / msPerFrame;
     log.info(`Creating video with framerate ${framerate}fps (${msPerFrame}ms per frame)`);
     await exec(
-      `ffmpeg -y -framerate ${framerate} -i %d.png -c:v libx264 -preset faster -r ${framerate} -pix_fmt yuv420p out.mp4`,
+      `ffmpeg -y -framerate ${framerate} -i %d.jpg -c:v libx264 -preset faster -r ${framerate} -pix_fmt yuv420p out.mp4`,
       {
         cwd: screenshotsDir,
       }

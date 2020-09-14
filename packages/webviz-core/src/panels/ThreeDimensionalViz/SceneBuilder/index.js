@@ -20,7 +20,7 @@ import type {
   BinaryOccupancyGrid,
   BinaryPolygonStamped,
   BinaryPoseStamped,
-  InstancedLineListMarker,
+  BinaryInstancedMarker,
 } from "webviz-core/src/types/BinaryMessages";
 import type {
   LaserScan,
@@ -34,6 +34,7 @@ import type {
   StampedMessage,
 } from "webviz-core/src/types/Messages";
 import type { MarkerProvider, MarkerCollector, Scene } from "webviz-core/src/types/Scene";
+import { objectValues } from "webviz-core/src/util";
 import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import Bounds from "webviz-core/src/util/Bounds";
 import { POSE_MARKER_SCALE, LINED_CONVEX_HULL_RENDERING_SETTING } from "webviz-core/src/util/globalConstants";
@@ -409,7 +410,7 @@ export default class SceneBuilder implements MarkerProvider {
     return pose;
   };
 
-  _transformBobjectMarkerPose = (topic: string, marker: BinaryMarker | InstancedLineListMarker): ?MutablePose => {
+  _transformBobjectMarkerPose = (topic: string, marker: BinaryMarker | BinaryInstancedMarker): ?MutablePose => {
     const frame_id = marker.header().frame_id();
 
     if (!frame_id) {
@@ -557,7 +558,7 @@ export default class SceneBuilder implements MarkerProvider {
     this.collectors[topic].addMarker(marker, name);
   }
 
-  _consumeBobjectMarker(topic: string, message: BinaryMarker | InstancedLineListMarker): void {
+  _consumeBobjectMarker(topic: string, message: BinaryMarker | BinaryInstancedMarker): void {
     // TODO(useBinaryTranslation): Convert this to bobject-logic
     const namespace = message.ns();
     if (namespace) {
@@ -1000,12 +1001,17 @@ export default class SceneBuilder implements MarkerProvider {
     this.collectors[topic].setClock(this._clock);
     this.collectors[topic].flush();
 
-    const filteredMessages = filterToSingleNonLifetimeMessage(messages);
+    const datatype = this.topicsByName[topic].datatype;
+    // If topic has a decayTime set, markers with no lifetime will get one
+    // later on, so we don't need to filter them. Note: A decayTime of zero is
+    // defined as an infinite lifetime
+    const decayTime = this._settingsByKey[`t:${topic}`]?.decayTime;
+    const filteredMessages = decayTime === undefined ? filterToSingleNonLifetimeMessage(messages) : messages;
     for (const message of filteredMessages) {
       if (isBobject(message.message)) {
-        this._consumeBobject(topic, this.topicsByName[topic].datatype, message);
+        this._consumeBobject(topic, datatype, message);
       } else {
-        this._consumeMessage(topic, this.topicsByName[topic].datatype, message);
+        this._consumeMessage(topic, datatype, message);
       }
     }
   };
@@ -1018,8 +1024,7 @@ export default class SceneBuilder implements MarkerProvider {
   }
 
   renderMarkers(add: MarkerCollector) {
-    for (const topicName of Object.keys(this.topicsByName)) {
-      const topic = this.topicsByName[topicName];
+    for (const topic of objectValues(this.topicsByName)) {
       const collector = this.collectors[topic.name];
       if (!collector) {
         continue;

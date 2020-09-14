@@ -6,6 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { cloneDeep } from "lodash";
+
 import { deepParse, getObject, getObjects, inaccurateByteSize, merge, wrapJsObject } from ".";
 import { typeSize } from "./messageDefinitionUtils";
 import {
@@ -19,7 +21,7 @@ import {
   type HasInt64s,
 } from "./messageDefinitionUtils.test";
 import { cast } from "webviz-core/src/players/types";
-import type { BinaryHeader } from "webviz-core/src/types/BinaryMessages";
+import type { BinaryHeader, BinaryTime } from "webviz-core/src/types/BinaryMessages";
 
 describe("getObjects", () => {
   it("can compile everything", () => {
@@ -296,5 +298,17 @@ describe("merge", () => {
     expect(merged1.frame_id()).toBe("qwer");
     expect(merged2.frame_id()).toBe("zxcv");
     expect(merged2.seq()).toBe(1);
+  });
+
+  it("can override nested things", () => {
+    // Deep clone the datatypes so we know no other test can defeat this check by seeding the cache.
+    const copiedDatatypes = cloneDeep(definitions);
+    const { buffer } = new Int32Array([1234, 4567, 6789, 0, 0]);
+    const bobject = cast<BinaryHeader>(getObject(copiedDatatypes, "std_msgs/Header", buffer, ""));
+    const stamp = bobject.stamp();
+
+    const merged = cast<BinaryTime>(merge(stamp, { sec: 4321 }));
+    expect(merged.sec()).toBe(4321);
+    expect(merged.nsec()).toBe(6789);
   });
 });

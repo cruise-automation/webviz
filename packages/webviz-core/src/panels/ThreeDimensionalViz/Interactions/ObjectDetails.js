@@ -15,6 +15,8 @@ import styled from "styled-components";
 import GlobalVariableLink from "./GlobalVariableLink/index";
 import type { InteractionData } from "./types";
 import Dropdown from "webviz-core/src/components/Dropdown";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import { Renderer } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
 
@@ -60,6 +62,15 @@ function ObjectDetailsWrapper({ interactionData, selectedObject: { object, insta
     full: "Show full object",
   };
 
+  const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
+  const updateShowInstance = (shouldShowInstance) => {
+    setShowInstance(shouldShowInstance);
+    logger({
+      name: eventNames["3D_OBJECT_DETAILS_SHOW_INSTANCE"],
+      tags: { [eventTags.PANEL_TYPE]: Renderer.panelType },
+    });
+  };
+
   const objectToDisplay = instanceObject && showInstance ? instanceObject : object;
   return (
     <div>
@@ -68,7 +79,7 @@ function ObjectDetailsWrapper({ interactionData, selectedObject: { object, insta
           position="below"
           value={showInstance}
           text={showInstance ? dropdownText.instance : dropdownText.full}
-          onChange={setShowInstance}>
+          onChange={updateShowInstance}>
           <span value={true}>{dropdownText.instance}</span>
           <span value={false}>{dropdownText.full}</span>
         </Dropdown>

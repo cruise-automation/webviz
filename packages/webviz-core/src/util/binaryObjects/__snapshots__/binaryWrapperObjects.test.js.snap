@@ -48,6 +48,7 @@ function deepParse$fake_msgs_ContainsEverything($offset) {
   this.seventh = new deepParse$fake_msgs_HasInt64s(($offset + 72));
   this.eighth = new deepParse$fake_msgs_HasArrayOfEmpties(($offset + 88));
 }
+$context.associateDatatypes(fake_msgs_ContainsEverything, [$typesByName, \\"fake_msgs/ContainsEverything\\"])
 class std_msgs_Header {
   constructor(offset) {
     this[$offset] = offset;
@@ -70,6 +71,7 @@ function deepParse$std_msgs_Header($offset) {
   this.stamp = new deepParse$time(($offset + 4));
   this.frame_id = $bigString.substr($view.getInt32(($offset + 16), true), $view.getInt32(($offset + 12), true));
 }
+$context.associateDatatypes(std_msgs_Header, [$typesByName, \\"std_msgs/Header\\"])
 class fake_msgs_HasComplexAndArray {
   constructor(offset) {
     this[$offset] = offset;
@@ -96,6 +98,7 @@ function deepParse$fake_msgs_HasComplexAndArray($offset) {
   }
   this.stringArray = stringArray$arr;
 }
+$context.associateDatatypes(fake_msgs_HasComplexAndArray, [$typesByName, \\"fake_msgs/HasComplexAndArray\\"])
 class fake_msgs_HasComplexArray {
   constructor(offset) {
     this[$offset] = offset;
@@ -118,6 +121,7 @@ function deepParse$fake_msgs_HasComplexArray($offset) {
   }
   this.complexArray = complexArray$arr;
 }
+$context.associateDatatypes(fake_msgs_HasComplexArray, [$typesByName, \\"fake_msgs/HasComplexArray\\"])
 class fake_msgs_HasConstant {
   constructor(offset) {
     this[$offset] = offset;
@@ -132,6 +136,7 @@ class fake_msgs_HasConstant {
 function deepParse$fake_msgs_HasConstant($offset) {
 
 }
+$context.associateDatatypes(fake_msgs_HasConstant, [$typesByName, \\"fake_msgs/HasConstant\\"])
 class fake_msgs_HasByteArray {
   constructor(offset) {
     this[$offset] = offset;
@@ -150,6 +155,7 @@ function deepParse$fake_msgs_HasByteArray($offset) {
   const byte_array$from = $view.getInt32(($offset + 4), true);
   this.byte_array = new Uint8Array($arrayBuffer, byte_array$from, byte_array$length);
 }
+$context.associateDatatypes(fake_msgs_HasByteArray, [$typesByName, \\"fake_msgs/HasByteArray\\"])
 class fake_msgs_HasJson {
   constructor(offset) {
     this[$offset] = offset;
@@ -164,6 +170,7 @@ class fake_msgs_HasJson {
 function deepParse$fake_msgs_HasJson($offset) {
   this.jsonField = JSON.parse($bigString.substr($view.getInt32(($offset + 4), true), $view.getInt32($offset, true)));
 }
+$context.associateDatatypes(fake_msgs_HasJson, [$typesByName, \\"fake_msgs/HasJson\\"])
 class fake_msgs_HasInt64s {
   constructor(offset) {
     this[$offset] = offset;
@@ -182,6 +189,7 @@ function deepParse$fake_msgs_HasInt64s($offset) {
   this.i64 = $int53.readInt64LE($buffer, $offset);
   this.u64 = $int53.readUInt64LE($buffer, ($offset + 8));
 }
+$context.associateDatatypes(fake_msgs_HasInt64s, [$typesByName, \\"fake_msgs/HasInt64s\\"])
 class fake_msgs_HasArrayOfEmpties {
   constructor(offset) {
     this[$offset] = offset;
@@ -204,6 +212,7 @@ function deepParse$fake_msgs_HasArrayOfEmpties($offset) {
   }
   this.arr = arr$arr;
 }
+$context.associateDatatypes(fake_msgs_HasArrayOfEmpties, [$typesByName, \\"fake_msgs/HasArrayOfEmpties\\"])
 class time {
   constructor(offset) {
     this[$offset] = offset;
@@ -222,6 +231,7 @@ function deepParse$time($offset) {
   this.sec = $view.getInt32($offset, true);
   this.nsec = $view.getInt32(($offset + 4), true);
 }
+$context.associateDatatypes(time, [$typesByName, \\"time\\"])
 const string$Array = $context.getArrayView((offset) => $bigString.substr($view.getInt32((offset + 4), true), $view.getInt32(offset, true)), 8);
 const fake_msgs_HasComplexAndArray$Array = $context.getArrayView((offset) => new fake_msgs_HasComplexAndArray(offset), 28);
 const fake_msgs_HasConstant$Array = $context.getArrayView((offset) => new fake_msgs_HasConstant(offset), 0);

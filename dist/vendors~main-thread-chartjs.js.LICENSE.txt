@@ -1,0 +1,92 @@
+/*!
+ * Chart.js v2.9.3
+ * https://www.chartjs.org
+ * (c) 2019 Chart.js Contributors
+ * Released under the MIT License
+ */
+
+/*!
+ * Chart.js v2.9.3
+ * https://www.chartjs.org
+ * (c) 2020 Chart.js Contributors
+ * Released under the MIT License
+ */
+
+/*!
+ * chartjs-plugin-datalabels v0.7.0
+ * https://chartjs-plugin-datalabels.netlify.com
+ * (c) 2020 Chart.js Contributors
+ * Released under the MIT license
+ */
+
+/*! ../helpers.js */
+
+/*! ./_baseAssignValue */
+
+/*! ./_createAggregator */
+
+/*! ./annotation.js */
+
+/*! ./element.js */
+
+/*! ./events.js */
+
+/*! ./helpers.js */
+
+/*! ./types/box.js */
+
+/*! ./types/line.js */
+
+/*! ModuleConcatenation bailout: Module is not an ECMAScript module */
+
+/*! all exports used */
+
+/*! chart.js */
+
+/*! moment */
+
+/*! no static exports found */
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/lodash/keyBy.js ***!
+  \***********************************************************/
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chart.js/dist/Chart.js ***!
+  \******************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/index.js ***!
+  \**********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/events.js ***!
+  \***********************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/element.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/helpers.js ***!
+  \************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/types/box.js ***!
+  \**************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/annotation.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/src/types/line.js ***!
+  \***************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-datalabels/dist/chartjs-plugin-datalabels.js ***!
+  \*******************************************************************************************************/
+
+/*!*********************************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/chartjs-plugin-annotation/node_modules/chart.js/dist/Chart.js ***!
+  \*********************************************************************************************************/

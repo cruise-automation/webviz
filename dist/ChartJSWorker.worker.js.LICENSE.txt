@@ -530,6 +530,8 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! tslib */
 
+/*! webviz-core/src/util */
+
 /*! webviz-core/src/util/Rpc */
 
 /*! webviz-core/src/util/RpcUtils */
@@ -559,6 +561,10 @@ PERFORMANCE OF THIS SOFTWARE.
 /*!**********************************************!*\
   !*** ./packages/webviz-core/src/util/Rpc.js ***!
   \**********************************************/
+
+/*!************************************************!*\
+  !*** ./packages/webviz-core/src/util/index.js ***!
+  \************************************************/
 
 /*!*************************************************!*\
   !*** (webpack)/node_modules/process/browser.js ***!

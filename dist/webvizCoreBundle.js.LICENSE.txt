@@ -1277,15 +1277,15 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/@cruise-automation/tooltip/node_modules/warning/browser.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/assertThisInitialized.js because of ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/possibleConstructorReturn.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/connected-react-router/esm/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
+
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/connected-react-router/esm/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
@@ -1368,6 +1368,8 @@ and limitations under the License.
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-router/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/redux/es/redux.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/LayoutHistoryKeyListener.js (referenced with cjs require), ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelLayout.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/MosaicDragHandle.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/hooks/useGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/store/configureStore.js (referenced with cjs require)) */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/connected-react-router/esm/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
@@ -1582,7 +1584,7 @@ and limitations under the License.
 
 /*! exports provided: isError, isErrorEvent, isDOMError, isDOMException, isString, isPrimitive, isPlainObject, isEvent, isElement, isRegExp, isThenable, isSyntheticEvent, isInstanceOf */
 
-/*! exports provided: layout, savedProps, globalVariables, userNodes, linkedGlobalVariables, playbackConfig, default */
+/*! exports provided: layout, savedProps, globalVariables, userNodes, linkedGlobalVariables, playbackConfig, version, default */
 
 /*! exports provided: logger */
 
@@ -2168,6 +2170,8 @@ and limitations under the License.
 
 /*! webviz-core/src/reducers/panels */
 
+/*! webviz-core/src/reducers/tests */
+
 /*! webviz-core/src/reducers/userNodes */
 
 /*! webviz-core/src/store */
@@ -2638,6 +2642,10 @@ and limitations under the License.
 
 /*!****************************************************!*\
   !*** ./packages/webviz-core/src/reducers/index.js ***!
+  \****************************************************/
+
+/*!****************************************************!*\
+  !*** ./packages/webviz-core/src/reducers/tests.js ***!
   \****************************************************/
 
 /*!****************************************************!*\
@@ -4933,7 +4941,7 @@ and limitations under the License.
   \********************************************************************************/
 
 /*!********************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/react-redux/es/index.js + 21 modules ***!
+  !*** ./packages/webviz-core/node_modules/react-redux/es/index.js + 22 modules ***!
   \********************************************************************************/
 
 /*!********************************************************************************!*\
@@ -5462,10 +5470,6 @@ and limitations under the License.
 
 /*!***********************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/core-js/library/modules/_redefine.js ***!
-  \***********************************************************************************************/
-
-/*!***********************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/assertThisInitialized.js ***!
   \***********************************************************************************************/
 
 /*!***********************************************************************************************!*\

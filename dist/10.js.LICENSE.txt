@@ -1,21 +1,17 @@
-/*! ./../../../../../../../webpack/node_modules/process/browser.js */
+/*! ../typescript/typescript.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./node_modules/monaco-editor/esm/vs/language/html/_deps/vscode-uri/index.js (<- Module uses injected variables (process)) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./node_modules/monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution.js (referenced with import()) */
 
-/*! ModuleConcatenation bailout: Module uses injected variables (process) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./node_modules/monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution.js (referenced with import()) */
 
 /*! all exports used */
 
-/*! exports provided: URI */
+/*! exports provided: conf, language */
 
-/*! exports provided: setupMode1, setupMode */
+/*!************************************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/basic-languages/javascript/javascript.js ***!
+  \************************************************************************************/
 
-/*! exports used: URI */
-
-/*!**********************************************************************************!*\
-  !*** ./node_modules/monaco-editor/esm/vs/language/html/htmlMode.js + 31 modules ***!
-  \**********************************************************************************/
-
-/*!***********************************************************************************!*\
-  !*** ./node_modules/monaco-editor/esm/vs/language/html/_deps/vscode-uri/index.js ***!
-  \***********************************************************************************/
+/*!************************************************************************************!*\
+  !*** ./node_modules/monaco-editor/esm/vs/basic-languages/typescript/typescript.js ***!
+  \************************************************************************************/

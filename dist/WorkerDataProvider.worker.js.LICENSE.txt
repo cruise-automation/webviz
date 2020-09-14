@@ -403,6 +403,8 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! webviz-core/src/players/types */
 
+/*! webviz-core/src/util */
+
 /*! webviz-core/src/util/CachedFilelike */
 
 /*! webviz-core/src/util/Logger */
@@ -581,6 +583,10 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!************************************************!*\
   !*** ./node_modules/util-deprecate/browser.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./packages/webviz-core/src/util/index.js ***!
   \************************************************/
 
 /*!*************************************************!*\

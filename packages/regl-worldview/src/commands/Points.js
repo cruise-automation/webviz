@@ -15,11 +15,11 @@ import Command, { type CommonCommandProps } from "./Command";
 
 type Props = {
   ...CommonCommandProps,
-  children: $ReadOnlyArray<PointType>,
   useWorldSpaceSize?: boolean,
+  children: $ReadOnlyArray<PointType>,
 };
 
-const makePointsCommand = (useWorldSpacePointSize: boolean) => {
+const makePointsCommand = (useWorldSpaceSize: boolean) => {
   return (regl: Regl) => {
     const [min, max] = regl.limits.pointSizeDims;
     return withPose({
@@ -88,7 +88,7 @@ const makePointsCommand = (useWorldSpacePointSize: boolean) => {
           const size = props.scale.x || 1;
           return Math.min(max, Math.max(min, size));
         },
-        useWorldSpacePointSize,
+        useWorldSpaceSize,
         viewportWidth: regl.context("viewportWidth"),
         viewportHeight: regl.context("viewportHeight"),
       },

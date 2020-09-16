@@ -7,7 +7,7 @@
 # This is a static build of just the Webviz application.
 # This container is published at https://hub.docker.com/r/cruise/webviz.
 
-FROM node:10.16-slim
+FROM node:10.22-slim
 
 # Install some general dependencies for stuff below and for CircleCI;
 # https://circleci.com/docs/2.0/custom-images/#required-tools-for-primary-containers

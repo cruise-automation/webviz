@@ -319,12 +319,13 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     // If we are supplied controlled camera state and no onCameraStateChange callback
     // then there is a 'fixed' camera from outside of worldview itself.
     const isFixedCamera = cameraState && !onCameraStateChange;
+    const devicePixelRatio = window.devicePixelRatio || 1;
     const canvasHtml = (
       <React.Fragment>
         <canvas
           style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
-          width={width}
-          height={height}
+          width={width * devicePixelRatio}
+          height={height * devicePixelRatio}
           ref={this._canvas}
           onMouseUp={this._onMouseUp}
           onMouseDown={this._onMouseDown}

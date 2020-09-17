@@ -58,6 +58,9 @@ export type BaseProps = {|
   onMouseUp?: MouseHandler,
   onMouseMove?: MouseHandler,
   onClick?: MouseHandler,
+
+  // Used to scale the canvas resolution and provide a higher image quality
+  resolutionScale?: number,
   ...Dimensions,
 |};
 
@@ -93,6 +96,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
     shiftKeys: true,
     style: {},
+    resolutionScale: 1,
   };
 
   constructor(props: BaseProps) {
@@ -314,17 +318,28 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
   }
 
   render() {
-    const { width, height, showDebug, keyMap, shiftKeys, style, cameraState, onCameraStateChange } = this.props;
+    const {
+      width,
+      height,
+      showDebug,
+      keyMap,
+      shiftKeys,
+      style,
+      cameraState,
+      onCameraStateChange,
+      resolutionScale,
+    } = this.props;
     const { worldviewContext } = this.state;
     // If we are supplied controlled camera state and no onCameraStateChange callback
     // then there is a 'fixed' camera from outside of worldview itself.
     const isFixedCamera = cameraState && !onCameraStateChange;
+    const canvasScale = resolutionScale || 1;
     const canvasHtml = (
       <React.Fragment>
         <canvas
           style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
-          width={width}
-          height={height}
+          width={width * canvasScale}
+          height={height * canvasScale}
           ref={this._canvas}
           onMouseUp={this._onMouseUp}
           onMouseDown={this._onMouseDown}

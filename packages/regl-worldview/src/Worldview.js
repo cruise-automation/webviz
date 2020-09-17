@@ -96,6 +96,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
     shiftKeys: true,
     style: {},
+    resolutionScale: 1,
   };
 
   constructor(props: BaseProps) {
@@ -332,13 +333,12 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
     // If we are supplied controlled camera state and no onCameraStateChange callback
     // then there is a 'fixed' camera from outside of worldview itself.
     const isFixedCamera = cameraState && !onCameraStateChange;
-    const canvasScale = resolutionScale || 1;
     const canvasHtml = (
       <React.Fragment>
         <canvas
           style={{ width, height, maxWidth: "100%", maxHeight: "100%" }}
-          width={width * canvasScale}
-          height={height * canvasScale}
+          width={width * resolutionScale}
+          height={height * resolutionScale}
           ref={this._canvas}
           onMouseUp={this._onMouseUp}
           onMouseDown={this._onMouseDown}

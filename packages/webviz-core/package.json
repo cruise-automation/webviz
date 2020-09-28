@@ -17,7 +17,7 @@
     "memoize-weak": "1.0.2",
     "moment": "2.22.2",
     "moment-duration-format": "2.2.2",
-    "moment-timezone": "0.5.23",
+    "moment-timezone": "0.5.28",
     "natsort": "2.0.0",
     "nearley": "2.15.1",
     "prop-types": "15.6.2",

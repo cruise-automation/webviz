@@ -44,9 +44,13 @@ const instancedPoints = {
 };
 
 const stories = storiesOf("Integration/Points", module);
+
+// $FlowFixMe - Flow does not like that `<Points />` has optional properties
 generateNonInstancedClickAssertions<PointType>("Point", Points, twoPointsInARow).forEach(({ name, story }) =>
   stories.add(name, story)
 );
+
+// $FlowFixMe - Flow does not like that `<Points />` has optional properties
 generateInstancedClickAssertions<PointType>("Point", Points, instancedPoints).forEach(({ name, story }) =>
   stories.add(name, story)
 );

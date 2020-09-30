@@ -154,10 +154,6 @@ and limitations under the License.
 
 /*! ../../routes */
 
-/*! ../browser-detector */
-
-/*! ../collection-utils */
-
 /*! ../utils/CameraStateControls */
 
 /*! ./../../../../node_modules/webpack/buildin/global.js */
@@ -674,8 +670,6 @@ and limitations under the License.
 
 /*! ./_uid */
 
-/*! ./browser-detector */
-
 /*! ./cjs/react-dom.production.min.js */
 
 /*! ./cjs/react-is.production.min.js */
@@ -685,8 +679,6 @@ and limitations under the License.
 /*! ./cjs/scheduler.production.min.js */
 
 /*! ./codeSandboxUtils */
-
-/*! ./collection-utils */
 
 /*! ./constant */
 
@@ -699,12 +691,6 @@ and limitations under the License.
 /*! ./data/mappings.js */
 
 /*! ./defineProperty */
-
-/*! ./detection-strategy/object.js */
-
-/*! ./detection-strategy/scroll.js */
-
-/*! ./element-utils */
 
 /*! ./emptyFunction */
 
@@ -725,10 +711,6 @@ and limitations under the License.
 /*! ./icons/Copy */
 
 /*! ./icons/Done */
-
-/*! ./id-generator */
-
-/*! ./id-handler */
 
 /*! ./identity */
 
@@ -808,8 +790,6 @@ and limitations under the License.
 
 /*! ./lib/xorwow */
 
-/*! ./listener-handler */
-
 /*! ./matchPath */
 
 /*! ./mdx-provider */
@@ -822,15 +802,11 @@ and limitations under the License.
 
 /*! ./property */
 
-/*! ./reporter */
-
 /*! ./routes */
 
 /*! ./seedrandom */
 
 /*! ./src/normalizeWheel.js */
-
-/*! ./state-handler */
 
 /*! ./stubArray */
 
@@ -849,8 +825,6 @@ and limitations under the License.
 /*! ./urls */
 
 /*! ./useRange */
-
-/*! ./utils */
 
 /*! ./utils/WorldviewCodeEditor */
 
@@ -942,8 +916,6 @@ and limitations under the License.
 
 /*! base64-js */
 
-/*! batch-processor */
-
 /*! common/fixtures/Duck.glb */
 
 /*! component-props */
@@ -957,8 +929,6 @@ and limitations under the License.
 /*! distance-to-line-segment */
 
 /*! earcut */
-
-/*! element-resize-detector */
 
 /*! exports provided: BrowserRouter, HashRouter, Link, MemoryRouter, NavLink, Prompt, Redirect, Route, Router, StaticRouter, Switch, generatePath, matchPath, withRouter */
 
@@ -1049,8 +1019,6 @@ and limitations under the License.
 /*! prop-types */
 
 /*! react */
-
-/*! react-container-dimensions */
 
 /*! react-copy-to-clipboard */
 
@@ -2702,10 +2670,6 @@ and limitations under the License.
   !*** ./packages/regl-worldview/node_modules/lodash/stubFalse.js ***!
   \******************************************************************/
 
-/*!******************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/prop-types/index.js ***!
-  \******************************************************************/
-
 /*!*******************************************************************!*\
   !*** ./node_modules/merge-anything/dist/index.esm.js + 1 modules ***!
   \*******************************************************************/
@@ -2772,10 +2736,6 @@ and limitations under the License.
 
 /*!*******************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/earcut/src/earcut.js ***!
-  \*******************************************************************/
-
-/*!*******************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/invariant/browser.js ***!
   \*******************************************************************/
 
 /*!*******************************************************************!*\
@@ -3839,10 +3799,6 @@ and limitations under the License.
   \***************************************************************************/
 
 /*!***************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/batch-processor/src/utils.js ***!
-  \***************************************************************************/
-
-/*!***************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_arrayIncludesWith.js ***!
   \***************************************************************************/
 
@@ -4718,18 +4674,6 @@ and limitations under the License.
   !*** ./packages/regl-worldview/node_modules/@babel/runtime/helpers/objectSpread.js ***!
   \*************************************************************************************/
 
-/*!*************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/batch-processor/src/batch-processor.js ***!
-  \*************************************************************************************/
-
-/*!*************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/prop-types/factoryWithThrowingShims.js ***!
-  \*************************************************************************************/
-
-/*!*************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/prop-types/lib/ReactPropTypesSecret.js ***!
-  \*************************************************************************************/
-
 /*!**************************************************************************************!*\
   !*** ./node_modules/regenerate-unicode-properties/Binary_Property/Case_Ignorable.js ***!
   \**************************************************************************************/
@@ -4767,19 +4711,11 @@ and limitations under the License.
   \**************************************************************************************/
 
 /*!**************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/reporter.js ***!
-  \**************************************************************************************/
-
-/*!**************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/gl-matrix/lib/gl-matrix.js + 10 modules ***!
   \**************************************************************************************/
 
 /*!**************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/normalize-wheel/src/isEventSupported.js ***!
-  \**************************************************************************************/
-
-/*!**************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/react-container-dimensions/lib/index.js ***!
   \**************************************************************************************/
 
 /*!***************************************************************************************!*\
@@ -4848,10 +4784,6 @@ and limitations under the License.
 
 /*!****************************************************************************************!*\
   !*** ./node_modules/regenerate-unicode-properties/General_Category/Space_Separator.js ***!
-  \****************************************************************************************/
-
-/*!****************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/id-handler.js ***!
   \****************************************************************************************/
 
 /*!*****************************************************************************************!*\
@@ -4927,10 +4859,6 @@ and limitations under the License.
   \******************************************************************************************/
 
 /*!******************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/id-generator.js ***!
-  \******************************************************************************************/
-
-/*!******************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/normalize-wheel/src/ExecutionEnvironment.js ***!
   \******************************************************************************************/
 
@@ -4956,14 +4884,6 @@ and limitations under the License.
 
 /*!*******************************************************************************************!*\
   !*** ./node_modules/regenerate-unicode-properties/Script_Extensions/Old_South_Arabian.js ***!
-  \*******************************************************************************************/
-
-/*!*******************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/element-utils.js ***!
-  \*******************************************************************************************/
-
-/*!*******************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/state-handler.js ***!
   \*******************************************************************************************/
 
 /*!********************************************************************************************!*\
@@ -5004,18 +4924,6 @@ and limitations under the License.
 
 /*!**********************************************************************************************!*\
   !*** ./node_modules/regenerate-unicode-properties/Script_Extensions/Meroitic_Hieroglyphs.js ***!
-  \**********************************************************************************************/
-
-/*!**********************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/browser-detector.js ***!
-  \**********************************************************************************************/
-
-/*!**********************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/collection-utils.js ***!
-  \**********************************************************************************************/
-
-/*!**********************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/listener-handler.js ***!
   \**********************************************************************************************/
 
 /*!***********************************************************************************************!*\
@@ -5077,18 +4985,6 @@ and limitations under the License.
 /*!*****************************************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/@babel/runtime/helpers/objectWithoutPropertiesLoose.js ***!
   \*****************************************************************************************************/
-
-/*!*****************************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/element-resize-detector.js ***!
-  \*****************************************************************************************************/
-
-/*!*******************************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/detection-strategy/object.js ***!
-  \*******************************************************************************************************/
-
-/*!*******************************************************************************************************!*\
-  !*** ./packages/regl-worldview/node_modules/element-resize-detector/src/detection-strategy/scroll.js ***!
-  \*******************************************************************************************************/
 
 /*!************************************************************************************************************!*\
   !*** ./node_modules/react-router/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js ***!

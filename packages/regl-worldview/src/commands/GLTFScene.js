@@ -43,7 +43,11 @@ const getSceneToDraw = ({ json }) => {
     return json.scene;
   }
   // Draw the first scene if the scene key is missing.
-  return Object.keys(json.scenes)[0];
+  const keys = Object.keys(json.scenes ?? {});
+  if (keys.length === 0) {
+    throw new Error("No scenes to render");
+  }
+  return keys[0];
 };
 
 const drawModel = (regl) => {

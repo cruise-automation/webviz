@@ -88,7 +88,7 @@ export function groupLinesIntoInstancedLineLists(
         fillExtend(metadataByIndex, message, points.length);
         fillExtend(poses, message.pose, points.length - (message.poses ? message.poses.length : 0));
 
-        if (baseMessage.closed) {
+        if (message.closed) {
           // If this is a closed marker, we need to add an extra point to generate a new line
           // from the last element to the first one. We also need to add the metadata and a pose
           // that correspond to that point.

@@ -35,7 +35,10 @@ window.videoRecording = {
     if (error) {
       // This object is serialized and deserialized to pass it to Puppeteer, so passing the error object itself will
       // just result in { "action": "error", "error": {} }. Instead pass a string - the stack itself.
-      const payload = { action: "error", error: error.stack };
+      const payload = {
+        action: "error",
+        error: error.stack || error.message || (error.toString && error.toString()) || (error: any),
+      };
       // Clear error, since if it is whitelisted we will ignore and try to keep running
       error = null;
       if (errorSignal) {

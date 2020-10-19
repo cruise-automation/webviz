@@ -90,7 +90,7 @@ describe("CachedFilelike", () => {
 
     it("keeps reconnecting when keepReconnectingCallback is set", async () => {
       const fileReader = new InMemoryFileReader(buffer.Buffer.from([0, 1, 2, 3]));
-      let interval, dataCallback;
+      let interval, dataCallback, destroyed;
       let stopSendingErrors = false;
       jest.spyOn(fileReader, "fetch").mockImplementation(() => {
         return {
@@ -108,6 +108,7 @@ describe("CachedFilelike", () => {
           },
           destroy() {
             clearInterval(interval);
+            destroyed = true;
           },
         };
       });
@@ -136,6 +137,7 @@ describe("CachedFilelike", () => {
       const data = await readerPromise;
       expect(keepReconnectingCallback.mock.calls).toEqual([[true], [false]]);
       expect([...data]).toEqual([1, 2]);
+      expect(destroyed).toBe(true);
     });
 
     it("returns an empty buffer when requesting size 0 (does not throw an error)", (done) => {

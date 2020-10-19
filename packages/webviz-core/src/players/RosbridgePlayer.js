@@ -23,7 +23,7 @@ import {
   type PublishPayload,
   type SubscribePayload,
   type Topic,
-  type MessageDefinitionsByTopic,
+  type ParsedMessageDefinitionsByTopic,
 } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { objectValues } from "webviz-core/src/util";
@@ -63,9 +63,10 @@ export default class RosbridgePlayer implements Player {
   _messageOrder: TimestampMethod = "receiveTime";
   _requestTopicsTimeout: ?TimeoutID; // setTimeout() handle for _requestTopics().
   _topicPublishers: { [topicName: string]: ROSLIB.Topic } = {};
-  _messageDefinitionsByTopic: MessageDefinitionsByTopic = {};
+  _parsedMessageDefinitionsByTopic: ParsedMessageDefinitionsByTopic = {};
   _bobjectTopics: Set<string> = new Set();
   _parsedTopics: Set<string> = new Set();
+  _receivedBytes: number = 0;
 
   constructor(url: string) {
     this._url = url;
@@ -148,11 +149,10 @@ export default class RosbridgePlayer implements Player {
         }
         topics.push({ name: topicName, datatype: type });
         datatypeDescriptions.push({ type, messageDefinition });
-        const parsedMessageDefinition =
+        const parsedDefinition =
           typeof messageDefinition === "string" ? parseMessageDefinition(messageDefinition) : messageDefinition;
-        messageReaders[type] =
-          messageReaders[type] || new MessageReader(parsedMessageDefinition, { freeze: FREEZE_MESSAGES });
-        this._messageDefinitionsByTopic[topicName] = messageDefinition;
+        messageReaders[type] = messageReaders[type] || new MessageReader(parsedDefinition, { freeze: FREEZE_MESSAGES });
+        this._parsedMessageDefinitionsByTopic[topicName] = parsedDefinition;
       }
 
       // Sort them for easy comparison. If nothing has changed here, bail out.
@@ -224,6 +224,7 @@ export default class RosbridgePlayer implements Player {
       activeData: {
         messages,
         bobjects,
+        totalBytesReceived: this._receivedBytes,
         messageOrder: this._messageOrder,
         startTime: _start,
         endTime: currentTime,
@@ -235,7 +236,7 @@ export default class RosbridgePlayer implements Player {
         lastSeekTime: 1,
         topics: _providerTopics,
         datatypes: _providerDatatypes,
-        messageDefinitionsByTopic: this._messageDefinitionsByTopic,
+        parsedMessageDefinitionsByTopic: this._parsedMessageDefinitionsByTopic,
         playerWarnings: NO_WARNINGS,
       },
     });
@@ -354,4 +355,5 @@ export default class RosbridgePlayer implements Player {
   seekPlayback(_time: Time) {}
   setPlaybackSpeed(_speedFraction: number) {}
   requestBackfill() {}
+  setGlobalVariables() {}
 }

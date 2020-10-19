@@ -75,7 +75,7 @@ const buffer = {
     [LEVELS.STALE]: new Map(),
   },
   sortedAutocompleteEntries: [],
-  diagnosticsInOrderReceived: [],
+  diagnosticsIdsInOrderReceived: [],
 };
 
 describe("diagnostics", () => {

@@ -28,13 +28,14 @@ import {
   type PublishPayload,
   type SubscribePayload,
   type Topic,
-  type MessageDefinitionsByTopic,
+  type ParsedMessageDefinitionsByTopic,
 } from "webviz-core/src/players/types";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
 import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 import { stringifyParams } from "webviz-core/src/util/layout";
+import { isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
 import { getSanitizedTopics } from "webviz-core/src/util/selectors";
 import sendNotification, { type NotificationType } from "webviz-core/src/util/sendNotification";
 import {
@@ -42,6 +43,7 @@ import {
   clampTime,
   fromMillis,
   fromNanoSec,
+  percentOf,
   subtractTimes,
   toSec,
   type TimestampMethod,
@@ -121,14 +123,14 @@ export default class RandomAccessPlayer implements Player {
   _id: string = uuid.v4();
   _messages: Message[] = [];
   _bobjects: $ReadOnlyArray<BobjectMessage> = [];
+  _receivedBytes: number = 0;
   _messageOrder: TimestampMethod = "receiveTime";
   _hasError = false;
   _closed = false;
   _seekToTime: ?Time;
   _lastRangeMillis: ?number;
-  _messageDefinitionsByTopic: MessageDefinitionsByTopic;
+  _parsedMessageDefinitionsByTopic: ParsedMessageDefinitionsByTopic;
   _preloadingEnabled: boolean;
-  _bobjectsEnabled: boolean;
 
   constructor(
     providerDescriptor: DataProviderDescriptor,
@@ -142,7 +144,6 @@ export default class RandomAccessPlayer implements Player {
     this._metricsCollector = metricsCollector || new NoopMetricsCollector();
     this._seekToTime = seekToTime;
     this._preloadingEnabled = getExperimentalFeature("preloading");
-    this._bobjectsEnabled = getExperimentalFeature("useBinaryTranslation");
     this._metricsCollector.playerConstructed();
 
     document.addEventListener("visibilitychange", this._handleDocumentVisibilityChange, false);
@@ -192,20 +193,27 @@ export default class RandomAccessPlayer implements Player {
               this._reconnecting = metadata.reconnecting;
               this._emitState();
               break;
-            case "performance":
+            case "average_throughput":
               this._metricsCollector.recordDataProviderPerformance(metadata);
               break;
             case "initializationPerformance":
               this._metricsCollector.recordDataProviderInitializePerformance(metadata);
+              break;
+            case "received_bytes":
+              this._receivedBytes += metadata.bytes;
               break;
             default:
               (metadata.type: empty);
           }
         },
       })
-      .then(({ start, end, topics, datatypes, messageDefinitionsByTopic, providesParsedMessages }) => {
+      .then(({ start, end, topics, messageDefinitions, providesParsedMessages }) => {
         if (!providesParsedMessages) {
           throw new Error("Use ParseMessagesDataProvider to parse raw messages");
+        }
+        const parsedMessageDefinitions = messageDefinitions;
+        if (parsedMessageDefinitions.type === "raw") {
+          throw new Error("RandomAccessPlayer requires parsed message definitions");
         }
 
         const initialTime = clampTime(
@@ -218,8 +226,8 @@ export default class RandomAccessPlayer implements Player {
         this._currentTime = initialTime;
         this._end = end;
         this._providerTopics = topics;
-        this._providerDatatypes = datatypes;
-        this._messageDefinitionsByTopic = messageDefinitionsByTopic;
+        this._providerDatatypes = parsedMessageDefinitions.datatypes;
+        this._parsedMessageDefinitionsByTopic = parsedMessageDefinitions.parsedMessageDefinitionsByTopic;
         this._initializing = false;
         this._reportInitialized();
 
@@ -297,6 +305,7 @@ export default class RandomAccessPlayer implements Player {
         : {
             messages,
             bobjects,
+            totalBytesReceived: this._receivedBytes,
             messageOrder: this._messageOrder,
             currentTime: clampTime(this._currentTime, this._start, this._end),
             startTime: this._start,
@@ -306,7 +315,7 @@ export default class RandomAccessPlayer implements Player {
             lastSeekTime: this._lastSeekEmitTime,
             topics: this._providerTopics,
             datatypes: this._providerDatatypes,
-            messageDefinitionsByTopic: this._messageDefinitionsByTopic,
+            parsedMessageDefinitionsByTopic: this._parsedMessageDefinitionsByTopic,
             playerWarnings: NO_WARNINGS,
           },
     };
@@ -407,6 +416,9 @@ export default class RandomAccessPlayer implements Player {
     if (parsedTopics.length + bobjectTopics.length === 0) {
       return { parsedMessages: [], bobjects: [] };
     }
+    if (!this.hasCachedRange(start, end)) {
+      this._metricsCollector.recordUncachedRangeRequest();
+    }
     const messages = await this._provider.getMessages(start, end, {
       bobjects: bobjectTopics,
       parsedMessages: parsedTopics,
@@ -472,10 +484,7 @@ export default class RandomAccessPlayer implements Player {
       });
     return {
       parsedMessages: filterMessages(parsedMessages, parsedTopics),
-      // The data providers send ROS binary messages in place of bobjects when the flag is off. This
-      // is useful for some tests, but causes some havoc in practice when people assume `!isBobject`
-      // means "is parsed" in panels and nodes.
-      bobjects: this._bobjectsEnabled ? filterMessages(bobjects, bobjectTopics) : [],
+      bobjects: filterMessages(bobjects, bobjectTopics),
     };
   }
 
@@ -516,7 +525,7 @@ export default class RandomAccessPlayer implements Player {
   }
 
   _setCurrentTime(time: Time): void {
-    this._metricsCollector.recordPlaybackTime(time);
+    this._metricsCollector.recordPlaybackTime(time, !this.hasCachedRange(this._start, this._end));
     this._currentTime = clampTime(time, this._start, this._end);
   }
 
@@ -603,4 +612,16 @@ export default class RandomAccessPlayer implements Player {
     this._metricsCollector.close();
     document.removeEventListener("visibilitychange", this._handleDocumentVisibilityChange);
   }
+
+  // Exposed for testing.
+  hasCachedRange(start: Time, end: Time) {
+    const fractionStart = percentOf(this._start, this._end, start) / 100;
+    const fractionEnd = percentOf(this._start, this._end, end) / 100;
+    return isRangeCoveredByRanges(
+      { start: fractionStart, end: fractionEnd },
+      this._progress.fullyLoadedFractionRanges ?? []
+    );
+  }
+
+  setGlobalVariables() {}
 }

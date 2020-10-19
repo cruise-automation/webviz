@@ -31,7 +31,6 @@ function getProvider() {
   return new MemoryDataProvider({
     messages,
     topics: [{ name: "/some_topic1", datatype: "some_datatype" }],
-    datatypes: {},
     providesParsedMessages: true,
     messageDefinitionsByTopic: { "/some_topic1": "int32 value" },
   });
@@ -58,8 +57,31 @@ describe("RenameDataProvider", () => {
         topics: [
           { datatype: "some_datatype", name: `${SECOND_SOURCE_PREFIX}/some_topic1`, originalTopic: "/some_topic1" },
         ],
-        datatypes: {},
-        messageDefinitionsByTopic: { [`${SECOND_SOURCE_PREFIX}/some_topic1`]: "int32 value" },
+        messageDefinitions: {
+          type: "raw",
+          messageDefinitionsByTopic: { [`${SECOND_SOURCE_PREFIX}/some_topic1`]: "int32 value" },
+        },
+        numMessages: undefined,
+        providesParsedMessages: true,
+      });
+    });
+
+    it("renames initialization data - parsed message definitions", async () => {
+      const baseProvider = getProvider();
+      baseProvider.parsedMessageDefinitionsByTopic = { "/some_topic1": [] };
+      const provider = getRenameDataProvider(baseProvider, SECOND_SOURCE_PREFIX);
+      expect(await provider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
+        start: { nsec: 0, sec: 101 },
+        end: { nsec: 0, sec: 103 },
+        topics: [
+          { datatype: "some_datatype", name: `${SECOND_SOURCE_PREFIX}/some_topic1`, originalTopic: "/some_topic1" },
+        ],
+        messageDefinitions: {
+          type: "parsed",
+          messageDefinitionsByTopic: { [`${SECOND_SOURCE_PREFIX}/some_topic1`]: "int32 value" },
+          datatypes: {},
+          parsedMessageDefinitionsByTopic: { [`${SECOND_SOURCE_PREFIX}/some_topic1`]: [] },
+        },
         numMessages: undefined,
         providesParsedMessages: true,
       });

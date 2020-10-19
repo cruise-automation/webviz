@@ -113,6 +113,7 @@ type Props = {|
   filterText: string,
   tooltips?: Node[],
   visibleTopicsCount: number,
+  diffModeEnabled: boolean,
 |};
 
 export default function TreeNodeRow({
@@ -131,6 +132,7 @@ export default function TreeNodeRow({
   visibleByColumn,
   visibleTopicsCount,
   width,
+  diffModeEnabled,
 }: Props) {
   const topicName = node.type === "topic" ? node.topicName : "";
   const datatype = node.type === "topic" ? node.datatype : undefined;
@@ -284,6 +286,8 @@ export default function TreeNodeRow({
                   }
                   visibleInScene={!!visibleByColumn[columnIdx]}
                   {...mouseEventHandlersByColumnIdx[columnIdx]}
+                  diffModeEnabled={diffModeEnabled}
+                  columnIndex={columnIdx}
                 />
               );
             })}
@@ -291,8 +295,8 @@ export default function TreeNodeRow({
         )}
         <TreeNodeMenu
           datatype={showTopicSettings ? datatype : undefined}
-          disableBaseColumn={!availableByColumn[0]}
-          disableFeatureColumn={!availableByColumn[1]}
+          disableBaseColumn={diffModeEnabled || !availableByColumn[0]}
+          disableFeatureColumn={diffModeEnabled || !availableByColumn[1]}
           hasFeatureColumn={hasFeatureColumn && availableByColumn[1]}
           nodeKey={key}
           providerAvailable={providerAvailable}

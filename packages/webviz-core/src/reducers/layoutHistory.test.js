@@ -6,22 +6,20 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { createMemoryHistory } from "history";
-
 import delay from "webviz-core/shared/delay";
 import { redoLayoutChange, undoLayoutChange } from "webviz-core/src/actions/layoutHistory";
 import { changePanelLayout, savePanelConfigs } from "webviz-core/src/actions/panels";
-import createRootReducer from "webviz-core/src/reducers";
 import { NEVER_PUSH_LAYOUT_THRESHOLD_MS } from "webviz-core/src/reducers/layoutHistory";
 import { GLOBAL_STATE_STORAGE_KEY } from "webviz-core/src/reducers/panels";
-import configureStore from "webviz-core/src/store";
+import { getGlobalStoreForTest } from "webviz-core/src/store/getGlobalStore";
 import Storage from "webviz-core/src/util/Storage";
 
 const getStore = () => {
-  const history = createMemoryHistory();
-  const store = configureStore(createRootReducer(history), [], history);
-  store.checkState = (fn) =>
-    fn({ layoutHistory: store.getState().layoutHistory, persistedState: store.getState().persistedState });
+  const store = getGlobalStoreForTest();
+  store.checkState = (fn) => {
+    const { persistedState, router, layoutHistory } = store.getState();
+    fn({ persistedState: { ...persistedState, search: router.location.search }, layoutHistory, router });
+  };
   return store;
 };
 

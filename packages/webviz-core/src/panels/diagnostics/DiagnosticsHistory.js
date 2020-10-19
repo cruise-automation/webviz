@@ -14,7 +14,6 @@ import {
   type DiagnosticsById,
   type DiagnosticId,
   type DiagnosticsByLevel,
-  type DiagnosticInfo,
   LEVELS,
   computeDiagnosticInfo,
 } from "./util";
@@ -33,7 +32,7 @@ export type DiagnosticsBuffer = {|
   diagnosticsById: DiagnosticsById,
   sortedAutocompleteEntries: DiagnosticAutocompleteEntry[],
   diagnosticsByLevel: DiagnosticsByLevel,
-  diagnosticsInOrderReceived: DiagnosticInfo[],
+  diagnosticsIdsInOrderReceived: DiagnosticId[],
 |};
 
 type Props = {|
@@ -52,13 +51,8 @@ export function addMessage(buffer: DiagnosticsBuffer, message: Message): Diagnos
     const info = computeDiagnosticInfo(status, header.stamp);
     const oldInfo = buffer.diagnosticsById.get(info.id);
     const oldHardwareIdInfo = buffer.diagnosticsById.get(`|${info.id.split("|")[1]}|`);
-
-    if (oldInfo) {
-      buffer.diagnosticsInOrderReceived = buffer.diagnosticsInOrderReceived.map((node) =>
-        node.id === info.id ? info : node
-      );
-    } else {
-      buffer.diagnosticsInOrderReceived.push(info);
+    if (!oldInfo) {
+      buffer.diagnosticsIdsInOrderReceived.push(info.id);
     }
 
     // update diagnosticsByLevel
@@ -126,7 +120,7 @@ export function defaultDiagnosticsBuffer(): DiagnosticsBuffer {
       [LEVELS.ERROR]: new Map(),
       [LEVELS.STALE]: new Map(),
     },
-    diagnosticsInOrderReceived: [],
+    diagnosticsIdsInOrderReceived: [],
   };
 }
 

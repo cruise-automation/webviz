@@ -87,6 +87,9 @@ export const colors = {
   BORDER_LIGHT: tinyColor(baseColors.LIGHT)
     .setAlpha(0.1)
     .toRgbString(),
+  DIFF_MODE_SOURCE_1: baseColors.MAGENTA,
+  DIFF_MODE_SOURCE_2: baseColors.TEAL,
+  DIFF_MODE_SOURCE_BOTH: baseColors.DARK7,
 };
 
 export const textSize = {
@@ -107,3 +110,5 @@ export const rounded = {
   PILL: "999px",
   CIRCLE: "50%",
 };
+
+export const ROBOTO_MONO = "Roboto Mono";

@@ -12,7 +12,7 @@ type Rules = {
   [name: string]: ((value: any) => ?string)[],
 };
 
-const layoutNameRegex = /[@%\s]/; // Don't allow these characters in layoutName.
+const layoutNameRegex = /[@%]/; // Don't allow these characters in layoutName.
 
 function isEmpty(value: any) {
   return value == null;
@@ -62,9 +62,13 @@ export const isString = (value: any): ?string => (typeof value !== "string" ? "m
 
 export const minLen = (minLength: number = 0) => (value: any): ?string => {
   if (Array.isArray(value)) {
-    return value.length < minLength ? `must contain at least ${minLength} array items` : undefined;
+    return value.length < minLength
+      ? `must contain at least ${minLength} array ${minLength === 1 ? "item" : "items"}`
+      : undefined;
   } else if (typeof value === "string") {
-    return value.length < minLength ? `must contain at least ${minLength} characters` : undefined;
+    return value.length < minLength
+      ? `must contain at least ${minLength} ${minLength === 1 ? "character" : "characters"}`
+      : undefined;
   }
 };
 
@@ -215,4 +219,4 @@ const isLayoutName = (value: string): ?string => {
   }
 };
 
-export const layoutNameValidator = createPrimitiveValidator([minLen(3), isLayoutName]);
+export const layoutNameValidator = createPrimitiveValidator([minLen(1), maxLen(120), isLayoutName]);

@@ -20,13 +20,13 @@ import type {
   GetMessagesResult,
   GetMessagesTopics,
   InitializationResult,
-  PerformanceMetadata,
+  AverageThroughput,
 } from "webviz-core/src/dataProviders/types";
 import type { Message } from "webviz-core/src/players/types";
-import { objectValues } from "webviz-core/src/util";
-import { bagConnectionsToDatatypes, bagConnectionsToTopics } from "webviz-core/src/util/bagConnectionsHelper";
+import { objectValues, debounceReduce } from "webviz-core/src/util";
+import { bagConnectionsToTopics } from "webviz-core/src/util/bagConnectionsHelper";
 import { getBagChunksOverlapCount } from "webviz-core/src/util/bags";
-import CachedFilelike from "webviz-core/src/util/CachedFilelike";
+import CachedFilelike, { type FileReader } from "webviz-core/src/util/CachedFilelike";
 import Logger from "webviz-core/src/util/Logger";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromMillis, subtractTimes } from "webviz-core/src/util/time";
@@ -48,26 +48,19 @@ function reportMalformedError(operation: string, error: Error): void {
   );
 }
 
-type TimedPerformanceMetadata = {|
+type TimedDataThroughput = {|
   startTime: Time,
   endTime: Time,
-  data: PerformanceMetadata,
+  data: AverageThroughput,
 |};
-export const statsAreAdjacent = (a: TimedPerformanceMetadata, b: TimedPerformanceMetadata): boolean => {
-  return (
-    isEqual(a.data.topics, b.data.topics) &&
-    a.data.inputSource === b.data.inputSource &&
-    a.data.inputType === b.data.inputType &&
-    isEqual(TimeUtil.add(a.endTime, { sec: 0, nsec: 1 }), b.startTime)
-  );
+export const statsAreAdjacent = (a: TimedDataThroughput, b: TimedDataThroughput): boolean => {
+  return isEqual(a.data.topics, b.data.topics) && isEqual(TimeUtil.add(a.endTime, { sec: 0, nsec: 1 }), b.startTime);
 };
-export const mergeStats = (a: TimedPerformanceMetadata, b: TimedPerformanceMetadata): TimedPerformanceMetadata => ({
+export const mergeStats = (a: TimedDataThroughput, b: TimedDataThroughput): TimedDataThroughput => ({
   startTime: a.startTime,
   endTime: b.endTime,
   data: {
     // Don't spread here, we need to update this function if we add fields.
-    inputSource: a.data.inputSource,
-    inputType: a.data.inputType,
     topics: a.data.topics,
     type: a.data.type,
     totalSizeOfMessages: a.data.totalSizeOfMessages + b.data.totalSizeOfMessages,
@@ -78,13 +71,31 @@ export const mergeStats = (a: TimedPerformanceMetadata, b: TimedPerformanceMetad
   },
 });
 
+// A FileReader that "spies" on data callbacks. Used to log data consumed.
+class TeeReader {
+  _reader: FileReader;
+  _dataCallback: (data: Buffer) => void;
+  constructor(reader: FileReader, dataCallback: (data: Buffer) => void) {
+    this._reader = reader;
+    this._dataCallback = dataCallback;
+  }
+  open() {
+    return this._reader.open();
+  }
+  fetch(offset: number, length: number) {
+    const stream = this._reader.fetch(offset, length);
+    stream.on("data", this._dataCallback);
+    return stream;
+  }
+}
+
 // Read from a ROS Bag. `bagPath` can either represent a local file, or a remote bag. See
 // `BrowserHttpReader` for how to set up a remote server to be able to directly stream from it.
 // Returns raw messages that still need to be parsed by `ParseMessagesDataProvider`.
 export default class BagDataProvider implements DataProvider {
   _options: Options;
   _bag: Bag;
-  _lastPerformanceStatsToLog: ?TimedPerformanceMetadata;
+  _lastPerformanceStatsToLog: ?TimedDataThroughput;
   _extensionPoint: ?ExtensionPoint;
 
   constructor(options: Options, children: DataProviderDescriptor[]) {
@@ -100,7 +111,13 @@ export default class BagDataProvider implements DataProvider {
     await decompress.isLoaded;
 
     if (bagPath.type === "remoteBagUrl") {
-      const fileReader = new BrowserHttpReader(bagPath.url);
+      const logData = debounceReduce({
+        action: (bytes) => extensionPoint.reportMetadataCallback({ type: "received_bytes", bytes }),
+        wait: 10,
+        reducer: (bytesSoFar, buffer) => bytesSoFar + buffer.length,
+        initialValue: 0,
+      });
+      const fileReader = new TeeReader(new BrowserHttpReader(bagPath.url), logData);
       const remoteReader = new CachedFilelike({
         fileReader,
         cacheSizeInBytes: cacheSizeInBytes || 1024 * 1024 * 200, // 200MiB
@@ -185,8 +202,7 @@ export default class BagDataProvider implements DataProvider {
       start: startTime,
       end: endTime,
       topics: bagConnectionsToTopics(connections, chunkInfos),
-      datatypes: bagConnectionsToDatatypes(connections),
-      messageDefinitionsByTopic,
+      messageDefinitions: { type: "raw", messageDefinitionsByTopic },
       providesParsedMessages: false,
     };
   }
@@ -202,7 +218,7 @@ export default class BagDataProvider implements DataProvider {
   // Logs some stats if it has been more than a second since the last call.
   _debouncedLogStats = debounce(this._logStats, 1000, { leading: false, trailing: true });
 
-  _queueStats(stats: TimedPerformanceMetadata) {
+  _queueStats(stats: TimedDataThroughput) {
     if (this._lastPerformanceStatsToLog != null && statsAreAdjacent(this._lastPerformanceStatsToLog, stats)) {
       // The common case: The next bit of data will be next to the last one. For remote bags we'll
       // reuse the connection.
@@ -270,9 +286,7 @@ export default class BagDataProvider implements DataProvider {
       startTime: start,
       endTime: end,
       data: {
-        type: "performance",
-        inputSource: "other",
-        inputType: this._options.bagPath.type === "file" ? "bag" : "remoteBag",
+        type: "average_throughput",
         totalSizeOfMessages,
         numberOfMessages,
         // Note: Requested durations are wrong by a nanosecond -- ranges are inclusive.

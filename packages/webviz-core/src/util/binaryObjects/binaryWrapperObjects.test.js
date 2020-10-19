@@ -41,7 +41,7 @@ describe("printSingularExpression", () => {
   it("handles JSON", () => {
     const pointer = new PointerExpression("this.offset").add(1);
     expect(printSingularExpression({}, "json", pointer)).toBe(
-      "JSON.parse($bigString.substr($view.getInt32((this.offset + 5), true), $view.getInt32((this.offset + 1), true)))"
+      "$context.parseJson($bigString.substr($view.getInt32((this.offset + 5), true), $view.getInt32((this.offset + 1), true)))"
     );
   });
 

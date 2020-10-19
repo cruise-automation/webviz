@@ -10,20 +10,17 @@ import { addTimeTypes, friendlyTypeName, typeSize } from "./messageDefinitionUti
 import type { RosValue } from "webviz-core/src/players/types";
 import type { BinaryHeader } from "webviz-core/src/types/BinaryMessages";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import type { ArrayView } from "webviz-core/src/util/binaryObjects";
+import type { ArrayView } from "webviz-core/src/util/binaryObjects/ArrayViews";
 
 export const definitions: RosDatatypes = {
   "std_msgs/Header": {
     fields: [{ type: "uint32", name: "seq" }, { type: "time", name: "stamp" }, { type: "string", name: "frame_id" }],
   },
   "fake_msgs/HasComplexAndArray": {
-    fields: [
-      { type: "std_msgs/Header", name: "header", isComplex: true },
-      { type: "string", isArray: true, name: "stringArray" },
-    ],
+    fields: [{ type: "std_msgs/Header", name: "header" }, { type: "string", isArray: true, name: "stringArray" }],
   },
   "fake_msgs/HasComplexArray": {
-    fields: [{ type: "fake_msgs/HasComplexAndArray", name: "complexArray", isArray: true, isComplex: true }],
+    fields: [{ type: "fake_msgs/HasComplexAndArray", name: "complexArray", isArray: true }],
   },
   "fake_msgs/HasConstant": {
     fields: [{ type: "uint8", name: "const", isConstant: true, value: 1 }],
@@ -38,18 +35,18 @@ export const definitions: RosDatatypes = {
     fields: [{ type: "int64", name: "i64" }, { type: "uint64", name: "u64" }],
   },
   "fake_msgs/HasArrayOfEmpties": {
-    fields: [{ type: "fake_msgs/HasConstant", name: "arr", isComplex: true, isArray: true }],
+    fields: [{ type: "fake_msgs/HasConstant", name: "arr", isArray: true }],
   },
   "fake_msgs/ContainsEverything": {
     fields: [
-      { type: "std_msgs/Header", name: "first", isComplex: true },
-      { type: "fake_msgs/HasComplexAndArray", name: "second", isComplex: true },
-      { type: "fake_msgs/HasComplexArray", name: "third", isComplex: true },
-      { type: "fake_msgs/HasConstant", name: "fourth", isComplex: true },
-      { type: "fake_msgs/HasByteArray", name: "fifth", isComplex: true },
-      { type: "fake_msgs/HasJson", name: "sixth", isComplex: true },
-      { type: "fake_msgs/HasInt64s", name: "seventh", isComplex: true },
-      { type: "fake_msgs/HasArrayOfEmpties", name: "eighth", isComplex: true },
+      { type: "std_msgs/Header", name: "first" },
+      { type: "fake_msgs/HasComplexAndArray", name: "second" },
+      { type: "fake_msgs/HasComplexArray", name: "third" },
+      { type: "fake_msgs/HasConstant", name: "fourth" },
+      { type: "fake_msgs/HasByteArray", name: "fifth" },
+      { type: "fake_msgs/HasJson", name: "sixth" },
+      { type: "fake_msgs/HasInt64s", name: "seventh" },
+      { type: "fake_msgs/HasArrayOfEmpties", name: "eighth" },
     ],
   },
 };

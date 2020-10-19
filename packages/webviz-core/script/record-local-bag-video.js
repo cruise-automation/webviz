@@ -111,6 +111,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Video generation failed:", err);
+  const errorString = err.stack || (err.toString && err.toString()) || err.message || err;
+  console.error("Video generation failed:", errorString);
   process.exit(1);
 });

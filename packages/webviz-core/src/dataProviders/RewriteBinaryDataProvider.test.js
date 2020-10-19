@@ -36,7 +36,12 @@ function getProvider(
   unlimitedCache: boolean = false
 ) {
   const messages = { parsedMessages: undefined, rosBinaryMessages, bobjects: undefined };
-  const memoryDataProvider = new MemoryDataProvider({ messages, unlimitedCache, providesParsedMessages: false });
+  const memoryDataProvider = new MemoryDataProvider({
+    messages,
+    unlimitedCache,
+    providesParsedMessages: false,
+    datatypes: {},
+  });
   return {
     provider: new RewriteBinaryDataProvider(
       { useBinaryObjects },
@@ -54,8 +59,12 @@ describe("RewriteBinaryDataProvider", () => {
       start: { nsec: 0, sec: 100 },
       end: { nsec: 0, sec: 102 },
       topics: [],
-      datatypes: {},
-      messageDefinitionsByTopic: {},
+      messageDefinitions: {
+        type: "parsed",
+        datatypes: {},
+        messageDefinitionsByTopic: {},
+        parsedMessageDefinitionsByTopic: {},
+      },
       providesParsedMessages: false,
     });
   });

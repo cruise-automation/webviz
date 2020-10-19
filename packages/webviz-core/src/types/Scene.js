@@ -24,6 +24,7 @@ import type {
   PointCloud,
   LaserScan,
   InstancedLineListMarker,
+  OverlayIconMarker,
 } from "webviz-core/src/types/Messages";
 import Bounds from "webviz-core/src/util/Bounds";
 
@@ -51,6 +52,7 @@ export interface MarkerCollector {
   linedConvexHull(LineListMarker | LineStripMarker): any;
   filledPolygon(FilledPolygonMarker): any;
   instancedLineList(InstancedLineListMarker): any;
+  overlayIcon(OverlayIconMarker): any;
 }
 
 export interface MarkerProvider {

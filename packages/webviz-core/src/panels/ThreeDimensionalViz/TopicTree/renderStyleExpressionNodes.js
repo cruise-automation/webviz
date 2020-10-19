@@ -211,6 +211,8 @@ function StyleExpressionNode(props) {
                   size="SMALL"
                   unavailableTooltip={""}
                   visibleInScene={active}
+                  diffModeEnabled={false}
+                  columnIndex={sourceIdx}
                   {...mouseEventHandlersByColumnIdx[sourceIdx]}
                 />
               );

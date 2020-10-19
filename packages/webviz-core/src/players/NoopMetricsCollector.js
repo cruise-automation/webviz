@@ -21,6 +21,7 @@ export default class NoopMetricsCollector implements PlayerMetricsCollectorInter
   recordPlaybackTime(_time: Time): void {}
   recordBytesReceived(_bytes: number): void {}
   recordDataProviderPerformance(): void {}
+  recordUncachedRangeRequest(): void {}
   recordTimeToFirstMsgs(): void {}
   recordDataProviderInitializePerformance() {}
 }

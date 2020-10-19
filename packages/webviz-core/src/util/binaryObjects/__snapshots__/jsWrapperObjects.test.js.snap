@@ -4,7 +4,7 @@ exports[`printClasses prints the expected function definition 1`] = `
 "const $value = Symbol();
 const $deepParse = $context.deepParse;
 const $maybeDeepParse = (o) => o && o[$deepParse]()
-const $PrimitiveArrayWrapper = $context.PrimitiveArrayWrapper;
+const $PrimitiveArrayView = $context.PrimitiveArrayView;
 class std_msgs_Header {
   constructor(value) {
     this[$value] = value;
@@ -30,7 +30,7 @@ class std_msgs_Header {
     };
   }
 }
-const std_msgs_Header$Array = $context.getReverseArrayWrapper(std_msgs_Header);
+const std_msgs_Header$Array = $context.getReverseWrapperArrayView(std_msgs_Header);
 
 class fake_msgs_HasComplexAndArray {
   constructor(value) {
@@ -48,7 +48,7 @@ class fake_msgs_HasComplexAndArray {
     if ($fieldValue == null || $fieldValue[$deepParse] != null) {
       return $fieldValue;
     }
-    return new $PrimitiveArrayWrapper($fieldValue);
+    return new $PrimitiveArrayView($fieldValue);
   }
   [$deepParse]() {
     return {
@@ -57,7 +57,7 @@ class fake_msgs_HasComplexAndArray {
     };
   }
 }
-const fake_msgs_HasComplexAndArray$Array = $context.getReverseArrayWrapper(fake_msgs_HasComplexAndArray);
+const fake_msgs_HasComplexAndArray$Array = $context.getReverseWrapperArrayView(fake_msgs_HasComplexAndArray);
 
 class fake_msgs_HasComplexArray {
   constructor(value) {
@@ -76,7 +76,7 @@ class fake_msgs_HasComplexArray {
     };
   }
 }
-const fake_msgs_HasComplexArray$Array = $context.getReverseArrayWrapper(fake_msgs_HasComplexArray);
+const fake_msgs_HasComplexArray$Array = $context.getReverseWrapperArrayView(fake_msgs_HasComplexArray);
 
 class fake_msgs_HasConstant {
   constructor(value) {
@@ -91,7 +91,7 @@ class fake_msgs_HasConstant {
     };
   }
 }
-const fake_msgs_HasConstant$Array = $context.getReverseArrayWrapper(fake_msgs_HasConstant);
+const fake_msgs_HasConstant$Array = $context.getReverseWrapperArrayView(fake_msgs_HasConstant);
 
 class fake_msgs_HasByteArray {
   constructor(value) {
@@ -106,7 +106,7 @@ class fake_msgs_HasByteArray {
     };
   }
 }
-const fake_msgs_HasByteArray$Array = $context.getReverseArrayWrapper(fake_msgs_HasByteArray);
+const fake_msgs_HasByteArray$Array = $context.getReverseWrapperArrayView(fake_msgs_HasByteArray);
 
 class fake_msgs_HasJson {
   constructor(value) {
@@ -121,7 +121,7 @@ class fake_msgs_HasJson {
     };
   }
 }
-const fake_msgs_HasJson$Array = $context.getReverseArrayWrapper(fake_msgs_HasJson);
+const fake_msgs_HasJson$Array = $context.getReverseWrapperArrayView(fake_msgs_HasJson);
 
 class fake_msgs_HasInt64s {
   constructor(value) {
@@ -140,7 +140,7 @@ class fake_msgs_HasInt64s {
     };
   }
 }
-const fake_msgs_HasInt64s$Array = $context.getReverseArrayWrapper(fake_msgs_HasInt64s);
+const fake_msgs_HasInt64s$Array = $context.getReverseWrapperArrayView(fake_msgs_HasInt64s);
 
 class fake_msgs_HasArrayOfEmpties {
   constructor(value) {
@@ -159,7 +159,7 @@ class fake_msgs_HasArrayOfEmpties {
     };
   }
 }
-const fake_msgs_HasArrayOfEmpties$Array = $context.getReverseArrayWrapper(fake_msgs_HasArrayOfEmpties);
+const fake_msgs_HasArrayOfEmpties$Array = $context.getReverseWrapperArrayView(fake_msgs_HasArrayOfEmpties);
 
 class fake_msgs_ContainsEverything {
   constructor(value) {
@@ -234,7 +234,7 @@ class fake_msgs_ContainsEverything {
     };
   }
 }
-const fake_msgs_ContainsEverything$Array = $context.getReverseArrayWrapper(fake_msgs_ContainsEverything);
+const fake_msgs_ContainsEverything$Array = $context.getReverseWrapperArrayView(fake_msgs_ContainsEverything);
 
 class time {
   constructor(value) {
@@ -253,7 +253,7 @@ class time {
     };
   }
 }
-const time$Array = $context.getReverseArrayWrapper(time);
+const time$Array = $context.getReverseWrapperArrayView(time);
 
 class duration {
   constructor(value) {
@@ -272,7 +272,7 @@ class duration {
     };
   }
 }
-const duration$Array = $context.getReverseArrayWrapper(duration);
+const duration$Array = $context.getReverseWrapperArrayView(duration);
 
 
 return {

@@ -18,7 +18,7 @@ import { hot } from "react-hot-loader/root";
 import ReactHoverObserver from "react-hover-observer";
 import Tree from "react-json-tree";
 
-import { HighlightedValue, SDiffSpan } from "./Diff";
+import { HighlightedValue, SDiffSpan, MaybeCollapsedValue } from "./Diff";
 import { type ValueAction, getValueActionForValue, getStructureItemForPath } from "./getValueActionForValue";
 import helpContent from "./index.help.md";
 import styles from "./index.module.scss";
@@ -27,6 +27,7 @@ import RawMessagesIcons from "./RawMessagesIcons";
 import { DATA_ARRAY_PREVIEW_LIMIT, getItemString, getItemStringForDiff } from "./utils";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import type { RosPath, MessagePathStructureItem } from "webviz-core/src/components/MessagePathSyntax/constants";
@@ -46,16 +47,27 @@ import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { useDataSourceInfo, useMessagesByTopic } from "webviz-core/src/PanelAPI";
 import getDiff, { diffLabels, diffLabelsByLabelText } from "webviz-core/src/panels/RawMessages/getDiff";
-import type { Topic } from "webviz-core/src/players/types";
+import { cast, type Topic } from "webviz-core/src/players/types";
 import type { PanelConfig } from "webviz-core/src/types/panels";
 import { objectValues } from "webviz-core/src/util";
-import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
+import {
+  type ArrayView,
+  deepParse,
+  fieldNames,
+  getField,
+  getIndex,
+  isArrayView,
+  isBobject,
+} from "webviz-core/src/util/binaryObjects";
+import { jsonTreeTheme, SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { enumValuesByDatatypeAndField } from "webviz-core/src/util/selectors";
 
+export const CUSTOM_METHOD = "custom";
 export const PREV_MSG_METHOD = "previous message";
+export const OTHER_SOURCE_METHOD = "other source";
 export type RawMessagesConfig = {|
   topicPath: string,
-  diffMethod: "custom" | "previous message",
+  diffMethod: "custom" | "previous message" | "other source",
   diffTopicPath: string,
   diffEnabled: boolean,
   showFullMessageForDiff: boolean,
@@ -67,9 +79,37 @@ type Props = {
   openSiblingPanel: (string, cb: (PanelConfig) => PanelConfig) => void,
 };
 
-const isSingleElemArray = (obj) => Array.isArray(obj) && obj.filter((a) => a != null).length === 1;
+const isSingleElemArray = (obj) => {
+  if (!Array.isArray(obj) && !isArrayView(obj)) {
+    return false;
+  }
+  const arr = isArrayView(obj) ? cast<ArrayView<any>>(obj).toArray() : cast<any[]>(obj);
+  return arr.filter((a) => a != null).length === 1;
+};
 const dataWithoutWrappingArray = (data) => {
-  return isSingleElemArray(data) && typeof data[0] === "object" ? data[0] : data;
+  return isSingleElemArray(data) && typeof getIndex(data, 0) === "object" ? getIndex(data, 0) : data;
+};
+
+const maybeShallowParse = (obj: mixed): mixed => {
+  if (!isBobject(obj)) {
+    return obj;
+  }
+  if (isArrayView(obj)) {
+    return cast<ArrayView<any>>(obj).toArray();
+  }
+  const ret = {};
+  // $FlowFixMe: We've checked obj is a bobject above.
+  fieldNames(obj).forEach((field) => {
+    ret[field] = getField(obj, field);
+  });
+  return ret;
+};
+
+const maybeDeepParse = (obj: mixed): mixed => {
+  if (!isBobject(obj)) {
+    return obj;
+  }
+  return deepParse(obj);
 };
 
 function RawMessages(props: Props) {
@@ -98,14 +138,23 @@ function RawMessages(props: Props) {
   const [expandedFields, setExpandedFields] = useState(() => new Set());
 
   const topicName = topicRosPath?.topicName || "";
-  const consecutiveMsgs = useMessagesByTopic({ topics: [topicName], historySize: 2 })[topicName];
+  const format = useExperimentalFeature("useBinaryTranslation") ? "bobjects" : "parsedMessages";
+  const consecutiveMsgs = useMessagesByTopic({ topics: [topicName], historySize: 2, format })[topicName];
   const cachedGetMessagePathDataItems = useCachedGetMessagePathDataItems([topicPath]);
   const prevTickMsg = consecutiveMsgs[consecutiveMsgs.length - 2];
   const [prevTickObj, currTickObj] = [
     prevTickMsg && { message: prevTickMsg, queriedData: cachedGetMessagePathDataItems(topicPath, prevTickMsg) || [] },
-    useLatestMessageDataItem(topicPath),
+    useLatestMessageDataItem(topicPath, format),
   ];
-  const diffTopicObj = useLatestMessageDataItem(diffEnabled ? diffTopicPath : "");
+
+  const otherSourceTopic = topicName.startsWith(SECOND_SOURCE_PREFIX)
+    ? topicName.replace(SECOND_SOURCE_PREFIX, "")
+    : `${SECOND_SOURCE_PREFIX}${topicName}`;
+  const inOtherSourceDiffMode = diffEnabled && diffMethod === OTHER_SOURCE_METHOD;
+  const diffTopicObj = useLatestMessageDataItem(
+    diffEnabled ? (inOtherSourceDiffMode ? otherSourceTopic : diffTopicPath) : "",
+    "parsedMessages"
+  );
 
   const inTimetickDiffMode = diffEnabled && diffMethod === PREV_MSG_METHOD;
   const baseItem = inTimetickDiffMode ? prevTickObj : currTickObj;
@@ -192,7 +241,7 @@ function RawMessages(props: Props) {
               }
             }
           }
-          const basePath: string = queriedData[lastKeyPath].path;
+          const basePath: string = queriedData[lastKeyPath] && queriedData[lastKeyPath].path;
           let itemLabel = label;
           // output preview for the first x items if the data is in binary format
           // sample output: Int8Array(331776) [-4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, ...]
@@ -256,8 +305,11 @@ function RawMessages(props: Props) {
       if (!topicPath) {
         return <EmptyState>No topic selected</EmptyState>;
       }
-      if (diffEnabled && diffMethod === "custom" && (!baseItem || !diffItem)) {
+      if (diffEnabled && diffMethod === CUSTOM_METHOD && (!baseItem || !diffItem)) {
         return <EmptyState>{`Waiting to diff next messages from "${topicPath}" and "${diffTopicPath}"`}</EmptyState>;
+      }
+      if (diffEnabled && diffMethod === OTHER_SOURCE_METHOD && (!baseItem || !diffItem)) {
+        return <EmptyState>{`Waiting to diff next messages from "${topicPath}" and "${otherSourceTopic}"`}</EmptyState>;
       }
       if (!baseItem) {
         return <EmptyState>Waiting for next message</EmptyState>;
@@ -267,11 +319,11 @@ function RawMessages(props: Props) {
       const hideWrappingArray = baseItem.queriedData.length === 1 && typeof baseItem.queriedData[0].value === "object";
       const shouldDisplaySingleVal =
         (data !== undefined && typeof data !== "object") ||
-        (isSingleElemArray(data) && data[0] !== undefined && typeof data[0] !== "object");
-      const singleVal = isSingleElemArray(data) ? data[0] : data;
+        (isSingleElemArray(data) && getIndex(data, 0) != null && typeof getIndex(data, 0) !== "object");
+      const singleVal = isSingleElemArray(data) ? getIndex(data, 0) : data;
 
       const diffData = diffItem && dataWithoutWrappingArray(diffItem.queriedData.map(({ value }) => (value: any)));
-      const diff = diffEnabled && getDiff(data, diffData, null, showFullMessageForDiff);
+      const diff = diffEnabled && getDiff(maybeDeepParse(data), maybeDeepParse(diffData), null, showFullMessageForDiff);
       const diffLabelTexts = objectValues(diffLabels).map(({ labelText }) => labelText);
 
       const CheckboxComponent = showFullMessageForDiff ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
@@ -286,7 +338,9 @@ function RawMessages(props: Props) {
             diffMessage={diffItem?.message}
           />
           {shouldDisplaySingleVal ? (
-            <div className={styles.singleVal}>{String(singleVal)}</div>
+            <div className={styles.singleVal}>
+              <MaybeCollapsedValue itemLabel={String(singleVal)} />
+            </div>
           ) : diffEnabled && isEqual({}, diff) ? (
             <EmptyState>No difference found</EmptyState>
           ) : (
@@ -317,7 +371,8 @@ function RawMessages(props: Props) {
                   }
                   return valueRenderer(rootStructureItem, data, baseItem.queriedData, ...args);
                 }}
-                postprocessValue={(val: mixed) => {
+                postprocessValue={(rawVal: mixed) => {
+                  const val = maybeShallowParse(rawVal);
                   if (
                     val != null &&
                     typeof val === "object" &&
@@ -400,6 +455,7 @@ function RawMessages(props: Props) {
       expandAll,
       expandedFields,
       onLabelClick,
+      otherSourceTopic,
       rootStructureItem,
       saveConfig,
       showFullMessageForDiff,
@@ -434,11 +490,12 @@ function RawMessages(props: Props) {
                     onChange={(newDiffMethod) => saveConfig({ diffMethod: newDiffMethod })}
                     noPortal>
                     <span value={PREV_MSG_METHOD}>{PREV_MSG_METHOD}</span>
-                    <span value="custom">custom</span>
+                    <span value={OTHER_SOURCE_METHOD}>{OTHER_SOURCE_METHOD}</span>
+                    <span value={CUSTOM_METHOD}>custom</span>
                   </Dropdown>
                 </>
               </Tooltip>
-              {diffMethod === "custom" ? (
+              {diffMethod === CUSTOM_METHOD ? (
                 <MessagePathInput
                   index={1}
                   path={diffTopicPath}
@@ -459,7 +516,7 @@ function RawMessages(props: Props) {
 RawMessages.defaultConfig = {
   topicPath: "",
   diffTopicPath: "",
-  diffMethod: "custom",
+  diffMethod: CUSTOM_METHOD,
   diffEnabled: false,
   showFullMessageForDiff: false,
 };

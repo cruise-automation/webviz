@@ -13,6 +13,7 @@ import { setPlaybackConfig } from "webviz-core/src/actions/panels";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
 import NoHeaderTopicsButton from "webviz-core/src/components/NoHeaderTopicsButton";
+import { defaultPlaybackConfig } from "webviz-core/src/reducers/panels";
 
 const BUTTON_STYLE = {
   display: "flex",
@@ -35,7 +36,7 @@ export default function MessageOrderControls() {
     [dispatch]
   );
 
-  const orderText = messageOrderLabel[messageOrder];
+  const orderText = messageOrderLabel[messageOrder] || defaultPlaybackConfig.messageOrder;
   const dropdownButton = (
     <>
       <Icon small>

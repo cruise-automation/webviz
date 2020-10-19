@@ -9,7 +9,7 @@
 import { mount } from "enzyme";
 import { cloneDeep } from "lodash";
 import * as React from "react";
-import { MessageReader } from "rosbag";
+import { MessageReader, parseMessageDefinition } from "rosbag";
 
 import * as PanelAPI from ".";
 import { setExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
@@ -57,11 +57,11 @@ describe("useBlocksByTopic", () => {
     //           1 |       1 |       0 |                       0
     //           1 |       1 |       1 |                       1
     const activeData = {
-      messageDefinitionsByTopic: {
-        "/just_defined": "uint32 id",
-        "/defined_and_present": "uint32 id",
-        "/subscribed_and_defined": "uint32 id",
-        "/subscribed_defined_and_present": "uint32 id",
+      parsedMessageDefinitionsByTopic: {
+        "/just_defined": parseMessageDefinition("uint32 id"),
+        "/defined_and_present": parseMessageDefinition("uint32 id"),
+        "/subscribed_and_defined": parseMessageDefinition("uint32 id"),
+        "/subscribed_defined_and_present": parseMessageDefinition("uint32 id"),
       },
     };
     const progress = {
@@ -122,7 +122,7 @@ describe("useBlocksByTopic", () => {
   });
 
   it("returns no messagesByTopic when the player does not provide blocks", async () => {
-    const activeData = { messageDefinitionsByTopic: { "/topic1": "uint32 id" } };
+    const activeData = { parsedMessageDefinitionsByTopic: { "/topic": parseMessageDefinition("uint32 id") } };
     const Test = createTest();
     const root = mount(
       <MockMessagePipelineProvider activeData={activeData}>
@@ -137,7 +137,7 @@ describe("useBlocksByTopic", () => {
 
   it("returns no data when the experimental feature is turned off (default)", async () => {
     setExperimentalFeature("preloading", "alwaysOff");
-    const activeData = { messageDefinitionsByTopic: { "/topic1": "uint32 id" } };
+    const activeData = { parsedMessageDefinitionsByTopic: { "/topic": parseMessageDefinition("uint32 id") } };
     const progress = {
       messageCache: {
         blocks: [{ sizeInBytes: 0, messagesByTopic: { "/topic1": [] } }],
@@ -179,7 +179,7 @@ describe("useBlocksByTopic", () => {
   });
 
   it("maintains block identity across repeated renders", async () => {
-    const activeData = { messageDefinitionsByTopic: { "/topic": "uint32 id" } };
+    const activeData = { parsedMessageDefinitionsByTopic: { "/topic": parseMessageDefinition("uint32 id") } };
     const progress = {
       messageCache: {
         blocks: [{ sizeInBytes: 0, messagesByTopic: { "/topic": [] } }],

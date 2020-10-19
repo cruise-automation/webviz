@@ -62,7 +62,7 @@ type Props = {|
 
 const devicePixelRatio = window.devicePixelRatio || 1;
 
-const webWorkerManager = new WebWorkerManager(ChartJSWorker, 8);
+const webWorkerManager = new WebWorkerManager(ChartJSWorker, 4);
 
 class ChartComponent extends React.PureComponent<Props> {
   canvas: ?HTMLCanvasElement;

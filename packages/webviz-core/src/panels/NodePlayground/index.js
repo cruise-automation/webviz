@@ -10,7 +10,6 @@ import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import PlusIcon from "@mdi/svg/svg/plus.svg";
 import * as React from "react";
-import Dimensions from "react-container-dimensions";
 import { hot } from "react-hot-loader/root";
 import { useSelector, useDispatch } from "react-redux";
 import styled from "styled-components";
@@ -19,6 +18,7 @@ import uuid from "uuid";
 import { type Script } from "./script";
 import { setUserNodes as setUserNodesAction } from "webviz-core/src/actions/panels";
 import Button from "webviz-core/src/components/Button";
+import Dimensions from "webviz-core/src/components/Dimensions";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import Item from "webviz-core/src/components/Menu/Item";
@@ -40,12 +40,13 @@ const Editor = React.lazy(() =>
 const skeletonBody = `import { Input, Messages } from "ros";
 
 type Output = {};
+type GlobalVariables = { id: number };
 
 export const inputs = [];
 export const output = "${DEFAULT_WEBVIZ_NODE_PREFIX}";
 
 // Populate 'Input' with a parameter to properly type your inputs, e.g. 'Input<"/your_input_topic">'
-const publisher = (message: Input<>): Output => {
+const publisher = (message: Input<>, globalVars: GlobalVariables): Output => {
   return {};
 };
 
@@ -58,6 +59,7 @@ type Config = {|
   // Used only for storybook screenshot testing.
   additionalBackStackItems?: Script[],
   vimMode: boolean,
+  autoFormatOnSave?: boolean,
 |};
 
 type Props = {
@@ -79,11 +81,18 @@ const UnsavedDot = styled.div`
 
 // Exported for screenshot testing.
 export const NodePlaygroundSettings = ({ config, saveConfig }: Props) => (
-  <Item
-    icon={config.vimMode ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-    onClick={() => saveConfig({ vimMode: !config.vimMode })}>
-    <span>Vim Mode</span>
-  </Item>
+  <>
+    <Item
+      icon={config.autoFormatOnSave ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
+      onClick={() => saveConfig({ autoFormatOnSave: !config.autoFormatOnSave })}>
+      <span>Auto-format on save</span>
+    </Item>
+    <Item
+      icon={config.vimMode ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
+      onClick={() => saveConfig({ vimMode: !config.vimMode })}>
+      <span>Vim Mode</span>
+    </Item>
+  </>
 );
 
 const SWelcomeScreen = styled.div`
@@ -135,7 +144,7 @@ const WelcomeScreen = ({
 
 function NodePlayground(props: Props) {
   const { config, saveConfig } = props;
-  const { selectedNodeId, editorForStorybook, vimMode } = config;
+  const { autoFormatOnSave, selectedNodeId, editorForStorybook, vimMode } = config;
 
   const [explorer, updateExplorer] = React.useState<Explorer>(null);
 
@@ -333,6 +342,7 @@ function NodePlayground(props: Props) {
                     }>
                     {editorForStorybook || (
                       <Editor
+                        autoFormatOnSave={!!autoFormatOnSave}
                         script={currentScript}
                         setScriptCode={setScriptCode}
                         setScriptOverride={setScriptOverride}
@@ -361,6 +371,6 @@ function NodePlayground(props: Props) {
 }
 
 NodePlayground.panelType = "NodePlayground";
-NodePlayground.defaultConfig = { selectedNodeId: undefined, vimMode: false };
+NodePlayground.defaultConfig = { selectedNodeId: undefined, vimMode: false, autoFormatOnSave: true };
 
 export default hot(Panel<Config>(NodePlayground));

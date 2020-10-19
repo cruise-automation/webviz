@@ -8,7 +8,7 @@
 import { useCleanup } from "@cruise-automation/hooks";
 import memoizeWeak from "memoize-weak";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { MessageReader, parseMessageDefinition } from "rosbag";
+import { MessageReader } from "rosbag";
 import uuid from "uuid";
 
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
@@ -100,8 +100,8 @@ export function useBlocksByTopic(topics: $ReadOnlyArray<string>): BlocksForTopic
   useSubscribeToTopicsForBlocks(requestedTopics);
 
   // Get player data needed.
-  const messageDefinitionsByTopic = useMessagePipeline(
-    useCallback(({ playerState }) => playerState.activeData?.messageDefinitionsByTopic, [])
+  const parsedMessageDefinitionsByTopic = useMessagePipeline(
+    useCallback(({ playerState }) => playerState.activeData?.parsedMessageDefinitionsByTopic, [])
   );
 
   // Get blocks for the topics
@@ -118,15 +118,14 @@ export function useBlocksByTopic(topics: $ReadOnlyArray<string>): BlocksForTopic
       }
       const result = {};
       for (const topic of requestedTopics) {
-        if (messageDefinitionsByTopic && messageDefinitionsByTopic[topic]) {
-          const definition = messageDefinitionsByTopic[topic];
-          const parsedDefinition = typeof definition === "string" ? parseMessageDefinition(definition) : definition;
+        if (parsedMessageDefinitionsByTopic && parsedMessageDefinitionsByTopic[topic]) {
+          const parsedDefinition = parsedMessageDefinitionsByTopic[topic];
           result[topic] = new MessageReader(parsedDefinition);
         }
       }
       return result;
     },
-    [messageDefinitionsByTopic, requestedTopics, exposeBlockData]
+    [parsedMessageDefinitionsByTopic, requestedTopics, exposeBlockData]
   );
   const presentTopics = useMemo(() => Object.keys(messageReadersByTopic), [messageReadersByTopic]);
 

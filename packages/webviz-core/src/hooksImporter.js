@@ -81,6 +81,7 @@ export function perPanelHooks() {
   const PentagonOutlineIcon = require("@mdi/svg/svg/pentagon-outline.svg").default;
   const RadarIcon = require("@mdi/svg/svg/radar.svg").default;
   const RobotIcon = require("@mdi/svg/svg/robot.svg").default;
+  const CubeOutline = require("@mdi/svg/svg/cube-outline.svg").default;
   const LaserScanVert = require("webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert").default;
   const { defaultMapPalette } = require("webviz-core/src/panels/ThreeDimensionalViz/commands/utils");
   const {
@@ -155,6 +156,7 @@ export function perPanelHooks() {
       SUPPORTED_BOBJECT_MARKER_DATATYPES,
       SUPPORTED_MARKER_DATATYPES,
       BLACKLIST_TOPICS: [],
+      iconsByClassification: { DEFAULT: CubeOutline },
       allSupportedMarkers: [
         "arrow",
         "cube",
@@ -167,6 +169,7 @@ export function perPanelHooks() {
         "linedConvexHull",
         "lineList",
         "lineStrip",
+        "overlayIcon",
         "pointcloud",
         "points",
         "poseMarker",
@@ -221,6 +224,7 @@ export function perPanelHooks() {
       rootTransformFrame: "map",
       defaultFollowTransformFrame: null,
       skipTransformFrame: null,
+      useWorldspacePointSize: () => true,
     },
     RawMessages: { docLinkFunction: (filename) => `https://www.google.com/search?q=${filename}` },
   };

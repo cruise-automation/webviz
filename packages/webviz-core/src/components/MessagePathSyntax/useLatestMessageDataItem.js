@@ -12,26 +12,31 @@ import parseRosPath from "./parseRosPath";
 import { useCachedGetMessagePathDataItems, type MessagePathDataItem } from "./useCachedGetMessagePathDataItems";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
-import type { Message } from "webviz-core/src/players/types";
+import type { Message, MessageFormat } from "webviz-core/src/players/types";
 import { useChangeDetector } from "webviz-core/src/util/hooks";
 
 type MessageAndData = {| message: Message, queriedData: MessagePathDataItem[] |};
 
 // Get the last message for a path, but *after* applying filters. In other words, we'll keep the
 // last message that matched.
-export function useLatestMessageDataItem(path: string): ?MessageAndData {
+export function useLatestMessageDataItem(path: string, format: MessageFormat): ?MessageAndData {
   const rosPath = useMemo(() => parseRosPath(path), [path]);
   const topics = useMemo(() => (rosPath ? [rosPath.topicName] : []), [rosPath]);
   const cachedGetMessagePathDataItems = useCachedGetMessagePathDataItems([path]);
 
-  const addMessage: (?MessageAndData, Message) => ?MessageAndData = useCallback(
-    (prevMessageAndData: ?MessageAndData, message: Message) => {
-      const queriedData = cachedGetMessagePathDataItems(path, message);
-      if (!queriedData) {
-        return;
-      }
-      if (queriedData.length > 0) {
-        return { message, queriedData };
+  const addMessages: (?MessageAndData, $ReadOnlyArray<Message>) => ?MessageAndData = useCallback(
+    (prevMessageAndData: ?MessageAndData, messages: $ReadOnlyArray<Message>) => {
+      // Iterate in reverse so we can early-return and not process all messages.
+      for (let i = messages.length - 1; i >= 0; --i) {
+        const message = messages[i];
+        const queriedData = cachedGetMessagePathDataItems(path, message);
+        if (queriedData == null) {
+          // Invalid path.
+          return;
+        }
+        if (queriedData.length > 0) {
+          return { message, queriedData };
+        }
       }
       return prevMessageAndData;
     },
@@ -59,6 +64,11 @@ export function useLatestMessageDataItem(path: string): ?MessageAndData {
     requestBackfill();
   }
 
-  const messageAndData = PanelAPI.useMessageReducer({ topics, addMessage, restore });
+  const addMessageCallbackName = format === "parsedMessages" ? "addMessages" : "addBobjects";
+  const messageAndData = PanelAPI.useMessageReducer({
+    topics,
+    [addMessageCallbackName]: addMessages,
+    restore,
+  });
   return rosPath ? messageAndData : undefined;
 }

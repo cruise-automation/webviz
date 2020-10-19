@@ -50,6 +50,7 @@ type Props = {|
   setEditingNamespace: SetEditingNamespace,
   topicNode: TreeTopicNode,
   width: number,
+  diffModeEnabled: boolean,
 |};
 
 function NamespaceNodeRow({
@@ -71,6 +72,7 @@ function NamespaceNodeRow({
   topicName,
   onNamespaceOverrideColorChange,
   setEditingNamespace,
+  diffModeEnabled,
 }: {
   nodeKey: string,
   featureKey: string,
@@ -89,6 +91,7 @@ function NamespaceNodeRow({
   unavailableTooltip: string,
   hasFeatureColumn: boolean,
   topicName: string,
+  diffModeEnabled: boolean,
   onNamespaceOverrideColorChange: OnNamespaceOverrideColorChange,
 }) {
   const nodeVisibleInScene = !!(visibleInSceneByColumn[0] || visibleInSceneByColumn[1]);
@@ -181,6 +184,8 @@ function NamespaceNodeRow({
                 unavailableTooltip={unavailableTooltip}
                 visibleInScene={!!visibleInSceneByColumn[columnIndex]}
                 {...mouseEventHandlersByColumnIdx[columnIndex]}
+                diffModeEnabled={diffModeEnabled}
+                columnIndex={columnIndex}
               />
             ))}
           </SToggles>
@@ -215,6 +220,7 @@ export default function renderNamespaceNodes({
   setEditingNamespace,
   topicNode,
   width,
+  diffModeEnabled,
 }: Props): TreeUINode[] {
   const rowWidth = width - (isXSWidth ? 0 : TREE_SPACING * 2) - OUTER_LEFT_MARGIN;
   const topicNodeAvailable = topicNode.availableByColumn[0] || topicNode.availableByColumn[1];
@@ -237,6 +243,7 @@ export default function renderNamespaceNodes({
     unavailableTooltip,
     hasFeatureColumn,
     topicName: topicNode.topicName,
+    diffModeEnabled,
   };
 
   return children

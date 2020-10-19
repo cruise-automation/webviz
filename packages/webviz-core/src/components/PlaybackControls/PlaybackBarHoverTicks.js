@@ -6,9 +6,9 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import React, { useMemo, useState } from "react";
-import Dimensions from "react-container-dimensions";
 import styled, { css } from "styled-components";
 
+import Dimensions from "webviz-core/src/components/Dimensions";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import HoverBar from "webviz-core/src/components/TimeBasedChart/HoverBar";
 import { toSec } from "webviz-core/src/util/time";

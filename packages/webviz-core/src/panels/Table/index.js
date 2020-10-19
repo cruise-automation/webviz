@@ -31,8 +31,9 @@ import type {
   PaginationState,
   ColumnOptions,
 } from "webviz-core/src/panels/Table/types";
-import type { RosValue, RosObject } from "webviz-core/src/players/types";
+import type { RosObject } from "webviz-core/src/players/types";
 import type { SaveConfig } from "webviz-core/src/types/panels";
+import { ROBOTO_MONO } from "webviz-core/src/util/sharedStyleConstants";
 import { toolsColorScheme } from "webviz-core/src/util/toolsColorScheme";
 
 const STable = styled.table`
@@ -77,7 +78,7 @@ const STableContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: "Roboto Mono";
+  font-family: ${ROBOTO_MONO};
 `;
 
 function sanitizeAccessorPath(accessorPath) {
@@ -121,7 +122,7 @@ function getColumnsFromObject(obj: RosObject, accessorPath: string): ColumnOptio
   return columns;
 }
 
-const Table = ({ value, accessorPath }: {| value: RosValue, accessorPath: string |}) => {
+const Table = ({ value, accessorPath }: {| value: mixed, accessorPath: string |}) => {
   const isNested = !!accessorPath;
   const columns = React.useMemo(
     () => {

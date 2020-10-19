@@ -59,8 +59,16 @@ function formatData(
   return [x, receiveTimeFloat, stampTime, label, y];
 }
 
-export function getCSVData(datasets: DataSet[], tooltips: TimeBasedChartTooltipData[]): string {
-  const headLine = ["elapsed time", "receive time", "header.stamp", "topic", "value"];
+const xAxisCsvColumnName = (xAxisVal: PlotXAxisVal): string =>
+  ({
+    timestamp: "elapsed time",
+    index: "index",
+    custom: "x value",
+    currentCustom: "x value",
+  }[xAxisVal]);
+
+export function getCSVData(datasets: DataSet[], tooltips: TimeBasedChartTooltipData[], xAxisVal: PlotXAxisVal): string {
+  const headLine = [xAxisCsvColumnName(xAxisVal), "receive time", "header.stamp", "topic", "value"];
   const combinedLines = [];
   combinedLines.push(headLine);
   datasets.forEach((dataset) => {
@@ -71,8 +79,8 @@ export function getCSVData(datasets: DataSet[], tooltips: TimeBasedChartTooltipD
   return combinedLines.join("\n");
 }
 
-function downloadCsvFile(datasets: DataSet[], tooltips: TimeBasedChartTooltipData[]) {
-  const csv = getCSVData(datasets, tooltips);
+function downloadCsvFile(datasets: DataSet[], tooltips: TimeBasedChartTooltipData[], xAxisVal: PlotXAxisVal) {
+  const csv = getCSVData(datasets, tooltips, xAxisVal);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   downloadFiles([{ blob, fileName: `plot_data_export.csv` }]);
 }
@@ -133,7 +141,7 @@ export default function PlotMenu({
         ) : null;
       return (
         <>
-          <Item onClick={() => downloadCsvFile(stableDatasets.current, stableTooltips.current)}>
+          <Item onClick={() => downloadCsvFile(stableDatasets.current, stableTooltips.current, xAxisVal)}>
             Download plot data (csv)
           </Item>
           <hr />

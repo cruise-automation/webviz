@@ -205,22 +205,22 @@ const tooltipsDiffTimestamp = flatten(
 
 describe("PlotMenu", () => {
   it("Single topic", () => {
-    expect(getCSVData(datasetsSingleTopic, tooltips)).toMatchSnapshot();
+    expect(getCSVData(datasetsSingleTopic, tooltips, "timestamp")).toMatchSnapshot();
   });
 
   it("Multiple topics", () => {
-    expect(getCSVData(datasetsMultipleTopics, tooltipsMultipleTopics)).toMatchSnapshot();
+    expect(getCSVData(datasetsMultipleTopics, tooltipsMultipleTopics, "timestamp")).toMatchSnapshot();
   });
 
   it("Multiple topics with one topic don't have header.stamp", () => {
-    expect(getCSVData(datasetsMultipleTopics, tooltipsNoHeader)).toMatchSnapshot();
+    expect(getCSVData(datasetsMultipleTopics, tooltipsNoHeader, "timestamp")).toMatchSnapshot();
   });
 
   it("Multiple topics with different header.stamp", () => {
-    expect(getCSVData(datasetsMultipleTopics, tooltipsDiffTimestamp)).toMatchSnapshot();
+    expect(getCSVData(datasetsMultipleTopics, tooltipsDiffTimestamp, "timestamp")).toMatchSnapshot();
   });
 
   it("works with data directly from getDatasetsAndTooltips", () => {
-    expect(getCSVData(trackedObjectsDatasets, trackedObjectsTooltips)).toMatchSnapshot();
+    expect(getCSVData(trackedObjectsDatasets, trackedObjectsTooltips, "timestamp")).toMatchSnapshot();
   });
 });

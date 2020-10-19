@@ -22,15 +22,26 @@ import { MockMessagePipelineProvider } from "webviz-core/src/components/MessageP
 import type { Message, Topic } from "webviz-core/src/players/types";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
+import { wrapMessages } from "webviz-core/src/test/datatypes";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 
-function addValuesWithPathsToItems(messages, path, providerTopics, datatypes) {
-  return messages.map((message) => {
-    const rosPath = parseRosPath(path);
+function addValuesWithPathsToItems(messages, messagePath, providerTopics, datatypes, useBobjects) {
+  const maybeBobjectMessages = useBobjects ? wrapMessages(messages) : messages;
+  return maybeBobjectMessages.map((message) => {
+    const rosPath = parseRosPath(messagePath);
     if (!rosPath) {
       return undefined;
     }
-    return getMessagePathDataItems(message, rosPath, providerTopics, datatypes);
+    const items = getMessagePathDataItems((message: any), rosPath, providerTopics, datatypes);
+    return (
+      items &&
+      items.map(({ value, path, constantName }) => ({
+        value: isBobject(value) ? deepParse(value) : value,
+        path,
+        constantName,
+      }))
+    );
   });
 }
 
@@ -141,7 +152,7 @@ describe("useCachedGetMessagePathDataItems", () => {
     root.unmount();
   });
 
-  describe("getMessagePathDataItems", () => {
+  describe.each([[false], [true]])("getMessagePathDataItems (Bobjects: %p)", (useBobjects) => {
     it("traverses down the path for every item", () => {
       const messages: Message[] = [
         {
@@ -173,7 +184,9 @@ describe("useCachedGetMessagePathDataItems", () => {
         },
       };
 
-      expect(addValuesWithPathsToItems(messages, "/some/topic.some_array[:].some_message", topics, datatypes)).toEqual([
+      expect(
+        addValuesWithPathsToItems(messages, "/some/topic.some_array[:].some_message", topics, datatypes, useBobjects)
+      ).toEqual([
         [
           {
             value: { x: 10, y: 20 },
@@ -210,11 +223,13 @@ describe("useCachedGetMessagePathDataItems", () => {
           some_datatype: { fields: [{ name: "someJson", type: "json", isArray: false }] },
         };
 
-        expect(addValuesWithPathsToItems(messages, "/some/topic.someJson", topics, datatypes)).toEqual([
+        expect(addValuesWithPathsToItems(messages, "/some/topic.someJson", topics, datatypes, useBobjects)).toEqual([
           [{ value: { someId: 10 }, path: "/some/topic.someJson", constantName: undefined }],
           [{ value: { someId: 11, anotherId: 12 }, path: "/some/topic.someJson", constantName: undefined }],
         ]);
-        expect(addValuesWithPathsToItems(messages, "/some/topic.someJson.someId", topics, datatypes)).toEqual([
+        expect(
+          addValuesWithPathsToItems(messages, "/some/topic.someJson.someId", topics, datatypes, useBobjects)
+        ).toEqual([
           [{ value: 10, path: "/some/topic.someJson.someId", constantName: undefined }],
           [{ value: 11, path: "/some/topic.someJson.someId", constantName: undefined }],
         ]);
@@ -229,9 +244,9 @@ describe("useCachedGetMessagePathDataItems", () => {
           some_datatype: { fields: [{ name: "jsonArr", type: "json", isArray: false }] },
         };
 
-        expect(addValuesWithPathsToItems(messages, "/some/topic.jsonArr[0].foo.bar", topics, datatypes)).toEqual([
-          [{ value: 42, path: "/some/topic.jsonArr[0].foo.bar", constantName: undefined }],
-        ]);
+        expect(
+          addValuesWithPathsToItems(messages, "/some/topic.jsonArr[0].foo.bar", topics, datatypes, useBobjects)
+        ).toEqual([[{ value: 42, path: "/some/topic.jsonArr[0].foo.bar", constantName: undefined }]]);
       });
 
       it("filters JSON arrays", () => {
@@ -247,7 +262,7 @@ describe("useCachedGetMessagePathDataItems", () => {
           some_datatype: { fields: [{ name: "jsonArr", type: "json", isArray: false }] },
         };
         const path = "/some/topic.jsonArr[:]{id==1}.val";
-        expect(addValuesWithPathsToItems(messages, path, topics, datatypes)).toEqual([
+        expect(addValuesWithPathsToItems(messages, path, topics, datatypes, useBobjects)).toEqual([
           [{ value: 42, path, constantName: undefined }],
         ]);
       });
@@ -261,9 +276,9 @@ describe("useCachedGetMessagePathDataItems", () => {
           some_datatype: { fields: [{ name: "jsonArr", type: "json", isArray: true }] },
         };
 
-        expect(addValuesWithPathsToItems(messages, "/some/topic.jsonArr[0].foo", topics, datatypes)).toEqual([
-          [{ value: 42, path: "/some/topic.jsonArr[0].foo", constantName: undefined }],
-        ]);
+        expect(
+          addValuesWithPathsToItems(messages, "/some/topic.jsonArr[0].foo", topics, datatypes, useBobjects)
+        ).toEqual([[{ value: 42, path: "/some/topic.jsonArr[0].foo", constantName: undefined }]]);
       });
 
       it("gracefully handles non-existent JSON fields", () => {
@@ -279,12 +294,14 @@ describe("useCachedGetMessagePathDataItems", () => {
           some_datatype: { fields: [{ name: "someJson", type: "json", isArray: false }] },
         };
 
-        expect(addValuesWithPathsToItems(messages, "/some/topic.someJson.badPath", topics, datatypes)).toEqual([[]]);
-        expect(addValuesWithPathsToItems(messages, "/some/topic.someJson.someId.badPath", topics, datatypes)).toEqual([
-          [],
-        ]);
         expect(
-          addValuesWithPathsToItems(messages, "/some/topic.someJson[0].someId.badPath", topics, datatypes)
+          addValuesWithPathsToItems(messages, "/some/topic.someJson.badPath", topics, datatypes, useBobjects)
+        ).toEqual([[]]);
+        expect(
+          addValuesWithPathsToItems(messages, "/some/topic.someJson.someId.badPath", topics, datatypes, useBobjects)
+        ).toEqual([[]]);
+        expect(
+          addValuesWithPathsToItems(messages, "/some/topic.someJson[0].someId.badPath", topics, datatypes, useBobjects)
         ).toEqual([[]]);
       });
     });
@@ -302,7 +319,9 @@ describe("useCachedGetMessagePathDataItems", () => {
         some_datatype: { fields: [{ name: "some_array", type: "int32", isArray: true }] },
       };
 
-      expect(addValuesWithPathsToItems(messages, "/some/topic.some_array[-2:-1]", topics, datatypes)).toEqual([
+      expect(
+        addValuesWithPathsToItems(messages, "/some/topic.some_array[-2:-1]", topics, datatypes, useBobjects)
+      ).toEqual([
         [
           { constantName: undefined, path: "/some/topic.some_array[-2]", value: 4 },
           { constantName: undefined, path: "/some/topic.some_array[-1]", value: 5 },
@@ -315,10 +334,11 @@ describe("useCachedGetMessagePathDataItems", () => {
         {
           topic: "/some/topic",
           receiveTime: { sec: 0, nsec: 0 },
-          message: 123,
+          message: { value: 1 },
         },
       ];
-      expect(addValuesWithPathsToItems(messages, "/some/topic", [], {})).toEqual([undefined]);
+      // Topic not present
+      expect(addValuesWithPathsToItems(messages, "/some/topic", [], {}, useBobjects)).toEqual([undefined]);
     });
 
     it("handles fields inside times", () => {
@@ -333,7 +353,7 @@ describe("useCachedGetMessagePathDataItems", () => {
           message: { stamp: { sec: 1, nsec: 2 } },
         },
       ];
-      expect(addValuesWithPathsToItems(messages, "/some/topic.stamp.nsec", topics, datatypes)).toEqual([
+      expect(addValuesWithPathsToItems(messages, "/some/topic.stamp.nsec", topics, datatypes, useBobjects)).toEqual([
         [{ constantName: undefined, path: "/some/topic.stamp.nsec", value: 2 }],
       ]);
     });
@@ -387,7 +407,8 @@ describe("useCachedGetMessagePathDataItems", () => {
           messages,
           "/some/topic.some_array[:]{some_filter_value==0}.some_id",
           topics,
-          datatypes
+          datatypes,
+          useBobjects
         )
       ).toEqual([
         [{ constantName: undefined, value: 10, path: "/some/topic.some_array[:]{some_filter_value==0}.some_id" }],
@@ -437,33 +458,39 @@ describe("useCachedGetMessagePathDataItems", () => {
         },
       };
 
-      expect(addValuesWithPathsToItems(messages, "/some/topic{str_field=='A'}.num_field", topics, datatypes)).toEqual([
+      expect(
+        addValuesWithPathsToItems(messages, "/some/topic{str_field=='A'}.num_field", topics, datatypes, useBobjects)
+      ).toEqual([
         [{ value: 1, path: "/some/topic{str_field=='A'}.num_field" }],
         [{ value: 2, path: "/some/topic{str_field=='A'}.num_field" }],
         [],
       ]);
 
-      expect(addValuesWithPathsToItems(messages, "/some/topic{str_field=='B'}.num_field", topics, datatypes)).toEqual([
-        [],
-        [],
-        [{ value: 2, path: "/some/topic{str_field=='B'}.num_field" }],
-      ]);
+      expect(
+        addValuesWithPathsToItems(messages, "/some/topic{str_field=='B'}.num_field", topics, datatypes, useBobjects)
+      ).toEqual([[], [], [{ value: 2, path: "/some/topic{str_field=='B'}.num_field" }]]);
 
-      expect(addValuesWithPathsToItems(messages, "/some/topic{num_field==2}.num_field", topics, datatypes)).toEqual([
+      expect(
+        addValuesWithPathsToItems(messages, "/some/topic{num_field==2}.num_field", topics, datatypes, useBobjects)
+      ).toEqual([
         [],
         [{ value: 2, path: "/some/topic{num_field==2}.num_field" }],
         [{ value: 2, path: "/some/topic{num_field==2}.num_field" }],
       ]);
 
       expect(
-        addValuesWithPathsToItems(messages, "/some/topic{str_field=='A'}{num_field==2}.num_field", topics, datatypes)
+        addValuesWithPathsToItems(
+          messages,
+          "/some/topic{str_field=='A'}{num_field==2}.num_field",
+          topics,
+          datatypes,
+          useBobjects
+        )
       ).toEqual([[], [{ value: 2, path: "/some/topic{str_field=='A'}{num_field==2}.num_field" }], []]);
 
-      expect(addValuesWithPathsToItems(messages, "/some/topic{str_field=='C'}.num_field", topics, datatypes)).toEqual([
-        [],
-        [],
-        [],
-      ]);
+      expect(
+        addValuesWithPathsToItems(messages, "/some/topic{str_field=='C'}.num_field", topics, datatypes, useBobjects)
+      ).toEqual([[], [], []]);
     });
 
     it("returns matching constants", () => {
@@ -507,7 +534,7 @@ describe("useCachedGetMessagePathDataItems", () => {
         },
       };
 
-      expect(addValuesWithPathsToItems(messages, "/some/topic.state", topics, datatypes)).toEqual([
+      expect(addValuesWithPathsToItems(messages, "/some/topic.state", topics, datatypes, useBobjects)).toEqual([
         [
           {
             value: 0,

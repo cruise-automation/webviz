@@ -8,7 +8,6 @@
 
 import { uniq } from "lodash";
 import * as React from "react";
-import Dimensions from "react-container-dimensions";
 import { hot } from "react-hot-loader/root";
 import stringHash from "string-hash";
 import styled, { css } from "styled-components";
@@ -16,6 +15,7 @@ import tinycolor from "tinycolor2";
 
 import helpContent from "./index.help.md";
 import Button from "webviz-core/src/components/Button";
+import Dimensions from "webviz-core/src/components/Dimensions";
 import MessageHistoryDEPRECATED, { type MessageHistoryData } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import Panel from "webviz-core/src/components/Panel";

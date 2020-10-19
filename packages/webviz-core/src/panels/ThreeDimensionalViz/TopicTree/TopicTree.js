@@ -14,11 +14,11 @@ import MoreIcon from "@mdi/svg/svg/unfold-more-horizontal.svg";
 import { clamp, groupBy } from "lodash";
 import Tree from "rc-tree";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import Dimensions from "react-container-dimensions";
 import { useSpring, animated } from "react-spring";
 import styled from "styled-components";
 
 import { type Save3DConfig } from "../index";
+import DiffModeSettings from "./DiffModeSettings";
 import NoMatchesSvg from "./noMatches.svg";
 import renderTreeNodes, { SWITCHER_WIDTH } from "./renderTreeNodes";
 import TopicTreeSwitcher, { SWITCHER_HEIGHT } from "./TopicTreeSwitcher";
@@ -38,6 +38,7 @@ import type {
   TreeNode,
   VisibleTopicsCountByKey,
 } from "./types";
+import Dimensions from "webviz-core/src/components/Dimensions";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Icon from "webviz-core/src/components/Icon";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
@@ -205,6 +206,7 @@ type SharedProps = {|
   onExitTopicTreeFocus: () => void,
   onNamespaceOverrideColorChange: OnNamespaceOverrideColorChange,
   pinTopics: boolean,
+  diffModeEnabled: boolean,
   rootTreeNode: TreeNode,
   saveConfig: Save3DConfig,
   sceneErrorsByKey: SceneErrorsByKey,
@@ -241,9 +243,9 @@ function TopicTree({
   getIsTreeNodeVisibleInScene,
   getIsTreeNodeVisibleInTree,
   hasFeatureColumn,
-  isPlaying,
   onNamespaceOverrideColorChange,
   pinTopics,
+  diffModeEnabled,
   rootTreeNode,
   saveConfig,
   sceneErrorsByKey,
@@ -297,16 +299,6 @@ function TopicTree({
   const isXSWidth = treeWidth < DEFAULT_XS_WIDTH;
   const headerRightIconStyle = { margin: `4px ${(isXSWidth ? 0 : TREE_SPACING) + 2}px 4px 8px` };
 
-  const springProps = useSpring({
-    native: true,
-    unique: true,
-    precision: 0.1,
-    // Skip the animation if we are playing because it looks nicer than having the animation lag
-    immediate: isPlaying,
-    to: { opacity: renderTopicTree ? 1 : 0, transformX: renderTopicTree ? 0 : -20 },
-    config: { tension: 340, friction: 26, clamp: true },
-  });
-
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
   const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("globalVariableColorOverrides");
   const linkedGlobalVariablesByTopic = highlightMarkersThatMatchGlobalVariables
@@ -325,123 +317,99 @@ function TopicTree({
   );
 
   return (
-    <>
-      <TopicTreeSwitcher
-        showErrorBadge={!renderTopicTree && Object.keys(sceneErrorsByKey).length > 0}
-        pinTopics={pinTopics}
-        renderTopicTree={renderTopicTree}
-        saveConfig={saveConfig}
-        setShowTopicTree={setShowTopicTree}
-      />
-      <STopicTree
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          pointerEvents: renderTopicTree ? "auto" : "none",
-          opacity: springProps.opacity,
-          transform: springProps.transformX.interpolate((x) => (x === 0 ? "none" : `translate3d(${x}px, 0px, 0px)`)),
-        }}>
-        <STopicTreeInner style={{ width: treeWidth }} isXSWidth={isXSWidth}>
-          <STopicTreeHeader>
-            <SFilter>
-              <Icon style={{ color: "rgba(255,255,255, 0.3)" }}>
-                <MagnifyIcon style={{ width: 16, height: 16 }} />
-              </Icon>
-              <SInput
-                size={3}
-                data-test="topic-tree-filter-input"
-                value={filterText}
-                placeholder="Type to filter"
-                onChange={(event) => setFilterText(event.target.value)}
-                onKeyDown={onKeyDown}
-                ref={filterTextFieldRef}
-              />
-            </SFilter>
-            {rootTreeNode.providerAvailable && (
-              <TopicViewModeSelector
-                isXSWidth={isXSWidth}
-                saveConfig={saveConfig}
-                topicDisplayMode={topicDisplayMode}
-              />
-            )}
-            {!filterText && (
-              <Icon
-                dataTest="expand-all-icon"
-                tooltip={topLevelNodesCollapsed ? "Expand all" : "Collapse all"}
-                small
-                fade
-                onClick={() => {
-                  saveConfig({ expandedKeys: topLevelNodesCollapsed ? allKeys : [] });
-                }}
-                style={headerRightIconStyle}>
-                {topLevelNodesCollapsed ? <MoreIcon /> : <LessIcon />}
-              </Icon>
-            )}
-            {filterText && (
-              <Icon
-                dataTest="clear-filter-icon"
-                small
-                fade
-                style={headerRightIconStyle}
-                onClick={() => setFilterText("")}>
-                <CloseIcon />
-              </Icon>
-            )}
-          </STopicTreeHeader>
-          <div ref={scrollContainerRef} style={{ overflow: "auto", width: treeWidth }}>
-            {showNoMatchesState ? (
-              <SNoMatches>
-                <NoMatchesSvg />
-                <SNoMatchesText>No results found. Try searching a different term.</SNoMatchesText>
-              </SNoMatches>
-            ) : (
-              <Tree
-                treeData={renderTreeNodes({
-                  availableNamespacesByTopic,
-                  checkedKeysSet,
-                  children: rootTreeNode.children || [],
-                  getIsTreeNodeVisibleInScene,
-                  getIsTreeNodeVisibleInTree,
-                  getIsNamespaceCheckedByDefault,
-                  hasFeatureColumn,
-                  isXSWidth,
-                  onNamespaceOverrideColorChange,
-                  sceneErrorsByKey,
-                  setCurrentEditingTopic,
-                  derivedCustomSettingsByKey,
-                  setEditingNamespace,
-                  topicDisplayMode,
-                  visibleTopicsCountByKey,
-                  width: treeWidth,
-                  filterText,
-                  linkedGlobalVariablesByTopic,
-                })}
-                height={treeHeight}
-                itemHeight={ROW_HEIGHT}
-                // Disable motion because it seems to cause a bug in the `rc-tree` (used under the hood by `antd` for
-                // the tree). This bug would result in nodes no longer being rendered after a search.
-                motion={null}
-                selectable={false}
-                onExpand={(newExpandedKeys) => {
-                  if (!shouldExpandAllKeys) {
-                    saveConfig({ expandedKeys: newExpandedKeys });
-                  }
-                }}
-                expandedKeys={shouldExpandAllKeys ? allKeys : expandedKeysRef.current}
-                autoExpandParent={false /* Set autoExpandParent to true when filtering */}
-                switcherIcon={
-                  <SSwitcherIcon style={filterText ? { visibility: "hidden" } : {}}>
-                    <ChevronDownIcon
-                      fill="currentColor"
-                      style={{ width: SWITCHER_ICON_SIZE, height: SWITCHER_ICON_SIZE }}
-                    />
-                  </SSwitcherIcon>
-                }
-              />
-            )}
-          </div>
-        </STopicTreeInner>
-      </STopicTree>
-    </>
+    <STopicTreeInner style={{ width: treeWidth }} isXSWidth={isXSWidth}>
+      <STopicTreeHeader>
+        <SFilter>
+          <Icon style={{ color: "rgba(255,255,255, 0.3)" }}>
+            <MagnifyIcon style={{ width: 16, height: 16 }} />
+          </Icon>
+          <SInput
+            size={3}
+            data-test="topic-tree-filter-input"
+            value={filterText}
+            placeholder="Type to filter"
+            onChange={(event) => setFilterText(event.target.value)}
+            onKeyDown={onKeyDown}
+            ref={filterTextFieldRef}
+          />
+        </SFilter>
+        {rootTreeNode.providerAvailable && (
+          <TopicViewModeSelector isXSWidth={isXSWidth} saveConfig={saveConfig} topicDisplayMode={topicDisplayMode} />
+        )}
+        {!filterText && (
+          <Icon
+            dataTest="expand-all-icon"
+            tooltip={topLevelNodesCollapsed ? "Expand all" : "Collapse all"}
+            small
+            fade
+            onClick={() => {
+              saveConfig({ expandedKeys: topLevelNodesCollapsed ? allKeys : [] });
+            }}
+            style={headerRightIconStyle}>
+            {topLevelNodesCollapsed ? <MoreIcon /> : <LessIcon />}
+          </Icon>
+        )}
+        {filterText && (
+          <Icon dataTest="clear-filter-icon" small fade style={headerRightIconStyle} onClick={() => setFilterText("")}>
+            <CloseIcon />
+          </Icon>
+        )}
+      </STopicTreeHeader>
+      {hasFeatureColumn && <DiffModeSettings enabled={diffModeEnabled} saveConfig={saveConfig} />}
+      <div ref={scrollContainerRef} style={{ overflow: "auto", width: treeWidth }}>
+        {showNoMatchesState ? (
+          <SNoMatches>
+            <NoMatchesSvg />
+            <SNoMatchesText>No results found. Try searching a different term.</SNoMatchesText>
+          </SNoMatches>
+        ) : (
+          <Tree
+            treeData={renderTreeNodes({
+              availableNamespacesByTopic,
+              checkedKeysSet,
+              children: rootTreeNode.children || [],
+              getIsTreeNodeVisibleInScene,
+              getIsTreeNodeVisibleInTree,
+              getIsNamespaceCheckedByDefault,
+              hasFeatureColumn,
+              isXSWidth,
+              onNamespaceOverrideColorChange,
+              sceneErrorsByKey,
+              setCurrentEditingTopic,
+              derivedCustomSettingsByKey,
+              setEditingNamespace,
+              topicDisplayMode,
+              visibleTopicsCountByKey,
+              width: treeWidth,
+              filterText,
+              linkedGlobalVariablesByTopic,
+              diffModeEnabled: hasFeatureColumn && diffModeEnabled,
+            })}
+            height={treeHeight}
+            itemHeight={ROW_HEIGHT}
+            // Disable motion because it seems to cause a bug in the `rc-tree` (used under the hood by `antd` for
+            // the tree). This bug would result in nodes no longer being rendered after a search.
+            motion={null}
+            selectable={false}
+            onExpand={(newExpandedKeys) => {
+              if (!shouldExpandAllKeys) {
+                saveConfig({ expandedKeys: newExpandedKeys });
+              }
+            }}
+            expandedKeys={shouldExpandAllKeys ? allKeys : expandedKeysRef.current}
+            autoExpandParent={false /* Set autoExpandParent to true when filtering */}
+            switcherIcon={
+              <SSwitcherIcon style={filterText ? { visibility: "hidden" } : {}}>
+                <ChevronDownIcon
+                  fill="currentColor"
+                  style={{ width: SWITCHER_ICON_SIZE, height: SWITCHER_ICON_SIZE }}
+                />
+              </SSwitcherIcon>
+            }
+          />
+        )}
+      </div>
+    </STopicTreeInner>
   );
 }
 
@@ -449,6 +417,16 @@ function TopicTree({
 function TopicTreeWrapper({ containerWidth, containerHeight, pinTopics, showTopicTree, ...rest }: Props) {
   const defaultTreeWidth = clamp(containerWidth, DEFAULT_XS_WIDTH, DEFAULT_WIDTH);
   const renderTopicTree = pinTopics || showTopicTree;
+  const { sceneErrorsByKey, saveConfig, setShowTopicTree, isPlaying } = rest;
+  const springProps = useSpring({
+    native: true,
+    unique: true,
+    precision: 0.1,
+    // Skip the animation if we are playing because it looks nicer than having the animation lag
+    immediate: isPlaying,
+    to: { opacity: renderTopicTree ? 1 : 0, transformX: renderTopicTree ? 0 : -20 },
+    config: { tension: 340, friction: 26, clamp: true },
+  });
 
   return (
     <STopicTreeWrapper style={{ height: containerHeight - CONTAINER_SPACING * 3 }} className="ant-component">
@@ -463,13 +441,32 @@ function TopicTreeWrapper({ containerWidth, containerHeight, pinTopics, showTopi
               maxWidth: containerWidth - 100,
             }}
             onClick={(ev) => ev.stopPropagation()}>
-            <TopicTree
-              {...rest}
+            <TopicTreeSwitcher
+              showErrorBadge={!renderTopicTree && Object.keys(sceneErrorsByKey).length > 0}
               pinTopics={pinTopics}
-              showTopicTree={showTopicTree}
-              treeWidth={width}
-              treeHeight={containerHeight - SEARCH_BAR_HEIGHT - SWITCHER_HEIGHT - CONTAINER_SPACING * 2}
+              renderTopicTree={renderTopicTree}
+              saveConfig={saveConfig}
+              setShowTopicTree={setShowTopicTree}
             />
+            <STopicTree
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                pointerEvents: renderTopicTree ? "auto" : "none",
+                opacity: springProps.opacity,
+                transform: springProps.transformX.interpolate((x) =>
+                  x === 0 ? "none" : `translate3d(${x}px, 0px, 0px)`
+                ),
+              }}>
+              {renderTopicTree && (
+                <TopicTree
+                  {...rest}
+                  pinTopics={pinTopics}
+                  showTopicTree={showTopicTree}
+                  treeWidth={width}
+                  treeHeight={containerHeight - SEARCH_BAR_HEIGHT - SWITCHER_HEIGHT - CONTAINER_SPACING * 2}
+                />
+              )}
+            </STopicTree>
           </div>
         )}
       </Dimensions>

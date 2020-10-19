@@ -26,6 +26,7 @@ import { Item } from "webviz-core/src/components/Menu";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import TopicToRenderMenu from "webviz-core/src/components/TopicToRenderMenu";
+import filterMap from "webviz-core/src/filterMap";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import DiagnosticsHistory from "webviz-core/src/panels/diagnostics/DiagnosticsHistory";
 import type { Topic } from "webviz-core/src/players/types";
@@ -192,7 +193,11 @@ class DiagnosticSummary extends React.Component<Props> {
                     ...getSortedNodes(getNodesByLevel(buffer, LEVELS.WARN), hardwareIdFilter, pinnedIds),
                     ...getSortedNodes(getNodesByLevel(buffer, LEVELS.OK), hardwareIdFilter, pinnedIds),
                   ]
-                : getSortedNodes(buffer.diagnosticsInOrderReceived, hardwareIdFilter, pinnedIds);
+                : getSortedNodes(
+                    filterMap(buffer.diagnosticsIdsInOrderReceived, (i) => buffer.diagnosticsById.get(i)),
+                    hardwareIdFilter,
+                    pinnedIds
+                  );
 
               const nodes: DiagnosticInfo[] = [...compact(pinnedNodes), ...sortedNodes];
               return !nodes.length ? null : (

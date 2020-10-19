@@ -51,10 +51,28 @@ export default class RenameDataProvider implements DataProvider {
       reportMetadataCallback: extensionPoint.reportMetadataCallback,
     };
     const result = await this._provider.initialize(childExtensionPoint);
+    const { messageDefinitions } = result;
 
-    const messageDefinitionsByTopic = {};
-    for (const topicName of Object.keys(result.messageDefinitionsByTopic)) {
-      messageDefinitionsByTopic[`${this._prefix}${topicName}`] = result.messageDefinitionsByTopic[topicName];
+    const convertTopicNameKey = (objWithTopicNameKeys) => {
+      const topicKeyResult = {};
+      for (const topicName of Object.keys(objWithTopicNameKeys)) {
+        topicKeyResult[`${this._prefix}${topicName}`] = objWithTopicNameKeys[topicName];
+      }
+      return topicKeyResult;
+    };
+    let newMessageDefinitions;
+    if (messageDefinitions.type === "parsed") {
+      newMessageDefinitions = {
+        type: "parsed",
+        datatypes: messageDefinitions.datatypes,
+        messageDefinitionsByTopic: convertTopicNameKey(messageDefinitions.messageDefinitionsByTopic),
+        parsedMessageDefinitionsByTopic: convertTopicNameKey(messageDefinitions.parsedMessageDefinitionsByTopic),
+      };
+    } else {
+      newMessageDefinitions = {
+        type: "raw",
+        messageDefinitionsByTopic: convertTopicNameKey(messageDefinitions.messageDefinitionsByTopic),
+      };
     }
 
     return {
@@ -67,7 +85,7 @@ export default class RenameDataProvider implements DataProvider {
         datatype: topic.datatype, // TODO(JP): We might want to map datatypes with a prefix in the future, to avoid collisions.
         numMessages: topic.numMessages,
       })),
-      messageDefinitionsByTopic,
+      messageDefinitions: newMessageDefinitions,
     };
   }
 

@@ -30,6 +30,7 @@ import {
   getRemoteBagDescriptor,
 } from "webviz-core/src/dataProviders/standardDataProviderDescriptors";
 import type { DataProviderDescriptor } from "webviz-core/src/dataProviders/types";
+import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import useUserNodes from "webviz-core/src/hooks/useUserNodes";
 import AutomatedRunPlayer from "webviz-core/src/players/automatedRun/AutomatedRunPlayer";
 import PerformanceMeasuringClient from "webviz-core/src/players/automatedRun/performanceMeasuringClient";
@@ -57,10 +58,10 @@ import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
 function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Player {
   const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
-  const useBinaryObjects = !!getExperimentalFeature("useBinaryTranslation");
+  const useBinaryObjects = getExperimentalFeature("useBinaryTranslation");
   const rootDescriptor = {
     name: CoreDataProviders.ParseMessagesDataProvider,
-    args: {},
+    args: { wrapMessagesToProvideBobjects: !useBinaryObjects },
     children: [
       {
         name: CoreDataProviders.MemoryCacheDataProvider,
@@ -160,6 +161,7 @@ type Props = OwnProps & {
   loadLayout: typeof loadLayoutAction,
   messageOrder: TimestampMethod,
   userNodes: UserNodes,
+  globalVariables: GlobalVariables,
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
   addUserNodeLogs: AddUserNodeLogs,
   setUserNodeRosLib: SetUserNodeRosLib,
@@ -171,12 +173,14 @@ function PlayerManager({
   children,
   messageOrder,
   userNodes,
+  globalVariables,
   setUserNodeDiagnostics: setDiagnostics,
   addUserNodeLogs: setLogs,
   setUserNodeRosLib: setRosLib,
   setGlobalVariables: setVariables,
 }: Props) {
   const usedFiles = React.useRef<File[]>([]);
+  const globalVariablesRef = React.useRef<GlobalVariables>(globalVariables);
   const [player, setPlayerInternal] = React.useState<?OrderedStampPlayer>();
   const [inputDescription, setInputDescription] = React.useState<React.Node>("No input selected.");
 
@@ -198,18 +202,19 @@ function PlayerManager({
         setUserNodeRosLib: setRosLib,
       });
       const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, initialMessageOrder);
+      headerStampPlayer.setGlobalVariables(globalVariablesRef.current);
       setPlayerInternal(headerStampPlayer);
     },
-    [setDiagnostics, setLogs, initialMessageOrder, setRosLib]
+    [setDiagnostics, setLogs, setRosLib, initialMessageOrder]
   );
 
   React.useEffect(
     () => {
       const params = new URLSearchParams(window.location.search);
 
-      const globalVariables = getGlobalVariablesFromUrl(params);
-      if (globalVariables) {
-        setVariables(globalVariables);
+      const globalVariablesFromUrl = getGlobalVariablesFromUrl(params);
+      if (globalVariablesFromUrl) {
+        setVariables(globalVariablesFromUrl);
       }
 
       // For testing, you can use ?layout-url=https://open-source-webviz-ui.s3.amazonaws.com/demoLayout.json
@@ -299,7 +304,9 @@ function PlayerManager({
           </div>
         </DropOverlay>
       </DocumentDropListener>
-      <MessagePipelineProvider player={player}>{children({ inputDescription })}</MessagePipelineProvider>
+      <MessagePipelineProvider player={player} globalVariables={globalVariables}>
+        {children({ inputDescription })}
+      </MessagePipelineProvider>
     </>
   );
 }
@@ -308,6 +315,7 @@ export default connect<Props, OwnProps, _, _, _, _>(
   (state) => ({
     messageOrder: state.persistedState.panels.playbackConfig.messageOrder,
     userNodes: state.persistedState.panels.userNodes,
+    globalVariables: state.persistedState.panels.globalVariables,
   }),
   {
     loadLayout: loadLayoutAction,

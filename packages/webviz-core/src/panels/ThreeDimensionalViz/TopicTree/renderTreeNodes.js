@@ -97,6 +97,7 @@ type Props = {|
   visibleTopicsCountByKey: VisibleTopicsCountByKey,
   width: number,
   linkedGlobalVariablesByTopic: { [string]: LinkedGlobalVariable[] },
+  diffModeEnabled: boolean,
 |};
 
 export type TreeUINode = {| title: Node, key: string, children?: TreeUINode[], disabled?: boolean |};
@@ -197,6 +198,7 @@ export default function renderTreeNodes({
   visibleTopicsCountByKey,
   width,
   linkedGlobalVariablesByTopic,
+  diffModeEnabled,
 }: Props): TreeUINode[] {
   const titleWidth = width - SWITCHER_WIDTH;
   return children
@@ -282,6 +284,7 @@ export default function renderTreeNodes({
           width={titleWidth}
           visibleTopicsCount={visibleTopicsCountByKey[item.key] || 0}
           {...(tooltips.length ? { tooltips } : undefined)}
+          diffModeEnabled={diffModeEnabled}
         />
       );
 
@@ -308,6 +311,7 @@ export default function renderTreeNodes({
             topicNode: item,
             width: titleWidth,
             filterText,
+            diffModeEnabled,
           })
         );
       }
@@ -332,6 +336,7 @@ export default function renderTreeNodes({
             width: titleWidth,
             filterText,
             linkedGlobalVariablesByTopic,
+            diffModeEnabled,
           })
         );
       }

@@ -18,6 +18,7 @@ import Dropdown from "webviz-core/src/components/Dropdown";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { Renderer } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
+import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
 
 // Sort the keys of objects to make their presentation more predictable
@@ -66,12 +67,16 @@ function ObjectDetailsWrapper({ interactionData, selectedObject: { object, insta
   const updateShowInstance = (shouldShowInstance) => {
     setShowInstance(shouldShowInstance);
     logger({
-      name: eventNames["3D_OBJECT_DETAILS_SHOW_INSTANCE"],
+      name: eventNames["3D_PANEL.OBJECT_DETAILS_SHOW_INSTANCE"],
       tags: { [eventTags.PANEL_TYPE]: Renderer.panelType },
     });
   };
 
   const objectToDisplay = instanceObject && showInstance ? instanceObject : object;
+  const parsedObject = React.useMemo(
+    () => (isBobject(objectToDisplay) ? deepParse(objectToDisplay) : objectToDisplay),
+    [objectToDisplay]
+  );
   return (
     <div>
       {instanceObject && (
@@ -84,7 +89,7 @@ function ObjectDetailsWrapper({ interactionData, selectedObject: { object, insta
           <span value={false}>{dropdownText.full}</span>
         </Dropdown>
       )}
-      <ObjectDetails interactionData={interactionData} objectToDisplay={objectToDisplay} />
+      <ObjectDetails interactionData={interactionData} objectToDisplay={parsedObject} />
     </div>
   );
 }

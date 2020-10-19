@@ -20,8 +20,8 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 
 const EmptyNode: $Shape<NodeDefinition<void>> = {
   inputs: [],
-  output: { name: "", datatype: "" },
-  datatypes: {},
+  output: { name: "", datatype: "foo/Bar" },
+  datatypes: { "foo/Bar": { fields: [] } },
   format: "parsedMessages",
   defaultState: undefined,
   callback() {
@@ -64,11 +64,13 @@ describe("nodes", () => {
         ...EmptyNode,
         inputs: ["/webviz/b"],
         output: { name: "/webviz/a", datatype: "a" },
+        datatypes: { a: { fields: [] } },
       };
       const NodeB: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/webviz/a"],
         output: { name: "/webviz/b", datatype: "b" },
+        datatypes: { b: { fields: [] } },
       };
       expect(() => validateNodeDefinitions([NodeA, NodeB])).toThrow();
       // For sanity, the individual nodes should be fine:
@@ -81,11 +83,13 @@ describe("nodes", () => {
         ...EmptyNode,
         inputs: ["/external/1"],
         output: { name: "/webviz/internal", datatype: "internal" },
+        datatypes: { internal: { fields: [] } },
       };
       const NodeB: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/external/2"],
         output: { name: "/webviz/internal", datatype: "internal" },
+        datatypes: { internal: { fields: [] } },
       };
       expect(() => validateNodeDefinitions([NodeA, NodeB])).toThrow();
       // For sanity, the individual nodes should be fine:
@@ -119,7 +123,7 @@ describe("nodes", () => {
       const NodeA: NodeDefinition<void> = {
         ...EmptyNode,
         inputs: ["/webviz/b"],
-        output: { name: "/webviz/a", datatype: "a" },
+        output: { name: "/webviz/a", datatype: "std_msgs/A" },
         datatypes: {
           "std_msgs/B": {
             fields: [

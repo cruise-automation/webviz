@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { max, min, flatten } from "lodash";
+import { max, min, flatten, sortedUniqBy, uniqBy } from "lodash";
 import React, { memo, useEffect, useCallback, useState, useRef } from "react";
 import DocumentEvents from "react-document-events";
 import ReactDOM from "react-dom";
@@ -27,10 +27,11 @@ import ChartComponent, { type HoveredElement, type ScaleOptions } from "webviz-c
 import { getChartValue, inBounds, type ScaleBounds } from "webviz-core/src/components/ReactChartjs/zoomAndPanHelpers";
 import TimeBasedChartLegend from "webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend";
 import Tooltip from "webviz-core/src/components/Tooltip";
-import { cast } from "webviz-core/src/players/types";
 import mixins from "webviz-core/src/styles/mixins.module.scss";
-import type { StampedMessage } from "webviz-core/src/types/Messages";
+import { isBobject } from "webviz-core/src/util/binaryObjects";
 import { useDeepChangeDetector } from "webviz-core/src/util/hooks";
+import { defaultGetHeaderStamp } from "webviz-core/src/util/synchronizeMessages";
+import { maybeGetBobjectHeaderStamp } from "webviz-core/src/util/time";
 
 type Bounds = {| minX: ?number, maxX: ?number |};
 const SyncTimeAxis = createSyncingComponent<Bounds, Bounds>("SyncTimeAxis", (dataItems: Bounds[]) => ({
@@ -45,10 +46,8 @@ export type TooltipItem = {|
 |};
 
 export const getTooltipItemForMessageHistoryItem = (item: MessageHistoryItem): TooltipItem => {
-  let headerStamp;
-  if (item.message.message?.header != null) {
-    headerStamp = cast<StampedMessage>(item.message.message).header.stamp;
-  }
+  const { message } = item.message;
+  const headerStamp = isBobject(message) ? maybeGetBobjectHeaderStamp(message) : defaultGetHeaderStamp(message);
   return { queriedData: item.queriedData, receiveTime: item.message.receiveTime, headerStamp };
 };
 
@@ -102,7 +101,7 @@ const SBar = styled.div.attrs(({ xAxisIsPlaybackTime }) => ({
   top: 0;
   bottom: 0;
   width: 9px;
-  margin-left: -4.5px;
+  margin-left: -4px;
   display: block;
   border-style: solid;
   border-color: #f7be00 transparent;
@@ -137,12 +136,42 @@ type FollowPlaybackState = $ReadOnly<{|
   xOffsetMax: number, // 1 means the right edge of the plot is one second after the current time.
 |}>;
 
+type Point = $ReadOnly<{ x: number, y: number | string }>;
+
 type DataSet = $ReadOnly<{
-  data: $ReadOnlyArray<$ReadOnly<{ x: number, y: number | string }>>,
+  data: $ReadOnlyArray<Point>,
   label: string,
   borderDash?: $ReadOnlyArray<number>,
   color?: string,
+  showLine?: boolean,
 }>;
+
+const scalePerPixel = (bounds: ?ScaleBounds): ?number =>
+  bounds && Math.abs(bounds.max - bounds.min) / Math.abs(bounds.maxAlongAxis - bounds.minAlongAxis);
+const screenCoord = (value, valuePerPixel) => (valuePerPixel == null ? value : Math.trunc(value / valuePerPixel));
+const datumStringPixel = ({ x, y }: Point, xScale: ?number, yScale: ?number): string =>
+  `${screenCoord(x, xScale)},${typeof y === "string" ? y : screenCoord(y, yScale)}`;
+
+// Exported for tests
+export const filterDatasets = (
+  datasets: $ReadOnlyArray<DataSet>,
+  linesToHide: { [string]: boolean },
+  xScalePerPixel: ?number,
+  yScalePerPixel: ?number
+): DataSet[] =>
+  datasets
+    // Only draw enabled lines. Needed for correctness.
+    .filter(({ label }) => !linesToHide[label])
+    // Remove redundant points to make drawing the chart more efficient.
+    .map((dataset) => {
+      const data = dataset.showLine
+        ? // For line charts, just remove adjacent points on top of each other so we can draw self-
+          // intersecting (loopy) lines.
+          sortedUniqBy(dataset.data.slice(), (datum) => datumStringPixel(datum, xScalePerPixel, yScalePerPixel))
+        : // For scatter charts there's no point in drawing any overlapping points.
+          uniqBy(dataset.data.slice(), (datum) => datumStringPixel(datum, xScalePerPixel, yScalePerPixel));
+      return { ...dataset, data };
+    });
 
 // Calculation mode for the "reset view" view.
 export type ChartDefaultView =
@@ -482,6 +511,8 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   // scrolling with playback because the vertical lines can flicker, and x axis labels can have an
   // inconsistent number of digits.
   const xBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "xAxes");
+  const yBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "yAxes");
+
   const xScaleOptions = followPlaybackState && xBounds && stepSize(xBounds);
 
   const getChartjsOptions = (minX: ?number, maxX: ?number) => {
@@ -629,7 +660,10 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
     height,
     key: `${width}x${height}`,
     ref: chartComponent,
-    data: { ...data, datasets: data.datasets.filter((dataset) => !linesToHide[dataset.label]) },
+    data: {
+      ...data,
+      datasets: filterDatasets(data.datasets, linesToHide, scalePerPixel(xBounds), scalePerPixel(yBounds)),
+    },
     onScaleBoundsUpdate,
     onPanZoom,
     onClick: onClickAddingValues,

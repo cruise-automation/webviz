@@ -45,6 +45,7 @@ import {
 } from "webviz-core/src/actions/panels";
 import Button from "webviz-core/src/components/Button";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import KeyListener from "webviz-core/src/components/KeyListener";
@@ -260,6 +261,11 @@ export default function Panel<Config: PanelConfig>(
         const nextSelectedPanelIds = toggleSelection ? xor(selectedPanelIds, [panelId]) : [panelId];
         const nextValidSelectedPanelIds = without(nextSelectedPanelIds, ...panelIdsToDeselect);
         actions.setSelectedPanelIds(nextValidSelectedPanelIds);
+
+        // Deselect any text that was selected due to holding the shift key while clicking
+        if (nextValidSelectedPanelIds.length >= 2) {
+          window.getSelection().removeAllRanges();
+        }
       },
       [actions, savedProps, selectedPanelIds, tabId]
     );
@@ -276,7 +282,8 @@ export default function Panel<Config: PanelConfig>(
 
         if (childId) {
           e.stopPropagation();
-          selectPanel(childId, e.metaKey);
+          const toggleSelection = e.metaKey || shiftKeyPressed;
+          selectPanel(childId, toggleSelection);
         }
       },
       [childId, fullScreen, quickActionsKeyPressed, selectPanel, shiftKeyPressed]
@@ -414,6 +421,7 @@ export default function Panel<Config: PanelConfig>(
       [panelComponentConfig, saveCompleteConfig, openSiblingPanel, topics, datatypes, capabilities, isHovered]
     );
 
+    const isDemoMode = useExperimentalFeature("demoMode");
     return (
       // $FlowFixMe - bug prevents requiring panelType on PanelComponent: https://stackoverflow.com/q/52508434/23649
       <PanelContext.Provider
@@ -438,8 +446,11 @@ export default function Panel<Config: PanelConfig>(
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
           onMouseMove={onMouseMove}
-          style={{ border: `2px solid ${isSelected ? colors.BLUE : "transparent"}` }}
-          className={cx({ [styles.root]: true, [styles.rootFullScreen]: fullScreen })}
+          className={cx({
+            [styles.root]: true,
+            [styles.rootFullScreen]: fullScreen,
+            [styles.selected]: isSelected && !isDemoMode,
+          })}
           col
           dataTest={`panel-mouseenter-container ${childId || ""}`}
           clip>

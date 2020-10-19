@@ -19,14 +19,15 @@ import type { SetUserNodeDiagnostics, AddUserNodeLogs, SetUserNodeRosLib } from 
 // $FlowFixMe - flow does not like workers.
 import UserNodePlayerWorker from "sharedworker-loader?name=nodeRuntimeWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker"; // eslint-disable-line
 
+import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type {
   AdvertisePayload,
   Message,
   Player,
   PlayerState,
+  PlayerStateActiveData,
   PublishPayload,
   SubscribePayload,
-  PlayerStateActiveData,
   Topic,
   BobjectMessage,
 } from "webviz-core/src/players/types";
@@ -101,6 +102,7 @@ export default class UserNodePlayer implements Player {
   // datatypes, but these datatype definitions are very stable.
   _userDatatypes: RosDatatypes = { ...basicDatatypes };
   _rosLib: ?string;
+  _globalVariables: GlobalVariables = {};
   _pendingResetWorkers: ?Promise<void>;
 
   constructor(player: Player, userNodeActions: UserNodeActions) {
@@ -134,23 +136,24 @@ export default class UserNodePlayer implements Player {
   _getMessages = microMemoize(
     async (
       parsedMessages: Message[],
-      bobjects: BobjectMessage[]
+      bobjects: BobjectMessage[],
+      datatypes: RosDatatypes,
+      globalVariables: GlobalVariables
     ): Promise<{ parsedMessages: $ReadOnlyArray<Message>, bobjects: $ReadOnlyArray<BobjectMessage> }> => {
       const parsedMessagesPromises = [];
       const bobjectPromises = [];
+
       for (const message of parsedMessages) {
         for (const nodeRegistration of this._nodeRegistrations) {
           const subscriptions = this._subscribedFormatByTopic[nodeRegistration.output.name];
           if (subscriptions && nodeRegistration.inputs.includes(message.topic)) {
-            const messagePromise = nodeRegistration.processMessage(message);
+            const messagePromise = nodeRegistration.processMessage(message, globalVariables);
             // There should be at most 2 subscriptions.
             for (const format of subscriptions.values()) {
               if (format === "parsedMessages") {
                 parsedMessagesPromises.push(messagePromise);
               } else {
-                bobjectPromises.push(
-                  getBobjectMessage(this._userDatatypes, nodeRegistration.output.datatype, messagePromise)
-                );
+                bobjectPromises.push(getBobjectMessage(datatypes, nodeRegistration.output.datatype, messagePromise));
               }
             }
           }
@@ -170,18 +173,20 @@ export default class UserNodePlayer implements Player {
     }
   );
 
+  setGlobalVariables(globalVariables: GlobalVariables) {
+    this._globalVariables = globalVariables;
+  }
+
   // Called when userNode state is updated.
   async setUserNodes(userNodes: UserNodes): Promise<void> {
     this._userNodes = userNodes;
-
     if (!this._lastPlayerStateActiveData) {
       return;
     }
 
+    // This code causes us to reset workers twice because the forceSeek resets the workers too
+    // TODO: Only reset workers once
     const { topics, datatypes } = this._lastPlayerStateActiveData;
-
-    // TODO: Currently the below causes us to reset workers twice, since we are
-    // forcing a 'seek' here.
     return this._resetWorkers(topics, datatypes).then(() => {
       this.setSubscriptions(this._subscriptions);
       const currentTime = this._lastPlayerStateActiveData && this._lastPlayerStateActiveData.currentTime;
@@ -227,7 +232,7 @@ export default class UserNodePlayer implements Player {
         }
 
         const result = await Promise.race([
-          rpc.send<ProcessMessageOutput>("processMessage", { message }),
+          rpc.send<ProcessMessageOutput>("processMessage", { message, globalVariables: this._globalVariables }),
           terminateSignal,
         ]);
 
@@ -353,47 +358,48 @@ export default class UserNodePlayer implements Player {
   setListener(listener: (PlayerState) => Promise<void>) {
     this._player.setListener(async (playerState: PlayerState) => {
       const { activeData } = playerState;
-      if (activeData) {
-        const { messages, topics, datatypes, bobjects } = activeData;
+      if (!activeData) {
+        return listener(playerState);
+      }
+      const { messages, topics, datatypes, bobjects } = activeData;
 
-        // For resetting node state after seeking.
-        // TODO: Make resetWorkers more efficient in this case since we don't
-        // need to recompile/validate anything.
-        if (
-          this._lastPlayerStateActiveData &&
-          activeData.lastSeekTime !== this._lastPlayerStateActiveData.lastSeekTime
-        ) {
-          await this._resetWorkers(topics, datatypes);
-        }
-        // If we do not have active player data from a previous call, then our
-        // player just spun up, meaning we should re-run our user nodes in case
-        // they have inputs that now exist in the current player context.
-        if (!this._lastPlayerStateActiveData) {
-          this._lastPlayerStateActiveData = activeData;
-          await this._resetWorkers(topics, datatypes);
-          this.setSubscriptions(this._subscriptions);
-          this.requestBackfill();
-        }
-
-        const { parsedMessages, bobjects: augmentedBobjects } = await this._getMessages(messages, bobjects);
-
-        const newPlayerState = {
-          ...playerState,
-          activeData: {
-            ...activeData,
-            messages: parsedMessages,
-            bobjects: augmentedBobjects,
-            topics: this._getTopics(topics, this._nodeRegistrations.map((nodeRegistration) => nodeRegistration.output)),
-            datatypes: this._getDatatypes(datatypes, this._userDatatypes),
-          },
-        };
-
-        this._lastPlayerStateActiveData = playerState.activeData;
-
-        return listener(newPlayerState);
+      // For resetting node state after seeking.
+      // TODO: Make resetWorkers more efficient in this case since we don't
+      // need to recompile/validate anything.
+      if (this._lastPlayerStateActiveData && activeData.lastSeekTime !== this._lastPlayerStateActiveData.lastSeekTime) {
+        await this._resetWorkers(topics, datatypes);
+      }
+      // If we do not have active player data from a previous call, then our
+      // player just spun up, meaning we should re-run our user nodes in case
+      // they have inputs that now exist in the current player context.
+      if (!this._lastPlayerStateActiveData) {
+        this._lastPlayerStateActiveData = activeData;
+        await this._resetWorkers(topics, datatypes);
+        this.setSubscriptions(this._subscriptions);
+        this.requestBackfill();
       }
 
-      return listener(playerState);
+      const allDatatypes = this._getDatatypes(datatypes, this._userDatatypes);
+      const { parsedMessages, bobjects: augmentedBobjects } = await this._getMessages(
+        messages,
+        bobjects,
+        allDatatypes,
+        this._globalVariables
+      );
+
+      const newPlayerState = {
+        ...playerState,
+        activeData: {
+          ...activeData,
+          messages: parsedMessages,
+          bobjects: augmentedBobjects,
+          topics: this._getTopics(topics, this._nodeRegistrations.map((nodeRegistration) => nodeRegistration.output)),
+          datatypes: allDatatypes,
+        },
+      };
+
+      this._lastPlayerStateActiveData = playerState.activeData;
+      return listener(newPlayerState);
     });
   }
 

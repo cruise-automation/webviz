@@ -31,16 +31,17 @@ export default class RpcDataProviderRemote {
     rpc.receive("getMessages", async ({ start, end, topics }) => {
       const messages = await provider.getMessages(start, end, { rosBinaryMessages: topics });
       const { parsedMessages, rosBinaryMessages, bobjects } = messages;
-      if (parsedMessages != null || bobjects != null || rosBinaryMessages == null) {
+      const messagesToSend = rosBinaryMessages ?? [];
+      if (parsedMessages != null || bobjects != null) {
         throw new Error(
           "RpcDataProvider only accepts raw messages (that still need to be parsed with ParseMessagesDataProvider)"
         );
       }
       const arrayBuffers = new Set();
-      for (const message of rosBinaryMessages) {
+      for (const message of messagesToSend) {
         arrayBuffers.add(message.message);
       }
-      return { messages: rosBinaryMessages, [Rpc.transferrables]: Array.from(arrayBuffers) };
+      return { messages: messagesToSend, [Rpc.transferrables]: Array.from(arrayBuffers) };
     });
     rpc.receive("close", () => provider.close());
   }

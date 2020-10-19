@@ -9,6 +9,7 @@ import { partition, cloneDeep, uniqBy } from "lodash";
 import microMemoize from "micro-memoize";
 import type { Time } from "rosbag";
 
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import {
   type NodeDefinition,
@@ -160,5 +161,9 @@ export default class NodePlayer implements Player {
       throw new Error("Only allowed to be used in tests.");
     }
     return this._player;
+  }
+
+  setGlobalVariables(globalVariables: GlobalVariables) {
+    this._player.setGlobalVariables(globalVariables);
   }
 }

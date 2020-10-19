@@ -56,39 +56,27 @@ const scaledCarOutlineBufferPoints = (() => {
 
 export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: Props): Node[] {
   const models = [];
-  const otherMarkers = [];
+  const filledPolygons = [];
   const arrowMarkers = [];
   children.forEach((marker, i) => {
     const { pose, settings, interactionData } = marker;
     if (settings?.addCarOutlineBuffer) {
-      otherMarkers.push(
-        <FilledPolygons layerIndex={layerIndex} key={`cruise-pose-${i}`}>
-          {[
-            {
-              pose,
-              interactionData,
-              points: scaledCarOutlineBufferPoints,
-              color: { r: 0.6666, g: 0.6666, b: 0.6666, a: 1 },
-            },
-          ]}
-        </FilledPolygons>
-      );
+      filledPolygons.push({
+        pose,
+        interactionData,
+        points: scaledCarOutlineBufferPoints,
+        color: { r: 0.6666, g: 0.6666, b: 0.6666, a: 1 },
+      });
     }
 
     switch (settings?.modelType) {
       case "car-outline": {
-        otherMarkers.push(
-          <FilledPolygons layerIndex={layerIndex} key={`cruise-pose-${i}`}>
-            {[
-              {
-                pose,
-                interactionData,
-                points: carOutlinePoints,
-                color: { r: 0.3313, g: 0.3313, b: 0.3375, a: 1 },
-              },
-            ]}
-          </FilledPolygons>
-        );
+        filledPolygons.push({
+          pose,
+          interactionData,
+          points: carOutlinePoints,
+          color: settings?.color ?? { r: 0.3313, g: 0.3313, b: 0.3375, a: 1 },
+        });
         break;
       }
       case "car-model": {
@@ -130,8 +118,10 @@ export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: 
   });
 
   return [
+    <FilledPolygons layerIndex={layerIndex} key={`cruise-pose`}>
+      {filledPolygons}
+    </FilledPolygons>,
     ...models,
-    ...otherMarkers,
     <Arrows layerIndex={layerIndex} key="arrows">
       {arrowMarkers}
     </Arrows>,

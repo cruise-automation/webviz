@@ -17,7 +17,6 @@ import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
 import { useContext, useState, useCallback, useMemo } from "react"; // eslint-disable-line import/no-duplicates
-import Dimensions from "react-container-dimensions";
 import { MosaicContext, MosaicWindowContext } from "react-mosaic-component";
 // $FlowFixMe - typedefs do not recognize the ReactReduxContext import
 import { useDispatch, useSelector, ReactReduxContext } from "react-redux";
@@ -28,6 +27,7 @@ import styles from "./index.module.scss";
 import MosaicDragHandle from "./MosaicDragHandle";
 import { savePanelConfigs, changePanelLayout, closePanel, splitPanel, swapPanel } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
+import Dimensions from "webviz-core/src/components/Dimensions";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import Icon from "webviz-core/src/components/Icon";
 import { Item, SubMenu } from "webviz-core/src/components/Menu";

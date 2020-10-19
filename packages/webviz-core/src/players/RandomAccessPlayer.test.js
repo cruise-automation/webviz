@@ -101,11 +101,12 @@ describe("RandomAccessPlayer", () => {
           lastSeekTime: 0,
           messages: [],
           bobjects: [],
+          totalBytesReceived: 0,
           messageOrder: "receiveTime",
           speed: 0.2,
           startTime: { sec: 10, nsec: 0 },
           topics: [{ datatype: "fooBar", name: "/foo/bar" }, { datatype: "baz", name: "/baz" }],
-          messageDefinitionsByTopic: {},
+          parsedMessageDefinitionsByTopic: {},
           playerWarnings: {},
         },
         capabilities: [PlayerCapabilities.setSpeed],
@@ -1167,6 +1168,7 @@ describe("RandomAccessPlayer", () => {
       recordDataProviderPerformance(): void {}
       recordPlaybackTime(_time: Time): void {}
       recordBytesReceived(_bytes: number): void {}
+      recordUncachedRangeRequest(): void {}
       stats() {
         return {
           initialized: this._initialized,
@@ -1485,5 +1487,33 @@ describe("RandomAccessPlayer", () => {
     await source.setListener(store.add);
     source.setSubscriptions([{ topic: "/fallback_parsed", format: "parsedMessages", preloadingFallback: true }]);
     await store.done;
+  });
+
+  describe("hasCachedRange", () => {
+    it("handles an empty progress range", async () => {
+      const provider = new TestProvider({ topics: [{ name: "/fallback_parsed", datatype: "dummy" }] });
+      const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+      await player.setListener(async () => {});
+      provider.extensionPoint.progressCallback({});
+
+      expect(player.hasCachedRange({ sec: 10, nsec: 0 }, { sec: 10, nsec: 0 })).toBe(false);
+    });
+
+    it("handles non-empty progress ranges", async () => {
+      const provider = new TestProvider({ topics: [{ name: "/fallback_parsed", datatype: "dummy" }] });
+      const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+      await player.setListener(async () => {});
+
+      // Provider start/end is 10s/100s. Load from 55s to 100s.
+      provider.extensionPoint.progressCallback({ fullyLoadedFractionRanges: [{ start: 0.5, end: 1.0 }] });
+
+      expect(player.hasCachedRange({ sec: 0, nsec: 0 }, { sec: 0, nsec: 1 })).toBe(false);
+      expect(player.hasCachedRange({ sec: 0, nsec: 0 }, { sec: 100, nsec: 0 })).toBe(false);
+
+      expect(player.hasCachedRange({ sec: 50, nsec: 0 }, { sec: 95, nsec: 0 })).toBe(false);
+      expect(player.hasCachedRange({ sec: 55, nsec: 0 }, { sec: 95, nsec: 0 })).toBe(true);
+      expect(player.hasCachedRange({ sec: 55, nsec: 0 }, { sec: 100, nsec: 0 })).toBe(true);
+      expect(player.hasCachedRange({ sec: 90, nsec: 0 }, { sec: 101, nsec: 0 })).toBe(false);
+    });
   });
 });

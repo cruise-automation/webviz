@@ -39,7 +39,14 @@ export const POSE_STAMPED_DATATYPE = "geometry_msgs/PoseStamped";
 export const LASER_SCAN_DATATYPE = "sensor_msgs/LaserScan";
 export const WEBVIZ_MARKER_DATATYPE = "visualization_msgs/WebvizMarker";
 export const WEBVIZ_MARKER_ARRAY_DATATYPE = "visualization_msgs/WebvizMarkerArray";
+export const FUTURE_VIZ_MSGS_DATATYPE = "future_visualization_msgs/WebvizMarkerArray";
 export const TF_DATATYPE = "tf2_msgs/TFMessage";
+
+export const MARKER_ARRAY_DATATYPES = [
+  "visualization_msgs/MarkerArray",
+  FUTURE_VIZ_MSGS_DATATYPE,
+  WEBVIZ_MARKER_ARRAY_DATATYPE,
+];
 
 export const USER_ERROR_PREFIX = "[WEBVIZ USER ERROR]";
 
@@ -80,7 +87,9 @@ export const MARKER_MSG_TYPES = {
   TEXT_VIEW_FACING: 9,
   MESH_RESOURCE: 10,
   TRIANGLE_LIST: 11,
+  FILLED_POLYGON: 107,
   INSTANCED_LINE_LIST: 108,
+  OVERLAY_ICON: 109,
 };
 
 export const POSE_MARKER_SCALE = { x: 2, y: 2, z: 0.1 };

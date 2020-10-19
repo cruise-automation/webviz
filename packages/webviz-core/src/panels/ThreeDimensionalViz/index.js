@@ -44,6 +44,7 @@ export type ThreeDimensionalVizConfig = {
   followOrientation?: boolean,
   modifiedNamespaceTopics?: string[],
   pinTopics: boolean,
+  diffModeEnabled: boolean,
   topicDisplayMode?: TopicDisplayMode,
   flattenMarkers?: boolean,
   selectedPolygonEditFormat?: "json" | "yaml",

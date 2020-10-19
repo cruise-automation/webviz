@@ -11,8 +11,8 @@ import React from "react";
 import { isTypicalFilterName } from "webviz-core/src/components/MessagePathSyntax/isTypicalFilterName";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { diffLabels } from "webviz-core/src/panels/RawMessages/getDiff";
+import { format, formatDuration } from "webviz-core/src/util/formatTime";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
-import { format, formatDuration } from "webviz-core/src/util/time";
 
 const DURATION_20_YEARS_SEC = 20 * 365 * 24 * 60 * 60;
 export const DATA_ARRAY_PREVIEW_LIMIT = 20;

@@ -6,7 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { encodeURLQueryParamValue, positiveModulo } from "./index";
+import { encodeURLQueryParamValue, positiveModulo, debounceReduce } from "./index";
+import delay from "webviz-core/shared/delay";
 
 describe("util", () => {
   describe("encodeURLQueryParamValue()", () => {
@@ -37,6 +38,41 @@ describe("util", () => {
       expect(positiveModulo(21, 10)).toEqual(1);
       expect(positiveModulo(-1, 10)).toEqual(9);
       expect(positiveModulo(-11, 10)).toEqual(9);
+    });
+  });
+
+  describe("debounceReduce", () => {
+    it("combines calls that happen closely together", async () => {
+      const totals = [];
+      const time = 0;
+      const waitUntil = (t) => {
+        if (time > t) {
+          throw new Error(`It's past ${t} already`);
+        }
+        return delay(t - time);
+      };
+      const fn = debounceReduce({
+        action: (n: number) => {
+          totals.push(n);
+        },
+        wait: 100,
+        reducer: (n: number, buf: ArrayBuffer) => n + buf.byteLength,
+        initialValue: 0,
+      });
+
+      fn(new ArrayBuffer(1));
+      await waitUntil(1);
+      expect(totals).toEqual([1]);
+
+      fn(new ArrayBuffer(2));
+      await waitUntil(90);
+      expect(totals).toEqual([1]); // not yet
+      fn(new ArrayBuffer(3));
+      await waitUntil(110);
+      expect(totals).toEqual([1, 5]); // combines writes
+
+      await waitUntil(300);
+      expect(totals).toEqual([1, 5]); // no extra writes
     });
   });
 });

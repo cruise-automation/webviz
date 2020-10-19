@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { clamp } from "lodash";
 import React, { useMemo, useState, useEffect } from "react";
 import {
   Arrows,
@@ -18,7 +19,9 @@ import {
   Lines,
   FilledPolygons,
   createInstancedGetChildrenForHitmap,
+  Overlay,
 } from "regl-worldview";
+import styled from "styled-components";
 
 import glTextAtlasLoader, { type TextAtlas } from "./utils/glTextAtlasLoader";
 import { groupLinesIntoInstancedLineLists } from "./utils/groupingUtils";
@@ -45,8 +48,23 @@ import type {
   SphereListMarker,
   SphereMarker,
   TextMarker,
+  OverlayIconMarker,
 } from "webviz-core/src/types/Messages";
+import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
+const ICON_WRAPPER_SIZE = 24;
+const ICON_SIZE = 14;
+
+export const SIconWrapper = styled.div`
+  position: absolute;
+  color: ${colors.LIGHT};
+  box-shadow: 0px 0px 12px rgba(23, 34, 40, 0.7);
+  overflow: hidden;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+`;
 export type MarkerWithInteractionData = Interactive<any>;
 
 export type InteractiveMarkersByType = {
@@ -62,6 +80,7 @@ export type InteractiveMarkersByType = {
   linedConvexHull: Interactive<BaseMarker>[],
   lineList: Interactive<LineListMarker>[],
   lineStrip: Interactive<LineStripMarker>[],
+  overlayIcon: Interactive<OverlayIconMarker>[],
   pointcloud: Interactive<SphereMarker>[],
   points: Interactive<PointsMarker>[],
   poseMarker: Interactive<BaseMarker>[],
@@ -92,13 +111,49 @@ export type WorldMarkerProps = {|
   layerIndex?: number,
   markersByType: InteractiveMarkersByType,
   clearCachedMarkers: boolean,
+  isDemoMode: boolean,
+  cameraDistance: number,
+  diffModeEnabled: boolean,
 |};
+
+const MIN_SCALE = 0.6;
+const MIN_DISTANCE = 50;
+const MAX_DISTANCE = 100;
+// The icons will scale according to camera distance between MIN_DISTANCE and MAX_DISTANCE, from 100% to MIN_SCALE.
+function getIconScaleByCameraDistance(distance: number): number {
+  const effectiveIconDistance = clamp(distance, MIN_DISTANCE, MAX_DISTANCE);
+  return 1 - ((effectiveIconDistance - MIN_DISTANCE) * (1 - MIN_SCALE)) / (MAX_DISTANCE - MIN_DISTANCE);
+}
+
+function getIconStyles(
+  distance: number
+): {|
+  iconWrapperStyles: { [attr: string]: string | number },
+  scaledIconSize: number,
+  scaledIconWrapperSize: number,
+|} {
+  const scale = getIconScaleByCameraDistance(distance);
+  const scaledIconWrapperSize = Math.round(scale * ICON_WRAPPER_SIZE);
+  const scaledIconSize = Math.round(scale * ICON_SIZE);
+  const padding = Math.floor((scaledIconWrapperSize - scaledIconSize) / 2);
+  return {
+    iconWrapperStyles: {
+      padding,
+      width: scaledIconWrapperSize,
+      height: scaledIconWrapperSize,
+      borderRadius: scaledIconWrapperSize,
+    },
+    scaledIconSize,
+    scaledIconWrapperSize,
+  };
+}
 
 export default function WorldMarkers({
   autoTextBackgroundColor,
   layerIndex,
   markersByType,
   clearCachedMarkers,
+  cameraDistance,
 }: WorldMarkerProps) {
   const getChildrenForHitmap = useMemo(() => createInstancedGetChildrenForHitmap(1), []);
   const {
@@ -114,6 +169,7 @@ export default function WorldMarkers({
     linedConvexHull,
     lineList,
     lineStrip,
+    overlayIcon,
     pointcloud,
     points,
     poseMarker,
@@ -148,16 +204,28 @@ export default function WorldMarkers({
     nonGroupedLines = [];
   }
 
+  // Render smaller icons when camera is zoomed out.
+  const { iconWrapperStyles, scaledIconWrapperSize, scaledIconSize } = useMemo(() => getIconStyles(cameraDistance), [
+    cameraDistance,
+  ]);
+
+  const useWorldspacePointSize = getGlobalHooks()
+    .perPanelHooks()
+    .ThreeDimensionalViz.useWorldspacePointSize();
+
   return (
     <>
       <OccupancyGrids layerIndex={layerIndex + LAYER_INDEX_OCCUPANCY_GRIDS}>{grid}</OccupancyGrids>
       {additionalMarkers}
-      <Lines layerIndex={layerIndex}>{nonGroupedLines}</Lines>
-      <Arrows layerIndex={layerIndex}>{arrow}</Arrows>
-      <Points layerIndex={layerIndex}>{points}</Points>
+      {/* Render PointClouds first so other markers with the same zIndex can show on top of PointClouds. */}
       <PointClouds layerIndex={layerIndex} clearCachedMarkers={clearCachedMarkers}>
         {pointcloud}
       </PointClouds>
+      <Lines layerIndex={layerIndex}>{nonGroupedLines}</Lines>
+      <Arrows layerIndex={layerIndex}>{arrow}</Arrows>
+      <Points layerIndex={layerIndex} useWorldSpaceSize={useWorldspacePointSize}>
+        {points}
+      </Points>
       <Triangles layerIndex={layerIndex}>{triangleList}</Triangles>
       <Spheres layerIndex={layerIndex}>{[...sphere, ...sphereList]}</Spheres>
       <Cylinders layerIndex={layerIndex}>{cylinder}</Cylinders>
@@ -179,6 +247,44 @@ export default function WorldMarkers({
         {[...instancedLineList, ...groupedLines]}
       </Lines>
       <LinedConvexHulls layerIndex={layerIndex}>{linedConvexHull}</LinedConvexHulls>
+      <Overlay
+        renderItem={({ item, coordinates, index, dimension: { width, height } }) => {
+          if (!coordinates) {
+            return null;
+          }
+          const [left, top] = coordinates;
+          if (left < -10 || top < -10 || left > width + 10 || top > height + 10) {
+            return null; // Don't render anything that's too far outside of the canvas
+          }
+          const originalMsg = item.interactionData?.originalMessage || {};
+          const parsedMsg = isBobject(originalMsg) ? deepParse(originalMsg) : originalMsg;
+
+          const metadata = parsedMsg?.metadata;
+          if (!metadata) {
+            return;
+          }
+          const { name, markerStyle = {}, iconOffset: { x = 0, y = 0 } = {} } = metadata;
+          const iconsByClassification = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.iconsByClassification;
+          const SvgIcon = iconsByClassification[name] || iconsByClassification.DEFAULT;
+
+          return (
+            <SIconWrapper
+              key={index}
+              style={{
+                ...markerStyle,
+                ...iconWrapperStyles,
+                transform: `translate(${(left - scaledIconWrapperSize / 2 + x).toFixed()}px,${(
+                  top -
+                  scaledIconWrapperSize / 2 +
+                  y
+                ).toFixed()}px)`,
+              }}>
+              <SvgIcon fill="white" width={scaledIconSize} height={scaledIconSize} />
+            </SIconWrapper>
+          );
+        }}>
+        {overlayIcon}
+      </Overlay>
     </>
   );
 }

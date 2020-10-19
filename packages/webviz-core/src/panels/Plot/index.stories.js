@@ -8,6 +8,7 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
+import { parseMessageDefinition } from "rosbag";
 
 import Plot from "webviz-core/src/panels/Plot";
 import PanelSetup, { triggerWheel } from "webviz-core/src/stories/PanelSetup";
@@ -67,13 +68,13 @@ const withEndTime = (testFixture, endTime) => ({
 const datatypes = {
   "msgs/PoseDebug": {
     fields: [
-      { name: "header", type: "std_msgs/Header", isArray: false },
-      { name: "pose", type: "msgs/Pose", isArray: false },
+      { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
+      { name: "pose", type: "msgs/Pose", isArray: false, isComplex: true },
     ],
   },
   "msgs/Pose": {
     fields: [
-      { name: "header", type: "std_msgs/Header", isArray: false },
+      { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
       { name: "x", type: "float64", isArray: false },
       { name: "y", type: "float64", isArray: false },
       { name: "travel", type: "float64", isArray: false },
@@ -84,8 +85,8 @@ const datatypes = {
   },
   "msgs/State": {
     fields: [
-      { name: "header", type: "std_msgs/Header", isArray: false },
-      { name: "items", type: "msgs/OtherState", isArray: true },
+      { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
+      { name: "items", type: "msgs/OtherState", isArray: true, isComplex: true },
     ],
   },
   "msgs/OtherState": {
@@ -105,7 +106,7 @@ const datatypes = {
   "std_msgs/Bool": { fields: [{ name: "data", type: "bool", isArray: false }] },
   "nonstd_msgs/Float64Stamped": {
     fields: [
-      { name: "header", type: "std_msgs/Header", isArray: false },
+      { name: "header", type: "std_msgs/Header", isArray: false, isComplex: true },
       { name: "data", type: "float64", isArray: false },
     ],
   },
@@ -156,7 +157,7 @@ const fixture = {
     endTime: { sec: 24, nsec: 999997069 },
     currentTime: { sec: 0, nsec: 750000000 },
     isPlaying: false,
-    messageDefinitionsByTopic: { "/preloaded_topic": float64StampedDefinition },
+    parsedMessageDefinitionsByTopic: { "/preloaded_topic": parseMessageDefinition(float64StampedDefinition) },
     speed: 0.2,
   },
   frame: {
@@ -201,7 +202,7 @@ const exampleConfig = { paths, minYValue: "", maxYValue: "", showLegend: true, x
 storiesOf("<Plot>", module)
   .addParameters({
     screenshot: {
-      delay: 1000,
+      delay: 4000,
     },
   })
   .add("line graph", () => {

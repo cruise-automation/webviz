@@ -29,8 +29,13 @@ const WorkerDataProviderWorker = getGlobalHooks().getWorkerDataProviderWorker();
 let preinitializedWorkers = [];
 if (process.env.NODE_ENV !== "test") {
   preinitializedWorkers = hasSecondSource
-    ? [new WorkerDataProviderWorker(), new WorkerDataProviderWorker()]
-    : [new WorkerDataProviderWorker()];
+    ? [
+        new WorkerDataProviderWorker(),
+        new WorkerDataProviderWorker(),
+        new WorkerDataProviderWorker(),
+        new WorkerDataProviderWorker(),
+      ]
+    : [new WorkerDataProviderWorker(), new WorkerDataProviderWorker()];
 }
 
 // Wraps the underlying DataProviderDescriptor tree in a Web Worker, therefore allowing

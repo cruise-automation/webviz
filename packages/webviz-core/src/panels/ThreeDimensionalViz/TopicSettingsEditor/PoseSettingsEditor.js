@@ -1,6 +1,6 @@
 // @flow
 //
-//  Copyright (c) 2019-present, Cruise LLC
+//  Copyright (c) 2020-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
@@ -8,12 +8,15 @@
 
 import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
+import InformationIcon from "@mdi/svg/svg/information.svg";
 import React from "react";
 
 import { type TopicSettingsEditorProps } from ".";
 import ColorPickerForTopicSettings from "./ColorPickerForTopicSettings";
 import { SLabel, SInput } from "./common";
 import Flex from "webviz-core/src/components/Flex";
+import Icon from "webviz-core/src/components/Icon";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { PoseStamped } from "webviz-core/src/types/Messages";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
@@ -32,6 +35,87 @@ type PoseSettings = {|
 export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseStamped, PoseSettings>) {
   const { message, settings, onFieldChange, onSettingsChange } = props;
 
+  const settingsByCarType = React.useMemo(
+    () => {
+      switch (settings.modelType) {
+        case "car-model": {
+          const alpha = settings.alpha != null ? settings.alpha : 1;
+          return (
+            <Flex col>
+              <SLabel>Alpha</SLabel>
+              <SInput
+                type="number"
+                value={alpha.toString()}
+                min={0}
+                max={1}
+                step={0.1}
+                onChange={(e) => onSettingsChange({ ...settings, alpha: parseFloat(e.target.value) })}
+              />
+            </Flex>
+          );
+        }
+        case "car-outline": {
+          return (
+            <>
+              <SLabel>Color of outline</SLabel>
+              <ColorPickerForTopicSettings
+                color={settings.color}
+                onChange={(newColor) => onFieldChange("color", newColor)}
+              />
+            </>
+          );
+        }
+        case "arrow":
+        default: {
+          const currentShaftWidth = settings.size?.shaftWidth ?? 2;
+          const currentHeadWidth = settings.size?.headWidth ?? 2;
+          const currentHeadLength = settings.size?.headLength ?? 0.1;
+          return (
+            <Flex col>
+              <SLabel>Color</SLabel>
+              <ColorPickerForTopicSettings
+                color={settings.color}
+                onChange={(newColor) => onFieldChange("color", newColor)}
+              />
+              <SLabel>Shaft width</SLabel>
+              <SInput
+                type="number"
+                value={currentShaftWidth}
+                placeholder="2"
+                onChange={(e) =>
+                  onSettingsChange({ ...settings, size: { ...settings.size, shaftWidth: parseFloat(e.target.value) } })
+                }
+              />
+              <SLabel>Head width</SLabel>
+              <SInput
+                type="number"
+                value={currentHeadWidth}
+                placeholder="2"
+                onChange={(e) =>
+                  onSettingsChange({ ...settings, size: { ...settings.size, headWidth: parseFloat(e.target.value) } })
+                }
+              />
+              <SLabel>Head length</SLabel>
+              <SInput
+                type="number"
+                value={currentHeadLength}
+                placeholder="0.1"
+                onChange={(e) =>
+                  onSettingsChange({ ...settings, size: { ...settings.size, headLength: parseFloat(e.target.value) } })
+                }
+              />
+            </Flex>
+          );
+        }
+      }
+    },
+    [onFieldChange, onSettingsChange, settings]
+  );
+
+  const badModelTypeSetting = React.useMemo(() => !["car-model", "car-outline", "arrow"].includes(settings.modelType), [
+    settings,
+  ]);
+
   if (!message) {
     return (
       <div style={{ color: colors.TEXT_MUTED }}>
@@ -39,57 +123,6 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
       </div>
     );
   }
-
-  const alpha = settings.alpha != null ? settings.alpha : 1;
-  const alphaField = (
-    <Flex col>
-      <SLabel>Alpha</SLabel>
-      <SInput
-        type="number"
-        value={alpha.toString()}
-        min={0}
-        max={1}
-        step={0.1}
-        onChange={(e) => onSettingsChange({ ...settings, alpha: parseFloat(e.target.value) })}
-      />
-    </Flex>
-  );
-  const currentShaftWidth = settings.size?.shaftWidth ?? 2;
-  const currentHeadWidth = settings.size?.headWidth ?? 2;
-  const currentHeadLength = settings.size?.headLength ?? 0.1;
-  const colorInputFields = (
-    <Flex col>
-      <SLabel>Color</SLabel>
-      <ColorPickerForTopicSettings color={settings.color} onChange={(newColor) => onFieldChange("color", newColor)} />
-      <SLabel>Shaft width</SLabel>
-      <SInput
-        type="number"
-        value={currentShaftWidth}
-        placeholder="2"
-        onChange={(e) =>
-          onSettingsChange({ ...settings, size: { ...settings.size, shaftWidth: parseFloat(e.target.value) } })
-        }
-      />
-      <SLabel>Head width</SLabel>
-      <SInput
-        type="number"
-        value={currentHeadWidth}
-        placeholder="2"
-        onChange={(e) =>
-          onSettingsChange({ ...settings, size: { ...settings.size, headWidth: parseFloat(e.target.value) } })
-        }
-      />
-      <SLabel>Head length</SLabel>
-      <SInput
-        type="number"
-        value={currentHeadLength}
-        placeholder="0.1"
-        onChange={(e) =>
-          onSettingsChange({ ...settings, size: { ...settings.size, headLength: parseFloat(e.target.value) } })
-        }
-      />
-    </Flex>
-  );
 
   const CheckboxComponent = settings.addCarOutlineBuffer ? CheckboxMarkedIcon : CheckboxBlankOutlineIcon;
 
@@ -105,18 +138,26 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
 
   return (
     <Flex col>
-      <SLabel>Model type</SLabel>
+      <SLabel>Rendered Car</SLabel>
       <div
-        style={{ display: "flex", margin: "4px" }}
+        style={{ display: "flex", margin: "4px", flexDirection: "column" }}
         onChange={(e) => {
           onSettingsChange({ ...settings, modelType: e.target.value, alpha: undefined });
         }}>
-        <input type="radio" value="car-model" checked={settings.modelType === "car-model"} />
-        Car Model
-        <input type="radio" value="car-outline" checked={settings.modelType === "car-outline"} />
-        Car Outline
-        <input type="radio" value="arrow" checked={settings.modelType === "arrow"} />
-        Arrow
+        {[
+          { value: "car-model", title: "Car Model" },
+          { value: "car-outline", title: "Car Outline" },
+          { value: "arrow", title: "Arrow" },
+        ].map(({ value, title }) => (
+          <div key={value} style={{ marginBottom: "4px", display: "flex" }}>
+            <input
+              type="radio"
+              value={value}
+              checked={settings.modelType === value || (value === "arrow" && badModelTypeSetting)}
+            />
+            <label>{title}</label>
+          </div>
+        ))}
       </div>
 
       <Flex style={{ marginBottom: "5px", cursor: "pointer" }}>
@@ -124,9 +165,12 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
           {...iconProps}
           onClick={() => onSettingsChange({ ...settings, addCarOutlineBuffer: !settings.addCarOutlineBuffer })}
         />
-        <SLabel>Add outline buffer</SLabel>
+        <SLabel>Show error buffer</SLabel>
+        <Icon tooltip={getGlobalHooks().perPanelHooks().ThreeDimensionalViz.copy.poseSettingsEditor.errorBuffer}>
+          <InformationIcon />
+        </Icon>
       </Flex>
-      {settings.modelType === "arrow" ? colorInputFields : settings.modelType === "car-model" ? alphaField : null}
+      {settingsByCarType}
     </Flex>
   );
 }

@@ -12,6 +12,7 @@ import { initVimMode } from "monaco-vim";
 import * as React from "react";
 import MonacoEditor from "react-monaco-editor";
 
+import getPrettifiedCode from "webviz-core/src/panels/NodePlayground/prettier";
 import type { Script, EditorSelection } from "webviz-core/src/panels/NodePlayground/script";
 import vsWebvizTheme from "webviz-core/src/panels/NodePlayground/theme/vs-webviz.json";
 import { getNodeProjectConfig } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/projectConfig";
@@ -25,6 +26,7 @@ type Props = {|
   script: Script | null,
   setScriptCode: (code: string) => void,
   vimMode: boolean,
+  autoFormatOnSave: boolean,
   rosLib: string,
   /* A minor hack to tell the monaco editor to resize when dimensions change. */
   resizeKey: string,
@@ -53,9 +55,21 @@ const gotoSelection = (editor: monacoApi.Editor, selection?: EditorSelection) =>
 };
 
 const projectConfig = getNodeProjectConfig();
-const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOverride, rosLib }: Props) => {
+const Editor = ({
+  autoFormatOnSave,
+  script,
+  setScriptCode,
+  vimMode,
+  resizeKey,
+  save,
+  setScriptOverride,
+  rosLib,
+}: Props) => {
   const editorRef = React.useRef<monacoApi.Editor>(null);
   const vimModeRef = React.useRef(null);
+  const autoFormatOnSaveRef = React.useRef(autoFormatOnSave);
+  autoFormatOnSaveRef.current = autoFormatOnSave;
+
   React.useEffect(
     () => {
       if (editorRef.current) {
@@ -154,9 +168,25 @@ const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOver
         return;
       }
       monaco.editor.defineTheme(VS_WEBVIZ_THEME, vsWebvizTheme);
+
       // Set eager model sync to enable intellisense between the user code and utility files
       monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
       monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true);
+
+      monaco.languages.registerDocumentFormattingEditProvider("typescript", {
+        provideDocumentFormattingEdits: async (model) => {
+          try {
+            return [
+              {
+                range: model.getFullModelRange(),
+                text: await getPrettifiedCode(model.getValue()),
+              },
+            ];
+          } catch (e) {
+            return [];
+          }
+        },
+      });
 
       // Disable validation in screenshots to avoid flaky tests
       if (inScreenshotTests()) {
@@ -198,6 +228,20 @@ const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOver
     [script]
   );
 
+  const saveCode = React.useCallback(
+    async () => {
+      const model = editorRef.current && editorRef.current.getModel();
+      if (model && script && !script.readOnly) {
+        // We have to use a ref for autoFormatOnSaveRef because of how monaco scopes the action callbacks
+        if (autoFormatOnSaveRef.current) {
+          await editorRef.current.getAction("editor.action.formatDocument").run();
+        }
+        save(model.getValue());
+      }
+    },
+    [save, script]
+  );
+
   const didMount = React.useCallback(
     (editor) => {
       editorRef.current = editor;
@@ -208,25 +252,13 @@ const Editor = ({ script, setScriptCode, vimMode, resizeKey, save, setScriptOver
         id: "ctrl-s",
         label: "Save current node",
         keybindings: [monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.KEY_S],
-        run: () => {
-          if (editorRef?.current) {
-            const model = editorRef.current.getModel();
-            if (model && script && !script.readOnly) {
-              save(model.getValue());
-            }
-          }
-        },
+        run: saveCode,
       });
     },
-    [save, script, vimMode]
+    [vimMode, saveCode]
   );
 
-  const onChange = React.useCallback(
-    (scr: string) => {
-      setScriptCode(scr);
-    },
-    [setScriptCode]
-  );
+  const onChange = React.useCallback((srcCode: string) => setScriptCode(srcCode), [setScriptCode]);
 
   if (!script) {
     // No script to load

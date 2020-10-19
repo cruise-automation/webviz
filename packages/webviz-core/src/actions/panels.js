@@ -106,6 +106,7 @@ export const fetchLayout = (search: string): Dispatcher<SET_FETCHED_LAYOUT> => (
     .then((layoutFetchResult) => {
       dispatch({
         type: PANELS_ACTION_TYPES.SET_FETCHED_LAYOUT,
+        // Omitting `isInitializedFromLocalStorage` whenever we get a new fetched layout.
         payload: { isLoading: false, data: layoutFetchResult, isFromLayoutUrlParam: !!hasLayoutUrl },
       });
       if (layoutFetchResult) {

@@ -1,0 +1,15 @@
+/*! ./../../../../node_modules/webpack/buildin/global.js */
+
+/*! ModuleConcatenation bailout: Module is not an ECMAScript module */
+
+/*! all exports used */
+
+/*! no static exports found */
+
+/*!******************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/prettier/standalone.js ***!
+  \******************************************************************/
+
+/*!*************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/prettier/parser-typescript.js ***!
+  \*************************************************************************/

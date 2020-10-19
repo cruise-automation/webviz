@@ -114,8 +114,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ./bag */
 
-/*! ./data/packed/latest.json */
-
 /*! ./fields */
 
 /*! ./freeze */
@@ -153,8 +151,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ./memo */
 
 /*! ./misc */
-
-/*! ./moment-timezone */
 
 /*! ./nmerge */
 
@@ -200,7 +196,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -221,17 +217,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! ModuleConcatenation bailout: Module uses injected variables (module) */
 
 /*! ModuleConcatenation bailout: Module uses injected variables (process, global) */
-
-/*! Moment Duration Format v2.2.2
- *  https://github.com/jsmreese/moment-duration-format
- *  Date: 2018-02-16
- *
- *  Duration format plugin function for the Moment.js library
- *  http://momentjs.com/
- *
- *  Copyright 2018 John Madhavan-Reese
- *  Released under the MIT license
- */
 
 /*! all exports used */
 
@@ -291,8 +276,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! exports provided: truncate, snipLine, safeJoin, isMatchingPattern */
 
-/*! exports provided: version, zones, links, default */
-
 /*! exports used: Hub, getCurrentHub, getHubFromCarrier */
 
 /*! exports used: Memo */
@@ -338,12 +321,6 @@ PERFORMANCE OF THIS SOFTWARE.
 /*! lodash */
 
 /*! memoize-weak */
-
-/*! moment */
-
-/*! moment-duration-format */
-
-/*! moment-timezone */
 
 /*! no static exports found */
 
@@ -419,7 +396,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! webviz-core/src/util/binaryObjects */
 
-/*! webviz-core/src/util/binaryObjects/ArrayView */
+/*! webviz-core/src/util/binaryObjects/ArrayViews */
 
 /*! webviz-core/src/util/binaryObjects/binaryWrapperObjects */
 
@@ -717,10 +694,6 @@ PERFORMANCE OF THIS SOFTWARE.
   !*** ./packages/webviz-core/node_modules/lodash/lodash.js ***!
   \************************************************************/
 
-/*!************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/moment/moment.js ***!
-  \************************************************************/
-
 /*!*************************************************************!*\
   !*** ./packages/webviz-core/node_modules/wasm-lz4/index.js ***!
   \*************************************************************/
@@ -809,10 +782,6 @@ PERFORMANCE OF THIS SOFTWARE.
   !*** ./packages/webviz-core/node_modules/wasm-lz4/wasm-lz4.wasm ***!
   \******************************************************************/
 
-/*!******************************************************************!*\
-  !*** ./packages/webviz-core/src/util/binaryObjects/ArrayView.js ***!
-  \******************************************************************/
-
 /*!*******************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js ***!
   \*******************************************************************/
@@ -841,6 +810,10 @@ PERFORMANCE OF THIS SOFTWARE.
   !*** ./packages/webviz-core/src/dataProviders/BagDataProvider.js ***!
   \*******************************************************************/
 
+/*!*******************************************************************!*\
+  !*** ./packages/webviz-core/src/util/binaryObjects/ArrayViews.js ***!
+  \*******************************************************************/
+
 /*!********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@sentry/hub/esm/scope.js ***!
   \********************************************************************/
@@ -851,10 +824,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/compressjs/lib/freeze.js ***!
-  \********************************************************************/
-
-/*!********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/moment-timezone/index.js ***!
   \********************************************************************/
 
 /*!********************************************************************!*\
@@ -950,10 +919,6 @@ PERFORMANCE OF THIS SOFTWARE.
   \******************************************************************************/
 
 /*!******************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/moment-timezone/moment-timezone.js ***!
-  \******************************************************************************/
-
-/*!******************************************************************************!*\
   !*** ./packages/webviz-core/src/dataProviders/IdbCacheWriterDataProvider.js ***!
   \******************************************************************************/
 
@@ -973,17 +938,9 @@ PERFORMANCE OF THIS SOFTWARE.
   !*** ./packages/webviz-core/node_modules/@sentry/types/esm/index.js + 2 modules ***!
   \**********************************************************************************/
 
-/*!***********************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/moment-timezone/data/packed/latest.json ***!
-  \***********************************************************************************/
-
 /*!*************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 35 modules ***!
   \*************************************************************************************/
-
-/*!************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/moment-duration-format/lib/moment-duration-format.js ***!
-  \************************************************************************************************/
 
 /*!****************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib?cacheDirectory!./packages/webviz-core/src/dataProviders/WorkerDataProvider.worker.js ***!
@@ -997,13 +954,3 @@ PERFORMANCE OF THIS SOFTWARE.
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
  * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
  */
-
-//! Copyright (c) JS Foundation and other contributors
-
-//! github.com/moment/moment-timezone
-
-//! license : MIT
-
-//! moment-timezone.js
-
-//! version : 0.5.23

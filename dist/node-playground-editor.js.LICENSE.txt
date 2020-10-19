@@ -4,6 +4,8 @@
 
 /*! exports provided: base, inherit, rules, colors, default */
 
+/*! import() | prettier */
+
 /*! monaco-editor/esm/vs/editor/editor.api */
 
 /*! monaco-editor/esm/vs/editor/standalone/browser/standaloneServices */
@@ -12,9 +14,15 @@
 
 /*! no static exports found */
 
+/*! prettier/parser-typescript */
+
+/*! prettier/standalone */
+
 /*! react */
 
 /*! react-monaco-editor */
+
+/*! webviz-core/src/panels/NodePlayground/prettier */
 
 /*! webviz-core/src/panels/NodePlayground/theme/vs-webviz.json */
 
@@ -25,6 +33,10 @@
 /*!******************************************************************!*\
   !*** ./packages/webviz-core/src/panels/NodePlayground/Editor.js ***!
   \******************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/NodePlayground/prettier.js ***!
+  \********************************************************************/
 
 /*!*****************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/NodePlayground/theme/vs-webviz.json ***!

@@ -107,7 +107,11 @@ and limitations under the License.
 
 /*! ../../../../node_modules/style-loader/lib/addStyles.js */
 
+/*! ../../asn1 */
+
 /*! ../../common/DndContext */
+
+/*! ../../elliptic */
 
 /*! ../../modules/_core */
 
@@ -137,19 +141,29 @@ and limitations under the License.
 
 /*! ../../modules/web.dom.iterable */
 
+/*! ../5/CheckObjectCoercible */
+
+/*! ../5/Type */
+
 /*! ../BagReader */
 
 /*! ../ChildToggle */
+
+/*! ../GetIntrinsic */
 
 /*! ../Icon */
 
 /*! ../Menu */
 
+/*! ../asn1 */
+
 /*! ../bag */
 
-/*! ../browser-detector */
+/*! ../base */
 
-/*! ../collection-utils */
+/*! ../common */
+
+/*! ../constants */
 
 /*! ../contextTypes */
 
@@ -167,7 +181,31 @@ and limitations under the License.
 
 /*! ../core-js/symbol/iterator */
 
+/*! ../curve */
+
+/*! ../des */
+
+/*! ../elliptic */
+
+/*! ../helpers/DefineOwnProperty */
+
+/*! ../helpers/assertRecord */
+
+/*! ../helpers/callBound */
+
+/*! ../helpers/getOwnPropertyDescriptor */
+
+/*! ../helpers/isFinite */
+
+/*! ../helpers/isNaN */
+
+/*! ../helpers/isPrimitive */
+
+/*! ../helpers/regexTester */
+
 /*! ../helpers/typeof */
+
+/*! ../incr32 */
 
 /*! ../index */
 
@@ -191,6 +229,8 @@ and limitations under the License.
 
 /*! ../locate/url */
 
+/*! ../package.json */
+
 /*! ../types */
 
 /*! ../util/OptionalBlueprint */
@@ -206,6 +246,10 @@ and limitations under the License.
 /*! ../util/normalize */
 
 /*! ../util/remove-indentation */
+
+/*! ../utils */
+
+/*! ../utils/common */
 
 /*! ./../../../../../../../../node_modules/webpack/buildin/global.js */
 
@@ -253,6 +297,8 @@ and limitations under the License.
 
 /*! ./../../webpack/node_modules/process/browser.js */
 
+/*! ./../buffer/index.js */
+
 /*! ./../node_modules/node-libs-browser/node_modules/buffer/index.js */
 
 /*! ./../node_modules/timers-browserify/main.js */
@@ -265,6 +311,10 @@ and limitations under the License.
 
 /*! ./../webpack/node_modules/process/browser.js */
 
+/*! ./256 */
+
+/*! ./512 */
+
 /*! ./BWT */
 
 /*! ./BagReader */
@@ -274,6 +324,8 @@ and limitations under the License.
 /*! ./CRC32 */
 
 /*! ./Confirm.module.scss */
+
+/*! ./CreateDataProperty */
 
 /*! ./DbWriter */
 
@@ -285,6 +337,10 @@ and limitations under the License.
 
 /*! ./Flex.module.scss */
 
+/*! ./FromPropertyDescriptor */
+
+/*! ./Get */
+
 /*! ./HelpButton */
 
 /*! ./HuffmanAllocator */
@@ -292,6 +348,22 @@ and limitations under the License.
 /*! ./Icon */
 
 /*! ./IdbCacheDataProviderDatabase */
+
+/*! ./IsArray */
+
+/*! ./IsCallable */
+
+/*! ./IsConstructor */
+
+/*! ./IsDataDescriptor */
+
+/*! ./IsExtensible */
+
+/*! ./IsInteger */
+
+/*! ./IsPropertyKey */
+
+/*! ./IsRegExp */
 
 /*! ./Item */
 
@@ -317,6 +389,8 @@ and limitations under the License.
 
 /*! ./MosaicZeroState */
 
+/*! ./OrdinaryGetOwnProperty */
+
 /*! ./PanelLayout.scss */
 
 /*! ./PlaybackBarHoverTicks */
@@ -329,11 +403,15 @@ and limitations under the License.
 
 /*! ./ReplaceButton */
 
+/*! ./RequireObjectCoercible */
+
 /*! ./Root.module.scss */
 
 /*! ./RootDropTargets */
 
 /*! ./Rpc */
+
+/*! ./SameValue */
 
 /*! ./SegmentedControl */
 
@@ -353,9 +431,19 @@ and limitations under the License.
 
 /*! ./TimeUtil */
 
+/*! ./ToBoolean */
+
+/*! ./ToNumber */
+
+/*! ./ToPrimitive */
+
+/*! ./ToPropertyDescriptor */
+
 /*! ./Toolbar.module.scss */
 
 /*! ./Tooltip.module.scss */
+
+/*! ./Type */
 
 /*! ./Util */
 
@@ -801,6 +889,26 @@ and limitations under the License.
 
 /*! ./_wks-ext */
 
+/*! ./adler32 */
+
+/*! ./aes */
+
+/*! ./aesid.json */
+
+/*! ./algorithms.json */
+
+/*! ./asn1 */
+
+/*! ./asn1/api */
+
+/*! ./asn1/base */
+
+/*! ./asn1/constants */
+
+/*! ./asn1/decoders */
+
+/*! ./asn1/encoders */
+
 /*! ./assertNever */
 
 /*! ./assets/latin-roboto-mono-bold-italic.woff2 */
@@ -813,15 +921,23 @@ and limitations under the License.
 
 /*! ./ast-to-react */
 
+/*! ./authCipher */
+
 /*! ./bag */
+
+/*! ./base */
 
 /*! ./bin/translator */
 
 /*! ./bin/translator.wasm */
 
+/*! ./binding */
+
 /*! ./block-elements.json */
 
-/*! ./browser-detector */
+/*! ./browser/algorithms.json */
+
+/*! ./buffer */
 
 /*! ./build/ReactDocumentEvents.js */
 
@@ -839,6 +955,18 @@ and limitations under the License.
 
 /*! ./buttons/defaultToolbarControls */
 
+/*! ./callBind */
+
+/*! ./cbc */
+
+/*! ./certificate */
+
+/*! ./cfb */
+
+/*! ./cfb1 */
+
+/*! ./cfb8 */
+
 /*! ./cjs/react-dom.production.min.js */
 
 /*! ./cjs/react-is.production.min.js */
@@ -847,7 +975,7 @@ and limitations under the License.
 
 /*! ./cjs/scheduler.production.min.js */
 
-/*! ./collection-utils */
+/*! ./common */
 
 /*! ./configureStore */
 
@@ -859,6 +987,12 @@ and limitations under the License.
 
 /*! ./core.js */
 
+/*! ./crc32 */
+
+/*! ./ctr */
+
+/*! ./curves.json */
+
 /*! ./data/packed/latest.json */
 
 /*! ./debounce */
@@ -867,17 +1001,43 @@ and limitations under the License.
 
 /*! ./decode-entity */
 
+/*! ./decrypter */
+
+/*! ./default-encoding */
+
 /*! ./defaults */
 
-/*! ./detection-strategy/object.js */
+/*! ./der */
 
-/*! ./detection-strategy/scroll.js */
+/*! ./des/cbc */
 
-/*! ./element-utils */
+/*! ./des/cipher */
+
+/*! ./des/des */
+
+/*! ./des/ede */
+
+/*! ./des/utils */
+
+/*! ./ecb */
+
+/*! ./edwards */
+
+/*! ./elliptic/curve */
+
+/*! ./elliptic/curves */
+
+/*! ./elliptic/ec */
+
+/*! ./elliptic/eddsa */
+
+/*! ./elliptic/utils */
 
 /*! ./empty */
 
 /*! ./emptyFunction */
+
+/*! ./encrypter */
 
 /*! ./eq */
 
@@ -887,7 +1047,11 @@ and limitations under the License.
 
 /*! ./fields */
 
+/*! ./fixProc */
+
 /*! ./freeze */
+
+/*! ./generatePrime */
 
 /*! ./get */
 
@@ -897,23 +1061,43 @@ and limitations under the License.
 
 /*! ./getNewConnection */
 
+/*! ./ghash */
+
 /*! ./hasIn */
 
+/*! ./hash */
+
+/*! ./hash/common */
+
+/*! ./hash/hmac */
+
+/*! ./hash/ripemd */
+
+/*! ./hash/sha */
+
+/*! ./hash/utils */
+
 /*! ./header */
+
+/*! ./helpers/isPrimitive */
 
 /*! ./hooksImporter */
 
 /*! ./icon.module.scss */
 
-/*! ./id-generator */
-
-/*! ./id-handler */
-
 /*! ./identity */
+
+/*! ./iframeUtils */
 
 /*! ./implementation */
 
+/*! ./incr32 */
+
 /*! ./index.module.scss */
+
+/*! ./inffast */
+
+/*! ./inftrees */
 
 /*! ./internal/streams/BufferList */
 
@@ -953,9 +1137,13 @@ and limitations under the License.
 
 /*! ./isTypedArray */
 
+/*! ./key */
+
 /*! ./keys */
 
 /*! ./keysIn */
+
+/*! ./legacy */
 
 /*! ./lib */
 
@@ -975,7 +1163,13 @@ and limitations under the License.
 
 /*! ./lib/alea */
 
+/*! ./lib/async */
+
 /*! ./lib/bytesToUuid */
+
+/*! ./lib/dh */
+
+/*! ./lib/generatePrime */
 
 /*! ./lib/heap */
 
@@ -983,7 +1177,11 @@ and limitations under the License.
 
 /*! ./lib/parser.js */
 
+/*! ./lib/primes.json */
+
 /*! ./lib/rng */
+
+/*! ./lib/sync */
 
 /*! ./lib/tychei */
 
@@ -995,21 +1193,35 @@ and limitations under the License.
 
 /*! ./lib/xorwow */
 
-/*! ./listener-handler */
+/*! ./list.json */
 
 /*! ./memo */
 
 /*! ./memoize */
 
+/*! ./messages */
+
+/*! ./mgf */
+
 /*! ./misc */
 
+/*! ./modes */
+
+/*! ./modes/list.json */
+
 /*! ./moment-timezone */
+
+/*! ./mont */
 
 /*! ./mosaicUtilities */
 
 /*! ./nmerge */
 
+/*! ./node */
+
 /*! ./now */
+
+/*! ./ofb */
 
 /*! ./overwriteFetch */
 
@@ -1019,15 +1231,29 @@ and limitations under the License.
 
 /*! ./pauseFrameForPromise */
 
+/*! ./pem */
+
 /*! ./plugins/disallow-node */
 
 /*! ./plugins/naive-html */
 
+/*! ./polyfill */
+
 /*! ./ponyfill.js */
+
+/*! ./precomputed/secp256k1 */
+
+/*! ./precondition */
+
+/*! ./privateDecrypt */
 
 /*! ./property */
 
+/*! ./publicEncrypt */
+
 /*! ./ranges */
+
+/*! ./rawMessageDefinitionsToParsed */
 
 /*! ./readable */
 
@@ -1037,13 +1263,47 @@ and limitations under the License.
 
 /*! ./reporter */
 
+/*! ./requirePromise */
+
 /*! ./scope */
 
 /*! ./seedrandom */
 
 /*! ./set-options */
 
-/*! ./state-handler */
+/*! ./sha */
+
+/*! ./sha/1 */
+
+/*! ./sha/224 */
+
+/*! ./sha/256 */
+
+/*! ./sha/384 */
+
+/*! ./sha/512 */
+
+/*! ./sha1 */
+
+/*! ./sha224 */
+
+/*! ./sha256 */
+
+/*! ./sha384 */
+
+/*! ./sha512 */
+
+/*! ./shams */
+
+/*! ./shim */
+
+/*! ./short */
+
+/*! ./sign */
+
+/*! ./signature */
+
+/*! ./streamCipher */
 
 /*! ./string */
 
@@ -1051,7 +1311,11 @@ and limitations under the License.
 
 /*! ./stubFalse */
 
+/*! ./support/isBuffer */
+
 /*! ./symbols */
+
+/*! ./sync */
 
 /*! ./time */
 
@@ -1115,6 +1379,8 @@ and limitations under the License.
 
 /*! ./tokenizer */
 
+/*! ./trees */
+
 /*! ./types */
 
 /*! ./unescape */
@@ -1133,6 +1399,8 @@ and limitations under the License.
 
 /*! ./useMessagesByTopic */
 
+/*! ./util.inspect */
+
 /*! ./util/BoundingBox */
 
 /*! ./util/OptionalBlueprint */
@@ -1147,15 +1415,21 @@ and limitations under the License.
 
 /*! ./v4 */
 
+/*! ./verify */
+
 /*! ./warnOnOutOfSyncMessages */
 
 /*! ./wasm-lz4 */
 
 /*! ./wasm-lz4.wasm */
 
+/*! ./withPublic */
+
 /*! ./wrap-table-rows */
 
 /*! ./wrap.js */
+
+/*! ./xor */
 
 /*! @babel/runtime/helpers/esm/extends */
 
@@ -1277,23 +1551,17 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/@cruise-automation/tooltip/node_modules/warning/browser.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/connected-react-router/esm/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/history/esm/history.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/connected-react-router/esm/index.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/connected-react-router/esm/index.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/inheritsLoose.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/asap/dist/esm/browser/raw.js (<- Module uses injected variables (global)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd-multi-backend/dist/esm/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd-touch-backend/dist/esm/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/index.js */
 
@@ -1311,7 +1579,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -1329,7 +1597,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/gud/index.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/history/esm/history.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/stories/StoreSetup.js (referenced with cjs require), ./packages/webviz-core/src/util/history.js (referenced with cjs require)) */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/history/esm/history.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/store/getGlobalStore.js (referenced with cjs require), ./packages/webviz-core/src/stories/StoreSetup.js (referenced with cjs require), ./packages/webviz-core/src/util/history.js (referenced with cjs require)) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/invariant/browser.js (<- Module is not an ECMAScript module) */
 
@@ -1339,7 +1607,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd-preview/node_modules/prop-types/index.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndContext.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndProvider.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndContext.js because of ./packages/webviz-core/node_modules/react-dnd-multi-backend/dist/esm/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndProvider.js (<- Module uses injected variables (global)) */
 
@@ -1369,9 +1637,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/redux/es/redux.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/LayoutHistoryKeyListener.js (referenced with cjs require), ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelLayout.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/MosaicDragHandle.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/hooks/useGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/store/configureStore.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/connected-react-router/esm/index.js */
-
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/history/esm/history.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tslib/tslib.es6.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -1403,7 +1669,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/MessageOrderControls.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/NoHeaderTopicsButton.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/NoHeaderTopicsButton.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PoseSettingsEditor.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/NotificationDisplay.js (referenced with cjs require) */
 
@@ -1460,17 +1726,49 @@ and limitations under the License.
 
 /*! all exports used */
 
+/*! array.prototype.map */
+
+/*! asn1.js */
+
+/*! assert */
+
 /*! bail */
 
 /*! base64-js */
 
-/*! batch-processor */
+/*! bn.js */
+
+/*! brorand */
+
+/*! browserify-aes */
+
+/*! browserify-aes/browser */
+
+/*! browserify-aes/modes */
+
+/*! browserify-cipher */
+
+/*! browserify-des */
+
+/*! browserify-des/modes */
+
+/*! browserify-rsa */
+
+/*! browserify-sign */
+
+/*! browserify-sign/algos */
 
 /*! buffer */
+
+/*! buffer-xor */
+
+/*! cbor-js */
 
 /*! character-entities-legacy */
 
 /*! character-reference-invalid */
+
+/*! cipher-base */
 
 /*! classnames */
 
@@ -1498,17 +1796,71 @@ and limitations under the License.
 
 /*! core-util-is */
 
+/*! create-ecdh */
+
+/*! create-hash */
+
+/*! create-hash/md5 */
+
+/*! create-hmac */
+
 /*! crypto */
+
+/*! define-properties */
+
+/*! des.js */
+
+/*! diffie-hellman */
 
 /*! dnd-multi-backend */
 
-/*! element-resize-detector */
+/*! elliptic */
+
+/*! es-abstract/2019/ArraySpeciesCreate */
+
+/*! es-abstract/2019/Call */
+
+/*! es-abstract/2019/CreateDataPropertyOrThrow */
+
+/*! es-abstract/2019/Get */
+
+/*! es-abstract/2019/HasProperty */
+
+/*! es-abstract/2019/IsCallable */
+
+/*! es-abstract/2019/PromiseResolve */
+
+/*! es-abstract/2019/RequireObjectCoercible */
+
+/*! es-abstract/2019/ToObject */
+
+/*! es-abstract/2019/ToString */
+
+/*! es-abstract/2019/ToUint32 */
+
+/*! es-abstract/2019/Type */
+
+/*! es-abstract/GetIntrinsic */
+
+/*! es-abstract/helpers/callBound */
+
+/*! es-array-method-boxes-properly */
+
+/*! es-get-iterator */
+
+/*! es-to-primitive/es2015 */
 
 /*! events */
+
+/*! evp_bytestokey */
 
 /*! exports provided: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, default */
 
 /*! exports provided: 0, 128, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 142, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 158, 159, default */
+
+/*! exports provided: 1.3.132.0.10, 1.3.132.0.33, 1.2.840.10045.3.1.1, 1.2.840.10045.3.1.7, 1.3.132.0.34, 1.3.132.0.35, default */
+
+/*! exports provided: 2.16.840.1.101.3.4.1.1, 2.16.840.1.101.3.4.1.2, 2.16.840.1.101.3.4.1.3, 2.16.840.1.101.3.4.1.4, 2.16.840.1.101.3.4.1.21, 2.16.840.1.101.3.4.1.22, 2.16.840.1.101.3.4.1.23, 2.16.840.1.101.3.4.1.24, 2.16.840.1.101.3.4.1.41, 2.16.840.1.101.3.4.1.42, 2.16.840.1.101.3.4.1.43, 2.16.840.1.101.3.4.1.44, default */
 
 /*! exports provided: AElig, AMP, Aacute, Acirc, Agrave, Aring, Atilde, Auml, COPY, Ccedil, ETH, Eacute, Ecirc, Egrave, Euml, GT, Iacute, Icirc, Igrave, Iuml, LT, Ntilde, Oacute, Ocirc, Ograve, Oslash, Otilde, Ouml, QUOT, REG, THORN, Uacute, Ucirc, Ugrave, Uuml, Yacute, aacute, acirc, acute, aelig, agrave, amp, aring, atilde, auml, brvbar, ccedil, cedil, cent, copy, curren, deg, divide, eacute, ecirc, egrave, eth, euml, frac12, frac14, frac34, gt, iacute, icirc, iexcl, igrave, iquest, iuml, laquo, lt, macr, micro, middot, nbsp, not, ntilde, oacute, ocirc, ograve, ordf, ordm, oslash, otilde, ouml, para, plusmn, pound, quot, raquo, reg, sect, shy, sup1, sup2, sup3, szlig, thorn, times, uacute, ucirc, ugrave, uml, uuml, yacute, yen, yuml, default */
 
@@ -1556,6 +1908,8 @@ and limitations under the License.
 
 /*! exports provided: __extends, __assign, __rest, __decorate, __param, __metadata, __awaiter, __generator, __exportStar, __values, __read, __spread, __spreadArrays, __await, __asyncGenerator, __asyncDelegator, __asyncValues, __makeTemplateObject, __importStar, __importDefault, __classPrivateFieldGet, __classPrivateFieldSet */
 
+/*! exports provided: aes-128-ecb, aes-192-ecb, aes-256-ecb, aes-128-cbc, aes-192-cbc, aes-256-cbc, aes128, aes192, aes256, aes-128-cfb, aes-192-cfb, aes-256-cfb, aes-128-cfb8, aes-192-cfb8, aes-256-cfb8, aes-128-cfb1, aes-192-cfb1, aes-256-cfb1, aes-128-ofb, aes-192-ofb, aes-256-ofb, aes-128-ctr, aes-192-ctr, aes-256-ctr, aes-128-gcm, aes-192-gcm, aes-256-gcm, default */
+
 /*! exports provided: convertFTtoSE, convertARtoSE, convertSEtoFT, convertSEtoAR, complement, isOverlappingSimple, isOverlapping, isMeeting, isBefore, isAfter, isStarting, isEnding, isDuring, isEqual, simplify, unify, intersect, merge, substract, split */
 
 /*! exports provided: createBrowserHistory, createHashHistory, createMemoryHistory, createLocation, locationsAreEqual, parsePath, createPath */
@@ -1588,11 +1942,17 @@ and limitations under the License.
 
 /*! exports provided: logger */
 
+/*! exports provided: modp1, modp2, modp5, modp14, modp15, modp16, modp17, modp18, default */
+
+/*! exports provided: name, version, description, main, files, scripts, repository, keywords, author, license, bugs, homepage, devDependencies, dependencies, _resolved, _integrity, _from, default */
+
 /*! exports provided: parseHeader */
 
 /*! exports provided: rawAsap */
 
 /*! exports provided: rosPrimitiveTypes, parseMessageDefinition */
+
+/*! exports provided: sha224WithRSAEncryption, RSA-SHA224, sha256WithRSAEncryption, RSA-SHA256, sha384WithRSAEncryption, RSA-SHA384, sha512WithRSAEncryption, RSA-SHA512, RSA-SHA1, ecdsa-with-SHA1, sha256, sha224, sha384, sha512, DSA-SHA, DSA-SHA1, DSA, DSA-WITH-SHA224, DSA-SHA224, DSA-WITH-SHA256, DSA-SHA256, DSA-WITH-SHA384, DSA-SHA384, DSA-WITH-SHA512, DSA-SHA512, DSA-RIPEMD160, ripemd160WithRSA, RSA-RIPEMD160, md5WithRSAEncryption, RSA-MD5, default */
 
 /*! exports provided: shallowEqual */
 
@@ -1662,13 +2022,27 @@ and limitations under the License.
 
 /*! fs */
 
+/*! function-bind */
+
 /*! fuzzysort */
 
 /*! gud */
 
+/*! has */
+
+/*! has-symbols */
+
+/*! has-symbols/shams */
+
+/*! hash-base */
+
+/*! hash.js */
+
 /*! heap */
 
 /*! history */
+
+/*! hmac-drbg */
 
 /*! idb */
 
@@ -1694,19 +2068,39 @@ and limitations under the License.
 
 /*! is-alphanumerical */
 
+/*! is-arguments */
+
 /*! is-buffer */
+
+/*! is-callable */
+
+/*! is-date-object */
 
 /*! is-decimal */
 
 /*! is-hexadecimal */
 
+/*! is-map */
+
 /*! is-plain-obj */
+
+/*! is-regex */
+
+/*! is-set */
+
+/*! is-string */
+
+/*! is-symbol */
 
 /*! is-whitespace-character */
 
 /*! is-word-character */
 
 /*! isarray */
+
+/*! iterate-iterator */
+
+/*! iterate-value */
 
 /*! jsondiffpatch */
 
@@ -1756,9 +2150,9 @@ and limitations under the License.
 
 /*! lodash/values */
 
-/*! lz-string */
-
 /*! markdown-escapes */
+
+/*! md5.js */
 
 /*! mdast-add-list-metadata */
 
@@ -1769,6 +2163,12 @@ and limitations under the License.
 /*! merge-anything */
 
 /*! micro-memoize */
+
+/*! miller-rabin */
+
+/*! minimalistic-assert */
+
+/*! minimalistic-crypto-utils */
 
 /*! moment */
 
@@ -1782,9 +2182,25 @@ and limitations under the License.
 
 /*! object-assign */
 
+/*! object-inspect */
+
+/*! object-keys */
+
+/*! pako/lib/zlib/constants */
+
+/*! pako/lib/zlib/deflate.js */
+
+/*! pako/lib/zlib/inflate.js */
+
+/*! pako/lib/zlib/zstream */
+
+/*! parse-asn1 */
+
 /*! parse-entities */
 
 /*! path */
+
+/*! pbkdf2 */
 
 /*! popper.js */
 
@@ -1792,11 +2208,17 @@ and limitations under the License.
 
 /*! promise-queue */
 
+/*! promise.allsettled */
+
 /*! prop-types */
 
-/*! react */
+/*! public-encrypt */
 
-/*! react-container-dimensions */
+/*! randombytes */
+
+/*! randomfill */
+
+/*! react */
 
 /*! react-dnd */
 
@@ -1852,6 +2274,8 @@ and limitations under the License.
 
 /*! reselect */
 
+/*! ripemd160 */
+
 /*! rosbag */
 
 /*! roslib/build/roslib */
@@ -1864,6 +2288,8 @@ and limitations under the License.
 
 /*! setimmediate */
 
+/*! sha.js */
+
 /*! shallowequal */
 
 /*! sharedworker-loader?name=nodeRuntimeWorker-[hash].[ext]!webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker */
@@ -1875,6 +2301,8 @@ and limitations under the License.
 /*! state-toggle */
 
 /*! stream */
+
+/*! string_decoder */
 
 /*! string_decoder/ */
 
@@ -1916,6 +2344,8 @@ and limitations under the License.
 
 /*! util-deprecate */
 
+/*! util/ */
+
 /*! uuid */
 
 /*! vfile */
@@ -1923,6 +2353,8 @@ and limitations under the License.
 /*! vfile-location */
 
 /*! vfile-message */
+
+/*! vm */
 
 /*! wasm-lz4 */
 
@@ -1960,6 +2392,8 @@ and limitations under the License.
 
 /*! webviz-core/shared/delay */
 
+/*! webviz-core/shared/layout */
+
 /*! webviz-core/shared/promiseTimeout */
 
 /*! webviz-core/shared/signal */
@@ -1993,6 +2427,8 @@ and limitations under the License.
 /*! webviz-core/src/components/Confirm */
 
 /*! webviz-core/src/components/CopyText */
+
+/*! webviz-core/src/components/Dimensions */
 
 /*! webviz-core/src/components/DocumentDropListener */
 
@@ -2130,7 +2566,7 @@ and limitations under the License.
 
 /*! webviz-core/src/loadWebviz */
 
-/*! webviz-core/src/middleware/updateUrl */
+/*! webviz-core/src/middleware/updateUrlAndLocalStorage */
 
 /*! webviz-core/src/panels/PanelList */
 
@@ -2194,6 +2630,8 @@ and limitations under the License.
 
 /*! webviz-core/src/styles/waitForFonts */
 
+/*! webviz-core/src/test/datatypes */
+
 /*! webviz-core/src/util */
 
 /*! webviz-core/src/util/CachedFilelike */
@@ -2212,7 +2650,7 @@ and limitations under the License.
 
 /*! webviz-core/src/util/binaryObjects */
 
-/*! webviz-core/src/util/binaryObjects/ArrayView */
+/*! webviz-core/src/util/binaryObjects/ArrayViews */
 
 /*! webviz-core/src/util/binaryObjects/binaryWrapperObjects */
 
@@ -2236,6 +2674,8 @@ and limitations under the License.
 
 /*! webviz-core/src/util/errors */
 
+/*! webviz-core/src/util/formatTime */
+
 /*! webviz-core/src/util/frameless */
 
 /*! webviz-core/src/util/getGlobalVariablesFromUrl */
@@ -2245,8 +2685,6 @@ and limitations under the License.
 /*! webviz-core/src/util/globalConstants */
 
 /*! webviz-core/src/util/helpModalOpenSource.help.md */
-
-/*! webviz-core/src/util/hideLoadingLogo */
 
 /*! webviz-core/src/util/history */
 
@@ -2292,6 +2730,8 @@ and limitations under the License.
 
 /*! xtend */
 
+/*! zlib */
+
 /*!********************!*\
   !*** ./src/bag.js ***!
   \********************/
@@ -2325,6 +2765,10 @@ and limitations under the License.
   \***********************/
 
 /*!************************!*\
+  !*** buffer (ignored) ***!
+  \************************/
+
+/*!************************!*\
   !*** crypto (ignored) ***!
   \************************/
 
@@ -2352,6 +2796,10 @@ and limitations under the License.
   !*** ./src/MessageWriter.js ***!
   \******************************/
 
+/*!********************************!*\
+  !*** ./util.inspect (ignored) ***!
+  \********************************/
+
 /*!***********************************!*\
   !*** (webpack)/buildin/global.js ***!
   \***********************************/
@@ -2364,6 +2812,10 @@ and limitations under the License.
   !*** ./node_modules/heap/index.js ***!
   \************************************/
 
+/*!************************************!*\
+  !*** ./node_modules/sha.js/sha.js ***!
+  \************************************/
+
 /*!*************************************!*\
   !*** ./node_modules/int53/index.js ***!
   \*************************************/
@@ -2372,8 +2824,36 @@ and limitations under the License.
   !*** ./node_modules/react/index.js ***!
   \*************************************/
 
+/*!*************************************!*\
+  !*** ./node_modules/sha.js/hash.js ***!
+  \*************************************/
+
+/*!*************************************!*\
+  !*** ./node_modules/sha.js/sha1.js ***!
+  \*************************************/
+
+/*!**************************************!*\
+  !*** ./node_modules/bn.js/lib/bn.js ***!
+  \**************************************/
+
 /*!**************************************!*\
   !*** ./node_modules/buffer/index.js ***!
+  \**************************************/
+
+/*!**************************************!*\
+  !*** ./node_modules/is-map/index.js ***!
+  \**************************************/
+
+/*!**************************************!*\
+  !*** ./node_modules/is-set/index.js ***!
+  \**************************************/
+
+/*!**************************************!*\
+  !*** ./node_modules/md5.js/index.js ***!
+  \**************************************/
+
+/*!**************************************!*\
+  !*** ./node_modules/sha.js/index.js ***!
   \**************************************/
 
 /*!***************************************!*\
@@ -2381,7 +2861,19 @@ and limitations under the License.
   \***************************************/
 
 /*!***************************************!*\
+  !*** ./node_modules/assert/assert.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/brorand/index.js ***!
+  \***************************************/
+
+/*!***************************************!*\
   !*** ./node_modules/events/events.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/has/src/index.js ***!
   \***************************************/
 
 /*!***************************************!*\
@@ -2397,11 +2889,35 @@ and limitations under the License.
   \***************************************/
 
 /*!***************************************!*\
+  !*** ./node_modules/sha.js/sha224.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/sha.js/sha256.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/sha.js/sha384.js ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./node_modules/sha.js/sha512.js ***!
+  \***************************************/
+
+/*!***************************************!*\
   !*** ./src/parseMessageDefinition.js ***!
   \***************************************/
 
 /*!****************************************!*\
   !*** (webpack)/buildin/amd-options.js ***!
+  \****************************************/
+
+/*!****************************************!*\
+  !*** ./node_modules/des.js/lib/des.js ***!
+  \****************************************/
+
+/*!****************************************!*\
+  !*** ./node_modules/pbkdf2/browser.js ***!
   \****************************************/
 
 /*!****************************************!*\
@@ -2413,12 +2929,56 @@ and limitations under the License.
   \*****************************************/
 
 /*!*****************************************!*\
+  !*** ./node_modules/create-hash/md5.js ***!
+  \*****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/hash-base/index.js ***!
+  \*****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/is-string/index.js ***!
+  \*****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/is-symbol/index.js ***!
+  \*****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/parse-asn1/asn1.js ***!
+  \*****************************************/
+
+/*!*****************************************!*\
   !*** ./node_modules/process/browser.js ***!
   \*****************************************/
 
 /*!*****************************************!*\
   !*** ./node_modules/react-dom/index.js ***!
   \*****************************************/
+
+/*!*****************************************!*\
+  !*** ./node_modules/ripemd160/index.js ***!
+  \*****************************************/
+
+/*!******************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./node_modules/buffer-xor/index.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./node_modules/hash.js/lib/hash.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./node_modules/parse-asn1/index.js ***!
+  \******************************************/
+
+/*!******************************************!*\
+  !*** ./node_modules/pbkdf2/lib/async.js ***!
+  \******************************************/
 
 /*!******************************************!*\
   !*** ./node_modules/prop-types/index.js ***!
@@ -2433,6 +2993,26 @@ and limitations under the License.
   \*******************************************/
 
 /*!*******************************************!*\
+  !*** (webpack)/node_modules/util/util.js ***!
+  \*******************************************/
+
+/*!*******************************************!*\
+  !*** ./node_modules/cipher-base/index.js ***!
+  \*******************************************/
+
+/*!*******************************************!*\
+  !*** ./node_modules/has-symbols/index.js ***!
+  \*******************************************/
+
+/*!*******************************************!*\
+  !*** ./node_modules/has-symbols/shams.js ***!
+  \*******************************************/
+
+/*!*******************************************!*\
+  !*** ./node_modules/object-keys/index.js ***!
+  \*******************************************/
+
+/*!*******************************************!*\
   !*** ./node_modules/safe-buffer/index.js ***!
   \*******************************************/
 
@@ -2444,13 +3024,133 @@ and limitations under the License.
   !*** ./packages/webviz-core/src/index.js ***!
   \*******************************************/
 
+/*!********************************************!*\
+  !*** ./node_modules/browserify-aes/aes.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/create-hmac/legacy.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/des.js/lib/des/cbc.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/des.js/lib/des/des.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/des.js/lib/des/ede.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/elliptic/package.json ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/is-arguments/index.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/parse-asn1/aesid.json ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/parse-asn1/fixProc.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/public-encrypt/mgf.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/public-encrypt/xor.js ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./node_modules/randomfill/browser.js ***!
+  \********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/create-ecdh/browser.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/create-hash/browser.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/create-hmac/browser.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/function-bind/index.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/iterate-value/index.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/miller-rabin/lib/mr.js ***!
+  \*********************************************/
+
 /*!*********************************************!*\
   !*** ./node_modules/object-assign/index.js ***!
   \*********************************************/
 
 /*!*********************************************!*\
+  !*** ./node_modules/pako/lib/zlib/crc32.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/pako/lib/zlib/trees.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
+  !*** ./node_modules/randombytes/browser.js ***!
+  \*********************************************/
+
+/*!*********************************************!*\
   !*** ./node_modules/seedrandom/lib/alea.js ***!
   \*********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/api.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/browserify-aes/ghash.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/browserify-des/index.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/browserify-des/modes.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/browserify-rsa/index.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/des.js/lib/des/utils.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/evp_bytestokey/index.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha.js ***!
+  \**********************************************/
+
+/*!**********************************************!*\
+  !*** ./node_modules/is-date-object/index.js ***!
+  \**********************************************/
 
 /*!**********************************************!*\
   !*** ./packages/webviz-core/shared/delay.js ***!
@@ -2465,7 +3165,59 @@ and limitations under the License.
   \**********************************************/
 
 /*!***********************************************!*\
+  !*** ./node_modules/browserify-aes/incr32.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/browserify-sign/algos.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
   !*** ./node_modules/core-util-is/lib/util.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/des.js/lib/des/cipher.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/diffie-hellman/lib/dh.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/es-get-iterator/index.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/hmac.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/pako/lib/utils/common.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/pako/lib/zlib/adler32.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/pako/lib/zlib/deflate.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/pako/lib/zlib/inffast.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/pako/lib/zlib/inflate.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
+  !*** ./node_modules/pako/lib/zlib/zstream.js ***!
   \***********************************************/
 
 /*!***********************************************!*\
@@ -2489,6 +3241,10 @@ and limitations under the License.
   \***********************************************/
 
 /*!***********************************************!*\
+  !*** ./packages/webviz-core/shared/layout.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
   !*** ./packages/webviz-core/shared/signal.js ***!
   \***********************************************/
 
@@ -2503,6 +3259,42 @@ and limitations under the License.
 /*!***********************************************!*\
   !*** ./packages/webviz-core/src/util/time.js ***!
   \***********************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/browserify-aes/browser.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/diffie-hellman/browser.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/1.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/utils.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/iterate-iterator/index.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/pako/lib/zlib/inftrees.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/pako/lib/zlib/messages.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/parse-asn1/certificate.js ***!
+  \************************************************/
+
+/*!************************************************!*\
+  !*** ./node_modules/public-encrypt/browser.js ***!
+  \************************************************/
 
 /*!************************************************!*\
   !*** ./node_modules/seedrandom/lib/xor4096.js ***!
@@ -2533,7 +3325,47 @@ and limitations under the License.
   \*************************************************/
 
 /*!*************************************************!*\
+  !*** ./node_modules/crypto-browserify/index.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
   !*** ./node_modules/css-loader/lib/css-base.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/define-properties/index.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/common.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/ripemd.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/hmac-drbg/lib/hmac-drbg.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/object-keys/isArguments.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/pako/lib/zlib/constants.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/pbkdf2/lib/precondition.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/pbkdf2/lib/sync-browser.js ***!
+  \*************************************************/
+
+/*!*************************************************!*\
+  !*** ./node_modules/promise.allsettled/shim.js ***!
   \*************************************************/
 
 /*!*************************************************!*\
@@ -2565,7 +3397,55 @@ and limitations under the License.
   \*************************************************/
 
 /*!**************************************************!*\
-  !*** ./node_modules/lz-string/libs/lz-string.js ***!
+  !*** ./node_modules/array.prototype.map/shim.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/decrypter.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/encrypter.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/cbc.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/cfb.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/ctr.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/ecb.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/ofb.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/224.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/256.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/384.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/512.js ***!
+  \**************************************************/
+
+/*!**************************************************!*\
+  !*** ./node_modules/promise.allsettled/index.js ***!
   \**************************************************/
 
 /*!**************************************************!*\
@@ -2593,11 +3473,43 @@ and limitations under the License.
   \**************************************************/
 
 /*!***************************************************!*\
+  !*** ./node_modules/array.prototype.map/index.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/browserify-aes/authCipher.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/cfb1.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/cfb8.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/browserify-cipher/browser.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/browserify-zlib/lib/index.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
   !*** ./node_modules/css-loader/lib/url/escape.js ***!
   \***************************************************/
 
 /*!***************************************************!*\
   !*** ./node_modules/inherits/inherits_browser.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/minimalistic-assert/index.js ***!
+  \***************************************************/
+
+/*!***************************************************!*\
+  !*** ./node_modules/public-encrypt/withPublic.js ***!
   \***************************************************/
 
 /*!***************************************************!*\
@@ -2619,6 +3531,14 @@ and limitations under the License.
 /*!***************************************************!*\
   !*** ./packages/webviz-core/src/util/entities.js ***!
   \***************************************************/
+
+/*!****************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/base/node.js ***!
+  \****************************************************/
+
+/*!****************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/index.js ***!
+  \****************************************************/
 
 /*!****************************************************!*\
   !*** ./node_modules/process-nextick-args/index.js ***!
@@ -2649,6 +3569,10 @@ and limitations under the License.
   \****************************************************/
 
 /*!****************************************************!*\
+  !*** ./packages/webviz-core/src/test/datatypes.js ***!
+  \****************************************************/
+
+/*!****************************************************!*\
   !*** ./packages/webviz-core/src/util/clipboard.js ***!
   \****************************************************/
 
@@ -2667,6 +3591,46 @@ and limitations under the License.
 /*!****************************************************!*\
   !*** ./packages/webviz-core/src/util/selectors.js ***!
   \****************************************************/
+
+/*!*****************************************************!*\
+  !*** (webpack)/node_modules/vm-browserify/index.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/base/index.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/browserify-aes/modes/list.json ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/browserify-aes/streamCipher.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/browserify-zlib/lib/binding.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/diffie-hellman/lib/primes.json ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/utils.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/hash.js/lib/hash/sha/common.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/pbkdf2/lib/default-encoding.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
+  !*** ./node_modules/promise.allsettled/polyfill.js ***!
+  \*****************************************************/
 
 /*!*****************************************************!*\
   !*** ./node_modules/readable-stream/passthrough.js ***!
@@ -2697,8 +3661,40 @@ and limitations under the License.
   \*****************************************************/
 
 /*!*****************************************************!*\
+  !*** ./packages/webviz-core/src/util/formatTime.js ***!
+  \*****************************************************/
+
+/*!*****************************************************!*\
   !*** ./packages/webviz-core/src/util/minivizAPI.js ***!
   \*****************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/array.prototype.map/polyfill.js ***!
+  \******************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/base/buffer.js ***!
+  \******************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/browserify-sign/browser/sign.js ***!
+  \******************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curves.js ***!
+  \******************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/ec/key.js ***!
+  \******************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/function-bind/implementation.js ***!
+  \******************************************************/
+
+/*!******************************************************!*\
+  !*** ./node_modules/public-encrypt/publicEncrypt.js ***!
+  \******************************************************/
 
 /*!******************************************************!*\
   !*** ./packages/webviz-core/node_modules/uuid/v1.js ***!
@@ -2733,6 +3729,30 @@ and limitations under the License.
   \*******************************************************/
 
 /*!*******************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/decoders/der.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/decoders/pem.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/encoders/der.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/encoders/pem.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/browserify-sign/browser/index.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./node_modules/public-encrypt/privateDecrypt.js ***!
+  \*******************************************************/
+
+/*!*******************************************************!*\
   !*** ./packages/webviz-core/shared/promiseTimeout.js ***!
   \*******************************************************/
 
@@ -2755,6 +3775,22 @@ and limitations under the License.
 /*!*******************************************************!*\
   !*** ./packages/webviz-core/src/util/stateHistory.js ***!
   \*******************************************************/
+
+/*!********************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/base/reporter.js ***!
+  \********************************************************/
+
+/*!********************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/constants/der.js ***!
+  \********************************************************/
+
+/*!********************************************************!*\
+  !*** ./node_modules/browserify-sign/browser/verify.js ***!
+  \********************************************************/
+
+/*!********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/ec/index.js ***!
+  \********************************************************/
 
 /*!********************************************************!*\
   !*** ./node_modules/react/cjs/react.production.min.js ***!
@@ -2799,6 +3835,18 @@ and limitations under the License.
 /*!********************************************************!*\
   !*** ./packages/webviz-core/src/stories/StoreSetup.js ***!
   \********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/decoders/index.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/encoders/index.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/eddsa/key.js ***!
+  \*********************************************************/
 
 /*!*********************************************************!*\
   !*** ./packages/@cruise-automation/button/lib/index.js ***!
@@ -2859,6 +3907,26 @@ and limitations under the License.
 /*!*********************************************************!*\
   !*** ./packages/webviz-core/src/util/overwriteFetch.js ***!
   \*********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/asn1.js/lib/asn1/constants/index.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/browserify-sign/browser/curves.json ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/diffie-hellman/lib/generatePrime.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curve/base.js ***!
+  \**********************************************************/
+
+/*!**********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curve/mont.js ***!
+  \**********************************************************/
 
 /*!**********************************************************!*\
   !*** ./node_modules/memoize-one/dist/memoize-one.esm.js ***!
@@ -2933,10 +4001,6 @@ and limitations under the License.
   \**********************************************************/
 
 /*!**********************************************************!*\
-  !*** ./packages/webviz-core/src/middleware/updateUrl.js ***!
-  \**********************************************************/
-
-/*!**********************************************************!*\
   !*** ./packages/webviz-core/src/store/configureStore.js ***!
   \**********************************************************/
 
@@ -2952,12 +4016,32 @@ and limitations under the License.
   !*** ./packages/webviz-core/src/util/globalConstants.js ***!
   \**********************************************************/
 
-/*!**********************************************************!*\
-  !*** ./packages/webviz-core/src/util/hideLoadingLogo.js ***!
-  \**********************************************************/
+/*!***********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curve/index.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curve/short.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/eddsa/index.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./node_modules/promise.allsettled/implementation.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./node_modules/promise.allsettled/requirePromise.js ***!
+  \***********************************************************/
 
 /*!***********************************************************!*\
   !*** ./node_modules/string_decoder/lib/string_decoder.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/cbor-js/cbor.js ***!
   \***********************************************************/
 
 /*!***********************************************************!*\
@@ -3009,6 +4093,10 @@ and limitations under the License.
   \***********************************************************/
 
 /*!***********************************************************!*\
+  !*** ./packages/webviz-core/src/components/Dimensions.js ***!
+  \***********************************************************/
+
+/*!***********************************************************!*\
   !*** ./packages/webviz-core/src/components/EmptyState.js ***!
   \***********************************************************/
 
@@ -3031,6 +4119,14 @@ and limitations under the License.
 /*!***********************************************************!*\
   !*** ./packages/webviz-core/src/util/sendNotification.js ***!
   \***********************************************************/
+
+/*!************************************************************!*\
+  !*** ./node_modules/array.prototype.map/implementation.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/ec/signature.js ***!
+  \************************************************************/
 
 /*!************************************************************!*\
   !*** ./node_modules/readable-stream/lib/_stream_duplex.js ***!
@@ -3129,6 +4225,14 @@ and limitations under the License.
   \************************************************************/
 
 /*!*************************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/curve/edwards.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./node_modules/minimalistic-crypto-utils/lib/utils.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
   !*** ./node_modules/prop-types/factoryWithThrowingShims.js ***!
   \*************************************************************/
 
@@ -3218,6 +4322,18 @@ and limitations under the License.
 
 /*!**************************************************************!*\
   !*** (webpack)/node_modules/node-libs-browser/mock/empty.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** (webpack)/node_modules/util/support/isBufferBrowser.js ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./node_modules/browserify-sign/browser/algorithms.json ***!
+  \**************************************************************/
+
+/*!**************************************************************!*\
+  !*** ./node_modules/es-array-method-boxes-properly/index.js ***!
   \**************************************************************/
 
 /*!**************************************************************!*\
@@ -3383,6 +4499,10 @@ and limitations under the License.
 /*!**************************************************************!*\
   !*** ./packages/webviz-core/src/util/binaryObjects/index.js ***!
   \**************************************************************/
+
+/*!***************************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/eddsa/signature.js ***!
+  \***************************************************************/
 
 /*!***************************************************************!*\
   !*** ./node_modules/readable-stream/lib/_stream_transform.js ***!
@@ -3981,10 +5101,6 @@ and limitations under the License.
   \******************************************************************/
 
 /*!******************************************************************!*\
-  !*** ./packages/webviz-core/src/util/binaryObjects/ArrayView.js ***!
-  \******************************************************************/
-
-/*!******************************************************************!*\
   !*** ./packages/webviz-core/src/util/showHelpModalOpenSource.js ***!
   \******************************************************************/
 
@@ -4129,12 +5245,20 @@ and limitations under the License.
   \*******************************************************************/
 
 /*!*******************************************************************!*\
+  !*** ./packages/webviz-core/src/util/binaryObjects/ArrayViews.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
   !*** ./packages/webviz-core/src/util/helpModalOpenSource.help.md ***!
   \*******************************************************************/
 
 /*!*******************************************************************!*\
   !*** ./packages/webviz-core/src/util/indexeddb/clearIndexedDb.js ***!
   \*******************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./node_modules/es-get-iterator/node_modules/isarray/index.js ***!
+  \********************************************************************/
 
 /*!********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/account.svg ***!
@@ -4235,6 +5359,10 @@ and limitations under the License.
 /*!********************************************************************!*\
   !*** ./packages/webviz-core/src/util/installDevtoolsFormatters.js ***!
   \********************************************************************/
+
+/*!*********************************************************************!*\
+  !*** ./node_modules/elliptic/lib/elliptic/precomputed/secp256k1.js ***!
+  \*********************************************************************/
 
 /*!*********************************************************************!*\
   !*** ./node_modules/node-libs-browser/node_modules/buffer/index.js ***!
@@ -4347,6 +5475,10 @@ and limitations under the License.
 /*!*********************************************************************!*\
   !*** ./packages/webviz-core/src/panels/PanelList/index.module.scss ***!
   \*********************************************************************/
+
+/*!**********************************************************************!*\
+  !*** ./node_modules/es-get-iterator/node_modules/is-string/index.js ***!
+  \**********************************************************************/
 
 /*!**********************************************************************!*\
   !*** ./node_modules/readable-stream/lib/internal/streams/destroy.js ***!
@@ -4513,15 +5645,19 @@ and limitations under the License.
   \***********************************************************************/
 
 /*!************************************************************************!*\
+  !*** ./node_modules/es-get-iterator/node_modules/has-symbols/index.js ***!
+  \************************************************************************/
+
+/*!************************************************************************!*\
+  !*** ./node_modules/es-get-iterator/node_modules/has-symbols/shams.js ***!
+  \************************************************************************/
+
+/*!************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/help-circle.svg ***!
   \************************************************************************/
 
 /*!************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/information.svg ***!
-  \************************************************************************/
-
-/*!************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/batch-processor/src/utils.js ***!
   \************************************************************************/
 
 /*!************************************************************************!*\
@@ -4567,6 +5703,10 @@ and limitations under the License.
 /*!************************************************************************!*\
   !*** ./packages/webviz-core/src/styles/assets/latin-roboto-mono.woff2 ***!
   \************************************************************************/
+
+/*!*************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/is-regex/index.js ***!
+  \*************************************************************************/
 
 /*!*************************************************************************!*\
   !*** ./node_modules/readable-stream/lib/internal/streams/BufferList.js ***!
@@ -4625,6 +5765,10 @@ and limitations under the License.
   \*************************************************************************/
 
 /*!*************************************************************************!*\
+  !*** ./packages/webviz-core/src/middleware/updateUrlAndLocalStorage.js ***!
+  \*************************************************************************/
+
+/*!*************************************************************************!*\
   !*** ./packages/webviz-core/src/util/binaryObjects/jsWrapperObjects.js ***!
   \*************************************************************************/
 
@@ -4655,6 +5799,14 @@ and limitations under the License.
 /*!**************************************************************************!*\
   !*** ./packages/webviz-core/src/dataProviders/ApiCheckerDataProvider.js ***!
   \**************************************************************************/
+
+/*!***************************************************************************!*\
+  !*** ./node_modules/promise.allsettled/node_modules/has-symbols/index.js ***!
+  \***************************************************************************/
+
+/*!***************************************************************************!*\
+  !*** ./node_modules/promise.allsettled/node_modules/has-symbols/shams.js ***!
+  \***************************************************************************/
 
 /*!***************************************************************************!*\
   !*** ./packages/webviz-core/migrations/frozenHelpers/incrementVersion.js ***!
@@ -4689,6 +5841,22 @@ and limitations under the License.
   \***************************************************************************/
 
 /*!****************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/has-symbols/index.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/has-symbols/shams.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/is-callable/index.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
+  !*** ./node_modules/promise.allsettled/node_modules/es-abstract/5/Type.js ***!
+  \****************************************************************************/
+
+/*!****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/radiobox-marked.svg ***!
   \****************************************************************************/
 
@@ -4719,6 +5887,10 @@ and limitations under the License.
 /*!****************************************************************************!*\
   !*** ./packages/webviz-core/src/components/PanelToolbar/index.module.scss ***!
   \****************************************************************************/
+
+/*!*****************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/5/Type.js ***!
+  \*****************************************************************************/
 
 /*!*****************************************************************************!*\
   !*** ./node_modules/readable-stream/lib/internal/streams/stream-browser.js ***!
@@ -4865,6 +6037,22 @@ and limitations under the License.
   \******************************************************************************/
 
 /*!*******************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/Get.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/object-inspect/index.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./node_modules/es-get-iterator/node_modules/es-abstract/GetIntrinsic.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
+  !*** ./node_modules/promise.allsettled/node_modules/es-abstract/2019/Type.js ***!
+  \*******************************************************************************/
+
+/*!*******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/micro-memoize/dist/micro-memoize.js ***!
   \*******************************************************************************/
 
@@ -4921,6 +6109,14 @@ and limitations under the License.
   \*******************************************************************************/
 
 /*!********************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/Call.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/Type.js ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/script-text-outline.svg ***!
   \********************************************************************************/
 
@@ -4965,6 +6161,10 @@ and limitations under the License.
   \********************************************************************************/
 
 /*!*********************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-to-primitive/es2015.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js ***!
   \*********************************************************************************/
 
@@ -4992,12 +6192,16 @@ and limitations under the License.
   !*** ./packages/webviz-core/node_modules/remark-parse/lib/tokenize/emphasis.js ***!
   \*********************************************************************************/
 
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/src/dataProviders/rawMessageDefinitionsToParsed.js ***!
+  \*********************************************************************************/
+
 /*!**********************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@sentry/types/esm/index.js + 2 modules ***!
+  !*** ./node_modules/promise.allsettled/node_modules/es-abstract/GetIntrinsic.js ***!
   \**********************************************************************************/
 
 /*!**********************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/batch-processor/src/batch-processor.js ***!
+  !*** ./packages/webviz-core/node_modules/@sentry/types/esm/index.js + 2 modules ***!
   \**********************************************************************************/
 
 /*!**********************************************************************************!*\
@@ -5033,6 +6237,18 @@ and limitations under the License.
   \**********************************************************************************/
 
 /*!***********************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/IsArray.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/GetIntrinsic.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
+  !*** ./node_modules/es-get-iterator/node_modules/es-abstract/helpers/callBind.js ***!
+  \***********************************************************************************/
+
+/*!***********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@babel/runtime/helpers/inheritsLoose.js ***!
   \***********************************************************************************/
 
@@ -5045,10 +6261,6 @@ and limitations under the License.
   \***********************************************************************************/
 
 /*!***********************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/reporter.js ***!
-  \***********************************************************************************/
-
-/*!***********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/jsondiffpatch/dist/jsondiffpatch.umd.js ***!
   \***********************************************************************************/
 
@@ -5058,10 +6270,6 @@ and limitations under the License.
 
 /*!***********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/parse-entities/decode-entity.browser.js ***!
-  \***********************************************************************************/
-
-/*!***********************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/react-container-dimensions/lib/index.js ***!
   \***********************************************************************************/
 
 /*!***********************************************************************************!*\
@@ -5083,6 +6291,34 @@ and limitations under the License.
 /*!***********************************************************************************!*\
   !*** ./packages/webviz-core/src/dataProviders/standardDataProviderDescriptors.js ***!
   \***********************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/IsRegExp.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/ToNumber.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/ToObject.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/ToString.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/ToUint32.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/helpers/isNaN.js ***!
+  \************************************************************************************/
+
+/*!************************************************************************************!*\
+  !*** ./node_modules/es-get-iterator/node_modules/es-abstract/helpers/callBound.js ***!
+  \************************************************************************************/
 
 /*!************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/fbjs/lib/emptyFunction.js ***!
@@ -5137,11 +6373,19 @@ and limitations under the License.
   \************************************************************************************/
 
 /*!*************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 35 modules ***!
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/IsInteger.js ***!
   \*************************************************************************************/
 
 /*!*************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/id-handler.js ***!
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/SameValue.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/ToBoolean.js ***!
+  \*************************************************************************************/
+
+/*!*************************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@sentry/browser/esm/index.js + 35 modules ***!
   \*************************************************************************************/
 
 /*!*************************************************************************************!*\
@@ -5155,6 +6399,14 @@ and limitations under the License.
 /*!*************************************************************************************!*\
   !*** ./packages/webviz-core/src/players/automatedRun/performanceMeasuringClient.js ***!
   \*************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/IsCallable.js ***!
+  \**************************************************************************************/
+
+/*!**************************************************************************************!*\
+  !*** ./node_modules/promise.allsettled/node_modules/es-abstract/helpers/callBind.js ***!
+  \**************************************************************************************/
 
 /*!**************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js ***!
@@ -5177,6 +6429,26 @@ and limitations under the License.
   \**************************************************************************************/
 
 /*!***************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/HasProperty.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/ToPrimitive.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/helpers/callBind.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/helpers/isFinite.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
+  !*** ./node_modules/promise.allsettled/node_modules/es-abstract/helpers/callBound.js ***!
+  \***************************************************************************************/
+
+/*!***************************************************************************************!*\
   !*** ./node_modules/react-dom/node_modules/scheduler/cjs/scheduler.production.min.js ***!
   \***************************************************************************************/
 
@@ -5186,10 +6458,6 @@ and limitations under the License.
 
 /*!***************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js ***!
-  \***************************************************************************************/
-
-/*!***************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/id-generator.js ***!
   \***************************************************************************************/
 
 /*!***************************************************************************************!*\
@@ -5217,11 +6485,11 @@ and limitations under the License.
   \***************************************************************************************/
 
 /*!****************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/element-utils.js ***!
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/IsExtensible.js ***!
   \****************************************************************************************/
 
 /*!****************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/state-handler.js ***!
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/helpers/callBound.js ***!
   \****************************************************************************************/
 
 /*!****************************************************************************************!*\
@@ -5237,6 +6505,18 @@ and limitations under the License.
   \****************************************************************************************/
 
 /*!*****************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/IsConstructor.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/IsPropertyKey.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
+  !*** ./node_modules/promise.allsettled/node_modules/es-abstract/2019/PromiseResolve.js ***!
+  \*****************************************************************************************/
+
+/*!*****************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-mosaic-component/lib/MosaicZeroState.js ***!
   \*****************************************************************************************/
 
@@ -5247,6 +6527,14 @@ and limitations under the License.
 /*!*****************************************************************************************!*\
   !*** ./packages/webviz-core/src/util/binaryObjects/binaryTranslation/bin/translator.js ***!
   \*****************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/helpers/isPrimitive.js ***!
+  \******************************************************************************************/
+
+/*!******************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/helpers/regexTester.js ***!
+  \******************************************************************************************/
 
 /*!******************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/babel-runtime/core-js/symbol.js ***!
@@ -5293,6 +6581,10 @@ and limitations under the License.
   \******************************************************************************************/
 
 /*!*******************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/helpers/assertRecord.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/babel-runtime/helpers/extends.js ***!
   \*******************************************************************************************/
 
@@ -5325,24 +6617,16 @@ and limitations under the License.
   \*******************************************************************************************/
 
 /*!*******************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/browser-detector.js ***!
-  \*******************************************************************************************/
-
-/*!*******************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/collection-utils.js ***!
-  \*******************************************************************************************/
-
-/*!*******************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/listener-handler.js ***!
-  \*******************************************************************************************/
-
-/*!*******************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-mosaic-component/lib/buttons/Separator.js ***!
   \*******************************************************************************************/
 
 /*!*******************************************************************************************!*\
   !*** ./packages/webviz-core/src/util/binaryObjects/binaryTranslation/bin/translator.wasm ***!
   \*******************************************************************************************/
+
+/*!********************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/IsDataDescriptor.js ***!
+  \********************************************************************************************/
 
 /*!********************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/babel-runtime/helpers/inherits.js ***!
@@ -5377,6 +6661,10 @@ and limitations under the License.
   \********************************************************************************************/
 
 /*!*********************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/5/CheckObjectCoercible.js ***!
+  \*********************************************************************************************/
+
+/*!*********************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/core-js/library/fn/symbol/index.js ***!
   \*********************************************************************************************/
 
@@ -5403,6 +6691,18 @@ and limitations under the License.
 /*!*********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-mosaic-component/react-mosaic-component.css ***!
   \*********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/ArraySpeciesCreate.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/CreateDataProperty.js ***!
+  \**********************************************************************************************/
+
+/*!**********************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-to-primitive/helpers/isPrimitive.js ***!
+  \**********************************************************************************************/
 
 /*!**********************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/babel-runtime/core-js/array/from.js ***!
@@ -5475,6 +6775,14 @@ and limitations under the License.
 /*!***********************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-mosaic-component/lib/buttons/ReplaceButton.js ***!
   \***********************************************************************************************/
+
+/*!************************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/ToPropertyDescriptor.js ***!
+  \************************************************************************************************/
+
+/*!************************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/helpers/DefineOwnProperty.js ***!
+  \************************************************************************************************/
 
 /*!************************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/core-js/library/fn/symbol/iterator.js ***!
@@ -5613,6 +6921,18 @@ and limitations under the License.
   \*************************************************************************************************/
 
 /*!**************************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/FromPropertyDescriptor.js ***!
+  \**************************************************************************************************/
+
+/*!**************************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/OrdinaryGetOwnProperty.js ***!
+  \**************************************************************************************************/
+
+/*!**************************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/RequireObjectCoercible.js ***!
+  \**************************************************************************************************/
+
+/*!**************************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/babel-runtime/helpers/classCallCheck.js ***!
   \**************************************************************************************************/
 
@@ -5646,10 +6966,6 @@ and limitations under the License.
 
 /*!**************************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/core-js/library/modules/_object-keys.js ***!
-  \**************************************************************************************************/
-
-/*!**************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/element-resize-detector.js ***!
   \**************************************************************************************************/
 
 /*!**************************************************************************************************!*\
@@ -5704,13 +7020,9 @@ and limitations under the License.
   !*** ./packages/@cruise-automation/tooltip/node_modules/react-popper/lib/esm/index.js + 4 modules ***!
   \****************************************************************************************************/
 
-/*!****************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/detection-strategy/object.js ***!
-  \****************************************************************************************************/
-
-/*!****************************************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/element-resize-detector/src/detection-strategy/scroll.js ***!
-  \****************************************************************************************************/
+/*!*****************************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/2019/CreateDataPropertyOrThrow.js ***!
+  \*****************************************************************************************************/
 
 /*!*****************************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/babel-runtime/helpers/toConsumableArray.js ***!
@@ -5747,6 +7059,10 @@ and limitations under the License.
 /*!******************************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js ***!
   \******************************************************************************************************/
+
+/*!*******************************************************************************************************!*\
+  !*** ./node_modules/array.prototype.map/node_modules/es-abstract/helpers/getOwnPropertyDescriptor.js ***!
+  \*******************************************************************************************************/
 
 /*!*******************************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/core-js/library/fn/object/define-property.js ***!

@@ -1,0 +1,9 @@
+/*! ModuleConcatenation bailout: Module is not an ECMAScript module */
+
+/*! all exports used */
+
+/*! no static exports found */
+
+/*!*********************************************************!*\
+  !*** ./packages/webviz-core/node_modules/prettier sync ***!
+  \*********************************************************/

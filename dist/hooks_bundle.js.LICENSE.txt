@@ -92,6 +92,8 @@
 
 /*! ./Diff */
 
+/*! ./DiffModeSettings */
+
 /*! ./ExpandingToolbar.module.scss */
 
 /*! ./FrameCompatibility */
@@ -330,6 +332,8 @@
 
 /*! @mdi/svg/svg/crosshairs-gps.svg */
 
+/*! @mdi/svg/svg/cube-outline.svg */
+
 /*! @mdi/svg/svg/cursor-default.svg */
 
 /*! @mdi/svg/svg/database.svg */
@@ -512,8 +516,6 @@
 
 /*! react-autocomplete */
 
-/*! react-container-dimensions */
-
 /*! react-dnd */
 
 /*! react-document-events */
@@ -604,6 +606,8 @@
 
 /*! webviz-core/src/components/ContextMenu */
 
+/*! webviz-core/src/components/Dimensions */
+
 /*! webviz-core/src/components/Dropdown */
 
 /*! webviz-core/src/components/Dropdown/index.module.scss */
@@ -688,6 +692,8 @@
 
 /*! webviz-core/src/components/SpinningLoadingIcon */
 
+/*! webviz-core/src/components/Switch */
+
 /*! webviz-core/src/components/TextContent */
 
 /*! webviz-core/src/components/TextField */
@@ -699,8 +705,6 @@
 /*! webviz-core/src/components/TimeBasedChart/constants */
 
 /*! webviz-core/src/components/Tooltip */
-
-/*! webviz-core/src/components/Tooltip.module.scss */
 
 /*! webviz-core/src/components/TopicToRenderMenu */
 
@@ -972,6 +976,8 @@
 
 /*! webviz-core/src/util/entities */
 
+/*! webviz-core/src/util/formatTime */
+
 /*! webviz-core/src/util/fuzzyFilter */
 
 /*! webviz-core/src/util/globalConstants */
@@ -1085,6 +1091,10 @@
 /*!******************************************************!*\
   !*** ./packages/webviz-core/src/util/fuzzyFilter.js ***!
   \******************************************************/
+
+/*!*******************************************************!*\
+  !*** ./packages/webviz-core/src/components/Switch.js ***!
+  \*******************************************************/
 
 /*!*******************************************************!*\
   !*** ./packages/webviz-core/src/panels/Note/index.js ***!
@@ -1808,6 +1818,10 @@
 
 /*!*******************************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/common.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/DiffModeSettings.js ***!
   \*******************************************************************************************/
 
 /*!*******************************************************************************************!*\

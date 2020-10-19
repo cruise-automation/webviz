@@ -9,8 +9,7 @@
 import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
 import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import { groupBy } from "lodash";
-import React, { type Node, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import Dimensions from "react-container-dimensions";
+import React, { type Node, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
   Worldview,
   PolygonBuilder,
@@ -24,10 +23,12 @@ import { type Time } from "rosbag";
 import { useDebouncedCallback } from "use-debounce";
 
 import useTopicTree, { TopicTreeContext } from "./useTopicTree";
+import Dimensions from "webviz-core/src/components/Dimensions";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
 import Modal from "webviz-core/src/components/Modal";
+import PanelContext from "webviz-core/src/components/PanelContext";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
 import filterMap from "webviz-core/src/filterMap";
@@ -158,6 +159,7 @@ export default function Layout({
     flattenMarkers,
     modifiedNamespaceTopics,
     pinTopics,
+    diffModeEnabled,
     selectedPolygonEditFormat = "yaml",
     showCrosshair,
     autoSyncCameraState,
@@ -299,6 +301,7 @@ export default function Layout({
     selectedTopicNames,
     shouldExpandAllKeys,
     visibleTopicsCountByKey,
+    toggleNamespaceChecked,
   } = topicTreeData;
 
   const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("globalVariableColorOverrides");
@@ -497,9 +500,11 @@ export default function Layout({
 
   const updateGlobalVariablesFromSelection = useCallback(
     (newSelectedObject: MouseEventObject) => {
-      const newGlobalVariables = getUpdatedGlobalVariablesBySelectedObject(newSelectedObject, linkedGlobalVariables);
-      if (newGlobalVariables) {
-        setGlobalVariables(newGlobalVariables);
+      if (newSelectedObject) {
+        const newGlobalVariables = getUpdatedGlobalVariablesBySelectedObject(newSelectedObject, linkedGlobalVariables);
+        if (newGlobalVariables) {
+          setGlobalVariables(newGlobalVariables);
+        }
       }
     },
     [linkedGlobalVariables, setGlobalVariables]
@@ -580,14 +585,24 @@ export default function Layout({
         toggleDebug: () => setDebug(!callbackInputsRef.current.debug),
         toggleCameraMode: () => {
           const { cameraState: currentCameraState, saveConfig: currentSaveConfig } = callbackInputsRef.current;
-          currentSaveConfig({ cameraState: { ...currentCameraState, perspective: !currentCameraState.perspective } });
+          const newPerspective = !currentCameraState.perspective;
+          currentSaveConfig({ cameraState: { ...currentCameraState, perspective: newPerspective } });
           if (measuringElRef.current && currentCameraState.perspective) {
             measuringElRef.current.reset();
+          }
+          // Automatically enable/disable map height based on 3D/2D mode
+          const mapHeightEnabled = (selectedNamespacesByTopic["/metadata"] || []).includes("height");
+          if (mapHeightEnabled !== newPerspective) {
+            toggleNamespaceChecked({
+              topicName: "/metadata",
+              namespace: "height",
+              columnIndex: 0,
+            });
           }
         },
       };
     },
-    [handleEvent, selectObject]
+    [handleEvent, selectObject, selectedNamespacesByTopic, toggleNamespaceChecked]
   );
 
   // When the TopicTree is hidden, focus the <World> again so keyboard controls continue to work
@@ -648,6 +663,10 @@ export default function Layout({
   ]);
 
   const cursorType = isDrawing ? "crosshair" : "";
+  const { isHovered } = useContext(PanelContext) || {};
+  const isDemoMode = useExperimentalFeature("demoMode");
+  const isHidden = isDemoMode && !isHovered;
+  const DemoModeComponent = getGlobalHooks().getDemoModeComponent();
 
   const { MapComponent, videoRecordingStyle } = useMemo(
     () => ({
@@ -667,9 +686,10 @@ export default function Layout({
           scene={memoizedScene}
           debug={debug}
           perspective={!!cameraState.perspective}
+          isDemoMode={isDemoMode}
         />
       ),
-    [MapComponent, cameraState.perspective, debug, mapNamespaces, memoizedScene]
+    [MapComponent, cameraState.perspective, debug, isDemoMode, mapNamespaces, memoizedScene]
   );
 
   // Memoize the threeDimensionalVizContextValue to avoid returning a new object every time
@@ -714,39 +734,43 @@ export default function Layout({
             }
           />
           <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
-            <Dimensions>
-              {({ width: containerWidth, height: containerHeight }) => (
-                <TopicTree
-                  allKeys={allKeys}
-                  availableNamespacesByTopic={availableNamespacesByTopic}
-                  checkedKeys={checkedKeys}
-                  containerHeight={containerHeight}
-                  containerWidth={containerWidth}
-                  derivedCustomSettingsByKey={derivedCustomSettingsByKey}
-                  expandedKeys={expandedKeys}
-                  filterText={filterText}
-                  getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
-                  getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
-                  getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
-                  hasFeatureColumn={hasFeatureColumn}
-                  isPlaying={isPlaying}
-                  onExitTopicTreeFocus={onExitTopicTreeFocus}
-                  onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
-                  pinTopics={pinTopics}
-                  rootTreeNode={rootTreeNode}
-                  saveConfig={saveConfig}
-                  sceneErrorsByKey={sceneErrorsByKey}
-                  setCurrentEditingTopic={setCurrentEditingTopic}
-                  setEditingNamespace={setEditingNamespace}
-                  setFilterText={setFilterText}
-                  setShowTopicTree={setShowTopicTree}
-                  shouldExpandAllKeys={shouldExpandAllKeys}
-                  showTopicTree={showTopicTree}
-                  topicDisplayMode={topicDisplayMode}
-                  visibleTopicsCountByKey={visibleTopicsCountByKey}
-                />
-              )}
-            </Dimensions>
+            {isDemoMode && DemoModeComponent && <DemoModeComponent />}
+            {(!isDemoMode || (isDemoMode && isHovered)) && (
+              <Dimensions>
+                {({ width: containerWidth, height: containerHeight }) => (
+                  <TopicTree
+                    allKeys={allKeys}
+                    availableNamespacesByTopic={availableNamespacesByTopic}
+                    checkedKeys={checkedKeys}
+                    containerHeight={containerHeight}
+                    containerWidth={containerWidth}
+                    derivedCustomSettingsByKey={derivedCustomSettingsByKey}
+                    expandedKeys={expandedKeys}
+                    filterText={filterText}
+                    getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
+                    getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
+                    getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
+                    hasFeatureColumn={hasFeatureColumn}
+                    isPlaying={isPlaying}
+                    onExitTopicTreeFocus={onExitTopicTreeFocus}
+                    onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
+                    pinTopics={pinTopics}
+                    diffModeEnabled={diffModeEnabled}
+                    rootTreeNode={rootTreeNode}
+                    saveConfig={saveConfig}
+                    sceneErrorsByKey={sceneErrorsByKey}
+                    setCurrentEditingTopic={setCurrentEditingTopic}
+                    setEditingNamespace={setEditingNamespace}
+                    setFilterText={setFilterText}
+                    setShowTopicTree={setShowTopicTree}
+                    shouldExpandAllKeys={shouldExpandAllKeys}
+                    showTopicTree={showTopicTree}
+                    topicDisplayMode={topicDisplayMode}
+                    visibleTopicsCountByKey={visibleTopicsCountByKey}
+                  />
+                )}
+              </Dimensions>
+            )}
             {currentEditingTopic && (
               <TopicSettingsModal
                 currentEditingTopic={currentEditingTopic}
@@ -784,8 +808,10 @@ export default function Layout({
               autoTextBackgroundColor={!!autoTextBackgroundColor}
               cameraState={cameraState}
               isPlaying={!!isPlaying}
+              isDemoMode={isDemoMode}
               markerProviders={markerProviders}
               onCameraStateChange={onCameraStateChange}
+              diffModeEnabled={hasFeatureColumn && diffModeEnabled}
               onClick={onClick}
               onDoubleClick={onDoubleClick}
               onMouseDown={onMouseDown}
@@ -827,6 +853,7 @@ export default function Layout({
                   targetPose={targetPose}
                   transforms={transforms}
                   rootTf={rootTf}
+                  isHidden={isHidden}
                   {...searchTextProps}
                 />
               </div>

@@ -10,7 +10,7 @@ import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
-function getProvider() {
+function getProvider(isRoot: boolean = false) {
   const memoryDataProvider = new MemoryDataProvider({
     messages: {
       parsedMessages: [
@@ -25,16 +25,14 @@ function getProvider() {
       { name: "/some_other_topic", datatype: "some_datatype" },
     ],
     datatypes: { some_datatype: { fields: [] } },
-    messageDefinitionsByTopic: {
-      "/some_topic": "dummy",
-      "/some_other_topic": "dummy",
-    },
+    messageDefinitionsByTopic: { "/some_other_topic": "dummy" },
+    parsedMessageDefinitionsByTopic: { "/some_topic": [], "/some_other_topic": [] },
     providesParsedMessages: false, // to test missing messageDefinitionsByTopic
   });
 
   return {
     provider: new ApiCheckerDataProvider(
-      { name: "test@1" },
+      { name: "test@1", isRoot },
       [{ name: "MemoryDataProvider", args: {}, children: [] }],
       () => memoryDataProvider
     ),
@@ -45,14 +43,37 @@ function getProvider() {
 describe("ApiCheckerDataProvider", () => {
   describe("#initialize", () => {
     it("works in the normal case", async () => {
-      const { provider } = getProvider();
+      const { provider } = getProvider(true);
       const initializationResult = await provider.initialize(mockExtensionPoint().extensionPoint);
       expect(initializationResult).toEqual({
-        messageDefinitionsByTopic: {
-          "/some_topic": "dummy",
-          "/some_other_topic": "dummy",
+        messageDefinitions: {
+          type: "parsed",
+          // with parsed messageDefintions, the string messageDefintionsByTopic does not need to be complete.
+          messageDefinitionsByTopic: { "/some_other_topic": "dummy" },
+          parsedMessageDefinitionsByTopic: { "/some_topic": [], "/some_other_topic": [] },
+          datatypes: { some_datatype: { fields: [] } },
         },
-        datatypes: { some_datatype: { fields: [] } },
+        end: { nsec: 0, sec: 105 },
+        start: { nsec: 0, sec: 100 },
+        topics: [
+          { datatype: "some_datatype", name: "/some_topic" },
+          { datatype: "some_datatype", name: "/some_other_topic" },
+        ],
+        providesParsedMessages: false,
+      });
+    });
+
+    it("works with unparsed message defintions", async () => {
+      const { provider, memoryDataProvider } = getProvider();
+      memoryDataProvider.messageDefinitionsByTopic = { "/some_topic": "dummy", "/some_other_topic": "dummy" };
+      memoryDataProvider.parsedMessageDefinitionsByTopic = undefined;
+      memoryDataProvider.datatypes = undefined;
+      const initializationResult = await provider.initialize(mockExtensionPoint().extensionPoint);
+      expect(initializationResult).toEqual({
+        messageDefinitions: {
+          type: "raw",
+          messageDefinitionsByTopic: { "/some_topic": "dummy", "/some_other_topic": "dummy" },
+        },
         end: { nsec: 0, sec: 105 },
         start: { nsec: 0, sec: 100 },
         topics: [
@@ -86,11 +107,26 @@ describe("ApiCheckerDataProvider", () => {
         await expect(provider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
       });
 
-      it("throws when topic is missing from messageDefinitionsByTopic", async () => {
+      it("throws when topic is missing from parsedMessageDefinitionsByTopic", async () => {
         const { provider, memoryDataProvider } = getProvider();
-        memoryDataProvider.messageDefinitionsByTopic = {
-          "/some_other_topic": "dummy",
+        memoryDataProvider.parsedMessageDefinitionsByTopic = {
+          "/some_other_topic": [],
         };
+        await expect(provider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
+      });
+
+      it("throws when topic is missing from messageDefinitionsByTopic (raw messageDefinitions)", async () => {
+        const { provider, memoryDataProvider } = getProvider(true);
+        memoryDataProvider.parsedMessageDefinitionsByTopic = undefined;
+        memoryDataProvider.datatypes = undefined;
+        await expect(provider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
+      });
+
+      it("throws when root message definitions are not parsed", async () => {
+        const { provider, memoryDataProvider } = getProvider(true);
+        memoryDataProvider.messageDefinitionsByTopic = { "/some_topic": "dummy", "/some_other_topic": "dummy" };
+        memoryDataProvider.parsedMessageDefinitionsByTopic = undefined;
+        memoryDataProvider.datatypes = undefined;
         await expect(provider.initialize(mockExtensionPoint().extensionPoint)).rejects.toThrow();
       });
     });

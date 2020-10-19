@@ -143,14 +143,14 @@ export default class IdbCacheWriterDataProvider implements DataProvider {
     // First, see if there are any read requests that we can resolve now.
     this._readRequests = this._readRequests.filter(({ range, topics, resolve }) => {
       if (topics.length === 0) {
-        resolve({ rosBinaryMessages: undefined, parsedMessages: undefined, bobjects: undefined });
+        resolve({ rosBinaryMessages: [], parsedMessages: undefined, bobjects: undefined });
         return false;
       }
       const downloadedRanges: Range[] = this._getDownloadedRanges(topics);
       if (!isRangeCoveredByRanges(range, downloadedRanges)) {
         return true;
       }
-      resolve({ rosBinaryMessages: undefined, parsedMessages: undefined, bobjects: undefined });
+      resolve({ rosBinaryMessages: [], parsedMessages: undefined, bobjects: undefined });
       this._lastResolvedCallbackEnd = range.end;
       return false;
     });

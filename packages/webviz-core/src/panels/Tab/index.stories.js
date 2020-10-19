@@ -25,6 +25,7 @@ const rootReducer = createRootReducer(createBrowserHistory());
 
 const fixture = { topics: [], datatypes: {}, frame: {}, layout: "Tab!a" };
 const manyTabs = new Array(25).fill(1).map((elem, idx) => ({ title: `Tab #${idx + 1}`, layout: null }));
+const DEFAULT_TIMEOUT = 200;
 storiesOf("<Tab>", module)
   .addParameters({
     screenshot: {
@@ -40,10 +41,10 @@ storiesOf("<Tab>", module)
     <PanelSetup
       fixture={fixture}
       onMount={() => {
-        setImmediate(async () => {
+        setTimeout(async () => {
           await tick();
           document.querySelectorAll('[data-test="pick-a-panel"]')[0].click();
-        });
+        }, DEFAULT_TIMEOUT);
       }}>
       <Tab />
     </PanelSetup>
@@ -61,12 +62,12 @@ storiesOf("<Tab>", module)
           },
         }}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             await tick();
             document.querySelectorAll('[data-test="pick-a-panel"]')[0].click();
             await tick();
             document.querySelectorAll('[data-test="panel-menu-item Image"]')[0].click();
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
       </PanelSetup>
@@ -85,12 +86,12 @@ storiesOf("<Tab>", module)
           },
         }}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             await tick();
             document.querySelectorAll('[data-test="pick-a-panel"]')[0].click();
             await tick();
             document.querySelectorAll('[data-test="panel-menu-item Image"]')[0].click();
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
       </PanelSetup>
@@ -111,7 +112,7 @@ storiesOf("<Tab>", module)
         }}
         store={store}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             await tick();
             document.querySelectorAll('[data-test="pick-a-panel"]')[0].click();
             await tick();
@@ -119,7 +120,7 @@ storiesOf("<Tab>", module)
             const imageItem = document.querySelectorAll('[data-test="panel-menu-item Image"]')[0];
             const panel = document.querySelectorAll('[data-test="empty-drop-target"]')[0];
             dragAndDrop(imageItem, panel);
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
       </PanelSetup>
@@ -140,7 +141,7 @@ storiesOf("<Tab>", module)
         }}
         store={store}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             await tick();
             document.querySelectorAll('[data-test="pick-a-panel"]')[0].click();
             await tick();
@@ -148,7 +149,7 @@ storiesOf("<Tab>", module)
             const imageItem = document.querySelectorAll('[data-test="panel-menu-item Image"]')[0];
             const panel = document.querySelectorAll('[data-test="empty-drop-target"]')[0];
             dragAndDrop(imageItem, panel);
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
       </PanelSetup>
@@ -214,12 +215,12 @@ storiesOf("<Tab>", module)
         style={{ width: "100%" }}
         store={store}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             const addTabBtn = document.querySelector("[data-test=add-tab]");
             if (addTabBtn) {
               addTabBtn.click();
             }
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
       </PanelSetup>
@@ -238,12 +239,12 @@ storiesOf("<Tab>", module)
         style={{ width: "100%" }}
         store={store}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             const removeTabBtn = document.querySelector("[data-test=tab-icon]");
             if (removeTabBtn) {
               removeTabBtn.click();
             }
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
       </PanelSetup>
@@ -262,13 +263,13 @@ storiesOf("<Tab>", module)
         style={{ width: "100%" }}
         store={store}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             await tick();
             const tabs = document.querySelectorAll("[draggable=true]");
 
             // Drag and drop the first tab onto the third tab
             dragAndDrop(tabs[0], tabs[2]);
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
         <SExpectedResult>Expected result: #2, #3, #1, #4, #5</SExpectedResult>
@@ -288,14 +289,14 @@ storiesOf("<Tab>", module)
         style={{ width: "100%" }}
         store={store}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             await tick();
             const tabs = document.querySelectorAll("[draggable=true]");
             const toolbar = document.querySelectorAll('[data-test="toolbar-droppable"]')[0];
 
             // Drag and drop the first tab onto the toolbar
             dragAndDrop(tabs[0], toolbar);
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
         <SExpectedResult>Expected result: #2, #1 (selected)</SExpectedResult>
@@ -322,14 +323,14 @@ storiesOf("<Tab>", module)
         style={{ width: "100%" }}
         store={store}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             await tick();
             const tabs = document.querySelectorAll("[draggable=true]");
             const toolbar = document.querySelectorAll('[data-test="toolbar-droppable"]')[1];
 
             // Drag and drop the first tab onto the toolbar of the second tab panel
             dragAndDrop(tabs[1], toolbar);
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
         <SExpectedResult css="left: 0">Should have only #2</SExpectedResult>
@@ -351,7 +352,7 @@ storiesOf("<Tab>", module)
         style={{ width: "100%" }}
         store={store}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             await tick();
             const tabs = document.querySelectorAll("[draggable=true]");
             const toolbar = document.querySelectorAll('[data-test="toolbar-droppable"]')[0];
@@ -362,7 +363,7 @@ storiesOf("<Tab>", module)
             toolbar.dispatchEvent(new MouseEvent("dragout", { bubbles: true }));
             await tick();
             tabs[2].dispatchEvent(new MouseEvent("dragover", { bubbles: true }));
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
         <SExpectedResult css="left: 0">the first tab should be hidden (we never dropped it)</SExpectedResult>
@@ -378,7 +379,7 @@ storiesOf("<Tab>", module)
         style={{ width: "100%" }}
         store={store}
         onMount={() => {
-          setImmediate(async () => {
+          setTimeout(async () => {
             // Create a new tab on the left side
             document.querySelectorAll('[data-test~="Tab!Left"] [data-test="add-tab"]')[0].click();
 
@@ -386,7 +387,7 @@ storiesOf("<Tab>", module)
             dragAndDrop(dragHandle, () =>
               document.querySelector('[data-test~="Tab!Left"] [data-test="empty-drop-target"]')
             );
-          });
+          }, DEFAULT_TIMEOUT);
         }}>
         <PanelLayout />
       </PanelSetup>

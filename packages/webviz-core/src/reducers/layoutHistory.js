@@ -13,7 +13,6 @@ import type { ActionTypes } from "webviz-core/src/actions";
 import { panelEditingActions } from "webviz-core/src/actions/panels";
 import type { State } from "webviz-core/src/reducers";
 import { type PersistedState } from "webviz-core/src/reducers/index";
-import { setPersistedStateInLocalStorage } from "webviz-core/src/reducers/panels";
 import { type EditHistoryOptions } from "webviz-core/src/types/panels";
 import { pushState, redoChange, undoChange, type StateHistory } from "webviz-core/src/util/stateHistory";
 
@@ -111,14 +110,12 @@ export default function(state: State, action: ActionTypes, oldPersistedState?: ?
     case "UNDO_LAYOUT_CHANGE": {
       const { undoRedoState, layoutHistory } = undoLayoutChange(state.persistedState, state.layoutHistory);
       const { persistedState, url } = undoRedoState;
-      setPersistedStateInLocalStorage(persistedState);
       history.replaceState(null, document.title, url);
       return { ...state, persistedState, layoutHistory };
     }
     case "REDO_LAYOUT_CHANGE": {
       const { undoRedoState, layoutHistory } = redoLayoutChange(state.persistedState, state.layoutHistory);
       const { persistedState, url } = undoRedoState;
-      setPersistedStateInLocalStorage(persistedState);
       history.replaceState(null, document.title, url);
       return { ...state, persistedState, layoutHistory };
     }

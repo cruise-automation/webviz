@@ -51,7 +51,7 @@ describe("addMessage", () => {
         [LEVELS.ERROR]: new Map(),
         [LEVELS.STALE]: new Map(),
       },
-      diagnosticsInOrderReceived: [info],
+      diagnosticsIdsInOrderReceived: [info.id],
       sortedAutocompleteEntries: [
         {
           displayName: info.status.hardware_id,
@@ -90,7 +90,7 @@ describe("addMessage", () => {
         [LEVELS.ERROR]: new Map([[info.id, info]]),
         [LEVELS.STALE]: new Map(),
       },
-      diagnosticsInOrderReceived: [info],
+      diagnosticsIdsInOrderReceived: [info.id],
       sortedAutocompleteEntries: [
         {
           displayName: info.status.hardware_id,

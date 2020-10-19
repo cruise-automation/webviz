@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React, { type Node, forwardRef } from "react";
-import { Worldview, type CameraState, type MouseHandler } from "regl-worldview";
+import { Worldview, type CameraState, type MouseHandler, DEFAULT_CAMERA_STATE } from "regl-worldview";
 
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { LAYER_INDEX_DEFAULT_BASE } from "webviz-core/src/panels/ThreeDimensionalViz/constants";
@@ -23,6 +23,7 @@ type Props = {|
   cameraState: CameraState,
   children?: Node,
   isPlaying: boolean,
+  isDemoMode: boolean,
   markerProviders: MarkerProvider[],
   onCameraStateChange: (CameraState) => void,
   onClick: MouseHandler,
@@ -30,6 +31,7 @@ type Props = {|
   onMouseDown?: MouseHandler,
   onMouseMove?: MouseHandler,
   onMouseUp?: MouseHandler,
+  diffModeEnabled: boolean,
   ...WorldSearchTextProps,
 |};
 
@@ -47,6 +49,7 @@ function getMarkers(markerProviders: MarkerProvider[]): InteractiveMarkersByType
     linedConvexHull: [],
     lineList: [],
     lineStrip: [],
+    overlayIcon: [],
     pointcloud: [],
     points: [],
     poseMarker: [],
@@ -55,6 +58,7 @@ function getMarkers(markerProviders: MarkerProvider[]): InteractiveMarkersByType
     text: [],
     triangleList: [],
   };
+
   const collector = {};
   getGlobalHooks()
     .perPanelHooks()
@@ -83,8 +87,10 @@ function World(
     autoTextBackgroundColor,
     children,
     onCameraStateChange,
+    diffModeEnabled,
     cameraState,
     isPlaying,
+    isDemoMode,
     markerProviders,
     onDoubleClick,
     onMouseDown,
@@ -128,6 +134,7 @@ function World(
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
+      resolutionScale={isDemoMode ? 2 : 1}
       ref={ref}>
       {children}
       <WrappedWorldMarkers
@@ -136,6 +143,9 @@ function World(
           markersByType: processedMarkersByType,
           layerIndex: LAYER_INDEX_DEFAULT_BASE,
           clearCachedMarkers: false,
+          isDemoMode,
+          cameraDistance: cameraState.distance || DEFAULT_CAMERA_STATE.distance,
+          diffModeEnabled,
         }}
       />
     </Worldview>

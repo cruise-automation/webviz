@@ -33,7 +33,8 @@ import Slider from "webviz-core/src/components/Slider";
 import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
 import { type PlayerState } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import { formatTime, formatTimeRaw, subtractTimes, toSec, fromSec } from "webviz-core/src/util/time";
+import { formatTime } from "webviz-core/src/util/formatTime";
+import { subtractTimes, toSec, fromSec, formatTimeRaw } from "webviz-core/src/util/time";
 
 const StyledFullWidthBar = styled.div`
   position: absolute;

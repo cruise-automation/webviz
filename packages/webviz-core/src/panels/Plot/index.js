@@ -29,6 +29,7 @@ import PlotChart, { getDatasetsAndTooltips, type PlotDataByPath } from "webviz-c
 import PlotLegend from "webviz-core/src/panels/Plot/PlotLegend";
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
 import type { PanelConfig } from "webviz-core/src/types/panels";
+import { isBobject } from "webviz-core/src/util/binaryObjects";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
 import { fromSec, subtractTimes, toSec } from "webviz-core/src/util/time";
 
@@ -104,11 +105,22 @@ const getMessagePathItemsForBlock = memoizeWeak(
   (decodeMessagePathsForMessagesByTopic, binaryBlock, messageReadersByTopic): PlotDataByPath => {
     const parsedBlock = {};
     Object.keys(binaryBlock).forEach((topic) => {
-      parsedBlock[topic] = blockMessageCache.parseMessages(binaryBlock[topic], messageReadersByTopic);
+      const messages = binaryBlock[topic];
+      if (messages && messages.length > 0 && isBobject(messages[0].message)) {
+        // If we're already receiving bobjecs, we don't need to parse the
+        // messages in this block.
+        // TODO(useBinaryTranslation): Once the binary translation is enabled
+        // and the flag removed, there won't be a need for readers anymore.
+        parsedBlock[topic] = messages;
+      } else {
+        parsedBlock[topic] = blockMessageCache.parseMessages(messages, messageReadersByTopic);
+      }
     });
     return Object.freeze(getPlotDataByPath(decodeMessagePathsForMessagesByTopic(parsedBlock)));
   }
 );
+
+const ZERO_TIME = { sec: 0, nsec: 0 };
 
 function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks) {
   const ret = {};
@@ -127,7 +139,9 @@ function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReader
         // If we are continuing directly from the previous block index (i - 1) then add to the
         // existing range, otherwise start a new range
         const currentRange = existingItems[existingItems.length - 1];
-        currentRange.push(...pathItems);
+        for (const item of pathItems) {
+          currentRange.push(item);
+        }
       } else {
         // Start a new contiguous range. Make a copy so we can extend it.
         existingItems.push(pathItems.slice());
@@ -176,6 +190,8 @@ function Plot(props: Props) {
     }
   });
 
+  const useBinaryTranslation = useExperimentalFeature("useBinaryTranslation");
+
   const showSingleCurrentMessage = xAxisVal === "currentCustom" || xAxisVal === "index";
   const historySize = showSingleCurrentMessage ? 1 : Infinity;
 
@@ -189,6 +205,8 @@ function Plot(props: Props) {
     //  1. A fallback for preloading when blocks are not available (nodes, websocket.)
     //  2. Playback-synced plotting of index/custom data.
     preloadingFallback: !showSingleCurrentMessage,
+    // TODO(useBinaryTranslation): Use parsed messages for NCS topics until the flag is removed.
+    format: useBinaryTranslation ? "bobjects" : "parsedMessages",
   });
 
   const decodeMessagePathsForMessagesByTopic = useDecodeMessagePathsForMessagesByTopic(memoizedPaths);
@@ -199,18 +217,28 @@ function Plot(props: Props) {
   ]);
 
   const { messageReadersByTopic, blocks } = useBlocksByTopic(subscribeTopics);
-  const blockItemsByPath = showSingleCurrentMessage
-    ? {}
-    : getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks);
+  const blockItemsByPath = useMemo(
+    () =>
+      showSingleCurrentMessage
+        ? {}
+        : getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks),
+    [showSingleCurrentMessage, decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks]
+  );
   const { startTime } = useDataSourceInfo();
+
+  // If every streaming key is in the blocks, just use the blocks object for a stable identity.
+  const mergedItems = Object.keys(streamedItemsByPath).every((path) => blockItemsByPath[path] != null)
+    ? blockItemsByPath
+    : { ...streamedItemsByPath, ...blockItemsByPath };
+
   // Don't filter out disabled paths when passing into getDatasetsAndTooltips, because we still want
   // easy access to the history when turning the disabled paths back on.
-  const { datasets, tooltips, pathsWithMismatchedDataLengths } = getDatasetsAndTooltips(
-    yAxisPaths,
-    { ...streamedItemsByPath, ...blockItemsByPath },
-    startTime || { sec: 0, nsec: 0 },
-    xAxisVal,
-    xAxisPath
+  const { datasets, tooltips, pathsWithMismatchedDataLengths } = useMemo(
+    // TODO(steel): This memoization isn't quite ideal: getDatasetsAndTooltips is a bit expensive
+    // with lots of preloaded data, and when we preload a new block we re-generate the datasets for
+    // the whole timeline. We should try to use block memoization here.
+    () => getDatasetsAndTooltips(yAxisPaths, mergedItems, startTime || ZERO_TIME, xAxisVal, xAxisPath),
+    [yAxisPaths, mergedItems, startTime, xAxisVal, xAxisPath]
   );
 
   const { currentTime, endTime, seekPlayback: seek } = useMessagePipeline(

@@ -48,12 +48,13 @@ But let’s say you want to render some markers in the 3D panel. When you create
 import { Input, Messages } from "ros";
 
 type Output = {};
+type GlobalVariables = { id: number };
 
 export const inputs = [];
 export const output = "/webviz_node/";
 
 // Populate 'Input' with a parameter to properly type your inputs, e.g. 'Input<"/your_input_topic">'
-const publisher = (message: Input<>): Output => {
+const publisher = (message: Input<>, globalVars: GlobalVariables): Output => {
   return {};
 };
 
@@ -66,9 +67,13 @@ You’ll notice a few things:
 
 - The type `Output` has no properties.
 
+- The type `GlobalVariables` is declared for convenience.
+
 `Input` is a generic type, meaning that it takes a parameter in order to be used. It is left empty on purpose as you'll need to populate it with the name of your input topic, e.g. `Input<"/rosout">`.
 
 As for the `Output` type, you can either manually type out your output with the properties you care about or use one of the dynamically generated types from the `Messages` type imported above. For instance, if you want to publish an array of markers, you can return the type `Messages.visualization_msgs__MarkerArray`.
+
+The `GlobalVariables` type is used to specify the types of any global variables you'd like to access in your node. It is not required.
 
 Strictly typing your nodes will help you debug issues at compile time rather than at runtime. It's not always obvious in Webviz how message properties are affecting the visualized output, and so the more you strictly type your nodes, the less likely you will make mistakes.
 
@@ -134,6 +139,27 @@ const publisher = (message: Input<"/rosout"> | Input<"/tf">): { data: number[] }
 }
 
 export default publisher;
+```
+
+#### Using Global Variables
+
+The publisher function will receive all of the Webviz global variables as an object every time it is called. If the global variables change, the publisher function will automatically re-run with the new values:
+
+```typescript
+import { Input, Messages } from "ros";
+
+type Output = {};
+type GlobalVariables = { someGlobalId: number };
+
+export const inputs = [];
+export const output = "/webviz_node/";
+
+const publisher = (message: Input<"/foo_marker">, globalVars: GlobalVariables): Output => {
+  if (message.message.id === globalVars.someGlobalId) {
+    // The message matches the global variable $someGlobalId
+  }
+  return { data: [] };
+};
 ```
 
 ## Debugging

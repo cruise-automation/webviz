@@ -9,7 +9,7 @@ import { groupBy } from "lodash";
 import { useCallback } from "react";
 
 import { useMessageReducer } from "./useMessageReducer";
-import type { TypedMessage } from "webviz-core/src/players/types";
+import type { Message, TypedMessage, MessageFormat } from "webviz-core/src/players/types";
 import { useDeepMemo } from "webviz-core/src/util/hooks";
 
 // Exported for tests
@@ -24,17 +24,21 @@ export const concatAndTruncate = <T>(array1: $ReadOnlyArray<T>, array2: $ReadOnl
   return ret;
 };
 
+export type MessagesByTopic = $ReadOnly<{ [topic: string]: $ReadOnlyArray<Message> }>;
+
 // Convenience wrapper around `useMessageReducer`, for if you just want some
 // recent messages for a few topics.
 export function useMessagesByTopic<T: any>({
   topics,
   historySize,
   preloadingFallback,
+  format = "parsedMessages",
 }: {
   topics: $ReadOnlyArray<string>,
   historySize: number,
   preloadingFallback?: ?boolean,
-}): $ReadOnly<{ [topic: string]: $ReadOnlyArray<TypedMessage<T>> }> {
+  format?: MessageFormat,
+}): MessagesByTopic {
   const requestedTopics = useDeepMemo(topics);
 
   const addMessages: (
@@ -71,5 +75,10 @@ export function useMessagesByTopic<T: any>({
     [requestedTopics, historySize]
   );
 
-  return useMessageReducer({ topics: requestedTopics, addMessages, restore, preloadingFallback });
+  return useMessageReducer({
+    topics: requestedTopics,
+    restore,
+    preloadingFallback,
+    ...(format === "bobjects" ? { addBobjects: addMessages } : { addMessages }),
+  });
 }

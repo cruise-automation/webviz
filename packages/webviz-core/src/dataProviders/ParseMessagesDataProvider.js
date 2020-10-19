@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import { uniq } from "lodash";
-import { type Time, MessageReader, parseMessageDefinition } from "rosbag";
+import { type Time, MessageReader } from "rosbag";
 
 import { type DataProvider, type InitializationResult, type ExtensionPoint } from "./types";
 import ParsedMessageCache from "webviz-core/src/dataProviders/ParsedMessageCache";
@@ -17,8 +17,12 @@ import type {
   GetMessagesResult,
   GetMessagesTopics,
 } from "webviz-core/src/dataProviders/types";
-import type { MessageDefinitionsByTopic } from "webviz-core/src/players/types";
+import type { ParsedMessageDefinitionsByTopic } from "webviz-core/src/players/types";
+import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
+
+type Args = $ReadOnly<{| wrapMessagesToProvideBobjects?: boolean |}>;
 
 // Parses raw messages as returned by `BagDataProvider`. To make it fast to seek back and forth, we keep
 // a small cache here, which maps messages from the underlying DataProvider to parsed messages. This assumes
@@ -27,80 +31,100 @@ import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
 export default class ParseMessagesDataProvider implements DataProvider {
   // Underlying DataProvider.
   _provider: DataProvider;
-  // Passed into the constructor.
-  _messageDefinitionsByTopic: ?MessageDefinitionsByTopic;
+  // Passed into `initialize`.
+  _parsedMessageDefinitionsByTopic: ?ParsedMessageDefinitionsByTopic;
   _messageCache = new ParsedMessageCache();
 
   // Reader per topic, as generated from the underlying DataProvider's `initialize` function.
   _readersByTopic: { [topic: string]: MessageReader } = {};
   // Use this to signal that the _readersByTopic is fully initialized.
   _calledInitializeReaders = false;
+  _wrapMessagesToProvideBobjects: boolean;
+  _datatypes: RosDatatypes = {};
+  _datatypeNamesByTopic: { [topic: string]: string } = {};
 
-  constructor(_: {}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
+  constructor(
+    { wrapMessagesToProvideBobjects }: Args,
+    children: DataProviderDescriptor[],
+    getDataProvider: GetDataProvider
+  ) {
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to ParseMessagesDataProvider: ${children.length}`);
     }
     this._provider = getDataProvider(children[0]);
+    this._wrapMessagesToProvideBobjects = !!wrapMessagesToProvideBobjects;
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
     const result = await this._provider.initialize(extensionPoint);
-    const { messageDefinitionsByTopic } = result;
+    const { messageDefinitions, topics } = result;
     if (result.providesParsedMessages) {
       throw new Error("ParseMessagesDataProvider should not be used with a provider provides already-parsed messages");
     }
-    if (!messageDefinitionsByTopic) {
-      throw new Error(
-        "ParseMessagesDataProvider can only be used with a provider that produces `messageDefinitionsByTopic`"
-      );
+    if (messageDefinitions.type !== "parsed") {
+      throw new Error("ParseMessagesDataProvider requires parsed message definitions");
     }
-    this._messageDefinitionsByTopic = messageDefinitionsByTopic;
+    this._parsedMessageDefinitionsByTopic = messageDefinitions.parsedMessageDefinitionsByTopic;
+    this._datatypes = messageDefinitions.datatypes;
+    topics.forEach(({ name, datatype }) => {
+      this._datatypeNamesByTopic[name] = datatype;
+    });
     // Initialize the readers asynchronously - we can load data without having the readers ready to parse it.
     return { ...result, providesParsedMessages: true };
   }
 
-  async _initializeReaders() {
-    this._calledInitializeReaders = true;
-    if (!this._messageDefinitionsByTopic) {
-      return;
+  // Make sure that we have a reader for each requested topic, but only create them on-demand.
+  _getReadersByTopic(topics: string[]): { [string]: MessageReader } {
+    const parsedMessageDefinitionsByTopic = this._parsedMessageDefinitionsByTopic;
+    if (!parsedMessageDefinitionsByTopic) {
+      throw new Error("ParseMessagesDataProvider: getMessages called before initialize");
     }
-
-    this._readersByTopic = {};
-    for (const topic of Object.keys(this._messageDefinitionsByTopic)) {
-      const definition = this._messageDefinitionsByTopic[topic];
-      const parsedDefinition = typeof definition === "string" ? parseMessageDefinition(definition) : definition;
-      this._readersByTopic[topic] = new MessageReader(parsedDefinition, {
-        freeze: FREEZE_MESSAGES,
-      });
-    }
+    topics.forEach((topic) => {
+      if (!this._readersByTopic[topic]) {
+        const parsedDefinition = parsedMessageDefinitionsByTopic[topic];
+        this._readersByTopic[topic] = new MessageReader(parsedDefinition, {
+          freeze: FREEZE_MESSAGES,
+        });
+      }
+    });
+    return this._readersByTopic;
   }
 
   async getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> {
     const requestedParsedTopics = new Set(topics.parsedMessages);
     const requestedBinaryTopics = new Set(topics.bobjects);
-    // TODO(steel/hernan): Add bobject support.
-    // For now we always request ROS binary messages and return no bobjects.
+    const readerTopics = [
+      ...(topics.parsedMessages || []),
+      ...(this._wrapMessagesToProvideBobjects ? topics.bobjects || [] : []),
+    ];
     const childTopics = {
       bobjects: uniq([...requestedParsedTopics, ...requestedBinaryTopics]),
     };
     // Kick off the request to the data provder to get the messages.
     const getMessagesPromise = this._provider.getMessages(start, end, childTopics);
-    // Make sure that all messages are here and all readers are initialized before doing any parsing.
-    if (!this._calledInitializeReaders) {
-      const readersInitializedPromise = this._initializeReaders();
-      await Promise.all([getMessagesPromise, readersInitializedPromise]);
-    }
+    const readersByTopic = this._getReadersByTopic(readerTopics);
     const { bobjects } = await getMessagesPromise;
     if (bobjects == null) {
       throw new Error("Child of ParseMessagesProvider must provide binary messages");
     }
-    const messagesToParse = bobjects.filter(({ topic }) => requestedParsedTopics.has(topic));
+    // When the binary translation flag is off, `bobjects` actually contains ROS binary messages. We
+    // need to parse all of them and wrap some of them as bobjects to return to the caller.
+    const messagesToParse = this._wrapMessagesToProvideBobjects
+      ? bobjects
+      : bobjects.filter(({ topic }) => requestedParsedTopics.has(topic));
+    const parsedMessages = this._messageCache.parseMessages(messagesToParse, readersByTopic);
 
-    // We need the RewriteMessagesDataProvider to return real bobjects. For the moment, returning
-    // the ROS binary messages helps make tests slightly more useful.
     return {
-      parsedMessages: this._messageCache.parseMessages(messagesToParse, this._readersByTopic),
-      bobjects: bobjects.filter(({ topic }) => requestedBinaryTopics.has(topic)),
+      parsedMessages: parsedMessages.filter(({ topic }) => requestedParsedTopics.has(topic)),
+      bobjects: this._wrapMessagesToProvideBobjects
+        ? parsedMessages
+            .filter(({ topic }) => requestedBinaryTopics.has(topic))
+            .map(({ topic, receiveTime, message }) => ({
+              topic,
+              receiveTime,
+              message: wrapJsObject(this._datatypes, this._datatypeNamesByTopic[topic], message),
+            }))
+        : bobjects.filter(({ topic }) => requestedBinaryTopics.has(topic)),
       rosBinaryMessages: undefined,
     };
   }

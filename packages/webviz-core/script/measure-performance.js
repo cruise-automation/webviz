@@ -72,8 +72,6 @@ if (!["playback", "load"].includes(program.mode)) {
   throw new Error("You must include a mode '--mode'");
 }
 
-console.log("buildUrl -> program.mode", program.mode);
-
 function buildUrl() {
   let url = `${program.url}?measure-${program.mode}-performance-mode`;
 
@@ -111,13 +109,13 @@ async function doPlaybackPerformanceMeasurements() {
   return runsOutput;
 }
 
-async function measureLoadPerformanceRun({ url, browser, layoutOptions, pageOptions }) {
+async function measureLoadPerformanceRun({ url, browser, layoutOptions, pageOptions, onBeforeUnloadPage }) {
   const runMetrics = {};
   const testTimeout = 180000;
   const runStartEpoch = Date.now();
 
   return runInPage(
-    async () => {
+    async (page) => {
       let runtimeMs = 0;
 
       // Loop until we see the event or timeout
@@ -134,8 +132,10 @@ async function measureLoadPerformanceRun({ url, browser, layoutOptions, pageOpti
         }
       }
       process.stdout.write("\n");
-      await delay(1500);
 
+      if (onBeforeUnloadPage) {
+        await onBeforeUnloadPage(page);
+      }
       return { stats: runMetrics, logs: [], errors: [] };
     },
     {
@@ -151,45 +151,77 @@ async function measureLoadPerformanceRun({ url, browser, layoutOptions, pageOpti
   );
 }
 
+async function recordNetworkActivity(page) {
+  console.log("Recording all network traffic to replay for subsequent runs...");
+  await page.evaluate(() => window.polly.stop());
+  await delay(1000);
+}
+
 async function doLoadPerformanceMeasurements() {
   const url = buildUrl();
   const runsOutput = [];
   const numberOfRuns = program.runs || 1;
 
-  await withBrowser(
-    async (browser) => {
-      for (let i = 0; i < numberOfRuns + 1; i++) {
-        console.log(`=== Starting run #${i + 1}`);
-        const runStats = await measureLoadPerformanceRun({
-          url,
-          browser,
-          pageOptions: {
-            onLog: _.noop,
-            onError: _.noop,
-            captureLogs: false,
-          },
-          layoutOptions: {
-            bagPath: program.bag,
-            panelLayout: program.layout ? JSON.parse(fs.readFileSync(program.layout)) : {},
-            experimentalFeatureSettings: program.experimentalFeatureSettings
-              ? program.experimentalFeatureSettings
-              : undefined,
-          },
-        });
-        runsOutput.push(runStats);
-      }
-    },
-    {
-      dimensions: { width: 1920, height: 1080 },
-      loadBrowserTimeout: 180000,
-    }
+  console.log(`=== Starting up Polly server to record network activity...`);
+  const pollyProccess = child_process.spawn(
+    "./node_modules/.bin/polly",
+    "listen --port 3010 --recordings-dir /tmp/__pollyRecordings".split(" "),
+    // Redirect all output and errors to the current process so we can see them
+    { stdio: [process.stdout, process.stderr, "ipc"] }
   );
+  pollyProccess.on("exit", (code, signal) => {
+    console.log("polly process exited with " + `code ${code} and signal ${signal}`);
+  });
+  await delay(1000);
+
+  try {
+    await withBrowser(
+      async (browser) => {
+        for (let i = 0; i < numberOfRuns + 1; i++) {
+          const isWarmupRun = i === 0;
+          if (isWarmupRun) {
+            console.log(`=== Preparing for first run...`);
+          } else {
+            console.log(`=== Starting run #${i}`);
+          }
+
+          const runStats = await measureLoadPerformanceRun({
+            url,
+            browser,
+            pageOptions: {
+              onLog: _.noop,
+              onError: _.noop,
+              captureLogs: false,
+            },
+            layoutOptions: {
+              bagPath: program.bag,
+              panelLayout: program.layout ? JSON.parse(fs.readFileSync(program.layout)) : {},
+              experimentalFeatureSettings: program.experimentalFeatureSettings
+                ? program.experimentalFeatureSettings
+                : undefined,
+            },
+            onBeforeUnloadPage: isWarmupRun ? recordNetworkActivity : null,
+          });
+          runsOutput.push(runStats);
+        }
+      },
+      {
+        dimensions: { width: 1920, height: 1080 },
+        loadBrowserTimeout: 180000,
+      }
+    );
+  } catch (e) {
+    throw e;
+  } finally {
+    console.log(`=== Polly server terminated`);
+    pollyProccess.kill("SIGINT");
+  }
 
   // Throw out the first result to account for webpack bundle caching
   return runsOutput.slice(1);
 }
 
-function processOutput(runsOutput) {
+function processOutput(mode, runsOutput) {
   const stats = runsOutput.map(({ stats: eachStats }) => eachStats);
 
   if (runsOutput.length > 1) {
@@ -225,6 +257,7 @@ function processOutput(runsOutput) {
 
   console.log(`Writing stats to ${statsDir}/${filename}.json`);
   const dataToWrite = {
+    mode,
     testName: program.testName,
     arguments: program.opts(),
     commit,
@@ -243,7 +276,7 @@ async function main() {
     runsOutput = await doLoadPerformanceMeasurements();
   }
 
-  processOutput(runsOutput);
+  processOutput(program.mode, runsOutput);
   process.exit(0);
 }
 

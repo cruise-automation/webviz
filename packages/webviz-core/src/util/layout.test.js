@@ -1,12 +1,13 @@
 // @flow
 //
-//  Copyright (c) 2019-present, Cruise LLC
+//  Copyright (c) 2020-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import LZString from "lz-string";
+import CBOR from "cbor-js";
 import { updateTree } from "react-mosaic-component";
+import zlib from "zlib";
 
 import {
   getPanelTypeFromId,
@@ -24,6 +25,7 @@ import {
   getUpdatedURLWithPatch,
   getUpdatedURLWithNewVersion,
   stringifyParams,
+  dictForPatchCompression,
 } from "./layout";
 
 describe("layout", () => {
@@ -514,37 +516,34 @@ describe("layout", () => {
   });
 
   describe("stringifyParams", () => {
-    const layoutParams = "?layout=foo%401500000000&randomKey=randomValue";
-    const layoutParamsDecoded = "?layout=foo@1500000000&randomKey=randomValue";
-    expect(stringifyParams(new URLSearchParams(layoutParams))).toMatch(layoutParamsDecoded);
-    expect(stringifyParams(new URLSearchParams(layoutParamsDecoded))).toMatch(layoutParamsDecoded);
+    it("returns stringified url query", () => {
+      const layoutParams = "?layout=foo%401500000000&randomKey=randomValue";
+      expect(stringifyParams(new URLSearchParams(layoutParams))).toMatch(layoutParams);
 
-    const layoutUrlParams = "?layout-url=https%3A%2F%2Ffoo%40bar.com&randomKey=randomValue";
-    const layoutUrlParamsDecoded = "?layout-url=https://foo@bar.com&randomKey=randomValue";
-    expect(stringifyParams(new URLSearchParams(layoutUrlParams))).toMatch(layoutUrlParamsDecoded);
-    expect(stringifyParams(new URLSearchParams(layoutUrlParamsDecoded))).toMatch(layoutUrlParamsDecoded);
-
-    const segmentParams = "?segment=5G21A6P02L4100136%3A1582075103%3A1582075123";
-    const segmentParamsDecoded = "?segment=5G21A6P02L4100136:1582075103:1582075123";
-    expect(stringifyParams(new URLSearchParams(segmentParams))).toMatch(segmentParamsDecoded);
-    expect(stringifyParams(new URLSearchParams(segmentParamsDecoded))).toMatch(segmentParamsDecoded);
+      const layoutUrlParams = "?layout-url=https%3A%2F%2Ffoo%40bar.com&randomKey=randomValue";
+      const layoutUrlParamsDecoded = "?layout-url=https://foo@bar.com&randomKey=randomValue";
+      expect(stringifyParams(new URLSearchParams(layoutUrlParams))).toMatch(layoutUrlParamsDecoded);
+      expect(stringifyParams(new URLSearchParams(layoutUrlParamsDecoded))).toMatch(layoutUrlParamsDecoded);
+    });
   });
 
   describe("getUpdatedURLWithPatch", () => {
     it("returns a new URL with the patch attached", () => {
-      const compressedPatch = LZString.compressToEncodedURIComponent("somePatch");
-      expect(getUpdatedURLWithPatch("?layout=foo&someKey=someVal", "somePatch")).toMatch(
-        `?layout=foo&someKey=someVal&patch=${compressedPatch}`
+      const stringifiedPatch = JSON.stringify({ somePatch: "somePatch" });
+      const diffBuffer = Buffer.from(CBOR.encode(JSON.parse(stringifiedPatch)));
+      const dictionaryBuffer = Buffer.from(CBOR.encode(dictForPatchCompression));
+      const compressedPatch = zlib.deflateSync(diffBuffer, { dictionary: dictionaryBuffer }).toString("base64");
+      expect(getUpdatedURLWithPatch("?layout=foo&someKey=someVal", stringifiedPatch)).toMatch(
+        `?layout=foo&someKey=someVal&patch=${encodeURIComponent(compressedPatch)}`
       );
     });
   });
 
   describe("getUpdatedURLWithNewVersion", () => {
     it("returns a new URL with the version attached", () => {
-      const timestampAndPatchHash =
-        "1596745459_9c4a1b372d257004f40918022d87d3ae0fa3bf871116516ec0cbc010bd67ce83&patch=N4IgNghgng9grgFxALgNogMwBEAEAFCAOwFMwBCAcwzgEYAzADxABpQATASwCdiBjBDjEIoQXGAHcWIOtwDOSZCAAq4mFg4BbYoVmDCEMHjAwEZDAAYAblzYYMU2XyFsR2fEVKVq9JgF8Aur5AA";
+      const timestampAndPatchHash = "1596745459_9c4a1b372d257004f40918022d87d3ae0fa3bf871116516ec0cbc010bd67ce8";
       expect(getUpdatedURLWithNewVersion("?layout=foo&patch=somePatch", "bar", timestampAndPatchHash)).toMatch(
-        `?layout=bar@${timestampAndPatchHash}`
+        `?layout=bar%40${timestampAndPatchHash}`
       );
     });
   });

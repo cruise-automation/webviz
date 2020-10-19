@@ -12,6 +12,7 @@ import type { Message, SubscribePayload, Topic, BobjectMessage } from "webviz-co
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { objectValues } from "webviz-core/src/util";
 import { deepParse, isBobject, wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import { isComplex } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
@@ -66,11 +67,14 @@ function getDependentNodeDefinitions(
 
 function validateDatatypes({ output, datatypes }: NodeDefinition<*>) {
   for (const datatype of objectValues(datatypes)) {
-    for (const { type, isComplex } of datatype.fields) {
-      if (isComplex && !datatypes[type]) {
+    for (const { type } of datatype.fields) {
+      if (isComplex(type) && !datatypes[type]) {
         throw new Error(`The datatype "${type}" is not defined for node "${output.name}"`);
       }
     }
+  }
+  if (datatypes[output.datatype] == null) {
+    throw new Error(`The datatype "${output.datatype}" is not defined for node "${output.name}"`);
   }
 }
 

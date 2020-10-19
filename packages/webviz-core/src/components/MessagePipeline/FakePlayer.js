@@ -53,4 +53,5 @@ export default class FakePlayer implements Player {
   startPlayback() {}
   seekPlayback() {}
   requestBackfill() {}
+  setGlobalVariables() {}
 }

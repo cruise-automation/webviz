@@ -9,8 +9,9 @@
 import { TimeUtil } from "rosbag";
 
 import OrderedStampPlayer, { BUFFER_DURATION_SECS } from "./OrderedStampPlayer";
+import signal from "webviz-core/shared/signal";
 import FakePlayer from "webviz-core/src/components/MessagePipeline/FakePlayer";
-import { PlayerCapabilities, type PlayerState } from "webviz-core/src/players/types";
+import { PlayerCapabilities, type PlayerState, type PlayerStateActiveData } from "webviz-core/src/players/types";
 import UserNodePlayer from "webviz-core/src/players/UserNodePlayer";
 import { deepParse, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
@@ -41,7 +42,7 @@ function makeBobject(headerStamp: ?number, receiveTime: number) {
   };
 }
 
-function getState() {
+function getState(): PlayerStateActiveData {
   return {
     messages: [],
     bobjects: [],
@@ -54,8 +55,9 @@ function getState() {
     lastSeekTime: 0,
     topics: [],
     datatypes: { ...basicDatatypes },
-    messageDefinitionsByTopic: {},
+    parsedMessageDefinitionsByTopic: {},
     playerWarnings: {},
+    totalBytesReceived: 1234,
   };
 }
 
@@ -297,5 +299,56 @@ describe("OrderedStampPlayer", () => {
       sec: BUFFER_DURATION_SECS,
       nsec: 0,
     });
+  });
+  it("backfills messages when global variables change", async () => {
+    const currentTime = fromSec(10);
+    const done = signal();
+    const done2 = signal();
+    const upstreamMessages = [makeMessage(8.9, 9.5)];
+    class ModifiedFakePlayer extends FakePlayer {
+      seekPlayback() {
+        this.emit({ ...getState(), currentTime, messages: upstreamMessages });
+      }
+    }
+    // Need to put a UserNodePlayer in between to satisfy flow.
+    const fakePlayer = new ModifiedFakePlayer();
+    fakePlayer.setCapabilities([PlayerCapabilities.setSpeed]);
+    const player = new OrderedStampPlayer(
+      new UserNodePlayer(fakePlayer, {
+        setUserNodeDiagnostics: jest.fn(),
+        addUserNodeLogs: jest.fn(),
+        setUserNodeRosLib: jest.fn(),
+      }),
+      "headerStamp"
+    );
+    jest.spyOn(fakePlayer, "seekPlayback");
+
+    let emitted;
+    let state: PlayerState;
+    player.setListener(async (playerState) => {
+      state = playerState;
+      if (!emitted) {
+        done.resolve();
+        emitted = true;
+      } else {
+        done2.resolve();
+      }
+    });
+
+    player.seekPlayback(currentTime);
+    await done;
+
+    expect(state?.activeData?.messages).toEqual(upstreamMessages);
+    const oldActiveData = state?.activeData;
+
+    // The backfill request should seek the currentTime using BUFFER_DURATION_SECS as a backfillDuration
+    player.setGlobalVariables({ futureTime: 1 });
+    expect(fakePlayer.seekPlayback).toHaveBeenCalledWith(currentTime, {
+      sec: BUFFER_DURATION_SECS,
+      nsec: 0,
+    });
+    await done2;
+    expect(state?.activeData === oldActiveData).toBeFalsy();
+    expect(state?.activeData?.messages).toEqual(oldActiveData?.messages);
   });
 });

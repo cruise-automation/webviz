@@ -5,6 +5,25 @@
   z-index: 1;
   background-color: $panel-background;
   position: relative;
+
+  &:after {
+    content: "";
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    opacity: 0;
+    border: 1px solid $accent;
+    position: absolute;
+    pointer-events: none;
+    transition: opacity 0.125s ease-out;
+    z-index: 100000; // highest level within panel
+  }
+
+  &.selected:after {
+    opacity: 1;
+    transition: opacity 0.05s ease-out;
+  }
 }
 
 .rootFullScreen {

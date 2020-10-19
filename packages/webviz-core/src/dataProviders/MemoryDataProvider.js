@@ -16,7 +16,12 @@ import type {
   InitializationResult,
   DataProvider,
 } from "webviz-core/src/dataProviders/types";
-import type { Message, Topic, MessageDefinitionsByTopic } from "webviz-core/src/players/types";
+import type {
+  Message,
+  Topic,
+  MessageDefinitionsByTopic,
+  ParsedMessageDefinitionsByTopic,
+} from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 
 function filterMessages(start: Time, end: Time, topics: $ReadOnlyArray<string>, messages: ?$ReadOnlyArray<Message>) {
@@ -45,6 +50,7 @@ export default class MemoryDataProvider implements DataProvider {
   topics: ?(Topic[]);
   datatypes: ?RosDatatypes;
   messageDefinitionsByTopic: MessageDefinitionsByTopic;
+  parsedMessageDefinitionsByTopic: ?ParsedMessageDefinitionsByTopic;
   extensionPoint: ExtensionPoint;
   initiallyLoaded: boolean;
   providesParsedMessages: boolean;
@@ -55,12 +61,14 @@ export default class MemoryDataProvider implements DataProvider {
     datatypes,
     initiallyLoaded,
     messageDefinitionsByTopic,
+    parsedMessageDefinitionsByTopic,
     providesParsedMessages,
   }: {
     messages: GetMessagesResult,
     topics?: Topic[],
     datatypes?: RosDatatypes,
     messageDefinitionsByTopic?: ?MessageDefinitionsByTopic,
+    parsedMessageDefinitionsByTopic?: ?ParsedMessageDefinitionsByTopic,
     initiallyLoaded?: boolean,
     providesParsedMessages?: boolean,
   }) {
@@ -68,6 +76,7 @@ export default class MemoryDataProvider implements DataProvider {
     this.topics = topics;
     this.datatypes = datatypes;
     this.messageDefinitionsByTopic = messageDefinitionsByTopic || {};
+    this.parsedMessageDefinitionsByTopic = parsedMessageDefinitionsByTopic;
     this.initiallyLoaded = !!initiallyLoaded;
     this.providesParsedMessages = providesParsedMessages ?? messages.parsedMessages != null;
   }
@@ -86,12 +95,26 @@ export default class MemoryDataProvider implements DataProvider {
       (m1, m2) => TimeUtil.compare(m1.receiveTime, m2.receiveTime)
     );
 
+    let messageDefinitions;
+    if (this.datatypes || this.parsedMessageDefinitionsByTopic) {
+      messageDefinitions = {
+        type: "parsed",
+        datatypes: this.datatypes || {},
+        parsedMessageDefinitionsByTopic: this.parsedMessageDefinitionsByTopic || {},
+        messageDefinitionsByTopic: this.messageDefinitionsByTopic,
+      };
+    } else {
+      messageDefinitions = {
+        type: "raw",
+        messageDefinitionsByTopic: this.messageDefinitionsByTopic,
+      };
+    }
+
     return {
       start: sortedMessages[0].receiveTime,
       end: last(sortedMessages).receiveTime,
       topics: this.topics || [],
-      datatypes: this.datatypes || {},
-      messageDefinitionsByTopic: this.messageDefinitionsByTopic,
+      messageDefinitions,
       providesParsedMessages: this.providesParsedMessages,
     };
   }

@@ -13,8 +13,10 @@ import "react-mosaic-component/react-mosaic-component.css";
 import { bindActionCreators } from "redux";
 
 import ErrorBoundary from "./ErrorBoundary";
+import "./PanelLayout.scss";
 import { setMosaicId } from "webviz-core/src/actions/mosaic";
 import { changePanelLayout, savePanelConfigs, type SAVE_PANEL_CONFIGS } from "webviz-core/src/actions/panels";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
@@ -25,7 +27,7 @@ import { EmptyDropTarget } from "webviz-core/src/panels/Tab/EmptyDropTarget";
 import type { State, Dispatcher } from "webviz-core/src/reducers";
 import type { MosaicNode, SaveConfigsPayload } from "webviz-core/src/types/panels";
 import { getPanelIdForType, getPanelTypeFromId } from "webviz-core/src/util/layout";
-import "./PanelLayout.scss";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type Props = {
   layout: ?MosaicNode,
@@ -52,6 +54,9 @@ class MosaicRoot extends MosaicWithoutDragDropContext {
     // set the mosaic id in redux so elements outside the container
     // can use the id to register their drag intents with mosaic drop targets
     this.props.setMosaicId(this.state.mosaicId);
+    if (window.webviz_hideLoadingLogo) {
+      window.webviz_hideLoadingLogo();
+    }
   }
 }
 
@@ -91,36 +96,59 @@ export function UnconnectedPanelLayout(props: Props) {
         return;
       }
       const type = getPanelTypeFromId(id);
-      const PanelComponent = PanelList.getComponentForType(type);
-      // if we haven't found a panel of the given type, render the panel selector
-      if (!PanelComponent) {
-        return (
-          <MosaicWindow path={path} createNode={createTile} renderPreview={() => null}>
-            <Flex col center>
-              <PanelToolbar floating />
-              Unknown panel type: {type}.
-            </Flex>
-          </MosaicWindow>
-        );
-      }
-
       const MosaicWindowComponent = type === "Tab" ? MosaicDumbWindow : MosaicWindow;
 
       return (
         <MosaicWindowComponent key={path} path={path} createNode={createTile} renderPreview={() => null} tabId={tabId}>
-          <PanelComponent childId={id} tabId={tabId} />
+          {(() => {
+            if (!hooksImported) {
+              return null;
+            }
+            // If we haven't found a panel of the given type, render the panel selector
+            const PanelComponent = PanelList.getComponentForType(type);
+            if (!PanelComponent) {
+              return (
+                <MosaicWindow path={path} createNode={createTile} renderPreview={() => null}>
+                  <Flex col center>
+                    <PanelToolbar floating />
+                    Unknown panel type: {type}.
+                  </Flex>
+                </MosaicWindow>
+              );
+            }
+            return <PanelComponent childId={id} tabId={tabId} />;
+          })()}
+          <div
+            style={{
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              position: "absolute",
+              background: colors.DARK2,
+              opacity: hooksImported ? 0 : 1,
+              pointerEvents: "none",
+              zIndex: 1,
+              transition: `all ${0.35}s ease-out ${Math.random() + 0.25}s`,
+            }}>
+            <Flex center style={{ width: "100%", height: "100%" }}>
+              <Icon large>
+                <SpinningLoadingIcon />
+              </Icon>
+            </Flex>
+          </div>
         </MosaicWindowComponent>
       );
     },
-    [createTile, tabId]
+    [createTile, hooksImported, tabId]
   );
-
+  const isDemoMode = useExperimentalFeature("demoMode");
   const bodyToRender = useMemo(
     () =>
       layout ? (
         <MosaicRoot
           renderTile={renderTile}
-          className="none"
+          className={isDemoMode ? "borderless" : "none"}
           resize={{ minimumPaneSizePercentage: 2 }}
           value={layout}
           onChange={onChange}
@@ -131,22 +159,10 @@ export function UnconnectedPanelLayout(props: Props) {
       ) : (
         <EmptyDropTarget tabId={tabId} mosaicId={mosaicId} />
       ),
-    [layout, mosaicId, onChange, props.setMosaicId, removeRootDropTarget, renderTile, tabId]
+    [isDemoMode, layout, mosaicId, onChange, props.setMosaicId, removeRootDropTarget, renderTile, tabId]
   );
 
-  return (
-    <ErrorBoundary ref={props.forwardedRef}>
-      {hooksImported ? (
-        bodyToRender
-      ) : (
-        <Flex center style={{ width: "100%", height: "100%" }}>
-          <Icon large>
-            <SpinningLoadingIcon />
-          </Icon>
-        </Flex>
-      )}
-    </ErrorBoundary>
-  );
+  return <ErrorBoundary ref={props.forwardedRef}>{bodyToRender}</ErrorBoundary>;
 }
 
 const ConnectedPanelLayout = ({ importHooks = true }: { importHooks?: boolean }, ref) => {

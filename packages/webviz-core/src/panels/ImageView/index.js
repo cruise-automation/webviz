@@ -28,6 +28,7 @@ import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import dropDownStyles from "webviz-core/src/components/Dropdown/index.module.scss";
 import EmptyState from "webviz-core/src/components/EmptyState";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import { Item, SubMenu } from "webviz-core/src/components/Menu";
@@ -242,6 +243,7 @@ function ImageView(props: Props) {
     customMarkerTopicOptions = [],
   } = config;
   const { topics } = PanelAPI.useDataSourceInfo();
+  const isDemoMode = useExperimentalFeature("demoMode");
   const cameraTopicFullObject = useMemo(() => getTopicsByTopicName(topics)[cameraTopic], [cameraTopic, topics]);
 
   const imageTopicsByNamespace = imageTopicsByNamespaceSelector(topics);
@@ -553,7 +555,7 @@ function ImageView(props: Props) {
           onStartRenderImage={onStartRenderImage}
         />
       )}
-      {!showEmptyState && renderBottomBar()}
+      {!showEmptyState && !isDemoMode && renderBottomBar()}
     </Flex>
   );
 }

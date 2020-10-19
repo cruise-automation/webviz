@@ -174,7 +174,16 @@ export default class BinaryMessageWriter {
     // Copy result data int new arrays so we can access them
     // after the writer has been deleted (a few lines below).
     const buffer = new Uint8Array(writer.getBuffer()).buffer;
-    const bigString = new TextDecoder("utf-8").decode(writer.getBigString());
+    // Notes:
+    //  - TextDecoder overhead makes it more efficient to decode all of the strings in one go, and
+    //    split them later (instead of parsing them from binary on access).
+    //  - Decoding straight from the WASM heap is a nice performance win over copying the data out
+    //    first.
+    //  - It's very important that the indices into bigString inside the buffer correspond with
+    //    characters returned by bigString.split(). Decoding as utf-8 is possible, and we could
+    //    store _codepoint_ indices in the buffer, but we would need our codepoint counting to agree
+    //    with the browser's for invalid data, which is difficult.
+    const bigString = new TextDecoder("ascii").decode(writer.getBigString());
 
     writer.delete();
 

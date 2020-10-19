@@ -15,6 +15,7 @@ import {
   addTimeTypes,
   friendlyTypeName,
   fieldSize,
+  isComplex,
   typeSize,
 } from "webviz-core/src/util/binaryObjects/messageDefinitionUtils";
 
@@ -57,7 +58,7 @@ function printPrimitiveSingularExpression(type: string, pointer: PointerExpressi
       const length = `$view.getInt32(${pointer.toString()}, true)`;
       const startIndex = `$view.getInt32(${pointer.add(4).toString()}, true)`;
       const stringExpression = `$bigString.substr(${startIndex}, ${length})`;
-      return type === "string" ? stringExpression : `JSON.parse(${stringExpression})`;
+      return type === "string" ? stringExpression : `$context.parseJson(${stringExpression})`;
     }
     case "bool":
       return `($view.getUint8(${pointer.toString()}) !== 0)`;
@@ -127,7 +128,7 @@ export const printFieldDefinition = (
 // unfortunately results in some duplicated code.
 const printDeepParseField = (
   typesByName: RosDatatypes,
-  { isArray, name, isComplex, type }: RosMsgField,
+  { isArray, name, type }: RosMsgField,
   pointer: PointerExpression
 ): string => {
   if (isArray) {
@@ -143,7 +144,7 @@ const printDeepParseField = (
       const elementSize = typeSize(typesByName, type);
       ret.push(`const ${name}$arr = new Array(${name}$length);`);
       ret.push(`for (let $ptr = ${name}$from, $i = 0; $i < ${name}$length; $ptr += ${elementSize}) {`);
-      if (isComplex || type === "time" || type === "duration") {
+      if (isComplex(type) || type === "time" || type === "duration") {
         ret.push(`  ${name}$arr[$i++] = new deepParse$${friendlyTypeName(type)}($ptr);`);
       } else {
         const loopPointer = new PointerExpression("$ptr");
@@ -154,7 +155,7 @@ const printDeepParseField = (
     }
     return ret.join("\n");
   }
-  if (isComplex || type === "time" || type === "duration") {
+  if (isComplex(type) || type === "time" || type === "duration") {
     return `this.${name} = new deepParse$${friendlyTypeName(type)}(${pointer.toString()});`;
   }
   return `this.${name} = ${printPrimitiveSingularExpression(type, pointer)};`;
@@ -234,7 +235,7 @@ const getTypesUsed = (typesByName: RosDatatypes, typeName: string): TypesUsed =>
           // We used typed arrays for int8 and uint8.
           arrayTypes.add(field.type);
         }
-        if (field.isComplex) {
+        if (isComplex(field.type)) {
           if (!classes.has(field.type)) {
             classes.add(field.type);
             nextFrontier.push(field.type);

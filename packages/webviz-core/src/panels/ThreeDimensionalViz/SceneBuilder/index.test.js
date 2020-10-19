@@ -5,7 +5,7 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
+import SceneBuilder, { filterOutSupersededMessages } from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 
 describe("SceneBuilder", () => {
   it("on setFrame, modified topics rendered", () => {
@@ -107,5 +107,66 @@ describe("SceneBuilder", () => {
     builder.render();
 
     expect(builder.topicsToRender.size).toBe(0);
+  });
+});
+
+describe("filterOutSupersededMessages", () => {
+  it("returns the input unchanged if there are no DELETE_ALL markers", () => {
+    const messages = [
+      { message: { markers: [{ action: 1 }, { action: 2 }, { action: 2 }] } },
+      { message: { markers: [{ action: 2 }, { action: 2 }, { action: 1 }] } },
+      { message: { markers: [{ action: 2 }, { action: 1 }, { action: 3 }] } },
+    ];
+    expect(filterOutSupersededMessages(messages, "visualization_msgs/MarkerArray")).toEqual(messages);
+  });
+
+  it("returns the input unchanged if DELETE_ALL markers are not in the first position", () => {
+    // No sense in checking every index, they always seem to be in the first position.
+    const messages = [
+      { message: { markers: [{ action: 1 }, { action: 2 }, { action: 2 }] } },
+      { message: { markers: [{ action: 2 }, { action: 2 }, { action: 1 }] } },
+      { message: { markers: [{ action: 2 }, { action: 1 }, { action: 3 }] } },
+    ];
+    expect(filterOutSupersededMessages(messages, "visualization_msgs/MarkerArray")).toEqual(messages);
+  });
+
+  it("returns the messages after a matching DELETE_ALL array", () => {
+    const messages = [
+      { message: { markers: [{ action: 1 }, { action: 2 }, { action: 2 }] } },
+      { message: { markers: [{ action: 1 }, { action: 2 }, { action: 2 }] } },
+      { message: { markers: [{ action: 3 }, { action: 2 }, { action: 1 }] } },
+      { message: { markers: [{ action: 2 }, { action: 1 }, { action: 3 }] } },
+    ];
+    expect(filterOutSupersededMessages(messages, "visualization_msgs/MarkerArray")).toEqual([
+      { message: { markers: [{ action: 3 }, { action: 2 }, { action: 1 }] } },
+      { message: { markers: [{ action: 2 }, { action: 1 }, { action: 3 }] } },
+    ]);
+  });
+
+  it("uses the last matching DELETE_ALL array", () => {
+    const messages = [
+      { message: { markers: [{ action: 1 }, { action: 2 }, { action: 2 }] } },
+      { message: { markers: [{ action: 1 }, { action: 2 }, { action: 2 }] } },
+      { message: { markers: [{ action: 3 }, { action: 2 }, { action: 1 }] } },
+      { message: { markers: [{ action: 1 }, { action: 2 }, { action: 2 }] } },
+      { message: { markers: [{ action: 3 }, { action: 2 }, { action: 1 }] } },
+      { message: { markers: [{ action: 2 }, { action: 1 }, { action: 3 }] } },
+    ];
+    expect(filterOutSupersededMessages(messages, "visualization_msgs/MarkerArray")).toEqual([
+      { message: { markers: [{ action: 3 }, { action: 2 }, { action: 1 }] } },
+      { message: { markers: [{ action: 2 }, { action: 1 }, { action: 3 }] } },
+    ]);
+  });
+
+  it("works with messages with empty marker arrays", () => {
+    const messages = [
+      { message: { markers: [{ action: 1 }, { action: 2 }, { action: 2 }] } },
+      { message: { markers: [{ action: 3 }] } },
+      { message: { markers: [] } },
+    ];
+    expect(filterOutSupersededMessages(messages, "visualization_msgs/MarkerArray")).toEqual([
+      { message: { markers: [{ action: 3 }] } },
+      { message: { markers: [] } },
+    ]);
   });
 });

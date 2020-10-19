@@ -15,7 +15,7 @@ import layoutHistory, { type LayoutHistory, initialLayoutHistoryState } from "we
 import mosaic from "webviz-core/src/reducers/mosaic";
 import panels, {
   type PanelsState,
-  getInitialPersistedStateAndSetStorageIfNeeded,
+  getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL,
 } from "webviz-core/src/reducers/panels";
 import tests from "webviz-core/src/reducers/tests";
 import userNodes, { type UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
@@ -38,6 +38,7 @@ const getReducers = (history: any) => [
 export type PersistedState = {|
   panels: PanelsState,
   fetchedLayout: SetFetchedLayoutPayload,
+  search?: string,
 |};
 
 export type Dispatcher<T> = (dispatch: Dispatch, getState: GetState) => T;
@@ -57,7 +58,7 @@ export type Store = { dispatch: Dispatch, getState: () => State };
 
 export default function createRootReducer(history: any) {
   const initialState: State = {
-    persistedState: getInitialPersistedStateAndSetStorageIfNeeded(),
+    persistedState: getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history),
     mosaic: { mosaicId: "", selectedPanelIds: [] },
     auth: Object.freeze({ username: undefined }),
     extensions: Object.freeze({ markerProviders: [], auxiliaryData: {} }),

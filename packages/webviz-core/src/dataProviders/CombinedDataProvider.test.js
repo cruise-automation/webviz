@@ -12,7 +12,10 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import { parseMessageDefinition } from "rosbag";
+
 import delay from "webviz-core/shared/delay";
+import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
 import CombinedDataProvider, { mergedBlocks } from "webviz-core/src/dataProviders/CombinedDataProvider";
 import MemoryDataProvider from "webviz-core/src/dataProviders/MemoryDataProvider";
 import { mockExtensionPoint } from "webviz-core/src/dataProviders/mockExtensionPoint";
@@ -20,6 +23,7 @@ import RenameDataProvider from "webviz-core/src/dataProviders/RenameDataProvider
 import { type Bobject, type BobjectMessage } from "webviz-core/src/players/types";
 import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
+import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromMillis } from "webviz-core/src/util/time";
 
 // reusable providers
@@ -102,6 +106,10 @@ function provider4() {
     datatypes: {},
     providesParsedMessages: true,
   });
+}
+
+function brokenProvider() {
+  return new BagDataProvider({ bagPath: { type: "file", file: "not a real file" } }, []);
 }
 
 function getCombinedDataProvider(data: any[]) {
@@ -256,6 +264,41 @@ describe("CombinedDataProvider", () => {
         "Data providers provide different message formats"
       );
     });
+
+    it("should let users see results from one provider when another fails", async () => {
+      const datatypes = { some_datatype: { fields: [{ name: "value", type: "int32" }] } };
+      const message = { topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } };
+      const topics = [{ name: "/some_topic", datatype: "some_datatype" }];
+      const p1 = new MemoryDataProvider({
+        messages: {
+          parsedMessages: [message],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
+        topics,
+        messageDefinitionsByTopic: { "/some_topic": "int32 value" },
+        datatypes,
+        providesParsedMessages: true,
+      });
+
+      const p2 = brokenProvider();
+      const combinedProvider = getCombinedDataProvider([{ provider: p1 }, { provider: p2 }]);
+      const initResult = await combinedProvider.initialize(mockExtensionPoint().extensionPoint);
+      expect(initResult).toEqual(
+        expect.objectContaining({
+          start: message.receiveTime,
+          end: message.receiveTime,
+          topics,
+        })
+      );
+      const messagesResult = await combinedProvider.getMessages(
+        { sec: 101, nsec: 0 },
+        { sec: 101, nsec: 0 },
+        { parsedMessages: ["/some_topic"] }
+      );
+      expect(messagesResult).toEqual({ parsedMessages: [message] });
+      sendNotification.expectCalledDuringTest();
+    });
   });
 
   describe("features", () => {
@@ -278,8 +321,83 @@ describe("CombinedDataProvider", () => {
             numMessages: undefined,
           },
         ],
-        datatypes: {},
-        messageDefinitionsByTopic: {},
+        messageDefinitions: {
+          type: "parsed",
+          datatypes: {},
+          messageDefinitionsByTopic: {},
+          parsedMessageDefinitionsByTopic: {},
+        },
+        providesParsedMessages: true,
+      });
+    });
+
+    it("combines message definitions", async () => {
+      const p1 = new MemoryDataProvider({
+        messages: {
+          parsedMessages: [{ topic: "/some_topic", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
+        topics: [{ name: "/some_topic", datatype: "some_datatype" }],
+        messageDefinitionsByTopic: { "/some_topic": "int32 value" },
+        parsedMessageDefinitionsByTopic: { "/some_topic": parseMessageDefinition("int32 value") },
+        datatypes: { some_datatype: { fields: [{ name: "value", type: "int32" }] } },
+        providesParsedMessages: true,
+      });
+
+      const p2 = new MemoryDataProvider({
+        messages: {
+          parsedMessages: [{ topic: "/some_topic_2", receiveTime: { sec: 101, nsec: 0 }, message: { value: 1 } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
+        topics: [{ name: "/some_topic_2", datatype: "some_datatype_2" }],
+        messageDefinitionsByTopic: { "/some_topic_2": "int16 value" },
+        parsedMessageDefinitionsByTopic: { "/some_topic_2": parseMessageDefinition("int16 value") },
+        datatypes: { some_datatype_2: { fields: [{ name: "value", type: "int16" }] } },
+        providesParsedMessages: true,
+      });
+
+      const p3 = new MemoryDataProvider({
+        messages: {
+          parsedMessages: [{ topic: "/some_topic_3", receiveTime: { sec: 101, nsec: 0 }, message: { value: "h" } }],
+          bobjects: undefined,
+          rosBinaryMessages: undefined,
+        },
+        topics: [{ name: "/some_topic_3", datatype: "some_datatype_3" }],
+        messageDefinitionsByTopic: { "/some_topic_3": "string value" },
+        parsedMessageDefinitionsByTopic: { "/some_topic_3": parseMessageDefinition("string value") },
+        datatypes: { some_datatype_3: { fields: [{ name: "value", type: "string" }] } },
+        providesParsedMessages: true,
+      });
+
+      const combinedProvider = getCombinedDataProvider([{ provider: p1 }, { provider: p2 }, { provider: p3 }]);
+      expect(await combinedProvider.initialize(mockExtensionPoint().extensionPoint)).toEqual({
+        start: { nsec: 0, sec: 101 },
+        end: { nsec: 0, sec: 101 },
+        topics: [
+          { name: "/some_topic", datatype: "some_datatype" },
+          { name: "/some_topic_2", datatype: "some_datatype_2" },
+          { name: "/some_topic_3", datatype: "some_datatype_3" },
+        ],
+        messageDefinitions: {
+          type: "parsed",
+          datatypes: {
+            some_datatype: { fields: [{ name: "value", type: "int32" }] },
+            some_datatype_2: { fields: [{ name: "value", type: "int16" }] },
+            some_datatype_3: { fields: [{ name: "value", type: "string" }] },
+          },
+          messageDefinitionsByTopic: {
+            "/some_topic": "int32 value",
+            "/some_topic_2": "int16 value",
+            "/some_topic_3": "string value",
+          },
+          parsedMessageDefinitionsByTopic: {
+            "/some_topic": parseMessageDefinition("int32 value"),
+            "/some_topic_2": parseMessageDefinition("int16 value"),
+            "/some_topic_3": parseMessageDefinition("string value"),
+          },
+        },
         providesParsedMessages: true,
       });
     });

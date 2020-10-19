@@ -17,7 +17,7 @@ $grey: #777;
   }
 
   .mosaic-tile {
-    margin: 0;
+    margin: 1px;
   }
 
   .mosaic-window {
@@ -55,6 +55,23 @@ $grey: #777;
     }
     &:hover .mosaic-split-line {
       box-shadow: 0 0 0 1px $grey;
+    }
+
+    &.-row {
+      margin-top: 2px;
+    }
+  }
+
+  &.borderless {
+    .mosaic-split {
+      opacity: 0;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+    .mosaic-tile {
+      margin: 0;
     }
   }
 

@@ -57,6 +57,18 @@ export type Transform = {
   };
 };
 
+export type PointStyle =
+  | "circle"
+  | "cross"
+  | "crossRot"
+  | "dash"
+  | "line"
+  | "rect"
+  | "rectRounded"
+  | "rectRot"
+  | "star"
+  | "triangle";
+
 export type TwoDimensionalPlotLine = {
   order?: number;
   label: string;
@@ -68,8 +80,8 @@ export type TwoDimensionalPlotLine = {
   pointBorderColor?: string;
   pointBorderWidth?: number;
   pointRadius?: number;
-  pointStyle?: string;
-  lineTension?: number,
+  pointStyle?: PointStyle;
+  lineTension?: number;
   data: { x: number; y: number }[];
 };
 /*
@@ -84,5 +96,5 @@ export type TwoDimensionalPlot = {
   title?: string;
   yAxisLabel?: string;
   xAxisLabel?: string;
-  gridColor?: string
+  gridColor?: string;
 };

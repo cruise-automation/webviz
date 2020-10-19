@@ -10,7 +10,6 @@ import { partition } from "lodash";
 import React, { type ComponentType } from "react";
 import { vec4ToRGBA } from "regl-worldview";
 
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { LAYER_INDEX_DIFF_MODE_BASE_PER_PASS } from "webviz-core/src/panels/ThreeDimensionalViz/constants";
 import type {
   InteractiveMarkersByType,
@@ -19,8 +18,8 @@ import type {
 import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 
 export const BASE_COLOR = [0.5, 0.5, 0.5, 1.0];
-export const SOURCE_1_COLOR = [1, 0, 0, 1];
-export const SOURCE_2_COLOR = [0, 1, 0, 1];
+export const SOURCE_1_COLOR = [1, 0, 1, 1];
+export const SOURCE_2_COLOR = [0, 1, 1, 1];
 
 export const BASE_COLOR_RGBA = vec4ToRGBA(BASE_COLOR);
 export const SOURCE_1_COLOR_RGBA = vec4ToRGBA(SOURCE_1_COLOR);
@@ -100,7 +99,7 @@ export function getDiffBySource(markers: InteractiveMarkersByType): InteractiveM
 
 export const withDiffMode = (BaseWorldMarkers: ComponentType<WorldMarkerProps>) => {
   const WorldMarkersWithDiffMode = (props: WorldMarkerProps) => {
-    const diffModeEnabled = useExperimentalFeature("diffModeEnabled");
+    const { diffModeEnabled } = props;
     if (diffModeEnabled) {
       return (
         <>

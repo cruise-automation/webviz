@@ -294,7 +294,7 @@ export default class NotificationDisplay extends React.PureComponent<Props, Stat
               <Fader visible={showMostRecent} style={{ paddingLeft: 5, cursor: "pointer" }}>
                 {notifications[0].message}
               </Fader>
-              {unreadCount > 1 && `(${unreadCount})`}
+              <div style={{ fontSize: 12 }}>{unreadCount > 1 && `\u00A0(1 of ${unreadCount})`}</div>
             </div>
             <NotificationList notifications={notifications} onClick={showNotificationModal} />
           </ChildToggle>

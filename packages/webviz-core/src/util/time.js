@@ -6,9 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { isEqual } from "lodash";
-import momentDurationFormatSetup from "moment-duration-format";
-import moment from "moment-timezone";
+// No time functions that require `moment` should live in this file.
 import { type Time, TimeUtil } from "rosbag";
 
 import { cast, type Bobject, type Message } from "webviz-core/src/players/types";
@@ -21,35 +19,14 @@ type BatchTimestamp = {
   nanoseconds: number,
 };
 
-momentDurationFormatSetup(moment);
-
 export type TimestampMethod = "receiveTime" | "headerStamp";
 
 // Unfortunately, using %checks on this function doesn't actually allow Flow to conclude that the object is a Time.
 // Related: https://github.com/facebook/flow/issues/3614
-const timeFields = new Set(["sec", "nsec"]);
 export function isTime(obj: mixed): boolean {
-  return !!obj && typeof obj === "object" && isEqual(new Set(Object.getOwnPropertyNames(obj)), timeFields);
-}
-
-export function format(stamp: Time) {
-  return `${formatDate(stamp)} ${formatTime(stamp)}`;
-}
-
-export function formatDate(stamp: Time, timezone?: ?string) {
-  if (stamp.sec < 0 || stamp.nsec < 0) {
-    console.error("Times are not allowed to be negative");
-    return "(invalid negative time)";
-  }
-  return moment.tz(toDate(stamp), timezone || moment.tz.guess()).format("YYYY-MM-DD");
-}
-
-export function formatTime(stamp: Time, timezone?: ?string) {
-  if (stamp.sec < 0 || stamp.nsec < 0) {
-    console.error("Times are not allowed to be negative");
-    return "(invalid negative time)";
-  }
-  return moment.tz(toDate(stamp), timezone || moment.tz.guess()).format("h:mm:ss.SSS A z");
+  return (
+    !!obj && typeof obj === "object" && "sec" in obj && "nsec" in obj && Object.getOwnPropertyNames(obj).length === 2
+  );
 }
 
 export function formatTimeRaw(stamp: Time) {
@@ -73,10 +50,6 @@ export function fromSecondStamp(stamp: string): Time {
   const nanosecond = nanoString.length <= 9 ? nanoString.padEnd(9, "0") : nanoString.slice(0, 9);
 
   return { sec: parseInt(secondString), nsec: parseInt(nanosecond) };
-}
-
-export function formatDuration(stamp: Time) {
-  return moment.duration(Math.round(stamp.sec * 1000 + stamp.nsec / 1e6)).format("h:mm:ss.SSS", { trim: false });
 }
 
 // note: sub-millisecond precision is lost
@@ -263,17 +236,6 @@ export function parseRosTimeStr(str: string): ?Time {
   const nsec = Math.round(parseInt(partials[1], 10) * 10 ** digitsShort);
   // It's possible we rounded to { sec: 1, nsec: 1e9 }, which is invalid, so fixTime.
   return fixTime({ sec: parseInt(partials[0], 10) || 0, nsec });
-}
-
-export function parseTimeStr(str: string): ?Time {
-  const newMomentTimeObj = moment(str, "YYYY-MM-DD h:mm:ss.SSS A z");
-  const date = newMomentTimeObj.toDate();
-  const result = (newMomentTimeObj.isValid() && fromDate(date)) || null;
-
-  if (!result || result.sec <= 0 || result.nsec < 0) {
-    return null;
-  }
-  return result;
 }
 
 export function getSeekToTime(): ?Time {

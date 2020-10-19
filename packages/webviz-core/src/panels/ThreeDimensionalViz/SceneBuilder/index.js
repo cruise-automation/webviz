@@ -35,9 +35,13 @@ import type {
 } from "webviz-core/src/types/Messages";
 import type { MarkerProvider, MarkerCollector, Scene } from "webviz-core/src/types/Scene";
 import { objectValues } from "webviz-core/src/util";
-import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
+import { getField, getIndex, deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import Bounds from "webviz-core/src/util/Bounds";
-import { POSE_MARKER_SCALE, LINED_CONVEX_HULL_RENDERING_SETTING } from "webviz-core/src/util/globalConstants";
+import {
+  POSE_MARKER_SCALE,
+  LINED_CONVEX_HULL_RENDERING_SETTING,
+  MARKER_ARRAY_DATATYPES,
+} from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { emptyPose } from "webviz-core/src/util/Pose";
 import sendNotification from "webviz-core/src/util/sendNotification";
@@ -108,13 +112,27 @@ function getSceneErrorsByTopic(sceneErrors: SceneErrors): { [topicName: string]:
 }
 
 // Only display one non-lifetime message at a time, so we filter to the last one.
-function filterToSingleNonLifetimeMessage(messages: any) {
+export function filterOutSupersededMessages(messages: any, datatype: string) {
+  // Later messages take precedence over earlier messages, so iterate from latest to earliest to
+  // find the last one that matters.
+  const reversedMessages = messages.slice().reverse();
+  if (MARKER_ARRAY_DATATYPES.includes(datatype)) {
+    // Many marker arrays begin with a command to "delete all markers on this topic". If we see
+    // this, we can ignore any earlier messages on the topic.
+    const earliestMessageToKeepIndex = reversedMessages.findIndex(({ message }) => {
+      const markers = getField(message, "markers") ?? getField(message, "allMarkers");
+      return getField(getIndex(markers, 0), "action") === 3;
+    });
+    if (earliestMessageToKeepIndex !== -1) {
+      return reversedMessages.slice(0, earliestMessageToKeepIndex + 1).reverse();
+    }
+    return messages;
+  }
   const filteredMessages = [];
   let hasSeenNonLifetimeMessage = false;
-  // iterate back to front.
-  for (const message of messages.slice().reverse()) {
-    // $FlowFixMe flow doesn't like optional function calls.
-    if (isBobject(message) ? message?.message?.()?.lifetime?.() : message?.message?.lifetime) {
+  for (const message of reversedMessages) {
+    const hasLifetime = !!getField(message.message, "lifetime");
+    if (hasLifetime) {
       // Show all messages that have a lifetime.
       filteredMessages.unshift(message);
     } else if (!hasSeenNonLifetimeMessage) {
@@ -259,7 +277,7 @@ export default class SceneBuilder implements MarkerProvider {
       const newNamespaces = selectedNamespacesByTopic[topicName];
       const previousNamespaces = [...(this.selectedNamespacesByTopic?.[topicName] || [])];
       if (xor(newNamespaces, previousNamespaces).length > 0) {
-        this.topicsToRender.add(topicName);
+        this._markTopicToRender(topicName);
       }
     });
     this.selectedNamespacesByTopic = mapValues(selectedNamespacesByTopic, (namespaces) => new Set(namespaces));
@@ -273,7 +291,7 @@ export default class SceneBuilder implements MarkerProvider {
     // Because setSelectedNamespacesByTopic is called before setGlobalVariables,
     // we need to add the topics here instead of overwriting them.
     const updatedTopics = getTopicsToRender(prevSelectionState, this.selectionState);
-    updatedTopics.forEach((topicName) => this.topicsToRender.add(topicName));
+    updatedTopics.forEach((topicName) => this._markTopicToRender(topicName));
   };
 
   setHighlightedMatchers(markerMatchers: Array<MarkerMatcher>) {
@@ -297,7 +315,13 @@ export default class SceneBuilder implements MarkerProvider {
     );
     // If any of the matchers have changed, we need to rerender all of the topics
     if (!shallowequal(matchersBefore, newMarkerMatchers)) {
-      Object.keys(this.topicsByName).forEach((name) => this.topicsToRender.add(name));
+      Object.keys(this.topicsByName).forEach((name) => this._markTopicToRender(name));
+    }
+  }
+
+  _markTopicToRender(topicName: string) {
+    if (this.topicsByName[topicName]) {
+      this.topicsToRender.add(topicName);
     }
   }
 
@@ -604,8 +628,9 @@ export default class SceneBuilder implements MarkerProvider {
     let minZ = Number.MAX_SAFE_INTEGER;
 
     const parsedPoints = [];
-    // if the marker has points, adjust bounds by the points
-    if (points.length()) {
+    // if the marker has points, adjust bounds by the points. (Constructed markers sometimes don't
+    // have points.)
+    if (points && points.length()) {
       for (const point of points) {
         const x = point.x();
         const y = point.y();
@@ -662,7 +687,7 @@ export default class SceneBuilder implements MarkerProvider {
     const marker: any = {
       type: message.type(),
       scale: deepParse(message.scale()),
-      lifetime: lifetime && deepParse(lifetime),
+      lifetime: deepParse(lifetime),
       pose,
       interactionData,
       color: overrideColor || color,
@@ -1006,7 +1031,7 @@ export default class SceneBuilder implements MarkerProvider {
     // later on, so we don't need to filter them. Note: A decayTime of zero is
     // defined as an infinite lifetime
     const decayTime = this._settingsByKey[`t:${topic}`]?.decayTime;
-    const filteredMessages = decayTime === undefined ? filterToSingleNonLifetimeMessage(messages) : messages;
+    const filteredMessages = decayTime === undefined ? filterOutSupersededMessages(messages, datatype) : messages;
     for (const message of filteredMessages) {
       if (isBobject(message.message)) {
         this._consumeBobject(topic, datatype, message);
@@ -1107,6 +1132,7 @@ export default class SceneBuilder implements MarkerProvider {
       case 104: return add.laserScan(marker);
       case 107: return add.filledPolygon(marker);
       case 108: return add.instancedLineList(marker);
+      case 109: return add.overlayIcon(marker)
       default: {
         if (!getGlobalHooks().perPanelHooks().ThreeDimensionalViz.addMarkerToCollector(add, marker)) {
           this._setTopicError(topic.name, `Unsupported marker type: ${marker.type}`);

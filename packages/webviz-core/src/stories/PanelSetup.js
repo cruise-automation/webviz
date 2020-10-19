@@ -211,7 +211,7 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
           topics={topics}
           datatypes={dTypes}
           messages={messages}
-          bobjects={bobjects}
+          bobjects={bobjects.length > 0 ? bobjects : undefined}
           activeData={activeData}
           progress={progress}
           store={this.state.store}>

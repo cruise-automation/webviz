@@ -16,6 +16,7 @@ import FakePlayer from "./FakePlayer";
 import { MAX_PROMISE_TIMEOUT_TIME_MS } from "./pauseFrameForPromise";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
+import tick from "webviz-core/shared/tick";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 jest.setTimeout(MAX_PROMISE_TIMEOUT_TIME_MS * 3);
@@ -112,6 +113,43 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       player.emit();
     });
     expect(() => player.emit()).toThrow("New playerState was emitted before last playerState was rendered.");
+  });
+
+  it("waits for the previous frame to finish before calling setGlobalVariables again", async () => {
+    let pauseFrame;
+    const player = new FakePlayer();
+    jest.spyOn(player, "setGlobalVariables");
+
+    const promise = signal();
+    const pipeline = mount(
+      <MessagePipelineProvider player={player} globalVariables={{}}>
+        <MessagePipelineConsumer>
+          {(context) => {
+            pauseFrame = context.pauseFrame;
+            promise.resolve();
+            return null;
+          }}
+        </MessagePipelineConsumer>
+      </MessagePipelineProvider>
+    );
+    await Promise.all([promise, tick()]);
+    if (!pauseFrame) {
+      return;
+    }
+
+    expect(player.setGlobalVariables).toHaveBeenCalledWith({});
+    expect(player.setGlobalVariables).toHaveBeenCalledTimes(1);
+    const onFrameRendered = pauseFrame("Wait");
+
+    // Pass in new globalVariables and make sure they aren't used until the frame is done
+    pipeline.setProps({ player, globalVariables: { futureTime: 1 } });
+    await tick();
+    expect(player.setGlobalVariables).toHaveBeenCalledTimes(1);
+
+    // Once the frame is done, setGlobalVariables will be called with the new value
+    onFrameRendered();
+    await tick();
+    expect(player.setGlobalVariables).toHaveBeenCalledWith({ futureTime: 1 });
   });
 
   it("sets subscriptions", (done) => {
@@ -430,8 +468,9 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       lastSeekTime: 1234,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     };
     await act(() => player.emit(activeData));
     expect(fn).toHaveBeenCalledTimes(2);
@@ -476,8 +515,9 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       lastSeekTime: 1234,
       topics: [{ name: "/input/foo", datatype: "foo" }],
       datatypes: { foo: { fields: [] } },
-      messageDefinitionsByTopic: {},
+      parsedMessageDefinitionsByTopic: {},
       playerWarnings: {},
+      totalBytesReceived: 1234,
     };
     await act(() => player.emit(activeData));
     expect(fn).toHaveBeenCalledTimes(3);

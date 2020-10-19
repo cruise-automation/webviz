@@ -178,7 +178,7 @@ export async function withBrowser<T>(
     }
     return Promise.reject();
   } catch (error) {
-    console.error(error);
+    console.error(error.stack || (error.toString && error.toString()) || error);
     throw error;
   } finally {
     if (browser) {
@@ -204,14 +204,27 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
     });
   });
 
-  page.on("error", (error) => {
-    const errorMessage = `${error.toString()} (stack trace: ${error.stack})`;
+  function onPuppeteerError(error: any) {
+    const errorMessage: string = (error.jsonValue && error.jsonValue()) || error.toString();
     log.error(`[runInBrowser error] ${errorMessage}`);
+    console.warn(errorMessage);
     onError(errorMessage);
+  }
+
+  page.on("pageerror", (error) => {
+    onPuppeteerError(error);
+  });
+  page.on("error", (error) => {
+    onPuppeteerError(error);
   });
 
   await page.evaluate(() => {
     window.addEventListener("error", (error) => {
+      // This can happen when ResizeObserver can't resolve its callbacks fast enough, but we can ignore it.
+      // See https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
+      if (error.message.includes("ResizeObserver loop limit exceeded")) {
+        return;
+      }
       console.error(error);
     });
     window.addEventListener("unhandledrejection", (event) => {
@@ -224,8 +237,11 @@ export async function setupPageLogging(page: Page, options: PageOptions) {
 export async function setupWebvizLayout(page: Page, options: LayoutOptions) {
   const { panelLayout, experimentalFeatureSettings, filePaths } = options;
 
+  // Make sure the page is ready before proceeding.
+  await page.waitForSelector(".app-container");
+
   if (panelLayout) {
-    await page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
+    page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
   }
 
   if (experimentalFeatureSettings) {

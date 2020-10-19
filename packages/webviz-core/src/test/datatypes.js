@@ -9,7 +9,7 @@
 import { groupBy } from "lodash";
 import type { RosMsgField } from "rosbag";
 
-import type { BobjectMessage, Frame, Message, Topic } from "webviz-core/src/players/types";
+import type { Frame, Message, Topic, TypedMessage } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 
@@ -36,6 +36,9 @@ const maybeInferJsonFieldType = (value: any, fieldName: string): ?FieldType => {
   if (fieldName === "metadata" || fieldName === "metadataByIndex") {
     return { type: "json", isArray: false };
   }
+  if (fieldName.toLowerCase().includes("json")) {
+    return { type: "json", isArray: false };
+  }
 };
 
 export const inferDatatypes = (fieldType: FieldType, value: any): FieldType => {
@@ -58,6 +61,8 @@ export const inferDatatypes = (fieldType: FieldType, value: any): FieldType => {
       throw new Error("Type mismatch");
     }
     return { isArray: fieldType.isArray, type: "bool" };
+  } else if (ArrayBuffer.isView(value)) {
+    return { isArray: true, type: "float64" };
   } else if (value == null) {
     // Shouldn't happen, but we should be robust against it. Keep whatever information we have.
     return fieldType;
@@ -136,7 +141,7 @@ export const createRosDatatypesFromFrame = (topics: $ReadOnlyArray<Topic>, frame
   return ret;
 };
 
-export const wrapMessages = (messages: $ReadOnlyArray<Message>): BobjectMessage[] => {
+export const wrapMessages = <T>(messages: $ReadOnlyArray<Message>): TypedMessage<T>[] => {
   const frame = groupBy(messages, "topic");
   const topics = Object.keys(frame).map((topic) => ({ name: topic, datatype: topic }));
   const datatypes = createRosDatatypesFromFrame(topics, frame);
@@ -147,4 +152,4 @@ export const wrapMessages = (messages: $ReadOnlyArray<Message>): BobjectMessage[
   }));
 };
 
-export const wrapMessage = (message: Message): BobjectMessage => wrapMessages([message])[0];
+export const wrapMessage = <T>(message: Message): TypedMessage<T> => wrapMessages<T>([message])[0];

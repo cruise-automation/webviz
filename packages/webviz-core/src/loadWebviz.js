@@ -33,6 +33,7 @@ const defaultHooks = {
         throw new Error(`Failed to fetch layout from URL: ${e.message}`);
       });
   },
+  getDemoModeComponent: () => undefined,
   async importHooksAsync() {
     return new Promise((resolve, reject) => {
       if (importedPanelsByCategory && importedPerPanelHooks) {
@@ -58,6 +59,7 @@ const defaultHooks = {
     // All panel fields have to be present.
     return {
       fetchedLayout: { isLoading: false, data: undefined },
+      search: "",
       panels: {
         layout: {
           direction: "row",
@@ -124,7 +126,7 @@ const defaultHooks = {
     const Root = require("webviz-core/src/components/Root").default;
     return <Root store={store} />;
   },
-  load: () => {
+  load: async () => {
     if (process.env.NODE_ENV === "production" && window.ga) {
       window.ga("create", "UA-82819136-10", "auto");
     } else {
@@ -169,15 +171,14 @@ const defaultHooks = {
       globalVariableColorOverrides: {
         name: "Global variable color overrides",
         description: "Change the color of markers when they match a linkedGlobalVariable.",
-        developmentDefault: false,
-        productionDefault: false,
+        developmentDefault: true,
+        productionDefault: true,
       },
       useBinaryTranslation: {
         name: "Use binary messages in the 3D panel instead of parsed messages",
-        description:
-          "Either use binary messages or _pretend_ to use binary messages in the 3D panel. Very broken, work in progress.",
-        developmentDefault: false,
-        productionDefault: false,
+        description: "Use binary messages wherever supported, instead of always deep-parsing ROS data.",
+        developmentDefault: true,
+        productionDefault: true,
       },
     };
   },
@@ -206,33 +207,28 @@ export function resetHooksToDefault() {
   hooks = defaultHooks;
 }
 
-export function loadWebviz(hooksToSet) {
+export async function loadWebviz(hooksToSet) {
   if (hooksToSet) {
     setHooks(hooksToSet);
   }
 
   require("webviz-core/src/styles/global.scss");
+  const Confirm = require("webviz-core/src/components/Confirm").default;
   const prepareForScreenshots = require("webviz-core/src/stories/prepareForScreenshots").default;
   const installDevtoolsFormatters = require("webviz-core/src/util/installDevtoolsFormatters").default;
   const overwriteFetch = require("webviz-core/src/util/overwriteFetch").default;
-  const { hideLoadingLogo } = require("webviz-core/src/util/hideLoadingLogo");
   const { clearIndexedDbWithoutConfirmation } = require("webviz-core/src/util/indexeddb/clearIndexedDb");
+  const waitForFonts = require("webviz-core/src/styles/waitForFonts").default;
 
   prepareForScreenshots(); // For integration screenshot tests.
   installDevtoolsFormatters();
   overwriteFetch();
   window.clearIndexedDb = clearIndexedDbWithoutConfirmation; // For integration tests.
 
-  const initializationResult = hooks.load();
-
-  const waitForFonts = require("webviz-core/src/styles/waitForFonts").default;
-  const Confirm = require("webviz-core/src/components/Confirm").default;
-
-  // Importing from /webviz-core/shared/delay seems to not work for some reason (maybe a bundle issue)? Just duplicate
-  // it here.
-  async function delay(timeoutMs) {
-    return new Promise((resolve) => setTimeout(resolve, timeoutMs));
-  }
+  // In production, hooks.load() will return initializationResult immediately.
+  // In a performance measuring mode, we delay the load while the Polly library
+  // loads so we can record and replay network requests before the app starts.
+  const initializationResult = await hooks.load();
 
   async function render() {
     const rootEl = document.getElementById("root");
@@ -242,10 +238,6 @@ export function loadWebviz(hooksToSet) {
     }
 
     await waitForFonts();
-    // Wait for any async load functions to start running while we are doing the initial render.
-    // The number isn't really important here, we just want to make sure that other async callbacks have a chance to
-    // run, because once we start the initial Webviz render we hold the main thread for ~500ms.
-    await delay(5);
     ReactDOM.render(<hooks.Root history={history} initializationResult={initializationResult} />, rootEl);
   }
 
@@ -254,7 +246,9 @@ export function loadWebviz(hooksToSet) {
   const chromeMatch = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
   const chromeVersion = chromeMatch ? parseInt(chromeMatch[2], 10) : 0;
   if (chromeVersion < MINIMUM_CHROME_VERSION) {
-    hideLoadingLogo();
+    if (window.webviz_hideLoadingLogo) {
+      window.webviz_hideLoadingLogo();
+    }
     Confirm({
       title: "Update your browser",
       prompt:

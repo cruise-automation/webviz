@@ -9,11 +9,25 @@
 import { PANELS_ACTION_TYPES } from "webviz-core/src/actions/panels";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { Store } from "webviz-core/src/reducers";
+import { setPersistedStateInLocalStorage } from "webviz-core/src/reducers/panels";
 import { getShouldProcessPatch } from "webviz-core/src/util/layout";
 
 type Action = { type: string, payload: any };
 
 let updateUrlTimer;
+
+function maybeSetPersistedStateInLocalStorage(store: Store, skipSettingLocalStorage: boolean) {
+  if (skipSettingLocalStorage) {
+    return;
+  }
+  const state = store.getState();
+  const persistedState = {
+    ...state.persistedState,
+    // Persist search so we can restore the current layout when loading Webviz without layout params.
+    search: state.router.location.search,
+  };
+  setPersistedStateInLocalStorage(persistedState);
+}
 const {
   LOAD_LAYOUT,
   IMPORT_PANEL_LAYOUT,
@@ -36,9 +50,11 @@ const {
   END_DRAG,
 } = PANELS_ACTION_TYPES;
 
-const updateUrlMiddlewareDebounced = (store: Store) => (next: (Action) => any) => (action: Action) => {
+const updateUrlAndLocalStorageMiddlewareDebounced = (store: Store) => (next: (Action) => any) => (action: Action) => {
   const result = next(action); // eslint-disable-line callback-return
   // Any action that changes panels state should potentially trigger a URL update.
+  const skipSettingLocalStorage = !!action.payload?.skipSettingLocalStorage;
+
   if (
     [
       LOAD_LAYOUT,
@@ -68,16 +84,21 @@ const updateUrlMiddlewareDebounced = (store: Store) => (next: (Action) => any) =
     updateUrlTimer = setTimeout(async () => {
       const shouldProcessPatch = getShouldProcessPatch();
       if (!shouldProcessPatch) {
+        maybeSetPersistedStateInLocalStorage(store, skipSettingLocalStorage);
         return result;
       }
       await getGlobalHooks().updateUrlToTrackLayoutChanges({
         store,
         skipPatch: action.type === LOAD_LAYOUT,
       });
+
+      maybeSetPersistedStateInLocalStorage(store, skipSettingLocalStorage);
       return result;
     }, 500);
   }
+
+  maybeSetPersistedStateInLocalStorage(store, skipSettingLocalStorage);
   return result;
 };
 
-export default updateUrlMiddlewareDebounced;
+export default updateUrlAndLocalStorageMiddlewareDebounced;

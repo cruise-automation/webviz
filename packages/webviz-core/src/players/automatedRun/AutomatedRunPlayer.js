@@ -11,7 +11,6 @@ import Queue from "promise-queue";
 import { type Time, TimeUtil } from "rosbag";
 import uuid from "uuid";
 
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import type { DataProvider, DataProviderMetadata, InitializationResult } from "webviz-core/src/dataProviders/types";
 import type {
   AdvertisePayload,
@@ -80,17 +79,16 @@ export default class AutomatedRunPlayer implements Player {
   _error: ?Error;
   _waitToReportErrorPromise: ?Promise<void>;
   _startCalled: boolean = false;
+  _receivedBytes: number = 0;
   // Calls to this._listener must not happen concurrently, and we want them to happen
   // deterministically so we put them in a FIFO queue.
   _emitStateQueue: Queue = new Queue(1);
-  _bobjectsEnabled: boolean;
 
   constructor(provider: DataProvider, client: AutomatedRunClient) {
     this._provider = provider;
     this._speed = client.speed;
     this._msPerFrame = client.msPerFrame;
     this._client = client;
-    this._bobjectsEnabled = getExperimentalFeature("useBinaryTranslation");
     // Report errors from sendNotification and those thrown on the window object to the client.
     setNotificationHandler(
       (message: string, details: DetailsType, type: NotificationType, severity: NotificationSeverity) => {
@@ -112,6 +110,11 @@ export default class AutomatedRunPlayer implements Player {
       }
     );
     window.addEventListener("error", (e: Error) => {
+      // This can happen when ResizeObserver can't resolve its callbacks fast enough, but we can ignore it.
+      // See https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
+      if (e.message.includes("ResizeObserver loop limit exceeded")) {
+        return;
+      }
       this._error = e;
       this._waitToReportErrorPromise = client.onError(e);
     });
@@ -156,10 +159,7 @@ export default class AutomatedRunPlayer implements Player {
           message: message.message,
         };
       });
-    const filteredParsedMessages = filterMessages(parsedMessages);
-    const filteredBobjects = this._bobjectsEnabled ? filterMessages(bobjects) : [];
-
-    return { parsedMessages: filteredParsedMessages, bobjects: filteredBobjects };
+    return { parsedMessages: filterMessages(parsedMessages), bobjects: filterMessages(bobjects) };
   }
 
   _emitState(
@@ -171,6 +171,10 @@ export default class AutomatedRunPlayer implements Player {
       if (!this._listener) {
         return;
       }
+      const initializationResult = this._providerResult;
+      if (initializationResult.messageDefinitions.type === "raw") {
+        throw new Error("AutomatedRunPlayer requires parsed message definitions");
+      }
       return this._listener({
         isPresent: true,
         showSpinner: false,
@@ -181,6 +185,7 @@ export default class AutomatedRunPlayer implements Player {
         activeData: {
           messages,
           bobjects,
+          totalBytesReceived: this._receivedBytes,
           currentTime,
           startTime: this._providerResult.start,
           endTime: this._providerResult.end,
@@ -189,8 +194,8 @@ export default class AutomatedRunPlayer implements Player {
           messageOrder: "receiveTime",
           lastSeekTime: 0,
           topics: this._providerResult.topics,
-          datatypes: this._providerResult.datatypes,
-          messageDefinitionsByTopic: this._providerResult.messageDefinitionsByTopic,
+          datatypes: initializationResult.messageDefinitions.datatypes,
+          parsedMessageDefinitionsByTopic: initializationResult.messageDefinitions.parsedMessageDefinitionsByTopic,
           playerWarnings: NO_WARNINGS,
         },
       });
@@ -232,10 +237,13 @@ export default class AutomatedRunPlayer implements Player {
               "error"
             );
             break;
-          case "performance":
+          case "average_throughput":
             // Don't need analytics for data provider callbacks in video generation.
             break;
           case "initializationPerformance":
+            break;
+          case "received_bytes":
+            this._receivedBytes += metadata.bytes;
             break;
           default:
             (metadata.type: empty);
@@ -385,4 +393,7 @@ export default class AutomatedRunPlayer implements Player {
   }
 
   requestBackfill() {}
+  setGlobalVariables() {
+    throw new Error(`Unsupported in AutomatedRunPlayer`);
+  }
 }

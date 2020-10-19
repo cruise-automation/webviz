@@ -16,7 +16,8 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import SelectableTimestamp from "webviz-core/src/components/SelectableTimestamp";
 import clipboard from "webviz-core/src/util/clipboard";
-import { formatDuration, subtractTimes, toSec } from "webviz-core/src/util/time";
+import { formatDuration } from "webviz-core/src/util/formatTime";
+import { subtractTimes, toSec } from "webviz-core/src/util/time";
 
 const STableContainer = styled.div`
   overflow-y: auto;

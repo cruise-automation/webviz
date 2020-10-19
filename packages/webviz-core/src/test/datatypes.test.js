@@ -62,6 +62,15 @@ describe("inferDatatypes", () => {
       object: { arr: { isArray: true, type: "float64" }, val: { isArray: false, type: "unknown" } },
     });
   });
+
+  it("handles typed arrays", () => {
+    const value = { arr: new Int8Array([1, 2, 3]) };
+    expect(inferDatatypes(unknown, value)).toEqual({
+      isArray: false,
+      type: "message",
+      object: { arr: { isArray: true, type: "float64" } },
+    });
+  });
 });
 
 const makeMessage = (message) => ({ receiveTime: { sec: 0, nsec: 0 }, topic: "", message });

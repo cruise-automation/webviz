@@ -49,6 +49,30 @@ const markers = {
   sphereList: [],
   text: [],
   triangleList: [],
+  overlayIcon: [],
+};
+
+const sharedExpected = {
+  arrow: [],
+  cube: [],
+  cubeList: [],
+  cylinder: [],
+  filledPolygon: [],
+  glText: [],
+  grid: [],
+  instancedLineList: [],
+  laserScan: [],
+  linedConvexHull: [],
+  lineList: [],
+  lineStrip: [],
+  pointcloud: [],
+  points: [],
+  poseMarker: [],
+  sphere: [],
+  sphereList: [],
+  text: [],
+  triangleList: [],
+  overlayIcon: [],
 };
 
 describe("getDiffBySource", () => {
@@ -56,6 +80,7 @@ describe("getDiffBySource", () => {
     const passes = getDiffBySource(markers);
     expect(passes.length).toBe(3);
     expect(passes[0]).toStrictEqual({
+      ...sharedExpected,
       arrow: [
         {
           ...marker("arrows"),
@@ -75,15 +100,6 @@ describe("getDiffBySource", () => {
           },
         },
       ],
-      cube: [],
-      cubeList: [],
-      cylinder: [],
-      filledPolygon: [],
-      glText: [],
-      grid: [],
-      instancedLineList: [],
-      laserScan: [],
-      linedConvexHull: [],
       lineList: [
         {
           ...marker("foo"),
@@ -103,26 +119,9 @@ describe("getDiffBySource", () => {
           },
         },
       ],
-      lineStrip: [],
-      pointcloud: [],
-      points: [],
-      poseMarker: [],
-      sphere: [],
-      sphereList: [],
-      text: [],
-      triangleList: [],
     });
     expect(passes[1]).toStrictEqual({
-      arrow: [],
-      cube: [],
-      cubeList: [],
-      cylinder: [],
-      filledPolygon: [],
-      glText: [],
-      grid: [],
-      instancedLineList: [],
-      laserScan: [],
-      linedConvexHull: [],
+      ...sharedExpected,
       lineList: [
         {
           ...marker(`${SECOND_SOURCE_PREFIX}/foo`),
@@ -141,7 +140,6 @@ describe("getDiffBySource", () => {
           },
         },
       ],
-      lineStrip: [],
       pointcloud: [
         {
           ...marker(`${SECOND_SOURCE_PREFIX}/foo`),
@@ -160,24 +158,9 @@ describe("getDiffBySource", () => {
           },
         },
       ],
-      points: [],
-      poseMarker: [],
-      sphere: [],
-      sphereList: [],
-      text: [],
-      triangleList: [],
     });
     expect(passes[2]).toStrictEqual({
-      arrow: [],
-      cube: [],
-      cubeList: [],
-      cylinder: [],
-      filledPolygon: [],
-      glText: [],
-      grid: [],
-      instancedLineList: [],
-      laserScan: [],
-      linedConvexHull: [],
+      ...sharedExpected,
       lineList: [
         {
           ...marker(`${SECOND_SOURCE_PREFIX}/foo`),
@@ -196,7 +179,6 @@ describe("getDiffBySource", () => {
           },
         },
       ],
-      lineStrip: [],
       pointcloud: [
         {
           ...marker(`${SECOND_SOURCE_PREFIX}/foo`),
@@ -215,12 +197,6 @@ describe("getDiffBySource", () => {
           },
         },
       ],
-      points: [],
-      poseMarker: [],
-      sphere: [],
-      sphereList: [],
-      text: [],
-      triangleList: [],
     });
   });
 });

@@ -85,7 +85,7 @@ export default class IdbCacheReaderDataProvider implements DataProvider {
       const { parsedMessages, rosBinaryMessages, bobjects } = await this._provider.getMessages(startTime, endTime, {
         rosBinaryMessages: topics,
       });
-      if (parsedMessages || rosBinaryMessages || bobjects) {
+      if (parsedMessages?.length || rosBinaryMessages?.length || bobjects?.length) {
         throw new Error(
           "IdbCacheReaderDataProvider should not be receiving messages from child; be sure to use a IdbCacheWriterDataProvider below"
         );

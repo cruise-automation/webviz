@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import fetchMock from "fetch-mock";
-import { createMemoryHistory } from "history";
 import { getLeaves } from "react-mosaic-component";
 
 import delay from "webviz-core/shared/delay";
@@ -27,23 +26,24 @@ import {
   fetchLayout,
 } from "webviz-core/src/actions/panels";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import createRootReducer from "webviz-core/src/reducers";
 import { GLOBAL_STATE_STORAGE_KEY, resetInitialPersistedState } from "webviz-core/src/reducers/panels";
-import configureStore from "webviz-core/src/store";
+import { getGlobalStoreForTest } from "webviz-core/src/store/getGlobalStore";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 import { getPanelTypeFromId } from "webviz-core/src/util/layout";
 import Storage from "webviz-core/src/util/Storage";
 
+const CURRENT_LAYOUT_VERSION = 12;
+const defaultPersistedState = Object.freeze(getGlobalHooks().getDefaultPersistedState());
+const storage = new Storage();
+
 const getStore = () => {
-  const history = createMemoryHistory();
-  const store = configureStore(createRootReducer(history), [], history);
-  store.checkState = (fn) => fn({ persistedState: store.getState().persistedState, router: store.getState().router });
-  // attach a helper method to the test store
-  store.push = (path) => history.push(path);
+  const store = getGlobalStoreForTest();
+  store.checkState = (fn) => {
+    const { persistedState, router } = store.getState();
+    fn({ persistedState: { ...persistedState, search: router.location.search }, router });
+  };
   return store;
 };
-
-const defaultPersistedState = getGlobalHooks().getDefaultPersistedState();
 
 describe("state.persistedState", () => {
   beforeEach(() => {
@@ -54,7 +54,6 @@ describe("state.persistedState", () => {
   it("stores initial panel layout in local storage", () => {
     const store = getStore();
     store.checkState(({ persistedState }) => {
-      const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState).toEqual(persistedState);
     });
@@ -65,7 +64,6 @@ describe("state.persistedState", () => {
     store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual(defaultPersistedState.panels.layout);
       expect(panels.savedProps).toEqual({});
-      const storage = new Storage();
       expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(defaultPersistedState);
     });
   });
@@ -87,7 +85,7 @@ describe("state.persistedState", () => {
     store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ "foo!bar": { test: true } });
-      const storage = new Storage();
+
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.layout).toEqual(panels.layout);
       expect(globalState.panels.savedProps).toEqual(panels.savedProps);
@@ -97,7 +95,7 @@ describe("state.persistedState", () => {
     store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ "foo!bar": { test: true } });
-      const storage = new Storage();
+
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.layout).toEqual(panels.layout);
       expect(globalState.panels.savedProps).toEqual(panels.savedProps);
@@ -109,10 +107,39 @@ describe("state.persistedState", () => {
     store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ "foo!bar": { test: true, testing: true } });
-      const storage = new Storage();
+
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.layout).toEqual(panels.layout);
       expect(globalState.panels.savedProps).toEqual(panels.savedProps);
+    });
+  });
+
+  it("saves all keys of migrated payload to state, with appropriate fallbacks", () => {
+    const store = getStore();
+
+    const payload = {
+      layout: "foo!bar",
+      savedProps: { "foo!bar": { test: true } },
+      version: 0,
+      futureFieldName: "foo",
+    };
+
+    store.dispatch(importPanelLayout(payload));
+    store.checkState(({ persistedState: { panels } }) => {
+      const result = {
+        layout: "foo!bar",
+        savedProps: { "foo!bar": { test: true } },
+        globalVariables: {},
+        userNodes: {},
+        linkedGlobalVariables: [],
+        playbackConfig: { speed: 0.2, messageOrder: "receiveTime" },
+        version: CURRENT_LAYOUT_VERSION,
+        futureFieldName: "foo",
+      };
+      expect(panels).toEqual(result);
+
+      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      expect(globalState.panels).toEqual(result);
     });
   });
 
@@ -125,7 +152,6 @@ describe("state.persistedState", () => {
 
     store.dispatch(importPanelLayout(payload));
     store.checkState(() => {
-      const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.globalVariables).toEqual({});
       expect(globalState.panels.userNodes).toEqual({});
@@ -142,7 +168,6 @@ describe("state.persistedState", () => {
 
     store.dispatch(importPanelLayout(payload));
     store.checkState(() => {
-      const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.playbackConfig).toEqual({ messageOrder: "receiveTime", speed: 0.2 });
     });
@@ -163,7 +188,6 @@ describe("state.persistedState", () => {
 
     store.dispatch(importPanelLayout(payload));
     store.checkState(() => {
-      const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.globalVariables).toEqual(globalVariables);
       expect(globalState.panels.userNodes).toEqual(userNodes);
@@ -181,7 +205,6 @@ describe("state.persistedState", () => {
 
     store.dispatch(importPanelLayout(payload));
     store.checkState(() => {
-      const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.restrictedTopics).toEqual(payload.restrictedTopics);
     });
@@ -193,7 +216,6 @@ describe("state.persistedState", () => {
     const payload = { globalData: globalVariables, layout: "foo!baz" };
     store.dispatch(importPanelLayout(payload, { isFromUrl: true }));
     store.checkState(() => {
-      const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.globalVariables).toEqual(globalVariables);
     });
@@ -205,7 +227,6 @@ describe("state.persistedState", () => {
     const payload = { globalData: { some_var: 2 }, globalVariables, layout: "foo!baz" };
     store.dispatch(importPanelLayout(payload, { isFromUrl: true }));
     store.checkState(() => {
-      const storage = new Storage();
       const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.globalData).toBe(undefined);
     });
@@ -606,7 +627,6 @@ describe("state.persistedState", () => {
 
   it("will set local storage when importing a panel layout, if reducer is not told to skipSettingLocalStorage", () => {
     const store = getStore();
-    const storage = new Storage();
 
     store.dispatch(importPanelLayout({ layout: "myNewLayout", savedProps: {} }, { isFromUrl: true }));
     store.checkState(() => {
@@ -617,7 +637,6 @@ describe("state.persistedState", () => {
 
   it("will not set local storage when importing a panel layout, if reducer is told to skipSettingLocalStorage", () => {
     const store = getStore();
-    const storage = new Storage();
 
     store.dispatch(
       importPanelLayout({ layout: null, savedProps: {} }, { isFromUrl: true, skipSettingLocalStorage: true })

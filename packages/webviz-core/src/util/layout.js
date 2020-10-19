@@ -6,8 +6,8 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import * as Sentry from "@sentry/browser";
+import CBOR from "cbor-js";
 import { compact, flatMap, xor, uniq } from "lodash";
-import LZString from "lz-string";
 import {
   createRemoveUpdate,
   getLeaves,
@@ -16,10 +16,11 @@ import {
   updateTree,
   type MosaicUpdate,
 } from "react-mosaic-component";
+import zlib from "zlib";
 
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import { isInIFrame } from "./iframeUtils";
+import { getLayoutNameAndVersion } from "webviz-core/shared/layout";
 import { type PanelsState } from "webviz-core/src/reducers/panels";
-import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { TabLocation, TabPanelConfig } from "webviz-core/src/types/layouts";
 import type {
   ConfigsPayload,
@@ -35,11 +36,14 @@ import {
   LAYOUT_QUERY_KEY,
   LAYOUT_URL_QUERY_KEY,
   PATCH_QUERY_KEY,
+  TITLE_QUERY_KEY,
 } from "webviz-core/src/util/globalConstants";
 
 const jsondiffpatch = require("jsondiffpatch").create({});
 
-const PARAMS_TO_DECODE = new Set([LAYOUT_QUERY_KEY, LAYOUT_URL_QUERY_KEY, "segment"]);
+const IS_IN_IFRAME = isInIFrame();
+
+const PARAMS_TO_DECODE = new Set([LAYOUT_URL_QUERY_KEY]);
 
 // given a panel type, create a unique id for a panel
 // with the type embedded within the id
@@ -464,9 +468,26 @@ export function stringifyParams(params: URLSearchParams): string {
   return stringifiedParams.length ? `?${stringifiedParams.join("&")}` : "";
 }
 
+const stateKeyMap = {
+  layout: "l",
+  savedProps: "sa",
+  globalVariables: "g",
+  userNodes: "u",
+  linkedGlobalVariables: "lg",
+  version: "v",
+  playbackConfig: "p",
+};
+const layoutKeyMap = { direction: "d", first: "f", second: "se", row: "r", column: "c", splitPercentage: "sp" };
+export const dictForPatchCompression = { ...layoutKeyMap, ...stateKeyMap };
+
 export function getUpdatedURLWithPatch(search: string, diff: string): string {
   const params = new URLSearchParams(search);
-  params.set(PATCH_QUERY_KEY, LZString.compressToEncodedURIComponent(diff));
+
+  const diffBuffer = Buffer.from(CBOR.encode(JSON.parse(diff)));
+  const dictionaryBuffer = Buffer.from(CBOR.encode(dictForPatchCompression));
+  const zlibPatch = zlib.deflateSync(diffBuffer, { dictionary: dictionaryBuffer }).toString("base64");
+
+  params.set(PATCH_QUERY_KEY, zlibPatch);
   return stringifyParams(params);
 }
 
@@ -476,10 +497,31 @@ export function getUpdatedURLWithNewVersion(search: string, name: string, versio
   params.delete(PATCH_QUERY_KEY);
   return stringifyParams(params);
 }
-
-// TODO(Audrey): remove the screenshot env checking after release.
 export function getShouldProcessPatch() {
-  const inScreenshot = inScreenshotTests();
-  const enableShareableUrl = getExperimentalFeature("shareableUrl");
-  return inScreenshot || (!inScreenshot && enableShareableUrl);
+  // Skip processing patch in iframe (currently used for MiniViz) since we can't update the URL anyway.
+  return !IS_IN_IFRAME;
+}
+
+// There are 2 cases for updating the document title based on layout:
+// - Update when initializing redux store (can read layout name from URL or localStorage)
+// - After URL is updated.
+export function updateDocumentTitle({ search, layoutName }: { search?: string, layoutName?: string }) {
+  if (!search && !layoutName) {
+    return;
+  }
+  const params = new URLSearchParams(search || "");
+  const title = params.get(TITLE_QUERY_KEY);
+
+  // Update directly if title is present at URL.
+  if (title) {
+    document.title = `${title} | webviz`;
+    return;
+  }
+  const fullLayoutName = layoutName || params.get(LAYOUT_QUERY_KEY);
+  const { name } = getLayoutNameAndVersion(fullLayoutName);
+  if (name) {
+    document.title = `${name.split("/").pop()} | webviz`;
+    return;
+  }
+  document.title = `webviz`;
 }

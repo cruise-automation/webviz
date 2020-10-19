@@ -161,14 +161,14 @@ class fake_msgs_HasJson {
     this[$offset] = offset;
   }
   jsonField() {
-    return JSON.parse($bigString.substr($view.getInt32((this[$offset] + 4), true), $view.getInt32(this[$offset], true)));
+    return $context.parseJson($bigString.substr($view.getInt32((this[$offset] + 4), true), $view.getInt32(this[$offset], true)));
   }
   [$deepParse]() {
     return new deepParse$fake_msgs_HasJson(this[$offset]);
   }
 }
 function deepParse$fake_msgs_HasJson($offset) {
-  this.jsonField = JSON.parse($bigString.substr($view.getInt32(($offset + 4), true), $view.getInt32($offset, true)));
+  this.jsonField = $context.parseJson($bigString.substr($view.getInt32(($offset + 4), true), $view.getInt32($offset, true)));
 }
 $context.associateDatatypes(fake_msgs_HasJson, [$typesByName, \\"fake_msgs/HasJson\\"])
 class fake_msgs_HasInt64s {

@@ -5,7 +5,6 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import { LOCATION_CHANGE } from "connected-react-router";
 import { isEmpty, isEqual, dropRight, pick, cloneDeep } from "lodash";
 import {
   getLeaves,
@@ -38,7 +37,12 @@ import type {
   UserNodes,
   PlaybackConfig,
 } from "webviz-core/src/types/panels";
-import { TAB_PANEL_TYPE, LAYOUT_QUERY_KEY, LAYOUT_URL_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import {
+  TAB_PANEL_TYPE,
+  LAYOUT_QUERY_KEY,
+  LAYOUT_URL_QUERY_KEY,
+  PATCH_QUERY_KEY,
+} from "webviz-core/src/util/globalConstants";
 import {
   updateTabPanelLayout,
   replaceAndRemovePanels,
@@ -55,9 +59,8 @@ import {
   moveTabBetweenTabPanels,
   createAddUpdates,
   removePanelFromTabPanel,
-  getLayoutPatch,
-  getShouldProcessPatch,
   stringifyParams,
+  updateDocumentTitle,
 } from "webviz-core/src/util/layout";
 import Storage from "webviz-core/src/util/Storage";
 
@@ -94,38 +97,94 @@ export const setPersistedStateInLocalStorage = (persistedState: PersistedState) 
 // new stores they will use the new values in localStorage. Re-initializing it for every action is
 // too expensive.
 let initialPersistedState;
-export function getInitialPersistedStateAndSetStorageIfNeeded(): PersistedState {
+export function getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history: any): PersistedState {
   if (initialPersistedState == null) {
     const defaultPersistedState = Object.freeze(getGlobalHooks().getDefaultPersistedState());
+    const oldPersistedState: any = storage.get(GLOBAL_STATE_STORAGE_KEY);
 
-    const storedPersistedState: any = storage.get(GLOBAL_STATE_STORAGE_KEY);
     const newPersistedState = cloneDeep(defaultPersistedState);
-    if (storedPersistedState?.fetchedLayout) {
-      newPersistedState.fetchedLayout = storedPersistedState.fetchedLayout;
+
+    const { search: currentSearch, pathname } = history.location;
+    const currentSearchParams = new URLSearchParams(currentSearch);
+    const oldFetchedLayoutState = oldPersistedState?.fetchedLayout;
+    const oldPersistedSearch = oldPersistedState?.search;
+    const fetchedLayoutDataFromLocalStorage = oldFetchedLayoutState?.data;
+
+    let isInitializedFromLocalStorage = false;
+
+    if (oldFetchedLayoutState) {
+      newPersistedState.fetchedLayout = oldFetchedLayoutState;
     }
-    if (storedPersistedState?.panels) {
-      newPersistedState.panels = storedPersistedState.panels;
-    } else if (storedPersistedState?.layout) {
-      // The localStorage is on old format with {layout, savedProps...}
-      newPersistedState.panels = storedPersistedState;
+    let fetchedLayoutName;
+
+    // 1. Get layout from localStorage and update URL if there are no layout params and the fetchedLayout is not from layout-url param.
+    if (
+      fetchedLayoutDataFromLocalStorage &&
+      !oldFetchedLayoutState.isFromLayoutUrlParam &&
+      !currentSearchParams.get(LAYOUT_QUERY_KEY) &&
+      !currentSearchParams.get(LAYOUT_URL_QUERY_KEY)
+    ) {
+      if (oldPersistedSearch) {
+        // Get the `layout` and `patch` params by reading `persistedState.search` from localStorage and update the URL.
+        const localStorageParams = new URLSearchParams(oldPersistedSearch);
+        const layoutParamVal = localStorageParams.get(LAYOUT_QUERY_KEY);
+        const patchParamVal = localStorageParams.get(PATCH_QUERY_KEY);
+        if (layoutParamVal) {
+          currentSearchParams.set(LAYOUT_QUERY_KEY, layoutParamVal);
+        }
+        if (patchParamVal) {
+          currentSearchParams.set(PATCH_QUERY_KEY, patchParamVal);
+        }
+      } else {
+        // Read layout name and version from fetchedLayout.
+        const { name, releasedVersion } = fetchedLayoutDataFromLocalStorage;
+        fetchedLayoutName = name;
+        const layoutParam = releasedVersion ? `${name}@${releasedVersion}` : name;
+        currentSearchParams.set(LAYOUT_QUERY_KEY, layoutParam);
+      }
+
+      isInitializedFromLocalStorage = true;
+      const newSearch = stringifyParams(currentSearchParams);
+      history.push({ pathname, search: newSearch });
+      // Store the current search in localStorage. It'll get updated later when user makes layout edits.
+      newPersistedState.search = newSearch;
+    }
+    updateDocumentTitle({ layoutName: fetchedLayoutName, search: newPersistedState.search || currentSearch });
+
+    // 2. Set fetchedLayout state if it's available in localStorage.
+    if (fetchedLayoutDataFromLocalStorage) {
+      // Set `isInitializedFromLocalStorage` flag to skip initial layout fetch.
+      newPersistedState.fetchedLayout = {
+        ...oldPersistedState.fetchedLayout,
+        isInitializedFromLocalStorage,
+      };
     }
 
+    // 3. Handle panel state.
+    if (oldPersistedState?.panels) {
+      newPersistedState.panels = oldPersistedState.panels;
+    } else if (oldPersistedState?.layout) {
+      // The localStorage is on old format with {layout, savedProps...}
+      newPersistedState.panels = oldPersistedState;
+    }
     // Extra checks to make sure all the common fields for panels are present.
     Object.keys(defaultPersistedState.panels).forEach((fieldName) => {
       const newFieldValue = newPersistedState.panels[fieldName];
       if (isEmpty(newFieldValue)) {
-        newPersistedState.panels[fieldName] = defaultPersistedState[fieldName];
+        newPersistedState.panels[fieldName] = defaultPersistedState.panels[fieldName];
       }
     });
 
+    // Migrate panels and store in localStorage.
     const migratedPanels = getGlobalHooks().migratePanels(newPersistedState.panels);
     initialPersistedState = {
       ...newPersistedState,
       panels: { ...defaultPersistedState.panels, ...migratedPanels },
     };
-    // Store the migrated state to local storage.
-    storage.set(GLOBAL_STATE_STORAGE_KEY, initialPersistedState);
+
+    setPersistedStateInLocalStorage(initialPersistedState);
   }
+
   return initialPersistedState;
 }
 
@@ -335,18 +394,17 @@ function importPanelLayout(state: PanelsState, payload: ImportPanelLayoutPayload
   try {
     migratedPayload = getGlobalHooks().migratePanels(payload);
   } catch (err) {
-    console.error("Error importing layout", payload, err);
     return state;
   }
 
   const newPanelsState = {
+    ...migratedPayload,
     layout: migratedPayload.layout || {},
     savedProps: migratedPayload.savedProps || {},
     globalVariables: migratedPayload.globalVariables || {},
     userNodes: migratedPayload.userNodes || {},
     linkedGlobalVariables: migratedPayload.linkedGlobalVariables || [],
     playbackConfig: migratedPayload.playbackConfig || defaultPlaybackConfig,
-    ...(migratedPayload.restrictedTopics ? { restrictedTopics: migratedPayload.restrictedTopics } : undefined),
   };
 
   return newPanelsState;
@@ -691,7 +749,6 @@ const endDrag = (panelsState: PanelsState, dragPayload: EndDragPayload): PanelsS
 };
 
 const panelsReducer = function(state: State, action: ActionTypes): State {
-  const oldPanels = { ...state.persistedState.panels };
   // Make a copy of the persistedState before mutation.
   let newState = { ...state, persistedState: { ...state.persistedState, panels: { ...state.persistedState.panels } } };
 
@@ -809,32 +866,6 @@ const panelsReducer = function(state: State, action: ActionTypes): State {
       break;
   }
 
-  // Reset layout entirely (without patch) when importing a different layout or routing via Redux
-  if (!["SET_FETCHED_LAYOUT", "LOAD_LAYOUT", "CLEAR_HOVER_VALUE", LOCATION_CHANGE].includes(action.type)) {
-    const shouldProcessPatch = getShouldProcessPatch();
-    if (!shouldProcessPatch) {
-      const params = new URLSearchParams(window.location.search);
-      // TODO(Esther) - Remove when Shareable Layout work is made public
-      const hasLayoutParam = params.get(LAYOUT_QUERY_KEY) || params.get(LAYOUT_URL_QUERY_KEY);
-      if (hasLayoutParam) {
-        // Calculate diff between old vs. new panels state - if it exists, remove layout param.
-        const layoutPatch = getLayoutPatch(oldPanels, newState.persistedState.panels);
-        if (layoutPatch) {
-          params.delete(LAYOUT_QUERY_KEY);
-          params.delete(LAYOUT_URL_QUERY_KEY);
-          newState.router.location = {
-            pathname: location.pathname,
-            search: stringifyParams(params),
-          };
-        }
-      }
-    }
-  }
-
-  if (action.payload && action.payload.skipSettingLocalStorage) {
-    return newState;
-  }
-  setPersistedStateInLocalStorage(newState.persistedState);
   return newState;
 };
 

@@ -42,6 +42,7 @@ type Props = {|
   setInteractionsTabType: (?TabType) => void,
   setMeasureInfo: (MeasureInfo) => void,
   showCrosshair: ?boolean,
+  isHidden: boolean,
   ...SearchTextProps,
 |};
 
@@ -78,6 +79,7 @@ function LayoutToolbar({
   setSearchTextMatches,
   setSelectedMatchIndex,
   showCrosshair,
+  isHidden,
   targetPose,
   toggleSearchTextOpen,
   transforms,
@@ -94,7 +96,7 @@ function LayoutToolbar({
     [transforms]
   );
 
-  return (
+  return isHidden ? null : (
     <>
       <MeasuringTool
         ref={measuringElRef}

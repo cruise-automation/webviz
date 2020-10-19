@@ -77,8 +77,10 @@ describe("MemoryCacheDataProvider", () => {
       start: { nsec: 0, sec: 100 },
       end: { nsec: 0, sec: 102 },
       topics: [],
-      datatypes: {},
-      messageDefinitionsByTopic: {},
+      messageDefinitions: {
+        type: "raw",
+        messageDefinitionsByTopic: {},
+      },
       providesParsedMessages: false,
     });
   });

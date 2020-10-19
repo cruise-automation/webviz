@@ -39,7 +39,7 @@ function MainToolbar({
   return (
     <div className={styles.buttons}>
       <Button tooltip={cameraModeTip} onClick={onToggleCameraMode}>
-        <Icon style={{ color: perspective ? colors.accent : "white" }}>
+        <Icon style={{ color: perspective ? colors.accent : "white" }} dataTest={`MainToolbar-toggleCameraMode`}>
           <Video3dIcon />
         </Icon>
       </Button>

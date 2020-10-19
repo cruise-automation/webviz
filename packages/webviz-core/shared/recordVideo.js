@@ -51,6 +51,7 @@ async function recordVideo({
   const screenshotsDir = `${globalEnvVars.tempVideosDirectory}/__video-recording-tmp-${uuid.v4()}__`;
   await mkdir(screenshotsDir);
 
+  let hasFailed = false;
   try {
     let msPerFrame;
     const parallelTotal = parallel || 2;
@@ -71,12 +72,19 @@ async function recordVideo({
           let i = 0;
           let isRunning = true;
           while (isRunning) {
+            if (hasFailed) {
+              return;
+            }
+
             await promiseTimeout(
               (async () => {
                 for (const error of errors) {
                   if (errorIsWhitelisted && errorIsWhitelisted(error)) {
                     log.info(`Encountered whitelisted error: ${error}`);
                   } else {
+                    const errorMessage = `Encountered error: ${error.toString() || "Unknown error"}`;
+                    log.info(errorMessage);
+                    console.error(errorMessage);
                     throw new Error(error);
                   }
                 }
@@ -92,11 +100,12 @@ async function recordVideo({
                 if (!actionObj) {
                   return;
                 }
-                if (actionObj.action === "error" && actionObj.error) {
-                  if (errorIsWhitelisted && errorIsWhitelisted(actionObj.error)) {
+                if (actionObj.action === "error") {
+                  if (errorIsWhitelisted && actionObj.error && errorIsWhitelisted(actionObj.error)) {
                     log.info(`Encountered whitelisted error: ${actionObj.error}`);
                   } else {
-                    throw new Error(actionObj.error);
+                    log.info(`Encountered error: ${actionObj.error || "Unknown error"}`);
+                    throw new Error(actionObj.error || "Unknown error");
                   }
                 } else if (actionObj.action === "finish") {
                   log.info("Finished!");
@@ -118,7 +127,7 @@ async function recordVideo({
                   );
                   i++;
                 } else {
-                  throw new Error(`Unknown action: ${actionObj.action}`);
+                  throw new Error(`Unknown action: '${actionObj.action}'`);
                 }
               })(),
               perFrameTimeoutMs,
@@ -154,6 +163,9 @@ async function recordVideo({
     await rmfr(videoPath);
 
     return { videoFile, sampledImageFile };
+  } catch (error) {
+    hasFailed = true;
+    throw error;
   } finally {
     log.info(`Removing ${screenshotsDir}`);
     await rmfr(screenshotsDir);

@@ -62,43 +62,6 @@ describe("percentOf", () => {
   });
 });
 
-describe("time.formatDuration", () => {
-  it("uses milliseconds and pads values with zeros", () => {
-    expect(time.formatDuration({ sec: 0, nsec: 0 })).toEqual("0:00:00.000");
-    expect(time.formatDuration({ sec: 0, nsec: 999 })).toEqual("0:00:00.000");
-    expect(time.formatDuration({ sec: 0, nsec: 1000 })).toEqual("0:00:00.000");
-    expect(time.formatDuration({ sec: 0, nsec: 499999 })).toEqual("0:00:00.000");
-    expect(time.formatDuration({ sec: 0, nsec: 500000 })).toEqual("0:00:00.001");
-    expect(time.formatDuration({ sec: 0, nsec: 999e3 })).toEqual("0:00:00.001");
-    expect(time.formatDuration({ sec: 0, nsec: 999e6 })).toEqual("0:00:00.999");
-    expect(time.formatDuration({ sec: 1, nsec: 999e6 })).toEqual("0:00:01.999");
-    expect(time.formatDuration({ sec: 1, nsec: 999999e3 })).toEqual("0:00:02.000");
-    expect(time.formatDuration({ sec: 1, nsec: 999999999 })).toEqual("0:00:02.000");
-    expect(time.formatDuration({ sec: 3 * 60 * 60 + 2 * 60 + 1, nsec: 999e6 })).toEqual("3:02:01.999");
-    expect(time.formatDuration({ sec: 3 * 60 * 60 + 59 * 60 + 59, nsec: 99e6 })).toEqual("3:59:59.099");
-    expect(time.formatDuration({ sec: -1, nsec: 0 })).toEqual("-0:00:01.000");
-    expect(time.formatDuration({ sec: 0, nsec: -1000000 })).toEqual("-0:00:00.001");
-  });
-});
-
-describe("time.formatDate", () => {
-  it("formats date based on provided timezone", () => {
-    expect(time.formatDate({ sec: 1, nsec: 0 }, "Asia/Bangkok")).toBe("1970-01-01");
-    expect(time.formatDate({ sec: 1, nsec: 1 }, "Australia/Currie")).toBe("1970-01-01");
-    expect(time.formatDate({ sec: 1000000, nsec: 0 }, "Pacific/Midway")).toBe("1970-01-12");
-    expect(time.formatDate({ sec: 1100000, nsec: 1000000000 }, "America/Los_Angeles")).toBe("1970-01-13");
-  });
-});
-
-describe("time.formatTime", () => {
-  it("formats time based on provided timezone", () => {
-    expect(time.formatTime({ sec: 1, nsec: 0 }, "America/Phoenix")).toBe("5:00:01.000 PM MST");
-    expect(time.formatTime({ sec: 1, nsec: 1 }, "America/Detroit")).toBe("7:00:01.000 PM EST");
-    expect(time.formatTime({ sec: 1, nsec: 999999999 }, "America/Phoenix")).toBe("5:00:01.999 PM MST");
-    expect(time.formatTime({ sec: 1, nsec: 1000000000 }, "America/Los_Angeles")).toBe("4:00:02.000 PM PST");
-  });
-});
-
 describe("time.formatTimeRaw", () => {
   it("formats whole values correction", () => {
     expect(time.formatTimeRaw({ sec: 1, nsec: 0 })).toEqual("1.000000000");
@@ -264,28 +227,6 @@ describe("time.parseRosTimeStr", () => {
     expect(time.parseRosTimeStr("1.0123456789")).toEqual({ sec: 1, nsec: 0.012345679e9 });
     // Too much precision, round seconds up.
     expect(time.parseRosTimeStr("1.999999999999")).toEqual({ sec: 2, nsec: 0 });
-  });
-});
-
-describe("time.parseTimeStr", () => {
-  // create the time string input from current time zone so the test results are always consistent
-  // sample output: 2018-07-23 2:45:20.317 PM PDT
-  function getCombinedTimeStr(timestamp) {
-    return `${time.formatDate(timestamp)} ${time.formatTime(timestamp)}`;
-  }
-
-  it("returns null if the input string is formatted incorrectly", () => {
-    expect(time.parseTimeStr("")).toEqual(null);
-    expect(time.parseTimeStr("018-07")).toEqual(null);
-    expect(time.parseTimeStr("0")).toEqual(null);
-  });
-
-  it("returns the correct time", () => {
-    const timeStr = getCombinedTimeStr({ sec: 1532382320, nsec: 317124567 });
-    expect(time.parseTimeStr(timeStr)).toEqual({
-      nsec: 317000000, // losing some accuracy when converting back
-      sec: 1532382320,
-    });
   });
 });
 

@@ -3,10 +3,14 @@
   "version": "0.0.1",
   "description": "rosbag analysis tool",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=10.22.0 <12"
+  },
   "dependencies": {
     "@cruise-automation/hooks": "0.0.1",
     "@mdi/svg": "3.2.89",
     "@sentry/browser": "5.11.0",
+    "async-retry": "1.2.3",
     "chart.js": "davidswinegar/Chart.js#0785c29a4c57b3e1b4243f8163df7950a00b2a80",
     "chartjs-plugin-annotation": "0.5.7",
     "chartjs-plugin-datalabels": "davidswinegar/chartjs-plugin-datalabels#b0ade94116d4e273f0fdc17e9528c9a33c796e90",
@@ -35,6 +39,7 @@
     "natsort": "2.0.0",
     "nearley": "2.15.1",
     "panzoom": "8.4.0",
+    "prettier": "1.15.3",
     "promise-queue": "2.2.5",
     "prop-types": "15.6.2",
     "rc-color-picker": "1.2.6",
@@ -42,7 +47,6 @@
     "rc-tree": "3.9.5",
     "react": "16.10.2",
     "react-autocomplete": "janpaul123/react-autocomplete#bc8737070b5744069719c8fcd4e0a197192b0d48",
-    "react-container-dimensions": "1.4.1",
     "react-dnd": "10.0.2",
     "react-dnd-html5-backend": "^10.0.2",
     "react-document-events": "davidswinegar/react-document-events#d7003228d8cd57535ee8b30fac9811aa237526b8",

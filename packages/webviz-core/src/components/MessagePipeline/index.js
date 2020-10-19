@@ -13,6 +13,7 @@ import { type Time, TimeUtil } from "rosbag";
 import { pauseFrameForPromises, type FramePromise } from "./pauseFrameForPromise";
 import warnOnOutOfSyncMessages from "./warnOnOutOfSyncMessages";
 import signal from "webviz-core/shared/signal";
+import type { GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type {
   AdvertisePayload,
   Frame,
@@ -26,9 +27,9 @@ import type {
   Topic,
 } from "webviz-core/src/players/types";
 import StoreSetup from "webviz-core/src/stories/StoreSetup";
+import { wrapMessages } from "webviz-core/src/test/datatypes";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { objectValues } from "webviz-core/src/util";
-import { hideLoadingLogo } from "webviz-core/src/util/hideLoadingLogo";
 import {
   type BailoutToken,
   createSelectableContext,
@@ -81,8 +82,8 @@ function defaultPlayerState(): PlayerState {
   };
 }
 
-type ProviderProps = {| children: React.Node, player?: ?Player |};
-export function MessagePipelineProvider({ children, player }: ProviderProps) {
+type ProviderProps = {| children: React.Node, player?: ?Player, globalVariables?: GlobalVariables |};
+export function MessagePipelineProvider({ children, player, globalVariables = {} }: ProviderProps) {
   const currentPlayer = useRef<?Player>(undefined);
   const [playerState, setPlayerState] = useState<PlayerState>(defaultPlayerState);
   const lastActiveData = useRef<?PlayerStateActiveData>(playerState.activeData);
@@ -160,16 +161,10 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
         if (playerTickState.current.resolveFn) {
           throw new Error("New playerState was emitted before last playerState was rendered.");
         }
+
         const promise = new Promise((resolve) => {
           playerTickState.current.resolveFn = resolve;
         });
-
-        const { showInitializing, isPresent } = newPlayerState;
-
-        if (!isPresent || !showInitializing) {
-          hideLoadingLogo();
-        }
-
         setPlayerState((currentPlayerState) => {
           if (currentPlayer.current !== player) {
             // It's unclear how we can ever get here, but it looks like React
@@ -269,6 +264,26 @@ export function MessagePipelineProvider({ children, player }: ProviderProps) {
   }, []);
   const requestBackfill = useMemo(() => debounce(() => (player ? player.requestBackfill() : undefined)), [player]);
 
+  React.useEffect(
+    () => {
+      let skipUpdate = false;
+      (async () => {
+        // Wait for the current frame to finish rendering if needed
+        await pauseFrameForPromises(playerTickState.current?.promisesToWaitFor ?? []);
+
+        // If the globalVariables have already changed again while
+        // we waited for the frame to render, skip the update.
+        if (!skipUpdate && currentPlayer.current) {
+          currentPlayer.current.setGlobalVariables(globalVariables);
+        }
+      })();
+      return () => {
+        skipUpdate = true;
+      };
+    },
+    [globalVariables]
+  );
+
   return (
     <Context.Provider
       value={useShallowMemo({
@@ -300,7 +315,6 @@ export function MessagePipelineConsumer({ children }: ConsumerProps) {
 }
 
 const NO_DATATYPES = Object.freeze({});
-const NO_BOBJECTS = Object.freeze([]);
 
 // TODO(Audrey): put messages under activeData, add ability to mock seeking
 export function MockMessagePipelineProvider(props: {|
@@ -365,7 +379,7 @@ export function MockMessagePipelineProvider(props: {|
         ? undefined
         : {
             messages: props.messages || [],
-            bobjects: props.bobjects || NO_BOBJECTS,
+            bobjects: props.bobjects || wrapMessages(props.messages || []),
             topics: props.topics || [],
             datatypes: props.datatypes || NO_DATATYPES,
             startTime: props.startTime || startTime.current || { sec: 100, nsec: 0 },

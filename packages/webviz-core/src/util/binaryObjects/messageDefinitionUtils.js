@@ -71,11 +71,17 @@ export const addTimeTypes = (typesByName: RosDatatypes): RosDatatypes => ({
 });
 
 // String.prototype.replaceAll is not implemented in Chrome.
-const allSlashes = new RegExp("/", "g");
-export const friendlyTypeName = (name: string): string => name.replace(allSlashes, "_");
+const allBadCharacters = new RegExp("[/-]", "g");
+export const friendlyTypeName = (name: string): string => name.replace(allBadCharacters, "_");
 export const deepParseSymbol = Symbol("deepParse");
 export const classDatatypes = new WeakMap<any, [RosDatatypes, string]>();
 export const associateDatatypes = (cls: any, datatypes: [RosDatatypes, string]): void => {
   classDatatypes.set(cls, datatypes);
 };
 export const getDatatypes = (cls: any): ?[RosDatatypes, string] => classDatatypes.get(cls);
+
+// Note: returns false for "time" and "duration". Might be more useful not doing that.
+// The RosMsgField flow-type has an `isComplex` field, but it isn't present for the websocket
+// player, and has gone missing in test fixture before as well. Best to just assume it doesn't
+// exist, because it's an annoying denormalization anyway.
+export const isComplex = (typeName: string) => !primitiveList.has(typeName);

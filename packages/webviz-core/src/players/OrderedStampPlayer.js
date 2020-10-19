@@ -8,6 +8,7 @@
 import { partition, uniq } from "lodash";
 import { type Time, TimeUtil } from "rosbag";
 
+import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import {
   cast,
   type AdvertisePayload,
@@ -183,6 +184,12 @@ export default class OrderedStampPlayer implements Player {
   }
   setUserNodes(nodes: UserNodes): Promise<void> {
     return this._player.setUserNodes(nodes);
+  }
+  setGlobalVariables(globalVariables: GlobalVariables) {
+    this._player.setGlobalVariables(globalVariables);
+    // So that downstream players can re-send messages that depend on global
+    // variable state.
+    this.requestBackfill();
   }
   setMessageOrder(order: TimestampMethod) {
     if (this._messageOrder !== order) {

@@ -38,6 +38,18 @@ function glConstantToRegl(value: ?number): ?string {
   throw new Error(`unhandled constant value ${JSON.stringify(value)}`);
 }
 
+const getSceneToDraw = ({ json }) => {
+  if (json.scene != null) {
+    return json.scene;
+  }
+  // Draw the first scene if the scene key is missing.
+  const keys = Object.keys(json.scenes ?? {});
+  if (keys.length === 0) {
+    throw new Error("No scenes to render");
+  }
+  return keys[0];
+};
+
 const drawModel = (regl) => {
   const command = regl({
     primitive: "triangles",
@@ -179,8 +191,9 @@ const drawModel = (regl) => {
       }
     }
 
-    // finally, draw each of the main scene's nodes
-    for (const nodeIdx of model.json.scenes[model.json.scene].nodes) {
+    // finally, draw each of the main scene's nodes. Use the first scene if one isn't specified
+    // explicitly.
+    for (const nodeIdx of model.json.scenes[getSceneToDraw(model)].nodes) {
       const rootTransform = mat4.create();
       mat4.rotateX(rootTransform, rootTransform, Math.PI / 2);
       mat4.rotateY(rootTransform, rootTransform, Math.PI / 2);

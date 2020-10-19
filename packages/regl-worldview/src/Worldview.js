@@ -9,7 +9,6 @@
 import mapValues from "lodash/mapValues";
 import pickBy from "lodash/pickBy";
 import * as React from "react";
-import ContainerDimensions from "react-container-dimensions";
 
 import { CameraListener, DEFAULT_CAMERA_STATE } from "./camera/index";
 import Command from "./commands/Command";
@@ -24,6 +23,7 @@ import type {
 } from "./types";
 import aggregate from "./utils/aggregate";
 import { getNodeEnv } from "./utils/common";
+import ContainerDimensions from "./utils/Dimensions";
 import { Ray } from "./utils/Raycast";
 import { WorldviewContext } from "./WorldviewContext";
 import WorldviewReactContext from "./WorldviewReactContext";

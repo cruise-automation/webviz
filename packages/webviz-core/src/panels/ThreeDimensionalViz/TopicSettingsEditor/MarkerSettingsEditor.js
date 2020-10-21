@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 
 import React from "react";
+import type { Color } from "regl-worldview";
 
 import { type TopicSettingsEditorProps } from ".";
 import ColorPickerForTopicSettings from "./ColorPickerForTopicSettings";
@@ -17,7 +18,7 @@ import type { Marker, MarkerArray } from "webviz-core/src/types/Messages";
 import { LINED_CONVEX_HULL_RENDERING_SETTING } from "webviz-core/src/util/globalConstants";
 
 type MarkerSettings = {|
-  overrideColor?: ?string,
+  overrideColor?: ?Color,
   overrideCommand?: ?string,
 |};
 

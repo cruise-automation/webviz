@@ -122,6 +122,82 @@ storiesOf("Worldview/Points", module)
       </Worldview>
     );
   })
+  .add("<Points> - World size matches non-unit cube (orthographic)", () => {
+    const scaleX = 0.5;
+    return (
+      <Worldview
+        defaultCameraState={{
+          distance: 3,
+          phi: 0.5 * Math.PI,
+          targetOffset: [0, 0, 0],
+          perspective: false,
+        }}>
+        <Points useWorldSpaceSize={true}>
+          {[
+            {
+              points: [{ x: 0, y: 0, z: 0 }],
+              scale: { x: scaleX, y: scaleX, z: scaleX },
+              color: { r: 1, g: 1, b: 0, a: 0.5 },
+              pose: {
+                position: { x: 0, y: 0, z: 0 },
+                orientation: { x: 0, y: 0, z: 0, w: 1 },
+              },
+            },
+          ]}
+        </Points>
+        <Cubes>
+          {[
+            {
+              pose: {
+                orientation: { x: 0, y: 0, z: 0, w: 1 },
+                position: { x: 0, y: 0, z: 0 },
+              },
+              scale: { x: scaleX, y: scaleX, z: scaleX },
+              color: { r: 1, g: 0, b: 1, a: 0.5 },
+            },
+          ]}
+        </Cubes>
+      </Worldview>
+    );
+  })
+  .add("<Points> - World size matches non-unit cube (perspective)", () => {
+    const scaleX = 0.5;
+    return (
+      <Worldview
+        defaultCameraState={{
+          distance: 3,
+          phi: 0.5 * Math.PI,
+          targetOffset: [0, 0, 0],
+          perspective: true,
+        }}>
+        <Points useWorldSpaceSize={true}>
+          {[
+            {
+              points: [{ x: 0, y: 0, z: 0 }],
+              scale: { x: scaleX, y: scaleX, z: scaleX },
+              color: { r: 1, g: 1, b: 0, a: 0.5 },
+              pose: {
+                position: { x: 0, y: 0, z: 0 },
+                orientation: { x: 0, y: 0, z: 0, w: 1 },
+              },
+            },
+          ]}
+        </Points>
+        <Cubes>
+          {[
+            {
+              pose: {
+                orientation: { x: 0, y: 0, z: 0, w: 1 },
+                position: { x: 0, y: 0, z: 0 },
+              },
+              scale: { x: scaleX, y: scaleX, z: scaleX },
+              color: { r: 1, g: 0, b: 1, a: 0.5 },
+            },
+          ]}
+        </Cubes>
+      </Worldview>
+    );
+  })
   .add("<Points> - Many points in world space, with cubes for reference", () => {
     const x = 5;
     const y = x;

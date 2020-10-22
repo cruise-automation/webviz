@@ -21,7 +21,7 @@ type Props = {
 
 const makePointsCommand = (useWorldSpaceSize: boolean) => {
   return (regl: Regl) => {
-    const [min, max] = regl.limits.pointSizeDims;
+    const [minLimitPointSize, maxLimitPointSize] = regl.limits.pointSizeDims;
     return withPose({
       primitive: "points",
       vert: `
@@ -34,6 +34,8 @@ const makePointsCommand = (useWorldSpaceSize: boolean) => {
     uniform bool useWorldSpaceSize;
     uniform float viewportWidth;
     uniform float viewportHeight;
+    uniform float minPointSize;
+    uniform float maxPointSize;
 
     attribute vec3 point;
     attribute vec4 color;
@@ -64,6 +66,9 @@ const makePointsCommand = (useWorldSpaceSize: boolean) => {
       } else {
         gl_PointSize = pointSize;
       }
+
+      // Finally, ensure the calculated point size is within the limits.
+      gl_PointSize = min(maxPointSize, max(minPointSize, gl_PointSize));
     }
     `,
       frag: `
@@ -85,12 +90,13 @@ const makePointsCommand = (useWorldSpaceSize: boolean) => {
 
       uniforms: {
         pointSize: (context, props) => {
-          const size = props.scale.x || 1;
-          return Math.min(max, Math.max(min, size));
+          return props.scale.x || 1;
         },
         useWorldSpaceSize,
         viewportWidth: regl.context("viewportWidth"),
         viewportHeight: regl.context("viewportHeight"),
+        minPointSize: minLimitPointSize,
+        maxPointSize: maxLimitPointSize,
       },
 
       count: regl.prop("points.length"),

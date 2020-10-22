@@ -12,6 +12,9 @@ import type { DepthState, BlendState } from "../types";
 import { defaultReglDepth, defaultReglBlend } from "./commandUtils";
 
 const withRenderStateOverrides = (command: any) => (regl: any) => {
+  // Generate the render command once
+  const reglCommand = command(regl);
+
   const renderElement = (props) => {
     // Get curstom render states from the given marker. Some commands, like <Arrows />
     // will use the originalMarker property instead. If no custom render states
@@ -23,8 +26,7 @@ const withRenderStateOverrides = (command: any) => (regl: any) => {
     // for the same render states
     const memoizedRender = memoize(
       (props: { depth: DepthState, blend: BlendState }) => {
-        const cmd = { ...command(regl), depth, blend };
-        return regl(cmd);
+        return regl({ ...reglCommand, depth, blend });
       },
       (...args) => JSON.stringify(args)
     );

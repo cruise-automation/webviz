@@ -15,7 +15,7 @@ const withRenderStateOverrides = (command: any) => (regl: any) => {
   // Generate the render command once
   const reglCommand = command(regl);
 
-  // Use memoization to prevent generating too multiple render commands
+  // Use memoization to avoid generating multiple render commands for the same render states
   // for the same render states
   const memoizedRender = memoize(
     (props: { depth: DepthState, blend: BlendState }) => {

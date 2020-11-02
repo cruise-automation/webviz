@@ -28,9 +28,10 @@ const withRenderStateOverrides = (command: any) => (regl: any) => {
   const renderElement = (props) => {
     // Get curstom render states from the given marker. Some commands, like <Arrows />
     // will use the originalMarker property instead. If no custom render states
-    // are present, use the default ones to make sure the hitmap works correctly.
-    const depth = props.depth || props.originalMarker?.depth || defaultReglDepth;
-    const blend = props.blend || props.originalMarker?.blend || defaultReglBlend;
+    // are present, use either the ones provided in the command or the default ones. We do
+    // need to provide valid objects in order to make sure the hitmap works correctly.
+    const depth = props.depth || props.originalMarker?.depth || reglCommand.depth || defaultReglDepth;
+    const blend = props.blend || props.originalMarker?.blend || reglCommand.blend || defaultReglBlend;
     memoizedRender({ depth, blend })(props);
   };
 

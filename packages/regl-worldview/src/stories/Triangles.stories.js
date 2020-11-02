@@ -44,6 +44,14 @@ const instancedTriangles = (x, y, z) => {
   };
 };
 
+const withSingleColor = (triangle, color) => {
+  return {
+    ...triangle,
+    colors: undefined,
+    color,
+  };
+};
+
 const Example = ({ triangles }) => (
   <Container cameraState={{ perspective: true, phi: 1.83, thetaOffset: -1.1 }}>
     <Triangles>{triangles}</Triangles>
@@ -54,9 +62,25 @@ storiesOf("Worldview/Triangles", module)
   .addDecorator(withKnobs)
   .add("<Triangles> with points and color", () => <Example triangles={[singleTriangle(0, 0, 0)]} />)
   .add("<Triangles> with instancing", () => <Example triangles={[instancedTriangles(0, 0, 0)]} />)
+  .add("<Triangles> with single color", () => (
+    <Example
+      triangles={[
+        withSingleColor(singleTriangle(0, 0, 0), { r: 1, g: 1, b: 0, a: 1 }),
+        withSingleColor(singleTriangle(5.0, 0.1, 0), { r: 0, g: 1, b: 1, a: 1 }),
+      ]}
+    />
+  ))
   .add("<Triangles> with custom depth and blend values", () => (
     <Example triangles={withCustomRenderStates([singleTriangle(0, 0, 0)], [singleTriangle(5, 0, 0.1)])} />
   ))
   .add("<Triangles> with instancing and custom render states", () => (
     <Example triangles={withCustomRenderStates([instancedTriangles(0, 0, 0)], [instancedTriangles(5, 0, 0.1)])} />
+  ))
+  .add("<Triangles> with single color and custom render states", () => (
+    <Example
+      triangles={withCustomRenderStates(
+        [withSingleColor(singleTriangle(0, 0, 0), { r: 1, g: 1, b: 0, a: 1 })],
+        [withSingleColor(singleTriangle(5.0, 0.1, 0), { r: 0, g: 1, b: 1, a: 1 })]
+      )}
+    />
   ));

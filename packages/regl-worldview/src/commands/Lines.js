@@ -358,7 +358,7 @@ const lines = (regl: any) => {
   let positionArray = new Float32Array(0);
   let rotationArray = new Float32Array(0);
 
-  function fillPointArray(points: any[], alreadyClosed: boolean, shouldClose: boolean) {
+  function fillPointArray(points: any[], alreadyClosed: boolean, shouldClose: boolean): Float32Array {
     const numTotalPoints = points.length + (shouldClose ? 3 : 2);
     if (allocatedPoints < numTotalPoints) {
       pointArray = new Float32Array(numTotalPoints * 3);
@@ -390,9 +390,13 @@ const lines = (regl: any) => {
       pointArray.copyWithin(0, 3, 6);
       pointArray.copyWithin(n - 3, n - 6, n - 3);
     }
+    return pointArray.subarray(0, n);
   }
 
-  function fillPoseArrays(instances: number, poses: Pose[]): ?Error {
+  function fillPoseArrays(
+    instances: number,
+    poses: Pose[]
+  ): { positionData: Float32Array, rotationData: Float32Array } {
     if (positionArray.length < instances * 3) {
       positionArray = new Float32Array(instances * 3);
       rotationArray = new Float32Array(instances * 4);
@@ -412,6 +416,10 @@ const lines = (regl: any) => {
       rotationArray[rotationOffset + 2] = convertedRotation[2];
       rotationArray[rotationOffset + 3] = convertedRotation[3];
     }
+    return {
+      positionData: positionArray.subarray(0, instances * 3),
+      rotationData: rotationArray.subarray(0, instances * 4),
+    };
   }
 
   function convertColors(colors: any): Vec4[] {
@@ -423,7 +431,7 @@ const lines = (regl: any) => {
     colors: ?((Color | Vec4)[]),
     monochrome: boolean,
     shouldClose: boolean
-  ) {
+  ): Float32Array {
     if (monochrome) {
       if (colorArray.length < VERTICES_PER_INSTANCE * 4) {
         colorArray = new Float32Array(VERTICES_PER_INSTANCE * 4);
@@ -438,6 +446,7 @@ const lines = (regl: any) => {
         colorArray[offset + 2] = b;
         colorArray[offset + 3] = a;
       }
+      return colorArray.subarray(0, VERTICES_PER_INSTANCE * 4);
     } else if (colors) {
       const length = shouldClose ? colors.length + 1 : colors.length;
       if (colorArray.length < length * 4) {
@@ -461,7 +470,9 @@ const lines = (regl: any) => {
         colorArray[lastIndex * 4 + 2] = b;
         colorArray[lastIndex * 4 + 3] = a;
       }
+      return colorArray.subarray(0, length * 4);
     }
+    throw new Error("Impossible: !monochrome implies !!colors.");
   }
 
   // Create a new render function based on rendering settings
@@ -498,13 +509,13 @@ const lines = (regl: any) => {
     // whether the first point needs to be duplicated after the last point
     const shouldClose = !alreadyClosed && props.closed;
 
-    fillPointArray(props.points, alreadyClosed, shouldClose);
-    positionBuffer1({ data: pointArray, usage: "dynamic" });
-    positionBuffer2({ data: pointArray, usage: "dynamic" });
+    const pointData = fillPointArray(props.points, alreadyClosed, shouldClose);
+    positionBuffer1({ data: pointData, usage: "dynamic" });
+    positionBuffer2({ data: pointData, usage: "dynamic" });
 
     const monochrome = !(props.colors && props.colors.length);
-    fillColorArray(props.color, props.colors, monochrome, shouldClose);
-    colorBuffer({ data: colorArray, usage: "dynamic" });
+    const colorData = fillColorArray(props.color, props.colors, monochrome, shouldClose);
+    colorBuffer({ data: colorData, usage: "dynamic" });
 
     const joined = primitive === "line strip";
     const effectiveNumPoints = numInputPoints + (shouldClose ? 1 : 0);
@@ -518,9 +529,9 @@ const lines = (regl: any) => {
         console.error(`Expected ${instances} poses but given ${poses.length} poses: will result in webgl error.`);
         return;
       }
-      fillPoseArrays(instances, poses);
-      posePositionBuffer({ data: positionArray, usage: "dynamic" });
-      poseRotationBuffer({ data: rotationArray, usage: "dynamic" });
+      const { positionData, rotationData } = fillPoseArrays(instances, poses);
+      posePositionBuffer({ data: positionData, usage: "dynamic" });
+      poseRotationBuffer({ data: rotationData, usage: "dynamic" });
     }
 
     render({ debug, depth, blend }, () => {

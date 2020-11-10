@@ -136,7 +136,7 @@
     "docs": "DEV_SERVER=true webpack-dev-server",
     "docs-deploy": "cp -r docs/public __temp_deploy__ && rm __temp_deploy__/app/index.html && cp packages/webviz-core/public/index.html __temp_deploy__/app/index.html && echo 'webviz.io' > __temp_deploy__/CNAME && gh-pages -d __temp_deploy__ && rm -rf __temp_deploy__",
     "publish": "lerna run clean && lerna run build && lerna publish",
-    "build-static-webviz": "rm -rf __static_webviz__ && cp -r docs/public/app __static_webviz__ && rm __static_webviz__/index.html && cp packages/webviz-core/public/index.html __static_webviz__/index.html && sed -i -- 's/\\/dist\\/webvizCoreBundle.js/webvizCoreBundle.js/' __static_webviz__/index.html && NODE_ENV=production STATIC_WEBVIZ=true webpack",
+    "build-static-webviz": "lerna run build && rm -rf __static_webviz__ && cp -r docs/public/app __static_webviz__ && rm __static_webviz__/index.html && cp packages/webviz-core/public/index.html __static_webviz__/index.html && sed -i -- 's/\\/dist\\/webvizCoreBundle.js/webvizCoreBundle.js/' __static_webviz__/index.html && NODE_ENV=production STATIC_WEBVIZ=true webpack",
     "serve-static-webviz": "node_modules/http-server/bin/http-server __static_webviz__",
     "screenshot": "NODE_ENV=development storycap http://localhost:6006 --serverTimeout 120000 --captureTimeout 35000 --disableCssAnimation --serverCmd \"yarn run storybook\" --viewport \"1001x745\" --parallel 4",
     "screenshot-ci": "npm run screenshot -- --puppeteerLaunchConfig '{\"executablePath\": \"/usr/bin/google-chrome\", \"headless\": true, \"args\":[\"--use-gl=swiftshader\", \"--no-sandbox\",\"--disable-setuid-sandbox\", \"--disable-dev-shm-usage\", \"--headless\", \"--mute-audio\", \"--user-agent=PuppeteerTestingChrome/80.\"]}'",

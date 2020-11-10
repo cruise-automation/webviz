@@ -37,7 +37,6 @@ RUN npm run install-ci
 COPY . /app
 
 # Build static webviz
-RUN npm run build
 RUN npm run build-static-webviz
 
 # Start again with a clean nginx container

@@ -46,8 +46,8 @@
 }
 
 .flex::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 
 .flex::-webkit-scrollbar-track {
@@ -55,7 +55,8 @@
 }
 
 .flex::-webkit-scrollbar-thumb {
-  background: #666;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
 }
 
 .scrollX {

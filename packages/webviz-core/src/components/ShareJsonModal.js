@@ -125,7 +125,7 @@ export default class ShareJsonModal extends Component<Props, State> {
           display: "flex",
         }}>
         <Flex col className={styles.container}>
-          <p>
+          <p style={{ lineHeight: "22px" }}>
             <em>Paste a new {this.props.noun} to use it, or copy this one to share it:</em>
           </p>
           <textarea

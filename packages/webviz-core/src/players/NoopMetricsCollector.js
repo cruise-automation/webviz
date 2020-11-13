@@ -24,4 +24,5 @@ export default class NoopMetricsCollector implements PlayerMetricsCollectorInter
   recordUncachedRangeRequest(): void {}
   recordTimeToFirstMsgs(): void {}
   recordDataProviderInitializePerformance() {}
+  recordDataProviderStall() {}
 }

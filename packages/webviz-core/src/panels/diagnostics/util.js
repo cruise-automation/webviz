@@ -37,12 +37,13 @@ export type Level = $Values<typeof LEVELS>;
 
 export type KeyValue = {| key: string, value: string |};
 
+// diagnostic_msgs/DiagnosticStatus
 export type DiagnosticStatusMessage = {|
   name: string,
   hardware_id: string,
   level: Level,
-  message?: string,
-  values?: KeyValue[],
+  message: string,
+  values: KeyValue[],
 |};
 
 export type DiagnosticInfo = {|
@@ -60,13 +61,14 @@ export type DiagnosticStatusArrayMsg = {|
 export type DiagnosticsById = Map<DiagnosticId, DiagnosticInfo>;
 export type DiagnosticsByLevel = {| [Level]: DiagnosticsById |};
 
-export function getDiagnosticId(status: DiagnosticStatusMessage): DiagnosticId {
-  // Remove leading slash from hardware_id if present.
-  let hardware_id = status.hardware_id;
-  if (hardware_id.startsWith("/")) {
-    hardware_id = hardware_id.substring(1);
-  }
-  return status.name ? `|${hardware_id}|${status.name}|` : `|${hardware_id}|`;
+// Remove leading slash from hardware_id if present.
+export function trimHardwareId(hardwareId: string): string {
+  return hardwareId.startsWith("/") ? hardwareId.slice(1) : hardwareId;
+}
+
+export function getDiagnosticId(hardwareId: string, name: ?string): DiagnosticId {
+  const trimmedHardwareId = trimHardwareId(hardwareId);
+  return name != null ? `|${trimmedHardwareId}|${name}|` : `|${trimmedHardwareId}|`;
 }
 
 export function getDisplayName(hardwareId: string, name: string) {
@@ -91,20 +93,30 @@ export function computeDiagnosticInfo(status: DiagnosticStatusMessage, stamp: Ti
         : undefined,
     };
   }
-
   return {
     status,
     stamp,
-    id: getDiagnosticId(status),
+    id: getDiagnosticId(status.hardware_id, status.name),
     displayName,
   };
 }
 
-export function getNodesByLevel(buffer: DiagnosticsBuffer, level: any): DiagnosticInfo[] {
-  return Array.from(buffer.diagnosticsByLevel[level].values());
+export function getDiagnosticsByLevel(buffer: DiagnosticsBuffer): {| [Level]: DiagnosticInfo[] |} {
+  const ret = {
+    [LEVELS.OK]: [],
+    [LEVELS.WARN]: [],
+    [LEVELS.ERROR]: [],
+    [LEVELS.STALE]: [],
+  };
+  for (const diagnosticsByName of buffer.diagnosticsByNameByTrimmedHardwareId.values()) {
+    for (const diagnostic of diagnosticsByName.values()) {
+      ret[diagnostic.status.level].push(diagnostic);
+    }
+  }
+  return ret;
 }
 
-export const getSortedNodes = (
+export const getSortedDiagnostics = (
   nodes: DiagnosticInfo[],
   hardwareIdFilter: string,
   pinnedIds: DiagnosticId[]

@@ -17,6 +17,7 @@ import panels, {
   type PanelsState,
   getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL,
 } from "webviz-core/src/reducers/panels";
+import recentLayouts, { maybeStoreNewRecentLayout } from "webviz-core/src/reducers/recentLayouts";
 import tests from "webviz-core/src/reducers/tests";
 import userNodes, { type UserNodeDiagnostics } from "webviz-core/src/reducers/userNodes";
 import type { Auth as AuthState } from "webviz-core/src/types/Auth";
@@ -32,6 +33,7 @@ const getReducers = (history: any) => [
   hoverValue,
   userNodes,
   layoutHistory,
+  recentLayouts,
   ...(process.env.NODE_ENV === "test" ? [tests] : []),
 ];
 
@@ -56,11 +58,13 @@ export type State = {
 
 export type Store = { dispatch: Dispatch, getState: () => State };
 
-export default function createRootReducer(history: any) {
+export default function createRootReducer(history: any, args?: { testAuth?: any }) {
+  const persistedState = getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history);
+  maybeStoreNewRecentLayout(persistedState);
   const initialState: State = {
-    persistedState: getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history),
+    persistedState,
     mosaic: { mosaicId: "", selectedPanelIds: [] },
-    auth: Object.freeze({ username: undefined }),
+    auth: Object.freeze(args?.testAuth || { username: undefined }),
     extensions: Object.freeze({ markerProviders: [], auxiliaryData: {} }),
     hoverValue: null,
     userNodes: { userNodeDiagnostics: {}, rosLib: ros_lib_dts },

@@ -7,9 +7,10 @@
 //  You may not use this file except in compliance with the License.
 
 import Tooltip from "@cruise-automation/tooltip";
-import CancelIcon from "@mdi/svg/svg/cancel.svg";
 import PauseIcon from "@mdi/svg/svg/pause.svg";
 import PlayIcon from "@mdi/svg/svg/play.svg";
+import SkipNextOutlineIcon from "@mdi/svg/svg/skip-next-outline.svg";
+import SkipPreviousOutlineIcon from "@mdi/svg/svg/skip-previous-outline.svg";
 import classnames from "classnames";
 import React, { memo, useCallback, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -21,12 +22,13 @@ import styles from "./index.module.scss";
 import PlaybackBarHoverTicks from "./PlaybackBarHoverTicks";
 import { ProgressPlot } from "./ProgressPlot";
 import { clearHoverValue, setHoverValue } from "webviz-core/src/actions/hoverValue";
-import EmptyState from "webviz-core/src/components/EmptyState";
+import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import MessageOrderControls from "webviz-core/src/components/MessageOrderControls";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
+import PlaybackTimeDisplayMethod from "webviz-core/src/components/PlaybackControls/PlaybackTimeDisplayMethod";
 import { togglePlayPause, jumpSeek, DIRECTION } from "webviz-core/src/components/PlaybackControls/sharedHelpers";
 import PlaybackSpeedControls from "webviz-core/src/components/PlaybackSpeedControls";
 import Slider from "webviz-core/src/components/Slider";
@@ -34,25 +36,28 @@ import tooltipStyles from "webviz-core/src/components/Tooltip.module.scss";
 import { type PlayerState } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
 import { formatTime } from "webviz-core/src/util/formatTime";
+import { colors as sharedColors } from "webviz-core/src/util/sharedStyleConstants";
 import { subtractTimes, toSec, fromSec, formatTimeRaw } from "webviz-core/src/util/time";
 
-const StyledFullWidthBar = styled.div`
+const cx = classnames.bind(styles);
+
+export const StyledFullWidthBar = styled.div`
   position: absolute;
-  top: 17px;
+  top: 12px;
   left: 0;
   right: 0;
-  background-color: ${colors.textMuted};
-  height: 5px;
+  background-color: ${(props) => (props.activeData ? sharedColors.DARK8 : sharedColors.DARK5)};
+  height: 4px;
 `;
 
-const StyledMarker = styled.div.attrs(({ width }) => ({
+export const StyledMarker = styled.div.attrs(({ width }) => ({
   style: { left: `calc(${(width || 0) * 100}% - 2px)` },
 }))`
   background-color: white;
   position: absolute;
   height: 36%;
   border: 1px solid ${colors.divider};
-  width: 3px;
+  width: 2px;
   top: 32%;
 `;
 
@@ -64,7 +69,7 @@ export type PlaybackControlProps = {|
   seek: (Time) => void,
 |};
 
-const TooltipItem = ({ title, value }) => (
+export const TooltipItem = ({ title, value }: { title: string, value: any }) => (
   <div>
     <span className={styles.tipTitle}>{title}:</span>
     <span className={styles.tipValue}>{value}</span>
@@ -92,8 +97,8 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
   const keyDownHandlers = useMemo(
     () => ({
       " ": () => togglePlayPause({ pause, play, player: playerState.current }),
-      ArrowLeft: (ev: KeyboardEvent) => jumpSeek(DIRECTION.BACKWARD, ev, { seek, player: playerState.current }),
-      ArrowRight: (ev: KeyboardEvent) => jumpSeek(DIRECTION.FORWARD, ev, { seek, player: playerState.current }),
+      ArrowLeft: (ev: KeyboardEvent) => jumpSeek(DIRECTION.BACKWARD, { seek, player: playerState.current }, ev),
+      ArrowRight: (ev: KeyboardEvent) => jumpSeek(DIRECTION.FORWARD, { seek, player: playerState.current }, ev),
     }),
     [pause, play, seek]
   );
@@ -106,7 +111,7 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
       if (!activeData) {
         return;
       }
-      const { startTime, endTime } = activeData;
+      const { startTime, endTime } = activeData || {};
       if (!startTime || !endTime || el.current == null || slider.current == null) {
         return;
       }
@@ -145,49 +150,50 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
     [dispatch, hoverComponentId]
   );
 
-  const { activeData, showInitializing, progress } = player;
+  const { activeData, progress } = player;
+  const { isPlaying, startTime, endTime, currentTime } = activeData || {};
 
-  if (!activeData) {
-    const message = showInitializing ? (
-      "Player is initializing..."
-    ) : (
-      <span>
-        Drop a <a href="http://wiki.ros.org/ROS/Tutorials/Recording%20and%20playing%20back%20data">ROS bag file</a> or
-        connect to a <a href="http://wiki.ros.org/rosbridge_suite/Tutorials/RunningRosbridge">rosbridge</a> to get
-        started. Or check out <a href="/worldview">Worldview</a> and other packages on{" "}
-        <a href="https://github.com/cruise-automation">GitHub</a>!
-      </span>
-    );
-    return (
-      <Flex row className={classnames(styles.container, styles.disconnected)}>
-        <Icon large clickable={false}>
-          <CancelIcon />
-        </Icon>
-        <EmptyState alignLeft>{message}</EmptyState>
-      </Flex>
-    );
-  }
-
-  const { isPlaying, startTime, endTime, currentTime } = activeData;
-
-  const min = toSec(startTime);
-  const max = toSec(endTime);
+  const min = startTime && toSec(startTime);
+  const max = endTime && toSec(endTime);
   const value = currentTime == null ? null : toSec(currentTime);
   const step = (max - min) / 500;
+
+  const seekControls = useMemo(
+    () => (
+      <>
+        <Button
+          onClick={() => jumpSeek(DIRECTION.BACKWARD, { seek, player: playerState.current })}
+          style={{ borderRadius: "4px 0px 0px 4px", marginLeft: "16px", marginRight: "1px" }}
+          className={cx([styles.seekBtn, { [styles.inactive]: !activeData }])}>
+          <Icon medium tooltip="Seek backward">
+            <SkipPreviousOutlineIcon />
+          </Icon>
+        </Button>
+        <Button
+          onClick={() => jumpSeek(DIRECTION.FORWARD, { seek, player: playerState.current })}
+          style={{ borderRadius: "0px 4px 4px 0px" }}
+          className={cx([styles.seekBtn, { [styles.inactive]: !activeData }])}>
+          <Icon medium tooltip="Seek forward">
+            <SkipNextOutlineIcon />
+          </Icon>
+        </Button>
+      </>
+    ),
+    [activeData, seek]
+  );
 
   return (
     <Flex row className={styles.container}>
       <KeyListener global keyDownHandlers={keyDownHandlers} />
-      <div className={styles.playIconWrapper} onClick={isPlaying ? pause : play}>
-        <Icon large>{isPlaying ? <PauseIcon /> : <PlayIcon />}</Icon>
-      </div>
-      <div>
-        <PlaybackSpeedControls />
-      </div>
       <MessageOrderControls />
-
+      <PlaybackSpeedControls />
+      <div className={styles.playIconWrapper} onClick={isPlaying ? pause : play}>
+        <Icon style={activeData ? {} : { opacity: 0.4 }} xlarge>
+          {isPlaying ? <PauseIcon /> : <PlayIcon />}
+        </Icon>
+      </div>
       <div className={styles.bar}>
-        <StyledFullWidthBar />
+        <StyledFullWidthBar activeData={activeData} />
         <div className={styles.stateBar}>
           <ProgressPlot progress={progress} />
         </div>
@@ -205,6 +211,8 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
         </div>
         <PlaybackBarHoverTicks componentId={hoverComponentId} />
       </div>
+      <PlaybackTimeDisplayMethod currentTime={currentTime} />
+      {seekControls}
     </Flex>
   );
 });

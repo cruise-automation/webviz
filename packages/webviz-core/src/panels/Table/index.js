@@ -77,7 +77,6 @@ const STableContainer = styled.div`
   overflow: auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
   font-family: ${ROBOTO_MONO};
 `;
 
@@ -228,7 +227,7 @@ const Table = ({ value, accessorPath }: {| value: mixed, accessorPath: string |}
         </tbody>
       </STable>
       {!isNested && (
-        <div style={{ marginTop: "4px" }}>
+        <div style={{ margin: "4px auto 0" }}>
           <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
             {"<<"}
           </button>{" "}

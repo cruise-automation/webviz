@@ -92,7 +92,7 @@ export default function NoHeaderTopicsButton() {
               </Modal>
             );
           }}
-          style={{ color, marginLeft: "-8px", paddingRight: "6px" }}
+          style={{ color, paddingRight: "6px" }}
           dataTest="missing-headers-icon">
           <InformationIcon />
         </Icon>

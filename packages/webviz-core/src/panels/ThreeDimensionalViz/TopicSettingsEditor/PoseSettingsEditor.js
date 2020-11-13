@@ -21,7 +21,7 @@ import type { PoseStamped } from "webviz-core/src/types/Messages";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type PoseSettings = {|
-  color?: ?string,
+  overrideColor?: ?string,
   alpha?: number,
   size?: {
     headLength: number,
@@ -59,8 +59,8 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
             <>
               <SLabel>Color of outline</SLabel>
               <ColorPickerForTopicSettings
-                color={settings.color}
-                onChange={(newColor) => onFieldChange("color", newColor)}
+                color={settings.overrideColor}
+                onChange={(newColor) => onFieldChange("overrideColor", newColor)}
               />
             </>
           );
@@ -74,8 +74,8 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
             <Flex col>
               <SLabel>Color</SLabel>
               <ColorPickerForTopicSettings
-                color={settings.color}
-                onChange={(newColor) => onFieldChange("color", newColor)}
+                color={settings.overrideColor}
+                onChange={(newColor) => onFieldChange("overrideColor", newColor)}
               />
               <SLabel>Shaft width</SLabel>
               <SInput

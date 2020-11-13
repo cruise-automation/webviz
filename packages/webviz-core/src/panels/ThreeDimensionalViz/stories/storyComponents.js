@@ -9,7 +9,6 @@
 import * as React from "react";
 import { Worldview } from "regl-worldview";
 
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import GlobalVariableSliderPanel from "webviz-core/src/panels/GlobalVariableSlider";
@@ -55,7 +54,6 @@ type FixtureExampleProps = {|
   loadData?: Promise<FixtureExampleData>,
   futureTime?: boolean,
   onMount?: (?HTMLDivElement, store?: Store) => void,
-  bobjects?: boolean,
 |};
 
 type FixtureExampleState = {| fixture: ?any, config: $Shape<ThreeDimensionalVizConfig> |};
@@ -90,7 +88,7 @@ export class FixtureExample extends React.Component<FixtureExampleProps, Fixture
   }
 
   updateState = (data: FixtureExampleData) => {
-    const { topics, globalVariables, frame } = data;
+    const { topics, globalVariables } = data;
     this.setState(
       {
         fixture: {
@@ -104,9 +102,8 @@ export class FixtureExample extends React.Component<FixtureExampleProps, Fixture
         // Additional delay to allow the 3D panel's dynamic setSubscriptions to take effect
         // *before* the fixture changes, not in the same update cycle.
         setImmediate(() => {
-          const bobjects = getExperimentalFeature("useBinaryTranslation");
           this.setState((state) => ({
-            fixture: { ...state.fixture, frame: bobjects ? bobjectify(data).frame : frame },
+            fixture: { ...state.fixture, frame: bobjectify(data).frame },
           }));
           // Additional delay to trigger updating available namespaces after consuming
           // the messages in SceneBuilder.

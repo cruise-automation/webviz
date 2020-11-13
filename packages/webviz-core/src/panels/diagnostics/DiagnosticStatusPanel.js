@@ -13,7 +13,7 @@ import { hot } from "react-hot-loader/root";
 import DiagnosticsHistory, { type DiagnosticAutocompleteEntry } from "./DiagnosticsHistory";
 import DiagnosticStatus from "./DiagnosticStatus";
 import helpContent from "./DiagnosticStatusPanel.help.md";
-import { getDiagnosticId, getDisplayName } from "./util";
+import { getDisplayName, trimHardwareId } from "./util";
 import Autocomplete from "webviz-core/src/components/Autocomplete";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
@@ -75,37 +75,30 @@ class DiagnosticStatusPanel extends React.Component<Props> {
     const { openSiblingPanel, config, saveConfig } = this.props;
     const { selectedHardwareId, selectedName, splitFraction, topicToRender, collapsedSections = [] } = config;
 
-    let hasSelection = false;
-    let selectedId, selectedDisplayName;
-    if (selectedHardwareId != null) {
-      hasSelection = true;
-      selectedId = getDiagnosticId({
-        hardware_id: selectedHardwareId,
-        name: selectedName || "",
-        level: 0,
-        message: "",
-      });
-      selectedDisplayName = hasSelection ? getDisplayName(selectedHardwareId, selectedName || "") : null;
-    }
+    const selectedDisplayName =
+      selectedHardwareId != null ? getDisplayName(selectedHardwareId, selectedName || "") : null;
     return (
       <Flex scroll scrollX col>
         <DiagnosticsHistory topic={topicToRender}>
           {(buffer) => {
-            const nestedKeys = [];
-            for (const key of buffer.diagnosticsById.keys()) {
-              if (key.startsWith(selectedId) && key !== selectedId) {
-                nestedKeys.push(key);
+            let selectedItem; // selected by name+hardware_id
+            let selectedItems; // [selectedItem], or all diagnostics with selectedHardwareId if no name is selected
+            if (selectedHardwareId != null) {
+              const items = [];
+              const diagnosticsByName = buffer.diagnosticsByNameByTrimmedHardwareId.get(
+                trimHardwareId(selectedHardwareId)
+              );
+              if (diagnosticsByName != null) {
+                for (const diagnostic of diagnosticsByName.values()) {
+                  if (selectedName == null || selectedName === diagnostic.status.name) {
+                    items.push(diagnostic);
+                    if (selectedName != null) {
+                      selectedItem = diagnostic;
+                    }
+                  }
+                }
               }
-            }
-            let selectedItems = null;
-            if (selectedId) {
-              selectedItems = nestedKeys.length
-                ? nestedKeys
-                    .reduce((acc, eachKey) => {
-                      return acc.concat([buffer.diagnosticsById.get(eachKey)]);
-                    }, [])
-                    .filter(Boolean)
-                : [buffer.diagnosticsById.get(selectedId)].filter(Boolean);
+              selectedItems = items;
             }
 
             return (
@@ -115,21 +108,21 @@ class DiagnosticStatusPanel extends React.Component<Props> {
                   helpContent={helpContent}
                   additionalIcons={this.renderTopicToRenderMenu(this.props.topics)}>
                   <Autocomplete
-                    placeholder={hasSelection ? selectedDisplayName : "Select a diagnostic"}
+                    placeholder={selectedDisplayName ?? "Select a diagnostic"}
                     items={buffer.sortedAutocompleteEntries}
                     getItemText={(entry) => entry.displayName}
                     getItemValue={(entry) => entry.id}
                     onSelect={this._onSelect}
-                    selectedItem={buffer.diagnosticsById.get(selectedId)}
+                    selectedItem={selectedItem}
                     inputStyle={{ height: "100%" }}
                   />
                 </PanelToolbar>
                 {selectedItems && selectedItems.length ? (
                   <Flex col scroll>
-                    {sortBy(selectedItems, ({ status }) => status.name.toLowerCase()).map((selectedItem) => (
+                    {sortBy(selectedItems, ({ status }) => status.name.toLowerCase()).map((item) => (
                       <DiagnosticStatus
-                        key={selectedItem.id}
-                        info={selectedItem}
+                        key={item.id}
+                        info={item}
                         splitFraction={splitFraction}
                         onChangeSplitFraction={(newSplitFraction) =>
                           this.props.saveConfig({ splitFraction: newSplitFraction })

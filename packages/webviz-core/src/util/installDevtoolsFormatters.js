@@ -11,6 +11,7 @@
 
 import seedrandom from "seedrandom";
 
+import { deepParse, isBobject, isArrayView, bobjectFieldNames } from "./binaryObjects";
 import { isTime } from "./time";
 
 const timeFormatter = (() => {
@@ -56,7 +57,37 @@ const timeFormatter = (() => {
   };
 })();
 
+const bobjectFormatter = {
+  header(o, config) {
+    // If it's a nested object, use the object key as the header.
+    if (config && config.bobjectFormatter) {
+      return ["div", {}, config.key];
+    }
+    // If it's not a bobject, use the default formatter.
+    if (!isBobject(o)) {
+      return null;
+    }
+    if (isArrayView(o)) {
+      return ["div", {}, `ArrayView Bobject with length ${o.length()}`];
+    }
+    return [
+      "div",
+      {},
+      ["span", {}, "Bobject with properties: "],
+      ["span", { style: "color: #7E7D7D" }, bobjectFieldNames(o).join(", ")],
+    ];
+  },
+  hasBody() {
+    return true;
+  },
+  body(o) {
+    const parsedBody = isBobject(o) ? deepParse(o) : o;
+    return ["div", { style: "margin-left: 20px; color: darkblue;" }, `\n${JSON.stringify(parsedBody, null, 2)}`];
+  },
+};
+
 export default function installDevtoolsFormatters() {
   window.devtoolsFormatters = window.devtoolsFormatters || [];
   window.devtoolsFormatters.push(timeFormatter);
+  window.devtoolsFormatters.push(bobjectFormatter);
 }

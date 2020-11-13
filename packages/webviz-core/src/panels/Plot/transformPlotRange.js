@@ -9,7 +9,7 @@
 import { type TimeBasedChartTooltipData } from "webviz-core/src/components/TimeBasedChart";
 import type { PlotChartPoint } from "webviz-core/src/panels/Plot/PlotChart";
 
-export default function derivative(
+export function derivative(
   data: PlotChartPoint[],
   tooltips: TimeBasedChartTooltipData[]
 ): { points: PlotChartPoint[], tooltips: TimeBasedChartTooltipData[] } {
@@ -34,4 +34,38 @@ export default function derivative(
     points.push(point);
   }
   return { points, tooltips: newTooltips };
+}
+
+export const mathFunctions = {
+  abs: Math.abs,
+  acos: Math.acos,
+  asin: Math.asin,
+  atan: Math.atan,
+  ceil: Math.ceil,
+  cos: Math.cos,
+  log: Math.log,
+  log1p: Math.log1p,
+  log2: Math.log2,
+  log10: Math.log10,
+  round: Math.round,
+  sign: Math.sign,
+  sin: Math.sin,
+  sqrt: Math.sqrt,
+  tan: Math.tan,
+  trunc: Math.trunc,
+  negative: (value: number) => -value,
+};
+
+// Apply a function to the y-value of the data or tooltips passed in.
+export function applyToDataOrTooltips<T>(dataOrTooltips: T[], func: (number) => number): T[] {
+  return dataOrTooltips.map((item) => {
+    // $FlowFixMe
+    let y: number | string = item.y;
+    const numericYValue: number = Number(y);
+    // Only apply the function if the Y value is a valid number.
+    if (!isNaN(numericYValue)) {
+      y = func(numericYValue);
+    }
+    return { ...item, y };
+  });
 }

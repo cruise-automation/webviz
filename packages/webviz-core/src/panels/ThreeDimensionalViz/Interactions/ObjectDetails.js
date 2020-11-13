@@ -124,7 +124,7 @@ function ObjectDetails({ interactionData, objectToDisplay }: Props) {
     <SObjectDetails>
       <Tree
         data={sortedDataObject}
-        shouldExpandNode={false}
+        shouldExpandNode={() => false}
         invertTheme={false}
         theme={{ ...jsonTreeTheme, tree: { margin: 0 } }}
         hideRoot

@@ -37,10 +37,11 @@ function withTransforms<Props: *>(ChildComponent: React.ComponentType<Props>) {
 
       const tfs = frame[TRANSFORM_TOPIC];
       if (tfs) {
+        const skipFrameId = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.skipTransformFrame?.frameId;
         for (const { message } of tfs) {
           const parsedMessage = isBobject(message) ? deepParse(message) : message;
           for (const tf of parsedMessage.transforms) {
-            if (tf.child_frame_id !== getGlobalHooks().perPanelHooks().ThreeDimensionalViz.skipTransformFrame) {
+            if (tf.child_frame_id !== skipFrameId) {
               transforms.consume(tf);
             }
           }

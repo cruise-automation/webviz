@@ -304,7 +304,6 @@ export default function Layout({
     toggleNamespaceChecked,
   } = topicTreeData;
 
-  const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("globalVariableColorOverrides");
   useEffect(() => setSubscriptions(selectedTopicNames), [selectedTopicNames, setSubscriptions]);
   const { playerId } = useDataSourceInfo();
 
@@ -346,10 +345,6 @@ export default function Layout({
 
   const colorOverrideMarkerMatchers = useMemo(
     () => {
-      if (!highlightMarkersThatMatchGlobalVariables) {
-        return [];
-      }
-
       // Transform linkedGlobalVariables and overridesByGlobalVariable into markerMatchers for SceneBuilder
       const linkedGlobalVariablesByName = groupBy(linkedGlobalVariables, ({ name }) => name);
       return Object.keys(colorOverrideBySourceIdxByVariable || {}).reduce((_activeColorOverrideMatchers, name) => {
@@ -375,12 +370,7 @@ export default function Layout({
         );
       }, []);
     },
-    [
-      colorOverrideBySourceIdxByVariable,
-      globalVariables,
-      highlightMarkersThatMatchGlobalVariables,
-      linkedGlobalVariables,
-    ]
+    [colorOverrideBySourceIdxByVariable, globalVariables, linkedGlobalVariables]
   );
 
   const rootTf = useMemo(

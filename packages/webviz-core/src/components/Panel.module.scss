@@ -3,7 +3,7 @@
 
 .root {
   z-index: 1;
-  background-color: $panel-background;
+  background-color: $dark;
   position: relative;
 
   &:after {
@@ -62,7 +62,7 @@
   .root:hover > &,
   // for screenshot tests
   &:global(.hoverForScreenshot) {
-    background-color: rgba(110, 81, 238, 0.15);
+    background-color: rgba(45, 45, 51, 1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -123,7 +123,7 @@
   .root:hover &,
   // for screenshot tests
   &:global(.hoverForScreenshot) {
-    background-color: rgba(45, 45, 51, 0.7);
+    background-color: rgba(45, 45, 51, 1);
   }
 }
 
@@ -141,7 +141,7 @@
   right: 8px;
   z-index: 102;
   opacity: 1;
-  background-color: $toolbar;
+  background-color: $dark3;
   display: none;
   .root:hover & {
     display: block;

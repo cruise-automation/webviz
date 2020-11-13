@@ -501,6 +501,11 @@ export function getShouldProcessPatch() {
   // Skip processing patch in iframe (currently used for MiniViz) since we can't update the URL anyway.
   return !IS_IN_IFRAME;
 }
+// If we have a URL patch, the user has edited the layout.
+export function hasEditedLayout() {
+  const params = new URLSearchParams(window.location.search);
+  return params.has(PATCH_QUERY_KEY);
+}
 
 // There are 2 cases for updating the document title based on layout:
 // - Update when initializing redux store (can read layout name from URL or localStorage)

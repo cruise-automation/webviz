@@ -22,6 +22,7 @@ const initialState = {
 };
 
 const Block = (props: any) => <div style={{ width: 50, backgroundColor: "red" }}>{props.children}</div>;
+const MARGIN = 50;
 
 function ChildToggleStory({ store }) {
   const { state } = store;
@@ -31,7 +32,7 @@ function ChildToggleStory({ store }) {
   const icon = state.isOpen ? <MinusCircleIcon /> : <PlusCircleIcon />;
   return (
     <Flex col center style={{ position: "relative" /* shouldn't affect popup position */ }}>
-      <div style={{ margin: 30, border: "1px solid gray" }}>
+      <div style={{ margin: MARGIN, border: "1px solid gray" }}>
         <ChildToggle position="right" onToggle={onToggle} isOpen={state.isOpen}>
           <Icon>{icon}</Icon>
           <Block>this opens right-aligned of the icon</Block>
@@ -43,19 +44,25 @@ function ChildToggleStory({ store }) {
           <Block>this opens above the icon</Block>
         </ChildToggle>
       </div>
-      <div style={{ margin: 30, border: "1px solid gray" }}>
+      <div style={{ margin: MARGIN, border: "1px solid gray" }}>
         <ChildToggle position="below" onToggle={onToggle} isOpen={state.isOpen}>
           <Icon>{icon}</Icon>
           <Block>this opens below the icon</Block>
         </ChildToggle>
       </div>
-      <div style={{ margin: 30, border: "1px solid gray" }}>
+      <div style={{ margin: MARGIN, border: "1px solid gray" }}>
+        <ChildToggle position="bottom-left" onToggle={onToggle} isOpen={state.isOpen}>
+          <Icon>{icon}</Icon>
+          <Block>this opens below and to the left of the icon</Block>
+        </ChildToggle>
+      </div>
+      <div style={{ margin: MARGIN, border: "1px solid gray" }}>
         <ChildToggle position="left" onToggle={onToggle} isOpen={state.isOpen}>
           <Icon>{icon}</Icon>
           <Block>this opens left-aligned of the icon</Block>
         </ChildToggle>
       </div>
-      <div style={{ margin: 30, border: "1px solid gray" }}>
+      <div style={{ margin: MARGIN, border: "1px solid gray" }}>
         <ChildToggle.ContainsOpen>
           {(containsOpen) => (
             <div>
@@ -68,7 +75,7 @@ function ChildToggleStory({ store }) {
           )}
         </ChildToggle.ContainsOpen>
       </div>
-      <div style={{ margin: 30, border: "1px solid gray" }}>
+      <div style={{ margin: MARGIN, border: "1px solid gray" }}>
         <ChildToggle.ContainsOpen>
           {(containsOpen) => (
             <div>

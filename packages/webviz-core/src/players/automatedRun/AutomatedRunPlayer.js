@@ -245,6 +245,8 @@ export default class AutomatedRunPlayer implements Player {
           case "received_bytes":
             this._receivedBytes += metadata.bytes;
             break;
+          case "data_provider_stall":
+            break;
           default:
             (metadata.type: empty);
         }

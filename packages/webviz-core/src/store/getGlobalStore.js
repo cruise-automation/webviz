@@ -23,10 +23,10 @@ function getGlobalStore() {
   return store;
 }
 
-export function getGlobalStoreForTest(args: ?{ search?: string, history?: any }) {
-  const memoryHistory = args?.history || createMemoryHistory();
+export function getGlobalStoreForTest(args: ?{ search?: string, testAuth?: any }) {
+  const memoryHistory = createMemoryHistory();
   const testStore = configureStore(
-    createRootReducer(memoryHistory),
+    createRootReducer(memoryHistory, { testAuth: args?.testAuth }),
     [routerMiddleware(memoryHistory), updateUrlAndLocalStorageMiddleware],
     memoryHistory
   );

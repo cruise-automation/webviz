@@ -11,7 +11,6 @@ import uuid from "uuid";
 
 import delay from "webviz-core/shared/delay";
 import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
-import { MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import { rootGetDataProvider } from "webviz-core/src/dataProviders/rootGetDataProvider";
 import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
@@ -33,7 +32,7 @@ import {
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import debouncePromise from "webviz-core/src/util/debouncePromise";
-import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import { SEEK_TO_UNIX_MS_QUERY_KEY } from "webviz-core/src/util/globalConstants";
 import { stringifyParams } from "webviz-core/src/util/layout";
 import { isRangeCoveredByRanges } from "webviz-core/src/util/ranges";
 import { getSanitizedTopics } from "webviz-core/src/util/selectors";
@@ -43,9 +42,12 @@ import {
   clampTime,
   fromMillis,
   fromNanoSec,
+  getSeekTimeFromSpec,
   percentOf,
+  SEEK_ON_START_NS,
   subtractTimes,
   toSec,
+  type SeekToTimeSpec,
   type TimestampMethod,
 } from "webviz-core/src/util/time";
 
@@ -69,16 +71,6 @@ const NO_WARNINGS = Object.freeze({});
 // fetching too many.
 export const SEEK_BACK_NANOSECONDS = 299 /* ms */ * 1e6;
 
-// Amount to seek into the bag from the start when loading the player, to show
-// something useful on the screen. Ideally this is less than BLOCK_SIZE_NS from
-// MemoryCacheDataProvider so we still stay within the first block when fetching
-// initial data.
-export const SEEK_ON_START_NS = 99 /* ms */ * 1e6;
-if (SEEK_ON_START_NS >= MEM_CACHE_BLOCK_SIZE_NS) {
-  throw new Error(
-    "SEEK_ON_START_NS should be less than MEM_CACHE_BLOCK_SIZE_NS (to keep initial backfill within one block)"
-  );
-}
 if (SEEK_ON_START_NS >= SEEK_BACK_NANOSECONDS) {
   throw new Error(
     "SEEK_ON_START_NS should be less than SEEK_BACK_NANOSECONDS (otherwise we skip over messages at the start)"
@@ -127,14 +119,14 @@ export default class RandomAccessPlayer implements Player {
   _messageOrder: TimestampMethod = "receiveTime";
   _hasError = false;
   _closed = false;
-  _seekToTime: ?Time;
+  _seekToTime: SeekToTimeSpec;
   _lastRangeMillis: ?number;
   _parsedMessageDefinitionsByTopic: ParsedMessageDefinitionsByTopic;
   _preloadingEnabled: boolean;
 
   constructor(
     providerDescriptor: DataProviderDescriptor,
-    { metricsCollector, seekToTime }: { metricsCollector: ?PlayerMetricsCollectorInterface, seekToTime: ?Time }
+    { metricsCollector, seekToTime }: { metricsCollector: ?PlayerMetricsCollectorInterface, seekToTime: SeekToTimeSpec }
   ) {
     if (process.env.NODE_ENV === "test" && providerDescriptor.name === "TestProvider") {
       this._provider = providerDescriptor.args.provider;
@@ -202,6 +194,9 @@ export default class RandomAccessPlayer implements Player {
             case "received_bytes":
               this._receivedBytes += metadata.bytes;
               break;
+            case "data_provider_stall":
+              this._metricsCollector.recordDataProviderStall(metadata);
+              break;
             default:
               (metadata.type: empty);
           }
@@ -216,11 +211,7 @@ export default class RandomAccessPlayer implements Player {
           throw new Error("RandomAccessPlayer requires parsed message definitions");
         }
 
-        const initialTime = clampTime(
-          this._seekToTime || TimeUtil.add(start, fromNanoSec(SEEK_ON_START_NS)),
-          start,
-          end
-        );
+        const initialTime = getSeekTimeFromSpec(this._seekToTime, start, end);
 
         this._start = start;
         this._currentTime = initialTime;
@@ -285,10 +276,10 @@ export default class RandomAccessPlayer implements Player {
 
       // If paused at the start of a datasource, remove seek-to param
       if (atDataStart) {
-        params.delete(SEEK_TO_QUERY_KEY);
+        params.delete(SEEK_TO_UNIX_MS_QUERY_KEY);
       } else {
         // Otherwise, update the seek-to param
-        params.set(SEEK_TO_QUERY_KEY, `${toMillis(this._currentTime)}`);
+        params.set(SEEK_TO_UNIX_MS_QUERY_KEY, `${toMillis(this._currentTime)}`);
       }
       history.replaceState({}, window.title, `${location.pathname}${stringifyParams(params)}`);
     }

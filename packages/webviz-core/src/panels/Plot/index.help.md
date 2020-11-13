@@ -18,6 +18,8 @@ You can also enter an arbitrary number, which will add a horizontal line at that
 
 To take the derivative of a value (change per second), use the special `.@derivative` modifier. This does not work with scatter plots (when using slices).
 
+To switch the sign of a value, use the special `.@negative` modifier at the end of the topic path syntax. The following math functions are also available: `.@abs`, `.@acos`, `.@asin`, `.@atan`, `.@ceil`, `.@cos`, `.@log`, `.@log1p`, `.@log2`, `.@log10`, `.@round`, `.@sign`, `.@sin`, `.@sqrt`, `.@tan`, and `.@trunc`. See the [Javascript Math documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math) for details on each one.
+
 ## Array Index as X-Axis
 
 In the legend, you can change the x-axis from being the messages' timestamps to their values' array indices. In this mode, adding message path `/some_topic.some_array` as a new line in the plot will chart that array's values against their indices. For example, if `/some_topic.some_array` contained the values `[5, 10, 15]`, the resulting points on the chart would be `[0, 5]`, `[1, 10]`, and `[2, 15]`.

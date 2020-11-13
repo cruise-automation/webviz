@@ -21,12 +21,12 @@ import TimeBasedChart, {
   type TooltipItem,
 } from "webviz-core/src/components/TimeBasedChart";
 import filterMap from "webviz-core/src/filterMap";
-import derivative from "webviz-core/src/panels/Plot/derivative";
 import {
   type PlotPath,
   type BasePlotPath,
   isReferenceLinePlotPathType,
 } from "webviz-core/src/panels/Plot/internalTypes";
+import { derivative, applyToDataOrTooltips, mathFunctions } from "webviz-core/src/panels/Plot/transformPlotRange";
 import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { format } from "webviz-core/src/util/formatTime";
 import { lightColor, lineColors } from "webviz-core/src/util/plotColors";
@@ -197,7 +197,7 @@ function getDatasetAndTooltipsFromMessagePlotPath(
     rangesOfPoints.push(rangePoints);
   }
 
-  if (path.value.includes(".@derivative")) {
+  if (path.value.endsWith(".@derivative")) {
     if (showLine) {
       const newRangesOfTooltips = [];
       const newRangesOfPoints = [];
@@ -214,6 +214,13 @@ function getDatasetAndTooltipsFromMessagePlotPath(
       // (nothing is better than incorrect data).
       rangesOfPoints = [];
       rangesOfTooltips = [];
+    }
+  }
+  for (const funcName of Object.keys(mathFunctions)) {
+    if (path.value.endsWith(`.@${funcName}`)) {
+      rangesOfPoints = rangesOfPoints.map((points) => applyToDataOrTooltips(points, mathFunctions[funcName]));
+      rangesOfTooltips = rangesOfTooltips.map((tooltips) => applyToDataOrTooltips(tooltips, mathFunctions[funcName]));
+      break;
     }
   }
 

@@ -124,7 +124,7 @@ export const inaccurateByteSize = (obj: any): number => {
   return ret;
 };
 
-function bobjectFieldNames(bobject): string[] {
+export function bobjectFieldNames(bobject: {}): string[] {
   const typeInfo = getDatatypes(Object.getPrototypeOf(bobject).constructor);
   if (!typeInfo) {
     throw new Error("Unknown constructor in bobjectFieldNames");

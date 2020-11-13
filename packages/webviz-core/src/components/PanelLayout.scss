@@ -51,7 +51,7 @@ $grey: #777;
     background: none;
     z-index: 99;
     .mosaic-split-line {
-      box-shadow: 0 0 0 1px $toolbar;
+      box-shadow: 0 0 0 1px $dark3;
     }
     &:hover .mosaic-split-line {
       box-shadow: 0 0 0 1px $grey;

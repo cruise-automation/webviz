@@ -27,7 +27,6 @@ import RawMessagesIcons from "./RawMessagesIcons";
 import { DATA_ARRAY_PREVIEW_LIMIT, getItemString, getItemStringForDiff } from "./utils";
 import Dropdown from "webviz-core/src/components/Dropdown";
 import EmptyState from "webviz-core/src/components/EmptyState";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import type { RosPath, MessagePathStructureItem } from "webviz-core/src/components/MessagePathSyntax/constants";
@@ -138,13 +137,12 @@ function RawMessages(props: Props) {
   const [expandedFields, setExpandedFields] = useState(() => new Set());
 
   const topicName = topicRosPath?.topicName || "";
-  const format = useExperimentalFeature("useBinaryTranslation") ? "bobjects" : "parsedMessages";
-  const consecutiveMsgs = useMessagesByTopic({ topics: [topicName], historySize: 2, format })[topicName];
+  const consecutiveMsgs = useMessagesByTopic({ topics: [topicName], historySize: 2, format: "bobjects" })[topicName];
   const cachedGetMessagePathDataItems = useCachedGetMessagePathDataItems([topicPath]);
   const prevTickMsg = consecutiveMsgs[consecutiveMsgs.length - 2];
   const [prevTickObj, currTickObj] = [
     prevTickMsg && { message: prevTickMsg, queriedData: cachedGetMessagePathDataItems(topicPath, prevTickMsg) || [] },
-    useLatestMessageDataItem(topicPath, format),
+    useLatestMessageDataItem(topicPath, "bobjects"),
   ];
 
   const otherSourceTopic = topicName.startsWith(SECOND_SOURCE_PREFIX)

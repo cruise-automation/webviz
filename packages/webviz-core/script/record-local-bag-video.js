@@ -54,6 +54,10 @@ program
   .option("--parallel <number>", "Number of simultaneous browsers to use", parseNumber)
   .option("--frameless", "Hide Webviz 'chrome' around the panels")
   .option("--url <url>", "Base URL", "https://webviz.io/app")
+  .option(
+    "--experimentalFeatureSettings <string>",
+    'Stringified JSON of experimental feature settings: \'{"featureName":"alwaysOn"}\''
+  )
   .parse(process.argv);
 
 const defaultLayout = {
@@ -82,6 +86,7 @@ async function main() {
   const { videoFile: video } = await recordVideo({
     parallel: parallelCount,
     bagPath: program.bag,
+    experimentalFeatureSettings: program.experimentalFeatureSettings,
     url: `${program.url}?video-recording-mode${
       program.frameless ? "&frameless" : ""
     }&video-recording-speed=${program.speed || 1}&video-recording-framerate=${parallelFrameRate}`,

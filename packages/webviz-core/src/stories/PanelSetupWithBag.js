@@ -6,169 +6,75 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import microMemoize from "micro-memoize";
+import { groupBy } from "lodash";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
 import { useEffect, useState } from "react"; // eslint-disable-line import/no-duplicates
-import rosbag from "rosbag";
-import decompress from "wasm-lz4";
 
-import { SECOND_SOURCE_PREFIX } from "../util/globalConstants";
+import NodePlayer from "webviz-core/src/players/NodePlayer";
+import StoryPlayer from "webviz-core/src/players/StoryPlayer";
+import type { PlayerState } from "webviz-core/src/players/types";
 import PanelSetup, { type Fixture } from "webviz-core/src/stories/PanelSetup";
-import { objectValues } from "webviz-core/src/util";
-import { bagConnectionsToTopics } from "webviz-core/src/util/bagConnectionsHelper";
-import Logger from "webviz-core/src/util/Logger";
-
-const log = new Logger(__filename);
-
-type Props = {
-  bagFileUrl?: string,
-  bagFileUrl2?: string,
-  children: React.Node,
-  topics?: string[],
-  // merge the bag data with existing fixture data
-  getMergedFixture?: (bagFixture: Fixture) => Fixture,
-  mapTopicToDatatype?: (topic: string) => string,
-  hasNestedMessageHistory?: ?boolean,
-  onMount?: (HTMLDivElement) => void,
-  onFirstMount?: (HTMLDivElement) => void,
-};
 
 const defaultGetMergedFixture = (bagFixture) => bagFixture;
-const defaultMapTopicToDatatype = () => "dummyType";
 
-const getFixtureFromBag = async (
-  bagFileUrl: string,
-  topics: string[],
-  mapTopicToDatatype: (topic: string) => string,
-  getMergedFixture: (bagFixture: Fixture) => Fixture,
-  second?: string = ""
-) => {
-  const response = await fetch(bagFileUrl);
-  if (!response) {
-    log.error(`failed to fetch the bag${second}`);
-  }
-  const blobs = await response.blob();
-  const bagFile = new File([blobs], "temp.bag");
-  const bag = await rosbag.open(bagFile).catch((err) => {
-    log.error(`error opening the bag${second}`, err);
-  });
-  if (bag == null) {
-    log.error(`bag${second} is not valid`);
-  }
-
-  // build the basic shape for fixture
-  const bagTopics = bagConnectionsToTopics(objectValues(bag.connections), bag.chunkInfos);
-  const numMessagesByTopic = {};
-  bagTopics.forEach((topic) => {
-    numMessagesByTopic[topic.name] = topic.numMessages;
-  });
-  const tempFixture = {
-    topics: topics.map((topic) => ({
-      name: second ? `${SECOND_SOURCE_PREFIX}${topic}` : topic,
-      datatype: mapTopicToDatatype(topic),
-      numMessages: numMessagesByTopic[topic],
-    })),
-    frame: topics.reduce((memo, topic) => {
-      memo[second ? `${SECOND_SOURCE_PREFIX}${topic}` : topic] = [];
-      return memo;
-    }, {}),
-  };
-
-  await bag
-    .readMessages(
-      {
-        topics,
-        decompress: {
-          lz4: decompress,
-        },
-      },
-      (result) => {
-        const { message, topic } = result;
-        tempFixture.frame[second ? `${SECOND_SOURCE_PREFIX}${topic}` : topic].push({
-          topic: second ? `${SECOND_SOURCE_PREFIX}${topic}` : topic,
-          receiveTime: result.timestamp,
-          message,
-        });
-      }
-    )
-    .catch((err) => {
-      log.error(`error reading messages from the bag${second}`, err);
-    });
-
-  return getMergedFixture(tempFixture);
-};
-
-const mergeFixtures = microMemoize((fixture1: Fixture, fixture2: Fixture) => ({
-  topics: [...fixture1.topics, ...fixture2.topics],
-  frame: {
-    ...fixture1.frame,
-    ...fixture2.frame,
-  },
-  activeData: {
-    ...fixture1.activeData,
-    ...fixture2.activeData,
-  },
-}));
-
-async function loadBag(
-  bagFileUrl: ?string,
-  bagFileUrl2: ?string,
-  hasNestedMessageHistory: ?boolean,
-  getMergedFixture: (bagFixture: Fixture) => Fixture,
-  mapTopicToDatatype: (topic: string) => string,
-  topics: string[],
-  setFixture: (any) => void
-) {
-  if (!bagFileUrl || topics.length === 0) {
-    return;
-  }
-
-  const fixture1 = await getFixtureFromBag(bagFileUrl, topics, mapTopicToDatatype, getMergedFixture);
-  const fixture2 = bagFileUrl2
-    ? await getFixtureFromBag(bagFileUrl2, topics, mapTopicToDatatype, getMergedFixture, "2")
-    : { topics: [], frame: {} };
-  const mergedFixture = mergeFixtures(fixture1, fixture2);
-  setFixture(mergedFixture);
-
-  // Nesting two message history components within eachother causes the message history cache of messages to topics
-  // to not be refreshed properly since both components mount at the same time.  This is a hack to support
-  // stories for the image panel, which involve nested message histories, until we can get a proper fix for having
-  // nested message histories with different topic subscriptions working.
-  if (hasNestedMessageHistory) {
-    setFixture({ ...mergedFixture });
-  }
-}
+type Props = {|
+  bag: string,
+  bag2?: string,
+  children: React.Node,
+  subscriptions?: string[],
+  bobjectSubscriptions?: string[],
+  // merge the bag data with existing fixture data
+  getMergedFixture?: (bagFixture: Fixture) => Fixture,
+  onMount?: (HTMLDivElement) => void,
+  onFirstMount?: (HTMLDivElement) => void,
+|};
 
 // A util component for testing panels that need to load the raw ROS bags.
 // Make sure the bag is uncompressed and is small (only contains related topics).
 // If the final fixture data is a mix of bag data (e.g. audio, image) and json/js data, you can
 // merge them together using getMergedFixture
 export default function PanelSetupWithBag({
-  bagFileUrl,
-  bagFileUrl2,
+  bag,
+  bag2,
   children,
-  hasNestedMessageHistory,
   getMergedFixture = defaultGetMergedFixture,
-  mapTopicToDatatype = defaultMapTopicToDatatype,
-  topics = [],
+  // TODO(troy): Ideally we wouldn't even need subscriptions here, relying on
+  // the PanelApi hooks to pick up on subscriptions and set them to the player
+  // created in this component. We'll need to overhaul
+  // `PanelSetup`/`MockMessagePipelineProvider` to accomplish this, mainly by
+  // threading the `player` created here through those components.
+  subscriptions,
+  bobjectSubscriptions,
   onMount,
   onFirstMount,
 }: Props) {
   const [fixture, setFixture] = useState();
-  // load the bag when component is mounted or updated
   useEffect(
     () => {
-      loadBag(
-        bagFileUrl,
-        bagFileUrl2,
-        hasNestedMessageHistory,
-        getMergedFixture,
-        mapTopicToDatatype,
-        topics,
-        setFixture
-      );
+      (async () => {
+        const player = new NodePlayer(new StoryPlayer([bag, bag2].filter(Boolean)));
+        player.setSubscriptions([
+          ...(subscriptions || []).map((topic) => ({ topic, format: "parsedMessages" })),
+          ...(bobjectSubscriptions || []).map((topic) => ({ topic, format: "bobjects" })),
+        ]);
+
+        player.setListener(({ activeData }: PlayerState) => {
+          if (!activeData) {
+            return Promise.resolve();
+          }
+          const { messages, bobjects, topics } = activeData;
+          const frame = groupBy([...messages, ...bobjects], "topic");
+          setFixture(
+            getMergedFixture({
+              frame,
+              topics,
+            })
+          );
+          return Promise.resolve();
+        });
+      })();
     },
-    [bagFileUrl, bagFileUrl2, topics, getMergedFixture, hasNestedMessageHistory, mapTopicToDatatype]
+    [bag, bag2, bobjectSubscriptions, getMergedFixture, subscriptions]
   );
 
   return fixture ? (

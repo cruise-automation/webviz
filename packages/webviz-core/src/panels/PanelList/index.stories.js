@@ -17,6 +17,41 @@ import { Provider } from "react-redux";
 import PanelList from "webviz-core/src/panels/PanelList";
 import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
+import PanelSetup from "webviz-core/src/stories/PanelSetup";
+
+const ScrolledPanelList = () => {
+  return (
+    <PanelSetup
+      fixture={{ frame: {}, topics: [] }}
+      style={{ width: 350 }}
+      onMount={() =>
+        setImmediate(() => {
+          const scrollContainer = document.querySelectorAll(".PanelList__SScrollContainer-hej56s-5")[0];
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        })
+      }>
+      <div style={{ margin: 50, height: 480 }}>
+        <PanelList onPanelSelect={() => {}} />
+      </div>
+    </PanelSetup>
+  );
+};
+const FilterStory = ({ inputValue }) => (
+  <div
+    style={{ margin: 50, height: 480 }}
+    ref={(el) => {
+      if (el) {
+        const input: ?HTMLInputElement = (el.querySelector("input"): any);
+        if (input) {
+          input.focus();
+          input.value = inputValue;
+          TestUtils.Simulate.change(input);
+        }
+      }
+    }}>
+    <PanelList onPanelSelect={() => {}} />
+  </div>
+);
 
 storiesOf("<PanelList>", module)
   .addDecorator((childrenRenderFcn) => (
@@ -25,39 +60,12 @@ storiesOf("<PanelList>", module)
     </DndProvider>
   ))
   .add("panel list", () => (
-    <div style={{ margin: 150 }}>
+    <div style={{ margin: 50, height: 480 }}>
       <PanelList onPanelSelect={() => {}} />
     </div>
   ))
-  .add("filtered panel list", () => (
-    <div
-      style={{ margin: 150 }}
-      ref={(el) => {
-        if (el) {
-          const input: ?HTMLInputElement = (el.querySelector("input"): any);
-          if (input) {
-            input.focus();
-            input.value = "h";
-            TestUtils.Simulate.change(input);
-          }
-        }
-      }}>
-      <PanelList onPanelSelect={() => {}} />
-    </div>
-  ))
-  .add("case-insensitive filtering and highlight submenu", () => (
-    <div
-      style={{ margin: 150 }}
-      ref={(el) => {
-        if (el) {
-          const input: ?HTMLInputElement = (el.querySelector("input"): any);
-          if (input) {
-            input.focus();
-            input.value = "dp";
-            TestUtils.Simulate.change(input);
-          }
-        }
-      }}>
-      <PanelList onPanelSelect={() => {}} />
-    </div>
-  ));
+  .add("scrolled panel list", () => <ScrolledPanelList />)
+  .add("filtered panel list", () => <FilterStory inputValue="h" />)
+  .add("filtered panel list without results in 1st category", () => <FilterStory inputValue="ha" />)
+  .add("filtered panel list without results in any category", () => <FilterStory inputValue="zz" />)
+  .add("case-insensitive filtering and highlight submenu", () => <FilterStory inputValue="dp" />);

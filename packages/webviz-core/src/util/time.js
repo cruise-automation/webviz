@@ -9,10 +9,15 @@
 // No time functions that require `moment` should live in this file.
 import { type Time, TimeUtil } from "rosbag";
 
+import { MIN_MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import { cast, type Bobject, type Message } from "webviz-core/src/players/types";
 import type { BinaryTime } from "webviz-core/src/types/BinaryMessages";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
-import { SEEK_TO_QUERY_KEY } from "webviz-core/src/util/globalConstants";
+import {
+  SEEK_TO_FRACTION_QUERY_KEY,
+  SEEK_TO_RELATIVE_MS_QUERY_KEY,
+  SEEK_TO_UNIX_MS_QUERY_KEY,
+} from "webviz-core/src/util/globalConstants";
 
 type BatchTimestamp = {
   seconds: number,
@@ -70,6 +75,11 @@ export function percentOf(start: Time, end: Time, target: Time) {
   const totalDuration = subtractTimes(end, start);
   const targetDuration = subtractTimes(target, start);
   return (toSec(targetDuration) / toSec(totalDuration)) * 100;
+}
+
+export function interpolateTimes(start: Time, end: Time, fraction: number): Time {
+  const duration = subtractTimes(end, start);
+  return TimeUtil.add(start, fromNanoSec(fraction * toNanoSec(duration)));
 }
 
 function fixTime(t: Time): Time {
@@ -238,10 +248,53 @@ export function parseRosTimeStr(str: string): ?Time {
   return fixTime({ sec: parseInt(partials[0], 10) || 0, nsec });
 }
 
-export function getSeekToTime(): ?Time {
+// Functions and types for specifying and applying player initial seek time intentions.
+// When loading from a copied URL, the exact unix time is used.
+type AbsoluteSeekToTime = $ReadOnly<{| type: "absolute", time: Time |}>;
+// If no seek time is specified, we default to 299ms from the start of the bag. Finer control is
+// exposed for use-cases where it's needed.
+type RelativeSeekToTime = $ReadOnly<{| type: "relative", startOffset: Time |}>;
+// Currently unused: We may expose interactive seek controls before the bag duration is known, and
+// store the seek state as a fraction of the eventual bag length.
+type SeekFraction = $ReadOnly<{| type: "fraction", fraction: number |}>;
+export type SeekToTimeSpec = AbsoluteSeekToTime | RelativeSeekToTime | SeekFraction;
+
+// Amount to seek into the bag from the start when loading the player, to show
+// something useful on the screen. Ideally this is less than BLOCK_SIZE_NS from
+// MemoryCacheDataProvider so we still stay within the first block when fetching
+// initial data.
+export const SEEK_ON_START_NS = 99 /* ms */ * 1e6;
+if (SEEK_ON_START_NS >= MIN_MEM_CACHE_BLOCK_SIZE_NS) {
+  throw new Error(
+    "SEEK_ON_START_NS should be less than MIN_MEM_CACHE_BLOCK_SIZE_NS (to keep initial backfill within one block)"
+  );
+}
+
+export function getSeekToTime(): SeekToTimeSpec {
   const params = new URLSearchParams(window.location.search);
-  const seekToParam = params.get(SEEK_TO_QUERY_KEY);
-  return seekToParam ? fromMillis(parseInt(seekToParam)) : null;
+  const absoluteSeek = params.get(SEEK_TO_UNIX_MS_QUERY_KEY);
+  if (absoluteSeek != null) {
+    return { type: "absolute", time: fromMillis(parseInt(absoluteSeek)) };
+  }
+  const relativeSeek = params.get(SEEK_TO_RELATIVE_MS_QUERY_KEY);
+  if (relativeSeek != null) {
+    return { type: "relative", startOffset: fromMillis(parseInt(relativeSeek)) };
+  }
+  const seekFraction = params.get(SEEK_TO_FRACTION_QUERY_KEY);
+  if (seekFraction != null) {
+    return { type: "fraction", fraction: parseFloat(seekFraction) };
+  }
+  return { type: "relative", startOffset: fromNanoSec(SEEK_ON_START_NS) };
+}
+
+export function getSeekTimeFromSpec(spec: SeekToTimeSpec, start: Time, end: Time): Time {
+  const rawSpecTime =
+    spec.type === "absolute"
+      ? spec.time
+      : spec.type === "relative"
+      ? TimeUtil.add(TimeUtil.isLessThan(spec.startOffset, { sec: 0, nsec: 0 }) ? end : start, spec.startOffset)
+      : interpolateTimes(start, end, spec.fraction);
+  return clampTime(rawSpecTime, start, end);
 }
 
 export function getTimestampForMessage(message: Message, timestampMethod?: TimestampMethod): ?Time {

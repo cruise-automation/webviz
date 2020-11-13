@@ -13,6 +13,7 @@ import MemoryCacheDataProvider, {
   getBlocksToKeep,
   getPrefetchStartPoint,
   MAX_BLOCK_SIZE_BYTES,
+  MAX_BLOCKS,
 } from "./MemoryCacheDataProvider";
 import delay from "webviz-core/shared/delay";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
@@ -54,6 +55,13 @@ function generateLargeMessages(): BobjectMessage[] {
     { topic: "/foo", receiveTime: { sec: 16, nsec: 0 }, message: bobjectWithSize(600) },
     { topic: "/foo", receiveTime: { sec: 18, nsec: 0 }, message: bobjectWithSize(600) },
     { topic: "/foo", receiveTime: { sec: 20, nsec: 0 }, message: bobjectWithSize(600) },
+  ]);
+}
+
+function generateMessagesForLongInput(): BobjectMessage[] {
+  return sortMessages([
+    { topic: "/foo", receiveTime: { sec: 0, nsec: 0 }, message: bobjectWithSize(10) },
+    { topic: "/bar", receiveTime: { sec: 3600, nsec: 0 }, message: bobjectWithSize(10) },
   ]);
 }
 
@@ -130,6 +138,25 @@ describe("MemoryCacheDataProvider", () => {
       // Has the right topic:
       { bobjects: ["/foo"] },
     ]);
+  });
+
+  it("limits the number of blocks made for very long bags", async () => {
+    const { provider, memoryDataProvider } = getProvider(generateMessagesForLongInput());
+    const { extensionPoint } = mockExtensionPoint();
+    const mockProgressCallback = jest.spyOn(extensionPoint, "progressCallback");
+    jest.spyOn(memoryDataProvider, "getMessages");
+
+    await provider.initialize(extensionPoint);
+    await provider.getMessages({ sec: 0, nsec: 0 }, { sec: 0, nsec: 1 }, { bobjects: ["/foo"] });
+    await delay(100);
+    expect(last(mockProgressCallback.mock.calls)).toEqual([
+      expect.objectContaining({ fullyLoadedFractionRanges: [{ start: 0, end: 1 }] }),
+    ]);
+    expect(memoryDataProvider.getMessages.mock.calls).toHaveLength(MAX_BLOCKS);
+    // Start of the first call is the start of the bag
+    expect(memoryDataProvider.getMessages.mock.calls[0][0]).toEqual({ sec: 0, nsec: 0 });
+    // End of the last call is the end of the bag
+    expect(last(memoryDataProvider.getMessages.mock.calls)[1]).toEqual({ sec: 3600, nsec: 0 });
   });
 
   it("prefetches earlier data when there is enough space", async () => {

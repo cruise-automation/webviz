@@ -63,13 +63,6 @@ export const ErrorCodes = {
   },
 };
 
-export type NodeRegistration = {|
-  inputs: $ReadOnlyArray<string>,
-  output: Topic,
-  processMessage: (Message, GlobalVariables) => Promise<?Message>,
-  terminate: () => void,
-|};
-
 export type Diagnostic = {|
   severity: $Values<typeof DiagnosticSeverity>,
   message: string,
@@ -96,13 +89,20 @@ export type NodeData = {|
   sourceFile: ?any,
   typeChecker: ?any,
   rosLib: string,
+  // An array of globalVariable names
+  globalVariables: $ReadOnlyArray<string>,
 |};
 
-export type NodeDataTransformer = (
+export type NodeRegistration = {|
+  nodeId: string,
   nodeData: NodeData,
-  topics: Topic[],
-  priorRegistrations: $ReadOnlyArray<Topic>
-) => NodeData;
+  inputs: $ReadOnlyArray<string>,
+  output: Topic,
+  processMessage: (Message, GlobalVariables) => Promise<?Message>,
+  terminate: () => void,
+|};
+
+export type NodeDataTransformer = (nodeData: NodeData, topics: Topic[]) => NodeData;
 
 export type UserNodeLog = {
   source: "registerNode" | "processMessage",

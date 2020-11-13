@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import HelpCircleIcon from "@mdi/svg/svg/help-circle.svg";
+import HelpCircleOutlineIcon from "@mdi/svg/svg/help-circle-outline.svg";
 import * as React from "react";
 
 import styles from "./index.module.scss";
@@ -16,23 +16,22 @@ import renderToBody from "webviz-core/src/components/renderToBody";
 
 type Props = {|
   children: React.Node | string,
+  iconStyle?: StyleObj,
 |};
 
 export default class HelpButton extends React.Component<Props> {
   render() {
     return (
-      <>
-        <Icon
-          tooltip="Help"
-          fade
-          onClick={() => {
-            const modal = renderToBody(
-              <HelpModal onRequestClose={() => modal.remove()}>{this.props.children}</HelpModal>
-            );
-          }}>
-          <HelpCircleIcon className={styles.icon} />
-        </Icon>
-      </>
+      <Icon
+        tooltip="Help"
+        fade
+        onClick={() => {
+          const modal = renderToBody(
+            <HelpModal onRequestClose={() => modal.remove()}>{this.props.children}</HelpModal>
+          );
+        }}>
+        <HelpCircleOutlineIcon className={styles.icon} style={this.props.iconStyle || {}} />
+      </Icon>
     );
   }
 }

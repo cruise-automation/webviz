@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@cruise-automation/hooks": "0.0.1",
-    "@mdi/svg": "3.2.89",
+    "@mdi/svg": "5.7.55",
     "@sentry/browser": "5.11.0",
     "async-retry": "1.2.3",
     "chart.js": "davidswinegar/Chart.js#0785c29a4c57b3e1b4243f8163df7950a00b2a80",
@@ -76,7 +76,7 @@
     "redux-thunk": "2.3.0",
     "reselect": "4.0.0",
     "rmfr": "2.0.0",
-    "rosbag": "2.6.2",
+    "rosbag": "2.6.3",
     "roslib": "1.1.0",
     "sanitize-html": "1.20.0",
     "scroll-into-view-if-needed": "2.2.24",
@@ -92,7 +92,7 @@
     "wasm-lz4": "1.0.0"
   },
   "devDependencies": {
-    "@babel/register": "7.0.0",
+    "@babel/register": "7.11.5",
     "@testing-library/react-hooks": "1.1.0",
     "eslint-plugin-react-hooks": "^1.5.0",
     "fake-indexeddb": "2.0.4",

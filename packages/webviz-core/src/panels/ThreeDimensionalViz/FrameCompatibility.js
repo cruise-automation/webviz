@@ -10,14 +10,11 @@ import hoistNonReactStatics from "hoist-non-react-statics";
 import { partition, uniq } from "lodash";
 import * as React from "react";
 
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import type { Message, Topic } from "webviz-core/src/players/types";
 import { useChangeDetector, useDeepMemo } from "webviz-core/src/util/hooks";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
-
-const NO_SUPPORTED_TYPES = new Set<string>([]);
 
 const useFrame = (
   topics: string[],
@@ -68,9 +65,8 @@ export function FrameCompatibilityDEPRECATED<Props>(ChildComponent: React.Compon
       setTopics(uniq(newTopics.concat(baseTopics || [])));
     }, []);
 
-    const supportedBobjectTypes = useExperimentalFeature("useBinaryTranslation")
-      ? getGlobalHooks().perPanelHooks().ThreeDimensionalViz.SUPPORTED_BOBJECT_MARKER_DATATYPES
-      : NO_SUPPORTED_TYPES;
+    const supportedBobjectTypes = getGlobalHooks().perPanelHooks().ThreeDimensionalViz
+      .SUPPORTED_BOBJECT_MARKER_DATATYPES;
     const stableTopics = useDeepMemo(props.topics);
     const topicsByName = React.useMemo(() => getTopicsByTopicName(stableTopics), [stableTopics]);
     const [bobjectTopics, messageTopics] = partition(

@@ -58,10 +58,9 @@ import { getSeekToTime, type TimestampMethod } from "webviz-core/src/util/time";
 
 function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Player {
   const unlimitedCache = getExperimentalFeature("unlimitedMemoryCache");
-  const useBinaryObjects = getExperimentalFeature("useBinaryTranslation");
   const rootDescriptor = {
     name: CoreDataProviders.ParseMessagesDataProvider,
-    args: { wrapMessagesToProvideBobjects: !useBinaryObjects },
+    args: {},
     children: [
       {
         name: CoreDataProviders.MemoryCacheDataProvider,
@@ -69,7 +68,7 @@ function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Pla
         children: [
           {
             name: CoreDataProviders.RewriteBinaryDataProvider,
-            args: { useBinaryObjects },
+            args: {},
             children: [childDescriptor],
           },
         ],
@@ -142,8 +141,15 @@ async function buildPlayerFromBagURLs(urls: string[]): Promise<?PlayerDefinition
     return {
       player: buildPlayerFromDescriptor({
         name: CoreDataProviders.CombinedDataProvider,
-        args: { providerInfos: [{}, { prefix: SECOND_SOURCE_PREFIX }] },
-        children: [getRemoteBagDescriptor(urls[0], guids[0]), getRemoteBagDescriptor(urls[1], guids[1])],
+        args: {},
+        children: [
+          getRemoteBagDescriptor(urls[0], guids[0]),
+          {
+            name: CoreDataProviders.RenameDataProvider,
+            args: { prefix: SECOND_SOURCE_PREFIX },
+            children: [getRemoteBagDescriptor(urls[1], guids[1])],
+          },
+        ],
       }),
       inputDescription: (
         <>

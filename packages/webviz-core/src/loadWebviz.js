@@ -142,12 +142,6 @@ const defaultHooks = {
   getAdditionalDataProviders: () => {},
   experimentalFeaturesList() {
     return {
-      groupLines: {
-        name: "Group Lines When Rendering",
-        description: "A faster method of rendering lines in the 3D panel by grouping them together.",
-        developmentDefault: true,
-        productionDefault: true,
-      },
       diskBagCaching: {
         name: "Disk Bag Caching (requires reload)",
         description:
@@ -167,18 +161,6 @@ const defaultHooks = {
           "If you have a lot of memory in your computer, and you frequently have to play all the way through large bags, you can turn this on to fully buffer the bag into memory. However, use at your own risk, as this might crash the browser.",
         developmentDefault: false,
         productionDefault: false,
-      },
-      globalVariableColorOverrides: {
-        name: "Global variable color overrides",
-        description: "Change the color of markers when they match a linkedGlobalVariable.",
-        developmentDefault: true,
-        productionDefault: true,
-      },
-      useBinaryTranslation: {
-        name: "Use binary messages in the 3D panel instead of parsed messages",
-        description: "Use binary messages wherever supported, instead of always deep-parsing ROS data.",
-        developmentDefault: true,
-        productionDefault: true,
       },
     };
   },

@@ -41,6 +41,8 @@ import {
   POSE_MARKER_SCALE,
   LINED_CONVEX_HULL_RENDERING_SETTING,
   MARKER_ARRAY_DATATYPES,
+  TRANSFORM_STATIC_TOPIC,
+  TRANSFORM_TOPIC,
 } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { emptyPose } from "webviz-core/src/util/Pose";
@@ -84,29 +86,47 @@ type SelectedNamespacesByTopic = { [topicName: string]: string[] };
 
 type MarkerMatchersByTopic = { [string]: Array<MarkerMatcher> };
 
-function getSceneErrorsByTopic(sceneErrors: SceneErrors): { [topicName: string]: string[] } {
+type SkipTransformSpec = $ReadOnly<{| frameId: string, sourceTopic: string |}>;
+
+const missingTransformMessage = (
+  rootTransformId: string,
+  error: ErrorDetails,
+  transforms: Transforms,
+  skipTransform: ?SkipTransformSpec
+): string => {
+  if (skipTransform != null && error.frameIds.has(skipTransform.frameId)) {
+    return `missing transform. Is ${skipTransform.sourceTopic} present?`;
+  }
+  if (transforms.empty) {
+    return `missing transform. Is ${TRANSFORM_TOPIC} or ${TRANSFORM_STATIC_TOPIC} present?`;
+  }
+  const frameIds = [...error.frameIds].sort().join(",");
+  const s = error.frameIds.size === 1 ? "" : "s"; // for plural
+  return `missing transforms to root frame ${rootTransformId} from frame${s} ${frameIds}.`;
+};
+
+export function getSceneErrorsByTopic(
+  sceneErrors: SceneErrors,
+  transforms: Transforms,
+  skipTransform: ?SkipTransformSpec
+): { [topicName: string]: string[] } {
   const res = {};
-  // generic errors
-  for (const [topic, message] of sceneErrors.topicsWithError) {
+  const addError = (topic, message) => {
     if (!res[topic]) {
       res[topic] = [];
     }
     res[topic].push(message);
+  };
+  // generic errors
+  for (const [topic, message] of sceneErrors.topicsWithError) {
+    addError(topic, message);
   }
   // errors related to missing frame ids and transform ids
-  [
-    { description: "missing frame id", errors: sceneErrors.topicsMissingFrameIds },
-    {
-      description: `missing transforms to root transform ${sceneErrors.rootTransformID}`,
-      errors: sceneErrors.topicsMissingTransforms,
-    },
-  ].forEach(({ description, errors }) => {
-    errors.forEach((_err, topic) => {
-      if (!res[topic]) {
-        res[topic] = [];
-      }
-      res[topic].push(description);
-    });
+  sceneErrors.topicsMissingTransforms.forEach((err, topic) => {
+    addError(topic, missingTransformMessage(sceneErrors.rootTransformID, err, transforms, skipTransform));
+  });
+  sceneErrors.topicsMissingFrameIds.forEach((_err, topic) => {
+    addError(topic, "missing frame id");
   });
   return res;
 }
@@ -356,7 +376,11 @@ export default class SceneBuilder implements MarkerProvider {
 
   // Update the field anytime the errors change in order to generate a new object to trigger TopicTree to rerender.
   _updateErrorsByTopic() {
-    const errorsByTopic = getSceneErrorsByTopic(this.errors);
+    const errorsByTopic = getSceneErrorsByTopic(
+      this.errors,
+      this.transforms,
+      getGlobalHooks().perPanelHooks().ThreeDimensionalViz.skipTransformFrame
+    );
     if (!isEqual(this.errorsByTopic, errorsByTopic)) {
       this.errorsByTopic = errorsByTopic;
       if (this._onForceUpdate) {
@@ -583,7 +607,6 @@ export default class SceneBuilder implements MarkerProvider {
   }
 
   _consumeBobjectMarker(topic: string, message: BinaryMarker | BinaryInstancedMarker): void {
-    // TODO(useBinaryTranslation): Convert this to bobject-logic
     const namespace = message.ns();
     if (namespace) {
       // Consume namespaces even if the message is later discarded
@@ -770,7 +793,6 @@ export default class SceneBuilder implements MarkerProvider {
   };
 
   _consumeBobjectOccupancyGrid = (topic: string, message: BinaryOccupancyGrid): void => {
-    // TODO(useBinaryTranslation): Convert this to bobject-logic
     const frameId = message.header().frame_id();
 
     if (!frameId) {
@@ -970,11 +992,9 @@ export default class SceneBuilder implements MarkerProvider {
         this._consumeBobjectOccupancyGrid(topic, cast<BinaryOccupancyGrid>(message));
         break;
       case SUPPORTED_MARKER_DATATYPES.POINT_CLOUD_DATATYPE:
-        // TODO(useBinaryTranslation): Check performance is acceptable.
         this._consumeNonMarkerMessage(topic, deepParse(message), 102);
         break;
       case SUPPORTED_MARKER_DATATYPES.SENSOR_MSGS_LASER_SCAN_DATATYPE:
-        // TODO(useBinaryTranslation): Check performance is acceptable.
         this._consumeNonMarkerMessage(topic, deepParse(message), 104);
         break;
       case SUPPORTED_MARKER_DATATYPES.GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: {

@@ -171,7 +171,7 @@ export class NotificationList extends React.PureComponent<NotificationListProps>
 }
 
 const ModalBody = styled.div`
-  padding: 16px;
+  padding: 32px;
   max-width: 600px;
   min-width: 300px;
   max-height: 600px;
@@ -188,8 +188,9 @@ export function showNotificationModal(notification: NotificationMessage): void {
 
   const modal = renderToBody(
     <Modal onRequestClose={() => modal.remove()}>
+      <Title style={{ color: getColorForSeverity(notification.severity) }}>{notification.message}</Title>
+      <hr />
       <ModalBody>
-        <Title style={{ color: getColorForSeverity(notification.severity) }}>{notification.message}</Title>
         {typeof details === "string" ? (
           <pre style={{ whiteSpace: "pre-wrap", lineHeight: 1.3 }}>{details}</pre>
         ) : (

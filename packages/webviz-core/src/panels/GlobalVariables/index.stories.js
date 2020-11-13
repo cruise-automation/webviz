@@ -123,28 +123,15 @@ storiesOf("<GlobalVariables>", module)
       />
     );
   })
-  .add("still show linked variables after clicking 'Clear all' button", () => {
-    return (
-      <PanelWithData
-        linkedGlobalVariables={linkedGlobalVariables}
-        onMount={(el) => {
-          const clearAllBtn = el.querySelector("[data-test='clear-all-btn']");
-          if (clearAllBtn) {
-            clearAllBtn.click();
-          }
-        }}
-      />
-    );
-  })
   .add("edit linked variable value", () => {
     return (
       <PanelWithData
         linkedGlobalVariables={linkedGlobalVariables}
         onMount={() => {
           const allJsonInput = document.querySelectorAll("[data-test='json-input']");
-          const lastJsonInput = allJsonInput[allJsonInput.length - 1];
-          if (lastJsonInput) {
-            triggerInputChange(lastJsonInput, "value is not 100 any more");
+          const linkedVarJsonInput = allJsonInput[2];
+          if (linkedVarJsonInput) {
+            triggerInputChange(linkedVarJsonInput, "value is not 100 any more");
           }
         }}
       />
@@ -161,6 +148,12 @@ storiesOf("<GlobalVariables>", module)
           const btn = el.querySelector("[data-test='unlink-linkedName']");
           if (btn) {
             btn.click();
+            setImmediate(() => {
+              const pathBtn = document.querySelector("[data-test='unlink-path']");
+              if (pathBtn) {
+                pathBtn.click();
+              }
+            });
           }
         }}
       />
@@ -174,23 +167,10 @@ storiesOf("<GlobalVariables>", module)
           const btn = el.querySelector("[data-test='unlink-linkedId']");
           if (btn) {
             btn.click();
-          }
-        }}
-      />
-    );
-  })
-  .add(`after unlinking a variable called "linkedName"`, () => {
-    return (
-      <PanelWithData
-        linkedGlobalVariables={linkedGlobalVariables}
-        onMount={(el) => {
-          const btn = el.querySelector("[data-test='unlink-linkedName']");
-          if (btn) {
-            btn.click();
             setImmediate(() => {
-              const unlinkFormBtn = document.querySelector("[data-test='unlink-form'] button");
-              if (unlinkFormBtn) {
-                unlinkFormBtn.click();
+              const pathBtn = document.querySelector("[data-test='unlink-path']");
+              if (pathBtn) {
+                pathBtn.click();
               }
             });
           }

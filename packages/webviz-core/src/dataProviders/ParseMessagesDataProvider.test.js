@@ -13,11 +13,10 @@ import createGetDataProvider from "webviz-core/src/dataProviders/createGetDataPr
 import MemoryCacheDataProvider from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
 import ParseMessagesDataProvider from "webviz-core/src/dataProviders/ParseMessagesDataProvider";
 import RewriteBinaryDataProvider from "webviz-core/src/dataProviders/RewriteBinaryDataProvider";
-import { isBobject } from "webviz-core/src/util/binaryObjects";
 
-function getProvider(useBinaryObjects: boolean = false) {
+function getProvider() {
   return new ParseMessagesDataProvider(
-    { wrapMessagesToProvideBobjects: !useBinaryObjects },
+    {},
     [
       {
         name: CoreDataProviders.MemoryCacheDataProvider,
@@ -25,7 +24,7 @@ function getProvider(useBinaryObjects: boolean = false) {
         children: [
           {
             name: CoreDataProviders.RewriteBinaryDataProvider,
-            args: { useBinaryObjects },
+            args: {},
             children: [
               {
                 name: CoreDataProviders.BagDataProvider,
@@ -136,7 +135,7 @@ describe("ParseMessagesDataProvider", () => {
   });
 
   it("does not return parsed messages for binary-only requests", async () => {
-    const provider = getProvider(true);
+    const provider = getProvider();
     await provider.initialize(dummyExtensionPoint);
     const start = { sec: 1396293887, nsec: 844783943 };
     const end = { sec: 1396293888, nsec: 60000000 };
@@ -148,20 +147,5 @@ describe("ParseMessagesDataProvider", () => {
     expect(messages2.rosBinaryMessages).toBe(undefined);
     expect(messages2.bobjects).toHaveLength(2);
     expect(messages2.parsedMessages).toEqual([]);
-  });
-
-  it("still returns bobjects when the binary translation flag is off", async () => {
-    const provider = getProvider(false);
-    await provider.initialize(dummyExtensionPoint);
-    const start = { sec: 1396293887, nsec: 844783943 };
-    const end = { sec: 1396293888, nsec: 60000000 };
-    const messages = await provider.getMessages(start, end, { parsedMessages: [], bobjects: ["/tf"] });
-    expect(messages.rosBinaryMessages).toBe(undefined);
-    expect(messages.bobjects).toHaveLength(2);
-    expect(messages.parsedMessages).toEqual([]);
-    if (messages.bobjects == null) {
-      throw new Error("Convince flow that bobjects is an array");
-    }
-    expect(messages.bobjects.map(({ message }) => isBobject(message))).toEqual([true, true]);
   });
 });

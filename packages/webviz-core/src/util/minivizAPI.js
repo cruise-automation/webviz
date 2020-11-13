@@ -10,7 +10,7 @@ import { isInIFrame, postMessageToIframeHost } from "webviz-core/src/util/iframe
 import type { NotificationType, DetailsType, NotificationSeverity } from "webviz-core/src/util/sendNotification";
 
 type IframePlaybackMessageData = {
-  playbackState: { timestampSec: number },
+  playbackState: { timestampSec: number, timeStampNano: number },
 };
 
 type IframeNotificationMessageData = {

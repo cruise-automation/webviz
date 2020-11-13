@@ -30,17 +30,17 @@ Only `label` and `data` are required - all other options have reasonable default
 Below are the ROS message definitions needed for a 2D Plot message:
 
 ```cpp
-# webviz_msgs/TwoDimensionalPlotMsg definition
+# webviz_msgs/TwoDimensionalPlot definition
 std_msgs/Header header
 string title
 string xAxisLabel
 string yAxisLabel
 string gridColor
-webviz_msgs/TwoDimensionalPlotDatapointMsg[] lines
-webviz_msgs/TwoDimensionalPlotDatapointMsg[] points
-webviz_msgs/TwoDimensionalPlotDatapointMsg[] polygons
+webviz_msgs/TwoDimensionalPlotDatapoint[] lines
+webviz_msgs/TwoDimensionalPlotDatapoint[] points
+webviz_msgs/TwoDimensionalPlotDatapoint[] polygons
 
-# webviz_msgs/TwoDimensionalPlotDatapointMsg definition
+# webviz_msgs/TwoDimensionalPlotDatapoint definition
 uint8 order
 string label
 string backgroundColor
@@ -63,7 +63,7 @@ Below is an example of an output message (in JavaScript) that could be consumed 
 ```js
 {
   topic: "/plot_a",
-  datatype: "webviz_msgs/TwoDimensionalPlotMsg",
+  datatype: "webviz_msgs/TwoDimensionalPlot",
   receiveTime: { sec: 1532375120, nsec: 317760607 },
   message: {
     title: "This is Plot A",

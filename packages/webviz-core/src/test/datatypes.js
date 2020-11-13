@@ -153,3 +153,9 @@ export const wrapMessages = <T>(messages: $ReadOnlyArray<Message>): TypedMessage
 };
 
 export const wrapMessage = <T>(message: Message): TypedMessage<T> => wrapMessages<T>([message])[0];
+
+// Objects are assumed to be of the same type
+export const wrapObjects = <T>(objects: $ReadOnlyArray<{}>): T[] => {
+  const messages = objects.map((message) => ({ receiveTime: { sec: 0, nsec: 0 }, topic: "dummy", message }));
+  return wrapMessages<T>(messages).map(({ message }) => message);
+};

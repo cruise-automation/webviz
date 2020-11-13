@@ -54,7 +54,7 @@ type Props = {|
   children: [React$Element<any>, React$Element<any>],
   style?: { [string]: any },
   // alignment of the content component
-  position: "above" | "below" | "left" | "right",
+  position: "above" | "below" | "left" | "right" | "bottom-left",
   // don't use a portal, e.g. if you are nesting this already in a portal
   noPortal?: boolean,
   dataTest?: string,
@@ -149,8 +149,13 @@ export default class ChildToggle extends React.Component<Props> {
       styleObj.top = childRect.top;
       spacerSize = window.innerWidth - childRect.left - padding;
     } else if (position === "below") {
-      styleObj.top = childRect.top + childRect.height;
+      // Floating menu should have 4px overlap with the toggle element above it
+      styleObj.top = childRect.top + childRect.height - 4;
       spacerSize = childRect.left - padding;
+    } else if (position === "bottom-left") {
+      // Floating menu should have 4px overlap with the toggle element above it
+      styleObj.top = childRect.top + childRect.height - 4;
+      spacerSize = window.innerWidth - childRect.right - padding;
     } else if (position === "above") {
       delete styleObj.bottom;
       styleObj.height = childRect.top - padding;
@@ -169,7 +174,7 @@ export default class ChildToggle extends React.Component<Props> {
       <div ref={(el) => (this.floatingEl = el)}>
         <Flex
           row
-          reverse={position === "left"}
+          reverse={position === "left" || position === "bottom-left"}
           start={position !== "above"}
           end={position === "above"}
           className={styles.childContainer}

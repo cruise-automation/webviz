@@ -42,17 +42,7 @@ function Canvas({
     draw(ctx, width, height);
   });
 
-  return (
-    <canvas
-      ref={canvasRef}
-      width={width * ratio}
-      height={height * ratio}
-      style={{
-        width,
-        height,
-      }}
-    />
-  );
+  return <canvas ref={canvasRef} width={width * ratio} height={height * ratio} style={{ width, height }} />;
 }
 
 const AutoSizingCanvas = ({ draw, overrideDevicePixelRatioForTest }: AutoSizingCanvasProps) => (

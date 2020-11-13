@@ -32,6 +32,7 @@ type Props = {|
   children: React.Node | string,
   linkTarget?: string,
   onRequestClose: () => void,
+  rootStyle?: { [attr: string]: string | number },
 |};
 
 function Footnote() {
@@ -42,11 +43,11 @@ function Footnote() {
   return <SFootnote>{footnote}</SFootnote>;
 }
 
-export default function HelpModal(props: Props) {
+export default function HelpModal({ onRequestClose, linkTarget, rootStyle, children }: Props) {
   return (
-    <Modal onRequestClose={props.onRequestClose}>
-      <SRoot>
-        <TextContent linkTarget={props.linkTarget}>{props.children}</TextContent>
+    <Modal onRequestClose={onRequestClose}>
+      <SRoot {...(rootStyle ? { style: rootStyle } : undefined)}>
+        <TextContent linkTarget={linkTarget}>{children}</TextContent>
         <Footnote />
       </SRoot>
     </Modal>

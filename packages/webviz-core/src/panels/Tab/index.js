@@ -22,6 +22,7 @@ import type { TabPanelConfig as Config } from "webviz-core/src/types/layouts";
 import type { SaveConfig } from "webviz-core/src/types/panels";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 import { DEFAULT_TAB_PANEL_CONFIG, updateTabPanelLayout } from "webviz-core/src/util/layout";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const SPanelCover = styled.div`
   top: 0;
@@ -29,7 +30,7 @@ const SPanelCover = styled.div`
   width: 100%;
   height: 100%;
   z-index: 1;
-  background: #1a1a1f;
+  background: ${colors.DARK};
   position: absolute;
 `;
 

@@ -5,31 +5,24 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
-import TimerIcon from "@mdi/svg/svg/av-timer.svg";
 import React, { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { setPlaybackConfig } from "webviz-core/src/actions/panels";
 import Dropdown from "webviz-core/src/components/Dropdown";
-import Icon from "webviz-core/src/components/Icon";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import { useDataSourceInfo } from "webviz-core/src/PanelAPI";
 import { PlayerCapabilities } from "webviz-core/src/players/types";
-import { ndash, times } from "webviz-core/src/util/entities";
+import { ndash } from "webviz-core/src/util/entities";
 
-const SPEEDS = ["0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "0.8", "1.0", "5.0"];
-const BUTTON_STYLE = {
-  display: "flex",
-  alignItems: "center",
-};
+const SPEEDS = ["0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "0.8", "1", "2", "3", "5"];
 
 export default function PlaybackSpeedControls() {
   const configSpeed = useSelector((state) => state.persistedState.panels.playbackConfig.speed);
   const speed = useMessagePipeline(
     useCallback(({ playerState }) => playerState.activeData && playerState.activeData.speed, [])
   );
-  const { capabilities, playerId } = useDataSourceInfo();
+  const { capabilities } = useDataSourceInfo();
   const canSetSpeed = capabilities.includes(PlayerCapabilities.setSpeed);
 
   // TODO(JP): Might be nice to move all this logic a bit deeper down. It's a bit weird to be doing
@@ -49,39 +42,27 @@ export default function PlaybackSpeedControls() {
   );
 
   // Set the speed to the speed that we got from the config whenever we get a new Player.
-  useEffect(
-    () => {
-      setSpeed(configSpeed);
-    },
-    [playerId, setSpeed, configSpeed]
-  );
+  useEffect(() => setSpeed(configSpeed), [configSpeed, setSpeed]);
 
-  if (!canSetSpeed) {
-    return null;
+  const displayedSpeed = speed || configSpeed;
+  let speedText = ndash;
+
+  if (displayedSpeed) {
+    speedText = displayedSpeed < 0.1 ? `${displayedSpeed.toFixed(2)}x` : `${displayedSpeed}x`;
   }
-
-  const speedText = !speed ? ndash : speed < 0.1 ? `${speed.toFixed(2)}${times}` : `${speed.toFixed(1)}${times}`;
-  const speedLabel = (
-    <>
-      <Icon small>
-        <TimerIcon />
-      </Icon>
-      &nbsp;
-      {speedText}
-    </>
-  );
 
   return (
     <Dropdown
       position="above"
-      value={speed || configSpeed}
-      text={speedLabel}
+      value={displayedSpeed}
+      text={speedText}
       onChange={setSpeed}
-      btnStyle={BUTTON_STYLE}
+      menuStyle={{ width: "75px" }}
+      btnStyle={{ marginRight: "16px", height: "28px" }}
       dataTest="PlaybackSpeedControls-Dropdown">
       {SPEEDS.map((eachSpeed: string) => (
         <span key={eachSpeed} value={parseFloat(eachSpeed)}>
-          {eachSpeed}&times;
+          {eachSpeed}x
         </span>
       ))}
     </Dropdown>

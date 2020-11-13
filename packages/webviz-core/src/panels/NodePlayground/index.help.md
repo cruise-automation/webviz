@@ -205,3 +205,23 @@ export default publisher;
 ```
 
 Note the union return type in the `publisher` definition. We've indicated to Typescript that this function can return `undefined`, and we do so within the conditional block (In Typescript, if you `return` without a value, it will implicitly return `undefined`). When this code path is hit, we don't publish any message.
+
+> Can I return arbitrary JSON data in a message?
+
+Yes! Node Playground supports the `json` type. You can import it from the "ros" module:
+
+```typescript
+import { Input, json } from "ros";
+
+export const inputs = ["/state"];
+export const output = "/webviz_node/json_data";
+
+const publisher = (msg: Input<"/state">): { data: json } => ({
+  data: {
+    foo: 123,
+    bar: 'string',
+    nested: { array: [1, 2, 3], working: true }
+  }
+});
+export default publisher;
+```

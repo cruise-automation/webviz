@@ -19,10 +19,9 @@ import type {
 } from "webviz-core/src/dataProviders/types";
 import type { ParsedMessageDefinitionsByTopic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { FREEZE_MESSAGES } from "webviz-core/src/util/globalConstants";
 
-type Args = $ReadOnly<{| wrapMessagesToProvideBobjects?: boolean |}>;
+type Args = $ReadOnly<{||}>;
 
 // Parses raw messages as returned by `BagDataProvider`. To make it fast to seek back and forth, we keep
 // a small cache here, which maps messages from the underlying DataProvider to parsed messages. This assumes
@@ -39,20 +38,14 @@ export default class ParseMessagesDataProvider implements DataProvider {
   _readersByTopic: { [topic: string]: MessageReader } = {};
   // Use this to signal that the _readersByTopic is fully initialized.
   _calledInitializeReaders = false;
-  _wrapMessagesToProvideBobjects: boolean;
   _datatypes: RosDatatypes = {};
   _datatypeNamesByTopic: { [topic: string]: string } = {};
 
-  constructor(
-    { wrapMessagesToProvideBobjects }: Args,
-    children: DataProviderDescriptor[],
-    getDataProvider: GetDataProvider
-  ) {
+  constructor(_args: Args, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
     if (children.length !== 1) {
       throw new Error(`Incorrect number of children to ParseMessagesDataProvider: ${children.length}`);
     }
     this._provider = getDataProvider(children[0]);
-    this._wrapMessagesToProvideBobjects = !!wrapMessagesToProvideBobjects;
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
@@ -93,10 +86,7 @@ export default class ParseMessagesDataProvider implements DataProvider {
   async getMessages(start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> {
     const requestedParsedTopics = new Set(topics.parsedMessages);
     const requestedBinaryTopics = new Set(topics.bobjects);
-    const readerTopics = [
-      ...(topics.parsedMessages || []),
-      ...(this._wrapMessagesToProvideBobjects ? topics.bobjects || [] : []),
-    ];
+    const readerTopics = [...(topics.parsedMessages || [])];
     const childTopics = {
       bobjects: uniq([...requestedParsedTopics, ...requestedBinaryTopics]),
     };
@@ -107,24 +97,12 @@ export default class ParseMessagesDataProvider implements DataProvider {
     if (bobjects == null) {
       throw new Error("Child of ParseMessagesProvider must provide binary messages");
     }
-    // When the binary translation flag is off, `bobjects` actually contains ROS binary messages. We
-    // need to parse all of them and wrap some of them as bobjects to return to the caller.
-    const messagesToParse = this._wrapMessagesToProvideBobjects
-      ? bobjects
-      : bobjects.filter(({ topic }) => requestedParsedTopics.has(topic));
+    const messagesToParse = bobjects.filter(({ topic }) => requestedParsedTopics.has(topic));
     const parsedMessages = this._messageCache.parseMessages(messagesToParse, readersByTopic);
 
     return {
       parsedMessages: parsedMessages.filter(({ topic }) => requestedParsedTopics.has(topic)),
-      bobjects: this._wrapMessagesToProvideBobjects
-        ? parsedMessages
-            .filter(({ topic }) => requestedBinaryTopics.has(topic))
-            .map(({ topic, receiveTime, message }) => ({
-              topic,
-              receiveTime,
-              message: wrapJsObject(this._datatypes, this._datatypeNamesByTopic[topic], message),
-            }))
-        : bobjects.filter(({ topic }) => requestedBinaryTopics.has(topic)),
+      bobjects: bobjects.filter(({ topic }) => requestedBinaryTopics.has(topic)),
       rosBinaryMessages: undefined,
     };
   }

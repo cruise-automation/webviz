@@ -5,14 +5,12 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import CloseIcon from "@mdi/svg/svg/close.svg";
 import EarthIcon from "@mdi/svg/svg/earth.svg";
-import HelpCircleIcon from "@mdi/svg/svg/help-circle.svg";
-import PlusBoxIcon from "@mdi/svg/svg/plus-box.svg";
 import React, { useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import styled, { css } from "styled-components";
 
+import { SLinkUnderline } from "webviz-core/shared/styledComponents";
 import { type AddPanelPayload, addPanel } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Flex from "webviz-core/src/components/Flex";
@@ -21,11 +19,9 @@ import GlobalVariablesTable, {
   isActiveElementEditable,
   makeFlashAnimation,
 } from "webviz-core/src/components/GlobalVariablesTable";
-import HelpModal from "webviz-core/src/components/HelpModal";
-import Icon from "webviz-core/src/components/Icon";
+import { WrappedIcon } from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
 import HelpButton from "webviz-core/src/components/PanelToolbar/HelpButton";
-import renderToBody from "webviz-core/src/components/renderToBody";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import GlobalVariables from "webviz-core/src/panels/GlobalVariables";
@@ -70,7 +66,7 @@ const IconFlashAnimation = css`
   animation-fill-mode: forwards;
 `;
 
-const SAnimatedIcon = styled(Icon)`
+const SAnimatedIcon = styled(WrappedIcon)`
   color: ${colors.LIGHT};
   transition: all ${AnimationDuration}s;
   ${({ animate, skipAnimation }) => (animate && !skipAnimation ? IconFlashAnimation : "none")};
@@ -102,13 +98,6 @@ function GlobalVariablesMenu(props: Props) {
     },
     [dispatch, layout]
   );
-  const openHelp = useCallback(() => {
-    const modal = renderToBody(
-      <HelpModal onRequestClose={() => modal.remove()}>
-        <HelpButton>{helpContent}</HelpButton>
-      </HelpModal>
-    );
-  }, []);
 
   const { globalVariables } = useGlobalVariables();
   useEffect(
@@ -124,36 +113,25 @@ function GlobalVariablesMenu(props: Props) {
     <ChildToggle position="below" onToggle={onToggle} isOpen={isOpen}>
       <Flex center>
         <SAnimatedIcon
-          small
+          medium
           fade
           active={isOpen}
           animate={hasChangedVariable}
           skipAnimation={skipAnimation || isOpen}
           style={{ transition: "all 1s ease-out" }}
-          tooltip="Global Variables">
+          tooltip="Global variables">
           <EarthIcon />
         </SAnimatedIcon>
       </Flex>
       <Menu>
         <STitleBar>
-          <STitle>Global Variables</STitle>
+          <STitle>Global variables</STitle>
           <SActions>
-            <Icon small fade tooltip="Help" tooltipProps={{ placement: "top" }} onClick={openHelp}>
-              <HelpCircleIcon />
-            </Icon>
-            <Icon
-              small
-              fade
-              tooltip="Add panel to layout"
-              onClick={addPanelToLayout}
-              tooltipProps={{ placement: "top" }}>
-              <PlusBoxIcon />
-            </Icon>
-            <Icon small fade tooltip="Close" onClick={onToggle} tooltipProps={{ placement: "top" }}>
-              <CloseIcon />
-            </Icon>
+            <SLinkUnderline onClick={addPanelToLayout}>Add panel to layout</SLinkUnderline>
+            <HelpButton iconStyle={{ width: "18px", height: "18px" }}>{helpContent}</HelpButton>
           </SActions>
         </STitleBar>
+        <hr />
         <GlobalVariablesTable />
       </Menu>
     </ChildToggle>

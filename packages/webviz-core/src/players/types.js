@@ -9,7 +9,11 @@
 import type { Time, RosMsgDefinition } from "rosbag";
 
 import type { BlockCache } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
-import type { AverageThroughput, InitializationPerformanceMetadata } from "webviz-core/src/dataProviders/types";
+import type {
+  AverageThroughput,
+  DataProviderStall,
+  InitializationPerformanceMetadata,
+} from "webviz-core/src/dataProviders/types";
 import { type GlobalVariables } from "webviz-core/src/hooks/useGlobalVariables";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import type { Range } from "webviz-core/src/util/ranges";
@@ -302,4 +306,5 @@ export interface PlayerMetricsCollectorInterface {
   recordUncachedRangeRequest(): void;
   recordTimeToFirstMsgs(): void;
   recordDataProviderInitializePerformance(metadata: InitializationPerformanceMetadata): void;
+  recordDataProviderStall(metadata: DataProviderStall): void;
 }

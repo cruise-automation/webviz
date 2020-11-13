@@ -20,11 +20,8 @@ export const DIRECTION = {
 
 export const jumpSeek = (
   directionSign: $Values<typeof DIRECTION>,
-  modifierKeys?: { altKey: boolean, shiftKey: boolean },
-  playerProps: {
-    seek: (Time) => void,
-    player: PlayerState,
-  }
+  playerProps: { seek: (Time) => void, player: PlayerState },
+  modifierKeys?: { altKey: boolean, shiftKey: boolean }
 ) => {
   const { player, seek } = playerProps;
   if (!player.activeData) {

@@ -17,7 +17,6 @@ import { PanelToolbarLabel, PanelToolbarInput } from "webviz-core/shared/panelTo
 import Button from "webviz-core/src/components/Button";
 import Dimensions from "webviz-core/src/components/Dimensions";
 import EmptyState from "webviz-core/src/components/EmptyState";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import { Item } from "webviz-core/src/components/Menu";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
@@ -88,11 +87,11 @@ type Config = {
 };
 type Props = { config: Config, saveConfig: ($Shape<Config>) => void };
 export type Line = {
-  order: number,
+  order?: number,
   label: string,
   backgroundColor?: string,
   borderColor?: string,
-  borderDash?: string,
+  borderDash?: number[],
   borderWidth?: number,
   pointBackgroundColor?: string,
   pointBorderColor?: string,
@@ -226,10 +225,10 @@ const TwoDimensionalTooltip = ({ datapoints, xAxisLabel, tooltipElement }: Toolt
 
 // NOTE: Keep this type (and its dependencies) in sync with the corresponding
 // Node Playground types in 'userUtils'.
-type PlotMessage = {
+export type PlotMessage = {
   lines: Line[],
-  points: Line[],
-  polygons: Line[],
+  points?: Line[],
+  polygons?: Line[],
   title?: string,
   yAxisLabel?: string,
   xAxisLabel?: string,
@@ -314,8 +313,7 @@ function TwoDimensionalPlot(props: Props) {
 
   const [mousePosition, updateMousePosition] = React.useState<?{ x: number, y: number }>(null);
 
-  const format = useExperimentalFeature("useBinaryTranslation") ? "bobjects" : "parsedMessages";
-  const maybeBobject: mixed = useLatestMessageDataItem(path.value, format)?.queriedData[0]?.value;
+  const maybeBobject: mixed = useLatestMessageDataItem(path.value, "bobjects")?.queriedData[0]?.value;
   const message: ?PlotMessage = isBobject(maybeBobject) ? deepParse(maybeBobject) : cast<PlotMessage>(maybeBobject);
   const { title, yAxisLabel, xAxisLabel, gridColor, lines = [], points = [], polygons = [] } = message || {};
   const datasets = React.useMemo(

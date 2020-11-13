@@ -8,11 +8,10 @@
 
 import ChartJSWorker from "./ChartJSWorker";
 import Rpc from "webviz-core/src/util/Rpc";
-
-const inWorkerEnvironment = global.postMessage && !global.onmessage;
+import { inWebWorker } from "webviz-core/src/util/workers";
 
 export default ChartJSWorker;
 
-if (inWorkerEnvironment) {
+if (inWebWorker()) {
   new ChartJSWorker(new Rpc(global));
 }

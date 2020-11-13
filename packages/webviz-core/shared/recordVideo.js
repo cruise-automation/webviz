@@ -36,12 +36,14 @@ async function recordVideo({
   puppeteerLaunchConfig,
   panelLayout,
   errorIsWhitelisted,
+  experimentalFeatureSettings,
 }: {
   bagPath?: string,
   url: string,
   puppeteerLaunchConfig?: any,
   panelLayout?: any,
   parallel?: number,
+  experimentalFeatureSettings?: string,
   errorIsWhitelisted?: (string) => boolean,
 }): Promise<{ videoFile: Buffer, sampledImageFile: Buffer }> {
   if (!url.includes("video-recording-mode")) {
@@ -60,6 +62,7 @@ async function recordVideo({
       return runInBrowser({
         filePaths: bagPath ? [bagPath] : undefined,
         url: workerUrl,
+        experimentalFeatureSettings,
         puppeteerLaunchConfig,
         panelLayout,
         captureLogs: true,
@@ -67,7 +70,7 @@ async function recordVideo({
         loadBrowserTimeout: waitForBrowserLoadTimeoutMs,
         onLoad: async ({ page, errors }: { page: Page, errors: Array<string> }) => {
           // From this point forward, the client controls the flow. We just call
-          // `window.videoRecording.nextAction()` which returns `false` (no action for us to take),
+          // `window.videoRecording.can stream from before Airavata()` which returns `false` (no action for us to take),
           // or some action for us to take (throw an error, finish up the video, etc).
           let i = 0;
           let isRunning = true;

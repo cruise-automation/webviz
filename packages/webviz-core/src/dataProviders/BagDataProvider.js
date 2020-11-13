@@ -22,8 +22,9 @@ import type {
   InitializationResult,
   AverageThroughput,
 } from "webviz-core/src/dataProviders/types";
+import { getReportMetadataForChunk } from "webviz-core/src/dataProviders/util";
 import type { Message } from "webviz-core/src/players/types";
-import { objectValues, debounceReduce } from "webviz-core/src/util";
+import { objectValues } from "webviz-core/src/util";
 import { bagConnectionsToTopics } from "webviz-core/src/util/bagConnectionsHelper";
 import { getBagChunksOverlapCount } from "webviz-core/src/util/bags";
 import CachedFilelike, { type FileReader } from "webviz-core/src/util/CachedFilelike";
@@ -72,19 +73,19 @@ export const mergeStats = (a: TimedDataThroughput, b: TimedDataThroughput): Time
 });
 
 // A FileReader that "spies" on data callbacks. Used to log data consumed.
-class TeeReader {
+class LogMetricsReader {
   _reader: FileReader;
-  _dataCallback: (data: Buffer) => void;
-  constructor(reader: FileReader, dataCallback: (data: Buffer) => void) {
+  _extensionPoint: ExtensionPoint;
+  constructor(reader: FileReader, extensionPoint: ExtensionPoint) {
     this._reader = reader;
-    this._dataCallback = dataCallback;
+    this._extensionPoint = extensionPoint;
   }
   open() {
     return this._reader.open();
   }
   fetch(offset: number, length: number) {
     const stream = this._reader.fetch(offset, length);
-    stream.on("data", this._dataCallback);
+    stream.on("data", getReportMetadataForChunk(this._extensionPoint));
     return stream;
   }
 }
@@ -111,13 +112,7 @@ export default class BagDataProvider implements DataProvider {
     await decompress.isLoaded;
 
     if (bagPath.type === "remoteBagUrl") {
-      const logData = debounceReduce({
-        action: (bytes) => extensionPoint.reportMetadataCallback({ type: "received_bytes", bytes }),
-        wait: 10,
-        reducer: (bytesSoFar, buffer) => bytesSoFar + buffer.length,
-        initialValue: 0,
-      });
-      const fileReader = new TeeReader(new BrowserHttpReader(bagPath.url), logData);
+      const fileReader = new LogMetricsReader(new BrowserHttpReader(bagPath.url), extensionPoint);
       const remoteReader = new CachedFilelike({
         fileReader,
         cacheSizeInBytes: cacheSizeInBytes || 1024 * 1024 * 200, // 200MiB
@@ -194,15 +189,17 @@ export default class BagDataProvider implements DataProvider {
     }
 
     const messageDefinitionsByTopic = {};
+    const messageDefinitionMd5SumByTopic = {};
     for (const connection of connections) {
       messageDefinitionsByTopic[connection.topic] = connection.messageDefinition;
+      messageDefinitionMd5SumByTopic[connection.topic] = connection.md5sum;
     }
 
     return {
       start: startTime,
       end: endTime,
       topics: bagConnectionsToTopics(connections, chunkInfos),
-      messageDefinitions: { type: "raw", messageDefinitionsByTopic },
+      messageDefinitions: { type: "raw", messageDefinitionsByTopic, messageDefinitionMd5SumByTopic },
       providesParsedMessages: false,
     };
   }

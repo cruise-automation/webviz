@@ -7,11 +7,11 @@
 //  You may not use this file except in compliance with the License.
 
 import { fromPairs, uniq } from "lodash";
-import { parseMessageDefinition } from "rosbag";
 
 import type { MessageDefinitions, ParsedMessageDefinitions } from "./types";
 import type { Topic, ParsedMessageDefinitionsByTopic } from "webviz-core/src/players/types";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
+import parseMessageDefinitionsCache from "webviz-core/src/util/parseMessageDefinitionsCache";
 
 // Extract one big list of datatypes from the individual connections.
 function parsedMessageDefinitionsToDatatypes(
@@ -48,7 +48,11 @@ export default function rawMessageDefinitionsToParsed(
   const parsedMessageDefinitionsByTopic = {};
   for (const topic of Object.keys(messageDefinitions.messageDefinitionsByTopic)) {
     const messageDefinition = messageDefinitions.messageDefinitionsByTopic[topic];
-    parsedMessageDefinitionsByTopic[topic] = parseMessageDefinition(messageDefinition);
+    const md5 = messageDefinitions.messageDefinitionMd5SumByTopic?.[topic];
+    parsedMessageDefinitionsByTopic[topic] = parseMessageDefinitionsCache.parseMessageDefinition(
+      messageDefinition,
+      md5
+    );
   }
   return {
     type: "parsed",

@@ -49,6 +49,7 @@ export const PANELS_ACTION_TYPES = {
   SET_FETCHED_LAYOUT: "SET_FETCHED_LAYOUT",
   SET_FETCH_LAYOUT_FAILED: "SET_FETCH_LAYOUT_FAILED",
   LOAD_LAYOUT: "LOAD_LAYOUT",
+  CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT: "CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT",
 };
 
 export type SAVE_PANEL_CONFIGS = { type: "SAVE_PANEL_CONFIGS", payload: SaveConfigsPayload };
@@ -93,8 +94,13 @@ export const changePanelLayout = (payload: ChangePanelLayoutPayload): Dispatcher
   return dispatch({ type: PANELS_ACTION_TYPES.CHANGE_PANEL_LAYOUT, payload });
 };
 
-export const loadLayout = (payload: PanelsState): Dispatcher<LOAD_LAYOUT> => (dispatch) => {
-  return dispatch({ type: PANELS_ACTION_TYPES.LOAD_LAYOUT, payload });
+export const loadLayout = (layout: PanelsState): Dispatcher<LOAD_LAYOUT> => (dispatch) => {
+  return dispatch({ type: PANELS_ACTION_TYPES.LOAD_LAYOUT, payload: layout });
+};
+
+type CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT = { type: "CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT" };
+export const clearLayoutUrlReplacedByDefault = (): Dispatcher<CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT> => (dispatch) => {
+  return dispatch({ type: PANELS_ACTION_TYPES.CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT });
 };
 
 export const fetchLayout = (search: string): Dispatcher<SET_FETCHED_LAYOUT> => (dispatch) => {
@@ -273,7 +279,8 @@ export type PanelsActions =
   | END_DRAG
   | SET_FETCHED_LAYOUT
   | SET_FETCH_LAYOUT_FAILED
-  | LOAD_LAYOUT;
+  | LOAD_LAYOUT
+  | CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT;
 
 type PanelsActionTypes = $Values<typeof PANELS_ACTION_TYPES>;
 export const panelEditingActions = new Set<PanelsActionTypes>(Object.keys(PANELS_ACTION_TYPES));

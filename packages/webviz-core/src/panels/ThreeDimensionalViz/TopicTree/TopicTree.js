@@ -39,7 +39,6 @@ import type {
   VisibleTopicsCountByKey,
 } from "./types";
 import Dimensions from "webviz-core/src/components/Dimensions";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Icon from "webviz-core/src/components/Icon";
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import { useChangeDetector } from "webviz-core/src/util/hooks";
@@ -68,7 +67,7 @@ const STopicTree = styled(animated.div)`
   position: relative;
   color: ${colors.TEXT};
   border-radius: 6px;
-  background-color: ${colors.TOOLBAR};
+  background-color: ${colors.DARK2};
   padding-bottom: 6px;
   max-width: 100%;
   overflow: auto;
@@ -300,10 +299,7 @@ function TopicTree({
   const headerRightIconStyle = { margin: `4px ${(isXSWidth ? 0 : TREE_SPACING) + 2}px 4px 8px` };
 
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
-  const highlightMarkersThatMatchGlobalVariables = useExperimentalFeature("globalVariableColorOverrides");
-  const linkedGlobalVariablesByTopic = highlightMarkersThatMatchGlobalVariables
-    ? groupBy(linkedGlobalVariables, ({ topic }) => topic)
-    : {};
+  const linkedGlobalVariablesByTopic = groupBy(linkedGlobalVariables, ({ topic }) => topic);
 
   // Close the TopicTree if the user hits the "Escape" key
   const onKeyDown = useCallback(

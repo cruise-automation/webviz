@@ -12,7 +12,6 @@ import TwoDimensionalPlot from "./index";
 import PanelSetup, { triggerWheel } from "webviz-core/src/stories/PanelSetup";
 
 const example0 = {
-  type: "webviz_msgs/TwoDimensionalPlotMsg",
   title: "This is Plot A",
   xAxisLabel: "This is my X axis label",
   yAxisLabel: "This is my Y axis label",
@@ -46,7 +45,6 @@ const example0 = {
 };
 
 const example1 = {
-  type: "webviz_msgs/TwoDimensionalPlotMsg",
   lines: [
     // This also has a solid-line, but with completely different dimensions. If we don't properly
     // clone these objects, Chart.js might mutate the object above because the label is the same.

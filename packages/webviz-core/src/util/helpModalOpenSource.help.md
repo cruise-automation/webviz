@@ -1,4 +1,4 @@
-# Help and Resources
+# Help and resources
 
 **Welcome to Webviz!** Use this tool to visualize a live or recorded [ROS system](https://www.ros.org/). If you're curious to see how this works, try this page with the [`?demo` parameter](?demo).
 

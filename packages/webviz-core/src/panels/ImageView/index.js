@@ -46,6 +46,7 @@ import type { SaveConfig } from "webviz-core/src/types/panels";
 import { useShallowMemo, useDeepMemo } from "webviz-core/src/util/hooks";
 import naturalSort from "webviz-core/src/util/naturalSort";
 import { getTopicsByTopicName } from "webviz-core/src/util/selectors";
+import { colors as sharedColors } from "webviz-core/src/util/sharedStyleConstants";
 import { getSynchronizingReducers } from "webviz-core/src/util/synchronizeMessages";
 import { formatTimeRaw } from "webviz-core/src/util/time";
 import toggle from "webviz-core/src/util/toggle";
@@ -93,7 +94,7 @@ const SEmptyStateWrapper = styled.div`
   height: 100%;
   position: absolute;
   z-index: 200;
-  background: ${colors.panelBackground};
+  background: ${sharedColors.DARK2};
   display: flex;
   align-items: center;
   justify-content: center;

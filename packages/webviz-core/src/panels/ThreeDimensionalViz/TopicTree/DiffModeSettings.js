@@ -11,6 +11,7 @@ import styled from "styled-components";
 
 import { type Save3DConfig } from "../index";
 import Switch from "webviz-core/src/components/Switch";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type Props = {|
@@ -60,14 +61,21 @@ function DiffModeIconEnabled() {
 }
 
 export default function DiffModeSettings({ enabled, saveConfig }: Props) {
+  const { logger, eventNames } = getGlobalHooks().getEventLogger();
+
+  const updateDiffModeFlag = () => {
+    saveConfig({ diffModeEnabled: !enabled });
+    logger({
+      name: eventNames["3D_PANEL.DIFF_MODE_TOGGLED"],
+      tags: {
+        enabled: !enabled,
+      },
+    });
+  };
+
   return (
     <SDiffModeWrapper>
-      <Switch
-        onChange={() => {
-          saveConfig({ diffModeEnabled: !enabled });
-        }}
-        isChecked={enabled}
-      />
+      <Switch onChange={updateDiffModeFlag} isChecked={enabled} />
       <STitle>Show diff</STitle>
       <SDiffModeIcon>{enabled && <DiffModeIconEnabled />}</SDiffModeIcon>
     </SDiffModeWrapper>

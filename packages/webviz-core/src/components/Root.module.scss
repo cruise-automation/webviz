@@ -16,10 +16,9 @@ $spacing: 14px;
 .block {
   color: white;
   flex: 0 0 auto;
-  margin-right: $spacing;
   display: flex;
-  align-items: center;
   height: 100%;
+  min-width: 40px;
 }
 
 .left {
@@ -40,5 +39,5 @@ $spacing: 14px;
 }
 
 .playback-controls {
-  background-color: $toolbar-background;
+  background-color: $dark2;
 }

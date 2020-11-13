@@ -51,8 +51,7 @@ const laserScan = (regl: Regl) =>
       range_min: regl.prop("range_min"),
       range_max: regl.prop("range_max"),
 
-      overrideColor: (context, props) => toRGBA(props.settings?.overrideColor || DEFAULT_FLAT_COLOR),
-      hitmapColor: (context, props) => props.color || [0, 0, 0, 1],
+      color: (context, props) => toRGBA(props.settings?.overrideColor || DEFAULT_FLAT_COLOR),
     },
 
     attributes: {
@@ -62,6 +61,7 @@ const laserScan = (regl: Regl) =>
         props.intensities.length === props.ranges.length
           ? props.intensities
           : new Float32Array(props.ranges.length).fill(1),
+      hitmapColor: (context, props) => new Array(props.ranges.length).fill(props.color || [0, 0, 0, 1]),
     },
 
     count: regl.prop("ranges.length"),

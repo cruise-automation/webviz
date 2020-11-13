@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { addMessage, defaultDiagnosticsBuffer } from "./DiagnosticsHistory";
+import { addMessages, defaultDiagnosticsBuffer } from "./DiagnosticsHistory";
 import { computeDiagnosticInfo, type Level, type DiagnosticInfo, LEVELS } from "./util";
 import type { Message } from "webviz-core/src/players/types";
 
@@ -32,32 +32,19 @@ const diagnosticInfoAtLevel = (level: Level): DiagnosticInfo => {
   return computeDiagnosticInfo(message.status[0], message.header.stamp);
 };
 
-describe("addMessage", () => {
+describe("addMessages", () => {
   it("adds a message at the right warning level", () => {
     const message = messageAtLevel(LEVELS.OK);
     const info = diagnosticInfoAtLevel(LEVELS.OK);
     const hardwareId = `|${info.status.hardware_id}|`;
-    expect(addMessage(defaultDiagnosticsBuffer(), message)).toEqual({
-      diagnosticsById: new Map([
-        [info.id, info],
-        [
-          hardwareId,
-          { ...info, displayName: info.status.hardware_id, id: hardwareId, status: { ...info.status, name: "" } },
-        ],
-      ]),
-      diagnosticsByLevel: {
-        [LEVELS.OK]: new Map([[info.id, info]]),
-        [LEVELS.WARN]: new Map(),
-        [LEVELS.ERROR]: new Map(),
-        [LEVELS.STALE]: new Map(),
-      },
-      diagnosticsIdsInOrderReceived: [info.id],
+    expect(addMessages(defaultDiagnosticsBuffer(), [message])).toEqual({
+      diagnosticsByNameByTrimmedHardwareId: new Map([[info.status.hardware_id, new Map([[info.status.name, info]])]]),
       sortedAutocompleteEntries: [
         {
           displayName: info.status.hardware_id,
           hardware_id: info.status.hardware_id,
           id: hardwareId,
-          name: "",
+          name: undefined,
           sortKey: info.status.hardware_id.toLowerCase(),
         },
         {
@@ -76,27 +63,14 @@ describe("addMessage", () => {
     const message2 = messageAtLevel(LEVELS.ERROR);
     const info = diagnosticInfoAtLevel(LEVELS.ERROR);
     const hardwareId = `|${info.status.hardware_id}|`;
-    expect(addMessage(addMessage(defaultDiagnosticsBuffer(), message1), message2)).toEqual({
-      diagnosticsById: new Map([
-        [info.id, info],
-        [
-          hardwareId,
-          { ...info, displayName: info.status.hardware_id, id: hardwareId, status: { ...info.status, name: "" } },
-        ],
-      ]),
-      diagnosticsByLevel: {
-        [LEVELS.OK]: new Map(),
-        [LEVELS.WARN]: new Map(),
-        [LEVELS.ERROR]: new Map([[info.id, info]]),
-        [LEVELS.STALE]: new Map(),
-      },
-      diagnosticsIdsInOrderReceived: [info.id],
+    expect(addMessages(defaultDiagnosticsBuffer(), [message1, message2])).toEqual({
+      diagnosticsByNameByTrimmedHardwareId: new Map([[info.status.hardware_id, new Map([[info.status.name, info]])]]),
       sortedAutocompleteEntries: [
         {
           displayName: info.status.hardware_id,
           hardware_id: info.status.hardware_id,
           id: hardwareId,
-          name: "",
+          name: undefined,
           sortKey: info.status.hardware_id.toLowerCase(),
         },
         {

@@ -72,6 +72,9 @@ export default class RenameDataProvider implements DataProvider {
       newMessageDefinitions = {
         type: "raw",
         messageDefinitionsByTopic: convertTopicNameKey(messageDefinitions.messageDefinitionsByTopic),
+        messageDefinitionMd5SumByTopic: messageDefinitions.messageDefinitionMd5SumByTopic
+          ? convertTopicNameKey(messageDefinitions.messageDefinitionMd5SumByTopic)
+          : undefined,
       };
     }
 

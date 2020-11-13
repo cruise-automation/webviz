@@ -38,7 +38,7 @@ import WebWorkerManager from "webviz-core/src/util/WebWorkerManager";
 
 type OnFinishRenderImage = () => void;
 type Props = {|
-  topic: Topic,
+  topic: ?Topic,
   image: ?Message,
   rawMarkerData: {|
     markers: Message[],
@@ -283,7 +283,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
     const canvas = this._canvasRef.current;
 
     // satisfy flow
-    if (!canvas || !image) {
+    if (!canvas || !image || !topic) {
       return;
     }
 
@@ -349,6 +349,10 @@ export default class ImageCanvas extends React.Component<Props, State> {
 
   renderCurrentImage = debouncePromise(async () => {
     const { image, topic, rawMarkerData, onStartRenderImage } = this.props;
+    if (!topic) {
+      return;
+    }
+
     const onFinishImageRender = onStartRenderImage();
     try {
       let dimensions;
@@ -378,6 +382,7 @@ export default class ImageCanvas extends React.Component<Props, State> {
         this.setState({ error: undefined });
       }
     } catch (error) {
+      console.error(error);
       sendNotification(`failed to decode image on ${image?.topic || ""}:`, "", "user", "error");
       this.setState({ error });
     } finally {

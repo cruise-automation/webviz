@@ -10,7 +10,7 @@ import React, { type Node } from "react";
 
 import Button from "webviz-core/src/components/Button";
 import Icon from "webviz-core/src/components/Icon";
-import colors from "webviz-core/src/styles/colors.module.scss";
+import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type Props = {
   tooltip: string,
@@ -27,7 +27,7 @@ export default React.memo<Props>(function IconButton(props: Props) {
     <Button
       id={id}
       tooltip={tooltip}
-      style={{ width: 32, height: 32, padding: 0, backgroundColor: colors.toolbar, ...style }}
+      style={{ width: 32, height: 32, padding: 0, backgroundColor: colors.DARK3, ...style }}
       onClick={onClick}
       disabled={disabled}>
       <Icon small>{icon}</Icon>

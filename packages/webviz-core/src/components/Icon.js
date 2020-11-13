@@ -14,9 +14,12 @@ import Tooltip from "webviz-core/src/components/Tooltip";
 
 type Props = {
   children: React.Node,
+  xlarge?: boolean,
   large?: boolean,
   medium?: boolean,
   small?: boolean,
+  xsmall?: boolean,
+  xxsmall?: boolean,
   active?: boolean,
   fade?: boolean,
   onClick?: (e: SyntheticMouseEvent<HTMLElement>) => void,
@@ -31,9 +34,12 @@ type Props = {
 const Icon = (props: Props) => {
   const {
     children,
+    xlarge,
     large,
     medium,
     small,
+    xsmall,
+    xxsmall,
     onClick,
     clickable,
     active,
@@ -48,9 +54,12 @@ const Icon = (props: Props) => {
     [styles.fade]: fade,
     [styles.clickable]: !!onClick || clickable == null || clickable,
     [styles.active]: active,
+    [styles.xlarge]: xlarge,
     [styles.large]: large,
     [styles.medium]: medium,
     [styles.small]: small,
+    [styles.xsmall]: xsmall,
+    [styles.xxsmall]: xxsmall,
   });
 
   // if we have a click handler
@@ -74,5 +83,17 @@ const Icon = (props: Props) => {
 };
 
 Icon.displayName = "Icon";
+
+export const WrappedIcon = (props: Props) => {
+  return (
+    <Icon
+      {...props}
+      style={{ display: "block", padding: "10px", minHeight: "40px", minWidth: "40px", ...props.style }}
+      className={styles.wrappedIcon}
+    />
+  );
+};
+
+WrappedIcon.displayName = "Icon";
 
 export default Icon;

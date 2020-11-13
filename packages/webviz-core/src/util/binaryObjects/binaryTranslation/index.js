@@ -183,8 +183,13 @@ export default class BinaryMessageWriter {
     //    characters returned by bigString.split(). Decoding as utf-8 is possible, and we could
     //    store _codepoint_ indices in the buffer, but we would need our codepoint counting to agree
     //    with the browser's for invalid data, which is difficult.
-    const bigString = new TextDecoder("ascii").decode(writer.getBigString());
-
+    let stringBuffer = writer.getBigString();
+    if (process.env.NODE_ENV === "test") {
+      // Something weird/terrible happening in node environments here... Causes the TextDecoder
+      // polyfill we use in tests to malfunction. Doesn't happen on the web.
+      stringBuffer = stringBuffer.slice();
+    }
+    const bigString = new TextDecoder("ascii").decode(stringBuffer);
     writer.delete();
 
     return {

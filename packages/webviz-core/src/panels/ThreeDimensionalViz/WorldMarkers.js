@@ -25,7 +25,6 @@ import styled from "styled-components";
 
 import glTextAtlasLoader, { type TextAtlas } from "./utils/glTextAtlasLoader";
 import { groupLinesIntoInstancedLineLists } from "./utils/groupingUtils";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import {
   OccupancyGrids,
@@ -194,15 +193,8 @@ export default function WorldMarkers({
     });
   }, []);
 
-  // If 'groupLines' is enabled, we group all line strips and line lists
-  // into as few markers as possible. Otherwise, just render them as is.
-  const groupLines = useExperimentalFeature("groupLines");
-  let groupedLines = [];
-  let nonGroupedLines = [...lineList, ...lineStrip];
-  if (groupLines) {
-    groupedLines = groupLinesIntoInstancedLineLists(nonGroupedLines);
-    nonGroupedLines = [];
-  }
+  // Group all line strips and line lists into as few markers as possible
+  const groupedLines = groupLinesIntoInstancedLineLists([...lineList, ...lineStrip]);
 
   // Render smaller icons when camera is zoomed out.
   const { iconWrapperStyles, scaledIconWrapperSize, scaledIconSize } = useMemo(() => getIconStyles(cameraDistance), [
@@ -221,7 +213,6 @@ export default function WorldMarkers({
       <PointClouds layerIndex={layerIndex} clearCachedMarkers={clearCachedMarkers}>
         {pointcloud}
       </PointClouds>
-      <Lines layerIndex={layerIndex}>{nonGroupedLines}</Lines>
       <Arrows layerIndex={layerIndex}>{arrow}</Arrows>
       <Points layerIndex={layerIndex} useWorldSpaceSize={useWorldspacePointSize}>
         {points}

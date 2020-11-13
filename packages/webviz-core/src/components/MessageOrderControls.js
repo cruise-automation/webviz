@@ -1,29 +1,21 @@
 // @flow
 //
-//  Copyright (c) 2019-present, Cruise LLC
+//  Copyright (c) 2020-present, Cruise LLC
 //
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import SortIcon from "@mdi/svg/svg/sort-variant.svg";
 import React, { useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
 import { setPlaybackConfig } from "webviz-core/src/actions/panels";
 import Dropdown from "webviz-core/src/components/Dropdown";
-import Icon from "webviz-core/src/components/Icon";
 import NoHeaderTopicsButton from "webviz-core/src/components/NoHeaderTopicsButton";
 import { defaultPlaybackConfig } from "webviz-core/src/reducers/panels";
 
-const BUTTON_STYLE = {
-  display: "flex",
-  alignItems: "center",
-  paddingLeft: 0,
-};
-
 const messageOrderLabel = {
-  receiveTime: "Receive Time",
-  headerStamp: "Header Stamp",
+  receiveTime: "Receive time",
+  headerStamp: "Header stamp",
 };
 
 export default function MessageOrderControls() {
@@ -37,31 +29,21 @@ export default function MessageOrderControls() {
   );
 
   const orderText = messageOrderLabel[messageOrder] || defaultPlaybackConfig.messageOrder;
-  const dropdownButton = (
-    <>
-      <Icon small>
-        <SortIcon />
-      </Icon>
-      &nbsp;
-      {orderText}
-    </>
-  );
   const tooltip = `Order messages by ${orderText.toLowerCase()}`;
   const noHeaderTopicsButton = messageOrder === "headerStamp" ? <NoHeaderTopicsButton /> : null;
   return (
     <>
-      <div>
-        <Dropdown
-          position="above"
-          value={messageOrder}
-          text={dropdownButton}
-          onChange={setMessageOrder}
-          tooltip={tooltip}
-          btnStyle={BUTTON_STYLE}>
-          <span value={"receiveTime"}>{messageOrderLabel.receiveTime}</span>
-          <span value={"headerStamp"}>{messageOrderLabel.headerStamp}</span>
-        </Dropdown>
-      </div>
+      <Dropdown
+        position="above"
+        value={messageOrder}
+        text={orderText}
+        onChange={setMessageOrder}
+        tooltip={tooltip}
+        menuStyle={{ width: "125px" }}
+        btnStyle={{ marginRight: "8px", height: "28px" }}>
+        <span value={"receiveTime"}>{messageOrderLabel.receiveTime}</span>
+        <span value={"headerStamp"}>{messageOrderLabel.headerStamp}</span>
+      </Dropdown>
       {noHeaderTopicsButton}
     </>
   );

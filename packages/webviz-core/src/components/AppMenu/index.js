@@ -6,13 +6,13 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import PlusBoxIcon from "@mdi/svg/svg/plus-box.svg";
+import PlusCircleOutlineIcon from "@mdi/svg/svg/plus-circle-outline.svg";
 import React, { useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { addPanel, type AddPanelPayload } from "webviz-core/src/actions/panels";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
-import Icon from "webviz-core/src/components/Icon";
+import { WrappedIcon } from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
@@ -39,12 +39,10 @@ function AppMenu(props: Props) {
 
   return (
     <ChildToggle position="below" onToggle={onToggle} isOpen={isOpen}>
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <Icon small fade active={isOpen} tooltip="Add Panel">
-          <PlusBoxIcon />
-        </Icon>
-      </div>
-      <Menu>
+      <WrappedIcon medium fade active={isOpen} tooltip="Add Panel">
+        <PlusCircleOutlineIcon />
+      </WrappedIcon>
+      <Menu style={{ overflowY: "hidden", height: "100%" }}>
         <PanelList onPanelSelect={onPanelSelect} />
       </Menu>
     </ChildToggle>

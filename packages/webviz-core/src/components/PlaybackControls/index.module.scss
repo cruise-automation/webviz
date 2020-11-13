@@ -6,15 +6,16 @@
 
 @import "~webviz-core/src/styles/mixins.module.scss";
 @import "~webviz-core/src/styles/colors.module.scss";
+@import "~webviz-core/src/styles/variables.scss";
 
 .container {
-  margin: 2px 8px;
-  height: 40px;
+  padding: 16px;
+  height: $playbackControlHeight;
   align-items: center;
+
   button {
-    background-color: transparent;
+    align-items: center;
   }
-  @include monospace;
 }
 
 .tip {
@@ -28,17 +29,25 @@
       padding-bottom: 0px;
     }
   }
+}
 
-  .tipTitle {
-    color: $text-muted;
-  }
+.tipTitle {
+  color: $dark2;
+  width: 70px;
+  text-align: right;
+  margin-right: 4px;
+  display: inline-block;
+}
+
+.tipValue {
+  @include monospace;
 }
 
 .playIconWrapper {
   display: flex;
 }
 .bar {
-  margin: 0 5px;
+  margin: 0px 0px 0px 5px;
   flex: 1;
   display: flex;
   flex-direction: row;
@@ -72,4 +81,25 @@
     min-height: 100%;
     flex: 1 0 100%;
   }
+}
+
+.seekBtn {
+  padding: 4px;
+  margin: 0;
+  display: flex;
+  height: auto;
+  background-color: $dark4;
+
+  &:hover {
+    opacity: 1;
+    background-color: $dark5;
+  }
+}
+
+.inactive,
+.inactive:hover {
+  opacity: 0.4;
+  color: white;
+  background-color: $dark4;
+  cursor: none;
 }

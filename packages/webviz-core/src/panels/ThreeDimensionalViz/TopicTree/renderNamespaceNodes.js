@@ -169,27 +169,27 @@ function NamespaceNodeRow({
         />
       </SLeft>
       <SRightActions>
-        {topicNodeAvailable && (
-          <SToggles>
-            {availableByColumn.map((available, columnIndex) => (
-              <VisibilityToggle
-                available={available}
-                checked={checkedByColumn[columnIndex]}
-                dataTest={`visibility-toggle~${nodeKey}~column${columnIndex}`}
-                key={columnIndex}
-                onAltToggle={() => onAltToggle(columnIndex)}
-                onToggle={() => onToggle(columnIndex)}
-                overrideColor={overrideColorByColumn && overrideColorByColumn[columnIndex]}
-                size="SMALL"
-                unavailableTooltip={unavailableTooltip}
-                visibleInScene={!!visibleInSceneByColumn[columnIndex]}
-                {...mouseEventHandlersByColumnIdx[columnIndex]}
-                diffModeEnabled={diffModeEnabled}
-                columnIndex={columnIndex}
-              />
-            ))}
-          </SToggles>
-        )}
+        <SToggles>
+          {availableByColumn.map((available, columnIndex) => (
+            <VisibilityToggle
+              // Some namespaces are statically available. But we want to make sure the parent topic is also available
+              // before showing it as available.
+              available={topicNodeAvailable && available}
+              checked={checkedByColumn[columnIndex]}
+              dataTest={`visibility-toggle~${nodeKey}~column${columnIndex}`}
+              key={columnIndex}
+              onAltToggle={() => onAltToggle(columnIndex)}
+              onToggle={() => onToggle(columnIndex)}
+              overrideColor={overrideColorByColumn && overrideColorByColumn[columnIndex]}
+              size="SMALL"
+              unavailableTooltip={unavailableTooltip}
+              visibleInScene={!!visibleInSceneByColumn[columnIndex]}
+              {...mouseEventHandlersByColumnIdx[columnIndex]}
+              diffModeEnabled={diffModeEnabled}
+              columnIndex={columnIndex}
+            />
+          ))}
+        </SToggles>
         <NamespaceMenu
           disableBaseColumn={!availableByColumn[0]}
           disableFeatureColumn={!availableByColumn[1]}

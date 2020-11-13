@@ -74,7 +74,7 @@ export type TwoDimensionalPlotLine = {
   label: string;
   backgroundColor?: string;
   borderColor?: string;
-  borderDash?: string;
+  borderDash?: number[];
   borderWidth?: number;
   pointBackgroundColor?: string;
   pointBorderColor?: string;
@@ -91,8 +91,8 @@ export type TwoDimensionalPlotLine = {
  */
 export type TwoDimensionalPlot = {
   lines: TwoDimensionalPlotLine[];
-  points: TwoDimensionalPlotLine[];
-  polygons: TwoDimensionalPlotLine[];
+  points?: TwoDimensionalPlotLine[];
+  polygons?: TwoDimensionalPlotLine[];
   title?: string;
   yAxisLabel?: string;
   xAxisLabel?: string;

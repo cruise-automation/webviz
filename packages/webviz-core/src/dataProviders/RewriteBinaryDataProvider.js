@@ -28,18 +28,12 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 export default class RewriteBinaryDataProvider implements DataProvider {
   _provider: DataProvider;
   _extensionPoint: ExtensionPoint;
-  _useBinaryObjects: boolean;
   _writer: BinaryMessageWriter;
   _datatypeByTopic: { [topic: string]: string };
   _datatypes: RosDatatypes;
 
-  constructor(
-    { useBinaryObjects }: {| useBinaryObjects: boolean |},
-    children: DataProviderDescriptor[],
-    getDataProvider: GetDataProvider
-  ) {
+  constructor(_: {||}, children: DataProviderDescriptor[], getDataProvider: GetDataProvider) {
     this._provider = getDataProvider(children[0]);
-    this._useBinaryObjects = useBinaryObjects;
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
@@ -53,31 +47,29 @@ export default class RewriteBinaryDataProvider implements DataProvider {
         ? result.messageDefinitions
         : rawMessageDefinitionsToParsed(result.messageDefinitions, topics);
 
-    if (this._useBinaryObjects) {
-      this._writer = new BinaryMessageWriter();
-      await this._writer.initialize();
+    this._writer = new BinaryMessageWriter();
+    await this._writer.initialize();
 
-      try {
-        const datatypesByTopic = {};
-        topics.forEach((topic) => {
-          datatypesByTopic[topic.name] = topic.datatype;
-        });
-        const { fakeDatatypesByTopic, fakeDatatypes } = getContentBasedDatatypes(
-          messageDefinitions.messageDefinitionsByTopic,
-          messageDefinitions.parsedMessageDefinitionsByTopic,
-          datatypesByTopic
-        );
-        this._writer.registerDefinitions(fakeDatatypes);
-        this._datatypes = fakeDatatypes;
-        this._datatypeByTopic = fakeDatatypesByTopic;
-      } catch (err) {
-        sendNotification(
-          "Failed to register type definitions",
-          err ? `${err.message} - ${err.stack}` : "<unknown error>",
-          "app",
-          "error"
-        );
-      }
+    try {
+      const datatypesByTopic = {};
+      topics.forEach((topic) => {
+        datatypesByTopic[topic.name] = topic.datatype;
+      });
+      const { fakeDatatypesByTopic, fakeDatatypes } = getContentBasedDatatypes(
+        messageDefinitions.messageDefinitionsByTopic,
+        messageDefinitions.parsedMessageDefinitionsByTopic,
+        datatypesByTopic
+      );
+      this._writer.registerDefinitions(fakeDatatypes);
+      this._datatypes = fakeDatatypes;
+      this._datatypeByTopic = fakeDatatypesByTopic;
+    } catch (err) {
+      sendNotification(
+        "Failed to register type definitions",
+        err ? `${err.message} - ${err.stack}` : "<unknown error>",
+        "app",
+        "error"
+      );
     }
 
     return { ...result, messageDefinitions };
@@ -87,15 +79,6 @@ export default class RewriteBinaryDataProvider implements DataProvider {
     const { rosBinaryMessages } = await this._provider.getMessages(start, end, {
       rosBinaryMessages: subscriptions.bobjects,
     });
-
-    if (!this._useBinaryObjects) {
-      return {
-        // $FlowFixMe: Lie about the type when not rewriting. Helpful for tests.
-        bobjects: rosBinaryMessages,
-        rosBinaryMessages: undefined,
-        parsedMessages: undefined,
-      };
-    }
 
     const bobjects = [];
 

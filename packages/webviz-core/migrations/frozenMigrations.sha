@@ -19,3 +19,7 @@ e0a0db07e34966e89227d3e0e1f0c32a97e4e6ee  ./webviz-core/migrations/frozenMigrati
 046cef348d45f70edfb0bd2d12626e3279bb7c4a  ./webviz-core/migrations/frozenMigrations/2020.07.07.11:17:28.prefixCollapsedSectionsWithDiagnosticName.test.js
 564cad7cbd08c52ddccfcf5e8ffacfcb66b8e4dc  ./webviz-core/migrations/frozenMigrations/2020.09.30.19:06:38.addAutoFormatOnSaveToNodePlaygroundConfig.js
 60711ba5b2d900b05849c540eeb12d1567822c87  ./webviz-core/migrations/frozenMigrations/2020.09.30.19:06:38.addAutoFormatOnSaveToNodePlaygroundConfig.test.js
+72a7bbd6e48de36ab344552edee26b90ad044fc3  ./webviz-core/migrations/frozenMigrations/2020.10.22.14:44:54.removeEmptyDiagnosticsConfigNames.js
+77e4f37e23bad6ed0bb1eff4f37d71a81554d6c7  ./webviz-core/migrations/frozenMigrations/2020.10.22.14:44:54.removeEmptyDiagnosticsConfigNames.test.js
+06fe983926e47009b234bc6889d19fbbb8d32e90  ./webviz-core/migrations/frozenMigrations/2020.11.02.14:16:21.migrateColorToOverrideColor.js
+32ce13bcc49a8e3dca4e6e85cf1c5a75b5840226  ./webviz-core/migrations/frozenMigrations/2020.11.02.14:16:21.migrateColorToOverrideColor.test.js

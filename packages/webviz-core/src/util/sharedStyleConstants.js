@@ -81,7 +81,6 @@ export const colors = {
   TEXTL1: baseColors.LIGHT2,
   ACTION: baseColors.BLUE,
   TEXT: baseColors.LIGHT1,
-  TOOLBAR: baseColors.DARK2,
   TOOLBARL1: baseColors.DARK4,
   BRIGHT_YELLOW: "#f6ff00",
   BORDER_LIGHT: tinyColor(baseColors.LIGHT)

@@ -146,6 +146,7 @@ class TfStore {
 
 export default class Transforms {
   storage = new TfStore();
+  empty = true;
 
   // consume a tf message
   consume(tfMessage: TF) {
@@ -156,6 +157,7 @@ export default class Transforms {
     const { rotation, translation } = tfMessage.transform;
     tf.set(translation, rotation);
     tf.parent = this.storage.get(parentId);
+    this.empty = false;
   }
 
   // Apply the tf hierarchy to the original pose and update the pose supplied in the output parameter.

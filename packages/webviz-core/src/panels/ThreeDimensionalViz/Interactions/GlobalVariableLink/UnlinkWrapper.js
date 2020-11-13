@@ -16,12 +16,6 @@ import { GlobalVariableName } from "./index";
 import ChildToggle from "webviz-core/src/components/ChildToggle";
 import Icon from "webviz-core/src/components/Icon";
 
-const SUnlinkWrapper = styled.span`
-  flex-direction: row;
-  display: inline-flex;
-  align-items: center;
-`;
-
 const SIconWrapper = styled.span`
   .icon {
     /* TODO(Audrey): remove the hard-coded icon style once we clean up 3D panel styles   */
@@ -64,29 +58,27 @@ export default function UnlinkWrapper({ children, linkedGlobalVariable, tooltip 
   const onToggle = useCallback(() => setIsOpen((open) => !open), []);
   return (
     <>
-      <SUnlinkWrapper>
-        <ChildToggle
-          dataTest={`unlink-${linkedGlobalVariable.name}`}
-          position="above"
-          onToggle={onToggle}
-          isOpen={isOpen}>
-          <SIconWrapper>
-            <Icon
-              fade
-              tooltipProps={{
-                contents: tooltip || (
-                  <span>
-                    Unlink this field from <GlobalVariableName name={linkedGlobalVariable.name} />
-                  </span>
-                ),
-              }}>
-              <LinkVariantOffIcon className="link-off-icon" />
-              <LinkVariantIcon className="linked-icon" />
-            </Icon>
-          </SIconWrapper>
-          <span>{children({ setIsOpen, linkedGlobalVariable })}</span>
-        </ChildToggle>
-      </SUnlinkWrapper>
+      <ChildToggle
+        dataTest={`unlink-${linkedGlobalVariable.name}`}
+        position="above"
+        onToggle={onToggle}
+        isOpen={isOpen}>
+        <SIconWrapper>
+          <Icon
+            fade
+            tooltipProps={{
+              contents: tooltip || (
+                <span>
+                  Unlink this field from <GlobalVariableName name={linkedGlobalVariable.name} />
+                </span>
+              ),
+            }}>
+            <LinkVariantOffIcon className="link-off-icon" />
+            <LinkVariantIcon className="linked-icon" />
+          </Icon>
+        </SIconWrapper>
+        <span>{children({ setIsOpen, linkedGlobalVariable })}</span>
+      </ChildToggle>
       <GlobalVariableName name={linkedGlobalVariable.name} leftPadding />
     </>
   );

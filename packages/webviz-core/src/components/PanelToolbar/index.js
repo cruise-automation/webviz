@@ -9,10 +9,10 @@
 import ArrowSplitHorizontalIcon from "@mdi/svg/svg/arrow-split-horizontal.svg";
 import ArrowSplitVerticalIcon from "@mdi/svg/svg/arrow-split-vertical.svg";
 import CheckboxMultipleBlankOutlineIcon from "@mdi/svg/svg/checkbox-multiple-blank-outline.svg";
+import CodeJsonIcon from "@mdi/svg/svg/code-json.svg";
+import CogIcon from "@mdi/svg/svg/cog.svg";
 import DragIcon from "@mdi/svg/svg/drag.svg";
 import FullscreenIcon from "@mdi/svg/svg/fullscreen.svg";
-import JsonIcon from "@mdi/svg/svg/json.svg";
-import SettingsIcon from "@mdi/svg/svg/settings.svg";
 import TrashCanOutlineIcon from "@mdi/svg/svg/trash-can-outline.svg";
 import cx from "classnames";
 import * as React from "react"; // eslint-disable-line import/no-duplicates
@@ -177,7 +177,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
                 Remove panel
               </Item>
               <Item
-                icon={<JsonIcon />}
+                icon={<CodeJsonIcon />}
                 onClick={() => onImportClick(store, panelContext?.id)}
                 disabled={type === TAB_PANEL_TYPE}
                 dataTest="panel-settings-config">
@@ -216,7 +216,7 @@ const PanelToolbarControls = React.memo(function PanelToolbarControls(props: Pan
         flatEdges={!floating}
         toggleComponent={
           <Icon fade tooltip="Panel settings" dataTest="panel-settings">
-            <SettingsIcon className={styles.icon} />
+            <CogIcon className={styles.icon} />
           </Icon>
         }>
         <StandardMenuItems tabId={panelData?.tabId} />

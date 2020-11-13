@@ -75,7 +75,7 @@ export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: 
           pose,
           interactionData,
           points: carOutlinePoints,
-          color: settings?.color ?? { r: 0.3313, g: 0.3313, b: 0.3375, a: 1 },
+          color: settings?.overrideColor ?? { r: 0.3313, g: 0.3313, b: 0.3375, a: 1 },
         });
         break;
       }
@@ -89,8 +89,8 @@ export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: 
       }
       case "arrow":
       default: {
-        if (settings && settings.color) {
-          marker = { ...marker, color: settings.color };
+        if (settings && settings.overrideColor) {
+          marker = { ...marker, color: settings.overrideColor };
         }
 
         if (settings && settings.size) {

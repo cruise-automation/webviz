@@ -5,8 +5,9 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import MagnifyIcon from "@mdi/svg/svg/magnify.svg";
 import fuzzySort from "fuzzysort";
-import { flatten, isEqual } from "lodash";
+import { flatten, flatMap, isEqual } from "lodash";
 import * as React from "react";
 import { useDrag } from "react-dnd";
 import { MosaicDragType } from "react-mosaic-component";
@@ -15,25 +16,63 @@ import styled from "styled-components";
 
 import styles from "./index.module.scss";
 import { dropPanel } from "webviz-core/src/actions/panels";
+import Flex from "webviz-core/src/components/Flex";
+import Icon from "webviz-core/src/components/Icon";
 import { Item } from "webviz-core/src/components/Menu";
 import TextHighlight from "webviz-core/src/components/TextHighlight";
-import Tooltip from "webviz-core/src/components/Tooltip";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { type TabPanelConfig } from "webviz-core/src/types/layouts";
 import type { PanelConfig, MosaicPath, MosaicDropTargetPosition, SavedProps } from "webviz-core/src/types/panels";
 import { objectValues } from "webviz-core/src/util";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
-const SearchInput = styled.input`
-  width: 100%;
-  min-width: 200px;
-  background-color: ${colors.DARK2} !important;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  margin: 0;
+const StickyDiv = styled.div`
+  color: ${colors.LIGHT};
   position: sticky;
   top: 0;
   z-index: 2;
+  background-color: ${colors.DARK3};
+`;
+
+const STitle = styled.h1`
+  padding: 16px 16px 0px 16px;
+  font-size: 14;
+`;
+
+const SDescription = styled.div`
+  padding: 8px 16px 16px;
+  opacity: 0.6;
+`;
+
+const SSearchInputContainer = styled(Flex)`
+  padding-left: 8px;
+  background-color: ${colors.DARK5};
+  border-radius: 4px;
+`;
+
+const SSearchInput = styled.input`
+  background-color: ${colors.DARK5};
+  padding: 8px;
+  width: 100%;
+  min-width: 200px;
+  margin: 0;
+
+  &:hover,
+  &:focus {
+    background-color: ${colors.DARK5};
+  }
+`;
+
+const SScrollContainer = styled.div`
+  overflow-y: auto;
+  height: calc(100% - 142px);
+  padding-bottom: 8px;
+  background-color: ${colors.DARK3};
+`;
+
+const SEmptyState = styled.div`
+  padding: 0px 16px 16px;
+  opacity: 0.4;
 `;
 
 type PresetSettings =
@@ -191,56 +230,78 @@ function PanelList(props: Props) {
   verifyPanels();
   const panelCategories = React.useMemo(() => getGlobalHooks().panelCategories(), []);
   const panelsByCategory = React.useMemo(() => getPanelsByCategory(), []);
+  const getFilteredItemsForCategory = React.useCallback(
+    (key: string) =>
+      searchQuery
+        ? fuzzySort.go(searchQuery, panelsByCategory[key], { key: "title" }).map((searchResult) => searchResult.obj)
+        : panelsByCategory[key],
+    [panelsByCategory, searchQuery]
+  );
+  const filteredItemsByCategoryIdx = React.useMemo(
+    () => panelCategories.map(({ key }) => getFilteredItemsForCategory(key)),
+    [getFilteredItemsForCategory, panelCategories]
+  );
+  const noResults = React.useMemo(() => filteredItemsByCategoryIdx.every((items) => !items.length), [
+    filteredItemsByCategoryIdx,
+  ]);
 
   return (
-    <div data-test-panel-category>
-      <div style={{ position: "sticky", top: 0 }}>
-        <Tooltip contents="click or drag panels" placement="left" defaultShown>
-          <div style={{ position: "relative", pointerEvents: "none", top: 45 }} />
-        </Tooltip>
-      </div>
-      <SearchInput
-        type="search"
-        placeholder="Filter panels"
-        value={searchQuery}
-        onChange={handleSearchChange}
-        autoFocus
-      />
-      {panelCategories.map(({ label, key }, categoryIndex) => {
-        let items = panelsByCategory[key];
-        if (searchQuery) {
-          items = fuzzySort.go(searchQuery, items, { key: "title" }).map((searchResult) => searchResult.obj);
-        }
-
-        return items.map(
-          // $FlowFixMe - bug prevents requiring panelType: https://stackoverflow.com/q/52508434/23649
-          ({ presetSettings, title, component: { panelType } }, panelIdx) => (
-            <div key={`${panelType}-${panelIdx}`}>
-              {categoryIndex !== 0 && panelIdx === 0 && <hr />}
-              {panelIdx === 0 && <Item isHeader>{label}</Item>}
-              <DraggablePanelItem
-                mosaicId={mosaicId}
-                panel={{
-                  type: panelType,
-                  title,
-                  config: presetSettings?.config,
-                  relatedConfigs: presetSettings?.relatedConfigs,
-                }}
-                onDrop={onPanelMenuItemDrop}
-                onClick={() =>
-                  onPanelSelect({
-                    type: panelType,
-                    config: presetSettings?.config,
-                    relatedConfigs: presetSettings?.relatedConfigs,
-                  })
-                }
-                checked={title === selectedPanelTitle}
-                searchQuery={searchQuery}
-              />
-            </div>
-          )
-        );
-      })}
+    <div data-test-panel-category style={{ height: "100%", width: "320px" }}>
+      <StickyDiv>
+        <STitle>Add panel</STitle>
+        <SDescription>Click to select a new panel or drag and drop to place a new panel.</SDescription>
+        <hr />
+        <div style={{ padding: "16px" }}>
+          <SSearchInputContainer center>
+            <Icon style={{ color: colors.LIGHT, opacity: 0.3 }}>
+              <MagnifyIcon />
+            </Icon>
+            <SSearchInput placeholder="Search panels" value={searchQuery} onChange={handleSearchChange} autoFocus />
+          </SSearchInputContainer>
+        </div>
+      </StickyDiv>
+      {noResults ? (
+        <SEmptyState>No panels match search criteria.</SEmptyState>
+      ) : (
+        <SScrollContainer>
+          {panelCategories.map(({ label }, categoryIdx) =>
+            filteredItemsByCategoryIdx[categoryIdx].map(
+              ({ presetSettings, title, component: { panelType } }, itemIdx) => {
+                const prevItems = flatMap(filteredItemsByCategoryIdx.slice(0, categoryIdx));
+                return (
+                  <div key={`${panelType}-${itemIdx}`} style={{ paddingTop: "8px" }}>
+                    {categoryIdx !== 0 && itemIdx === 0 && prevItems.length > 0 && <hr />}
+                    {itemIdx === 0 && (
+                      <Item isHeader style={categoryIdx === 0 || !prevItems.length ? { paddingTop: 0 } : {}}>
+                        {label}
+                      </Item>
+                    )}
+                    <DraggablePanelItem
+                      mosaicId={mosaicId}
+                      panel={{
+                        type: panelType,
+                        title,
+                        config: presetSettings?.config,
+                        relatedConfigs: presetSettings?.relatedConfigs,
+                      }}
+                      onDrop={onPanelMenuItemDrop}
+                      onClick={() =>
+                        onPanelSelect({
+                          type: panelType,
+                          config: presetSettings?.config,
+                          relatedConfigs: presetSettings?.relatedConfigs,
+                        })
+                      }
+                      checked={title === selectedPanelTitle}
+                      searchQuery={searchQuery}
+                    />
+                  </div>
+                );
+              }
+            )
+          )}
+        </SScrollContainer>
+      )}
     </div>
   );
 }

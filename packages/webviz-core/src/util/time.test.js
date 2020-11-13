@@ -268,3 +268,74 @@ describe("time.compareBinaryTimes", () => {
     ]);
   });
 });
+
+describe("time.interpolateTimes", () => {
+  it("works for zero-duration spans", () => {
+    const t = { sec: 0, nsec: 0 };
+    expect(time.interpolateTimes(t, t, 0)).toEqual(t);
+    expect(time.interpolateTimes(t, t, -1)).toEqual(t);
+    expect(time.interpolateTimes(t, t, 1)).toEqual(t);
+  });
+
+  it("works for non-zero spans", () => {
+    const start = { sec: 0, nsec: 0 };
+    const end = { sec: 5, nsec: 0 };
+    expect(time.interpolateTimes(start, end, 0)).toEqual(start);
+    expect(time.interpolateTimes(start, end, 1)).toEqual(end);
+    expect(time.interpolateTimes(start, end, 0.5)).toEqual({ sec: 2, nsec: 5e8 });
+    expect(time.interpolateTimes(start, end, 2)).toEqual({ sec: 10, nsec: 0 });
+  });
+});
+
+describe("time.getSeekTimeFromSpec", () => {
+  it("returns absolute seek times", () => {
+    expect(
+      time.getSeekTimeFromSpec(
+        { type: "absolute", time: { sec: 12, nsec: 0 } },
+        { sec: 10, nsec: 0 },
+        { sec: 15, nsec: 0 }
+      )
+    ).toEqual({ sec: 12, nsec: 0 });
+  });
+
+  it("adds relative offsets", () => {
+    expect(
+      time.getSeekTimeFromSpec(
+        { type: "relative", startOffset: { sec: 1, nsec: 0 } },
+        { sec: 10, nsec: 0 },
+        { sec: 15, nsec: 0 }
+      )
+    ).toEqual({ sec: 11, nsec: 0 });
+  });
+
+  it("supports negative relative offsets", () => {
+    expect(
+      time.getSeekTimeFromSpec(
+        { type: "relative", startOffset: { sec: -1, nsec: 5e8 } }, // minus half a second
+        { sec: 10, nsec: 0 },
+        { sec: 15, nsec: 0 }
+      )
+    ).toEqual({ sec: 14, nsec: 5e8 });
+  });
+
+  it("calculates fractional times", () => {
+    expect(
+      time.getSeekTimeFromSpec({ type: "fraction", fraction: 0.6 }, { sec: 10, nsec: 0 }, { sec: 15, nsec: 0 })
+    ).toEqual({ sec: 13, nsec: 0 });
+  });
+
+  it("clamps seek times to the playback range", () => {
+    const start = { sec: 10, nsec: 0 };
+    const end = { sec: 15, nsec: 0 };
+    expect(time.getSeekTimeFromSpec({ type: "absolute", time: { sec: 6, nsec: 0 } }, start, end)).toEqual(start);
+    expect(time.getSeekTimeFromSpec({ type: "absolute", time: { sec: 16, nsec: 0 } }, start, end)).toEqual(end);
+
+    expect(time.getSeekTimeFromSpec({ type: "relative", startOffset: { sec: -6, nsec: 0 } }, start, end)).toEqual(
+      start
+    );
+    expect(time.getSeekTimeFromSpec({ type: "relative", startOffset: { sec: 6, nsec: 0 } }, start, end)).toEqual(end);
+
+    expect(time.getSeekTimeFromSpec({ type: "fraction", fraction: -1 }, start, end)).toEqual(start);
+    expect(time.getSeekTimeFromSpec({ type: "fraction", fraction: 2 }, start, end)).toEqual(end);
+  });
+});

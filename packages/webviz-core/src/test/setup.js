@@ -7,6 +7,8 @@
 //  You may not use this file except in compliance with the License.
 
 import "babel-polyfill";
+// Node has a TextDecoder in util, but it doesn't support the ascii encoding used in binary message
+// rewriting.
 import { TextDecoder } from "text-encoding";
 import UrlSearchParams from "url-search-params";
 import util from "util";

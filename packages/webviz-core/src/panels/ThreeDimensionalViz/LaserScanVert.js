@@ -19,7 +19,7 @@ export default `
   uniform float range_max;
   uniform bool isHitmap;
   uniform vec4 hitmapColor;
-  uniform vec4 overrideColor;
+  uniform vec4 color;
 
   attribute float index;
   attribute float range;
@@ -36,10 +36,7 @@ export default `
 
     if (range < range_min || range > range_max || intensity == 0.0) {
       gl_PointSize = 0.;
-    } else if (isHitmap) {
-      vColor = hitmapColor;
-    } else {
-      vColor = overrideColor;
     }
+    vColor = isHitmap ? hitmapColor : color;
   }
 `;

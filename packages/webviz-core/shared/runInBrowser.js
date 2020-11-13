@@ -240,15 +240,15 @@ export async function setupWebvizLayout(page: Page, options: LayoutOptions) {
   // Make sure the page is ready before proceeding.
   await page.waitForSelector(".app-container");
 
-  if (panelLayout) {
-    page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
-  }
-
   if (experimentalFeatureSettings) {
     await page.evaluate(
       (settings: any) => localStorage.setItem("experimentalFeaturesSettings", (settings: string)),
       experimentalFeatureSettings
     );
+  }
+
+  if (panelLayout) {
+    page.evaluate((layout) => window.setPanelLayout(layout), panelLayout);
   }
 
   if (filePaths && filePaths.length) {

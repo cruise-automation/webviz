@@ -17,9 +17,9 @@ import { deepParse, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import { fromSec, type TimestampMethod } from "webviz-core/src/util/time";
 
-function makeMessage(headerStamp: ?number, receiveTime: number) {
+function makeMessage(headerStamp: ?number, receiveTime: number, topic?: string = "/dummy_topic") {
   return {
-    topic: "/dummy_topic",
+    topic,
     message: {
       header: {
         stamp: headerStamp == null ? undefined : fromSec(headerStamp),
@@ -29,9 +29,9 @@ function makeMessage(headerStamp: ?number, receiveTime: number) {
   };
 }
 
-function makeBobject(headerStamp: ?number, receiveTime: number) {
+function makeBobject(headerStamp: ?number, receiveTime: number, topic?: string = "/dummy_topic") {
   return {
-    topic: "/dummy_topic",
+    topic,
     receiveTime: fromSec(receiveTime),
     message: wrapJsObject(basicDatatypes, "geometry_msgs/PoseStamped", {
       header: {
@@ -41,8 +41,17 @@ function makeBobject(headerStamp: ?number, receiveTime: number) {
     }),
   };
 }
+const markerArrayDatatype = basicDatatypes["visualization_msgs/MarkerArray"];
+const dummyDatatypeWithHeader = {
+  dummyDatatypeWithHeader: {
+    fields: [
+      ...(markerArrayDatatype?.fields || []),
+      { type: "std_msgs/Header", name: "header", isArray: false, isComplex: true },
+    ],
+  },
+};
 
-function getState(): PlayerStateActiveData {
+function getState(hasHeaderStamp): PlayerStateActiveData {
   return {
     messages: [],
     bobjects: [],
@@ -54,7 +63,10 @@ function getState(): PlayerStateActiveData {
     speed: 0.2,
     lastSeekTime: 0,
     topics: [],
-    datatypes: { ...basicDatatypes },
+    datatypes: {
+      ...basicDatatypes,
+      ...(hasHeaderStamp ? dummyDatatypeWithHeader : undefined),
+    },
     parsedMessageDefinitionsByTopic: {},
     playerWarnings: {},
     totalBytesReceived: 1234,
@@ -109,28 +121,45 @@ describe("OrderedStampPlayer", () => {
     ]);
   });
 
-  it("filters and reorders bobjects by header stamp", async () => {
+  it("filters and reorders bobjects and updates topics by header stamp", async () => {
     const { player, fakePlayer } = makePlayers("headerStamp");
     const states = [];
     player.setListener(async (playerState) => {
       states.push(playerState);
     });
+    const oldTopics = [
+      { name: "/dummy_topic", datatype: "dummyDatatypeWithHeader" },
+      { name: "/foo", datatype: "dummyDatatypeWithHeader" },
+      { name: "/dummy_no_header_topic", datatype: "visualization_msgs/MarkerArray" },
+    ];
 
-    const upstreamBobjects = [makeBobject(8.9, 9.5), makeBobject(8, 10), makeBobject(9.5, 10)];
+    const upstreamBobjects = [
+      makeBobject(8.9, 9.5),
+      makeBobject(8, 10),
+      makeBobject(9.5, 10),
+      makeBobject(undefined, 10, "/dummy_no_header_topic"),
+    ];
 
     expect(BUFFER_DURATION_SECS).toEqual(1);
     await fakePlayer.emit({
-      ...getState(),
+      ...getState(true),
+      topics: oldTopics,
+
       // Reordering buffer is one second long, so data before header-stamp=9 will be emitted.
       currentTime: fromSec(10),
       bobjects: upstreamBobjects,
     });
     const bobjects = states[0].activeData?.bobjects;
+    const topics = states[0].activeData?.topics;
+
     if (bobjects == null) {
       throw new Error("Satisfy flow.");
     }
-    expect(bobjects.map(({ receiveTime, message }) => ({ receiveTime, message: deepParse(message) }))).toEqual([
+    expect(
+      bobjects.map(({ receiveTime, message, topic }) => ({ topic, receiveTime, message: deepParse(message) }))
+    ).toEqual([
       {
+        topic: "/dummy_topic",
         receiveTime: { sec: 10, nsec: 0 },
         message: {
           header: { stamp: { sec: 8, nsec: 0 } },
@@ -138,6 +167,7 @@ describe("OrderedStampPlayer", () => {
         },
       },
       {
+        topic: "/dummy_topic",
         receiveTime: { sec: 9, nsec: 500000000 },
         message: {
           header: { stamp: { sec: 8, nsec: 900000000 } },
@@ -145,9 +175,10 @@ describe("OrderedStampPlayer", () => {
         },
       },
     ]);
+    expect(topics).toEqual(oldTopics.filter(({ name }) => name !== "/dummy_no_header_topic"));
   });
 
-  it("does not emit messages without header stamps in headerStamp mode", async () => {
+  it("filters and reorders messages and updates topics by header stamp", async () => {
     const { player, fakePlayer } = makePlayers("headerStamp");
     const states = [];
     player.setListener(async (playerState) => {
@@ -157,26 +188,33 @@ describe("OrderedStampPlayer", () => {
     // if this changes, this test must change as well
     expect(BUFFER_DURATION_SECS).toEqual(1);
 
-    const upstreamMessages = [makeMessage(undefined, 9.5)];
-
+    const oldTopics = [
+      { name: "/dummy_topic", datatype: "dummyDatatypeWithHeader" },
+      { name: "/foo", datatype: "dummyDatatypeWithHeader" },
+      { name: "/dummy_no_header_topic", datatype: "visualization_msgs/MarkerArray" },
+    ];
+    const msg = makeMessage(0.5, 9.5);
+    const upstreamMessages = [makeMessage(undefined, 9.5, "/dummy_no_header_topic"), msg];
     await fakePlayer.emit({
-      ...getState(),
+      ...getState(true),
+      topics: oldTopics,
       currentTime: fromSec(10),
       messages: upstreamMessages,
     });
     expect(states).toEqual([
       expect.objectContaining({
         activeData: expect.objectContaining({
-          messages: [],
+          messages: [msg],
           currentTime: fromSec(9),
           startTime: fromSec(0),
           endTime: fromSec(20 - BUFFER_DURATION_SECS),
           playerWarnings: {
-            topicsWithoutHeaderStamps: ["/dummy_topic"],
+            topicsWithoutHeaderStamps: ["/dummy_no_header_topic"],
           },
         }),
       }),
     ]);
+    expect(states[0]?.activeData?.topics).toEqual(oldTopics.filter(({ name }) => name !== "/dummy_no_header_topic"));
   });
 
   it("sets time correctly", async () => {

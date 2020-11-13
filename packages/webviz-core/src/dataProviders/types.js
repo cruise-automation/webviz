@@ -77,6 +77,8 @@ export type MessageDefinitions =
       // available through the data provider in binary format, either directly through getMessages calls
       // or indirectly through the player progress mechanism.
       messageDefinitionsByTopic: MessageDefinitionsByTopic,
+      // Optional, the md5 sum of the message definition by topic.
+      messageDefinitionMd5SumByTopic?: { [string]: string },
     |}>
   | ParsedMessageDefinitions;
 
@@ -160,13 +162,22 @@ export type ReceivedBytes = $ReadOnly<{|
   bytes: number,
 |}>;
 
+export type DataProviderStall = $ReadOnly<{|
+  type: "data_provider_stall",
+  stallDuration: Time,
+  requestTimeUntilStall: Time,
+  transferTimeUntilStall: Time,
+  bytesReceivedBeforeStall: number,
+|}>;
+
 export type DataProviderMetadata =
   // Report whether or not the DataProvider is reconnecting to some external server. Used to show a
   // loading indicator in the UI.
   | $ReadOnly<{| type: "updateReconnecting", reconnecting: boolean |}>
   | AverageThroughput
   | InitializationPerformanceMetadata
-  | ReceivedBytes;
+  | ReceivedBytes
+  | DataProviderStall;
 
 // A ROS bag "connection", used for parsing messages.
 export type Connection = {|

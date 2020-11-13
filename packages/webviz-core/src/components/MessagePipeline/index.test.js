@@ -17,7 +17,7 @@ import { MAX_PROMISE_TIMEOUT_TIME_MS } from "./pauseFrameForPromise";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
 import tick from "webviz-core/shared/tick";
-import sendNotification from "webviz-core/src/util/sendNotification";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 
 jest.setTimeout(MAX_PROMISE_TIMEOUT_TIME_MS * 3);
 
@@ -539,9 +539,17 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
   });
 
   describe("pauseFrame", () => {
-    let pauseFrame, player, el;
+    let pauseFrame, player, el, logger;
 
     beforeEach(async () => {
+      logger = jest.fn();
+      jest.spyOn(getGlobalHooks(), "getEventLogger");
+      getGlobalHooks().getEventLogger.mockImplementation(() => ({
+        logger,
+        eventNames: { PAUSE_FRAME_TIMEOUT: "pause_frame_timeout" },
+        eventTags: { PANEL_TYPES: "panel_types" },
+      }));
+
       player = new FakePlayer();
       el = mount(
         <MessagePipelineProvider player={player}>
@@ -662,8 +670,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
 
       await delay(MAX_PROMISE_TIMEOUT_TIME_MS + 20);
       expect(hasFinishedFrame).toEqual(true);
-
-      sendNotification.expectCalledDuringTest();
+      expect(logger).toHaveBeenCalled();
     });
 
     it("Adding multiple promises that do not resolve eventually results in an error, and then continues playing", async () => {
@@ -683,8 +690,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
 
       await delay(MAX_PROMISE_TIMEOUT_TIME_MS + 20);
       expect(hasFinishedFrame).toEqual(true);
-
-      sendNotification.expectCalledDuringTest();
+      expect(logger).toHaveBeenCalled();
     });
 
     it("does not accidentally resolve the second player's promise when replacing the player", async () => {

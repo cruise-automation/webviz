@@ -12,7 +12,7 @@
 
 .rc-color-picker-panel {
   // TOOLBAR
-  background: #1a1a1f;
+  background: $dark2;
   .rc-color-picker-panel-inner {
     box-shadow: none;
     // DARK7
@@ -100,7 +100,7 @@ textarea {
   background-color: $background-control;
   border-radius: 4px;
   border: none;
-  padding: $control-padding;
+  padding: 8px 12px;
   margin: $control-margin;
 
   &:focus {
@@ -128,15 +128,15 @@ textarea {
   @include monospace;
   border: 2px solid $text-normal;
   color: $text-normal;
-  background-color: $panel-background;
+  background-color: $dark;
   &:focus {
     background-color: black;
   }
 }
 
 div::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 
 div::-webkit-scrollbar-track {
@@ -144,7 +144,8 @@ div::-webkit-scrollbar-track {
 }
 
 div::-webkit-scrollbar-thumb {
-  background: #666;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
 }
 
 a {
@@ -200,7 +201,7 @@ button {
     color: $background;
   }
   &.selected {
-    background-color: $background-control-selected;
+    background-color: $dark5;
     color: $text-normal;
   }
   &.disabled,
@@ -229,9 +230,19 @@ td {
   line-height: 1.3em;
 }
 
+tr {
+  svg {
+    opacity: 0.6;
+  }
+}
+
 tr:hover {
-  th,
   td {
-    background-color: $text-input;
+    background-color: $dark4;
+    cursor: pointer;
+  }
+
+  svg {
+    opacity: 0.8;
   }
 }

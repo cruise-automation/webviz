@@ -23,13 +23,11 @@ import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { getTooltipItemForMessageHistoryItem, type TooltipItem } from "webviz-core/src/components/TimeBasedChart";
 import { useBlocksByTopic, useDataSourceInfo, useMessagesByTopic } from "webviz-core/src/PanelAPI";
-import { blockMessageCache } from "webviz-core/src/PanelAPI/useBlocksByTopic";
 import type { BasePlotPath, PlotPath } from "webviz-core/src/panels/Plot/internalTypes";
 import PlotChart, { getDatasetsAndTooltips, type PlotDataByPath } from "webviz-core/src/panels/Plot/PlotChart";
 import PlotLegend from "webviz-core/src/panels/Plot/PlotLegend";
 import PlotMenu from "webviz-core/src/panels/Plot/PlotMenu";
 import type { PanelConfig } from "webviz-core/src/types/panels";
-import { isBobject } from "webviz-core/src/util/binaryObjects";
 import { useShallowMemo } from "webviz-core/src/util/hooks";
 import { fromSec, subtractTimes, toSec } from "webviz-core/src/util/time";
 
@@ -102,34 +100,20 @@ const getPlotDataByPath = (itemsByPath: MessageHistoryItemsByPath): PlotDataByPa
 };
 
 const getMessagePathItemsForBlock = memoizeWeak(
-  (decodeMessagePathsForMessagesByTopic, binaryBlock, messageReadersByTopic): PlotDataByPath => {
-    const parsedBlock = {};
-    Object.keys(binaryBlock).forEach((topic) => {
-      const messages = binaryBlock[topic];
-      if (messages && messages.length > 0 && isBobject(messages[0].message)) {
-        // If we're already receiving bobjecs, we don't need to parse the
-        // messages in this block.
-        // TODO(useBinaryTranslation): Once the binary translation is enabled
-        // and the flag removed, there won't be a need for readers anymore.
-        parsedBlock[topic] = messages;
-      } else {
-        parsedBlock[topic] = blockMessageCache.parseMessages(messages, messageReadersByTopic);
-      }
-    });
-    return Object.freeze(getPlotDataByPath(decodeMessagePathsForMessagesByTopic(parsedBlock)));
+  (decodeMessagePathsForMessagesByTopic, block): PlotDataByPath => {
+    return Object.freeze(getPlotDataByPath(decodeMessagePathsForMessagesByTopic(block)));
   }
 );
 
 const ZERO_TIME = { sec: 0, nsec: 0 };
 
-function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks) {
+function getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, blocks) {
   const ret = {};
   const lastBlockIndexForPath = {};
   blocks.forEach((block, i) => {
     const messagePathItemsForBlock: PlotDataByPath = getMessagePathItemsForBlock(
       decodeMessagePathsForMessagesByTopic,
-      block,
-      messageReadersByTopic
+      block
     );
     Object.keys(messagePathItemsForBlock).forEach((path) => {
       const existingItems: TooltipItem[][] = ret[path] || [];
@@ -190,8 +174,6 @@ function Plot(props: Props) {
     }
   });
 
-  const useBinaryTranslation = useExperimentalFeature("useBinaryTranslation");
-
   const showSingleCurrentMessage = xAxisVal === "currentCustom" || xAxisVal === "index";
   const historySize = showSingleCurrentMessage ? 1 : Infinity;
 
@@ -205,8 +187,7 @@ function Plot(props: Props) {
     //  1. A fallback for preloading when blocks are not available (nodes, websocket.)
     //  2. Playback-synced plotting of index/custom data.
     preloadingFallback: !showSingleCurrentMessage,
-    // TODO(useBinaryTranslation): Use parsed messages for NCS topics until the flag is removed.
-    format: useBinaryTranslation ? "bobjects" : "parsedMessages",
+    format: "bobjects",
   });
 
   const decodeMessagePathsForMessagesByTopic = useDecodeMessagePathsForMessagesByTopic(memoizedPaths);
@@ -216,13 +197,10 @@ function Plot(props: Props) {
     messagesByTopic,
   ]);
 
-  const { messageReadersByTopic, blocks } = useBlocksByTopic(subscribeTopics);
+  const { blocks } = useBlocksByTopic(subscribeTopics);
   const blockItemsByPath = useMemo(
-    () =>
-      showSingleCurrentMessage
-        ? {}
-        : getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks),
-    [showSingleCurrentMessage, decodeMessagePathsForMessagesByTopic, messageReadersByTopic, blocks]
+    () => (showSingleCurrentMessage ? {} : getBlockItemsByPath(decodeMessagePathsForMessagesByTopic, blocks)),
+    [showSingleCurrentMessage, decodeMessagePathsForMessagesByTopic, blocks]
   );
   const { startTime } = useDataSourceInfo();
 

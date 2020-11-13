@@ -862,6 +862,10 @@ const panelsReducer = function(state: State, action: ActionTypes): State {
       newState.persistedState.panels = importPanelLayout(newState.persistedState.panels, action.payload);
       break;
 
+    case "CLEAR_LAYOUT_URL_REPLACED_BY_DEFAULT":
+      newState.persistedState.fetchedLayout.layoutUrlReplacedByDefault = undefined;
+      break;
+
     default:
       break;
   }

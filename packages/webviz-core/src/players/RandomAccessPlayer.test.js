@@ -9,7 +9,7 @@
 import { omit } from "lodash";
 import { TimeUtil, type Time } from "rosbag";
 
-import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS, SEEK_ON_START_NS, SEEK_START_DELAY_MS } from "./RandomAccessPlayer";
+import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS, SEEK_START_DELAY_MS } from "./RandomAccessPlayer";
 import TestProvider from "./TestProvider";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
@@ -22,10 +22,10 @@ import {
   type PlayerState,
 } from "webviz-core/src/players/types";
 import sendNotification from "webviz-core/src/util/sendNotification";
-import { fromNanoSec } from "webviz-core/src/util/time";
+import { fromNanoSec, getSeekToTime, SEEK_ON_START_NS } from "webviz-core/src/util/time";
 
 // By default seek to the start of the bag, since that makes things a bit simpler to reason about.
-const playerOptions = { metricsCollector: undefined, seekToTime: { sec: 10, nsec: 0 } };
+const playerOptions = { metricsCollector: undefined, seekToTime: { type: "absolute", time: { sec: 10, nsec: 0 } } };
 
 class MessageStore {
   _messages: PlayerState[] = [];
@@ -67,6 +67,8 @@ describe("RandomAccessPlayer", () => {
   let mockDateNow;
   beforeEach(() => {
     mockDateNow = jest.spyOn(Date, "now").mockReturnValue(0);
+    // Remove any seek-to param in the URL
+    history.replaceState(null, window.title, location.pathname);
   });
   afterEach(async () => {
     mockDateNow.mockRestore();
@@ -122,11 +124,11 @@ describe("RandomAccessPlayer", () => {
     source.close();
   });
 
-  it("without a specified seekToTime it seeks into the bag by a bit, so that there's something useful on the screen", async () => {
+  it("with the default seekToTime it seeks into the bag by a bit, so that there's something useful on the screen", async () => {
     const provider = new TestProvider();
     const source = new RandomAccessPlayer(
       { name: "TestProvider", args: { provider }, children: [] },
-      { ...playerOptions, seekToTime: undefined }
+      { ...playerOptions, seekToTime: getSeekToTime() }
     );
     const store = new MessageStore(2);
     await source.setListener(store.add);
@@ -1166,6 +1168,7 @@ describe("RandomAccessPlayer", () => {
       setSubscriptions(): void {}
       close(): void {}
       recordDataProviderPerformance(): void {}
+      recordDataProviderStall(): void {}
       recordPlaybackTime(_time: Time): void {}
       recordBytesReceived(_bytes: number): void {}
       recordUncachedRangeRequest(): void {}

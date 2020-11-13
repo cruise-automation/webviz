@@ -53,6 +53,7 @@ const SOption = styled.div`
 `;
 const SLabel = styled.div`
   margin-left: 8px;
+  overflow: hidden;
 `;
 
 export default function Radio(props: RadioProps): React.Node {

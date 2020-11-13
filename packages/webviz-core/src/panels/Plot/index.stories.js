@@ -593,4 +593,36 @@ storiesOf("<Plot>", module)
         />
       </PanelSetup>
     );
+  })
+  .add("preloaded data and its negative", () => {
+    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
+    return (
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              { value: "/preloaded_topic.data.@negative", enabled: true, timestampMethod: "receiveTime" },
+            ],
+          }}
+        />
+      </PanelSetup>
+    );
+  })
+  .add("preloaded data and its absolute value", () => {
+    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
+    return (
+      <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
+        <Plot
+          config={{
+            ...exampleConfig,
+            paths: [
+              { value: "/preloaded_topic.data", enabled: true, timestampMethod: "receiveTime" },
+              { value: "/preloaded_topic.data.@abs", enabled: true, timestampMethod: "receiveTime" },
+            ],
+          }}
+        />
+      </PanelSetup>
+    );
   });

@@ -268,7 +268,7 @@ export default function useTree({
         }
       });
 
-      // Returns whether a node/namespace is rendered in the 3d scene. Keep it inside useMemo since it needs to acces the same isSelectedMemo.
+      // Returns whether a node/namespace is rendered in the 3d scene. Keep it inside useMemo since it needs to access the same isSelectedMemo.
       // A node is visible if it's available, itself and all ancestor nodes are selected.
       function getIsTreeNodeVisibleInScene(node: ?TreeNode, columnIndex: number, namespace?: string): boolean {
         if (!node) {
@@ -286,10 +286,11 @@ export default function useTree({
           if (!prefixedTopicName) {
             return false;
           }
-          return (
-            selectedTopicNamesSet.has(prefixedTopicName) &&
-            (selectedNamespacesByTopic[prefixedTopicName] || []).includes(namespace)
-          );
+          if (!(selectedNamespacesByTopic[prefixedTopicName] || []).includes(namespace)) {
+            return false;
+          }
+          // A namespace node is visible if the parent topic node is visible.
+          return getIsTreeNodeVisibleInScene(node, columnIndex);
         }
         return !!node.availableByColumn[columnIndex] && isSelected(baseKey, isFeatureColumn);
       }

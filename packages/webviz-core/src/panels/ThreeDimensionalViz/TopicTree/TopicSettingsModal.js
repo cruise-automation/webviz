@@ -23,7 +23,7 @@ import { SECOND_SOURCE_PREFIX } from "webviz-core/src/util/globalConstants";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const STopicSettingsEditor = styled.div`
-  background: ${colors.TOOLBAR};
+  background: ${colors.DARK2};
   color: ${colors.TEXT};
   padding: 16px;
 `;

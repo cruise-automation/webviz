@@ -27,13 +27,28 @@ const inNativeUndoRedoElement = (eventTarget: EventTarget) => {
   return false;
 };
 
-export default function LayoutHistoryKeyListener() {
+type Props = {|
+  openSaveLayoutModal?: () => void,
+  openLayoutModal?: () => void,
+  openShortcutsModal?: () => void,
+  history: any,
+|};
+
+export default function GlobalKeyListener({ openSaveLayoutModal, openLayoutModal, history }: Props) {
   const dispatch = useDispatch();
   const actions = useMemo(() => bindActionCreators({ redoLayoutChange, undoLayoutChange }, dispatch), [dispatch]);
 
   const keyDownHandler: (KeyboardEvent) => void = useCallback(
     (e) => {
-      if ((e.key === "z" || e.key === "Z") && (e.ctrlKey || e.metaKey)) {
+      const lowercaseEventKey = e.key.toLowerCase();
+      if (e.key === "?") {
+        history.push(`/help${window.location.search}`);
+      }
+
+      if (!(e.ctrlKey || e.metaKey)) {
+        return;
+      }
+      if (lowercaseEventKey === "z") {
         // Don't use ctrl-Z for layout history actions inside the Monaco Editor. It isn't
         // controlled, and changes inside it don't result in updates to the Redux state. We could
         // consider making the editor controlled, with a separate "unsaved state".
@@ -49,9 +64,18 @@ export default function LayoutHistoryKeyListener() {
         } else {
           actions.undoLayoutChange();
         }
+      } else if (lowercaseEventKey === "s" && openSaveLayoutModal) {
+        e.preventDefault();
+        openSaveLayoutModal();
+      } else if (lowercaseEventKey === "e" && openLayoutModal) {
+        e.preventDefault();
+        openLayoutModal();
+      } else if (lowercaseEventKey === "/") {
+        e.preventDefault();
+        history.push(`/shortcuts${window.location.search}`);
       }
     },
-    [actions]
+    [openSaveLayoutModal, openLayoutModal, history, actions]
   );
 
   // Not using KeyListener because we want to preventDefault on [ctrl+z] but not on [z], and we want

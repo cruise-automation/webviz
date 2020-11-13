@@ -335,6 +335,8 @@ and limitations under the License.
 
 /*! ./ExpandButton */
 
+/*! ./ExpandableMenu */
+
 /*! ./Flex.module.scss */
 
 /*! ./FromPropertyDescriptor */
@@ -368,6 +370,8 @@ and limitations under the License.
 /*! ./Item */
 
 /*! ./Menu */
+
+/*! ./MenuHeader */
 
 /*! ./MessageReader */
 
@@ -413,7 +417,11 @@ and limitations under the License.
 
 /*! ./SameValue */
 
+/*! ./SectionHeader */
+
 /*! ./SegmentedControl */
+
+/*! ./SettingsMenu */
 
 /*! ./ShareJsonModal.module.scss */
 
@@ -930,6 +938,8 @@ and limitations under the License.
 /*! ./bin/translator */
 
 /*! ./bin/translator.wasm */
+
+/*! ./binaryObjects */
 
 /*! ./binding */
 
@@ -1451,27 +1461,23 @@ and limitations under the License.
 
 /*! @mdi/svg/svg/alert.svg */
 
-/*! @mdi/svg/svg/apps.svg */
-
 /*! @mdi/svg/svg/arrow-split-horizontal.svg */
 
 /*! @mdi/svg/svg/arrow-split-vertical.svg */
 
-/*! @mdi/svg/svg/av-timer.svg */
-
 /*! @mdi/svg/svg/bell.svg */
-
-/*! @mdi/svg/svg/border-all.svg */
-
-/*! @mdi/svg/svg/cancel.svg */
 
 /*! @mdi/svg/svg/check.svg */
 
 /*! @mdi/svg/svg/checkbox-multiple-blank-outline.svg */
 
+/*! @mdi/svg/svg/chevron-down.svg */
+
 /*! @mdi/svg/svg/chevron-left.svg */
 
 /*! @mdi/svg/svg/chevron-right.svg */
+
+/*! @mdi/svg/svg/chevron-up.svg */
 
 /*! @mdi/svg/svg/clipboard-outline.svg */
 
@@ -1479,23 +1485,23 @@ and limitations under the License.
 
 /*! @mdi/svg/svg/close.svg */
 
+/*! @mdi/svg/svg/code-json.svg */
+
+/*! @mdi/svg/svg/cog.svg */
+
 /*! @mdi/svg/svg/database.svg */
 
 /*! @mdi/svg/svg/drag.svg */
 
-/*! @mdi/svg/svg/flag-variant.svg */
-
 /*! @mdi/svg/svg/fullscreen.svg */
 
-/*! @mdi/svg/svg/help-circle.svg */
+/*! @mdi/svg/svg/help-circle-outline.svg */
 
 /*! @mdi/svg/svg/information.svg */
 
-/*! @mdi/svg/svg/json.svg */
-
 /*! @mdi/svg/svg/loading.svg */
 
-/*! @mdi/svg/svg/menu-down.svg */
+/*! @mdi/svg/svg/magnify.svg */
 
 /*! @mdi/svg/svg/nuke.svg */
 
@@ -1503,7 +1509,7 @@ and limitations under the License.
 
 /*! @mdi/svg/svg/play.svg */
 
-/*! @mdi/svg/svg/plus-box.svg */
+/*! @mdi/svg/svg/plus-circle-outline.svg */
 
 /*! @mdi/svg/svg/radiobox-blank.svg */
 
@@ -1511,9 +1517,9 @@ and limitations under the License.
 
 /*! @mdi/svg/svg/script-text-outline.svg */
 
-/*! @mdi/svg/svg/settings.svg */
+/*! @mdi/svg/svg/skip-next-outline.svg */
 
-/*! @mdi/svg/svg/sort-variant.svg */
+/*! @mdi/svg/svg/skip-previous-outline.svg */
 
 /*! @mdi/svg/svg/trash-can-outline.svg */
 
@@ -1551,19 +1557,21 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/@cruise-automation/tooltip/node_modules/warning/browser.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/history/esm/history.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/extends.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/inheritsLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-redux/es/index.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js because of ./packages/webviz-core/node_modules/react-router/esm/react-router.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@babel/runtime/helpers/inheritsLoose.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/asap/dist/esm/browser/raw.js (<- Module uses injected variables (global)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd-touch-backend/dist/esm/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndProvider.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@react-dnd/invariant/dist/invariant.esm.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/index.js */
 
@@ -1581,7 +1589,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -1609,7 +1617,7 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd-preview/node_modules/prop-types/index.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndContext.js because of ./packages/webviz-core/node_modules/react-dnd-multi-backend/dist/esm/index.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndContext.js because of ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndProvider.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-dnd/dist/esm/common/DndProvider.js (<- Module uses injected variables (global)) */
 
@@ -1627,19 +1635,21 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-is/index.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-redux/es/index.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/AppMenu/index.js (referenced with cjs require), ./packages/webviz-core/src/components/LayoutHistoryKeyListener.js (referenced with cjs require), ./packages/webviz-core/src/components/LayoutModal.js (referenced with cjs require), ./packages/webviz-core/src/components/MessageOrderControls.js (referenced with cjs require), ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelLayout.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/MosaicDragHandle.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/components/PlaybackControls/index.js (referenced with cjs require), ./packages/webviz-core/src/components/PlaybackSpeedControls.js (referenced with cjs require), ./packages/webviz-core/src/components/PlayerManager.js (referenced with cjs require), ./packages/webviz-core/src/components/Root.js (referenced with cjs require), ./packages/webviz-core/src/components/TimeBasedChart/HoverBar.js (referenced with cjs require), ./packages/webviz-core/src/components/TimeBasedChart/index.js (referenced with cjs require), ./packages/webviz-core/src/components/renderToBody.js (referenced with cjs require), ./packages/webviz-core/src/hooks/useGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/BottomBar/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/PanelList/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/DraggableToolbarTab.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/EmptyDropTarget.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/TabbedToolbar.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/index.js (referenced with cjs require), ./packages/webviz-core/src/stories/StoreSetup.js (referenced with cjs require)) */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-redux/es/index.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/AppMenu/index.js (referenced with cjs require), ./packages/webviz-core/src/components/LayoutModal.js (referenced with cjs require), ./packages/webviz-core/src/components/MessageOrderControls.js (referenced with cjs require), ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelLayout.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/MosaicDragHandle.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/components/PlaybackControls/index.js (referenced with cjs require), ./packages/webviz-core/src/components/PlaybackSpeedControls.js (referenced with cjs require), ./packages/webviz-core/src/components/PlayerManager.js (referenced with cjs require), ./packages/webviz-core/src/components/Root.js (referenced with cjs require), ./packages/webviz-core/src/components/TimeBasedChart/HoverBar.js (referenced with cjs require), ./packages/webviz-core/src/components/TimeBasedChart/index.js (referenced with cjs require), ./packages/webviz-core/src/components/renderToBody.js (referenced with cjs require), ./packages/webviz-core/src/hooks/useGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/BottomBar/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/PanelList/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/DraggableToolbarTab.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/EmptyDropTarget.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/TabbedToolbar.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/index.js (referenced with cjs require), ./packages/webviz-core/src/stories/StoreSetup.js (referenced with cjs require)) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-redux/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js (<- Module is not an ECMAScript module) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-redux/node_modules/prop-types/index.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-router/esm/react-router.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-router/esm/react-router.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Root.js (referenced with cjs require)) */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/react-router/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js (<- Module is not an ECMAScript module) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/redux/es/redux.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/LayoutHistoryKeyListener.js (referenced with cjs require), ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelLayout.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/MosaicDragHandle.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/hooks/useGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/store/configureStore.js (referenced with cjs require)) */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/redux/es/redux.js (<- Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelLayout.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/MosaicDragHandle.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/hooks/useGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/store/configureStore.js (referenced with cjs require)) */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/react-router-dom/esm/react-router-dom.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/history/esm/history.js */
+
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tiny-invariant/dist/tiny-invariant.esm.js because of ./packages/webviz-core/node_modules/react-router/esm/react-router.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/tslib/tslib.es6.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -1649,27 +1659,23 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/CopyText.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/Metadata.js (referenced with cjs require), ./packages/webviz-core/src/panels/Rosout/index.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Dropdown/index.js (referenced with cjs require), ./packages/webviz-core/src/components/MessagePathSyntax/MessagePathInput.js (referenced with cjs require), ./packages/webviz-core/src/components/Select/Select.js (referenced with cjs require), ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Dropdown/index.js (referenced with cjs require), ./packages/webviz-core/src/components/Menu/ExpandableMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExperimentalFeatures.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExperimentalFeatures.js (referenced with cjs require), ./packages/webviz-core/src/components/Modal.js (referenced with cjs require), ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/ToolbarTab.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExperimentalFeatures.js (referenced with cjs require), ./packages/webviz-core/src/components/GlobalVariablesTable.js (referenced with cjs require), ./packages/webviz-core/src/components/Modal.js (referenced with cjs require), ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/ToolbarTab.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExperimentalFeatures.js (referenced with cjs require), ./packages/webviz-core/src/components/TopicToRenderMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/ToolbarTab.js (referenced with cjs require) */
-
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/LayoutHistoryKeyListener.js (referenced with cjs require), ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelLayout.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/MosaicDragHandle.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/hooks/useGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/store/configureStore.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExperimentalFeatures.js (referenced with cjs require), ./packages/webviz-core/src/components/Menu/Item.js (referenced with cjs require), ./packages/webviz-core/src/components/TopicToRenderMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/Tab/ToolbarTab.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/LayoutMenu.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/LayoutMenu.js (referenced with cjs require), ./packages/webviz-core/src/components/Panel.js (referenced with cjs require) */
-
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/LayoutMenu.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Menu/ExpandableMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Menu/Item.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Menu/Item.js (referenced with cjs require), ./packages/webviz-core/src/components/SelectableTimestamp.js (referenced with cjs require) */
-
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/MessageOrderControls.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/NoHeaderTopicsButton.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PoseSettingsEditor.js (referenced with cjs require) */
 
@@ -1677,25 +1683,31 @@ and limitations under the License.
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/NotificationDisplay.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require) */
 
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelLayout.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/MosaicDragHandle.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/hooks/useGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables.js (referenced with cjs require), ./packages/webviz-core/src/store/configureStore.js (referenced with cjs require) */
+
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Panel.js (referenced with cjs require), ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/PanelToolbar/HelpButton.js (referenced with cjs require), ./packages/webviz-core/src/components/Root.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/Sidebar.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/PanelToolbar/HelpButton.js (referenced with cjs require), ./packages/webviz-core/src/components/SettingsMenu.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/PlaybackControls/index.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/PanelToolbar/index.js (referenced with cjs require), ./packages/webviz-core/src/components/SettingsMenu.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/PlaybackSpeedControls.js (referenced with cjs require) */
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/PlaybackControls/index.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Radio.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Root.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/SettingsMenu.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/SpinningLoadingIcon.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/TextContent.js (referenced with cjs require), ./packages/webviz-core/src/components/renderToBody.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/TinyConnectionPicker.js (referenced with cjs require), ./packages/webviz-core/src/components/TopicToRenderMenu.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ImageView/ImageCanvas.js (referenced with cjs require), ./packages/webviz-core/src/panels/PanelList/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Plot/PlotChart.js (referenced with cjs require), ./packages/webviz-core/src/panels/Rosout/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/diagnostics/DiagnosticStatus.js (referenced with cjs require), ./packages/webviz-core/src/util/selectors.js (referenced with cjs require) */
 
@@ -1979,8 +1991,6 @@ and limitations under the License.
 /*! exports used: Hub, getCurrentHub, getHubFromCarrier */
 
 /*! exports used: Memo */
-
-/*! exports used: MemoryRouter, Prompt, Redirect, Route, Router, StaticRouter, Switch, __RouterContext, generatePath, matchPath, withRouter */
 
 /*! exports used: Scope, addGlobalEventProcessor */
 
@@ -2392,6 +2402,10 @@ and limitations under the License.
 
 /*! webviz-core/migrations/frozenMigrations/2020.07.07.11:17:28.prefixCollapsedSectionsWithDiagnosticName.js */
 
+/*! webviz-core/migrations/frozenMigrations/2020.10.22.14:44:54.removeEmptyDiagnosticsConfigNames.js */
+
+/*! webviz-core/migrations/frozenMigrations/2020.11.02.14:16:21.migrateColorToOverrideColor.js */
+
 /*! webviz-core/shared/delay */
 
 /*! webviz-core/shared/layout */
@@ -2416,6 +2430,8 @@ and limitations under the License.
 
 /*! webviz-core/src/assets/emptyBox.svg */
 
+/*! webviz-core/src/assets/layout.svg */
+
 /*! webviz-core/src/assets/logo.svg */
 
 /*! webviz-core/src/components/AppMenu */
@@ -2438,8 +2454,6 @@ and limitations under the License.
 
 /*! webviz-core/src/components/Dropdown */
 
-/*! webviz-core/src/components/EmptyState */
-
 /*! webviz-core/src/components/ErrorBoundary */
 
 /*! webviz-core/src/components/ExperimentalFeatures */
@@ -2452,7 +2466,7 @@ and limitations under the License.
 
 /*! webviz-core/src/components/KeyListener */
 
-/*! webviz-core/src/components/LayoutHistoryKeyListener */
+/*! webviz-core/src/components/KeyboardShortcut */
 
 /*! webviz-core/src/components/LayoutMenu */
 
@@ -2482,6 +2496,8 @@ and limitations under the License.
 
 /*! webviz-core/src/components/PlaybackControls */
 
+/*! webviz-core/src/components/PlaybackControls/PlaybackTimeDisplayMethod */
+
 /*! webviz-core/src/components/PlaybackControls/sharedHelpers */
 
 /*! webviz-core/src/components/PlaybackSpeedControls */
@@ -2497,6 +2513,8 @@ and limitations under the License.
 /*! webviz-core/src/components/SelectableTimestamp */
 
 /*! webviz-core/src/components/ShareJsonModal */
+
+/*! webviz-core/src/components/ShortcutsModal */
 
 /*! webviz-core/src/components/Slider */
 
@@ -2562,6 +2580,8 @@ and limitations under the License.
 
 /*! webviz-core/src/dataProviders/standardDataProviderDescriptors */
 
+/*! webviz-core/src/dataProviders/util */
+
 /*! webviz-core/src/filterMap */
 
 /*! webviz-core/src/hooks/useUserNodes */
@@ -2588,6 +2608,8 @@ and limitations under the License.
 
 /*! webviz-core/src/players/UserNodePlayer/types */
 
+/*! webviz-core/src/players/UserNodePlayer/utils */
+
 /*! webviz-core/src/players/automatedRun/AutomatedRunPlayer */
 
 /*! webviz-core/src/players/automatedRun/performanceMeasuringClient */
@@ -2607,6 +2629,8 @@ and limitations under the License.
 /*! webviz-core/src/reducers/mosaic */
 
 /*! webviz-core/src/reducers/panels */
+
+/*! webviz-core/src/reducers/recentLayouts */
 
 /*! webviz-core/src/reducers/tests */
 
@@ -2711,6 +2735,8 @@ and limitations under the License.
 /*! webviz-core/src/util/naturalSort */
 
 /*! webviz-core/src/util/overwriteFetch */
+
+/*! webviz-core/src/util/parseMessageDefinitionsCache */
 
 /*! webviz-core/src/util/ranges */
 
@@ -3563,6 +3589,10 @@ and limitations under the License.
   \****************************************************/
 
 /*!****************************************************!*\
+  !*** ./packages/webviz-core/src/assets/layout.svg ***!
+  \****************************************************/
+
+/*!****************************************************!*\
   !*** ./packages/webviz-core/src/reducers/index.js ***!
   \****************************************************/
 
@@ -3824,6 +3854,10 @@ and limitations under the License.
 
 /*!********************************************************!*\
   !*** ./packages/webviz-core/src/components/Tooltip.js ***!
+  \********************************************************/
+
+/*!********************************************************!*\
+  !*** ./packages/webviz-core/src/dataProviders/util.js ***!
   \********************************************************/
 
 /*!********************************************************!*\
@@ -4099,10 +4133,6 @@ and limitations under the License.
   \***********************************************************/
 
 /*!***********************************************************!*\
-  !*** ./packages/webviz-core/src/components/EmptyState.js ***!
-  \***********************************************************/
-
-/*!***********************************************************!*\
   !*** ./packages/webviz-core/src/components/LayoutMenu.js ***!
   \***********************************************************/
 
@@ -4219,6 +4249,10 @@ and limitations under the License.
   \************************************************************/
 
 /*!************************************************************!*\
+  !*** ./packages/webviz-core/src/reducers/recentLayouts.js ***!
+  \************************************************************/
+
+/*!************************************************************!*\
   !*** ./packages/webviz-core/src/styles/colors.module.scss ***!
   \************************************************************/
 
@@ -4296,6 +4330,10 @@ and limitations under the License.
 
 /*!*************************************************************!*\
   !*** ./packages/webviz-core/src/components/PanelContext.js ***!
+  \*************************************************************/
+
+/*!*************************************************************!*\
+  !*** ./packages/webviz-core/src/components/SettingsMenu.js ***!
   \*************************************************************/
 
 /*!*************************************************************!*\
@@ -4627,6 +4665,10 @@ and limitations under the License.
   \***************************************************************/
 
 /*!***************************************************************!*\
+  !*** ./packages/webviz-core/src/components/ShortcutsModal.js ***!
+  \***************************************************************/
+
+/*!***************************************************************!*\
   !*** ./packages/webviz-core/src/components/WssErrorModal.png ***!
   \***************************************************************/
 
@@ -4652,6 +4694,10 @@ and limitations under the License.
 
 /*!****************************************************************!*\
   !*** ./node_modules/react-dom/node_modules/scheduler/index.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/cog.svg ***!
   \****************************************************************/
 
 /*!****************************************************************!*\
@@ -4763,6 +4809,10 @@ and limitations under the License.
   \****************************************************************/
 
 /*!****************************************************************!*\
+  !*** ./packages/webviz-core/src/components/Menu/MenuHeader.js ***!
+  \****************************************************************/
+
+/*!****************************************************************!*\
   !*** ./packages/webviz-core/src/panels/Tab/EmptyDropTarget.js ***!
   \****************************************************************/
 
@@ -4779,19 +4829,11 @@ and limitations under the License.
   \*****************************************************************/
 
 /*!*****************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/apps.svg ***!
-  \*****************************************************************/
-
-/*!*****************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/bell.svg ***!
   \*****************************************************************/
 
 /*!*****************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/drag.svg ***!
-  \*****************************************************************/
-
-/*!*****************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/json.svg ***!
   \*****************************************************************/
 
 /*!*****************************************************************!*\
@@ -4924,6 +4966,10 @@ and limitations under the License.
 
 /*!*****************************************************************!*\
   !*** ./packages/webviz-core/src/components/Confirm.module.scss ***!
+  \*****************************************************************/
+
+/*!*****************************************************************!*\
+  !*** ./packages/webviz-core/src/components/KeyboardShortcut.js ***!
   \*****************************************************************/
 
 /*!*****************************************************************!*\
@@ -5103,15 +5149,15 @@ and limitations under the License.
   \******************************************************************/
 
 /*!******************************************************************!*\
+  !*** ./packages/webviz-core/src/players/UserNodePlayer/utils.js ***!
+  \******************************************************************/
+
+/*!******************************************************************!*\
   !*** ./packages/webviz-core/src/util/showHelpModalOpenSource.js ***!
   \******************************************************************/
 
 /*!*******************************************************************!*\
   !*** ./node_modules/merge-anything/dist/index.esm.js + 1 modules ***!
-  \*******************************************************************/
-
-/*!*******************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/cancel.svg ***!
   \*******************************************************************/
 
 /*!*******************************************************************!*\
@@ -5227,6 +5273,10 @@ and limitations under the License.
   \*******************************************************************/
 
 /*!*******************************************************************!*\
+  !*** ./packages/webviz-core/src/components/Menu/SectionHeader.js ***!
+  \*******************************************************************/
+
+/*!*******************************************************************!*\
   !*** ./packages/webviz-core/src/components/PanelToolbar/index.js ***!
   \*******************************************************************/
 
@@ -5268,6 +5318,10 @@ and limitations under the License.
 
 /*!********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/loading.svg ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/magnify.svg ***!
   \********************************************************************/
 
 /*!********************************************************************!*\
@@ -5331,6 +5385,10 @@ and limitations under the License.
   \********************************************************************/
 
 /*!********************************************************************!*\
+  !*** ./packages/webviz-core/src/components/Menu/ExpandableMenu.js ***!
+  \********************************************************************/
+
+/*!********************************************************************!*\
   !*** ./packages/webviz-core/src/components/Menu/index.module.scss ***!
   \********************************************************************/
 
@@ -5371,19 +5429,7 @@ and limitations under the License.
   \*********************************************************************/
 
 /*!*********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/av-timer.svg ***!
-  \*********************************************************************/
-
-/*!*********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/database.svg ***!
-  \*********************************************************************/
-
-/*!*********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/plus-box.svg ***!
-  \*********************************************************************/
-
-/*!*********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/settings.svg ***!
   \*********************************************************************/
 
 /*!*********************************************************************!*\
@@ -5487,7 +5533,7 @@ and limitations under the License.
   \**********************************************************************/
 
 /*!**********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/menu-down.svg ***!
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/code-json.svg ***!
   \**********************************************************************/
 
 /*!**********************************************************************!*\
@@ -5571,7 +5617,7 @@ and limitations under the License.
   \***********************************************************************/
 
 /*!***********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/border-all.svg ***!
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/chevron-up.svg ***!
   \***********************************************************************/
 
 /*!***********************************************************************!*\
@@ -5646,16 +5692,16 @@ and limitations under the License.
   !*** ./packages/webviz-core/src/dataProviders/rootGetDataProvider.js ***!
   \***********************************************************************/
 
+/*!***********************************************************************!*\
+  !*** ./packages/webviz-core/src/util/parseMessageDefinitionsCache.js ***!
+  \***********************************************************************/
+
 /*!************************************************************************!*\
   !*** ./node_modules/es-get-iterator/node_modules/has-symbols/index.js ***!
   \************************************************************************/
 
 /*!************************************************************************!*\
   !*** ./node_modules/es-get-iterator/node_modules/has-symbols/shams.js ***!
-  \************************************************************************/
-
-/*!************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/help-circle.svg ***!
   \************************************************************************/
 
 /*!************************************************************************!*\
@@ -5715,19 +5761,15 @@ and limitations under the License.
   \*************************************************************************/
 
 /*!*************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/chevron-down.svg ***!
+  \*************************************************************************/
+
+/*!*************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/chevron-left.svg ***!
   \*************************************************************************/
 
 /*!*************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/close-circle.svg ***!
-  \*************************************************************************/
-
-/*!*************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/flag-variant.svg ***!
-  \*************************************************************************/
-
-/*!*************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/sort-variant.svg ***!
   \*************************************************************************/
 
 /*!*************************************************************************!*\
@@ -5756,10 +5798,6 @@ and limitations under the License.
 
 /*!*************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/symbol-observable/es/index.js ***!
-  \*************************************************************************/
-
-/*!*************************************************************************!*\
-  !*** ./packages/webviz-core/src/components/LayoutHistoryKeyListener.js ***!
   \*************************************************************************/
 
 /*!*************************************************************************!*\
@@ -5987,6 +6025,10 @@ and limitations under the License.
   \******************************************************************************/
 
 /*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/skip-next-outline.svg ***!
+  \******************************************************************************/
+
+/*!******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/trash-can-outline.svg ***!
   \******************************************************************************/
 
@@ -6119,6 +6161,14 @@ and limitations under the License.
   \********************************************************************************/
 
 /*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/help-circle-outline.svg ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/plus-circle-outline.svg ***!
+  \********************************************************************************/
+
+/*!********************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/script-text-outline.svg ***!
   \********************************************************************************/
 
@@ -6200,6 +6250,10 @@ and limitations under the License.
 
 /*!**********************************************************************************!*\
   !*** ./node_modules/promise.allsettled/node_modules/es-abstract/GetIntrinsic.js ***!
+  \**********************************************************************************/
+
+/*!**********************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/skip-previous-outline.svg ***!
   \**********************************************************************************/
 
 /*!**********************************************************************************!*\
@@ -6620,6 +6674,10 @@ and limitations under the License.
 
 /*!*******************************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-mosaic-component/lib/buttons/Separator.js ***!
+  \*******************************************************************************************/
+
+/*!*******************************************************************************************!*\
+  !*** ./packages/webviz-core/src/components/PlaybackControls/PlaybackTimeDisplayMethod.js ***!
   \*******************************************************************************************/
 
 /*!*******************************************************************************************!*\
@@ -7162,6 +7220,10 @@ and limitations under the License.
   !*** ./packages/webviz-core/migrations/frozenMigrations/2020.06.26.17:40:24.migrate3DPanelColorSettings.js ***!
   \*************************************************************************************************************/
 
+/*!*************************************************************************************************************!*\
+  !*** ./packages/webviz-core/migrations/frozenMigrations/2020.11.02.14:16:21.migrateColorToOverrideColor.js ***!
+  \*************************************************************************************************************/
+
 /*!**************************************************************************************************************!*\
   !*** ./packages/@cruise-automation/tooltip/node_modules/core-js/library/modules/core.get-iterator-method.js ***!
   \**************************************************************************************************************/
@@ -7200,6 +7262,10 @@ and limitations under the License.
 
 /*!*******************************************************************************************************************!*\
   !*** ./packages/webviz-core/migrations/frozenMigrations/2020.06.01.11:34:51.migrate3DPanelPointCloudHexColors.js ***!
+  \*******************************************************************************************************************/
+
+/*!*******************************************************************************************************************!*\
+  !*** ./packages/webviz-core/migrations/frozenMigrations/2020.10.22.14:44:54.removeEmptyDiagnosticsConfigNames.js ***!
   \*******************************************************************************************************************/
 
 /*!********************************************************************************************************************!*\

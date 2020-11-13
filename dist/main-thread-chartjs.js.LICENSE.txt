@@ -1,5 +1,3 @@
-/*! ./../../../../../node_modules/webpack/buildin/global.js */
-
 /*! ./ChartJSManager */
 
 /*! ./zoomAndPanHelpers */
@@ -27,6 +25,8 @@
 /*! webviz-core/src/util/installChartjs */
 
 /*! webviz-core/src/util/multicolorLineChart */
+
+/*! webviz-core/src/util/workers */
 
 /*!*********************************************************!*\
   !*** ./packages/webviz-core/src/util/installChartjs.js ***!

@@ -1122,13 +1122,17 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExpandingToolbar.js (referenced with cjs require) */
 
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/GlobalVariablesTable.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderStyleExpressionNodes.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/MessagePathSyntax/MessagePathInput.js (referenced with cjs require), ./packages/webviz-core/src/components/Select/Select.js (referenced with cjs require), ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/FollowTFControl.js (referenced with cjs require) */
+
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Panel.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/hooksImporter.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ImageView/ImageCanvas.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
-
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require) */
+
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/Sidebar.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/NodePlayground/BottomBar/DiagnosticsSection.js (referenced with cjs require), ./packages/webviz-core/src/panels/Plot/PlotLegend.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeRow.js (referenced with cjs require) */
 
@@ -1168,13 +1172,7 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/MainToolbar.js (referenced with cjs require) */
 
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require) */
-
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/SearchText.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
-
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js (referenced with cjs require) */
-
-/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderStyleExpressionNodes.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TopicTree.js (referenced with cjs require) */
 
@@ -2487,10 +2485,6 @@ object-assign
   \********************************************************************/
 
 /*!********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/magnify.svg ***!
-  \********************************************************************/
-
-/*!********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/base16/lib/codeschool.js ***!
   \********************************************************************/
 
@@ -2747,6 +2741,10 @@ object-assign
   \**********************************************************************/
 
 /*!**********************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/menu-down.svg ***!
+  \**********************************************************************/
+
+/*!**********************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/menu-left.svg ***!
   \**********************************************************************/
 
@@ -2855,7 +2853,7 @@ object-assign
   \***********************************************************************/
 
 /*!***********************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/chevron-up.svg ***!
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/border-all.svg ***!
   \***********************************************************************/
 
 /*!***********************************************************************!*\
@@ -2932,6 +2930,10 @@ object-assign
 
 /*!************************************************************************!*\
   !*** ./packages/regl-worldview/node_modules/lodash/_objectToString.js ***!
+  \************************************************************************/
+
+/*!************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/help-circle.svg ***!
   \************************************************************************/
 
 /*!************************************************************************!*\
@@ -3024,10 +3026,6 @@ object-assign
 
 /*!*************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/chart-bubble.svg ***!
-  \*************************************************************************/
-
-/*!*************************************************************************!*\
-  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/chevron-down.svg ***!
   \*************************************************************************/
 
 /*!*************************************************************************!*\

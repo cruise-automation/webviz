@@ -196,7 +196,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/types/esm/status.js because of ./packages/webviz-core/node_modules/@sentry/types/esm/index.js */
 
-/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/object.js */
+/*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/is.js because of ./packages/webviz-core/node_modules/@sentry/utils/esm/misc.js */
 
 /*! ModuleConcatenation bailout: Cannot concat with ./packages/webviz-core/node_modules/@sentry/utils/esm/logger.js because of ./packages/webviz-core/node_modules/@sentry/hub/esm/hub.js */
 
@@ -372,11 +372,17 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! webviz-core/src/dataProviders/MeasureDataProvider */
 
+/*! webviz-core/src/dataProviders/MemoryCacheDataProvider */
+
 /*! webviz-core/src/dataProviders/RpcDataProviderRemote */
 
 /*! webviz-core/src/dataProviders/constants */
 
 /*! webviz-core/src/dataProviders/createGetDataProvider */
+
+/*! webviz-core/src/dataProviders/util */
+
+/*! webviz-core/src/filterMap */
 
 /*! webviz-core/src/players/types */
 
@@ -547,6 +553,10 @@ PERFORMANCE OF THIS SOFTWARE.
   \***********************************************/
 
 /*!***********************************************!*\
+  !*** ./packages/webviz-core/src/filterMap.js ***!
+  \***********************************************/
+
+/*!***********************************************!*\
   !*** ./packages/webviz-core/src/util/bags.js ***!
   \***********************************************/
 
@@ -636,6 +646,10 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!********************************************************!*\
   !*** ./node_modules/readable-stream/duplex-browser.js ***!
+  \********************************************************/
+
+/*!********************************************************!*\
+  !*** ./packages/webviz-core/src/dataProviders/util.js ***!
   \********************************************************/
 
 /*!*********************************************************!*\
@@ -901,6 +915,10 @@ PERFORMANCE OF THIS SOFTWARE.
 /*!**************************************************************************!*\
   !*** ./packages/webviz-core/src/dataProviders/ApiCheckerDataProvider.js ***!
   \**************************************************************************/
+
+/*!***************************************************************************!*\
+  !*** ./packages/webviz-core/src/dataProviders/MemoryCacheDataProvider.js ***!
+  \***************************************************************************/
 
 /*!****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@sentry/utils/esm/syncpromise.js ***!

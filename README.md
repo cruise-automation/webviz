@@ -40,7 +40,6 @@ docker run -p 8080:8080 cruise/webviz
 
 ```sh
 npm run bootstrap # install dependencies
-npm run build # build all packages
 npm run build-static-webviz # generate static build in __static_webviz__
 npm run serve-static-webviz # serve static build on localhost:8080
 ```

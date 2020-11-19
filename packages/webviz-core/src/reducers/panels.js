@@ -89,7 +89,7 @@ export type PanelsState = {|
 |};
 
 export const setPersistedStateInLocalStorage = (persistedState: PersistedState) => {
-  storage.set(GLOBAL_STATE_STORAGE_KEY, persistedState);
+  storage.setItem(GLOBAL_STATE_STORAGE_KEY, persistedState);
 };
 
 // initialPersistedState will be initialized once when the store initializes this reducer. It is
@@ -100,7 +100,7 @@ let initialPersistedState;
 export function getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history: any): PersistedState {
   if (initialPersistedState == null) {
     const defaultPersistedState = Object.freeze(getGlobalHooks().getDefaultPersistedState());
-    const oldPersistedState: any = storage.get(GLOBAL_STATE_STORAGE_KEY);
+    const oldPersistedState: any = storage.getItem(GLOBAL_STATE_STORAGE_KEY);
 
     const newPersistedState = cloneDeep(defaultPersistedState);
 

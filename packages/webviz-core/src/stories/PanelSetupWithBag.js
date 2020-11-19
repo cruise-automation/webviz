@@ -13,6 +13,7 @@ import { useEffect, useState } from "react"; // eslint-disable-line import/no-du
 import NodePlayer from "webviz-core/src/players/NodePlayer";
 import StoryPlayer from "webviz-core/src/players/StoryPlayer";
 import type { PlayerState } from "webviz-core/src/players/types";
+import Store from "webviz-core/src/store";
 import PanelSetup, { type Fixture } from "webviz-core/src/stories/PanelSetup";
 
 const defaultGetMergedFixture = (bagFixture) => bagFixture;
@@ -27,6 +28,7 @@ type Props = {|
   getMergedFixture?: (bagFixture: Fixture) => Fixture,
   onMount?: (HTMLDivElement) => void,
   onFirstMount?: (HTMLDivElement) => void,
+  store?: Store,
 |};
 
 // A util component for testing panels that need to load the raw ROS bags.
@@ -47,6 +49,7 @@ export default function PanelSetupWithBag({
   bobjectSubscriptions,
   onMount,
   onFirstMount,
+  store,
 }: Props) {
   const [fixture, setFixture] = useState();
   useEffect(
@@ -78,7 +81,7 @@ export default function PanelSetupWithBag({
   );
 
   return fixture ? (
-    <PanelSetup fixture={fixture} onMount={onMount} onFirstMount={onFirstMount}>
+    <PanelSetup fixture={fixture} onMount={onMount} onFirstMount={onFirstMount} store={store}>
       {children}
     </PanelSetup>
   ) : null;

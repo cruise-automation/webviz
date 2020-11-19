@@ -9,8 +9,8 @@
 import { sortBy, sortedUniq } from "lodash";
 
 import promiseTimeout from "webviz-core/shared/promiseTimeout";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import inAutomatedRunMode from "webviz-core/src/util/inAutomatedRunMode";
+import logEvent, { getEventNames, getEventTags } from "webviz-core/src/util/logEvent";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 export type FramePromise = {| name: string, promise: Promise<void> |};
@@ -29,12 +29,11 @@ export async function pauseFrameForPromises(promises: FramePromise[]) {
       return;
     }
 
-    // Log the panelTypes to amplitude so we can track which panels timeout regularly.
-    const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
+    // Log the panelTypes so we can track which panels timeout regularly.
     const sortedUniquePanelTypes = sortedUniq(sortBy(promises.map(({ name }) => name)));
-    logger({
-      name: eventNames.PAUSE_FRAME_TIMEOUT,
-      tags: { [eventTags.PANEL_TYPES]: sortedUniquePanelTypes },
+    logEvent({
+      name: getEventNames().PAUSE_FRAME_TIMEOUT,
+      tags: { [getEventTags().PANEL_TYPES]: sortedUniquePanelTypes },
     });
   }
 }

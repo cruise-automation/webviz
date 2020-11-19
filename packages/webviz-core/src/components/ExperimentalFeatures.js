@@ -18,6 +18,7 @@ import TextContent from "webviz-core/src/components/TextContent";
 import Tooltip from "webviz-core/src/components/Tooltip";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import colors from "webviz-core/src/styles/colors.module.scss";
+import logEvent, { getEventNames } from "webviz-core/src/util/logEvent";
 import Storage from "webviz-core/src/util/Storage";
 
 // All these are exported for tests; please don't use them directly in your code.
@@ -29,6 +30,8 @@ export type FeatureDescriptions = {
     productionDefault: boolean,
   |},
 };
+
+export type FeatureValue = "default" | "alwaysOn" | "alwaysOff";
 export type FeatureStorage = { [id: string]: "alwaysOn" | "alwaysOff" };
 export type FeatureSettings = { [id: string]: { enabled: boolean, manuallySet: boolean } };
 export const EXPERIMENTAL_FEATURES_STORAGE_KEY = "experimentalFeaturesSettings";
@@ -44,7 +47,7 @@ function getDefaultKey(): "productionDefault" | "developmentDefault" {
 function getExperimentalFeatureSettings(): FeatureSettings {
   const experimentalFeaturesList = getExperimentalFeaturesList();
   const settings: FeatureSettings = {};
-  const featureStorage = new Storage().get<FeatureStorage>(EXPERIMENTAL_FEATURES_STORAGE_KEY) || {};
+  const featureStorage = new Storage().getItem<FeatureStorage>(EXPERIMENTAL_FEATURES_STORAGE_KEY) || {};
   for (const id in experimentalFeaturesList) {
     if (["alwaysOn", "alwaysOff"].includes(featureStorage[id])) {
       settings[id] = { enabled: featureStorage[id] === "alwaysOn", manuallySet: true };
@@ -91,19 +94,18 @@ export function getExperimentalFeature(id: string): boolean {
   return settings[id].enabled;
 }
 
-export function setExperimentalFeature(id: string, value: "default" | "alwaysOn" | "alwaysOff"): void {
+export function setExperimentalFeature(id: string, value: FeatureValue): void {
   const storage = new Storage();
-  const newSettings = { ...storage.get(EXPERIMENTAL_FEATURES_STORAGE_KEY) };
+  const newSettings = { ...storage.getItem(EXPERIMENTAL_FEATURES_STORAGE_KEY) };
 
-  const { logger, eventNames } = getGlobalHooks().getEventLogger();
-  logger({ name: eventNames.CHANGE_EXPERIMENTAL_FEATURE, tags: { feature: id, value } });
+  logEvent({ name: getEventNames().CHANGE_EXPERIMENTAL_FEATURE, tags: { feature: id, value } });
 
   if (value === "default") {
     delete newSettings[id];
   } else {
     newSettings[id] = value;
   }
-  storage.set(EXPERIMENTAL_FEATURES_STORAGE_KEY, newSettings);
+  storage.setItem(EXPERIMENTAL_FEATURES_STORAGE_KEY, newSettings);
   for (const update of subscribedComponents) {
     update();
   }

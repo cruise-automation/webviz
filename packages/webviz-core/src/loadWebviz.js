@@ -16,7 +16,6 @@ let importedPanelsByCategory;
 let importedPerPanelHooks;
 const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
-  getEventLogger: () => ({ logger: (_args) => undefined, eventNames: {}, eventTags: {} }),
   getLayoutFromUrl: async (search) => {
     const { LAYOUT_URL_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     const params = new URLSearchParams(search);
@@ -135,6 +134,9 @@ const defaultHooks = {
       };
     }
     window.ga("send", "pageview");
+
+    const { initializeLogEvent } = require("webviz-core/src/util/logEvent");
+    initializeLogEvent(() => undefined, {}, {});
   },
   getWorkerDataProviderWorker: () => {
     return require("webviz-core/src/dataProviders/WorkerDataProvider.worker");

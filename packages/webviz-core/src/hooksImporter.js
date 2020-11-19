@@ -225,6 +225,7 @@ export function perPanelHooks() {
       defaultFollowTransformFrame: null,
       skipTransformFrame: null,
       useWorldspacePointSize: () => true,
+      createPointCloudPositionBuffer: () => null,
     },
     RawMessages: { docLinkFunction: (filename) => `https://www.google.com/search?q=${filename}` },
   };

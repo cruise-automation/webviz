@@ -62,7 +62,7 @@ describe("GlobalKeyListener", () => {
     expect(undoActionCreator).not.toHaveBeenCalled();
   });
 
-  it("does not fire undo events from the 'share layout' modal", () => {
+  it("does not fire undo/redo events from editable fields", () => {
     const shareTextarea = document.getElementById("some-text-area");
     if (shareTextarea == null) {
       throw new Error("Satisfy flow: shareTextArea is not null.");
@@ -77,7 +77,7 @@ describe("GlobalKeyListener", () => {
       throw new Error("Satisfy flow: otherTextArea is not null.");
     }
     otherTextarea.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true }));
-    expect(undoActionCreator).toHaveBeenCalledTimes(1);
+    expect(undoActionCreator).not.toHaveBeenCalled();
     expect(redoActionCreator).not.toHaveBeenCalled();
   });
 
@@ -101,6 +101,25 @@ describe("GlobalKeyListener", () => {
     expect(openSaveLayoutModal).toHaveBeenCalledTimes(4);
   });
 
+  it("does not call openSaveLayoutModal if the events were fired from editable fields", () => {
+    const wrapper = document.createElement("div");
+    const openSaveLayoutModal = jest.fn();
+    mount(
+      <Context store={getStore()}>
+        <GlobalKeyListener history={mockHistory} openSaveLayoutModal={openSaveLayoutModal} />
+        <textarea id="some-text-area" />
+      </Context>,
+      { attachTo: wrapper }
+    );
+
+    const textarea = document.getElementById("some-text-area");
+    if (!textarea) {
+      throw new Error("Satisfy flow: textarea is not null.");
+    }
+    textarea.dispatchEvent(new KeyboardEvent("keydown", { key: "s", ctrlKey: true }));
+    expect(openSaveLayoutModal).toHaveBeenCalledTimes(0);
+  });
+
   it("calls openLayoutModal after pressing cmd/ctrl + s/e keys", async () => {
     const wrapper = document.createElement("div");
     const openLayoutModal = jest.fn();
@@ -119,6 +138,25 @@ describe("GlobalKeyListener", () => {
     expect(openLayoutModal).toHaveBeenCalledTimes(3);
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "e", metaKey: true }));
     expect(openLayoutModal).toHaveBeenCalledTimes(4);
+  });
+
+  it("does not call openLayoutModal if the events were fired from editable fields", () => {
+    const wrapper = document.createElement("div");
+    const openLayoutModal = jest.fn();
+    mount(
+      <Context store={getStore()}>
+        <GlobalKeyListener history={mockHistory} openLayoutModal={openLayoutModal} />
+        <textarea id="some-text-area" />
+      </Context>,
+      { attachTo: wrapper }
+    );
+
+    const textarea = document.getElementById("some-text-area");
+    if (!textarea) {
+      throw new Error("Satisfy flow: textarea is not null.");
+    }
+    textarea.dispatchEvent(new KeyboardEvent("keydown", { key: "e", ctrlKey: true }));
+    expect(openLayoutModal).toHaveBeenCalledTimes(0);
   });
 
   it("pushes shortcuts route to history after pressing cmd/ctrl + / keys", async () => {
@@ -149,5 +187,25 @@ describe("GlobalKeyListener", () => {
 
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
     expect(mockHistoryPush).toHaveBeenNthCalledWith(1, "/help");
+  });
+
+  it("does not push shortcuts route if the events were fired from editable fields", () => {
+    const wrapper = document.createElement("div");
+    const mockHistoryPush = jest.fn();
+
+    mount(
+      <Context store={getStore()}>
+        <GlobalKeyListener history={{ push: mockHistoryPush }} />
+        <textarea id="some-text-area" />
+      </Context>,
+      { attachTo: wrapper }
+    );
+
+    const textarea = document.getElementById("some-text-area");
+    if (!textarea) {
+      throw new Error("Satisfy flow: textarea is not null.");
+    }
+    textarea.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    expect(mockHistoryPush).not.toHaveBeenCalled();
   });
 });

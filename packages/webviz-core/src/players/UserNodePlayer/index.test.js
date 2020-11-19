@@ -22,7 +22,9 @@ import { deepParse, wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
+import Storage from "webviz-core/src/util/Storage";
 
+const storage = new Storage();
 const nodeId = "nodeId";
 
 const hardcodedNode = {
@@ -118,6 +120,11 @@ const basicPlayerState = {
   playerWarnings: {},
   bobjects: [],
   totalBytesReceived: 1234,
+  messages: [],
+  messageOrder: "receiveTime",
+  currentTime: { sec: 0, nsec: 0 },
+  topics: [],
+  datatypes: {},
 };
 const upstreamMessages = [
   {
@@ -163,7 +170,7 @@ describe("UserNodePlayer", () => {
   const rpcFuncMap = { registerNode, processMessage, transform, generateRosLib };
 
   beforeEach(() => {
-    window.localStorage.clear();
+    storage.clear();
     // Simply wires the RpcProvider interface into the user node registry.
     // $FlowFixMe - mocks are hard with flow
     Rpc.mockImplementation(() => ({
@@ -178,7 +185,7 @@ describe("UserNodePlayer", () => {
   });
 
   afterAll(() => {
-    window.localStorage.clear();
+    storage.clear();
   });
 
   describe("default player behavior", () => {
@@ -974,6 +981,37 @@ describe("UserNodePlayer", () => {
       });
       const { topicNames: secondTopicNames } = await secondDone;
       expect(secondTopicNames).toEqual(["/np_input"]);
+    });
+    it("properly sets diagnostics when there is an error", async () => {
+      const code = `
+        export const inputs = ["/np_input"];
+        export const output = "/bad_prefix";
+        export default (messages: any): any => {};
+      `;
+      const fakePlayer = new FakePlayer();
+      const mockSetNodeDiagnostics = jest.fn();
+      const userNodePlayer = new UserNodePlayer(fakePlayer, {
+        ...defaultUserNodeActions,
+        setUserNodeDiagnostics: mockSetNodeDiagnostics,
+      });
+
+      userNodePlayer.setUserNodes({ nodeId: { name: `${DEFAULT_WEBVIZ_NODE_PREFIX}1`, sourceCode: code } });
+
+      const [done] = setListenerHelper(userNodePlayer);
+      fakePlayer.emit(basicPlayerState);
+      await done;
+      expect(mockSetNodeDiagnostics).toHaveBeenLastCalledWith({
+        nodeId: {
+          diagnostics: [
+            {
+              severity: DiagnosticSeverity.Error,
+              message: expect.any(String),
+              source: Sources.OutputTopicChecker,
+              code: ErrorCodes.OutputTopicChecker.BAD_PREFIX,
+            },
+          ],
+        },
+      });
     });
 
     describe("user logging", () => {

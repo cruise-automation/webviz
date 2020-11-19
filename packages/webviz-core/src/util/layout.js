@@ -185,10 +185,12 @@ export const getSaveConfigsPayloadForAddedPanel = ({
   if (!relatedConfigs) {
     return { configs: [{ id, config }] };
   }
-  const templateIds = Object.keys(relatedConfigs);
+  const templateIds = getPanelIdsInsideTabPanels([id], { [id]: config });
   const panelIdMap = mapTemplateIdsToNewIds(templateIds);
   let newConfigs = templateIds.map((tempId) => ({ id: panelIdMap[tempId], config: relatedConfigs[tempId] }));
-  newConfigs = newConfigs.concat([{ id, config }]).map(replaceMaybeTabLayoutWithNewPanelIds(panelIdMap));
+  newConfigs = [...newConfigs, { id, config }]
+    .filter((configObj) => configObj.config)
+    .map(replaceMaybeTabLayoutWithNewPanelIds(panelIdMap));
   return { configs: newConfigs };
 };
 
@@ -214,6 +216,9 @@ export function getAllPanelIds(layout: MosaicNode, savedProps: SavedProps): stri
 }
 
 export const validateTabPanelConfig = (config: ?PanelConfig) => {
+  if (!config) {
+    return false;
+  }
   if (!Array.isArray(config?.tabs) || typeof config?.activeTabIdx !== "number") {
     const error = new Error("A non-Tab panel config is being operated on as if it were a Tab panel.");
     console.log("Invalid Tab panel config:", config, error);

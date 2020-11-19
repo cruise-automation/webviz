@@ -40,6 +40,17 @@ export default function GlobalKeyListener({ openSaveLayoutModal, openLayoutModal
 
   const keyDownHandler: (KeyboardEvent) => void = useCallback(
     (e) => {
+      const target = e.target;
+
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        // The user is typing in an editable field; ignore the event.
+        return;
+      }
+
       const lowercaseEventKey = e.key.toLowerCase();
       if (e.key === "?") {
         history.push(`/help${window.location.search}`);

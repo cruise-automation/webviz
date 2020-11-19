@@ -2,15 +2,9 @@
 
 The 2D Plot panel allows users to define within their ROS messages the points, lines, and polygons they would like to visualize on an x- and y-axis.
 
-The panel's API currently allows users to specify the plot's title and axes labels, and supports the visualization of 3 types of markers: `points`, `lines`, and `polygons`. Any incoming message with these 3 keys pointing to an array of API-conforming marker objects can be displayed in the 2D Plot panel.
+The panel's API currently allows users to specify the plot's title and axes labels (`title`, `xAxisLabel`, and `yAxisLabel`), and supports the visualization of 3 marker types: `points`, `lines`, and `polygons`. Any incoming message with these 3 keys pointing to an array of API-conforming marker objects can be displayed in the 2D Plot panel.
 
-The chart options supported by the 2D Plot panel API are:
-
-- `title`
-- `xAxisLabel`
-- `yAxisLabel`
-
-There are 3 types of datasets supported by the 2D PLot panel API - `lines`, `points`, and `polygons`. Each of these dataset types can be customized by the following options:
+Each marker type can be constructed using the following options:
 
 - `order` - z-index
 - `label` - unique ID
@@ -110,3 +104,9 @@ Below is an example of an output message (in JavaScript) that could be consumed 
   },
 }
 ```
+
+## User Interactions
+
+You can zoom by scrolling, and pan by dragging. Double-click to reset.
+
+By default, scrolling will zoom horizontally only. To zoom vertically, hold the `v` key while scrolling. To zoom both horizontally and vertically at the same time, hold the `b` key while scrolling.

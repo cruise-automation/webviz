@@ -13,7 +13,10 @@ import { parseMessageDefinition } from "rosbag";
 import Plot from "webviz-core/src/panels/Plot";
 import PanelSetup, { triggerWheel } from "webviz-core/src/stories/PanelSetup";
 import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import Storage from "webviz-core/src/util/Storage";
 import { fromSec } from "webviz-core/src/util/time";
+
+const storage = new Storage();
 
 const float64StampedDefinition = `std_msgs/Header header
 float64 data
@@ -547,7 +550,7 @@ storiesOf("<Plot>", module)
     );
   })
   .add("preloaded data in binary blocks", () => {
-    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
+    storage.setItem("experimentalFeaturesSettings", { preloading: "alwaysOn" });
     return (
       <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
         <Plot
@@ -563,7 +566,7 @@ storiesOf("<Plot>", module)
     );
   })
   .add("mixed streamed and preloaded data", () => {
-    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
+    storage.setItem("experimentalFeaturesSettings", { preloading: "alwaysOn" });
     return (
       <PanelSetup fixture={withEndTime(fixture, { sec: 3, nsec: 0 })}>
         <Plot
@@ -579,7 +582,7 @@ storiesOf("<Plot>", module)
     );
   })
   .add("preloaded data and its derivative", () => {
-    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
+    storage.setItem("experimentalFeaturesSettings", { preloading: "alwaysOn" });
     return (
       <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
         <Plot
@@ -595,7 +598,7 @@ storiesOf("<Plot>", module)
     );
   })
   .add("preloaded data and its negative", () => {
-    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
+    storage.setItem("experimentalFeaturesSettings", { preloading: "alwaysOn" });
     return (
       <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
         <Plot
@@ -611,7 +614,7 @@ storiesOf("<Plot>", module)
     );
   })
   .add("preloaded data and its absolute value", () => {
-    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
+    storage.setItem("experimentalFeaturesSettings", { preloading: "alwaysOn" });
     return (
       <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
         <Plot

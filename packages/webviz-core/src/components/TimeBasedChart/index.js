@@ -60,6 +60,7 @@ export type TimeBasedChartTooltipData = {|
   value: number | boolean | string,
   constantName?: ?string,
   startTime: Time,
+  source?: ?number,
 |};
 
 export type DataPoint = {|

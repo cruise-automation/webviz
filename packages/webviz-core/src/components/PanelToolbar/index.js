@@ -35,10 +35,10 @@ import PanelContext from "webviz-core/src/components/PanelContext";
 import { getPanelTypeFromMosaic } from "webviz-core/src/components/PanelToolbar/utils";
 import renderToBody from "webviz-core/src/components/renderToBody";
 import ShareJsonModal from "webviz-core/src/components/ShareJsonModal";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import PanelList, { type PanelSelection } from "webviz-core/src/panels/PanelList";
 import frameless from "webviz-core/src/util/frameless";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
+import logEvent, { getEventNames, getEventTags } from "webviz-core/src/util/logEvent";
 
 type Props = {|
   children?: React.Node,
@@ -70,8 +70,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
 
   const close = useCallback(
     () => {
-      const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-      logger({ name: eventNames.PANEL_REMOVE, tags: { [eventTags.PANEL_TYPE]: getPanelType() } });
+      logEvent({ name: getEventNames().PANEL_REMOVE, tags: { [getEventTags().PANEL_TYPE]: getPanelType() } });
       actions.closePanel({ tabId, root: mosaicActions.getRoot(), path: mosaicWindowActions.getPath() });
     },
     [actions, getPanelType, mosaicActions, mosaicWindowActions, tabId]
@@ -83,8 +82,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
       if (!id || !type) {
         throw new Error("Trying to split unknown panel!");
       }
-      const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-      logger({ name: eventNames.PANEL_SPLIT, tags: { [eventTags.PANEL_TYPE]: getPanelType() } });
+      logEvent({ name: getEventNames().PANEL_SPLIT, tags: { [getEventTags().PANEL_TYPE]: getPanelType() } });
 
       const config = savedProps[id];
       actions.splitPanel({
@@ -110,8 +108,7 @@ function StandardMenuItems({ tabId }: { tabId?: string }) {
         config,
         relatedConfigs,
       });
-      const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-      logger({ name: eventNames.PANEL_SWAP, tags: { [eventTags.PANEL_TYPE]: type } });
+      logEvent({ name: getEventNames().PANEL_SWAP, tags: { [getEventTags().PANEL_TYPE]: type } });
     },
     [actions, mosaicActions, mosaicWindowActions, tabId]
   );

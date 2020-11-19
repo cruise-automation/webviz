@@ -6,49 +6,55 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { toPairs, fromPairs, difference } from "lodash";
+import { fromPairs, difference } from "lodash";
 import { parseMessageDefinition, type RosMsgDefinition } from "rosbag";
 
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import MemoryStorage from "webviz-core/src/test/MemoryStorage";
+import sendNotification from "webviz-core/src/util/sendNotification";
+import Storage, { type BackingStore } from "webviz-core/src/util/Storage";
 import { inWebWorker } from "webviz-core/src/util/workers";
 
-const STORAGE_ITEM_KEY_PREFIX = "msgdefn/";
+export const STORAGE_ITEM_KEY_PREFIX = "msgdefn/";
+
+let storage = new Storage();
+
+export function bustAllMessageDefinitionCache(backingStore: BackingStore, keys: string[]) {
+  keys.forEach((key) => {
+    if (key.startsWith(STORAGE_ITEM_KEY_PREFIX)) {
+      backingStore.removeItem(key);
+    }
+  });
+}
+
+// Register the bust function once so that when localStorage is running out, the
+// message definition cache can be busted.
+storage.registerBustStorageFn(bustAllMessageDefinitionCache);
+
+export const setStorageForTest = (quota?: number) => {
+  storage = new Storage(new MemoryStorage(quota));
+  storage.registerBustStorageFn(bustAllMessageDefinitionCache);
+};
+export const restoreStorageForTest = () => {
+  storage = new Storage();
+};
+
+export const getStorageForTest = () => storage;
 
 function maybeWriteLocalStorageCache(
   md5Sum: string,
-  newValue: string,
+  newValue: RosMsgDefinition[],
   allStoredMd5Sums: string[],
   usedmd5Sums: string[]
 ): void {
-  const { logger, eventNames } = getGlobalHooks().getEventLogger();
   const newKey = `${STORAGE_ITEM_KEY_PREFIX}${md5Sum}`;
-  try {
-    localStorage.setItem(newKey, newValue);
-  } catch {
-    // We failed writing to localStorage. Now we should clear all cached storage values and start over.
-    logger(eventNames.FAILED_WRITING_LOCALSTORAGE_KEY, {
-      definitions_count: allStoredMd5Sums.length,
-      definition_length: newValue.length,
+  const bustUnusedMessageDefinition = (usedStorage) => {
+    // Keep all localStorage entries that aren't parsed message definitions.
+    const itemsToRemove = difference(allStoredMd5Sums, usedmd5Sums);
+    itemsToRemove.forEach((md5ToRemove) => {
+      usedStorage.removeItem(`${STORAGE_ITEM_KEY_PREFIX}${md5ToRemove}`);
     });
-    try {
-      // Keep all localStorage entries that aren't parsed message definitions.
-      const itemsToRemove = difference(allStoredMd5Sums, usedmd5Sums);
-      itemsToRemove.forEach((md5ToRemove) => {
-        localStorage.removeItem(`${STORAGE_ITEM_KEY_PREFIX}${md5ToRemove}`);
-      });
-      localStorage.setItem(newKey, newValue);
-    } catch (error) {
-      // If we fail removing and then re-writing the definition, log it and re-throw it.
-      logger(eventNames.FAILED_WRITING_ALL_LOCALSTORAGE_DEFNS, {
-        definitions_count: allStoredMd5Sums.length,
-        definition_length: newValue.length,
-      });
-      throw error;
-    }
-    logger(eventNames.SUCCEEDED_WRITING_ALL_LOCALSTORAGE_DEFNS, {
-      definitions_count: allStoredMd5Sums.length,
-    });
-  }
+  };
+  storage.setItem(newKey, newValue, bustUnusedMessageDefinition);
 }
 
 class ParseMessageDefinitionCache {
@@ -56,19 +62,21 @@ class ParseMessageDefinitionCache {
   // Used because we may load extraneous definitions that we need to clear.
   _usedMd5Sums = new Set<string>();
   _stringDefinitionsToParsedDefinitions: { [string]: RosMsgDefinition[] } = {};
-  _md5SumsToJsonStringifiedParsedDefinitions: { [string]: string } = {};
+  _md5SumsToParsedDefinitions: { [string]: RosMsgDefinition[] } = {};
   _hashesToParsedDefinitions: { [string]: RosMsgDefinition[] } = {};
   _localStorageCacheDisabled = false;
 
   constructor() {
-    const hashesToParsedDefinitionsEntries = toPairs(localStorage)
-      .filter(([key]) => key.startsWith(STORAGE_ITEM_KEY_PREFIX))
-      .map(([key, value]) => [key.substring(STORAGE_ITEM_KEY_PREFIX.length), value]);
-    this._md5SumsToJsonStringifiedParsedDefinitions = fromPairs(hashesToParsedDefinitionsEntries);
+    const hashesToParsedDefinitionsEntries = storage
+      .keys()
+      .filter((key) => key.startsWith(STORAGE_ITEM_KEY_PREFIX))
+      .map((key) => [key.substring(STORAGE_ITEM_KEY_PREFIX.length), storage.getItem(key)]);
+    // $FlowFixMe getItem returns RosMsgDefinition[] type.
+    this._md5SumsToParsedDefinitions = fromPairs(hashesToParsedDefinitionsEntries);
   }
 
   parseMessageDefinition(messageDefinition: string, md5Sum: ?string): RosMsgDefinition[] {
-    // What if we already have this message defintion stored?
+    // What if we already have this message definition stored?
     if (md5Sum) {
       const storedDefinition = this.getStoredDefinition(md5Sum);
       if (storedDefinition != null) {
@@ -83,16 +91,13 @@ class ParseMessageDefinitionCache {
     if (md5Sum) {
       this._hashesToParsedDefinitions[md5Sum] = parsedDefinition;
       if (!this._localStorageCacheDisabled) {
-        const stringifiedMsgDefinition = JSON.stringify(parsedDefinition);
-        this._md5SumsToJsonStringifiedParsedDefinitions[md5Sum] = stringifiedMsgDefinition;
+        this._md5SumsToParsedDefinitions[md5Sum] = parsedDefinition;
         try {
-          maybeWriteLocalStorageCache(
-            md5Sum,
-            stringifiedMsgDefinition,
-            Object.keys(this._md5SumsToJsonStringifiedParsedDefinitions),
-            [...this._usedMd5Sums]
-          );
-        } catch {
+          maybeWriteLocalStorageCache(md5Sum, parsedDefinition, Object.keys(this._md5SumsToParsedDefinitions), [
+            ...this._usedMd5Sums,
+          ]);
+        } catch (e) {
+          sendNotification("Unable to save message definition to localStorage", e, "user", "warn");
           this._localStorageCacheDisabled = true;
         }
       }
@@ -102,21 +107,22 @@ class ParseMessageDefinitionCache {
 
   getStoredDefinition(md5Sum: string): ?(RosMsgDefinition[]) {
     this._usedMd5Sums.add(md5Sum);
+
     if (this._hashesToParsedDefinitions[md5Sum]) {
       return this._hashesToParsedDefinitions[md5Sum];
     }
-    if (this._md5SumsToJsonStringifiedParsedDefinitions[md5Sum]) {
-      const parsedDefinition = JSON.parse(this._md5SumsToJsonStringifiedParsedDefinitions[md5Sum]);
+    if (this._md5SumsToParsedDefinitions[md5Sum]) {
+      const parsedDefinition = this._md5SumsToParsedDefinitions[md5Sum];
       this._hashesToParsedDefinitions[md5Sum] = parsedDefinition;
       return parsedDefinition;
     }
   }
 
-  getMd5sForStoredDefintions(): string[] {
+  getMd5sForStoredDefinitions(): string[] {
     if (this._localStorageCacheDisabled) {
       return [];
     }
-    return Object.keys(this._md5SumsToJsonStringifiedParsedDefinitions);
+    return Object.keys(this._md5SumsToParsedDefinitions);
   }
 }
 

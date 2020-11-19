@@ -47,7 +47,7 @@ import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupReceiveReportErrorHandler } from "webviz-core/src/util/RpcUtils";
+import { setupReceiveReportErrorHandler } from "webviz-core/src/util/RpcMainThreadUtils";
 
 type UserNodeActions = {|
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
@@ -342,9 +342,13 @@ export default class UserNodePlayer implements Player {
     );
 
     // Filter out nodes with compilation errors
-    const nodeRegistrations: Array<NodeRegistration> = allNodeRegistrations.filter(
-      (nodeRegistration) => !hasTransformerErrors(nodeRegistration.nodeData)
-    );
+    const nodeRegistrations: Array<NodeRegistration> = allNodeRegistrations.filter(({ nodeData, nodeId }) => {
+      const hasError = hasTransformerErrors(nodeData);
+      if (hasError) {
+        this._setUserNodeDiagnostics(nodeId, nodeData.diagnostics);
+      }
+      return !hasError;
+    });
 
     // Create diagnostic errors if more than one node outputs to the same topic
     const nodesByOutputTopic = groupBy(nodeRegistrations, ({ output }) => output.name);

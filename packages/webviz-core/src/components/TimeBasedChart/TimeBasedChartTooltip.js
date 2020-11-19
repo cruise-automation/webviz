@@ -33,6 +33,12 @@ export default class TimeBasedChartTooltip extends React.PureComponent<Props> {
           <span className={styles.title}>Path:&nbsp;</span>
           {tooltip.path}
         </div>
+        {tooltip.source != null && (
+          <div>
+            <span className={styles.title}>Source:&nbsp;</span>
+            {tooltip.source}
+          </div>
+        )}
         {receiveTime && headerStamp && (
           <table>
             <tbody>

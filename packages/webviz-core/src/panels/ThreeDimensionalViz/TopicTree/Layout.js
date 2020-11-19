@@ -723,74 +723,76 @@ export default function Layout({
               </>
             }
           />
-          <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
+          <div style={{ position: "absolute", width: "100%", height: "100%" }}>
             {isDemoMode && DemoModeComponent && <DemoModeComponent />}
-            {(!isDemoMode || (isDemoMode && isHovered)) && (
-              <Dimensions>
-                {({ width: containerWidth, height: containerHeight }) => (
-                  <TopicTree
-                    allKeys={allKeys}
-                    availableNamespacesByTopic={availableNamespacesByTopic}
-                    checkedKeys={checkedKeys}
-                    containerHeight={containerHeight}
-                    containerWidth={containerWidth}
-                    derivedCustomSettingsByKey={derivedCustomSettingsByKey}
-                    expandedKeys={expandedKeys}
-                    filterText={filterText}
-                    getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
-                    getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
-                    getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
-                    hasFeatureColumn={hasFeatureColumn}
-                    isPlaying={isPlaying}
-                    onExitTopicTreeFocus={onExitTopicTreeFocus}
-                    onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
-                    pinTopics={pinTopics}
-                    diffModeEnabled={diffModeEnabled}
-                    rootTreeNode={rootTreeNode}
-                    saveConfig={saveConfig}
-                    sceneErrorsByKey={sceneErrorsByKey}
-                    setCurrentEditingTopic={setCurrentEditingTopic}
-                    setEditingNamespace={setEditingNamespace}
-                    setFilterText={setFilterText}
-                    setShowTopicTree={setShowTopicTree}
-                    shouldExpandAllKeys={shouldExpandAllKeys}
-                    showTopicTree={showTopicTree}
-                    topicDisplayMode={topicDisplayMode}
-                    visibleTopicsCountByKey={visibleTopicsCountByKey}
-                  />
-                )}
-              </Dimensions>
-            )}
-            {currentEditingTopic && (
-              <TopicSettingsModal
-                currentEditingTopic={currentEditingTopic}
-                hasFeatureColumn={hasFeatureColumn}
-                setCurrentEditingTopic={setCurrentEditingTopic}
-                sceneBuilderMessage={
-                  sceneBuilder.collectors[currentEditingTopic.name] &&
-                  sceneBuilder.collectors[currentEditingTopic.name].getMessages()[0]
-                }
-                saveConfig={saveConfig}
-                settingsByKey={settingsByKey}
-              />
-            )}
-            {editingNamespace && (
-              <RenderToBodyComponent>
-                <Modal
-                  onRequestClose={() => setEditingNamespace(undefined)}
-                  contentStyle={{
-                    maxHeight: "calc(100vh - 200px)",
-                    maxWidth: 480,
-                    display: "flex",
-                    flexDirection: "column",
-                  }}>
-                  <ColorPickerSettingsPanel
-                    color={settingsByKey[editingNamespace.namespaceKey]?.overrideColor}
-                    onChange={(newColor) => onNamespaceOverrideColorChange(newColor, editingNamespace.namespaceKey)}
-                  />
-                </Modal>
-              </RenderToBodyComponent>
-            )}
+            <div style={{ ...videoRecordingStyle, position: "relative", width: "100%", height: "100%" }}>
+              {(!isDemoMode || (isDemoMode && isHovered)) && (
+                <Dimensions>
+                  {({ width: containerWidth, height: containerHeight }) => (
+                    <TopicTree
+                      allKeys={allKeys}
+                      availableNamespacesByTopic={availableNamespacesByTopic}
+                      checkedKeys={checkedKeys}
+                      containerHeight={containerHeight}
+                      containerWidth={containerWidth}
+                      derivedCustomSettingsByKey={derivedCustomSettingsByKey}
+                      expandedKeys={expandedKeys}
+                      filterText={filterText}
+                      getIsNamespaceCheckedByDefault={getIsNamespaceCheckedByDefault}
+                      getIsTreeNodeVisibleInScene={getIsTreeNodeVisibleInScene}
+                      getIsTreeNodeVisibleInTree={getIsTreeNodeVisibleInTree}
+                      hasFeatureColumn={hasFeatureColumn}
+                      isPlaying={isPlaying}
+                      onExitTopicTreeFocus={onExitTopicTreeFocus}
+                      onNamespaceOverrideColorChange={onNamespaceOverrideColorChange}
+                      pinTopics={pinTopics}
+                      diffModeEnabled={diffModeEnabled}
+                      rootTreeNode={rootTreeNode}
+                      saveConfig={saveConfig}
+                      sceneErrorsByKey={sceneErrorsByKey}
+                      setCurrentEditingTopic={setCurrentEditingTopic}
+                      setEditingNamespace={setEditingNamespace}
+                      setFilterText={setFilterText}
+                      setShowTopicTree={setShowTopicTree}
+                      shouldExpandAllKeys={shouldExpandAllKeys}
+                      showTopicTree={showTopicTree}
+                      topicDisplayMode={topicDisplayMode}
+                      visibleTopicsCountByKey={visibleTopicsCountByKey}
+                    />
+                  )}
+                </Dimensions>
+              )}
+              {currentEditingTopic && (
+                <TopicSettingsModal
+                  currentEditingTopic={currentEditingTopic}
+                  hasFeatureColumn={hasFeatureColumn}
+                  setCurrentEditingTopic={setCurrentEditingTopic}
+                  sceneBuilderMessage={
+                    sceneBuilder.collectors[currentEditingTopic.name] &&
+                    sceneBuilder.collectors[currentEditingTopic.name].getMessages()[0]
+                  }
+                  saveConfig={saveConfig}
+                  settingsByKey={settingsByKey}
+                />
+              )}
+              {editingNamespace && (
+                <RenderToBodyComponent>
+                  <Modal
+                    onRequestClose={() => setEditingNamespace(undefined)}
+                    contentStyle={{
+                      maxHeight: "calc(100vh - 200px)",
+                      maxWidth: 480,
+                      display: "flex",
+                      flexDirection: "column",
+                    }}>
+                    <ColorPickerSettingsPanel
+                      color={settingsByKey[editingNamespace.namespaceKey]?.overrideColor}
+                      onChange={(newColor) => onNamespaceOverrideColorChange(newColor, editingNamespace.namespaceKey)}
+                    />
+                  </Modal>
+                </RenderToBodyComponent>
+              )}
+            </div>
           </div>
           <div className={styles.world}>
             <World

@@ -12,14 +12,17 @@ import { maybeStoreNewRecentLayout, getRecentLayouts } from "./recentLayouts";
 import delay from "webviz-core/shared/delay";
 import { fetchLayout } from "webviz-core/src/actions/panels";
 import { getGlobalStoreForTest } from "webviz-core/src/store/getGlobalStore";
+import Storage from "webviz-core/src/util/Storage";
+
+const storage = new Storage();
 
 describe("recentLayouts", () => {
   beforeEach(() => {
-    window.localStorage.clear();
+    storage.clear();
   });
 
   afterEach(() => {
-    window.localStorage.clear();
+    storage.clear();
   });
 
   it("stores the initial layout in localStorage", () => {
@@ -33,11 +36,11 @@ describe("recentLayouts", () => {
     maybeStoreNewRecentLayout(initialPersistedState);
     expect(getRecentLayouts()).toEqual(["initialLayout"]);
 
-    expect(localStorage.getItem("recentLayouts")).toEqual(`["initialLayout"]`);
+    expect(storage.getItem("recentLayouts")).toEqual(["initialLayout"]);
   });
 
   it("reads recent layouts from localStorage on initialization", () => {
-    localStorage.setItem("recentLayouts", `["storedLayout"]`);
+    storage.setItem("recentLayouts", ["storedLayout"]);
     const initialPersistedState: any = { fetchedLayout: { data: {} } };
     maybeStoreNewRecentLayout(initialPersistedState);
     expect(getRecentLayouts()).toEqual(["storedLayout"]);
@@ -52,13 +55,13 @@ describe("recentLayouts", () => {
 
     await delay(500);
     expect(getRecentLayouts()).toEqual(["loadedLayout"]);
-    expect(localStorage.getItem("recentLayouts")).toEqual(`["loadedLayout"]`);
+    expect(storage.getItem("recentLayouts")).toEqual(["loadedLayout"]);
 
     fetchMock.get("https://www.foo.com", { status: 200, body: { name: "loadedLayout2" } }, { overwriteRoutes: true });
     store.dispatch(fetchLayout("?layout-url=https://www.foo.com"));
 
     await delay(500);
     expect(getRecentLayouts()).toEqual(["loadedLayout2", "loadedLayout"]);
-    expect(localStorage.getItem("recentLayouts")).toEqual(`["loadedLayout2","loadedLayout"]`);
+    expect(storage.getItem("recentLayouts")).toEqual(["loadedLayout2", "loadedLayout"]);
   });
 });

@@ -64,7 +64,7 @@ export type BaseProps = {|
   ...Dimensions,
 
   // Context attributes passed into canvas.getContext.
-  contextAttributes?: ?any,
+  contextAttributes?: ?{ [string]: any },
 |};
 
 type State = {|
@@ -152,7 +152,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         // DEFAULT_CAMERA_STATE is applied if both `cameraState` and `defaultCameraState` are not present
         cameraState: props.cameraState || props.defaultCameraState || DEFAULT_CAMERA_STATE,
         onCameraStateChange: props.onCameraStateChange || undefined,
-        contextAttributes: props.contextAttributes || undefined,
+        contextAttributes: props.contextAttributes || {},
       }),
     };
   }

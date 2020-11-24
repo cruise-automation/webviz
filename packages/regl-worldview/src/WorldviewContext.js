@@ -37,7 +37,7 @@ type ConstructorArgs = {
   cameraState: CameraState,
   defaultCameraState?: CameraState,
   onCameraStateChange: ?(CameraState) => void,
-  contextAttributes?: ?any,
+  contextAttributes?: ?{ [string]: any },
 };
 
 type InitializedData = {
@@ -99,7 +99,7 @@ export class WorldviewContext {
   canvasBackgroundColor: Vec4 = [0, 0, 0, 1];
   // group all initialized data together so it can be checked for existence to verify initialization is complete
   initializedData: ?InitializedData;
-  contextAttributes: ?any;
+  contextAttributes: ?{ [string]: any };
 
   constructor({ dimension, canvasBackgroundColor, cameraState, onCameraStateChange }: ConstructorArgs) {
     // used for children to call paint() directly

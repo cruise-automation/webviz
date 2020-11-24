@@ -62,6 +62,9 @@ export type BaseProps = {|
   // Used to scale the canvas resolution and provide a higher image quality
   resolutionScale?: number,
   ...Dimensions,
+
+  // Context attributes passed into canvas.getContext.
+  contextAttributes?: ?{ [string]: any },
 |};
 
 type State = {|
@@ -149,6 +152,7 @@ export class WorldviewBase extends React.Component<BaseProps, State> {
         // DEFAULT_CAMERA_STATE is applied if both `cameraState` and `defaultCameraState` are not present
         cameraState: props.cameraState || props.defaultCameraState || DEFAULT_CAMERA_STATE,
         onCameraStateChange: props.onCameraStateChange || undefined,
+        contextAttributes: props.contextAttributes || {},
       }),
     };
   }

@@ -101,10 +101,17 @@ export class WorldviewContext {
   initializedData: ?InitializedData;
   contextAttributes: ?{ [string]: any };
 
-  constructor({ dimension, canvasBackgroundColor, cameraState, onCameraStateChange }: ConstructorArgs) {
+  constructor({
+    dimension,
+    canvasBackgroundColor,
+    cameraState,
+    onCameraStateChange,
+    contextAttributes,
+  }: ConstructorArgs) {
     // used for children to call paint() directly
     this.dimension = dimension;
     this.canvasBackgroundColor = canvasBackgroundColor;
+    this.contextAttributes = contextAttributes;
     this.cameraStore = new CameraStore((cameraState: CameraState) => {
       if (onCameraStateChange) {
         onCameraStateChange(cameraState);

@@ -39,6 +39,7 @@ export function panelsByCategory() {
   const ThreeDimensionalViz = require("webviz-core/src/panels/ThreeDimensionalViz").default;
   const { ndash } = require("webviz-core/src/util/entities");
   const Table = require("webviz-core/src/panels/Table").default;
+  const Teleop = require("webviz-core/src/panels/Teleop").default;
 
   const ros = [
     { title: "2D Plot", component: TwoDimensionalPlot },
@@ -52,6 +53,7 @@ export function panelsByCategory() {
     { title: "rosout", component: Rosout },
     { title: "State Transitions", component: StateTransitions },
     { title: "Table", component: Table },
+    { title: "Teleop", component: Teleop }
   ];
 
   const utilities = [

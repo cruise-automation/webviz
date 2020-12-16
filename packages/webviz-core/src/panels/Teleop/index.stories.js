@@ -23,7 +23,6 @@ const getFixture = (allowPublish) => {
   };
 };
 
-const advancedJSON = `{\n  "data": ""\n}`;
 const publishConfig = () => ({
   buttonColor: "",
 });
@@ -36,7 +35,6 @@ storiesOf("<Teleop>", module)
         <Teleop config={publishConfig()} />
       </PanelSetup>
     );
-
   })
   .add("example can't publish", () => {
     const allowPublish = false;

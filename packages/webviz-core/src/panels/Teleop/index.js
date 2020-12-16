@@ -5,29 +5,22 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
-import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import * as React from "react";
 import { hot } from "react-hot-loader/root";
-import styled from "styled-components";
 
 import { PanelToolbarInput, PanelToolbarLabel } from "webviz-core/shared/panelToolbarStyles";
-import Autocomplete from "webviz-core/src/components/Autocomplete";
 import Button from "webviz-core/src/components/Button";
 import Flex from "webviz-core/src/components/Flex";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import Item from "webviz-core/src/components/Menu/Item";
 import Panel from "webviz-core/src/components/Panel";
 import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import Publisher from "webviz-core/src/components/Publisher";
-import KeyListener from "webviz-core/src/components/KeyListener";
 import { PlayerCapabilities, type Topic } from "webviz-core/src/players/types";
 import colors from "webviz-core/src/styles/colors.module.scss";
-import { colors as c } from "webviz-core/src/util/sharedStyleConstants";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
-import { string } from "prop-types";
 
 type Config = {|
-  buttonColor: string,
   topicName: string,
 |};
 
@@ -49,38 +42,6 @@ type PanelState = {|
   pressing: any,
   topic: string,
 |};
-
-const STextArea = styled.textarea`
-  width: 100%;
-  height: 100%;
-  resize: none;
-`;
-
-const STextAreaContainer = styled.div`
-  flex-grow: 1;
-  padding: 12px 0;
-`;
-
-const SErrorText = styled.div`
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  color: ${colors.red};
-`;
-
-const SSpan = styled.span`
-  opacity: 0.8;
-`;
-const SRow = styled.div`
-  display: flex;
-  line-height: 24px;
-  flex-shrink: 0;
-`;
-
-function getTopicName(topic: Topic): string {
-  return topic.name;
-}
 
 function parseInput(value: string): $Shape<PanelState> {
   let parsedObject;
@@ -116,7 +77,7 @@ class Teleop extends React.PureComponent<Props, PanelState> {
     datatypeNames: [],
     error: null,
     parsedObject: undefined,
-    pressing: {ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false},
+    pressing: { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false },
   };
 
   static getDerivedStateFromProps(props: Props, state: PanelState) {
@@ -137,27 +98,29 @@ class Teleop extends React.PureComponent<Props, PanelState> {
   }
 
   composeTwist = (key) => {
-    const COMMANDS = { // Map x, y, z, th here
-      ArrowUp: [1, 0, 0, 0], 
-      ArrowDown: [-1, 0, 0, 0], 
-      ArrowLeft: [0, 0, 0, 1], 
+    const COMMANDS = {
+      // Map x, y, z, th here
+      ArrowUp: [1, 0, 0, 0],
+      ArrowDown: [-1, 0, 0, 0],
+      ArrowLeft: [0, 0, 0, 1],
       ArrowRight: [0, 0, 0, -1],
       " ": [0, 0, 0, 0], // Stop
     };
     const [x, y, z, th] = COMMANDS[key];
-    const speed = 0.5, turn = 1.0;
+    const speed = 0.5,
+      turn = 1.0;
     return {
       linear: {
-        x: x*speed,
-        y: y*speed,
-        z: z*speed
+        x: x * speed,
+        y: y * speed,
+        z: z * speed,
       },
       angular: {
         x: 0,
         y: 0,
-        z: th * turn
-      }
-    }
+        z: th * turn,
+      },
+    };
   };
 
   _onChange = (event: SyntheticInputEvent<HTMLTextAreaElement>) => {
@@ -166,23 +129,23 @@ class Teleop extends React.PureComponent<Props, PanelState> {
 
   _onCommandButtonClick = (command) => {
     // Simulate key press and release
-    this._handleKey({key: command, type: "keydown"});
-    this._handleKey({key: command, type: "keyup"});
+    this._handleKey({ key: command, type: "keydown" });
+    this._handleKey({ key: command, type: "keyup" });
   };
 
   _handleKey = (event) => {
-    this.setState(function(state, props) {
-      let newPressing = state.pressing;
-      newPressing[event.key] = event.type == "keydown";
-      if(this._publisher.current){
-        if(event.type=="keydown" ){
+    this.setState(function(state, _) {
+      const newPressing = state.pressing;
+      newPressing[event.key] = event.type === "keydown";
+      if (this._publisher.current) {
+        if (event.type === "keydown") {
           this._publisher.current.publish(this.composeTwist(event.key));
         }
       } else {
         console.error("Publisher not set!");
       }
       return {
-        pressing: newPressing
+        pressing: newPressing,
       };
     });
 
@@ -204,17 +167,6 @@ class Teleop extends React.PureComponent<Props, PanelState> {
     return (
       <>
         <Item>
-          <PanelToolbarLabel>Button color (rgba or hex)</PanelToolbarLabel>
-          <PanelToolbarInput
-            type="text"
-            value={config.buttonColor}
-            onChange={(event) => {
-              saveConfig({ buttonColor: event.target.value });
-            }}
-            placeholder="rgba(1,1,1,1) or #FFFFFF"
-          />
-        </Item>
-        <Item>
           <PanelToolbarLabel>Topic name</PanelToolbarLabel>
           <PanelToolbarInput
             type="text"
@@ -232,11 +184,11 @@ class Teleop extends React.PureComponent<Props, PanelState> {
   render() {
     const {
       capabilities,
-      topics,
-      config: { buttonColor, topicName },
+      config: { topicName },
     } = this.props;
+    const buttonColor = "#00A871";
 
-    const { datatypeNames, parsedObject, error, pressing } = this.state;
+    const { pressing } = this.state;
     const canPublish = capabilities.includes(PlayerCapabilities.advertise);
 
     return (
@@ -244,44 +196,49 @@ class Teleop extends React.PureComponent<Props, PanelState> {
         {topicName && (
           <Publisher ref={this._publisher} name="Publish" topic={topicName} datatype="geometry_msgs/Twist" />
         )}
-        
-        <KeyListener global keyDownHandlers={this._keyHandlers} keyUpHandlers={this._keyHandlers} />
+
+        <KeyListener keyDownHandlers={this._keyHandlers} keyUpHandlers={this._keyHandlers} />
         <PanelToolbar floating menuContent={this._renderMenuContent()} />
-        <Flex row style={{ flex: "0 0 auto", justifyContent: "center", "paddingTop": "5px", "paddingBottom": "5px"}}>
+        <Flex row style={{ flex: "0 0 auto", justifyContent: "center", paddingTop: "5px", paddingBottom: "5px" }}>
           <Button
-            style={{backgroundColor: pressing.ArrowUp ? colors.red : buttonColor}}
+            style={{ backgroundColor: pressing.ArrowUp ? colors.red : buttonColor }}
             disabled={!canPublish}
             tooltip={canPublish ? "" : "Connect to ROS to publish data"}
-            onClick={(e) => this._onCommandButtonClick("ArrowUp")}
-          >↑</Button>
+            onClick={(_) => this._onCommandButtonClick("ArrowUp")}>
+            ↑
+          </Button>
         </Flex>
-        <Flex row style={{ flex: "0 0 auto", justifyContent: "center", "paddingTop": "5px", "paddingBottom": "5px"}}>
+        <Flex row style={{ flex: "0 0 auto", justifyContent: "center", paddingTop: "5px", paddingBottom: "5px" }}>
           <Button
-            style={{backgroundColor: pressing.ArrowLeft ? colors.red : buttonColor}}
+            style={{ backgroundColor: pressing.ArrowLeft ? colors.red : buttonColor }}
             disabled={!canPublish}
             tooltip={canPublish ? "" : "Connect to ROS to publish data"}
-            onClick={(e) => this._onCommandButtonClick("ArrowLeft")}
-          >←</Button>
+            onClick={(_) => this._onCommandButtonClick("ArrowLeft")}>
+            ←
+          </Button>
           <Button
-            style={{backgroundColor: pressing.ArrowDown ? colors.red : buttonColor}}
+            style={{ backgroundColor: pressing.ArrowDown ? colors.red : buttonColor }}
             disabled={!canPublish}
             tooltip={canPublish ? "" : "Connect to ROS to publish data"}
-            onClick={(e) => this._onCommandButtonClick("ArrowDown")}
-          >↓</Button>
+            onClick={(_) => this._onCommandButtonClick("ArrowDown")}>
+            ↓
+          </Button>
           <Button
-            style={{backgroundColor: pressing.ArrowRight ? colors.red : buttonColor}}
+            style={{ backgroundColor: pressing.ArrowRight ? colors.red : buttonColor }}
             disabled={!canPublish}
             tooltip={canPublish ? "" : "Connect to ROS to publish data"}
-            onClick={(e) => this._onCommandButtonClick("ArrowRight")}
-          >→</Button>
+            onClick={(_) => this._onCommandButtonClick("ArrowRight")}>
+            →
+          </Button>
         </Flex>
-        <Flex row style={{ flex: "0 0 auto", justifyContent: "center", "paddingTop": "5px", "paddingBottom": "5px"}}>
+        <Flex row style={{ flex: "0 0 auto", justifyContent: "center", paddingTop: "5px", paddingBottom: "5px" }}>
           <Button
-            style={{backgroundColor: pressing[" "] ? buttonColor : colors.red}}
+            style={{ backgroundColor: pressing[" "] ? buttonColor : colors.red }}
             disabled={!canPublish}
             tooltip={canPublish ? "" : "Connect to ROS to publish data"}
-            onClick={(e) => this._onCommandButtonClick(" ")}
-          >Stop</Button>
+            onClick={(_) => this._onCommandButtonClick(" ")}>
+            Stop
+          </Button>
         </Flex>
       </Flex>
     );

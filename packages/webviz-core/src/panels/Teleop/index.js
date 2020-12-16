@@ -28,6 +28,7 @@ import { string } from "prop-types";
 
 type Config = {|
   buttonColor: string,
+  topicName: string,
 |};
 
 type Props = {
@@ -105,6 +106,7 @@ class Teleop extends React.PureComponent<Props, PanelState> {
   static panelType = "Teleop";
   static defaultConfig = {
     buttonColor: "#00A871",
+    topicName: "/cmd_vel",
   };
 
   _publisher = React.createRef<Publisher>();
@@ -212,6 +214,17 @@ class Teleop extends React.PureComponent<Props, PanelState> {
             placeholder="rgba(1,1,1,1) or #FFFFFF"
           />
         </Item>
+        <Item>
+          <PanelToolbarLabel>Topic name</PanelToolbarLabel>
+          <PanelToolbarInput
+            type="text"
+            value={config.topicName}
+            onChange={(event) => {
+              saveConfig({ topicName: event.target.value });
+            }}
+            placeholder="Choose /cmd_vel if unsure"
+          />
+        </Item>
       </>
     );
   }
@@ -220,7 +233,7 @@ class Teleop extends React.PureComponent<Props, PanelState> {
     const {
       capabilities,
       topics,
-      config: { buttonColor },
+      config: { buttonColor, topicName },
     } = this.props;
 
     const { datatypeNames, parsedObject, error, pressing } = this.state;
@@ -228,7 +241,9 @@ class Teleop extends React.PureComponent<Props, PanelState> {
 
     return (
       <Flex col style={{ height: "100%", padding: "12px" }} onKeyPress={this.handleKey}>
-        <Publisher ref={this._publisher} name="Publish" topic="/cmd_vel" datatype="geometry_msgs/Twist" />
+        {topicName && (
+          <Publisher ref={this._publisher} name="Publish" topic={topicName} datatype="geometry_msgs/Twist" />
+        )}
         
         <KeyListener global keyDownHandlers={this._keyHandlers} keyUpHandlers={this._keyHandlers} />
         <PanelToolbar floating menuContent={this._renderMenuContent()} />

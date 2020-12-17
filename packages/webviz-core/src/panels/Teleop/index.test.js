@@ -24,7 +24,7 @@ describe("Teleop panel", () => {
         }}>
         <Teleop
           config={{
-            buttonColor: "",
+            topicName: "/cmd_vel",
           }}
           saveConfig={saveConfig}
         />

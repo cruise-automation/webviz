@@ -52,7 +52,7 @@ export function panelsByCategory() {
     { title: "rosout", component: Rosout },
     { title: "State Transitions", component: StateTransitions },
     { title: "Table", component: Table },
-    { title: "Teleop", component: Teleop }
+    { title: "Teleop", component: Teleop },
   ];
 
   const utilities = [

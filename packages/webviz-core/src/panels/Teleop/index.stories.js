@@ -24,7 +24,7 @@ const getFixture = (allowPublish) => {
 };
 
 const publishConfig = () => ({
-  buttonColor: "",
+  topicName: "/cmd_vel",
 });
 
 storiesOf("<Teleop>", module)

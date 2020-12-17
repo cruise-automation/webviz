@@ -41,7 +41,13 @@ function Teleop(props: Props) {
 
   const publisher = React.createRef<Publisher>();
 
-  const [pressing, setPressing] = useState({ ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false });
+  const [pressing, setPressing] = useState({
+    ArrowLeft: false,
+    ArrowRight: false,
+    ArrowUp: false,
+    ArrowDown: false,
+    " ": false,
+  });
 
   const composeTwist = (key) => {
     const COMMANDS = {

@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 import { registerNode, processMessage } from "webviz-core/src/players/UserNodePlayer/nodeRuntimeWorker/registry";
+import { BobjectRpcReceiver } from "webviz-core/src/util/binaryObjects/BobjectRpc";
 import Rpc from "webviz-core/src/util/Rpc";
 import { enforceFetchIsBlocked, inSharedWorker } from "webviz-core/src/util/workers";
 
@@ -24,6 +25,8 @@ global.onconnect = (e) => {
   const rpc = new Rpc(port);
   // Just check fetch is blocked on registration, don't slow down message processing.
   rpc.receive("registerNode", enforceFetchIsBlocked(registerNode));
-  rpc.receive("processMessage", processMessage);
+  new BobjectRpcReceiver(rpc).receive("processMessage", "parsed", async (message, globalVariables) =>
+    processMessage({ message, globalVariables })
+  );
   port.start();
 };

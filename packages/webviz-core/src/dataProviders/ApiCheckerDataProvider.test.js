@@ -160,6 +160,17 @@ describe("ApiCheckerDataProvider", () => {
         ).rejects.toThrow();
       });
 
+      it("throws when calling getMessages start/end time that contains non-integer values", async () => {
+        const { provider } = getProvider();
+        await provider.initialize(mockExtensionPoint().extensionPoint);
+        await expect(
+          provider.getMessages({ sec: 100, nsec: 0 }, { sec: 105, nsec: 0.1 }, { parsedMessages: ["/some_topic"] })
+        ).rejects.toThrow();
+        await expect(
+          provider.getMessages({ sec: 100.5, nsec: 0 }, { sec: 105, nsec: 0 }, { parsedMessages: ["/some_topic"] })
+        ).rejects.toThrow();
+      });
+
       it("throws when calling getMessages with invalid ranges", async () => {
         const { provider } = getProvider();
         await provider.initialize(mockExtensionPoint().extensionPoint);

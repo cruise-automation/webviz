@@ -293,6 +293,7 @@ function GlobalVariablesTable(): Node {
               <td data-test="global-variable-key">
                 <ValidatedResizingInput
                   value={name}
+                  dataTest={`global-variable-key-input-${name}`}
                   onChange={(newKey) =>
                     changeGlobalKey(newKey, name, globalVariables, linked.length + idx, overwriteGlobalVariables)
                   }
@@ -301,6 +302,7 @@ function GlobalVariablesTable(): Node {
               </td>
               <td width="100%">
                 <JSONInput
+                  dataTest={`global-variable-value-input-${JSON.stringify(globalVariables[name] ?? "")}`}
                   value={JSON.stringify(globalVariables[name] ?? "")}
                   onChange={(newVal) => setGlobalVariables({ [name]: newVal })}
                 />

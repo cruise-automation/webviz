@@ -47,6 +47,7 @@ const migrationsByVersion = {
   "015": [
     require("webviz-core/migrations/frozenMigrations/2020.11.02.14:16:21.migrateColorToOverrideColor.js").default,
   ],
+  "016": [],
 };
 
 export default function migratePanels(originalPanelsState: any): any {

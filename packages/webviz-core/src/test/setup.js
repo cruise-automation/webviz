@@ -74,3 +74,6 @@ global.TextEncoder = util.TextEncoder;
 
 // Override lazy load components
 require("../hooksImporter").testSetup();
+
+// Set logEvent up with a default implementation
+require("webviz-core/src/util/logEvent").resetLogEventForTests();

@@ -207,6 +207,18 @@ describe("time.clampTime", () => {
   });
 });
 
+describe("time.isTimeInRangeInclusive", () => {
+  const start = { sec: 0, nsec: 100 };
+  const end = { sec: 100, nsec: 100 };
+  it("returns whether time is between start and end, inclusive", () => {
+    expect(time.isTimeInRangeInclusive(start, start, end)).toEqual(true);
+    expect(time.isTimeInRangeInclusive(end, start, end)).toEqual(true);
+    expect(time.isTimeInRangeInclusive({ sec: 50, nsec: 50 }, start, end)).toEqual(true);
+    expect(time.isTimeInRangeInclusive({ sec: 0, nsec: 99 }, start, end)).toEqual(false);
+    expect(time.isTimeInRangeInclusive({ sec: 100, nsec: 101 }, start, end)).toEqual(false);
+  });
+});
+
 describe("time.parseRosTimeStr", () => {
   it("returns null if the input string is formatted incorrectly", () => {
     expect(time.parseRosTimeStr("")).toEqual(null);
@@ -337,5 +349,32 @@ describe("time.getSeekTimeFromSpec", () => {
 
     expect(time.getSeekTimeFromSpec({ type: "fraction", fraction: -1 }, start, end)).toEqual(start);
     expect(time.getSeekTimeFromSpec({ type: "fraction", fraction: 2 }, start, end)).toEqual(end);
+  });
+});
+
+describe("time.getRosTimeFromString", () => {
+  it("takes a stringified number and returns time object", () => {
+    expect(time.getRosTimeFromString("")).toEqual(undefined);
+    expect(time.getRosTimeFromString("abc")).toEqual(undefined);
+    expect(time.getRosTimeFromString("123456.000000000")).toEqual({ sec: 123456, nsec: 0 });
+    expect(time.getRosTimeFromString("123456.100000000")).toEqual({ sec: 123456, nsec: 100000000 });
+    expect(time.getRosTimeFromString("123456.123456789")).toEqual({ sec: 123456, nsec: 123456789 });
+  });
+});
+
+describe("time.getValidatedTimeAndMethodFromString", () => {
+  const commonArgs = { date: "2020-01-01", timezone: "America/Los_Angeles" };
+  it("takes a string and gets a validated ROS or TOD time", () => {
+    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "" })).toEqual(undefined);
+    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "abc" })).toEqual(undefined);
+    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "123abc" })).toEqual(undefined);
+    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "1598635994.000000000" })).toEqual({
+      time: { nsec: 0, sec: 1598635994 },
+      method: "ROS",
+    });
+    expect(time.getValidatedTimeAndMethodFromString({ ...commonArgs, text: "1:30:10.000 PM PST" })).toEqual({
+      time: { nsec: 0, sec: 1577914210 },
+      method: "TOD",
+    });
   });
 });

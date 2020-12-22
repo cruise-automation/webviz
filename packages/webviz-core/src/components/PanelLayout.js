@@ -5,7 +5,6 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-
 import React, { useCallback, useMemo, useState, forwardRef, type ElementRef } from "react";
 import { MosaicWithoutDragDropContext, MosaicWindow, MosaicDumbWindow } from "react-mosaic-component";
 import { useSelector, useDispatch } from "react-redux";
@@ -110,7 +109,7 @@ export function UnconnectedPanelLayout(props: Props) {
               return (
                 <MosaicWindow path={path} createNode={createTile} renderPreview={() => null}>
                   <Flex col center>
-                    <PanelToolbar floating />
+                    <PanelToolbar floating isUnknownPanel />
                     Unknown panel type: {type}.
                   </Flex>
                 </MosaicWindow>

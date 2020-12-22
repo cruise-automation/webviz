@@ -12,7 +12,7 @@ import ChartJSManager from "./ChartJSManager";
 import type { RpcLike } from "webviz-core/src/util/FakeRpc";
 import installChartjs from "webviz-core/src/util/installChartjs";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupWorker } from "webviz-core/src/util/RpcUtils";
+import { setupWorker } from "webviz-core/src/util/RpcWorkerUtils";
 import { inWebWorker } from "webviz-core/src/util/workers";
 
 let hasInstalledChartjs = false;

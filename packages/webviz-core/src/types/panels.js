@@ -31,6 +31,7 @@ export type PerPanelFunc<Config> = (Config) => Config;
 export type PlaybackConfig = {
   speed: number,
   messageOrder: TimestampMethod,
+  timeDisplayMethod: "ROS" | "TOD",
 };
 
 export type UserNode = { name: string, sourceCode: string };
@@ -83,6 +84,7 @@ export type LayoutFetchResult = {|
   name: string,
   savedBy: string,
   releasedVersion: number,
+  fileSuffix?: string,
 |};
 export type LayoutUrl = {| layoutId: ?string, layoutUrl: ?string, patch: ?string |};
 export type InitialLayoutFetchResult = {|

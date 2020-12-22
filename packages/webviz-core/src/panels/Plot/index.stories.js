@@ -547,7 +547,6 @@ storiesOf("<Plot>", module)
     );
   })
   .add("preloaded data in binary blocks", () => {
-    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
     return (
       <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
         <Plot
@@ -563,7 +562,6 @@ storiesOf("<Plot>", module)
     );
   })
   .add("mixed streamed and preloaded data", () => {
-    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
     return (
       <PanelSetup fixture={withEndTime(fixture, { sec: 3, nsec: 0 })}>
         <Plot
@@ -579,7 +577,6 @@ storiesOf("<Plot>", module)
     );
   })
   .add("preloaded data and its derivative", () => {
-    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
     return (
       <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
         <Plot
@@ -595,7 +592,6 @@ storiesOf("<Plot>", module)
     );
   })
   .add("preloaded data and its negative", () => {
-    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
     return (
       <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
         <Plot
@@ -611,7 +607,6 @@ storiesOf("<Plot>", module)
     );
   })
   .add("preloaded data and its absolute value", () => {
-    localStorage.setItem("experimentalFeaturesSettings", JSON.stringify({ preloading: "alwaysOn" }));
     return (
       <PanelSetup fixture={withEndTime(fixture, { sec: 2, nsec: 0 })}>
         <Plot

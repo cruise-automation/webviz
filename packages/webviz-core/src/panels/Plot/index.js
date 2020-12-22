@@ -13,7 +13,6 @@ import { hot } from "react-hot-loader/root";
 import { type Time, TimeUtil } from "rosbag";
 
 import helpContent from "./index.help.md";
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import Flex from "webviz-core/src/components/Flex";
 import { type MessageHistoryItemsByPath } from "webviz-core/src/components/MessageHistoryDEPRECATED";
 import { getTopicsFromPaths } from "webviz-core/src/components/MessagePathSyntax/parseRosPath";
@@ -229,13 +228,11 @@ function Plot(props: Props) {
       []
     )
   );
-  const preloading = useExperimentalFeature("preloading");
-
   // Min/max x-values and playback position indicator are only used for preloaded plots. In non-
   // preloaded plots min x-value is always the last seek time, and the max x-value is the current
   // playback time.
   const timeToXValueForPreloading = (t: ?Time): ?number => {
-    if (preloading && xAxisVal === "timestamp" && t && startTime) {
+    if (xAxisVal === "timestamp" && t && startTime) {
       return toSec(subtractTimes(t, startTime));
     }
   };
@@ -254,14 +251,14 @@ function Plot(props: Props) {
 
   const onClick = useCallback(
     (_, __, { X_AXIS_ID: seekSeconds }) => {
-      if (!preloading || !startTime || seekSeconds == null || !seek || xAxisVal !== "timestamp") {
+      if (!startTime || seekSeconds == null || !seek || xAxisVal !== "timestamp") {
         return;
       }
       // The player validates and clamps the time.
       const seekTime = TimeUtil.add(startTime, fromSec(seekSeconds));
       seek(seekTime);
     },
-    [preloading, seek, startTime, xAxisVal]
+    [seek, startTime, xAxisVal]
   );
 
   return (

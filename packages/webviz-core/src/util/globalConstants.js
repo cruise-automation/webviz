@@ -36,13 +36,17 @@ export const ROSOUT_TOPIC = "/rosout";
 export const SOCKET_KEY = "dataSource.websocket";
 export const SECOND_SOURCE_PREFIX = "/webviz_source_2";
 
+export const GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE = "geometry_msgs/PolygonStamped";
+export const NAV_MSGS_OCCUPANCY_GRID_DATATYPE = "nav_msgs/OccupancyGrid";
 export const POINT_CLOUD_DATATYPE = "sensor_msgs/PointCloud2";
 export const POSE_STAMPED_DATATYPE = "geometry_msgs/PoseStamped";
-export const LASER_SCAN_DATATYPE = "sensor_msgs/LaserScan";
+export const SENSOR_MSGS_LASER_SCAN_DATATYPE = "sensor_msgs/LaserScan";
 export const WEBVIZ_MARKER_DATATYPE = "visualization_msgs/WebvizMarker";
 export const WEBVIZ_MARKER_ARRAY_DATATYPE = "visualization_msgs/WebvizMarkerArray";
 export const FUTURE_VIZ_MSGS_DATATYPE = "future_visualization_msgs/WebvizMarkerArray";
 export const TF_DATATYPE = "tf2_msgs/TFMessage";
+export const VISUALIZATION_MSGS_MARKER_DATATYPE = "visualization_msgs/Marker";
+export const VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE = "visualization_msgs/MarkerArray";
 
 export const MARKER_ARRAY_DATATYPES = [
   "visualization_msgs/MarkerArray",

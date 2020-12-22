@@ -16,7 +16,6 @@ let importedPanelsByCategory;
 let importedPerPanelHooks;
 const defaultHooks = {
   areHooksImported: () => importedPanelsByCategory && importedPerPanelHooks,
-  getEventLogger: () => ({ logger: (_args) => undefined, eventNames: {}, eventTags: {} }),
   getLayoutFromUrl: async (search) => {
     const { LAYOUT_URL_QUERY_KEY } = require("webviz-core/src/util/globalConstants");
     const params = new URLSearchParams(search);
@@ -135,6 +134,9 @@ const defaultHooks = {
       };
     }
     window.ga("send", "pageview");
+
+    const { initializeLogEvent } = require("webviz-core/src/util/logEvent");
+    initializeLogEvent(() => undefined, {}, {});
   },
   getWorkerDataProviderWorker: () => {
     return require("webviz-core/src/dataProviders/WorkerDataProvider.worker");
@@ -148,12 +150,6 @@ const defaultHooks = {
           "When streaming bag data, persist it on disk, so that when reloading the page we don't have to download the data again. However, this might result in an overall slower experience, and is generally experimental, so we only recommend it if you're on a slow network connection. Alternatively, you can download the bag to disk manually, and drag it into Webviz.",
         developmentDefault: false,
         productionDefault: false,
-      },
-      preloading: {
-        name: "Preloading",
-        description: "Allow panels to use data from caches directly, without playback.",
-        developmentDefault: true,
-        productionDefault: true,
       },
       unlimitedMemoryCache: {
         name: "Unlimited in-memory cache (requires reload)",
@@ -172,6 +168,14 @@ const defaultHooks = {
   updateUrlToTrackLayoutChanges: async ({ _store, _skipPatch }) => {
     // Persist the layout state in URL or remote storage if needed.
     await Promise.resolve();
+  },
+  getPoseErrorScaling() {
+    const scaling = {
+      x: 1,
+      y: 1,
+    };
+
+    return { originalScaling: scaling, updatedScaling: scaling };
   },
 };
 

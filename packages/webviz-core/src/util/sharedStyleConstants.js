@@ -8,7 +8,7 @@
 
 import tinyColor from "tinycolor2";
 
-const baseColors = {
+const robotStylesColors = {
   DARK: "#08080a",
   DARK1: "#111114",
   DARK2: "#1a1a1f",
@@ -66,29 +66,30 @@ const baseColors = {
 };
 
 export const colors = {
-  ...baseColors,
-  PRIMARY: baseColors.PURPLE,
-  TEXT_MUTED: baseColors.GRAY,
-  HIGHLIGHT: baseColors.BLUE,
-  HIGHLIGHT_MUTED: tinyColor(baseColors.BLUE)
+  ...robotStylesColors,
+  PRIMARY: robotStylesColors.PURPLE,
+  TEXT_MUTED: robotStylesColors.GRAY,
+  HIGHLIGHT: robotStylesColors.BLUE,
+  HIGHLIGHT_MUTED: tinyColor(robotStylesColors.BLUE)
     .setAlpha(0.3)
     .toRgbString(),
   // TODO:(Audrey): !!! need design review. Don't use these colors until TopicGrouping feature is finished.
-  HOVER_BACKGROUND_COLOR: tinyColor(baseColors.PURPLE)
+  HOVER_BACKGROUND_COLOR: tinyColor(robotStylesColors.PURPLE)
     .setAlpha(0.2)
     .toRgbString(),
-  DISABLED: baseColors.DARK9,
-  TEXTL1: baseColors.LIGHT2,
-  ACTION: baseColors.BLUE,
-  TEXT: baseColors.LIGHT1,
-  TOOLBARL1: baseColors.DARK4,
+  DISABLED: robotStylesColors.DARK9,
+  TEXTL1: robotStylesColors.LIGHT2,
+  ACTION: robotStylesColors.BLUE,
+  TEXT: robotStylesColors.LIGHT1,
+  TOOLBARL1: robotStylesColors.DARK4,
   BRIGHT_YELLOW: "#f6ff00",
-  BORDER_LIGHT: tinyColor(baseColors.LIGHT)
+  BORDER_LIGHT: tinyColor(robotStylesColors.LIGHT)
     .setAlpha(0.1)
     .toRgbString(),
-  DIFF_MODE_SOURCE_1: baseColors.MAGENTA,
-  DIFF_MODE_SOURCE_2: baseColors.TEAL,
-  DIFF_MODE_SOURCE_BOTH: baseColors.DARK7,
+  DIFF_MODE_SOURCE_1: robotStylesColors.MAGENTA,
+  DIFF_MODE_SOURCE_2: robotStylesColors.TEAL,
+  DIFF_MODE_SOURCE_BOTH: robotStylesColors.DARK7,
+  CYAN: "#00ffff",
 };
 
 export const textSize = {

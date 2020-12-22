@@ -18,13 +18,42 @@ import createRootReducer from "webviz-core/src/reducers";
 import configureStore from "webviz-core/src/store/configureStore.testing";
 import PanelSetup from "webviz-core/src/stories/PanelSetup";
 
+const DEFAULT_CLICK_DELAY = 100;
 storiesOf("<PanelLayout>", module)
   .add("panel not found", () => {
     const store = configureStore(createRootReducer(createMemoryHistory));
     store.dispatch(changePanelLayout({ layout: "UnknownPanel!4co6n9d" }));
     return (
       <DndProvider backend={HTML5Backend}>
-        <PanelSetup fixture={{ topics: [], datatypes: {}, frame: {} }} store={store} omitDragAndDrop>
+        <PanelSetup
+          onMount={() => {
+            setTimeout(() => {
+              document.querySelectorAll("[data-test=panel-settings]")[0].click();
+            }, DEFAULT_CLICK_DELAY);
+          }}
+          fixture={{ topics: [], datatypes: {}, frame: {} }}
+          store={store}
+          omitDragAndDrop>
+          <PanelLayout />
+        </PanelSetup>
+      </DndProvider>
+    );
+  })
+  .add("remove unknown panel", () => {
+    const store = configureStore(createRootReducer(createMemoryHistory));
+    store.dispatch(changePanelLayout({ layout: "UnknownPanel!4co6n9d" }));
+    return (
+      <DndProvider backend={HTML5Backend}>
+        <PanelSetup
+          onMount={() => {
+            setTimeout(() => {
+              document.querySelectorAll("[data-test=panel-settings]")[0].click();
+              document.querySelectorAll("[data-test=panel-settings-remove]")[0].click();
+            }, DEFAULT_CLICK_DELAY);
+          }}
+          fixture={{ topics: [], datatypes: {}, frame: {} }}
+          store={store}
+          omitDragAndDrop>
           <PanelLayout />
         </PanelSetup>
       </DndProvider>

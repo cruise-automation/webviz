@@ -59,10 +59,18 @@ describe("formatTime.parseTimeStr", () => {
   });
 
   it("returns the correct time", () => {
-    const timeStr = getCombinedTimeStr({ sec: 1532382320, nsec: 317124567 });
+    const originalTime = { sec: 1532382320, nsec: 317124567 };
+    const timeStr = getCombinedTimeStr(originalTime);
     expect(formatTime.parseTimeStr(timeStr)).toEqual({
       nsec: 317000000, // losing some accuracy when converting back
-      sec: 1532382320,
+      sec: originalTime.sec,
     });
+
+    const timeObjInDifferentTimezone = formatTime.parseTimeStr(timeStr, "America/Detroit");
+    expect(timeObjInDifferentTimezone?.nsec).toEqual(317000000); // losing some accuracy when converting back
+
+    // Get numeric sec value that is not equal to originalTime's sec value
+    expect(timeObjInDifferentTimezone?.sec).not.toBeNaN();
+    expect(timeObjInDifferentTimezone?.sec).not.toEqual(originalTime.sec);
   });
 });

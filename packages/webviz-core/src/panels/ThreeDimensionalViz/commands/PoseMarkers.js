@@ -19,16 +19,17 @@ import {
 
 import CarModel from "./CarModel";
 import carOutlinePoints from "./CarModel/carOutline.json";
+import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
+import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 
 type Props = {
   children: Arrow[],
   ...CommonCommandProps,
 };
 
-const X_SCALING_FACTOR = 1.111;
-const Y_SCALING_FACTOR = 1.121;
+const { originalScaling, updatedScaling } = getGlobalHooks().getPoseErrorScaling();
 
-const scaledCarOutlineBufferPoints = (() => {
+const getScaledCarOutlineBufferPoints = (scaling: { x: number, y: number }) => {
   const vectorSum = carOutlinePoints.reduce(
     (prev, curr) => {
       prev.x += curr.x;
@@ -40,21 +41,26 @@ const scaledCarOutlineBufferPoints = (() => {
   );
 
   const vectorAverage = { x: vectorSum.x / carOutlinePoints.length, y: vectorSum.y / carOutlinePoints.length, z: 0 };
-  const scaledVectorAverage = { x: vectorAverage.x * X_SCALING_FACTOR, y: vectorAverage.y * Y_SCALING_FACTOR, z: 0 };
+  const scaledVectorAverage = { x: vectorAverage.x * scaling.x, y: vectorAverage.y * scaling.y, z: 0 };
 
   const transform_x = scaledVectorAverage.x - vectorAverage.x;
   const transform_y = scaledVectorAverage.y - vectorAverage.y;
 
   const scaledAndTransformedPoints = carOutlinePoints.map(({ x, y, z }) => ({
-    x: x * X_SCALING_FACTOR - transform_x,
-    y: y * Y_SCALING_FACTOR - transform_y,
+    x: x * scaling.x - transform_x,
+    y: y * scaling.y - transform_y,
     z,
   }));
 
   return scaledAndTransformedPoints;
-})();
+};
 
 export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: Props): Node[] {
+  const useUpdatedScaling = useExperimentalFeature("updatedPoseErrorScaling");
+  const scaledCarOutlineBufferPoints = React.useMemo(
+    () => getScaledCarOutlineBufferPoints(useUpdatedScaling ? updatedScaling : originalScaling),
+    [useUpdatedScaling]
+  );
   const models = [];
   const filledPolygons = [];
   const arrowMarkers = [];

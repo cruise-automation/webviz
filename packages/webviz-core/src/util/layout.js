@@ -7,7 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import * as Sentry from "@sentry/browser";
 import CBOR from "cbor-js";
-import { compact, flatMap, xor, uniq } from "lodash";
+import { compact, cloneDeep, flatMap, isEmpty, xor, uniq } from "lodash";
 import {
   createRemoveUpdate,
   getLeaves,
@@ -185,10 +185,12 @@ export const getSaveConfigsPayloadForAddedPanel = ({
   if (!relatedConfigs) {
     return { configs: [{ id, config }] };
   }
-  const templateIds = Object.keys(relatedConfigs);
+  const templateIds = getPanelIdsInsideTabPanels([id], { [id]: config });
   const panelIdMap = mapTemplateIdsToNewIds(templateIds);
   let newConfigs = templateIds.map((tempId) => ({ id: panelIdMap[tempId], config: relatedConfigs[tempId] }));
-  newConfigs = newConfigs.concat([{ id, config }]).map(replaceMaybeTabLayoutWithNewPanelIds(panelIdMap));
+  newConfigs = [...newConfigs, { id, config }]
+    .filter((configObj) => configObj.config)
+    .map(replaceMaybeTabLayoutWithNewPanelIds(panelIdMap));
   return { configs: newConfigs };
 };
 
@@ -214,6 +216,9 @@ export function getAllPanelIds(layout: MosaicNode, savedProps: SavedProps): stri
 }
 
 export const validateTabPanelConfig = (config: ?PanelConfig) => {
+  if (!config) {
+    return false;
+  }
   if (!Array.isArray(config?.tabs) || typeof config?.activeTabIdx !== "number") {
     const error = new Error("A non-Tab panel config is being operated on as if it were a Tab panel.");
     console.log("Invalid Tab panel config:", config, error);
@@ -481,6 +486,10 @@ const layoutKeyMap = { direction: "d", first: "f", second: "se", row: "r", colum
 export const dictForPatchCompression = { ...layoutKeyMap, ...stateKeyMap };
 
 export function getUpdatedURLWithPatch(search: string, diff: string): string {
+  // Return the original search directly if the diff is empty.
+  if (!diff) {
+    return search;
+  }
   const params = new URLSearchParams(search);
 
   const diffBuffer = Buffer.from(CBOR.encode(JSON.parse(diff)));
@@ -529,4 +538,18 @@ export function updateDocumentTitle({ search, layoutName }: { search?: string, l
     return;
   }
   document.title = `webviz`;
+}
+
+export function setDefaultFields(defaultLayout: PanelsState, layout: PanelsState): PanelsState {
+  const clonedLayout = cloneDeep(layout);
+
+  // Extra checks to make sure all the common fields for panels are present.
+  Object.keys(defaultLayout).forEach((fieldName) => {
+    const newFieldValue = clonedLayout[fieldName];
+    if (isEmpty(newFieldValue)) {
+      // $FlowFixMe - Flow does not understand that the types for fieldName in both objects match
+      clonedLayout[fieldName] = defaultLayout[fieldName];
+    }
+  });
+  return clonedLayout;
 }

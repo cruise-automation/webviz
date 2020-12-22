@@ -18,9 +18,9 @@ export default function userNodes(state: State, action: ActionTypes): State {
   switch (action.type) {
     case "SET_USER_NODE_DIAGNOSTICS": {
       const userNodeDiagnostics = { ...state.userNodes.userNodeDiagnostics };
-      Object.keys(action.payload).forEach((nodeId) => {
-        const payloadDiagnostics = action.payload[nodeId].diagnostics;
-        if (action.payload[nodeId] === undefined) {
+      Object.keys(action.payload.diagnostics).forEach((nodeId) => {
+        const payloadDiagnostics = action.payload.diagnostics[nodeId].diagnostics;
+        if (action.payload.diagnostics[nodeId] === undefined) {
           delete userNodeDiagnostics[nodeId];
         } else if (!userNodeDiagnostics[nodeId]) {
           userNodeDiagnostics[nodeId] = { diagnostics: payloadDiagnostics, logs: [] };

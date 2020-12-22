@@ -103,3 +103,18 @@
   background-color: $dark4;
   cursor: none;
 }
+
+.timeDisplayMethodButton {
+  min-width: 32px;
+  background-color: transparent;
+  margin: 0px 4px;
+  padding: 8px 4px;
+  font-family: $monospace-font;
+  color: $light;
+  opacity: 1;
+
+  &:hover {
+    background-color: transparent;
+    opacity: 0.8;
+  }
+}

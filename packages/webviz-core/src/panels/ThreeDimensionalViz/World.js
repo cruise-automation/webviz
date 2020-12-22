@@ -135,7 +135,8 @@ function World(
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       resolutionScale={isDemoMode ? 2 : 1}
-      ref={ref}>
+      ref={ref}
+      contextAttributes={{ preserveDrawingBuffer: true }}>
       {children}
       <WrappedWorldMarkers
         {...{

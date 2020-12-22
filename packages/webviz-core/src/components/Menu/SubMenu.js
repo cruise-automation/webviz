@@ -64,7 +64,7 @@ export default class SubMenu extends React.Component<Props, State> {
         <Item hasSubMenu direction={direction} checked={open || checked} icon={icon}>
           {text}
         </Item>
-        <Menu>{children}</Menu>
+        <Menu style={{ height: "100%" }}>{children}</Menu>
       </ChildToggle>
     );
   }

@@ -10,7 +10,6 @@ import { TimeUtil, type Time } from "rosbag";
 import uuid from "uuid";
 
 import delay from "webviz-core/shared/delay";
-import { getExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { rootGetDataProvider } from "webviz-core/src/dataProviders/rootGetDataProvider";
 import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
 import filterMap from "webviz-core/src/filterMap";
@@ -122,7 +121,6 @@ export default class RandomAccessPlayer implements Player {
   _seekToTime: SeekToTimeSpec;
   _lastRangeMillis: ?number;
   _parsedMessageDefinitionsByTopic: ParsedMessageDefinitionsByTopic;
-  _preloadingEnabled: boolean;
 
   constructor(
     providerDescriptor: DataProviderDescriptor,
@@ -135,7 +133,6 @@ export default class RandomAccessPlayer implements Player {
     }
     this._metricsCollector = metricsCollector || new NoopMetricsCollector();
     this._seekToTime = seekToTime;
-    this._preloadingEnabled = getExperimentalFeature("preloading");
     this._metricsCollector.playerConstructed();
 
     document.addEventListener("visibilitychange", this._handleDocumentVisibilityChange, false);
@@ -554,6 +551,10 @@ export default class RandomAccessPlayer implements Player {
   });
 
   seekPlayback(time: Time, backfillDuration: ?Time): void {
+    // Only seek when the provider initialization is done.
+    if (!this._start || !this._end) {
+      return;
+    }
     this._metricsCollector.seek(time);
     this._setCurrentTime(time);
     this._seekPlaybackInternal(backfillDuration);
@@ -570,9 +571,9 @@ export default class RandomAccessPlayer implements Player {
   setSubscriptions(newSubscriptions: SubscribePayload[]): void {
     const [bobjectSubscriptions, parsedSubscriptions] = partition(
       // Anything we can get from the data providers will be in the blocks. Subscriptions for
-      // preloading-fallback codepaths are only needed when preloading is disabled, or for other
-      // data sources without blocks (like nodes and websocket.)
-      newSubscriptions.filter(({ preloadingFallback }) => !this._preloadingEnabled || !preloadingFallback),
+      // preloading-fallback codepaths are only needed for other data sources without blocks (like
+      // nodes and websocket.)
+      newSubscriptions.filter(({ preloadingFallback }) => !preloadingFallback),
       ({ format }) => format === "bobjects"
     );
     this._parsedSubscribedTopics = new Set(parsedSubscriptions.map(({ topic }) => topic));

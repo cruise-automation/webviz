@@ -13,6 +13,11 @@
   padding: 4px 8px;
   white-space: pre-line;
   position: relative;
+
+  code {
+    background-color: transparent;
+    padding: 0px;
+  }
 }
 
 .arrow {

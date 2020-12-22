@@ -350,7 +350,7 @@ class MessagePathInputUnconnected extends React.PureComponent<MessagePathInputPr
           onSelect={(value: string, item: any, autocomplete: Autocomplete) =>
             this._onSelect(value, autocomplete, autocompleteType, autocompleteRange)
           }
-          hasError={!!autocompleteType && !disableAutocomplete}
+          hasError={!!autocompleteType && !disableAutocomplete && path.length}
           autocompleteKey={autocompleteType}
           placeholder={placeholder || "/some/topic.msgs[0].field"}
           autoSize={autoSize}

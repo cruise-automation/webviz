@@ -6,7 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { debounce, flatten, groupBy } from "lodash";
+import { debounce, flatten, groupBy, isEqual } from "lodash";
 import * as React from "react";
 import { type Time, TimeUtil } from "rosbag";
 
@@ -222,23 +222,28 @@ export function MessagePipelineProvider({ children, player, globalVariables = {}
   const datatypes: RosDatatypes = useMemo(() => unmemoizedDatatypes ?? {}, [unmemoizedDatatypes]);
   const setSubscriptions = useCallback(
     (id: string, subscriptionsForId: SubscribePayload[]) => {
-      setAllSubscriptions((s) => ({ ...s, [id]: subscriptionsForId }));
-
-      if (
-        lastTimeWhenActiveDataBecameSet.current &&
-        Date.now() < lastTimeWhenActiveDataBecameSet.current + WARN_ON_SUBSCRIPTIONS_WITHIN_TIME_MS
-      ) {
-        // TODO(JP): Might be nice to use `sendNotification` here at some point, so users can let us know about this.
-        // However, there is currently a race condition where a layout can get loaded just after the player
-        // initializes. I'm not too sure how to prevent that, because we also don't want to ignore whenever the
-        // layout changes, since a panel might decide to save its config when data becomes available, and that is
-        // bad behaviour by itself too.
-        console.warn(
-          `Panel subscribed right after Player loaded, which causes unnecessary requests. Please let the Webviz team know about this. Topics: ${subscriptionsForId
-            .map(({ topic }) => topic)
-            .join(", ")}`
-        );
-      }
+      setAllSubscriptions((s) => {
+        if (
+          lastTimeWhenActiveDataBecameSet.current &&
+          Date.now() < lastTimeWhenActiveDataBecameSet.current + WARN_ON_SUBSCRIPTIONS_WITHIN_TIME_MS &&
+          !isEqual(
+            new Set(subscriptionsForId.map(({ topic }) => topic)),
+            new Set((s[id] || []).map(({ topic }) => topic))
+          )
+        ) {
+          // TODO(JP): Might be nice to use `sendNotification` here at some point, so users can let us know about this.
+          // However, there is currently a race condition where a layout can get loaded just after the player
+          // initializes. I'm not too sure how to prevent that, because we also don't want to ignore whenever the
+          // layout changes, since a panel might decide to save its config when data becomes available, and that is
+          // bad behaviour by itself too.
+          console.warn(
+            `Panel subscribed right after Player loaded, which causes unnecessary requests. Please let the Webviz team know about this. Topics: ${subscriptionsForId
+              .map(({ topic }) => topic)
+              .join(", ")}`
+          );
+        }
+        return { ...s, [id]: subscriptionsForId };
+      });
     },
     [setAllSubscriptions]
   );

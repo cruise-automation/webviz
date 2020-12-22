@@ -18,7 +18,7 @@ export function migrateUncategorizedNode(nodes: string[]): string[] {
 }
 
 export function migrate3DPanelUncategorizedNode({
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line
   savedPropsVersion,
   checkedKeys,
   expandedKeys,

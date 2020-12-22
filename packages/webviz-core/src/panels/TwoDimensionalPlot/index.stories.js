@@ -73,10 +73,15 @@ const fixture = {
   },
 };
 
-function zoomOut() {
+function zoomOut(keyObj) {
   const canvasEl = document.querySelector("canvas");
+
   // Zoom is a continuous event, so we need to simulate wheel multiple times
   if (canvasEl) {
+    if (keyObj) {
+      document.dispatchEvent(new KeyboardEvent("keydown", keyObj));
+    }
+
     for (let i = 0; i < 5; i++) {
       triggerWheel(canvasEl, 1);
     }
@@ -161,11 +166,29 @@ storiesOf("<TwoDimensionalPlot>", module)
       </PanelSetup>
     );
   })
-  .add("zooms to show reset view button", () => (
+  .add("zooms horizontally to show reset view button", () => (
     <PanelSetup
       fixture={fixture}
       onMount={() => {
         setTimeout(zoomOut, 200);
+      }}>
+      <TwoDimensionalPlot config={{ path: { value: "/plot_a.versions[0]" } }} />
+    </PanelSetup>
+  ))
+  .add("zooms vertically to show reset view button", () => (
+    <PanelSetup
+      fixture={fixture}
+      onMount={() => {
+        setTimeout(() => zoomOut({ key: "v", code: "KeyV", keyCode: 86, ctrlKey: false, metaKey: false }), 200);
+      }}>
+      <TwoDimensionalPlot config={{ path: { value: "/plot_a.versions[0]" } }} />
+    </PanelSetup>
+  ))
+  .add("zooms both axes simultaneously to show reset view button", () => (
+    <PanelSetup
+      fixture={fixture}
+      onMount={() => {
+        setTimeout(() => zoomOut({ key: "b", code: "KeyB", keyCode: 66, ctrlKey: false, metaKey: false }), 200);
       }}>
       <TwoDimensionalPlot config={{ path: { value: "/plot_a.versions[0]" } }} />
     </PanelSetup>

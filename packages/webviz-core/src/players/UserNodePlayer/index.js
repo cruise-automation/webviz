@@ -44,10 +44,11 @@ import { hasTransformerErrors } from "webviz-core/src/players/UserNodePlayer/uti
 import type { UserNode, UserNodes } from "webviz-core/src/types/panels";
 import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import { wrapJsObject } from "webviz-core/src/util/binaryObjects";
+import { BobjectRpcSender } from "webviz-core/src/util/binaryObjects/BobjectRpc";
 import { basicDatatypes } from "webviz-core/src/util/datatypes";
 import { DEFAULT_WEBVIZ_NODE_PREFIX } from "webviz-core/src/util/globalConstants";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupReceiveReportErrorHandler } from "webviz-core/src/util/RpcUtils";
+import { setupReceiveReportErrorHandler } from "webviz-core/src/util/RpcMainThreadUtils";
 
 type UserNodeActions = {|
   setUserNodeDiagnostics: SetUserNodeDiagnostics,
@@ -153,12 +154,16 @@ export default class UserNodePlayer implements Player {
     ): Promise<{ parsedMessages: $ReadOnlyArray<Message>, bobjects: $ReadOnlyArray<BobjectMessage> }> => {
       const parsedMessagesPromises = [];
       const bobjectPromises = [];
-
-      for (const message of parsedMessages) {
+      for (const message of bobjects) {
+        // BobjectRpc is currently not re-entrant: It has per-topic state, so we can't currently run multiple messages
+        // concurrently. This also helps us provide an ordering guarantee for stateful nodes.
+        // We run all nodes in parallel, but run all messages in series.
+        const messagePromises = [];
         for (const nodeRegistration of nodeRegistrations) {
           const subscriptions = this._subscribedFormatByTopic[nodeRegistration.output.name];
           if (subscriptions && nodeRegistration.inputs.includes(message.topic)) {
             const messagePromise = nodeRegistration.processMessage(message, globalVariables);
+            messagePromises.push(messagePromise);
             // There should be at most 2 subscriptions.
             for (const format of subscriptions.values()) {
               if (format === "parsedMessages") {
@@ -169,6 +174,7 @@ export default class UserNodePlayer implements Player {
             }
           }
         }
+        await Promise.all(messagePromises);
       }
       const [nodeParsedMessages, nodeBobjects] = await Promise.all([
         (await Promise.all(parsedMessagesPromises)).filter(Boolean),
@@ -223,6 +229,7 @@ export default class UserNodePlayer implements Player {
     const nodeData = await transformWorker.send("transform", transformMessage);
     const { inputTopics, outputTopic, transpiledCode, projectCode, outputDatatype } = nodeData;
 
+    let bobjectSender;
     let rpc;
     let terminateSignal = signal<void>();
     return {
@@ -235,8 +242,9 @@ export default class UserNodePlayer implements Player {
         terminateSignal = signal<void>();
 
         // Register the node within a web worker to be executed.
-        if (!rpc) {
+        if (!bobjectSender || !rpc) {
           rpc = this._unusedNodeRuntimeWorkers.pop() || rpcFromNewSharedWorker(new UserNodePlayerWorker(uuid.v4()));
+          bobjectSender = new BobjectRpcSender(rpc);
           const { error, userNodeDiagnostics, userNodeLogs } = await rpc.send<RegistrationOutput>("registerNode", {
             projectCode,
             nodeCode: transpiledCode,
@@ -257,7 +265,7 @@ export default class UserNodePlayer implements Player {
         }
 
         const result = await Promise.race([
-          rpc.send<ProcessMessageOutput>("processMessage", { message, globalVariables: this._globalVariables }),
+          bobjectSender.send<ProcessMessageOutput>("processMessage", message, this._globalVariables),
           terminateSignal,
         ]);
         if (!result) {
@@ -274,7 +282,9 @@ export default class UserNodePlayer implements Player {
               },
             ]
           : [];
-        this._setUserNodeDiagnostics(nodeId, diagnostics);
+        if (diagnostics.length > 0) {
+          this._setUserNodeDiagnostics(nodeId, diagnostics);
+        }
         this._addUserNodeLogs(nodeId, result.userNodeLogs);
 
         // TODO: FUTURE - surface runtime errors / infinite loop errors
@@ -342,9 +352,13 @@ export default class UserNodePlayer implements Player {
     );
 
     // Filter out nodes with compilation errors
-    const nodeRegistrations: Array<NodeRegistration> = allNodeRegistrations.filter(
-      (nodeRegistration) => !hasTransformerErrors(nodeRegistration.nodeData)
-    );
+    const nodeRegistrations: Array<NodeRegistration> = allNodeRegistrations.filter(({ nodeData, nodeId }) => {
+      const hasError = hasTransformerErrors(nodeData);
+      if (hasError) {
+        this._setUserNodeDiagnostics(nodeId, nodeData.diagnostics);
+      }
+      return !hasError;
+    });
 
     // Create diagnostic errors if more than one node outputs to the same topic
     const nodesByOutputTopic = groupBy(nodeRegistrations, ({ output }) => output.name);
@@ -468,8 +482,8 @@ export default class UserNodePlayer implements Player {
           realTopicSubscriptions.push({
             topic: inputTopic,
             requester: { type: "node", name: nodeRegistration.output.name },
-            // User nodes won't understand bobjects.
-            format: "parsedMessages",
+            // Bobjects are parsed inside the worker.
+            format: "bobjects",
           });
         }
       }

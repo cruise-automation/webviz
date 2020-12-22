@@ -86,6 +86,8 @@ const props = {
   xAxisIsPlaybackTime: true,
 };
 
+const DEFAULT_DELAY = 500;
+
 function CleansUpTooltipExample() {
   const [hasRenderedOnce, setHasRenderedOnce] = useState<boolean>(false);
   const refFn = useCallback(() => {
@@ -237,7 +239,7 @@ storiesOf("<TimeBasedChart>", module)
             // This will show the vertical bar but not the tooltip because the mouse is on top of a different element
             // (in this case the document), not the canvas itself.
             document.dispatchEvent(new MouseEvent("mousemove", { clientX: 363 + left, clientY: 400 + top }));
-          }, 200);
+          }, DEFAULT_DELAY);
         }}>
         <MockMessagePipelineProvider>
           <TimeBasedChart {...props} />
@@ -254,7 +256,7 @@ storiesOf("<TimeBasedChart>", module)
             const [canvas] = document.getElementsByTagName("canvas");
             const { top, left } = canvas.getBoundingClientRect();
             canvas.dispatchEvent(new MouseEvent("mousemove", { clientX: 363 + left, clientY: 400 + top }));
-          }, 200);
+          }, DEFAULT_DELAY);
         }}>
         <MockMessagePipelineProvider>
           <TimeBasedChart {...props} />

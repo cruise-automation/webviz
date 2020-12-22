@@ -6,6 +6,7 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
+import CheckCircleIcon from "@mdi/svg/svg/check-circle.svg";
 import CheckIcon from "@mdi/svg/svg/check.svg";
 import ChevronLeftIcon from "@mdi/svg/svg/chevron-left.svg";
 import ChevronRightIcon from "@mdi/svg/svg/chevron-right.svg";
@@ -30,6 +31,7 @@ type ItemProps = {
   className?: string,
   isHeader?: boolean,
   checked?: boolean,
+  highlighted?: boolean,
   tooltip?: React.Node,
   children: React.Node,
   icon?: React.Node,
@@ -49,6 +51,7 @@ const Item = (props: ItemProps) => {
     className = "",
     isHeader = false,
     checked,
+    highlighted,
     children,
     icon,
     iconSize,
@@ -63,7 +66,7 @@ const Item = (props: ItemProps) => {
     hoverForScreenshots,
   } = props;
   const classes = cx(styles.item, className, {
-    [styles.active]: checked && !disabled,
+    [styles.active]: highlighted && !disabled,
     [styles.disabled]: disabled,
     disabled,
     [styles.header]: isHeader,
@@ -78,7 +81,14 @@ const Item = (props: ItemProps) => {
           <Icon {...{ [iconSize || "small"]: true }}>{icon}</Icon>
         </span>
       )}
-      <SContentWrapper>{children}</SContentWrapper>
+      <SContentWrapper>
+        {children}
+        {checked && !isDropdown && (
+          <Icon {...{ [iconSize || "small"]: true }} style={{ marginLeft: "5px" }}>
+            <CheckCircleIcon />
+          </Icon>
+        )}
+      </SContentWrapper>
       {hasSubMenu && direction === "right" && <ChevronRightIcon className={styles.submenuIconRight} />}
       {checked && isDropdown && (
         <Icon {...{ [iconSize || "small"]: true }}>

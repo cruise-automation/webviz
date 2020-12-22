@@ -114,6 +114,7 @@ export async function runInPage<T>(
 
     log.info(`Navigating to URL: ${url}`);
     await page.goto(url, { waitUntil: "networkidle2", timeout: pageLoadTimeout });
+    await page.waitFor(() => !document.querySelector("#loadingLogo"), { timeout: pageLoadTimeout });
 
     await setupPageLogging(page, pageOptions);
     await setupWebvizLayout(page, layoutOptions);

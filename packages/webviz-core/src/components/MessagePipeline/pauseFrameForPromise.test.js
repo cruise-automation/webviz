@@ -9,8 +9,8 @@
 import { pauseFrameForPromises, MAX_PROMISE_TIMEOUT_TIME_MS } from "./pauseFrameForPromise";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import inAutomatedRunMode from "webviz-core/src/util/inAutomatedRunMode";
+import { initializeLogEvent, resetLogEventForTests } from "webviz-core/src/util/logEvent";
 import sendNotification from "webviz-core/src/util/sendNotification";
 
 const sendNotificationAny: any = sendNotification;
@@ -26,12 +26,7 @@ describe("pauseFrameForPromise", () => {
 
   it("sends the paused frame panel types to amplitude", async () => {
     const logger = jest.fn();
-    jest.spyOn(getGlobalHooks(), "getEventLogger");
-    getGlobalHooks().getEventLogger.mockImplementation(() => ({
-      logger,
-      eventNames: { PAUSE_FRAME_TIMEOUT: "pause_frame_timeout" },
-      eventTags: { PANEL_TYPES: "panel_types" },
-    }));
+    initializeLogEvent(logger, { PAUSE_FRAME_TIMEOUT: "pause_frame_timeout" }, { PANEL_TYPES: "panel_types" });
 
     pauseFrameForPromises([
       { promise: signal(), name: "foo" },
@@ -42,6 +37,7 @@ describe("pauseFrameForPromise", () => {
     await delay(MAX_PROMISE_TIMEOUT_TIME_MS + 20);
 
     expect(logger).toHaveBeenCalledWith({ name: "pause_frame_timeout", tags: { panel_types: ["bar", "foo", "zoo"] } });
+    resetLogEventForTests();
   });
 
   it("always reports an error in automated run mode", async () => {

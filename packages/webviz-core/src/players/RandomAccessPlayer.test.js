@@ -13,7 +13,6 @@ import RandomAccessPlayer, { SEEK_BACK_NANOSECONDS, SEEK_START_DELAY_MS } from "
 import TestProvider from "./TestProvider";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
-import { setExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import type { GetMessagesResult, GetMessagesTopics } from "webviz-core/src/dataProviders/types";
 import {
   type Message,
@@ -1359,6 +1358,24 @@ describe("RandomAccessPlayer", () => {
     player.close();
   });
 
+  it("does not seek until setListener is called to initialize the start and end time", async () => {
+    const provider = new TestProvider();
+    provider.getMessages = jest.fn().mockImplementation(() => Promise.resolve(getMessagesResult));
+    const player = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
+    const store = new MessageStore(2);
+    player.setSubscriptions([{ topic: "/foo/bar", format: "parsedMessages" }]);
+    player.requestBackfill(); // We always get a `requestBackfill` after each `setSubscriptions`.
+
+    player.seekPlayback({ sec: 10, nsec: 0 });
+    expect(provider.getMessages).not.toHaveBeenCalled();
+
+    await player.setListener(store.add);
+    player.seekPlayback({ sec: 10, nsec: 0 });
+    expect(provider.getMessages).toHaveBeenCalled();
+
+    player.close();
+  });
+
   it("wraps playback when letting it play across the end boundary", async () => {
     const provider = new TestProvider();
     provider.getMessages = jest.fn().mockImplementation(() => Promise.resolve(getMessagesResult));
@@ -1469,26 +1486,6 @@ describe("RandomAccessPlayer", () => {
       { topic: "/streaming_and_fallback_binary", format: "bobjects" },
       { topic: "/streaming_and_fallback_binary", format: "bobjects", preloadingFallback: true },
     ]);
-    await store.done;
-  });
-
-  it("requests messages for `preloadingFallback` subscriptions when preloading is disabled", async () => {
-    setExperimentalFeature("preloading", "alwaysOff");
-    expect.assertions(1);
-    const provider = new TestProvider({ topics: [{ name: "/fallback_parsed", datatype: "dummy" }] });
-    const source = new RandomAccessPlayer({ name: "TestProvider", args: { provider }, children: [] }, playerOptions);
-
-    provider.getMessages = (start: Time, end: Time, topics: GetMessagesTopics): Promise<GetMessagesResult> => {
-      expect(topics).toEqual({
-        parsedMessages: ["/fallback_parsed"],
-        bobjects: [],
-      });
-      return Promise.resolve(getMessagesResult);
-    };
-
-    const store = new MessageStore(2);
-    await source.setListener(store.add);
-    source.setSubscriptions([{ topic: "/fallback_parsed", format: "parsedMessages", preloadingFallback: true }]);
     await store.done;
   });
 

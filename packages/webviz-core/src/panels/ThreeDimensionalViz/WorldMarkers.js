@@ -188,9 +188,15 @@ export default function WorldMarkers({
     glTextAtlas: undefined,
   });
   useEffect(() => {
+    let mounted = true;
     glTextAtlasPromise.then((atlas) => {
-      setGlTextAtlasInfo({ status: "LOADED", glTextAtlas: atlas });
+      if (mounted) {
+        setGlTextAtlasInfo({ status: "LOADED", glTextAtlas: atlas });
+      }
     });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Group all line strips and line lists into as few markers as possible

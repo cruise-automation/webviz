@@ -83,12 +83,9 @@ export function TabbedToolbar(props: Props) {
       dispatch(moveTab(({ source, target }: MoveTabPayload)));
     },
   });
-  useEffect(
-    () => {
-      setDraggingTabState({ item, isOver });
-    },
-    [item, isOver, setDraggingTabState]
-  );
+  useEffect(() => {
+    setDraggingTabState({ item, isOver });
+  }, [item, isOver, setDraggingTabState]);
 
   return (
     <STabbedToolbar highlight={isOver}>

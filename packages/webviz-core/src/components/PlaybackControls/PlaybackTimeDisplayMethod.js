@@ -65,64 +65,55 @@ const PlaybackTimeDisplayMethod = ({
   const timestampInputRef = useRef();
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
-  const currentTimeString = useMemo(
-    () => {
-      if (currentTime) {
-        return timeDisplayMethod === "ROS" ? formatTimeRaw(currentTime) : formatTime(currentTime, timezone);
-      }
-      return null;
-    },
-    [currentTime, timeDisplayMethod, timezone]
-  );
+  const currentTimeString = useMemo(() => {
+    if (currentTime) {
+      return timeDisplayMethod === "ROS" ? formatTimeRaw(currentTime) : formatTime(currentTime, timezone);
+    }
+    return null;
+  }, [currentTime, timeDisplayMethod, timezone]);
   const [inputText, setInputText] = useState<?string>(currentTimeString);
   const [hasError, setHasError] = useState<boolean>(false);
 
-  const onSubmit = useCallback(
-    (e) => {
-      e.preventDefault();
+  const onSubmit = useCallback((e) => {
+    e.preventDefault();
 
-      if (!inputText?.length) {
-        return;
+    if (!inputText?.length) {
+      return;
+    }
+
+    const validTimeAndMethod = getValidatedTimeAndMethodFromString({
+      text: inputText,
+      date: formatDate(currentTime, timezone),
+      timezone,
+    });
+
+    if (!validTimeAndMethod) {
+      setHasError(true);
+      return;
+    }
+
+    // If input is valid, clear error state, exit edit mode, and seek to input timestamp
+    setHasError(false);
+    setIsEditing(false);
+    if (
+      validTimeAndMethod &&
+      validTimeAndMethod.time &&
+      isTimeInRangeInclusive(validTimeAndMethod.time, startTime, endTime)
+    ) {
+      onSeek(validTimeAndMethod.time);
+      if (validTimeAndMethod.method !== timeDisplayMethod) {
+        setTimeDisplayMethod(validTimeAndMethod.method);
       }
+    }
+  }, [currentTime, endTime, inputText, onSeek, setTimeDisplayMethod, startTime, timeDisplayMethod, timezone]);
 
-      const validTimeAndMethod = getValidatedTimeAndMethodFromString({
-        text: inputText,
-        date: formatDate(currentTime, timezone),
-        timezone,
-      });
-
-      if (!validTimeAndMethod) {
-        setHasError(true);
-        return;
-      }
-
-      // If input is valid, clear error state, exit edit mode, and seek to input timestamp
-      setHasError(false);
+  useEffect(() => {
+    // If user submits an empty input field or resumes playback, clear error state and show current timestamp
+    if (hasError && (!inputText?.length || isPlaying)) {
       setIsEditing(false);
-      if (
-        validTimeAndMethod &&
-        validTimeAndMethod.time &&
-        isTimeInRangeInclusive(validTimeAndMethod.time, startTime, endTime)
-      ) {
-        onSeek(validTimeAndMethod.time);
-        if (validTimeAndMethod.method !== timeDisplayMethod) {
-          setTimeDisplayMethod(validTimeAndMethod.method);
-        }
-      }
-    },
-    [currentTime, endTime, inputText, onSeek, setTimeDisplayMethod, startTime, timeDisplayMethod, timezone]
-  );
-
-  useEffect(
-    () => {
-      // If user submits an empty input field or resumes playback, clear error state and show current timestamp
-      if (hasError && (!inputText?.length || isPlaying)) {
-        setIsEditing(false);
-        setHasError(false);
-      }
-    },
-    [hasError, inputText, isPlaying]
-  );
+      setHasError(false);
+    }
+  }, [hasError, inputText, isPlaying]);
 
   return (
     <Flex start style={{ maxWidth: `${MAX_WIDTH}px`, alignItems: "center", marginLeft: "8px" }}>

@@ -152,27 +152,24 @@ function DraggablePanelItem({ searchQuery, panel, onClick, onDrop, checked, high
     },
   });
 
-  React.useEffect(
-    () => {
-      if (highlighted && scrollRef.current) {
-        const highlightedItem = scrollRef.current.getBoundingClientRect();
-        const scrollContainer = scrollRef.current?.parentElement?.parentElement?.parentElement;
-        if (scrollContainer) {
-          const scrollContainerToTop = scrollContainer.getBoundingClientRect().top;
+  React.useEffect(() => {
+    if (highlighted && scrollRef.current) {
+      const highlightedItem = scrollRef.current.getBoundingClientRect();
+      const scrollContainer = scrollRef.current?.parentElement?.parentElement?.parentElement;
+      if (scrollContainer) {
+        const scrollContainerToTop = scrollContainer.getBoundingClientRect().top;
 
-          const isInView =
-            highlightedItem.top >= 0 &&
-            highlightedItem.top >= scrollContainerToTop &&
-            highlightedItem.top + 50 <= window.innerHeight;
+        const isInView =
+          highlightedItem.top >= 0 &&
+          highlightedItem.top >= scrollContainerToTop &&
+          highlightedItem.top + 50 <= window.innerHeight;
 
-          if (!isInView && scrollRef.current) {
-            scrollRef.current.scrollIntoView({ behavior: "smooth" });
-          }
+        if (!isInView && scrollRef.current) {
+          scrollRef.current.scrollIntoView({ behavior: "smooth" });
         }
       }
-    },
-    [highlighted]
-  );
+    }
+  }, [highlighted]);
 
   return (
     <div ref={drag}>
@@ -239,21 +236,25 @@ function PanelList(props: Props) {
 
   // Update panel layout in Redux when a panel menu item is dropped;
   // actual operations to change layout supplied by react-mosaic-component
-  const onPanelMenuItemDrop = React.useCallback(
-    ({ config, relatedConfigs, type, position, path, tabId }: DropDescription) => {
-      dispatch(
-        dropPanel({
-          newPanelType: type,
-          destinationPath: path,
-          position,
-          tabId,
-          config,
-          relatedConfigs,
-        })
-      );
-    },
-    [dispatch]
-  );
+  const onPanelMenuItemDrop = React.useCallback(({
+    config,
+    relatedConfigs,
+    type,
+    position,
+    path,
+    tabId,
+  }: DropDescription) => {
+    dispatch(
+      dropPanel({
+        newPanelType: type,
+        destinationPath: path,
+        position,
+        tabId,
+        config,
+        relatedConfigs,
+      })
+    );
+  }, [dispatch]);
 
   const handleSearchChange = React.useCallback((e: SyntheticInputEvent<HTMLInputElement>) => {
     // TODO(Audrey): press enter to select the first item, allow using arrow key to go up and down
@@ -289,53 +290,47 @@ function PanelList(props: Props) {
     [filteredItems, highlightedPanelIdx]
   );
 
-  const onKeyDown = React.useCallback(
-    (e) => {
-      if (e.key === "ArrowDown" && highlightedPanelIdx != null) {
-        setHighlightedPanelIdx((highlightedPanelIdx + 1) % filteredItems.length);
-      } else if (e.key === "ArrowUp" && highlightedPanelIdx != null) {
-        const newIdx = (highlightedPanelIdx - 1) % (filteredItems.length - 1);
-        setHighlightedPanelIdx(newIdx >= 0 ? newIdx : filteredItems.length + newIdx);
-      } else if (e.key === "Enter" && highlightedPanel) {
-        const { component, presetSettings } = highlightedPanel;
-        onPanelSelect({
-          type: component.panelType,
+  const onKeyDown = React.useCallback((e) => {
+    if (e.key === "ArrowDown" && highlightedPanelIdx != null) {
+      setHighlightedPanelIdx((highlightedPanelIdx + 1) % filteredItems.length);
+    } else if (e.key === "ArrowUp" && highlightedPanelIdx != null) {
+      const newIdx = (highlightedPanelIdx - 1) % (filteredItems.length - 1);
+      setHighlightedPanelIdx(newIdx >= 0 ? newIdx : filteredItems.length + newIdx);
+    } else if (e.key === "Enter" && highlightedPanel) {
+      const { component, presetSettings } = highlightedPanel;
+      onPanelSelect({
+        type: component.panelType,
+        config: presetSettings?.config,
+        relatedConfigs: presetSettings?.relatedConfigs,
+      });
+    }
+  }, [filteredItems.length, highlightedPanel, highlightedPanelIdx, onPanelSelect]);
+
+  const displayPanelListItem = React.useCallback(({ presetSettings, title, component: { panelType } }) => {
+    return (
+      <DraggablePanelItem
+        key={`${panelType}-${title}`}
+        mosaicId={mosaicId}
+        panel={{
+          type: panelType,
+          title,
           config: presetSettings?.config,
           relatedConfigs: presetSettings?.relatedConfigs,
-        });
-      }
-    },
-    [filteredItems.length, highlightedPanel, highlightedPanelIdx, onPanelSelect]
-  );
-
-  const displayPanelListItem = React.useCallback(
-    ({ presetSettings, title, component: { panelType } }) => {
-      return (
-        <DraggablePanelItem
-          key={`${panelType}-${title}`}
-          mosaicId={mosaicId}
-          panel={{
+        }}
+        onDrop={onPanelMenuItemDrop}
+        onClick={() =>
+          onPanelSelect({
             type: panelType,
-            title,
             config: presetSettings?.config,
             relatedConfigs: presetSettings?.relatedConfigs,
-          }}
-          onDrop={onPanelMenuItemDrop}
-          onClick={() =>
-            onPanelSelect({
-              type: panelType,
-              config: presetSettings?.config,
-              relatedConfigs: presetSettings?.relatedConfigs,
-            })
-          }
-          checked={title === selectedPanelTitle}
-          highlighted={highlightedPanel?.title === title}
-          searchQuery={searchQuery}
-        />
-      );
-    },
-    [highlightedPanel, mosaicId, onPanelMenuItemDrop, onPanelSelect, searchQuery, selectedPanelTitle]
-  );
+          })
+        }
+        checked={title === selectedPanelTitle}
+        highlighted={highlightedPanel?.title === title}
+        searchQuery={searchQuery}
+      />
+    );
+  }, [highlightedPanel, mosaicId, onPanelMenuItemDrop, onPanelSelect, searchQuery, selectedPanelTitle]);
 
   return (
     <div data-test-panel-category style={{ height: "100%", width: "320px" }}>

@@ -88,25 +88,19 @@ function GlobalVariablesMenu(props: Props) {
 
   const dispatch = useDispatch();
   const layout = useSelector((state) => state.persistedState.panels.layout);
-  const addPanelToLayout = useCallback(
-    () => {
-      setIsOpen((open) => !open);
-      dispatch(addPanel(({ type: GlobalVariables.panelType, layout, tabId: null }: AddPanelPayload)));
+  const addPanelToLayout = useCallback(() => {
+    setIsOpen((open) => !open);
+    dispatch(addPanel(({ type: GlobalVariables.panelType, layout, tabId: null }: AddPanelPayload)));
 
-      logEvent({ name: getEventNames().PANEL_ADD, tags: { [getEventTags().PANEL_TYPE]: GlobalVariables.panelType } });
-    },
-    [dispatch, layout]
-  );
+    logEvent({ name: getEventNames().PANEL_ADD, tags: { [getEventTags().PANEL_TYPE]: GlobalVariables.panelType } });
+  }, [dispatch, layout]);
 
   const { globalVariables } = useGlobalVariables();
-  useEffect(
-    () => {
-      setHasChangedVariable(!skipAnimation && !isActiveElementEditable());
-      const timerId = setTimeout(() => setHasChangedVariable(false), ANIMATION_RESET_DELAY_MS);
-      return () => clearTimeout(timerId);
-    },
-    [globalVariables, skipAnimation]
-  );
+  useEffect(() => {
+    setHasChangedVariable(!skipAnimation && !isActiveElementEditable());
+    const timerId = setTimeout(() => setHasChangedVariable(false), ANIMATION_RESET_DELAY_MS);
+    return () => clearTimeout(timerId);
+  }, [globalVariables, skipAnimation]);
 
   return (
     <ChildToggle position="below" onToggle={onToggle} isOpen={isOpen} dataTest="open-global-variables">

@@ -71,13 +71,10 @@ const useSubscribeToTopicsForBlocks = (topics: $ReadOnlyArray<string>) => {
   const setSubscriptions = useMessagePipeline(
     useCallback(({ setSubscriptions: pipelineSetSubscriptions }) => pipelineSetSubscriptions, [])
   );
-  const subscriptions: SubscribePayload[] = useMemo(
-    () => {
-      const requester = panelType ? { type: "panel", name: panelType } : undefined;
-      return topics.map((topic) => ({ topic, requester, format: "bobjects" }));
-    },
-    [panelType, topics]
-  );
+  const subscriptions: SubscribePayload[] = useMemo(() => {
+    const requester = panelType ? { type: "panel", name: panelType } : undefined;
+    return topics.map((topic) => ({ topic, requester, format: "bobjects" }));
+  }, [panelType, topics]);
   useEffect(() => setSubscriptions(id, subscriptions), [id, setSubscriptions, subscriptions]);
   useCleanup(() => setSubscriptions(id, []));
 };
@@ -108,39 +105,33 @@ export function useBlocksByTopic(topics: $ReadOnlyArray<string>): BlocksForTopic
 
   const exposeBlockData = !!allBlocks; // The websocket player does not expose blocks.
 
-  const messageReadersByTopic = useMemo(
-    () => {
-      if (!exposeBlockData) {
-        // Do not provide any readers if the player does not provide blocks. A missing reader
-        // signals that binary data will never appear for a topic.
-        return {};
+  const messageReadersByTopic = useMemo(() => {
+    if (!exposeBlockData) {
+      // Do not provide any readers if the player does not provide blocks. A missing reader
+      // signals that binary data will never appear for a topic.
+      return {};
+    }
+    const result = {};
+    for (const topic of requestedTopics) {
+      if (parsedMessageDefinitionsByTopic && parsedMessageDefinitionsByTopic[topic]) {
+        const parsedDefinition = parsedMessageDefinitionsByTopic[topic];
+        result[topic] = new MessageReader(parsedDefinition);
       }
-      const result = {};
-      for (const topic of requestedTopics) {
-        if (parsedMessageDefinitionsByTopic && parsedMessageDefinitionsByTopic[topic]) {
-          const parsedDefinition = parsedMessageDefinitionsByTopic[topic];
-          result[topic] = new MessageReader(parsedDefinition);
-        }
-      }
-      return result;
-    },
-    [parsedMessageDefinitionsByTopic, requestedTopics, exposeBlockData]
-  );
+    }
+    return result;
+  }, [parsedMessageDefinitionsByTopic, requestedTopics, exposeBlockData]);
   const presentTopics = useMemo(() => Object.keys(messageReadersByTopic), [messageReadersByTopic]);
 
-  const blocks = useMemo(
-    () => {
-      if (!allBlocks) {
-        return [];
-      }
-      const ret = [];
-      // Note: allBlocks.map() misbehaves, because allBlocks is initialized like "new Array(...)".
-      for (let i = 0; i < allBlocks.length; ++i) {
-        ret.push(filterBlockByTopics(allBlocks[i], presentTopics));
-      }
-      return ret;
-    },
-    [allBlocks, presentTopics]
-  );
+  const blocks = useMemo(() => {
+    if (!allBlocks) {
+      return [];
+    }
+    const ret = [];
+    // Note: allBlocks.map() misbehaves, because allBlocks is initialized like "new Array(...)".
+    for (let i = 0; i < allBlocks.length; ++i) {
+      ret.push(filterBlockByTopics(allBlocks[i], presentTopics));
+    }
+    return ret;
+  }, [allBlocks, presentTopics]);
   return useShallowMemo({ messageReadersByTopic, blocks });
 }

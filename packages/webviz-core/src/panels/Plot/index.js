@@ -249,17 +249,14 @@ function Plot(props: Props) {
     }
   }
 
-  const onClick = useCallback(
-    (_, __, { X_AXIS_ID: seekSeconds }) => {
-      if (!startTime || seekSeconds == null || !seek || xAxisVal !== "timestamp") {
-        return;
-      }
-      // The player validates and clamps the time.
-      const seekTime = TimeUtil.add(startTime, fromSec(seekSeconds));
-      seek(seekTime);
-    },
-    [seek, startTime, xAxisVal]
-  );
+  const onClick = useCallback((_, __, { X_AXIS_ID: seekSeconds }) => {
+    if (!startTime || seekSeconds == null || !seek || xAxisVal !== "timestamp") {
+      return;
+    }
+    // The player validates and clamps the time.
+    const seekTime = TimeUtil.add(startTime, fromSec(seekSeconds));
+    seek(seekTime);
+  }, [seek, startTime, xAxisVal]);
 
   return (
     <Flex col clip center style={{ position: "relative" }}>

@@ -21,13 +21,10 @@ export default function GlobalVariableSlider(props: Props): ReactNode {
   const { globalVariables, setGlobalVariables } = useGlobalVariables();
   const globalVariableValue = globalVariables[props.globalVariableName];
 
-  const onChange = useCallback(
-    (newValue) => {
-      if (newValue !== globalVariableValue) {
-        setGlobalVariables({ [props.globalVariableName]: newValue });
-      }
-    },
-    [props.globalVariableName, globalVariableValue, setGlobalVariables]
-  );
+  const onChange = useCallback((newValue) => {
+    if (newValue !== globalVariableValue) {
+      setGlobalVariables({ [props.globalVariableName]: newValue });
+    }
+  }, [props.globalVariableName, globalVariableValue, setGlobalVariables]);
   return <SliderWithTicks value={globalVariableValue} sliderProps={props.sliderProps} onChange={onChange} />;
 }

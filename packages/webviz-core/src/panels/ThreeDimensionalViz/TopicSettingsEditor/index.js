@@ -154,12 +154,9 @@ const TopicSettingsEditor = React.memo<Props>(function TopicSettingsEditor({
   settings,
   onSettingsChange,
 }: Props) {
-  const onFieldChange = useCallback(
-    (fieldName: string, value: any) => {
-      onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
-    },
-    [onSettingsChange]
-  );
+  const onFieldChange = useCallback((fieldName: string, value: any) => {
+    onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
+  }, [onSettingsChange]);
 
   const Editor = topicSettingsEditorForDatatype(topic.datatype);
   if (!Editor) {

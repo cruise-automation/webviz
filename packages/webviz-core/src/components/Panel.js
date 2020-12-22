@@ -168,150 +168,136 @@ export default function Panel<Config: PanelConfig>(
     const panelComponentConfig = useMemo(() => ({ ...PanelComponent.defaultConfig, ...config }), [config]);
 
     // Mix partial config with current config or `defaultConfig`
-    const saveCompleteConfig = useCallback(
-      (configToSave: $Shape<Config>, options: ?{ historyOptions?: EditHistoryOptions }) => {
-        if (saveConfig) {
-          saveConfig(configToSave);
-        }
-        if (childId) {
-          actions.savePanelConfigs({
-            configs: [{ id: childId, config: configToSave, defaultConfig: PanelComponent.defaultConfig }],
-            historyOptions: options?.historyOptions,
-          });
-        }
-      },
-      [actions, childId, saveConfig]
-    );
+    const saveCompleteConfig = useCallback((
+      configToSave: $Shape<Config>,
+      options: ?{ historyOptions?: EditHistoryOptions }
+    ) => {
+      if (saveConfig) {
+        saveConfig(configToSave);
+      }
+      if (childId) {
+        actions.savePanelConfigs({
+          configs: [{ id: childId, config: configToSave, defaultConfig: PanelComponent.defaultConfig }],
+          historyOptions: options?.historyOptions,
+        });
+      }
+    }, [actions, childId, saveConfig]);
 
-    const updatePanelConfig = useCallback(
-      (panelType: string, perPanelFunc: (PanelConfig) => PanelConfig, historyOptions?: EditHistoryOptions) => {
-        actions.saveFullPanelConfig({ panelType, perPanelFunc, historyOptions });
-      },
-      [actions]
-    );
+    const updatePanelConfig = useCallback((
+      panelType: string,
+      perPanelFunc: (PanelConfig) => PanelConfig,
+      historyOptions?: EditHistoryOptions
+    ) => {
+      actions.saveFullPanelConfig({ panelType, perPanelFunc, historyOptions });
+    }, [actions]);
 
     // Open a panel next to the current panel, of the specified `panelType`.
     // If such a panel already exists, we update it with the new props.
-    const openSiblingPanel = useCallback(
-      (panelType: string, siblingConfigCreator: (PanelConfig) => PanelConfig) => {
-        const siblingComponent = PanelList.getComponentForType(panelType);
-        if (!siblingComponent) {
-          return;
-        }
-        const siblingDefaultConfig = siblingComponent.defaultConfig;
-        const ownPath = mosaicWindowActions.getPath();
+    const openSiblingPanel = useCallback((panelType: string, siblingConfigCreator: (PanelConfig) => PanelConfig) => {
+      const siblingComponent = PanelList.getComponentForType(panelType);
+      if (!siblingComponent) {
+        return;
+      }
+      const siblingDefaultConfig = siblingComponent.defaultConfig;
+      const ownPath = mosaicWindowActions.getPath();
 
-        // Try to find a sibling summary panel and update it with the `siblingConfig`
-        const siblingPathEnd = last(ownPath) ? getOtherBranch(last(ownPath)) : "second";
-        const siblingPath = ownPath.slice(0, -1).concat(siblingPathEnd);
-        const siblingId = getNodeAtPath(mosaicActions.getRoot(), siblingPath);
-        if (typeof siblingId === "string" && getPanelTypeFromId(siblingId) === panelType) {
-          const siblingConfig: PanelConfig = { ...siblingDefaultConfig, ...stableSavedProps.current[siblingId] };
-          actions.savePanelConfigs({
-            configs: [
-              { id: siblingId, config: siblingConfigCreator(siblingConfig), defaultConfig: siblingDefaultConfig },
-            ],
-          });
-          return;
-        }
-
-        // Otherwise, open new panel
-        const newPanelPath = ownPath.concat("second");
-        mosaicWindowActions.split({ type: panelType }).then(() => {
-          const newPanelId = getNodeAtPath(mosaicActions.getRoot(), newPanelPath);
-          actions.savePanelConfigs({
-            configs: [
-              {
-                id: newPanelId,
-                config: siblingConfigCreator(siblingDefaultConfig),
-                defaultConfig: siblingDefaultConfig,
-              },
-            ],
-          });
+      // Try to find a sibling summary panel and update it with the `siblingConfig`
+      const siblingPathEnd = last(ownPath) ? getOtherBranch(last(ownPath)) : "second";
+      const siblingPath = ownPath.slice(0, -1).concat(siblingPathEnd);
+      const siblingId = getNodeAtPath(mosaicActions.getRoot(), siblingPath);
+      if (typeof siblingId === "string" && getPanelTypeFromId(siblingId) === panelType) {
+        const siblingConfig: PanelConfig = { ...siblingDefaultConfig, ...stableSavedProps.current[siblingId] };
+        actions.savePanelConfigs({
+          configs: [
+            { id: siblingId, config: siblingConfigCreator(siblingConfig), defaultConfig: siblingDefaultConfig },
+          ],
         });
-      },
-      [actions, mosaicActions, mosaicWindowActions]
-    );
+        return;
+      }
 
-    const selectPanel = useCallback(
-      (panelId: string, toggleSelection: boolean) => {
-        const panelIdsToDeselect = [];
-
-        // If we selected a Tab panel, deselect its children
-        const savedConfig = savedProps[panelId];
-        if (isTabPanel(panelId) && savedConfig) {
-          const { activeTabIdx, tabs } = (savedConfig: TabPanelConfig);
-          const activeTabLayout = tabs[activeTabIdx]?.layout;
-          if (activeTabLayout) {
-            const childrenPanelIds = getAllPanelIds(activeTabLayout, savedProps);
-            panelIdsToDeselect.push(...childrenPanelIds);
-          }
-        }
-
-        // If we selected a child, deselect all parent Tab panels
-        const parentTabPanelByPanelId = getParentTabPanelByPanelId(savedProps);
-        let nextParentId = tabId;
-        const parentTabPanelIds = [];
-        while (nextParentId) {
-          parentTabPanelIds.push(nextParentId);
-          nextParentId = parentTabPanelByPanelId[nextParentId];
-        }
-        panelIdsToDeselect.push(...parentTabPanelIds);
-
-        const nextSelectedPanelIds = toggleSelection ? xor(selectedPanelIds, [panelId]) : [panelId];
-        const nextValidSelectedPanelIds = without(nextSelectedPanelIds, ...panelIdsToDeselect);
-        actions.setSelectedPanelIds(nextValidSelectedPanelIds);
-
-        // Deselect any text that was selected due to holding the shift key while clicking
-        if (nextValidSelectedPanelIds.length >= 2) {
-          window.getSelection().removeAllRanges();
-        }
-      },
-      [actions, savedProps, selectedPanelIds, tabId]
-    );
-
-    const onOverlayClick = useCallback(
-      (e) => {
-        if (!fullScreen && quickActionsKeyPressed) {
-          setFullScreen(true);
-          if (shiftKeyPressed) {
-            setFullScreenLocked(true);
-          }
-          return;
-        }
-
-        if (childId) {
-          e.stopPropagation();
-          const toggleSelection = e.metaKey || shiftKeyPressed;
-          selectPanel(childId, toggleSelection);
-        }
-      },
-      [childId, fullScreen, quickActionsKeyPressed, selectPanel, shiftKeyPressed]
-    );
-
-    const groupPanels = useCallback(
-      () => {
-        actions.createTabPanel({
-          idToReplace: childId,
-          layout,
-          idsToRemove: selectedPanelIds,
-          singleTab: true,
+      // Otherwise, open new panel
+      const newPanelPath = ownPath.concat("second");
+      mosaicWindowActions.split({ type: panelType }).then(() => {
+        const newPanelId = getNodeAtPath(mosaicActions.getRoot(), newPanelPath);
+        actions.savePanelConfigs({
+          configs: [
+            {
+              id: newPanelId,
+              config: siblingConfigCreator(siblingDefaultConfig),
+              defaultConfig: siblingDefaultConfig,
+            },
+          ],
         });
-      },
-      [actions, childId, layout, selectedPanelIds]
-    );
+      });
+    }, [actions, mosaicActions, mosaicWindowActions]);
 
-    const createTabs = useCallback(
-      () => {
-        actions.createTabPanel({
-          idToReplace: childId,
-          layout,
-          idsToRemove: selectedPanelIds,
-          singleTab: false,
-        });
-      },
-      [actions, childId, layout, selectedPanelIds]
-    );
+    const selectPanel = useCallback((panelId: string, toggleSelection: boolean) => {
+      const panelIdsToDeselect = [];
+
+      // If we selected a Tab panel, deselect its children
+      const savedConfig = savedProps[panelId];
+      if (isTabPanel(panelId) && savedConfig) {
+        const { activeTabIdx, tabs } = (savedConfig: TabPanelConfig);
+        const activeTabLayout = tabs[activeTabIdx]?.layout;
+        if (activeTabLayout) {
+          const childrenPanelIds = getAllPanelIds(activeTabLayout, savedProps);
+          panelIdsToDeselect.push(...childrenPanelIds);
+        }
+      }
+
+      // If we selected a child, deselect all parent Tab panels
+      const parentTabPanelByPanelId = getParentTabPanelByPanelId(savedProps);
+      let nextParentId = tabId;
+      const parentTabPanelIds = [];
+      while (nextParentId) {
+        parentTabPanelIds.push(nextParentId);
+        nextParentId = parentTabPanelByPanelId[nextParentId];
+      }
+      panelIdsToDeselect.push(...parentTabPanelIds);
+
+      const nextSelectedPanelIds = toggleSelection ? xor(selectedPanelIds, [panelId]) : [panelId];
+      const nextValidSelectedPanelIds = without(nextSelectedPanelIds, ...panelIdsToDeselect);
+      actions.setSelectedPanelIds(nextValidSelectedPanelIds);
+
+      // Deselect any text that was selected due to holding the shift key while clicking
+      if (nextValidSelectedPanelIds.length >= 2) {
+        window.getSelection().removeAllRanges();
+      }
+    }, [actions, savedProps, selectedPanelIds, tabId]);
+
+    const onOverlayClick = useCallback((e) => {
+      if (!fullScreen && quickActionsKeyPressed) {
+        setFullScreen(true);
+        if (shiftKeyPressed) {
+          setFullScreenLocked(true);
+        }
+        return;
+      }
+
+      if (childId) {
+        e.stopPropagation();
+        const toggleSelection = e.metaKey || shiftKeyPressed;
+        selectPanel(childId, toggleSelection);
+      }
+    }, [childId, fullScreen, quickActionsKeyPressed, selectPanel, shiftKeyPressed]);
+
+    const groupPanels = useCallback(() => {
+      actions.createTabPanel({
+        idToReplace: childId,
+        layout,
+        idsToRemove: selectedPanelIds,
+        singleTab: true,
+      });
+    }, [actions, childId, layout, selectedPanelIds]);
+
+    const createTabs = useCallback(() => {
+      actions.createTabPanel({
+        idToReplace: childId,
+        layout,
+        idsToRemove: selectedPanelIds,
+        singleTab: false,
+      });
+    }, [actions, childId, layout, selectedPanelIds]);
 
     const { closePanel, splitPanel } = useMemo(
       () => ({
@@ -359,15 +345,12 @@ export default function Panel<Config: PanelConfig>(
       [cmdKeyPressed]
     );
 
-    const onReleaseQuickActionsKey = useCallback(
-      () => {
-        setQuickActionsKeyPressed(false);
-        if (fullScreen && !fullScreenLocked) {
-          exitFullScreen();
-        }
-      },
-      [exitFullScreen, fullScreen, fullScreenLocked]
-    );
+    const onReleaseQuickActionsKey = useCallback(() => {
+      setQuickActionsKeyPressed(false);
+      if (fullScreen && !fullScreenLocked) {
+        exitFullScreen();
+      }
+    }, [exitFullScreen, fullScreen, fullScreenLocked]);
 
     const { keyUpHandlers, keyDownHandlers } = useMemo(
       () => ({
@@ -394,15 +377,12 @@ export default function Panel<Config: PanelConfig>(
       [actions, cmdKeyPressed, exitFullScreen, onReleaseQuickActionsKey]
     );
 
-    const onBlurDocument = useCallback(
-      () => {
-        exitFullScreen();
-        setCmdKeyPressed(false);
-        setShiftKeyPressed(false);
-        onReleaseQuickActionsKey();
-      },
-      [exitFullScreen, onReleaseQuickActionsKey]
-    );
+    const onBlurDocument = useCallback(() => {
+      exitFullScreen();
+      setCmdKeyPressed(false);
+      setShiftKeyPressed(false);
+      onReleaseQuickActionsKey();
+    }, [exitFullScreen, onReleaseQuickActionsKey]);
 
     const child = useMemo(
       () => (

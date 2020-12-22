@@ -59,16 +59,13 @@ function usePlaybackMessage<T>(topic: string): ?T {
 export default function useBlockMessageByTopicWithFallback<T>(topic: string): ?T {
   const { blocks, messageReadersByTopic } = PanelAPI.useBlocksByTopic([topic]);
 
-  const binaryBlocksMessage = useMemo(
-    () => {
-      if (!messageReadersByTopic[topic]) {
-        return;
-      }
-      const maybeBlockWithMessage = blocks.find((block) => block[topic]?.length);
-      return maybeBlockWithMessage?.[topic]?.[0];
-    },
-    [blocks, messageReadersByTopic, topic]
-  );
+  const binaryBlocksMessage = useMemo(() => {
+    if (!messageReadersByTopic[topic]) {
+      return;
+    }
+    const maybeBlockWithMessage = blocks.find((block) => block[topic]?.length);
+    return maybeBlockWithMessage?.[topic]?.[0];
+  }, [blocks, messageReadersByTopic, topic]);
 
   const parsedBlockMessage =
     binaryBlocksMessage && blockMessageCache.parseMessages([binaryBlocksMessage], messageReadersByTopic)[0]?.message;

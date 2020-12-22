@@ -44,36 +44,30 @@ export function useMessagesByTopic<T: any>({
   const addMessages: (
     $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }>,
     $ReadOnlyArray<TypedMessage<T>>
-  ) => $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }> = useCallback(
-    (
-      prevMessagesByTopic: $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }>,
-      messages: $ReadOnlyArray<TypedMessage<T>>
-    ) => {
-      const newMessagesByTopic = groupBy(messages, "topic");
-      const ret = { ...prevMessagesByTopic };
-      Object.keys(newMessagesByTopic).forEach((topic) => {
-        ret[topic] = concatAndTruncate(ret[topic], newMessagesByTopic[topic], historySize);
-      });
-      return ret;
-    },
-    [historySize]
-  );
+  ) => $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }> = useCallback((
+    prevMessagesByTopic: $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }>,
+    messages: $ReadOnlyArray<TypedMessage<T>>
+  ) => {
+    const newMessagesByTopic = groupBy(messages, "topic");
+    const ret = { ...prevMessagesByTopic };
+    Object.keys(newMessagesByTopic).forEach((topic) => {
+      ret[topic] = concatAndTruncate(ret[topic], newMessagesByTopic[topic], historySize);
+    });
+    return ret;
+  }, [historySize]);
 
-  const restore = useCallback(
-    (
-      prevMessagesByTopic: ?$ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }>
-    ): $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }> => {
-      const newMessagesByTopic: { [topic: string]: TypedMessage<T>[] } = {};
-      // When changing topics, we try to keep as many messages around from the previous set of
-      // topics as possible.
-      for (const topic of requestedTopics) {
-        newMessagesByTopic[topic] =
-          prevMessagesByTopic && prevMessagesByTopic[topic] ? prevMessagesByTopic[topic].slice(-historySize) : [];
-      }
-      return newMessagesByTopic;
-    },
-    [requestedTopics, historySize]
-  );
+  const restore = useCallback((
+    prevMessagesByTopic: ?$ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }>
+  ): $ReadOnly<{ [string]: $ReadOnlyArray<TypedMessage<T>> }> => {
+    const newMessagesByTopic: { [topic: string]: TypedMessage<T>[] } = {};
+    // When changing topics, we try to keep as many messages around from the previous set of
+    // topics as possible.
+    for (const topic of requestedTopics) {
+      newMessagesByTopic[topic] =
+        prevMessagesByTopic && prevMessagesByTopic[topic] ? prevMessagesByTopic[topic].slice(-historySize) : [];
+    }
+    return newMessagesByTopic;
+  }, [requestedTopics, historySize]);
 
   return useMessageReducer({
     topics: requestedTopics,

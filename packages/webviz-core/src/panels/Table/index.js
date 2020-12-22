@@ -123,23 +123,20 @@ function getColumnsFromObject(obj: RosObject, accessorPath: string): ColumnOptio
 
 const Table = ({ value, accessorPath }: {| value: mixed, accessorPath: string |}) => {
   const isNested = !!accessorPath;
-  const columns = React.useMemo(
-    () => {
-      if (
-        value === null ||
-        typeof value !== "object" ||
-        (Array.isArray(value) && typeof value[0] !== "object" && value[0] !== null)
-      ) {
-        return [];
-      }
+  const columns = React.useMemo(() => {
+    if (
+      value === null ||
+      typeof value !== "object" ||
+      (Array.isArray(value) && typeof value[0] !== "object" && value[0] !== null)
+    ) {
+      return [];
+    }
 
-      const rosObject: RosObject = ((Array.isArray(value) ? value[0] || {} : value): any);
+    const rosObject: RosObject = ((Array.isArray(value) ? value[0] || {} : value): any);
 
-      // Strong assumption about structure of data.
-      return getColumnsFromObject(rosObject, accessorPath);
-    },
-    [accessorPath, value]
-  );
+    // Strong assumption about structure of data.
+    return getColumnsFromObject(rosObject, accessorPath);
+  }, [accessorPath, value]);
 
   const data = React.useMemo(() => (Array.isArray(value) ? value : [value]), [value]);
 
@@ -295,12 +292,9 @@ type Props = { config: Config, saveConfig: SaveConfig<Config> };
 
 function TablePanel({ config, saveConfig }: Props) {
   const { topicPath } = config;
-  const onTopicPathChange = React.useCallback(
-    (newTopicPath: string) => {
-      saveConfig({ topicPath: newTopicPath });
-    },
-    [saveConfig]
-  );
+  const onTopicPathChange = React.useCallback((newTopicPath: string) => {
+    saveConfig({ topicPath: newTopicPath });
+  }, [saveConfig]);
 
   const topicRosPath: ?RosPath = React.useMemo(() => parseRosPath(topicPath), [topicPath]);
   const topicName = topicRosPath?.topicName || "";

@@ -76,58 +76,52 @@ export const useGLText = ({
   ...WorldSearchTextProps,
   text: Interactive<TextMarker>[],
 |}): Interactive<GLTextMarker>[] => {
-  const glText: Interactive<GLTextMarker>[] = React.useMemo(
-    () => {
-      let numMatches = 0;
-      return text.map((marker) => {
-        const scale = {
-          // RViz ignores scale.x/y for text and only uses z
-          x: marker.scale.z,
-          y: marker.scale.z,
-          z: marker.scale.z,
-        };
+  const glText: Interactive<GLTextMarker>[] = React.useMemo(() => {
+    let numMatches = 0;
+    return text.map((marker) => {
+      const scale = {
+        // RViz ignores scale.x/y for text and only uses z
+        x: marker.scale.z,
+        y: marker.scale.z,
+        z: marker.scale.z,
+      };
 
-        if (!searchText || !searchTextOpen) {
-          return { ...marker, scale };
-        }
-
-        const highlightedIndices = getHighlightedIndices(marker.text, searchText);
-
-        if (highlightedIndices.length) {
-          numMatches += 1;
-          const highlightedMarker = {
-            ...marker,
-            scale,
-            highlightColor: selectedMatchIndex + 1 === numMatches ? ORANGE : YELLOW,
-            highlightedIndices,
-          };
-          return highlightedMarker;
-        }
-
+      if (!searchText || !searchTextOpen) {
         return { ...marker, scale };
-      });
-    },
-    [searchText, searchTextOpen, selectedMatchIndex, text]
-  );
+      }
+
+      const highlightedIndices = getHighlightedIndices(marker.text, searchText);
+
+      if (highlightedIndices.length) {
+        numMatches += 1;
+        const highlightedMarker = {
+          ...marker,
+          scale,
+          highlightColor: selectedMatchIndex + 1 === numMatches ? ORANGE : YELLOW,
+          highlightedIndices,
+        };
+        return highlightedMarker;
+      }
+
+      return { ...marker, scale };
+    });
+  }, [searchText, searchTextOpen, selectedMatchIndex, text]);
 
   const throttledSetSearchTextMatches = useCallback(throttle(setSearchTextMatches, 200, { trailing: true }), [
     setSearchTextMatches,
   ]);
 
-  useEffect(
-    () => {
-      if (!searchTextOpen && !searchTextMatches.length) {
-        return;
-      }
-      const matches = glText.filter((marker) => marker.highlightedIndices && marker.highlightedIndices.length);
-      if (matches.length) {
-        throttledSetSearchTextMatches(matches);
-      } else if (!matches.length && searchTextMatches.length) {
-        throttledSetSearchTextMatches([]);
-      }
-    },
-    [throttledSetSearchTextMatches, glText, searchText, searchTextMatches.length, searchTextOpen]
-  );
+  useEffect(() => {
+    if (!searchTextOpen && !searchTextMatches.length) {
+      return;
+    }
+    const matches = glText.filter((marker) => marker.highlightedIndices && marker.highlightedIndices.length);
+    if (matches.length) {
+      throttledSetSearchTextMatches(matches);
+    } else if (!matches.length && searchTextMatches.length) {
+      throttledSetSearchTextMatches([]);
+    }
+  }, [throttledSetSearchTextMatches, glText, searchText, searchTextMatches.length, searchTextOpen]);
 
   return glText;
 };
@@ -177,34 +171,31 @@ export const useSearchMatches = ({
   transforms: Transforms,
 }) => {
   const hasCurrentMatchChanged = useDeepChangeDetector([currentMatch], true);
-  React.useEffect(
-    () => {
-      if (!currentMatch || !searchTextOpen || !rootTf || !hasCurrentMatchChanged) {
-        return;
-      }
+  React.useEffect(() => {
+    if (!currentMatch || !searchTextOpen || !rootTf || !hasCurrentMatchChanged) {
+      return;
+    }
 
-      const { header, pose } = currentMatch;
+    const { header, pose } = currentMatch;
 
-      const output = transforms.apply(
-        { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 0 } },
-        pose,
-        header.frame_id,
-        rootTf
-      );
-      if (!output) {
-        return;
-      }
-      const {
-        position: { x, y, z },
-      } = output;
+    const output = transforms.apply(
+      { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 0 } },
+      pose,
+      header.frame_id,
+      rootTf
+    );
+    if (!output) {
+      return;
+    }
+    const {
+      position: { x, y, z },
+    } = output;
 
-      const targetHeading = cameraStateSelectors.targetHeading(cameraState);
-      const targetOffset = [0, 0, 0];
-      vec3.rotateZ(targetOffset, vec3.subtract(targetOffset, [x, y, z], cameraState.target), [0, 0, 0], targetHeading);
-      onCameraStateChange({ ...cameraState, targetOffset });
-    },
-    [cameraState, currentMatch, hasCurrentMatchChanged, onCameraStateChange, rootTf, searchTextOpen, transforms]
-  );
+    const targetHeading = cameraStateSelectors.targetHeading(cameraState);
+    const targetOffset = [0, 0, 0];
+    vec3.rotateZ(targetOffset, vec3.subtract(targetOffset, [x, y, z], cameraState.target), [0, 0, 0], targetHeading);
+    onCameraStateChange({ ...cameraState, targetOffset });
+  }, [cameraState, currentMatch, hasCurrentMatchChanged, onCameraStateChange, rootTf, searchTextOpen, transforms]);
 };
 
 const SearchText = React.memo<SearchTextComponentProps>(
@@ -223,28 +214,22 @@ const SearchText = React.memo<SearchTextComponentProps>(
     rootTf,
   }: SearchTextComponentProps) => {
     const currentMatch = searchTextMatches[selectedMatchIndex];
-    const iterateCurrentIndex = useCallback(
-      (iterator: number) => {
-        const newIndex = selectedMatchIndex + iterator;
-        if (newIndex >= searchTextMatches.length) {
-          setSelectedMatchIndex(0);
-        } else if (newIndex < 0) {
-          setSelectedMatchIndex(searchTextMatches.length - 1);
-        } else {
-          setSelectedMatchIndex(newIndex);
-        }
-      },
-      [searchTextMatches, selectedMatchIndex, setSelectedMatchIndex]
-    );
+    const iterateCurrentIndex = useCallback((iterator: number) => {
+      const newIndex = selectedMatchIndex + iterator;
+      if (newIndex >= searchTextMatches.length) {
+        setSelectedMatchIndex(0);
+      } else if (newIndex < 0) {
+        setSelectedMatchIndex(searchTextMatches.length - 1);
+      } else {
+        setSelectedMatchIndex(newIndex);
+      }
+    }, [searchTextMatches, selectedMatchIndex, setSelectedMatchIndex]);
 
-    React.useEffect(
-      () => {
-        if (!searchTextMatches.length) {
-          setSelectedMatchIndex(0);
-        }
-      },
-      [searchTextMatches.length, setSelectedMatchIndex]
-    );
+    React.useEffect(() => {
+      if (!searchTextMatches.length) {
+        setSelectedMatchIndex(0);
+      }
+    }, [searchTextMatches.length, setSelectedMatchIndex]);
 
     useSearchMatches({
       cameraState,

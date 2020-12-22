@@ -35,29 +35,26 @@ export function ScreenshotsProvider({ children }: { children: React$Node }) {
   const isTakingScreenshotRef = useRef(isTakingScreenshot);
   isTakingScreenshotRef.current = isTakingScreenshot;
 
-  const takeScreenshot = useCallback(
-    async (element: HTMLElement): Promise<?Blob> => {
-      if (isTakingScreenshotRef.current) {
-        return;
-      }
+  const takeScreenshot = useCallback(async (element: HTMLElement): Promise<?Blob> => {
+    if (isTakingScreenshotRef.current) {
+      return;
+    }
 
-      // We always pause playback when taking the screenshot.
-      pausePlayback();
-      setIsTakingScreenshot(true);
+    // We always pause playback when taking the screenshot.
+    pausePlayback();
+    setIsTakingScreenshot(true);
 
-      let image;
-      try {
-        image = await domToImage.toBlob(element, { scrollFix: true });
-      } catch (error) {
-        log.error(error);
-        sendNotification("Error taking screenshot", error.stack, "app", "error");
-      } finally {
-        setIsTakingScreenshot(false);
-      }
-      return image;
-    },
-    [pausePlayback]
-  );
+    let image;
+    try {
+      image = await domToImage.toBlob(element, { scrollFix: true });
+    } catch (error) {
+      log.error(error);
+      sendNotification("Error taking screenshot", error.stack, "app", "error");
+    } finally {
+      setIsTakingScreenshot(false);
+    }
+    return image;
+  }, [pausePlayback]);
 
   const contextValue = {
     takeScreenshot,

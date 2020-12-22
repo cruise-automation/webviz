@@ -45,14 +45,11 @@ function Example({
 }) {
   const [value, setValue] = React.useState(obj);
 
-  React.useEffect(
-    () => {
-      setTimeout(() => {
-        setValue(changedObj);
-      }, 10);
-    },
-    [changedObj]
-  );
+  React.useEffect(() => {
+    setTimeout(() => {
+      setValue(changedObj);
+    }, 10);
+  }, [changedObj]);
 
   return (
     <Box>

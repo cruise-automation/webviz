@@ -146,30 +146,23 @@ function TopicSettingsModal({
   settingsByKey,
 }: Props) {
   const topicSettingsKey = `t:${topicName}`;
-  const onSettingsChange = useCallback(
-    (settings: any | ((prevSettings: {}) => {})) => {
-      if (typeof settings !== "function" && isEmpty(settings)) {
-        // Remove the field if the topic settings are empty to prevent the panelConfig from every growing.
-        saveConfig({ settingsByKey: omit(settingsByKey, [topicSettingsKey]) });
-        return;
-      }
-      saveConfig({
-        settingsByKey: {
-          ...settingsByKey,
-          [topicSettingsKey]:
-            typeof settings === "function" ? settings(settingsByKey[topicSettingsKey] || {}) : settings,
-        },
-      });
-    },
-    [saveConfig, settingsByKey, topicSettingsKey]
-  );
+  const onSettingsChange = useCallback((settings: any | ((prevSettings: {}) => {})) => {
+    if (typeof settings !== "function" && isEmpty(settings)) {
+      // Remove the field if the topic settings are empty to prevent the panelConfig from every growing.
+      saveConfig({ settingsByKey: omit(settingsByKey, [topicSettingsKey]) });
+      return;
+    }
+    saveConfig({
+      settingsByKey: {
+        ...settingsByKey,
+        [topicSettingsKey]: typeof settings === "function" ? settings(settingsByKey[topicSettingsKey] || {}) : settings,
+      },
+    });
+  }, [saveConfig, settingsByKey, topicSettingsKey]);
 
-  const onFieldChange = useCallback(
-    (fieldName: string, value: any) => {
-      onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
-    },
-    [onSettingsChange]
-  );
+  const onFieldChange = useCallback((fieldName: string, value: any) => {
+    onSettingsChange((newSettings) => ({ ...newSettings, [fieldName]: value }));
+  }, [onSettingsChange]);
 
   const columnIndex = topicName.startsWith(SECOND_SOURCE_PREFIX) ? 1 : 0;
   const nonPrefixedTopic = columnIndex === 1 ? topicName.substr(SECOND_SOURCE_PREFIX.length) : topicName;

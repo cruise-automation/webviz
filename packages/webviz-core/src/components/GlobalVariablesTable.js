@@ -151,26 +151,19 @@ function LinkedGlobalVariableRow({ name }: { name: string }): Node {
     [linkedGlobalVariables, name]
   );
 
-  const unlink = useCallback(
-    (path) => {
-      setLinkedGlobalVariables(
-        linkedGlobalVariables.filter(
-          ({ name: varName, topic, markerKeyPath }) =>
-            !(varName === name && [topic, ...markerKeyPath].join(".") === path)
-        )
-      );
-    },
-    [linkedGlobalVariables, name, setLinkedGlobalVariables]
-  );
+  const unlink = useCallback((path) => {
+    setLinkedGlobalVariables(
+      linkedGlobalVariables.filter(
+        ({ name: varName, topic, markerKeyPath }) => !(varName === name && [topic, ...markerKeyPath].join(".") === path)
+      )
+    );
+  }, [linkedGlobalVariables, name, setLinkedGlobalVariables]);
 
-  const unlinkAndDelete = useCallback(
-    () => {
-      const newLinkedGlobalVariables = linkedGlobalVariables.filter(({ name: varName }) => varName !== name);
-      setLinkedGlobalVariables(newLinkedGlobalVariables);
-      setGlobalVariables({ [name]: undefined });
-    },
-    [linkedGlobalVariables, name, setGlobalVariables, setLinkedGlobalVariables]
-  );
+  const unlinkAndDelete = useCallback(() => {
+    const newLinkedGlobalVariables = linkedGlobalVariables.filter(({ name: varName }) => varName !== name);
+    setLinkedGlobalVariables(newLinkedGlobalVariables);
+    setGlobalVariables({ [name]: undefined });
+  }, [linkedGlobalVariables, name, setGlobalVariables, setLinkedGlobalVariables]);
 
   return (
     <>
@@ -246,25 +239,22 @@ function GlobalVariablesTable(): Node {
   previousGlobalVariablesRef.current = previousGlobalVariables;
 
   const [changedVariables, setChangedVariables] = useState<string[]>([]);
-  useEffect(
-    () => {
-      if (skipAnimation.current || isActiveElementEditable()) {
-        return;
-      }
-      const newChangedVariables = union(
-        Object.keys(globalVariables),
-        Object.keys(previousGlobalVariablesRef.current || {})
-      ).filter((name) => {
-        const previousValue = previousGlobalVariablesRef.current?.[name];
-        return previousValue !== globalVariables[name];
-      });
+  useEffect(() => {
+    if (skipAnimation.current || isActiveElementEditable()) {
+      return;
+    }
+    const newChangedVariables = union(
+      Object.keys(globalVariables),
+      Object.keys(previousGlobalVariablesRef.current || {})
+    ).filter((name) => {
+      const previousValue = previousGlobalVariablesRef.current?.[name];
+      return previousValue !== globalVariables[name];
+    });
 
-      setChangedVariables(newChangedVariables);
-      const timerId = setTimeout(() => setChangedVariables([]), ANIMATION_RESET_DELAY_MS);
-      return () => clearTimeout(timerId);
-    },
-    [globalVariables, skipAnimation]
-  );
+    setChangedVariables(newChangedVariables);
+    const timerId = setTimeout(() => setChangedVariables([]), ANIMATION_RESET_DELAY_MS);
+    return () => clearTimeout(timerId);
+  }, [globalVariables, skipAnimation]);
 
   return (
     <SGlobalVariablesTable>

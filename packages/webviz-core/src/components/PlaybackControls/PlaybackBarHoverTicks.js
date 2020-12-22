@@ -52,28 +52,25 @@ export default React.memo<Props>(({ componentId }: Props) => {
   const { startTime, endTime } = useMessagePipeline(getStartAndEndTime);
   const [width, setWidth] = useState<?number>();
 
-  const scaleBounds = useMemo(
-    () => {
-      if (width == null || startTime == null || endTime == null) {
-        return null;
-      }
-      return {
-        // HoverBar takes a ref to avoid rerendering (and avoid needing to rerender) when the bounds
-        // change in charts that scroll at playback speed.
-        current: [
-          {
-            id: componentId,
-            min: 0,
-            max: toSec(endTime) - toSec(startTime),
-            axes: "xAxes",
-            minAlongAxis: 0,
-            maxAlongAxis: width,
-          },
-        ],
-      };
-    },
-    [width, startTime, endTime, componentId]
-  );
+  const scaleBounds = useMemo(() => {
+    if (width == null || startTime == null || endTime == null) {
+      return null;
+    }
+    return {
+      // HoverBar takes a ref to avoid rerendering (and avoid needing to rerender) when the bounds
+      // change in charts that scroll at playback speed.
+      current: [
+        {
+          id: componentId,
+          min: 0,
+          max: toSec(endTime) - toSec(startTime),
+          axes: "xAxes",
+          minAlongAxis: 0,
+          maxAlongAxis: width,
+        },
+      ],
+    };
+  }, [width, startTime, endTime, componentId]);
 
   return (
     <>

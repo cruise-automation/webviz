@@ -108,93 +108,87 @@ export function MessagePipelineProvider({ children, player, globalVariables = {}
   useEffect(() => (player ? player.setPublishers(publishers) : undefined), [player, publishers]);
 
   // Delay the player listener promise until rendering has finished for the latest data.
-  useLayoutEffect(
-    () => {
-      if (playerTickState.current) {
-        // In certain cases like the player being replaced (reproduce by dragging a bag in while playing), we can
-        // replace the new playerTickState. We want to use one playerTickState throughout the entire tick, since it's
-        // implicitly tied to the player.
-        const currentPlayerTickState = playerTickState.current;
-        // $FlowFixMe it doesn't matter if this function returns a promise.
-        requestAnimationFrame(async () => {
-          if (currentPlayerTickState.resolveFn && !currentPlayerTickState.waitingForPromises) {
-            if (currentPlayerTickState.promisesToWaitFor.length) {
-              // If we have finished rendering but we still have to wait for some promises wait for them here.
+  useLayoutEffect(() => {
+    if (playerTickState.current) {
+      // In certain cases like the player being replaced (reproduce by dragging a bag in while playing), we can
+      // replace the new playerTickState. We want to use one playerTickState throughout the entire tick, since it's
+      // implicitly tied to the player.
+      const currentPlayerTickState = playerTickState.current;
+      // $FlowFixMe it doesn't matter if this function returns a promise.
+      requestAnimationFrame(async () => {
+        if (currentPlayerTickState.resolveFn && !currentPlayerTickState.waitingForPromises) {
+          if (currentPlayerTickState.promisesToWaitFor.length) {
+            // If we have finished rendering but we still have to wait for some promises wait for them here.
 
-              const promises = currentPlayerTickState.promisesToWaitFor;
-              currentPlayerTickState.promisesToWaitFor = [];
-              currentPlayerTickState.waitingForPromises = true;
-              // If `pauseFrame` is called while we are waiting for any other promises, they just wait for the frame
-              // after the current one.
-              await pauseFrameForPromises(promises);
+            const promises = currentPlayerTickState.promisesToWaitFor;
+            currentPlayerTickState.promisesToWaitFor = [];
+            currentPlayerTickState.waitingForPromises = true;
+            // If `pauseFrame` is called while we are waiting for any other promises, they just wait for the frame
+            // after the current one.
+            await pauseFrameForPromises(promises);
 
-              currentPlayerTickState.waitingForPromises = false;
-              if (currentPlayerTickState.resolveFn) {
-                currentPlayerTickState.resolveFn();
-                currentPlayerTickState.resolveFn = undefined;
-              }
-            } else {
+            currentPlayerTickState.waitingForPromises = false;
+            if (currentPlayerTickState.resolveFn) {
               currentPlayerTickState.resolveFn();
               currentPlayerTickState.resolveFn = undefined;
             }
+          } else {
+            currentPlayerTickState.resolveFn();
+            currentPlayerTickState.resolveFn = undefined;
           }
-        });
-      }
-    },
-    [playerState]
-  );
-
-  useEffect(
-    () => {
-      currentPlayer.current = player;
-      if (!player) {
-        return;
-      }
-      // Create a new PlayerTickState when the player is replaced.
-      playerTickState.current = { resolveFn: undefined, promisesToWaitFor: [], waitingForPromises: false };
-
-      player.setListener((newPlayerState: PlayerState) => {
-        warnOnOutOfSyncMessages(newPlayerState);
-        if (currentPlayer.current !== player) {
-          return Promise.resolve();
         }
-        if (playerTickState.current.resolveFn) {
-          throw new Error("New playerState was emitted before last playerState was rendered.");
-        }
-
-        const promise = new Promise((resolve) => {
-          playerTickState.current.resolveFn = resolve;
-        });
-        setPlayerState((currentPlayerState) => {
-          if (currentPlayer.current !== player) {
-            // It's unclear how we can ever get here, but it looks like React
-            // doesn't properly order the `setPlayerState` call below. So we
-            // need this additional check. Unfortunately this is hard to test,
-            // so please make sure to manually test having an active player and
-            // disconnecting from it when changing this code. Without this line
-            // it will show the player as being in an active state even after
-            // explicitly disconnecting it.
-            return currentPlayerState;
-          }
-          if (!lastActiveData.current && newPlayerState.activeData) {
-            lastTimeWhenActiveDataBecameSet.current = Date.now();
-          }
-          lastActiveData.current = newPlayerState.activeData;
-          return newPlayerState;
-        });
-        return promise;
       });
-      return () => {
-        currentPlayer.current = playerTickState.current.resolveFn = undefined;
-        player.close();
-        setPlayerState({
-          ...defaultPlayerState(),
-          activeData: lastActiveData.current,
-        });
-      };
-    },
-    [player]
-  );
+    }
+  }, [playerState]);
+
+  useEffect(() => {
+    currentPlayer.current = player;
+    if (!player) {
+      return;
+    }
+    // Create a new PlayerTickState when the player is replaced.
+    playerTickState.current = { resolveFn: undefined, promisesToWaitFor: [], waitingForPromises: false };
+
+    player.setListener((newPlayerState: PlayerState) => {
+      warnOnOutOfSyncMessages(newPlayerState);
+      if (currentPlayer.current !== player) {
+        return Promise.resolve();
+      }
+      if (playerTickState.current.resolveFn) {
+        throw new Error("New playerState was emitted before last playerState was rendered.");
+      }
+
+      const promise = new Promise((resolve) => {
+        playerTickState.current.resolveFn = resolve;
+      });
+      setPlayerState((currentPlayerState) => {
+        if (currentPlayer.current !== player) {
+          // It's unclear how we can ever get here, but it looks like React
+          // doesn't properly order the `setPlayerState` call below. So we
+          // need this additional check. Unfortunately this is hard to test,
+          // so please make sure to manually test having an active player and
+          // disconnecting from it when changing this code. Without this line
+          // it will show the player as being in an active state even after
+          // explicitly disconnecting it.
+          return currentPlayerState;
+        }
+        if (!lastActiveData.current && newPlayerState.activeData) {
+          lastTimeWhenActiveDataBecameSet.current = Date.now();
+        }
+        lastActiveData.current = newPlayerState.activeData;
+        return newPlayerState;
+      });
+      return promise;
+    });
+    return () => {
+      currentPlayer.current = playerTickState.current.resolveFn = undefined;
+      player.close();
+      setPlayerState({
+        ...defaultPlayerState(),
+        activeData: lastActiveData.current,
+      });
+    };
+  }, [player]);
 
   const topics: ?(Topic[]) = playerState.activeData?.topics;
   useShouldNotChangeOften(topics, () => {
@@ -220,39 +214,33 @@ export function MessagePipelineProvider({ children, player, globalVariables = {}
   const frame = useMemo(() => groupBy(messages || [], "topic"), [messages]);
   const sortedTopics = useMemo(() => (topics || []).sort(), [topics]);
   const datatypes: RosDatatypes = useMemo(() => unmemoizedDatatypes ?? {}, [unmemoizedDatatypes]);
-  const setSubscriptions = useCallback(
-    (id: string, subscriptionsForId: SubscribePayload[]) => {
-      setAllSubscriptions((s) => {
-        if (
-          lastTimeWhenActiveDataBecameSet.current &&
-          Date.now() < lastTimeWhenActiveDataBecameSet.current + WARN_ON_SUBSCRIPTIONS_WITHIN_TIME_MS &&
-          !isEqual(
-            new Set(subscriptionsForId.map(({ topic }) => topic)),
-            new Set((s[id] || []).map(({ topic }) => topic))
-          )
-        ) {
-          // TODO(JP): Might be nice to use `sendNotification` here at some point, so users can let us know about this.
-          // However, there is currently a race condition where a layout can get loaded just after the player
-          // initializes. I'm not too sure how to prevent that, because we also don't want to ignore whenever the
-          // layout changes, since a panel might decide to save its config when data becomes available, and that is
-          // bad behaviour by itself too.
-          console.warn(
-            `Panel subscribed right after Player loaded, which causes unnecessary requests. Please let the Webviz team know about this. Topics: ${subscriptionsForId
-              .map(({ topic }) => topic)
-              .join(", ")}`
-          );
-        }
-        return { ...s, [id]: subscriptionsForId };
-      });
-    },
-    [setAllSubscriptions]
-  );
-  const setPublishers = useCallback(
-    (id: string, publishersForId: AdvertisePayload[]) => {
-      setAllPublishers((p) => ({ ...p, [id]: publishersForId }));
-    },
-    [setAllPublishers]
-  );
+  const setSubscriptions = useCallback((id: string, subscriptionsForId: SubscribePayload[]) => {
+    setAllSubscriptions((s) => {
+      if (
+        lastTimeWhenActiveDataBecameSet.current &&
+        Date.now() < lastTimeWhenActiveDataBecameSet.current + WARN_ON_SUBSCRIPTIONS_WITHIN_TIME_MS &&
+        !isEqual(
+          new Set(subscriptionsForId.map(({ topic }) => topic)),
+          new Set((s[id] || []).map(({ topic }) => topic))
+        )
+      ) {
+        // TODO(JP): Might be nice to use `sendNotification` here at some point, so users can let us know about this.
+        // However, there is currently a race condition where a layout can get loaded just after the player
+        // initializes. I'm not too sure how to prevent that, because we also don't want to ignore whenever the
+        // layout changes, since a panel might decide to save its config when data becomes available, and that is
+        // bad behaviour by itself too.
+        console.warn(
+          `Panel subscribed right after Player loaded, which causes unnecessary requests. Please let the Webviz team know about this. Topics: ${subscriptionsForId
+            .map(({ topic }) => topic)
+            .join(", ")}`
+        );
+      }
+      return { ...s, [id]: subscriptionsForId };
+    });
+  }, [setAllSubscriptions]);
+  const setPublishers = useCallback((id: string, publishersForId: AdvertisePayload[]) => {
+    setAllPublishers((p) => ({ ...p, [id]: publishersForId }));
+  }, [setAllPublishers]);
   const publish = useCallback((request: PublishPayload) => (player ? player.publish(request) : undefined), [player]);
   const startPlayback = useCallback(() => (player ? player.startPlayback() : undefined), [player]);
   const pausePlayback = useCallback(() => (player ? player.pausePlayback() : undefined), [player]);
@@ -269,25 +257,22 @@ export function MessagePipelineProvider({ children, player, globalVariables = {}
   }, []);
   const requestBackfill = useMemo(() => debounce(() => (player ? player.requestBackfill() : undefined)), [player]);
 
-  React.useEffect(
-    () => {
-      let skipUpdate = false;
-      (async () => {
-        // Wait for the current frame to finish rendering if needed
-        await pauseFrameForPromises(playerTickState.current?.promisesToWaitFor ?? []);
+  React.useEffect(() => {
+    let skipUpdate = false;
+    (async () => {
+      // Wait for the current frame to finish rendering if needed
+      await pauseFrameForPromises(playerTickState.current?.promisesToWaitFor ?? []);
 
-        // If the globalVariables have already changed again while
-        // we waited for the frame to render, skip the update.
-        if (!skipUpdate && currentPlayer.current) {
-          currentPlayer.current.setGlobalVariables(globalVariables);
-        }
-      })();
-      return () => {
-        skipUpdate = true;
-      };
-    },
-    [globalVariables]
-  );
+      // If the globalVariables have already changed again while
+      // we waited for the frame to render, skip the update.
+      if (!skipUpdate && currentPlayer.current) {
+        currentPlayer.current.setGlobalVariables(globalVariables);
+      }
+    })();
+    return () => {
+      skipUpdate = true;
+    };
+  }, [globalVariables]);
 
   return (
     <Context.Provider

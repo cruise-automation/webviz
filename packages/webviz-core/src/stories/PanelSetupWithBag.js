@@ -57,45 +57,39 @@ export default function PanelSetupWithBag({
   // 3D Panel hack that resets fixture in order to get around MessageHistory
   // behavior where the existing frame is not re-processed when the set of
   // topics changes.
-  useEffect(
-    () => {
-      if (!hasResetFixture.current && fixture && frameHistoryCompatibility) {
-        setImmediate(() => {
-          hasResetFixture.current = true;
-          setFixture({ ...fixture });
-        });
-      }
-    },
-    [fixture, frameHistoryCompatibility]
-  );
+  useEffect(() => {
+    if (!hasResetFixture.current && fixture && frameHistoryCompatibility) {
+      setImmediate(() => {
+        hasResetFixture.current = true;
+        setFixture({ ...fixture });
+      });
+    }
+  }, [fixture, frameHistoryCompatibility]);
 
-  useEffect(
-    () => {
-      (async () => {
-        const player = new NodePlayer(new StoryPlayer([bag, bag2].filter(Boolean)));
-        const formattedSubscriptions = flatten(
-          (subscriptions || []).map((topic) => [{ topic, format: "parsedMessages" }, { topic, format: "bobjects" }])
-        );
-        player.setSubscriptions(formattedSubscriptions);
+  useEffect(() => {
+    (async () => {
+      const player = new NodePlayer(new StoryPlayer([bag, bag2].filter(Boolean)));
+      const formattedSubscriptions = flatten(
+        (subscriptions || []).map((topic) => [{ topic, format: "parsedMessages" }, { topic, format: "bobjects" }])
+      );
+      player.setSubscriptions(formattedSubscriptions);
 
-        player.setListener(({ activeData }: PlayerState) => {
-          if (!activeData) {
-            return Promise.resolve();
-          }
-          const { messages, bobjects, topics } = activeData;
-          const frame = groupBy([...messages, ...bobjects], "topic");
-          setFixture(
-            getMergedFixture({
-              frame,
-              topics,
-            })
-          );
+      player.setListener(({ activeData }: PlayerState) => {
+        if (!activeData) {
           return Promise.resolve();
-        });
-      })();
-    },
-    [bag, bag2, getMergedFixture, subscriptions]
-  );
+        }
+        const { messages, bobjects, topics } = activeData;
+        const frame = groupBy([...messages, ...bobjects], "topic");
+        setFixture(
+          getMergedFixture({
+            frame,
+            topics,
+          })
+        );
+        return Promise.resolve();
+      });
+    })();
+  }, [bag, bag2, getMergedFixture, subscriptions]);
 
   return fixture ? (
     <PanelSetup fixture={fixture} onMount={onMount} onFirstMount={onFirstMount} store={store}>

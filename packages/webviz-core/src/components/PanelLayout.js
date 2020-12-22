@@ -75,72 +75,66 @@ export function UnconnectedPanelLayout(props: Props) {
       });
   }
 
-  const createTile = useCallback(
-    (config: any) => {
-      const defaultPanelType = "RosOut";
-      const type = config ? config.type || defaultPanelType : defaultPanelType;
-      const id = getPanelIdForType(type);
-      if (config.panelConfig) {
-        saveConfigs({ configs: [{ id, config: config.panelConfig }] });
-      }
-      return id;
-    },
-    [saveConfigs]
-  );
+  const createTile = useCallback((config: any) => {
+    const defaultPanelType = "RosOut";
+    const type = config ? config.type || defaultPanelType : defaultPanelType;
+    const id = getPanelIdForType(type);
+    if (config.panelConfig) {
+      saveConfigs({ configs: [{ id, config: config.panelConfig }] });
+    }
+    return id;
+  }, [saveConfigs]);
 
-  const renderTile = useCallback(
-    (id: string | {}, path: any) => {
-      // `id` is usually a string. But when `layout` is empty, `id` will be an empty object, in which case we don't need to render Tile
-      if (!id || typeof id !== "string") {
-        return;
-      }
-      const type = getPanelTypeFromId(id);
-      const MosaicWindowComponent = type === "Tab" ? MosaicDumbWindow : MosaicWindow;
+  const renderTile = useCallback((id: string | {}, path: any) => {
+    // `id` is usually a string. But when `layout` is empty, `id` will be an empty object, in which case we don't need to render Tile
+    if (!id || typeof id !== "string") {
+      return;
+    }
+    const type = getPanelTypeFromId(id);
+    const MosaicWindowComponent = type === "Tab" ? MosaicDumbWindow : MosaicWindow;
 
-      return (
-        <MosaicWindowComponent key={path} path={path} createNode={createTile} renderPreview={() => null} tabId={tabId}>
-          {(() => {
-            if (!hooksImported) {
-              return null;
-            }
-            // If we haven't found a panel of the given type, render the panel selector
-            const PanelComponent = PanelList.getComponentForType(type);
-            if (!PanelComponent) {
-              return (
-                <MosaicWindow path={path} createNode={createTile} renderPreview={() => null}>
-                  <Flex col center>
-                    <PanelToolbar floating isUnknownPanel />
-                    Unknown panel type: {type}.
-                  </Flex>
-                </MosaicWindow>
-              );
-            }
-            return <PanelComponent childId={id} tabId={tabId} />;
-          })()}
-          <div
-            style={{
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              position: "absolute",
-              background: colors.DARK2,
-              opacity: hooksImported ? 0 : 1,
-              pointerEvents: "none",
-              zIndex: 1,
-              transition: `all ${0.35}s ease-out ${Math.random() + 0.25}s`,
-            }}>
-            <Flex center style={{ width: "100%", height: "100%" }}>
-              <Icon large>
-                <SpinningLoadingIcon />
-              </Icon>
-            </Flex>
-          </div>
-        </MosaicWindowComponent>
-      );
-    },
-    [createTile, hooksImported, tabId]
-  );
+    return (
+      <MosaicWindowComponent key={path} path={path} createNode={createTile} renderPreview={() => null} tabId={tabId}>
+        {(() => {
+          if (!hooksImported) {
+            return null;
+          }
+          // If we haven't found a panel of the given type, render the panel selector
+          const PanelComponent = PanelList.getComponentForType(type);
+          if (!PanelComponent) {
+            return (
+              <MosaicWindow path={path} createNode={createTile} renderPreview={() => null}>
+                <Flex col center>
+                  <PanelToolbar floating isUnknownPanel />
+                  Unknown panel type: {type}.
+                </Flex>
+              </MosaicWindow>
+            );
+          }
+          return <PanelComponent childId={id} tabId={tabId} />;
+        })()}
+        <div
+          style={{
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            background: colors.DARK2,
+            opacity: hooksImported ? 0 : 1,
+            pointerEvents: "none",
+            zIndex: 1,
+            transition: `all ${0.35}s ease-out ${Math.random() + 0.25}s`,
+          }}>
+          <Flex center style={{ width: "100%", height: "100%" }}>
+            <Icon large>
+              <SpinningLoadingIcon />
+            </Icon>
+          </Flex>
+        </div>
+      </MosaicWindowComponent>
+    );
+  }, [createTile, hooksImported, tabId]);
   const isDemoMode = useExperimentalFeature("demoMode");
   const bodyToRender = useMemo(
     () =>
@@ -171,12 +165,9 @@ const ConnectedPanelLayout = ({ importHooks = true }: { importHooks?: boolean },
     () => bindActionCreators({ changePanelLayout, savePanelConfigs, setMosaicId }, dispatch),
     [dispatch]
   );
-  const onChange = useCallback(
-    (newLayout: MosaicNode) => {
-      actions.changePanelLayout({ layout: newLayout });
-    },
-    [actions]
-  );
+  const onChange = useCallback((newLayout: MosaicNode) => {
+    actions.changePanelLayout({ layout: newLayout });
+  }, [actions]);
   return (
     <UnconnectedPanelLayout
       forwardedRef={ref}

@@ -25,17 +25,14 @@ export default function useAnimationFrame(
     });
   }
 
-  useEffect(
-    () => {
-      if (!disable) {
-        createAnimationFrame(callback);
+  useEffect(() => {
+    if (!disable) {
+      createAnimationFrame(callback);
+    }
+    return function cleanup() {
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
       }
-      return function cleanup() {
-        if (rafId.current) {
-          cancelAnimationFrame(rafId.current);
-        }
-      };
-    },
-    [callback, disable, ...dependencies]
-  );
+    };
+  }, [callback, disable, ...dependencies]);
 }

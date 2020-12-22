@@ -104,19 +104,20 @@ export default function GlobalVariableStyles(props: Props) {
   const { linkedGlobalVariables } = useLinkedGlobalVariables();
   const linkedGlobalVariablesByName = groupBy(linkedGlobalVariables, ({ name }) => name);
 
-  const updateSettingsForGlobalVariable = useCallback(
-    (globalVariableName, settings: { active: boolean, color: Color }, sourceIdx = 0) => {
-      const updatedSettings = new Array(2)
-        .fill()
-        .map((_, i) => colorOverrideBySourceIdxByVariable[globalVariableName]?.[i]);
-      updatedSettings[sourceIdx] = settings;
-      setColorOverrideBySourceIdxByVariable({
-        ...colorOverrideBySourceIdxByVariable,
-        [globalVariableName]: updatedSettings,
-      });
-    },
-    [colorOverrideBySourceIdxByVariable, setColorOverrideBySourceIdxByVariable]
-  );
+  const updateSettingsForGlobalVariable = useCallback((
+    globalVariableName,
+    settings: { active: boolean, color: Color },
+    sourceIdx = 0
+  ) => {
+    const updatedSettings = new Array(2)
+      .fill()
+      .map((_, i) => colorOverrideBySourceIdxByVariable[globalVariableName]?.[i]);
+    updatedSettings[sourceIdx] = settings;
+    setColorOverrideBySourceIdxByVariable({
+      ...colorOverrideBySourceIdxByVariable,
+      [globalVariableName]: updatedSettings,
+    });
+  }, [colorOverrideBySourceIdxByVariable, setColorOverrideBySourceIdxByVariable]);
 
   return (
     <ExpandingToolbar

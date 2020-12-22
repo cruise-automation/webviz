@@ -61,17 +61,14 @@ export default function Dimensions({ children }: Props) {
     }
   }, []);
 
-  useEffect(
-    () => {
-      if (!parentElement) {
-        return;
-      }
-      resizeObserver.observe(parentElement);
-      // Make sure to unobserve when we unmount the component.
-      return () => resizeObserver.unobserve(parentElement);
-    },
-    [parentElement, resizeObserver]
-  );
+  useEffect(() => {
+    if (!parentElement) {
+      return;
+    }
+    resizeObserver.observe(parentElement);
+    // Make sure to unobserve when we unmount the component.
+    return () => resizeObserver.unobserve(parentElement);
+  }, [parentElement, resizeObserver]);
 
   // This only happens during the first render - we use it to grab the parentElement of this div.
   if (dimensions == null) {

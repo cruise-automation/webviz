@@ -84,17 +84,14 @@ function LayoutToolbar({
   toggleSearchTextOpen,
   transforms,
 }: Props) {
-  const additionalToolbarItemsElem = useMemo(
-    () => {
-      const AdditionalToolbarItems = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.AdditionalToolbarItems;
-      return (
-        <div className={cx(styles.buttons, styles.cartographer)}>
-          <AdditionalToolbarItems transforms={transforms} />
-        </div>
-      );
-    },
-    [transforms]
-  );
+  const additionalToolbarItemsElem = useMemo(() => {
+    const AdditionalToolbarItems = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.AdditionalToolbarItems;
+    return (
+      <div className={cx(styles.buttons, styles.cartographer)}>
+        <AdditionalToolbarItems transforms={transforms} />
+      </div>
+    );
+  }, [transforms]);
 
   return isHidden ? null : (
     <>

@@ -31,14 +31,11 @@ const defaultActiveData: PlayerStateActiveData = {
 
 function Example({ states }: { states: UnconnectedPlaybackPerformanceProps[] }) {
   const [state, setState] = React.useState(states);
-  React.useEffect(
-    () => {
-      if (state.length > 1) {
-        setState(state.slice(1));
-      }
-    },
-    [state]
-  );
+  React.useEffect(() => {
+    if (state.length > 1) {
+      setState(state.slice(1));
+    }
+  }, [state]);
   return <UnconnectedPlaybackPerformance {...state[0]} />;
 }
 

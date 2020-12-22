@@ -169,9 +169,11 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! webviz-core/src/util/Rpc */
 
-/*! webviz-core/src/util/RpcUtils */
+/*! webviz-core/src/util/RpcWorkerUtils */
 
 /*! webviz-core/src/util/errors */
+
+/*! webviz-core/src/util/logEvent */
 
 /*! webviz-core/src/util/sendNotification */
 
@@ -202,8 +204,12 @@ PERFORMANCE OF THIS SOFTWARE.
   \**************************************************/
 
 /*!***************************************************!*\
-  !*** ./packages/webviz-core/src/util/RpcUtils.js ***!
+  !*** ./packages/webviz-core/src/util/logEvent.js ***!
   \***************************************************/
+
+/*!*********************************************************!*\
+  !*** ./packages/webviz-core/src/util/RpcWorkerUtils.js ***!
+  \*********************************************************/
 
 /*!*********************************************************!*\
   !*** ./packages/webviz-core/src/util/overwriteFetch.js ***!

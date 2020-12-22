@@ -536,11 +536,13 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*! webviz-core/src/util/Rpc */
 
-/*! webviz-core/src/util/RpcUtils */
+/*! webviz-core/src/util/RpcWorkerUtils */
 
 /*! webviz-core/src/util/errors */
 
 /*! webviz-core/src/util/installChartjs */
+
+/*! webviz-core/src/util/logEvent */
 
 /*! webviz-core/src/util/multicolorLineChart */
 
@@ -581,7 +583,7 @@ PERFORMANCE OF THIS SOFTWARE.
   \**************************************************/
 
 /*!***************************************************!*\
-  !*** ./packages/webviz-core/src/util/RpcUtils.js ***!
+  !*** ./packages/webviz-core/src/util/logEvent.js ***!
   \***************************************************/
 
 /*!********************************************************!*\
@@ -590,6 +592,10 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /*!*********************************************************!*\
   !*** ./packages/webviz-core/node_modules/lodash/get.js ***!
+  \*********************************************************/
+
+/*!*********************************************************!*\
+  !*** ./packages/webviz-core/src/util/RpcWorkerUtils.js ***!
   \*********************************************************/
 
 /*!*********************************************************!*\

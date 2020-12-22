@@ -1120,6 +1120,8 @@ object-assign
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/Checkbox.js (referenced with cjs require), ./packages/webviz-core/src/components/TimeBasedChart/TimeBasedChartLegend.js (referenced with cjs require), ./packages/webviz-core/src/panels/ImageView/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/NodePlayground/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/Publish/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/index.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicSettingsEditor/PoseSettingsEditor.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/Layout.js (referenced with cjs require), ./packages/webviz-core/src/panels/diagnostics/DiagnosticSummary.js (referenced with cjs require) */
 
+/*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/CopyText.js (referenced with cjs require), ./packages/webviz-core/src/panels/RawMessages/Metadata.js (referenced with cjs require), ./packages/webviz-core/src/panels/Rosout/index.js (referenced with cjs require) */
+
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/ExpandingToolbar.js (referenced with cjs require) */
 
 /*! ModuleConcatenation bailout: Module is referenced from these modules with unsupported syntax: ./packages/webviz-core/src/components/GlobalVariablesTable.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/NamespaceMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/TreeNodeMenu.js (referenced with cjs require), ./packages/webviz-core/src/panels/ThreeDimensionalViz/TopicTree/renderStyleExpressionNodes.js (referenced with cjs require) */
@@ -3283,6 +3285,10 @@ object-assign
 /*!*****************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/react-base16-styling/lib/index.js ***!
   \*****************************************************************************/
+
+/*!******************************************************************************!*\
+  !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/clipboard-outline.svg ***!
+  \******************************************************************************/
 
 /*!******************************************************************************!*\
   !*** ./packages/webviz-core/node_modules/@mdi/svg/svg/minus-box-outline.svg ***!

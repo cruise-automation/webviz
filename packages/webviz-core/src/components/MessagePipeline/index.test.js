@@ -17,7 +17,7 @@ import { MAX_PROMISE_TIMEOUT_TIME_MS } from "./pauseFrameForPromise";
 import delay from "webviz-core/shared/delay";
 import signal from "webviz-core/shared/signal";
 import tick from "webviz-core/shared/tick";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
+import { initializeLogEvent, resetLogEventForTests } from "webviz-core/src/util/logEvent";
 
 jest.setTimeout(MAX_PROMISE_TIMEOUT_TIME_MS * 3);
 
@@ -522,12 +522,16 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
     await act(() => player.emit(activeData));
     expect(fn).toHaveBeenCalledTimes(3);
 
-    // Calling setSubscriptions right after activeData is emitted results in a warning.
-    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test", format: "parsedMessages" }]));
+    // Calling setSubscriptions right after activeData is ok if the set of topics doesn't change
+    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test", format: "bobjects" }]));
+    // $FlowFixMe - Flow doesn't understand `console.warn.mock`
+    expect(console.warn.mock.calls).toEqual([]);
+    // But changing the set of topics results in a warning
+    act(() => fn.mock.calls[0][0].setSubscriptions("id", [{ topic: "/test2", format: "parsedMessages" }]));
     // $FlowFixMe - Flow doesn't understand `console.warn.mock`
     expect(console.warn.mock.calls).toEqual([
       [
-        "Panel subscribed right after Player loaded, which causes unnecessary requests. Please let the Webviz team know about this. Topics: /test",
+        "Panel subscribed right after Player loaded, which causes unnecessary requests. Please let the Webviz team know about this. Topics: /test2",
       ],
     ]);
 
@@ -543,12 +547,7 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
 
     beforeEach(async () => {
       logger = jest.fn();
-      jest.spyOn(getGlobalHooks(), "getEventLogger");
-      getGlobalHooks().getEventLogger.mockImplementation(() => ({
-        logger,
-        eventNames: { PAUSE_FRAME_TIMEOUT: "pause_frame_timeout" },
-        eventTags: { PANEL_TYPES: "panel_types" },
-      }));
+      initializeLogEvent(logger, { PAUSE_FRAME_TIMEOUT: "pause_frame_timeout" }, { PANEL_TYPES: "panel_types" });
 
       player = new FakePlayer();
       el = mount(
@@ -563,6 +562,10 @@ describe("MessagePipelineProvider/MessagePipelineConsumer", () => {
       );
 
       await delay(20);
+    });
+
+    afterEach(() => {
+      resetLogEventForTests();
     });
 
     it("frames automatically resolve without calling pauseFrame", async () => {

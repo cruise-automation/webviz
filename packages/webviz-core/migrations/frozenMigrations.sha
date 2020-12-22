@@ -9,7 +9,7 @@ ab684bfcf2ce591d974613ee8c07c56490970d20  ./webviz-core/migrations/frozenMigrati
 7bfac30079a4947418f37b730306ed36d117b6c6  ./webviz-core/migrations/frozenMigrations/2020.06.01.11:34:51.migrate3DPanelPointCloudHexColors.test.js
 925bce672762a8db57f04ca0d13792b30f8cc9b8  ./webviz-core/migrations/frozenMigrations/2020.06.02.11:27:59.addDefaultPlaybackConfig.js
 312471f5e94facdc1a12daf958ce75c78af725b2  ./webviz-core/migrations/frozenMigrations/2020.06.02.11:27:59.addDefaultPlaybackConfig.test.js
-fcb40bb0e87bb87772608cdc777c801fa19ceec8  ./webviz-core/migrations/frozenMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode.js
+8d0b727bb35ed4a372221701f0991aa0dd7c282e  ./webviz-core/migrations/frozenMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode.js
 58864800e3b50004406a399068b669bfe2cc984a  ./webviz-core/migrations/frozenMigrations/2020.06.02.13:56:52.migrate3DPanelUncategorizedNode.test.js
 54c53fbed65b87b01c6a559bd9eb91cd09a7a372  ./webviz-core/migrations/frozenMigrations/2020.06.03.13:56:52.migrate3DPanelTopicSettingsToSettingsByKey.js
 12ae8ce4c121265ebd8de6fd1e72810463548742  ./webviz-core/migrations/frozenMigrations/2020.06.03.13:56:52.migrate3DPanelTopicSettingsToSettingsByKey.test.js

@@ -8,7 +8,7 @@
 
 import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
 import Rpc from "webviz-core/src/util/Rpc";
-import { setupWorker } from "webviz-core/src/util/RpcUtils";
+import { setupWorker } from "webviz-core/src/util/RpcWorkerUtils";
 
 // The "other side" of `RpcDataProvider`. Instantiates a `DataProviderDescriptor` tree underneath,
 // in the context of wherever this is instantiated (e.g. a Web Worker, or the server side of a

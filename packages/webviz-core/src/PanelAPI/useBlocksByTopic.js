@@ -11,7 +11,6 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { MessageReader } from "rosbag";
 import uuid from "uuid";
 
-import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { useMessagePipeline } from "webviz-core/src/components/MessagePipeline";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import type { MemoryCacheBlock } from "webviz-core/src/dataProviders/MemoryCacheDataProvider";
@@ -107,7 +106,7 @@ export function useBlocksByTopic(topics: $ReadOnlyArray<string>): BlocksForTopic
   // Get blocks for the topics
   const allBlocks = useMessagePipeline<?$ReadOnlyArray<?MemoryCacheBlock>>(getBlocksFromPlayerState);
 
-  const exposeBlockData = useExperimentalFeature("preloading") && !!allBlocks;
+  const exposeBlockData = !!allBlocks; // The websocket player does not expose blocks.
 
   const messageReadersByTopic = useMemo(
     () => {

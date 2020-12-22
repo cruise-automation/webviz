@@ -54,6 +54,8 @@ export const mathFunctions = {
   tan: Math.tan,
   trunc: Math.trunc,
   negative: (value: number) => -value,
+  deg2rad: (degrees: number) => degrees * (Math.PI / 180),
+  rad2deg: (radians: number) => radians * (180 / Math.PI),
 };
 
 // Apply a function to the y-value of the data or tooltips passed in.

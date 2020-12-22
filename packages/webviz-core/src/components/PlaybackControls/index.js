@@ -86,13 +86,7 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
   const playerState = useRef(player);
   playerState.current = player;
 
-  const onChange = useCallback(
-    (value: number) => {
-      const time = fromSec(value);
-      seek(time);
-    },
-    [seek]
-  );
+  const onChange = useCallback((value: number) => seek(fromSec(value)), [seek]);
 
   const keyDownHandlers = useMemo(
     () => ({
@@ -200,8 +194,9 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
         <div ref={el} className={styles.sliderContainer} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
           <Slider
             ref={slider}
-            min={min}
-            max={max}
+            min={min || 0}
+            max={max || 100}
+            disabled={min == null || max == null}
             step={step}
             value={value}
             draggable
@@ -211,7 +206,14 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
         </div>
         <PlaybackBarHoverTicks componentId={hoverComponentId} />
       </div>
-      <PlaybackTimeDisplayMethod currentTime={currentTime} />
+      <PlaybackTimeDisplayMethod
+        currentTime={currentTime}
+        startTime={startTime}
+        endTime={endTime}
+        onSeek={seek}
+        onPause={pause}
+        isPlaying={isPlaying}
+      />
       {seekControls}
     </Flex>
   );

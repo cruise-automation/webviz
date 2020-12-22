@@ -124,6 +124,21 @@ describe("diagnostics", () => {
       expect(getSortedDiagnostics(nodes, "watchdog", [])).toStrictEqual([watchdogStatus]);
       expect(getSortedDiagnostics(nodes, "mctm_logger", [])).toStrictEqual([mctmLogger]);
     });
+
+    it("returns filtered nodes ordered by match quality", () => {
+      const hardwareIdFilter = "123456";
+      const prefixDiagnostic = { ...mctmLogger, displayName: "123456asdfg", id: "1" };
+      const subsequenceDiagnostic = { ...mctmLogger, displayName: "1a2s3d4fg5h6", id: "2" };
+      const subsequenceButPinnedDiagnostic = { ...mctmLogger, displayName: "12asdfg3456", id: "3" };
+      const notSubsequenceDiagnostic = { ...mctmLogger, displayName: "12345", id: "4" };
+      expect(
+        getSortedDiagnostics(
+          [subsequenceButPinnedDiagnostic, notSubsequenceDiagnostic, subsequenceDiagnostic, prefixDiagnostic],
+          hardwareIdFilter,
+          ["3"]
+        )
+      ).toEqual([prefixDiagnostic, subsequenceDiagnostic]);
+    });
   });
 
   describe("computeDiagnosticInfo", () => {

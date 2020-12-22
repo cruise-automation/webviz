@@ -66,18 +66,20 @@ function NumberOfRenders(): React.Node {
   return (
     <Flex col>
       <PanelToolbar />
-      <Flex row center style={{ fontSize: 20, lineHeight: 1.5, textAlign: "center" }}>
-        <MessageHistoryDEPRECATED paths={[]}>
-          {() => (
-            <>
-              panelRenderCount: {getRenderCountMessage(panelRenderCount)} <br />
-              messageHistoryRenderCount: {getRenderCountMessage(++messageHistoryRenderCount)}
-            </>
-          )}
-        </MessageHistoryDEPRECATED>
-        <br />
-        <HooksComponent />
-        <br />
+      <Flex col center style={{ fontSize: 20, lineHeight: 1.5, textAlign: "center" }}>
+        <div>
+          <MessageHistoryDEPRECATED paths={[]}>
+            {() => (
+              <>
+                panelRenderCount: {getRenderCountMessage(panelRenderCount)} <br />
+                messageHistoryRenderCount: {getRenderCountMessage(++messageHistoryRenderCount)}
+              </>
+            )}
+          </MessageHistoryDEPRECATED>
+        </div>
+        <div>
+          <HooksComponent />
+        </div>
         {!inScreenshotTests() && <MessagePipelineRendersComponent /> // Too flakey for screenshots.
         }
       </Flex>

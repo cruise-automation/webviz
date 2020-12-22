@@ -34,6 +34,8 @@ To plot data from just the most recent tick, use the "msg path (current)" settin
 
 ## User Interactions
 
-You can zoom by scrolling, and pan by dragging. Double-click to reset. To scroll in only the vertical direction (no horizontal scrolling), you can hold the `v` key while scrolling, and to scroll in only the horizontal direction you can hold the `h` key while scrolling.
+You can zoom by scrolling, and pan by dragging. Double-click to reset.
+
+By default, scrolling will zoom horizontally only. To zoom vertically, hold the `v` key while scrolling. To zoom both horizontally and vertically at the same time, hold the `b` key while scrolling.
 
 Some "default zoom level" settings are available in the panel settings menu. The y-axis limits can be given fixed values for any plot type. For plots where the x-axis represents the message timestamp, you can have the plot "follow" playback by specifying the plot's "viewport" (i.e. width in seconds).

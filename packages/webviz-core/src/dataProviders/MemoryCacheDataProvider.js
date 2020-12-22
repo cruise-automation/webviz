@@ -243,7 +243,7 @@ export default class MemoryCacheDataProvider implements DataProvider {
     const result = await this._provider.initialize({ ...extensionPoint, progressCallback: () => {} });
     this._startTime = result.start;
     this._totalNs = toNanoSec(subtractTimes(result.end, result.start)) + 1; // +1 since times are inclusive.
-    this._memCacheBlockSizeNs = Math.max(MIN_MEM_CACHE_BLOCK_SIZE_NS, this._totalNs / MAX_BLOCKS);
+    this._memCacheBlockSizeNs = Math.ceil(Math.max(MIN_MEM_CACHE_BLOCK_SIZE_NS, this._totalNs / MAX_BLOCKS));
     this._readAheadBlocks = Math.ceil(READ_AHEAD_NS / this._memCacheBlockSizeNs);
     if (this._totalNs > Number.MAX_SAFE_INTEGER * 0.9) {
       throw new Error("Time range is too long to be supported");

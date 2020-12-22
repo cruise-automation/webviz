@@ -11,6 +11,7 @@ import type { Time } from "rosbag";
 
 import { type DiagnosticsBuffer } from "webviz-core/src/panels/diagnostics/DiagnosticsHistory";
 import type { Header } from "webviz-core/src/types/Messages";
+import fuzzyFilter from "webviz-core/src/util/fuzzyFilter";
 
 // Trim the message if it's too long. We sometimes get crazy massive messages here that can
 // otherwise crash our entire UI. I looked at a bunch of messages manually and they are typically
@@ -121,12 +122,10 @@ export const getSortedDiagnostics = (
   hardwareIdFilter: string,
   pinnedIds: DiagnosticId[]
 ): DiagnosticInfo[] => {
-  return sortBy(
-    nodes.filter(
-      (info) =>
-        pinnedIds.indexOf(info.id) === -1 &&
-        (!hardwareIdFilter || (hardwareIdFilter && info.displayName.startsWith(hardwareIdFilter)))
-    ),
-    (info) => info.displayName.replace(/^\//, "")
-  );
+  const unpinnedNodes = nodes.filter(({ id }) => !pinnedIds.includes(id));
+  if (!hardwareIdFilter) {
+    return sortBy(unpinnedNodes, (info) => info.displayName.replace(/^\//, ""));
+  }
+  // fuzzyFilter sorts by match accuracy.
+  return fuzzyFilter(unpinnedNodes, hardwareIdFilter, ({ displayName }) => displayName);
 };

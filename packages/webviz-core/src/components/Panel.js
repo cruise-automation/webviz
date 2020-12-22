@@ -51,7 +51,6 @@ import Icon from "webviz-core/src/components/Icon";
 import KeyListener from "webviz-core/src/components/KeyListener";
 import PanelContext from "webviz-core/src/components/PanelContext";
 import MosaicDragHandle from "webviz-core/src/components/PanelToolbar/MosaicDragHandle";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import * as PanelAPI from "webviz-core/src/PanelAPI";
 import PanelList, { getPanelsByType } from "webviz-core/src/panels/PanelList";
 import type { Topic } from "webviz-core/src/players/types";
@@ -74,6 +73,7 @@ import {
   isTabPanel,
   updateTabPanelLayout,
 } from "webviz-core/src/util/layout";
+import logEvent, { getEventTags, getEventNames } from "webviz-core/src/util/logEvent";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type Props<Config> = { childId?: string, config?: Config, saveConfig?: (Config) => void, tabId?: string };
@@ -316,8 +316,7 @@ export default function Panel<Config: PanelConfig>(
     const { closePanel, splitPanel } = useMemo(
       () => ({
         closePanel: () => {
-          const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-          logger({ name: eventNames.PANEL_REMOVE, tags: { [eventTags.PANEL_TYPE]: type } });
+          logEvent({ name: getEventNames().PANEL_REMOVE, tags: { [getEventTags().PANEL_TYPE]: type } });
           mosaicActions.remove(mosaicWindowActions.getPath());
         },
         splitPanel: () => {
@@ -333,8 +332,7 @@ export default function Panel<Config: PanelConfig>(
           } else {
             mosaicWindowActions.split({ type: PanelComponent.panelType });
           }
-          const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-          logger({ name: eventNames.PANEL_SPLIT, tags: { [eventTags.PANEL_TYPE]: type } });
+          logEvent({ name: getEventNames().PANEL_SPLIT, tags: { [getEventTags().PANEL_TYPE]: type } });
         },
       }),
       [actions, childId, config, mosaicActions, mosaicWindowActions, savedProps, tabId, type]

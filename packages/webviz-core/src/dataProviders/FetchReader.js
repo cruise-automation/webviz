@@ -46,7 +46,11 @@ export default class FetchReader extends Readable {
     }
     if (!`${data.status}`.startsWith("2")) {
       setImmediate(() => {
-        this.emit("error", new Error(`Bad response status code (${data.status}): ${this._url}`));
+        const requestId = data.headers.get("x-request-id");
+        this.emit(
+          "error",
+          new Error(`Bad response status code (${data.status}): ${this._url}. x-request-id: ${requestId}`)
+        );
       });
       return undefined;
     }

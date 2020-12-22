@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import _ from "lodash";
 import React, { useCallback } from "react";
 import { hot } from "react-hot-loader/root";
 import styled from "styled-components";

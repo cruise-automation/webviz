@@ -13,7 +13,6 @@ import { DndProvider } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import { Mosaic, MosaicWindow } from "react-mosaic-component";
 
-import { setAuxiliaryData } from "webviz-core/src/actions/extensions";
 import {
   changePanelLayout,
   overwriteGlobalVariables,
@@ -42,7 +41,6 @@ export type Fixture = {|
   activeData?: $Shape<PlayerStateActiveData>,
   progress?: Progress,
   datatypes?: RosDatatypes,
-  auxiliaryData?: any,
   globalVariables?: GlobalVariables,
   layout?: ?MosaicNode,
   linkedGlobalVariables?: LinkedGlobalVariables,
@@ -58,7 +56,7 @@ type Props = {|
   children: React.Node,
   fixture: Fixture,
   omitDragAndDrop?: boolean,
-  onMount?: (HTMLDivElement, store: Store) => void,
+  onMount?: (HTMLDivElement, store: Store) => ?Promise<any>, // optional promise to allow for awaits in onMount
   onFirstMount?: (HTMLDivElement) => void,
   store?: Store,
   style?: { [string]: any },
@@ -128,7 +126,6 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
   static getDerivedStateFromProps(props: Props, prevState: State) {
     const { store } = prevState;
     const {
-      auxiliaryData,
       globalVariables,
       userNodes,
       layout,
@@ -138,9 +135,6 @@ export default class PanelSetup extends React.PureComponent<Props, State> {
       userNodeRosLib,
       savedProps,
     } = props.fixture;
-    if (auxiliaryData) {
-      store.dispatch(setAuxiliaryData(() => auxiliaryData));
-    }
     if (globalVariables) {
       store.dispatch(overwriteGlobalVariables(globalVariables));
     }

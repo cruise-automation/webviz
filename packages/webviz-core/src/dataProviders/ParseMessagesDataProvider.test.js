@@ -6,7 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { setExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import BagDataProvider from "webviz-core/src/dataProviders/BagDataProvider";
 import { CoreDataProviders } from "webviz-core/src/dataProviders/constants";
 import createGetDataProvider from "webviz-core/src/dataProviders/createGetDataProvider";
@@ -46,14 +45,6 @@ const dummyExtensionPoint = {
 };
 
 describe("ParseMessagesDataProvider", () => {
-  beforeEach(() => {
-    setExperimentalFeature("preloading", "alwaysOn");
-  });
-
-  afterEach(() => {
-    setExperimentalFeature("preloading", "default");
-  });
-
   it("initializes", async () => {
     const provider = getProvider();
     const result = await provider.initialize(dummyExtensionPoint);

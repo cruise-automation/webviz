@@ -36,7 +36,8 @@ const ScrolledPanelList = () => {
     </PanelSetup>
   );
 };
-const FilterStory = ({ inputValue }) => (
+
+const PanelListWithInteractions = ({ inputValue, events = [] }: { inputValue?: string, events?: any[] }) => (
   <div
     style={{ margin: 50, height: 480 }}
     ref={(el) => {
@@ -44,14 +45,24 @@ const FilterStory = ({ inputValue }) => (
         const input: ?HTMLInputElement = (el.querySelector("input"): any);
         if (input) {
           input.focus();
-          input.value = inputValue;
-          TestUtils.Simulate.change(input);
+          if (inputValue) {
+            input.value = inputValue;
+            TestUtils.Simulate.change(input);
+          }
+          setTimeout(() => {
+            events.forEach((event) => {
+              TestUtils.Simulate.keyDown(input, event);
+            });
+          }, 100);
         }
       }
     }}>
     <PanelList onPanelSelect={() => {}} />
   </div>
 );
+
+const arrowDown = { key: "ArrowDown", code: "ArrowDown", keyCode: 40 };
+const arrowUp = { key: "ArrowUp", code: "ArrowUp", keyCode: 91 };
 
 storiesOf("<PanelList>", module)
   .addDecorator((childrenRenderFcn) => (
@@ -65,7 +76,14 @@ storiesOf("<PanelList>", module)
     </div>
   ))
   .add("scrolled panel list", () => <ScrolledPanelList />)
-  .add("filtered panel list", () => <FilterStory inputValue="h" />)
-  .add("filtered panel list without results in 1st category", () => <FilterStory inputValue="ha" />)
-  .add("filtered panel list without results in any category", () => <FilterStory inputValue="zz" />)
-  .add("case-insensitive filtering and highlight submenu", () => <FilterStory inputValue="dp" />);
+  .add("filtered panel list", () => <PanelListWithInteractions inputValue="h" />)
+  .add("navigating panel list with arrow keys", () => (
+    <PanelListWithInteractions events={[arrowDown, arrowDown, arrowUp]} />
+  ))
+  .add("navigating up from top of panel list will scroll to highlighted last item", () => (
+    <PanelListWithInteractions events={[arrowUp]} />
+  ))
+  .add("filtered panel list without results in 1st category", () => <PanelListWithInteractions inputValue="ha" />)
+  .add("filtered panel list without results in last category", () => <PanelListWithInteractions inputValue="z" />)
+  .add("filtered panel list without results in any category", () => <PanelListWithInteractions inputValue="zz" />)
+  .add("case-insensitive filtering and highlight submenu", () => <PanelListWithInteractions inputValue="dp" />);

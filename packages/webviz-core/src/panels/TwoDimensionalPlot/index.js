@@ -18,6 +18,7 @@ import Button from "webviz-core/src/components/Button";
 import Dimensions from "webviz-core/src/components/Dimensions";
 import EmptyState from "webviz-core/src/components/EmptyState";
 import Flex from "webviz-core/src/components/Flex";
+import KeyListener from "webviz-core/src/components/KeyListener";
 import { Item } from "webviz-core/src/components/Menu";
 import MessagePathInput from "webviz-core/src/components/MessagePathSyntax/MessagePathInput";
 import { useLatestMessageDataItem } from "webviz-core/src/components/MessagePathSyntax/useLatestMessageDataItem";
@@ -308,6 +309,8 @@ function TwoDimensionalPlot(props: Props) {
   const { config, saveConfig } = props;
   const { path, minXVal, maxXVal, minYVal, maxYVal, pointRadiusOverride } = config;
   const [hasUserPannedOrZoomed, setHasUserPannedOrZoomed] = React.useState<boolean>(false);
+  const [hasVerticalExclusiveZoom, setHasVerticalExclusiveZoom] = React.useState<boolean>(false);
+  const [hasBothAxesZoom, setHasBothAxesZoom] = React.useState<boolean>(false);
   const tooltip = React.useRef<?HTMLDivElement>(null);
   const chartComponent = React.useRef<?ChartComponent>(null);
 
@@ -548,6 +551,29 @@ function TwoDimensionalPlot(props: Props) {
     }
   }
 
+  let zoomMode = "x";
+  if (hasVerticalExclusiveZoom) {
+    zoomMode = "y";
+  } else if (hasBothAxesZoom) {
+    zoomMode = "xy";
+  }
+
+  const keyDownHandlers = React.useMemo(
+    () => ({
+      v: () => setHasVerticalExclusiveZoom(true),
+      b: () => setHasBothAxesZoom(true),
+    }),
+    []
+  );
+
+  const keyUphandlers = React.useMemo(
+    () => ({
+      v: () => setHasVerticalExclusiveZoom(false),
+      b: () => setHasBothAxesZoom(false),
+    }),
+    [setHasVerticalExclusiveZoom, setHasBothAxesZoom]
+  );
+
   // Always clean up tooltips when unmounting.
   React.useEffect(() => removeTooltip, [removeTooltip]);
   const emptyMessage = !points.length && !lines.length && !polygons.length;
@@ -591,6 +617,10 @@ function TwoDimensionalPlot(props: Props) {
                   onPanZoom={onPanZoom}
                   onScaleBoundsUpdate={onScaleBoundsUpdate}
                   data={{ datasets }}
+                  zoomOptions={{
+                    ...ChartComponent.defaultProps.zoomOptions,
+                    mode: zoomMode,
+                  }}
                 />
                 {hasUserPannedOrZoomed && (
                   <SResetZoom>
@@ -603,6 +633,7 @@ function TwoDimensionalPlot(props: Props) {
             )}
           </Dimensions>
           <DocumentEvents capture onMouseDown={onMouseMove} onMouseUp={onMouseMove} onMouseMove={onMouseMove} />
+          <KeyListener global keyDownHandlers={keyDownHandlers} keyUpHandlers={keyUphandlers} />
         </SRoot>
       )}
     </SContainer>

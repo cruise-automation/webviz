@@ -13,6 +13,7 @@ import { MIN_MEM_CACHE_BLOCK_SIZE_NS } from "webviz-core/src/dataProviders/Memor
 import { cast, type Bobject, type Message } from "webviz-core/src/players/types";
 import type { BinaryTime } from "webviz-core/src/types/BinaryMessages";
 import { deepParse } from "webviz-core/src/util/binaryObjects";
+import { parseTimeStr } from "webviz-core/src/util/formatTime";
 import {
   SEEK_TO_FRACTION_QUERY_KEY,
   SEEK_TO_RELATIVE_MS_QUERY_KEY,
@@ -114,7 +115,7 @@ export function toMicroSec({ sec, nsec }: Time) {
 }
 
 // WARNING! Imprecise float; see above.
-export function toSec({ sec, nsec }: Time) {
+export function toSec({ sec, nsec }: Time): number {
   return sec + nsec * 1e-9;
 }
 
@@ -227,6 +228,13 @@ export function clampTime(time: Time, start: Time, end: Time): Time {
   return time;
 }
 
+export const isTimeInRangeInclusive = (time: Time, start: Time, end: Time) => {
+  if (TimeUtil.compare(start, time) > 0 || TimeUtil.compare(end, time) < 0) {
+    return false;
+  }
+  return true;
+};
+
 export function parseRosTimeStr(str: string): ?Time {
   if (/^\d+\.?$/.test(str)) {
     // Whole number with optional "." at the end.
@@ -273,18 +281,19 @@ if (SEEK_ON_START_NS >= MIN_MEM_CACHE_BLOCK_SIZE_NS) {
 export function getSeekToTime(): SeekToTimeSpec {
   const params = new URLSearchParams(window.location.search);
   const absoluteSeek = params.get(SEEK_TO_UNIX_MS_QUERY_KEY);
+  const defaultResult = { type: "relative", startOffset: fromNanoSec(SEEK_ON_START_NS) };
   if (absoluteSeek != null) {
-    return { type: "absolute", time: fromMillis(parseInt(absoluteSeek)) };
+    return isNaN(absoluteSeek) ? defaultResult : { type: "absolute", time: fromMillis(parseInt(absoluteSeek)) };
   }
   const relativeSeek = params.get(SEEK_TO_RELATIVE_MS_QUERY_KEY);
   if (relativeSeek != null) {
-    return { type: "relative", startOffset: fromMillis(parseInt(relativeSeek)) };
+    return isNaN(relativeSeek) ? defaultResult : { type: "relative", startOffset: fromMillis(parseInt(relativeSeek)) };
   }
   const seekFraction = params.get(SEEK_TO_FRACTION_QUERY_KEY);
   if (seekFraction != null) {
-    return { type: "fraction", fraction: parseFloat(seekFraction) };
+    return isNaN(seekFraction) ? defaultResult : { type: "fraction", fraction: parseFloat(seekFraction) };
   }
-  return { type: "relative", startOffset: fromNanoSec(SEEK_ON_START_NS) };
+  return defaultResult;
 }
 
 export function getSeekTimeFromSpec(spec: SeekToTimeSpec, start: Time, end: Time): Time {
@@ -326,4 +335,38 @@ export const maybeGetBobjectHeaderStamp = (message: ?Bobject): ?Time => {
   if (isTime(stamp)) {
     return stamp;
   }
+};
+
+export const getRosTimeFromString = (text: string) => {
+  if (!text.length || isNaN(text)) {
+    return;
+  }
+  const textAsNum = Number(text);
+  return { sec: Math.floor(textAsNum), nsec: textAsNum * 1e9 - Math.floor(textAsNum) * 1e9 };
+};
+
+const todTimeRegex = /^\d+:\d+:\d+.\d+\s[PpAa][Mm]\s[A-Za-z$]+/;
+export const getValidatedTimeAndMethodFromString = ({
+  text,
+  date,
+  timezone,
+}: {
+  text: ?string,
+  date: string,
+  timezone: ?string,
+}): ?{ time: ?Time, method: "ROS" | "TOD" } => {
+  if (!text) {
+    return;
+  }
+  const isInvalidRosTime = isNaN(text);
+  const isInvalidTodTime = !(todTimeRegex.test(text || "") && parseTimeStr(`${date} ${text || ""}`, timezone));
+
+  if (isInvalidRosTime && isInvalidTodTime) {
+    return;
+  }
+
+  return {
+    time: !isInvalidRosTime ? getRosTimeFromString(text || "") : parseTimeStr(`${date} ${text || ""}`, timezone),
+    method: isInvalidRosTime ? "TOD" : "ROS",
+  };
 };

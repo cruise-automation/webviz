@@ -136,6 +136,7 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
     },
   };
 
+  const copy = getGlobalHooks().perPanelHooks().ThreeDimensionalViz.copy.poseSettingsEditor;
   return (
     <Flex col>
       <SLabel>Rendered Car</SLabel>
@@ -166,9 +167,11 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
           onClick={() => onSettingsChange({ ...settings, addCarOutlineBuffer: !settings.addCarOutlineBuffer })}
         />
         <SLabel>Show error buffer</SLabel>
-        <Icon tooltip={getGlobalHooks().perPanelHooks().ThreeDimensionalViz.copy.poseSettingsEditor.errorBuffer}>
-          <InformationIcon />
-        </Icon>
+        {copy?.errorBuffer && (
+          <Icon tooltip={copy.errorBuffer}>
+            <InformationIcon />
+          </Icon>
+        )}
       </Flex>
       {settingsByCarType}
     </Flex>

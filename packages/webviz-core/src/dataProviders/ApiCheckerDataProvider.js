@@ -111,6 +111,12 @@ export default class ApiCheckerDataProvider implements DataProvider {
   }
 
   async getMessages(start: Time, end: Time, subscriptions: GetMessagesTopics): Promise<GetMessagesResult> {
+    if (!Number.isInteger(start.sec) || !Number.isInteger(start.nsec)) {
+      this._warn(`start time ${JSON.stringify(start)} must only contain integers`);
+    }
+    if (!Number.isInteger(end.sec) || !Number.isInteger(end.nsec)) {
+      this._warn(`end time ${JSON.stringify(end)} must only contain integers`);
+    }
     const initRes = this._initializationResult;
     if (!initRes) {
       this._warn("getMessages was called before initialize finished");

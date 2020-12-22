@@ -64,15 +64,10 @@ $control-margin: 0 0.2em;
   }
 }
 
-%menu-item-active {
+%menu-item-active,
+%menu-item-hover {
   color: rgba(255, 255, 255, 1);
   background-color: $dark5;
-  opacity: 1;
-}
-
-%menu-item-hover {
-  background-color: $dark4;
-  color: rgba(255, 255, 255, 1);
 }
 
 $sans-serif-font: "Inter UI", -apple-system, BlinkMacSystemFont, sans-serif;

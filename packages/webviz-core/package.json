@@ -17,6 +17,7 @@
     "classnames": "2.2.6",
     "compressjs": "1.0.3",
     "connected-react-router": "6.5.2",
+    "dom-to-image-more-scroll-fix": "2.9.0",
     "downshift": "4.0.1",
     "fuzzysort": "1.1.4",
     "hammerjs": "2.0.8",

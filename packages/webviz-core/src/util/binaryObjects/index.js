@@ -31,7 +31,14 @@ const context = { Buffer, getArrayView, deepParse: deepParseSymbol, int53, assoc
 
 export type { ArrayView };
 
-const bobjectSizes = new WeakMap<any, number>();
+type BinaryBobjectData = $ReadOnly<{|
+  buffer: ArrayBuffer,
+  bigString: string,
+  offset: number,
+  approximateSize: number,
+|}>;
+const binaryData = new WeakMap<any, BinaryBobjectData>();
+export const getBinaryData = (bobject: any): ?BinaryBobjectData => binaryData.get(bobject);
 const reverseWrappedBobjects = new WeakSet<any>();
 
 export const getObject = (
@@ -40,15 +47,9 @@ export const getObject = (
   buffer: ArrayBuffer,
   bigString: string
 ): Bobject => {
-  const Class = getGetClassForView(typesByName, datatype)(
-    context,
-    new DataView(buffer),
-    bigString,
-    typesByName,
-    datatype
-  );
+  const Class = getGetClassForView(typesByName, datatype)(context, new DataView(buffer), bigString, typesByName);
   const ret = new Class(0);
-  bobjectSizes.set(ret, buffer.byteLength + bigString.length);
+  binaryData.set(ret, { buffer, bigString, offset: 0, approximateSize: buffer.byteLength + bigString.length });
   return ret;
 };
 
@@ -59,20 +60,15 @@ export const getObjects = (
   bigString: string,
   offsets: $ReadOnlyArray<number>
 ): $ReadOnlyArray<Bobject> => {
-  const Class = getGetClassForView(typesByName, datatype)(
-    context,
-    new DataView(buffer),
-    bigString,
-    typesByName,
-    datatype
-  );
+  const Class = getGetClassForView(typesByName, datatype)(context, new DataView(buffer), bigString, typesByName);
   const ret = offsets.map((offset) => new Class(offset));
-  ret.forEach((bobject) => {
-    // Super dumb heuristic: assume all of the bobjects have the same size. We can do better because
-    // we have the offset, and we could even get the exact amount from the rewriter, but this is
-    // only used for memory cache eviction which we do a whole block at a time, so we're only
-    // actually interested in the sum (which is correct, plus or minus floating point error).
-    bobjectSizes.set(bobject, (buffer.byteLength + bigString.length) / offsets.length);
+  // Super dumb heuristic: assume all of the bobjects in a block have the same size. We could do
+  // better, but this is only used for memory cache eviction which we do a whole block at a time, so
+  // we're only actually interested in the sum (which is correct, plus or minus floating point
+  // error).
+  const approximateSize = (buffer.byteLength + bigString.length) / offsets.length;
+  ret.forEach((bobject, i) => {
+    binaryData.set(bobject, { buffer, bigString, offset: offsets[i], approximateSize });
   });
   return ret;
 };
@@ -111,17 +107,17 @@ export const wrapJsObject = <T>(typesByName: RosDatatypes, typeName: string, obj
 // or we might remove this function and just provide access to the identity of the underlying data
 // so the shared storage is clear.
 export const inaccurateByteSize = (obj: any): number => {
-  const ret = bobjectSizes.get(obj);
-  if (ret == null) {
-    if (reverseWrappedBobjects.has(obj)) {
-      // Not ideal: Storing the deep-parsed representation of a reverse-wrapped bobject actually
-      // does take up memory -- and quite a bit of it. Unfortunately, we don't have a good heuristic
-      // for reverse-wrapped bobject sizes.
-      return 0;
-    }
-    throw new Error("Size of object not available");
+  const data = getBinaryData(obj);
+  if (data != null) {
+    return data.approximateSize;
   }
-  return ret;
+  if (reverseWrappedBobjects.has(obj)) {
+    // Not ideal: Storing the deep-parsed representation of a reverse-wrapped bobject actually
+    // does take up memory -- and quite a bit of it. Unfortunately, we don't have a good heuristic
+    // for reverse-wrapped bobject sizes.
+    return 0;
+  }
+  throw new Error("Size of object not available");
 };
 
 export function bobjectFieldNames(bobject: {}): string[] {

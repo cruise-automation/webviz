@@ -257,7 +257,7 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
     } = this.props;
     const autocompleteItems = fuzzyFilter(items, filterText, getItemText, sortWhenFiltering);
 
-    const { hasError = autocompleteItems.length === 0 } = this.props;
+    const { hasError = autocompleteItems.length === 0 && value?.length } = this.props;
 
     const open = this.state.focused && autocompleteItems.length > 0;
     if (!open) {
@@ -289,7 +289,10 @@ export default class Autocomplete extends PureComponent<AutocompleteProps, Autoc
         onSelect={this._onSelect}
         value={value || ""}
         inputProps={{
-          className: cx(styles.input, { [styles.inputError]: hasError }),
+          className: cx(styles.input, {
+            [styles.inputError]: hasError,
+            [styles.placeholder]: !value,
+          }),
           autoCorrect: "off",
           autoCapitalize: "off",
           spellCheck: "false",

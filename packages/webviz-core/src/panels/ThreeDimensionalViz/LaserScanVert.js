@@ -18,12 +18,12 @@ export default `
   uniform float range_min;
   uniform float range_max;
   uniform bool isHitmap;
-  uniform vec4 hitmapColor;
   uniform vec4 color;
 
   attribute float index;
   attribute float range;
   attribute float intensity;
+  attribute vec4 hitmapColor;
 
   varying vec4 vColor;
 

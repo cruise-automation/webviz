@@ -10,7 +10,6 @@ import hoistNonReactStatics from "hoist-non-react-statics";
 import { omit, debounce } from "lodash";
 import React, { type Node, useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { hot } from "react-hot-loader/root";
-import { useSelector } from "react-redux";
 import { type CameraState } from "regl-worldview";
 
 import { FrameCompatibilityDEPRECATED } from "./FrameCompatibility";
@@ -81,7 +80,6 @@ const BaseRenderer = (props: Props, ref) => {
     transforms,
     config: { autoSyncCameraState, followOrientation, followTf },
   } = props;
-  const extensions = useSelector((state) => state.extensions);
   const { updatePanelConfig } = React.useContext(PanelContext) || {};
 
   const currentTime = useMessagePipeline(
@@ -195,7 +193,6 @@ const BaseRenderer = (props: Props, ref) => {
       config={config}
       cleared={cleared}
       currentTime={currentTime}
-      extensions={extensions}
       followOrientation={!!followOrientation}
       followTf={followTf}
       frame={frame}

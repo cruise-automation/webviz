@@ -151,4 +151,14 @@ describe("transformPlotRange", () => {
       ]);
     });
   });
+
+  it("rad2deg converts radians to degrees", () => {
+    const items = [{ x: 1, y: Math.PI }];
+    expect(applyToDataOrTooltips(items, mathFunctions.rad2deg)).toEqual([{ x: 1, y: 180 }]);
+  });
+
+  it("deg2rad converts degrees to radians", () => {
+    const items = [{ x: 1, y: 180 }];
+    expect(applyToDataOrTooltips(items, mathFunctions.deg2rad)).toEqual([{ x: 1, y: Math.PI }]);
+  });
 });

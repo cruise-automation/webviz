@@ -125,6 +125,7 @@ type PanelItemProps = {
   panel: {| type: string, title: string, config: ?PanelConfig, relatedConfigs: ?SavedProps |},
   searchQuery: string,
   checked?: boolean,
+  highlighted?: boolean,
   onClick: () => void,
   // the props here are actually used in the dragSource
   // beginDrag and endDrag callbacks - the props are passed via react-dnd
@@ -133,7 +134,8 @@ type PanelItemProps = {
   onDrop: (DropDescription) => void, //eslint-disable-line react/no-unused-prop-types
 };
 
-function DraggablePanelItem({ searchQuery, panel, onClick, onDrop, checked, mosaicId }: PanelItemProps) {
+function DraggablePanelItem({ searchQuery, panel, onClick, onDrop, checked, highlighted, mosaicId }: PanelItemProps) {
+  const scrollRef = React.useRef<?HTMLDivElement>(null);
   const [__, drag] = useDrag({
     item: { type: MosaicDragType.WINDOW },
     begin: (_monitor) => ({ mosaicId }),
@@ -149,11 +151,41 @@ function DraggablePanelItem({ searchQuery, panel, onClick, onDrop, checked, mosa
       onDrop({ type, config, relatedConfigs, position, path, tabId });
     },
   });
+
+  React.useEffect(
+    () => {
+      if (highlighted && scrollRef.current) {
+        const highlightedItem = scrollRef.current.getBoundingClientRect();
+        const scrollContainer = scrollRef.current?.parentElement?.parentElement?.parentElement;
+        if (scrollContainer) {
+          const scrollContainerToTop = scrollContainer.getBoundingClientRect().top;
+
+          const isInView =
+            highlightedItem.top >= 0 &&
+            highlightedItem.top >= scrollContainerToTop &&
+            highlightedItem.top + 50 <= window.innerHeight;
+
+          if (!isInView && scrollRef.current) {
+            scrollRef.current.scrollIntoView({ behavior: "smooth" });
+          }
+        }
+      }
+    },
+    [highlighted]
+  );
+
   return (
     <div ref={drag}>
-      <Item onClick={onClick} checked={checked} className={styles.item} dataTest={`panel-menu-item ${panel.title}`}>
-        <TextHighlight targetStr={panel.title} searchText={searchQuery} />
-      </Item>
+      <div ref={scrollRef}>
+        <Item
+          onClick={onClick}
+          checked={checked}
+          highlighted={highlighted}
+          className={styles.item}
+          dataTest={`panel-menu-item ${panel.title}`}>
+          <TextHighlight targetStr={panel.title} searchText={searchQuery} />
+        </Item>
+      </div>
     </div>
   );
 }
@@ -197,6 +229,7 @@ function verifyPanels() {
 
 function PanelList(props: Props) {
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [highlightedPanelIdx, setHighlightedPanelIdx] = React.useState<?number>(null);
   const { onPanelSelect, selectedPanelTitle } = props;
 
   const dispatch = useDispatch();
@@ -225,6 +258,7 @@ function PanelList(props: Props) {
   const handleSearchChange = React.useCallback((e: SyntheticInputEvent<HTMLInputElement>) => {
     // TODO(Audrey): press enter to select the first item, allow using arrow key to go up and down
     setSearchQuery(e.target.value);
+    setHighlightedPanelIdx(0);
   }, []);
 
   verifyPanels();
@@ -241,9 +275,67 @@ function PanelList(props: Props) {
     () => panelCategories.map(({ key }) => getFilteredItemsForCategory(key)),
     [getFilteredItemsForCategory, panelCategories]
   );
+
   const noResults = React.useMemo(() => filteredItemsByCategoryIdx.every((items) => !items.length), [
     filteredItemsByCategoryIdx,
   ]);
+
+  const filteredItems = React.useMemo(() => flatMap(Object.values(filteredItemsByCategoryIdx)), [
+    filteredItemsByCategoryIdx,
+  ]);
+
+  const highlightedPanel = React.useMemo(
+    () => (highlightedPanelIdx != null ? filteredItems[highlightedPanelIdx] : null),
+    [filteredItems, highlightedPanelIdx]
+  );
+
+  const onKeyDown = React.useCallback(
+    (e) => {
+      if (e.key === "ArrowDown" && highlightedPanelIdx != null) {
+        setHighlightedPanelIdx((highlightedPanelIdx + 1) % filteredItems.length);
+      } else if (e.key === "ArrowUp" && highlightedPanelIdx != null) {
+        const newIdx = (highlightedPanelIdx - 1) % (filteredItems.length - 1);
+        setHighlightedPanelIdx(newIdx >= 0 ? newIdx : filteredItems.length + newIdx);
+      } else if (e.key === "Enter" && highlightedPanel) {
+        const { component, presetSettings } = highlightedPanel;
+        onPanelSelect({
+          type: component.panelType,
+          config: presetSettings?.config,
+          relatedConfigs: presetSettings?.relatedConfigs,
+        });
+      }
+    },
+    [filteredItems.length, highlightedPanel, highlightedPanelIdx, onPanelSelect]
+  );
+
+  const displayPanelListItem = React.useCallback(
+    ({ presetSettings, title, component: { panelType } }) => {
+      return (
+        <DraggablePanelItem
+          key={`${panelType}-${title}`}
+          mosaicId={mosaicId}
+          panel={{
+            type: panelType,
+            title,
+            config: presetSettings?.config,
+            relatedConfigs: presetSettings?.relatedConfigs,
+          }}
+          onDrop={onPanelMenuItemDrop}
+          onClick={() =>
+            onPanelSelect({
+              type: panelType,
+              config: presetSettings?.config,
+              relatedConfigs: presetSettings?.relatedConfigs,
+            })
+          }
+          checked={title === selectedPanelTitle}
+          highlighted={highlightedPanel?.title === title}
+          searchQuery={searchQuery}
+        />
+      );
+    },
+    [highlightedPanel, mosaicId, onPanelMenuItemDrop, onPanelSelect, searchQuery, selectedPanelTitle]
+  );
 
   return (
     <div data-test-panel-category style={{ height: "100%", width: "320px" }}>
@@ -256,7 +348,19 @@ function PanelList(props: Props) {
             <Icon style={{ color: colors.LIGHT, opacity: 0.3 }}>
               <MagnifyIcon />
             </Icon>
-            <SSearchInput placeholder="Search panels" value={searchQuery} onChange={handleSearchChange} autoFocus />
+            <SSearchInput
+              placeholder="Search panels"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onKeyDown={onKeyDown}
+              onBlur={() => {
+                setHighlightedPanelIdx(null);
+              }}
+              onFocus={() => {
+                setHighlightedPanelIdx(0);
+              }}
+              autoFocus
+            />
           </SSearchInputContainer>
         </div>
       </StickyDiv>
@@ -264,42 +368,21 @@ function PanelList(props: Props) {
         <SEmptyState>No panels match search criteria.</SEmptyState>
       ) : (
         <SScrollContainer>
-          {panelCategories.map(({ label }, categoryIdx) =>
-            filteredItemsByCategoryIdx[categoryIdx].map(
-              ({ presetSettings, title, component: { panelType } }, itemIdx) => {
-                const prevItems = flatMap(filteredItemsByCategoryIdx.slice(0, categoryIdx));
-                return (
-                  <div key={`${panelType}-${itemIdx}`} style={{ paddingTop: "8px" }}>
-                    {categoryIdx !== 0 && itemIdx === 0 && prevItems.length > 0 && <hr />}
-                    {itemIdx === 0 && (
-                      <Item isHeader style={categoryIdx === 0 || !prevItems.length ? { paddingTop: 0 } : {}}>
-                        {label}
-                      </Item>
-                    )}
-                    <DraggablePanelItem
-                      mosaicId={mosaicId}
-                      panel={{
-                        type: panelType,
-                        title,
-                        config: presetSettings?.config,
-                        relatedConfigs: presetSettings?.relatedConfigs,
-                      }}
-                      onDrop={onPanelMenuItemDrop}
-                      onClick={() =>
-                        onPanelSelect({
-                          type: panelType,
-                          config: presetSettings?.config,
-                          relatedConfigs: presetSettings?.relatedConfigs,
-                        })
-                      }
-                      checked={title === selectedPanelTitle}
-                      searchQuery={searchQuery}
-                    />
-                  </div>
-                );
-              }
-            )
-          )}
+          {panelCategories.map(({ label }, categoryIdx) => {
+            const prevItems = flatMap(filteredItemsByCategoryIdx.slice(0, categoryIdx));
+            if (!filteredItemsByCategoryIdx[categoryIdx].length) {
+              return null;
+            }
+            return (
+              <div key={label} style={{ paddingTop: "8px" }}>
+                {categoryIdx !== 0 && prevItems.length > 0 && <hr />}
+                <Item isHeader style={categoryIdx === 0 || !prevItems.length ? { paddingTop: 0 } : {}}>
+                  {label}
+                </Item>
+                {filteredItemsByCategoryIdx[categoryIdx].map(displayPanelListItem)}
+              </div>
+            );
+          })}
         </SScrollContainer>
       )}
     </div>

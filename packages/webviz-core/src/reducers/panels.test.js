@@ -26,13 +26,17 @@ import {
   fetchLayout,
 } from "webviz-core/src/actions/panels";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import { GLOBAL_STATE_STORAGE_KEY, resetInitialPersistedState } from "webviz-core/src/reducers/panels";
+import {
+  GLOBAL_STATE_STORAGE_KEY,
+  resetInitialPersistedState,
+  defaultPlaybackConfig,
+} from "webviz-core/src/reducers/panels";
 import { getGlobalStoreForTest } from "webviz-core/src/store/getGlobalStore";
 import { TAB_PANEL_TYPE } from "webviz-core/src/util/globalConstants";
 import { getPanelTypeFromId } from "webviz-core/src/util/layout";
 import Storage from "webviz-core/src/util/Storage";
 
-const CURRENT_LAYOUT_VERSION = 15;
+const CURRENT_LAYOUT_VERSION = 16;
 const defaultPersistedState = Object.freeze(getGlobalHooks().getDefaultPersistedState());
 const storage = new Storage();
 
@@ -48,13 +52,13 @@ const getStore = () => {
 describe("state.persistedState", () => {
   beforeEach(() => {
     resetInitialPersistedState();
-    window.localStorage.clear();
+    storage.clear();
   });
 
   it("stores initial panel layout in local storage", () => {
     const store = getStore();
     store.checkState(({ persistedState }) => {
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState).toEqual(persistedState);
     });
   });
@@ -64,7 +68,7 @@ describe("state.persistedState", () => {
     store.checkState(({ persistedState: { panels } }) => {
       expect(panels.layout).toEqual(defaultPersistedState.panels.layout);
       expect(panels.savedProps).toEqual({});
-      expect(storage.get(GLOBAL_STATE_STORAGE_KEY)).toEqual(defaultPersistedState);
+      expect(storage.getItem(GLOBAL_STATE_STORAGE_KEY)).toEqual(defaultPersistedState);
     });
   });
 
@@ -86,7 +90,7 @@ describe("state.persistedState", () => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ "foo!bar": { test: true } });
 
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.layout).toEqual(panels.layout);
       expect(globalState.panels.savedProps).toEqual(panels.savedProps);
     });
@@ -96,7 +100,7 @@ describe("state.persistedState", () => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ "foo!bar": { test: true } });
 
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.layout).toEqual(panels.layout);
       expect(globalState.panels.savedProps).toEqual(panels.savedProps);
     });
@@ -108,7 +112,7 @@ describe("state.persistedState", () => {
       expect(panels.layout).toEqual("foo!bar");
       expect(panels.savedProps).toEqual({ "foo!bar": { test: true, testing: true } });
 
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.layout).toEqual(panels.layout);
       expect(globalState.panels.savedProps).toEqual(panels.savedProps);
     });
@@ -138,7 +142,7 @@ describe("state.persistedState", () => {
       };
       expect(panels).toEqual(result);
 
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels).toEqual(result);
     });
   });
@@ -152,7 +156,7 @@ describe("state.persistedState", () => {
 
     store.dispatch(importPanelLayout(payload));
     store.checkState(() => {
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.globalVariables).toEqual({});
       expect(globalState.panels.userNodes).toEqual({});
       expect(globalState.panels.linkedGlobalVariables).toEqual([]);
@@ -168,7 +172,7 @@ describe("state.persistedState", () => {
 
     store.dispatch(importPanelLayout(payload));
     store.checkState(() => {
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.playbackConfig).toEqual({ messageOrder: "receiveTime", speed: 0.2 });
     });
   });
@@ -188,7 +192,7 @@ describe("state.persistedState", () => {
 
     store.dispatch(importPanelLayout(payload));
     store.checkState(() => {
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.globalVariables).toEqual(globalVariables);
       expect(globalState.panels.userNodes).toEqual(userNodes);
       expect(globalState.panels.linkedGlobalVariables).toEqual(linkedGlobalVariables);
@@ -205,7 +209,7 @@ describe("state.persistedState", () => {
 
     store.dispatch(importPanelLayout(payload));
     store.checkState(() => {
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.restrictedTopics).toEqual(payload.restrictedTopics);
     });
   });
@@ -216,7 +220,7 @@ describe("state.persistedState", () => {
     const payload = { globalData: globalVariables, layout: "foo!baz" };
     store.dispatch(importPanelLayout(payload, { isFromUrl: true }));
     store.checkState(() => {
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.globalVariables).toEqual(globalVariables);
     });
   });
@@ -227,7 +231,7 @@ describe("state.persistedState", () => {
     const payload = { globalData: { some_var: 2 }, globalVariables, layout: "foo!baz" };
     store.dispatch(importPanelLayout(payload, { isFromUrl: true }));
     store.checkState(() => {
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.globalData).toBe(undefined);
     });
   });
@@ -571,7 +575,7 @@ describe("state.persistedState", () => {
     await delay(500);
     store.checkState(({ persistedState: { panels, fetchedLayout } }) => {
       expect(panels.layout).toEqual({ foo: "bar" });
-      expect(fetchedLayout.data).toEqual({ layout: { foo: "bar" } });
+      expect(fetchedLayout.data.layout).toEqual({ foo: "bar" });
       expect(fetchedLayout.isLoading).toEqual(false);
     });
     store.dispatch(fetchLayout("?layout-url=https://www.foo.com"));
@@ -618,7 +622,7 @@ describe("state.persistedState", () => {
         globalVariables: {},
         layout: {},
         linkedGlobalVariables: [],
-        playbackConfig: { messageOrder: "receiveTime", speed: 0.2 },
+        playbackConfig: defaultPlaybackConfig,
         savedProps: {},
         userNodes: {},
       });
@@ -630,7 +634,7 @@ describe("state.persistedState", () => {
 
     store.dispatch(importPanelLayout({ layout: "myNewLayout", savedProps: {} }, { isFromUrl: true }));
     store.checkState(() => {
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.layout).toEqual("myNewLayout");
     });
   });
@@ -642,7 +646,7 @@ describe("state.persistedState", () => {
       importPanelLayout({ layout: null, savedProps: {} }, { isFromUrl: true, skipSettingLocalStorage: true })
     );
     store.checkState(({ persistedState: { panels } }) => {
-      const globalState = storage.get(GLOBAL_STATE_STORAGE_KEY) || {};
+      const globalState = storage.getItem(GLOBAL_STATE_STORAGE_KEY) || {};
       expect(globalState.panels.layout).not.toEqual(panels.layout);
     });
   });

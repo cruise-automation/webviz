@@ -27,7 +27,7 @@ describe("ExperimentalFeatures", () => {
         return dummyExperimentalFeaturesList;
       },
     });
-    new Storage().set(EXPERIMENTAL_FEATURES_STORAGE_KEY, dummyExperimentalFeaturesStorage);
+    new Storage().setItem(EXPERIMENTAL_FEATURES_STORAGE_KEY, dummyExperimentalFeaturesStorage);
 
     const renderedSettings = {};
     let renderCount = 0;
@@ -57,12 +57,12 @@ describe("ExperimentalFeatures", () => {
       .simulate("click");
     expect(renderCount).toEqual(2);
     expect(renderedSettings).toEqual({ topicTree: false, topicTree2: true, topicTree3: true, topicTree4: false });
-    expect(new Storage().get(EXPERIMENTAL_FEATURES_STORAGE_KEY)).toEqual({
+    expect(new Storage().getItem(EXPERIMENTAL_FEATURES_STORAGE_KEY)).toEqual({
       ...dummyExperimentalFeaturesStorage,
       topicTree: "alwaysOff",
     });
 
-    new Storage().remove(EXPERIMENTAL_FEATURES_STORAGE_KEY);
+    new Storage().removeItem(EXPERIMENTAL_FEATURES_STORAGE_KEY);
     resetHooksToDefault();
   });
 });

@@ -27,11 +27,12 @@ import {
   stringifyParams,
   dictForPatchCompression,
 } from "./layout";
+import { defaultPlaybackConfig } from "webviz-core/src/reducers/panels";
 
+const tabConfig = { title: "First tab", layout: { first: "Plot!1", second: "Plot!2", direction: "row" } };
 describe("layout", () => {
   describe("getSaveConfigsPayloadForAddedPanel", () => {
     it("properly map template panel IDs to new IDs when adding a Tab panel", () => {
-      const tabConfig = { title: "First tab", layout: { first: "Plot!1", second: "Plot!2" } };
       const firstPlotConfig = { paths: ["/abc"] };
       const secondPlotConfig = { paths: ["/def"] };
       const configsSaved = getSaveConfigsPayloadForAddedPanel({
@@ -50,7 +51,7 @@ describe("layout", () => {
       expect(getPanelTypeFromId(newIdForSecondPlot)).toEqual("Plot");
 
       expect(configsSaved[2].config).toEqual({
-        tabs: [{ ...tabConfig, layout: { first: newIdForFirstPlot, second: newIdForSecondPlot } }],
+        tabs: [{ ...tabConfig, layout: { first: newIdForFirstPlot, second: newIdForSecondPlot, direction: "row" } }],
       });
       expect(configsSaved[2].id).toEqual("Tab!abc");
     });
@@ -88,6 +89,26 @@ describe("layout", () => {
       const { configs } = getSaveConfigsPayloadForAddedPanel({ ...originalConfig, relatedConfigs: undefined });
       expect(configs.length).toEqual(1);
       expect(originalConfig).toEqual(configs[0]);
+    });
+    it("returns configs when there are missing related configs", () => {
+      const firstPlotConfig = { paths: ["/abc"] };
+      const configsSaved = getSaveConfigsPayloadForAddedPanel({
+        id: "Tab!abc",
+        config: { tabs: [tabConfig] },
+        relatedConfigs: { "Plot!1": firstPlotConfig },
+      }).configs;
+      expect(configsSaved.length).toEqual(2);
+      const newIdForFirstPlot = configsSaved[0].id;
+      expect(configsSaved[0].config).toEqual(firstPlotConfig);
+      expect(newIdForFirstPlot).not.toEqual("Plot!1");
+      expect(getPanelTypeFromId(newIdForFirstPlot)).toEqual("Plot");
+
+      expect(configsSaved[1].id).toEqual("Tab!abc");
+      const updatedTabConfig = configsSaved[1].config.tabs[0];
+      expect(updatedTabConfig.layout.first).toEqual(newIdForFirstPlot);
+      expect(updatedTabConfig.layout.second).not.toEqual("Plot!2");
+      expect(getPanelTypeFromId(updatedTabConfig.layout.second)).toEqual("Plot");
+      expect(updatedTabConfig.layout.direction).toEqual("row");
     });
   });
 
@@ -485,6 +506,7 @@ describe("layout", () => {
       expect(validateTabPanelConfig({ tabs, activeTabIdx: 1 })).toEqual(false);
       expect(validateTabPanelConfig({ activeTabIdx: 1 })).toEqual(false);
       expect(validateTabPanelConfig({ tabs, activeTabIdx: 0 })).toEqual(true);
+      expect(validateTabPanelConfig(undefined)).toEqual(false);
     });
   });
 
@@ -496,7 +518,7 @@ describe("layout", () => {
             layout: "abc",
             globalVariables: { globalVar1: 1, globalVar2: 2 },
             linkedGlobalVariables: [],
-            playbackConfig: { speed: 0.2, messageOrder: "receiveTime" },
+            playbackConfig: defaultPlaybackConfig,
             userNodes: {},
             savedProps: {},
           },
@@ -504,7 +526,7 @@ describe("layout", () => {
             layout: "def",
             globalVariables: { globalVar1: 1, globalVar3: 3 },
             linkedGlobalVariables: [],
-            playbackConfig: { speed: 0.5, messageOrder: "receiveTime" },
+            playbackConfig: { ...defaultPlaybackConfig, speed: 0.5 },
             userNodes: {},
             savedProps: {},
           }
@@ -536,6 +558,10 @@ describe("layout", () => {
       expect(getUpdatedURLWithPatch("?layout=foo&someKey=someVal", stringifiedPatch)).toMatch(
         `?layout=foo&someKey=someVal&patch=${encodeURIComponent(compressedPatch)}`
       );
+    });
+    it("does not change the search if the diff input is empty", async () => {
+      const search = "?layout=foo&someKey=someVal&patch=bar";
+      expect(getUpdatedURLWithPatch(search, "")).toBe(search);
     });
   });
 

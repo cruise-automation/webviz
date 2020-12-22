@@ -8,13 +8,29 @@
 
 import tick from "webviz-core/shared/tick";
 
-export async function simulateDragClick(point: number[] = [0, 0], canvas: ?HTMLCanvasElement) {
-  canvas = canvas || (document.querySelectorAll("canvas")[0]: any);
+export function findCanvas(): HTMLCanvasElement {
+  const canvas = (document.querySelectorAll("canvas")[0]: any);
   if (!canvas) {
     throw new Error("Could not find canvas element");
   }
+  return canvas;
+}
 
+export async function simulateMouseMove(point: number[] = [0, 0], canvas: ?HTMLCanvasElement) {
   const [clientX, clientY] = point;
+  canvas = canvas || findCanvas();
+  canvas.dispatchEvent(
+    new MouseEvent("mousemove", {
+      bubbles: true,
+      clientX,
+      clientY,
+    })
+  );
+}
+
+export async function simulateDragClick(point: number[] = [0, 0], canvas: ?HTMLCanvasElement) {
+  const [clientX, clientY] = point;
+  canvas = canvas || findCanvas();
   canvas.dispatchEvent(
     new MouseEvent("mousedown", {
       bubbles: true,

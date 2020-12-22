@@ -194,6 +194,7 @@ function TopicSettingsModal({
           maxWidth: 480,
           display: "flex",
           flexDirection: "column",
+          overflow: "auto",
         }}>
         <STopicSettingsEditor>
           <STitle>{currentEditingTopic.name}</STitle>

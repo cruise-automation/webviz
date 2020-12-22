@@ -12,7 +12,6 @@ import * as React from "react";
 import { MessageReader, parseMessageDefinition } from "rosbag";
 
 import * as PanelAPI from ".";
-import { setExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { MockMessagePipelineProvider } from "webviz-core/src/components/MessagePipeline";
 
 describe("useBlocksByTopic", () => {
@@ -25,10 +24,6 @@ describe("useBlocksByTopic", () => {
     Test.result = jest.fn();
     return Test;
   }
-
-  afterEach(() => {
-    setExperimentalFeature("preloading", "default");
-  });
 
   it("returns an empty structure when there are no blocks", async () => {
     const Test = createTest();
@@ -132,27 +127,6 @@ describe("useBlocksByTopic", () => {
     // Consumers just need to check in one place to see whether they need a fallback for a topic:
     // in messageReadersByTopic. (They don't also need to check the presence of blocks.)
     expect(Test.result.mock.calls).toEqual([[{ blocks: [], messageReadersByTopic: {} }]]);
-    root.unmount();
-  });
-
-  it("returns no data when the experimental feature is turned off (default)", async () => {
-    setExperimentalFeature("preloading", "alwaysOff");
-    const activeData = { parsedMessageDefinitionsByTopic: { "/topic": parseMessageDefinition("uint32 id") } };
-    const progress = {
-      messageCache: {
-        blocks: [{ sizeInBytes: 0, messagesByTopic: { "/topic1": [] } }],
-        startTime: { sec: 0, nsec: 0 },
-      },
-    };
-    const Test = createTest();
-    const root = mount(
-      <MockMessagePipelineProvider activeData={activeData} progress={progress}>
-        <Test topics={["/topic1"]} />
-      </MockMessagePipelineProvider>
-    );
-    // No message readers, even though we have a definition and we try to subscribe to the topic.
-    // This means the data will never be provided.
-    expect(Test.result.mock.calls).toEqual([[{ blocks: [{}], messageReadersByTopic: {} }]]);
     root.unmount();
   });
 

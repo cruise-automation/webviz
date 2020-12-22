@@ -15,11 +15,11 @@ import styled from "styled-components";
 import GlobalVariableLink from "./GlobalVariableLink/index";
 import type { InteractionData } from "./types";
 import Dropdown from "webviz-core/src/components/Dropdown";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import { Renderer } from "webviz-core/src/panels/ThreeDimensionalViz/index";
 import { getInstanceObj } from "webviz-core/src/panels/ThreeDimensionalViz/threeDimensionalVizUtils";
 import { deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
 import { jsonTreeTheme } from "webviz-core/src/util/globalConstants";
+import logEvent, { getEventNames, getEventTags } from "webviz-core/src/util/logEvent";
 
 // Sort the keys of objects to make their presentation more predictable
 const PREFERRED_OBJECT_KEY_ORDER = [
@@ -63,12 +63,11 @@ function ObjectDetailsWrapper({ interactionData, selectedObject: { object, insta
     full: "Show full object",
   };
 
-  const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
   const updateShowInstance = (shouldShowInstance) => {
     setShowInstance(shouldShowInstance);
-    logger({
-      name: eventNames["3D_PANEL.OBJECT_DETAILS_SHOW_INSTANCE"],
-      tags: { [eventTags.PANEL_TYPE]: Renderer.panelType },
+    logEvent({
+      name: getEventNames()["3D_PANEL.OBJECT_DETAILS_SHOW_INSTANCE"],
+      tags: { [getEventTags().PANEL_TYPE]: Renderer.panelType },
     });
   };
 

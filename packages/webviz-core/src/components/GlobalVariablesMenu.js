@@ -23,10 +23,10 @@ import { WrappedIcon } from "webviz-core/src/components/Icon";
 import Menu from "webviz-core/src/components/Menu";
 import HelpButton from "webviz-core/src/components/PanelToolbar/HelpButton";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
-import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import GlobalVariables from "webviz-core/src/panels/GlobalVariables";
 import helpContent from "webviz-core/src/panels/GlobalVariables/index.help.md";
 import inScreenshotTests from "webviz-core/src/stories/inScreenshotTests";
+import logEvent, { getEventTags, getEventNames } from "webviz-core/src/util/logEvent";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const STitleBar = styled.div`
@@ -93,8 +93,7 @@ function GlobalVariablesMenu(props: Props) {
       setIsOpen((open) => !open);
       dispatch(addPanel(({ type: GlobalVariables.panelType, layout, tabId: null }: AddPanelPayload)));
 
-      const { logger, eventNames, eventTags } = getGlobalHooks().getEventLogger();
-      logger({ name: eventNames.PANEL_ADD, tags: { [eventTags.PANEL_TYPE]: GlobalVariables.panelType } });
+      logEvent({ name: getEventNames().PANEL_ADD, tags: { [getEventTags().PANEL_TYPE]: GlobalVariables.panelType } });
     },
     [dispatch, layout]
   );
@@ -110,7 +109,7 @@ function GlobalVariablesMenu(props: Props) {
   );
 
   return (
-    <ChildToggle position="below" onToggle={onToggle} isOpen={isOpen}>
+    <ChildToggle position="below" onToggle={onToggle} isOpen={isOpen} dataTest="open-global-variables">
       <Flex center>
         <SAnimatedIcon
           medium

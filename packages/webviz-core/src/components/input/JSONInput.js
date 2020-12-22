@@ -11,7 +11,7 @@ import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 const keyValMap = { ArrowDown: -1, ArrowUp: 1 };
 
-export function JSONInput(props: {| value: string, onChange: (mixed) => void |}) {
+export function JSONInput(props: {| value: string, dataTest?: string, onChange: (mixed) => void |}) {
   const [internalValue, setInternalValue] = useState<string>(props.value);
   const lastPropsValue = useRef<string>(props.value);
   if (lastPropsValue.current !== props.value) {
@@ -23,7 +23,7 @@ export function JSONInput(props: {| value: string, onChange: (mixed) => void |})
   return (
     <input
       style={{ color: isValid ? "white" : colors.RED }}
-      data-test="json-input"
+      data-test={props.dataTest || "json-input"}
       type="text"
       value={internalValue}
       onChange={(e) => {

@@ -9,7 +9,7 @@ import { connectRouter } from "connected-react-router";
 
 import type { ActionTypes } from "webviz-core/src/actions";
 import { ros_lib_dts } from "webviz-core/src/players/UserNodePlayer/nodeTransformerWorker/typescript/ros";
-import extensions, { type Extensions as ExtensionsState } from "webviz-core/src/reducers/extensions";
+import commenting from "webviz-core/src/reducers/commenting";
 import hoverValue from "webviz-core/src/reducers/hoverValue";
 import layoutHistory, { type LayoutHistory, initialLayoutHistoryState } from "webviz-core/src/reducers/layoutHistory";
 import mosaic from "webviz-core/src/reducers/mosaic";
@@ -29,11 +29,11 @@ const getReducers = (history: any) => [
   (state) => ({ ...state, router: connectRouter(history)() }),
   panels,
   mosaic,
-  extensions,
   hoverValue,
   userNodes,
   layoutHistory,
   recentLayouts,
+  commenting,
   ...(process.env.NODE_ENV === "test" ? [tests] : []),
 ];
 
@@ -45,15 +45,22 @@ export type PersistedState = {|
 
 export type Dispatcher<T> = (dispatch: Dispatch, getState: GetState) => T;
 
+export type Comment = {
+  id: string,
+  authorId: string,
+  body: string,
+  metadata: { [string]: any },
+  attachments: { url: string }[],
+};
 export type State = {
   persistedState: PersistedState,
   mosaic: { mosaicId: string, selectedPanelIds: string[] },
   auth: AuthState,
-  extensions: ExtensionsState,
   hoverValue: ?HoverValue,
   userNodes: { userNodeDiagnostics: UserNodeDiagnostics, rosLib: string },
   router: { location: { pathname: string, search: string } },
   layoutHistory: LayoutHistory,
+  commenting: { fetchedCommentsBase: Comment[], fetchedCommentsFeature: Comment[] },
 };
 
 export type Store = { dispatch: Dispatch, getState: () => State };
@@ -70,6 +77,7 @@ export default function createRootReducer(history: any, args?: { testAuth?: any 
     userNodes: { userNodeDiagnostics: {}, rosLib: ros_lib_dts },
     router: connectRouter(history)(),
     layoutHistory: initialLayoutHistoryState,
+    commenting: { fetchedCommentsBase: [], fetchedCommentsFeature: [], sourceToShow: "Both" },
   };
   return (state: State, action: ActionTypes): State => {
     const oldPersistedState: ?PersistedState = state?.persistedState;

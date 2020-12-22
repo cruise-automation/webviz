@@ -8,7 +8,6 @@
 
 import { Time } from "rosbag";
 
-import { setupReceiveReportErrorHandler } from "webviz-core/src//util/RpcUtils";
 import type {
   DataProviderDescriptor,
   ExtensionPoint,
@@ -18,6 +17,7 @@ import type {
   DataProvider,
 } from "webviz-core/src/dataProviders/types";
 import Rpc from "webviz-core/src/util/Rpc";
+import { setupMainThreadRpc } from "webviz-core/src/util/RpcMainThreadUtils";
 
 // Looks a bit like a regular `DataProvider`, but is not intended to be used directly in a
 // DataProviderDescriptor tree, but rather in another DataProvider where we instantiate an Rpc, e.g.
@@ -30,7 +30,7 @@ export default class RpcDataProvider implements DataProvider {
 
   constructor(rpc: Rpc, children: DataProviderDescriptor[]) {
     this._rpc = rpc;
-    setupReceiveReportErrorHandler(this._rpc);
+    setupMainThreadRpc(this._rpc);
     if (children.length !== 1) {
       throw new Error(`RpcDataProvider requires exactly 1 child, but received ${children.length}`);
     }

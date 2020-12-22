@@ -44,6 +44,12 @@ export type BinaryPose = $ReadOnly<{|
   orientation(): Orientation,
 |}>;
 
+export type BinaryPose2D = $ReadOnly<{|
+  x(): number,
+  y(): number,
+  theta(): number,
+|}>;
+
 export type BinaryPoseStamped = $ReadOnly<BinaryStampedMessage & {| pose(): BinaryPose |}>;
 
 export type BinaryPolygon = $ReadOnly<{| points(): ArrayView<BinaryPoint> |}>;

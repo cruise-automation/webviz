@@ -48,8 +48,10 @@ export function formatDuration(stamp: Time) {
   return moment.duration(Math.round(stamp.sec * 1000 + stamp.nsec / 1e6)).format("h:mm:ss.SSS", { trim: false });
 }
 
-export function parseTimeStr(str: string): ?Time {
-  const newMomentTimeObj = moment(str, "YYYY-MM-DD h:mm:ss.SSS A z");
+export function parseTimeStr(str: string, timezone?: ?string): ?Time {
+  const newMomentTimeObj = timezone
+    ? moment.tz(str, "YYYY-MM-DD h:mm:ss.SSS A z", timezone)
+    : moment(str, "YYYY-MM-DD h:mm:ss.SSS A z");
   const date = newMomentTimeObj.toDate();
   const result = (newMomentTimeObj.isValid() && fromDate(date)) || null;
 

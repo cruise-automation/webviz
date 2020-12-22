@@ -44,6 +44,7 @@ import {
   PATCH_QUERY_KEY,
 } from "webviz-core/src/util/globalConstants";
 import {
+  setDefaultFields,
   updateTabPanelLayout,
   replaceAndRemovePanels,
   getPanelIdForType,
@@ -70,6 +71,7 @@ export const GLOBAL_STATE_STORAGE_KEY = "webvizGlobalState";
 export const defaultPlaybackConfig: PlaybackConfig = {
   speed: 0.2,
   messageOrder: "receiveTime",
+  timeDisplayMethod: "ROS",
 };
 
 export type PanelsState = {|
@@ -89,7 +91,7 @@ export type PanelsState = {|
 |};
 
 export const setPersistedStateInLocalStorage = (persistedState: PersistedState) => {
-  storage.set(GLOBAL_STATE_STORAGE_KEY, persistedState);
+  storage.setItem(GLOBAL_STATE_STORAGE_KEY, persistedState);
 };
 
 // initialPersistedState will be initialized once when the store initializes this reducer. It is
@@ -100,7 +102,7 @@ let initialPersistedState;
 export function getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history: any): PersistedState {
   if (initialPersistedState == null) {
     const defaultPersistedState = Object.freeze(getGlobalHooks().getDefaultPersistedState());
-    const oldPersistedState: any = storage.get(GLOBAL_STATE_STORAGE_KEY);
+    const oldPersistedState: any = storage.getItem(GLOBAL_STATE_STORAGE_KEY);
 
     const newPersistedState = cloneDeep(defaultPersistedState);
 
@@ -137,9 +139,14 @@ export function getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history
         }
       } else {
         // Read layout name and version from fetchedLayout.
-        const { name, releasedVersion } = fetchedLayoutDataFromLocalStorage;
+        const { name, releasedVersion, fileSuffix } = fetchedLayoutDataFromLocalStorage;
         fetchedLayoutName = name;
-        const layoutParam = releasedVersion ? `${name}@${releasedVersion}` : name;
+        let layoutParam = name;
+        if (fileSuffix) {
+          layoutParam = `${name}@${fileSuffix}`;
+        } else if (releasedVersion) {
+          layoutParam = `${name}@${releasedVersion}`;
+        }
         currentSearchParams.set(LAYOUT_QUERY_KEY, layoutParam);
       }
 
@@ -155,9 +162,14 @@ export function getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history
     if (fetchedLayoutDataFromLocalStorage) {
       // Set `isInitializedFromLocalStorage` flag to skip initial layout fetch.
       newPersistedState.fetchedLayout = {
-        ...oldPersistedState.fetchedLayout,
+        ...oldFetchedLayoutState,
+        data: {
+          ...fetchedLayoutDataFromLocalStorage,
+          content: getGlobalHooks().migratePanels(fetchedLayoutDataFromLocalStorage.content),
+        },
         isInitializedFromLocalStorage,
       };
+      newPersistedState.search = oldPersistedState.search;
     }
 
     // 3. Handle panel state.
@@ -167,13 +179,7 @@ export function getInitialPersistedStateAndMaybeUpdateLocalStorageAndURL(history
       // The localStorage is on old format with {layout, savedProps...}
       newPersistedState.panels = oldPersistedState;
     }
-    // Extra checks to make sure all the common fields for panels are present.
-    Object.keys(defaultPersistedState.panels).forEach((fieldName) => {
-      const newFieldValue = newPersistedState.panels[fieldName];
-      if (isEmpty(newFieldValue)) {
-        newPersistedState.panels[fieldName] = defaultPersistedState.panels[fieldName];
-      }
-    });
+    newPersistedState.panels = setDefaultFields(defaultPersistedState.panels, newPersistedState.panels);
 
     // Migrate panels and store in localStorage.
     const migratedPanels = getGlobalHooks().migratePanels(newPersistedState.panels);

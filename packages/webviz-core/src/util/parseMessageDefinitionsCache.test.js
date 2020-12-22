@@ -6,15 +6,21 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import { CacheForTesting as ParseMessageDefinitionsCache } from "./parseMessageDefinitionsCache";
+import {
+  CacheForTesting as ParseMessageDefinitionsCache,
+  setStorageForTest,
+  getStorageForTest,
+  restoreStorageForTest,
+} from "./parseMessageDefinitionsCache";
+import sendNotification from "webviz-core/src/util/sendNotification";
+import Storage, { clearBustStorageFnsMap } from "webviz-core/src/util/Storage";
+
+const storage = new Storage();
 
 describe("parseMessageDefinitionsCache", () => {
   beforeEach(() => {
-    localStorage.clear();
-  });
-
-  afterEach(() => {
-    localStorage.clear();
+    storage.clear();
+    clearBustStorageFnsMap();
   });
 
   describe("on construction", () => {
@@ -71,33 +77,49 @@ describe("parseMessageDefinitionsCache", () => {
     it("stores the definition in localStorage", () => {
       const cache = new ParseMessageDefinitionsCache();
       const definition = cache.parseMessageDefinition("string value", "dummy md5");
-      const localStorageItem = localStorage.getItem("msgdefn/dummy md5");
-      expect(JSON.parse(localStorageItem || "")).toEqual(definition);
+      const localStorageItem = storage.getItem("msgdefn/dummy md5");
+      expect(localStorageItem).toEqual(definition);
+    });
+
+    it("busts the message definition cache when running out of storage space", () => {
+      setStorageForTest(87);
+      const mockStorage = getStorageForTest();
+      const previousCache = new ParseMessageDefinitionsCache();
+      previousCache.parseMessageDefinition("string value1", "md5 to remove");
+      expect(mockStorage.getItem("msgdefn/md5 to remove")).not.toEqual(undefined);
+
+      mockStorage.setItem("test", "some new value");
+      expect(mockStorage.getItem("msgdefn/md5 to remove")).toEqual(undefined);
+      expect(mockStorage.getItem("test")).toEqual("some new value");
+
+      restoreStorageForTest();
     });
 
     it("on localStorage failure, clears and reloads all localStorage definitions", () => {
       const previousCache = new ParseMessageDefinitionsCache();
       previousCache.parseMessageDefinition("string value1", "md5 to remove");
-      expect(localStorage.getItem("msgdefn/md5 to remove")).not.toEqual(undefined);
-      localStorage.setItem("test", "test");
+      expect(storage.getItem("msgdefn/md5 to remove")).not.toEqual(undefined);
+      storage.setItem("test", "test");
 
-      const cache = new ParseMessageDefinitionsCache();
-      const definition1 = cache.parseMessageDefinition("string value2", "dummy md5 1");
-
-      jest.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => {
-        throw new Error("quota exceeded");
+      jest.spyOn(Storage.prototype, "setItem").mockImplementationOnce((key, value) => {
+        // Clear the previous cache.
+        storage.removeItem("msgdefn/md5 to remove");
+        storage.setItem(key, value);
       });
+      const cache = new ParseMessageDefinitionsCache();
+
+      const definition1 = cache.parseMessageDefinition("string value2", "dummy md5 1");
       const definition2 = cache.parseMessageDefinition("string value", "dummy md5");
 
       // Both keys should be in localStorage.
-      const localStorageItem1 = localStorage.getItem("msgdefn/dummy md5 1");
-      expect(JSON.parse(localStorageItem1 || "")).toEqual(definition1);
-      const localStorageItem2 = localStorage.getItem("msgdefn/dummy md5");
-      expect(JSON.parse(localStorageItem2 || "")).toEqual(definition2);
+      const localStorageItem1 = storage.getItem("msgdefn/dummy md5 1");
+      expect(localStorageItem1).toEqual(definition1);
+      const localStorageItem2 = storage.getItem("msgdefn/dummy md5");
+      expect(localStorageItem2).toEqual(definition2);
       // The key from the previous cache should be removed.
-      expect(localStorage.getItem("msgdefn/md5 to remove")).toEqual(null);
+      expect(storage.getItem("msgdefn/md5 to remove")).toEqual(undefined);
       // Any non-message definition localStorage keys should be restored.
-      expect(localStorage.getItem("test")).toEqual("test");
+      expect(storage.getItem("test")).toEqual("test");
       Storage.prototype.setItem.mockRestore();
     });
 
@@ -113,8 +135,9 @@ describe("parseMessageDefinitionsCache", () => {
       cache.parseMessageDefinition("string value", "dummy md5");
       cache.parseMessageDefinition("string value3", "dummy md5 2");
       cache.parseMessageDefinition("string value4", "dummy md5 3");
-      // Fails the first time, and then fails again when trying to set all keys, so we stop using localStorage.
-      expect(setItemCount).toEqual(2);
+      // Failed even though we cleared the cache, so we stop using localStorage.
+      expect(setItemCount).toEqual(1);
+      sendNotification.expectCalledDuringTest();
       Storage.prototype.setItem.mockRestore();
     });
   });
@@ -132,11 +155,11 @@ describe("parseMessageDefinitionsCache", () => {
     });
   });
 
-  describe("getMd5sForStoredDefintions", () => {
+  describe("getMd5sForStoredDefinitions", () => {
     it("gets all md5s for the stored definitions", () => {
       const cache = new ParseMessageDefinitionsCache();
       cache.parseMessageDefinition("string value", "dummy md5");
-      expect(cache.getMd5sForStoredDefintions()).toEqual(["dummy md5"]);
+      expect(cache.getMd5sForStoredDefinitions()).toEqual(["dummy md5"]);
     });
   });
 });

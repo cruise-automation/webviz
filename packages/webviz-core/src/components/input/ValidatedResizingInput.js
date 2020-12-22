@@ -14,6 +14,7 @@ export function ValidatedResizingInput(props: {|
   value: string,
   onChange: (string) => void,
   invalidInputs: string[],
+  dataTest?: string,
 |}) {
   const [internalValue, setInternalValue] = useState<string>(props.value);
   const lastPropsValue = useRef<string>(props.value);
@@ -25,6 +26,7 @@ export function ValidatedResizingInput(props: {|
     <ReactInputAutosize
       style={{ color: !props.invalidInputs.includes(internalValue) ? "white" : colors.RED }}
       value={`$${internalValue}`}
+      data-test={props.dataTest}
       onChange={(event) => {
         const value = event.target.value.slice(1);
         setInternalValue(value);

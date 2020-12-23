@@ -145,7 +145,7 @@ export function perPanelHooks() {
         zoomPercentage: 100,
         offset: [0, 0],
       },
-      imageMarkerDatatypes: ["visualization_msgs/ImageMarker", "visualization_msgs/ImageMarkerArray"],
+      imageMarkerDatatypes: ["visualization_msgs/ImageMarker", "webviz_msgs/ImageMarkerArray"],
       canTransformMarkersByTopic: (topic) => !topic.includes("rect"),
     },
     GlobalVariableSlider: {

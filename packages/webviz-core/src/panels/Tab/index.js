@@ -53,41 +53,26 @@ function Tab({ config, saveConfig }: Props) {
   });
 
   // Create the actions used by the tab
-  const selectTab = useCallback(
-    (idx) => {
-      saveConfig({ activeTabIdx: idx });
-    },
-    [saveConfig]
-  );
-  const setTabTitle = useCallback(
-    (idx, title) => {
-      const newTabs = tabs.slice();
-      newTabs[idx] = { ...tabs[idx], title };
-      saveConfig({ tabs: newTabs });
-    },
-    [saveConfig, tabs]
-  );
-  const removeTab = useCallback(
-    (idx) => {
-      const newTabs = tabs.slice(0, idx).concat(tabs.slice(idx + 1));
-      const lastIdx = tabs.length - 1;
-      saveConfig({ tabs: newTabs, activeTabIdx: activeTabIdx === lastIdx ? lastIdx - 1 : activeTabIdx });
-    },
-    [activeTabIdx, saveConfig, tabs]
-  );
-  const addTab = useCallback(
-    () => {
-      const newTab = { title: `${tabs.length + 1}`, layout: null };
-      saveConfig({ ...config, activeTabIdx: tabs.length, tabs: tabs.concat([newTab]) });
-    },
-    [config, saveConfig, tabs]
-  );
-  const onChangeLayout = useCallback(
-    (layout: string) => {
-      saveConfig(updateTabPanelLayout(layout, config));
-    },
-    [config, saveConfig]
-  );
+  const selectTab = useCallback((idx) => {
+    saveConfig({ activeTabIdx: idx });
+  }, [saveConfig]);
+  const setTabTitle = useCallback((idx, title) => {
+    const newTabs = tabs.slice();
+    newTabs[idx] = { ...tabs[idx], title };
+    saveConfig({ tabs: newTabs });
+  }, [saveConfig, tabs]);
+  const removeTab = useCallback((idx) => {
+    const newTabs = tabs.slice(0, idx).concat(tabs.slice(idx + 1));
+    const lastIdx = tabs.length - 1;
+    saveConfig({ tabs: newTabs, activeTabIdx: activeTabIdx === lastIdx ? lastIdx - 1 : activeTabIdx });
+  }, [activeTabIdx, saveConfig, tabs]);
+  const addTab = useCallback(() => {
+    const newTab = { title: `${tabs.length + 1}`, layout: null };
+    saveConfig({ ...config, activeTabIdx: tabs.length, tabs: tabs.concat([newTab]) });
+  }, [config, saveConfig, tabs]);
+  const onChangeLayout = useCallback((layout: string) => {
+    saveConfig(updateTabPanelLayout(layout, config));
+  }, [config, saveConfig]);
   const actions = useMemo(() => ({ addTab, removeTab, selectTab, setTabTitle }), [
     addTab,
     removeTab,

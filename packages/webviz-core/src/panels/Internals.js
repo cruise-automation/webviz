@@ -89,69 +89,60 @@ function Internals(): React.Node {
   );
   const publishers = useMessagePipeline(useCallback(({ publishers: pipelinePublishers }) => pipelinePublishers, []));
 
-  const [groupedSubscriptions, subscriptionGroups] = React.useMemo(
-    () => {
-      const grouped = groupBy(subscriptions, getSubscriptionGroup);
-      return [grouped, Object.keys(grouped)];
-    },
-    [subscriptions]
-  );
+  const [groupedSubscriptions, subscriptionGroups] = React.useMemo(() => {
+    const grouped = groupBy(subscriptions, getSubscriptionGroup);
+    return [grouped, Object.keys(grouped)];
+  }, [subscriptions]);
 
-  const renderedSubscriptions = React.useMemo(
-    () => {
-      if (subscriptions.length === 0) {
-        return "(none)";
-      }
-      return Object.keys(groupedSubscriptions)
-        .sort()
-        .map((key) => {
-          return (
-            <React.Fragment key={key}>
-              <div style={{ marginTop: 16 }}>{key}:</div>
-              <ul>
-                {sortBy(groupedSubscriptions[key], (sub) => sub.topic).map((sub, i) => (
-                  <li key={i}>
-                    <tt>
-                      {sub.topic}
-                      {topicsByName[sub.topic] &&
-                        topicsByName[sub.topic].originalTopic &&
-                        ` (original topic: ${topicsByName[sub.topic].originalTopic})`}
-                    </tt>
-                  </li>
-                ))}
-              </ul>
-            </React.Fragment>
-          );
-        });
-    },
-    [groupedSubscriptions, subscriptions.length, topicsByName]
-  );
+  const renderedSubscriptions = React.useMemo(() => {
+    if (subscriptions.length === 0) {
+      return "(none)";
+    }
+    return Object.keys(groupedSubscriptions)
+      .sort()
+      .map((key) => {
+        return (
+          <React.Fragment key={key}>
+            <div style={{ marginTop: 16 }}>{key}:</div>
+            <ul>
+              {sortBy(groupedSubscriptions[key], (sub) => sub.topic).map((sub, i) => (
+                <li key={i}>
+                  <tt>
+                    {sub.topic}
+                    {topicsByName[sub.topic] &&
+                      topicsByName[sub.topic].originalTopic &&
+                      ` (original topic: ${topicsByName[sub.topic].originalTopic})`}
+                  </tt>
+                </li>
+              ))}
+            </ul>
+          </React.Fragment>
+        );
+      });
+  }, [groupedSubscriptions, subscriptions.length, topicsByName]);
 
-  const renderedPublishers = React.useMemo(
-    () => {
-      if (publishers.length === 0) {
-        return "(none)";
-      }
-      const groupedPublishers = groupBy(publishers, getPublisherGroup);
-      return Object.keys(groupedPublishers)
-        .sort()
-        .map((key) => {
-          return (
-            <React.Fragment key={key}>
-              <div style={{ marginTop: 16 }}>{key}:</div>
-              <ul>
-                {sortBy(groupedPublishers[key], (sub) => sub.topic).map((sub, i) => (
-                  <li key={i}>
-                    <tt>{sub.topic}</tt>
-                  </li>
-                ))}
-              </ul>
-            </React.Fragment>
-          );
-        });
-    },
-    [publishers]
-  );
+  const renderedPublishers = React.useMemo(() => {
+    if (publishers.length === 0) {
+      return "(none)";
+    }
+    const groupedPublishers = groupBy(publishers, getPublisherGroup);
+    return Object.keys(groupedPublishers)
+      .sort()
+      .map((key) => {
+        return (
+          <React.Fragment key={key}>
+            <div style={{ marginTop: 16 }}>{key}:</div>
+            <ul>
+              {sortBy(groupedPublishers[key], (sub) => sub.topic).map((sub, i) => (
+                <li key={i}>
+                  <tt>{sub.topic}</tt>
+                </li>
+              ))}
+            </ul>
+          </React.Fragment>
+        );
+      });
+  }, [publishers]);
 
   const [recordGroup, setRecordGroup] = React.useState<string>(RECORD_ALL);
   const [recordingTopics, setRecordingTopics] = React.useState<?(string[])>();
@@ -171,30 +162,27 @@ function Internals(): React.Node {
     downloadTextFile(JSON.stringify(recordedData.current) || "{}", "fixture.json");
   }
 
-  const historyRecorder = React.useMemo(
-    () => {
-      if (!recordingTopics) {
-        return false;
-      }
-      return (
-        <MessageHistoryDEPRECATED paths={recordingTopics} historySize={1}>
-          {({ itemsByPath }) => {
-            const frame = mapValues(itemsByPath, (items) => items.map(({ message }) => message));
-            recordedData.current = {
-              topics: filterMap(Object.keys(itemsByPath), (topic) =>
-                itemsByPath[topic] && itemsByPath[topic].length
-                  ? { name: topic, datatype: topicsByName[topic].datatype }
-                  : null
-              ),
-              frame,
-            };
-            return null;
-          }}
-        </MessageHistoryDEPRECATED>
-      );
-    },
-    [recordingTopics, topicsByName]
-  );
+  const historyRecorder = React.useMemo(() => {
+    if (!recordingTopics) {
+      return false;
+    }
+    return (
+      <MessageHistoryDEPRECATED paths={recordingTopics} historySize={1}>
+        {({ itemsByPath }) => {
+          const frame = mapValues(itemsByPath, (items) => items.map(({ message }) => message));
+          recordedData.current = {
+            topics: filterMap(Object.keys(itemsByPath), (topic) =>
+              itemsByPath[topic] && itemsByPath[topic].length
+                ? { name: topic, datatype: topicsByName[topic].datatype }
+                : null
+            ),
+            frame,
+          };
+          return null;
+        }}
+      </MessageHistoryDEPRECATED>
+    );
+  }, [recordingTopics, topicsByName]);
 
   return (
     <Container>

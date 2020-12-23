@@ -31,15 +31,12 @@ export default function PlaybackSpeedControls() {
   const setPlaybackSpeed = useMessagePipeline(
     useCallback(({ setPlaybackSpeed: pipelineSetPlaybackSpeed }) => pipelineSetPlaybackSpeed, [])
   );
-  const setSpeed = useCallback(
-    (newSpeed) => {
-      dispatch(setPlaybackConfig({ speed: newSpeed }));
-      if (canSetSpeed) {
-        setPlaybackSpeed(newSpeed);
-      }
-    },
-    [canSetSpeed, dispatch, setPlaybackSpeed]
-  );
+  const setSpeed = useCallback((newSpeed) => {
+    dispatch(setPlaybackConfig({ speed: newSpeed }));
+    if (canSetSpeed) {
+      setPlaybackSpeed(newSpeed);
+    }
+  }, [canSetSpeed, dispatch, setPlaybackSpeed]);
 
   // Set the speed to the speed that we got from the config whenever we get a new Player.
   useEffect(() => setSpeed(configSpeed), [configSpeed, setSpeed]);

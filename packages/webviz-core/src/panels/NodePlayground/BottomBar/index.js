@@ -58,16 +58,13 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs }: Props) => {
   const clearLogs = React.useCallback((payload: string) => dispatch(clearUserNodeLogs(payload)), [dispatch]);
   const scrollContainer = useRef(null);
 
-  useEffect(
-    () => {
-      if (autoScroll) {
-        if (scrollContainer.current) {
-          scrollContainer.current.scrollTop = scrollContainer.current.scrollHeight;
-        }
+  useEffect(() => {
+    if (autoScroll) {
+      if (scrollContainer.current) {
+        scrollContainer.current.scrollTop = scrollContainer.current.scrollHeight;
       }
-    },
-    [autoScroll, logs]
-  );
+    }
+  }, [autoScroll, logs]);
 
   return (
     <Flex col style={{ backgroundColor: colors.DARK1, position: "absolute", bottom: 0, right: 0, left: 0 }}>

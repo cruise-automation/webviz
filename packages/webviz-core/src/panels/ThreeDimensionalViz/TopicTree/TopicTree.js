@@ -272,26 +272,20 @@ function TopicTree({
   const hasRootNodeChanged = useChangeDetector([rootTreeNode], false);
   expandedKeysRef.current = hasRootNodeChanged ? [...expandedKeys] : expandedKeys;
 
-  useEffect(
-    () => {
-      // auto focus whenever first rendering the topic tree
-      if (renderTopicTree && filterTextFieldRef.current) {
-        const filterTextFieldEl: HTMLInputElement = filterTextFieldRef.current;
-        filterTextFieldEl.focus();
-        filterTextFieldEl.select();
-      }
-    },
-    [renderTopicTree]
-  );
+  useEffect(() => {
+    // auto focus whenever first rendering the topic tree
+    if (renderTopicTree && filterTextFieldRef.current) {
+      const filterTextFieldEl: HTMLInputElement = filterTextFieldRef.current;
+      filterTextFieldEl.focus();
+      filterTextFieldEl.select();
+    }
+  }, [renderTopicTree]);
 
-  const topLevelNodesCollapsed = useMemo(
-    () => {
-      const topLevelChildren = rootTreeNode.type === "group" ? rootTreeNode.children : [];
-      const topLevelKeys = topLevelChildren.map(({ key }) => key);
-      return topLevelKeys.every((key) => !expandedKeys.includes(key));
-    },
-    [expandedKeys, rootTreeNode]
-  );
+  const topLevelNodesCollapsed = useMemo(() => {
+    const topLevelChildren = rootTreeNode.type === "group" ? rootTreeNode.children : [];
+    const topLevelKeys = topLevelChildren.map(({ key }) => key);
+    return topLevelKeys.every((key) => !expandedKeys.includes(key));
+  }, [expandedKeys, rootTreeNode]);
 
   const showNoMatchesState = !getIsTreeNodeVisibleInTree(rootTreeNode.key);
 
@@ -302,15 +296,12 @@ function TopicTree({
   const linkedGlobalVariablesByTopic = groupBy(linkedGlobalVariables, ({ topic }) => topic);
 
   // Close the TopicTree if the user hits the "Escape" key
-  const onKeyDown = useCallback(
-    (event: SyntheticKeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Escape" && document.activeElement) {
-        document.activeElement.blur();
-        setShowTopicTree(false);
-      }
-    },
-    [setShowTopicTree]
-  );
+  const onKeyDown = useCallback((event: SyntheticKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape" && document.activeElement) {
+      document.activeElement.blur();
+      setShowTopicTree(false);
+    }
+  }, [setShowTopicTree]);
 
   return (
     <STopicTreeInner style={{ width: treeWidth }} isXSWidth={isXSWidth}>

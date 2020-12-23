@@ -220,135 +220,109 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
   const [followPlaybackState, setFollowPlaybackState] = useState<?FollowPlaybackState>(null);
   const [, forceUpdate] = useState();
 
-  const onVisibilityChange = useCallback(
-    () => {
-      if (document.visibilityState === "visible") {
-        // HACK: There is a Chrome bug that causes 2d canvas elements to get cleared when the page
-        // becomes hidden on certain hardware:
-        // https://bugs.chromium.org/p/chromium/issues/detail?id=588434
-        // https://bugs.chromium.org/p/chromium/issues/detail?id=591374
-        // We can hack around this by forcing a re-render when the page becomes visible again.
-        // There may be other canvases that this affects, but these seemed like the most important.
-        // Ideally we can find a global workaround but we're not sure there is one — can't just
-        // twiddle the width/height attribute of the canvas as suggested in one of the comments on
-        // a chrome bug; it seems like you really have to redraw the frame from scratch.
-        forceUpdate();
-      }
-    },
-    [forceUpdate]
-  );
-  useEffect(
-    () => {
-      document.addEventListener("visibilitychange", onVisibilityChange);
-      return () => {
-        document.removeEventListener("visibilitychange", onVisibilityChange);
-      };
-    },
-    [onVisibilityChange]
-  );
+  const onVisibilityChange = useCallback(() => {
+    if (document.visibilityState === "visible") {
+      // HACK: There is a Chrome bug that causes 2d canvas elements to get cleared when the page
+      // becomes hidden on certain hardware:
+      // https://bugs.chromium.org/p/chromium/issues/detail?id=588434
+      // https://bugs.chromium.org/p/chromium/issues/detail?id=591374
+      // We can hack around this by forcing a re-render when the page becomes visible again.
+      // There may be other canvases that this affects, but these seemed like the most important.
+      // Ideally we can find a global workaround but we're not sure there is one — can't just
+      // twiddle the width/height attribute of the canvas as suggested in one of the comments on
+      // a chrome bug; it seems like you really have to redraw the frame from scratch.
+      forceUpdate();
+    }
+  }, [forceUpdate]);
+  useEffect(() => {
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [onVisibilityChange]);
 
   const pauseFrame = useMessagePipeline(useCallback((messagePipeline) => messagePipeline.pauseFrame, []));
 
-  const onChartUpdate = useCallback(
-    () => {
-      const resumeFrame = pauseFrame("TimeBasedChart");
-      return () => {
-        resumeFrame();
-      };
-    },
-    [pauseFrame]
-  );
+  const onChartUpdate = useCallback(() => {
+    const resumeFrame = pauseFrame("TimeBasedChart");
+    return () => {
+      resumeFrame();
+    };
+  }, [pauseFrame]);
 
   const { saveCurrentView, yAxes } = props;
   const scaleBounds = useRef<?$ReadOnlyArray<ScaleBounds>>();
   const hoverBar = useRef<?HTMLElement>();
-  const onScaleBoundsUpdate = useCallback(
-    (scales) => {
-      scaleBounds.current = scales;
-      const firstYScale = scales.find(({ axes }) => axes === "yAxes");
-      const firstXScale = scales.find(({ axes }) => axes === "xAxes");
-      const width = firstXScale && firstXScale.max - firstXScale.min;
-      if (
-        firstYScale &&
-        saveCurrentView &&
-        typeof firstYScale.min === "number" &&
-        typeof firstYScale.max === "number"
-      ) {
-        saveCurrentView(firstYScale.min, firstYScale.max, width);
-      }
-      if (firstYScale != null && hoverBar.current != null) {
-        const { current } = hoverBar;
-        const topPx = Math.min(firstYScale.minAlongAxis, firstYScale.maxAlongAxis);
-        const bottomPx = Math.max(firstYScale.minAlongAxis, firstYScale.maxAlongAxis);
-        current.style.top = `${topPx}px`;
-        current.style.height = `${bottomPx - topPx}px`;
-      }
-    },
-    [saveCurrentView, scaleBounds]
-  );
+  const onScaleBoundsUpdate = useCallback((scales) => {
+    scaleBounds.current = scales;
+    const firstYScale = scales.find(({ axes }) => axes === "yAxes");
+    const firstXScale = scales.find(({ axes }) => axes === "xAxes");
+    const width = firstXScale && firstXScale.max - firstXScale.min;
+    if (firstYScale && saveCurrentView && typeof firstYScale.min === "number" && typeof firstYScale.max === "number") {
+      saveCurrentView(firstYScale.min, firstYScale.max, width);
+    }
+    if (firstYScale != null && hoverBar.current != null) {
+      const { current } = hoverBar;
+      const topPx = Math.min(firstYScale.minAlongAxis, firstYScale.maxAlongAxis);
+      const bottomPx = Math.max(firstYScale.minAlongAxis, firstYScale.maxAlongAxis);
+      current.style.top = `${topPx}px`;
+      current.style.height = `${bottomPx - topPx}px`;
+    }
+  }, [saveCurrentView, scaleBounds]);
 
   const { onClick } = props;
   const lastPanTime = useRef<?Date>();
 
-  const onClickAddingValues = useCallback(
-    (ev: SyntheticMouseEvent<HTMLCanvasElement>, datalabel: ?any) => {
-      if (!onClick) {
+  const onClickAddingValues = useCallback((ev: SyntheticMouseEvent<HTMLCanvasElement>, datalabel: ?any) => {
+    if (!onClick) {
+      return;
+    }
+    if (lastPanTime.current && new Date() - lastPanTime.current < PAN_CLICK_SUPPRESS_THRESHOLD_MS) {
+      // Ignore clicks that happen too soon after a pan. Sometimes clicks get fired at the end of
+      // drags on touchpads.
+      return;
+    }
+    const values = {};
+    (scaleBounds.current || []).forEach((bounds) => {
+      const chartPx =
+        bounds.axes === "xAxes"
+          ? // $FlowFixMe: getBoundingClientRect, ClientRect.x
+            ev.clientX - ev.target.getBoundingClientRect().x
+          : // $FlowFixMe: getBoundingClientRect, ClientRect.y
+            ev.clientY - ev.target.getBoundingClientRect().y;
+      const value = getChartValue(bounds, chartPx);
+      if (value == null) {
         return;
       }
-      if (lastPanTime.current && new Date() - lastPanTime.current < PAN_CLICK_SUPPRESS_THRESHOLD_MS) {
-        // Ignore clicks that happen too soon after a pan. Sometimes clicks get fired at the end of
-        // drags on touchpads.
-        return;
-      }
-      const values = {};
-      (scaleBounds.current || []).forEach((bounds) => {
-        const chartPx =
-          bounds.axes === "xAxes"
-            ? // $FlowFixMe: getBoundingClientRect, ClientRect.x
-              ev.clientX - ev.target.getBoundingClientRect().x
-            : // $FlowFixMe: getBoundingClientRect, ClientRect.y
-              ev.clientY - ev.target.getBoundingClientRect().y;
-        const value = getChartValue(bounds, chartPx);
-        if (value == null) {
-          return;
-        }
-        values[bounds.id] = value;
-      });
-      return onClick(ev, datalabel, values);
-    },
-    [onClick, scaleBounds, lastPanTime]
-  );
+      values[bounds.id] = value;
+    });
+    return onClick(ev, datalabel, values);
+  }, [onClick, scaleBounds, lastPanTime]);
 
   // Keep a ref to props.currentTime so onPanZoom can have stable identity
   const currentTimeRef = useRef<?number>();
   currentTimeRef.current = props.currentTime;
-  const onPanZoom = useCallback(
-    (newScaleBounds: ScaleBounds[]) => {
-      if (!hasUserPannedOrZoomed) {
-        setHasUserPannedOrZoomed(true);
-      }
-      // Preloaded plots follow playback at a fixed zoom and x-offset unless the user is in the
-      // initial "zoom to fit" state. Subsequent zooms/pans adjust the offsets.
-      const bounds = newScaleBounds.find(({ axes }) => axes === "xAxes");
-      if (bounds != null && bounds.min != null && bounds.max != null && currentTimeRef.current != null) {
-        const currentTime = currentTimeRef.current;
-        setFollowPlaybackState({ xOffsetMin: bounds.min - currentTime, xOffsetMax: bounds.max - currentTime });
-      }
-      lastPanTime.current = new Date();
-    },
-    [hasUserPannedOrZoomed]
-  );
+  const onPanZoom = useCallback((newScaleBounds: ScaleBounds[]) => {
+    if (!hasUserPannedOrZoomed) {
+      setHasUserPannedOrZoomed(true);
+    }
+    // Preloaded plots follow playback at a fixed zoom and x-offset unless the user is in the
+    // initial "zoom to fit" state. Subsequent zooms/pans adjust the offsets.
+    const bounds = newScaleBounds.find(({ axes }) => axes === "xAxes");
+    if (bounds != null && bounds.min != null && bounds.max != null && currentTimeRef.current != null) {
+      const currentTime = currentTimeRef.current;
+      setFollowPlaybackState({ xOffsetMin: bounds.min - currentTime, xOffsetMax: bounds.max - currentTime });
+    }
+    lastPanTime.current = new Date();
+  }, [hasUserPannedOrZoomed]);
 
-  const onResetZoom = useCallback(
-    () => {
-      if (chartComponent.current) {
-        chartComponent.current.resetZoom();
-        setHasUserPannedOrZoomed(false);
-      }
-      setFollowPlaybackState(null);
-    },
-    [setHasUserPannedOrZoomed, setFollowPlaybackState]
-  );
+  const onResetZoom = useCallback(() => {
+    if (chartComponent.current) {
+      chartComponent.current.resetZoom();
+      setHasUserPannedOrZoomed(false);
+    }
+    setFollowPlaybackState(null);
+  }, [setHasUserPannedOrZoomed, setFollowPlaybackState]);
 
   if (useDeepChangeDetector([props.defaultView], false)) {
     // Reset the view to the default when the default changes.
@@ -394,62 +368,60 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
     }
   }, []);
   // Always clean up tooltips when unmounting.
-  useEffect(
-    () => {
-      return () => {
-        hasUnmounted.current = true;
-        removeTooltip();
-      };
-    },
-    [removeTooltip]
-  );
+  useEffect(() => {
+    return () => {
+      hasUnmounted.current = true;
+      removeTooltip();
+    };
+  }, [removeTooltip]);
 
   const tooltips = props.tooltips || [];
   // We use a custom tooltip so we can style it more nicely, and so that it can break
   // out of the bounds of the canvas, in case the panel is small.
-  const updateTooltip = useCallback(
-    (currentChartComponent: ChartComponent, canvas: HTMLCanvasElement, tooltipItem: ?HoveredElement) => {
-      // This is an async callback, so it can fire after this component is unmounted. Make sure that we remove the
-      // tooltip if this fires after unmount.
-      if (!tooltipItem || hasUnmounted.current) {
-        return removeTooltip();
-      }
+  const updateTooltip = useCallback((
+    currentChartComponent: ChartComponent,
+    canvas: HTMLCanvasElement,
+    tooltipItem: ?HoveredElement
+  ) => {
+    // This is an async callback, so it can fire after this component is unmounted. Make sure that we remove the
+    // tooltip if this fires after unmount.
+    if (!tooltipItem || hasUnmounted.current) {
+      return removeTooltip();
+    }
 
-      // We have to iterate through all of the tooltips every time the user hovers over a point. However, the cost of
-      // running this search is small (< 10ms even with many tooltips) compared to the cost of indexing tooltips by
-      // coordinates and we care more about render time than tooltip responsiveness.
-      const tooltipData = tooltips.find(
-        (_tooltip) => _tooltip.x === tooltipItem.data.x && String(_tooltip.y) === String(tooltipItem.data.y)
+    // We have to iterate through all of the tooltips every time the user hovers over a point. However, the cost of
+    // running this search is small (< 10ms even with many tooltips) compared to the cost of indexing tooltips by
+    // coordinates and we care more about render time than tooltip responsiveness.
+    const tooltipData = tooltips.find(
+      (_tooltip) => _tooltip.x === tooltipItem.data.x && String(_tooltip.y) === String(tooltipItem.data.y)
+    );
+    if (!tooltipData) {
+      return removeTooltip();
+    }
+
+    if (!tooltip.current) {
+      tooltip.current = document.createElement("div");
+      if (canvas.parentNode) {
+        canvas.parentNode.appendChild(tooltip.current);
+      }
+    }
+
+    if (tooltip.current) {
+      ReactDOM.render(
+        <TimeBasedChartTooltip tooltip={tooltipData}>
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              transform: `translate(${tooltipItem.view.x}px, ${tooltipItem.view.y}px)`,
+            }}
+          />
+        </TimeBasedChartTooltip>,
+        tooltip.current
       );
-      if (!tooltipData) {
-        return removeTooltip();
-      }
-
-      if (!tooltip.current) {
-        tooltip.current = document.createElement("div");
-        if (canvas.parentNode) {
-          canvas.parentNode.appendChild(tooltip.current);
-        }
-      }
-
-      if (tooltip.current) {
-        ReactDOM.render(
-          <TimeBasedChartTooltip tooltip={tooltipData}>
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                transform: `translate(${tooltipItem.view.x}px, ${tooltipItem.view.y}px)`,
-              }}
-            />
-          </TimeBasedChartTooltip>,
-          tooltip.current
-        );
-      }
-    },
-    [removeTooltip, tooltips]
-  );
+    }
+  }, [removeTooltip, tooltips]);
 
   const [hoverComponentId] = useState(() => uuid.v4());
   const { xAxisIsPlaybackTime } = props;
@@ -470,43 +442,40 @@ export default memo<Props>(function TimeBasedChart(props: Props) {
     [dispatch, hoverComponentId, xAxisIsPlaybackTime]
   );
 
-  const onMouseMove = useCallback(
-    async (event: MouseEvent) => {
-      const currentChartComponent = chartComponent.current;
-      if (!currentChartComponent || !currentChartComponent.canvas) {
-        removeTooltip();
-        clearGlobalHoverTime();
-        return;
-      }
-      const { canvas } = currentChartComponent;
-      const canvasRect = canvas.getBoundingClientRect();
-      const xBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "xAxes");
-      const yBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "yAxes");
-      const xMousePosition = event.pageX - canvasRect.left;
-      const yMousePosition = event.pageY - canvasRect.top;
-      const isTargetingCanvas = event.target === canvas;
-      if (!inBounds(xMousePosition, xBounds) || !inBounds(yMousePosition, yBounds) || !isTargetingCanvas) {
-        removeTooltip();
-        clearGlobalHoverTime();
-        return;
-      }
+  const onMouseMove = useCallback(async (event: MouseEvent) => {
+    const currentChartComponent = chartComponent.current;
+    if (!currentChartComponent || !currentChartComponent.canvas) {
+      removeTooltip();
+      clearGlobalHoverTime();
+      return;
+    }
+    const { canvas } = currentChartComponent;
+    const canvasRect = canvas.getBoundingClientRect();
+    const xBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "xAxes");
+    const yBounds = scaleBounds.current && scaleBounds.current.find(({ axes }) => axes === "yAxes");
+    const xMousePosition = event.pageX - canvasRect.left;
+    const yMousePosition = event.pageY - canvasRect.top;
+    const isTargetingCanvas = event.target === canvas;
+    if (!inBounds(xMousePosition, xBounds) || !inBounds(yMousePosition, yBounds) || !isTargetingCanvas) {
+      removeTooltip();
+      clearGlobalHoverTime();
+      return;
+    }
 
-      const value = getChartValue(xBounds, xMousePosition);
-      if (value != null) {
-        setGlobalHoverTime(value);
-      } else {
-        clearGlobalHoverTime();
-      }
+    const value = getChartValue(xBounds, xMousePosition);
+    if (value != null) {
+      setGlobalHoverTime(value);
+    } else {
+      clearGlobalHoverTime();
+    }
 
-      if (tooltips && tooltips.length) {
-        const tooltipElement = await currentChartComponent.getElementAtXAxis(event);
-        updateTooltip(currentChartComponent, canvas, tooltipElement);
-      } else {
-        removeTooltip();
-      }
-    },
-    [updateTooltip, removeTooltip, tooltips, clearGlobalHoverTime, setGlobalHoverTime, scaleBounds]
-  );
+    if (tooltips && tooltips.length) {
+      const tooltipElement = await currentChartComponent.getElementAtXAxis(event);
+      updateTooltip(currentChartComponent, canvas, tooltipElement);
+    } else {
+      removeTooltip();
+    }
+  }, [updateTooltip, removeTooltip, tooltips, clearGlobalHoverTime, setGlobalHoverTime, scaleBounds]);
 
   // Normally we set the x axis step-size and display automatically, but we need consistency when
   // scrolling with playback because the vertical lines can flicker, and x axis labels can have an

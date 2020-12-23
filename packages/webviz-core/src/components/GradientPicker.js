@@ -59,16 +59,13 @@ export default function GradientPicker({
   const hexMinColor = getHexFromColorSettingWithDefault(minColor);
   const hexMaxColor = getHexFromColorSettingWithDefault(maxColor);
 
-  const drawGradient = useCallback(
-    (ctx, width, height) => {
-      const gradient = ctx.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, hexMinColor);
-      gradient.addColorStop(1, hexMaxColor);
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, width, height);
-    },
-    [hexMaxColor, hexMinColor]
-  );
+  const drawGradient = useCallback((ctx, width, height) => {
+    const gradient = ctx.createLinearGradient(0, 0, width, 0);
+    gradient.addColorStop(0, hexMinColor);
+    gradient.addColorStop(1, hexMaxColor);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }, [hexMaxColor, hexMinColor]);
 
   return (
     <>

@@ -28,13 +28,10 @@ function AppMenu(props: Props) {
   const dispatch = useDispatch();
 
   const layout = useSelector((state: ReduxState) => state.persistedState.panels.layout);
-  const onPanelSelect = useCallback(
-    ({ type, config, relatedConfigs }: PanelSelection) => {
-      dispatch(addPanel(({ type, layout, config, relatedConfigs, tabId: null }: AddPanelPayload)));
-      logEvent({ name: getEventNames().PANEL_ADD, tags: { [getEventTags().PANEL_TYPE]: type } });
-    },
-    [dispatch, layout]
-  );
+  const onPanelSelect = useCallback(({ type, config, relatedConfigs }: PanelSelection) => {
+    dispatch(addPanel(({ type, layout, config, relatedConfigs, tabId: null }: AddPanelPayload)));
+    logEvent({ name: getEventNames().PANEL_ADD, tags: { [getEventTags().PANEL_TYPE]: type } });
+  }, [dispatch, layout]);
 
   return (
     <ChildToggle position="below" onToggle={onToggle} isOpen={isOpen}>

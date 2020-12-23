@@ -49,17 +49,14 @@ type Props = {|
 
 function App({ importPanelLayout: importPanelLayoutProp }) {
   const containerRef = useRef<?HTMLDivElement>(undefined);
-  useEffect(
-    () => {
-      // Focus on page load to enable keyboard interaction.
-      if (containerRef.current) {
-        containerRef.current.focus();
-      }
-      // Add a hook for integration tests.
-      window.setPanelLayout = (payload) => importPanelLayoutProp(payload);
-    },
-    [importPanelLayoutProp]
-  );
+  useEffect(() => {
+    // Focus on page load to enable keyboard interaction.
+    if (containerRef.current) {
+      containerRef.current.focus();
+    }
+    // Add a hook for integration tests.
+    window.setPanelLayout = (payload) => importPanelLayoutProp(payload);
+  }, [importPanelLayoutProp]);
 
   return (
     <div ref={containerRef} className="app-container" tabIndex={0}>

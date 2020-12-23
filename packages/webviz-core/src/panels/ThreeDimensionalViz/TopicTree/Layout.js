@@ -220,12 +220,9 @@ export default function Layout({
   );
 
   // Ensure that we show new namespaces and errors any time scenebuilder adds them.
-  useMemo(
-    () => {
-      sceneBuilder.setOnForceUpdate(forceUpdate);
-    },
-    [sceneBuilder, forceUpdate]
-  );
+  useMemo(() => {
+    sceneBuilder.setOnForceUpdate(forceUpdate);
+  }, [sceneBuilder, forceUpdate]);
 
   const {
     blacklistTopicsSet,
@@ -307,70 +304,64 @@ export default function Layout({
   const { playerId } = useDataSourceInfo();
 
   // If a user selects a marker or hovers over a TopicPicker row, highlight relevant markers
-  const highlightMarkerMatchers = useMemo(
-    () => {
-      if (isDrawing) {
-        return [];
-      }
-      if (hoveredMarkerMatchers.length > 0) {
-        return hoveredMarkerMatchers;
-      }
-      // Highlight the selected object if the interactionsTab popout is open
-      if (selectedObject && !!interactionsTabType) {
-        const marker = getObject(selectedObject);
-        const topic = getInteractionData(selectedObject)?.topic;
-        return marker && topic
-          ? [
-              {
-                topic,
-                checks: [
-                  {
-                    markerKeyPath: ["id"],
-                    value: getField(marker, "id"),
-                  },
-                  {
-                    markerKeyPath: ["ns"],
-                    value: getField(marker, "ns"),
-                  },
-                ],
-              },
-            ]
-          : [];
-      }
+  const highlightMarkerMatchers = useMemo(() => {
+    if (isDrawing) {
       return [];
-    },
-    [hoveredMarkerMatchers, interactionsTabType, isDrawing, selectedObject]
-  );
+    }
+    if (hoveredMarkerMatchers.length > 0) {
+      return hoveredMarkerMatchers;
+    }
+    // Highlight the selected object if the interactionsTab popout is open
+    if (selectedObject && !!interactionsTabType) {
+      const marker = getObject(selectedObject);
+      const topic = getInteractionData(selectedObject)?.topic;
+      return marker && topic
+        ? [
+            {
+              topic,
+              checks: [
+                {
+                  markerKeyPath: ["id"],
+                  value: getField(marker, "id"),
+                },
+                {
+                  markerKeyPath: ["ns"],
+                  value: getField(marker, "ns"),
+                },
+              ],
+            },
+          ]
+        : [];
+    }
+    return [];
+  }, [hoveredMarkerMatchers, interactionsTabType, isDrawing, selectedObject]);
 
-  const colorOverrideMarkerMatchers = useMemo(
-    () => {
-      // Transform linkedGlobalVariables and overridesByGlobalVariable into markerMatchers for SceneBuilder
-      const linkedGlobalVariablesByName = groupBy(linkedGlobalVariables, ({ name }) => name);
-      return Object.keys(colorOverrideBySourceIdxByVariable || {}).reduce((_activeColorOverrideMatchers, name) => {
-        return (colorOverrideBySourceIdxByVariable?.[name] || []).flatMap((override, i) =>
-          override?.active
-            ? [
-                ..._activeColorOverrideMatchers,
-                ...(linkedGlobalVariablesByName[name] || []).map(({ topic, markerKeyPath }) => {
-                  const baseTopic = topic.replace(SECOND_SOURCE_PREFIX, "");
-                  return {
-                    topic: i === 0 ? baseTopic : joinTopics(SECOND_SOURCE_PREFIX, baseTopic),
-                    checks: [
-                      {
-                        markerKeyPath,
-                        value: globalVariables[name],
-                      },
-                    ],
-                    color: override.color,
-                  };
-                }),
-              ]
-            : _activeColorOverrideMatchers
-        );
-      }, []);
-    },
-    [colorOverrideBySourceIdxByVariable, globalVariables, linkedGlobalVariables]
-  );
+  const colorOverrideMarkerMatchers = useMemo(() => {
+    // Transform linkedGlobalVariables and overridesByGlobalVariable into markerMatchers for SceneBuilder
+    const linkedGlobalVariablesByName = groupBy(linkedGlobalVariables, ({ name }) => name);
+    return Object.keys(colorOverrideBySourceIdxByVariable || {}).reduce((_activeColorOverrideMatchers, name) => {
+      return (colorOverrideBySourceIdxByVariable?.[name] || []).flatMap((override, i) =>
+        override?.active
+          ? [
+              ..._activeColorOverrideMatchers,
+              ...(linkedGlobalVariablesByName[name] || []).map(({ topic, markerKeyPath }) => {
+                const baseTopic = topic.replace(SECOND_SOURCE_PREFIX, "");
+                return {
+                  topic: i === 0 ? baseTopic : joinTopics(SECOND_SOURCE_PREFIX, baseTopic),
+                  checks: [
+                    {
+                      markerKeyPath,
+                      value: globalVariables[name],
+                    },
+                  ],
+                  color: override.color,
+                };
+              }),
+            ]
+          : _activeColorOverrideMatchers
+      );
+    }, []);
+  }, [colorOverrideBySourceIdxByVariable, globalVariables, linkedGlobalVariables]);
 
   const rootTf = useMemo(
     () =>
@@ -380,64 +371,58 @@ export default function Layout({
     [frame, transforms, followTf]
   );
 
-  useMemo(
-    () => {
-      // TODO(Audrey): add tests for the clearing behavior
-      if (cleared) {
-        sceneBuilder.clear();
-      }
-      if (!frame || !rootTf) {
-        return;
-      }
-      // Toggle scene builder topics based on visible topic nodes in the tree
-      const topicsByTopicName = getTopicsByTopicName(topics);
-      const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByTopicName[name]);
+  useMemo(() => {
+    // TODO(Audrey): add tests for the clearing behavior
+    if (cleared) {
+      sceneBuilder.clear();
+    }
+    if (!frame || !rootTf) {
+      return;
+    }
+    // Toggle scene builder topics based on visible topic nodes in the tree
+    const topicsByTopicName = getTopicsByTopicName(topics);
+    const selectedTopics = filterMap(selectedTopicNames, (name) => topicsByTopicName[name]);
 
-      sceneBuilder.setPlayerId(playerId);
-      sceneBuilder.setTransforms(transforms, rootTf);
-      sceneBuilder.setFlattenMarkers(!!flattenMarkers);
-      sceneBuilder.setSelectedNamespacesByTopic(selectedNamespacesByTopic);
-      sceneBuilder.setSettingsByKey(settingsByKey);
-      sceneBuilder.setTopics(selectedTopics);
-      sceneBuilder.setGlobalVariables({ globalVariables, linkedGlobalVariables });
-      sceneBuilder.setHighlightedMatchers(highlightMarkerMatchers);
-      sceneBuilder.setColorOverrideMatchers(colorOverrideMarkerMatchers);
-      sceneBuilder.setFrame(frame);
-      sceneBuilder.setCurrentTime(currentTime);
-      sceneBuilder.render();
+    sceneBuilder.setPlayerId(playerId);
+    sceneBuilder.setTransforms(transforms, rootTf);
+    sceneBuilder.setFlattenMarkers(!!flattenMarkers);
+    sceneBuilder.setSelectedNamespacesByTopic(selectedNamespacesByTopic);
+    sceneBuilder.setSettingsByKey(settingsByKey);
+    sceneBuilder.setTopics(selectedTopics);
+    sceneBuilder.setGlobalVariables({ globalVariables, linkedGlobalVariables });
+    sceneBuilder.setHighlightedMatchers(highlightMarkerMatchers);
+    sceneBuilder.setColorOverrideMatchers(colorOverrideMarkerMatchers);
+    sceneBuilder.setFrame(frame);
+    sceneBuilder.setCurrentTime(currentTime);
+    sceneBuilder.render();
 
-      // update the transforms and set the selected ones to render
-      transformsBuilder.setTransforms(transforms, rootTf);
-      transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic[TRANSFORM_TOPIC] || []);
-    },
-    [
-      cleared,
-      frame,
-      topics,
-      selectedTopicNames,
-      sceneBuilder,
-      playerId,
-      transforms,
-      rootTf,
-      flattenMarkers,
-      selectedNamespacesByTopic,
-      settingsByKey,
-      globalVariables,
-      linkedGlobalVariables,
-      highlightMarkerMatchers,
-      colorOverrideMarkerMatchers,
-      currentTime,
-      transformsBuilder,
-    ]
-  );
+    // update the transforms and set the selected ones to render
+    transformsBuilder.setTransforms(transforms, rootTf);
+    transformsBuilder.setSelectedTransforms(selectedNamespacesByTopic[TRANSFORM_TOPIC] || []);
+  }, [
+    cleared,
+    frame,
+    topics,
+    selectedTopicNames,
+    sceneBuilder,
+    playerId,
+    transforms,
+    rootTf,
+    flattenMarkers,
+    selectedNamespacesByTopic,
+    settingsByKey,
+    globalVariables,
+    linkedGlobalVariables,
+    highlightMarkerMatchers,
+    colorOverrideMarkerMatchers,
+    currentTime,
+    transformsBuilder,
+  ]);
 
-  const handleDrawPolygons = useCallback(
-    (eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
-      polygonBuilder[eventName](ev, args);
-      forceUpdate();
-    },
-    [polygonBuilder]
-  );
+  const handleDrawPolygons = useCallback((eventName: EventName, ev: MouseEvent, args: ?ReglClickInfo) => {
+    polygonBuilder[eventName](ev, args);
+    forceUpdate();
+  }, [polygonBuilder]);
 
   // use callbackInputsRef to prevent unnecessary callback changes
   const callbackInputsRef = useRef({
@@ -487,38 +472,29 @@ export default function Layout({
     }
   }, []);
 
-  const updateGlobalVariablesFromSelection = useCallback(
-    (newSelectedObject: MouseEventObject) => {
-      if (newSelectedObject) {
-        const newGlobalVariables = getUpdatedGlobalVariablesBySelectedObject(newSelectedObject, linkedGlobalVariables);
-        if (newGlobalVariables) {
-          setGlobalVariables(newGlobalVariables);
-        }
+  const updateGlobalVariablesFromSelection = useCallback((newSelectedObject: MouseEventObject) => {
+    if (newSelectedObject) {
+      const newGlobalVariables = getUpdatedGlobalVariablesBySelectedObject(newSelectedObject, linkedGlobalVariables);
+      if (newGlobalVariables) {
+        setGlobalVariables(newGlobalVariables);
       }
-    },
-    [linkedGlobalVariables, setGlobalVariables]
-  );
+    }
+  }, [linkedGlobalVariables, setGlobalVariables]);
 
   // Auto open/close the tab when the selectedObject changes as long as
   // we aren't drawing or the disableAutoOpenClickedObject setting is enabled.
-  const updateInteractionsTabVisibility = useCallback(
-    (newSelectedObject: ?MouseEventObject) => {
-      if (!isDrawing) {
-        const shouldBeOpen = newSelectedObject && !disableAutoOpenClickedObject;
-        setInteractionsTabType(shouldBeOpen ? OBJECT_TAB_TYPE : null);
-      }
-    },
-    [disableAutoOpenClickedObject, isDrawing]
-  );
+  const updateInteractionsTabVisibility = useCallback((newSelectedObject: ?MouseEventObject) => {
+    if (!isDrawing) {
+      const shouldBeOpen = newSelectedObject && !disableAutoOpenClickedObject;
+      setInteractionsTabType(shouldBeOpen ? OBJECT_TAB_TYPE : null);
+    }
+  }, [disableAutoOpenClickedObject, isDrawing]);
 
-  const selectObject = useCallback(
-    (newSelectedObject: ?MouseEventObject) => {
-      setSelectionState({ ...callbackInputsRef.current.selectionState, selectedObject: newSelectedObject });
-      updateInteractionsTabVisibility(newSelectedObject);
-      updateGlobalVariablesFromSelection(newSelectedObject);
-    },
-    [updateInteractionsTabVisibility, updateGlobalVariablesFromSelection]
-  );
+  const selectObject = useCallback((newSelectedObject: ?MouseEventObject) => {
+    setSelectionState({ ...callbackInputsRef.current.selectionState, selectedObject: newSelectedObject });
+    updateInteractionsTabVisibility(newSelectedObject);
+    updateGlobalVariablesFromSelection(newSelectedObject);
+  }, [updateInteractionsTabVisibility, updateGlobalVariablesFromSelection]);
 
   const {
     onClick,
@@ -531,119 +507,110 @@ export default function Layout({
     onSetPolygons,
     toggleCameraMode,
     toggleDebug,
-  } = useMemo(
-    () => {
-      return {
-        onClick: (ev: MouseEvent, args: ?ReglClickInfo) => {
-          // Don't set any clicked objects when measuring distance or drawing polygons.
-          if (callbackInputsRef.current.isDrawing) {
-            return;
-          }
-          const newClickedObjects = (args && args.objects) || [];
-          const newClickedPosition = { clientX: ev.clientX, clientY: ev.clientY };
-          const newSelectedObject = newClickedObjects.length === 1 ? newClickedObjects[0] : null;
+  } = useMemo(() => {
+    return {
+      onClick: (ev: MouseEvent, args: ?ReglClickInfo) => {
+        // Don't set any clicked objects when measuring distance or drawing polygons.
+        if (callbackInputsRef.current.isDrawing) {
+          return;
+        }
+        const newClickedObjects = (args && args.objects) || [];
+        const newClickedPosition = { clientX: ev.clientX, clientY: ev.clientY };
+        const newSelectedObject = newClickedObjects.length === 1 ? newClickedObjects[0] : null;
 
-          // Select the object directly if there is only one or open up context menu if there are many.
-          setSelectionState({
-            ...callbackInputsRef.current.selectionState,
-            clickedObjects: newClickedObjects,
-            clickedPosition: newClickedPosition,
+        // Select the object directly if there is only one or open up context menu if there are many.
+        setSelectionState({
+          ...callbackInputsRef.current.selectionState,
+          clickedObjects: newClickedObjects,
+          clickedPosition: newClickedPosition,
+        });
+        selectObject(newSelectedObject);
+      },
+      onControlsOverlayClick: (ev: SyntheticMouseEvent<HTMLDivElement>) => {
+        if (!containerRef.current) {
+          return;
+        }
+        const target = ((ev.target: any): HTMLElement);
+        // Only close if the click target is inside the panel, e.g. don't close when dropdown menus rendered in portals are clicked
+        if (containerRef.current.contains(target)) {
+          setShowTopicTree(false);
+        }
+      },
+      onDoubleClick: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onDoubleClick", ev, args),
+      onExitTopicTreeFocus: () => {
+        if (containerRef.current) {
+          containerRef.current.focus();
+        }
+      },
+      onMouseDown: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseDown", ev, args),
+      onMouseMove: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseMove", ev, args),
+      onMouseUp: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseUp", ev, args),
+      onSetPolygons: (polygons: Polygon[]) => setPolygonBuilder(new PolygonBuilder(polygons)),
+      toggleDebug: () => setDebug(!callbackInputsRef.current.debug),
+      toggleCameraMode: () => {
+        const { cameraState: currentCameraState, saveConfig: currentSaveConfig } = callbackInputsRef.current;
+        const newPerspective = !currentCameraState.perspective;
+        currentSaveConfig({ cameraState: { ...currentCameraState, perspective: newPerspective } });
+        if (measuringElRef.current && currentCameraState.perspective) {
+          measuringElRef.current.reset();
+        }
+        // Automatically enable/disable map height based on 3D/2D mode
+        const mapHeightEnabled = (selectedNamespacesByTopic["/metadata"] || []).includes("height");
+        if (mapHeightEnabled !== newPerspective) {
+          toggleNamespaceChecked({
+            topicName: "/metadata",
+            namespace: "height",
+            columnIndex: 0,
           });
-          selectObject(newSelectedObject);
-        },
-        onControlsOverlayClick: (ev: SyntheticMouseEvent<HTMLDivElement>) => {
-          if (!containerRef.current) {
-            return;
-          }
-          const target = ((ev.target: any): HTMLElement);
-          // Only close if the click target is inside the panel, e.g. don't close when dropdown menus rendered in portals are clicked
-          if (containerRef.current.contains(target)) {
-            setShowTopicTree(false);
-          }
-        },
-        onDoubleClick: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onDoubleClick", ev, args),
-        onExitTopicTreeFocus: () => {
-          if (containerRef.current) {
-            containerRef.current.focus();
-          }
-        },
-        onMouseDown: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseDown", ev, args),
-        onMouseMove: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseMove", ev, args),
-        onMouseUp: (ev: MouseEvent, args: ?ReglClickInfo) => handleEvent("onMouseUp", ev, args),
-        onSetPolygons: (polygons: Polygon[]) => setPolygonBuilder(new PolygonBuilder(polygons)),
-        toggleDebug: () => setDebug(!callbackInputsRef.current.debug),
-        toggleCameraMode: () => {
-          const { cameraState: currentCameraState, saveConfig: currentSaveConfig } = callbackInputsRef.current;
-          const newPerspective = !currentCameraState.perspective;
-          currentSaveConfig({ cameraState: { ...currentCameraState, perspective: newPerspective } });
-          if (measuringElRef.current && currentCameraState.perspective) {
-            measuringElRef.current.reset();
-          }
-          // Automatically enable/disable map height based on 3D/2D mode
-          const mapHeightEnabled = (selectedNamespacesByTopic["/metadata"] || []).includes("height");
-          if (mapHeightEnabled !== newPerspective) {
-            toggleNamespaceChecked({
-              topicName: "/metadata",
-              namespace: "height",
-              columnIndex: 0,
-            });
-          }
-        },
-      };
-    },
-    [handleEvent, selectObject, selectedNamespacesByTopic, toggleNamespaceChecked]
-  );
+        }
+      },
+    };
+  }, [handleEvent, selectObject, selectedNamespacesByTopic, toggleNamespaceChecked]);
 
   // When the TopicTree is hidden, focus the <World> again so keyboard controls continue to work
   const worldRef = useRef<?typeof Worldview>(null);
-  useEffect(
-    () => {
-      if (!showTopicTree && worldRef.current) {
-        worldRef.current.focus();
-      }
-    },
-    [showTopicTree]
-  );
+  useEffect(() => {
+    if (!showTopicTree && worldRef.current) {
+      worldRef.current.focus();
+    }
+  }, [showTopicTree]);
 
-  const keyDownHandlers = useMemo(
-    () => {
-      const handlers: { [key: string]: (e: KeyboardEvent) => void } = {
-        "3": () => {
-          toggleCameraMode();
-        },
-        Escape: (e) => {
+  const keyDownHandlers = useMemo(() => {
+    const handlers: { [key: string]: (e: KeyboardEvent) => void } = {
+      "3": () => {
+        toggleCameraMode();
+      },
+      Escape: (e) => {
+        e.preventDefault();
+        setShowTopicTree(false);
+        setDrawingTabType(null);
+        searchTextProps.toggleSearchTextOpen(false);
+        if (document.activeElement && document.activeElement === containerRef.current) {
+          document.activeElement.blur();
+        }
+      },
+      t: (e) => {
+        e.preventDefault();
+        // Unpin before enabling keyboard toggle open/close.
+        if (pinTopics) {
+          saveConfig({ pinTopics: false });
+          return;
+        }
+        setShowTopicTree((shown) => !shown);
+      },
+      f: (e: KeyboardEvent) => {
+        if (e.ctrlKey || e.metaKey) {
           e.preventDefault();
-          setShowTopicTree(false);
-          setDrawingTabType(null);
-          searchTextProps.toggleSearchTextOpen(false);
-          if (document.activeElement && document.activeElement === containerRef.current) {
-            document.activeElement.blur();
-          }
-        },
-        t: (e) => {
-          e.preventDefault();
-          // Unpin before enabling keyboard toggle open/close.
-          if (pinTopics) {
-            saveConfig({ pinTopics: false });
+          searchTextProps.toggleSearchTextOpen(true);
+          if (!searchTextProps.searchInputRef || !searchTextProps.searchInputRef.current) {
             return;
           }
-          setShowTopicTree((shown) => !shown);
-        },
-        f: (e: KeyboardEvent) => {
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            searchTextProps.toggleSearchTextOpen(true);
-            if (!searchTextProps.searchInputRef || !searchTextProps.searchInputRef.current) {
-              return;
-            }
-            searchTextProps.searchInputRef.current.select();
-          }
-        },
-      };
-      return handlers;
-    },
-    [pinTopics, saveConfig, searchTextProps, toggleCameraMode]
-  );
+          searchTextProps.searchInputRef.current.select();
+        }
+      },
+    };
+    return handlers;
+  }, [pinTopics, saveConfig, searchTextProps, toggleCameraMode]);
 
   const markerProviders = useMemo(() => [sceneBuilder, transformsBuilder], [sceneBuilder, transformsBuilder]);
 

@@ -149,18 +149,15 @@ export default function VisibilityToggle({
   columnIndex,
 }: Props) {
   // Handle shift + click/enter, option + click/enter, and click/enter.
-  const onChange = useCallback(
-    (e: MouseEvent | KeyboardEvent) => {
-      if (onShiftToggle && e.shiftKey) {
-        onShiftToggle();
-      } else if (onAltToggle && e.altKey) {
-        onAltToggle();
-      } else {
-        onToggle();
-      }
-    },
-    [onAltToggle, onShiftToggle, onToggle]
-  );
+  const onChange = useCallback((e: MouseEvent | KeyboardEvent) => {
+    if (onShiftToggle && e.shiftKey) {
+      onShiftToggle();
+    } else if (onAltToggle && e.altKey) {
+      onAltToggle();
+    } else {
+      onToggle();
+    }
+  }, [onAltToggle, onShiftToggle, onToggle]);
 
   if (!available) {
     return (

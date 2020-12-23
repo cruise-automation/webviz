@@ -177,76 +177,58 @@ function NodePlayground(props: Props) {
     width: `${inputTitle.length + 4}ch`, // Width based on character count of title + padding
   };
 
-  React.useLayoutEffect(
-    () => {
-      if (selectedNode) {
-        const testItems = props.config.additionalBackStackItems || [];
-        setScriptBackStack([
-          { filePath: selectedNode.name, code: selectedNode.sourceCode, readOnly: false },
-          ...testItems,
-        ]);
+  React.useLayoutEffect(() => {
+    if (selectedNode) {
+      const testItems = props.config.additionalBackStackItems || [];
+      setScriptBackStack([
+        { filePath: selectedNode.name, code: selectedNode.sourceCode, readOnly: false },
+        ...testItems,
+      ]);
+    }
+  }, [props.config.additionalBackStackItems, selectedNode]);
+
+  const addNewNode = React.useCallback((_, code?: string) => {
+    const newNodeId = uuid.v4();
+    const sourceCode = code || skeletonBody;
+    // TODO: Add integration test for this flow.
+    setUserNodes({
+      [newNodeId]: {
+        sourceCode,
+        name: `${DEFAULT_WEBVIZ_NODE_PREFIX}${newNodeId.split("-")[0]}`,
+      },
+    });
+    saveConfig({ selectedNodeId: newNodeId });
+  }, [saveConfig, setUserNodes]);
+
+  const saveNode = React.useCallback((script) => {
+    if (!selectedNodeId || !script) {
+      return;
+    }
+    setUserNodes({ [selectedNodeId]: { ...selectedNode, sourceCode: script } });
+  }, [selectedNode, selectedNodeId, setUserNodes]);
+
+  const setScriptOverride = React.useCallback((script: Script, maxDepth?: number) => {
+    if (maxDepth && scriptBackStack.length >= maxDepth) {
+      setScriptBackStack([...scriptBackStack.slice(0, maxDepth - 1), script]);
+    } else {
+      setScriptBackStack([...scriptBackStack, script]);
+    }
+  }, [scriptBackStack]);
+
+  const goBack = React.useCallback(() => {
+    setScriptBackStack(scriptBackStack.slice(0, scriptBackStack.length - 1));
+  }, [scriptBackStack]);
+
+  const setScriptCode = React.useCallback((code: string) => {
+    // update code at top of backstack
+    const backStack = [...scriptBackStack];
+    if (backStack.length > 0) {
+      const script = backStack.pop();
+      if (!script.readOnly) {
+        setScriptBackStack([...backStack, { ...script, code }]);
       }
-    },
-    [props.config.additionalBackStackItems, selectedNode]
-  );
-
-  const addNewNode = React.useCallback(
-    (_, code?: string) => {
-      const newNodeId = uuid.v4();
-      const sourceCode = code || skeletonBody;
-      // TODO: Add integration test for this flow.
-      setUserNodes({
-        [newNodeId]: {
-          sourceCode,
-          name: `${DEFAULT_WEBVIZ_NODE_PREFIX}${newNodeId.split("-")[0]}`,
-        },
-      });
-      saveConfig({ selectedNodeId: newNodeId });
-    },
-    [saveConfig, setUserNodes]
-  );
-
-  const saveNode = React.useCallback(
-    (script) => {
-      if (!selectedNodeId || !script) {
-        return;
-      }
-      setUserNodes({ [selectedNodeId]: { ...selectedNode, sourceCode: script } });
-    },
-    [selectedNode, selectedNodeId, setUserNodes]
-  );
-
-  const setScriptOverride = React.useCallback(
-    (script: Script, maxDepth?: number) => {
-      if (maxDepth && scriptBackStack.length >= maxDepth) {
-        setScriptBackStack([...scriptBackStack.slice(0, maxDepth - 1), script]);
-      } else {
-        setScriptBackStack([...scriptBackStack, script]);
-      }
-    },
-    [scriptBackStack]
-  );
-
-  const goBack = React.useCallback(
-    () => {
-      setScriptBackStack(scriptBackStack.slice(0, scriptBackStack.length - 1));
-    },
-    [scriptBackStack]
-  );
-
-  const setScriptCode = React.useCallback(
-    (code: string) => {
-      // update code at top of backstack
-      const backStack = [...scriptBackStack];
-      if (backStack.length > 0) {
-        const script = backStack.pop();
-        if (!script.readOnly) {
-          setScriptBackStack([...backStack, { ...script, code }]);
-        }
-      }
-    },
-    [scriptBackStack]
-  );
+    }
+  }, [scriptBackStack]);
 
   return (
     <Dimensions>

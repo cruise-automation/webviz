@@ -26,23 +26,17 @@ const useFrame = (
   const frame = React.useRef({});
   const lastClearTime = PanelAPI.useMessageReducer({
     topics,
-    restore: React.useCallback(
-      () => {
-        frame.current = {};
-        return Date.now();
-      },
-      [frame]
-    ),
-    [callbackKey]: React.useCallback(
-      (time, messages: $ReadOnlyArray<Message>) => {
-        for (const message of messages) {
-          frame.current[message.topic] = frame.current[message.topic] || [];
-          frame.current[message.topic].push(message);
-        }
-        return time;
-      },
-      [frame]
-    ),
+    restore: React.useCallback(() => {
+      frame.current = {};
+      return Date.now();
+    }, [frame]),
+    [callbackKey]: React.useCallback((time, messages: $ReadOnlyArray<Message>) => {
+      for (const message of messages) {
+        frame.current[message.topic] = frame.current[message.topic] || [];
+        frame.current[message.topic].push(message);
+      }
+      return time;
+    }, [frame]),
   });
 
   const cleared = useChangeDetector([lastClearTime], false);

@@ -174,26 +174,20 @@ export default function TreeNodeRow({
   maxNodeNameWidth -= showVisibleTopicsCount ? VISIBLE_COUNT_WIDTH + VISIBLE_COUNT_MARGIN * 2 : 0;
 
   const { setHoveredMarkerMatchers } = useContext(ThreeDimensionalVizContext);
-  const updateHoveredMarkerMatchers = useCallback(
-    (columnIndex, visible) => {
-      if (visible) {
-        const topic = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)][columnIndex];
-        setHoveredMarkerMatchers([{ topic }]);
-      }
-    },
-    [setHoveredMarkerMatchers, topicName]
-  );
+  const updateHoveredMarkerMatchers = useCallback((columnIndex, visible) => {
+    if (visible) {
+      const topic = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)][columnIndex];
+      setHoveredMarkerMatchers([{ topic }]);
+    }
+  }, [setHoveredMarkerMatchers, topicName]);
 
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
-  const mouseEventHandlersByColumnIdx = useMemo(
-    () => {
-      return new Array(2).fill().map((_, columnIndex) => ({
-        onMouseEnter: () => updateHoveredMarkerMatchers(columnIndex, true),
-        onMouseLeave,
-      }));
-    },
-    [onMouseLeave, updateHoveredMarkerMatchers]
-  );
+  const mouseEventHandlersByColumnIdx = useMemo(() => {
+    return new Array(2).fill().map((_, columnIndex) => ({
+      onMouseEnter: () => updateHoveredMarkerMatchers(columnIndex, true),
+      onMouseLeave,
+    }));
+  }, [onMouseLeave, updateHoveredMarkerMatchers]);
   const {
     toggleCheckAllAncestors,
     toggleNodeChecked,

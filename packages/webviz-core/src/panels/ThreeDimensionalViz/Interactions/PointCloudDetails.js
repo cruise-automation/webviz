@@ -38,39 +38,33 @@ export default function PointCloudDetails({ selectedObject: { object, instanceIn
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   const { clickedPoint, clickedPointColor, additionalFieldValues } =
-    useMemo(
-      () => {
-        return getClickedInfo(object, instanceIndex);
-      },
-      [instanceIndex, object]
-    ) || {};
+    useMemo(() => {
+      return getClickedInfo(object, instanceIndex);
+    }, [instanceIndex, object]) || {};
 
   const additionalFieldNames = useMemo(() => (additionalFieldValues && Object.keys(additionalFieldValues)) || [], [
     additionalFieldValues,
   ]);
 
   const hasAdditionalFieldNames = !!additionalFieldNames.length;
-  const onCopy = useCallback(
-    () => {
-      // GPU point clouds need to extract positions using getAllPoints()
-      const allPoints: number[] = object.points || getAllPoints(object);
-      const dataRows = [];
-      const len = allPoints.length / 3;
-      // get copy data
-      for (let i = 0; i < len; i++) {
-        const rowData = [allPoints[i * 3], allPoints[i * 3 + 1], allPoints[i * 3 + 2]];
-        rowData.push(...additionalFieldNames.map((fieldName) => object?.[fieldName]?.[i]));
-        dataRows.push(rowData.join(","));
-      }
+  const onCopy = useCallback(() => {
+    // GPU point clouds need to extract positions using getAllPoints()
+    const allPoints: number[] = object.points || getAllPoints(object);
+    const dataRows = [];
+    const len = allPoints.length / 3;
+    // get copy data
+    for (let i = 0; i < len; i++) {
+      const rowData = [allPoints[i * 3], allPoints[i * 3 + 1], allPoints[i * 3 + 2]];
+      rowData.push(...additionalFieldNames.map((fieldName) => object?.[fieldName]?.[i]));
+      dataRows.push(rowData.join(","));
+    }
 
-      const additionalColumns = hasAdditionalFieldNames ? `,${additionalFieldNames.join(",")}` : "";
-      const dataStr = `x,y,z${additionalColumns}\n${dataRows.join("\n")}`;
-      const blob = new Blob([dataStr], { type: "text/csv;charset=utf-8;" });
-      downloadFiles([{ blob, fileName: "PointCloud.csv" }]);
-      setIsOpen(false);
-    },
-    [additionalFieldNames, hasAdditionalFieldNames, object]
-  );
+    const additionalColumns = hasAdditionalFieldNames ? `,${additionalFieldNames.join(",")}` : "";
+    const dataStr = `x,y,z${additionalColumns}\n${dataRows.join("\n")}`;
+    const blob = new Blob([dataStr], { type: "text/csv;charset=utf-8;" });
+    downloadFiles([{ blob, fileName: "PointCloud.csv" }]);
+    setIsOpen(false);
+  }, [additionalFieldNames, hasAdditionalFieldNames, object]);
   const onToggle = useCallback(() => setIsOpen((open) => !open), []);
 
   if (!clickedPoint) {

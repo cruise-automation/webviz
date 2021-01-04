@@ -141,17 +141,14 @@ function ZoomExample() {
 function PauseFrameExample() {
   const [, forceUpdate] = useState(0);
   const [unpauseFrameCount, setUnpauseFrameCount] = useState(0);
-  const pauseFrame = useCallback(
-    () => {
-      return () => {
-        // Set a limit here to avoid unlimited cascading updates.
-        if (unpauseFrameCount < 2) {
-          setUnpauseFrameCount(unpauseFrameCount + 1);
-        }
-      };
-    },
-    [unpauseFrameCount, setUnpauseFrameCount]
-  );
+  const pauseFrame = useCallback(() => {
+    return () => {
+      // Set a limit here to avoid unlimited cascading updates.
+      if (unpauseFrameCount < 2) {
+        setUnpauseFrameCount(unpauseFrameCount + 1);
+      }
+    };
+  }, [unpauseFrameCount, setUnpauseFrameCount]);
 
   const refFn = useCallback(() => {
     setTimeout(() => {
@@ -181,21 +178,18 @@ function RemoveChartExample() {
   const [, forceUpdate] = useState(0);
   const [showChart, setShowChart] = useState(true);
   const [statusMessage, setStatusMessage] = useState("FAILURE - START");
-  const pauseFrame = useCallback(
-    () => {
-      if (showChart) {
-        setShowChart(false);
+  const pauseFrame = useCallback(() => {
+    if (showChart) {
+      setShowChart(false);
+    }
+    return () => {
+      if (statusMessage === "FAILURE - START") {
+        setStatusMessage("SUCCESS");
+      } else {
+        setStatusMessage("FAILURE - CANNOT CALL RESUME FRAME TWICE");
       }
-      return () => {
-        if (statusMessage === "FAILURE - START") {
-          setStatusMessage("SUCCESS");
-        } else {
-          setStatusMessage("FAILURE - CANNOT CALL RESUME FRAME TWICE");
-        }
-      };
-    },
-    [showChart, setShowChart, statusMessage, setStatusMessage]
-  );
+    };
+  }, [showChart, setShowChart, statusMessage, setStatusMessage]);
 
   const refFn = useCallback(() => {
     setTimeout(() => {

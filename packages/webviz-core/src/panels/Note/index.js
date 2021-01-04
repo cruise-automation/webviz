@@ -31,12 +31,9 @@ const STextArea = styled.textarea`
 type Config = { noteText: string };
 type Props = { config: Config, saveConfig: SaveConfig<Config> };
 function Note({ config, saveConfig }: Props) {
-  const onChangeText = useCallback(
-    (event: SyntheticInputEvent<HTMLTextAreaElement>) => {
-      saveConfig({ noteText: event.target.value });
-    },
-    [saveConfig]
-  );
+  const onChangeText = useCallback((event: SyntheticInputEvent<HTMLTextAreaElement>) => {
+    saveConfig({ noteText: event.target.value });
+  }, [saveConfig]);
 
   return (
     <Flex col style={{ height: "100%" }}>

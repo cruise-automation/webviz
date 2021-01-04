@@ -84,24 +84,21 @@ export function ToolbarTab(props: Props) {
   );
   const setTabTitle = useCallback(() => actions.setTabTitle(tabIndex, title), [actions, tabIndex, title]);
 
-  const onClickTab = useCallback(
-    () => {
-      if (!isActive) {
-        selectTab();
-      } else {
-        setEditingTitle(true);
+  const onClickTab = useCallback(() => {
+    if (!isActive) {
+      selectTab();
+    } else {
+      setEditingTitle(true);
 
-        setImmediate(() => {
-          if (inputRef.current) {
-            const inputEl: HTMLInputElement = inputRef.current;
-            inputEl.focus();
-            inputEl.select();
-          }
-        });
-      }
-    },
-    [isActive, selectTab, inputRef]
-  );
+      setImmediate(() => {
+        if (inputRef.current) {
+          const inputEl: HTMLInputElement = inputRef.current;
+          inputEl.focus();
+          inputEl.select();
+        }
+      });
+    }
+  }, [isActive, selectTab, inputRef]);
 
   const endTitleEditing = useCallback(() => {
     setEditingTitle(false);
@@ -110,50 +107,35 @@ export function ToolbarTab(props: Props) {
     }
   }, []);
 
-  const confirmNewTitle = useCallback(
-    () => {
-      setTabTitle();
-      endTitleEditing();
-    },
-    [endTitleEditing, setTabTitle]
-  );
+  const confirmNewTitle = useCallback(() => {
+    setTabTitle();
+    endTitleEditing();
+  }, [endTitleEditing, setTabTitle]);
 
-  const resetTitle = useCallback(
-    () => {
-      setTitle(tabTitle || "");
-      endTitleEditing();
-    },
-    [endTitleEditing, tabTitle]
-  );
+  const resetTitle = useCallback(() => {
+    setTitle(tabTitle || "");
+    endTitleEditing();
+  }, [endTitleEditing, tabTitle]);
 
-  const onKeyDown = useCallback(
-    (event: SyntheticKeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Escape") {
-        resetTitle();
-      } else if (event.key === "Enter") {
-        confirmNewTitle();
-      }
-    },
-    [confirmNewTitle, resetTitle]
-  );
+  const onKeyDown = useCallback((event: SyntheticKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape") {
+      resetTitle();
+    } else if (event.key === "Enter") {
+      confirmNewTitle();
+    }
+  }, [confirmNewTitle, resetTitle]);
 
   // If the tab is no longer active, stop editing the title
-  useEffect(
-    () => {
-      if (!isActive) {
-        setEditingTitle(false);
-      }
-    },
-    [isActive]
-  );
+  useEffect(() => {
+    if (!isActive) {
+      setEditingTitle(false);
+    }
+  }, [isActive]);
 
   // Update the cached title if the tabTitle changes
-  useEffect(
-    () => {
-      setTitle(tabTitle);
-    },
-    [tabTitle]
-  );
+  useEffect(() => {
+    setTitle(tabTitle);
+  }, [tabTitle]);
 
   return (
     <STab

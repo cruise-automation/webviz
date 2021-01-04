@@ -28,12 +28,9 @@ type Props = {|
 |};
 
 function UnconnectedLayoutModal({ onRequestClose, loadLayout: loadFetchedLayout, panels, history }: Props) {
-  const onChange = useCallback(
-    (layoutPayload: PanelsState) => {
-      loadFetchedLayout(layoutPayload);
-    },
-    [loadFetchedLayout]
-  );
+  const onChange = useCallback((layoutPayload: PanelsState) => {
+    loadFetchedLayout(layoutPayload);
+  }, [loadFetchedLayout]);
   return (
     <ShareJsonModal
       history={history}

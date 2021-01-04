@@ -102,41 +102,29 @@ function NamespaceNodeRow({
     "TopicTreeContext"
   );
 
-  const updateHoveredMarkerMatchers = useCallback(
-    (columnIndex, visible) => {
-      if (visible) {
-        const topic = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)][columnIndex];
-        setHoveredMarkerMatchers([{ topic, checks: [{ markerKeyPath: ["ns"], value: namespace }] }]);
-      }
-    },
-    [namespace, setHoveredMarkerMatchers, topicName]
-  );
+  const updateHoveredMarkerMatchers = useCallback((columnIndex, visible) => {
+    if (visible) {
+      const topic = [topicName, joinTopics(SECOND_SOURCE_PREFIX, topicName)][columnIndex];
+      setHoveredMarkerMatchers([{ topic, checks: [{ markerKeyPath: ["ns"], value: namespace }] }]);
+    }
+  }, [namespace, setHoveredMarkerMatchers, topicName]);
 
   const onMouseLeave = useCallback(() => setHoveredMarkerMatchers([]), [setHoveredMarkerMatchers]);
-  const mouseEventHandlersByColumnIdx = useMemo(
-    () => {
-      return new Array(2).fill().map((topic, columnIndex) => ({
-        onMouseEnter: () => updateHoveredMarkerMatchers(columnIndex, true),
-        onMouseLeave,
-      }));
-    },
-    [updateHoveredMarkerMatchers, onMouseLeave]
-  );
+  const mouseEventHandlersByColumnIdx = useMemo(() => {
+    return new Array(2).fill().map((topic, columnIndex) => ({
+      onMouseEnter: () => updateHoveredMarkerMatchers(columnIndex, true),
+      onMouseLeave,
+    }));
+  }, [updateHoveredMarkerMatchers, onMouseLeave]);
 
-  const onToggle = useCallback(
-    (columnIndex) => {
-      toggleNamespaceChecked({ topicName, namespace, columnIndex });
-      updateHoveredMarkerMatchers(columnIndex, !visibleInSceneByColumn[columnIndex]);
-    },
-    [toggleNamespaceChecked, topicName, namespace, updateHoveredMarkerMatchers, visibleInSceneByColumn]
-  );
-  const onAltToggle = useCallback(
-    (columnIndex) => {
-      toggleCheckAllAncestors(nodeKey, columnIndex, topicName);
-      updateHoveredMarkerMatchers(columnIndex, !visibleInSceneByColumn[columnIndex]);
-    },
-    [toggleCheckAllAncestors, nodeKey, topicName, updateHoveredMarkerMatchers, visibleInSceneByColumn]
-  );
+  const onToggle = useCallback((columnIndex) => {
+    toggleNamespaceChecked({ topicName, namespace, columnIndex });
+    updateHoveredMarkerMatchers(columnIndex, !visibleInSceneByColumn[columnIndex]);
+  }, [toggleNamespaceChecked, topicName, namespace, updateHoveredMarkerMatchers, visibleInSceneByColumn]);
+  const onAltToggle = useCallback((columnIndex) => {
+    toggleCheckAllAncestors(nodeKey, columnIndex, topicName);
+    updateHoveredMarkerMatchers(columnIndex, !visibleInSceneByColumn[columnIndex]);
+  }, [toggleCheckAllAncestors, nodeKey, topicName, updateHoveredMarkerMatchers, visibleInSceneByColumn]);
 
   return (
     <STreeNodeRow

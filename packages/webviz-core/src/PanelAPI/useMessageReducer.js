@@ -82,26 +82,23 @@ function useSubscriptions({
   preloadingFallback: boolean,
   format: "parsedMessages" | "bobjects",
 |}): SubscribePayload[] {
-  return useMemo(
-    () => {
-      const commonFields: $Shape<SubscribePayload> = { preloadingFallback, format };
-      if (panelType) {
-        commonFields.requester = { type: "panel", name: panelType };
+  return useMemo(() => {
+    const commonFields: $Shape<SubscribePayload> = { preloadingFallback, format };
+    if (panelType) {
+      commonFields.requester = { type: "panel", name: panelType };
+    }
+    return requestedTopics.map((request) => {
+      if (typeof request === "object") {
+        // We might be able to remove the `encoding` field from the protocol entirely, and only
+        // use scale. Or we can deal with scaling down in a different way altogether, such as having
+        // special topics or syntax for scaled down versions of images or so. In any case, we should
+        // be cautious about having metadata on subscriptions, as that leads to the problem of how to
+        // deal with multiple subscriptions to the same topic but with different metadata.
+        return { ...commonFields, topic: request.topic, encoding: "image/compressed", scale: request.imageScale };
       }
-      return requestedTopics.map((request) => {
-        if (typeof request === "object") {
-          // We might be able to remove the `encoding` field from the protocol entirely, and only
-          // use scale. Or we can deal with scaling down in a different way altogether, such as having
-          // special topics or syntax for scaled down versions of images or so. In any case, we should
-          // be cautious about having metadata on subscriptions, as that leads to the problem of how to
-          // deal with multiple subscriptions to the same topic but with different metadata.
-          return { ...commonFields, topic: request.topic, encoding: "image/compressed", scale: request.imageScale };
-        }
-        return { ...commonFields, topic: request };
-      });
-    },
-    [preloadingFallback, format, panelType, requestedTopics]
-  );
+      return { ...commonFields, topic: request };
+    });
+  }, [preloadingFallback, format, panelType, requestedTopics]);
 }
 
 const NO_MESSAGES = Object.freeze([]);
@@ -189,23 +186,20 @@ export function useMessageReducer<T>(props: Props<T>): T {
   const latestRequestedTopicsRef = useRef(requestedTopicsSet);
   latestRequestedTopicsRef.current = requestedTopicsSet;
   const messages = useMessagePipeline<Message[]>(
-    useCallback(
-      ({ playerState: { activeData } }) => {
-        if (!activeData) {
-          return NO_MESSAGES; // identity must not change to avoid unnecessary re-renders
-        }
-        const messageData = format === "bobjects" ? activeData.bobjects : activeData.messages;
-        if (lastProcessedMessagesRef.current === messageData) {
-          return useContextSelector.BAILOUT;
-        }
-        const filteredMessages = messageData.filter(({ topic }) => latestRequestedTopicsRef.current.has(topic));
-        // Bail out if we didn't want any of these messages, but not if this is our first render
-        const shouldBail = lastProcessedMessagesRef.current && filteredMessages.length === 0;
-        lastProcessedMessagesRef.current = messageData;
-        return shouldBail ? useContextSelector.BAILOUT : filteredMessages;
-      },
-      [format]
-    )
+    useCallback(({ playerState: { activeData } }) => {
+      if (!activeData) {
+        return NO_MESSAGES; // identity must not change to avoid unnecessary re-renders
+      }
+      const messageData = format === "bobjects" ? activeData.bobjects : activeData.messages;
+      if (lastProcessedMessagesRef.current === messageData) {
+        return useContextSelector.BAILOUT;
+      }
+      const filteredMessages = messageData.filter(({ topic }) => latestRequestedTopicsRef.current.has(topic));
+      // Bail out if we didn't want any of these messages, but not if this is our first render
+      const shouldBail = lastProcessedMessagesRef.current && filteredMessages.length === 0;
+      lastProcessedMessagesRef.current = messageData;
+      return shouldBail ? useContextSelector.BAILOUT : filteredMessages;
+    }, [format])
   );
 
   const lastSeekTime = useMessagePipeline(

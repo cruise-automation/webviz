@@ -194,98 +194,89 @@ function PlayerManager({
   // initialize it with the right order, so make a variable for its initial value we can use in the
   // dependency array below to defeat the linter.
   const [initialMessageOrder] = React.useState(messageOrder);
-  const setPlayer = React.useCallback(
-    (playerDefinition: ?PlayerDefinition) => {
-      if (!playerDefinition) {
-        setPlayerInternal(undefined);
-        setInputDescription("No input selected.");
-        return;
-      }
-      setInputDescription(playerDefinition.inputDescription);
-      const userNodePlayer = new UserNodePlayer(playerDefinition.player, {
-        setUserNodeDiagnostics: setDiagnostics,
-        addUserNodeLogs: setLogs,
-        setUserNodeRosLib: setRosLib,
-      });
-      const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, initialMessageOrder);
-      headerStampPlayer.setGlobalVariables(globalVariablesRef.current);
-      setPlayerInternal(headerStampPlayer);
-    },
-    [setDiagnostics, setLogs, setRosLib, initialMessageOrder]
-  );
+  const setPlayer = React.useCallback((playerDefinition: ?PlayerDefinition) => {
+    if (!playerDefinition) {
+      setPlayerInternal(undefined);
+      setInputDescription("No input selected.");
+      return;
+    }
+    setInputDescription(playerDefinition.inputDescription);
+    const userNodePlayer = new UserNodePlayer(playerDefinition.player, {
+      setUserNodeDiagnostics: setDiagnostics,
+      addUserNodeLogs: setLogs,
+      setUserNodeRosLib: setRosLib,
+    });
+    const headerStampPlayer = new OrderedStampPlayer(userNodePlayer, initialMessageOrder);
+    headerStampPlayer.setGlobalVariables(globalVariablesRef.current);
+    setPlayerInternal(headerStampPlayer);
+  }, [setDiagnostics, setLogs, setRosLib, initialMessageOrder]);
 
-  React.useEffect(
-    () => {
-      const params = new URLSearchParams(window.location.search);
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
 
-      const globalVariablesFromUrl = getGlobalVariablesFromUrl(params);
-      if (globalVariablesFromUrl) {
-        setVariables(globalVariablesFromUrl);
-      }
+    const globalVariablesFromUrl = getGlobalVariablesFromUrl(params);
+    if (globalVariablesFromUrl) {
+      setVariables(globalVariablesFromUrl);
+    }
 
-      // For testing, you can use ?layout-url=https://open-source-webviz-ui.s3.amazonaws.com/demoLayout.json
-      const layoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
-      if (layoutUrl) {
-        fetch(layoutUrl)
-          .then((response) => (response ? response.json() : undefined))
-          .then((json) => {
-            if (json) {
-              loadLayout({ ...json, skipSettingLocalStorage: false });
-            }
-          })
-          .catch((error) => {
-            sendNotification(
-              "Layout failed to load",
-              `Fetching remote file failed. ${corsError(layoutUrl)} ${error}`,
-              "user",
-              "error"
-            );
-          });
-      } else if (params.has(DEMO_QUERY_KEY)) {
-        loadLayout({ ...demoLayoutJson, isFromUrl: false, skipSettingLocalStorage: true });
-      }
-
-      const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
-      if (params.has(DEMO_QUERY_KEY)) {
-        buildPlayerFromBagURLs([remoteDemoBagUrl]).then((playerDefinition: ?PlayerDefinition) => {
-          setPlayer(playerDefinition);
-          // When we're showing a demo, then automatically start playback (we don't normally
-          // do that).
-          if (playerDefinition) {
-            setTimeout(() => {
-              playerDefinition.player.startPlayback();
-            }, 1000);
+    // For testing, you can use ?layout-url=https://open-source-webviz-ui.s3.amazonaws.com/demoLayout.json
+    const layoutUrl = params.get(LAYOUT_URL_QUERY_KEY);
+    if (layoutUrl) {
+      fetch(layoutUrl)
+        .then((response) => (response ? response.json() : undefined))
+        .then((json) => {
+          if (json) {
+            loadLayout({ ...json, skipSettingLocalStorage: false });
           }
+        })
+        .catch((error) => {
+          sendNotification(
+            "Layout failed to load",
+            `Fetching remote file failed. ${corsError(layoutUrl)} ${error}`,
+            "user",
+            "error"
+          );
         });
-      }
-      if (params.has(REMOTE_BAG_URL_QUERY_KEY)) {
-        const urls = [params.get(REMOTE_BAG_URL_QUERY_KEY), params.get(REMOTE_BAG_URL_2_QUERY_KEY)].filter(Boolean);
-        buildPlayerFromBagURLs(urls).then((playerDefinition: ?PlayerDefinition) => {
-          setPlayer(playerDefinition);
-        });
-      } else {
-        const websocketUrl = params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090";
-        setPlayer({
-          player: new RosbridgePlayer(websocketUrl),
-          inputDescription: (
-            <>
-              Using WebSocket at <code>{websocketUrl}</code>.
-            </>
-          ),
-        });
-      }
-    },
-    [loadLayout, setPlayer, setVariables]
-  );
+    } else if (params.has(DEMO_QUERY_KEY)) {
+      loadLayout({ ...demoLayoutJson, isFromUrl: false, skipSettingLocalStorage: true });
+    }
 
-  React.useEffect(
-    () => {
-      if (player) {
-        player.setMessageOrder(messageOrder);
-      }
-    },
-    [messageOrder, player]
-  );
+    const remoteDemoBagUrl = "https://open-source-webviz-ui.s3.amazonaws.com/demo.bag";
+    if (params.has(DEMO_QUERY_KEY)) {
+      buildPlayerFromBagURLs([remoteDemoBagUrl]).then((playerDefinition: ?PlayerDefinition) => {
+        setPlayer(playerDefinition);
+        // When we're showing a demo, then automatically start playback (we don't normally
+        // do that).
+        if (playerDefinition) {
+          setTimeout(() => {
+            playerDefinition.player.startPlayback();
+          }, 1000);
+        }
+      });
+    }
+    if (params.has(REMOTE_BAG_URL_QUERY_KEY)) {
+      const urls = [params.get(REMOTE_BAG_URL_QUERY_KEY), params.get(REMOTE_BAG_URL_2_QUERY_KEY)].filter(Boolean);
+      buildPlayerFromBagURLs(urls).then((playerDefinition: ?PlayerDefinition) => {
+        setPlayer(playerDefinition);
+      });
+    } else {
+      const websocketUrl = params.get(ROSBRIDGE_WEBSOCKET_URL_QUERY_KEY) || "ws://localhost:9090";
+      setPlayer({
+        player: new RosbridgePlayer(websocketUrl),
+        inputDescription: (
+          <>
+            Using WebSocket at <code>{websocketUrl}</code>.
+          </>
+        ),
+      });
+    }
+  }, [loadLayout, setPlayer, setVariables]);
+
+  React.useEffect(() => {
+    if (player) {
+      player.setMessageOrder(messageOrder);
+    }
+  }, [messageOrder, player]);
   useUserNodes({ nodePlayer: player, userNodes });
 
   return (

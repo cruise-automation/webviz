@@ -50,15 +50,12 @@ function SliderSettingsMenu(props: MenuProps) {
   const { updateConfig, config } = props;
   const { sliderProps, globalVariableName } = config;
 
-  const updateSliderProps = useCallback(
-    (partial: $Shape<SliderProps>) => {
-      updateConfig({
-        ...config,
-        sliderProps: { ...sliderProps, ...partial },
-      });
-    },
-    [config, sliderProps, updateConfig]
-  );
+  const updateSliderProps = useCallback((partial: $Shape<SliderProps>) => {
+    updateConfig({
+      ...config,
+      sliderProps: { ...sliderProps, ...partial },
+    });
+  }, [config, sliderProps, updateConfig]);
 
   const onChangeVariableName = useCallback(
     (newGlobalVariableName) =>
@@ -119,25 +116,19 @@ function GlobalVariableSliderPanel(props: Props): ReactNode {
   const { globalVariables, setGlobalVariables } = useGlobalVariables();
 
   const globalVariableValue = globalVariables[globalVariableName];
-  const saveSliderProps = useCallback(
-    (updatedConfig) => {
-      // If the name of the global variable changes, immediately set its value.
-      // Without this, the variable won't be set until the slider is moved.
-      if (updatedConfig.globalVariableName !== config.globalVariableName) {
-        setGlobalVariables({ [updatedConfig.globalVariableName]: globalVariableValue });
-      }
-      saveConfig(updatedConfig);
-    },
-    [config.globalVariableName, globalVariableValue, saveConfig, setGlobalVariables]
-  );
-  const additionalOutput = useMemo(
-    () => {
-      return getGlobalHooks()
-        .perPanelHooks()
-        .GlobalVariableSlider.getVariableSpecificOutput(globalVariableName, globalVariables);
-    },
-    [globalVariableName, globalVariables]
-  );
+  const saveSliderProps = useCallback((updatedConfig) => {
+    // If the name of the global variable changes, immediately set its value.
+    // Without this, the variable won't be set until the slider is moved.
+    if (updatedConfig.globalVariableName !== config.globalVariableName) {
+      setGlobalVariables({ [updatedConfig.globalVariableName]: globalVariableValue });
+    }
+    saveConfig(updatedConfig);
+  }, [config.globalVariableName, globalVariableValue, saveConfig, setGlobalVariables]);
+  const additionalOutput = useMemo(() => {
+    return getGlobalHooks()
+      .perPanelHooks()
+      .GlobalVariableSlider.getVariableSpecificOutput(globalVariableName, globalVariables);
+  }, [globalVariableName, globalVariables]);
   const menuContent = useMemo(() => <SliderSettingsMenu config={config} updateConfig={saveSliderProps} />, [
     config,
     saveSliderProps,

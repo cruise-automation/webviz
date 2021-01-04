@@ -99,50 +99,44 @@ export const UnconnectedPlaybackControls = memo<PlaybackControlProps>((props: Pl
 
   const [hoverComponentId] = useState<string>(uuid.v4());
   const dispatch = useDispatch();
-  const onMouseMove = useCallback(
-    (e: SyntheticMouseEvent<HTMLDivElement>) => {
-      const { activeData } = playerState.current;
-      if (!activeData) {
-        return;
-      }
-      const { startTime, endTime } = activeData || {};
-      if (!startTime || !endTime || el.current == null || slider.current == null) {
-        return;
-      }
-      const currentEl = el.current;
-      const currentSlider = slider.current;
-      const x = e.clientX;
-      // fix the y position of the tooltip to float on top of the playback bar
-      const y = currentEl.getBoundingClientRect().top;
+  const onMouseMove = useCallback((e: SyntheticMouseEvent<HTMLDivElement>) => {
+    const { activeData } = playerState.current;
+    if (!activeData) {
+      return;
+    }
+    const { startTime, endTime } = activeData || {};
+    if (!startTime || !endTime || el.current == null || slider.current == null) {
+      return;
+    }
+    const currentEl = el.current;
+    const currentSlider = slider.current;
+    const x = e.clientX;
+    // fix the y position of the tooltip to float on top of the playback bar
+    const y = currentEl.getBoundingClientRect().top;
 
-      const value = currentSlider.getValueAtMouse(e);
-      const stamp = fromSec(value);
-      const timeFromStart = subtractTimes(stamp, startTime);
+    const value = currentSlider.getValueAtMouse(e);
+    const stamp = fromSec(value);
+    const timeFromStart = subtractTimes(stamp, startTime);
 
-      const tip = (
-        <div className={classnames(tooltipStyles.tooltip, styles.tip)}>
-          <TooltipItem title="ROS" value={formatTimeRaw(stamp)} />
-          <TooltipItem title="Time" value={formatTime(stamp)} />
-          <TooltipItem title="Elapsed" value={`${toSec(timeFromStart).toFixed(9)} sec`} />
-        </div>
-      );
-      Tooltip.show(x, y, tip, {
-        placement: "top",
-        offset: { x: 0, y: 0 },
-        arrow: <div className={tooltipStyles.arrow} />,
-      });
-      dispatch(setHoverValue({ componentId: hoverComponentId, type: "PLAYBACK_SECONDS", value: toSec(timeFromStart) }));
-    },
-    [playerState, dispatch, hoverComponentId]
-  );
+    const tip = (
+      <div className={classnames(tooltipStyles.tooltip, styles.tip)}>
+        <TooltipItem title="ROS" value={formatTimeRaw(stamp)} />
+        <TooltipItem title="Time" value={formatTime(stamp)} />
+        <TooltipItem title="Elapsed" value={`${toSec(timeFromStart).toFixed(9)} sec`} />
+      </div>
+    );
+    Tooltip.show(x, y, tip, {
+      placement: "top",
+      offset: { x: 0, y: 0 },
+      arrow: <div className={tooltipStyles.arrow} />,
+    });
+    dispatch(setHoverValue({ componentId: hoverComponentId, type: "PLAYBACK_SECONDS", value: toSec(timeFromStart) }));
+  }, [playerState, dispatch, hoverComponentId]);
 
-  const onMouseLeave = useCallback(
-    (_e: SyntheticMouseEvent<HTMLDivElement>) => {
-      Tooltip.hide();
-      dispatch(clearHoverValue({ componentId: hoverComponentId }));
-    },
-    [dispatch, hoverComponentId]
-  );
+  const onMouseLeave = useCallback((_e: SyntheticMouseEvent<HTMLDivElement>) => {
+    Tooltip.hide();
+    dispatch(clearHoverValue({ componentId: hoverComponentId }));
+  }, [dispatch, hoverComponentId]);
 
   const { activeData, progress } = player;
   const { isPlaying, startTime, endTime, currentTime } = activeData || {};

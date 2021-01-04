@@ -21,12 +21,9 @@ const messageOrderLabel = {
 export default function MessageOrderControls() {
   const messageOrder = useSelector((state) => state.persistedState.panels.playbackConfig.messageOrder);
   const dispatch = useDispatch();
-  const setMessageOrder = useCallback(
-    (newMessageOrder) => {
-      dispatch(setPlaybackConfig({ messageOrder: newMessageOrder }));
-    },
-    [dispatch]
-  );
+  const setMessageOrder = useCallback((newMessageOrder) => {
+    dispatch(setPlaybackConfig({ messageOrder: newMessageOrder }));
+  }, [dispatch]);
 
   const orderText = messageOrderLabel[messageOrder] || defaultPlaybackConfig.messageOrder;
   const tooltip = `Order messages by ${orderText.toLowerCase()}`;

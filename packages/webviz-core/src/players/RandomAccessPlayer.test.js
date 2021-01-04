@@ -24,7 +24,11 @@ import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromNanoSec, getSeekToTime, SEEK_ON_START_NS } from "webviz-core/src/util/time";
 
 // By default seek to the start of the bag, since that makes things a bit simpler to reason about.
-const playerOptions = { metricsCollector: undefined, seekToTime: { type: "absolute", time: { sec: 10, nsec: 0 } } };
+const playerOptions = {
+  metricsCollector: undefined,
+  seekToTime: { type: "absolute", time: { sec: 10, nsec: 0 } },
+  notifyPlayerManager: async () => {},
+};
 
 class MessageStore {
   _messages: PlayerState[] = [];

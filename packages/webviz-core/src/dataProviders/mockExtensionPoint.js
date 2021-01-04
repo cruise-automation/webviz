@@ -11,8 +11,9 @@ export function mockExtensionPoint() {
   const metadata = [];
   return {
     extensionPoint: ({
-      progressCallback() {},
-      reportMetadataCallback(m) {
+      notifyPlayerManager: async () => {},
+      progressCallback: () => {},
+      reportMetadataCallback: (m) => {
         metadata.push(m);
       },
     }: ExtensionPoint),

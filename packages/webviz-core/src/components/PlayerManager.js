@@ -82,7 +82,11 @@ function buildPlayerFromDescriptor(childDescriptor: DataProviderDescriptor): Pla
   if (inPlaybackPerformanceMeasuringMode()) {
     return new AutomatedRunPlayer(rootGetDataProvider(rootDescriptor), new PerformanceMeasuringClient());
   }
-  return new RandomAccessPlayer(rootDescriptor, { metricsCollector: undefined, seekToTime: getSeekToTime() });
+  return new RandomAccessPlayer(rootDescriptor, {
+    metricsCollector: undefined,
+    seekToTime: getSeekToTime(),
+    notifyPlayerManager: async () => {},
+  });
 }
 
 type PlayerDefinition = {| player: Player, inputDescription: React.Node |};

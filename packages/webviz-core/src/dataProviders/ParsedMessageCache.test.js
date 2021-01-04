@@ -20,8 +20,9 @@ describe("parsedMessageCache", () => {
     const file = `${__dirname}/../../public/fixtures/example.bag`;
     const provider = new BagDataProvider({ bagPath: { type: "file", file } }, []);
     const { messageDefinitions } = await provider.initialize({
-      progressCallback() {},
-      reportMetadataCallback() {},
+      progressCallback: () => {},
+      reportMetadataCallback: () => {},
+      notifyPlayerManager: async () => {},
     });
     if (messageDefinitions.type !== "raw") {
       throw new Error("BagDataProvider should have raw message definitions");

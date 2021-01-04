@@ -251,6 +251,7 @@ export default class AutomatedRunPlayer implements Player {
             (metadata.type: empty);
         }
       },
+      notifyPlayerManager: async () => {},
     });
 
     await this._start();

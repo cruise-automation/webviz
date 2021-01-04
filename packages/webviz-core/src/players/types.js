@@ -19,6 +19,12 @@ import type { RosDatatypes } from "webviz-core/src/types/RosDatatypes";
 import type { Range } from "webviz-core/src/util/ranges";
 import type { TimestampMethod } from "webviz-core/src/util/time";
 
+export type RequireAuthAsk = {| type: "requireAuthAsk" |};
+export type RequireAuthReply = {| type: "requireAuthReply", data: string |};
+export type NotifyPlayerManagerData = RequireAuthAsk;
+export type NotifyPlayerManagerReplyData = RequireAuthReply;
+export type NotifyPlayerManager = (NotifyPlayerManagerData) => Promise<?NotifyPlayerManagerReplyData>;
+
 export type MessageDefinitionsByTopic = { [topic: string]: string };
 export type ParsedMessageDefinitionsByTopic = { [topic: string]: RosMsgDefinition[] };
 

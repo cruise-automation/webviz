@@ -300,6 +300,8 @@
 
 /*! @mdi/svg/svg/arrow-left.svg */
 
+/*! @mdi/svg/svg/arrow-right.svg */
+
 /*! @mdi/svg/svg/block-helper.svg */
 
 /*! @mdi/svg/svg/blur.svg */
@@ -407,6 +409,10 @@
 /*! @mdi/svg/svg/robot.svg */
 
 /*! @mdi/svg/svg/ruler.svg */
+
+/*! @mdi/svg/svg/swap-horizontal.svg */
+
+/*! @mdi/svg/svg/sync.svg */
 
 /*! @mdi/svg/svg/target.svg */
 
@@ -843,6 +849,8 @@
 /*! webviz-core/src/panels/ThreeDimensionalViz/MainToolbar */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/MeasureMarker */
+
+/*! webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu */
 
 /*! webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder */
 
@@ -1634,6 +1642,10 @@
 
 /*!*********************************************************************************!*\
   !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/CameraInfo/index.js ***!
+  \*********************************************************************************/
+
+/*!*********************************************************************************!*\
+  !*** ./packages/webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu.js ***!
   \*********************************************************************************/
 
 /*!*********************************************************************************!*\

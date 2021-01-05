@@ -60,6 +60,7 @@ export default class StoryPlayer implements Player {
         .initialize({
           progressCallback: () => {},
           reportMetadataCallback: () => {},
+          notifyPlayerManager: async () => {},
         })
         .then(async ({ topics, start, end, messageDefinitions }) => {
           const { parsedMessages = [], bobjects = [] } = await provider.getMessages(start, end, {

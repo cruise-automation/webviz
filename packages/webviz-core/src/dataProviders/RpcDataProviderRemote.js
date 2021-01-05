@@ -7,9 +7,9 @@
 //  You may not use this file except in compliance with the License.
 
 import type { DataProvider, DataProviderDescriptor, DataProviderMetadata } from "webviz-core/src/dataProviders/types";
+import type { NotifyPlayerManagerData } from "webviz-core/src/players/types";
 import Rpc from "webviz-core/src/util/Rpc";
 import { setupWorker } from "webviz-core/src/util/RpcWorkerUtils";
-
 // The "other side" of `RpcDataProvider`. Instantiates a `DataProviderDescriptor` tree underneath,
 // in the context of wherever this is instantiated (e.g. a Web Worker, or the server side of a
 // WebSocket).
@@ -26,6 +26,8 @@ export default class RpcDataProviderRemote {
         reportMetadataCallback: (data: DataProviderMetadata) => {
           rpc.send("extensionPointCallback", { type: "reportMetadataCallback", data });
         },
+        notifyPlayerManager: (data: NotifyPlayerManagerData) =>
+          rpc.send("extensionPointCallback", { type: "notifyPlayerManager", data }),
       });
     });
     rpc.receive("getMessages", async ({ start, end, topics }) => {
@@ -43,6 +45,7 @@ export default class RpcDataProviderRemote {
       }
       return { messages: messagesToSend, [Rpc.transferrables]: Array.from(arrayBuffers) };
     });
+
     rpc.receive("close", () => provider.close());
   }
 }

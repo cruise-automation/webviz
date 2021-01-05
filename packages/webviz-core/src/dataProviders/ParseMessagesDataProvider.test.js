@@ -42,6 +42,7 @@ function getProvider() {
 const dummyExtensionPoint = {
   progressCallback() {},
   reportMetadataCallback() {},
+  notifyPlayerManager: async () => {},
 };
 
 describe("ParseMessagesDataProvider", () => {

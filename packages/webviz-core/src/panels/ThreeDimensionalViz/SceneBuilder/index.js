@@ -23,19 +23,16 @@ import type {
 } from "webviz-core/src/types/BinaryMessages";
 import type {
   Color,
-  LaserScan,
   Marker,
   Namespace,
   NavMsgs$OccupancyGrid,
   MutablePose,
-  PointCloud2,
   Pose,
-  PoseStamped,
   StampedMessage,
 } from "webviz-core/src/types/Messages";
 import type { MarkerProvider, MarkerCollector, Scene } from "webviz-core/src/types/Scene";
 import { objectValues } from "webviz-core/src/util";
-import { getField, getIndex, deepParse, isBobject } from "webviz-core/src/util/binaryObjects";
+import { getField, getIndex, deepParse } from "webviz-core/src/util/binaryObjects";
 import Bounds from "webviz-core/src/util/Bounds";
 import {
   POSE_MARKER_SCALE,
@@ -435,41 +432,7 @@ export default class SceneBuilder implements MarkerProvider {
     }
   }
 
-  _transformMarkerPose = (topic: string, marker: Marker): ?MutablePose => {
-    const { frame_id } = marker.header;
-
-    if (!frame_id) {
-      const error = this._addError(this.errors.topicsMissingFrameIds, topic);
-      error.namespaces.add(marker.ns);
-      return null;
-    }
-
-    if (frame_id === this.rootTransformID) {
-      // Transforming is a bit expensive, and this (no transformation necessary) is the common-case
-      // TODO: Need to deep-clone, callers mutate the result; fix this downstream.
-      return {
-        position: { ...marker.pose.position },
-        orientation: { ...marker.pose.orientation },
-      };
-    }
-
-    // frame_id !== this.rootTransformID.
-    // We continue to render these, though they may be inaccurate
-    this._reportBadFrameId(topic);
-    const badFrameError = this._addError(this.errors.topicsWithBadFrameIds, topic);
-    badFrameError.namespaces.add(marker.ns);
-    badFrameError.frameIds.add(frame_id);
-
-    const pose = this.transforms.apply(emptyPose(), marker.pose, frame_id, this.rootTransformID);
-    if (!pose) {
-      const topicMissingError = this._addError(this.errors.topicsMissingTransforms, topic);
-      topicMissingError.namespaces.add(marker.ns);
-      topicMissingError.frameIds.add(frame_id);
-    }
-    return pose;
-  };
-
-  _transformBobjectMarkerPose = (topic: string, marker: BinaryMarker | BinaryInstancedMarker): ?MutablePose => {
+  _transformMarkerPose = (topic: string, marker: BinaryMarker | BinaryInstancedMarker): ?MutablePose => {
     const frame_id = marker.header().frame_id();
 
     if (!frame_id) {
@@ -502,14 +465,8 @@ export default class SceneBuilder implements MarkerProvider {
   };
 
   _consumeMarkerArray = (topic: string, message: any): void => {
-    for (let i = 0; i < message.markers.length; i++) {
-      this._consumeMarker(topic, message.markers[i]);
-    }
-  };
-
-  _consumeBobjectMarkerArray = (topic: string, message: any): void => {
     for (const marker of message.markers()) {
-      this._consumeBobjectMarker(topic, marker);
+      this._consumeMarker(topic, marker);
     }
   };
 
@@ -579,46 +536,7 @@ export default class SceneBuilder implements MarkerProvider {
     this.collectors[topic].addMarker(marker, name);
   }
 
-  _consumeMarker(topic: string, message: Marker): void {
-    if (message.ns) {
-      // Consume namespaces even if the message is later discarded
-      // Otherwise, the namespace won't be shown as available.
-      this._consumeNamespace(topic, message.ns);
-      if (!this.namespaceIsEnabled(topic, message.ns)) {
-        return;
-      }
-    }
-
-    // Marker names are used to identify previously rendered markers for "deletes" and over-writing
-    // "adds".
-    // In each topic, the namespace (`ns`) and identifier (`id`) uniquely identify the marker.
-    // See https://github.com/ros-visualization/rviz/blob/4b6c0f4/src/rviz/default_plugin/markers/marker_base.h#L56
-    // and https://github.com/ros-visualization/rviz/blob/4b6c0f4/src/rviz/default_plugin/marker_display.cpp#L422
-    const name = `${topic}/${message.ns}/${message.id}`;
-    switch (message.action) {
-      case 0: // add
-        break;
-      case 1: // deprecated in ros
-        this._setTopicError(topic, "Marker.action=1 is deprecated");
-        return;
-      case 2: // delete
-        this.collectors[topic].deleteMarker(name);
-        return;
-      case 3:
-        this.collectors[topic].deleteAll();
-        return;
-      default:
-        this._setTopicError(topic, `Unsupported action type: ${message.action}`);
-        return;
-    }
-
-    const pose = this._transformMarkerPose(topic, message);
-    if (pose) {
-      this._addMarker({ topic, name, message: ({ ...message, pose }: any) });
-    }
-  }
-
-  _consumeBobjectMarker(topic: string, message: BinaryMarker | BinaryInstancedMarker): void {
+  _consumeMarker(topic: string, message: BinaryMarker | BinaryInstancedMarker): void {
     const namespace = message.ns();
     if (namespace) {
       // Consume namespaces even if the message is later discarded
@@ -652,7 +570,7 @@ export default class SceneBuilder implements MarkerProvider {
         return;
     }
 
-    const pose = this._transformBobjectMarkerPose(topic, message);
+    const pose = this._transformMarkerPose(topic, message);
     if (!pose) {
       return;
     }
@@ -854,62 +772,16 @@ export default class SceneBuilder implements MarkerProvider {
     this.topicsToRender.clear();
   }
 
-  _consumeMessage = (topic: string, datatype: string, msg: Message): void => {
+  _consumeMessage = (topic: string, datatype: string, msg: BobjectMessage): void => {
     const { message } = msg;
     switch (datatype) {
       case WEBVIZ_MARKER_DATATYPE:
       case VISUALIZATION_MSGS_MARKER_DATATYPE:
-        this._consumeMarker(topic, message);
+        this._consumeMarker(topic, cast<BinaryMarker>(message));
         break;
       case WEBVIZ_MARKER_ARRAY_DATATYPE:
       case VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE:
         this._consumeMarkerArray(topic, message);
-        break;
-      case POSE_STAMPED_DATATYPE: {
-        // make synthetic arrow marker from the stamped pose
-        const { pose } = cast<PoseStamped>(msg.message);
-        this.collectors[topic].addNonMarker(
-          topic,
-          buildSyntheticArrowMarker(msg, pose, this._hooks.getSyntheticArrowMarkerColor)
-        );
-        break;
-      }
-      case NAV_MSGS_OCCUPANCY_GRID_DATATYPE:
-        // flatten btn: set empty z values to be at the same level as the flattenedZHeightPose
-        this._consumeOccupancyGrid(topic, message);
-        break;
-      case POINT_CLOUD_DATATYPE:
-        this._consumeNonMarkerMessage(topic, cast<PointCloud2>(message), 102);
-        break;
-      case SENSOR_MSGS_LASER_SCAN_DATATYPE:
-        this._consumeNonMarkerMessage(topic, cast<LaserScan>(message), 104);
-        break;
-      default: {
-        const { flattenedZHeightPose, collectors, errors, lastSeenMessages, selectionState } = this;
-        this._hooks.consumeMessage(
-          topic,
-          datatype,
-          msg,
-          {
-            consumeMarkerArray: this._consumeMarkerArray,
-            consumeNonMarkerMessage: this._consumeNonMarkerMessage,
-          },
-          { flattenedZHeightPose, collectors, errors, lastSeenMessages, selectionState }
-        );
-      }
-    }
-  };
-
-  _consumeBobject = (topic: string, datatype: string, msg: BobjectMessage): void => {
-    const { message } = msg;
-    switch (datatype) {
-      case WEBVIZ_MARKER_DATATYPE:
-      case VISUALIZATION_MSGS_MARKER_DATATYPE:
-        this._consumeBobjectMarker(topic, cast<BinaryMarker>(message));
-        break;
-      case WEBVIZ_MARKER_ARRAY_DATATYPE:
-      case VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE:
-        this._consumeBobjectMarkerArray(topic, message);
         break;
       case POSE_STAMPED_DATATYPE: {
         // make synthetic arrow marker from the stamped pose
@@ -954,7 +826,7 @@ export default class SceneBuilder implements MarkerProvider {
           datatype,
           msg,
           {
-            consumeMarkerArray: this._consumeBobjectMarkerArray,
+            consumeMarkerArray: this._consumeMarkerArray,
             consumeNonMarkerMessage: this._consumeNonMarkerMessage,
           },
           { flattenedZHeightPose, collectors, errors, lastSeenMessages, selectionState }
@@ -984,11 +856,7 @@ export default class SceneBuilder implements MarkerProvider {
     const decayTime = this._settingsByKey[`t:${topic}`]?.decayTime;
     const filteredMessages = decayTime === undefined ? filterOutSupersededMessages(messages, datatype) : messages;
     for (const message of filteredMessages) {
-      if (isBobject(message.message)) {
-        this._consumeBobject(topic, datatype, message);
-      } else {
-        this._consumeMessage(topic, datatype, message);
-      }
+      this._consumeMessage(topic, datatype, message);
     }
   };
 

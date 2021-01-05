@@ -71,6 +71,7 @@ describe("RpcDataProvider", () => {
     const extensionPoint = {
       progressCallback() {},
       reportMetadataCallback: jest.fn(),
+      notifyPlayerManager: jest.fn(),
     };
     const { local: mainChannel, remote: workerChannel } = createLinkedChannels();
     const provider = new RpcDataProvider(new Rpc(mainChannel), dummyChildren);

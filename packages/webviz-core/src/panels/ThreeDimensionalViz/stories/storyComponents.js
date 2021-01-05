@@ -37,7 +37,6 @@ export type FixtureExampleData = {
 };
 
 function bobjectify(fixture: FixtureExampleData): FixtureExampleData {
-  const { SUPPORTED_BOBJECT_MARKER_DATATYPES } = getGlobalHooks().perPanelHooks().ThreeDimensionalViz;
   const { topics, frame } = fixture;
   const newFrame = {};
   // The topics are sometimes arrays, sometimes objects :-(
@@ -46,13 +45,11 @@ function bobjectify(fixture: FixtureExampleData): FixtureExampleData {
   const datatypes = createRosDatatypesFromFrame(topicsArray, frame);
   topicsArray.forEach(({ name: topicName, datatype }) => {
     if (frame[topicName]) {
-      newFrame[topicName] = frame[topicName].map((msg) => {
-        const message =
-          SUPPORTED_BOBJECT_MARKER_DATATYPES.has(datatype) && !isBobject(msg.message)
-            ? wrapJsObject(datatypes, datatype, msg.message)
-            : msg.message;
-        return { topic: msg.topic, receiveTime: msg.receiveTime, message };
-      });
+      newFrame[topicName] = frame[topicName].map(({ topic, receiveTime, message }) => ({
+        topic,
+        receiveTime,
+        message: !isBobject(message) ? wrapJsObject(datatypes, datatype, message) : message,
+      }));
     }
   });
   return { ...fixture, frame: newFrame };

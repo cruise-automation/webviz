@@ -12,13 +12,6 @@ import { TF_DATATYPE } from "webviz-core/src/util/globalConstants";
 const sceneBuilderHooks: ThreeDimensionalVizHooks = {
   getSelectionState: () => {},
   getTopicsToRender: () => new Set(),
-  consumeMessage: (topic, datatype, msg, consumeMethods, { errors }) => {
-    // TF messages are consumed by TransformBuilder, not SceneBuilder.
-    if (datatype === TF_DATATYPE) {
-      return;
-    }
-    errors.topicsWithError.set(topic, `Unrecognized topic datatype for scene: ${datatype}`);
-  },
   consumeBobject: (topic, datatype, msg, consumeMethods, { errors }) => {
     // TF messages are consumed by TransformBuilder, not SceneBuilder.
     if (datatype === TF_DATATYPE) {

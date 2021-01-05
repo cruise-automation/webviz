@@ -111,20 +111,6 @@ export function perPanelHooks() {
     TF_DATATYPE,
   };
 
-  const SUPPORTED_BOBJECT_MARKER_DATATYPES = new Set([
-    // (Complete)
-    VISUALIZATION_MSGS_MARKER_DATATYPE,
-    VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
-    WEBVIZ_MARKER_DATATYPE,
-    WEBVIZ_MARKER_ARRAY_DATATYPE,
-    POSE_STAMPED_DATATYPE,
-    POINT_CLOUD_DATATYPE,
-    SENSOR_MSGS_LASER_SCAN_DATATYPE,
-    NAV_MSGS_OCCUPANCY_GRID_DATATYPE,
-    GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE,
-    TF_DATATYPE,
-  ]);
-
   return {
     DiagnosticSummary: {
       defaultConfig: {
@@ -145,7 +131,7 @@ export function perPanelHooks() {
         zoomPercentage: 100,
         offset: [0, 0],
       },
-      imageMarkerDatatypes: ["visualization_msgs/ImageMarker"],
+      imageMarkerDatatypes: ["visualization_msgs/ImageMarker", "webviz_msgs/ImageMarkerArray"],
       canTransformMarkersByTopic: (topic) => !topic.includes("rect"),
     },
     GlobalVariableSlider: {
@@ -168,7 +154,6 @@ export function perPanelHooks() {
       topicSettingsEditors: {},
       copy: {},
       SUPPORTED_MARKER_DATATYPES,
-      SUPPORTED_BOBJECT_MARKER_DATATYPES,
       BLACKLIST_TOPICS: [],
       iconsByClassification: { DEFAULT: CubeOutline },
       allSupportedMarkers: [

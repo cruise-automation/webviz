@@ -39,7 +39,8 @@ export default class RenameDataProvider implements DataProvider {
   }
 
   async initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
-    const childExtensionPoint = {
+    const result = await this._provider.initialize({
+      ...extensionPoint,
       progressCallback: (progress: Progress) => {
         extensionPoint.progressCallback({
           // Only map fields that we know are correctly mapped. Don't just splat in `...progress` here
@@ -48,9 +49,7 @@ export default class RenameDataProvider implements DataProvider {
           messageCache: progress.messageCache ? this._mapMessageCache(progress.messageCache) : undefined,
         });
       },
-      reportMetadataCallback: extensionPoint.reportMetadataCallback,
-    };
-    const result = await this._provider.initialize(childExtensionPoint);
+    });
     const { messageDefinitions } = result;
 
     const convertTopicNameKey = (objWithTopicNameKeys) => {

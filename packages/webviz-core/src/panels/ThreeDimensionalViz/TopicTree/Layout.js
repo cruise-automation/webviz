@@ -6,8 +6,6 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
-import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import { groupBy } from "lodash";
 import React, { type Node, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
@@ -26,10 +24,8 @@ import useTopicTree, { TopicTreeContext } from "./useTopicTree";
 import Dimensions from "webviz-core/src/components/Dimensions";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import KeyListener from "webviz-core/src/components/KeyListener";
-import { Item } from "webviz-core/src/components/Menu";
 import Modal from "webviz-core/src/components/Modal";
 import PanelContext from "webviz-core/src/components/PanelContext";
-import PanelToolbar from "webviz-core/src/components/PanelToolbar";
 import { RenderToBodyComponent } from "webviz-core/src/components/renderToBody";
 import filterMap from "webviz-core/src/filterMap";
 import useGlobalVariables from "webviz-core/src/hooks/useGlobalVariables";
@@ -43,6 +39,7 @@ import { InteractionContextMenu, OBJECT_TAB_TYPE } from "webviz-core/src/panels/
 import useLinkedGlobalVariables from "webviz-core/src/panels/ThreeDimensionalViz/Interactions/useLinkedGlobalVariables";
 import styles from "webviz-core/src/panels/ThreeDimensionalViz/Layout.module.scss";
 import LayoutToolbar from "webviz-core/src/panels/ThreeDimensionalViz/LayoutToolbar";
+import PanelToolbarMenu from "webviz-core/src/panels/ThreeDimensionalViz/PanelToolbarMenu";
 import SceneBuilder from "webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder";
 import { useSearchText } from "webviz-core/src/panels/ThreeDimensionalViz/SearchText";
 import {
@@ -665,25 +662,13 @@ export default function Layout({
           style={{ cursor: cursorType }}
           data-test="3dviz-layout">
           <KeyListener keyDownHandlers={keyDownHandlers} />
-          <PanelToolbar
-            floating
+          <PanelToolbarMenu
+            autoTextBackgroundColor={!!autoTextBackgroundColor}
+            checkedKeys={checkedKeys}
+            flattenMarkers={!!flattenMarkers}
             helpContent={helpContent}
-            menuContent={
-              <>
-                <Item
-                  tooltip="Markers with 0 as z-value in pose or points are updated to have the z-value of the flattened base frame."
-                  icon={flattenMarkers ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-                  onClick={() => saveConfig({ flattenMarkers: !flattenMarkers })}>
-                  Flatten markers
-                </Item>
-                <Item
-                  tooltip="Automatically apply dark/light background color to text."
-                  icon={autoTextBackgroundColor ? <CheckboxMarkedIcon /> : <CheckboxBlankOutlineIcon />}
-                  onClick={() => saveConfig({ autoTextBackgroundColor: !autoTextBackgroundColor })}>
-                  Auto Text Background
-                </Item>
-              </>
-            }
+            saveConfig={saveConfig}
+            settingsByKey={settingsByKey}
           />
           <div style={{ position: "absolute", width: "100%", height: "100%" }}>
             {isDemoMode && DemoModeComponent && <DemoModeComponent />}

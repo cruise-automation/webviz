@@ -39,7 +39,7 @@ export default class RpcDataProvider implements DataProvider {
 
   initialize(extensionPoint: ExtensionPoint): Promise<InitializationResult> {
     if (extensionPoint) {
-      const { progressCallback, reportMetadataCallback } = extensionPoint;
+      const { progressCallback, reportMetadataCallback, notifyPlayerManager } = extensionPoint;
 
       this._rpc.receive("extensionPointCallback", ({ type, data }) => {
         switch (type) {
@@ -49,6 +49,9 @@ export default class RpcDataProvider implements DataProvider {
           case "reportMetadataCallback":
             reportMetadataCallback(data);
             break;
+          case "notifyPlayerManager": {
+            return notifyPlayerManager(data);
+          }
           default:
             throw new Error(`Unsupported extension point type in RpcDataProvider: ${type}`);
         }

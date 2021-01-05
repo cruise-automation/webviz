@@ -23,8 +23,8 @@ const getFixture = (allowPublish) => {
   };
 };
 
-const publishConfig = () => ({
-  topicName: "/cmd_vel",
+const publishConfig = (topic = "/cmd_vel") => ({
+  topicName: topic,
 });
 
 storiesOf("<Teleop>", module)
@@ -41,6 +41,24 @@ storiesOf("<Teleop>", module)
     return (
       <PanelSetup fixture={getFixture(allowPublish)}>
         <Teleop config={publishConfig()} />
+      </PanelSetup>
+    );
+  })
+  .add("example with invalid topic name", () => {
+    const allowPublish = true;
+    // Will attempt to use topic name /a, which is too short
+    return (
+      <PanelSetup fixture={getFixture(allowPublish)}>
+        <Teleop config={publishConfig("/a")} />
+      </PanelSetup>
+    );
+  })
+  .add("example with empty topic name", () => {
+    const allowPublish = true;
+    // Will attempt to use the empty topic
+    return (
+      <PanelSetup fixture={getFixture(allowPublish)}>
+        <Teleop config={publishConfig("")} />
       </PanelSetup>
     );
   })

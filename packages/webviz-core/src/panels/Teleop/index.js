@@ -7,6 +7,7 @@
 //  You may not use this file except in compliance with the License.
 import React, { useState, useReducer } from "react";
 import { hot } from "react-hot-loader/root";
+import styled from "styled-components";
 
 import helpContent from "./index.help.md";
 import { PanelToolbarInput, PanelToolbarLabel } from "webviz-core/shared/panelToolbarStyles";
@@ -35,6 +36,14 @@ type Props = {
   datatypes: RosDatatypes,
 };
 
+const SErrorText = styled.div`
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  color: ${colors.red};
+`;
+
 function Teleop(props: Props) {
   const { config, saveConfig, capabilities } = props;
   const { topicName } = config;
@@ -48,6 +57,10 @@ function Teleop(props: Props) {
     ArrowDown: false,
     " ": false,
   });
+
+  const isValidTopic = (t) => {
+    return t.startsWith("/") && t.length >= 3;
+  };
 
   const composeTwist = (key) => {
     const COMMANDS = {
@@ -81,12 +94,12 @@ function Teleop(props: Props) {
   const handleKey = (event) => {
     const newPressing = pressing;
     newPressing[event.key] = event.type === "keydown";
-    if (publisher.current) {
+    if (publisher.current && isValidTopic(topicName)) {
       if (event.type === "keydown") {
         publisher.current.publish(composeTwist(event.key));
       }
     } else {
-      console.error("Publisher not set!");
+      console.error("Publisher not set or topic name invalid");
     }
     setPressing(newPressing);
 
@@ -111,8 +124,28 @@ function Teleop(props: Props) {
 
   const buttonColor = "#00A871";
 
-  const canPublish = capabilities.includes(PlayerCapabilities.advertise) && topicName;
+  const canPublish = capabilities.includes(PlayerCapabilities.advertise) && isValidTopic(topicName);
 
+  const renderError = () => {
+    if (topicName.length === 0) {
+      return (
+        <>
+          <SErrorText>Topic name can&apos;t be empty!</SErrorText>
+        </>
+      );
+    } else if (!isValidTopic(topicName)) {
+      return (
+        <>
+          {
+            <SErrorText>
+              Topic name &quot;{topicName}&quot; is invalid (must be at least 2 characters long and start with /)
+            </SErrorText>
+          }
+        </>
+      );
+    }
+    return <></>;
+  };
   const renderMenuContent = () => {
     return (
       <>
@@ -178,6 +211,9 @@ function Teleop(props: Props) {
           onClick={(_) => onCommandButtonClick(" ")}>
           Stop
         </Button>
+      </Flex>
+      <Flex row style={{ flex: "0 0 auto", justifyContent: "center", paddingTop: "5px", paddingBottom: "5px" }}>
+        {renderError()}
       </Flex>
     </Flex>
   );

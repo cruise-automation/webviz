@@ -14,7 +14,7 @@ import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitm
 import withRenderStateOverrides from "../utils/withRenderStateOverrides";
 import Command, { type CommonCommandProps } from "./Command";
 
-const cubes = withRenderStateOverrides(
+export const cubes = withRenderStateOverrides(
   fromGeometry(
     [
       // bottom face corners

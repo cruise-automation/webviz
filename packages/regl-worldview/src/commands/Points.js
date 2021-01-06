@@ -104,6 +104,8 @@ const makePointsCommand = (useWorldSpaceSize: boolean) => {
   };
 };
 
+export const points = makePointsCommand(false);
+
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 export default function Points(props: Props) {
   const [command] = useState(() => makePointsCommand(!!props.useWorldSpaceSize));

@@ -63,13 +63,10 @@ type GLTextProps = {|
 |};
 
 type Props = {
+  // $FlowFixMe: flow does not know how to handle the indexed property in CommonCommandProps
   ...CommonCommandProps,
+  ...GLTextProps,
   children: $ReadOnlyArray<TextMarkerProps>,
-  autoBackgroundColor?: boolean,
-  scaleInvariantFontSize?: number,
-  resolution?: number,
-  alphabet?: string[],
-  textAtlas?: GeneratedAtlas,
 };
 
 // Font size used in rendering the atlas. This is independent of the `scale` of the rendered text.
@@ -568,7 +565,7 @@ function makeTextCommand(alphabet?: string[]) {
   return command;
 }
 
-export const glText = (props: GLTextProps) => {
+export const makeGLTextCommand = (props: GLTextProps) => {
   const command = makeTextCommand(props.alphabet);
   // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
   // so just attach it to the command object for now.
@@ -581,14 +578,7 @@ export const glText = (props: GLTextProps) => {
 };
 
 export default function GLText(props: Props) {
-  const [command] = useState(() => makeTextCommand(props.alphabet));
-  // HACK: Worldview doesn't provide an easy way to pass a command-level prop into the regl commands,
-  // so just attach it to the command object for now.
-  command.autoBackgroundColor = props.autoBackgroundColor;
-  command.resolution = Math.max(MIN_RESOLUTION, props.resolution || DEFAULT_RESOLUTION);
-  command.scaleInvariant = props.scaleInvariantFontSize != null;
-  command.scaleInvariantSize = props.scaleInvariantFontSize ?? 0;
-  command.textAtlas = props.textAtlas;
+  const [command] = useState(() => makeGLTextCommand(props));
   const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 
   return <Command getChildrenForHitmap={getChildrenForHitmap} reglCommand={command} {...props} />;

@@ -134,14 +134,20 @@ const drawModel = (regl) => {
       model.json.textures.map((textureInfo) => {
         const sampler = model.json.samplers[textureInfo.sampler];
         const bitmap = model.images && model.images[textureInfo.source];
-        const texture = regl.texture({
-          data: bitmap,
-          min: glConstantToRegl(sampler.minFilter),
-          mag: glConstantToRegl(sampler.magFilter),
-          wrapS: glConstantToRegl(sampler.wrapS),
-          wrapT: glConstantToRegl(sampler.wrapT),
-        });
-        return texture;
+        const textureProps = { data: bitmap };
+        if (sampler.minFilter) {
+          textureProps.min = glConstantToRegl(sampler.minFilter);
+        }
+        if (sampler.magFilter) {
+          textureProps.mag = glConstantToRegl(sampler.magFilter);
+        }
+        if (sampler.wrapS) {
+          textureProps.wrapS = glConstantToRegl(sampler.wrapS);
+        }
+        if (sampler.wrapT) {
+          textureProps.wrapT = glConstantToRegl(sampler.wrapT);
+        }
+        return regl.texture(textureProps);
       });
     if (model.images) {
       model.images.forEach((bitmap: ImageBitmap) => bitmap.close());

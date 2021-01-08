@@ -14,8 +14,8 @@ import type { Arrow } from "../types";
 import { pointToVec3, vec3ToPoint, orientationToVec4, vec4ToOrientation } from "../utils/commandUtils";
 import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
 import type { CommonCommandProps } from "./Command";
-import Cones from "./Cones";
-import Cylinders from "./Cylinders";
+import Cones, { cones } from "./Cones";
+import Cylinders, { cylinders } from "./Cylinders";
 
 const UNIT_X_VECTOR = Object.freeze([0, 0, 1]);
 
@@ -24,11 +24,11 @@ type Props = {
   children: Arrow[],
 };
 
-function Arrows(props: Props) {
-  const passedProps = omit(props, "children");
+const generateArrowPrimitives = (markers: Arrow[]) => {
   const cylinders = [];
   const cones = [];
-  for (const marker of props.children) {
+
+  for (const marker of markers) {
     let shaftWidthX;
     let shaftWidthY;
     let shaftLength;
@@ -95,6 +95,25 @@ function Arrows(props: Props) {
     });
   }
 
+  return {
+    cones,
+    cylinders,
+  };
+};
+
+export const makeArrowsCommand = () => (regl: any) => {
+  const cylindersCommand = cylinders(regl);
+  const conesCommand = cones(regl);
+  return (props: any) => {
+    const { cylinders: cylinderPrimitives, cones: conePrimitives } = generateArrowPrimitives(props);
+    cylindersCommand(cylinderPrimitives);
+    conesCommand(conePrimitives);
+  };
+};
+
+function Arrows(props: Props) {
+  const passedProps = omit(props, "children");
+  const { cylinders, cones } = generateArrowPrimitives(props.children);
   return (
     <Fragment>
       <Cylinders getChildrenForHitmap={getChildrenForHitmapWithOriginalMarker} {...passedProps}>

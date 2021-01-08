@@ -12,7 +12,7 @@ import React from "react";
 import type { Vec3, Point, PolygonType } from "../types";
 import { shouldConvert, pointToVec3 } from "../utils/commandUtils";
 import { getChildrenForHitmapWithOriginalMarker } from "../utils/getChildrenForHitmapDefaults";
-import Triangles from "./Triangles";
+import Triangles, { makeTrianglesCommand } from "./Triangles";
 
 const NO_POSE = {
   position: { x: 0, y: 0, z: 0 },
@@ -47,9 +47,8 @@ type Props = {
   children: PolygonType[],
 };
 
-// command to draw a filled polygon
-function FilledPolygons({ children: polygons = [], ...rest }: Props) {
-  const triangles = polygons.map((poly) => {
+const generateTriangles = (polygons: PolygonType[]) => {
+  return polygons.map((poly) => {
     // $FlowFixMe flow doesn't know how shouldConvert works
     const points: Vec3[] = shouldConvert(poly.points) ? poly.points.map(pointToVec3) : poly.points;
     const pose = poly.pose ? poly.pose : NO_POSE;
@@ -62,6 +61,18 @@ function FilledPolygons({ children: polygons = [], ...rest }: Props) {
       originalMarker: poly,
     };
   });
+};
+
+export const makeFilledPolygonsCommand = () => (regl: any) => {
+  const trianglesCommand = makeTrianglesCommand()(regl);
+  return (props: any) => {
+    trianglesCommand(generateTriangles(props), false);
+  };
+};
+
+// command to draw a filled polygon
+function FilledPolygons({ children: polygons = [], ...rest }: Props) {
+  const triangles = generateTriangles(polygons);
 
   // Overwrite the triangle's default getChildrenForHitmap because we want to event as if each triangle is a single
   // polygon.

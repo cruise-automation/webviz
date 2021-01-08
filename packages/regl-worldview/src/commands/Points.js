@@ -13,13 +13,18 @@ import { getVertexColors, pointToVec3, withPose } from "../utils/commandUtils";
 import { createInstancedGetChildrenForHitmap } from "../utils/getChildrenForHitmapDefaults";
 import Command, { type CommonCommandProps } from "./Command";
 
-type Props = {
-  ...CommonCommandProps,
+type PointsProps = {|
   useWorldSpaceSize?: boolean,
+|};
+
+type Props = {
+  // $FlowFixMe: flow does not know how to handle the indexed property in CommonCommandProps
+  ...CommonCommandProps,
+  ...PointsProps,
   children: $ReadOnlyArray<PointType>,
 };
 
-const makePointsCommand = (useWorldSpaceSize: boolean) => {
+export const makePointsCommand = ({ useWorldSpaceSize }: PointsProps) => {
   return (regl: Regl) => {
     const [minLimitPointSize, maxLimitPointSize] = regl.limits.pointSizeDims;
     return withPose({
@@ -106,6 +111,6 @@ const makePointsCommand = (useWorldSpaceSize: boolean) => {
 
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 export default function Points(props: Props) {
-  const [command] = useState(() => makePointsCommand(!!props.useWorldSpaceSize));
+  const [command] = useState(() => makePointsCommand(props));
   return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={command} />;
 }

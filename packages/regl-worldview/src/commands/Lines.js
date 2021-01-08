@@ -242,7 +242,7 @@ function pointsEqual(a, b) {
   return ax === bx && ay === by && az === bz;
 }
 
-const lines = (regl: any) => {
+export const lines = (regl: any) => {
   // The point type attribute, reused for each instance
   const pointTypeBuffer = regl.buffer({
     type: "uint16",

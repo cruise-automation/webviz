@@ -167,6 +167,10 @@ const triangles = (regl: Regl) => {
   };
 };
 
+export const makeTrianglesCommand = () => {
+  return triangles;
+};
+
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(3);
 export default function Triangles(props: { ...CommonCommandProps, children: TriangleList[] }) {
   return <Command getChildrenForHitmap={getChildrenForHitmap} {...props} reglCommand={triangles} />;

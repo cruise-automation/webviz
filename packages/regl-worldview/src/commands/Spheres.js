@@ -55,7 +55,7 @@ for (let j = 0; j < NUM_MERIDIANS; j++) {
   faces.push([pt, prevPt, 1]);
 }
 
-const spheres = withRenderStateOverrides(fromGeometry(points, faces));
+export const spheres = withRenderStateOverrides(fromGeometry(points, faces));
 
 const getChildrenForHitmap = createInstancedGetChildrenForHitmap(1);
 export default function Spheres(props: { ...CommonCommandProps, children: SphereList[] }) {

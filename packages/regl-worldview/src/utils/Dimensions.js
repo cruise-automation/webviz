@@ -8,6 +8,8 @@
 
 import React, { useEffect, useState, useCallback, type Node } from "react";
 
+import { inWebWorker } from "./common";
+
 type DimensionsParams = {| height: number, width: number, left: number, top: number |};
 type Props = {|
   children: (DimensionsParams) => Node,
@@ -26,7 +28,8 @@ class ResizeObserverMock {
   }
   unobserve() {}
 }
-const ResizeObserverImpl = process.env.NODE_ENV === "test" ? (ResizeObserverMock: any) : ResizeObserver;
+const ResizeObserverImpl =
+  process.env.NODE_ENV === "test" || inWebWorker() ? (ResizeObserverMock: any) : ResizeObserver;
 
 // Calculates the dimensions of the parent element, and passes those dimensions to the child function.
 // Uses resizeObserver, which is very performant.

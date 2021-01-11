@@ -97,7 +97,7 @@ export const makePointsCommand = ({ useWorldSpaceSize }: PointsProps) => {
         pointSize: (context, props) => {
           return props.scale.x || 1;
         },
-        useWorldSpaceSize,
+        useWorldSpaceSize: !!useWorldSpaceSize,
         viewportWidth: regl.context("viewportWidth"),
         viewportHeight: regl.context("viewportHeight"),
         minPointSize: minLimitPointSize,
